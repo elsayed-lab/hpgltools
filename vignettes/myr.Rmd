@@ -3,10 +3,9 @@ title: "Using My R for fun and profit"
 author: "Ashton Trey Belew <abelew@gmail.com>"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
-fig_caption: yes
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmarkdown::render}
   %\usepackage[utf8]{inputenc}
 ---
 
@@ -109,7 +108,7 @@ Here is an example from a recent experiment.
 
 ```{r sample_sheet, results='asis'}
 
-samples = read.csv("../data/all_samples.csv")
+samples = read.csv("data/all_samples.csv")
 knitr::kable(head(samples))
 
 ```

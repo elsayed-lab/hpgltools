@@ -1,0 +1,63 @@
+Package: myr
+Type: Package
+Title: A pile of (hopefully) useful R functions
+Version: 0.1
+Date: 2014-05-23
+Author: Ashton Trey Belew
+Authors@R: person("Ashton", "Trey", "Belew", email="abelew@gmail.com", role=c("aut","cre"))
+Maintainer: Ashton Trey Belew <abelew@gmail.com>
+Description: This is a set of functions I have been using in my various
+    analyses in the El-Sayed laboratory.  They are intended to
+    be useful for anyone, but primarily attempt to make some
+    graphs easier to create, some data normalizations easier,
+    and as reminders about what to (not) do.
+License: GPL
+Suggests: biomaRt,
+          BSgenome,
+          BSgenome.Lmajor.friedlin,
+          Cairo,
+          cbcbSEQ,
+          clusterProfiler,
+          data.table,
+          DESeq2,
+          DESeq,
+          devtools,
+          directlabels,
+          DOSE,
+          edgeR,
+          genomeIntervals,
+          ggplot2,
+          GO.db,
+          googleVis,
+          goseq,
+          gplots,
+          gtools,
+          gridExtra,
+          hash,
+          KEGGREST,
+          knitcitations,
+          knitr,
+          knitrBootstrap,
+          methods,
+          motifRG,
+          multtest,
+          pathview,
+          plyr,
+          qvalue,
+          RamiGO,
+          RColorBrewer,
+          reshape,
+          rjson,
+          rmarkdown,
+          robust,
+          roxygen2,
+          Rsamtools,
+          rtracklayer,
+          scales,
+          seqinr,
+          sva,
+          testthat,
+          topGO,
+          XLConnect,
+          xtable
+VignetteBuilder: knitr

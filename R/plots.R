@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Dec 22 12:16:58 2014 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Dec 23 16:55:22 2014 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -204,18 +204,16 @@ graph_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, title=NUL
 #' @examples
 #' ## libsize_plot = my_libsize(expt=expt)
 #' ## libsize_plot  ## ooo pretty bargraph
-my_libsize = function(df=NULL, design=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL, title=NULL, text=TRUE, ...) {
+my_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL, title=NULL, text=TRUE, ...) {
     my_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
     if (is.null(expt)) {
-        my_design = design
         my_colors = colors
         my_df = df
         my_names = names
     } else if (is.null(df)) {
-        my_design = expt$design
         my_colors = expt$colors
         my_df = Biobase::exprs(expt$expressionset)
         my_names = expt$names
@@ -223,7 +221,7 @@ my_libsize = function(df=NULL, design=NULL, colors=NULL, expt=NULL, scale=TRUE, 
         stop("Both df and expt are defined, choose one.")
     }
     if (is.null(my_colors)) {
-        my_colors = colorRampPalette(brewer.pal(ncol(fun),"Dark2"))(ncol(fun))
+        my_colors = colorRampPalette(brewer.pal(ncol(my_df),"Dark2"))(ncol(my_df))
     }
     my_colors = as.character(my_colors)
     tmp = data.frame(id=colnames(my_df),
@@ -335,22 +333,23 @@ my_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=NU
 #' @return a list of the log qqplots, ratio qqplots, and means
 #'
 #' @export
-my_qq_all = function(df=NULL, expt=NULL, verbose=FALSE, against="mean", norm="quant", transform="log2", convert="cpm") {
-    my_env = environment()
+my_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
+    my_df = NULL
     if (is.null(df)) {
         my_df = exprs(expt$expressionset)
     } else {
         my_df = df
     }
-    sample_data = my_df[,1:2]
-    if (against == "mean") {
-        sample_data = transform(sample_data, mean = rowMeans(my_df))
-    } else {
-        sample_data = my_norm(df=counts(make_exampledata(ngenes=data_rows, columns=2)), transform=transform, norm=norm, convert=convert, filter_low=FALSE)$counts
-    }
+    my_df = as.data.frame(my_df)
+    sample_data = my_df[,c(1,2)]
+    ## This is bizarre, performing this operation with transform fails when called from a function
+    ## but works fine when called interactively, wtf indeed?
+    ##    sample_data = transform(sample_data, mean=rowMeans(my_df))
+    wtf = rowMeans(my_df)    
+    sample_data$mean=wtf
     logs = list()
     ratios = list()
     means = list()
@@ -379,6 +378,7 @@ my_qq_all = function(df=NULL, expt=NULL, verbose=FALSE, against="mean", norm="qu
     return(plots)
 }
 
+
 #' Perform qq plots of every column against every other column of a dataset
 #'
 #' @param  df the data
@@ -388,7 +388,6 @@ my_qq_all = function(df=NULL, expt=NULL, verbose=FALSE, against="mean", norm="qu
 #'
 #' @export
 my_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
-    my_env = environment()    
     ## Testing parameters
     ##expt=NULL
     ##df = test_data
@@ -399,6 +398,7 @@ my_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
+    my_df = NULL
     if (is.null(df)) {
         my_df = exprs(expt$expressionset)
     } else {
