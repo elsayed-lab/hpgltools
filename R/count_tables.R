@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Dec 16 16:35:51 2014 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 22 11:26:44 2015 Ashton Trey Belew (abelew@gmail.com)>
 ### count_tables.R contains some functions for simple count-table manipulations
 ### This includes reading in files, creating expressionSets, and subsets.
 
@@ -20,34 +20,36 @@
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
-create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=tooltip_data, by_type=FALSE, by_sample=FALSE) {
+create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", count_dataframe=NULL, ...) {
     ## Test params
-    ##file = "all_samples.csv"
-    ##suffix=".htseq.gz"
-    ##header=FALSE
-    ##by_type=TRUE
+    ##file = "data/all_samples.csv"
+    ##count_dataframe = example_data
+    ##sep = ","
+    ##suffix = ".count.gz"
+    ##genes=NULL
+    ##header = FALSE
+    ##by_type = FALSE
+    ##by_sample = FALSE
+    ##color_hash = NULL
     ## End test params
-    if (is.null(color_hash)) {
-        tmp_definitions = read.csv(file=file, comment.char="#")
-        ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
-        ## Thus the next line
-        tmp_definitions = subset(tmp_definitions, Sample.ID != "")
-        condition_names = unique(tmp_definitions$condition)
-        num_colors = length(condition_names)        
-        colors = colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors)
-        color_hash = hash(keys=as.character(condition_names), values=colors)
-    }
-    expt = create_experiment(file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample)
-    expt = expt_subset(expt, "")
-    data_rows = nrow(exprs(expt$expressionset))
-    data_cols = ncol(exprs(expt$expressionset))
+    tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
+    ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
+    ## Thus the next line
+    print("This function needs the conditions and batches to be an explicit column in the sample sheet.")
+    tmp_definitions = subset(tmp_definitions, Sample.ID != "")
+    condition_names = unique(tmp_definitions$condition)
+    num_colors = length(condition_names)        
+    colors = colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors)
+    color_hash = hash(keys=as.character(condition_names), values=colors)
+    expt = create_experiment(file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, sep=sep)
+    new_expt = expt_subset(expt, "")
     ## EdgeR makes toy data with this call:
     ##bcv = 0.2 ## (dispersion, 0.4 for data, 0.1 for very similar, 0.01 for replicates)
     ##data_cols = 20
     ##data_rows = 2
     ##counts <- matrix( rnbinom(40,size=1/bcv^2,mu=10), data_cols, data_rows)
     ##expt$sample_data = counts(make_exampledata(ngenes=data_rows, columns=data_cols))
-    return(expt)
+    return(new_expt)
 }
 
 #' Wrap bioconductor's expressionset to include some other extraneous
@@ -67,19 +69,13 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
-create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE, genes=tooltip_data, by_type=FALSE, by_sample=FALSE) {
-    ## Testing parameters
-    ##file="human_samples.csv"
-    ##color_hash=color_hash
-    ##suffix="_hg19.count.gz"
-    ##header=TRUE
-    ## End testing parameters
+create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, count_dataframe=NULL, sep=",", ...) {
     print("Please note that thus function assumes a specific set of columns in the sample sheet:")
     print("The most important ones are: Sample.ID, Stage, Type.")
     print("Other columns it will attempt to create by itself, but if")
     print("batch and condition are provided, that is a nice help.")
-    sample_definitions = read.csv(file=file, comment.char="#")
-    sample_definitions = sample_definitions[grepl('^HPGL', sample_definitions$Sample.ID, perl=TRUE),]
+    sample_definitions = read.csv(file=file, comment.char="#", sep=sep)
+    sample_definitions = sample_definitions[grepl('(^HPGL|^hpgl)', sample_definitions$Sample.ID, perl=TRUE),]
     if (is.null(sample_definitions$condition)) {
         sample_definitions$condition = tolower(paste(sample_definitions$Type, sample_definitions$Stage, sep="_"))
         sample_definitions$batch = gsub("\\s+|\\d+|\\*", "", sample_definitions$Batch, perl=TRUE)
@@ -114,15 +110,45 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     }
     sample_definitions = as.data.frame(sample_definitions)
     rownames(sample_definitions) = sample_definitions$Sample.ID
-    all_count_tables = my_read_files(as.character(sample_definitions$Sample.ID),
-        as.character(sample_definitions$counts), header=header)
-    all_count_matrix = as.matrix(all_count_tables)
-    if (!is.null(genes)) {
+    if (is.null(count_dataframe)) {
+        all_count_tables = my_read_files(as.character(sample_definitions$Sample.ID),
+            as.character(sample_definitions$counts), header=header)
+    } else {
+        all_count_tables = count_dataframe
+        colnames(all_count_tables) = rownames(sample_definitions)
+    }
+    all_count_matrix = data.frame(all_count_tables)
+    rownames(all_count_matrix) = gsub("^exon:","", rownames(all_count_matrix))
+    rownames(all_count_matrix) = make.names(gsub(":\\d+","", rownames(all_count_matrix)), unique=TRUE)    
+    if (is.null(genes)) {
+        gene_info = data.frame(all_count_matrix)
+    } else {
         if (is.null(genes$ID)) {
             genes$ID = rownames(genes)
         }
         gene_info = genes[genes$ID %in% rownames(all_count_matrix),]
         all_count_matrix = all_count_matrix[rownames(all_count_matrix) %in% genes$ID,]                
+    }
+    if (is.null(sample_definitions$stage)) {
+        sample_definitions$stage = "unknown"
+    }
+    if (is.null(sample_definitions$type)) {
+        sample_definitions$type = "unknown"
+    }
+    if (is.null(sample_definitions$condition)) {
+        sample_definitions$condition = "unknown"
+    }
+    if (is.null(sample_definitions$batch)) {
+        sample_definitions$batch = "unknown"
+    }
+    if (is.null(sample_definitions$colors)) {
+        sample_definitions$colors = "unknown"
+    }
+    if (is.null(sample_definitions$counts)) {
+        sample_definitions$counts = "unknown"
+    }
+    if (is.null(sample_definitions$intercounts)) {
+        sample_definitions$intercounts = "unknown"
     }
     metadata = new("AnnotatedDataFrame", data.frame(sample=as.character(sample_definitions$Sample.ID),
         stage=as.character(sample_definitions$stage),
@@ -158,6 +184,9 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
 #' ## smaller_expt = expt_subset(big_expt, "condition=='control'")
 #' ## all_expt = expt_subset(expressionset, "")  ## extracts everything
 expt_subset = function(expt, subset) {
+    ## Test variables
+    ##expt = expt
+    ##subset = ""
     if (class(expt) == "ExpressionSet") {
         expressionset = expt
     } else if (class(expt) == "expt") {
@@ -210,8 +239,8 @@ expt_subset = function(expt, subset) {
 #' @export
 #' @examples
 #' ## count_tables = my_read_files(as.character(sample_ids), as.character(count_filenames))
-my_read_files = function(ids, files, header=FALSE) {
-    initial_count = read.table(files[1])
+my_read_files = function(ids, files, header=FALSE, ...) {
+    initial_count = read.table(files[1], ...)
     colnames(initial_count) = c("ID", ids[1])
     for (table in 2:length(files)) {
         tmp_count = read.table(files[table], header=header)

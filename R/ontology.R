@@ -250,6 +250,10 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
     ##qvalue=0.1
     ##method="Wallenius"
     ## End test parameters
+    print("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
+    print("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
+    print("The other table is of gene lengths with columns (gene)ID and (gene)width.")
+    print("Other columns are fine, but ignored.")
     if (is.null(de_genes$ID)) {
         de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
@@ -459,6 +463,68 @@ my_topdiffgenes = function(scores, df=de_genes, direction="up") {
     quartiles = summary(df)
 }
 
+#' Perform ontology searches of the output from limma
+#'
+#' @param limma_out a list of topTables comprising limma outputs
+#' @param n a number of genes at the top/bottom to search
+#' @param z a number of standard deviations to search
+#'
+#' @export
+limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE) {
+    print("This function expects a list of limma contrast tables and some annotation information.")
+    print("The annotation information would be gene lengths and ontology ids")
+    if (is.null(n) & is.null(z)) {
+        z = 1
+    }
+    output = list()
+    for (c in 1:length(limma_out)) {
+        datum = limma_out[[c]]
+        if (is.null(n)) {
+            out_summary = summary(datum$logFC)
+            out_mad = mad(datum$logFC, na.rm=TRUE)
+            up_median_dist = out_summary["Median"] + (out_mad * z)
+            down_median_dist = out_summary["Median"] - (out_mad * z)
+            up_genes = subset(datum, logFC >= up_median_dist)
+            down_genes = subset(datum, logFC <= down_median_dist)
+        } else if (is.null(z)) {
+            upranked = datum[order(datum$logFC, decreasing=TRUE),]
+            up_genes = head(upranked, n=n)
+            down_genes = tail(upranked, n=n)
+        }
+        goseq_up_ontology = goseq_up_trees = goseq_down_ontology = goseq_down_trees = NULL
+        cluster_up_ontology = cluster_up_trees = cluster_down_ontology = cluster_down_trees = NULL
+        topgo_up_ontology = topgo_up_trees = topgo_down_ontology = topgo_down_trees = NULL        
+        if (isTRUE(do_goseq)) {
+            goseq_up_ontology = simple_goseq(up_genes, lengths=gene_lengths, goids=goids)
+            goseq_up_trees = try(goseq_trees(up_genes, goseq_up_ontology, goid_map=goid_map, goids_df=goids, overwrite=overwrite))
+            goseq_down_ontology = simple_goseq(down_genes, lengths=gene_lengths, goids=goids)
+            goseq_down_trees = try(goseq_trees(down_genes, goseq_down_ontology, goid_map=goid_map, goids_df=goids))
+        }
+        if (isTRUE(do_cluster)) {
+            cluster_up_ontology = simple_clusterprofiler(up_genes, goids=goids, gff=goids)
+            cluster_up_trees = try(cluster_trees(up_genes, cluster_up_ontology, goid_map=goid_map, goids_df=goids))
+            cluster_down_ontology = simple_clusterprofiler(down_genes, goids=goids, gff=goids)
+            cluster_down_trees = try(cluster_trees(down_genes, cluster_down_ontology, goid_map=goid_map, goids_df=goids))
+        }
+        if (isTRUE(do_topgo)) {
+            topgo_up_ontology = simple_topgo(up_genes, goid_map=goid_map, goids_df=goids)
+            topgo_up_trees = try(topgo_trees(topgo_up_ontology))
+            topgo_down_ontology = simple_topgo(down_genes, goid_map=goid_map, goids_df=goids)
+            topgo_down_trees = try(topgo_trees(topgo_down_ontology))
+        }
+        c_data = list(up_goseq=goseq_up_ontology, down_goseq=goseq_down_ontology,
+            up_cluster=cluster_up_ontology, down_cluster=cluster_down_ontology,
+            up_topgo=topgo_up_ontology, down_topgo=topgo_down_ontology,
+            up_goseqtrees=goseq_up_trees, down_goseqtrees=goseq_down_trees,
+            up_clustertrees=cluster_up_trees, down_clustertrees=cluster_down_trees,
+            up_topgotrees=topgo_up_trees, down_topgotrees=topgo_down_trees)
+            output[[c]] = c_data
+    }
+    names(output) = names(limma_out)
+    return(output)
+}
+
+
 #' A very simple selector of strong scoring genes (by p-value)
 #'
 #' This function was provided in the topGO documentation, but not defined.
@@ -477,7 +543,7 @@ topDiffGenes <- function(allScore) { return(allScore < 0.01) }
 #' 
 #' @return a big list including the various outputs from topgo
 #' @export
-simple_topgo = function(de_genes, goids="reference/go/id2go.map", goids_df=NULL, pvals=NULL, limitby="fisher", limit=0.1, signodes=100, sigforall=TRUE, numchar=300, selector="topDiffGenes") {
+simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL, pvals=NULL, limitby="fisher", limit=0.1, signodes=100, sigforall=TRUE, numchar=300, selector="topDiffGenes", overwrite=FALSE) {
     ## Test parameters
     ##de_genes = epi_cl14clbr_low
     ##pvals = epi_cl14clbr_pvals
@@ -496,24 +562,11 @@ simple_topgo = function(de_genes, goids="reference/go/id2go.map", goids_df=NULL,
 ### sum(x) ## the number of selected genes
 ### If we do something like above to give scores to all the 'DEgenes', then we set up the GOdata object like this:
 ### mf_GOdata = new("topGOdata", description="something", ontology="BP", allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO, gene2GO=geneID2GO, nodeSize=2)
-    id2go_test = file.info(goids)
-    if (is.na(id2go_test$size)) {
-        if (is.null(goids_df)) {
-            stop("There is neither a id2go file nor a data frame of goids.")
-        } else {
-            print("Attempting to generate a id2go file in the format expected by topGO.")
-            new_go = plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
-            write.table(new_go, file=goids, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
-            rm(id2go_test)
-        }
-    } else {
-        print("Found a goid mapping file, moving on.")
-        rm(id2go_test)
-    }
-    geneID2GO = topGO::readMappings(file=goids)
+    make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+    geneID2GO = topGO::readMappings(file=goid_map)
     annotated_genes = names(geneID2GO)
     if (is.null(de_genes$ID)) {
-        de_genes$ID = rownames(de_genes)
+        de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
     ##    interesting_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
     interesting_genes = factor(annotated_genes %in% de_genes$ID)
@@ -569,13 +622,20 @@ simple_topgo = function(de_genes, goids="reference/go/id2go.map", goids_df=NULL,
         mf_weight=mf_weight_result, bp_weight=bp_weight_result, cc_weight=cc_weight_result)
 
     tables = topgo_tables(results, limitby=limitby, limit=limit)
-    
-    mf_first_group = tables$mf[1, "GO.ID"]
-    mf_first_density = myGroupDensity(mf_GOdata, mf_first_group, ranks=TRUE)
-    bp_first_group = tables$bp[1, "GO.ID"]
-    bp_first_density = myGroupDensity(bp_GOdata, bp_first_group, ranks=TRUE )
-    cc_first_group = tables$cc[1, "GO.ID"]
-    cc_first_density = myGroupDensity(cc_GOdata, cc_first_group, ranks=TRUE  )   
+
+    mf_first_density = bp_first_density = cc_first_density = NULL
+    if (class(tables$mf) != 'try-error') {
+        mf_first_group = tables$mf[1, "GO.ID"]
+        mf_first_density = myGroupDensity(mf_GOdata, mf_first_group, ranks=TRUE)
+    }
+    if (class(tables$bp) != 'try-error') {
+        bp_first_group = tables$bp[1, "GO.ID"]
+        bp_first_density = myGroupDensity(bp_GOdata, bp_first_group, ranks=TRUE )
+    }
+    if(class(tables$cc) != 'try-error') {
+        cc_first_group = tables$cc[1, "GO.ID"]
+        cc_first_density = myGroupDensity(cc_GOdata, cc_first_group, ranks=TRUE  )
+    }
     first_densities = list(mf=mf_first_density, bp=bp_first_density, cc=cc_first_density)
     
     information = list(
@@ -596,6 +656,7 @@ topgo_tables = function(result, limit=0.001, limitby="fisher", numchar=300, orde
     ## End testing parameters
     ## The following if statement could be replaced by get(limitby)
     ## But I am leaving it as a way to ensure that no shenanigans ensue
+    mf_allRes = bp_allRes = cc_allRes = mf_interesting = bp_interesting = cc_interesting = NULL
     if (limitby == "fisher") {
         mf_siglist = names(which(result$mf_fisher@score <= limit))        
         bp_siglist = names(which(result$bp_fisher@score <= limit))
@@ -619,42 +680,50 @@ topgo_tables = function(result, limit=0.001, limitby="fisher", numchar=300, orde
     mf_allRes = try(topGO::GenTable(result$mf_godata, classic=result$mf_fisher, KS=result$mf_ks,
         EL=result$mf_el, weight=result$mf_weight, orderBy=orderby,
         ranksOf=ranksof, topNodes=mf_topnodes, numChar=numchar))
-    mf_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$mf_fisher))$qvalues)
-    mf_allRes = merge(mf_allRes, mf_qvalues, by.x="GO.ID", by.y="row.names")
-    mf_allRes$classic = as.numeric(mf_allRes$classic)
-    mf_allRes = mf_allRes[with(mf_allRes, order(classic)), ]
-    colnames(mf_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
+    if (class(mf_allRes) != 'try-error') {
+        mf_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$mf_fisher))$qvalues)
+        mf_allRes = merge(mf_allRes, mf_qvalues, by.x="GO.ID", by.y="row.names")
+        mf_allRes$classic = as.numeric(mf_allRes$classic)
+        mf_allRes = mf_allRes[with(mf_allRes, order(classic)), ]
+        colnames(mf_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
+        mf_interesting = subset(mf_allRes, get(limitby) <= limit)
+        rownames(mf_interesting) = NULL
+        mf_interesting$ont = "MF"
+        mf_interesting = mf_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
+    }
+    
     bp_topnodes = length(bp_siglist)
     bp_allRes = try(topGO::GenTable(result$bp_godata, classic=result$bp_fisher, KS=result$bp_ks,
         EL=result$bp_el, weight=result$bp_weight, orderBy=orderby,
-        ranksOf=ranksof, topNodes=bp_topnodes, numChar=numchar))    
-    bp_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$bp_fisher))$qvalues)
-    bp_allRes = merge(bp_allRes, bp_qvalues, by.x="GO.ID", by.y="row.names", all.x=TRUE)
-    bp_allRes$classic = as.numeric(bp_allRes$classic)
-    bp_allRes = bp_allRes[with(bp_allRes, order(classic)), ]
-    colnames(bp_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
+        ranksOf=ranksof, topNodes=bp_topnodes, numChar=numchar))
+    if (class(bp_allRes) != 'try-error') {
+        bp_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$bp_fisher))$qvalues)
+        bp_allRes = merge(bp_allRes, bp_qvalues, by.x="GO.ID", by.y="row.names", all.x=TRUE)
+        bp_allRes$classic = as.numeric(bp_allRes$classic)
+        bp_allRes = bp_allRes[with(bp_allRes, order(classic)), ]
+        colnames(bp_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
+        bp_interesting = subset(bp_allRes, get(limitby) <= limit)
+        rownames(bp_interesting) = NULL
+        bp_interesting$ont = "BP"
+        bp_interesting = bp_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
+    }
+    
     cc_topnodes = length(cc_siglist)
     cc_allRes = try(topGO::GenTable(result$cc_godata, classic=result$cc_fisher, KS=result$cc_ks,
         EL=result$cc_el, weight=result$cc_weight, orderBy=orderby,
         ranksOf=ranksof, topNodes=cc_topnodes, numChar=numchar))
-    cc_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$cc_fisher))$qvalues)
-    cc_allRes = merge(cc_allRes, cc_qvalues, by.x="GO.ID", by.y="row.names")
-    cc_allRes$classic = as.numeric(cc_allRes$classic)
-    cc_allRes = cc_allRes[with(cc_allRes, order(classic)), ]
-    colnames(cc_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
-
-    mf_interesting = subset(mf_allRes, get(limitby) <= limit)
-    rownames(mf_interesting) = NULL
-    mf_interesting$ont = "MF"
-    mf_interesting = mf_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
-    bp_interesting = subset(bp_allRes, get(limitby) <= limit)
-    rownames(bp_interesting) = NULL
-    bp_interesting$ont = "BP"
-    bp_interesting = bp_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
-    cc_interesting = subset(cc_allRes, get(limitby) <= limit)
-    rownames(cc_interesting) = NULL
-    cc_interesting$ont = "CC"
-    cc_interesting = cc_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
+    if (class(cc_allRes) != 'try-error') {
+        cc_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$cc_fisher))$qvalues)
+        cc_allRes = merge(cc_allRes, cc_qvalues, by.x="GO.ID", by.y="row.names")
+        cc_allRes$classic = as.numeric(cc_allRes$classic)
+        cc_allRes = cc_allRes[with(cc_allRes, order(classic)), ]
+        colnames(cc_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
+        cc_interesting = subset(cc_allRes, get(limitby) <= limit)
+        rownames(cc_interesting) = NULL
+        cc_interesting$ont = "CC"
+        cc_interesting = cc_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
+    }
+    
 
     tables = list(mf=mf_allRes, bp=bp_allRes, cc=cc_allRes, mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting)
     return(tables)
@@ -822,8 +891,8 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     genetable_test = try(load("geneTable.rda"))
     if (class(genetable_test) == 'try-error') {
         if (!is.null(gff)) {
-            print(paste("Generating the geneTable.rda using: ", gff, sep=""))
-            ##            clusterProfiler::Gff2GeneTable(gff)
+            print("Generating the geneTable.rda")
+            ## clusterProfiler::Gff2GeneTable(gff)
             myr::Gff2GeneTable(gff)            
         } else {
             stop("cluster Profiler requires a geneTable.rda, which requires a gff file to read.")
@@ -874,41 +943,47 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     y_limit = (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
     all_cc_phist = all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
     
-    mf_group_barplot = try(clusterProfiler::barplot(mf_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
+    mf_group_barplot = try(barplot(mf_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(mf_group_barplot)[1] != 'try-error') {
         mf_group_barplot$data$Description = as.character(lapply(strwrap(mf_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
     
-    bp_group_barplot = try(clusterProfiler::barplot(bp_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
+    bp_group_barplot = try(barplot(bp_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(bp_group_barplot)[1] != 'try-error') {
         bp_group_barplot$data$Description = as.character(lapply(strwrap(bp_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
     
-    cc_group_barplot = try(clusterProfiler::barplot(cc_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
+    cc_group_barplot = try(barplot(cc_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(cc_group_barplot)[1] != 'try-error') {
         cc_group_barplot$data$Description = as.character(lapply(strwrap(cc_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
 
-    all_mf_barplot = try(clusterProfiler::barplot(all_mf, categorySize="pvalue", showCategory=showcategory), silent=TRUE)    
-    enriched_mf_barplot = try(clusterProfiler::barplot(enriched_mf, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
-    if (class(enriched_mf_barplot)[1] != 'try-error') {
+    all_mf_barplot = try(barplot(mf_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)    
+    enriched_mf_barplot = try(barplot(enriched_mf, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    if (class(enriched_mf_barplot)[1] == 'try-error') {
+        print("No enriched MF groups were observed.")
+    } else {
         enriched_mf_barplot$data$Description = as.character(lapply(strwrap(enriched_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
     if (class(all_mf_barplot)[1] != 'try-error') {
         all_mf_barplot$data$Description = as.character(lapply(strwrap(all_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
-    all_bp_barplot = try(clusterProfiler::barplot(bp_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)        
-    enriched_bp_barplot = try(clusterProfiler::barplot(enriched_bp, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
-    if (class(enriched_bp_barplot)[1] != 'try-error') {
+    all_bp_barplot = try(barplot(bp_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)        
+    enriched_bp_barplot = try(barplot(enriched_bp, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    if (class(enriched_bp_barplot)[1] == 'try-error') {
+        print("No enriched BP groups observed.")
+    } else {
         enriched_bp_barplot$data$Description = as.character(lapply(strwrap(enriched_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
     if (class(all_bp_barplot)[1] != 'try-error') {
         all_bp_barplot$data$Description = as.character(lapply(strwrap(all_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
 
-    all_cc_barplot = try(clusterProfiler::barplot(cc_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
-    enriched_cc_barplot = try(clusterProfiler::barplot(enriched_cc, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
-    if (class(enriched_cc_barplot)[1] != 'try-error') {
+    all_cc_barplot = try(barplot(cc_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    enriched_cc_barplot = try(barplot(enriched_cc, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    if (class(enriched_cc_barplot)[1] == 'try-error') {
+        print("No enriched CC groups observed.")
+    } else {
         enriched_cc_barplot$data$Description = as.character(lapply(strwrap(enriched_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
     if (class(all_cc_barplot)[1] != 'try-error') {
@@ -970,6 +1045,36 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     return(return_information)        
 }
 
+make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overwrite=FALSE) {
+    id2go_test = file.info(goid_map)
+    goids_dir = dirname(goid_map)
+    if (!file.exists(goids_dir)) {
+        dir.create(goids_dir, recursive=TRUE)
+    }
+
+    if (isTRUE(overwrite)) {
+        if (is.null(goids_df)) {
+            stop("There is neither a id2go file nor a data frame of goids.")
+        } else {
+            print("Attempting to generate a id2go file in the format expected by topGO.")
+            new_go = plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
+            write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
+            rm(id2go_test)
+        }
+    } else {
+        if (is.na(id2go_test$size)) {
+            if (is.null(goids_df)) {
+                stop("There is neither a id2go file nor a data frame of goids.")
+            } else {
+                print("Attempting to generate a id2go file in the format expected by topGO.")
+                new_go = plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
+                write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
+                rm(id2go_test)
+            }
+        }
+    }
+}
+
 #' Make fun trees a la topgo from goseq data.
 #'
 #' @param de_genes some differentially expressed genes
@@ -980,39 +1085,41 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
 #' @return a plot!
 #' @seealso \code{\link{Ramigo}}
 #' @export
-goseq_trees = function(de_genes, godata, goids="reference/go/id2go.map", score_limit=0.01, goids_df=NULL) {
+goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", score_limit=0.01, goids_df=NULL, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Val") {
     ## Testing parameters
     ##de_genes = proeff_high
     ##godata = proeff_high_go
     ##goids = "reference/go/id2go.map"
     ##score_limit=0.01
     ## End parameters
-    id2go_test = file.info(goids)
-    if (is.na(id2go_test$size)) {
-        if (is.null(goids_df)) {
-            stop("There is neither a id2go file nor a data frame of goids.")
-        } else {
-            print("Attempting to generate a id2go file in the format expected by topGO.")
-            new_go = plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
-            write.table(new_go, file=goids, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
-            rm(id2go_test)
-        }
-    }
-    
-    enriched_categories = godata$alldata$category
-    geneID2GO = topGO::readMappings(file=goids)
+    make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+    geneID2GO = topGO::readMappings(file=goid_map)
     annotated_genes = names(geneID2GO)
-    interesting_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
-    names(interesting_genes) = annotated_genes
-    mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-    bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-    cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-    mf_enriched_ids = godata$alldata$category
-    mf_enriched_scores = godata$alldata$over_represented_pvalue
-    names(mf_enriched_scores) = mf_enriched_ids
+    if (is.null(de_genes$ID)) {
+        de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
+    }
+    interesting_genes = factor(annotated_genes %in% de_genes$ID)
+    names(interesting_genes) = annotated_genes    
+
+    if (is.null(de_genes[[pval_column]])) {
+        mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)        
+    } else {
+        pvals = as.vector(de_genes[[pval_column]])
+        names(pvals) = rownames(de_genes)
+        mf_GOdata = new("topGOdata", description="MF", ontology="MF", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata = new("topGOdata", description="BP", ontology="BP", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata = new("topGOdata", description="CC", ontology="CC", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+    }
+        
+    enriched_ids = godata$alldata$category
+    enriched_scores = godata$alldata$over_represented_pvalue
+    names(enriched_scores) = enriched_ids
+    
     mf_avail_nodes = as.list(mf_GOdata@graph@nodes)
     names(mf_avail_nodes) = mf_GOdata@graph@nodes
-    mf_nodes = mf_enriched_scores[names(mf_enriched_scores) %in% names(mf_avail_nodes)]
+    mf_nodes = enriched_scores[names(enriched_scores) %in% names(mf_avail_nodes)]
     mf_included = length(which(mf_nodes <= score_limit))
     mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=myGOplot)))
     if (class(mf_tree_data) == 'try-error') {
@@ -1020,13 +1127,11 @@ goseq_trees = function(de_genes, godata, goids="reference/go/id2go.map", score_l
         mf_tree = NULL
     } else {
         mf_tree = recordPlot()
-    }    
-    bp_enriched_ids = godata$alldata$category
-    bp_enriched_scores = godata$alldata$over_represented_pvalue
-    names(bp_enriched_scores) = bp_enriched_ids
+    }
+
     bp_avail_nodes = as.list(bp_GOdata@graph@nodes)
     names(bp_avail_nodes) = bp_GOdata@graph@nodes
-    bp_nodes = bp_enriched_scores[names(bp_enriched_scores) %in% names(bp_avail_nodes)]
+    bp_nodes = enriched_scores[names(enriched_scores) %in% names(bp_avail_nodes)]
     bp_included = length(which(bp_nodes <= score_limit))
     bp_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_included, useFullNames=TRUE, plotFunction=myGOplot)))
     if (class(bp_tree_data) == 'try-error') {
@@ -1035,12 +1140,10 @@ goseq_trees = function(de_genes, godata, goids="reference/go/id2go.map", score_l
     } else {
         bp_tree = recordPlot()
     }    
-    cc_enriched_ids = godata$alldata$category
-    cc_enriched_scores = godata$alldata$over_represented_pvalue
-    names(cc_enriched_scores) = cc_enriched_ids
+
     cc_avail_nodes = as.list(cc_GOdata@graph@nodes)
     names(cc_avail_nodes) = cc_GOdata@graph@nodes
-    cc_nodes = cc_enriched_scores[names(cc_enriched_scores) %in% names(cc_avail_nodes)]
+    cc_nodes = enriched_scores[names(enriched_scores) %in% names(cc_avail_nodes)]
     cc_included = length(which(cc_nodes <= score_limit))
     cc_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_included, useFullNames=TRUE, plotFunction=myGOplot)))
     if (class(cc_tree_data) == 'try-error') {
@@ -1064,26 +1167,40 @@ goseq_trees = function(de_genes, godata, goids="reference/go/id2go.map", score_l
 #' @return a plot!
 #' @seealso \code{\link{Ramigo}}
 #' @export
-cluster_trees = function(de_genes, cpdata, goids="reference/go/id2go.map", score_limit=0.1) {
+cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", goids_df=NULL, score_limit=0.1, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Value") {
     ## Testing parameters
     ##de_genes = proeff_high
     ##cpdata = proeff_high_cl
     ##goids = "reference/go/id2go.map"
     ##score_limit=0.1
     ## End testing parameters
+    make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+    geneID2GO = topGO::readMappings(file=goid_map)
+    annotated_genes = names(geneID2GO)
+    if (is.null(de_genes$ID)) {
+        de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
+    }
+    interesting_genes = factor(annotated_genes %in% de_genes$ID)
+    names(interesting_genes) = annotated_genes
+
+    if (is.null(de_genes[[pval_column]])) {
+        mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)        
+    } else {
+        pvals = as.vector(de_genes[[pval_column]])
+        names(pvals) = rownames(de_genes)
+        mf_GOdata = new("topGOdata", description="MF", ontology="MF", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata = new("topGOdata", description="BP", ontology="BP", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata = new("topGOdata", description="CC", ontology="CC", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+    }
+
     mf_all = cpdata$mf_all
     mf_enriched = cpdata$mf_enriched
     bp_all = cpdata$bp_all
     bp_enriched = cpdata$bp_enriched
     cc_all = cpdata$cc_all
     cc_enriched = cpdata$cc_enriched
-    geneID2GO = topGO::readMappings(file=goids)
-    annotated_genes = names(geneID2GO)
-    interesting_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
-    names(interesting_genes) = annotated_genes
-    mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-    bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-    cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
     mf_all_ids = mf_all@result$ID
     bp_all_ids = bp_all@result$ID
     cc_all_ids = cc_all@result$ID
@@ -1700,11 +1817,27 @@ myGroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
 ## Functions in this are not exported by topGO
 Gff2GeneTable <- function(gffFile, compress=TRUE) {
     ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"
-    gff <- readGff(gffFile)
-
-    GeneID <- data.frame(GeneID=getGffAttribution(gff$attributes, field="ID"))
-
-    ## GI2GeneID <- data.frame(GI=getGffAttribution(gff$attributes, field="GI"),
+    if (is.data.frame(gffFile)) {
+        GeneID = data.frame(GeneID = gffFile$ID)
+        geneInfo = gffFile
+        geneInfo$start = 1
+        geneInfo$GeneID = gffFile$ID
+        geneInfo$GeneName = gffFile$ID
+        geneInfo$Locus = gffFile$ID        
+        geneInfo$end = geneInfo$width
+        geneInfo$strand = "+"
+    } else {
+        gff <- readGff(gffFile)
+        GeneID <- data.frame(GeneID=getGffAttribution(gff$attributes, field="ID"))
+        geneInfo <- gff[gff$feature == "gene",]
+        geneInfo <- geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
+        geneInfo$GeneID <- getGffAttribution(geneInfo$attributes, field="ID")
+        geneInfo$GeneName <- getGffAttribution(geneInfo$attributes, field="Name")
+        geneInfo$Locus <- getGffAttribution(geneInfo$attributes, field="locus_tag")
+        geneInfo$GeneName[is.na(geneInfo$GeneName)] <- "-"
+        geneInfo <- geneInfo[, -5] ## abondom "attributes" column.
+    }
+            ## GI2GeneID <- data.frame(GI=getGffAttribution(gff$attributes, field="GI"),
     ##                        GeneID=getGffAttribution(gff$attributes, field="GeneID")
     ##                                    #,
     ##                                    #Product=getGffAttribution(gff$attributes, field="product")
@@ -1712,14 +1845,8 @@ Gff2GeneTable <- function(gffFile, compress=TRUE) {
     ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$GI),]
     ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$Gene),]
 
-    geneInfo <- gff[gff$feature == "gene",]
-    geneInfo <- geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
-    geneInfo$GeneID <- getGffAttribution(geneInfo$attributes, field="ID")
-    geneInfo$GeneName <- getGffAttribution(geneInfo$attributes, field="Name")
-    geneInfo$Locus <- getGffAttribution(geneInfo$attributes, field="locus_tag")
-    geneInfo$GeneName[is.na(geneInfo$GeneName)] <- "-"
+        
 
-    geneInfo <- geneInfo[, -5] ## abondom "attributes" column.
     ## geneTable <- merge(GI2GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
     geneTable <- merge(GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
     geneTable <- unique(geneTable)

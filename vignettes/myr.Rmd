@@ -9,9 +9,7 @@ vignette: >
   %\usepackage[utf8]{inputenc}
 ---
 
-# Myr vignette!
-
-My first vignette, lets make kittens!
+# Myr: Stupid R tricks.
 
 The following block shows how I handle autloading requisite libraries for my
 code.  This makes it easier for me to download/install the R requirements on
@@ -119,11 +117,15 @@ corresponds to the Sample.ID.  These may be organized by sample name or
 condition.  The following code shows how I create an expressionset and
 fill it with the count data.
 
-```{r creating_experiment, eval=FALSE}
+```{r creating_experiment}
 
-all_expt = create_expt("all_samples.csv", suffix=".htseq.gz")
-## or in another instance
-all_human_expt = create_expt("human_samples.csv", suffix="_hg19.count.gz", by_type=TRUE, genes=human_tooltip)
+example_data = counts(make_exampledata(ngenes=10000, columns=24))
+## create_expt() usually expects that there are a bunch of count tables
+## from htseq in the directory: processed_data/count_tables/
+## These may be organised in separate directories by condition(type)
+## in one directory each by sample.  By default, this assumes they will be
+## named sample_id.count.gz, but this may be changed with the suffix argument.
+all_expt = create_expt("data/all_samples.csv", count_dataframe=example_data)
 
 ```
 
@@ -138,27 +140,26 @@ data set using limma's makeExampleData()
 
 ```{r examining_data}
 
-fun = as.matrix(counts(makeExampleCountDataSet()))
-## graph_metrics will perform all these graphs, normalize the data
-## re-perform all these graphs, and do an initial batch correction,
-## and again plot them.
-## Sadly, it requires an expt class as input, so here are just a few
-## examples.
-my_colors = colorRampPalette(brewer.pal(ncol(fun),"Dark2"))(ncol(fun))
-fun_boxplot = my_boxplot(df=fun)
-print(fun_boxplot)
-log_boxplot = my_boxplot(df=fun, scale="log")
-print(log_boxplot)
-## Something is weird in my R session, I changed these functions to not require
-## the colors= argument but the R session does not seem to be seeing my change
-## despite me running devtools::load_all("~/myr")  oh well
-my_corheat(df=fun, colors=my_colors)
-my_disheat(df=fun, colors=my_colors)
-my_smc(df=fun, colors=my_colors)
-my_libsize(df=fun)
-my_qq_all(df=fun)
-## There are other graphs which require a design or an expt class.
-## my_pca, sample_heatmap, my_smd, graph_nonzero
+## graph_metrics() performs the following:
+## runs a libsize plot, non-zero genes plot, boxplot, correlation/distance heatmaps, and pca plots
+## It performs a normalization of the data (log2(quantile(cpm)) by default), and does it again
+## It then uses limma's removeBatchEffect() to make a stab at removing batch effect, and does it again.
+
+## An important thing to remember: the data from makeExampleData() is not very interesting, so the resulting
+## plots are also not interesting...
+fun = graph_metrics(expt=all_expt)
+fun
+## The following are some examples of other ways to make use of these plots:
+
+##fun_boxplot = my_boxplot(df=fun)
+##print(fun_boxplot)
+##log_boxplot = my_boxplot(df=fun, scale="log")
+##print(log_boxplot)
+##my_corheat(df=fun, colors=my_colors)
+##my_disheat(df=fun, colors=my_colors)
+##my_smc(df=fun, colors=my_colors)
+##my_libsize(df=fun)
+##my_qq_all(df=fun)
 
 ```
 
@@ -170,34 +171,90 @@ RNAseq data must be normalized.  Here is one easy method:
 
 ## normalize_expt will do this on the expt class, replace the expressionset therein, and
 ## make a backup of the data inside the expt class.
-ql2cpm = my_norm(df=fun)  ## defaults to log2(CPM(quantile(data)))
-head(ql2cpm)
+norm_expt = normalize_expt(all_expt)
+head(exprs(norm_expt$expressionset))
 ## size factor, tmm, rle, upperQuartile all require a design matrix.
+norm_boxplot = my_boxplot(expt=norm_expt)
+print(norm_boxplot)
+norm_disheat = my_disheat(expt=norm_expt)
+print(norm_disheat)
 
 ```
 
 ### Voom/limma etc
 
-The following are examples of some fun analyses.  They generally want a full
-expressionset and so I won't tell R to evaluate the following block.
+There are a couple ways to call limma using the expt class.  In some cases, it might
+be useful to pull out a subset of the data and only compare the samples of specific
+conditions/batches/etc.
 
-```{r etc, eval=FALSE}
+```{r etc}
 
-## expt_subset() will pull pieces out of an expt class for simple comparisons
-epi_subset = expt_subset(all_qcpml2, "condition=='clbr_epi'|condition=='cl14_epi'")
-## graph the metrics of a subset of the data
-epi_graphs = graph_metrics(expt=epi_subset)
-epi_graphs$norm_pcaplot
-epi_graphs$norm_disheat
-epi_graphs$norm_corheat
+## el_subset means to pull out only those samples which represent 'Early Log' growth.
+el_subset = expt_subset(norm_expt, "stage=='EL'")
+## Conversely, one may pull samples which are early log and also wild type
+elwt_subset = expt_subset(norm_expt, "stage=='EL'&type=='WT'")
+## These subsets may be characterized with the plots as above
+## Here is a qq plot as an example.
+elwt_qqs = my_qq_all(expt=elwt_subset)
 ## Simple comparison will take the first condition as control and the second
-## as experimental
-epi_comparison = simple_comparison(epi_subset)
-epi_table = epi_comparison$table
-epi_comparison$pvalue_histogram
-epi_comparison$volcano_plot
-epi_comparison$ma_plot
-epi_comparison$coefficient_scatter
+## as experimental, if we look at el_subset, we will see that means conditions
+## 'a' and 'b'.  Thus performing simple_comparison will look for differentially
+## expressed genes between them.
+head(el_subset$design)
+ab_comparison = simple_comparison(el_subset)
+## A summary of the data will show the data provided:
+## The following plots and pieces of data show the output provided by simple_comparison()
+## This function isn't really intended to be used, but provides a reference point for performing other analyses.
+summary(ab_comparison)
+print(ab_comparison$amean_histogram)  ## A histogram of the per-gene mean values
+print(ab_comparison$coef_amean_cor)   ## The correlation of the means (should not be significant)
+print(ab_comparison$coefficient_scatter) ## A scatter plot of condition b with respect to a
+print(ab_comparison$coefficient_x) ## A histogram of the gene abundances of a
+print(ab_comparison$coefficient_y) ## A histogram of the gene abundances of b
+print(ab_comparison$coefficient_both) ## A histogram of the gene abundances of a and b
+## Note to self, I keep meaning to change the colors of that to match the others
+print(ab_comparison$coefficient_lm) ## The description of the line which describes the relationship
+## of all of the genes in a to those in b
+print(ab_comparison$coefficient_lmsummary) ## A summary of the robust linear model in coefficient_lm
+## This has some neat things like the R-squared value and the parameters used to arrive at the linear model.
+## ab_comparison$coefficient_weights ## a list of weights by gene, bigger weights mean closer to the linear model.
+## ab_comparison$comparisons ## the raw output from limma
+print(ab_comparison$contrasts)  ## The output from limma's makeContrasts()
+print(ab_comparison$contrast_histogram)  ## A histogram of the values of b-a for each gene
+head(ab_comparison$downsignificant)  ## The list of genes which are significantly down in b vs a
+dim(ab_comparison$downsignificant)
+## ab_comparison$fit ## the result from lmFit()
+print(ab_comparison$ma_plot)  ## An ma plot of b vs a
+print(ab_comparison$pvalue_histogram) ## A histogram of the p-values, one would hope to see a spike in the low numbers
+head(ab_comparison$table) ## The full contrast table
+head(ab_comparison$upsignificant)  ## The list of genes which are significantly up in b vs a
+dim(ab_comparison$upsignificant)
+print(ab_comparison$volcano_plot) ## A Volcano plot of b vs a
+## ab_comparison$voom_data  ## The output from voom()
+print(ab_comparison$voom_plot) ## A ggplot2 version of the mean/variance trend provided by voom()
+
+## The data structure ab_comparison$comparisons contains the output from eBayes() which comprises the last
+## limma step...
+funkytown = write_limma(data=ab_comparison$comparisons, excel=FALSE, csv=FALSE)
+## Lets make up some gene lengths
+gene_lengths = funkytown[[1]]
+gene_lengths$width = sample(nrow(gene_lengths))
+gene_lengths$ID = rownames(gene_lengths)
+gene_lengths = gene_lengths[,c("ID","width")]
+
+## And some GO categories
+goids=funkytown[[1]]
+all_go_categories = AnnotationDbi::keys(GO.db)
+goids$GO = sample(all_go_categories, nrow(gene_lengths))
+goids$ID = rownames(goids)
+goids = goids[,c("ID","GO")]
+
+ontology_fun = limma_ontology(funkytown, gene_lengths=gene_lengths, goids=goids, n=100, overwrite=TRUE)
+
+testme = head(funkytown[[1]], n=40)
+tt = simple_clusterprofiler(testme, goids=goids, gff=goids)
+ttt = cluster_trees(testme, tt)
+tttt = simple_topgo(testme)
 
 ```
 
@@ -368,6 +425,8 @@ all_contrasts = makeContrasts(
     levels=complete_voom$design)
 all_fits = contrasts.fit(complete_fit, all_contrasts)
 all_comparisons = eBayes(all_fits)
+limma_list = write_limma(data=all_comparisons)
+
 all_table = topTable(all_comparisons, adjust="fdr", n=nrow(all_data))
 write.csv(all_comparisons, file="excel/all_tables.csv")
 ## write_limma() is a shortcut for writing out all the data structures
@@ -381,61 +440,59 @@ The following is an example of a simplified GO search given
 20 groups of genes which are from an unannotated organism, but
 for which blast2GO was performed.
 
-```{r ontology_searches, eval=FALSE}
+```{r ontology_searches}
 
-for (iter in 1:20) {
-    ## Pull the nth group
-    subgroup = subset(ontology_info, group == iter)
-    subgroup = subgroup[,c("transcript_id","start","end")]
-    colnames(subgroup) = c("ID","start","end")
-    subgroup_go = simple_goseq(subgroup, lengths=gene_lengths, goids=go_ids)
-    ## Save my pictures as images/go_plots-groupN.pdf
-    plot_filename = paste("images/go_plots-group", iter, ".pdf", sep="")
-    ## I put a block inside the pdf() call just so I can
-    ## have indentation to see the set of things being
-    ## printed to the pdf file.
-    group_trees = goseq_trees(subgroup, subgroup_go)    
-    pdf(file=plot_filename)
-    ## Print the p-value histogram describing how >99% of the go
-    ## categories are not in fact significant.
-    print(subgroup_go$pvalue_histogram)
-    ## mfp_plot/bpp_plot/ccp_plot are bar graphs showing the
-    ## 'score' (ratio of genes with in the ontology / all genes) as a bar
-    ## and ontology p-value as color.  Thus bigger bars with brighter colors
-    ## are considered cooler in the context of the ontology.
-    ## Please note that these are explicitly limited to the top ~12 categories
-    ## in order to make sure they are readable.
-    print(subgroup_go$mfp_plot)
-    print(subgroup_go$bpp_plot)
-    print(subgroup_go$ccp_plot)
-    print(group_trees$MF)
-    print(group_trees$BP)
-    print(group_trees$CC)    
-    ## The file/sink operations tell goseq_trees to shut up.  It is a very
-    ## chatty tool.  goseq_trees feeds the topGO tool the goseq data and
-    ## tells it to plot its ontology trees images which describe the
-    ## chosen ontology (molecular function/biological process/cell component)
-    ## and the 'interesting' genes therein as boxes and colors.
-    ##f = file()
-    ##sink(file=f)
-    ##close(f)
-    dev.off()
-    
-    ## Write out the data tables in excel files: excel/group_tables-groupN.xls
-    xls_filename = paste("excel/go_tables-group", iter, ".xls", sep="")
-    sheetname = paste("mf_interesting-group", iter, sep="")
-    write_xls(data=subgroup_go$mf_interesting, sheet=sheetname, file=xls_filename)
-    sheetname = paste("mf_subset-group", iter, sep="")
-    write_xls(data=subgroup_go$mf_subset, sheet=sheetname, file=xls_filename)    
-    sheetname = paste("bp_interesting-group", iter, sep="")
-    write_xls(data=subgroup_go$bp_interesting , sheet=sheetname, file=xls_filename)
-    sheetname = paste("bp_subset-group", iter, sep="")
-    write_xls(data=subgroup_go$bp_subset, sheet=sheetname, file=xls_filename)        
-    sheetname = paste("cc_interesting-group", iter, sep="")
-    write_xls(data=subgroup_go$cc_interesting , sheet=sheetname, file=xls_filename)
-    sheetname = paste("cc_subset-group", iter, sep="")
-    write_xls(data=subgroup_go$cc_subset, sheet=sheetname, file=xls_filename)        
-}
+ontology_info = read.csv(file="data/trinotate_go_trimmed.csv.gz", header=FALSE, sep="\t")
+colnames(ontology_info) = c("gene_id","transcript_id","group","startend","blast_go","pfam_go")
+## Drop any entries which don't have a putative length
+ontology_info = subset(ontology_info, startend != 0)
+## Split the column 'startend' into two columns by the '-' sign
+ontology_info = as.data.frame(transform(ontology_info, startend=colsplit(startend, split="\\-", names=c("start","end"))))
+## Make the resulting pieces into two separate columns, start and end.
+ontology_info$start = ontology_info$startend$start
+ontology_info$end = ontology_info$startend$end
+## Use start and end to make length
+ontology_info$length = abs(ontology_info$start - ontology_info$end)
+## Drop the unneeded columns
+ontology_info = ontology_info[,c("gene_id","transcript_id","group","start","end","length","blast_go","pfam_go")]
+head(ontology_info)
+
+## goseq() requires mappings between ID/length and ID/GO category
+## Currently I have my toy set to assume column names, which is admittedly stupid.
+gene_lengths = ontology_info[,c("transcript_id","length")]
+colnames(gene_lengths) = c("ID","width")
+split_go = ontology_info[,c("transcript_id","blast_go")]
+split_go$blast_go = as.character(split_go$blast_go)
+
+## The following few lines were pulled from the internet
+## they serve to generate a data structure in the format expected by goseq()
+## It simply splits all space separated GO categories into separate rows
+## with the same ID
+require.auto("splitstackshape")
+id_go = concat.split.multiple(split_go, "blast_go", seps=" ", "long")
+id_go = as.data.frame(id_go)
+colnames(id_go) = c("ID","GO")
+go_ids = subset(id_go, GO != 0)
+
+## Pull out all entries from group 1
+group_one = subset(ontology_info, group == "1")
+group_one = group_one[,c("transcript_id","start","end")]
+colnames(group_one) = c("ID","start","end")
+
+## Perform the goseq() analysis
+group_one_go = simple_goseq(group_one, lengths=gene_lengths, goids=go_ids)
+group_one_go$pvalue_histogram
+head(group_one_go$godata_interesting)
+head(group_one_go$mf_subset)
+group_one_go$mfp_plot
+group_one_go$bpp_plot
+group_one_go$ccp_plot
+
+## Print trees of the goseq() data
+initial_trees = goseq_trees(group_one, group_one_go, goids_df=go_ids)
+initial_trees$MF
+initial_trees$BP
+initial_trees$CC
 
 ```
 

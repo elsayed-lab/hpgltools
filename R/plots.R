@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Dec 23 16:55:22 2014 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 22 11:40:58 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -15,8 +15,41 @@
 #' Defaults to pearson (Available: pearson, spearman, kendal, robust)
 #' @param distmethod define the distance metric for heatmaps.
 #' Defaults to euclidean (Lots are available, I don't understand them.)
+#' @param ... extra parameters optionally fed to the various plots
 #' 
-#' @return a list of plots.  This is a mix of ggplots and replayed built-ins.
+#' @return a loooong list of plots including the following:
+#'   nonzero = a ggplot2 plot of the non-zero genes vs library size
+#'   libsize = a ggplot2 bar plot of the library sizes
+#'   raw_boxplot = a ggplot2 boxplot of the raw data
+#'   norm_boxplot = a ggplot2 boxplot of the normalized data
+#'   raw_corheat = a recordPlot()ed pairwise correlation heatmap of the raw data
+#'   norm_corheat = a recordPlot()ed pairwise correlation heatmap of the normalized data
+#'   raw_smc = a recordPlot()ed view of the standard median pairwise correlation of the raw data
+#'   norm_smc = a recordPlot()ed view of the standard median pairwise correlation of the normalized data
+#'   raw_disheat = a recordPlot()ed pairwise euclidean distance heatmap of the raw data
+#'   norm_disheat = a recordPlot()ed pairwise euclidean distance heatmap of the normalized data
+#'   raw_smd = a recordPlot()ed view of the standard median pairwise distance of the raw data
+#'   norm_smd = a recordPlot()ed view of the standard median pairwise distance of the normalized data
+#'   raw_pcaplot = a recordPlot()ed PCA plot of the raw samples
+#'   norm_pcaplot = a recordPlot()ed PCA plot of the normalized samples
+#'   raw_pcatable = a table describing the relative contribution of condition/batch of the raw data
+#'   norm_pcatable = a table describing the relative contribution of condition/batch of the normalized data
+#'   raw_pcares =  a table describing the relative contribution of condition/batch of the raw data
+#'   norm_pcares = a table describing the relative contribution of condition/batch of the normalized data
+#'   raw_pcavar = a table describing the variance of the raw data
+#'   norm_pcavar = a table describing the variance of the normalized data
+#'   raw_qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
+#'   norm_qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every normalized sample
+#'   raw_density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
+#'   norm_density = a ggplot2 view of the density of each normalized
+#'   batch_boxplot = a ggplot2 boxplot of the data after calling limma's removeBatchEffect()
+#'   batch_disheat = a recordPlot() of a distance heatmap after calling limma's removeBatchEffect()
+#'   batch_corheat = a recordPlot() of a correlation heatmap after calling limma's removeBatchEffect()
+#'   batch_pcaplot = a ggplot2 PCA plot after removeBatchEffect()
+#'   batch_pcatable = a pca table of the removeBatchEffect()'d data
+#'   batch_pcares = a pcares table of the removeBatchEffect()'d data
+#'   batch_pcavar = a pcavar table of the removeBatchEffect()'d data
+#' 
 #' @seealso \code{\link{exprs}}, \code{\link{my_norm}},
 #' \code{\link{graph_nonzero}}, \code{\link{my_libsize}},
 #' \code{\link{my_boxplot}}, \code{\link{my_corheat}},
@@ -28,7 +61,7 @@
 #' @examples
 #' ## toomany_plots = graph_metrics(expt)
 #' ## testnorm = graph_metrics(expt, norm_type="tmm", filter="log2", out_type="rpkm", cormethod="robust")
-graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, cormethod="pearson", distmethod="euclidean", slideshow=FALSE, ...) {
+graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, cormethod="pearson", distmethod="euclidean", ...) {
     expt_design = expt$design
     expt_colors = expt$colors
     expt_names = expt$names
@@ -53,8 +86,6 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
     print("Graphing a raw-data distance heatmap.")
     raw_disheat = myr::my_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...)
     print("Graphing a raw-data standard median distance.")
-##    raw_neatmap = my_neatmap(expt=expt, cormethod=cormethod, distmethod=distmethod, ...)
-##    print("Graphing correlation and distance on the same heatmap.")
     raw_smd = myr::my_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...)
     print("Graphing a normalized distance heatmap.")
     norm_disheat = myr::my_disheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap, norm. data.", ...)
@@ -62,15 +93,20 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
     norm_smd = myr::my_smd(df=expt_norm_data, names=expt$names, colors=expt_colors, method=distmethod, title="Standard Median Distance, norm. data.", ...)
     print("Graphing a PCA plot of the raw data.")
     raw_pca = try(myr::my_pca(expt=expt, fancy_labels=FALSE, title="PCA plot of raw data.", ...))
+    print("Printing a qqplot of the raw data.")
+    raw_qq = try(myr::my_qq_all(df=data.frame(exprs(expt$expressionset))))
+    raw_density = try(myr::my_density_plot(expt=expt, title="Density plot of raw data."))
+    norm_density = try(myr::my_density_plot(df=expt_norm_data, title="Density plot of normalized data."))    
     print("Graphing a PCA plot of the normalized data.")
     norm_pca = try(myr::my_pca(df=expt_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
+    print("Printing a qqplot of the normalized data.")
+    norm_qq = try(myr::my_qq_all(df=expt_norm_data))
     batch_removed = limma::removeBatchEffect(Biobase::exprs(expt$expressionset), batch=expt$batches)
     batch_boxplot = myr::my_boxplot(df=batch_removed, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...)
     batch_disheat = myr::my_disheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...)
     batch_corheat = myr::my_corheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Correlation heatmap of batch removed data.", ...)
     batch_pca = try(myr::my_pca(df=batch_removed, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
     
-    if (slideshow) { Sys.sleep(5) }    
     ret_data = list(
         nonzero=nonzero_plot, libsize=libsize_plot, raw_boxplot=raw_boxplot,
         norm_boxplot=norm_boxplot, raw_corheat=raw_corheat, raw_smc=raw_smc,
@@ -80,68 +116,23 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
         raw_pcatable=raw_pca$table, norm_pcatable=norm_pca$table,
         raw_pcares=raw_pca$res, norm_pcares=norm_pca$res,
         raw_pcavar=raw_pca$variance, norm_pcavar=norm_pca$variance,
+        raw_qq=raw_qq, norm_qq=norm_qq,
+        raw_density=raw_density, norm_density=norm_density,
         batch_boxplot=batch_boxplot, batch_disheat=batch_disheat, batch_corheat=batch_corheat,
         batch_pcaplot=batch_pca$plot, batch_pcatable=batch_pca$table,
         batch_pcares=batch_pca$res, batch_pcavar=batch_pca$variance
     )
-    if (slideshow) {
-        print("Showing library sizes.")
-        plot(libsize_plot)
-        Sys.sleep(5)
-        print("Showing # non-zero genes by library.")
-        plot(nonzero_plot)
-        Sys.sleep(5)
-        print("Showing raw boxplot")
-        plot(raw_boxplot)
-        Sys.sleep(5)
-        print("Showing normalized boxplot")
-        plot(norm_boxplot)
-        Sys.sleep(5)
-        print("Showing raw correlation heatmap")
-        print(raw_corheat)
-        Sys.sleep(5)
-        print("Showing raw standard median correlation")
-        print(raw_smc)
-        Sys.sleep(5)
-        print("Showing normalized correlation heatmap")
-        print(norm_corheat)
-        Sys.sleep(5)
-        print("Showing normalized standard median correlation")
-        print(norm_smc)
-        Sys.sleep(5)
-        print("Showing raw distance heatmap")
-        print(raw_disheat)
-        Sys.sleep(5)
-        print("Showing raw standard median distance")
-        print(raw_smd)
-        Sys.sleep(5)
-        print("Showing normalized distance heatmap")
-        print(norm_disheat)
-        Sys.sleep(5)
-        print("Showing normalized standaed median distance")
-        print(norm_smd)
-        Sys.sleep(5)
-        print("Showing raw PCA")
-        print(raw_pca$plot)
-        Sys.sleep(5)
-        print("Showing normalized PCA")
-        print(norm_pca$plot)
-        Sys.sleep(5)
-        return(NULL)
-    } else {
-        return(ret_data)
-    }
+    return(ret_data)
 }
 
-#' Make a ggplot graph of the number of non-zero genes by sample.
+#' Make a ggplot graph of the number of non-zero genes by sample.  Made by Ramzi Temanni.
 #'
 #' @param expt an expt set of samples
 #' @param df alternately a data frame which must be accompanied by
 #' @param design a design matrix and
 #' @param colors a color scheme
 #' 
-#' @return  nonzero_plot a ggplot2 plot of the number of non-zero
-#' genes with respect to each library's CPM
+#' @return a ggplot2 plot of the number of non-zero genes with respect to each library's CPM
 #' @seealso \code{\link{geom_point}}, \code{\link{geom_dl}}
 #' 
 #' @export
@@ -196,7 +187,7 @@ graph_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, title=NUL
 #' @param colors a color scheme
 #' @param scale whether or not to log10 the y-axis
 #' 
-#' @return  libsize_plot a ggplot2 plot of each library's size
+#' @return a ggplot2 bar plot of every sample's size
 #' @seealso \code{\link{geom_bar}}, \code{\link{geom_text}},
 #' \code{\link{prettyNum}}, \code{\link{scale_y_log10}}
 #' 
@@ -260,7 +251,7 @@ my_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL, t
 #' @param names a nicer version of the sample names
 #' @param scale whether to log scale the y-axis
 #' 
-#' @return  box_plot a ggplot2 boxplot of the samples.  Each boxplot
+#' @return a ggplot2 boxplot of the samples.  Each boxplot
 #' contains the following information: a centered line describing the
 #' median value of counts of all genes in the sample, a box around the
 #' line describing the inner-quartiles around the median (quartiles 2
@@ -330,7 +321,10 @@ my_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=NU
 #' @param against either the mean of all samples, or a sample dataset generated on the fly
 #' @param norm normalize the data? -- this is no longer needed I think
 #'
-#' @return a list of the log qqplots, ratio qqplots, and means
+#' @return a list containing:
+#'   logs = a recordPlot() of the pairwise log qq plots
+#'   ratios = a recordPlot() of the pairwise ratio qq plots
+#'   means = a table of the median values of all the summaries of the qq plots
 #'
 #' @export
 my_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
@@ -381,7 +375,7 @@ my_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
 
 #' Perform qq plots of every column against every other column of a dataset
 #'
-#' @param  df the data
+#' @param df the data
 #' @param expt or an expt class
 #'
 #' @return a list containing the recordPlot() output of the ratios, logs, and means among samples
@@ -441,10 +435,10 @@ my_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
 #' @param file a file to write to
 #' @param cols the number of columns in the grid
 #'
-#' @return a plot!
+#' @return a multiplot!
 #' @export
 multiplot <- function(plots=NULL, file, cols=NULL, layout=NULL) {
-  require(grid)
+  require.auto("grid")
   ## Make a list from the ... arguments and plotlist
   ##  plots <- c(list(...), plotlist)
   numPlots = length(plots)
@@ -589,7 +583,7 @@ my_corheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pear
 #' @param colors a color scheme
 #' @param method correlation statistic to use.  Defaults to euclidean.
 #' 
-#' @return  corheat_plot a gplots heatmap describing the similarity among samples.
+#' @return a recordPlot() heatmap describing the distance between samples.
 #' @seealso \code{\link{brewer.pal}},
 #' \code{\link{heatmap.2}}, \code{\link{recordPlot}}
 #' 
@@ -602,16 +596,6 @@ my_disheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="eucl
 }
 
 my_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
-    ### Test arguments
-    ##df = NULL
-    ##colors = NULL
-    ##design = NULL
-    ##expt = all_qcpml2
-    ##method = "pearson"
-    ##names = NULL
-    ##type = "correlation"
-    ##row = "batch"
-    #### End test arguments
     my_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
@@ -679,9 +663,9 @@ my_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pear
 #' @param colors a color scheme
 #' @param method correlation statistic to use.  Defaults to euclidean.
 #' 
-#' @return  corheat_plot a gplots heatmap describing the similarity among samples.
+#' @return a recordPlot() heatmap describing the samples.
 #' @seealso \code{\link{brewer.pal}},
-#' \code{\link{heatmap.2}}, \code{\link{recordPlot}}
+#' \code{\link{heatmap.3}}, \code{\link{recordPlot}}
 #' 
 #' @export
 sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
@@ -712,7 +696,7 @@ sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="
         my_names = colnames(my_df)
     }
     
-    heatmap.2(my_df, keysize=2, labRow=NA, col=heatmap_colors,
+    heatmap.3(my_df, keysize=2, labRow=NA, col=heatmap_colors,
                    labCol=my_names, margins=c(12,8), trace="none", linewidth=0.5, main=title)
 
     my_heatmap_plot = recordPlot()    
@@ -728,7 +712,8 @@ sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="
 #' @param method a correlation method to use.  Defaults to pearson.
 #' @param names use pretty names for the samples?
 #' 
-#' @return smc_plot a recordPlot of plot.  This will also write to an
+#' @return a recordPlot() of the standard median pairwise correlation
+#' among the samples.  This will also write to an
 #' open device.  The resulting plot measures the median correlation of
 #' each sample among its peers.  It notes 1.5* the interquartile range
 #' among the samples and makes a horizontal line at that correlation
@@ -858,9 +843,12 @@ my_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclidean
 #' @param method a correlation method to use.  Defaults to pearson.
 #' @param names use pretty names for the samples?
 #' 
-#' @return pca_plot a ggplot2 describing the principle component
-#' analysis of the samples.  This makes use of cbcbSEQ and prints the
-#' table of variance by component.
+#' @return a list containing the following:
+#'   plot = ggplot2 pca_plot describing the principle component analysis of the samples.
+#'   table = a table of the PCA plot data
+#'   res = a table of the PCA res data
+#'   variance = a table of the PCA plot variance
+#' This makes use of cbcbSEQ and prints the table of variance by component.
 #' 
 #' @seealso \code{\link{makeSVD}}, \code{\link{pcRes}},
 #' \code{\link{geom_dl}}
@@ -917,18 +905,6 @@ my_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", 
     }
     pca_return = list(plot=pca_plot, table=pca_data, res=pca_res, variance=pca_variance)
     return(pca_return)
-}
-
-write_plots = function(name, plot) {
-    ps_filename = paste("ps/", name, ".eps", sep="")
-    pdf_filename = paste("pdf/", name, ".pdf", sep="")
-    png_filename = paste("png/", name, ".png", sep="")
-    dev.copy(postscript, ps_filename)
-    dev.off()
-    dev.copy(pdf, pdf_filename)
-    dev.off()
-    dev.copy(png, png_filename)
-    dev.off()
 }
 
 #' Make a pretty MA plot from the output of voom/limma/eBayes/toptable
@@ -1118,7 +1094,7 @@ my_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, 
 #' @export
 #' @examples
 #' ## my_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-my_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, histargs=NULL, loess=FALSE, gvis_trendline=NULL, ...) {
+my_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, histargs=NULL, loess=FALSE, identity=FALSE, gvis_trendline=NULL, ...) {
     ## Test options
 ###    df = comp_5448
 ###    cormethod = "kendal"
@@ -1158,6 +1134,10 @@ my_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormetho
     if (loess == TRUE) {
         first_vs_second = first_vs_second +
             geom_smooth(method="loess")
+    }
+    if (identity == TRUE) {
+        first_vs_second = first_vs_second +
+            geom_abline(colour="darkgreen", slope=1, intercept=0, size=1)
     }
     first_vs_second = first_vs_second +
         theme(legend.position="none")
@@ -1347,7 +1327,7 @@ my_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=
 #'
 #' @return a density plot!
 #' @export
-my_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, position="identity", fill=NULL) {
+my_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, position="identity", fill=NULL, title=NULL) {
     ## Other interesting positions: fill, stack
     ## Testing params
     ##expt = kept_qcpml2
@@ -1386,7 +1366,10 @@ my_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, position
     }
     densityplot = ggplot2::ggplot(data=melted, aes(x=counts, colour=cond, fill=fill), environment=my_env) +
         geom_density(aes(x=counts, y=..count..), position=position) +
-        theme_bw()
+            theme_bw()
+    if (!is.null(title)) {
+        densityplot = densityplot + ggplot2::ggtitle(title)
+    }
     return(densityplot)
 }
 
