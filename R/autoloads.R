@@ -1,4 +1,4 @@
-## Time-stamp: "Mon Dec  1 11:48:37 2014 Ashton Trey Belew (abelew@gmail.com)"
+## Time-stamp: "Tue Jan 27 11:13:50 2015 Ashton Trey Belew (abelew@gmail.com)"
 ## autoloads.R contains some short-cuts I wrote for myself to make
 ## installing/maintaining packages/dependencies easier
 ## 
@@ -50,65 +50,93 @@ require.auto = function(lib, github_path=NULL, verbose=TRUE, update=FALSE) {
     }
 }
 
+autoloads_ontology = function(...) {
+    require.auto("clusterProfiler", ...)
+    require.auto("GO.db")
+    require.auto("DOSE")
+    require.auto("goseq")
+    require.auto("KEGGREST")    
+    require.auto("pathview")
+    require.auto("RamiGO")
+    require.auto("topGO")    
+}
+
+autoloads_genome = function(...) {
+    require.auto("biomaRt", ...)    
+    require.auto("BSgenome")
+    require.auto("BSgenome.Lmajor.friedlin")
+    require.auto("genomeIntervals")    
+    require.auto("rtracklayer")
+}
+
+autoloads_deseq = function(...) {
+    require.auto("cbcbSEQ")
+    require.auto("DESeq2")
+    require.auto("DESeq")
+    require.auto("edgeR")
+    require.auto("sva")    
+}
+
+autoloads_graphs = function(...) {
+    require.auto("Cairo")
+    require.auto("directlabels")
+    require.auto("ggplot2")
+    require.auto("googleVis")
+    require.auto("gplots")
+    require.auto("gridExtra")
+    require.auto("RColorBrewer")
+    require.auto("Rgraphviz")    
+}
+
+autoloads_helpers = function(...) {
+    require.auto("devtools", ...)
+    require.auto("data.table")
+    require.auto("gtools")
+    require.auto("hash")    
+    require.auto("knitcitations")
+    require.auto("knitr")
+    require.auto("knitrBootstrap", "jimhester/knitrBootstrap")
+    require.auto("methods")
+    require.auto("plyr")
+    require.auto("reshape")
+    require.auto("rjson")
+    require.auto("rmarkdown")
+    require.auto("roxygen2")
+    require.auto("testthat")
+    options(java.parameters = "-Xmx4g")  ## used for xlconnect
+    require.auto("XLConnect")
+    require.auto("xtable")    
+}
+
+autoloads_stats = function(...) {
+    require.auto("multtest", ...)
+    require.auto("qvalue")
+    require.auto("robust")    
+}
+
+autoloads_misc = function(...) {
+    require.auto("motifRG", ...)
+    require.auto("Rsamtools")
+    require.auto("scales")
+    require.auto("seqinr")    
+}
+
 #' Automatic loading of stuff I use
 #'
 #' @return NULL currently
 #' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}
 #' @export
-autoloads = function(...) {
+autoloads_all = function(...) {
     ## I added the ... to the first entry
     ## So that it will do update.packages() if update=TRUE
     ## I don't need it after the first I think.
-    require.auto("biomaRt", ...)
-    require.auto("BSgenome")
-    require.auto("BSgenome.Lmajor.friedlin")
-    require.auto("Cairo")
-    require.auto("cbcbSEQ")
-    require.auto("clusterProfiler")
-    require.auto("data.table")
-    require.auto("DESeq2")
-    require.auto("DESeq")
-    require.auto("devtools")
-    require.auto("directlabels")
-    require.auto("DOSE")
-    require.auto("edgeR")
-    require.auto("genomeIntervals")
-    require.auto("ggplot2")
-    require.auto("GO.db")
-    require.auto("googleVis")
-    require.auto("goseq")
-    require.auto("gplots")
-    require.auto("gtools")
-    require.auto("gridExtra")
-    require.auto("hash")
-    require.auto("KEGGREST")
-    require.auto("knitcitations")
-    require.auto("knitr")
-    require.auto("knitrBootstrap", "jimhester/knitrBootstrap")
-    require.auto("methods")
-    require.auto("motifRG")
-    require.auto("multtest")
-    require.auto("pathview")
-    require.auto("plyr")
-    require.auto("qvalue")
-    require.auto("RamiGO")
-    require.auto("RColorBrewer")
-    require.auto("reshape")
-    require.auto("Rgraphviz")
-    require.auto("rjson")
-    require.auto("rmarkdown")
-    require.auto("robust")
-    require.auto("roxygen2")
-    require.auto("Rsamtools")
-    require.auto("rtracklayer")
-    require.auto("scales")
-    require.auto("seqinr")
-    require.auto("sva")
-    require.auto("testthat")             
-    require.auto("topGO")
-    options(java.parameters = "-Xmx4g")  ## used for xlconnect
-    require.auto("XLConnect")
-    require.auto("xtable")
+    autoloads_helpers(...)
+    autoloads_ontology(...)
+    autoloads_genome(...)
+    autoloads_deseq(...)
+    autoloads_graphs(...)
+    autoloads_stats(...)
+    autoloads_misc(...)
     ##cite_options(tooltip=TRUE)
     ##cleanbib()
     options(gvis.plot.tag="chart")

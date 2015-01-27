@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 22 14:28:55 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 27 11:14:11 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## differential_expression.R contains functions useful for differential expression tasks.
 
 
@@ -76,7 +76,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
     return(return_data)
 }
 
-#' my_voom():  A slight modification of limma's voom() function.
+#' hpgl_voom():  A slight modification of limma's voom() function.
 #' Estimate mean-variance relationship between samples and generate
 #' 'observational-level weights' in preparation for linear modelling
 #' RNAseq data.  This particular implementation was primarily scabbed
@@ -105,8 +105,8 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
 #' 
 #' @export
 #' @examples
-#' ## funkytown = my_voom(samples, model)
-my_voom = function(dataframe, model, libsize=NULL, stupid=FALSE) {
+#' ## funkytown = hpgl_voom(samples, model)
+hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE) {
     out = list()
     if (is.null(libsize)) {
         libsize = colSums(dataframe, na.rm=TRUE)
@@ -209,7 +209,7 @@ unbalanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, 
     ## Make a model matrix which will have one entry for each of these condition/batches
     fun_model = model.matrix(~0 + macb)
     ## And voom() it
-    fun_voom = my_voom(data, fun_model)
+    fun_voom = hpgl_voom(data, fun_model)
     ## Extract the design created by voom()
     ## This is interesting because each column of the design will have a prefix string 'macb' before the
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
@@ -365,7 +365,7 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
     tmpnames = gsub("conditions", "", tmpnames)
     colnames(fun_model) = tmpnames
     ## voom() it
-    fun_voom = my_voom(data, fun_model)
+    fun_voom = hpgl_voom(data, fun_model)
     ## Extract the design created by voom()
     ## This is interesting because each column of the design will have a prefix string 'macb' before the
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
@@ -497,8 +497,8 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
 #'   voom_data = the result from calling voom()
 #'   voom_plot = a plot from voom(), redunant with voom_data
 #' 
-#' @seealso \code{\link{my_gvis_ma_plot}}, \code{\link{toptable}},
-#' \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{my_voom}},
+#' @seealso \code{\link{hpgl_gvis_ma_plot}}, \code{\link{toptable}},
+#' \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{hpgl_voom}},
 #' \code{\link{lmFit}}, \code{\link{makeContrasts}},
 #' \code{\link{contrasts.fit}}
 #' 
@@ -523,10 +523,10 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
 #        expt_data = ComBat(expt_data, subset$batches, condition_model)
         expt_data = cbcbSEQ::combatMod(expt_data, subset$batches, subset$conditions)
     }
-    expt_voom = myr::my_voom(expt_data, model)
+    expt_voom = myr::hpgl_voom(expt_data, model)
     lf = limma::lmFit(expt_voom)
     colnames(lf$coefficients)
-    coefficient_scatter = myr::my_linear_scatter(lf$coefficients)
+    coefficient_scatter = myr::hpgl_linear_scatter(lf$coefficients)
     colnames(lf$design)[1] = "changed"
     colnames(lf$coefficients)[1] = "changed"
     colnames(lf$design)[2] = "control"
@@ -543,25 +543,25 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
     contrast_matrix = limma::makeContrasts(changed_v_control = changed - control, levels=lf$design)
     cond_contrasts = contrasts.fit(lf, contrast_matrix)
     hist_df = data.frame(values=cond_contrasts$coefficients)
-    contrast_histogram = myr::my_histogram(hist_df)
+    contrast_histogram = myr::hpgl_histogram(hist_df)
     hist_df = data.frame(values=cond_contrasts$Amean)
-    amean_histogram = myr::my_histogram(hist_df, fillcolor="pink", color="red")
+    amean_histogram = myr::hpgl_histogram(hist_df, fillcolor="pink", color="red")
     coef_amean_cor = cor.test(cond_contrasts$coefficients, cond_contrasts$Amean, exact=FALSE)
     cond_comparison = limma::eBayes(cond_contrasts)
     hist_df = data.frame(values=cond_comparison$p.value)
-    pvalue_histogram = myr::my_histogram(hist_df, fillcolor="lightblue", color="blue")
+    pvalue_histogram = myr::hpgl_histogram(hist_df, fillcolor="lightblue", color="blue")
     cond_table = limma::topTable(cond_comparison, number=nrow(expt_voom$E), coef="changed_v_control", sort.by="logFC")
     if (!is.na(basename)) {
         vol_gvis_filename = paste(basename, "volplot.html", sep="_")
-        a_volcano_plot = myr::my_volcano_plot(cond_table, gvis_filename=vol_gvis_filename, tooltip_data=tooltip_data)
+        a_volcano_plot = myr::hpgl_volcano_plot(cond_table, gvis_filename=vol_gvis_filename, tooltip_data=tooltip_data)
     } else {
-        a_volcano_plot = myr::my_volcano_plot(cond_table)
+        a_volcano_plot = myr::hpgl_volcano_plot(cond_table)
     }
     if (!is.na(basename)) {
         ma_gvis_filename=paste(basename, "maplot.html", sep="_")
-        an_ma_plot = myr::my_ma_plot(expt_voom$E, cond_table, gvis_filename=ma_gvis_filename, tooltip_data=tooltip_data)
+        an_ma_plot = myr::hpgl_ma_plot(expt_voom$E, cond_table, gvis_filename=ma_gvis_filename, tooltip_data=tooltip_data)
     } else {
-        an_ma_plot = myr::my_ma_plot(expt_voom$E, cond_table)
+        an_ma_plot = myr::hpgl_ma_plot(expt_voom$E, cond_table)
     }
     myr::write_xls(cond_table, sheet, file=workbook, rowname="row.names")
     upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)

@@ -1,4 +1,4 @@
-Package: myr
+Package: hpgltools
 Type: Package
 Title: A pile of (hopefully) useful R functions
 Version: 0.1

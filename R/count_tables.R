@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 22 11:26:44 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 27 11:14:03 2015 Ashton Trey Belew (abelew@gmail.com)>
 ### count_tables.R contains some functions for simple count-table manipulations
 ### This includes reading in files, creating expressionSets, and subsets.
 
@@ -12,7 +12,7 @@
 #' 
 #' @return  experiment an expressionset
 #' @seealso \code{\link{pData}}, \code{\link{fData}},
-#' \code{\link{exprs}}, \code{\link{my_read_files}},
+#' \code{\link{exprs}}, \code{\link{hpgl_read_files}},
 #' \code{\link{as.list.hash}}
 #' 
 #' @export
@@ -61,7 +61,7 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
 #' 
 #' @return  experiment an expressionset
 #' @seealso \code{\link{pData}}, \code{\link{fData}},
-#' \code{\link{exprs}}, \code{\link{my_read_files}},
+#' \code{\link{exprs}}, \code{\link{hpgl_read_files}},
 #' \code{\link{as.list.hash}}
 #' 
 #' @export
@@ -111,7 +111,7 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     sample_definitions = as.data.frame(sample_definitions)
     rownames(sample_definitions) = sample_definitions$Sample.ID
     if (is.null(count_dataframe)) {
-        all_count_tables = my_read_files(as.character(sample_definitions$Sample.ID),
+        all_count_tables = hpgl_read_files(as.character(sample_definitions$Sample.ID),
             as.character(sample_definitions$counts), header=header)
     } else {
         all_count_tables = count_dataframe
@@ -238,8 +238,8 @@ expt_subset = function(expt, subset) {
 #' 
 #' @export
 #' @examples
-#' ## count_tables = my_read_files(as.character(sample_ids), as.character(count_filenames))
-my_read_files = function(ids, files, header=FALSE, ...) {
+#' ## count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
+hpgl_read_files = function(ids, files, header=FALSE, ...) {
     initial_count = read.table(files[1], ...)
     colnames(initial_count) = c("ID", ids[1])
     for (table in 2:length(files)) {

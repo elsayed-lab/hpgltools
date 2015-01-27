@@ -9,8 +9,8 @@
 #' @seealso \code{\link{edgeR}} and \code{\link{cpm}}
 #' @export
 #' @examples
-#' ## rpkm_df = my_rpkm(df, annotations=gene_annotations)
-my_rpkm = function(df, annotations=gene_annotations) {
+#' ## rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
+hpgl_rpkm = function(df, annotations=gene_annotations) {
     if (class(df) == "edgeR") {
         df = df$counts
     }
@@ -84,7 +84,7 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
     }
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)
-    normalized_data = my_norm(df=old_data, design=expt$design, transform=transform, norm=norm, convert=convert, filter_low=filter_low, annotations=annotations, verbose=verbose)
+    normalized_data = hpgl_norm(df=old_data, design=expt$design, transform=transform, norm=norm, convert=convert, filter_low=filter_low, annotations=annotations, verbose=verbose)
     exprs(new_expt$expressionset) = as.matrix(normalized_data$counts)
     return(new_expt)
 }
@@ -113,20 +113,20 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
 #' @return edgeR's DGEList expression of a count table.  This seems to
 #' me to be the easiest to deal with.
 #' @seealso \code{\link{cpm}}, \code{\link{rpkm}},
-#' \code{\link{my_rpkm}}, \code{\link{filterCounts}},
+#' \code{\link{hpgl_rpkm}}, \code{\link{filterCounts}},
 #' \code{\link{DESeqDataSetFromMatrix}},
 #' \code{\link{estimateSizeFactors}}, \code{\link{DGEList}},
 #' \code{\link{qNorm}}, \code{\link{calcNormFactors}}
 #' 
 #' @export
 #' @examples
-#' df_raw = my_norm(expt=expt)  ## Only performs low-count filtering
-#' df_raw = my_norm(df=a_df, design=a_design) ## Same, but using a df
-#' df_ql2rpkm = my_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
+#' df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
+#' df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
+#' df_ql2rpkm = hpgl_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
 #' count_table = df_ql2rpkm$counts
 #' library_size = df_ql2rpkm$lib.size
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm
-my_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", filter_low=TRUE, annotations=NULL, verbose=FALSE, ...) {
+hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", filter_low=TRUE, annotations=NULL, verbose=FALSE, ...) {
     ## Testing args
     ##df=NULL
     ##expt=rnarpf_prometa_kexpt
@@ -236,7 +236,7 @@ my_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw",
         if (is.null(annotations)) {
             stop("RPKM conversion requires gene lengths.")
         }
-        counts = myr::my_rpkm(counts, annotations=annotations)
+        counts = myr::hpgl_rpkm(counts, annotations=annotations)
         count_table = edgeR::DGEList(counts=counts)
     } else if (convert == "cp_seq_m") {
         counts = count_table$counts

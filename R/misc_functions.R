@@ -1,4 +1,4 @@
-## Time-stamp: "Wed Jan 21 14:49:31 2015 Ashton Trey Belew (abelew@gmail.com)"
+## Time-stamp: "Tue Jan 27 11:14:19 2015 Ashton Trey Belew (abelew@gmail.com)"
 ## misc_functions.R contains a host of (hopefully) useful functions when
 ## dealing with genomic data in R.
 
@@ -18,9 +18,9 @@
 #' 
 #' @export
 #' @examples
-#' ## my_cor(df=df)
-#' ## my_cor(df=df, method="robust")
-my_cor = function(df=NULL, method="pearson", ...) {
+#' ## hpgl_cor(df=df)
+#' ## hpgl_cor(df=df, method="robust")
+hpgl_cor = function(df=NULL, method="pearson", ...) {
     if (method == "robust") {
         robust_cov = robust::covRob(df, corr=TRUE)
         correlation = robust_cov$cov
@@ -47,7 +47,7 @@ my_cor = function(df=NULL, method="pearson", ...) {
 #' 
 #' @export
 #' @examples
-#' ## write_xls(dataframe, "my_data")
+#' ## write_xls(dataframe, "hpgl_data")
 #' ## Sometimes it is a good idea to go in and delete the workbook and
 #' ## re-create it if this is used heavily, because it will get crufty.
 write_xls = function(data=NULL, sheet="first", file="excel/workbook.xls", rowname="rownames", overwrite=FALSE) {

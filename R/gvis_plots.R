@@ -1,7 +1,7 @@
 #' Make an html version of an MA plot.
 #'
 #' @param counts df of linear-modelling, normalized counts by sample-type,
-#' which is to say the output from voom/voomMod/my_voom().
+#' which is to say the output from voom/voomMod/hpgl_voom().
 #' @param de_genes df from toptable or its friends containing p-values.
 #' @param adjpval_cutoff a cutoff defining significant from not.
 #' Defaults to 0.05.
@@ -11,14 +11,14 @@
 #' graphs. NULL by default.
 #' 
 #' @return NULL, but along the way an html file is generated which
-#' contains a googleVis MA plot.  See my_ma_plot() for details.
+#' contains a googleVis MA plot.  See hpgl_ma_plot() for details.
 #' 
-#' @seealso \code{\link{my_ma_plot}}
+#' @seealso \code{\link{hpgl_ma_plot}}
 #' 
 #' @export
 #' @examples
-#' ## my_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
-my_gvis_ma_plot = function(counts, degenes, tooltip_data=NULL, filename="html/gvis_ma_plot.html", base_url="", ...) {
+#' ## hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+hpgl_gvis_ma_plot = function(counts, degenes, tooltip_data=NULL, filename="html/gvis_ma_plot.html", base_url="", ...) {
     gvis_chartid=gsub("\\.html$", "", basename(filename))
     gvis_df = data.frame(AvgExp=rowMeans(counts[rownames(degenes),]), LogFC=degenes$logFC, AdjPVal=degenes$adj.P.Val)
     gvis_sig = subset(gvis_df, AdjPVal <= 0.05)
@@ -53,11 +53,11 @@ my_gvis_ma_plot = function(counts, degenes, tooltip_data=NULL, filename="html/gv
         title="MA Plot!",
         gvis.listener.jscode=ma_jscode,    
         axisTitlesPosition="out")
-    my_gvis_scatterchart = googleVis::gvisScatterChart(as.data.frame(gvis_final_df), chartid=gvis_chartid, options=gvis_options)
-    print(my_gvis_scatterchart, file=filename)
+    hpgl_gvis_scatterchart = googleVis::gvisScatterChart(as.data.frame(gvis_final_df), chartid=gvis_chartid, options=gvis_options)
+    print(hpgl_gvis_scatterchart, file=filename)
 }
 
-my_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, tooltip_data=NULL, filename="html/gvis_vol_plot.html", base_url="", ...) {
+hpgl_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, tooltip_data=NULL, filename="html/gvis_vol_plot.html", base_url="", ...) {
     gvis_raw_df = toptable_data[,c("logFC", "modified_p", "P.Value")]
     gvis_raw_df = merge(gvis_raw_df, tooltip_data, by="row.names")
     gvis_sig = subset(gvis_raw_df, P.Value <= p_cutoff)
@@ -89,8 +89,8 @@ my_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, too
         title="Volcano Plot!",
         gvis.listener.jscode=vol_jscode,    
         axisTitlesPosition="out")
-    my_gvis_scatterchart = googleVis::gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
-    print(my_gvis_scatterchart, file=filename)
+    hpgl_gvis_scatterchart = googleVis::gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
+    print(hpgl_gvis_scatterchart, file=filename)
 }
 
 
@@ -105,14 +105,14 @@ my_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, too
 #' with the gene name
 #' 
 #' @return NULL, but along the way an html file is generated which
-#' contains a googleVis scatter plot.  See my_scatter_plot() for details.
+#' contains a googleVis scatter plot.  See hpgl_scatter_plot() for details.
 #' 
 #' @seealso \code{\link{gvisScatterChart}}
 #' 
 #' @export
 #' @examples
-#' ## my_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html", base_url="http://yeastgenome.org/accession?")
-my_gvis_scatter = function(df, tooltip_data=NULL, filename="html/gvis_scatter.html", base_url="", trendline=NULL) {
+#' ## hpgl_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html", base_url="http://yeastgenome.org/accession?")
+hpgl_gvis_scatter = function(df, tooltip_data=NULL, filename="html/gvis_scatter.html", base_url="", trendline=NULL) {
     gvis_df = df
     gvis_df = merge(gvis_df, tooltip_data, by="row.names", all.x=TRUE)
     rownames(gvis_df) = gvis_df$Row.names
@@ -138,6 +138,6 @@ my_gvis_scatter = function(df, tooltip_data=NULL, filename="html/gvis_scatter.ht
             trendlines=trendline_string,
             axisTitlesPosition="out")
     }
-    my_gvis_scatterchart = googleVis::gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
-    print(my_gvis_scatterchart, file=filename)
+    hpgl_gvis_scatterchart = googleVis::gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
+    print(hpgl_gvis_scatterchart, file=filename)
 }

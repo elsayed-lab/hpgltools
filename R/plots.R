@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 22 11:40:58 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 27 11:14:36 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -50,11 +50,11 @@
 #'   batch_pcares = a pcares table of the removeBatchEffect()'d data
 #'   batch_pcavar = a pcavar table of the removeBatchEffect()'d data
 #' 
-#' @seealso \code{\link{exprs}}, \code{\link{my_norm}},
-#' \code{\link{graph_nonzero}}, \code{\link{my_libsize}},
-#' \code{\link{my_boxplot}}, \code{\link{my_corheat}},
-#' \code{\link{my_smc}}, \code{\link{my_disheat}},
-#' \code{\link{my_smd}}, \code{\link{my_pca}},
+#' @seealso \code{\link{exprs}}, \code{\link{hpgl_norm}},
+#' \code{\link{graph_nonzero}}, \code{\link{hpgl_libsize}},
+#' \code{\link{hpgl_boxplot}}, \code{\link{hpgl_corheat}},
+#' \code{\link{hpgl_smc}}, \code{\link{hpgl_disheat}},
+#' \code{\link{hpgl_smd}}, \code{\link{hpgl_pca}},
 #' \code{\link{replayPlot}}, \code{\link{recordPlot}}
 #' 
 #' @export
@@ -66,46 +66,46 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
     expt_colors = expt$colors
     expt_names = expt$names
     expt_raw_data = Biobase::exprs(expt$expressionset)
-    expt_norm_data = myr::my_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low, ...)$counts
+    expt_norm_data = myr::hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low, ...)$counts
     print("Graphing number of non-zero genes with respect to CPM by library.")
     nonzero_plot = myr::graph_nonzero(expt=expt, title="Non zero genes.", ...)
     print("Graphing library sizes.")
-    libsize_plot = myr::my_libsize(expt=expt, title="Library sizes.", ...)
+    libsize_plot = myr::hpgl_libsize(expt=expt, title="Library sizes.", ...)
     print("Graphing a raw data boxplot on log scale.")
-    raw_boxplot = myr::my_boxplot(expt=expt, title="Boxplot of log(raw data).", scale="log", ...)
+    raw_boxplot = myr::hpgl_boxplot(expt=expt, title="Boxplot of log(raw data).", scale="log", ...)
     print("Graphing a normalized boxplot.")
-    norm_boxplot = myr::my_boxplot(df=expt_norm_data, names=expt$names, colors=expt_colors, title="Boxplot of normalized data.", ...)
+    norm_boxplot = myr::hpgl_boxplot(df=expt_norm_data, names=expt$names, colors=expt_colors, title="Boxplot of normalized data.", ...)
     print("Graphing a raw-data correlation heatmap.")
-    raw_corheat = myr::my_corheat(expt=expt, method=cormethod, title="Correlation heatmap of raw data.", ...)
+    raw_corheat = myr::hpgl_corheat(expt=expt, method=cormethod, title="Correlation heatmap of raw data.", ...)
     print("Graphing a raw-data standard median correlation.")
-    raw_smc = myr::my_smc(expt=expt, method=cormethod, title="Standard Median Correlation, raw data.", ...)
+    raw_smc = myr::hpgl_smc(expt=expt, method=cormethod, title="Standard Median Correlation, raw data.", ...)
     print("Graphing a normalized correlation heatmap.")
-    norm_corheat = myr::my_corheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Corrleation heatmap of normalized data.", ...)
+    norm_corheat = myr::hpgl_corheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Corrleation heatmap of normalized data.", ...)
     print("Graphing a normalized standard median correlation.")
-    norm_smc = myr::my_smc(df=expt_norm_data, names=expt$names, colors=expt_colors, method=cormethod, title="Standard Median Correlation, norm. data.", ...)
+    norm_smc = myr::hpgl_smc(df=expt_norm_data, names=expt$names, colors=expt_colors, method=cormethod, title="Standard Median Correlation, norm. data.", ...)
     print("Graphing a raw-data distance heatmap.")
-    raw_disheat = myr::my_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...)
+    raw_disheat = myr::hpgl_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...)
     print("Graphing a raw-data standard median distance.")
-    raw_smd = myr::my_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...)
+    raw_smd = myr::hpgl_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...)
     print("Graphing a normalized distance heatmap.")
-    norm_disheat = myr::my_disheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap, norm. data.", ...)
+    norm_disheat = myr::hpgl_disheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap, norm. data.", ...)
     print("Graphing a normalized standard median distance.")
-    norm_smd = myr::my_smd(df=expt_norm_data, names=expt$names, colors=expt_colors, method=distmethod, title="Standard Median Distance, norm. data.", ...)
+    norm_smd = myr::hpgl_smd(df=expt_norm_data, names=expt$names, colors=expt_colors, method=distmethod, title="Standard Median Distance, norm. data.", ...)
     print("Graphing a PCA plot of the raw data.")
-    raw_pca = try(myr::my_pca(expt=expt, fancy_labels=FALSE, title="PCA plot of raw data.", ...))
+    raw_pca = try(myr::hpgl_pca(expt=expt, fancy_labels=FALSE, title="PCA plot of raw data.", ...))
     print("Printing a qqplot of the raw data.")
-    raw_qq = try(myr::my_qq_all(df=data.frame(exprs(expt$expressionset))))
-    raw_density = try(myr::my_density_plot(expt=expt, title="Density plot of raw data."))
-    norm_density = try(myr::my_density_plot(df=expt_norm_data, title="Density plot of normalized data."))    
+    raw_qq = try(myr::hpgl_qq_all(df=data.frame(exprs(expt$expressionset))))
+    raw_density = try(myr::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
+    norm_density = try(myr::hpgl_density_plot(df=expt_norm_data, title="Density plot of normalized data."))    
     print("Graphing a PCA plot of the normalized data.")
-    norm_pca = try(myr::my_pca(df=expt_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
+    norm_pca = try(myr::hpgl_pca(df=expt_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
     print("Printing a qqplot of the normalized data.")
-    norm_qq = try(myr::my_qq_all(df=expt_norm_data))
+    norm_qq = try(myr::hpgl_qq_all(df=expt_norm_data))
     batch_removed = limma::removeBatchEffect(Biobase::exprs(expt$expressionset), batch=expt$batches)
-    batch_boxplot = myr::my_boxplot(df=batch_removed, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...)
-    batch_disheat = myr::my_disheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...)
-    batch_corheat = myr::my_corheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Correlation heatmap of batch removed data.", ...)
-    batch_pca = try(myr::my_pca(df=batch_removed, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
+    batch_boxplot = myr::hpgl_boxplot(df=batch_removed, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...)
+    batch_disheat = myr::hpgl_disheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...)
+    batch_corheat = myr::hpgl_corheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Correlation heatmap of batch removed data.", ...)
+    batch_pca = try(myr::hpgl_pca(df=batch_removed, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
     
     ret_data = list(
         nonzero=nonzero_plot, libsize=libsize_plot, raw_boxplot=raw_boxplot,
@@ -140,36 +140,36 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
 #' ## nonzero_plot = graph_nonzero(expt=expt)
 #' ## nonzero_plot  ## ooo pretty
 graph_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, title=NULL, ...) {
-    my_env = environment()
+    hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
     if (is.null(expt)) {
-        my_design = design
-        my_colors = colors
-        my_df = df
+        hpgl_design = design
+        hpgl_colors = colors
+        hpgl_df = df
     } else if (is.null(df)) {
-        my_design = expt$design
-        my_colors = expt$colors
-        my_df = exprs(expt$expressionset)
+        hpgl_design = expt$design
+        hpgl_colors = expt$colors
+        hpgl_df = exprs(expt$expressionset)
     } else {
         stop("Both df and expt are defined, choose one.")
     }
     if (is.null(expt$names)) {
-        my_labels = colnames(my_df)
+        hpgl_labels = colnames(hpgl_df)
     } else {
-        my_labels = expt$names
+        hpgl_labels = expt$names
     }
-    my_shapes = as.integer(my_design$batch)
-    non_zero = data.frame(id=colnames(my_df),
-        nonzero_genes=colSums(my_df > 1),
-        cpm=colSums(my_df) * 1e-6,
-        condition=my_design$condition,
-        batch=my_design$batch)
-    non_zero_plot = ggplot2::ggplot(data=non_zero, ggplot2::aes(x=cpm, y=nonzero_genes), environment=my_env,
-           colour=my_colors, shape=my_shapes) +
-        geom_point(stat="identity", size=3, colour=my_colors, shape=my_shapes) +
-        directlabels::geom_dl(aes(label=my_labels), method="smart.grid", colour=my_colors) +
+    hpgl_shapes = as.integer(hpgl_design$batch)
+    non_zero = data.frame(id=colnames(hpgl_df),
+        nonzero_genes=colSums(hpgl_df > 1),
+        cpm=colSums(hpgl_df) * 1e-6,
+        condition=hpgl_design$condition,
+        batch=hpgl_design$batch)
+    non_zero_plot = ggplot2::ggplot(data=non_zero, ggplot2::aes(x=cpm, y=nonzero_genes), environment=hpgl_env,
+           colour=hpgl_colors, shape=hpgl_shapes) +
+        geom_point(stat="identity", size=3, colour=hpgl_colors, shape=hpgl_shapes) +
+        directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_colors) +
         ylab("Number of non-zero genes observed.") +
         xlab("Observed CPM")
     if (!is.null(title)) {
@@ -193,34 +193,34 @@ graph_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, title=NUL
 #' 
 #' @export
 #' @examples
-#' ## libsize_plot = my_libsize(expt=expt)
+#' ## libsize_plot = hpgl_libsize(expt=expt)
 #' ## libsize_plot  ## ooo pretty bargraph
-my_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL, title=NULL, text=TRUE, ...) {
-    my_env = environment()
+hpgl_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL, title=NULL, text=TRUE, ...) {
+    hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
     if (is.null(expt)) {
-        my_colors = colors
-        my_df = df
-        my_names = names
+        hpgl_colors = colors
+        hpgl_df = df
+        hpgl_names = names
     } else if (is.null(df)) {
-        my_colors = expt$colors
-        my_df = Biobase::exprs(expt$expressionset)
-        my_names = expt$names
+        hpgl_colors = expt$colors
+        hpgl_df = Biobase::exprs(expt$expressionset)
+        hpgl_names = expt$names
     } else {
         stop("Both df and expt are defined, choose one.")
     }
-    if (is.null(my_colors)) {
-        my_colors = colorRampPalette(brewer.pal(ncol(my_df),"Dark2"))(ncol(my_df))
+    if (is.null(hpgl_colors)) {
+        hpgl_colors = colorRampPalette(brewer.pal(ncol(hpgl_df),"Dark2"))(ncol(hpgl_df))
     }
-    my_colors = as.character(my_colors)
-    tmp = data.frame(id=colnames(my_df),
-        sum=colSums(my_df),
-        colors=factor(my_colors))
+    hpgl_colors = as.character(hpgl_colors)
+    tmp = data.frame(id=colnames(hpgl_df),
+        sum=colSums(hpgl_df),
+        colors=factor(hpgl_colors))
     tmp$order = factor(tmp$id, as.character(tmp$id))
     libsize_plot = ggplot2::ggplot(data=tmp, ggplot2::aes(x=order, y=sum),
-        environment=my_env, colour=tmp$colors) +
+        environment=hpgl_env, colour=tmp$colors) +
             geom_bar(aes(x=order), stat="identity", colour="black", fill=tmp$colors) +
             xlab("Sample ID") +
             ylab("Library size in (pseudo)counts.") +
@@ -236,8 +236,8 @@ my_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL, t
         print("Adding log10")
         libsize_plot = libsize_plot + scale_y_log10()
     }
-    if (!is.null(my_names)) {
-        libsize_plot = libsize_plot + scale_x_discrete(labels=my_names)
+    if (!is.null(hpgl_names)) {
+        libsize_plot = libsize_plot + scale_x_discrete(labels=hpgl_names)
     }
     return(libsize_plot)
 }
@@ -264,36 +264,36 @@ my_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL, t
 #' 
 #' @export
 #' @examples
-#' ## a_boxplot = my_boxplot(expt=expt)
+#' ## a_boxplot = hpgl_boxplot(expt=expt)
 #' ## a_boxplot  ## ooo pretty boxplot look at the lines
-my_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=NULL, scale="raw", ...) {
-    my_env = environment()
+hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=NULL, scale="raw", ...) {
+    hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
     if (is.null(expt)) {
-        my_design = design
-        my_colors = colors_fill
-        my_names = names
-        my_df = df
+        hpgl_design = design
+        hpgl_colors = colors_fill
+        hpgl_names = names
+        hpgl_df = df
     } else if (is.null(df)) {
-        my_design = expt$design
-        my_colors = expt$colors
-        my_df = exprs(expt$expressionset)
-        my_names = expt$names
+        hpgl_design = expt$design
+        hpgl_colors = expt$colors
+        hpgl_df = exprs(expt$expressionset)
+        hpgl_names = expt$names
     } else {
         stop("Both df and expt are defined, choose one.")
     }
-    if (is.null(my_colors)) {
-        my_colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
+    if (is.null(hpgl_colors)) {
+        hpgl_colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
     }
-    my_df = data.frame(my_df)
-    my_df$id = rownames(my_df)
-    dataframe = melt(my_df)
+    hpgl_df = data.frame(hpgl_df)
+    hpgl_df$id = rownames(hpgl_df)
+    dataframe = melt(hpgl_df)
     colnames(dataframe) = c("gene","variable","value")
     boxplot = ggplot2::ggplot(data=dataframe, aes(x=variable, y=value)) +
         geom_boxplot(aes(fill=variable),
-                     fill=my_colors,
+                     fill=hpgl_colors,
                      size=0.5,
                      outlier.size=1.5,
                      outlier.colour=alpha("black", 0.2)) +
@@ -307,8 +307,8 @@ my_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=NU
     if (scale != "raw") {
         boxplot = boxplot + scale_y_log10()
     }
-    if (!is.null(my_names)) {
-        boxplot = boxplot + scale_x_discrete(labels=my_names)
+    if (!is.null(hpgl_names)) {
+        boxplot = boxplot + scale_x_discrete(labels=hpgl_names)
     }
     return(boxplot)
 }
@@ -327,38 +327,38 @@ my_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=NU
 #'   means = a table of the median values of all the summaries of the qq plots
 #'
 #' @export
-my_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
+hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
-    my_df = NULL
+    hpgl_df = NULL
     if (is.null(df)) {
-        my_df = exprs(expt$expressionset)
+        hpgl_df = exprs(expt$expressionset)
     } else {
-        my_df = df
+        hpgl_df = df
     }
-    my_df = as.data.frame(my_df)
-    sample_data = my_df[,c(1,2)]
+    hpgl_df = as.data.frame(hpgl_df)
+    sample_data = hpgl_df[,c(1,2)]
     ## This is bizarre, performing this operation with transform fails when called from a function
     ## but works fine when called interactively, wtf indeed?
-    ##    sample_data = transform(sample_data, mean=rowMeans(my_df))
-    wtf = rowMeans(my_df)    
+    ##    sample_data = transform(sample_data, mean=rowMeans(hpgl_df))
+    wtf = rowMeans(hpgl_df)    
     sample_data$mean=wtf
     logs = list()
     ratios = list()
     means = list()
-    comparisons = length(colnames(my_df))
+    comparisons = length(colnames(hpgl_df))
     row_columns = ceiling(sqrt(comparisons))
-    rows = nrow(my_df)
+    rows = nrow(hpgl_df)
     ## I want to make a square containing the graphs.
     count = 1
     for (i in 1:comparisons) {
-        ith = colnames(my_df)[i]
+        ith = colnames(hpgl_df)[i]
         if (verbose) {
             print(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
         }
-        tmpdf = data.frame(my_df[,i], sample_data$mean)
-        tmpqq = my_qq_plot(df=tmpdf, x=1, y=2, labels=FALSE)
+        tmpdf = data.frame(hpgl_df[,i], sample_data$mean)
+        tmpqq = hpgl_qq_plot(df=tmpdf, x=1, y=2, labels=FALSE)
         logs[[count]] = tmpqq$log
         ratios[[count]] = tmpqq$ratio
         means[[count]] = tmpqq$summary[['Median']]
@@ -381,36 +381,36 @@ my_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
 #' @return a list containing the recordPlot() output of the ratios, logs, and means among samples
 #'
 #' @export
-my_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
+hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
     ## Testing parameters
     ##expt=NULL
     ##df = test_data
-    ##my_df = all_qcpml2_df[,c(1,2,3,4)]$counts    
+    ##hpgl_df = all_qcpml2_df[,c(1,2,3,4)]$counts    
     ##x = 1
     ##y = 2
     ## End test parameters
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
-    my_df = NULL
+    hpgl_df = NULL
     if (is.null(df)) {
-        my_df = exprs(expt$expressionset)
+        hpgl_df = exprs(expt$expressionset)
     } else {
-        my_df = df
+        hpgl_df = df
     }
     logs = list()
     ratios = list()
-    rows = length(colnames(my_df))
+    rows = length(colnames(hpgl_df))
     means = matrix(nrow=rows, ncol=rows)
     count = 1
     for (i in 1:rows) {
         for (j in 1:rows) {
-            ith = colnames(my_df)[i]
-            jth = colnames(my_df)[j]
+            ith = colnames(hpgl_df)[i]
+            jth = colnames(hpgl_df)[j]
             if (verbose) {
                 print(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
             }
-            tmp = my_qq_plot(df=my_df, x=i, y=j, labels=FALSE)
+            tmp = hpgl_qq_plot(df=hpgl_df, x=i, y=j, labels=FALSE)
             logs[[count]] = tmp$log
             ratios[[count]] = tmp$ratio
             means[i,j] = tmp$summary[['Mean']]
@@ -482,8 +482,8 @@ multiplot <- function(plots=NULL, file, cols=NULL, layout=NULL) {
 #'
 #' @return a list of the logs, ratios, and mean between the plots as ggplots.
 #' @export
-my_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
-    my_env = environment()    
+hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
+    hpgl_env = environment()    
     ## Testing parameters
     ##expt=kept_qcpml2
     ## End test parameters
@@ -491,21 +491,21 @@ my_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
     if (is.null(df)) {
-        my_df = exprs(expt$expressionset)
+        hpgl_df = exprs(expt$expressionset)
     } else {
-        my_df = df
+        hpgl_df = df
     }
-    xlabel = colnames(my_df)[x]
-    ylabel = colnames(my_df)[y]
-    xvector = as.vector(my_df[,x])
-    yvector = as.vector(my_df[,y])
+    xlabel = colnames(hpgl_df)[x]
+    ylabel = colnames(hpgl_df)[y]
+    xvector = as.vector(hpgl_df[,x])
+    yvector = as.vector(hpgl_df[,y])
     sorted_x = sort(xvector)
     sorted_y = sort(yvector)
     vector_ratio = sorted_x / sorted_y
     increment = as.vector(1:length(vector_ratio))
     ratio_df = data.frame(cbind(increment, sorted_x, sorted_y, vector_ratio))
     y_string = paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
-    ratio_plot = ggplot2::ggplot(ratio_df, aes(x=increment, y=vector_ratio), environment=my_env) +
+    ratio_plot = ggplot2::ggplot(ratio_df, aes(x=increment, y=vector_ratio), environment=hpgl_env) +
         geom_point(colour=suppressWarnings(densCols(vector_ratio)), stat="identity", size=1, alpha=0.2, na.rm=TRUE) +
         scale_y_continuous(limits=c(0,2)) 
     if (isTRUE(labels)) {
@@ -529,7 +529,7 @@ my_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
     gg_max = max(log_df)
     colnames(log_df) = c(xlabel, ylabel)
     log_df$sub = log_df[,1] - log_df[,2]
-    log_ratio_plot = ggplot2::ggplot(log_df, aes(x=get(xlabel), y=get(ylabel)), environment=my_env) +
+    log_ratio_plot = ggplot2::ggplot(log_df, aes(x=get(xlabel), y=get(ylabel)), environment=hpgl_env) +
         geom_point(colour=densCols(sorted_x, sorted_y), na.rm=TRUE) +
         scale_y_continuous(limits=c(0, gg_max)) + scale_x_continuous(limits=c(0, gg_max))
     if (labels) {
@@ -564,15 +564,15 @@ my_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
 #' 
 #' @return  corheat_plot a gplots heatmap describing how the samples
 #' pairwise correlate with one another.
-#' @seealso \code{\link{my_cor}}, \code{\link{brewer.pal}},
+#' @seealso \code{\link{hpgl_cor}}, \code{\link{brewer.pal}},
 #' \code{\link{heatmap.2}}, \code{\link{recordPlot}}
 #' 
 #' @export
 #' @examples
-#' ## corheat_plot = my_corheat(expt=expt, method="robust")
+#' ## corheat_plot = hpgl_corheat(expt=expt, method="robust")
 #' ## corheat_plot
-my_corheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, row="batch", title=NULL, ...) {
-    my_heatmap(df=df, colors=colors, design=design, expt=expt, method=method, names=names, type="correlation", row=row, title=title, ...)
+hpgl_corheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, row="batch", title=NULL, ...) {
+    hpgl_heatmap(df=df, colors=colors, design=design, expt=expt, method=method, names=names, type="correlation", row=row, title=title, ...)
 }
 
 #' Make a heatmap2 description of the similarity (euclildean distance) between samples.
@@ -589,70 +589,70 @@ my_corheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pear
 #' 
 #' @export
 #' @examples
-#' ## disheat_plot = my_disheat(expt=expt, method="euclidean")
+#' ## disheat_plot = hpgl_disheat(expt=expt, method="euclidean")
 #' ## disheat_plot
-my_disheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="euclidean", names=NULL, row="batch", title=NULL, ...) {
-    my_heatmap(df=df, colors=colors, design=design, expt=expt, method=method, names=names, type="distance", row=row, title=title, ...)
+hpgl_disheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="euclidean", names=NULL, row="batch", title=NULL, ...) {
+    hpgl_heatmap(df=df, colors=colors, design=design, expt=expt, method=method, names=names, type="distance", row=row, title=title, ...)
 }
 
-my_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
-    my_env = environment()
+hpgl_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
+    hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
     if (is.null(expt)) {
-        my_design = design
-        my_colors = colors
-        my_df = df
-        my_names = names
+        hpgl_design = design
+        hpgl_colors = colors
+        hpgl_df = df
+        hpgl_names = names
     } else if (is.null(df)) {
-        my_design = expt$design
-        my_colors = expt$colors
-        my_df = Biobase::exprs(expt$expressionset)
-        my_names = expt$names
+        hpgl_design = expt$design
+        hpgl_colors = expt$colors
+        hpgl_df = Biobase::exprs(expt$expressionset)
+        hpgl_names = expt$names
     } else {
         stop("Both df and expt are defined, choose one.")
     }
-    if (is.null(my_colors)) {
-        tt = ncol(my_df)
-        my_colors = colorRampPalette(brewer.pal(tt,"Dark2"))(tt)
+    if (is.null(hpgl_colors)) {
+        tt = ncol(hpgl_df)
+        hpgl_colors = colorRampPalette(brewer.pal(tt,"Dark2"))(tt)
     }
-    if (is.null(my_names)) {
-        my_names = colnames(my_df)
+    if (is.null(hpgl_names)) {
+        hpgl_names = colnames(hpgl_df)
     }
     
     if (type == "correlation") {
-        heatmap_data = myr::my_cor(my_df, method=method)
+        heatmap_data = myr::hpgl_cor(hpgl_df, method=method)
         heatmap_colors = grDevices::colorRampPalette(brewer.pal(9, "OrRd"))(100)
     } else if (type == "distance") {
-        heatmap_data = as.matrix(dist(t(my_df)), method=method)
+        heatmap_data = as.matrix(dist(t(hpgl_df)), method=method)
         heatmap_colors = grDevices::colorRampPalette(brewer.pal(9, "GnBu"))(100)
     }
-    my_colors = as.character(my_colors)
+    hpgl_colors = as.character(hpgl_colors)
 
 
-    if (is.null(my_design)) {
-        row_colors = rep("white", length(my_colors))
-    } else if (length(as.integer(as.factor(as.data.frame(my_design[ row ])[,1]))) >= 2) {
-##        row_colors = brewer.pal(12, "Set3")[as.integer(as.list(my_design[ row ]))]
-        row_colors = RColorBrewer::brewer.pal(12, "Set3")[as.integer(as.factor(as.data.frame(my_design[ row ])[,1]))]
+    if (is.null(hpgl_design)) {
+        row_colors = rep("white", length(hpgl_colors))
+    } else if (length(as.integer(as.factor(as.data.frame(hpgl_design[ row ])[,1]))) >= 2) {
+##        row_colors = brewer.pal(12, "Set3")[as.integer(as.list(hpgl_design[ row ]))]
+        row_colors = RColorBrewer::brewer.pal(12, "Set3")[as.integer(as.factor(as.data.frame(hpgl_design[ row ])[,1]))]
     } else {
-        row_colors = rep("green", length(my_design[ row ]))
+        row_colors = rep("green", length(hpgl_design[ row ]))
     }
 
     ## A temporary hack for the ribosome profiling paper
     ## Correlation heatmaps shouldn't set the colormap for the moment.
     if (type == "correlation") {
-        myr::heatmap.3(heatmap_data, keysize=2, labRow=my_names,
-                  labCol=my_names, ColSideColors=my_colors, RowSideColors=row_colors,
+        myr::heatmap.3(heatmap_data, keysize=2, labRow=hpgl_names,
+                  labCol=hpgl_names, ColSideColors=hpgl_colors, RowSideColors=row_colors,
                   margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
     } else {
-        myr::heatmap.3(heatmap_data, keysize=2, labRow=my_names, col=rev(heatmap_colors),
-                  labCol=my_names, ColSideColors=my_colors, RowSideColors=row_colors,
+        myr::heatmap.3(heatmap_data, keysize=2, labRow=hpgl_names, col=rev(heatmap_colors),
+                  labCol=hpgl_names, ColSideColors=hpgl_colors, RowSideColors=row_colors,
                   margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
     }
-    my_heatmap_plot = recordPlot()    
-    return(my_heatmap_plot)
+    hpgl_heatmap_plot = recordPlot()    
+    return(hpgl_heatmap_plot)
 }
 
 #' Make a heatmap2 description of the similarity of the genes among samples.
@@ -669,38 +669,38 @@ my_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pear
 #' 
 #' @export
 sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
-    my_env = environment()
+    hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
     if (is.null(expt)) {
-        my_df = df        
-        my_design = design
+        hpgl_df = df        
+        hpgl_design = design
         if (is.null(colors)) {
-            my_colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(my_df)[2])
+            hpgl_colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(hpgl_df)[2])
         } else {
-            my_colors = colors
+            hpgl_colors = colors
         }
-        my_names = names
+        hpgl_names = names
     } else if (is.null(df)) {
-        my_design = expt$design
-        my_colors = expt$colors
-        my_df = Biobase::exprs(expt$expressionset)
-        my_names = expt$names
+        hpgl_design = expt$design
+        hpgl_colors = expt$colors
+        hpgl_df = Biobase::exprs(expt$expressionset)
+        hpgl_names = expt$names
     } else {
         stop("Both df and expt are defined, choose one.")
     }
 
     heatmap_colors = redgreen(75)
-    if (is.null(my_names)) {
-        my_names = colnames(my_df)
+    if (is.null(hpgl_names)) {
+        hpgl_names = colnames(hpgl_df)
     }
     
-    heatmap.3(my_df, keysize=2, labRow=NA, col=heatmap_colors,
-                   labCol=my_names, margins=c(12,8), trace="none", linewidth=0.5, main=title)
+    heatmap.3(hpgl_df, keysize=2, labRow=NA, col=heatmap_colors,
+                   labCol=hpgl_names, margins=c(12,8), trace="none", linewidth=0.5, main=title)
 
-    my_heatmap_plot = recordPlot()    
-    return(my_heatmap_plot)
+    hpgl_heatmap_plot = recordPlot()    
+    return(hpgl_heatmap_plot)
 }
 
 #' Make an R plot of the standard median correlation among samples
@@ -720,39 +720,39 @@ sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="
 #' coefficient.  Any sample which falls below this line is considered
 #' for removal because it is much less similar to all of its peers.
 #' 
-#' @seealso \code{\link{my_cor}}, \code{\link{matrixStats::rowMedians}},
+#' @seealso \code{\link{hpgl_cor}}, \code{\link{matrixStats::rowMedians}},
 #' \code{\link{quantile}}, \code{\link{diff}}, \code{\link{recordPlot}}
 #' 
 #' @export
 #' @examples
-#' ## smc_plot = my_smc(expt=expt)
-my_smc = function(df=NULL, colors=NULL, expt=NULL, method="pearson", names=NULL, title=NULL, ...) {
+#' ## smc_plot = hpgl_smc(expt=expt)
+hpgl_smc = function(df=NULL, colors=NULL, expt=NULL, method="pearson", names=NULL, title=NULL, ...) {
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
     if (is.null(expt)) {
-        my_colors = colors
-        my_df = df
+        hpgl_colors = colors
+        hpgl_df = df
     } else if (is.null(df)) {
-        my_colors = expt$colors
-        my_df = Biobase::exprs(expt$expressionset)
+        hpgl_colors = expt$colors
+        hpgl_df = Biobase::exprs(expt$expressionset)
     } else {
         stop("Both df and expt are defined, choose one.")
     }
     if (is.null(expt$names)) {
         if (is.null(names)) {
-            my_names = colnames(my_df)
+            hpgl_names = colnames(hpgl_df)
         } else {
-            my_names = names
+            hpgl_names = names
         }
     } else {
-        my_names = expt$names
+        hpgl_names = expt$names
     }
-    if (is.null(my_colors)) {
-        my_colors = colorRampPalette(brewer.pal(ncol(fun),"Dark2"))(ncol(fun))
+    if (is.null(hpgl_colors)) {
+        hpgl_colors = colorRampPalette(brewer.pal(ncol(fun),"Dark2"))(ncol(fun))
     }
-    my_colors = as.character(my_colors)
-    correlations = my_cor(my_df, method=method)
+    hpgl_colors = as.character(hpgl_colors)
+    correlations = hpgl_cor(hpgl_df, method=method)
     cor_median = matrixStats::rowMedians(correlations)
     cor_spread = stats::quantile(cor_median, p=c(1,3)/4)
     cor_iqr = diff(cor_spread)
@@ -760,13 +760,13 @@ my_smc = function(df=NULL, colors=NULL, expt=NULL, method="pearson", names=NULL,
     ylimit = c(pmin(min(cor_median), outer_limit), max(cor_median))
     plot(cor_median, xaxt="n", ylim=ylimit,
          xlab="", main="", ylab="Median pairwise correlation",
-         col=my_colors, pch=16, cex=1.5)
+         col=hpgl_colors, pch=16, cex=1.5)
     title(title)
-    axis(side=1, at=seq(along=cor_median), labels=my_names, las=2)
+    axis(side=1, at=seq(along=cor_median), labels=hpgl_names, las=2)
     abline(h=outer_limit, lty=2)
-    abline(v=1:length(my_names), lty=3, col="black")
-    my_smc_plot = recordPlot()    
-    return(my_smc_plot)
+    abline(v=1:length(hpgl_names), lty=3, col="black")
+    hpgl_smc_plot = recordPlot()    
+    return(hpgl_smc_plot)
 }
 
 #' Make an R plot of the standard median distance among samples
@@ -789,34 +789,34 @@ my_smc = function(df=NULL, colors=NULL, expt=NULL, method="pearson", names=NULL,
 #' 
 #' @export
 #' @examples
-#' ## smd_plot = my_smd(expt=expt)
-my_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclidean", title=NULL, ...) {
+#' ## smd_plot = hpgl_smd(expt=expt)
+hpgl_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclidean", title=NULL, ...) {
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
     if (is.null(expt)) {
-        my_colors = colors
-        my_df = df
+        hpgl_colors = colors
+        hpgl_df = df
     } else if (is.null(df)) {
-        my_colors = expt$colors
-        my_df = Biobase::exprs(expt$expressionset)
+        hpgl_colors = expt$colors
+        hpgl_df = Biobase::exprs(expt$expressionset)
     } else {
         stop("Both df and expt are defined, choose one.")
     }
     if (is.null(expt$names)) {
         if (is.null(names)) {
-            my_names = colnames(my_df)
+            hpgl_names = colnames(hpgl_df)
         } else {
-            my_names = names
+            hpgl_names = names
         }
     } else {
-        my_names = expt$names
+        hpgl_names = expt$names
     }
-    if (is.null(my_colors)) {
-        my_colors = colorRampPalette(brewer.pal(ncol(fun),"Dark2"))(ncol(fun))
+    if (is.null(hpgl_colors)) {
+        hpgl_colors = colorRampPalette(brewer.pal(ncol(fun),"Dark2"))(ncol(fun))
     }    
-    my_colors = as.character(my_colors)
-    dists = as.matrix(dist(t(my_df)), method=method)
+    hpgl_colors = as.character(hpgl_colors)
+    dists = as.matrix(dist(t(hpgl_df)), method=method)
     dist_median = matrixStats::rowMedians(dists)
     dist_spread = stats::quantile(dist_median, p=c(1,3)/4)
     dist_iqr = diff(dist_spread)
@@ -825,13 +825,13 @@ my_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclidean
     ylimit = c(min(dist_median), pmax(max(dist_median), outer_limit))
     plot(dist_median, xaxt="n", ylim=ylimit,
          xlab="", main="", ylab="Median pairwise distance",
-         col=my_colors, pch=16, cex=1.5)
+         col=hpgl_colors, pch=16, cex=1.5)
     title(title)
-    axis(side=1, at=seq(along=dist_median), labels=my_names, las=2)
+    axis(side=1, at=seq(along=dist_median), labels=hpgl_names, las=2)
     abline(h=outer_limit, lty=2)
-    abline(v=1:length(my_names), lty=3, col="black")
-    my_smd_plot = recordPlot()        
-    return(my_smd_plot)
+    abline(v=1:length(hpgl_names), lty=3, col="black")
+    hpgl_smd_plot = recordPlot()        
+    return(hpgl_smd_plot)
 }
 
 #' Make a ggplot PCA plot describing the samples' clustering
@@ -855,50 +855,50 @@ my_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclidean
 #' 
 #' @export
 #' @examples
-#' ## pca_plot = my_pca(expt=expt)
+#' ## pca_plot = hpgl_pca(expt=expt)
 #' ## pca_plot
-my_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", title=NULL, fancy_labels=FALSE, ...) {
-    my_env = environment()
+hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", title=NULL, fancy_labels=FALSE, ...) {
+    hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors.")
     }
     if (is.null(expt)) {
-        my_design = design
-        my_colors = colors
-        my_df = df
+        hpgl_design = design
+        hpgl_colors = colors
+        hpgl_df = df
     } else if (is.null(df)) {
-        my_design = expt$design
-        my_colors = expt$colors
-        my_df = Biobase::exprs(expt$expressionset)
+        hpgl_design = expt$design
+        hpgl_colors = expt$colors
+        hpgl_df = Biobase::exprs(expt$expressionset)
     } else {
         stop("Both df and expt are defined, that is confusing.")
     }
     if (is.null(expt$names)) {
-        my_labels = colnames(my_df)
+        hpgl_labels = colnames(hpgl_df)
     } else {
-        my_labels = expt$names
+        hpgl_labels = expt$names
     }
-    pca = cbcbSEQ::makeSVD(my_df)  ## This is a part of cbcbSEQ
-    pca_res = cbcbSEQ::pcRes(pca$v, pca$d, my_design$condition, my_design$batch)
+    pca = cbcbSEQ::makeSVD(hpgl_df)  ## This is a part of cbcbSEQ
+    pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition, hpgl_design$batch)
     print(pca_res)
     pca_variance = round((pca$d ^ 2) / sum(pca$d ^ 2) * 100, 2)
     xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
-    pca_data = data.frame(SampleID=my_labels,
-        condition=my_design$condition,
-        batch=my_design$batch,
-        batch_int = as.integer(my_design$batch),
+    pca_data = data.frame(SampleID=hpgl_labels,
+        condition=hpgl_design$condition,
+        batch=hpgl_design$batch,
+        batch_int = as.integer(hpgl_design$batch),
         PC1=pca$v[,1],
         PC2=pca$v[,2])
 
-    pca_plot = ggplot(data=pca_data, environment=my_env) +
+    pca_plot = ggplot(data=pca_data, environment=hpgl_env) +
         geom_point(aes(x=PC1,y=PC2,color=condition,shape=batch), size=3) +
         scale_colour_discrete(name="Experimental\nCondition") +
         scale_shape_discrete(name="Experimental\nBatch") + 
         xlab(xl) + ylab(yl) + theme_bw()
 
     if (fancy_labels == TRUE) {
-        pca_plot = pca_plot + directlabels::geom_dl(aes(label=my_labels), method="smart.grid", colour=my_colors)
+        pca_plot = pca_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_colors)
     }
     if (!is.null(title)) {
         pca_plot = pca_plot + ggtitle(title)
@@ -910,7 +910,7 @@ my_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", 
 #' Make a pretty MA plot from the output of voom/limma/eBayes/toptable
 #'
 #' @param counts df of linear-modelling, normalized counts by sample-type,
-#' which is to say the output from voom/voomMod/my_voom().
+#' which is to say the output from voom/voomMod/hpgl_voom().
 #' @param de_genes df from toptable or its friends containing p-values.
 #' @param adjpval_cutoff a cutoff defining significant from not.
 #' Defaults to 0.05.
@@ -927,23 +927,23 @@ my_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", 
 #' Dots are colored depending on if they are 'significant.'  This will
 #' make a fun clicky googleVis graph if requested.
 #' 
-#' @seealso \code{\link{my_gvis_ma_plot}}, \code{\link{toptable}},
-#' \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{my_voom}},
+#' @seealso \code{\link{hpgl_gvis_ma_plot}}, \code{\link{toptable}},
+#' \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{hpgl_voom}},
 #' \code{\link{lmFit}}, \code{\link{makeContrasts}},
 #' \code{\link{contrasts.fit}}
 #' 
 #' @export
 #' @examples
-#' ## my_ma_plot(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
+#' ## hpgl_ma_plot(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
 #' ## Currently this assumes that a variant of toptable was used which
 #' ## gives adjusted p-values.  This is not always the case and I should
 #' ## check for that, but I have not yet.
-my_ma_plot = function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6, size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
-    my_env = environment()
+hpgl_ma_plot = function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6, size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
+    hpgl_env = environment()
     df = data.frame(AvgExp=rowMeans(counts[rownames(de_genes),]),
 #        LogFC=de_genes$logFC, AdjPVal=de_genes$adj.P.Val)
         LogFC=de_genes$logFC, AdjPVal=de_genes$P.Value)
-    plt = ggplot2::ggplot(df, aes(AvgExp, LogFC, color=(AdjPVal < adjpval_cutoff)), environment=my_env) +
+    plt = ggplot2::ggplot(df, aes(AvgExp, LogFC, color=(AdjPVal < adjpval_cutoff)), environment=hpgl_env) +
         geom_hline(yintercept=c(-1,1), color="Red", size=size) +
         geom_point(stat="identity", size=size, alpha=alpha) +
         theme(axis.text.x=element_text(angle=-90)) +
@@ -951,7 +951,7 @@ my_ma_plot = function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6, size=2, 
         ylab("log fold change") +
         theme_bw()            
     if (!is.null(gvis_filename)) {
-        my_gvis_ma_plot(counts, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
+        hpgl_gvis_ma_plot(counts, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
     }
     return(plt)
 }
@@ -985,14 +985,14 @@ my_ma_plot = function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6, size=2, 
 #' distances from each axis, multiplied by each other, summed by axis,
 #' then normalized against the maximum.
 #' 
-#' @seealso \code{\link{my_gvis_scatter}}, \code{\link{geom_scatter}},
-#' \code{\link{hsv}}, \code{\link{my_linear_scatter}}
+#' @seealso \code{\link{hpgl_gvis_scatter}}, \code{\link{geom_scatter}},
+#' \code{\link{hsv}}, \code{\link{hpgl_linear_scatter}}
 #' 
 #' @export
 #' @examples
-#' ## my_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-my_dist_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, size=3) {
-    my_env = environment()
+#' ## hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+hpgl_dist_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, size=3) {
+    hpgl_env = environment()
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
     df_columns = colnames(df)
@@ -1011,7 +1011,7 @@ my_dist_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, size=3) {
     mydist$dist = mydist$x * mydist$y
     mydist$dist = mydist$dist / max(mydist$dist)
     line_size = size / 2
-    first_vs_second = ggplot2::ggplot(df, aes(x=first, y=second), environment=my_env) +
+    first_vs_second = ggplot2::ggplot(df, aes(x=first, y=second), environment=hpgl_env) +
         xlab(paste("Expression of", df_x_axis)) +
         ylab(paste("Expression of", df_y_axis)) +
         geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
@@ -1023,7 +1023,7 @@ my_dist_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, size=3) {
         geom_point(colour=hsv(mydist$dist, 1, mydist$dist), alpha=0.6, size=size) +
         theme(legend.position="none")
     if (!is.null(gvis_filename)) {
-        my_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
+        hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
     }
     return(first_vs_second)    
 }
@@ -1038,27 +1038,27 @@ my_dist_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, size=3) {
 #' 
 #' @return a ggplot2 scatter plot.
 #' 
-#' @seealso \code{\link{my_gvis_scatter}}, \code{\link{geom_scatter}},
-#' \code{\link{my_linear_scatter}}
+#' @seealso \code{\link{hpgl_gvis_scatter}}, \code{\link{geom_scatter}},
+#' \code{\link{hpgl_linear_scatter}}
 #' 
 #' @export
 #' @examples
-#' ## my_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-my_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=3) {
-    my_env = environment()
+#' ## hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+hpgl_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=3) {
+    hpgl_env = environment()
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
     df_columns = colnames(df)
     df_x_axis = df_columns[1]
     df_y_axis = df_columns[2]
     colnames(df) = c("first","second")
-    first_vs_second = ggplot2::ggplot(df, aes(x=first, y=second), environment=my_env) +
+    first_vs_second = ggplot2::ggplot(df, aes(x=first, y=second), environment=hpgl_env) +
         xlab(paste("Expression of", df_x_axis)) +
         ylab(paste("Expression of", df_y_axis)) +
         geom_point(colour=color, alpha=0.6, size=size) +
         theme(legend.position="none")
     if (!is.null(gvis_filename)) {
-        my_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
+        hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
     }
     return(first_vs_second)    
 }
@@ -1089,17 +1089,17 @@ my_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, 
 #' requested.
 #'
 #' @seealso \code{\link{lmrob}}, \code{\link{weights}},
-#' \code{\link{hsv}}, \code{\link{mad}}, \code{\link{my_histogram}}
+#' \code{\link{hsv}}, \code{\link{mad}}, \code{\link{hpgl_histogram}}
 #'
 #' @export
 #' @examples
-#' ## my_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-my_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, histargs=NULL, loess=FALSE, identity=FALSE, gvis_trendline=NULL, ...) {
+#' ## hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, histargs=NULL, loess=FALSE, identity=FALSE, gvis_trendline=NULL, ...) {
     ## Test options
 ###    df = comp_5448
 ###    cormethod = "kendal"
     ##
-    my_env = environment()    
+    hpgl_env = environment()    
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
     correlation = cor.test(df[,1], df[,2], method=cormethod, exact=FALSE)
@@ -1117,7 +1117,7 @@ my_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormetho
     first_mad = stats::mad(df$first, na.rm=TRUE)
     second_mad = stats::mad(df$second, na.rm=TRUE)
     line_size = size / 2
-    first_vs_second = ggplot2::ggplot(df, aes(x=first, y=second), environment=my_env) +
+    first_vs_second = ggplot2::ggplot(df, aes(x=first, y=second), environment=hpgl_env) +
         xlab(paste("Expression of", df_x_axis)) +
         ylab(paste("Expression of", df_y_axis)) +
         geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
@@ -1146,11 +1146,11 @@ my_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormetho
         if (verbose) {
             print("Generating an interactive graph.")
         }
-        my_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename, trendline=gvis_trendline)
+        hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename, trendline=gvis_trendline)
     }
-    x_histogram = myr::my_histogram(data.frame(df[,1]), verbose=verbose, fillcolor="lightblue", color="blue")
-    y_histogram = myr::my_histogram(data.frame(df[,2]), verbose=verbose, fillcolor="pink", color="red")
-    both_histogram = myr::my_multihistogram(df, verbose=verbose)
+    x_histogram = myr::hpgl_histogram(data.frame(df[,1]), verbose=verbose, fillcolor="lightblue", color="blue")
+    y_histogram = myr::hpgl_histogram(data.frame(df[,2]), verbose=verbose, fillcolor="pink", color="red")
+    both_histogram = myr::hpgl_multihistogram(df, verbose=verbose)
     plots = list(scatter=first_vs_second,
         x_histogram=x_histogram,
         y_histogram=y_histogram,
@@ -1184,8 +1184,8 @@ my_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormetho
 #' 
 #' @export
 #' @examples
-#' ## kittytime = my_histogram(df)
-my_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE, fillcolor="darkgrey", color="black") {
+#' ## kittytime = hpgl_histogram(df)
+hpgl_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE, fillcolor="darkgrey", color="black") {
     ### Test arguments
     #df = data_list
     #binwidth = NULL
@@ -1195,7 +1195,7 @@ my_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE, f
     #color = "black"
     #fillcolor = "grey"
     ### End test arguments
-    my_env = environment()
+    hpgl_env = environment()
     if (class(df) == "data.frame") {
         colnames(df) = c("values")
     } else if (class(df) == "list") {
@@ -1213,7 +1213,7 @@ my_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE, f
             print(paste("No binwidth provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
         }
     }
-    a_histogram = ggplot2::ggplot(df, aes(x=values), environment=my_env) +
+    a_histogram = ggplot2::ggplot(df, aes(x=values), environment=hpgl_env) +
     geom_histogram(aes(y=..density..), stat="bin", binwidth=binwidth, colour=color, fill=fillcolor, position="identity") +
 ##    stat_bin(binwidth=binwidth, color=fillcolor) +
     geom_density(alpha=0.4, fill=fillcolor) +
@@ -1241,8 +1241,8 @@ my_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE, f
 #' 
 #' @export
 #' @examples
-#' ## kittytime = my_multihistogram(df)
-my_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=FALSE) {
+#' ## kittytime = hpgl_multihistogram(df)
+hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=FALSE) {
     ### Test argument
     #data = data_list
     #log = FALSE
@@ -1285,7 +1285,7 @@ my_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=
     } else {
         print("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
     }
-    my_multi = ggplot2::ggplot(play_all, aes(x=expression, fill=cond)) +
+    hpgl_multi = ggplot2::ggplot(play_all, aes(x=expression, fill=cond)) +
         geom_histogram(aes(y=..density..), binwidth=binwidth, alpha=0.4, position="identity") +
         xlab("Expression") +
         ylab("Number of observations") +
@@ -1293,9 +1293,9 @@ my_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=
         geom_vline(data=play_cdf, aes(xintercept=rating.mean,  colour=cond), linetype="dashed", size=0.75) +
         theme_bw()
     if (log) {
-        logged = try(my_multi + scale_x_log10())
+        logged = try(hpgl_multi + scale_x_log10())
         if (logged != 'try-error') {
-            my_multi = logged
+            hpgl_multi = logged
         }
     }
     if (verbose) {
@@ -1310,7 +1310,7 @@ my_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=
             print(bon_t)
         }
     }
-    returns = list(plot=my_multi,
+    returns = list(plot=hpgl_multi,
         data_summary=summary_df,
         uncor_t=uncor_t,
         bon_t=bon_t)
@@ -1327,44 +1327,44 @@ my_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=
 #'
 #' @return a density plot!
 #' @export
-my_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, position="identity", fill=NULL, title=NULL) {
+hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, position="identity", fill=NULL, title=NULL) {
     ## Other interesting positions: fill, stack
     ## Testing params
     ##expt = kept_qcpml2
     ##position="identity"
     ##fill=TRUE
     ## End test params
-    my_env = environment()
+    hpgl_env = environment()
     print("This plot looks neat if you do position='fill' or position='stack'")
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df.")
     }
     if (is.null(expt)) {
-        my_colors = colors
-        my_df = df
-        my_names = names
+        hpgl_colors = colors
+        hpgl_df = df
+        hpgl_names = names
     } else if (is.null(df)) {
-        my_colors = expt$colors
-        my_df = Biobase::exprs(expt$expressionset)
-        my_names = expt$names
+        hpgl_colors = expt$colors
+        hpgl_df = Biobase::exprs(expt$expressionset)
+        hpgl_names = expt$names
     } else {
         stop("Both expt and df are defined, please choose one.")
     }
 
-    if (!is.null(my_names)) {
-        colnames(my_df) = make.names(my_names, unique=TRUE)
+    if (!is.null(hpgl_names)) {
+        colnames(hpgl_df) = make.names(hpgl_names, unique=TRUE)
     }
-    melted = reshape::melt(my_df)
+    melted = reshape::melt(hpgl_df)
     colnames(melted) = c("gene", "cond", "counts")
 
-    colors = factor(my_colors)    
-    if (is.null(my_colors)) {
-        my_colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(my_df)[2])
+    colors = factor(hpgl_colors)    
+    if (is.null(hpgl_colors)) {
+        hpgl_colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(hpgl_df)[2])
     }
     if (!is.null(fill)) {
         fill = "cond"
     }
-    densityplot = ggplot2::ggplot(data=melted, aes(x=counts, colour=cond, fill=fill), environment=my_env) +
+    densityplot = ggplot2::ggplot(data=melted, aes(x=counts, colour=cond, fill=fill), environment=hpgl_env) +
         geom_density(aes(x=counts, y=..count..), position=position) +
             theme_bw()
     if (!is.null(title)) {
@@ -1395,18 +1395,18 @@ my_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, position
 #' 'significant' and not.  This will make a fun clicky googleVis graph
 #' if requested.
 #' 
-#' @seealso \code{\link{my_gvis_ma_plot}}, \code{\link{toptable}},
-#' \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{my_voom}},
+#' @seealso \code{\link{hpgl_gvis_ma_plot}}, \code{\link{toptable}},
+#' \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{hpgl_voom}},
 #' \code{\link{lmFit}}, \code{\link{makeContrasts}},
 #' \code{\link{contrasts.fit}}
 #' 
 #' @export
 #' @examples
-#' ## my_volcano_plot(toptable_data, gvis_filename="html/fun_ma_plot.html")
+#' ## hpgl_volcano_plot(toptable_data, gvis_filename="html/fun_ma_plot.html")
 #' ## Currently this assumes that a variant of toptable was used which
 #' ## gives adjusted p-values.  This is not always the case and I should
 #' ## check for that, but I have not yet.
-my_volcano_plot = function(toptable_data, tooltip_data=NULL, gvis_filename=NULL, fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6, ...) {
+hpgl_volcano_plot = function(toptable_data, tooltip_data=NULL, gvis_filename=NULL, fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6, ...) {
     ### Testing parameters
     ##toptable_data = cond_table
     ##tooltip_data = tooltip_data_5448
@@ -1416,11 +1416,11 @@ my_volcano_plot = function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
     ##size=3
     ##alpha=0.6
     ### End testing parameters
-    my_env = environment()
+    hpgl_env = environment()
     low_vert_line = 0.0 - fc_cutoff
     horiz_line = -1 * log10(p_cutoff)
     toptable_data$modified_p = -1 * log10(toptable_data$P.Value)
-    plt = ggplot2::ggplot(toptable_data, aes(x=logFC, y=modified_p, color=(P.Value <= p_cutoff)), environment=my_env) +
+    plt = ggplot2::ggplot(toptable_data, aes(x=logFC, y=modified_p, color=(P.Value <= p_cutoff)), environment=hpgl_env) +
         geom_hline(yintercept=horiz_line, color="black", size=size) +
         geom_vline(xintercept=fc_cutoff, color="black", size=size) +
         geom_vline(xintercept=low_vert_line, color="black", size=size) +
@@ -1430,7 +1430,7 @@ my_volcano_plot = function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
         ylab("-log10(adjusted p value)") +
         theme(legend.position="none")
     if (!is.null(gvis_filename)) {
-        my_gvis_volcano_plot(toptable_data, fc_cutoff=fc_cutoff, p_cutoff=p_cutoff, tooltip_data=tooltip_data, filename=gvis_filename)
+        hpgl_gvis_volcano_plot(toptable_data, fc_cutoff=fc_cutoff, p_cutoff=p_cutoff, tooltip_data=tooltip_data, filename=gvis_filename)
     }
     return(plt)
 }
@@ -1929,7 +1929,7 @@ heatmap.3 = function (x, Rowv = TRUE, Colv = if (symm) "Rowv" else TRUE,
 #'
 #' @return a plot! of the BCV a la ggplot2
 #' @export
-my_plot_bcv = function(expt) {
+hpgl_plot_bcv = function(expt) {
     data = exprs(expt$expressionset)^2
     data = DGEList(counts=data)
     edisp = estimateDisp(data)

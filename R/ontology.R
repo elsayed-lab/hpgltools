@@ -274,7 +274,7 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
 ##    godata = goseq(pwf, gene2cat=goids, method='Wallenius')
     colnames(goids) = c("ID", "GO")
     godata = goseq::goseq(pwf, gene2cat=goids, use_genes_without_cat=TRUE, method=method)
-    goseq_p = myr::my_histogram(godata$over_represented_pvalue, bins=20)
+    goseq_p = myr::hpgl_histogram(godata$over_represented_pvalue, bins=20)
     goseq_p_second = sort(unique(table(goseq_p$data)), decreasing=TRUE)[2]
     ## Set the y scale to 2x the second highest number
     ## (assuming always that the highest is a p-value of 1)
@@ -450,7 +450,7 @@ pval_plot = function(df, ontology="MF") {
 }
 
 
-my_topdiffgenes = function(scores, df=de_genes, direction="up") {
+hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
     ## Testing parameters
     ##scores = pvals
     ##df = epi_cl14clbr_high
@@ -598,18 +598,18 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
     cc_weight_result = topGO::getSigGroups(cc_GOdata, test_stat)
 
 
-    mf_fisher_pdist = myr::my_histogram(mf_fisher_result@score, bins=20)
-    mf_ks_pdist = myr::my_histogram(mf_ks_result@score, bins=20)
-    mf_el_pdist = myr::my_histogram(mf_el_result@score, bins=20)
-    mf_weight_pdist = myr::my_histogram(mf_weight_result@score, bins=20)
-    bp_fisher_pdist = myr::my_histogram(bp_fisher_result@score, bins=20)
-    bp_ks_pdist = myr::my_histogram(bp_ks_result@score, bins=20)
-    bp_el_pdist = myr::my_histogram(bp_el_result@score, bins=20)
-    bp_weight_pdist = myr::my_histogram(bp_weight_result@score, bins=20)
-    cc_fisher_pdist = myr::my_histogram(cc_fisher_result@score, bins=20)
-    cc_ks_pdist = myr::my_histogram(cc_ks_result@score, bins=20)
-    cc_el_pdist = myr::my_histogram(cc_el_result@score, bins=20)
-    cc_weight_pdist = myr::my_histogram(cc_weight_result@score, bins=20)
+    mf_fisher_pdist = myr::hpgl_histogram(mf_fisher_result@score, bins=20)
+    mf_ks_pdist = myr::hpgl_histogram(mf_ks_result@score, bins=20)
+    mf_el_pdist = myr::hpgl_histogram(mf_el_result@score, bins=20)
+    mf_weight_pdist = myr::hpgl_histogram(mf_weight_result@score, bins=20)
+    bp_fisher_pdist = myr::hpgl_histogram(bp_fisher_result@score, bins=20)
+    bp_ks_pdist = myr::hpgl_histogram(bp_ks_result@score, bins=20)
+    bp_el_pdist = myr::hpgl_histogram(bp_el_result@score, bins=20)
+    bp_weight_pdist = myr::hpgl_histogram(bp_weight_result@score, bins=20)
+    cc_fisher_pdist = myr::hpgl_histogram(cc_fisher_result@score, bins=20)
+    cc_ks_pdist = myr::hpgl_histogram(cc_ks_result@score, bins=20)
+    cc_el_pdist = myr::hpgl_histogram(cc_el_result@score, bins=20)
+    cc_weight_pdist = myr::hpgl_histogram(cc_weight_result@score, bins=20)
     p_dists = list(mf_fisher=mf_fisher_pdist, bp_fisher=bp_fisher_pdist, cc_fisher=cc_fisher_pdist,
         mf_ks=mf_ks_pdist, bp_ks=bp_ks_pdist, cc_ks=cc_ks_pdist,
         mf_el=mf_el_pdist, bp_el=bp_el_pdist, cc_el=cc_el_pdist,
@@ -920,26 +920,26 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     print(ego2)
     print("Starting MF(molecular function) analysis")
     mf_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
-    mf_all = myr::my_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    all_mf_phist = myr::my_histogram(mf_all@result$pvalue, bins=20)
+    mf_all = myr::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
+    all_mf_phist = myr::hpgl_histogram(mf_all@result$pvalue, bins=20)
     y_limit = (sort(unique(table(all_mf_phist$data)), decreasing=TRUE)[2]) * 2
     all_mf_phist = all_mf_phist + scale_y_continuous(limits=c(0, y_limit))
-    enriched_mf = myr::my_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    enriched_mf = myr::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
     
     print("Starting BP(biological process) analysis")
     bp_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
-    bp_all = myr::my_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    all_bp_phist = myr::my_histogram(bp_all@result$pvalue, bins=20)
+    bp_all = myr::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
+    all_bp_phist = myr::hpgl_histogram(bp_all@result$pvalue, bins=20)
     y_limit = (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
     all_bp_phist = all_bp_phist + scale_y_continuous(limits=c(0, y_limit))
     
-    enriched_bp = myr::my_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    enriched_bp = myr::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
 
     print("Starting CC(cellular component) analysis")
     cc_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="CC", level=golevel, readable=TRUE)
-    cc_all = myr::my_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    enriched_cc = myr::my_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
-    all_cc_phist = myr::my_histogram(cc_all@result$pvalue, bins=50)
+    cc_all = myr::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
+    enriched_cc = myr::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    all_cc_phist = myr::hpgl_histogram(cc_all@result$pvalue, bins=50)
     y_limit = (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
     all_cc_phist = all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
     
@@ -1246,7 +1246,7 @@ cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", go
 #' @return a plot!
 #' @seealso \code{\link{Ramigo}}
 #' @export
-my_pathview = function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, verbose=FALSE) {
+hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, verbose=FALSE) {
     ##eh = new.env(hash=TRUE, size=NA)
     ## There is a weird namespace conflict when using pathview, so I will reload it here
     try(detach("package:Rgraphviz", unload=TRUE))
@@ -1359,7 +1359,7 @@ my_pathview = function(path_data, indir="pathview_in", outdir="pathview", pathwa
 #' @return some clusterProfiler data
 #' @seealso \code{\link{clusterProfiler}}
 #' @export
-my_enrichGO = function(gene, organism="human", ont="MF",
+hpgl_enrichGO = function(gene, organism="human", ont="MF",
     pvalueCutoff=0.05, pAdjustMethod="BH", universe,
     qvalueCutoff=0.2, minGSSize=2, readable=FALSE) {
     ## Testing parameters
@@ -1368,7 +1368,7 @@ my_enrichGO = function(gene, organism="human", ont="MF",
     ##ont="BP"
     ##minGSSize=2
     ## End testing parameters
-    information = my_enrich.internal(gene, organism=organism, pvalueCutoff=pvalueCutoff,
+    information = hpgl_enrich.internal(gene, organism=organism, pvalueCutoff=pvalueCutoff,
 ##        pAdjustMethod=pAdjustMethod, ont=ont, universe=universe,
         pAdjustMethod=pAdjustMethod, ont=ont,
         qvalueCutoff=qvalueCutoff, minGSSize=minGSSize)
@@ -1385,7 +1385,7 @@ my_enrichGO = function(gene, organism="human", ont="MF",
 #' @return some clusterProfiler data
 #' @seealso \code{\link{clusterProfiler}}
 #' @export
-my_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="BH",
+hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="BH",
     ont, minGSSize=2, qvalueCutoff=0.2, readable=FALSE, universe=NULL) {
     ## I removed universe as an argument
     ##gene = gene_list
