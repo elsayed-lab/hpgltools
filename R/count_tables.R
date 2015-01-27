@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jan 27 11:14:03 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 27 12:41:26 2015 Ashton Trey Belew (abelew@gmail.com)>
 ### count_tables.R contains some functions for simple count-table manipulations
 ### This includes reading in files, creating expressionSets, and subsets.
 
@@ -21,17 +21,6 @@
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
 create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", count_dataframe=NULL, ...) {
-    ## Test params
-    ##file = "data/all_samples.csv"
-    ##count_dataframe = example_data
-    ##sep = ","
-    ##suffix = ".count.gz"
-    ##genes=NULL
-    ##header = FALSE
-    ##by_type = FALSE
-    ##by_sample = FALSE
-    ##color_hash = NULL
-    ## End test params
     tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
     ## Thus the next line
@@ -43,12 +32,6 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
     color_hash = hash(keys=as.character(condition_names), values=colors)
     expt = create_experiment(file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, sep=sep)
     new_expt = expt_subset(expt, "")
-    ## EdgeR makes toy data with this call:
-    ##bcv = 0.2 ## (dispersion, 0.4 for data, 0.1 for very similar, 0.01 for replicates)
-    ##data_cols = 20
-    ##data_rows = 2
-    ##counts <- matrix( rnbinom(40,size=1/bcv^2,mu=10), data_cols, data_rows)
-    ##expt$sample_data = counts(make_exampledata(ngenes=data_rows, columns=data_cols))
     return(new_expt)
 }
 
@@ -81,7 +64,8 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
         sample_definitions$batch = gsub("\\s+|\\d+|\\*", "", sample_definitions$Batch, perl=TRUE)
     }
     design_colors_list = as.list.hash(color_hash)
-    sample_definitions$colors = as.list(design_colors_list[ sample_definitions$condition ])
+    sample_definitions$colors = as.list(design_colors_list[as.character(sample_definitions$condition)])
+    ##sample_definitions$colors = as.list(color_hash[sample_definitions$condition])
     ## The logic here is that I want by_type to be the default, but only
     ## if no one chooses either.
     if (!isTRUE(by_type) & !isTRUE(by_sample)) {
@@ -184,9 +168,6 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
 #' ## smaller_expt = expt_subset(big_expt, "condition=='control'")
 #' ## all_expt = expt_subset(expressionset, "")  ## extracts everything
 expt_subset = function(expt, subset) {
-    ## Test variables
-    ##expt = expt
-    ##subset = ""
     if (class(expt) == "ExpressionSet") {
         expressionset = expt
     } else if (class(expt) == "expt") {
