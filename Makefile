@@ -1,4 +1,7 @@
 VERSION=0.1
+install:
+	cd ../ && R CMD INSTALL hpgltools
+
 build:
 	cd ../ && R CMD build hpgltools --no-build-vignettes
 	mv ../hpgltools_${VERSION}.tar.gz .
@@ -7,15 +10,12 @@ build:
 	R CMD Rd2pdf hpgltools && mv hpgltools.pdf hpgltools/inst/doc
 	R CMD INSTALL hpgltools
 
-inst:
-	cd ../ && R CMD build hpgltools --no-build-vignettes && R CMD INSTALL hpgltools && rm hpgltools_${VERSION}.tar.gz
-
 clean:
 	rm -rf hpgltools/
 	rm -rf hpgltools.Rcheck/
 	rm -rf hpgltools_${VERSION}.tar.gz
 
-install:
+prereq:
 	Rscript -e "source('http://bioconductor.org/biocLite.R');\
 pasilla = try(library('pasilla'));\
 if (class(pasilla) == 'try-error') { biocLite('pasilla'); library('pasilla') };\
