@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jan 27 11:14:11 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 27 11:26:42 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## differential_expression.R contains functions useful for differential expression tasks.
 
 
@@ -523,10 +523,10 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
 #        expt_data = ComBat(expt_data, subset$batches, condition_model)
         expt_data = cbcbSEQ::combatMod(expt_data, subset$batches, subset$conditions)
     }
-    expt_voom = myr::hpgl_voom(expt_data, model)
+    expt_voom = hpgltools::hpgl_voom(expt_data, model)
     lf = limma::lmFit(expt_voom)
     colnames(lf$coefficients)
-    coefficient_scatter = myr::hpgl_linear_scatter(lf$coefficients)
+    coefficient_scatter = hpgltools::hpgl_linear_scatter(lf$coefficients)
     colnames(lf$design)[1] = "changed"
     colnames(lf$coefficients)[1] = "changed"
     colnames(lf$design)[2] = "control"
@@ -543,27 +543,27 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
     contrast_matrix = limma::makeContrasts(changed_v_control = changed - control, levels=lf$design)
     cond_contrasts = contrasts.fit(lf, contrast_matrix)
     hist_df = data.frame(values=cond_contrasts$coefficients)
-    contrast_histogram = myr::hpgl_histogram(hist_df)
+    contrast_histogram = hpgltools::hpgl_histogram(hist_df)
     hist_df = data.frame(values=cond_contrasts$Amean)
-    amean_histogram = myr::hpgl_histogram(hist_df, fillcolor="pink", color="red")
+    amean_histogram = hpgltools::hpgl_histogram(hist_df, fillcolor="pink", color="red")
     coef_amean_cor = cor.test(cond_contrasts$coefficients, cond_contrasts$Amean, exact=FALSE)
     cond_comparison = limma::eBayes(cond_contrasts)
     hist_df = data.frame(values=cond_comparison$p.value)
-    pvalue_histogram = myr::hpgl_histogram(hist_df, fillcolor="lightblue", color="blue")
+    pvalue_histogram = hpgltools::hpgl_histogram(hist_df, fillcolor="lightblue", color="blue")
     cond_table = limma::topTable(cond_comparison, number=nrow(expt_voom$E), coef="changed_v_control", sort.by="logFC")
     if (!is.na(basename)) {
         vol_gvis_filename = paste(basename, "volplot.html", sep="_")
-        a_volcano_plot = myr::hpgl_volcano_plot(cond_table, gvis_filename=vol_gvis_filename, tooltip_data=tooltip_data)
+        a_volcano_plot = hpgltools::hpgl_volcano_plot(cond_table, gvis_filename=vol_gvis_filename, tooltip_data=tooltip_data)
     } else {
-        a_volcano_plot = myr::hpgl_volcano_plot(cond_table)
+        a_volcano_plot = hpgltools::hpgl_volcano_plot(cond_table)
     }
     if (!is.na(basename)) {
         ma_gvis_filename=paste(basename, "maplot.html", sep="_")
-        an_ma_plot = myr::hpgl_ma_plot(expt_voom$E, cond_table, gvis_filename=ma_gvis_filename, tooltip_data=tooltip_data)
+        an_ma_plot = hpgltools::hpgl_ma_plot(expt_voom$E, cond_table, gvis_filename=ma_gvis_filename, tooltip_data=tooltip_data)
     } else {
-        an_ma_plot = myr::hpgl_ma_plot(expt_voom$E, cond_table)
+        an_ma_plot = hpgltools::hpgl_ma_plot(expt_voom$E, cond_table)
     }
-    myr::write_xls(cond_table, sheet, file=workbook, rowname="row.names")
+    hpgltools::write_xls(cond_table, sheet, file=workbook, rowname="row.names")
     upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
     downsignificant_table = subset(cond_table, logFC <= (-1 * logfc_cutoff))
 #    psignificant_table = subset(cond_table, adj.P.Val <= pvalue_cutoff)

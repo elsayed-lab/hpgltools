@@ -236,12 +236,12 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         if (is.null(annotations)) {
             stop("RPKM conversion requires gene lengths.")
         }
-        counts = myr::hpgl_rpkm(counts, annotations=annotations)
+        counts = hpgltools::hpgl_rpkm(counts, annotations=annotations)
         count_table = edgeR::DGEList(counts=counts)
     } else if (convert == "cp_seq_m") {
         counts = count_table$counts
         counts = edgeR::cpm(counts)
-        counts = myr::divide_seq(counts, ...)
+        counts = hpgltools::divide_seq(counts, ...)
         count_table = edgeR::DGEList(counts=counts)
     } else {
         count_table = edgeR::DGEList(counts=count_table$counts)

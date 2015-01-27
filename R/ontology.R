@@ -274,7 +274,7 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
 ##    godata = goseq(pwf, gene2cat=goids, method='Wallenius')
     colnames(goids) = c("ID", "GO")
     godata = goseq::goseq(pwf, gene2cat=goids, use_genes_without_cat=TRUE, method=method)
-    goseq_p = myr::hpgl_histogram(godata$over_represented_pvalue, bins=20)
+    goseq_p = hpgltools::hpgl_histogram(godata$over_represented_pvalue, bins=20)
     goseq_p_second = sort(unique(table(goseq_p$data)), decreasing=TRUE)[2]
     ## Set the y scale to 2x the second highest number
     ## (assuming always that the highest is a p-value of 1)
@@ -598,18 +598,18 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
     cc_weight_result = topGO::getSigGroups(cc_GOdata, test_stat)
 
 
-    mf_fisher_pdist = myr::hpgl_histogram(mf_fisher_result@score, bins=20)
-    mf_ks_pdist = myr::hpgl_histogram(mf_ks_result@score, bins=20)
-    mf_el_pdist = myr::hpgl_histogram(mf_el_result@score, bins=20)
-    mf_weight_pdist = myr::hpgl_histogram(mf_weight_result@score, bins=20)
-    bp_fisher_pdist = myr::hpgl_histogram(bp_fisher_result@score, bins=20)
-    bp_ks_pdist = myr::hpgl_histogram(bp_ks_result@score, bins=20)
-    bp_el_pdist = myr::hpgl_histogram(bp_el_result@score, bins=20)
-    bp_weight_pdist = myr::hpgl_histogram(bp_weight_result@score, bins=20)
-    cc_fisher_pdist = myr::hpgl_histogram(cc_fisher_result@score, bins=20)
-    cc_ks_pdist = myr::hpgl_histogram(cc_ks_result@score, bins=20)
-    cc_el_pdist = myr::hpgl_histogram(cc_el_result@score, bins=20)
-    cc_weight_pdist = myr::hpgl_histogram(cc_weight_result@score, bins=20)
+    mf_fisher_pdist = hpgltools::hpgl_histogram(mf_fisher_result@score, bins=20)
+    mf_ks_pdist = hpgltools::hpgl_histogram(mf_ks_result@score, bins=20)
+    mf_el_pdist = hpgltools::hpgl_histogram(mf_el_result@score, bins=20)
+    mf_weight_pdist = hpgltools::hpgl_histogram(mf_weight_result@score, bins=20)
+    bp_fisher_pdist = hpgltools::hpgl_histogram(bp_fisher_result@score, bins=20)
+    bp_ks_pdist = hpgltools::hpgl_histogram(bp_ks_result@score, bins=20)
+    bp_el_pdist = hpgltools::hpgl_histogram(bp_el_result@score, bins=20)
+    bp_weight_pdist = hpgltools::hpgl_histogram(bp_weight_result@score, bins=20)
+    cc_fisher_pdist = hpgltools::hpgl_histogram(cc_fisher_result@score, bins=20)
+    cc_ks_pdist = hpgltools::hpgl_histogram(cc_ks_result@score, bins=20)
+    cc_el_pdist = hpgltools::hpgl_histogram(cc_el_result@score, bins=20)
+    cc_weight_pdist = hpgltools::hpgl_histogram(cc_weight_result@score, bins=20)
     p_dists = list(mf_fisher=mf_fisher_pdist, bp_fisher=bp_fisher_pdist, cc_fisher=cc_fisher_pdist,
         mf_ks=mf_ks_pdist, bp_ks=bp_ks_pdist, cc_ks=cc_ks_pdist,
         mf_el=mf_el_pdist, bp_el=bp_el_pdist, cc_el=cc_el_pdist,
@@ -893,7 +893,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         if (!is.null(gff)) {
             print("Generating the geneTable.rda")
             ## clusterProfiler::Gff2GeneTable(gff)
-            myr::Gff2GeneTable(gff)            
+            hpgltools::Gff2GeneTable(gff)            
         } else {
             stop("cluster Profiler requires a geneTable.rda, which requires a gff file to read.")
         }
@@ -920,26 +920,26 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     print(ego2)
     print("Starting MF(molecular function) analysis")
     mf_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
-    mf_all = myr::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    all_mf_phist = myr::hpgl_histogram(mf_all@result$pvalue, bins=20)
+    mf_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
+    all_mf_phist = hpgltools::hpgl_histogram(mf_all@result$pvalue, bins=20)
     y_limit = (sort(unique(table(all_mf_phist$data)), decreasing=TRUE)[2]) * 2
     all_mf_phist = all_mf_phist + scale_y_continuous(limits=c(0, y_limit))
-    enriched_mf = myr::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    enriched_mf = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
     
     print("Starting BP(biological process) analysis")
     bp_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
-    bp_all = myr::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    all_bp_phist = myr::hpgl_histogram(bp_all@result$pvalue, bins=20)
+    bp_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
+    all_bp_phist = hpgltools::hpgl_histogram(bp_all@result$pvalue, bins=20)
     y_limit = (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
     all_bp_phist = all_bp_phist + scale_y_continuous(limits=c(0, y_limit))
     
-    enriched_bp = myr::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    enriched_bp = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
 
     print("Starting CC(cellular component) analysis")
     cc_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="CC", level=golevel, readable=TRUE)
-    cc_all = myr::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    enriched_cc = myr::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
-    all_cc_phist = myr::hpgl_histogram(cc_all@result$pvalue, bins=50)
+    cc_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
+    enriched_cc = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    all_cc_phist = hpgltools::hpgl_histogram(cc_all@result$pvalue, bins=50)
     y_limit = (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
     all_cc_phist = all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
     
@@ -1666,7 +1666,7 @@ myGOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
     if(edgeTypes)
       ##    0 for a is_a relation,  1 for a part_of relation
         ##edgeAttrs$color <- ifelse(getEdgeWeights(dag) == 0, 'black', 'red')
-        edgeAttrs$color <- ifelse(myr::getEdgeWeights(dag) == 0, 'black', 'black')
+        edgeAttrs$color <- ifelse(hpgltools::getEdgeWeights(dag) == 0, 'black', 'black')
   
 
   ##plot(dag, attrs = graphAttrs, nodeAttrs = nodeAttrs, edgeAttrs = edgeAttrs)
@@ -1783,7 +1783,7 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
     if(edgeTypes)
       ##    0 for a is_a relation,  1 for a part_of relation
       ## edgeAttrs$color <- ifelse(getEdgeWeights(dag) == 0, 'black', 'red')
-      edgeAttrs$color <- ifelse(myr::getEdgeWeights(dag) == 0, 'black', 'black')
+      edgeAttrs$color <- ifelse(hpgltools::getEdgeWeights(dag) == 0, 'black', 'black')
   
 
   ##plot(dag, attrs = graphAttrs, nodeAttrs = nodeAttrs, edgeAttrs = edgeAttrs)

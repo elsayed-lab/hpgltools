@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jan 27 11:14:36 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 27 11:26:59 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -66,46 +66,46 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
     expt_colors = expt$colors
     expt_names = expt$names
     expt_raw_data = Biobase::exprs(expt$expressionset)
-    expt_norm_data = myr::hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low, ...)$counts
+    expt_norm_data = hpgltools::hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low, ...)$counts
     print("Graphing number of non-zero genes with respect to CPM by library.")
-    nonzero_plot = myr::graph_nonzero(expt=expt, title="Non zero genes.", ...)
+    nonzero_plot = hpgltools::graph_nonzero(expt=expt, title="Non zero genes.", ...)
     print("Graphing library sizes.")
-    libsize_plot = myr::hpgl_libsize(expt=expt, title="Library sizes.", ...)
+    libsize_plot = hpgltools::hpgl_libsize(expt=expt, title="Library sizes.", ...)
     print("Graphing a raw data boxplot on log scale.")
-    raw_boxplot = myr::hpgl_boxplot(expt=expt, title="Boxplot of log(raw data).", scale="log", ...)
+    raw_boxplot = hpgltools::hpgl_boxplot(expt=expt, title="Boxplot of log(raw data).", scale="log", ...)
     print("Graphing a normalized boxplot.")
-    norm_boxplot = myr::hpgl_boxplot(df=expt_norm_data, names=expt$names, colors=expt_colors, title="Boxplot of normalized data.", ...)
+    norm_boxplot = hpgltools::hpgl_boxplot(df=expt_norm_data, names=expt$names, colors=expt_colors, title="Boxplot of normalized data.", ...)
     print("Graphing a raw-data correlation heatmap.")
-    raw_corheat = myr::hpgl_corheat(expt=expt, method=cormethod, title="Correlation heatmap of raw data.", ...)
+    raw_corheat = hpgltools::hpgl_corheat(expt=expt, method=cormethod, title="Correlation heatmap of raw data.", ...)
     print("Graphing a raw-data standard median correlation.")
-    raw_smc = myr::hpgl_smc(expt=expt, method=cormethod, title="Standard Median Correlation, raw data.", ...)
+    raw_smc = hpgltools::hpgl_smc(expt=expt, method=cormethod, title="Standard Median Correlation, raw data.", ...)
     print("Graphing a normalized correlation heatmap.")
-    norm_corheat = myr::hpgl_corheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Corrleation heatmap of normalized data.", ...)
+    norm_corheat = hpgltools::hpgl_corheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Corrleation heatmap of normalized data.", ...)
     print("Graphing a normalized standard median correlation.")
-    norm_smc = myr::hpgl_smc(df=expt_norm_data, names=expt$names, colors=expt_colors, method=cormethod, title="Standard Median Correlation, norm. data.", ...)
+    norm_smc = hpgltools::hpgl_smc(df=expt_norm_data, names=expt$names, colors=expt_colors, method=cormethod, title="Standard Median Correlation, norm. data.", ...)
     print("Graphing a raw-data distance heatmap.")
-    raw_disheat = myr::hpgl_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...)
+    raw_disheat = hpgltools::hpgl_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...)
     print("Graphing a raw-data standard median distance.")
-    raw_smd = myr::hpgl_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...)
+    raw_smd = hpgltools::hpgl_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...)
     print("Graphing a normalized distance heatmap.")
-    norm_disheat = myr::hpgl_disheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap, norm. data.", ...)
+    norm_disheat = hpgltools::hpgl_disheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap, norm. data.", ...)
     print("Graphing a normalized standard median distance.")
-    norm_smd = myr::hpgl_smd(df=expt_norm_data, names=expt$names, colors=expt_colors, method=distmethod, title="Standard Median Distance, norm. data.", ...)
+    norm_smd = hpgltools::hpgl_smd(df=expt_norm_data, names=expt$names, colors=expt_colors, method=distmethod, title="Standard Median Distance, norm. data.", ...)
     print("Graphing a PCA plot of the raw data.")
-    raw_pca = try(myr::hpgl_pca(expt=expt, fancy_labels=FALSE, title="PCA plot of raw data.", ...))
+    raw_pca = try(hpgltools::hpgl_pca(expt=expt, fancy_labels=FALSE, title="PCA plot of raw data.", ...))
     print("Printing a qqplot of the raw data.")
-    raw_qq = try(myr::hpgl_qq_all(df=data.frame(exprs(expt$expressionset))))
-    raw_density = try(myr::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
-    norm_density = try(myr::hpgl_density_plot(df=expt_norm_data, title="Density plot of normalized data."))    
+    raw_qq = try(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset))))
+    raw_density = try(hpgltools::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
+    norm_density = try(hpgltools::hpgl_density_plot(df=expt_norm_data, title="Density plot of normalized data."))    
     print("Graphing a PCA plot of the normalized data.")
-    norm_pca = try(myr::hpgl_pca(df=expt_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
+    norm_pca = try(hpgltools::hpgl_pca(df=expt_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
     print("Printing a qqplot of the normalized data.")
-    norm_qq = try(myr::hpgl_qq_all(df=expt_norm_data))
+    norm_qq = try(hpgltools::hpgl_qq_all(df=expt_norm_data))
     batch_removed = limma::removeBatchEffect(Biobase::exprs(expt$expressionset), batch=expt$batches)
-    batch_boxplot = myr::hpgl_boxplot(df=batch_removed, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...)
-    batch_disheat = myr::hpgl_disheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...)
-    batch_corheat = myr::hpgl_corheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Correlation heatmap of batch removed data.", ...)
-    batch_pca = try(myr::hpgl_pca(df=batch_removed, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
+    batch_boxplot = hpgltools::hpgl_boxplot(df=batch_removed, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...)
+    batch_disheat = hpgltools::hpgl_disheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...)
+    batch_corheat = hpgltools::hpgl_corheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Correlation heatmap of batch removed data.", ...)
+    batch_pca = try(hpgltools::hpgl_pca(df=batch_removed, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
     
     ret_data = list(
         nonzero=nonzero_plot, libsize=libsize_plot, raw_boxplot=raw_boxplot,
@@ -622,7 +622,7 @@ hpgl_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pe
     }
     
     if (type == "correlation") {
-        heatmap_data = myr::hpgl_cor(hpgl_df, method=method)
+        heatmap_data = hpgltools::hpgl_cor(hpgl_df, method=method)
         heatmap_colors = grDevices::colorRampPalette(brewer.pal(9, "OrRd"))(100)
     } else if (type == "distance") {
         heatmap_data = as.matrix(dist(t(hpgl_df)), method=method)
@@ -643,11 +643,11 @@ hpgl_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pe
     ## A temporary hack for the ribosome profiling paper
     ## Correlation heatmaps shouldn't set the colormap for the moment.
     if (type == "correlation") {
-        myr::heatmap.3(heatmap_data, keysize=2, labRow=hpgl_names,
+        hpgltools::heatmap.3(heatmap_data, keysize=2, labRow=hpgl_names,
                   labCol=hpgl_names, ColSideColors=hpgl_colors, RowSideColors=row_colors,
                   margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
     } else {
-        myr::heatmap.3(heatmap_data, keysize=2, labRow=hpgl_names, col=rev(heatmap_colors),
+        hpgltools::heatmap.3(heatmap_data, keysize=2, labRow=hpgl_names, col=rev(heatmap_colors),
                   labCol=hpgl_names, ColSideColors=hpgl_colors, RowSideColors=row_colors,
                   margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
     }
@@ -1148,9 +1148,9 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
         }
         hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename, trendline=gvis_trendline)
     }
-    x_histogram = myr::hpgl_histogram(data.frame(df[,1]), verbose=verbose, fillcolor="lightblue", color="blue")
-    y_histogram = myr::hpgl_histogram(data.frame(df[,2]), verbose=verbose, fillcolor="pink", color="red")
-    both_histogram = myr::hpgl_multihistogram(df, verbose=verbose)
+    x_histogram = hpgltools::hpgl_histogram(data.frame(df[,1]), verbose=verbose, fillcolor="lightblue", color="blue")
+    y_histogram = hpgltools::hpgl_histogram(data.frame(df[,2]), verbose=verbose, fillcolor="pink", color="red")
+    both_histogram = hpgltools::hpgl_multihistogram(df, verbose=verbose)
     plots = list(scatter=first_vs_second,
         x_histogram=x_histogram,
         y_histogram=y_histogram,
