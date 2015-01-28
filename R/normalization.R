@@ -1,4 +1,4 @@
-#' Express a data frame of counts as reads per killobase(gene) per
+#' Express a data frame of counts as reads per kilobase(gene) per
 #' million(library).
 #'
 #' @param df a data frame of counts, alternately an edgeR DGEList
@@ -35,14 +35,18 @@ hpgl_log2cpm = function(counts) {
     t(log2(t(counts + 0.5) / (colSums(counts) + 1) * 1e+06))
 }
 
-divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.fasta", entry_type="gene") {
-    ## Testing parameters
-    ##counts=exprs(rnarpf_prometa_kexpt$expressionset)
-    ##pattern="ATG"
-    ##fasta="reference/lmajor_genome/TriTrypDB-6.0_LmajorFriedlin_Genome.fasta"
-    ##gff="reference/lmajor_genome/TriTrypDB-6.0_LmajorFriedlin_genes.gff"
-    ##entry_type="gene"
-    ##
+#' Express a data frame of counts as reads per pattern per
+#' million(library).
+#'
+#' @param counts read count matrix
+#' @param pattern pattern to search against.  Defaults to 'TA'
+#' @param fasta a fasta genome to search
+#' @param gff the gff set of annotations to define start/ends of genes.
+#' @param entry_type which type of gff entry to search against.  Defaults to 'gene'.
+#' 
+#' @return The 'RPseqM' counts
+#' @export
+divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff", entry_type="gene") {
     raw_seq = FaFile(fasta)
     gff_entries = import.gff3(gff, asRangedData=FALSE)
     cds_entries = subset(gff_entries, type==entry_type)

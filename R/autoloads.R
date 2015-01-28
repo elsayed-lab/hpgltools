@@ -1,4 +1,4 @@
-## Time-stamp: "Tue Jan 27 13:39:21 2015 Ashton Trey Belew (abelew@gmail.com)"
+## Time-stamp: "Wed Jan 28 16:33:30 2015 Ashton Trey Belew (abelew@gmail.com)"
 ## autoloads.R contains some short-cuts I wrote for myself to make
 ## installing/maintaining packages/dependencies easier
 ## 
@@ -147,9 +147,6 @@ autoloads_all = function(...) {
                bold = paste(mainfont, "style=Bold", sep = ":"),
                italic = paste("SimSun", "style=Regular", sep = ":"), 
                bolditalic = paste(mainfont, "style=Bold Italic,BoldItalic", sep = ":"))
-    opts_chunk$set(fig.width=800/192, fig.height=800/192, dpi=192, dev="png", bootstrap.thumbnail.size=12)
-
-    theme_set(theme_bw())
     pdf = CairoPDF
     png = CairoPNG
     x11 = CairoX11

@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 28 15:52:54 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jan 28 17:20:43 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -572,7 +572,7 @@ multiplot <- function(plots=NULL, file, cols=NULL, layout=NULL) {
   }
 }
     
-#' Make a heatmap2 description of the correlation between samples.
+#' Make a heatmap.3 description of the correlation between samples.
 #'
 #' @param expt an expt set of samples
 #' @param df alternately a data frame which must be accompanied by
@@ -593,7 +593,7 @@ hpgl_corheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pe
     hpgl_heatmap(df=df, colors=colors, design=design, expt=expt, method=method, names=names, type="correlation", row=row, title=title, ...)
 }
 
-#' Make a heatmap2 description of the similarity (euclildean distance) between samples.
+#' Make a heatmap.3 description of the similarity (euclildean distance) between samples.
 #'
 #' @param expt an expt set of samples
 #' @param df alternately a data frame which must be accompanied by
@@ -673,7 +673,7 @@ hpgl_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pe
     return(hpgl_heatmap_plot)
 }
 
-#' Make a heatmap2 description of the similarity of the genes among samples.
+#' Make a heatmap.3 description of the similarity of the genes among samples.
 #'
 #' @param expt an expt set of samples
 #' @param df alternately a data frame which must be accompanied by
@@ -686,7 +686,7 @@ hpgl_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pe
 #' \code{\link{heatmap.3}}, \code{\link{recordPlot}}
 #' 
 #' @export
-sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
+hpgl_sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
     hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
@@ -1113,10 +1113,6 @@ hpgl_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL
 #' @examples
 #' ## hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
 hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, histargs=NULL, loess=FALSE, identity=FALSE, gvis_trendline=NULL, ...) {
-    ## Test options
-###    df = comp_5448
-###    cormethod = "kendal"
-    ##
     hpgl_env = environment()    
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
@@ -1204,15 +1200,6 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
 #' @examples
 #' ## kittytime = hpgl_histogram(df)
 hpgl_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE, fillcolor="darkgrey", color="black") {
-    ### Test arguments
-    #df = data_list
-    #binwidth = NULL
-    #log = FALSE
-    #bins = 500
-    #verbose = TRUE
-    #color = "black"
-    #fillcolor = "grey"
-    ### End test arguments
     hpgl_env = environment()
     if (class(df) == "data.frame") {
         colnames(df) = c("values")
@@ -1261,13 +1248,6 @@ hpgl_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE,
 #' @examples
 #' ## kittytime = hpgl_multihistogram(df)
 hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=FALSE) {
-    ### Test argument
-    #data = data_list
-    #log = FALSE
-    #binwidth = NULL
-    #bins = 500
-    #verbose = TRUE
-    ### End test argument
     if (is.data.frame(data)) {
         df = data
         columns = colnames(df)
@@ -1419,15 +1399,6 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
 #' ## gives adjusted p-values.  This is not always the case and I should
 #' ## check for that, but I have not yet.
 hpgl_volcano_plot = function(toptable_data, tooltip_data=NULL, gvis_filename=NULL, fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6, ...) {
-    ### Testing parameters
-    ##toptable_data = cond_table
-    ##tooltip_data = tooltip_data_5448
-    ##gvis_filename=vol_gvis_filename
-    ##fc_cutoff=0.8
-    ##p_cutoff=0.05
-    ##size=3
-    ##alpha=0.6
-    ### End testing parameters
     hpgl_env = environment()
     low_vert_line = 0.0 - fc_cutoff
     horiz_line = -1 * log10(p_cutoff)
