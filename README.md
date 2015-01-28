@@ -14,6 +14,26 @@ analyses.
 
 ## Installation
 
+There are two likely methods of installing this package:
+
+* If one has Hadley's devtools installed, then run the following from R:
+
+> install_github("elsayed-lab/hpgltools")
+Upon completion, if one wishes to update/install the various
+packages used in this, perform:
+> autoload_all(update=TRUE)
+
+* Otherwise:
+
+Download the package via 'git pull' or a zip or whatever, go
+into the hpgltools/ directory and perform:
+> make
+one may perform
+> make prereq to install some datasets and helpers
+or
+> make build
+to have it regenerate the vignettes and check for (new) problems.
+
 ## Functionality
 
 ### autoloads.R
