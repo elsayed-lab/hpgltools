@@ -67,7 +67,6 @@ divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.fa
 #' Filter low-count genes from a data set.
 #'
 #' @param df input data frame of counts by sample
-#' @param lib.size optional list of library sizes
 #' @param thresh lower threshold of counts (4 by default)
 #' @param minSamples minimum number of samples
 #' @return dataframe of counts without the low-count genes
@@ -75,8 +74,8 @@ divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.fa
 #' @export
 #' @examples
 #' ## filtered_table = filter_counts(count_table)
-filter_counts = function(counts, lib.size=NULL, thresh=4, minSamples=2) {
-    cpms = 2 ^ cbcbSEQ::log2CPM(counts, lib.size=lib.size)$y
+filter_counts = function(counts, thresh=4, minSamples=2) {
+    cpms = 2^hpgl_log2cpm(counts)
     keep = rowSums(cpms > thresh) >= minSamples
     counts = counts[keep,]
     return(counts)
@@ -138,7 +137,6 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
 #' df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
 #' df_ql2rpkm = hpgl_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
 #' count_table = df_ql2rpkm$counts
-#' library_size = df_ql2rpkm$lib.size
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm
 hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", filter_low=TRUE, annotations=NULL, verbose=FALSE, ...) {
     ## Testing args
