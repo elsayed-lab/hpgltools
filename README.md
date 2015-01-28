@@ -65,6 +65,7 @@ Handle simple count table operations
 Some simple normalization functions.
 
 - **hpgl_rpkm**: Calculate RPKM using a gff annotation and data frame
+- **hpgl_log2cpm**: Convert count matrix to log2 counts-per-million reads
 - **divide_seq**: Calculate RPKseqM -- reads per Kilo-sequence Million reads, useful for TNSeq and normalizing by # of TAs
 - **hpgl_norm**: Wrapper for the many possible normalization schemes, standardizes them all into a DGEList
 

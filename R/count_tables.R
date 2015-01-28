@@ -213,24 +213,40 @@ expt_subset = function(expt, subset) {
 #'
 #' @param ids a list of experimental ids
 #' @param files a list of files to read
+#' @param header whether or not the count tables include a header row
+#'        (default: FALSE)
+#' @param include_summary_rows whether HTSeq summary rows should be included
+#'        (default: FALSE)
 #' 
-#' @return  initial_count a data frame of count tables
+#' @return  count_table a data frame of count tables
 #' @seealso \code{\link{create_experiment}}
 #' 
 #' @export
 #' @examples
 #' ## count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
-hpgl_read_files = function(ids, files, header=FALSE, ...) {
-    initial_count = read.table(files[1], ...)
-    colnames(initial_count) = c("ID", ids[1])
+hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE, ...) {
+    # load first sample
+    count_table = read.table(files[1], ...)
+    colnames(count_table) = c("ID", ids[1])
+
+    # iterate over and append remaining samples
     for (table in 2:length(files)) {
         tmp_count = read.table(files[table], header=header)
         colnames(tmp_count) = c("ID", ids[table])
-        initial_count = merge(initial_count, tmp_count, by="ID")
+        count_table = merge(count_table, tmp_count, by="ID")
     }
     rm(tmp_count)
-    rownames(initial_count) = initial_count$ID
-    initial_count = initial_count[-1]
-    colnames(initial_count) = ids
-    return(initial_count)
+
+    # set row and columns ids
+    rownames(count_table) = count_table$ID
+    count_table = count_table[-1]
+    colnames(count_table) = ids
+
+    # remove summary fields added by HTSeq
+    if (!include_summary_rows) {
+        htseq_meta_rows = c('__no_feature', '__ambiguous', '__too_low_aQual',
+                            '__not_aligned', '__alignment_not_unique')
+        count_table = count_table[!rownames(count_table) %in% htseq_meta_rows,]
+    }
+    return(count_table)
 }
