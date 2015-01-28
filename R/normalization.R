@@ -114,10 +114,9 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
 #' @param transform defines whether to log(2|10) transform the
 #' data. Defaults to raw.
 #' @param norm specify the normalization strategy.  Defaults to
-#' raw.  This makes use of DESeq/EdgeR/cbcbSEQ to provide: quantile,
-#' RLE, upperquartile, size-factor, or tmm normalization.  I tend to
-#' like quantile, but there are definitely corner-case scenarios for
-#' all strategies.
+#' raw.  This makes use of DESeq/EdgeR to provide: RLE, upperquartile,
+#' size-factor, or tmm normalization.  I tend to like quantile, but there are
+#' definitely corner-case scenarios for all strategies.
 #' @param filter_low choose whether to low-count filter the data.
 #' Defaults to true.
 #' @param annotations is used for rpkm or sequence normalizations to
@@ -189,8 +188,14 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         colnames(count_table) = rownames(column_data)
         count_table = edgeR::DGEList(counts=count_table)
     } else if (norm == "quant") {
-        ## Quantile normalization is documented in Kwame's cbcbSEQ
-        count_table = cbcbSEQ::qNorm(count_table)
+        # Quantile normalization (Bolstad et al., 2003)
+        count_rownames = rownames(count_table)
+        count_colnames = colnames(count_table)
+        count_table = normalize.quantiles(as.matrix(count_table))
+        rownames(count_table) = count_rownames
+        colnames(count_table) = count_colnames
+
+        # Convert to a DGEList
         count_table = edgeR::DGEList(counts=count_table)
     } else if (norm == "tmm") {
         ## TMM normalization is documented in edgeR
