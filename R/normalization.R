@@ -80,7 +80,8 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
     if (is.null(new_expt$original_expressionset)) {
         new_expt$original_expressionset = new_expt$expressionset
     } else {
-        print("This function defaults to using the original expressionset for normalization.")
+        print(paste("This function defaults to replacing the expt$expressionset slot with the ", transform, "(", norm, "(", convert, "))'d data.", sep=""))
+        print("It saves the current data into a slot named: expt$backup_expressionset")
     }
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)
