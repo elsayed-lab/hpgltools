@@ -213,6 +213,10 @@ expt_subset = function(expt, subset) {
 #'
 #' @param ids a list of experimental ids
 #' @param files a list of files to read
+#' @param header whether or not the count tables include a header row
+#'        (default: FALSE)
+#' @param include_summary_rows whether HTSeq summary rows should be included
+#'        (default: FALSE)
 #' 
 #' @return  count_table a data frame of count tables
 #' @seealso \code{\link{create_experiment}}

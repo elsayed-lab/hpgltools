@@ -21,6 +21,20 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
     return(rpkm_df)
 }
 
+#' Converts count matrix to log2 counts-per-million reads.
+#'
+#' Based on the method used by limma as described in the Law et al. (2014) voom
+#' paper.
+#'
+#' @param counts read count matrix
+#' 
+#' @return log2-CPM read count matrix
+#' @export
+#'
+hpgl_log2cpm = function(counts) {
+    t(log2(t(counts + 0.5) / (colSums(counts) + 1) * 1e+06))
+}
+
 divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.fasta", entry_type="gene") {
     ## Testing parameters
     ##counts=exprs(rnarpf_prometa_kexpt$expressionset)
