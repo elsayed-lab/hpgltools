@@ -626,15 +626,15 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
     mf_first_density = bp_first_density = cc_first_density = NULL
     if (class(tables$mf) != 'try-error') {
         mf_first_group = tables$mf[1, "GO.ID"]
-        mf_first_density = myGroupDensity(mf_GOdata, mf_first_group, ranks=TRUE)
+        mf_first_density = hpgl_GroupDensity(mf_GOdata, mf_first_group, ranks=TRUE)
     }
     if (class(tables$bp) != 'try-error') {
         bp_first_group = tables$bp[1, "GO.ID"]
-        bp_first_density = myGroupDensity(bp_GOdata, bp_first_group, ranks=TRUE )
+        bp_first_density = hpgl_GroupDensity(bp_GOdata, bp_first_group, ranks=TRUE )
     }
     if(class(tables$cc) != 'try-error') {
         cc_first_group = tables$cc[1, "GO.ID"]
-        cc_first_density = myGroupDensity(cc_GOdata, cc_first_group, ranks=TRUE  )
+        cc_first_density = hpgl_GroupDensity(cc_GOdata, cc_first_group, ranks=TRUE  )
     }
     first_densities = list(mf=mf_first_density, bp=bp_first_density, cc=cc_first_density)
     
@@ -746,7 +746,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     mf_fisher_nodes = mf_fisher_tree = NULL
     if (do_mf_fisher_tree) {
         included = length(which(topGO::score(tg$results$mf_fisher) <= score_limit))
-        mf_fisher_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_fisher), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        mf_fisher_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_fisher), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_fisher_nodes)[1] != 'try-error') {
             mf_fisher_tree = try(recordPlot())
         }
@@ -754,7 +754,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     bp_fisher_nodes = bp_fisher_tree = NULL
     if (do_bp_fisher_tree) {
         included = length(which(topGO::score(tg$results$bp_fisher) <= score_limit))
-        bp_fisher_nodes = try(suppressWarnings(showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_fisher), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        bp_fisher_nodes = try(suppressWarnings(showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_fisher), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_fisher_nodes)[1] != 'try-error') {
             bp_fisher_tree = try(recordPlot())
         }
@@ -762,7 +762,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     cc_fisher_nodes = cc_fisher_tree = NULL
     if (do_cc_fisher_tree) {
         included = length(which(topGO::score(tg$results$cc_fisher) <= score_limit))        
-        cc_fisher_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_fisher), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        cc_fisher_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_fisher), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_fisher_nodes)[1] != 'try-error') {
             cc_fisher_tree = try(recordPlot())
         }
@@ -770,7 +770,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     mf_ks_nodes = mf_ks_tree = NULL
     if (do_mf_ks_tree) {
         included = length(which(topGO::score(tg$results$mf_ks) <= score_limit))        
-        mf_ks_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_ks), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        mf_ks_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_ks), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_ks_nodes)[1] != 'try-error') {
             mf_ks_tree = try(recordPlot())
         }
@@ -778,7 +778,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     bp_ks_nodes = bp_ks_tree = NULL
     if (do_bp_ks_tree) {
         included = length(which(topGO::score(tg$results$bp_ks) <= score_limit))
-        bp_ks_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_ks), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        bp_ks_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_ks), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_ks_nodes)[1] != 'try-error') {
             bp_ks_tree = try(recordPlot())
         }
@@ -786,7 +786,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     cc_ks_nodes = cc_ks_tree = NULL
     if (do_cc_ks_tree) {
         included = length(which(topGO::score(tg$results$cc_ks) <= score_limit))        
-        cc_ks_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_ks), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        cc_ks_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_ks), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_ks_nodes)[1] != 'try-error') {
             cc_ks_tree = try(recordPlot())
         }
@@ -794,7 +794,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     mf_el_nodes = mf_el_tree = NULL
     if (do_mf_el_tree) {
         included = length(which(topGO::score(tg$results$mf_el) <= score_limit))        
-        mf_el_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_el), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        mf_el_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_el), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_el_nodes)[1] != 'try-error') {
             mf_el_tree = try(recordPlot())
         }
@@ -802,7 +802,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     bp_el_nodes = bp_el_tree = NULL
     if (do_bp_el_tree) {
         included = length(which(topGO::score(tg$results$bp_el) <= score_limit))                
-        bp_el_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_el), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        bp_el_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_el), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_el_nodes)[1] != 'try-error') {
             bp_el_tree = try(recordPlot())
         }
@@ -810,7 +810,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     cc_el_nodes = cc_el_tree = NULL
     if (do_cc_el_tree) {
         included = length(which(topGO::score(tg$results$cc_el) <= score_limit))                
-        cc_el_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_el), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        cc_el_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_el), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_el_nodes)[1] != 'try-error') {
             cc_el_tree = try(recordPlot())
         }
@@ -818,7 +818,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     mf_weight_nodes = mf_weight_tree = NULL
     if (do_mf_weight_tree) {
         included = length(which(topGO::score(tg$results$mf_weight) <= score_limit))                
-        mf_weight_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_weight), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        mf_weight_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_weight), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_weight_nodes)[1] != 'try-error') {
             mf_weight_tree = try(recordPlot())
         }
@@ -826,7 +826,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     bp_weight_nodes = bp_weight_tree = NULL
     if (do_bp_weight_tree) {
         included = length(which(topGO::score(tg$results$bp_weight) <= score_limit))                
-        bp_weight_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_weight), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        bp_weight_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_weight), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_weight_nodes)[1] != 'try-error') {
             bp_weight_tree = try(recordPlot())
         }
@@ -834,7 +834,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     cc_weight_nodes = cc_weight_tree = NULL
     if (do_cc_weight_tree) {
         included = length(which(topGO::score(tg$results$cc_weight) <= score_limit))                
-        cc_weight_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_weight), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=myGOplot)))
+        cc_weight_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_weight), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_weight_nodes)[1] != 'try-error') {
             cc_weight_tree = try(recordPlot())
         }
@@ -1121,7 +1121,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     names(mf_avail_nodes) = mf_GOdata@graph@nodes
     mf_nodes = enriched_scores[names(enriched_scores) %in% names(mf_avail_nodes)]
     mf_included = length(which(mf_nodes <= score_limit))
-    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=myGOplot)))
+    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(mf_tree_data) == 'try-error') {
         print("There was an error generating the MF tree.")
         mf_tree = NULL
@@ -1133,7 +1133,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     names(bp_avail_nodes) = bp_GOdata@graph@nodes
     bp_nodes = enriched_scores[names(enriched_scores) %in% names(bp_avail_nodes)]
     bp_included = length(which(bp_nodes <= score_limit))
-    bp_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_included, useFullNames=TRUE, plotFunction=myGOplot)))
+    bp_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(bp_tree_data) == 'try-error') {
         print("There was an error generating the BP tree.")
         bp_tree = NULL
@@ -1145,7 +1145,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     names(cc_avail_nodes) = cc_GOdata@graph@nodes
     cc_nodes = enriched_scores[names(enriched_scores) %in% names(cc_avail_nodes)]
     cc_included = length(which(cc_nodes <= score_limit))
-    cc_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_included, useFullNames=TRUE, plotFunction=myGOplot)))
+    cc_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(cc_tree_data) == 'try-error') {
         print("There was an error generating the CC tree.")
         cc_tree = NULL
@@ -1211,21 +1211,21 @@ cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", go
     names(bp_all_scores) = bp_all_ids
     names(cc_all_scores) = cc_all_ids
     mf_included = length(which(mf_all_scores <= score_limit))
-    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=myGOplot)))
+    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(mf_tree_data)[1] == 'try-error') {
         mf_tree = NULL
     } else {
         mf_tree = recordPlot()
     }
     bp_included = length(which(bp_all_scores <= score_limit))
-    bp_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_included, useFullNames=TRUE, plotFunction=myGOplot)))
+    bp_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(bp_tree_data)[1] == 'try-error') {
         bp_tree = NULL
     } else {
         bp_tree = recordPlot()
     }
     cc_included = length(which(cc_all_scores <= score_limit))
-    cc_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_included, useFullNames=TRUE, plotFunction=myGOplot)))
+    cc_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(cc_tree_data)[1] == 'try-error') {
         cc_tree = NULL
     } else {
@@ -1541,7 +1541,7 @@ getEdgeWeights <- function (graph) {
 #' A minor hack in the topGO GOplot function
 #'
 #' @export
-myGOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
+hpgl_GOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
                      nodeShape.type = c('box', 'circle', 'ellipse', 'plaintext')[3],
                      genNodes = NULL, wantedNodes = NULL, showEdges = T, useFullNames = T,
                      oldSigNodes = NULL, nodeInfo=nodeInfo, maxchars=30) {
@@ -1793,7 +1793,7 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
 }
 
 
-myGroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
+hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     ## Testing parameters
     ##object = mf_GOdata
     ##whichGO = mf_first_group
@@ -1864,7 +1864,7 @@ parseKGML2Graph2 <-function (file, ...) {
     return(gR)
 }
 
-mybase_pathview = function (gene.data = NULL, cpd.data = NULL, xml.file = NULL, 
+hpgl_base_pathview = function (gene.data = NULL, cpd.data = NULL, xml.file = NULL, 
     pathway.id, species = "hsa", kegg.dir = ".", cpd.idtype = "kegg", 
     gene.idtype = "entrez", gene.annotpkg = NULL, min.nnodes = 3, 
     kegg.native = TRUE, map.null = TRUE, expand.node = FALSE, 
@@ -2120,5 +2120,3 @@ mybase_pathview = function (gene.data = NULL, cpd.data = NULL, xml.file = NULL,
     }
     return(invisible(list(plot.data.gene = plot.data.gene, plot.data.cpd = plot.data.cpd)))
 }
-
-

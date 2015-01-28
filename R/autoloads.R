@@ -1,4 +1,4 @@
-## Time-stamp: "Tue Jan 27 11:13:50 2015 Ashton Trey Belew (abelew@gmail.com)"
+## Time-stamp: "Tue Jan 27 13:39:21 2015 Ashton Trey Belew (abelew@gmail.com)"
 ## autoloads.R contains some short-cuts I wrote for myself to make
 ## installing/maintaining packages/dependencies easier
 ## 
@@ -83,6 +83,7 @@ autoloads_graphs = function(...) {
     require.auto("ggplot2")
     require.auto("googleVis")
     require.auto("gplots")
+    require.auto("grid")
     require.auto("gridExtra")
     require.auto("RColorBrewer")
     require.auto("Rgraphviz")    
@@ -146,7 +147,6 @@ autoloads_all = function(...) {
                bold = paste(mainfont, "style=Bold", sep = ":"),
                italic = paste("SimSun", "style=Regular", sep = ":"), 
                bolditalic = paste(mainfont, "style=Bold Italic,BoldItalic", sep = ":"))
-    workbook = loadWorkbook("excel/workbook.xls", create = TRUE)
     opts_chunk$set(fig.width=800/192, fig.height=800/192, dpi=192, dev="png", bootstrap.thumbnail.size=12)
 
     theme_set(theme_bw())

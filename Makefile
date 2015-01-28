@@ -29,4 +29,4 @@ knitrbootstrap = try(library('knitrBootstrap'));\
 if (class(knitrbootstrap) == 'try-error') { install_github('jimhester/knitrBootstrap'); library('knitrBootstrap') };\
 cbcbSEQ = try(library('cbcbSEQ')); \
 if (class(cbcbSEQ) == 'try-error') { install_github('kokrah/cbcbSEQ'); library('cbcbSEQ') };\
-" ;	cd .. && R CMD build hpgltools ; R CMD INSTALL hpgltools_0.1.tar.gz ; cd hpgltools && R CMD INSTALL googleVis && R CMD INSTALL BSgenome.Lmajor.friedlin ; Rscript -e "require(hpgltools)" 
+" ;	cd .. && R CMD INSTALL hpgltools_0.1.tar.gz ; cd hpgltools ; Rscript -e "library(hpgltools); autoloads_all(update=TRUE)" 

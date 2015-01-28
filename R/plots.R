@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jan 27 11:26:59 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jan 28 11:25:30 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -438,7 +438,6 @@ hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
 #' @return a multiplot!
 #' @export
 multiplot <- function(plots=NULL, file, cols=NULL, layout=NULL) {
-  require.auto("grid")
   ## Make a list from the ... arguments and plotlist
   ##  plots <- c(list(...), plotlist)
   numPlots = length(plots)
@@ -1328,12 +1327,6 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
 #' @return a density plot!
 #' @export
 hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, position="identity", fill=NULL, title=NULL) {
-    ## Other interesting positions: fill, stack
-    ## Testing params
-    ##expt = kept_qcpml2
-    ##position="identity"
-    ##fill=TRUE
-    ## End test params
     hpgl_env = environment()
     print("This plot looks neat if you do position='fill' or position='stack'")
     if (is.null(expt) & is.null(df)) {
@@ -1355,7 +1348,7 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
         colnames(hpgl_df) = make.names(hpgl_names, unique=TRUE)
     }
     melted = reshape::melt(hpgl_df)
-    colnames(melted) = c("gene", "cond", "counts")
+    colnames(melted) = c("cond", "counts")
 
     colors = factor(hpgl_colors)    
     if (is.null(hpgl_colors)) {
@@ -1366,7 +1359,7 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
     }
     densityplot = ggplot2::ggplot(data=melted, aes(x=counts, colour=cond, fill=fill), environment=hpgl_env) +
         geom_density(aes(x=counts, y=..count..), position=position) +
-            theme_bw()
+        theme_bw()
     if (!is.null(title)) {
         densityplot = densityplot + ggplot2::ggtitle(title)
     }
