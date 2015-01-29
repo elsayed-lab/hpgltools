@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 28 11:25:30 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jan 28 17:20:43 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -94,13 +94,13 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
     print("Graphing a PCA plot of the raw data.")
     raw_pca = try(hpgltools::hpgl_pca(expt=expt, fancy_labels=FALSE, title="PCA plot of raw data.", ...))
     print("Printing a qqplot of the raw data.")
-    raw_qq = try(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset))))
+    raw_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
     raw_density = try(hpgltools::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
     norm_density = try(hpgltools::hpgl_density_plot(df=expt_norm_data, title="Density plot of normalized data."))    
     print("Graphing a PCA plot of the normalized data.")
     norm_pca = try(hpgltools::hpgl_pca(df=expt_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
     print("Printing a qqplot of the normalized data.")
-    norm_qq = try(hpgltools::hpgl_qq_all(df=expt_norm_data))
+    norm_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=expt_norm_data)))
     batch_removed = limma::removeBatchEffect(Biobase::exprs(expt$expressionset), batch=expt$batches)
     batch_boxplot = hpgltools::hpgl_boxplot(df=batch_removed, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...)
     batch_disheat = hpgltools::hpgl_disheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...)
@@ -116,7 +116,7 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
         raw_pcatable=raw_pca$table, norm_pcatable=norm_pca$table,
         raw_pcares=raw_pca$res, norm_pcares=norm_pca$res,
         raw_pcavar=raw_pca$variance, norm_pcavar=norm_pca$variance,
-        raw_qq=raw_qq, norm_qq=norm_qq,
+        raw_qq=raw_qq, ##norm_qq=norm_qq,
         raw_density=raw_density, norm_density=norm_density,
         batch_boxplot=batch_boxplot, batch_disheat=batch_disheat, batch_corheat=batch_corheat,
         batch_pcaplot=batch_pca$plot, batch_pcatable=batch_pca$table,
@@ -167,7 +167,7 @@ graph_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, title=NUL
         condition=hpgl_design$condition,
         batch=hpgl_design$batch)
     non_zero_plot = ggplot2::ggplot(data=non_zero, ggplot2::aes(x=cpm, y=nonzero_genes), environment=hpgl_env,
-           colour=hpgl_colors, shape=hpgl_shapes) +
+        colour=hpgl_colors, shape=hpgl_shapes) +
         geom_point(stat="identity", size=3, colour=hpgl_colors, shape=hpgl_shapes) +
         directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_colors) +
         ylab("Number of non-zero genes observed.") +
@@ -288,24 +288,25 @@ hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=
         hpgl_colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
     }
     hpgl_df = data.frame(hpgl_df)
+    if (scale == "log") {
+        hpgl_df = hpgl_df + 1
+        hpgl_df = log2(hpgl_df)
+    }    
     hpgl_df$id = rownames(hpgl_df)
-    dataframe = melt(hpgl_df)
+    dataframe = melt(hpgl_df, id=c("id"))
     colnames(dataframe) = c("gene","variable","value")
     boxplot = ggplot2::ggplot(data=dataframe, aes(x=variable, y=value)) +
-        geom_boxplot(aes(fill=variable),
+        suppressWarnings(geom_boxplot(aes(fill=variable),
                      fill=hpgl_colors,
                      size=0.5,
                      outlier.size=1.5,
-                     outlier.colour=alpha("black", 0.2)) +
+                     outlier.colour=alpha("black", 0.2))) +
         theme_bw() +
         theme(axis.text.x = element_text(angle=90, hjust=1)) +
         xlab("Sample") +
         ylab("Per-gene log(counts)")
     if (!is.null(title)) {
         boxplot = boxplot + ggtitle(title)
-    }
-    if (scale != "raw") {
-        boxplot = boxplot + scale_y_log10()
     }
     if (!is.null(hpgl_names)) {
         boxplot = boxplot + scale_x_discrete(labels=hpgl_names)
@@ -327,7 +328,7 @@ hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=
 #'   means = a table of the median values of all the summaries of the qq plots
 #'
 #' @export
-hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
+hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE, labels="short") {
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
@@ -342,8 +343,8 @@ hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
     ## This is bizarre, performing this operation with transform fails when called from a function
     ## but works fine when called interactively, wtf indeed?
     ##    sample_data = transform(sample_data, mean=rowMeans(hpgl_df))
-    wtf = rowMeans(hpgl_df)    
-    sample_data$mean=wtf
+    means = rowMeans(hpgl_df)
+    sample_data$mean=means
     logs = list()
     ratios = list()
     means = list()
@@ -357,8 +358,9 @@ hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
         if (verbose) {
             print(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
         }
-        tmpdf = data.frame(hpgl_df[,i], sample_data$mean)
-        tmpqq = hpgl_qq_plot(df=tmpdf, x=1, y=2, labels=FALSE)
+        tmpdf = data.frame(ith=hpgl_df[,i], mean=sample_data$mean)
+        colnames(tmpdf) = c(ith, "mean")
+        tmpqq = hpgl_qq_plot(df=tmpdf, x=1, y=2, labels=labels)
         logs[[count]] = tmpqq$log
         ratios[[count]] = tmpqq$ratio
         means[[count]] = tmpqq$summary[['Median']]
@@ -372,6 +374,112 @@ hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
     return(plots)
 }
 
+#' Perform a qqplot between two columns of a matrix
+#'
+#' @param a data frame
+#' @param or an expt!
+#' @param x the first column
+#' @param y the second column
+#' @param labels whether to include the labels
+#'
+#' @return a list of the logs, ratios, and mean between the plots as ggplots.
+#' @export
+hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
+    hpgl_env = environment()    
+    if (is.null(expt) & is.null(df)) {
+        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
+    }
+    if (is.null(df)) {
+        hpgl_df = exprs(expt$expressionset)
+    } else {
+        hpgl_df = df
+    }
+    xlabel = colnames(hpgl_df)[x]
+    ylabel = colnames(hpgl_df)[y]
+    xvector = as.vector(hpgl_df[,x])
+    yvector = as.vector(hpgl_df[,y])
+    sorted_x = sort(xvector)
+    sorted_y = sort(yvector)
+    vector_ratio = sorted_x / sorted_y
+    increment = as.vector(1:length(vector_ratio))
+    ratio_df = data.frame(cbind(increment, sorted_x, sorted_y, vector_ratio))
+    if (labels == "short") {
+        y_string = paste(xlabel, " : ", ylabel, sep="")
+    } else {
+        y_string = paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
+    }
+    ratio_plot = ggplot2::ggplot(ratio_df, aes(x=increment, y=vector_ratio), environment=hpgl_env) +
+        geom_point(colour=suppressWarnings(densCols(vector_ratio)), stat="identity", size=1, alpha=0.2, na.rm=TRUE) +
+        scale_y_continuous(limits=c(0,2))
+    if (isTRUE(labels)) {
+        ratio_plot = ratio_plot + xlab("Sorted gene") + ylab(y_string) + theme(legend.position="none")
+    } else if (labels == "short") {
+        ratio_plot = ratio_plot + ylab(y_string) +
+            theme(axis.text.x=element_blank(),
+                  axis.text.y=element_blank(),
+                  axis.ticks=element_blank(),
+                  axis.title.x=element_blank(),
+                  legend.position="none",
+                  panel.background=element_blank(),
+                  panel.border=element_blank(),
+                  panel.grid.major=element_blank(),
+                  panel.grid.minor=element_blank(),
+                  plot.background=element_blank())                  
+    } else {
+        ratio_plot = ratio_plot + theme(axis.line=element_blank(),
+            axis.text.x=element_blank(),
+            axis.text.y=element_blank(),
+            axis.ticks=element_blank(),
+            axis.title.x=element_blank(),
+            axis.title.y=element_blank(),
+            legend.position="none",
+            panel.background=element_blank(),
+            panel.border=element_blank(),
+            panel.grid.major=element_blank(),
+            panel.grid.minor=element_blank(),
+            plot.background=element_blank())
+    }
+
+    log_df = data.frame(cbind(log(sorted_x), log(sorted_y)))
+    gg_max = max(log_df)
+    colnames(log_df) = c(xlabel, ylabel)
+    log_df$sub = log_df[,1] - log_df[,2]
+    log_ratio_plot = ggplot2::ggplot(log_df, aes(x=get(xlabel), y=get(ylabel)), environment=hpgl_env) +
+        geom_point(colour=suppressWarnings(densCols(sorted_x, sorted_y)), na.rm=TRUE) +
+        scale_y_continuous(limits=c(0, gg_max)) + scale_x_continuous(limits=c(0, gg_max))
+    if (isTRUE(labels)) {
+        log_ratio_plot = log_ratio_plot + xlab(paste("log sorted ", xlabel)) + ylab(paste("log sorted ", ylabel)) + theme(legend.position="none")
+    } else if (labels == "short") {
+        log_ratio_plot = log_ratio_plot + xlab("gene") + ylab(y_string) +
+            theme(axis.text.x=element_blank(),
+                  axis.text.y=element_blank(),
+                  axis.ticks=element_blank(),
+                  axis.title.x=element_blank(),
+                  legend.position="none",
+                  panel.background=element_blank(),
+                  panel.border=element_blank(),
+                  panel.grid.major=element_blank(),
+                  panel.grid.minor=element_blank(),
+                  plot.background=element_blank())                          
+    } else {
+        log_ratio_plot = log_ratio_plot +
+            theme(axis.line=element_blank(),
+                  axis.text.x=element_blank(),
+                  axis.text.y=element_blank(),
+                  axis.ticks=element_blank(),
+                  axis.title.x=element_blank(),
+                  axis.title.y=element_blank(),
+                  legend.position="none",
+                  panel.background=element_blank(),
+                  panel.border=element_blank(),
+                  panel.grid.major=element_blank(),
+                  panel.grid.minor=element_blank(),
+                  plot.background=element_blank())
+    }
+    log_summary = summary(log_df$sub)
+    qq_plots = list(ratio=ratio_plot, log=log_ratio_plot, summary=log_summary)
+    return(qq_plots)
+}
 
 #' Perform qq plots of every column against every other column of a dataset
 #'
@@ -382,13 +490,6 @@ hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE) {
 #'
 #' @export
 hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
-    ## Testing parameters
-    ##expt=NULL
-    ##df = test_data
-    ##hpgl_df = all_qcpml2_df[,c(1,2,3,4)]$counts    
-    ##x = 1
-    ##y = 2
-    ## End test parameters
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
@@ -410,7 +511,7 @@ hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
             if (verbose) {
                 print(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
             }
-            tmp = hpgl_qq_plot(df=hpgl_df, x=i, y=j, labels=FALSE)
+            tmp = hpgl_qq_plot(df=hpgl_df, x=i, y=j, labels=labels)
             logs[[count]] = tmp$log
             ratios[[count]] = tmp$ratio
             means[i,j] = tmp$summary[['Mean']]
@@ -470,90 +571,8 @@ multiplot <- function(plots=NULL, file, cols=NULL, layout=NULL) {
       }
   }
 }
-
-#' Perform a qqplot between two columns of a matrix
-#'
-#' @param a data frame
-#' @param or an expt!
-#' @param x the first column
-#' @param y the second column
-#' @param labels whether to include the labels
-#'
-#' @return a list of the logs, ratios, and mean between the plots as ggplots.
-#' @export
-hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
-    hpgl_env = environment()    
-    ## Testing parameters
-    ##expt=kept_qcpml2
-    ## End test parameters
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(df)) {
-        hpgl_df = exprs(expt$expressionset)
-    } else {
-        hpgl_df = df
-    }
-    xlabel = colnames(hpgl_df)[x]
-    ylabel = colnames(hpgl_df)[y]
-    xvector = as.vector(hpgl_df[,x])
-    yvector = as.vector(hpgl_df[,y])
-    sorted_x = sort(xvector)
-    sorted_y = sort(yvector)
-    vector_ratio = sorted_x / sorted_y
-    increment = as.vector(1:length(vector_ratio))
-    ratio_df = data.frame(cbind(increment, sorted_x, sorted_y, vector_ratio))
-    y_string = paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
-    ratio_plot = ggplot2::ggplot(ratio_df, aes(x=increment, y=vector_ratio), environment=hpgl_env) +
-        geom_point(colour=suppressWarnings(densCols(vector_ratio)), stat="identity", size=1, alpha=0.2, na.rm=TRUE) +
-        scale_y_continuous(limits=c(0,2)) 
-    if (isTRUE(labels)) {
-        ratio_plot = ratio_plot + xlab("Sorted gene") + ylab(y_string) + theme(legend.position="none") 
-    } else {
-        ratio_plot = ratio_plot + theme(axis.line=element_blank(),
-            axis.text.x=element_blank(),
-            axis.text.y=element_blank(),
-            axis.ticks=element_blank(),
-            axis.title.x=element_blank(),
-            axis.title.y=element_blank(),
-            legend.position="none",
-            panel.background=element_blank(),
-            panel.border=element_blank(),
-            panel.grid.major=element_blank(),
-            panel.grid.minor=element_blank(),
-            plot.background=element_blank())
-    }
-
-    log_df = data.frame(cbind(log(sorted_x), log(sorted_y)))
-    gg_max = max(log_df)
-    colnames(log_df) = c(xlabel, ylabel)
-    log_df$sub = log_df[,1] - log_df[,2]
-    log_ratio_plot = ggplot2::ggplot(log_df, aes(x=get(xlabel), y=get(ylabel)), environment=hpgl_env) +
-        geom_point(colour=densCols(sorted_x, sorted_y), na.rm=TRUE) +
-        scale_y_continuous(limits=c(0, gg_max)) + scale_x_continuous(limits=c(0, gg_max))
-    if (labels) {
-        log_ratio_plot = log_ratio_plot + xlab(paste("log sorted ", xlabel)) + ylab(paste("log sorted ", ylabel)) + theme(legend.position="none")
-    } else {
-        log_ratio_plot = log_ratio_plot +
-            theme(axis.line=element_blank(),
-                  axis.text.x=element_blank(),
-                  axis.text.y=element_blank(),
-                  axis.ticks=element_blank(),
-                  axis.title.x=element_blank(),
-                  axis.title.y=element_blank(),
-                  legend.position="none",
-                  panel.background=element_blank(),
-                  panel.border=element_blank(),
-                  panel.grid.major=element_blank(),
-                  panel.grid.minor=element_blank(),
-                  plot.background=element_blank())
-    }
-    log_summary = summary(log_df$sub)
-    qq_plots = list(ratio=ratio_plot, log=log_ratio_plot, summary=log_summary)
-    return(qq_plots)
-}
     
-#' Make a heatmap2 description of the correlation between samples.
+#' Make a heatmap.3 description of the correlation between samples.
 #'
 #' @param expt an expt set of samples
 #' @param df alternately a data frame which must be accompanied by
@@ -574,7 +593,7 @@ hpgl_corheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pe
     hpgl_heatmap(df=df, colors=colors, design=design, expt=expt, method=method, names=names, type="correlation", row=row, title=title, ...)
 }
 
-#' Make a heatmap2 description of the similarity (euclildean distance) between samples.
+#' Make a heatmap.3 description of the similarity (euclildean distance) between samples.
 #'
 #' @param expt an expt set of samples
 #' @param df alternately a data frame which must be accompanied by
@@ -654,7 +673,7 @@ hpgl_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pe
     return(hpgl_heatmap_plot)
 }
 
-#' Make a heatmap2 description of the similarity of the genes among samples.
+#' Make a heatmap.3 description of the similarity of the genes among samples.
 #'
 #' @param expt an expt set of samples
 #' @param df alternately a data frame which must be accompanied by
@@ -667,7 +686,7 @@ hpgl_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pe
 #' \code{\link{heatmap.3}}, \code{\link{recordPlot}}
 #' 
 #' @export
-sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
+hpgl_sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
     hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
@@ -1094,10 +1113,6 @@ hpgl_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL
 #' @examples
 #' ## hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
 hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, histargs=NULL, loess=FALSE, identity=FALSE, gvis_trendline=NULL, ...) {
-    ## Test options
-###    df = comp_5448
-###    cormethod = "kendal"
-    ##
     hpgl_env = environment()    
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
@@ -1185,15 +1200,6 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
 #' @examples
 #' ## kittytime = hpgl_histogram(df)
 hpgl_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE, fillcolor="darkgrey", color="black") {
-    ### Test arguments
-    #df = data_list
-    #binwidth = NULL
-    #log = FALSE
-    #bins = 500
-    #verbose = TRUE
-    #color = "black"
-    #fillcolor = "grey"
-    ### End test arguments
     hpgl_env = environment()
     if (class(df) == "data.frame") {
         colnames(df) = c("values")
@@ -1242,13 +1248,6 @@ hpgl_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE,
 #' @examples
 #' ## kittytime = hpgl_multihistogram(df)
 hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=FALSE) {
-    ### Test argument
-    #data = data_list
-    #log = FALSE
-    #binwidth = NULL
-    #bins = 500
-    #verbose = TRUE
-    ### End test argument
     if (is.data.frame(data)) {
         df = data
         columns = colnames(df)
@@ -1348,7 +1347,7 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
         colnames(hpgl_df) = make.names(hpgl_names, unique=TRUE)
     }
     melted = reshape::melt(hpgl_df)
-    colnames(melted) = c("cond", "counts")
+    colnames(melted) = c("sample", "counts")
 
     colors = factor(hpgl_colors)    
     if (is.null(hpgl_colors)) {
@@ -1357,7 +1356,7 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
     if (!is.null(fill)) {
         fill = "cond"
     }
-    densityplot = ggplot2::ggplot(data=melted, aes(x=counts, colour=cond, fill=fill), environment=hpgl_env) +
+    densityplot = ggplot2::ggplot(data=melted, aes(x=counts, colour=sample, fill=fill), environment=hpgl_env) +
         geom_density(aes(x=counts, y=..count..), position=position) +
         theme_bw()
     if (!is.null(title)) {
@@ -1400,15 +1399,6 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
 #' ## gives adjusted p-values.  This is not always the case and I should
 #' ## check for that, but I have not yet.
 hpgl_volcano_plot = function(toptable_data, tooltip_data=NULL, gvis_filename=NULL, fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6, ...) {
-    ### Testing parameters
-    ##toptable_data = cond_table
-    ##tooltip_data = tooltip_data_5448
-    ##gvis_filename=vol_gvis_filename
-    ##fc_cutoff=0.8
-    ##p_cutoff=0.05
-    ##size=3
-    ##alpha=0.6
-    ### End testing parameters
     hpgl_env = environment()
     low_vert_line = 0.0 - fc_cutoff
     horiz_line = -1 * log10(p_cutoff)

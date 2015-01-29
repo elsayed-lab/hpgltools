@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jan 27 11:26:42 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jan 28 14:29:15 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## differential_expression.R contains functions useful for differential expression tasks.
 
 
@@ -275,7 +275,7 @@ unbalanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, 
     ## The goal now is to create the variables in the R environment
     ## and add them to makeContrasts()
     eval_strings = append(identities, all_pairwise)
-    if (!isNULL(extra_contrasts)) {
+    if (!is.null(extra_contrasts)) {
         eval_strings = append(eval_strings, extra_contrasts)
     }
     for (f in 1:length(eval_strings)) {
@@ -405,7 +405,7 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
     ## The goal now is to create the variables in the R environment
     ## and add them to makeContrasts()
     eval_strings = append(identities, all_pairwise)
-    if (!isNULL(extra_contrasts)) {
+    if (!is.null(extra_contrasts)) {
         eval_strings = append(eval_strings, extra_contrasts)
     }
 ##    for (f in 1:length(eval_strings)) {

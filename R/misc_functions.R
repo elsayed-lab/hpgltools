@@ -1,4 +1,4 @@
-## Time-stamp: "Tue Jan 27 11:14:19 2015 Ashton Trey Belew (abelew@gmail.com)"
+## Time-stamp: "Wed Jan 28 16:40:35 2015 Ashton Trey Belew (abelew@gmail.com)"
 ## misc_functions.R contains a host of (hopefully) useful functions when
 ## dealing with genomic data in R.
 
@@ -113,4 +113,3 @@ Beta.NA = function(y,X) {
     B = solve(t(des)%*%des)%*%t(des)%*%y1
     B
 }
-
