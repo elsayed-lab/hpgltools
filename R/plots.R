@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 28 17:20:43 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jan 28 19:10:12 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -1346,15 +1346,15 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
     if (!is.null(hpgl_names)) {
         colnames(hpgl_df) = make.names(hpgl_names, unique=TRUE)
     }
-    melted = reshape::melt(hpgl_df)
-    colnames(melted) = c("sample", "counts")
+    melted = reshape::melt(hpgl_df, id=1, measure=3)
+    colnames(melted) = c("gene", "sample", "counts")
 
     colors = factor(hpgl_colors)    
     if (is.null(hpgl_colors)) {
         hpgl_colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(hpgl_df)[2])
     }
     if (!is.null(fill)) {
-        fill = "cond"
+        fill = "sample"
     }
     densityplot = ggplot2::ggplot(data=melted, aes(x=counts, colour=sample, fill=fill), environment=hpgl_env) +
         geom_density(aes(x=counts, y=..count..), position=position) +

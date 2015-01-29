@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 28 14:29:15 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 29 11:20:35 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## differential_expression.R contains functions useful for differential expression tasks.
 
 
@@ -23,7 +23,7 @@
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE) {
+write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
     testdir = dirname(workbook)
     if (n == 0) {
         n = dim(data$coefficients)[1]
@@ -55,6 +55,10 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
             finally={
             }
         )
+        if (!is.null(annotation)) {
+            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
+            ###data_table = data_table[-1]
+        }
         ## This write_xls runs out of memory annoyingly often
         if (isTRUE(excel) | isTRUE(csv)) {
             if (!file.exists(testdir)) {
