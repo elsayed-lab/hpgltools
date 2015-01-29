@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 28 19:10:12 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 29 12:17:29 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -909,7 +909,11 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         PC1=pca$v[,1],
         PC2=pca$v[,2])
 
-    pca_plot = ggplot(data=pca_data, environment=hpgl_env) +
+    pca_plot = ggplot(data=pca_data, environment=hpgl_env)
+    if (length(batch) > 6) { ## Then ggplot2 wants shapes specified manually...
+        pca_plot = pca_plot + scale_shape_manual(values=1:length(batch))
+    }
+    pca_plot = pca_plot +
         geom_point(aes(x=PC1,y=PC2,color=condition,shape=batch), size=3) +
         scale_colour_discrete(name="Experimental\nCondition") +
         scale_shape_discrete(name="Experimental\nBatch") + 
