@@ -1,6 +1,5 @@
-## Time-stamp: <Thu Jan 29 11:20:35 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jan 30 13:26:59 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## differential_expression.R contains functions useful for differential expression tasks.
-
 
 #' write_limma(): Writes out the results of a limma search using toptable()
 #' However, this will do a couple of things to make one's life easier:
