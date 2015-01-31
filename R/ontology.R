@@ -241,15 +241,6 @@ goseq_table = function(df, file=NULL) {
 #' @seealso \code{\link{goseq}} and \code{\link{clusterProfiler}}
 #' @export
 simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0.1, qvalue=0.1, method="Wallenius") {
-    ## Test parameters
-    ##de_genes = group_one
-    ##lengths = go_lengths
-    ##goids = go_ids
-    ##adjust = 0.1
-    ##pvalue = 0.1
-    ##qvalue=0.1
-    ##method="Wallenius"
-    ## End test parameters
     print("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
     print("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
     print("The other table is of gene lengths with columns (gene)ID and (gene)width.")
@@ -274,7 +265,7 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
 ##    godata = goseq(pwf, gene2cat=goids, method='Wallenius')
     colnames(goids) = c("ID", "GO")
     godata = goseq::goseq(pwf, gene2cat=goids, use_genes_without_cat=TRUE, method=method)
-    goseq_p = hpgltools::hpgl_histogram(godata$over_represented_pvalue, bins=20)
+    goseq_p = try(hpgltools::hpgl_histogram(godata$over_represented_pvalue, bins=20))
     goseq_p_second = sort(unique(table(goseq_p$data)), decreasing=TRUE)[2]
     ## Set the y scale to 2x the second highest number
     ## (assuming always that the highest is a p-value of 1)
@@ -337,13 +328,6 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
 #' @seealso \code{\link{goseq}}
 #' @export
 topgo_pval_plot = function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
-    ## Testing parameters
-    ##topgo = epi_cl14clbr_high_top
-    ##wrapped_width=20
-    ##cutoff=0.1
-    ##n=12
-    ##type="fisher"
-    ## End testing parameters
     mf_newdf = topgo$tables$mf[,c("GO.ID", "Term", "Annotated","Significant",type)]
     mf_newdf$term = as.character(lapply(strwrap(mf_newdf$Term, wrapped_width, simplify=F), paste, collapse="\n"))
     mf_newdf$pvalue = as.numeric(mf_newdf[[type]])
@@ -383,12 +367,6 @@ topgo_pval_plot = function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fish
 #' @seealso \code{\link{goseq}}
 #' @export
 goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
-    ## Testing parameters
-    ##goterms = godata
-    ##wrapped_width=20
-    ##cutoff=0.1
-    ##n=10
-    ## End testing parameters
     plotting_mf = subset(goterms, complete.cases(goterms))
     plotting_mf$score = plotting_mf$numDEInCat / plotting_mf$numInCat    
     plotting_mf = subset(plotting_mf, ont == "MF")
@@ -470,15 +448,25 @@ hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
 #' @param z a number of standard deviations to search
 #'
 #' @export
-limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE) {
+limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
     print("This function expects a list of limma contrast tables and some annotation information.")
     print("The annotation information would be gene lengths and ontology ids")
     if (is.null(n) & is.null(z)) {
         z = 1
     }
+
+    testdir = dirname(workbook)
+    if (isTRUE(excel) | isTRUE(csv)) {
+        if (!file.exists(testdir)) {
+            dir.create(testdir)
+            print(paste("Creating directory: ", testdir, "for writing excel/csv data.", sep=""))
+        }
+    }
+    
     output = list()
     for (c in 1:length(limma_out)) {
         datum = limma_out[[c]]
+        comparison = names(limma_out[c])
         if (is.null(n)) {
             out_summary = summary(datum$logFC)
             out_mad = mad(datum$logFC, na.rm=TRUE)
@@ -496,21 +484,96 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
         topgo_up_ontology = topgo_up_trees = topgo_down_ontology = topgo_down_trees = NULL        
         if (isTRUE(do_goseq)) {
             goseq_up_ontology = simple_goseq(up_genes, lengths=gene_lengths, goids=goids)
-            goseq_up_trees = try(goseq_trees(up_genes, goseq_up_ontology, goid_map=goid_map, goids_df=goids, overwrite=overwrite))
             goseq_down_ontology = simple_goseq(down_genes, lengths=gene_lengths, goids=goids)
-            goseq_down_trees = try(goseq_trees(down_genes, goseq_down_ontology, goid_map=goid_map, goids_df=goids))
+            if (isTRUE(do_trees)) {
+                goseq_up_trees = try(goseq_trees(up_genes, goseq_up_ontology, goid_map=goid_map, goids_df=goids, overwrite=overwrite))
+                goseq_down_trees = try(goseq_trees(down_genes, goseq_down_ontology, goid_map=goid_map, goids_df=goids))
+            }
+            if (isTRUE(excel)) {
+                sheetname = paste(comparison, "_goseq_mf_up", sep="")
+                try(write_xls(data=goseq_up_ontology$mf_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_goseq_bp_up", sep="")
+                try(write_xls(data=goseq_up_ontology$bp_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_goseq_cc_up", sep="")
+                try(write_xls(data=goseq_up_ontology$cc_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_goseq_mf_down", sep="")
+                try(write_xls(data=goseq_down_ontology$mf_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_goseq_bp_down", sep="")
+                try(write_xls(data=goseq_down_ontology$bp_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_goseq_cc_down", sep="")
+                try(write_xls(data=goseq_down_ontology$cc_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+            }
+            if (isTRUE(csv)) {
+                csv_base = gsub(".xls$", "", workbook)
+                write.csv(goseq_up_ontology$mf_interesting, file=paste(comparison, csv_base, "_goseq_mf_up.csv", sep=""))
+                write.csv(goseq_up_ontology$bp_interesting, file=paste(comparison, csv_base, "_goseq_bp_up.csv", sep=""))
+                write.csv(goseq_up_ontology$cc_interesting, file=paste(comparison, csv_base, "_goseq_cc_up.csv", sep=""))
+                write.csv(goseq_down_ontology$mf_interesting, file=paste(comparison, csv_base, "_goseq_mf_down.csv", sep=""))
+                write.csv(goseq_down_ontology$bp_interesting, file=paste(comparison, csv_base, "_goseq_bp_down.csv", sep=""))
+                write.csv(goseq_down_ontology$cc_interesting, file=paste(comparison, csv_base, "_goseq_cc_down.csv", sep=""))
+            }
         }
         if (isTRUE(do_cluster)) {
             cluster_up_ontology = simple_clusterprofiler(up_genes, goids=goids, gff=goids)
-            cluster_up_trees = try(cluster_trees(up_genes, cluster_up_ontology, goid_map=goid_map, goids_df=goids))
             cluster_down_ontology = simple_clusterprofiler(down_genes, goids=goids, gff=goids)
-            cluster_down_trees = try(cluster_trees(down_genes, cluster_down_ontology, goid_map=goid_map, goids_df=goids))
+            if (isTRUE(do_trees)) {
+                cluster_up_trees = try(cluster_trees(up_genes, cluster_up_ontology, goid_map=goid_map, goids_df=goids))
+                cluster_down_trees = try(cluster_trees(down_genes, cluster_down_ontology, goid_map=goid_map, goids_df=goids))
+            }
+            if (isTRUE(excel)) {
+                sheetname = paste(comparison, "_cluster_mf_up", sep="")
+                try(write_xls(data=cluster_up_ontology$mf_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_cluster_bp_up", sep="")
+                try(write_xls(data=cluster_up_ontology$bp_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_cluster_cc_up", sep="")
+                try(write_xls(data=cluster_up_ontology$cc_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_cluster_mf_down", sep="")
+                try(write_xls(data=cluster_down_ontology$mf_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_cluster_bp_down", sep="")
+                try(write_xls(data=cluster_down_ontology$bp_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_cluster_cc_down", sep="")
+                try(write_xls(data=cluster_down_ontology$cc_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+            }
+            if (isTRUE(csv)) {
+                csv_base = gsub(".xls$", "", workbook)
+                write.csv(cluster_up_ontology$mf_interesting, file=paste(comparison, csv_base, "_cluster_mf_up.csv", sep=""))
+                write.csv(cluster_up_ontology$bp_interesting, file=paste(comparison, csv_base, "_cluster_bp_up.csv", sep=""))
+                write.csv(cluster_up_ontology$cc_interesting, file=paste(comparison, csv_base, "_cluster_cc_up.csv", sep=""))
+                write.csv(cluster_down_ontology$mf_interesting, file=paste(comparison, csv_base, "_cluster_mf_down.csv", sep=""))
+                write.csv(cluster_down_ontology$bp_interesting, file=paste(comparison, csv_base, "_cluster_bp_down.csv", sep=""))
+                write.csv(cluster_down_ontology$cc_interesting, file=paste(comparison, csv_base, "_cluster_cc_down.csv", sep=""))
+            }
         }
         if (isTRUE(do_topgo)) {
             topgo_up_ontology = simple_topgo(up_genes, goid_map=goid_map, goids_df=goids)
-            topgo_up_trees = try(topgo_trees(topgo_up_ontology))
             topgo_down_ontology = simple_topgo(down_genes, goid_map=goid_map, goids_df=goids)
-            topgo_down_trees = try(topgo_trees(topgo_down_ontology))
+            if (isTRUE(do_trees)) {
+                topgo_up_trees = try(topgo_trees(topgo_up_ontology))
+                topgo_down_trees = try(topgo_trees(topgo_down_ontology))
+            }
+            if (isTRUE(excel)) {
+                sheetname = paste(comparison, "_topgo_mf_up", sep="")
+                try(write_xls(data=topgo_up_ontology$mf_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_topgo_bp_up", sep="")
+                try(write_xls(data=topgo_up_ontology$bp_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_topgo_cc_up", sep="")
+                try(write_xls(data=topgo_up_ontology$cc_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_topgo_mf_down", sep="")
+                try(write_xls(data=topgo_down_ontology$mf_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_topgo_bp_down", sep="")
+                try(write_xls(data=topgo_down_ontology$bp_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+                sheetname = paste(comparison, "_topgo_cc_down", sep="")
+                try(write_xls(data=topgo_down_ontology$cc_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+            }
+            if (isTRUE(csv)) {
+                csv_base = gsub(".xls$", "", workbook)
+                write.csv(topgo_up_ontology$mf_interesting, file=paste(comparison, csv_base, "_topgo_mf_up.csv", sep=""))
+                write.csv(topgo_up_ontology$bp_interesting, file=paste(comparison, csv_base, "_topgo_bp_up.csv", sep=""))
+                write.csv(topgo_up_ontology$cc_interesting, file=paste(comparison, csv_base, "_topgo_cc_up.csv", sep=""))
+                write.csv(topgo_down_ontology$mf_interesting, file=paste(comparison, csv_base, "_topgo_mf_down.csv", sep=""))
+                write.csv(topgo_down_ontology$bp_interesting, file=paste(comparison, csv_base, "_topgo_bp_down.csv", sep=""))
+                write.csv(topgo_down_ontology$cc_interesting, file=paste(comparison, csv_base, "_topgo_cc_down.csv", sep=""))
+            }
         }
         c_data = list(up_goseq=goseq_up_ontology, down_goseq=goseq_down_ontology,
             up_cluster=cluster_up_ontology, down_cluster=cluster_down_ontology,
@@ -544,17 +607,7 @@ topDiffGenes <- function(allScore) { return(allScore < 0.01) }
 #' @return a big list including the various outputs from topgo
 #' @export
 simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL, pvals=NULL, limitby="fisher", limit=0.1, signodes=100, sigforall=TRUE, numchar=300, selector="topDiffGenes", overwrite=FALSE) {
-    ## Test parameters
-    ##de_genes = epi_cl14clbr_low
-    ##pvals = epi_cl14clbr_pvals
-    ##numchar=300
-    ##goids = goid_file
-    ##limitby="fisher"
-    ##limit=0.1
-    ##sigforall = TRUE
-    ##selector="topDiffGenes"
-    ## End test parameters
-    ## Some neat ideas from the topGO documentation:
+### Some neat ideas from the topGO documentation:
 ### geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
 ### A variant of these operations make it possible to give topGO scores so that
 ### a larger array of tests may be performed
@@ -598,18 +651,18 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
     cc_weight_result = topGO::getSigGroups(cc_GOdata, test_stat)
 
 
-    mf_fisher_pdist = hpgltools::hpgl_histogram(mf_fisher_result@score, bins=20)
-    mf_ks_pdist = hpgltools::hpgl_histogram(mf_ks_result@score, bins=20)
-    mf_el_pdist = hpgltools::hpgl_histogram(mf_el_result@score, bins=20)
-    mf_weight_pdist = hpgltools::hpgl_histogram(mf_weight_result@score, bins=20)
-    bp_fisher_pdist = hpgltools::hpgl_histogram(bp_fisher_result@score, bins=20)
-    bp_ks_pdist = hpgltools::hpgl_histogram(bp_ks_result@score, bins=20)
-    bp_el_pdist = hpgltools::hpgl_histogram(bp_el_result@score, bins=20)
-    bp_weight_pdist = hpgltools::hpgl_histogram(bp_weight_result@score, bins=20)
-    cc_fisher_pdist = hpgltools::hpgl_histogram(cc_fisher_result@score, bins=20)
-    cc_ks_pdist = hpgltools::hpgl_histogram(cc_ks_result@score, bins=20)
-    cc_el_pdist = hpgltools::hpgl_histogram(cc_el_result@score, bins=20)
-    cc_weight_pdist = hpgltools::hpgl_histogram(cc_weight_result@score, bins=20)
+    mf_fisher_pdist = try(hpgltools::hpgl_histogram(mf_fisher_result@score, bins=20))
+    mf_ks_pdist = try(hpgltools::hpgl_histogram(mf_ks_result@score, bins=20))
+    mf_el_pdist = try(hpgltools::hpgl_histogram(mf_el_result@score, bins=20))
+    mf_weight_pdist = try(hpgltools::hpgl_histogram(mf_weight_result@score, bins=20))
+    bp_fisher_pdist = try(hpgltools::hpgl_histogram(bp_fisher_result@score, bins=20))
+    bp_ks_pdist = try(hpgltools::hpgl_histogram(bp_ks_result@score, bins=20))
+    bp_el_pdist = try(hpgltools::hpgl_histogram(bp_el_result@score, bins=20))
+    bp_weight_pdist = try(hpgltools::hpgl_histogram(bp_weight_result@score, bins=20))
+    cc_fisher_pdist = try(hpgltools::hpgl_histogram(cc_fisher_result@score, bins=20))
+    cc_ks_pdist = try(hpgltools::hpgl_histogram(cc_ks_result@score, bins=20))
+    cc_el_pdist = try(hpgltools::hpgl_histogram(cc_el_result@score, bins=20))
+    cc_weight_pdist = try(hpgltools::hpgl_histogram(cc_weight_result@score, bins=20))
     p_dists = list(mf_fisher=mf_fisher_pdist, bp_fisher=bp_fisher_pdist, cc_fisher=cc_fisher_pdist,
         mf_ks=mf_ks_pdist, bp_ks=bp_ks_pdist, cc_ks=cc_ks_pdist,
         mf_el=mf_el_pdist, bp_el=bp_el_pdist, cc_el=cc_el_pdist,
@@ -621,7 +674,7 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
         mf_el=mf_el_result, bp_el=bp_el_result, cc_el=cc_el_result,
         mf_weight=mf_weight_result, bp_weight=bp_weight_result, cc_weight=cc_weight_result)
 
-    tables = topgo_tables(results, limitby=limitby, limit=limit)
+    tables = try(topgo_tables(results, limitby=limitby, limit=limit))
 
     mf_first_density = bp_first_density = cc_first_density = NULL
     if (class(tables$mf) != 'try-error') {
@@ -647,13 +700,7 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
 
 #' Make tables out of topGO data
 #' @export
-topgo_tables = function(result, limit=0.001, limitby="fisher", numchar=300, orderby="classic", ranksof="classic") {
-    ## Testing parameters
-    ##limitby = "fisher"
-    ##numchar = 300
-    ##orderby = "classic"
-    ##ranksof = "classic"
-    ## End testing parameters
+topgo_tables = function(result, limit=0.01, limitby="fisher", numchar=300, orderby="classic", ranksof="classic") {
     ## The following if statement could be replaced by get(limitby)
     ## But I am leaving it as a way to ensure that no shenanigans ensue
     mf_allRes = bp_allRes = cc_allRes = mf_interesting = bp_interesting = cc_interesting = NULL
@@ -677,54 +724,56 @@ topgo_tables = function(result, limit=0.001, limitby="fisher", numchar=300, orde
         stop("I can only limit by: fisher, KS, EL, or weight.")
     }
     mf_topnodes = length(mf_siglist)
-    mf_allRes = try(topGO::GenTable(result$mf_godata, classic=result$mf_fisher, KS=result$mf_ks,
-        EL=result$mf_el, weight=result$mf_weight, orderBy=orderby,
-        ranksOf=ranksof, topNodes=mf_topnodes, numChar=numchar))
-    if (class(mf_allRes) != 'try-error') {
-        mf_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$mf_fisher))$qvalues)
-        mf_allRes = merge(mf_allRes, mf_qvalues, by.x="GO.ID", by.y="row.names")
-        mf_allRes$classic = as.numeric(mf_allRes$classic)
-        mf_allRes = mf_allRes[with(mf_allRes, order(classic)), ]
-        colnames(mf_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
-        mf_interesting = subset(mf_allRes, get(limitby) <= limit)
-        rownames(mf_interesting) = NULL
-        mf_interesting$ont = "MF"
-        mf_interesting = mf_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
+    if (mf_topnodes > 0) {
+        mf_allRes = try(topGO::GenTable(result$mf_godata, classic=result$mf_fisher, KS=result$mf_ks,
+            EL=result$mf_el, weight=result$mf_weight, orderBy=orderby,
+            ranksOf=ranksof, topNodes=mf_topnodes, numChar=numchar))
+        if (class(mf_allRes) != 'try-error') {
+            mf_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$mf_fisher))$qvalues)
+            mf_allRes = merge(mf_allRes, mf_qvalues, by.x="GO.ID", by.y="row.names")
+            mf_allRes$classic = as.numeric(mf_allRes$classic)
+            mf_allRes = mf_allRes[with(mf_allRes, order(classic)), ]
+            colnames(mf_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
+            mf_interesting = subset(mf_allRes, get(limitby) <= limit)
+            rownames(mf_interesting) = NULL
+            mf_interesting$ont = "MF"
+            mf_interesting = mf_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
+        }
     }
-    
     bp_topnodes = length(bp_siglist)
-    bp_allRes = try(topGO::GenTable(result$bp_godata, classic=result$bp_fisher, KS=result$bp_ks,
-        EL=result$bp_el, weight=result$bp_weight, orderBy=orderby,
-        ranksOf=ranksof, topNodes=bp_topnodes, numChar=numchar))
-    if (class(bp_allRes) != 'try-error') {
-        bp_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$bp_fisher))$qvalues)
-        bp_allRes = merge(bp_allRes, bp_qvalues, by.x="GO.ID", by.y="row.names", all.x=TRUE)
-        bp_allRes$classic = as.numeric(bp_allRes$classic)
-        bp_allRes = bp_allRes[with(bp_allRes, order(classic)), ]
-        colnames(bp_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
-        bp_interesting = subset(bp_allRes, get(limitby) <= limit)
-        rownames(bp_interesting) = NULL
-        bp_interesting$ont = "BP"
-        bp_interesting = bp_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
+    if (bp_topnodes > 0) {
+        bp_allRes = try(topGO::GenTable(result$bp_godata, classic=result$bp_fisher, KS=result$bp_ks,
+            EL=result$bp_el, weight=result$bp_weight, orderBy=orderby,
+            ranksOf=ranksof, topNodes=bp_topnodes, numChar=numchar))
+        if (class(bp_allRes) != 'try-error') {
+            bp_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$bp_fisher))$qvalues)
+            bp_allRes = merge(bp_allRes, bp_qvalues, by.x="GO.ID", by.y="row.names", all.x=TRUE)
+            bp_allRes$classic = as.numeric(bp_allRes$classic)
+            bp_allRes = bp_allRes[with(bp_allRes, order(classic)), ]
+            colnames(bp_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
+            bp_interesting = subset(bp_allRes, get(limitby) <= limit)
+            rownames(bp_interesting) = NULL
+            bp_interesting$ont = "BP"
+            bp_interesting = bp_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
+        }
     }
-    
     cc_topnodes = length(cc_siglist)
-    cc_allRes = try(topGO::GenTable(result$cc_godata, classic=result$cc_fisher, KS=result$cc_ks,
-        EL=result$cc_el, weight=result$cc_weight, orderBy=orderby,
-        ranksOf=ranksof, topNodes=cc_topnodes, numChar=numchar))
-    if (class(cc_allRes) != 'try-error') {
-        cc_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$cc_fisher))$qvalues)
-        cc_allRes = merge(cc_allRes, cc_qvalues, by.x="GO.ID", by.y="row.names")
-        cc_allRes$classic = as.numeric(cc_allRes$classic)
-        cc_allRes = cc_allRes[with(cc_allRes, order(classic)), ]
-        colnames(cc_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
-        cc_interesting = subset(cc_allRes, get(limitby) <= limit)
-        rownames(cc_interesting) = NULL
-        cc_interesting$ont = "CC"
-        cc_interesting = cc_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
+    if (cc_topnodes > 0) {
+        cc_allRes = try(topGO::GenTable(result$cc_godata, classic=result$cc_fisher, KS=result$cc_ks,
+            EL=result$cc_el, weight=result$cc_weight, orderBy=orderby,
+            ranksOf=ranksof, topNodes=cc_topnodes, numChar=numchar))
+        if (class(cc_allRes) != 'try-error') {
+            cc_qvalues = as.data.frame(qvalue::qvalue(topGO::score(result$cc_fisher))$qvalues)
+            cc_allRes = merge(cc_allRes, cc_qvalues, by.x="GO.ID", by.y="row.names")
+            cc_allRes$classic = as.numeric(cc_allRes$classic)
+            cc_allRes = cc_allRes[with(cc_allRes, order(classic)), ]
+            colnames(cc_allRes) = c("GO.ID","Term","Annotated","Significant","Expected","fisher","KS","EL","weight","qvalue")
+            cc_interesting = subset(cc_allRes, get(limitby) <= limit)
+            rownames(cc_interesting) = NULL
+            cc_interesting$ont = "CC"
+            cc_interesting = cc_interesting[,c("GO.ID","ont","Annotated","Significant","Expected","fisher","qvalue","KS","EL","weight","Term")]
+        }
     }
-    
-
     tables = list(mf=mf_allRes, bp=bp_allRes, cc=cc_allRes, mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting)
     return(tables)
 }
@@ -737,12 +786,6 @@ topgo_tables = function(result, limit=0.001, limitby="fisher", numchar=300, orde
 #' @return a big list including the various outputs from topgo
 #' @export
 topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=TRUE, do_bp_fisher_tree=TRUE, do_cc_fisher_tree=TRUE, do_mf_ks_tree=FALSE, do_bp_ks_tree=FALSE, do_cc_ks_tree=FALSE, do_mf_el_tree=FALSE, do_bp_el_tree=FALSE, do_cc_el_tree=FALSE, do_mf_weight_tree=FALSE, do_bp_weight_tree=FALSE, do_cc_weight_tree=FALSE) {
-    ## Testing parameters
-    ##tg = epi_cl14clbr_high_top
-    ##sigforall=TRUE
-    ##score_limit = 0.01
-    ##sigforall=TRUE; do_mf_fisher_tree=TRUE; do_bp_fisher_tree=TRUE; do_cc_fisher_tree=TRUE; do_mf_ks_tree=FALSE; do_bp_ks_tree=FALSE; do_cc_ks_tree=FALSE; do_mf_el_tree=FALSE; do_bp_el_tree=FALSE; do_cc_el_tree=FALSE; do_mf_weight_tree=FALSE; do_bp_weight_tree=FALSE; do_cc_weight_tree=FALSE;
-    ## End testing parameters
     mf_fisher_nodes = mf_fisher_tree = NULL
     if (do_mf_fisher_tree) {
         included = length(which(topGO::score(tg$results$mf_fisher) <= score_limit))
@@ -870,24 +913,6 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     qcutoff=1.0, fold_changes=NULL, include_cnetplots=TRUE,
     showcategory=12, universe=NULL, organism="lm", gff=NULL,
     wrapped_width=20, method="Walllenius", padjust="BH") {
-    ## Test parameters
-    ##de_genes = epi_cl14clbr_high
-    ##de_genes = proeff_high
-    ##goids=go_ids
-    ##fold_changes=NULL
-    ##organism = "lm"
-    ##method = "Wallenius"
-    ##padjust="BH"
-    ##adjust=0.1
-    ##pcutoff=0.1
-    ##qcutoff=1.0
-    ##golevel=4
-    ##wrapped_width = 20
-    ##showcategory=12
-    ##gff_file = "reference/gff/clbrener_8.1_complete_genes.gff"
-    ##padjust="BH"
-    ##universe = rownames(rnarpf_pro_table)
-    ## End test parameters
     genetable_test = try(load("geneTable.rda"))
     if (class(genetable_test) == 'try-error') {
         if (!is.null(gff)) {
@@ -921,17 +946,21 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     print("Starting MF(molecular function) analysis")
     mf_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
     mf_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    all_mf_phist = hpgltools::hpgl_histogram(mf_all@result$pvalue, bins=20)
-    y_limit = (sort(unique(table(all_mf_phist$data)), decreasing=TRUE)[2]) * 2
-    all_mf_phist = all_mf_phist + scale_y_continuous(limits=c(0, y_limit))
+    all_mf_phist = try(hpgltools::hpgl_histogram(mf_all@result$pvalue, bins=20))
+    if (class(all_mf_phist) != 'try-error') {
+        y_limit = (sort(unique(table(all_mf_phist$data)), decreasing=TRUE)[2]) * 2
+        all_mf_phist = all_mf_phist + scale_y_continuous(limits=c(0, y_limit))
+    }
     enriched_mf = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
     
     print("Starting BP(biological process) analysis")
     bp_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
     bp_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    all_bp_phist = hpgltools::hpgl_histogram(bp_all@result$pvalue, bins=20)
-    y_limit = (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
-    all_bp_phist = all_bp_phist + scale_y_continuous(limits=c(0, y_limit))
+    all_bp_phist = try(hpgltools::hpgl_histogram(bp_all@result$pvalue, bins=20))
+    if (class(all_bp_phist) != 'try-error') {
+        y_limit = (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
+        all_bp_phist = all_bp_phist + scale_y_continuous(limits=c(0, y_limit))
+    }
     
     enriched_bp = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
 
@@ -939,9 +968,12 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     cc_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="CC", level=golevel, readable=TRUE)
     cc_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     enriched_cc = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
-    all_cc_phist = hpgltools::hpgl_histogram(cc_all@result$pvalue, bins=50)
-    y_limit = (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
-    all_cc_phist = all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
+    all_cc_phist = try(hpgltools::hpgl_histogram(cc_all@result$pvalue, bins=20))
+    ## Try and catch if there are no significant hits.
+    if (class(all_cc_phist) != 'try-error') {
+        y_limit = (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
+        all_cc_phist = all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
+    }
     
     mf_group_barplot = try(barplot(mf_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(mf_group_barplot)[1] != 'try-error') {
@@ -989,7 +1021,6 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     if (class(all_cc_barplot)[1] != 'try-error') {
         all_cc_barplot$data$Description = as.character(lapply(strwrap(all_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
-    
     
     if (include_cnetplots == TRUE) {
         print("Attempting to include the cnetplots from clusterProfiler.")
@@ -1086,12 +1117,6 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
 #' @seealso \code{\link{Ramigo}}
 #' @export
 goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", score_limit=0.01, goids_df=NULL, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Val") {
-    ## Testing parameters
-    ##de_genes = proeff_high
-    ##godata = proeff_high_go
-    ##goids = "reference/go/id2go.map"
-    ##score_limit=0.01
-    ## End parameters
     make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO = topGO::readMappings(file=goid_map)
     annotated_genes = names(geneID2GO)
@@ -1168,12 +1193,6 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
 #' @seealso \code{\link{Ramigo}}
 #' @export
 cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", goids_df=NULL, score_limit=0.1, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Value") {
-    ## Testing parameters
-    ##de_genes = proeff_high
-    ##cpdata = proeff_high_cl
-    ##goids = "reference/go/id2go.map"
-    ##score_limit=0.1
-    ## End testing parameters
     make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO = topGO::readMappings(file=goid_map)
     annotated_genes = names(geneID2GO)
@@ -1387,14 +1406,6 @@ hpgl_enrichGO = function(gene, organism="human", ont="MF",
 #' @export
 hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="BH",
     ont, minGSSize=2, qvalueCutoff=0.2, readable=FALSE, universe=NULL) {
-    ## I removed universe as an argument
-    ##gene = gene_list
-    ##minGSSize=2
-    ##ont="BP"
-    ##pAdjustMethod="BH"
-    ##pvalueCutoff=1
-    ##qvalueCutoff=1
-    ###
     gene <- as.character(gene)
     class(gene) <- ont
     qExtID2TermID = DOSE::EXTID2TERMID(gene, organism)

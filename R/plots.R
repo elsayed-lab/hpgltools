@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 29 12:17:29 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jan 30 16:33:21 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -898,7 +898,6 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     }
     pca = cbcbSEQ::makeSVD(hpgl_df)  ## This is a part of cbcbSEQ
     pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition, hpgl_design$batch)
-    print(pca_res)
     pca_variance = round((pca$d ^ 2) / sum(pca$d ^ 2) * 100, 2)
     xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
@@ -909,9 +908,10 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         PC1=pca$v[,1],
         PC2=pca$v[,2])
 
+    num_batches = length(hpgl_design$batch)
     pca_plot = ggplot(data=pca_data, environment=hpgl_env)
-    if (length(batch) > 6) { ## Then ggplot2 wants shapes specified manually...
-        pca_plot = pca_plot + scale_shape_manual(values=1:length(batch))
+    if (num_batches > 6) { ## Then ggplot2 wants shapes specified manually...
+        pca_plot = pca_plot + scale_shape_manual(values=1:num_batches)
     }
     pca_plot = pca_plot +
         geom_point(aes(x=PC1,y=PC2,color=condition,shape=batch), size=3) +
@@ -1350,8 +1350,8 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
     if (!is.null(hpgl_names)) {
         colnames(hpgl_df) = make.names(hpgl_names, unique=TRUE)
     }
-    melted = reshape::melt(hpgl_df, id=1, measure=3)
-    colnames(melted) = c("gene", "sample", "counts")
+    melted = reshape::melt(hpgl_df)
+    colnames(melted) = c("sample", "counts")
 
     colors = factor(hpgl_colors)    
     if (is.null(hpgl_colors)) {
