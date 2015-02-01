@@ -71,17 +71,25 @@ divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gf
 #' Filter low-count genes from a data set.
 #'
 #' @param df input data frame of counts by sample
-#' @param thresh lower threshold of counts (4 by default)
-#' @param minSamples minimum number of samples
+#' @param threshold lower threshold of counts (default: 4)
+#' @param min_samples minimum number of samples (default: 2)
+#' @param verbose If set to true, prints number of genes removed / remaining
 #' @return dataframe of counts without the low-count genes
 #' @seealso \code{\link{log2CPM}} which this uses to decide what to keep
 #' @export
 #' @examples
 #' ## filtered_table = filter_counts(count_table)
-filter_counts = function(counts, thresh=4, minSamples=2) {
+filter_counts = function(counts, threshold=4, min_samples=2, verbose=FALSE) {
+    num_before = nrow(counts)
     cpms = 2^hpgl_log2cpm(counts)
     keep = rowSums(cpms > thresh) >= minSamples
     counts = counts[keep,]
+
+    if (verbose) {
+        print(sprintf("Removing %d low-count genes (%d remaining).",
+                      nrow(counts) - num_before, nrow(counts)))
+    }
+
     return(counts)
 }
 
