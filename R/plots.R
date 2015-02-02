@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jan 30 16:33:21 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  2 17:26:21 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -860,6 +860,7 @@ hpgl_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclide
 #' @param colors a color scheme
 #' @param method a correlation method to use.  Defaults to pearson.
 #' @param names use pretty names for the samples?
+#' @param labels add labels?  Also, what type?  FALSE, "default", or "fancy"
 #' 
 #' @return a list containing the following:
 #'   plot = ggplot2 pca_plot describing the principle component analysis of the samples.
@@ -875,18 +876,16 @@ hpgl_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclide
 #' @examples
 #' ## pca_plot = hpgl_pca(expt=expt)
 #' ## pca_plot
-hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", title=NULL, fancy_labels=FALSE, ...) {
+hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", title=NULL, labels=NULL, ...) {
     hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors.")
     }
     if (is.null(expt)) {
         hpgl_design = design
-        hpgl_colors = colors
         hpgl_df = df
     } else if (is.null(df)) {
         hpgl_design = expt$design
-        hpgl_colors = expt$colors
         hpgl_df = Biobase::exprs(expt$expressionset)
     } else {
         stop("Both df and expt are defined, that is confusing.")
@@ -914,13 +913,17 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         pca_plot = pca_plot + scale_shape_manual(values=1:num_batches)
     }
     pca_plot = pca_plot +
-        geom_point(aes(x=PC1,y=PC2,color=condition,shape=batch), size=3) +
+        geom_point(aes(x=PC1, y=PC2, color=hpgl_design$condition, shape=hpgl_design$batch), size=3) +
         scale_colour_discrete(name="Experimental\nCondition") +
         scale_shape_discrete(name="Experimental\nBatch") + 
         xlab(xl) + ylab(yl) + theme_bw()
 
-    if (fancy_labels == TRUE) {
-        pca_plot = pca_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_colors)
+    if (!is.null(labels)) {
+        if (labels == "fancy") {
+            pca_plot = pca_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_design$condition)
+        } else {
+            pca_plot = pca_plot + geom_text(aes(label=SampleID), angle=45, size=4,vjust=2)
+        }
     }
     if (!is.null(title)) {
         pca_plot = pca_plot + ggtitle(title)

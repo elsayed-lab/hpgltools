@@ -679,15 +679,15 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
     mf_first_density = bp_first_density = cc_first_density = NULL
     if (class(tables$mf) != 'try-error') {
         mf_first_group = tables$mf[1, "GO.ID"]
-        mf_first_density = hpgl_GroupDensity(mf_GOdata, mf_first_group, ranks=TRUE)
+        mf_first_density = try(hpgl_GroupDensity(mf_GOdata, mf_first_group, ranks=TRUE))
     }
     if (class(tables$bp) != 'try-error') {
         bp_first_group = tables$bp[1, "GO.ID"]
-        bp_first_density = hpgl_GroupDensity(bp_GOdata, bp_first_group, ranks=TRUE )
+        bp_first_density = try(hpgl_GroupDensity(bp_GOdata, bp_first_group, ranks=TRUE))
     }
     if(class(tables$cc) != 'try-error') {
         cc_first_group = tables$cc[1, "GO.ID"]
-        cc_first_density = hpgl_GroupDensity(cc_GOdata, cc_first_group, ranks=TRUE  )
+        cc_first_density = try(hpgl_GroupDensity(cc_GOdata, cc_first_group, ranks=TRUE))
     }
     first_densities = list(mf=mf_first_density, bp=bp_first_density, cc=cc_first_density)
     
@@ -1045,23 +1045,34 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
             print("cnetplot just failed for the CC ontology.  Do not be concerned with the previous error.")
         }
     }
-    mf_interesting = mf_all@result
-    rownames(mf_interesting) = NULL
-    mf_interesting$ont = "MF"
-    mf_interesting = mf_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]    
-    mf_interesting = subset(mf_interesting, pvalue <= 0.1)
-
-    bp_interesting = bp_all@result
-    rownames(bp_interesting) = NULL
-    bp_interesting$ont = "BP"
-    bp_interesting = bp_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]    
-    bp_interesting = subset(bp_interesting, pvalue <= 0.1)
-
-    cc_interesting = cc_all@result
-    rownames(cc_interesting) = NULL
-    cc_interesting$ont = "CC"
-    cc_interesting = cc_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
-    cc_interesting = subset(cc_interesting, pvalue <= 0.1)
+    
+    if (!is.null(mf_all)) {
+        mf_interesting = mf_all@result
+        rownames(mf_interesting) = NULL
+        mf_interesting$ont = "MF"
+        mf_interesting = mf_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]    
+        mf_interesting = subset(mf_interesting, pvalue <= 0.1)
+    } else {
+        mf_interesting = NULL
+    }
+    if (!is.null(bp_all)) {
+        bp_interesting = bp_all@result
+        rownames(bp_interesting) = NULL
+        bp_interesting$ont = "BP"
+        bp_interesting = bp_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]    
+        bp_interesting = subset(bp_interesting, pvalue <= 0.1)
+    } else {
+        bp_interesting = NULL
+    }
+    if (!is.null(cc_all)) {
+        cc_interesting = cc_all@result
+        rownames(cc_interesting) = NULL
+        cc_interesting$ont = "CC"
+        cc_interesting = cc_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
+        cc_interesting = subset(cc_interesting, pvalue <= 0.1)
+    } else {
+        cc_interesting = NULL
+    }
     
     return_information = list(
         mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting,
