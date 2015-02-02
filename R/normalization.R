@@ -70,7 +70,7 @@ divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gf
 
 #' Filter low-count genes from a data set.
 #'
-#' @param df input data frame of counts by sample
+#' @param counts input data frame or ExpressionSet of counts by sample
 #' @param threshold lower threshold of counts (default: 4)
 #' @param min_samples minimum number of samples (default: 2)
 #' @param verbose If set to true, prints number of genes removed / remaining
@@ -81,8 +81,13 @@ divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gf
 #' ## filtered_table = filter_counts(count_table)
 filter_counts = function(counts, threshold=4, min_samples=2, verbose=FALSE) {
     num_before = nrow(counts)
-    cpms = 2^hpgl_log2cpm(counts)
-    keep = rowSums(cpms > thresh) >= minSamples
+
+    if (class(counts) == 'ExpressionSet') {
+        cpms = 2^hpgl_log2cpm(exprs(counts))
+    } else {
+        cpms = 2^hpgl_log2cpm(counts)
+    }
+    keep = rowSums(cpms > threshold) >= min_samples
     counts = counts[keep,]
 
     if (verbose) {
