@@ -7,8 +7,11 @@ build:
 	mv ../hpgltools_${VERSION}.tar.gz .
 	tar xavf hpgltools_${VERSION}.tar.gz
 	R CMD check hpgltools --no-build-vignettes
-	R CMD Rd2pdf hpgltools && mv hpgltools.pdf hpgltools/doc/reference.pdf && cp hpgltools/vignettes/hpgltools.pdf  hpgltools/doc/
+	R CMD Rd2pdf hpgltools && mv hpgltools.pdf hpgltools/inst/doc/reference.pdf && cp hpgltools/vignettes/hpgltools.pdf  hpgltools/inst/doc/
 	R CMD INSTALL hpgltools
+
+vignette:
+	cd ../ && R CMD check hpgltools
 
 clean:
 	rm -rf hpgltools/

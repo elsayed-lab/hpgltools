@@ -1,0 +1,4 @@
+%\VignetteIndexEntry{HPGLtools for fun and profit}
+\documentclass{article}
+\begin{document}
+\end{document}

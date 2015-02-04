@@ -23,7 +23,7 @@ library("hpgltools")
 ## To set up an initial vignette, use the following line:
 ## devtools::use_vignette("hpgltools")
 autoloads_all()
-opts_knit$set(progress=TRUE, verbose=TRUE, stop_on_error=FALSE, error=TRUE, fig.width=7, fig.height=7)
+opts_knit$set(progress=TRUE, verbose=TRUE, stop_on_error=FALSE, purl=FALSE, error=TRUE, fig.width=7, fig.height=7)
 options(java.parameters="-Xmx8g")  ## used for xlconnect -- damn 4g wasn't enough
 theme_set(theme_bw(base_size=10))
 set.seed(1)
