@@ -92,7 +92,7 @@ filter_counts = function(counts, threshold=4, min_samples=2, verbose=FALSE) {
 
     if (verbose) {
         print(sprintf("Removing %d low-count genes (%d remaining).",
-                      nrow(counts) - num_before, nrow(counts)))
+                      num_before - nrow(counts), nrow(counts)))
     }
 
     return(counts)
