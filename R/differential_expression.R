@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jan 30 13:26:59 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  9 10:36:48 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## differential_expression.R contains functions useful for differential expression tasks.
 
 #' write_limma(): Writes out the results of a limma search using toptable()
@@ -35,7 +35,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
     return_data = list()
     for (c in 1:length(coef)) {
         comparison = coef[c]
-        print(paste("Printing table: ", comparison, sep=""))        
+        message(paste("Printing table: ", comparison, sep=""))        
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -62,7 +62,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         if (isTRUE(excel) | isTRUE(csv)) {
             if (!file.exists(testdir)) {
                 dir.create(testdir)
-                print(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
+                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
             }
         }
         if (isTRUE(excel)) {
@@ -143,7 +143,7 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE) {
         stat_function(fun=f, colour="red") +
         theme(legend.position="none")
     if (is.null(linear_fit$rank)) {
-        print("Some samples cannot be balanced across the experimental design.")
+        message("Some samples cannot be balanced across the experimental design.")
         if (stupid) {
             ## I think this is telling me I have confounded data, and so
             ## for those replicates I will have no usable coefficients, so
@@ -283,7 +283,7 @@ unbalanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, 
     }
     for (f in 1:length(eval_strings)) {
         eval_name = names(eval_strings[f])
-        print(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
+        message(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
         eval(parse(text=as.character(eval_strings[f])))
     }
     ## Now we have bob=(somestuff) in memory in R's environment
@@ -573,27 +573,27 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
     psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)    
 
     if (verbose) {
-        print("The model looks like:")
-        print(model)
-        print("The mean:variance trend follows")
+        message("The model looks like:")
+        message(model)
+        message("The mean:variance trend follows")
         plot(expt_voom$plot)
-        print("Drawing a scatterplot of the genes.")
-        print("The following statistics describe the relationship between:")
+        message("Drawing a scatterplot of the genes.")
+        message("The following statistics describe the relationship between:")
         print(coefficient_scatter$scatter)
-        print(paste("Setting the column:", colnames(lf$design)[2], "to control"))
-        print(paste("Setting the column:", colnames(lf$design)[1], "to changed"))
-        print("Performing contrasts of the experimental - control.")        
-        print("Taking a histogram of the subtraction values.")
+        message(paste("Setting the column:", colnames(lf$design)[2], "to control"))
+        message(paste("Setting the column:", colnames(lf$design)[1], "to changed"))
+        message("Performing contrasts of the experimental - control.")        
+        message("Taking a histogram of the subtraction values.")
         print(contrast_histogram)
-        print("Taking a histogram of the mean values across samples.")
-        print("The subtraction values should not be related to the mean values.")
+        message("Taking a histogram of the mean values across samples.")
+        message("The subtraction values should not be related to the mean values.")
         print(coef_amean_cor)
-        print("Making a table of the data including p-values and F-statistics.")
-        print("Taking a histogram of the p-values.")
+        message("Making a table of the data including p-values and F-statistics.")
+        message("Taking a histogram of the p-values.")
         print(pvalue_histogram)
-        print("Printing a volcano plot of this data.")
-        print("Printing an maplot of this data.")
-        print(paste("Writing excel sheet:", sheet))               
+        message("Printing a volcano plot of this data.")
+        message("Printing an maplot of this data.")
+        message(paste("Writing excel sheet:", sheet))               
     }
     return_info = list(
         amean_histogram=amean_histogram,

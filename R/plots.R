@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  2 17:26:21 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  9 10:42:08 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -67,39 +67,39 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
     expt_names = expt$names
     expt_raw_data = Biobase::exprs(expt$expressionset)
     expt_norm_data = hpgltools::hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low, ...)$counts
-    print("Graphing number of non-zero genes with respect to CPM by library.")
+    message("Graphing number of non-zero genes with respect to CPM by library.")
     nonzero_plot = hpgltools::graph_nonzero(expt=expt, title="Non zero genes.", ...)
-    print("Graphing library sizes.")
+    message("Graphing library sizes.")
     libsize_plot = hpgltools::hpgl_libsize(expt=expt, title="Library sizes.", ...)
-    print("Graphing a raw data boxplot on log scale.")
+    message("Graphing a raw data boxplot on log scale.")
     raw_boxplot = hpgltools::hpgl_boxplot(expt=expt, title="Boxplot of log(raw data).", scale="log", ...)
-    print("Graphing a normalized boxplot.")
+    message("Graphing a normalized boxplot.")
     norm_boxplot = hpgltools::hpgl_boxplot(df=expt_norm_data, names=expt$names, colors=expt_colors, title="Boxplot of normalized data.", ...)
-    print("Graphing a raw-data correlation heatmap.")
+    message("Graphing a raw-data correlation heatmap.")
     raw_corheat = hpgltools::hpgl_corheat(expt=expt, method=cormethod, title="Correlation heatmap of raw data.", ...)
-    print("Graphing a raw-data standard median correlation.")
+    message("Graphing a raw-data standard median correlation.")
     raw_smc = hpgltools::hpgl_smc(expt=expt, method=cormethod, title="Standard Median Correlation, raw data.", ...)
-    print("Graphing a normalized correlation heatmap.")
+    message("Graphing a normalized correlation heatmap.")
     norm_corheat = hpgltools::hpgl_corheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Corrleation heatmap of normalized data.", ...)
-    print("Graphing a normalized standard median correlation.")
+    message("Graphing a normalized standard median correlation.")
     norm_smc = hpgltools::hpgl_smc(df=expt_norm_data, names=expt$names, colors=expt_colors, method=cormethod, title="Standard Median Correlation, norm. data.", ...)
-    print("Graphing a raw-data distance heatmap.")
+    message("Graphing a raw-data distance heatmap.")
     raw_disheat = hpgltools::hpgl_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...)
-    print("Graphing a raw-data standard median distance.")
+    message("Graphing a raw-data standard median distance.")
     raw_smd = hpgltools::hpgl_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...)
-    print("Graphing a normalized distance heatmap.")
+    message("Graphing a normalized distance heatmap.")
     norm_disheat = hpgltools::hpgl_disheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap, norm. data.", ...)
-    print("Graphing a normalized standard median distance.")
+    message("Graphing a normalized standard median distance.")
     norm_smd = hpgltools::hpgl_smd(df=expt_norm_data, names=expt$names, colors=expt_colors, method=distmethod, title="Standard Median Distance, norm. data.", ...)
-    print("Graphing a PCA plot of the raw data.")
+    message("Graphing a PCA plot of the raw data.")
     raw_pca = try(hpgltools::hpgl_pca(expt=expt, fancy_labels=FALSE, title="PCA plot of raw data.", ...))
-    print("Printing a qqplot of the raw data.")
+    message("Printing a qqplot of the raw data.")
     raw_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
     raw_density = try(hpgltools::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
     norm_density = try(hpgltools::hpgl_density_plot(df=expt_norm_data, title="Density plot of normalized data."))    
-    print("Graphing a PCA plot of the normalized data.")
+    message("Graphing a PCA plot of the normalized data.")
     norm_pca = try(hpgltools::hpgl_pca(df=expt_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
-    print("Printing a qqplot of the normalized data.")
+    message("Printing a qqplot of the normalized data.")
     norm_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=expt_norm_data)))
     batch_removed = limma::removeBatchEffect(Biobase::exprs(expt$expressionset), batch=expt$batches)
     batch_boxplot = hpgltools::hpgl_boxplot(df=batch_removed, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...)
@@ -233,7 +233,7 @@ hpgl_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL,
         libsize_plot = libsize_plot + ggtitle(title)
     }
     if (scale == TRUE) {
-        print("Adding log10")
+        message("Adding log10")
         libsize_plot = libsize_plot + scale_y_log10()
     }
     if (!is.null(hpgl_names)) {
@@ -356,7 +356,7 @@ hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE, labels="short") {
     for (i in 1:comparisons) {
         ith = colnames(hpgl_df)[i]
         if (verbose) {
-            print(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
+            message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
         }
         tmpdf = data.frame(ith=hpgl_df[,i], mean=sample_data$mean)
         colnames(tmpdf) = c(ith, "mean")
@@ -509,7 +509,7 @@ hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
             ith = colnames(hpgl_df)[i]
             jth = colnames(hpgl_df)[j]
             if (verbose) {
-                print(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
+                message(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
             }
             tmp = hpgl_qq_plot(df=hpgl_df, x=i, y=j, labels=labels)
             logs[[count]] = tmp$log
@@ -1165,7 +1165,7 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
     
     if (!is.null(gvis_filename)) {
         if (verbose) {
-            print("Generating an interactive graph.")
+            message("Generating an interactive graph.")
         }
         hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename, trendline=gvis_trendline)
     }
@@ -1185,13 +1185,13 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
         second_median=second_median,
         second_mad=second_mad)
     if (verbose) {
-        print(sprintf("Calculating correlation between the axes using:", cormethod))
-        print(correlation)
-        print("Calculating linear model between the axes")
-        print(linear_model_summary)
-        print("Generating histogram of the x axis.")
-        print("Generating histogram of the y axis.")
-        print("Generating a histogram comparing the axes.")
+        message(sprintf("Calculating correlation between the axes using:", cormethod))
+        message(correlation)
+        message("Calculating linear model between the axes")
+        message(linear_model_summary)
+        message("Generating histogram of the x axis.")
+        message("Generating histogram of the y axis.")
+        message("Generating a histogram comparing the axes.")
     }
     return(plots)
 }
@@ -1222,7 +1222,7 @@ hpgl_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE,
         maxval = max(df, na.rm=TRUE)
         binwidth = (maxval - minval) / bins
         if (verbose) {
-            print(paste("No binwidth provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
+            message(paste("No binwidth provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
         }
     }
     a_histogram = ggplot2::ggplot(df, aes(x=values), environment=hpgl_env) +
@@ -1279,16 +1279,16 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
         maxval = max(play_all$expression, na.rm=TRUE)
         bins = 500
         binwidth = (maxval - minval) / bins
-        print(paste("No binwidth nor bins provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))        
+        message(paste("No binwidth nor bins provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))        
     } else if  (is.null(binwidth)) {
         minval = min(play_all$expression, na.rm=TRUE)
         maxval = max(play_all$expression, na.rm=TRUE)
         binwidth = (maxval - minval) / bins
-        print(paste("Setting binwidth to ", binwidth, " in order to have ", bins, " bins.", sep=""))        
+        message(paste("Setting binwidth to ", binwidth, " in order to have ", bins, " bins.", sep=""))        
     } else if (is.null(bins)) {
-        print(paste("Setting binwidth to ", binwidth, sep=""))
+        message(paste("Setting binwidth to ", binwidth, sep=""))
     } else {
-        print("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
+        message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
     }
     hpgl_multi = ggplot2::ggplot(play_all, aes(x=expression, fill=cond)) +
         geom_histogram(aes(y=..density..), binwidth=binwidth, alpha=0.4, position="identity") +
@@ -1304,15 +1304,15 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
         }
     }
     if (verbose) {
-        print("Summarise the data.")
-        print(summary_df)
-        print("Uncorrected t test(s) between columns:")
-        print(uncor_t)
+        message("Summarise the data.")
+        message(summary_df)
+        message("Uncorrected t test(s) between columns:")
+        message(uncor_t)
         if (class(bon_t) == 'try-error') {
-            print("Unable to perform corrected test.")
+            message("Unable to perform corrected test.")
         } else {
-            print("Bon Ferroni corrected t test(s) between columns:")
-            print(bon_t)
+            message("Bon Ferroni corrected t test(s) between columns:")
+            message(bon_t)
         }
     }
     returns = list(plot=hpgl_multi,
@@ -1334,7 +1334,7 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
 #' @export
 hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, position="identity", fill=NULL, title=NULL) {
     hpgl_env = environment()
-    print("This plot looks neat if you do position='fill' or position='stack'")
+    message("This plot looks neat if you do position='fill' or position='stack'")
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df.")
     }
