@@ -1,4 +1,4 @@
-## Time-stamp: "Wed Jan 28 16:33:30 2015 Ashton Trey Belew (abelew@gmail.com)"
+## Time-stamp: "Mon Feb  9 15:08:50 2015 Ashton Trey Belew (abelew@gmail.com)"
 ## autoloads.R contains some short-cuts I wrote for myself to make
 ## installing/maintaining packages/dependencies easier
 ## 
@@ -30,7 +30,7 @@ require.auto = function(lib, github_path=NULL, verbose=TRUE, update=FALSE) {
     }
     if (isTRUE(lib %in% .packages(all.available=TRUE))) {
         if (verbose) {
-            print(sprintf("Loading %s", lib))
+            message(sprintf("Loading %s", lib))
         }
         eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
     } else {
@@ -39,7 +39,7 @@ require.auto = function(lib, github_path=NULL, verbose=TRUE, update=FALSE) {
             biocLite(character(), ask=FALSE) # update dependencies, if any.
             eval(parse(text=paste("biocLite('", lib, "')", sep="")))
             if (verbose) {
-                print(sprintf("Loading %s", lib))
+                message(sprintf("Loading %s", lib))
             }
             eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
             ## eval(parse(text=paste("install.packages('", lib, "')", sep="")))

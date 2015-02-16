@@ -147,7 +147,7 @@ golev = function(go) {
             ancestors = GOCCANCESTOR[[go]]
         } else {
             ## There was an error
-            print(paste("There was an error getting the ontology: ", as.character(id), sep=""))
+            message(paste("There was an error getting the ontology: ", as.character(id), sep=""))
             ancestors = "error"
         }
         print("Incrementing level")
@@ -241,10 +241,10 @@ goseq_table = function(df, file=NULL) {
 #' @seealso \code{\link{goseq}} and \code{\link{clusterProfiler}}
 #' @export
 simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0.1, qvalue=0.1, method="Wallenius") {
-    print("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
-    print("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
-    print("The other table is of gene lengths with columns (gene)ID and (gene)width.")
-    print("Other columns are fine, but ignored.")
+    message("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
+    message("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
+    message("The other table is of gene lengths with columns (gene)ID and (gene)width.")
+    message("Other columns are fine, but ignored.")
     if (is.null(de_genes$ID)) {
         de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
@@ -271,21 +271,21 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
     ## (assuming always that the highest is a p-value of 1)
     goseq_y_limit = goseq_p_second * 2
     goseq_p = goseq_p + scale_y_continuous(limits=c(0, goseq_y_limit))
-    print("Calculating q-values")
+    message("Calculating q-values")
     qdata = godata$over_represented_pvalue
     qdata[qdata > 1] = 1 ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.0000000000000001
     qdata = qvalue::qvalue(qdata)
     godata = cbind(godata, qdata$qvalues)
     colnames(godata) = c("category","over_represented_pvalue","under_represented_pvalue","numDEInCat","numInCat","qvalue")
-    print("Filling godata table with term information, this takes a while.")
+    message("Filling godata table with term information, this takes a while.")
     godata$ont = goont(godata$category)
     godata$term = goterm(godata$category)
     if (!is.null(adjust)) {
         godata_interesting = subset(godata, p.adjust(godata$over_represented_pvalue, method=method) < adjust)
         adjust_method=method
         if (dim(godata_interesting)[1] == 0) {
-            print(paste("There are no genes with an adjusted pvalue < ", adjust, " using method: ", method, ".", sep=""))
-            print(sprintf("Providing genes with an un-adjusted pvalue < %s", pvalue))
+            message(paste("There are no genes with an adjusted pvalue < ", adjust, " using method: ", method, ".", sep=""))
+            message(sprintf("Providing genes with an un-adjusted pvalue < %s", pvalue))
             godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
             adjust_method="none"
         }
@@ -294,7 +294,7 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
         adjust_method="none"
     }
     ##    goterms = goseq_table(godata_interesting)
-    print("Making pvalue plots for the ontologies.")
+    message("Making pvalue plots for the ontologies.")
     pvalue_plots = goseq_pval_plots(godata)
     mf_subset = subset(godata, ont == "MF")
     bp_subset = subset(godata, ont == "BP")
@@ -449,8 +449,8 @@ hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
 #'
 #' @export
 limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
-    print("This function expects a list of limma contrast tables and some annotation information.")
-    print("The annotation information would be gene lengths and ontology ids")
+    message("This function expects a list of limma contrast tables and some annotation information.")
+    message("The annotation information would be gene lengths and ontology ids")
     if (is.null(n) & is.null(z)) {
         z = 1
     }
@@ -459,7 +459,7 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
     if (isTRUE(excel) | isTRUE(csv)) {
         if (!file.exists(testdir)) {
             dir.create(testdir)
-            print(paste("Creating directory: ", testdir, "for writing excel/csv data.", sep=""))
+            message(paste("Creating directory: ", testdir, "for writing excel/csv data.", sep=""))
         }
     }
     
@@ -916,7 +916,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     genetable_test = try(load("geneTable.rda"))
     if (class(genetable_test) == 'try-error') {
         if (!is.null(gff)) {
-            print("Generating the geneTable.rda")
+            message("Generating the geneTable.rda")
             ## clusterProfiler::Gff2GeneTable(gff)
             hpgltools::Gff2GeneTable(gff)            
         } else {
@@ -933,17 +933,17 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     }
     gomapping_test = try(load("GO2EG.rda"))
     if (class(gomapping_test) == 'try-error') {
-        print("Generating GO mapping data for cluster profiler from the goids data.")
+        message("Generating GO mapping data for cluster profiler from the goids data.")
         gomap = goids
         colnames(gomap) = c("entrezgene", "go_accession")
         clusterProfiler::buildGOmap(gomap)
     } else {
-        print("Using GO mapping data located in GO2EG.rda")
+        message("Using GO mapping data located in GO2EG.rda")
     }
-    print("Testing gseGO")
+    message("Testing gseGO")
     ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
     print(ego2)
-    print("Starting MF(molecular function) analysis")
+    message("Starting MF(molecular function) analysis")
     mf_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
     mf_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     all_mf_phist = try(hpgltools::hpgl_histogram(mf_all@result$pvalue, bins=20))
@@ -953,7 +953,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     }
     enriched_mf = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
     
-    print("Starting BP(biological process) analysis")
+    message("Starting BP(biological process) analysis")
     bp_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
     bp_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     all_bp_phist = try(hpgltools::hpgl_histogram(bp_all@result$pvalue, bins=20))
@@ -964,7 +964,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     
     enriched_bp = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
 
-    print("Starting CC(cellular component) analysis")
+    message("Starting CC(cellular component) analysis")
     cc_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="CC", level=golevel, readable=TRUE)
     cc_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     enriched_cc = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
@@ -993,7 +993,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     all_mf_barplot = try(barplot(mf_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)    
     enriched_mf_barplot = try(barplot(enriched_mf, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_mf_barplot)[1] == 'try-error') {
-        print("No enriched MF groups were observed.")
+        message("No enriched MF groups were observed.")
     } else {
         enriched_mf_barplot$data$Description = as.character(lapply(strwrap(enriched_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
@@ -1003,7 +1003,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     all_bp_barplot = try(barplot(bp_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)        
     enriched_bp_barplot = try(barplot(enriched_bp, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_bp_barplot)[1] == 'try-error') {
-        print("No enriched BP groups observed.")
+        message("No enriched BP groups observed.")
     } else {
         enriched_bp_barplot$data$Description = as.character(lapply(strwrap(enriched_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
@@ -1014,7 +1014,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     all_cc_barplot = try(barplot(cc_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     enriched_cc_barplot = try(barplot(enriched_cc, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_cc_barplot)[1] == 'try-error') {
-        print("No enriched CC groups observed.")
+        message("No enriched CC groups observed.")
     } else {
         enriched_cc_barplot$data$Description = as.character(lapply(strwrap(enriched_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
@@ -1023,26 +1023,26 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     }
     
     if (include_cnetplots == TRUE) {
-        print("Attempting to include the cnetplots from clusterProfiler.")
-        print("They fail often, if this is causing errors, set:")
-        print("include_cnetplots to FALSE")
+        message("Attempting to include the cnetplots from clusterProfiler.")
+        message("They fail often, if this is causing errors, set:")
+        message("include_cnetplots to FALSE")
         cnetplot_mf = try(clusterProfiler::cnetplot(enriched_mf, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_mf)[1] != 'try-error') {
             cnetplot_mf = recordPlot()
         } else {
-            print("cnetplot just failed for the MF ontology.  Do not be concerned with the previous error.")
+            message("cnetplot just failed for the MF ontology.  Do not be concerned with the previous error.")
         }
         cnetplot_bp = try(clusterProfiler::cnetplot(enriched_bp, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_bp)[1] != 'try-error') {
             cnetplot_bp = recordPlot()
         } else {
-            print("cnetplot just failed for the BP ontology.  Do not be concerned with the previous error.")
+            message("cnetplot just failed for the BP ontology.  Do not be concerned with the previous error.")
         }            
         cnetplot_cc = try(clusterProfiler::cnetplot(enriched_cc, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_cc)[1] != 'try-error') {
             cnetplot_cc = recordPlot()
         } else {
-            print("cnetplot just failed for the CC ontology.  Do not be concerned with the previous error.")
+            message("cnetplot just failed for the CC ontology.  Do not be concerned with the previous error.")
         }
     }
     
@@ -1098,7 +1098,7 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
         if (is.null(goids_df)) {
             stop("There is neither a id2go file nor a data frame of goids.")
         } else {
-            print("Attempting to generate a id2go file in the format expected by topGO.")
+            message("Attempting to generate a id2go file in the format expected by topGO.")
             new_go = plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
             write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
             rm(id2go_test)
@@ -1108,7 +1108,7 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
             if (is.null(goids_df)) {
                 stop("There is neither a id2go file nor a data frame of goids.")
             } else {
-                print("Attempting to generate a id2go file in the format expected by topGO.")
+                message("Attempting to generate a id2go file in the format expected by topGO.")
                 new_go = plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
                 write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
                 rm(id2go_test)
@@ -1159,7 +1159,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     mf_included = length(which(mf_nodes <= score_limit))
     mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(mf_tree_data) == 'try-error') {
-        print("There was an error generating the MF tree.")
+        message("There was an error generating the MF tree.")
         mf_tree = NULL
     } else {
         mf_tree = recordPlot()
@@ -1171,7 +1171,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     bp_included = length(which(bp_nodes <= score_limit))
     bp_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(bp_tree_data) == 'try-error') {
-        print("There was an error generating the BP tree.")
+        message("There was an error generating the BP tree.")
         bp_tree = NULL
     } else {
         bp_tree = recordPlot()
@@ -1183,7 +1183,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     cc_included = length(which(cc_nodes <= score_limit))
     cc_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(cc_tree_data) == 'try-error') {
-        print("There was an error generating the CC tree.")
+        message("There was an error generating the CC tree.")
         cc_tree = NULL
     } else {
         cc_tree = recordPlot()
@@ -1286,18 +1286,6 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
     try(detach("package:RamiGO", unload=TRUE))
     try(detach("package:graph", unload=TRUE))
     library("pathview")
-    ## Testing parameters
-    ##path_data = kegg_list
-    ##indir="pathview_in"
-    ##outdir="pathview_epi_high"
-    ##pathway="all"
-    ##species="tcr"
-    ##string_from="TcCLB."
-    ##string_to=""
-    ##suffix="_epi_high"
-    ## End testing parameters    
-#    environment(eh)
-    ## Massage the names to KEGG compatible names
     tmp_names = names(path_data)
     tmp_names = gsub(string_from, string_to, tmp_names)
     if (!is.null(second_from)) {
@@ -1312,8 +1300,8 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
         dir.create(indir)
     }
     if (!file.exists(outdir)){
-            dir.create(outdir)
-        }
+        dir.create(outdir)
+    }
     paths = list()
     if (pathway == "all") {
         all_pathways = unique(KEGGREST::keggLink("pathway", species))
@@ -1328,8 +1316,11 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
     return_list = list()
     for (count in 1:length(paths)) {
         path = paths[count]
+        gene_examples = try(keggLink(paste("path", path, sep=":"))[,2])  ## RCurl is crap and fails sometimes for no apparent reason.
         limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
         if (isTRUE(verbose)) {
+            print(paste("Here are some path gene examples: ", gene_examples, sep=""))
+            print(paste("Here are your genes: ", head(names(path_data))), sep="")
             pv = try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path, species=species, limit=list(gene=limits, cpd=limits), map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix, split.group=TRUE, expand.node=TRUE, kegg.native=TRUE, map.symbol=TRUE, same.layer=FALSE, res=1200, new.signature=FALSE, cex=0.05, key.pos="topright"))
         } else {
             pv = suppressMessages(try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path, species=species, limit=list(gene=limits, cpd=limits), map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix, split.group=TRUE, expand.node=TRUE, kegg.native=TRUE, map.symbol=TRUE, same.layer=FALSE, res=1200, new.signature=FALSE, cex=0.05, key.pos="topright")))
@@ -1345,7 +1336,7 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
             oldfile = paste(path, ".", suffix, ".png", sep="")
             newfile = paste(outdir,"/", path, suffix, ".png", sep="")
             if (isTRUE(verbose)) {
-                print(paste("Moving file to: ", newfile, sep=""))
+                message(paste("Moving file to: ", newfile, sep=""))
             }
             file.rename(from=oldfile, to=newfile)
             data_low = summary(path_data)[2]
@@ -1877,7 +1868,7 @@ Gff2GeneTable <- function(gffFile, compress=TRUE) {
     } else {
         save(geneTable, file="geneTable.rda")
     }
-    print("Gene Table file save in the working directory.")
+    message("Gene Table file save in the working directory.")
 }
 
 parseKGML2Graph2 <-function (file, ...) {
