@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  9 10:42:08 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Feb 13 13:39:34 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -896,7 +896,11 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         hpgl_labels = expt$names
     }
     pca = cbcbSEQ::makeSVD(hpgl_df)  ## This is a part of cbcbSEQ
-    pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition, hpgl_design$batch)
+    if (length(levels(hpgl_design$batch)) == 1) {
+        pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition)
+    } else {
+        pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition, hpgl_design$batch)
+    }
     pca_variance = round((pca$d ^ 2) / sum(pca$d ^ 2) * 100, 2)
     xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
@@ -922,7 +926,7 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         if (labels == "fancy") {
             pca_plot = pca_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_design$condition)
         } else {
-            pca_plot = pca_plot + geom_text(aes(label=SampleID), angle=45, size=4,vjust=2)
+            pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=labels), angle=45, size=4, vjust=2)
         }
     }
     if (!is.null(title)) {

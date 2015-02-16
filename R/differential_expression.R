@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  9 10:36:48 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Feb 13 15:34:06 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## differential_expression.R contains functions useful for differential expression tasks.
 
 #' write_limma(): Writes out the results of a limma search using toptable()
@@ -514,8 +514,13 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
 #' ## check for that, but I have not yet.
 simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="simple_comparison", basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE, pvalue_cutoff=0.05, logfc_cutoff=0.6, tooltip_data=NULL, verbose=FALSE, ...) {
     condition_model = stats::model.matrix(~ 0 + subset$condition)
-    condbatch_model = stats::model.matrix(~ 0 + subset$condition + subset$batch)
-    if (batch) {
+    if (length(levels(subset$batch)) == 1) {
+        print("Hey! There is only one batch! I am only including condition in the model!")
+        condbatch_model = stats::model.matrix(~ 0 + subset$condition)
+    } else {
+        condbatch_model = stats::model.matrix(~ 0 + subset$condition + subset$batch)
+    }
+    if (isTRUE(batch)) {
         model = condbatch_model
     } else {
         model = condition_model

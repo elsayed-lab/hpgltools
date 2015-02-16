@@ -1286,18 +1286,6 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
     try(detach("package:RamiGO", unload=TRUE))
     try(detach("package:graph", unload=TRUE))
     library("pathview")
-    ## Testing parameters
-    ##path_data = kegg_list
-    ##indir="pathview_in"
-    ##outdir="pathview_epi_high"
-    ##pathway="all"
-    ##species="tcr"
-    ##string_from="TcCLB."
-    ##string_to=""
-    ##suffix="_epi_high"
-    ## End testing parameters    
-#    environment(eh)
-    ## Massage the names to KEGG compatible names
     tmp_names = names(path_data)
     tmp_names = gsub(string_from, string_to, tmp_names)
     if (!is.null(second_from)) {
@@ -1312,8 +1300,8 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
         dir.create(indir)
     }
     if (!file.exists(outdir)){
-            dir.create(outdir)
-        }
+        dir.create(outdir)
+    }
     paths = list()
     if (pathway == "all") {
         all_pathways = unique(KEGGREST::keggLink("pathway", species))
@@ -1328,8 +1316,11 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
     return_list = list()
     for (count in 1:length(paths)) {
         path = paths[count]
+        gene_examples = try(keggLink(paste("path", path, sep=":"))[,2])  ## RCurl is crap and fails sometimes for no apparent reason.
         limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
         if (isTRUE(verbose)) {
+            print(paste("Here are some path gene examples: ", gene_examples, sep=""))
+            print(paste("Here are your genes: ", head(names(path_data))), sep="")
             pv = try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path, species=species, limit=list(gene=limits, cpd=limits), map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix, split.group=TRUE, expand.node=TRUE, kegg.native=TRUE, map.symbol=TRUE, same.layer=FALSE, res=1200, new.signature=FALSE, cex=0.05, key.pos="topright"))
         } else {
             pv = suppressMessages(try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path, species=species, limit=list(gene=limits, cpd=limits), map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix, split.group=TRUE, expand.node=TRUE, kegg.native=TRUE, map.symbol=TRUE, same.layer=FALSE, res=1200, new.signature=FALSE, cex=0.05, key.pos="topright")))

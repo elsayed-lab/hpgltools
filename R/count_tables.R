@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jan 27 12:41:26 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb 16 16:51:54 2015 Ashton Trey Belew (abelew@gmail.com)>
 ### count_tables.R contains some functions for simple count-table manipulations
 ### This includes reading in files, creating expressionSets, and subsets.
 
@@ -20,18 +20,25 @@
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
-create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", count_dataframe=NULL, ...) {
+create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", count_dataframe=NULL, savefile="expt", ...) {
     tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
+    colnames(tmp_definitions) = tolower(colnames(tmp_definitions))    
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
     ## Thus the next line
     print("This function needs the conditions and batches to be an explicit column in the sample sheet.")
-    tmp_definitions = subset(tmp_definitions, Sample.ID != "")
+    tmp_definitions = subset(tmp_definitions, sample.id != "")
     condition_names = unique(tmp_definitions$condition)
-    num_colors = length(condition_names)        
+    num_colors = length(condition_names)
     colors = colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors)
     color_hash = hash(keys=as.character(condition_names), values=colors)
-    expt = create_experiment(file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, sep=sep)
+    expt_list = create_experiment(file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, sep=sep, low_files=low_files)
+    expt = expt_list$expt
+    def = expt_list$def
     new_expt = expt_subset(expt, "")
+    new_expt$definitions = def
+    if (savefile) {
+        save(list = c("new_expt"), file=paste(savefile, ".Rdata", sep=""))
+    }
     return(new_expt)
 }
 
@@ -58,10 +65,11 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     print("Other columns it will attempt to create by itself, but if")
     print("batch and condition are provided, that is a nice help.")
     sample_definitions = read.csv(file=file, comment.char="#", sep=sep)
-    sample_definitions = sample_definitions[grepl('(^HPGL|^hpgl)', sample_definitions$Sample.ID, perl=TRUE),]
+    colnames(sample_definitions) = tolower(colnames(sample_definitions))
+    sample_definitions = sample_definitions[grepl('(^HPGL|^hpgl)', sample_definitions$sample.id, perl=TRUE),]
     if (is.null(sample_definitions$condition)) {
-        sample_definitions$condition = tolower(paste(sample_definitions$Type, sample_definitions$Stage, sep="_"))
-        sample_definitions$batch = gsub("\\s+|\\d+|\\*", "", sample_definitions$Batch, perl=TRUE)
+        sample_definitions$condition = tolower(paste(sample_definitions$type, sample_definitions$stage, sep="_"))
+        sample_definitions$batch = gsub("\\s+|\\d+|\\*", "", sample_definitions$batch, perl=TRUE)
     }
     design_colors_list = as.list.hash(color_hash)
     sample_definitions$colors = as.list(design_colors_list[as.character(sample_definitions$condition)])
@@ -72,31 +80,22 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
         by_type = TRUE
     }
     if (isTRUE(by_type)) {
-        sample_definitions$counts = paste("processed_data/count_tables/", tolower(sample_definitions$Type),
-            "/", tolower(sample_definitions$Stage), "/",
-            sample_definitions$Sample.ID, suffix, sep="")
-        sample_definitions$intercounts = paste("data/count_tables/", tolower(sample_definitions$Type),
-            "/", tolower(sample_definitions$Stage), "/",
-            sample_definitions$Sample.ID, "_inter", suffix, sep="")
+        sample_definitions$counts = paste("processed_data/count_tables/", tolower(sample_definitions$type),
+            "/", tolower(sample_definitions$stage), "/",
+            sample_definitions$sample.id, suffix, sep="")
+        sample_definitions$intercounts = paste("data/count_tables/", tolower(sample_definitions$type),
+            "/", tolower(sample_definitions$stage), "/",
+            sample_definitions$sample.id, "_inter", suffix, sep="")
     }
     if (isTRUE(by_sample)) {
-        sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$Sample.ID), "/", as.character(sample_definitions$Sample.ID), suffix, sep="")
-        sample_definitions$intercounts = paste("processed_data/count_tables/", as.character(sample_definitions$Sample.ID), "/", as.character(sample_definitions$Sample.ID), "_inter", suffix, sep="")
-    }
-    if (is.null(sample_definitions$stage)) {
-        sample_definitions$stage = sample_definitions$Stage
-    }
-    if (is.null(sample_definitions$type)) {
-        sample_definitions$type = sample_definitions$Type
-    }
-    if (is.null(sample_definitions$batch)) {
-        sample_definitions$batch = sample_definitions$Batch
+        sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
+        sample_definitions$intercounts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), "_inter", suffix, sep="")
     }
     sample_definitions = as.data.frame(sample_definitions)
-    rownames(sample_definitions) = sample_definitions$Sample.ID
+    rownames(sample_definitions) = sample_definitions$sample.id
     if (is.null(count_dataframe)) {
-        all_count_tables = hpgl_read_files(as.character(sample_definitions$Sample.ID),
-            as.character(sample_definitions$counts), header=header)
+        all_count_tables = hpgl_read_files(as.character(sample_definitions$sample.id),
+            as.character(sample_definitions$counts), header=header, suffix=suffix)
     } else {
         all_count_tables = count_dataframe
         colnames(all_count_tables) = rownames(sample_definitions)
@@ -134,7 +133,7 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     if (is.null(sample_definitions$intercounts)) {
         sample_definitions$intercounts = "unknown"
     }
-    metadata = new("AnnotatedDataFrame", data.frame(sample=as.character(sample_definitions$Sample.ID),
+    metadata = new("AnnotatedDataFrame", data.frame(sample=as.character(sample_definitions$sample.id),
         stage=as.character(sample_definitions$stage),
         type=as.character(sample_definitions$type),
         condition=as.character(sample_definitions$condition),
@@ -147,7 +146,8 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     featureNames(feature_data) = rownames(all_count_matrix)
     experiment = new("ExpressionSet", exprs=all_count_matrix,
         phenoData=metadata, featureData=feature_data)
-    return(experiment)
+    ret = list(expt=experiment, def=sample_definitions)
+    return(ret)
 }
 
 #' Extract a subset of samples following some rule(s) from an
@@ -167,7 +167,7 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
 #' @examples
 #' ## smaller_expt = expt_subset(big_expt, "condition=='control'")
 #' ## all_expt = expt_subset(expressionset, "")  ## extracts everything
-expt_subset = function(expt, subset) {
+expt_subset = function(expt, subset, by_definitions=FALSE) {
     if (class(expt) == "ExpressionSet") {
         expressionset = expt
     } else if (class(expt) == "expt") {
@@ -175,10 +175,14 @@ expt_subset = function(expt, subset) {
     } else {
         stop("expt is neither an expt nor ExpressionSet")
     }
-    initial_metadata = Biobase::pData(expressionset)
+    if (isTRUE(by_definitions)) {
+        initial_metadata = expt$definitions
+    } else {
+        initial_metadata = Biobase::pData(expressionset)
+    }
     r_expression=paste("subset(initial_metadata,", subset, ")")
     samples = eval(parse(text=r_expression))
-##    design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
+    ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
     design = as.data.frame(samples)
     ## This is to get around stupidity with respect to needing all factors to be in a DESeqDataSet
     conditions = as.factor(as.character(design$condition))
@@ -224,25 +228,45 @@ expt_subset = function(expt, subset) {
 #' @export
 #' @examples
 #' ## count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
-hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE, ...) {
-    # load first sample
-    count_table = read.table(files[1], ...)
-    colnames(count_table) = c("ID", ids[1])
+hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE, suffix=NULL, ...) {
+    ## load first sample
+    lower_filenames = files
+    dirs = dirname(lower_filenames)
+    low_files = tolower(basename(files))
+    if (!is.null(suffix)) {
+        low_hpgl = gsub(suffix, "", basename(files))
+        low_hpgl = tolower(low_hpgl)
+        low_hpgl = paste(low_hpgl, suffix, sep="")
+    } else {
+        low_hpgl = gsub("HPGL","hpgl", basename(files))
+    }
+    lower_filenames = paste(dirs, low_files, sep="/")
+    lowhpgl_filenames = paste(dirs, low_hpgl, sep="/")
 
-    # iterate over and append remaining samples
+    if (file.exists(tolower(files[1]))) {
+        files = tolower(files)
+    } else if (file.exists(lowhpgl_filenames[1])) {
+        files = lowhpgl_filenames
+    } else if (file.exists(lower_filenames[1])) {
+        files = lower_filenames
+    }
+    ##count_table = read.table(files[1], header=header, ...)
+    count_table = read.table(files[1], header=header)    
+    colnames(count_table) = c("ID", ids[1])
+    ## iterate over and append remaining samples
     for (table in 2:length(files)) {
         tmp_count = read.table(files[table], header=header)
         colnames(tmp_count) = c("ID", ids[table])
         count_table = merge(count_table, tmp_count, by="ID")
     }
+    
     rm(tmp_count)
-
-    # set row and columns ids
+    ## set row and columns ids
     rownames(count_table) = count_table$ID
     count_table = count_table[-1]
     colnames(count_table) = ids
 
-    # remove summary fields added by HTSeq
+    ## remove summary fields added by HTSeq
     if (!include_summary_rows) {
         htseq_meta_rows = c('__no_feature', '__ambiguous', '__too_low_aQual',
                             '__not_aligned', '__alignment_not_unique')
