@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb 16 16:51:54 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Feb 20 17:58:38 2015 Ashton Trey Belew (abelew@gmail.com)>
 ### count_tables.R contains some functions for simple count-table manipulations
 ### This includes reading in files, creating expressionSets, and subsets.
 
@@ -20,7 +20,7 @@
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
-create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", count_dataframe=NULL, savefile="expt", ...) {
+create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
     tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
     colnames(tmp_definitions) = tolower(colnames(tmp_definitions))    
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
@@ -31,12 +31,12 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
     num_colors = length(condition_names)
     colors = colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors)
     color_hash = hash(keys=as.character(condition_names), values=colors)
-    expt_list = create_experiment(file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, sep=sep, low_files=low_files)
+    expt_list = create_experiment(file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
     expt = expt_list$expt
     def = expt_list$def
     new_expt = expt_subset(expt, "")
     new_expt$definitions = def
-    if (savefile) {
+    if (!is.null(savefile)) {
         save(list = c("new_expt"), file=paste(savefile, ".Rdata", sep=""))
     }
     return(new_expt)
@@ -59,7 +59,7 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
-create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, count_dataframe=NULL, sep=",", ...) {
+create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, include_type="all", include_gff=NULL, count_dataframe=NULL, sep=",", ...) {
     print("Please note that thus function assumes a specific set of columns in the sample sheet:")
     print("The most important ones are: Sample.ID, Stage, Type.")
     print("Other columns it will attempt to create by itself, but if")
@@ -100,7 +100,8 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
         all_count_tables = count_dataframe
         colnames(all_count_tables) = rownames(sample_definitions)
     }
-    all_count_matrix = data.frame(all_count_tables)
+    all_count_matrix = as.data.frame(all_count_tables)
+
     rownames(all_count_matrix) = gsub("^exon:","", rownames(all_count_matrix))
     rownames(all_count_matrix) = make.names(gsub(":\\d+","", rownames(all_count_matrix)), unique=TRUE)    
     if (is.null(genes)) {
@@ -112,6 +113,22 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
         gene_info = genes[genes$ID %in% rownames(all_count_matrix),]
         all_count_matrix = all_count_matrix[rownames(all_count_matrix) %in% genes$ID,]                
     }
+
+    ## Make sure that all columns have been filled in for every gene.
+    complete_index = complete.cases(all_count_matrix)
+    all_count_matrix = all_count_matrix[complete_index,]
+
+    if (include_type != "all") {
+        print(paste("Excluding entries from the annotation which are not: ", include_type, sep=""))
+        print("Reading the annotation information, this may take a while.")
+        annotation = BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
+        print("Finished reading annotations, we should be done soon.")
+        keepers = annotation[annotation$type==include_type,]$gene_id
+        index = row.names(all_count_matrix) %in% keepers
+        all_count_matrix = all_count_matrix[index,]
+        gene_info = gene_info[index,]
+    }
+    
     if (is.null(sample_definitions$stage)) {
         sample_definitions$stage = "unknown"
     }
