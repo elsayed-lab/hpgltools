@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Feb 13 15:34:06 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Feb 18 11:16:24 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## differential_expression.R contains functions useful for differential expression tasks.
 
 #' write_limma(): Writes out the results of a limma search using toptable()
@@ -77,6 +77,38 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         return_data[[comparison]] = data_table
     }
     return(return_data)
+}
+
+
+#' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
+#' It just does fast.svd of a matrix against its rowMeans().
+#'
+#' @param data A data frame to decompose
+#'
+#' @return a list containing the s,v,u from fast.svd
+#' @seealso \code{\link{fast.svd}}
+#'
+#' @export
+#' @examples
+#' ## svd = makeSVD(data)
+makeSVD = function (x) {
+    x = as.matrix(x)
+    s = fast.svd(x - rowMeans(x))
+    v = s$v
+    rownames(v) = colnames(x)
+    s = list(v=v, u=s$u, d=s$d)
+    return(s)
+}
+
+## Some code to more strongly remove batch effects
+remove_batch_effect = function(normalized_counts, model) {
+    ## model = model.matrix(~ condition + batch)
+    voomed = hpgl_voom(normalized_counts, model)
+    voomed_fit = lmFit(voomed)
+    modified_model = model
+    modified_model = modified_model[,grep("batch", colnames(modified_model))] = 0 ## Drop batch from the model
+    new_data = tcrossprod(voomed_fit$coefficient, modified_model) + residuals(voomed_fit, normalized_counts)
+    return(new_data)
 }
 
 #' hpgl_voom():  A slight modification of limma's voom() function.

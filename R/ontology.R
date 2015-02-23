@@ -1265,18 +1265,33 @@ cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", go
     return(trees)
 }
 
+
+## HAHAH awesome
+kegg_get_orgn = function(species) {
+    require.auto("RCurl")
+    all_organisms = getURL("http://rest.kegg.jp/list/organism")
+    org_tsv = textConnection(all_organisms)
+    all = read.table(org_tsv, sep="\t", quote="", fill=TRUE)
+    close(org_tsv)
+    colnames(all) = c("Tid","orgid","species","phylogeny")
+    candidates = all[grepl(species, all$species),]  ## Look for the search string in the species column
+    return(candidates)
+}
+
 ## Please note that the KGML parser fails if other XML parsers are loaded into R
 #' Print some data onto KEGG pathways
 #'
 #' @param de_genes some differentially expressed genes
-#' @param godata data from cluster Profiler
-#' @param goids a mapping of IDs to GO in the Ramigo expected format
-#' @param sigforall Print significance on all nodes?
+#' @param indir A directory into which the unmodified kegg images will be downloaded (or already exist).  Defaults to 'pathview_in'
+#' @param outdir A directory which will contain the colored images.
+#' @param pathway Perform the coloring for a specific pathway?  Defaults to 'all'
+#' @param species The kegg identifier for the species of interest.
+#' @param filenames Whether to give filenames as the kegg ID or pathway name.  Defaults to 'id'.
 #' 
 #' @return a plot!
 #' @seealso \code{\link{Ramigo}}
 #' @export
-hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, verbose=FALSE) {
+hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, verbose=FALSE, filenames="id") {
     ##eh = new.env(hash=TRUE, size=NA)
     ## There is a weird namespace conflict when using pathview, so I will reload it here
     try(detach("package:Rgraphviz", unload=TRUE))
@@ -1316,6 +1331,11 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
     return_list = list()
     for (count in 1:length(paths)) {
         path = paths[count]
+        path_name = keggGet(path)
+        path_name = path_name[[1]]$NAME
+        path_name = gsub("(.*) - .*", "\\1", path_name)
+        path_name = tolower(path_name)
+        path_name = gsub(" ", "_", path_name)
         gene_examples = try(keggLink(paste("path", path, sep=":"))[,2])  ## RCurl is crap and fails sometimes for no apparent reason.
         limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
         if (isTRUE(verbose)) {
@@ -1334,7 +1354,13 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
             colored_genes = dim(pv$plot.data.gene)[1]
             ##        "lma04070._proeff.png"
             oldfile = paste(path, ".", suffix, ".png", sep="")
-            newfile = paste(outdir,"/", path, suffix, ".png", sep="")
+            ## An if-statement to see if the user prefers pathnames by kegg ID or pathway name
+            ## Dr. McIver wants path names...
+            if (filenames == "id") {
+                newfile = paste(outdir,"/", path, suffix, ".png", sep="")
+            } else {
+                newfile = paste(outdir, "/", path_name, suffix, ".png", sep="")
+            }
             if (isTRUE(verbose)) {
                 message(paste("Moving file to: ", newfile, sep=""))
             }
