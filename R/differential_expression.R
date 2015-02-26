@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Feb 18 11:16:24 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb 26 13:50:31 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## differential_expression.R contains functions useful for differential expression tasks.
 
 #' write_limma(): Writes out the results of a limma search using toptable()
@@ -283,6 +283,7 @@ unbalanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, 
             }
         } ## End looking at the comparison of batches in condition.
         identity_string = gsub(" \\+ $", ")\"", identity_string)
+        print(paste("As a reference, the identity is: ", identity_string, sep=""))
         identities[identity_name] = identity_string
     }
     ## If I also create a sample condition 'alice', and also perform a subtraction
@@ -414,6 +415,7 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
         identity_name = names(condition_table[c])
         identity_string = paste(identity_name, " = ", identity_name, ",", sep="")
         identities[identity_name] = identity_string
+        print(paste("As a reference, the identity is: ", identity_string, sep=""))
     }
     ## If I also create a sample condition 'alice', and also perform a subtraction
     ## of 'alice' from 'bob', then the full makeContrasts() will be:
@@ -440,7 +442,12 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
     ## The goal now is to create the variables in the R environment
     ## and add them to makeContrasts()
     eval_strings = append(identities, all_pairwise)
+    eval_names = names(eval_strings)
     if (!is.null(extra_contrasts)) {
+        extra_eval_strings = strsplit(extra_contrasts, "\\n")
+        extra_eval_names = extra_eval_strings
+        require.auto("stringi")
+        extra_eval_names = stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")        
         eval_strings = append(eval_strings, extra_contrasts)
     }
 ##    for (f in 1:length(eval_strings)) {
@@ -461,7 +468,11 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
     eval(parse(text=contrast_string))
     ## I like to change the column names of the contrasts because by default
     ## they are kind of obnoxious and too long to type
-    colnames(all_pairwise_contrasts) = as.character(names(eval_strings))
+    
+    if (!is.null(extra_contrasts)) {
+        eval_names = append(eval_names, extra_eval_names)
+    }
+    colnames(all_pairwise_contrasts) = eval_names
     ## Once all that is done, perform the fit
     ## This will first provide the relative abundances of each condition
     ## followed by the set of all pairwise comparisons.

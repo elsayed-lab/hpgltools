@@ -7,7 +7,9 @@
 #' 
 #' @export
 #' @examples
-#' ## text = goterm("GO:0032559")
+#' ## goterm("GO:0032559")
+#' ## > GO:0032559
+#' ## > "adenyl ribonucleotide binding" 
 goterm = function(go="GO:0032559") {
     go = as.character(go)
     term = function(id) {
@@ -40,7 +42,10 @@ goterm = function(go="GO:0032559") {
 #' 
 #' @export
 #' @examples
-#' ## text = gosyn("GO:0032559")
+#' ## text =  gosyn("GO:0000001")
+#' ## text
+#' ## > GO:000001
+#' ## > "mitochondrial inheritance" 
 gosyn = function(go) {
     go = as.character(go)
     syn = function(id) {
@@ -63,7 +68,9 @@ gosyn = function(go) {
 #' 
 #' @export
 #' @examples
-#' ## text = gosec("GO:0032559")
+#' ## gosec("GO:0032432")
+#' ## > GO:0032432
+#' ## > "c(NA, \"GO:0000141\", \"GO:0030482\")" 
 gosec = function(go) {
     go = as.character(go)
     sec = function(id) {
@@ -86,7 +93,9 @@ gosec = function(go) {
 #' 
 #' @export
 #' @examples
-#' ## text = gosec("GO:0032559")
+#' ## godef("GO:0032432")
+#' ## > GO:0032432
+#' ## > "An assembly of actin filaments that are on the same axis but may be oriented with the same or opposite polarities and may be packed with different levels of tightness."
 godef = function(go) {
     go = as.character(go)
     def = function(id) {
@@ -109,7 +118,9 @@ godef = function(go) {
 #' 
 #' @export
 #' @examples
-#' ## text = gosec("GO:0032559")
+#' ## goont(c("GO:0032432", "GO:0032433"))
+#' ## > GO:0032432 GO:0032433 
+#' ## > "CC" "CC"
 goont = function(go) {
     go = as.character(go)
     ont = function(id) {
@@ -133,12 +144,16 @@ goont = function(go) {
 #' 
 #' @export
 #' @examples
-#' ## text = gosec("GO:0032559")
-golev = function(go) {
+#' ## golev("GO:0032559")
+#' ## > 3
+golev = function(go, verbose=FALSE) {
     go = as.character(go)
     level = 0
-    go = "GO:0005874"
     while(class(try(as.character(AnnotationDbi::Ontology(GOTERM[[go]])), silent=FALSE)) != 'try-error') {
+        if(isTRUE(verbose)) {
+            print(paste("Restarting while loop, level: ", level, go, sep=" "))
+        }
+        ontology = as.character(Ontology(GOTERM[[go]]))
         if (ontology == "MF") {
             ancestors = GOMFANCESTOR[[go]]
         } else if (ontology == "BP") {
@@ -150,12 +165,29 @@ golev = function(go) {
             message(paste("There was an error getting the ontology: ", as.character(id), sep=""))
             ancestors = "error"
         }
-        print("Incrementing level")
+        if(isTRUE(verbose)) {
+            print("Incrementing level")            
+        }        
         go = ancestors[1]
         level = level + 1
+        if (go == "all") {
+            return(level)
+        }
     }  ## End while
     return(level)
 }
+
+#' Get a go level approximation from a set of IDs
+#' This just wraps golev() in mapply.
+#' @param id a character list of IDs
+#' 
+#' @return Some text
+#' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
+#' 
+#' @export
+#' @examples
+#' ## golevel(c("GO:0032559", "GO:0000001")
+#' ## > 3 4
 golevel = function(go) {
     mapply(golev, go)
 }
@@ -169,7 +201,10 @@ golevel = function(go) {
 #' 
 #' @export
 #' @examples
-#' ## text = gosec("GO:0032559")
+#' ## gotest("GO:0032559")
+#' ## > 1
+#' ## gotest("GO:0923429034823904")
+#' ## > 0
 gotest = function(go) {
     go = as.character(go)
     tst = function(id) {
@@ -198,33 +233,19 @@ gotest = function(go) {
 #' @examples
 #' ## annotated_go = goseq_table(go_ids)
 goseq_table = function(df, file=NULL) {
-    ## Testing args:
-    ## df=godata
-    ## end testing
     keep_columns = c("goid", "over_pval","under_pval","numDEinCat","numInCat", "qvalue")
     colnames(df) = keep_columns
     df$good = gotest(df$goid)
-##    df$good = mapply(gotest, df$goid)
     df = subset(df, good == 1)
     df = df[, keep_columns]
     df$term = goterm(df$goid)
-##    df$term = mapply(goterm, df$goid)
-##    df$term = as.character(df$term)
     df = subset(df, !is.null(term))
     df$syn = gosyn(df$goid)
-##    df$syn = mapply(gosyn, df$goid)
-##    df$syn = as.character(df$syn)
     df$sec = goseq(df$goid)
-##    df$sec = mapply(gosec, df$goid)
-##    df$sec = as.character(df$sec)
     df$ont = goont(df$goid)
-##    df$ont = mapply(goont, df$goid)
-##    df$ont = as.character(df$ont)
     df = subset(df, !is.null(ont))
-######    df$level = mapply(golevel, df$goid)
+##  df$level = mapply(golevel, df$goid)
     df$def = godef(df$goid)
-##    df$def = mapply(godef, df$goid)
-##    df$def = as.character(df$def)
     if (!is.null(file)) {
         write.csv(df, file=file)
     }
@@ -1265,137 +1286,6 @@ cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", go
     return(trees)
 }
 
-
-## HAHAH awesome
-kegg_get_orgn = function(species) {
-    require.auto("RCurl")
-    all_organisms = getURL("http://rest.kegg.jp/list/organism")
-    org_tsv = textConnection(all_organisms)
-    all = read.table(org_tsv, sep="\t", quote="", fill=TRUE)
-    close(org_tsv)
-    colnames(all) = c("Tid","orgid","species","phylogeny")
-    candidates = all[grepl(species, all$species),]  ## Look for the search string in the species column
-    return(candidates)
-}
-
-## Please note that the KGML parser fails if other XML parsers are loaded into R
-#' Print some data onto KEGG pathways
-#'
-#' @param de_genes some differentially expressed genes
-#' @param indir A directory into which the unmodified kegg images will be downloaded (or already exist).  Defaults to 'pathview_in'
-#' @param outdir A directory which will contain the colored images.
-#' @param pathway Perform the coloring for a specific pathway?  Defaults to 'all'
-#' @param species The kegg identifier for the species of interest.
-#' @param filenames Whether to give filenames as the kegg ID or pathway name.  Defaults to 'id'.
-#' 
-#' @return a plot!
-#' @seealso \code{\link{Ramigo}}
-#' @export
-hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, verbose=FALSE, filenames="id") {
-    ##eh = new.env(hash=TRUE, size=NA)
-    ## There is a weird namespace conflict when using pathview, so I will reload it here
-    try(detach("package:Rgraphviz", unload=TRUE))
-    try(detach("package:topGO", unload=TRUE))
-    try(detach("package:pathview", unload=TRUE))
-    try(detach("package:KEGGgraph", unload=TRUE))
-    try(detach("package:RamiGO", unload=TRUE))
-    try(detach("package:graph", unload=TRUE))
-    library("pathview")
-    tmp_names = names(path_data)
-    tmp_names = gsub(string_from, string_to, tmp_names)
-    if (!is.null(second_from)) {
-        tmp_names = gsub(second_from, second_to, tmp_names)
-    }
-##    tmp_names = gsub("\\.","_", tmp_names)
-    names(path_data) = tmp_names
-    rm(tmp_names)
-    
-    ## First check that the input pathview directory exists
-    if (!file.exists(indir)) {
-        dir.create(indir)
-    }
-    if (!file.exists(outdir)){
-        dir.create(outdir)
-    }
-    paths = list()
-    if (pathway == "all") {
-        all_pathways = unique(KEGGREST::keggLink("pathway", species))
-        paths = all_pathways
-        paths = gsub("path:", "", paths)
-        all_modules = unique(KEGGREST::keggLink("module", species))
-    } else if (class(pathway) == "list") {
-        paths = pathway
-    } else {
-        paths[1] = pathway
-    }
-    return_list = list()
-    for (count in 1:length(paths)) {
-        path = paths[count]
-        path_name = keggGet(path)
-        path_name = path_name[[1]]$NAME
-        path_name = gsub("(.*) - .*", "\\1", path_name)
-        path_name = tolower(path_name)
-        path_name = gsub(" ", "_", path_name)
-        gene_examples = try(keggLink(paste("path", path, sep=":"))[,2])  ## RCurl is crap and fails sometimes for no apparent reason.
-        limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
-        if (isTRUE(verbose)) {
-            print(paste("Here are some path gene examples: ", gene_examples, sep=""))
-            print(paste("Here are your genes: ", head(names(path_data))), sep="")
-            pv = try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path, species=species, limit=list(gene=limits, cpd=limits), map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix, split.group=TRUE, expand.node=TRUE, kegg.native=TRUE, map.symbol=TRUE, same.layer=FALSE, res=1200, new.signature=FALSE, cex=0.05, key.pos="topright"))
-        } else {
-            pv = suppressMessages(try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path, species=species, limit=list(gene=limits, cpd=limits), map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix, split.group=TRUE, expand.node=TRUE, kegg.native=TRUE, map.symbol=TRUE, same.layer=FALSE, res=1200, new.signature=FALSE, cex=0.05, key.pos="topright")))
-        }
-        if (class(pv) == "numeric") {
-            colored_genes = NULL
-            newfile = NULL
-            up = NULL
-            down = NULL
-        } else {
-            colored_genes = dim(pv$plot.data.gene)[1]
-            ##        "lma04070._proeff.png"
-            oldfile = paste(path, ".", suffix, ".png", sep="")
-            ## An if-statement to see if the user prefers pathnames by kegg ID or pathway name
-            ## Dr. McIver wants path names...
-            if (filenames == "id") {
-                newfile = paste(outdir,"/", path, suffix, ".png", sep="")
-            } else {
-                newfile = paste(outdir, "/", path_name, suffix, ".png", sep="")
-            }
-            if (isTRUE(verbose)) {
-                message(paste("Moving file to: ", newfile, sep=""))
-            }
-            file.rename(from=oldfile, to=newfile)
-            data_low = summary(path_data)[2]
-            data_high = summary(path_data)[3]
-            numbers_in_plot = as.numeric(pv$plot.data.gene$mol.data)
-            up = sum(numbers_in_plot > data_high, na.rm=TRUE)
-            down = sum(numbers_in_plot < data_low, na.rm=TRUE)
-        }
-        return_list[[path]]$file = newfile
-        return_list[[path]]$genes = colored_genes
-        return_list[[path]]$up = up
-        return_list[[path]]$down = down
-    }
-
-    retdf = data.frame(rep(NA, length(names(return_list))))
-    rownames(retdf) = names(return_list)
-    retdf$genes = NA
-    retdf$up = NA
-    retdf$down = NA
-    colnames(retdf) = c("file","genes","up","down")
-    for (path in names(return_list)) {
-        if (is.null(return_list[[path]]$genes)) {
-            retdf[path,]$genes = 0
-        } else {
-            retdf[path,]$genes = as.numeric(return_list[[path]]$genes)
-        }
-        retdf[path,]$file = as.character(return_list[[path]]$file)
-        retdf[path,]$up = as.numeric(return_list[[path]]$up)
-        retdf[path,]$down = as.numeric(return_list[[path]]$down)        
-    }
-    retdf = retdf[with(retdf, order(up, down)), ]
-    return(retdf)
-}
 
 #' A minor hack in the clusterProfiler function 'enrichGO'
 #'

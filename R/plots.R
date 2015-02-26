@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Feb 13 13:39:34 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb 26 10:55:35 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -935,6 +935,118 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     pca_return = list(plot=pca_plot, table=pca_data, res=pca_res, variance=pca_variance)
     return(pca_return)
 }
+
+factor_rsquared = function(svd_v, factor) {
+    svd_lm = lm(svd_v ~ factor)
+    lm_summary = summary.lm(svd_lm)
+    r_squared = lm_summary$r.squared
+    result = round(r_squared * 100, 3)
+    return(result)
+}
+
+#' Calculate some information useful for generating PCA plots
+#'
+#' @param df The data to analyze (usually exprs(somedataset))
+#' @param design A dataframe describing the experimental design, containing columns with
+#'   useful information like the conditions, batches, number of cells, whatever...
+#' @param factors A character list of columns from the design matrix which will be queried
+#'   for R^2 against the fast.svd of the data.  This defaults to c("condition","batch"), which
+#'   is in all of my experimental designs thus far.
+#' @param components A number of principle components to compare the design factors against.
+#'   If left null, it will query the same number of components as factors asked for.
+#' 
+#' @return a list of fun pca information:
+#'   svd_u/d/v: The u/d/v parameters from fast.svd
+#'   rsquared_table: A table of the rsquared values between each factor and principle component
+#'   pca_variance: A table of the pca variances
+#'   pca_data: Coordinates for a pca plot
+#'   pca_cor: A table of the correlations between the factors and principle components
+#'   cor_heatmap: A heatmap from recordPlot() describing pca_cor.
+#' @seealso \code{\link{fast.svd}}, \code{\link{lm}}
+#' 
+#' @export
+#' @examples
+#' ## pca_plot = hpgl_pca(expt=expt)
+#' ## pca_plot
+pca_information = function(df, design, factors=c("condition","batch"), num_components=NULL) {
+    df = exprs(all_major_norm$expressionset)
+    data = as.matrix(df)
+    means = rowMeans(data)
+    decomposed = fast.svd(data - means)
+    positives = decomposed$d
+    u = decomposed$u
+    v = decomposed$v
+    rownames(v) = colnames(data)
+    component_variance = round((positives^2) / sum(positives^2) * 100, 3)
+    cumulative_pc_variance = cumsum(component_variance)
+    component_rsquared_table = data.frame(
+        prop_var = component_variance,
+        cumulative_prop_var = cumulative_pc_variance)
+
+    if (is.null(factors)) {
+        factors = colnames(design)
+    } else if (factors == "all") {
+        factors = colnames(design)
+    }
+    for (component in factors) {
+        comp = as.factor(design[,component])
+        column = apply(v, 2, factor_rsquared, factor=comp)
+        component_rsquared_table[component] = column
+    }
+    pca_variance = round((positives ^ 2) / sum(positives ^2) * 100, 2)
+    xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
+    yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
+    labels = rownames(design)
+
+    pca_data = data.frame(SampleID=labels,
+        condition=design$condition,
+        batch=design$batch,
+        batch_int=as.integer(design$batch))
+    pc_df = data.frame(SampleID=labels)
+    rownames(pc_df) = make.names(labels)
+    
+    if (is.null(num_components)) {
+        num_components = length(factors)
+    }
+    for (pc in 1:num_components) {
+        name = paste("PC", pc, sep="")
+        pca_data[name] = v[,pc]
+        pc_df[name] = v[,pc]
+    }
+    pc_df = pc_df[-1]
+
+    factor_df = data.frame(SampleID=labels)
+    rownames(factor_df) = make.names(labels)
+    for (factor in factors) {
+        factor_df[factor] = as.numeric(as.factor(design[,factor]))
+    }
+    factor_df = factor_df[-1]
+
+    cor_df = data.frame()
+    for (factor in factors) {
+        for (pc in 1:num_components) {
+            cor_df[factor,pc] = cor(factor_df[,factor], pc_df[,pc])
+        }
+    }
+    rownames(cor_df) = colnames(factor_df)
+    colnames(cor_df) = colnames(pc_df)
+    cor_df = as.matrix(cor_df)
+    silly_colors = grDevices::colorRampPalette(brewer.pal(9, "Purples"))(100)
+    sillytime = heatmap.3(cor_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=silly_colors)
+    pc_factor_corheat = recordPlot()
+
+    pca_list = list(
+        svd_d=positives,
+        svd_u=u,
+        svd_v=v,
+        rsquared_table=component_rsquared_table,
+        pca_variance=pca_variance,
+        pca_data=pca_data,
+        pca_cor=cor_df,
+        cor_heatmap=pc_factor_corheat)
+    return(pca_list)
+}
+
 
 #' Make a pretty MA plot from the output of voom/limma/eBayes/toptable
 #'
