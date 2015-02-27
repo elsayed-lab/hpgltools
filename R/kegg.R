@@ -26,7 +26,7 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
     try(detach("package:KEGGgraph", unload=TRUE))
     try(detach("package:RamiGO", unload=TRUE))
     try(detach("package:graph", unload=TRUE))
-    library("pathview")
+    require.auto("pathview")
     tmp_names = names(path_data)
     tmp_names = gsub(string_from, string_to, tmp_names)
     if (!is.null(second_from)) {
