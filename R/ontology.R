@@ -542,6 +542,14 @@ hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
     quartiles = summary(df)
 }
 
+get_genelengths = function(gff, ID="Note") {
+    annotations = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
+    genes = annotations[annotations$type=="gene",]
+    genes$ID = unlist(genes[,ID])
+    genes = genes[,c("ID","width")]
+    return(genes)
+}
+
 #' Perform ontology searches of the output from limma
 #'
 #' @param limma_out a list of topTables comprising limma outputs
@@ -1008,8 +1016,31 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
 #' @param include_cnetplots the cnetplots are often stupid and can be left behind
 #' @param showcategory how many categories to show in p-value plots
 #' 
-#' @return a big list including the various outputs from topgo
+#' @return a big list including the following:
+#'   mf_interesting: A table of the interesting molecular function groups
+#'   bp_interesting: A table of the interesting biological process groups
+#'   cc_interesting: A table of the interesting cellular component groups
+#'   mf_pvals: A histogram of the molecular function p-values
+#'   bp_pvals: Ditto, biological process
+#'   cc_pvals: And cellular component...
+#'   mf_enriched: A table of the enriched molecular function groups by adjusted p-value.
+#'   bp_enriched: yep, you guessed it
+#'   cc_enriched: cellular component, too
+#'   mf_all/bp_all/cc_all: A table of all go categories observed (mf/bp/cc respectively)
+#'   mfp_plot/bpp_plot/ccp_plot: ggplot2 p-value bar plots describing the over represented groups
+#'   mf_cnetplot/bp_cnetplot/cc_cnetplot: clusterProfiler cnetplots
+#'   mf_group_barplot/bp_group_barplot/cc_group_barplot: The group barplots from clusterProfiler
 #' @export
+#' @examples
+#' ## up_cluster = simple_clusterprofiler(mga2_ll_thy_top, goids=goids, gff="reference/genome/gas.gff")
+#' ## > Some chattery while it runs
+#' ## tail(head(up_cluster$bp_interesting, n=10), n=1)
+#' ## > ID ont GeneRatio BgRatio     pvalue   p.adjust    qvalue
+#' ## > 10 GO:0009311  BP     5/195 10/1262 0.01089364 0.01089364 0.1272835
+#' ## >   geneID Count
+#' ## >   10 M5005_Spy1632/M5005_Spy1637/M5005_Spy1635/M5005_Spy1636/M5005_Spy1638     5
+#' ## >   Description
+#' ## >   10 oligosaccharide metabolic process
 simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     qcutoff=1.0, fold_changes=NULL, include_cnetplots=TRUE,
     showcategory=12, universe=NULL, organism="lm", gff=NULL,
@@ -1181,13 +1212,22 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         mf_enriched=enriched_mf, bp_enriched=enriched_bp, cc_enriched=enriched_cc,
         mf_all=mf_all, bp_all=bp_all, cc_all=cc_all,
         mf_all_barplot=all_mf_barplot, bp_all_barplot=all_bp_barplot, cc_all_barplot=all_cc_barplot,
-        mf_enriched_barplot=enriched_mf_barplot, bp_enriched_barplot=enriched_bp_barplot, cc_enriched_barplot=enriched_cc_barplot,
+        mfp_plot=enriched_mf_barplot, bpp_plot=enriched_bp_barplot, ccp_plot=enriched_cc_barplot,
         mf_cnetplot=cnetplot_mf, bp_cnetplot=cnetplot_bp, cc_cnetplot=cnetplot_cc,
         mf_group=mf_group, bp_group=bp_group, cc_group=cc_group,
         mf_group_barplot=mf_group_barplot, bp_group_barplot=bp_group_barplot, cc_group_barplot=cc_group_barplot)
     return(return_information)        
 }
 
+#' Make a go mapping from IDs in a format suitable for topGO
+#'
+#' @param goid_map A topGO mapping file
+#' @param goids_df If there is no goid_map, create it with this
+#' @param overwrite A boolean, if it already exists, rewrite the mapping file?
+#' 
+#' @return a summary of the new goid table
+#' 
+#' @export
 make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overwrite=FALSE) {
     id2go_test = file.info(goid_map)
     goids_dir = dirname(goid_map)
@@ -1216,6 +1256,7 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
             }
         }
     }
+    return(summary(new_go))
 }
 
 #' Make fun trees a la topgo from goseq data.
@@ -1523,6 +1564,93 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
 }
 
 
+
+#' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
+#'
+#' GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be integers.
+#' As a result, I am going to have this function take a gff file in order to get the go ids and
+#' gene ids on the same page.
+#'
+#' @param gff The annotation information for this genome
+#' @param de_genes The set of differentially expressed genes in the limma format as before
+#' @param goids The set of GOids, as before in the format ID/GO
+#' 
+#' @return dunno yet
+#' @seealso \code{\link{GOstats}}
+#' @export
+simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05) {
+    ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should) contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
+    annotation = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
+    if (is.null(annotation[,universe_merge])) {
+        if (is.null(annotation[,second_merge_try])) {
+            stop(paste("This function needs a key to merge the differentially expressed genes against the universe of genes.  It tried: ", universe_merge, " and ", second_merge_try, " to no avail.", sep=""))
+        } else {
+            universe = annotation[,c(second_merge_try, "width")]
+        }
+    } else {
+        universe = annotation[,c(universe_merge, "width")]
+    }
+    universe$id = rownames(universe)
+    colnames(universe) = c("geneid","width","id")
+    universe_cross_de = merge(universe, de_genes, by.x="geneid", by.y="ID")
+    degenes_ids = universe_cross_de$id
+    gostats_go = merge(universe, goids, by.x="geneid", by.y="name")
+    gostats_go$frame.Evidence = "TAS"
+    colnames(gostats_go) = c("sysName","name","frame.gene_id", "frame.go_id","frame.Evidence")
+    gostats_go = gostats_go[,c("frame.go_id","frame.Evidence","frame.gene_id")]
+    gostats_frame = GOFrame(gostats_go, organism=organism)
+    gostats_all = GOAllFrame(gostats_frame)
+    gsc = GeneSetCollection(gostats_all, setType=GOCollection())
+    mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+        geneSetCollection=gsc,
+        geneIds=degenes_ids,
+        universeGeneIds=universe_ids,
+        ontology="MF",
+        pvalueCutoff=pcutoff,
+        conditional=FALSE,
+        testDirection="over")
+
+    bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+        geneSetCollection=gsc,
+        geneIds=degenes_ids,
+        universeGeneIds=universe_ids,
+        ontology="BP",
+        pvalueCutoff=pcutoff,
+        conditional=FALSE,
+        testDirection="over")
+
+    cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+        geneSetCollection=gsc,
+        geneIds=degenes_ids,
+        universeGeneIds=universe_ids,
+        ontology="CC",
+        pvalueCutoff=pcutoff,
+        conditional=FALSE,
+        testDirection="over")            
+    
+    mf_over = hyperGTest(mf_params)
+    bp_over = hyperGTest(bp_params)
+    cc_over = hyperGTest(cc_params)
+
+    mf_table = summary(mf_over, pvalue=1.0)
+    bp_table = summary(bp_over, pvalue=1.0)
+    cc_table = summary(cc_over, pvalue=1.0)
+    mf_table$qvalue = qvalue(mf_table$Pvalue)
+    bp_table$qvalue = qvalue(bp_table$Pvalue)
+    cc_table$qvalue = qvalue(cc_table$Pvalue)
+
+    mf_sig = summary(mf_over)
+    bp_sig = summary(bp_over)
+    cc_sig = summary(cc_over)
+    mf_sig$definition = godef(mf_over$GOBPID)
+    bp_sig$definition = godef(bp_over$GOBPID)
+    cc_sig$definition = godef(cc_over$GOBPID)    
+    ret_list = list(mf_all=mf_table, bp_all=bp_table, cc_all=cc_table,
+        mf_enriched=mf_sig, bp_enriched=bp_sig, cc_enriched=cc_sig)
+    return(ret_list)
+}
+
+
 ## this function will plot the GO DAG or parts of it
 ## sigNodes:     a named vector of terms p-values, the names are the GO terms
 ## wantedNodes:  the nodes that we want to find, we will plot this nodes with
@@ -1803,10 +1931,6 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
 
 
 hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
-    ## Testing parameters
-    ##object = mf_GOdata
-    ##whichGO = mf_first_group
-    ## End testing parameters
     groupMembers <- topGO::genesInTerm(object, whichGO)[[1]]
     allS <- topGO::geneScore(object, use.names = TRUE)
     if(rm.one) {
@@ -1823,309 +1947,60 @@ hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     return(plot)
 }
 
-## Functions in this are not exported by topGO
-Gff2GeneTable <- function(gffFile, compress=TRUE) {
-    ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"
-    if (is.data.frame(gffFile)) {
-        GeneID = data.frame(GeneID = gffFile$ID)
-        geneInfo = gffFile
-        geneInfo$start = 1
-        geneInfo$GeneID = gffFile$ID
-        geneInfo$GeneName = gffFile$ID
-        geneInfo$Locus = gffFile$ID        
-        geneInfo$end = geneInfo$width
-        geneInfo$strand = "+"
-    } else {
-        gff <- readGff(gffFile)
-        GeneID <- data.frame(GeneID=getGffAttribution(gff$attributes, field="ID"))
-        geneInfo <- gff[gff$feature == "gene",]
-        geneInfo <- geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
-        geneInfo$GeneID <- getGffAttribution(geneInfo$attributes, field="ID")
-        geneInfo$GeneName <- getGffAttribution(geneInfo$attributes, field="Name")
-        geneInfo$Locus <- getGffAttribution(geneInfo$attributes, field="locus_tag")
-        geneInfo$GeneName[is.na(geneInfo$GeneName)] <- "-"
-        geneInfo <- geneInfo[, -5] ## abondom "attributes" column.
-    }
-            ## GI2GeneID <- data.frame(GI=getGffAttribution(gff$attributes, field="GI"),
-    ##                        GeneID=getGffAttribution(gff$attributes, field="GeneID")
-    ##                                    #,
-    ##                                    #Product=getGffAttribution(gff$attributes, field="product")
-    ##                        )
-    ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$GI),]
-    ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$Gene),]
-
-        
-
-    ## geneTable <- merge(GI2GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
-    geneTable <- merge(GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
-    geneTable <- unique(geneTable)
-    if (compress) {
-        save(geneTable, file="geneTable.rda", compress="xz")
-    } else {
-        save(geneTable, file="geneTable.rda")
-    }
-    message("Gene Table file save in the working directory.")
-}
-
-parseKGML2Graph2 <-function (file, ...) {
-    pathway <- parseKGML2(file)
-    gR <- KEGGpathway2Graph2(pathway, ...)
-    return(gR)
-}
-
-hpgl_base_pathview = function (gene.data = NULL, cpd.data = NULL, xml.file = NULL, 
-    pathway.id, species = "hsa", kegg.dir = ".", cpd.idtype = "kegg", 
-    gene.idtype = "entrez", gene.annotpkg = NULL, min.nnodes = 3, 
-    kegg.native = TRUE, map.null = TRUE, expand.node = FALSE, 
-    split.group = FALSE, map.symbol = TRUE, map.cpdname = TRUE, 
-    node.sum = "sum", discrete = list(gene = FALSE, cpd = FALSE), 
-    limit = list(gene = 1, cpd = 1), bins = list(gene = 10, cpd = 10), 
-    both.dirs = list(gene = T, cpd = T), trans.fun = list(gene = NULL, 
-        cpd = NULL), low = list(gene = "green", cpd = "blue"), 
-    mid = list(gene = "gray", cpd = "gray"), high = list(gene = "red", 
-        cpd = "yellow"), na.col = "transparent", ...) {
-    if (is.character(gene.data)) {
-        gd.names = gene.data
-        gene.data = rep(1, length(gene.data))
-        names(gene.data) = gd.names
-        both.dirs$gene = FALSE
-        ng = length(gene.data)
-        nsamp.g = 1
-    }
-    else if (!is.null(gene.data)) {
-        if (length(dim(gene.data)) == 2) {
-            gd.names = rownames(gene.data)
-            ng = nrow(gene.data)
-            nsamp.g = 2
-        }
-        else if (is.numeric(gene.data) & is.null(dim(gene.data))) {
-            gd.names = names(gene.data)
-            ng = length(gene.data)
-            nsamp.g = 1
-        }
-        else stop("wrong gene.data format!")
-    }
-    else if (is.null(cpd.data)) {
-        stop("gene.data and cpd.data are both NULL!")
-    }
-    gene.idtype = toupper(gene.idtype)
-    data(bods)
-    data(gene.idtype.list)
-    if (species != "ko") {
-        species.data = pathview::kegg.species.code(species, na.rm = T, 
-            code.only = FALSE)
-    }
-    else {
-        species.data = c(kegg.code = "ko", entrez.gnodes = "0", 
-            kegg.geneid = "K01488", ncbi.geneid = "")
-        gene.idtype = "KEGG"
-        msg.fmt = "Only KEGG ortholog gene ID is supported, make sure it looks like \"%s\"!"
-        msg = sprintf(msg.fmt, species.data["kegg.geneid"])
-        message(msg)
-    }
-    if (length(dim(species.data)) == 2) {
-        message("More than two valide species!")
-        species.data = species.data[1, ]
-    }
-    species = species.data["kegg.code"]
-    entrez.gnodes = species.data["entrez.gnodes"] == 1
-    if (is.na(species.data["ncbi.geneid"])) {
-        if (!is.na(species.data["kegg.geneid"])) {
-            msg.fmt = "Only native KEGG gene ID is supported for this species,\nmake sure it looks like \"%s\"!"
-            msg = sprintf(msg.fmt, species.data["kegg.geneid"])
-            message(msg)
-        }
-        else {
-            stop("This species is not annotated in KEGG!")
-        }
-    }
-    if (is.null(gene.annotpkg)) 
-        gene.annotpkg = bods[match(species, bods[, 3]), 1]
-    if (length(grep("ENTREZ|KEGG", gene.idtype)) < 1 & !is.null(gene.data)) {
-        if (is.na(gene.annotpkg)) 
-            stop("No proper gene annotation package available!")
-        if (!gene.idtype %in% gene.idtype.list) 
-            stop("Wrong input gene ID type!")
-        gene.idmap = id2eg(gd.names, category = gene.idtype, 
-            pkg.name = gene.annotpkg)
-        gene.data = mol.sum(gene.data, gene.idmap)
-        gene.idtype = "ENTREZ"
-    }
-    if (gene.idtype == "ENTREZ" & !entrez.gnodes & !is.null(gene.data)) {
-        message("Getting gene ID data from KEGG...")
-        gene.idmap = keggConv("ncbi-geneid", species)
-        message("Done with data retrieval!")
-        kegg.ids = gsub(paste(species, ":", sep = ""), "", names(gene.idmap))
-        ncbi.ids = gsub("ncbi-geneid:", "", gene.idmap)
-        gene.idmap = cbind(ncbi.ids, kegg.ids)
-        gene.data = mol.sum(gene.data, gene.idmap)
-        gene.idtype = "KEGG"
-    }
-    if (is.character(cpd.data)) {
-        cpdd.names = cpd.data
-        cpd.data = rep(1, length(cpd.data))
-        names(cpd.data) = cpdd.names
-        both.dirs$cpd = FALSE
-        ncpd = length(cpd.data)
-    }
-    else if (!is.null(cpd.data)) {
-        if (length(dim(cpd.data)) == 2) {
-            cpdd.names = rownames(cpd.data)
-            ncpd = nrow(cpd.data)
-        }
-        else if (is.numeric(cpd.data) & is.null(dim(cpd.data))) {
-            cpdd.names = names(cpd.data)
-            ncpd = length(cpd.data)
-        }
-        else stop("wrong cpd.data format!")
-    }
-    if (length(grep("kegg", cpd.idtype)) < 1 & !is.null(cpd.data)) {
-        data(rn.list)
-        cpd.types = c(names(rn.list), "name")
-        cpd.types = tolower(cpd.types)
-        cpd.types = cpd.types[-grep("kegg", cpd.types)]
-        if (!tolower(cpd.idtype) %in% cpd.types) 
-            stop("Wrong input cpd ID type!")
-        cpd.idmap = cpd2kegg(cpdd.names, in.type = cpd.idtype)
-        cpd.data = mol.sum(cpd.data, cpd.idmap)
-    }
-    warn.fmt = "Parsing %s file failed, please check the file!"
-    if (length(grep(species, pathway.id)) > 0) {
-        pathway.name = pathway.id
-        pathway.id = gsub(species, "", pathway.id)
-    }
-    else pathway.name = paste(species, pathway.id, sep = "")
-    kfiles = list.files(path = kegg.dir, pattern = "[.]xml|[.]png")
-    tfiles = paste(pathway.name, c("xml", "png"), sep = ".")
-    if (!all(tfiles %in% kfiles)) {
-        dstatus = download.kegg(pathway.id = pathway.id, species = species, 
-            kegg.dir = kegg.dir)
-        if (dstatus == "failed") {
-            warn.fmt = "Failed to download KEGG xml/png files, %s skipped!"
-            warn.msg = sprintf(warn.fmt, pathway.name)
-            message(warn.msg)
-            return(invisible(0))
-        }
-    }
-    if (missing(xml.file)) 
-        xml.file <- paste(kegg.dir, "/", pathway.name, ".xml", 
-            sep = "")
-    if (kegg.native) {
-        node.data = try(node.info(xml.file), silent = T)
-        if (class(node.data) == "try-error") {
-            warn.msg = sprintf(warn.fmt, xml.file)
-            message(warn.msg)
-            return(invisible(0))
-        }
-        node.type = c("gene", "enzyme", "compound", "ortholog")
-        sel.idx = node.data$type %in% node.type
-        nna.idx = !is.na(node.data$x + node.data$y + node.data$width + 
-            node.data$height)
-        sel.idx = sel.idx & nna.idx
-        if (sum(sel.idx) < min.nnodes) {
-            warn.fmt = "Number of mappable nodes is below %d, %s skipped!"
-            warn.msg = sprintf(warn.fmt, min.nnodes, pathway.name)
-            message(warn.msg)
-            return(invisible(0))
-        }
-        node.data = lapply(node.data, "[", sel.idx)
-    }
-    else {
-        gR1 = try(parseKGML2Graph2(xml.file, genes = F, expand = expand.node, 
-            split.group = split.group), silent = T)
-        node.data = try(node.info(gR1), silent = T)
-        if (class(node.data) == "try-error") {
-            warn.msg = sprintf(warn.fmt, xml.file)
-            message(warn.msg)
-            return(invisible(0))
-        }
-    }
-    if (species == "ko") 
-        gene.node.type = "ortholog"
-    else gene.node.type = "gene"
-    if ((!is.null(gene.data) | map.null) & sum(node.data$type == 
-        gene.node.type) > 1) {
-        plot.data.gene = node.map(gene.data, node.data, node.types = gene.node.type, 
-            node.sum = node.sum, entrez.gnodes = entrez.gnodes)
-        kng = plot.data.gene$kegg.names
-        kng.char = gsub("[0-9]", "", unlist(kng))
-        if (any(kng.char > "")) 
-            entrez.gnodes = FALSE
-        if (map.symbol & species != "ko" & entrez.gnodes) {
-            if (is.na(gene.annotpkg)) {
-                warm.fmt = "No annotation package for the species %s, gene symbols not mapped!"
-                warm.msg = sprintf(warm.fmt, species)
-                message(warm.msg)
-            }
-            else {
-                plot.data.gene$labels = eg2id(as.character(plot.data.gene$kegg.names), 
-                  category = "SYMBOL", pkg.name = gene.annotpkg)[, 
-                  2]
-                mapped.gnodes = rownames(plot.data.gene)
-                node.data$labels[mapped.gnodes] = plot.data.gene$labels
-            }
-        }
-        cols.ts.gene = node.color(plot.data.gene, limit$gene, 
-            bins$gene, both.dirs = both.dirs$gene, trans.fun = trans.fun$gene, 
-            discrete = discrete$gene, low = low$gene, mid = mid$gene, 
-            high = high$gene, na.col = na.col)
-    }
-    else plot.data.gene = cols.ts.gene = NULL
-    if ((!is.null(cpd.data) | map.null) & sum(node.data$type == 
-        "compound") > 1) {
-        plot.data.cpd = node.map(cpd.data, node.data, node.types = "compound", 
-            node.sum = node.sum)
-        if (map.cpdname & !kegg.native) {
-            plot.data.cpd$labels = cpdkegg2name(plot.data.cpd$labels)[, 
-                2]
-            mapped.cnodes = rownames(plot.data.cpd)
-            node.data$labels[mapped.cnodes] = plot.data.cpd$labels
-        }
-        cols.ts.cpd = node.color(plot.data.cpd, limit$cpd, bins$cpd, 
-            both.dirs = both.dirs$cpd, trans.fun = trans.fun$cpd, 
-            discrete = discrete$cpd, low = low$cpd, mid = mid$cpd, 
-            high = high$cpd, na.col = na.col)
-    }
-    else plot.data.cpd = cols.ts.cpd = NULL
-    if (kegg.native) {
-        pv.pars = keggview.native(plot.data.gene = plot.data.gene, 
-            cols.ts.gene = cols.ts.gene, plot.data.cpd = plot.data.cpd, 
-            cols.ts.cpd = cols.ts.cpd, node.data = node.data, 
-            pathway.name = pathway.name, kegg.dir = kegg.dir, 
-            limit = limit, bins = bins, both.dirs = both.dirs, 
-            discrete = discrete, low = low, mid = mid, high = high, 
-            na.col = na.col, ...)
-    }
-    else {
-        pv.pars = keggview.graph(plot.data.gene = plot.data.gene, 
-            cols.ts.gene = cols.ts.gene, plot.data.cpd = plot.data.cpd, 
-            cols.ts.cpd = cols.ts.cpd, node.data = node.data, 
-            path.graph = gR1, pathway.name = pathway.name, map.cpdname = map.cpdname, 
-            split.group = split.group, limit = limit, bins = bins, 
-            both.dirs = both.dirs, discrete = discrete, low = low, 
-            mid = mid, high = high, na.col = na.col, ...)
-    }
-    plot.data.gene = cbind(plot.data.gene, cols.ts.gene)
-    if (!is.null(plot.data.gene)) {
-        cnames = colnames(plot.data.gene)[-(1:7)]
-        nsamp = length(cnames)/2
-        if (nsamp > 1) {
-            cnames[(nsamp + 1):(2 * nsamp)] = paste(cnames[(nsamp + 
-                1):(2 * nsamp)], "col", sep = ".")
-        }
-        else cnames[2] = "mol.col"
-        colnames(plot.data.gene)[-(1:7)] = cnames
-    }
-    plot.data.cpd = cbind(plot.data.cpd, cols.ts.cpd)
-    if (!is.null(plot.data.cpd)) {
-        cnames = colnames(plot.data.cpd)[-(1:7)]
-        nsamp = length(cnames)/2
-        if (nsamp > 1) {
-            cnames[(nsamp + 1):(2 * nsamp)] = paste(cnames[(nsamp + 
-                1):(2 * nsamp)], "col", sep = ".")
-        }
-        else cnames[2] = "mol.col"
-        colnames(plot.data.cpd)[-(1:7)] = cnames
-    }
-    return(invisible(list(plot.data.gene = plot.data.gene, plot.data.cpd = plot.data.cpd)))
-}
+#' A copy and paste of clusterProfiler's readGff
+#' @export
+##readGff <- function(gffFile, nrows = -1) {
+##    cat("Reading ", gffFile, ": ", sep="")
+##    gff <- read.table(gffFile, sep="\t", as.is=TRUE, quote="\"", fill=TRUE,
+##                      header=FALSE, comment.char="#", nrows=nrows,
+##                      colClasses=c("character", "character", "character", "integer",
+##                          "integer", "character", "character", "character", "character"))
+##    colnames(gff) = c("seqname", "source", "feature", "start", "end",
+##                "score", "strand", "frame", "attributes")
+##    cat("found", nrow(gff), "rows with classes:",
+##        paste(sapply(gff, class), collapse=", "), "\n")
+##    stopifnot(!any(is.na(gff$start)), !any(is.na(gff$end)))
+##    return(gff)
+##}
+##
+## Functions in this are not exported by clusterProfiler/topGO
+##Gff2GeneTable <- function(gffFile, compress=TRUE) {
+##    ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"
+##    if (is.data.frame(gffFile)) {
+##        GeneID = data.frame(GeneID = gffFile$ID)
+##        geneInfo = gffFile
+##        geneInfo$start = 1
+##        geneInfo$GeneID = gffFile$ID
+##        geneInfo$GeneName = gffFile$ID
+##        geneInfo$Locus = gffFile$ID        
+##        geneInfo$end = geneInfo$width
+##        geneInfo$strand = "+"
+##    } else {
+##        ## readGff was written in clusterProfiler, but isn't exported.
+##        gff <- readGff(gffFile)
+##        GeneID <- data.frame(GeneID=getGffAttribution(gff$attributes, field="ID"))
+##        geneInfo <- gff[gff$feature == "gene",]
+##        geneInfo <- geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
+##        geneInfo$GeneID <- getGffAttribution(geneInfo$attributes, field="ID")
+##        geneInfo$GeneName <- getGffAttribution(geneInfo$attributes, field="Name")
+##        geneInfo$Locus <- getGffAttribution(geneInfo$attributes, field="locus_tag")
+##        geneInfo$GeneName[is.na(geneInfo$GeneName)] <- "-"
+##        geneInfo <- geneInfo[, -5] ## abondom "attributes" column.
+##    }
+##            ## GI2GeneID <- data.frame(GI=getGffAttribution(gff$attributes, field="GI"),
+##    ##                        GeneID=getGffAttribution(gff$attributes, field="GeneID")
+##    ##                                    #,
+##    ##                                    #Product=getGffAttribution(gff$attributes, field="product")
+##    ##                        )
+##    ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$GI),]
+##    ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$Gene),]
+##    ## geneTable <- merge(GI2GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
+##    geneTable <- merge(GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
+##    geneTable <- unique(geneTable)
+##    if (compress) {
+##        save(geneTable, file="geneTable.rda", compress="xz")
+##    } else {
+##        save(geneTable, file="geneTable.rda")
+##    }
+##    message("Gene Table file save in the working directory.")
+##}

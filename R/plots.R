@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb 26 10:55:35 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar  1 17:05:42 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -1469,9 +1469,16 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
     if (!is.null(hpgl_names)) {
         colnames(hpgl_df) = make.names(hpgl_names, unique=TRUE)
     }
-    melted = reshape::melt(hpgl_df)
-    colnames(melted) = c("sample", "counts")
-
+    ## If the columns lose the connectivity between the sample and values, then
+    ## the ggplot below will fail with env missing.
+    melted = reshape::melt(as.matrix(hpgl_df))
+    if (dim(melted)[2] == 3) {
+        colnames(melted) = c("id", "sample", "counts")        
+    } else if (dim(melted)[2] == 2) {
+        colnames(melted) = c("sample","counts")
+    } else {
+        stop("Could not properly melt the data.")
+    }
     colors = factor(hpgl_colors)    
     if (is.null(hpgl_colors)) {
         hpgl_colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(hpgl_df)[2])
