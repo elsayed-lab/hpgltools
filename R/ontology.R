@@ -259,7 +259,10 @@ golevel = function(go) {
 #' ## > 0
 gotst = function(go) {
     go = as.character(go)
-    value = GOTERM[[go]]
+    value = try(GOTERM[[go]])
+    if (class(value) == 'try-error') {
+        return(0)
+    }
     if (is.null(value)) {
         return(0)
     } else {
@@ -305,6 +308,12 @@ gotest = function(go) {
 #' ## >        secondary    definition
 #' ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal RNA (rRNA) transcript into one or more mature rRNA molecules.
 goseq_table = function(df, file=NULL) {
+    if (is.null(df$term)) {
+        df$term = goterm(df$category)
+    }
+    if (is.null(df$ontology)) {
+        df$ontology = goont(df$category)
+    }
     df = subset(df, !is.null(term))
     print("Testing that go categories are defined.")
     df$good = gotest(df$category)
@@ -379,19 +388,21 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
     qdata = godata$over_represented_pvalue
     qdata[qdata > 1] = 1 ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.0000000000000001
     qdata = qvalue::qvalue(qdata)
+    godata$term = goterm(godata$category)
+    godata$ontology = goont(godata$category)    
     godata = cbind(godata, qdata$qvalues)
     colnames(godata) = c("category","over_represented_pvalue","under_represented_pvalue","numDEInCat","numInCat","term","ontology","qvalue")
-    if (!is.null(adjust)) {
-        godata_interesting = subset(godata, p.adjust(godata$over_represented_pvalue, method=padjust_method) < adjust)
+    if (is.null(adjust)) {
+        godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
+        padjust_method="none"
+    } else {  ## There is a requested pvalue adjustment
+        godata_interesting = subset(godata, p.adjust(godata$over_represented_pvalue, method=padjust_method) <= adjust)
         if (dim(godata_interesting)[1] == 0) {
             message(paste("There are no genes with an adjusted pvalue < ", adjust, " using method: ", padjust_method, ".", sep=""))
             message(sprintf("Providing genes with an un-adjusted pvalue < %s", pvalue))
-            godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
+            godata_interesting = subset(godata, godata$over_represented_pvalue <= pvalue)
             padjust_method="none"
         }
-    } else {
-        godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
-        padjust_method="none"
     }
     message("Filling godata table with term information, this takes a while.")
     godata_interesting = goseq_table(godata_interesting)
@@ -575,7 +586,12 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
     output = list()
     for (c in 1:length(limma_out)) {
         datum = limma_out[[c]]
+        if (!is.null(datum$Row.names)) {
+            rownames(datum) = datum$Row.names
+            datum = datum[-1]
+        }
         comparison = names(limma_out[c])
+        message(paste("Performing ontology search of:", comparison, sep=""))
         if (is.null(n)) {
             out_summary = summary(datum$logFC)
             out_mad = mad(datum$logFC, na.rm=TRUE)
@@ -1072,9 +1088,9 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     } else {
         message("Using GO mapping data located in GO2EG.rda")
     }
-    message("Testing gseGO")
-    ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
-    print(ego2)
+##    message("Testing gseGO")
+##    ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
+##    print(ego2)
     message("Starting MF(molecular function) analysis")
     mf_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
     mf_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
@@ -1234,7 +1250,7 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
     if (!file.exists(goids_dir)) {
         dir.create(goids_dir, recursive=TRUE)
     }
-
+    new_go = NULL
     if (isTRUE(overwrite)) {
         if (is.null(goids_df)) {
             stop("There is neither a id2go file nor a data frame of goids.")
@@ -1578,7 +1594,7 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
 #' @return dunno yet
 #' @seealso \code{\link{GOstats}}
 #' @export
-simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05) {
+simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05, direction="over", conditional=FALSE, categorysize=NULL) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should) contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
     annotation = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
     if (is.null(annotation[,universe_merge])) {
@@ -1607,8 +1623,8 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
         universeGeneIds=universe_ids,
         ontology="MF",
         pvalueCutoff=pcutoff,
-        conditional=FALSE,
-        testDirection="over")
+        conditional=conditional,
+        testDirection=direction)
 
     bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
         geneSetCollection=gsc,
@@ -1632,19 +1648,27 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
     bp_over = hyperGTest(bp_params)
     cc_over = hyperGTest(cc_params)
 
-    mf_table = summary(mf_over, pvalue=1.0)
-    bp_table = summary(bp_over, pvalue=1.0)
-    cc_table = summary(cc_over, pvalue=1.0)
+    ## Make tables of the entire ontology
+    mf_table = summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
+    bp_table = summary(bp_over, pvalue=1.0, htmlLinks=TRUE)
+    cc_table = summary(cc_over, pvalue=1.0, htmlLinks=TRUE)
     mf_table$qvalue = qvalue(mf_table$Pvalue)
     bp_table$qvalue = qvalue(bp_table$Pvalue)
     cc_table$qvalue = qvalue(cc_table$Pvalue)
 
-    mf_sig = summary(mf_over)
-    bp_sig = summary(bp_over)
-    cc_sig = summary(cc_over)
+    if (is.null(categorysie)) {
+        mf_sig = summary(mf_over)
+        bp_sig = summary(bp_over)
+        cc_sig = summary(cc_over)
+    } else {
+        mf_sig = summary(mf_over, categorySize=categorysize)
+        bp_sig = summary(bp_over, categorySize=categorysize)
+        cc_sig = summary(cc_over, categorySize=categorysize)        
+    }
     mf_sig$definition = godef(mf_over$GOBPID)
     bp_sig$definition = godef(bp_over$GOBPID)
     cc_sig$definition = godef(cc_over$GOBPID)    
+
     ret_list = list(mf_all=mf_table, bp_all=bp_table, cc_all=cc_table,
         mf_enriched=mf_sig, bp_enriched=bp_sig, cc_enriched=cc_sig)
     return(ret_list)
