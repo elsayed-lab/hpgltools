@@ -1,3 +1,20 @@
+gostats_kegg = function() {
+    frame = toTable(org.Hs.egPATH)
+    keggframedata = data.frame(frame$path_id, frame$gene_id)
+    keggFrame=KEGGFrame(keggframeData,organism="Homo sapiens")
+    gsc <- GeneSetCollection(keggFrame, setType = KEGGCollection())
+    universe = Lkeys(org.Hs.egGO)
+    genes = universe[1:500]
+    kparams <- GSEAKEGGHyperGParams(name="My Custom GSEA based annot Params",
+                                    geneSetCollection=gsc,
+                                    geneIds = genes,
+                                    universeGeneIds = universe,
+                                    pvalueCutoff = 0.05,
+                                    testDirection = "over")
+    kOver <- hyperGTest(params)
+    head(summary(kOver))
+}
+
 ## Please note that the KGML parser fails if other XML parsers are loaded into R
 #' Print some data onto KEGG pathways
 #'

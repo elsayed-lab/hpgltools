@@ -1231,6 +1231,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
 make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overwrite=FALSE) {
     id2go_test = file.info(goid_map)
     goids_dir = dirname(goid_map)
+    new_go = NULL
     if (!file.exists(goids_dir)) {
         dir.create(goids_dir, recursive=TRUE)
     }
@@ -1578,7 +1579,7 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
 #' @return dunno yet
 #' @seealso \code{\link{GOstats}}
 #' @export
-simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05) {
+simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05, direction="over", conditional=FALSE, categorysize=NULL) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should) contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
     annotation = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
     if (is.null(annotation[,universe_merge])) {
@@ -1607,8 +1608,8 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
         universeGeneIds=universe_ids,
         ontology="MF",
         pvalueCutoff=pcutoff,
-        conditional=FALSE,
-        testDirection="over")
+        conditional=conditional,
+        testDirection=direction)
 
     bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
         geneSetCollection=gsc,
@@ -1632,19 +1633,27 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
     bp_over = hyperGTest(bp_params)
     cc_over = hyperGTest(cc_params)
 
-    mf_table = summary(mf_over, pvalue=1.0)
-    bp_table = summary(bp_over, pvalue=1.0)
-    cc_table = summary(cc_over, pvalue=1.0)
+    ## Make tables of the entire ontology
+    mf_table = summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
+    bp_table = summary(bp_over, pvalue=1.0, htmlLinks=TRUE)
+    cc_table = summary(cc_over, pvalue=1.0, htmlLinks=TRUE)
     mf_table$qvalue = qvalue(mf_table$Pvalue)
     bp_table$qvalue = qvalue(bp_table$Pvalue)
     cc_table$qvalue = qvalue(cc_table$Pvalue)
 
-    mf_sig = summary(mf_over)
-    bp_sig = summary(bp_over)
-    cc_sig = summary(cc_over)
+    if (is.null(categorysie)) {
+        mf_sig = summary(mf_over)
+        bp_sig = summary(bp_over)
+        cc_sig = summary(cc_over)
+    } else {
+        mf_sig = summary(mf_over, categorySize=categorysize)
+        bp_sig = summary(bp_over, categorySize=categorysize)
+        cc_sig = summary(cc_over, categorySize=categorysize)        
+    }
     mf_sig$definition = godef(mf_over$GOBPID)
     bp_sig$definition = godef(bp_over$GOBPID)
     cc_sig$definition = godef(cc_over$GOBPID)    
+
     ret_list = list(mf_all=mf_table, bp_all=bp_table, cc_all=cc_table,
         mf_enriched=mf_sig, bp_enriched=bp_sig, cc_enriched=cc_sig)
     return(ret_list)

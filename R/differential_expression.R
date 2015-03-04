@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar  1 13:15:26 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Mar  4 10:05:55 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## differential_expression.R contains functions useful for differential expression tasks.
 
 #' write_limma(): Writes out the results of a limma search using toptable()
@@ -204,8 +204,20 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE) {
     new("EList", out)
 }
 
+
+#' limma_subset():  A quick and dirty way to pull the top/bottom genes from toptable()
 #'
+#' @param df The original data from limma
+#' @param n A number of genes to keep
+#' @param z A number of z-scores from the mean
+#' @return a dataframe subset from toptable
 #' 
+#' @seealso \code{\link{limma}}
+#' 
+#' @export
+#' @examples
+#' ## subset = limma_subset(df, n=400)
+#' ## subset = limma_subset(df, z=1.5)
 limma_subset = function(table, n=NULL, z=NULL) {
     if (is.null(n) & is.null(z)) {
         z = 1.5

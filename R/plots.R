@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar  1 17:05:42 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Mar  3 22:32:02 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -288,7 +288,7 @@ hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=
         hpgl_colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
     }
     hpgl_df = data.frame(hpgl_df)
-    if (scale == "log") {
+    if (scale != "raw") {
         hpgl_df = hpgl_df + 1
         hpgl_df = log2(hpgl_df)
     }    
@@ -1409,13 +1409,13 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
     hpgl_multi = ggplot2::ggplot(play_all, aes(x=expression, fill=cond)) +
         geom_histogram(aes(y=..density..), binwidth=binwidth, alpha=0.4, position="identity") +
         xlab("Expression") +
-        ylab("Number of observations") +
+        ylab("Observation likelihood") +
         geom_density(alpha=0.5) +                
         geom_vline(data=play_cdf, aes(xintercept=rating.mean,  colour=cond), linetype="dashed", size=0.75) +
         theme_bw()
     if (log) {
         logged = try(hpgl_multi + scale_x_log10())
-        if (logged != 'try-error') {
+        if (class(logged) != 'try-error') {
             hpgl_multi = logged
         }
     }
