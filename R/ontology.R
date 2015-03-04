@@ -259,7 +259,10 @@ golevel = function(go) {
 #' ## > 0
 gotst = function(go) {
     go = as.character(go)
-    value = GOTERM[[go]]
+    value = try(GOTERM[[go]])
+    if (class(value) == 'try-error') {
+        return(0)
+    }
     if (is.null(value)) {
         return(0)
     } else {
@@ -305,6 +308,12 @@ gotest = function(go) {
 #' ## >        secondary    definition
 #' ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal RNA (rRNA) transcript into one or more mature rRNA molecules.
 goseq_table = function(df, file=NULL) {
+    if (is.null(df$term)) {
+        df$term = goterm(df$category)
+    }
+    if (is.null(df$ontology)) {
+        df$ontology = goont(df$category)
+    }
     df = subset(df, !is.null(term))
     print("Testing that go categories are defined.")
     df$good = gotest(df$category)
@@ -379,19 +388,21 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
     qdata = godata$over_represented_pvalue
     qdata[qdata > 1] = 1 ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.0000000000000001
     qdata = qvalue::qvalue(qdata)
+    godata$term = goterm(godata$category)
+    godata$ontology = goont(godata$category)    
     godata = cbind(godata, qdata$qvalues)
     colnames(godata) = c("category","over_represented_pvalue","under_represented_pvalue","numDEInCat","numInCat","term","ontology","qvalue")
-    if (!is.null(adjust)) {
-        godata_interesting = subset(godata, p.adjust(godata$over_represented_pvalue, method=padjust_method) < adjust)
+    if (is.null(adjust)) {
+        godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
+        padjust_method="none"
+    } else {  ## There is a requested pvalue adjustment
+        godata_interesting = subset(godata, p.adjust(godata$over_represented_pvalue, method=padjust_method) <= adjust)
         if (dim(godata_interesting)[1] == 0) {
             message(paste("There are no genes with an adjusted pvalue < ", adjust, " using method: ", padjust_method, ".", sep=""))
             message(sprintf("Providing genes with an un-adjusted pvalue < %s", pvalue))
-            godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
+            godata_interesting = subset(godata, godata$over_represented_pvalue <= pvalue)
             padjust_method="none"
         }
-    } else {
-        godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
-        padjust_method="none"
     }
     message("Filling godata table with term information, this takes a while.")
     godata_interesting = goseq_table(godata_interesting)
@@ -575,7 +586,12 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
     output = list()
     for (c in 1:length(limma_out)) {
         datum = limma_out[[c]]
+        if (!is.null(datum$Row.names)) {
+            rownames(datum) = datum$Row.names
+            datum = datum[-1]
+        }
         comparison = names(limma_out[c])
+        message(paste("Performing ontology search of:", comparison, sep=""))
         if (is.null(n)) {
             out_summary = summary(datum$logFC)
             out_mad = mad(datum$logFC, na.rm=TRUE)
@@ -1072,9 +1088,9 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     } else {
         message("Using GO mapping data located in GO2EG.rda")
     }
-    message("Testing gseGO")
-    ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
-    print(ego2)
+##    message("Testing gseGO")
+##    ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
+##    print(ego2)
     message("Starting MF(molecular function) analysis")
     mf_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
     mf_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
@@ -1235,7 +1251,7 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
     if (!file.exists(goids_dir)) {
         dir.create(goids_dir, recursive=TRUE)
     }
-
+    new_go = NULL
     if (isTRUE(overwrite)) {
         if (is.null(goids_df)) {
             stop("There is neither a id2go file nor a data frame of goids.")
