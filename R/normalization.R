@@ -79,15 +79,11 @@ divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gf
 #' @export
 #' @examples
 #' ## filtered_table = filter_counts(count_table)
-<<<<<<< HEAD
-filter_counts = function(counts, threshold=4, min_samples=2, verbose=FALSE) {
-    num_before = nrow(counts)
-    cpms = 2^hpgl_log2cpm(counts)
-=======
+##filter_counts = function(counts, threshold=4, min_samples=2, verbose=FALSE) {
+##    num_before = nrow(counts)
+##    cpms = 2^hpgl_log2cpm(counts)
 filter_counts = function(counts, lib.size=NULL, thresh=1, minSamples=2) {
     cpms = 2^log2CPM(counts, lib.size=lib.size)$y
-    ## cpms = 2^hpgl_log2cpm(counts)
->>>>>>> 538df329231360a3f346a070c1c4fe07505eda95
     keep = rowSums(cpms > thresh) >= minSamples
     counts = counts[keep,]
 
