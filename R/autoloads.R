@@ -1,4 +1,4 @@
-## Time-stamp: "Mon Feb  9 15:08:50 2015 Ashton Trey Belew (abelew@gmail.com)"
+## Time-stamp: "Mon Mar  2 01:15:41 2015 Ashton Trey Belew (abelew@gmail.com)"
 ## autoloads.R contains some short-cuts I wrote for myself to make
 ## installing/maintaining packages/dependencies easier
 ## 
@@ -55,6 +55,8 @@ autoloads_ontology = function(...) {
     require.auto("GO.db")
     require.auto("DOSE")
     require.auto("goseq")
+    require.auto("GOstats")
+    require.auto("GSEABase")
     require.auto("KEGGREST")    
     require.auto("pathview")
     require.auto("RamiGO")
@@ -99,6 +101,7 @@ autoloads_helpers = function(...) {
     require.auto("knitrBootstrap", "jimhester/knitrBootstrap")
     require.auto("methods")
     require.auto("plyr")
+    require.auto("RCurl")
     require.auto("reshape")
     require.auto("rjson")
     require.auto("rmarkdown")
