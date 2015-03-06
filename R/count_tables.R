@@ -1,6 +1,7 @@
-## Time-stamp: <Fri Feb 20 17:58:38 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Mar  4 10:08:26 2015 Ashton Trey Belew (abelew@gmail.com)>
 ### count_tables.R contains some functions for simple count-table manipulations
 ### This includes reading in files, creating expressionSets, and subsets.
+
 
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -76,29 +77,36 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     ##sample_definitions$colors = as.list(color_hash[sample_definitions$condition])
     ## The logic here is that I want by_type to be the default, but only
     ## if no one chooses either.
-    if (!isTRUE(by_type) & !isTRUE(by_sample)) {
-        by_type = TRUE
-    }
-    if (isTRUE(by_type)) {
-        sample_definitions$counts = paste("processed_data/count_tables/", tolower(sample_definitions$type),
-            "/", tolower(sample_definitions$stage), "/",
-            sample_definitions$sample.id, suffix, sep="")
-        sample_definitions$intercounts = paste("data/count_tables/", tolower(sample_definitions$type),
-            "/", tolower(sample_definitions$stage), "/",
-            sample_definitions$sample.id, "_inter", suffix, sep="")
-    }
-    if (isTRUE(by_sample)) {
-        sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
-        sample_definitions$intercounts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), "_inter", suffix, sep="")
-    }
-    sample_definitions = as.data.frame(sample_definitions)
-    rownames(sample_definitions) = sample_definitions$sample.id
-    if (is.null(count_dataframe)) {
+    filenames = NULL
+    if (!is.null(sample_definitions$file)) {
+        filenames = sample_definitions$file
         all_count_tables = hpgl_read_files(as.character(sample_definitions$sample.id),
-            as.character(sample_definitions$counts), header=header, suffix=suffix)
+            as.character(filenames), header=header, suffix=suffix)        
     } else {
-        all_count_tables = count_dataframe
-        colnames(all_count_tables) = rownames(sample_definitions)
+        if (!isTRUE(by_type) & !isTRUE(by_sample) & is.null(filenames)) {
+            by_type = TRUE
+        }
+        if (isTRUE(by_type)) {
+            sample_definitions$counts = paste("processed_data/count_tables/", tolower(sample_definitions$type),
+                "/", tolower(sample_definitions$stage), "/",
+                sample_definitions$sample.id, suffix, sep="")
+            sample_definitions$intercounts = paste("data/count_tables/", tolower(sample_definitions$type),
+                "/", tolower(sample_definitions$stage), "/",
+                sample_definitions$sample.id, "_inter", suffix, sep="")
+        }
+        if (isTRUE(by_sample)) {
+            sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
+            sample_definitions$intercounts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), "_inter", suffix, sep="")
+        }
+        sample_definitions = as.data.frame(sample_definitions)
+        rownames(sample_definitions) = sample_definitions$sample.id
+        if (is.null(count_dataframe)) {
+            all_count_tables = hpgl_read_files(as.character(sample_definitions$sample.id),
+                as.character(sample_definitions$counts), header=header, suffix=suffix)
+        } else {
+            all_count_tables = count_dataframe
+            colnames(all_count_tables) = rownames(sample_definitions)
+        }
     }
     all_count_matrix = as.data.frame(all_count_tables)
 

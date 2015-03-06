@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Feb 13 13:39:34 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Mar  5 19:50:18 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -61,7 +61,7 @@
 #' @examples
 #' ## toomany_plots = graph_metrics(expt)
 #' ## testnorm = graph_metrics(expt, norm_type="tmm", filter="log2", out_type="rpkm", cormethod="robust")
-graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, cormethod="pearson", distmethod="euclidean", ...) {
+graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, cormethod="pearson", distmethod="euclidean", do_qq=FALSE, ...) {
     expt_design = expt$design
     expt_colors = expt$colors
     expt_names = expt$names
@@ -93,14 +93,17 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
     norm_smd = hpgltools::hpgl_smd(df=expt_norm_data, names=expt$names, colors=expt_colors, method=distmethod, title="Standard Median Distance, norm. data.", ...)
     message("Graphing a PCA plot of the raw data.")
     raw_pca = try(hpgltools::hpgl_pca(expt=expt, fancy_labels=FALSE, title="PCA plot of raw data.", ...))
-    message("Printing a qqplot of the raw data.")
-    raw_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
     raw_density = try(hpgltools::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
     norm_density = try(hpgltools::hpgl_density_plot(df=expt_norm_data, title="Density plot of normalized data."))    
     message("Graphing a PCA plot of the normalized data.")
     norm_pca = try(hpgltools::hpgl_pca(df=expt_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
-    message("Printing a qqplot of the normalized data.")
-    norm_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=expt_norm_data)))
+    if (isTRUE(do_qq)) {
+        message("Printing a qqplot of the normalized data.")
+        norm_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=expt_norm_data)))
+        message("Printing a qqplot of the raw data.")
+        raw_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
+    }
+        
     batch_removed = limma::removeBatchEffect(Biobase::exprs(expt$expressionset), batch=expt$batches)
     batch_boxplot = hpgltools::hpgl_boxplot(df=batch_removed, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...)
     batch_disheat = hpgltools::hpgl_disheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...)
@@ -288,7 +291,7 @@ hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=
         hpgl_colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
     }
     hpgl_df = data.frame(hpgl_df)
-    if (scale == "log") {
+    if (scale != "raw") {
         hpgl_df = hpgl_df + 1
         hpgl_df = log2(hpgl_df)
     }    
@@ -936,6 +939,159 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     return(pca_return)
 }
 
+factor_rsquared = function(svd_v, factor) {
+    svd_lm = try(lm(svd_v ~ factor), silent=TRUE)
+    if (class(svd_lm) == 'try-error') {
+        result = 0
+    } else {
+        lm_summary = summary.lm(svd_lm)
+        r_squared = lm_summary$r.squared
+        result = round(r_squared * 100, 3)
+    }
+    return(result)
+}
+
+#' Calculate some information useful for generating PCA plots
+#'
+#' @param df The data to analyze (usually exprs(somedataset))
+#' @param design A dataframe describing the experimental design, containing columns with
+#'   useful information like the conditions, batches, number of cells, whatever...
+#' @param factors A character list of columns from the design matrix which will be queried
+#'   for R^2 against the fast.svd of the data.  This defaults to c("condition","batch"), which
+#'   is in all of my experimental designs thus far.
+#' @param components A number of principle components to compare the design factors against.
+#'   If left null, it will query the same number of components as factors asked for.
+#' 
+#' @return a list of fun pca information:
+#'   svd_u/d/v: The u/d/v parameters from fast.svd
+#'   rsquared_table: A table of the rsquared values between each factor and principle component
+#'   pca_variance: A table of the pca variances
+#'   pca_data: Coordinates for a pca plot
+#'   pca_cor: A table of the correlations between the factors and principle components
+#'   cor_heatmap: A heatmap from recordPlot() describing pca_cor.
+#' @seealso \code{\link{fast.svd}}, \code{\link{lm}}
+#' 
+#' @export
+#' @examples
+#' ## pca_plot = hpgl_pca(expt=expt)
+#' ## pca_plot
+pca_information = function(df, design, factors=c("condition","batch"), num_components=NULL) {
+    data = as.matrix(df)
+    means = rowMeans(data)
+    decomposed = fast.svd(data - means)
+    positives = decomposed$d
+    u = decomposed$u
+    v = decomposed$v
+    rownames(v) = colnames(data)
+    component_variance = round((positives^2) / sum(positives^2) * 100, 3)
+    cumulative_pc_variance = cumsum(component_variance)
+
+    ## Include in this table the fstatistic and pvalue described in rnaseq_bma.rmd
+    component_rsquared_table = data.frame(
+        prop_var = component_variance,
+        cumulative_prop_var = cumulative_pc_variance)
+
+    if (is.null(factors)) {
+        factors = colnames(design)
+    } else if (factors == "all") {
+        factors = colnames(design)
+    }
+
+    for (component in factors) {
+        comp = factor(as.character(design[,component]), exclude=FALSE)
+        column = apply(v, 2, factor_rsquared, factor=comp)
+        component_rsquared_table[component] = column
+    }
+    pca_variance = round((positives ^ 2) / sum(positives ^2) * 100, 2)
+    xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
+    yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
+    labels = rownames(design)
+
+    pca_data = data.frame(SampleID=labels,
+        condition=design$condition,
+        batch=design$batch,
+        batch_int=as.integer(design$batch))
+    pc_df = data.frame(SampleID=labels)
+    rownames(pc_df) = make.names(labels)
+    
+    if (is.null(num_components)) {
+        num_components = length(factors)
+    }
+    for (pc in 1:num_components) {
+        name = paste("PC", pc, sep="")
+        pca_data[name] = v[,pc]
+        pc_df[name] = v[,pc]
+    }
+    pc_df = pc_df[-1]
+
+    factor_df = data.frame(SampleID=labels)
+    rownames(factor_df) = make.names(labels)
+    for (factor in factors) {
+        factor_df[factor] = as.numeric(as.factor(as.character(design[,factor])))
+    }
+    factor_df = factor_df[-1]
+
+    fit_one = data.frame()
+    fit_two = data.frame()
+    cor_df = data.frame()
+    anova_rss = data.frame()
+    anova_sums = data.frame()
+    anova_f = data.frame()
+    anova_p = data.frame()
+    for (factor in factors) {
+        for (pc in 1:num_components) {
+            factor_name = names(factor_df[factor])
+            pc_name = names(pc_df[pc])
+            tmp_df = merge(factor_df, pc_df, by="row.names")
+            rownames(tmp_df) = tmp_df[,1]
+            tmp_df = tmp_df[-1]
+
+            lmwithfactor_test = try(lm(formula=get(pc_name) ~ 1 + get(factor_name), data=tmp_df))
+            lmwithoutfactor_test = try(lm(formula=get(pc_name) ~ 1, data=tmp_df))
+            fstat = sum(residuals(lmwithfactor_test)^2) / sum(residuals(lmwithoutfactor_test)^2)            
+            ##1.  Perform lm(pc ~ 1 + factor) which is fit1
+            ##2.  Perform lm(pc ~ 1) which is fit2
+            ##3.  The Fstat is then defined as (sum(residuals(fit1)^2) / sum(residuals(fit2)^2))
+            ##4.  The resulting p-value is 1 - pf(Fstat, (n-(#levels in the factor)), (n-1))  ## n is the number of samples in the fit
+            ##5.  Look at anova.test() to see if this provides similar/identical information
+            another_fstat = try(anova(lmwithfactor_test, lnwithoutfactor_test), silent=TRUE)
+            if (class(another_fstat) == 'try-error') {
+                anova_rss[factor,pc] = 0                
+                anova_sums[factor,pc] = 0
+                anova_f[factor,pc] = 0
+                anova_p[factor,pc] = 0
+            } else {
+                anova_RSS[factor,pc] = another_fstat$RSS[2]
+                anova_sums[factor,pc] = another_fstat$S[2]
+                anova_f[factor,pc] = another_fstat$F[2]
+                anova_p[factor,pc] = another_fstat$P[2]
+            }
+
+            cor_test = try(cor(tmp_df[,factor_name], tmp_df[,pc_name]), silent=TRUE)
+            if (class(cor_test) == 'try-error') {
+                cor_df[factor,pc] = 0
+            } else {
+                cor_df[factor,pc] = cor_test                
+            }
+        }
+    }
+    rownames(cor_df) = colnames(factor_df)
+    colnames(cor_df) = colnames(pc_df)
+    cor_df = as.matrix(cor_df)
+    silly_colors = grDevices::colorRampPalette(brewer.pal(9, "Purples"))(100)
+    cor_df = cor_df[complete.cases(cor_df),]
+    sillytime = heatmap.3(cor_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=silly_colors)
+    pc_factor_corheat = recordPlot()
+
+    pca_list = list(
+        svd_d=positives, svd_u=u, svd_v=v, rsquared_table=component_rsquared_table,
+        pca_variance=pca_variance, pca_data=pca_data, anova_rss=anova_rss,
+        anova_sums=anova_sums, anova_f=anova_f, anova_p=anova_p,
+        pca_cor=cor_df, cor_heatmap=pc_factor_corheat)
+    return(pca_list)
+}
+
+
 #' Make a pretty MA plot from the output of voom/limma/eBayes/toptable
 #'
 #' @param counts df of linear-modelling, normalized counts by sample-type,
@@ -1297,13 +1453,13 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
     hpgl_multi = ggplot2::ggplot(play_all, aes(x=expression, fill=cond)) +
         geom_histogram(aes(y=..density..), binwidth=binwidth, alpha=0.4, position="identity") +
         xlab("Expression") +
-        ylab("Number of observations") +
+        ylab("Observation likelihood") +
         geom_density(alpha=0.5) +                
         geom_vline(data=play_cdf, aes(xintercept=rating.mean,  colour=cond), linetype="dashed", size=0.75) +
         theme_bw()
     if (log) {
         logged = try(hpgl_multi + scale_x_log10())
-        if (logged != 'try-error') {
+        if (class(logged) != 'try-error') {
             hpgl_multi = logged
         }
     }
@@ -1357,9 +1513,16 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
     if (!is.null(hpgl_names)) {
         colnames(hpgl_df) = make.names(hpgl_names, unique=TRUE)
     }
-    melted = reshape::melt(hpgl_df)
-    colnames(melted) = c("sample", "counts")
-
+    ## If the columns lose the connectivity between the sample and values, then
+    ## the ggplot below will fail with env missing.
+    melted = reshape::melt(as.matrix(hpgl_df))
+    if (dim(melted)[2] == 3) {
+        colnames(melted) = c("id", "sample", "counts")        
+    } else if (dim(melted)[2] == 2) {
+        colnames(melted) = c("sample","counts")
+    } else {
+        stop("Could not properly melt the data.")
+    }
     colors = factor(hpgl_colors)    
     if (is.null(hpgl_colors)) {
         hpgl_colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(hpgl_df)[2])
