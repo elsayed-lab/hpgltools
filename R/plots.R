@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Mar 11 17:54:15 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar  8 18:42:20 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -999,6 +999,12 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     return(pca_return)
 }
 
+#' Collect the r^2 values from a linear model fitting between a singular
+#' value decomposition and factor
+#'
+#' @param svd_v The V' V = I portion of a fast.svd call
+#' @param factor a factor describing the original data
+#' @return The r^2 values of the linear model as a %
 factor_rsquared = function(svd_v, factor) {
     svd_lm = try(lm(svd_v ~ factor), silent=TRUE)
     if (class(svd_lm) == 'try-error') {
