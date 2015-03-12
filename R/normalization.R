@@ -98,7 +98,7 @@ filter_counts = function(counts, thresh=2, min_samples=2) {
 #'
 #' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
 #' @export
-normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, annotations=NULL, verbose=FALSE, use_original=TRUE, thresh=2, min_samples=2, ...) {
+normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, annotations=NULL, verbose=FALSE, use_original=TRUE, thresh=2, min_samples=2, batch=NULL, batch1="batch", batch2=NULL, ...) {
     new_expt = expt
     if (is.null(new_expt$original_expressionset)) {
         new_expt$original_expressionset = new_expt$expressionset
@@ -108,8 +108,43 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
     }
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)
-    normalized_data = hpgl_norm(df=old_data, design=expt$design, transform=transform, norm=norm, convert=convert, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples)
-    exprs(new_expt$expressionset) = as.matrix(normalized_data$counts)
+    design = expt$design
+
+    normalized_data = hpgl_norm(df=old_data, design=design, transform=transform, norm=norm, convert=convert, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples)
+
+    if (is.null(batch)) {
+        exprs(new_expt$expressionset) = as.matrix(normalized_data$counts)
+    } else {
+        if (batch == "limma") {
+            batches1 = as.factor(design[,batch1])
+            if (is.null(batch2)) {
+                ## A reminder of removeBatchEffect usage
+                ## adjusted_batchdonor = removeBatchEffect(data, batch=as.factor(as.character(des$donor)), batch2=as.factor(as.character(des$batch)))
+                message("Using limma's removeBatchEffect to remove batch effect.")
+                normalized_data = removeBatchEffect(normalized_data$counts, batch=batches1)
+            } else {
+                batches2 = as.factor(design[,batch2])
+                normalized_data = removeBatchEffect(normalized_data$counts, batch=batches1, batch2=batches2)
+            }
+        } else if (batch == "sva") {
+            message("Using sva's combat for batch correction with the 'noScale' option.")
+            batches = as.factor(design[,"batch"])
+            conditions = as.factor(design[,"condition"])
+            df = data.frame(normalized_data$counts)
+            conditional_model = model.matrix(~conditions, data=df)
+            null_model = conditional_model[,1]
+            num_surrogates = num.sv(as.matrix(df), conditional_model)
+            sva_object = sva(as.matrix(df), conditional_model, null_model, n.sv=num_surrogates)
+            mod_sv = cbind(conditional_model, sva_object$sv)
+            normalized_data = test$db
+            new_expt$mod_sv = mod_sv
+##            normalized_data = combatMod(normalized_data, batches, conditions, noScale=TRUE)
+        } else {
+            message("haven't implemented other batch removals, just doing limma's removeBatchEffect()")
+            normalized_data = removeBatchEffect(normalized_data, batch=get(batch1))            
+        }
+        exprs(new_expt$expressionset) = as.matrix(normalized_data)
+    } ## End the if/else batch correction
     return(new_expt)
 }
 
@@ -180,8 +215,72 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
             print(paste("Low count filtering cost:", lost_rows, "gene(s)."))
         }
     }
+
+    ## Step 2: Normalization
+    ## This section handles the various normalization strategies
+    ## If nothing is chosen, then the filtering is considered sufficient
+    if (verbose) {
+        print(paste("Applying normalization:", norm_type))
+    }
+    if (norm == "sf") {
+        ## Size-factored normalization is a part of DESeq
+        matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
+        size_factor = BiocGenerics::estimateSizeFactors(matrix)
+        count_table = BiocGenerics::counts(size_factor, normalized=TRUE)
+        colnames(count_table) = rownames(column_data)
+        count_table = edgeR::DGEList(counts=count_table)
+    } else if (norm == "quant") {
+        # Quantile normalization (Bolstad et al., 2003)
+        count_rownames = rownames(count_table)
+        count_colnames = colnames(count_table)
+        count_table = normalize.quantiles(as.matrix(count_table))
+        rownames(count_table) = count_rownames
+        colnames(count_table) = count_colnames
+        # Convert to a DGEList
+        count_table = edgeR::DGEList(counts=count_table)
+    } else if (norm == "tmm") {
+        ## TMM normalization is documented in edgeR
+        ## Set up the edgeR data structure
+        count_table = edgeR::DGEList(counts=count_table)
+        ## Get the tmm normalization factors
+        norms = edgeR::calcNormFactors(count_table, method="TMM")
+        ## Set up the DESeq data structure to which to apply the new factors
+        deseq_matrix =  DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
+        ## Apply the edgeR tmm factors to this
+        sizeFactors(deseq_matrix) = norms$samples$norm.factors
+        ## Get the counts out
+        factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
+        ## return this to a DGEList
+        count_table = edgeR::DGEList(counts=factored)        
+    } else if (norm == "upperquartile") {
+        ## Get the tmm normalization factors
+        count_table = edgeR::DGEList(counts=count_table)        
+        norms = edgeR::calcNormFactors(count_table, method="upperquartile")
+        ## Set up the DESeq data structure to which to apply the new factors
+        deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
+        ## Apply the edgeR tmm factors to this
+        sizeFactors(deseq_matrix) = norms$samples$norm.factors
+        ## Get the counts out
+        factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
+        ## return this to a DGEList
+        count_table = edgeR::DGEList(counts=factored)
+    } else if (norm == "rle") {
+        ## Get the tmm normalization factors
+        count_table = edgeR::DGEList(counts=count_table)
+        norms = edgeR::calcNormFactors(count_table, method="RLE")
+        ## Set up the DESeq data structure to which to apply the new factors
+        deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
+        ## Apply the edgeR tmm factors to this
+        sizeFactors(deseq_matrix) = norms$samples$norm.factors
+        ## Get the counts out
+        factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
+        ## return this to a DGEList
+        count_table = edgeR::DGEList(counts=factored)
+    } else {
+        count_table = edgeR::DGEList(counts=count_table)
+    }    
     
-    ## Step 2: Convert the data to (likely) cpm
+    ## Step 3: Convert the data to (likely) cpm
     ## The following stanza handles the three possible output types
     ## cpm and rpkm are both from edgeR
     ## They have nice ways of handling the log2 which I should consider
@@ -220,69 +319,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
     }
     count_table = DGEList(counts=counts)    
     
-    ## Step 4: Normalization
-    ## This section handles the various normalization strategies
-    ## If nothing is chosen, then the filtering is considered sufficient
-    if (verbose) {
-        print(paste("Applying normalization:", norm_type))
-    }
-    if (norm == "sf") {
-        ## Size-factored normalization is a part of DESeq
-        matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
-        size_factor = BiocGenerics::estimateSizeFactors(matrix)
-        count_table = BiocGenerics::counts(size_factor, normalized=TRUE)
-        colnames(count_table) = rownames(column_data)
-        count_table = edgeR::DGEList(counts=count_table)
-    } else if (norm == "quant") {
-        # Quantile normalization (Bolstad et al., 2003)
-        count_rownames = rownames(count_table)
-        count_colnames = colnames(count_table)
-        count_table = normalize.quantiles(as.matrix(count_table))
-        rownames(count_table) = count_rownames
-        colnames(count_table) = count_colnames
-        # Convert to a DGEList
-        count_table = edgeR::DGEList(counts=count_table)
-    } else if (norm == "tmm") {
-        ## TMM normalization is documented in edgeR
-        ## Set up the edgeR data structure, this is used for TMM
-        count_table = edgeR::DGEList(counts=count_table)
-        ## Get the tmm normalization factors
-        norms = edgeR::calcNormFactors(count_table)
-        ## Set up the DESeq data structure to which to apply the new factors
-        deseq_matrix =  DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
-        ## Apply the edgeR tmm factors to this
-        sizeFactors(deseq_matrix) = norms$samples$norm.factors
-        ## Get the counts out
-        factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
-        ## return this to a DGEList
-        count_table = edgeR::DGEList(counts=factored)        
-    } else if (norm == "upperquartile") {
-        ## Get the tmm normalization factors
-        count_table = edgeR::DGEList(counts=count_table)        
-        norms = edgeR::calcNormFactors(count_table, method="upperquartile")
-        ## Set up the DESeq data structure to which to apply the new factors
-        deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
-        ## Apply the edgeR tmm factors to this
-        sizeFactors(deseq_matrix) = norms$samples$norm.factors
-        ## Get the counts out
-        factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
-        ## return this to a DGEList
-        count_table = edgeR::DGEList(counts=factored)
-    } else if (norm == "rle") {
-        ## Get the tmm normalization factors
-        count_table = edgeR::DGEList(counts=count_table)
-        norms = edgeR::calcNormFactors(count_table, method="RLE")
-        ## Set up the DESeq data structure to which to apply the new factors
-        deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
-        ## Apply the edgeR tmm factors to this
-        sizeFactors(deseq_matrix) = norms$samples$norm.factors
-        ## Get the counts out
-        factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
-        ## return this to a DGEList
-        count_table = edgeR::DGEList(counts=factored)
-    } else {
-        count_table = edgeR::DGEList(counts=count_table)
-    }
+
 
     return(count_table)
 }

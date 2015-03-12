@@ -110,7 +110,7 @@ fis_rawpca
 ## So, normalize the data
 norm_expt = normalize_expt(fission_expt)
 ## And try the pca again
-fis_normpca = hpgl_pca(expt=norm_expt, labels=norm_expt$condition)
+fis_normpca = hpgl_pca(expt=norm_expt, labels=norm_expt$condition, title="normalized pca")
 fis_normpca
 ## ok, that caused the 0, 60, 15, and 30 minute samples to cluster nicely
 ## the 120 and 180 minute samples are still a bit tight
@@ -126,11 +126,55 @@ fis_info$pca_cor
 ## And p-values to lend some credence(or not to those assertions)
 fis_info$anova_p
 
+## Try again with batch removed data
+batchnorm_expt = normalize_expt(fission_expt, batch="limma")
+fis_batchnormpca = hpgl_pca(expt=batchnorm_expt, labels=norm_expt$condition, title="limma corrected pca")
+fis_batchnormpca$plot
+
+combatnorm_expt = normalize_expt(fission_expt, batch="sva")
+fis_combatnormpca = hpgl_pca(expt=combatnorm_expt, labels=norm_expt$condition, title="sva corrected pca")
+fis_combatnormpca
+
 ```
+
+Interesting, the batch normalized pca plot looks much the same as the normalized.
+The variances are in fact pretty much the exact same...
 
 ## Look at the data distributions
 
+We have some tools which provide visualizations of the distribution of the data:
+
 ```{r distributions}
 
+hpgl_boxplot(expt=norm_expt)
+sf_expt = normalize_expt(fission_expt, norm="sf")
+hpgl_boxplot(expt=sf_expt)
+tm_expt = normalize_expt(fission_expt, norm="tmm")
+hpgl_boxplot(expt=tm_expt)
+rle_expt = normalize_expt(fission_expt, norm="rle")
+hpgl_boxplot(expt=rle_expt)
+up_expt = normalize_expt(fission_expt, norm="upperquartile")
+hpgl_boxplot(expt=up_expt)
+
+hpgl_density_plot(expt=norm_expt)
+hpgl_density_plot(expt=sf_expt)
+hpgl_density_plot(expt=tm_expt)
+
+compare_12 = hpgl_qq_plot(exprs(norm_expt$expressionset), x=1, y=2)
+compare_12$ratio
+compare_12$log
+
+```
+
+## See how they cluster
+
+Ok, so we can further check out how the data cluster with respect to one another...
+
+```{r clustering}
+
+hpgl_corheat(expt=norm_expt)
+hpgl_corheat(expt=batchnorm_expt)
+hpgl_disheat(expt=norm_expt)
+hpgl_disheat(expt=batchnorm_expt)
 
 ```

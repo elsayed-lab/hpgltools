@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Mar 12 15:06:29 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Mar 12 18:43:25 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -227,7 +227,7 @@ hpgl_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, labels=NUL
         xlab("Observed CPM") +
         theme_bw()
     if (!is.null(labels)) {
-        if (labels == "fancy") {
+        if (labels[[1]] == "fancy") {
             non_zero_plot = non_zero_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_colors)
         } else {
             non_zero_plot = non_zero_plot + geom_text(aes(x=cpm, y=nonzero_genes, label=hpgl_labels), angle=45, size=4, vjust=2)
@@ -476,6 +476,7 @@ hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
         ratio_plot = ratio_plot + xlab("Sorted gene") + ylab(y_string) + theme(legend.position="none")
     } else if (labels == "short") {
         ratio_plot = ratio_plot + ylab(y_string) +
+            theme_bw() +
             theme(axis.text.x=element_blank(),
                   axis.text.y=element_blank(),
                   axis.ticks=element_blank(),
@@ -487,18 +488,19 @@ hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
                   panel.grid.minor=element_blank(),
                   plot.background=element_blank())                  
     } else {
-        ratio_plot = ratio_plot + theme(axis.line=element_blank(),
-            axis.text.x=element_blank(),
-            axis.text.y=element_blank(),
-            axis.ticks=element_blank(),
-            axis.title.x=element_blank(),
-            axis.title.y=element_blank(),
-            legend.position="none",
-            panel.background=element_blank(),
-            panel.border=element_blank(),
-            panel.grid.major=element_blank(),
-            panel.grid.minor=element_blank(),
-            plot.background=element_blank())
+        ratio_plot = ratio_plot + theme_bw()
+            theme(axis.line=element_blank(),
+                  axis.text.x=element_blank(),
+                  axis.text.y=element_blank(),
+                  axis.ticks=element_blank(),
+                  axis.title.x=element_blank(),
+                  axis.title.y=element_blank(),
+                  legend.position="none",
+                  panel.background=element_blank(),
+                  panel.border=element_blank(),
+                  panel.grid.major=element_blank(),
+                  panel.grid.minor=element_blank(),
+                  plot.background=element_blank())
     }
 
     log_df = data.frame(cbind(log(sorted_x), log(sorted_y)))
@@ -524,6 +526,7 @@ hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
                   plot.background=element_blank())                          
     } else {
         log_ratio_plot = log_ratio_plot +
+            theme_bw() +
             theme(axis.line=element_blank(),
                   axis.text.x=element_blank(),
                   axis.text.y=element_blank(),
@@ -983,10 +986,10 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         geom_point(aes(x=PC1, y=PC2, color=hpgl_design$condition, shape=hpgl_design$batch), size=3) +
         scale_colour_discrete(name="Experimental\nCondition") +
         scale_shape_discrete(name="Experimental\nBatch") + 
-        xlab(xl) + ylab(yl) + theme_bw()
+        xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
 
     if (!is.null(labels)) {
-        if (labels == "fancy") {
+        if (labels[[1]] == "fancy") {
             pca_plot = pca_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_design$condition)
         } else {
             pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=labels), angle=45, size=4, vjust=2)
@@ -1213,10 +1216,7 @@ pca_information = function(df, design, factors=c("condition","batch"), num_compo
                 },
                 finally={
                 }
-            )
-
-            
-##            cor_test = try(cor(tmp_df[,factor_name], tmp_df[,pc_name]), silent=TRUE)
+            ) ## End of the tryCatch
             if (class(cor_test) == 'try-error') {
                 cor_df[factor,pc] = 0
             } else {
@@ -1682,7 +1682,8 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
     }
     densityplot = ggplot2::ggplot(data=melted, aes(x=counts, colour=sample, fill=fill), environment=hpgl_env) +
         geom_density(aes(x=counts, y=..count..), position=position) +
-        theme_bw()
+        theme_bw() +
+        theme(legend.key.size=unit(0.3, "cm"))        
     if (!is.null(title)) {
         densityplot = densityplot + ggplot2::ggtitle(title)
     }
