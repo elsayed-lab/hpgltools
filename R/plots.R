@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar  8 18:42:20 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Mar 12 15:06:29 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
@@ -1017,32 +1017,53 @@ factor_rsquared = function(svd_v, factor) {
     return(result)
 }
 
-plot_pcs = function(data, first="PC1", second="PC2", colors=NULL, design=NULL, title=NULL, shapes="batch", labels=NULL) {
+#' A quick and dirty PCA plotter of arbitrary components against one another.
+#'
+#' @param data A dataframe of principle components PC1 .. PCN with any other arbitrary information.
+#' @param first Principle component PCx to put on the x axis
+#' @param second Principle component PCy to put on the y axis
+#' @param variances A list of the %variance explained by each component
+#' @param design The experimental design with condition/batch
+#' @param title Title for the plot
+#' @param labels Whether or not one wants fancy labels for the conditions
+#' 
+#' @return a ggplot2 PCA plot
+#' @seealso \code{\link{ggplot2}}, \code{\link{geom_dl}}
+#' 
+#' @export
+#' @examples
+#' ## pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
+plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL, title=NULL, labels=NULL) {
     hpgl_env = environment()
-    num_batches = length(design$batch)    
-    pca_plot = ggplot(data=as.data.frame(data), environment=hpgl_env)
-    if (num_batches > 6) { ## Then ggplot2 wants shapes specified manually...
-        pca_plot = pca_plot + scale_shape_manual(values=1:num_batches) +
-            geom_point(aes(x=get(first), y=get(second), color=design$condition), size=3)
-    } else {
-        pca_plot = pca_plot +
-            geom_point(aes(x=get(first), y=get(second), color=design$condition, shape=design$batch), size=3)
+    batches = design$batch
+    point_labels = factor(design$condition)
+    if (is.null(title)) {
+        title = paste(first, " vs. ", second, sep="")
     }
-    pca_plot = pca_plot +
-        scale_colour_discrete(name="Experimental\nCondition", guide=guide_legend(override.aes=aes(size=1))) +
-        scale_shape_discrete(name="Experimental\nBatch", guide=guide_legend(override.aes=aes(size=1))) +
-        xlab(xl) + ylab(yl) + theme_bw()        
+    colors = levels(as.factor(unlist(design$color)))
+    pca_plot = ggplot(data=as.data.frame(data), environment=hpgl_env) +
+        geom_point(aes(x=get(first), y=get(second), shape=batches, colour=factor(design$condition)), size=3) +
+        scale_colour_manual(values=colors, name="Condition") +
+        scale_shape_manual(values=batches, name="Batch", guide=guide_legend(override.aes=aes(size=1))) +
+        ggtitle(title) +
+        theme_bw() +
+        theme(legend.key.size=unit(0.5, "cm"))
 
+    if (!is.null(variances)) {
+        x_var_num = as.numeric(gsub("PC", "", first))
+        y_var_num = as.numeric(gsub("PC", "", second))
+        x_label = paste("PC", x_var_num, ": ", variances[[x_var_num]], "%  variance", sep="")
+        y_label = paste("PC", y_var_num, ": ", variances[[y_var_num]], "%  variance", sep="")
+        pca_plot = pca_plot + xlab(x_label) + ylab(y_label)
+    }
+                
     if (!is.null(labels)) {
-        if (labels == "fancy") {
-            pca_plot = pca_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_design$condition)
+        if (labels[[1]] == "fancy") {
+            pca_plot = pca_plot + geom_dl(aes(x=get(first), y=get(second), label=point_labels), list("top.bumpup", cex=0.5))
         } else {
-            pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=labels), angle=45, size=4, vjust=2)
+            pca_plot = pca_plot + geom_text(aes(x=get(first), y=get(second), label=point_labels), angle=45, size=4, vjust=2)
         }
     }
-    if (!is.null(title)) {
-        pca_plot = pca_plot + ggtitle(title)
-    }    
     return(pca_plot)
 }
 
@@ -1070,7 +1091,7 @@ plot_pcs = function(data, first="PC1", second="PC2", colors=NULL, design=NULL, t
 #' @examples
 #' ## pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
 #' ## pca_info
-pca_information = function(df, design, factors=c("condition","batch"), num_components=NULL, plot_pcas=FALSE) {
+pca_information = function(df, design, factors=c("condition","batch"), num_components=NULL, plot_pcas=FALSE, labels="fancy") {
     data = as.matrix(df)
     means = rowMeans(data)
     decomposed = fast.svd(data - means)
@@ -1129,8 +1150,7 @@ pca_information = function(df, design, factors=c("condition","batch"), num_compo
                 if (pc < second_pc & second_pc <= num_components) {
                     second_name = paste("PC", second_pc, sep="")
                     list_name = paste(name, "_", second_name, sep="")
-                    tmp_plot = print(invisible(plot_pcs(pca_data, colors=design$colors, design=design, first=name, second=second_name)))
-                    ##            print(tmp_plot)
+                    tmp_plot = print(plot_pcs(pca_data, design=design, variances=pca_variance, first=name, second=second_name, labels=labels))
                     pca_plots[[list_name]] = tmp_plot
                 }
             }
@@ -1518,7 +1538,6 @@ hpgl_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE,
     }
     a_histogram = ggplot2::ggplot(df, aes(x=values), environment=hpgl_env) +
     geom_histogram(aes(y=..density..), stat="bin", binwidth=binwidth, colour=color, fill=fillcolor, position="identity") +
-##    stat_bin(binwidth=binwidth, color=fillcolor) +
     geom_density(alpha=0.4, fill=fillcolor) +
     geom_vline(aes(xintercept=mean(values, na.rm=T)), color=color, linetype="dashed", size=1) +
     theme_bw()
