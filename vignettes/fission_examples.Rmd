@@ -130,10 +130,12 @@ fis_info$anova_p
 batchnorm_expt = normalize_expt(fission_expt, batch="limma")
 fis_batchnormpca = hpgl_pca(expt=batchnorm_expt, labels=norm_expt$condition, title="limma corrected pca")
 fis_batchnormpca$plot
+test_pca = pca_information(df=exprs(batchnorm_expt$expressionset), design=full_design, factors=c("condition","batch","strain","minute"), num_components=6)
 
 combatnorm_expt = normalize_expt(fission_expt, batch="sva")
 fis_combatnormpca = hpgl_pca(expt=combatnorm_expt, labels=norm_expt$condition, title="sva corrected pca")
 fis_combatnormpca
+test_pca = pca_information(df=exprs(combatnorm_expt$expressionset), design=full_design, factors=c("condition","batch","strain","minute"), num_components=6)
 
 ```
 
@@ -176,5 +178,35 @@ hpgl_corheat(expt=norm_expt)
 hpgl_corheat(expt=batchnorm_expt)
 hpgl_disheat(expt=norm_expt)
 hpgl_disheat(expt=batchnorm_expt)
+
+```
+
+# Some simple differential expression analyses
+
+```{r simple_de}
+
+all_pairwise = balanced_pairwise(exprs(norm_expt$expressionset), norm_expt$conditions, norm_expt$batches)
+## I have the following elements in this list:
+### conditions_table     :  how many replicates are there of each condition
+### batches_table        :  how many replicates are there of each batch
+### conditions           :  a factor of all the conditions
+### batches              :  a factor of all the batches
+### model                :  the model of the data used for voom etc.
+### fit                  :  the result of lmfit()
+### voom_result          :  the result of voom()
+### voom_design          :  the design matrix fed to voom()
+### identities           :  the strings fed to makeContrasts() which describe each sample alone
+### all_pairwise         :  the strings describing all the subtractions fed to makeContrasts()
+### contrast_string      :  the entire string fed to makeContrasts() including the design etc.
+### pairwise_fits        :  the result of contrasts.fit()
+### pairwise_comparisons :  the result from eBayes()
+### limma_result         :  a list of toptable()s corresponding to each pairwise comparison
+
+names(all_pairwise$limma_result)
+summary(all_pairwise$limma_result$wt.120_minus_mut.120)
+wt_120 = all_pairwise$limma_result$wt.120
+mut_120 = all_pairwise$limma_result$mut.120
+
+hpgl_linear_scatter(df=data.frame(wt=wt_120$AveExpr, mut=mut_120$AveExpr))
 
 ```

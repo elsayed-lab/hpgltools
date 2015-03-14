@@ -4,14 +4,14 @@
 \alias{filter_counts}
 \title{Filter low-count genes from a data set.}
 \usage{
-filter_counts(counts, lib.size = NULL, thresh = 1, minSamples = 2)
+filter_counts(counts, thresh = 2, min_samples = 2)
 }
 \arguments{
 \item{thresh}{lower threshold of counts (4 by default)}
 
-\item{minSamples}{minimum number of samples}
-
 \item{df}{input data frame of counts by sample}
+
+\item{minSamples}{minimum number of samples}
 }
 \value{
 dataframe of counts without the low-count genes

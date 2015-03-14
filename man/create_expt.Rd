@@ -15,7 +15,35 @@ create_expt(file, color_hash = NULL, suffix = ".count.gz", header = FALSE,
 \item{file}{a comma separated file describing the samples with
 information like condition,batch,count_filename,etc}
 
-\item{color_hash}{a hash which describes how to color the samples}
+\item{color_hash}{a hash which describes how to color the samples,
+NULL by default; it will generate its own colors using colorBrewer}
+
+\item{suffix}{when looking for the count tables in processed_data
+look for this suffix on the end of the files.  .count.gz by default.}
+
+\item{header}{Does the csv metadata file have a header?  FALSE by default.}
+
+\item{genes}{annotation information describing the rows of the data set, usually
+this comes from a call to import.gff()}
+
+\item{by_type}{when looking for count tables, are they organized by type?}
+
+\item{by_sample}{or by sample?  I do all mine by sample, but others do by type...}
+
+\item{sep}{some folks prefer their csv files as tab separated or somesuch}
+
+\item{include_type}{I have usually assumed that all gff annotations should be used,
+but that is not always true, this allows one to limit.}
+
+\item{include_gff}{A gff file to help in sorting which features to keep}
+
+\item{count_dataframe}{If one does not wish to read the count tables from processed_data/
+they may instead be fed here}
+
+\item{savefile}{an Rdata file to which to save the data of the resulting expt. expt.Rdata by default.}
+
+\item{low_files}{whether or not to explicitly lowercase the filenames when searching in processed_data/
+  this is relevant because the ceph object storage by default lowercases filenames.}
 }
 \value{
 experiment an expressionset

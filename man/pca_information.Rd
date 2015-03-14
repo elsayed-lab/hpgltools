@@ -5,7 +5,7 @@
 \title{Calculate some information useful for generating PCA plots}
 \usage{
 pca_information(df, design, factors = c("condition", "batch"),
-  num_components = NULL)
+  num_components = NULL, plot_pcas = FALSE, labels = "fancy")
 }
 \arguments{
 \item{df}{The data to analyze (usually exprs(somedataset))}
@@ -33,8 +33,8 @@ a list of fun pca information:
 Calculate some information useful for generating PCA plots
 }
 \examples{
-## pca_plot = hpgl_pca(expt=expt)
-## pca_plot
+## pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
+## pca_info
 }
 \seealso{
 \code{\link{fast.svd}}, \code{\link{lm}}

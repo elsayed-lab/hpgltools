@@ -127,7 +127,7 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
                 normalized_data = removeBatchEffect(normalized_data$counts, batch=batches1, batch2=batches2)
             }
         } else if (batch == "sva") {
-            message("Using sva's combat for batch correction with the 'noScale' option.")
+            message("Using sva's fsva for batch correction.")
             batches = as.factor(design[,"batch"])
             conditions = as.factor(design[,"condition"])
             df = data.frame(normalized_data$counts)
@@ -136,8 +136,14 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
             num_surrogates = num.sv(as.matrix(df), conditional_model)
             sva_object = sva(as.matrix(df), conditional_model, null_model, n.sv=num_surrogates)
             mod_sv = cbind(conditional_model, sva_object$sv)
-            normalized_data = test$db
+            fsva_result = fsva(as.matrix(df), conditional_model, sva_object, newdat=as.matrix(df), method="exact")
+            new_expt$conditional_model = conditional_model
+            new_expt$null_model = null_model
+            new_expt$num_surrogates = num_surrogates
+            new_expt$sva_object = sva_object
             new_expt$mod_sv = mod_sv
+            new_expt$fsva_result = fsva_result
+            normalized_data = fsva_result$db            
 ##            normalized_data = combatMod(normalized_data, batches, conditions, noScale=TRUE)
         } else {
             message("haven't implemented other batch removals, just doing limma's removeBatchEffect()")
@@ -178,10 +184,10 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
 #' 
 #' @export
 #' @examples
-#' df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
-#' df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-#' df_ql2rpkm = hpgl_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
-#' count_table = df_ql2rpkm$counts
+#' ## df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
+#' ## df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
+#' ## df_ql2rpkm = hpgl_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
+#' ## count_table = df_ql2rpkm$counts
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm
 hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, ...) {
     if (is.null(expt) & is.null(df)) {
