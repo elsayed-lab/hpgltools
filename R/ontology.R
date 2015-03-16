@@ -520,6 +520,79 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
     return(pval_plots)    
 }
 
+
+gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_under, wrapped_width=20, cutoff=0.1, n=10) {
+    ##    plotting_mf_over = subset(mf_over, complete.cases(mf_over))
+    plotting_mf_over = mf_over
+    plotting_mf_over$score = plotting_mf_over$ExpCount
+    plotting_mf_over = subset(plotting_mf_over, Term != "NULL")
+    plotting_mf_over = subset(plotting_mf_over, Pvalue <= 0.1)
+    plotting_mf_over = subset(plotting_mf_over, Size > 10)    
+    plotting_mf_over = plotting_mf_over[order(plotting_mf_over$Pvalue),]
+    plotting_mf_over = head(plotting_mf_over, n=n)
+    plotting_mf_over = plotting_mf_over[,c("Term","Pvalue","score")]
+    colnames(plotting_mf_over) = c("term","pvalue","score")
+    mf_pval_plot_over = pval_plot(plotting_mf_over, ontology="MF")
+    plotting_mf_under = mf_under
+    plotting_mf_under$score = plotting_mf_under$ExpCount
+    plotting_mf_under = subset(plotting_mf_under, Term != "NULL")
+    plotting_mf_under = subset(plotting_mf_under, Pvalue <= 0.1)
+    plotting_mf_under = subset(plotting_mf_under, Size > 10)    
+    plotting_mf_under = plotting_mf_under[order(plotting_mf_under$Pvalue),]
+    plotting_mf_under = head(plotting_mf_under, n=n)
+    plotting_mf_under = plotting_mf_under[,c("Term","Pvalue","score")]
+    colnames(plotting_mf_under) = c("term","pvalue","score")
+    mf_pval_plot_under = pval_plot(plotting_mf_under, ontology="MF")
+
+    plotting_bp_over = bp_over
+    plotting_bp_over$score = plotting_bp_over$ExpCount
+    plotting_bp_over = subset(plotting_bp_over, Term != "NULL")
+    plotting_bp_over = subset(plotting_bp_over, Pvalue <= 0.1)
+    plotting_bp_over = subset(plotting_bp_over, Size > 10)    
+    plotting_bp_over = plotting_bp_over[order(plotting_bp_over$Pvalue),]
+    plotting_bp_over = head(plotting_bp_over, n=n)
+    plotting_bp_over = plotting_bp_over[,c("Term","Pvalue","score")]
+    colnames(plotting_bp_over) = c("term","pvalue","score")
+    bp_pval_plot_over = pval_plot(plotting_bp_over, ontology="BP")
+    plotting_bp_under = bp_under
+    plotting_bp_under$score = plotting_bp_under$ExpCount
+    plotting_bp_under = subset(plotting_bp_under, Term != "NULL")
+    plotting_bp_under = subset(plotting_bp_under, Pvalue <= 0.1)
+    plotting_bp_under = subset(plotting_bp_under, Size > 10)    
+    plotting_bp_under = plotting_bp_under[order(plotting_bp_under$Pvalue),]
+    plotting_bp_under = head(plotting_bp_under, n=n)
+    plotting_bp_under = plotting_bp_under[,c("Term","Pvalue","score")]
+    colnames(plotting_bp_under) = c("term","pvalue","score")
+    bp_pval_plot_under = pval_plot(plotting_bp_under, ontology="BP")
+
+    plotting_cc_over = cc_over
+    plotting_cc_over$score = plotting_cc_over$ExpCount
+    plotting_cc_over = subset(plotting_cc_over, Term != "NULL")
+    plotting_cc_over = subset(plotting_cc_over, Pvalue <= 0.1)
+    plotting_cc_over = subset(plotting_cc_over, Size > 10)    
+    plotting_cc_over = plotting_cc_over[order(plotting_cc_over$Pvalue),]
+    plotting_cc_over = head(plotting_cc_over, n=n)
+    plotting_cc_over = plotting_cc_over[,c("Term","Pvalue","score")]
+    colnames(plotting_cc_over) = c("term","pvalue","score")
+    cc_pval_plot_over = pval_plot(plotting_cc_over, ontology="CC")
+    plotting_cc_under = cc_under
+    plotting_cc_under$score = plotting_cc_under$ExpCount
+    plotting_cc_under = subset(plotting_cc_under, Term != "NULL")
+    plotting_cc_under = subset(plotting_cc_under, Pvalue <= 0.1)
+    plotting_cc_under = subset(plotting_cc_under, Size > 10)    
+    plotting_cc_under = plotting_cc_under[order(plotting_cc_under$Pvalue),]
+    plotting_cc_under = head(plotting_cc_under, n=n)
+    plotting_cc_under = plotting_cc_under[,c("Term","Pvalue","score")]
+    colnames(plotting_cc_under) = c("term","pvalue","score")
+    cc_pval_plot_under = pval_plot(plotting_cc_under, ontology="CC")
+
+    pval_plots = list(mfp_plot_over=mf_pval_plot_over, bpp_plot_over=bp_pval_plot_over, ccp_plot_over=cc_pval_plot_over,
+        mf_subset_over=plotting_mf_over, bp_subset_over=plotting_bp_over, cc_subset_over=plotting_cc_over,
+        mfp_plot_under=mf_pval_plot_under, bpp_plot_under=bp_pval_plot_under, ccp_plot_under=cc_pval_plot_under,
+        mf_subset_under=plotting_mf_under, bp_subset_under=plotting_bp_under, cc_subset_under=plotting_cc_under)
+    return(pval_plots)    
+}
+
 #' Make a pvalue plot from a df of IDs, scores, and p-values
 #'
 #' @param df some data from topgo/goseq/clusterprofiler
@@ -1580,6 +1653,116 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
     return (x)
 }
 
+gostats_trees = function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under, cc_under, goid_map="reference/go/id2go.map", score_limit=0.01, goids_df=NULL, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Val") {
+    make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+    geneID2GO = topGO::readMappings(file=goid_map)
+    annotated_genes = names(geneID2GO)
+    if (is.null(de_genes$ID)) {
+        de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
+    }
+    interesting_genes = factor(annotated_genes %in% de_genes$ID)
+    names(interesting_genes) = annotated_genes
+    if (is.null(de_genes[[pval_column]])) {
+        mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFun.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFun.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFun.gene2GO, gene2GO=geneID2GO)
+    } else {
+        pvals = as.vector(de_genes[[pval_column]])
+        names(pvals) = rownames(de_genes)
+        mf_GOdata = new("topGOdata", description="MF", ontology="MF", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata = new("topGOdata", description="BP", ontology="BP", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata = new("topGOdata", description="CC", ontology="CC", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+    }
+    mf_over_enriched_ids = mf_over$GOMFID
+    bp_over_enriched_ids = bp_over$GOBPID
+    cc_over_enriched_ids = cc_over$GOCCID
+    mf_under_enriched_ids = mf_under$GOMFID
+    bp_under_enriched_ids = bp_under$GOBPID
+    cc_under_enriched_ids = cc_under$GOCCID
+    mf_over_enriched_scores = mf_over$Pvalue
+    names(mf_over_enriched_scores) = mf_over_enriched_ids
+    bp_over_enriched_scores = bp_over$Pvalue
+    names(bp_over_enriched_scores) = bp_over_enriched_ids
+    cc_over_enriched_scores = cc_over$Pvalue
+    names(cc_over_enriched_scores) = cc_over_enriched_ids    
+    mf_under_enriched_scores = mf_under$Pvalue
+    names(mf_under_enriched_scores) = mf_under_enriched_ids    
+    bp_under_enriched_scores = bp_under$Pvalue    
+    names(bp_under_enriched_scores) = bp_under_enriched_ids    
+    cc_under_enriched_scores = cc_under$Pvalue
+    names(cc_under_enriched_scores) = cc_under_enriched_ids
+
+    mf_avail_nodes = as.list(mf_GOdata@graph@nodes)
+    names(mf_avail_nodes) = mf_GOdata@graph@nodes
+    mf_over_nodes = mf_over_enriched_scores[names(mf_over_enriched_scores) %in% names(mf_avail_nodes)]
+    mf_under_nodes = mf_under_enriched_scores[names(mf_under_enriched_scores) %in% names(mf_avail_nodes)]
+    mf_over_included = length(which(mf_over_nodes <= score_limit))
+    mf_under_included = length(which(mf_under_nodes <= score_limit))
+    mf_over_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_over_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_over_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    mf_under_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_under_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_under_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    if (class(mf_over_tree_data) == 'try-error') {
+        message("There was an error generating the over MF tree.")
+        mf_over_tree = NULL
+    } else {
+        mf_over_tree = recordPlot()
+    }
+    if (class(mf_under_tree_data) == 'try-error') {
+        message("There was an error generating the under MF tree.")
+        mf_under_tree = NULL
+    } else {
+        mf_under_tree = recordPlot()
+    }
+
+    bp_avail_nodes = as.list(bp_GOdata@graph@nodes)
+    names(bp_avail_nodes) = bp_GOdata@graph@nodes
+    bp_over_nodes = bp_over_enriched_scores[names(bp_over_enriched_scores) %in% names(bp_avail_nodes)]
+    bp_under_nodes = bp_under_enriched_scores[names(bp_under_enriched_scores) %in% names(bp_avail_nodes)]
+    bp_over_included = length(which(bp_over_nodes <= score_limit))
+    bp_under_included = length(which(bp_under_nodes <= score_limit))
+    bp_over_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_over_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_over_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    bp_under_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_under_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_under_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    if (class(bp_over_tree_data) == 'try-error') {
+        message("There was an error generating the over BP tree.")
+        bp_over_tree = NULL
+    } else {
+        bp_over_tree = recordPlot()
+    }
+    if (class(bp_under_tree_data) == 'try-error') {
+        message("There was an error generating the under BP tree.")
+        bp_under_tree = NULL
+    } else {
+        bp_under_tree = recordPlot()
+    }
+    
+    cc_avail_nodes = as.list(cc_GOdata@graph@nodes)
+    names(cc_avail_nodes) = cc_GOdata@graph@nodes
+    cc_over_nodes = cc_over_enriched_scores[names(cc_over_enriched_scores) %in% names(cc_avail_nodes)]
+    cc_under_nodes = cc_under_enriched_scores[names(cc_under_enriched_scores) %in% names(cc_avail_nodes)]
+    cc_over_included = length(which(cc_over_nodes <= score_limit))
+    cc_under_included = length(which(cc_under_nodes <= score_limit))
+    cc_over_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_over_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_over_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    cc_under_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_under_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_under_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    if (class(cc_over_tree_data) == 'try-error') {
+        message("There was an error generating the over CC tree.")
+        cc_over_tree = NULL
+    } else {
+        cc_over_tree = recordPlot()
+    }
+    if (class(cc_under_tree_data) == 'try-error') {
+        message("There was an error generating the under CC tree.")
+        cc_under_tree = NULL
+    } else {
+        cc_under_tree = recordPlot()
+    }
+
+    trees = list(
+        MF_over=mf_over_tree, BP_over=bp_over_tree, CC_over=cc_over_tree,
+        MF_overdata=mf_over_tree_data, BP_overdata=bp_over_tree_data, CC_overdata=cc_over_tree_data,
+        MF_under=mf_under_tree, BP_under=bp_under_tree, CC_under=cc_under_tree,
+        MF_underdata=mf_under_tree_data, BP_underdata=bp_under_tree_data, CC_underdata=cc_under_tree_data,
+    )
+    return(trees)
+}
 
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
@@ -1595,7 +1778,7 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
 #' @return dunno yet
 #' @seealso \code{\link{GOstats}}
 #' @export
-simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05, direction="over", conditional=FALSE, categorysize=NULL) {
+simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05, direction="both", conditional=FALSE, categorysize=NULL) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should) contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
     annotation = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
     if (is.null(annotation[,universe_merge])) {
@@ -1607,71 +1790,208 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
     } else {
         universe = annotation[,c(universe_merge, "width")]
     }
+    universe = universe[complete.cases(universe),]
     universe$id = rownames(universe)
     colnames(universe) = c("geneid","width","id")
+    if (is.null(de_genes$ID)) {
+        de_genes$ID = rownames(de_genes)
+    }
     universe_cross_de = merge(universe, de_genes, by.x="geneid", by.y="ID")
     degenes_ids = universe_cross_de$id
-    gostats_go = merge(universe, goids, by.x="geneid", by.y="name")
+    universe_ids = universe$id
+    gostats_go = merge(universe, goids, by.x="geneid", by.y="ID")
     gostats_go$frame.Evidence = "TAS"
     colnames(gostats_go) = c("sysName","name","frame.gene_id", "frame.go_id","frame.Evidence")
     gostats_go = gostats_go[,c("frame.go_id","frame.Evidence","frame.gene_id")]
     gostats_frame = GOFrame(gostats_go, organism=organism)
     gostats_all = GOAllFrame(gostats_frame)
+    require.auto("GSEABase", verbose=FALSE)
     gsc = GeneSetCollection(gostats_all, setType=GOCollection())
-    mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-        geneSetCollection=gsc,
-        geneIds=degenes_ids,
-        universeGeneIds=universe_ids,
-        ontology="MF",
-        pvalueCutoff=pcutoff,
-        conditional=conditional,
-        testDirection=direction)
 
-    bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-        geneSetCollection=gsc,
-        geneIds=degenes_ids,
-        universeGeneIds=universe_ids,
-        ontology="BP",
-        pvalueCutoff=pcutoff,
-        conditional=FALSE,
-        testDirection="over")
-
-    cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-        geneSetCollection=gsc,
-        geneIds=degenes_ids,
-        universeGeneIds=universe_ids,
-        ontology="CC",
-        pvalueCutoff=pcutoff,
-        conditional=FALSE,
-        testDirection="over")            
-    
-    mf_over = hyperGTest(mf_params)
-    bp_over = hyperGTest(bp_params)
-    cc_over = hyperGTest(cc_params)
-
-    ## Make tables of the entire ontology
-    mf_table = summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
-    bp_table = summary(bp_over, pvalue=1.0, htmlLinks=TRUE)
-    cc_table = summary(cc_over, pvalue=1.0, htmlLinks=TRUE)
-    mf_table$qvalue = qvalue(mf_table$Pvalue)
-    bp_table$qvalue = qvalue(bp_table$Pvalue)
-    cc_table$qvalue = qvalue(cc_table$Pvalue)
-
-    if (is.null(categorysie)) {
-        mf_sig = summary(mf_over)
-        bp_sig = summary(bp_over)
-        cc_sig = summary(cc_over)
+    mf_over = bp_over = cc_over = NULL
+    mf_under = bp_under = cc_under = NULL
+    if (direction == "over") {
+        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="MF",
+            pvalueCutoff=pcutoff,
+            conditional=conditional,
+            testDirection="over")
+        mf_over = hyperGTest(mf_params)        
+        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="BP",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="over")
+        bp_over = hyperGTest(bp_params)        
+        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="CC",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="over")
+        cc_over = hyperGTest(cc_params)        
+    } else if (direction == "under") {
+        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="MF",
+            pvalueCutoff=pcutoff,
+            conditional=conditional,
+            testDirection="under")
+        mf_under = hyperGTest(mf_params)        
+        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="BP",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="under")
+        bp_under = hyperGTest(bp_params)        
+        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="CC",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="under")
+        cc_under = hyperGTest(cc_params)        
     } else {
-        mf_sig = summary(mf_over, categorySize=categorysize)
-        bp_sig = summary(bp_over, categorySize=categorysize)
-        cc_sig = summary(cc_over, categorySize=categorysize)        
+        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="MF",
+            pvalueCutoff=pcutoff,
+            conditional=conditional,
+            testDirection="over")
+        mf_over = hyperGTest(mf_params)        
+        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="BP",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="over")
+        bp_over = hyperGTest(bp_params)        
+        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="CC",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="over")
+        cc_over = hyperGTest(cc_params)
+        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="MF",
+            pvalueCutoff=pcutoff,
+            conditional=conditional,
+            testDirection="under")
+        mf_under = hyperGTest(mf_params)        
+        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="BP",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="under")
+        bp_under = hyperGTest(bp_params)        
+        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="CC",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="under")
+        cc_under = hyperGTest(cc_params)                
     }
-    mf_sig$definition = godef(mf_over$GOBPID)
-    bp_sig$definition = godef(bp_over$GOBPID)
-    cc_sig$definition = godef(cc_over$GOBPID)    
 
-    ret_list = list(mf_all=mf_table, bp_all=bp_table, cc_all=cc_table,
-        mf_enriched=mf_sig, bp_enriched=bp_sig, cc_enriched=cc_sig)
+    mf_over_table = bp_over_table = cc_over_table = NULL
+    mf_under_table = bp_under_table = cc_under_table = NULL
+    if (direction == "over") {
+        ## Make tables of the entire ontology
+        mf_over_table = summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
+        bp_over_table = summary(bp_over, pvalue=1.0, htmlLinks=TRUE)
+        cc_over_table = summary(cc_over, pvalue=1.0, htmlLinks=TRUE)
+        mf_over_table$qvalue = qvalue(mf_over_table$Pvalue)$qvalues
+        bp_over_table$qvalue = qvalue(bp_over_table$Pvalue)$qvalues
+        cc_over_table$qvalue = qvalue(cc_over_table$Pvalue)$qvalues
+    } else if (direction == "under") {
+        mf_under_table = summary(mf_under, pvalue=1.0, htmlLinks=TRUE)
+        bp_under_table = summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
+        cc_under_table = summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
+        mf_under_table$qvalue = qvalue(mf_under_table$Pvalue)$qvalues
+        bp_under_table$qvalue = qvalue(bp_under_table$Pvalue)$qvalues
+        cc_under_table$qvalue = qvalue(cc_under_table$Pvalue)$qvalues
+    } else {
+        mf_over_table = summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
+        bp_over_table = summary(bp_over, pvalue=1.0, htmlLinks=TRUE)
+        cc_over_table = summary(cc_over, pvalue=1.0, htmlLinks=TRUE)
+        mf_over_table$qvalue = qvalue(mf_over_table$Pvalue)$qvalues
+        bp_over_table$qvalue = qvalue(bp_over_table$Pvalue)$qvalues
+        cc_over_table$qvalue = qvalue(cc_over_table$Pvalue)$qvalues
+        mf_under_table = summary(mf_under, pvalue=1.0, htmlLinks=TRUE)
+        bp_under_table = summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
+        cc_under_table = summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
+        mf_under_table$qvalue = qvalue(mf_under_table$Pvalue)$qvalues
+        bp_under_table$qvalue = qvalue(bp_under_table$Pvalue)$qvalues
+        cc_under_table$qvalue = qvalue(cc_under_table$Pvalue)$qvalues
+    }
+
+    if (is.null(categorysize)) {
+        mf_over_sig = summary(mf_over)
+        bp_over_sig = summary(bp_over)
+        cc_over_sig = summary(cc_over)
+        mf_under_sig = summary(mf_under)
+        bp_under_sig = summary(bp_under)
+        cc_under_sig = summary(cc_under)        
+    } else {
+        mf_over_sig = summary(mf_over, categorySize=categorysize)
+        bp_over_sig = summary(bp_over, categorySize=categorysize)
+        cc_over_sig = summary(cc_over, categorySize=categorysize)
+        mf_under_sig = summary(mf_under, categorySize=categorysize)
+        bp_under_sig = summary(bp_under, categorySize=categorysize)
+        cc_under_sig = summary(cc_under, categorySize=categorysize)                
+    }
+    mf_over_sig$definition = godef(mf_over_sig$GOMFID)
+    bp_over_sig$definition = godef(bp_over_sig$GOBPID)
+    cc_over_sig$definition = godef(cc_over_sig$GOCCID)
+    mf_under_sig$definition = godef(mf_under_sig$GOMFID)
+    bp_under_sig$definition = godef(bp_under_sig$GOBPID)
+    cc_under_sig$definition = godef(cc_under_sig$GOCCID)    
+
+    pvalue_plots = try(gostats_pval_plots(mf_over_sig, bp_over_sig, cc_over_sig, mf_under_sig, bp_under_sig, cc_under_sig))
+    gostats_p_mf_over = try(hpgl_histogram(mf_over_table$Pvalue, bins=20))
+    gostats_p_mf_under = try(hpgl_histogram(mf_under_table$Pvalue, bins=20))    
+    gostats_p_bp_over = try(hpgl_histogram(bp_over_table$Pvalue, bins=20))
+    gostats_p_bp_under = try(hpgl_histogram(bp_under_table$Pvalue, bins=20))    
+    gostats_p_cc_over = try(hpgl_histogram(cc_over_table$Pvalue, bins=20))
+    gostats_p_cc_under = try(hpgl_histogram(cc_under_table$Pvalue, bins=20))    
+    
+    ret_list = list(mf_over_all=mf_over_table, bp_over_all=bp_over_table, cc_over_all=cc_over_table,
+        mf_under_all=mf_under_table, bp_under_all=bp_under_table, cc_under_all=cc_under_table,        
+        mf_over_enriched=mf_over_sig, bp_over_enriched=bp_over_sig, cc_over_enriched=cc_over_sig,
+        mf_under_enriched=mf_under_sig, bp_under_enriched=bp_under_sig, cc_under_enriched=cc_under_sig,
+        gostats_mfp_over=gostats_p_mf_over, gostats_bpp_over=gostats_p_bp_over, gostats_ccp_over=gostats_p_cc_over,
+        gostats_mfp_under=gostats_p_mf_under, gostats_bpp_under=gostats_p_bp_under, gostats_ccp_under=gostats_p_cc_under,        
+        pvalue_plots=pvalue_plots)
     return(ret_list)
 }
 
