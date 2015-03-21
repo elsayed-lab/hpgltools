@@ -15,7 +15,6 @@ gostats_kegg = function() {
     head(summary(kOver))
 }
 
-## Please note that the KGML parser fails if other XML parsers are loaded into R
 #' Print some data onto KEGG pathways
 #'
 #' @param de_genes some differentially expressed genes
@@ -33,9 +32,10 @@ gostats_kegg = function() {
 #' @seealso \code{\link{Ramigo}}
 #' @export
 #' @examples
-#' thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in", outdir="kegg_thy_el_comp2", string_from="_Spy", string_to="_Spy_", filenames="pathname")
+#' ## thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in", outdir="kegg_thy_el_comp2", string_from="_Spy", string_to="_Spy_", filenames="pathname")
 hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, verbose=FALSE, filenames="id") {
-    ##eh = new.env(hash=TRUE, size=NA)
+    ## Please note that the KGML parser fails if other XML parsers are loaded into R
+    ## eh = new.env(hash=TRUE, size=NA)
     ## There is a weird namespace conflict when using pathview, so I will reload it here
     try(detach("package:Rgraphviz", unload=TRUE))
     try(detach("package:topGO", unload=TRUE))

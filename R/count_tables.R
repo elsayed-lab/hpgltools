@@ -1,8 +1,3 @@
-## Time-stamp: <Tue Mar 10 22:01:21 2015 Ashton Trey Belew (abelew@gmail.com)>
-### count_tables.R contains some functions for simple count-table manipulations
-### This includes reading in files, creating expressionSets, and subsets.
-
-
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
 #' expt_subset for everything
@@ -54,6 +49,25 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
     def = expt_list$def
     new_expt = expt_subset(expt, "")
     new_expt$definitions = def
+
+    if (!is.null(expt_list$annotation)) {
+        new_expt$annotation = expt_list$annotation
+        new_expt$gff_file = include_gff
+        tmp_genes = new_expt$annotation
+        tmp_genes = tmp_genes[tmp_genes$type == "gene",]
+        rownames(tmp_genes) = make.names(tmp_genes$Name, unique=TRUE)
+        tooltip_data = tmp_genes
+        tooltip_data = tooltip_data[,c(11,12)]
+        tooltip_data$tooltip = paste(tooltip_data$Name, tooltip_data$description, sep=": ")
+        tooltip_data$tooltip = gsub("\\+", " ", tooltip_data$tooltip)
+        rownames(tooltip_data) = tooltip_data$Name
+        tooltip_data = tooltip_data[-1]
+        tooltip_data = tooltip_data[-1]
+        colnames(tooltip_data) = c("name.tooltip")
+        new_expt$genes = genes
+        new_expt$tooltip = tooltip_data
+    }
+
     if (!is.null(savefile)) {
         save(list = c("new_expt"), file=paste(savefile, ".Rdata", sep=""))
     }
@@ -92,11 +106,12 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     design_colors_list = as.list.hash(color_hash)
     sample_definitions$colors = as.list(design_colors_list[as.character(sample_definitions$condition)])
     sample_definitions = as.data.frame(sample_definitions)
-    rownames(sample_definitions) = sample_definitions$sample.id
+    rownames(sample_definitions) = make.names(sample_definitions$sample.id, unique=TRUE)
     
     ## The logic here is that I want by_type to be the default, but only
     ## if no one chooses either.
     filenames = NULL
+    found_counts = NULL
     ## This stanza allows one to have a field 'file' in the csv with filenames for the count tables.
     if (!is.null(sample_definitions$file)) {
         filenames = sample_definitions$file
@@ -107,17 +122,29 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
         all_count_tables = count_dataframe
         colnames(all_count_tables) = rownames(sample_definitions)
         ## If neither of these cases is true, start looking for the files in the processed_data/ directory
+
     } else if (!isTRUE(by_type) & !isTRUE(by_sample) & is.null(filenames)) {
-        by_type = TRUE
-        if (isTRUE(by_type)) {
+        ## If neither by_type or by_sample is set, look first by sample
+        sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
+        found_counts = try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
+        if (class(found_counts) == 'try-error') {
+            ## Then try by-type
             sample_definitions$counts = paste("processed_data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, suffix, sep="")
-            sample_definitions$intercounts = paste("data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, "_inter", suffix, sep="")
-        } else if (isTRUE(by_sample)) {
-            sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
-            sample_definitions$intercounts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), "_inter", suffix, sep="")
+            found_counts = try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
+            if (class(found_counts) == 'try-error') {
+                stop("Unable to find count tables, either by sample id nor by type")
+            } else {
+                all_count_tables = found_counts
+            }
+        } else {
+            all_count_tables = found_counts
         }
-        all_count_tables = hpgl_read_files(as.character(sample_definitions$sample.id),
-            as.character(sample_definitions$counts), header=header, suffix=suffix)
+    } else if (isTRUE(by_sample)) {
+        sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
+        all_count_tables = try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
+    } else if (isTRUE(by_type)) {
+        sample_definitions$counts = paste("processed_data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, suffix, sep="")
+        all_count_tables = try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
     } ## End checking by_type/by_samples
     all_count_matrix = as.data.frame(all_count_tables)
 
@@ -137,15 +164,22 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     complete_index = complete.cases(all_count_matrix)
     all_count_matrix = all_count_matrix[complete_index,]
 
-    if (include_type != "all") {
-        print(paste("Excluding entries from the annotation which are not: ", include_type, sep=""))
-        print("Reading the annotation information, this may take a while.")
-        annotation = BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
-        print("Finished reading annotations, we should be done soon.")
-        keepers = annotation[annotation$type==include_type,]$gene_id
-        index = row.names(all_count_matrix) %in% keepers
-        all_count_matrix = all_count_matrix[index,]
-        gene_info = gene_info[index,]
+    annotation = NULL
+    if (!is.null(include_gff)) {
+        if (include_type == "all") {
+            print("Reading the annotation information, this may take a while.")            
+            annotation = BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
+            print("Finished reading annotations, we should be done soon.")            
+        } else {
+            print(paste("Excluding entries from the annotation which are not: ", include_type, sep=""))
+            print("Reading the annotation information, this may take a while.")
+            annotation = BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
+            print("Finished reading annotations, we should be done soon.")
+            keepers = annotation[annotation$type==include_type,]$gene_id
+            index = row.names(all_count_matrix) %in% keepers
+            all_count_matrix = all_count_matrix[index,]
+            gene_info = gene_info[index,]
+        }
     }
     
     if (is.null(sample_definitions$stage)) {
@@ -182,7 +216,7 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     featureNames(feature_data) = rownames(all_count_matrix)
     experiment = new("ExpressionSet", exprs=all_count_matrix,
         phenoData=metadata, featureData=feature_data)
-    ret = list(expt=experiment, def=sample_definitions)
+    ret = list(expt=experiment, def=sample_definitions, annotation=annotation)
     return(ret)
 }
 

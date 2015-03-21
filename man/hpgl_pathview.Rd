@@ -33,7 +33,7 @@ A list of some information for every KEGG pathway downloaded/examined.  This inf
 Print some data onto KEGG pathways
 }
 \examples{
-thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in", outdir="kegg_thy_el_comp2", string_from="_Spy", string_to="_Spy_", filenames="pathname")
+## thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in", outdir="kegg_thy_el_comp2", string_from="_Spy", string_to="_Spy_", filenames="pathname")
 }
 \seealso{
 \code{\link{Ramigo}}

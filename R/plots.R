@@ -1,5 +1,3 @@
-## Time-stamp: <Thu Mar 12 18:43:25 2015 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
 #'
@@ -131,13 +129,13 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
     raw_pcavar = norm_pcavar = batch_pcavar = batchnorm_pcavar = NULL
     if (isTRUE(do_pca)) {
         message("Graphing a PCA plot of the raw data.")
-        raw_pca = try(hpgltools::hpgl_pca(expt=expt, fancy_labels=FALSE, title="PCA plot of raw data.", ...))
+        raw_pca = try(hpgltools::hpgl_pca(expt=expt, title="PCA plot of raw data.", ...))
         message("Graphing a PCA plot of the normalized data.")
-        norm_pca = try(hpgltools::hpgl_pca(df=expt_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
+        norm_pca = try(hpgltools::hpgl_pca(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
         message("Graphing a PCA plot of the batch removed data.")        
-        batch_pca = try(hpgltools::hpgl_pca(df=batch_removed_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
+        batch_pca = try(hpgltools::hpgl_pca(df=batch_removed_data, names=expt$names, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
         message("Graphing a PCA plot of the batch removed normalized data.")
-        batchnorm_pca = try(hpgltools::hpgl_pca(df=batch_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
+        batchnorm_pca = try(hpgltools::hpgl_pca(df=batch_norm_data, names=expt$names, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
     }
 
     raw_density = norm_density = batch_density = batchnorm_density = NULL
@@ -977,20 +975,23 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         PC1=pca$v[,1],
         PC2=pca$v[,2])
 
-    num_batches = length(hpgl_design$batch)
-    pca_plot = ggplot(data=pca_data, environment=hpgl_env)
-    if (num_batches > 6) { ## Then ggplot2 wants shapes specified manually...
-        pca_plot = pca_plot + scale_shape_manual(values=1:num_batches)
-    }
-    pca_plot = pca_plot +
-        geom_point(aes(x=PC1, y=PC2, color=hpgl_design$condition, shape=hpgl_design$batch), size=3) +
+    num_batches = length(levels(hpgl_design$batch))
+    pca_plot = ggplot(data=pca_data, environment=hpgl_env) +
+        geom_point(aes(x=PC1, y=PC2, color=hpgl_design$condition, shape=hpgl_design$batch), size=3) +        
         scale_colour_discrete(name="Experimental\nCondition") +
-        scale_shape_discrete(name="Experimental\nBatch") + 
         xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
+    if (num_batches > 6) { ## Then ggplot2 wants shapes specified manually...
+        pca_plot = pca_plot +
+        scale_shape_manual(values=c(1:num_batches))
+    } else {
+        pca_plot = pca_plot + scale_shape_discrete(name="Experimental\nBatch") 
+    }
 
     if (!is.null(labels)) {
         if (labels[[1]] == "fancy") {
             pca_plot = pca_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_design$condition)
+        } else  if (labels[[1]] == "normal") {
+            pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=paste(hpgl_design$condition, hpgl_design$batch, sep="_")), angle=45, size=4, vjust=2)            
         } else {
             pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=labels), angle=45, size=4, vjust=2)
         }
@@ -1007,7 +1008,10 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
 #'
 #' @param svd_v The V' V = I portion of a fast.svd call
 #' @param factor a factor describing the original data
+#'
 #' @return The r^2 values of the linear model as a %
+#'
+#' @seealso \code{\link{fast.svd}}
 factor_rsquared = function(svd_v, factor) {
     svd_lm = try(lm(svd_v ~ factor), silent=TRUE)
     if (class(svd_lm) == 'try-error') {
@@ -1025,12 +1029,13 @@ factor_rsquared = function(svd_v, factor) {
 #' @param data A dataframe of principle components PC1 .. PCN with any other arbitrary information.
 #' @param first Principle component PCx to put on the x axis
 #' @param second Principle component PCy to put on the y axis
-#' @param variances A list of the %variance explained by each component
+#' @param variances A list of the pct. variance explained by each component
 #' @param design The experimental design with condition/batch
 #' @param title Title for the plot
 #' @param labels Whether or not one wants fancy labels for the conditions
 #' 
 #' @return a ggplot2 PCA plot
+#'
 #' @seealso \code{\link{ggplot2}}, \code{\link{geom_dl}}
 #' 
 #' @export

@@ -1,6 +1,3 @@
-## Time-stamp: <Fri Mar 13 20:56:24 2015 Ashton Trey Belew (abelew@gmail.com)>
-## differential_expression.R contains functions useful for differential expression tasks.
-
 #' write_limma(): Writes out the results of a limma search using toptable()
 #' However, this will do a couple of things to make one's life easier:
 #' 1.  Make a list of the output, one element for each comparison of the contrast matrix
@@ -16,6 +13,7 @@
 #'
 #' @return a list of data frames comprising the toptable output for each coefficient,
 #'    I also added a qvalue entry to these toptable() outputs.
+#'
 #' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
 #'
 #' @export
@@ -210,6 +208,7 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE) {
 #' @param df The original data from limma
 #' @param n A number of genes to keep
 #' @param z A number of z-scores from the mean
+#'
 #' @return a dataframe subset from toptable
 #' 
 #' @seealso \code{\link{limma}}
@@ -271,8 +270,16 @@ limma_subset = function(table, n=NULL, z=NULL) {
 #'
 #' @seealso \code{\link{write_limma}}
 #' @export
+#' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
-balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ...) {
+balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, extra_contrasts=NULL, ...) {
+    if (is.null(expt) & is.null(data)) {
+        stop("This requires either an expt or data/condition/batches")
+    } else if (!is.null(expt)) {
+        conditions = expt$conditions
+        batches = expt$batches
+        data = as.data.frame(exprs(expt$expressionset))
+    }
     condition_table = table(conditions)
     batch_table = table(batches)
     conditions = as.factor(conditions)
@@ -361,6 +368,7 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
     ## followed by the set of all pairwise comparisons.
     all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
     all_pairwise_comparisons = eBayes(all_pairwise_fits)
+    all_tables = try(topTable(all_pairwise_comparisons))
     limma_result = write_limma(all_pairwise_comparisons, excel=FALSE)
     result = list(
         conditions_table=condition_table,
@@ -376,8 +384,44 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
         contrast_string=contrast_string,
         pairwise_fits=all_pairwise_fits,
         pairwise_comparisons=all_pairwise_comparisons,
+        all_tables=all_tables,
         limma_result=limma_result)
     return(result)
+}
+
+#' Plot arbitrary data from limma
+#'
+#' @param all_pairwise_result The result from calling balanced_pairwise()
+#' @param first_name A table inside all_pairwise_result$limma_result
+#' @param first_type A column within the chosen table
+#' @param second_name Another table inside all_pairwise_result$limma_result
+#' @param second_type A column to compare against
+#' 
+#' @return a hpgl_linear_scatter() set of plots comparing the chosen columns
+#' If you forget to specify tables to compare, it will try the first vs the second.
+#' @seealso \code{\link{hpgl_linear_scatter}}, \code{\link{topTable}},
+#' 
+#' @export
+#' @examples
+#' ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
+#' ## compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+limma_scatter = function(all_pairwise_result, first_table=1, first_column="AveExpr", second_table=2, second_column="AveExpr") {
+    tables = all_pairwise_result$limma_result
+    if (is.numeric(first_table)) {
+        x_name = paste(names(tables)[first_table], first_column, sep=":")
+    }
+    if (is.numeric(second_table)) {
+        y_name = paste(names(tables)[second_table], second_column, sep=":")
+    }
+    x_name = paste(first_table, first_column, sep=":")
+    y_name = paste(second_table, second_column, sep=":")
+    df = data.frame(
+        x=tables[[first_table]][[first_column]],
+        y=tables[[second_table]][[second_column]]
+    )
+    colnames(df) = c(x_name, y_name)
+    plots = hpgl_linear_scatter(df, loess=TRUE)
+    return(plots)
 }
 
 #' simple_comparison():  Perform a simple experimental/control comparison
@@ -402,6 +446,7 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
 #' @param pvalue_cutoff p-value definition of 'significant.'  0.05 by default.
 #' @param logfc_cutoff fold-change cutoff of significance. 0.6 (and therefore 1.6) by default.
 #' @param tooltip_data Text descriptions of genes if one wants google graphs.
+#'
 #' @return A list containing the following pieces:
 #'   amean_histogram = a histogram of the mean values between the two conditions
 #'   coef_amean_cor = a correlation test between the mean values and coefficients (this should be a p-value of 1)
@@ -561,6 +606,7 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
 #' @return a matrix of pretend counts
 #' @seealso \code{\link{makeExampleData}}
 #' @export
+#' @examples
 #' ## pretend = make_exampledata()
 make_exampledata = function (ngenes=1000, columns=5) {
     q0 <- rexp(ngenes, rate = 1/250)
