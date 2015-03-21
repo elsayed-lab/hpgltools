@@ -1,12 +1,3 @@
-## Time-stamp: "Wed Jan 28 16:40:35 2015 Ashton Trey Belew (abelew@gmail.com)"
-## misc_functions.R contains a host of (hopefully) useful functions when
-## dealing with genomic data in R.
-
-### This file is intended to keep a set of functions which will prove
-### elsewhere in the analysis of ribosome profiling data.  These are
-### mostly stolen from other people's code, notably Ramzi Temanni,
-### Keith Hughitt, Laura Dillon, Yuan Li, and Kwame.
-
 #' Wrap cor() to include robust correlations
 #'
 #' @param df a data frame to test

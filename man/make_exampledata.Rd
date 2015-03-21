@@ -19,6 +19,9 @@ a matrix of pretend counts
 make_exampledata():  A small hack of limma's exampleData()
 function to allow for arbitrary data set sizes.
 }
+\examples{
+## pretend = make_exampledata()
+}
 \seealso{
 \code{\link{makeExampleData}}
 }

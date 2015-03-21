@@ -2,10 +2,9 @@
 % Please edit documentation in R/autoloads.R
 \name{require.auto}
 \alias{require.auto}
-\title{##  Paragraphs are separated by singlelines
-Automatic loading and/or installing of packages.}
+\title{Automatic loading and/or installing of packages.}
 \usage{
-require.auto(lib, github_path = NULL, verbose = TRUE, update = FALSE)
+require.auto(lib, github_path = NULL, verbose = FALSE, update = FALSE)
 }
 \arguments{
 \item{lib}{string name of a library}

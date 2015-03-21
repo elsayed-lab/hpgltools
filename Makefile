@@ -1,5 +1,5 @@
 VERSION=0.1
-install:
+install: document
 	cd ../ && R CMD INSTALL hpgltools
 
 build:
@@ -9,6 +9,12 @@ build:
 	R CMD check hpgltools --no-build-vignettes
 	R CMD Rd2pdf hpgltools && mv hpgltools.pdf hpgltools/inst/doc/reference.pdf && cp hpgltools/vignettes/hpgltools.pdf  hpgltools/inst/doc/
 	R CMD INSTALL hpgltools
+
+roxygen:
+	rm NAMESPACE && Rscript -e "library('roxygen2'); roxygenize()"
+
+document:
+	rm NAMESPACE && Rscript -e "library('devtools'); devtools::document()"
 
 vignette:
 	cd ../ && R CMD check hpgltools
@@ -32,4 +38,4 @@ knitrbootstrap = try(library('knitrBootstrap'));\
 if (class(knitrbootstrap) == 'try-error') { install_github('jimhester/knitrBootstrap'); library('knitrBootstrap') };\
 cbcbSEQ = try(library('cbcbSEQ')); \
 if (class(cbcbSEQ) == 'try-error') { install_github('kokrah/cbcbSEQ'); library('cbcbSEQ') };\
-" ;	cd .. && R CMD INSTALL hpgltools_0.1.tar.gz ; cd hpgltools ; Rscript -e "library(hpgltools); autoloads_all(update=TRUE)" 
+" ;	cd .. && R CMD INSTALL hpgltools_0.1.tar.gz ; cd hpgltools ; Rscript -e "library(hpgltools); autoloads_all(update=TRUE)"

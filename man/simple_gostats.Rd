@@ -6,7 +6,7 @@
 \usage{
 simple_gostats(de_genes, gff, goids, universe_merge = "locus_tag",
   second_merge_try = "gene_id", organism = "fun", pcutoff = 0.05,
-  direction = "over", conditional = FALSE, categorysize = NULL)
+  direction = "both", conditional = FALSE, categorysize = NULL)
 }
 \arguments{
 \item{de_genes}{The set of differentially expressed genes in the limma format as before}

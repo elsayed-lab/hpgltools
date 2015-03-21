@@ -4,7 +4,7 @@
 \alias{hpgl_log2cpm}
 \title{Converts count matrix to log2 counts-per-million reads.}
 \usage{
-hpgl_log2cpm(counts)
+hpgl_log2cpm(counts, lib.size = NULL)
 }
 \arguments{
 \item{counts}{read count matrix}

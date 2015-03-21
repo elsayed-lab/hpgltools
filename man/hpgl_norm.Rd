@@ -6,7 +6,7 @@
 \usage{
 hpgl_norm(df = NULL, expt = NULL, design = NULL, transform = "raw",
   norm = "raw", convert = "raw", filter_low = TRUE, annotations = NULL,
-  verbose = FALSE, ...)
+  verbose = FALSE, thresh = 2, min_samples = 2, ...)
 }
 \arguments{
 \item{transform}{defines whether to log(2|10) transform the
@@ -41,10 +41,10 @@ me to be the easiest to deal with.
 Normalize a dataframe/expt, express it, and/or transform it
 }
 \examples{
-df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
-df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-df_ql2rpkm = hpgl_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
-count_table = df_ql2rpkm$counts
+## df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
+## df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
+## df_ql2rpkm = hpgl_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
+## count_table = df_ql2rpkm$counts
 }
 \seealso{
 \code{\link{cpm}}, \code{\link{rpkm}},

@@ -6,7 +6,9 @@
 before/after normalization.}
 \usage{
 graph_metrics(expt, transform = "log2", norm = "quant", convert = "cpm",
-  filter_low = TRUE, cormethod = "pearson", distmethod = "euclidean", ...)
+  filter_low = TRUE, cormethod = "pearson", distmethod = "euclidean",
+  do_cor = TRUE, do_pca = TRUE, do_dis = TRUE, do_qq = FALSE,
+  do_libsize = TRUE, do_density = TRUE, do_boxplot = TRUE, ...)
 }
 \arguments{
 \item{expt}{an expt experiment containing the data, design, and colors}
@@ -71,6 +73,7 @@ before/after normalization.
 \examples{
 ## toomany_plots = graph_metrics(expt)
 ## testnorm = graph_metrics(expt, norm_type="tmm", filter="log2", out_type="rpkm", cormethod="robust")
+## haha sucker, you are going to be waiting a while!
 }
 \seealso{
 \code{\link{exprs}}, \code{\link{hpgl_norm}},

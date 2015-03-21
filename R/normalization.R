@@ -31,7 +31,11 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
 #' @return log2-CPM read count matrix
 #' @export
 #'
-hpgl_log2cpm = function(counts) {
+hpgl_log2cpm = function(counts, lib.size=NULL) {
+    if (is.null(lib.size)) {
+        lib.size = colSums(counts)
+    }
+    cpm
     t(log2(t(counts + 0.5) / (colSums(counts) + 1) * 1e+06))
 }
 
@@ -79,12 +83,11 @@ divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gf
 #' @export
 #' @examples
 #' ## filtered_table = filter_counts(count_table)
-##filter_counts = function(counts, threshold=4, min_samples=2, verbose=FALSE) {
-##    num_before = nrow(counts)
-##    cpms = 2^hpgl_log2cpm(counts)
-filter_counts = function(counts, lib.size=NULL, thresh=1, minSamples=2) {
-    cpms = 2^log2CPM(counts, lib.size=lib.size)$y
-    keep = rowSums(cpms > thresh) >= minSamples
+filter_counts = function(counts, thresh=2, min_samples=2) {
+    ## I think having a log2cpm here is kind of weird, because the next step in processing is to cpm the data.
+    ##cpms = 2^log2CPM(counts, lib.size=lib.size)$y
+    ## cpms = 2^hpgl_log2cpm(counts)
+    keep = rowSums(counts > thresh) >= min_samples
     counts = counts[keep,]
 
     if (verbose) {
@@ -102,7 +105,7 @@ filter_counts = function(counts, lib.size=NULL, thresh=1, minSamples=2) {
 #'
 #' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
 #' @export
-normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, annotations=NULL, verbose=FALSE, use_original=TRUE, ...) {
+normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, annotations=NULL, verbose=FALSE, use_original=TRUE, thresh=2, min_samples=2, batch=NULL, batch1="batch", batch2=NULL, ...) {
     new_expt = expt
     if (is.null(new_expt$original_expressionset)) {
         new_expt$original_expressionset = new_expt$expressionset
@@ -112,8 +115,49 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
     }
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)
-    normalized_data = hpgl_norm(df=old_data, design=expt$design, transform=transform, norm=norm, convert=convert, filter_low=filter_low, annotations=annotations, verbose=verbose)
-    exprs(new_expt$expressionset) = as.matrix(normalized_data$counts)
+    design = expt$design
+
+    normalized_data = hpgl_norm(df=old_data, design=design, transform=transform, norm=norm, convert=convert, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples)
+
+    if (is.null(batch)) {
+        exprs(new_expt$expressionset) = as.matrix(normalized_data$counts)
+    } else {
+        if (batch == "limma") {
+            batches1 = as.factor(design[,batch1])
+            if (is.null(batch2)) {
+                ## A reminder of removeBatchEffect usage
+                ## adjusted_batchdonor = removeBatchEffect(data, batch=as.factor(as.character(des$donor)), batch2=as.factor(as.character(des$batch)))
+                message("Using limma's removeBatchEffect to remove batch effect.")
+                normalized_data = removeBatchEffect(normalized_data$counts, batch=batches1)
+            } else {
+                batches2 = as.factor(design[,batch2])
+                normalized_data = removeBatchEffect(normalized_data$counts, batch=batches1, batch2=batches2)
+            }
+        } else if (batch == "sva") {
+            message("Using sva's fsva for batch correction.")
+            batches = as.factor(design[,"batch"])
+            conditions = as.factor(design[,"condition"])
+            df = data.frame(normalized_data$counts)
+            conditional_model = model.matrix(~conditions, data=df)
+            null_model = conditional_model[,1]
+            num_surrogates = num.sv(as.matrix(df), conditional_model)
+            sva_object = sva(as.matrix(df), conditional_model, null_model, n.sv=num_surrogates)
+            mod_sv = cbind(conditional_model, sva_object$sv)
+            fsva_result = fsva(as.matrix(df), conditional_model, sva_object, newdat=as.matrix(df), method="exact")
+            new_expt$conditional_model = conditional_model
+            new_expt$null_model = null_model
+            new_expt$num_surrogates = num_surrogates
+            new_expt$sva_object = sva_object
+            new_expt$mod_sv = mod_sv
+            new_expt$fsva_result = fsva_result
+            normalized_data = fsva_result$db            
+##            normalized_data = combatMod(normalized_data, batches, conditions, noScale=TRUE)
+        } else {
+            message("haven't implemented other batch removals, just doing limma's removeBatchEffect()")
+            normalized_data = removeBatchEffect(normalized_data, batch=get(batch1))            
+        }
+        exprs(new_expt$expressionset) = as.matrix(normalized_data)
+    } ## End the if/else batch correction
     return(new_expt)
 }
 
@@ -147,20 +191,12 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
 #' 
 #' @export
 #' @examples
-#' df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
-#' df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-#' df_ql2rpkm = hpgl_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
-#' count_table = df_ql2rpkm$counts
+#' ## df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
+#' ## df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
+#' ## df_ql2rpkm = hpgl_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
+#' ## count_table = df_ql2rpkm$counts
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm
-hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", filter_low=TRUE, annotations=NULL, verbose=FALSE, ...) {
-    ## Testing args
-    ##df=NULL
-    ##expt=rnarpf_prometa_kexpt
-    ##norm_type="sf"
-    ##filter="log2"
-    ##out_type="cpm_seq_m"
-    ##verbose=TRUE
-    ## End test args
+hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, ...) {
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
@@ -178,20 +214,24 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
     } else {
         stop("Both df and expt are defined, choose one.")
     }
+
+    ## Step 1: Perform a low count filter
     if (filter_low == TRUE) {
         if (verbose) {
             print("Filtering low counts")
         }
         original_dim = dim(count_table)
-        count_table = as.matrix(filter_counts(count_table))
-        following_dim = dim(count_table)
-        lost_rows = original_dim[1] - following_dim[1]
+        count_table = as.matrix(filter_counts(count_table, thresh=thresh, min_samples=min_samples))
         if (verbose) {
+            following_dim = dim(count_table)
+            lost_rows = original_dim[1] - following_dim[1]
             print(paste("Low count filtering cost:", lost_rows, "gene(s)."))
         }
     }
-    ### This section handles the various normalization strategies
-    ### If nothing is chosen, then the filtering is considered sufficient
+
+    ## Step 2: Normalization
+    ## This section handles the various normalization strategies
+    ## If nothing is chosen, then the filtering is considered sufficient
     if (verbose) {
         print(paste("Applying normalization:", norm_type))
     }
@@ -209,15 +249,14 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         count_table = normalize.quantiles(as.matrix(count_table))
         rownames(count_table) = count_rownames
         colnames(count_table) = count_colnames
-
         # Convert to a DGEList
         count_table = edgeR::DGEList(counts=count_table)
     } else if (norm == "tmm") {
         ## TMM normalization is documented in edgeR
-        ## Set up the edgeR data structure, this is used for TMM
+        ## Set up the edgeR data structure
         count_table = edgeR::DGEList(counts=count_table)
         ## Get the tmm normalization factors
-        norms = edgeR::calcNormFactors(count_table)
+        norms = edgeR::calcNormFactors(count_table, method="TMM")
         ## Set up the DESeq data structure to which to apply the new factors
         deseq_matrix =  DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
         ## Apply the edgeR tmm factors to this
@@ -252,36 +291,37 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         count_table = edgeR::DGEList(counts=factored)
     } else {
         count_table = edgeR::DGEList(counts=count_table)
-    }
-    ### The following stanza handles the three possible output types
-    ### cpm and rpkm are both from edgeR
+    }    
+    
+    ## Step 3: Convert the data to (likely) cpm
+    ## The following stanza handles the three possible output types
+    ## cpm and rpkm are both from edgeR
     ## They have nice ways of handling the log2 which I should consider
     if (verbose) {
         print(paste("Setting output type as:", out_type))
     }
     if (convert == "cpm") {
-        counts = count_table$counts
-        counts = edgeR::cpm(counts)
+        counts = edgeR::cpm(count_table)
         count_table = edgeR::DGEList(counts=count_table)
     } else if (convert == "rpkm") {
-        counts = count_table$counts
         if (is.null(annotations)) {
             stop("RPKM conversion requires gene lengths.")
         }
-        counts = hpgltools::hpgl_rpkm(counts, annotations=annotations)
+        counts = hpgltools::hpgl_rpkm(counts_table, annotations=annotations)
         count_table = edgeR::DGEList(counts=counts)
     } else if (convert == "cp_seq_m") {
-        counts = count_table$counts
-        counts = edgeR::cpm(counts)
+        counts = edgeR::cpm(count_table)
         counts = hpgltools::divide_seq(counts, ...)
         count_table = edgeR::DGEList(counts=counts)
     } else {
-        count_table = edgeR::DGEList(counts=count_table$counts)
+        count_table = edgeR::DGEList(counts=count_table)
     }
+
+    ## Step 4: Transformation
+    ## Finally, this considers whether to log2 the data or no
     if (verbose) {
-        print(paste("Applying:", filter, "filter"))
+        print(paste("Applying: ", transform, " transformation.", sep=""))
     }
-    ### Finally, this considers whether to log2 the data or no
     counts = count_table$counts
     if (transform == "log2") {
         counts = log2(counts + 1)
@@ -290,6 +330,9 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
     } else if (transform == "log") {  ## Natural log
         counts = log(counts + 1)  ## Apparently log1p does this.
     }
-    count_table = DGEList(counts=counts)
+    count_table = DGEList(counts=counts)    
+    
+
+
     return(count_table)
 }

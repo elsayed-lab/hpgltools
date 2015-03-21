@@ -8,7 +8,7 @@ hpgl_multihistogram(data, log = FALSE, binwidth = NULL, bins = NULL,
   verbose = FALSE)
 }
 \arguments{
-\item{df}{a dataframe of lots of pretty numbers}
+\item{df}{a dataframe of lots of pretty numbers, this also accepts lists.}
 }
 \value{
 a ggplot histogram comparing multiple data sets

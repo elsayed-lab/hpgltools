@@ -1,16 +1,3 @@
-## Time-stamp: "Mon Mar  2 01:15:41 2015 Ashton Trey Belew (abelew@gmail.com)"
-## autoloads.R contains some short-cuts I wrote for myself to make
-## installing/maintaining packages/dependencies easier
-## 
-## The following are a few reminders that I keep forgetting:
-## clean_environment = environment()
-## devtools::document() ## Scan for roxygen2 comments and generate .Rd files
-## Reminder about roxygen comments:
-##  The first sentence is the title.  The second paragraph is the
-##  description.  The third paragraph are details.
-##  Paragraphs are separated by single #' lines
-## Use load_all() to reload a library which is being currently edited.
-
 #' Automatic loading and/or installing of packages.
 #'
 #' \code{require.auto} loads a library, and installs it first if necessary.
@@ -24,7 +11,11 @@
 #' @export
 #' @examples
 #' ## require.auto("ggplot2")
-require.auto = function(lib, github_path=NULL, verbose=TRUE, update=FALSE) {
+require.auto = function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
+    local({r <- getOption("repos")
+           r["CRAN"] <- "http://cran.r-project.org" 
+           options(repos=r)
+       })
     if (isTRUE(update)) {
         update.packages(ask=FALSE)
     }

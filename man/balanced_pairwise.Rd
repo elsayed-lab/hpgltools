@@ -6,7 +6,8 @@
 a pairwise comparison of all conditions/batches.  In this case, there
 must be a balanced set of batches for each condition.}
 \usage{
-balanced_pairwise(data, conditions, batches, extra_contrasts = NULL, ...)
+balanced_pairwise(expt = NULL, data = NULL, conditions = NULL,
+  batches = NULL, extra_contrasts = NULL, ...)
 }
 \arguments{
 \item{conditions}{a factor of conditions in the experiment}
@@ -42,6 +43,9 @@ A list including the following information:
 balanced_pairwise():  Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions/batches.  In this case, there
 must be a balanced set of batches for each condition.
+}
+\examples{
+## pretend = balanced_pairwise(data, conditions, batches)
 }
 \seealso{
 \code{\link{write_limma}}
