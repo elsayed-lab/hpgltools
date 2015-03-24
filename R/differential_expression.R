@@ -369,7 +369,7 @@ balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL
     all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
     all_pairwise_comparisons = eBayes(all_pairwise_fits)
     all_tables = try(topTable(all_pairwise_comparisons))
-    limma_result = write_limma(all_pairwise_comparisons, excel=FALSE)
+    limma_result = write_limma(all_pairwise_comparisons, excel=FALSE, ...)
     result = list(
         conditions_table=condition_table,
         batches_table=batch_table,
@@ -396,6 +396,8 @@ balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL
 #' @param first_type A column within the chosen table
 #' @param second_name Another table inside all_pairwise_result$limma_result
 #' @param second_type A column to compare against
+#' @param type A type of scatter plot (linear model, distance, vanilla)
+#' @param ... so that you may feed it the gvis/tooltip information to make clicky graphs if so desired.
 #' 
 #' @return a hpgl_linear_scatter() set of plots comparing the chosen columns
 #' If you forget to specify tables to compare, it will try the first vs the second.
@@ -405,7 +407,7 @@ balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL
 #' @examples
 #' ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
 #' ## compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
-limma_scatter = function(all_pairwise_result, first_table=1, first_column="AveExpr", second_table=2, second_column="AveExpr") {
+limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC", second_table=2, second_column="logFC", type="linear_scatter", ...) {
     tables = all_pairwise_result$limma_result
     if (is.numeric(first_table)) {
         x_name = paste(names(tables)[first_table], first_column, sep=":")
@@ -420,7 +422,15 @@ limma_scatter = function(all_pairwise_result, first_table=1, first_column="AveEx
         y=tables[[second_table]][[second_column]]
     )
     colnames(df) = c(x_name, y_name)
-    plots = hpgl_linear_scatter(df, loess=TRUE)
+    plots = NULL
+    if (type == "linear_scatter") {
+        plots = hpgl_linear_scatter(df, loess=TRUE, ...)
+    } else if (type == "dist_scatter") {
+        plots = hpgl_dist_scatter(df, ...)
+    } else {
+        plots = hpgl_scatter(df, ...)
+    }
+    plots[['dataframe']] = df
     return(plots)
 }
 

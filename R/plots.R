@@ -347,9 +347,9 @@ hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=
         hpgl_colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
     }
     hpgl_df = data.frame(hpgl_df)
+    hpgl_df[hpgl_df < 0] = 0 ## Likely only needed when using batch correction and it sets a value to < 0
     if (scale != "raw") {
-        hpgl_df = hpgl_df + 1
-        hpgl_df = log2(hpgl_df)
+        hpgl_df = log2(hpgl_df + 1)
     }    
     hpgl_df$id = rownames(hpgl_df)
     dataframe = melt(hpgl_df, id=c("id"))
@@ -1099,7 +1099,15 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
 #' @examples
 #' ## pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
 #' ## pca_info
-pca_information = function(df, design, factors=c("condition","batch"), num_components=NULL, plot_pcas=FALSE, labels="fancy") {
+pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition","batch"), num_components=NULL, plot_pcas=FALSE, labels="fancy") {
+    hpgl_env = environment()
+    if (is.null(expt) & is.null(df)) {
+        stop("This needs either: an expt or a df.")
+    }
+    if (is.null(df)) {
+        df = as.data.frame(exprs(expt$expressionset))
+        design = as.data.frame(expt$design)
+    }
     data = as.matrix(df)
     means = rowMeans(data)
     decomposed = fast.svd(data - means)
