@@ -4,8 +4,9 @@
 \alias{pca_information}
 \title{Calculate some information useful for generating PCA plots}
 \usage{
-pca_information(df, design, factors = c("condition", "batch"),
-  num_components = NULL, plot_pcas = FALSE, labels = "fancy")
+pca_information(expt = NULL, df = NULL, design = NULL,
+  factors = c("condition", "batch"), num_components = NULL,
+  plot_pcas = FALSE, labels = "fancy")
 }
 \arguments{
 \item{df}{The data to analyze (usually exprs(somedataset))}
@@ -27,6 +28,10 @@ a list of fun pca information:
   pca_variance: A table of the pca variances
   pca_data: Coordinates for a pca plot
   pca_cor: A table of the correlations between the factors and principle components
+  anova_fstats: the sum of the residuals with the factor vs without (manually calculated)
+  anova_f: The result from performing anova(withfactor, withoutfactor), the F slot
+  anova_p: The p-value calculated from the anova() call
+  anova_sums: The RSS value from the above anova() call
   cor_heatmap: A heatmap from recordPlot() describing pca_cor.
 }
 \description{

@@ -1012,6 +1012,7 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
 #' @return The r^2 values of the linear model as a %
 #'
 #' @seealso \code{\link{fast.svd}}
+#' @export
 factor_rsquared = function(svd_v, factor) {
     svd_lm = try(lm(svd_v ~ factor), silent=TRUE)
     if (class(svd_lm) == 'try-error') {
@@ -1092,6 +1093,10 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
 #'   pca_variance: A table of the pca variances
 #'   pca_data: Coordinates for a pca plot
 #'   pca_cor: A table of the correlations between the factors and principle components
+#'   anova_fstats: the sum of the residuals with the factor vs without (manually calculated)
+#'   anova_f: The result from performing anova(withfactor, withoutfactor), the F slot
+#'   anova_p: The p-value calculated from the anova() call
+#'   anova_sums: The RSS value from the above anova() call
 #'   cor_heatmap: A heatmap from recordPlot() describing pca_cor.
 #' @seealso \code{\link{fast.svd}}, \code{\link{lm}}
 #' 
@@ -1166,7 +1171,8 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
                 if (pc < second_pc & second_pc <= num_components) {
                     second_name = paste("PC", second_pc, sep="")
                     list_name = paste(name, "_", second_name, sep="")
-                    tmp_plot = print(plot_pcs(pca_data, design=design, variances=pca_variance, first=name, second=second_name, labels=labels))
+                    ## Sometimes these plots fail because too many grid operations are happening.
+                    tmp_plot = try(print(plot_pcs(pca_data, design=design, variances=pca_variance, first=name, second=second_name, labels=labels)))
                     pca_plots[[list_name]] = tmp_plot
                 }
             }
@@ -1187,6 +1193,7 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     anova_sums = data.frame()
     anova_f = data.frame()
     anova_p = data.frame()
+    anova_rss = data.frame()
     anova_fstats = data.frame()
     for (factor in factors) {
         for (pc in 1:num_components) {
@@ -1209,10 +1216,12 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
                 anova_sums[factor,pc] = 0
                 anova_f[factor,pc] = 0
                 anova_p[factor,pc] = 0
+                anova_rss[factor,pc] = 0
             } else {
                 anova_sums[factor,pc] = another_fstat$S[2]
                 anova_f[factor,pc] = another_fstat$F[2]
                 anova_p[factor,pc] = another_fstat$P[2]
+                anova_rss[factor,pc] = another_fstat$RSS[1]
             }
             anova_fstats[factor,pc] = fstat
 
@@ -1239,17 +1248,42 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     }
     rownames(cor_df) = colnames(factor_df)
     colnames(cor_df) = colnames(pc_df)
+    colnames(anova_sums) = colnames(pc_df)
+    colnames(anova_f) = colnames(pc_df)
+    colnames(anova_p) = colnames(pc_df)
+    colnames(anova_rss) = colnames(pc_df)
+    colnames(anova_fstats) = colnames(pc_df)
+
     cor_df = as.matrix(cor_df)
-    silly_colors = grDevices::colorRampPalette(brewer.pal(9, "Purples"))(100)
+    ##    silly_colors = grDevices::colorRampPalette(brewer.pal(9, "Purples"))(100)
+    silly_colors = grDevices::colorRampPalette(c("purple","black","yellow"))(100)
     cor_df = cor_df[complete.cases(cor_df),]
     sillytime = heatmap.3(cor_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=silly_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="cor(factor, PC)")
     pc_factor_corheat = recordPlot()
+
+    anova_f_colors = grDevices::colorRampPalette(c("blue","black","red"))(100)    
+    anova_f_heat = heatmap.3(as.matrix(anova_f), scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=anova_f_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="anova fstats for (factor, PC)")
+    anova_f_heat = recordPlot()
+
+    anova_fstat_colors = grDevices::colorRampPalette(c("blue","white","red"))(100)
+    anova_fstat_heat = heatmap.3(as.matrix(anova_fstats), scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=anova_fstat_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="anova fstats for (factor, PC)")
+    anova_fstat_heat = recordPlot()
+
+    neglog_p = -1 * log(as.matrix(anova_p) + 1)
+    anova_neglogp_colors = grDevices::colorRampPalette(c("blue","white","red"))(100)
+    anova_neglogp_heat = heatmap.3(as.matrix(neglog_p), scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=anova_f_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="-log(anova_p values)")
+    anova_neglogp_heat = recordPlot()
+    ## Another option: -log10 p-value of the ftest for this heatmap.
+    ## covariate vs PC score
+    ## Analagously: boxplot(PCn ~ batch)
     
     pca_list = list(
         svd_d=positives, svd_u=u, svd_v=v, rsquared_table=component_rsquared_table,
         pca_variance=pca_variance, pca_data=pca_data, anova_fstats=anova_fstats,
         anova_sums=anova_sums, anova_f=anova_f, anova_p=anova_p,
-        pca_cor=cor_df, cor_heatmap=pc_factor_corheat,
+        pca_cor=cor_df,
+        cor_heatmap=pc_factor_corheat,
+        anova_f_heatmap=anova_f_heat, anova_fstat_heatmap=anova_fstat_heat, anova_neglogp_heatmaph=anova_neglogp_heat,
         pca_plots=pca_plots
     )
    
