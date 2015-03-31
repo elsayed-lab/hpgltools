@@ -285,6 +285,7 @@ balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL
     conditions = as.factor(conditions)
     batches = as.factor(batches)
     ## Make a model matrix which will have one entry for each of these condition/batches
+    cond_model = model.matrix(~0 + conditions)
     fun_model = model.matrix(~0 + conditions + batches)
     tmpnames = colnames(fun_model)
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)

@@ -1123,6 +1123,16 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     component_variance = round((positives^2) / sum(positives^2) * 100, 3)
     cumulative_pc_variance = cumsum(component_variance)
 
+    ## Another method of using PCA
+    con = as.factor(as.numeric(batches))
+    another_pca = try(princomp(x=data, cor=FALSE, scores=TRUE, formula=~con+bat))
+    lowest = NULL
+    highest = NULL
+    if (class(another_pca != 'try-error')) {
+        lowest = head(names(sort(another_pca$x[,"PC1"], decreasing=FALSE)))
+        highest = head(names(sort(another_pca$x[,"PC1"], decreasing=TRUE)))
+    }
+
     ## Include in this table the fstatistic and pvalue described in rnaseq_bma.rmd
     component_rsquared_table = data.frame(
         prop_var = component_variance,

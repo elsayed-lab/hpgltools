@@ -126,8 +126,15 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
                 batches2 = as.factor(design[,batch2])
                 normalized_data = removeBatchEffect(normalized_data$counts, batch=batches1, batch2=batches2)
             }
+        } else if (batch == "combatmod") {
+            message("Using cbcbSeq's combatMod for batch correction.")
+            batches = as.factor(design[,"batch"])
+            conditions = as.factor(design[,"condition"])
+            df = data.frame(normalized_data$counts)
+            normalized_data = my_combatMod(dat=df, batch=batches, mod=conditions, ...)
+            
         } else if (batch == "sva") {
-            message("Using sva's fsva for batch correction.")
+
             batches = as.factor(design[,"batch"])
             conditions = as.factor(design[,"condition"])
             df = data.frame(normalized_data$counts)
@@ -328,4 +335,294 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
 
 
     return(count_table)
+}
+
+
+## The original combatMod from cbcbSeq
+## I intend to rewrite sections of it to make it a bit more robust to situations when we don't have perfect batch/conditions
+combatMod = function (dat, batch, mod, noScale = TRUE, prior.plots = FALSE) {
+    par.prior = TRUE
+    numCovs = NULL
+    mod = cbind(mod, batch)
+    check = apply(mod, 2, function(x) all(x == 1))
+    mod = as.matrix(mod[, !check])
+    colnames(mod)[ncol(mod)] = "Batch"
+    if (sum(check) > 0 & !is.null(numCovs)) 
+        numCovs = numCovs - 1
+    design <- sva:::design.mat(mod, numCov = numCovs)
+    batches <- sva:::list.batch(mod)
+    n.batch <- length(batches)
+    n.batches <- sapply(batches, length)
+    n.array <- sum(n.batches)
+    NAs = any(is.na(dat))
+    if (NAs) {
+        cat(c("Found", sum(is.na(dat)), "Missing Data Values\n"), 
+            sep = " ")
+    }
+    cat("Standardizing Data across genes\n")
+    if (!NAs) {
+        B.hat <- solve(t(design) %*% design) %*% t(design) %*% 
+            t(as.matrix(dat))
+    }
+    else {
+        B.hat = apply(dat, 1, Beta.NA, design)
+    }
+    grand.mean <- t(n.batches/n.array) %*% B.hat[1:n.batch, ]
+    if (!NAs) {
+        var.pooled <- ((dat - t(design %*% B.hat))^2) %*% rep(1/n.array, 
+            n.array)
+    }
+    else {
+        var.pooled <- apply(dat - t(design %*% B.hat), 1, var, 
+            na.rm = T)
+    }
+    stand.mean <- t(grand.mean) %*% t(rep(1, n.array))
+    if (!is.null(design)) {
+        tmp <- design
+        tmp[, c(1:n.batch)] <- 0
+        stand.mean <- stand.mean + t(tmp %*% B.hat)
+    }
+    s.data <- (dat - stand.mean)/(sqrt(var.pooled) %*% t(rep(1, 
+        n.array)))
+    if (noScale) {
+        m.data <- dat - stand.mean
+        mse <- ((dat - t(design %*% B.hat))^2) %*% rep(1/(n.array - 
+            ncol(design)), n.array)
+        hld <- NULL
+        bayesdata <- dat
+        for (k in 1:n.batch) {
+            cat(paste("Fitting 'shrunk' batch ", k, " effects\n", 
+                sep = ""))
+            sel <- batches[[k]]
+            gammaMLE <- rowMeans(m.data[, sel])
+            mprior <- mean(gammaMLE, na.rm = TRUE)
+            vprior <- var(gammaMLE, na.rm = TRUE)
+            prop <- vprior/(mse/(length(sel)) + vprior)
+            gammaPost <- prop * gammaMLE + (1 - prop) * mprior
+            for (i in sel) {
+                bayesdata[, i] <- bayesdata[, i] - gammaPost
+            }
+            stats <- data.frame(gammaPost = gammaPost, gammaMLE = gammaMLE, 
+                prop = prop)
+            hld[[paste("Batch", k, sep = ".")]] <- list(stats = stats, 
+                indices = sel, mprior = mprior, vprior = vprior)
+        }
+        cat("Adjusting data for batch effects\n")
+        return(bayesdata)
+    }
+    else {
+        cat("Fitting L/S model and finding priors\n")
+        batch.design <- design[, 1:n.batch]
+        if (!NAs) {
+            gamma.hat <- solve(t(batch.design) %*% batch.design) %*% 
+                t(batch.design) %*% t(as.matrix(s.data))
+        }
+        else {
+            gamma.hat = apply(s.data, 1, Beta.NA, batch.design)
+        }
+        delta.hat <- NULL
+        for (i in batches) {
+            delta.hat <- rbind(delta.hat, apply(s.data[, i], 
+                1, var, na.rm = T))
+        }
+        gamma.bar <- apply(gamma.hat, 1, mean)
+        t2 <- apply(gamma.hat, 1, var)
+        a.prior <- apply(delta.hat, 1, sva:::aprior)
+        b.prior <- apply(delta.hat, 1, sva:::bprior)
+        if (prior.plots & par.prior) {
+            par(mfrow = c(2, 2))
+            tmp <- density(gamma.hat[1, ])
+            plot(tmp, type = "l", main = "Density Plot")
+            xx <- seq(min(tmp$x), max(tmp$x), length = 100)
+            lines(xx, dnorm(xx, gamma.bar[1], sqrt(t2[1])), col = 2)
+            qqnorm(gamma.hat[1, ])
+            qqline(gamma.hat[1, ], col = 2)
+            tmp <- density(delta.hat[1, ])
+            invgam <- 1/rgamma(ncol(delta.hat), a.prior[1], b.prior[1])
+            tmp1 <- density(invgam)
+            plot(tmp, typ = "l", main = "Density Plot", ylim = c(0, 
+                max(tmp$y, tmp1$y)))
+            lines(tmp1, col = 2)
+            qqplot(delta.hat[1, ], invgam, xlab = "Sample Quantiles", 
+                ylab = "Theoretical Quantiles")
+            lines(c(0, max(invgam)), c(0, max(invgam)), col = 2)
+            title("Q-Q Plot")
+        }
+        gamma.star <- delta.star <- NULL
+        if (par.prior) {
+            cat("Finding parametric adjustments\n")
+            for (i in 1:n.batch) {
+                temp <- sva:::it.sol(s.data[, batches[[i]]], 
+                  gamma.hat[i, ], delta.hat[i, ], gamma.bar[i], 
+                  t2[i], a.prior[i], b.prior[i])
+                gamma.star <- rbind(gamma.star, temp[1, ])
+                delta.star <- rbind(delta.star, temp[2, ])
+            }
+        }
+        else {
+            cat("Finding nonparametric adjustments\n")
+            for (i in 1:n.batch) {
+                temp <- sva:::int.prior(as.matrix(s.data[, batches[[i]]]), 
+                  gamma.hat[i, ], delta.hat[i, ])
+                gamma.star <- rbind(gamma.star, temp[1, ])
+                delta.star <- rbind(delta.star, temp[2, ])
+            }
+        }
+        cat("Adjusting the Data\n")
+        bayesdata <- s.data
+        j <- 1
+        for (i in batches) {
+            bayesdata[, i] <- (bayesdata[, i] - t(batch.design[i, 
+                ] %*% gamma.star))/(sqrt(delta.star[j, ]) %*% 
+                t(rep(1, n.batches[j])))
+            j <- j + 1
+        }
+        bayesdata <- (bayesdata * (sqrt(var.pooled) %*% t(rep(1, 
+            n.array)))) + stand.mean
+        return(bayesdata)
+    }
+}
+
+
+my_combatMod = function (dat, batch, mod, noScale = TRUE, prior.plots = FALSE) {
+    par.prior = TRUE
+    numCovs = NULL
+    mod = cbind(mod, batch)
+    check = apply(mod, 2, function(x) all(x == 1))
+    mod = as.matrix(mod[, !check])
+    colnames(mod)[ncol(mod)] = "Batch"
+    if (sum(check) > 0 & !is.null(numCovs)) 
+        numCovs = numCovs - 1
+    design <- sva:::design.mat(mod, numCov = numCovs)
+    batches <- sva:::list.batch(mod)
+    n.batch <- length(batches)
+    n.batches <- sapply(batches, length)
+    n.array <- sum(n.batches)
+    NAs = any(is.na(dat))
+    if (NAs) {
+        cat(c("Found", sum(is.na(dat)), "Missing Data Values\n"), 
+            sep = " ")
+    }
+    cat("Standardizing Data across genes\n")
+    if (!NAs) {
+        B.hat <- solve(t(design) %*% design) %*% t(design) %*% 
+            t(as.matrix(dat))
+    }
+    else {
+        B.hat = apply(dat, 1, Beta.NA, design)
+    }
+    grand.mean <- t(n.batches/n.array) %*% B.hat[1:n.batch, ]
+    if (!NAs) {
+        var.pooled <- ((dat - t(design %*% B.hat))^2) %*% rep(1/n.array, 
+            n.array)
+    }
+    else {
+        var.pooled <- apply(dat - t(design %*% B.hat), 1, var, 
+            na.rm = T)
+    }
+    stand.mean <- t(grand.mean) %*% t(rep(1, n.array))
+    if (!is.null(design)) {
+        tmp <- design
+        tmp[, c(1:n.batch)] <- 0
+        stand.mean <- stand.mean + t(tmp %*% B.hat)
+    }
+    s.data <- (dat - stand.mean)/(sqrt(var.pooled) %*% t(rep(1, 
+        n.array)))
+    if (noScale) {
+        m.data <- dat - stand.mean
+        mse <- ((dat - t(design %*% B.hat))^2) %*% rep(1/(n.array - 
+            ncol(design)), n.array)
+        hld <- NULL
+        bayesdata <- dat
+        for (k in 1:n.batch) {
+            cat(paste("Fitting 'shrunk' batch ", k, " effects\n", 
+                sep = ""))
+            sel <- batches[[k]]
+            gammaMLE <- rowMeans(m.data[, sel])
+            mprior <- mean(gammaMLE, na.rm = TRUE)
+            vprior <- var(gammaMLE, na.rm = TRUE)
+            prop <- vprior/(mse/(length(sel)) + vprior)
+            gammaPost <- prop * gammaMLE + (1 - prop) * mprior
+            for (i in sel) {
+                bayesdata[, i] <- bayesdata[, i] - gammaPost
+            }
+            stats <- data.frame(gammaPost = gammaPost, gammaMLE = gammaMLE, 
+                prop = prop)
+            hld[[paste("Batch", k, sep = ".")]] <- list(stats = stats, 
+                indices = sel, mprior = mprior, vprior = vprior)
+        }
+        cat("Adjusting data for batch effects\n")
+        return(bayesdata)
+    }
+    else {
+        cat("Fitting L/S model and finding priors\n")
+        batch.design <- design[, 1:n.batch]
+        if (!NAs) {
+            gamma.hat <- solve(t(batch.design) %*% batch.design) %*% 
+                t(batch.design) %*% t(as.matrix(s.data))
+        }
+        else {
+            gamma.hat = apply(s.data, 1, Beta.NA, batch.design)
+        }
+        delta.hat <- NULL
+        for (i in batches) {
+            delta.hat <- rbind(delta.hat, apply(s.data[, i], 
+                1, var, na.rm = T))
+        }
+        gamma.bar <- apply(gamma.hat, 1, mean)
+        t2 <- apply(gamma.hat, 1, var)
+        a.prior <- apply(delta.hat, 1, sva:::aprior)
+        b.prior <- apply(delta.hat, 1, sva:::bprior)
+        if (prior.plots & par.prior) {
+            par(mfrow = c(2, 2))
+            tmp <- density(gamma.hat[1, ])
+            plot(tmp, type = "l", main = "Density Plot")
+            xx <- seq(min(tmp$x), max(tmp$x), length = 100)
+            lines(xx, dnorm(xx, gamma.bar[1], sqrt(t2[1])), col = 2)
+            qqnorm(gamma.hat[1, ])
+            qqline(gamma.hat[1, ], col = 2)
+            tmp <- density(delta.hat[1, ])
+            invgam <- 1/rgamma(ncol(delta.hat), a.prior[1], b.prior[1])
+            tmp1 <- density(invgam)
+            plot(tmp, typ = "l", main = "Density Plot", ylim = c(0, 
+                max(tmp$y, tmp1$y)))
+            lines(tmp1, col = 2)
+            qqplot(delta.hat[1, ], invgam, xlab = "Sample Quantiles", 
+                ylab = "Theoretical Quantiles")
+            lines(c(0, max(invgam)), c(0, max(invgam)), col = 2)
+            title("Q-Q Plot")
+        }
+        gamma.star <- delta.star <- NULL
+        if (par.prior) {
+            cat("Finding parametric adjustments\n")
+            for (i in 1:n.batch) {
+                temp <- sva:::it.sol(s.data[, batches[[i]]], 
+                  gamma.hat[i, ], delta.hat[i, ], gamma.bar[i], 
+                  t2[i], a.prior[i], b.prior[i])
+                gamma.star <- rbind(gamma.star, temp[1, ])
+                delta.star <- rbind(delta.star, temp[2, ])
+            }
+        }
+        else {
+            cat("Finding nonparametric adjustments\n")
+            for (i in 1:n.batch) {
+                temp <- sva:::int.prior(as.matrix(s.data[, batches[[i]]]), 
+                  gamma.hat[i, ], delta.hat[i, ])
+                gamma.star <- rbind(gamma.star, temp[1, ])
+                delta.star <- rbind(delta.star, temp[2, ])
+            }
+        }
+        cat("Adjusting the Data\n")
+        bayesdata <- s.data
+        j <- 1
+        for (i in batches) {
+            bayesdata[, i] <- (bayesdata[, i] - t(batch.design[i, 
+                ] %*% gamma.star))/(sqrt(delta.star[j, ]) %*% 
+                t(rep(1, n.batches[j])))
+            j <- j + 1
+        }
+        bayesdata <- (bayesdata * (sqrt(var.pooled) %*% t(rep(1, 
+            n.array)))) + stand.mean
+        return(bayesdata)
+    }
 }
