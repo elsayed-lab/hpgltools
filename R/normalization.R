@@ -98,7 +98,7 @@ filter_counts = function(counts, thresh=2, min_samples=2) {
 #'
 #' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
 #' @export
-normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, annotations=NULL, verbose=FALSE, use_original=TRUE, thresh=2, min_samples=2, batch=NULL, batch1="batch", batch2=NULL, ...) {
+normalize_expt = function(expt, transform="raw", norm="raw", convert="raw", filter_low=FALSE, annotations=NULL, verbose=FALSE, use_original=FALSE, thresh=2, min_samples=2, batch=NULL, batch1="batch", batch2=NULL, ...) {
     new_expt = expt
     if (is.null(new_expt$original_expressionset)) {
         new_expt$original_expressionset = new_expt$expressionset
@@ -110,54 +110,13 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
     old_data = exprs(expt$original_expressionset)
     design = expt$design
 
-    normalized_data = hpgl_norm(df=old_data, design=design, transform=transform, norm=norm, convert=convert, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples)
+    normalized_data = hpgl_norm(df=old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch2=batch2, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples)
 
-    if (is.null(batch)) {
-        exprs(new_expt$expressionset) = as.matrix(normalized_data$counts)
-    } else {
-        if (batch == "limma") {
-            batches1 = as.factor(design[,batch1])
-            if (is.null(batch2)) {
-                ## A reminder of removeBatchEffect usage
-                ## adjusted_batchdonor = removeBatchEffect(data, batch=as.factor(as.character(des$donor)), batch2=as.factor(as.character(des$batch)))
-                message("Using limma's removeBatchEffect to remove batch effect.")
-                normalized_data = removeBatchEffect(normalized_data$counts, batch=batches1)
-            } else {
-                batches2 = as.factor(design[,batch2])
-                normalized_data = removeBatchEffect(normalized_data$counts, batch=batches1, batch2=batches2)
-            }
-        } else if (batch == "combatmod") {
-            message("Using cbcbSeq's combatMod for batch correction.")
-            batches = as.factor(design[,"batch"])
-            conditions = as.factor(design[,"condition"])
-            df = data.frame(normalized_data$counts)
-            normalized_data = my_combatMod(dat=df, batch=batches, mod=conditions, ...)
-            
-        } else if (batch == "sva") {
-
-            batches = as.factor(design[,"batch"])
-            conditions = as.factor(design[,"condition"])
-            df = data.frame(normalized_data$counts)
-            conditional_model = model.matrix(~conditions, data=df)
-            null_model = conditional_model[,1]
-            num_surrogates = num.sv(as.matrix(df), conditional_model)
-            sva_object = sva(as.matrix(df), conditional_model, null_model, n.sv=num_surrogates)
-            mod_sv = cbind(conditional_model, sva_object$sv)
-            fsva_result = fsva(as.matrix(df), conditional_model, sva_object, newdat=as.matrix(df), method="exact")
-            new_expt$conditional_model = conditional_model
-            new_expt$null_model = null_model
-            new_expt$num_surrogates = num_surrogates
-            new_expt$sva_object = sva_object
-            new_expt$mod_sv = mod_sv
-            new_expt$fsva_result = fsva_result
-            normalized_data = fsva_result$db            
-##            normalized_data = combatMod(normalized_data, batches, conditions, noScale=TRUE)
-        } else {
-            message("haven't implemented other batch removals, just doing limma's removeBatchEffect()")
-            normalized_data = removeBatchEffect(normalized_data, batch=get(batch1))            
-        }
-        exprs(new_expt$expressionset) = as.matrix(normalized_data)
-    } ## End the if/else batch correction
+    new_expt$filtered = filter_low
+    new_expt$transform = transform
+    new_expt$norm = norm
+    new_expt$convert = convert
+    new_expt$batch = batch
     return(new_expt)
 }
 
@@ -195,8 +154,13 @@ normalize_expt = function(expt, transform="log2", norm="quant", convert="cpm", f
 #' ## df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
 #' ## df_ql2rpkm = hpgl_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
 #' ## count_table = df_ql2rpkm$counts
-###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm
-hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, ...) {
+###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm|cbcbcpm
+hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, ...) {
+    transform_performed = "raw"
+    norm_performed = "raw"
+    convert_performed = "raw"
+    batch_performed = "raw"
+    
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
@@ -242,6 +206,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         count_table = BiocGenerics::counts(size_factor, normalized=TRUE)
         colnames(count_table) = rownames(column_data)
         count_table = edgeR::DGEList(counts=count_table)
+        norm_performed = "sf"
     } else if (norm == "quant") {
         # Quantile normalization (Bolstad et al., 2003)
         count_rownames = rownames(count_table)
@@ -251,6 +216,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         colnames(count_table) = count_colnames
         # Convert to a DGEList
         count_table = edgeR::DGEList(counts=count_table)
+        norm_performed = "quant"
     } else if (norm == "tmm") {
         ## TMM normalization is documented in edgeR
         ## Set up the edgeR data structure
@@ -264,7 +230,8 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         ## Get the counts out
         factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
         ## return this to a DGEList
-        count_table = edgeR::DGEList(counts=factored)        
+        count_table = edgeR::DGEList(counts=factored)
+        norm_performed = "tmm"
     } else if (norm == "upperquartile") {
         ## Get the tmm normalization factors
         count_table = edgeR::DGEList(counts=count_table)        
@@ -277,6 +244,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
         ## return this to a DGEList
         count_table = edgeR::DGEList(counts=factored)
+        norm_performed = "upperquartile"
     } else if (norm == "rle") {
         ## Get the tmm normalization factors
         count_table = edgeR::DGEList(counts=count_table)
@@ -289,6 +257,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
         ## return this to a DGEList
         count_table = edgeR::DGEList(counts=factored)
+        norm_performed = "rle"
     } else {
         count_table = edgeR::DGEList(counts=count_table)
     }    
@@ -300,19 +269,28 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
     if (verbose) {
         print(paste("Setting output type as:", out_type))
     }
-    if (convert == "cpm") {
-        counts = edgeR::cpm(count_table)
+    if (convert == "edgecpm") {
+        count_table = edgeR::cpm(count_table)
         count_table = edgeR::DGEList(counts=count_table)
+        convert_performed = "edgecpm"
+    } else if (convert == "cpm") {
+        lib_size = colSums(count_table$counts)
+        ##        count_table = t(t((count_table$counts + 0.5) / (lib_size + 1)) * 1e+06)
+        count_table = t(t((count_table$counts + 0.5) / (lib_size + 1)) * 1e+06)        
+        count_table = edgeR::DGEList(counts=count_table)
+        convert_performed = "cpm"
     } else if (convert == "rpkm") {
         if (is.null(annotations)) {
             stop("RPKM conversion requires gene lengths.")
         }
         counts = hpgltools::hpgl_rpkm(counts_table, annotations=annotations)
         count_table = edgeR::DGEList(counts=counts)
+        convert_performed = "rpkm"
     } else if (convert == "cp_seq_m") {
         counts = edgeR::cpm(count_table)
         counts = hpgltools::divide_seq(counts, ...)
         count_table = edgeR::DGEList(counts=counts)
+        convert_performed = "cp_seq_m"
     } else {
         count_table = edgeR::DGEList(counts=count_table)
     }
@@ -323,16 +301,60 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         print(paste("Applying: ", transform, " transformation.", sep=""))
     }
     counts = count_table$counts
+    if (convert_performed != "cpm") {
+        counts = counts + 1
+    }
     if (transform == "log2") {
-        counts = log2(counts + 1)
+        counts = log2(counts)
     } else if (transform == "log10") {
-        counts = log10(counts + 1)
+        counts = log10(counts)
     } else if (transform == "log") {  ## Natural log
-        counts = log(counts + 1)  ## Apparently log1p does this.
+        counts = log(counts)  ## Apparently log1p does this.
     }
     count_table = DGEList(counts=counts)    
-    
 
+    ## Step 5: Batch correction
+    if (verbose) {
+        print(paste("Applying: ", batch, " batch correction(raw means nothing).", sep=""))
+    }    
+    if (batch == "limma") {
+        batches1 = as.factor(design[, batch1])
+        if (is.null(batch2)) {
+            ## A reminder of removeBatchEffect usage
+            ## adjusted_batchdonor = removeBatchEffect(data, batch=as.factor(as.character(des$donor)), batch2=as.factor(as.character(des$batch)))
+            message("Using limma's removeBatchEffect to remove batch effect.")
+            normalized_data = removeBatchEffect(normalized_data$counts, batch=batches1)
+        } else {
+            batches2 = as.factor(design[, batch2])
+            normalized_data = removeBatchEffect(normalized_data$counts, batch=batches1, batch2=batches2)
+        }
+        count_table = DGEList(counts=normalized_data)            
+    } else if (batch == "combatmod") {
+        message("Using a modified cbcbSeq combatMod for batch correction.")
+        batches = as.factor(design[, batch1])
+        conditions = as.factor(design[, "condition"])
+        df = data.frame(normalized_data$counts)
+        normalized_data = hpgl_combatMod(dat=df, batch=batches, mod=conditions, ...)
+        count_table = DGEList(counts=normalized_data)
+    } else if (batch == "sva") {
+            batches = as.factor(design[, batch1])
+            conditions = as.factor(design[,"condition"])
+            df = data.frame(normalized_data$counts)
+            conditional_model = model.matrix(~conditions, data=df)
+            null_model = conditional_model[,1]
+            num_surrogates = num.sv(as.matrix(df), conditional_model)
+            sva_object = sva(as.matrix(df), conditional_model, null_model, n.sv=num_surrogates)
+            mod_sv = cbind(conditional_model, sva_object$sv)
+            fsva_result = fsva(as.matrix(df), conditional_model, sva_object, newdat=as.matrix(df), method="exact")
+            new_expt$conditional_model = conditional_model
+            new_expt$null_model = null_model
+            new_expt$num_surrogates = num_surrogates
+            new_expt$sva_object = sva_object
+            new_expt$mod_sv = mod_sv
+            new_expt$fsva_result = fsva_result
+            normalized_data = fsva_result$db            
+            count_table = DGEList(counts = normalized_data)
+        }
 
     return(count_table)
 }
@@ -347,8 +369,9 @@ combatMod = function (dat, batch, mod, noScale = TRUE, prior.plots = FALSE) {
     check = apply(mod, 2, function(x) all(x == 1))
     mod = as.matrix(mod[, !check])
     colnames(mod)[ncol(mod)] = "Batch"
-    if (sum(check) > 0 & !is.null(numCovs)) 
+    if (sum(check) > 0 & !is.null(numCovs)) {
         numCovs = numCovs - 1
+    }
     design <- sva:::design.mat(mod, numCov = numCovs)
     batches <- sva:::list.batch(mod)
     n.batch <- length(batches)
@@ -391,10 +414,14 @@ combatMod = function (dat, batch, mod, noScale = TRUE, prior.plots = FALSE) {
         hld <- NULL
         bayesdata <- dat
         for (k in 1:n.batch) {
-            cat(paste("Fitting 'shrunk' batch ", k, " effects\n", 
-                sep = ""))
+            cat(paste("Fitting 'shrunk' batch ", k, " effects\n", sep = ""))
             sel <- batches[[k]]
-            gammaMLE <- rowMeans(m.data[, sel])
+            if (length(sel) > 1) {
+                gammaMLE = rowMeans(m.data[, sel])
+            } else {
+                gammaMLE = m.data[, sel]
+            }
+        
             mprior <- mean(gammaMLE, na.rm = TRUE)
             vprior <- var(gammaMLE, na.rm = TRUE)
             prop <- vprior/(mse/(length(sel)) + vprior)
@@ -484,7 +511,21 @@ combatMod = function (dat, batch, mod, noScale = TRUE, prior.plots = FALSE) {
 }
 
 
-my_combatMod = function (dat, batch, mod, noScale = TRUE, prior.plots = FALSE) {
+#' Use a modified version of combat on some data
+#'
+#' @param dat a df to modify
+#' @param batch a factor of batches
+#' @param mod a factor of conditions
+#' @param noScale the normal 'scale' option squishes the data too much, so this defaults to TRUE
+#' @param prior.plots print out prior plots? FALSE
+#'
+#' @return a df of batch corrected data
+#' @seealso \code{\link{sva}}, \code{\link{combat}},
+#' 
+#' @export
+#' @examples
+#' ## df_new = hpgl_combatMod(df, batches, model)
+hpgl_combatMod = function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
     par.prior = TRUE
     numCovs = NULL
     mod = cbind(mod, batch)

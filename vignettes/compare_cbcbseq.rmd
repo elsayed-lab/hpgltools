@@ -1,0 +1,177 @@
+# Testing my code vs. cbcbSEQ
+
+## Load data
+
+This will use the pasilla dataset exactly as cbcbSEQ did.
+
+```{r load_data}
+
+require(pasilla)
+# locate the path of the dataset and read in the dataset
+datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
+counts = read.table(datafile, header=TRUE, row.names=1)
+head(counts)
+dim(counts)
+counts = counts[rowSums(counts) > ncol(counts),]
+dim(counts)
+
+```
+
+## cbcbSEQ result
+
+```{r cbcbSEQ_result}
+
+library(cbcbSEQ)
+design = data.frame(row.names=colnames(counts), 
+                    condition=c("untreated","untreated","untreated",
+                                "untreated","treated","treated","treated"),
+                    libType=c("single-end","single-end","paired-end",
+                              "paired-end","single-end","paired-end","paired-end"))
+design
+
+# quantile normalize: adjust counts for library size.
+qcounts = qNorm(counts)
+# convert counts to log2 counts per milliom. (voom scale)
+cpm = log2CPM(qcounts)
+names(cpm)
+libsize = cpm$lib.size
+cpm = cpm$y
+#
+# PCA analysis
+# returns a list with two components v and d.
+res = makeSVD(cpm)
+pcRes(res$v,res$d, design$condition, design$libType)
+plotPC(res$v,res$d, 
+       col=design$condition, # color by batch
+       pch=19, main="PCA plot",
+       xlim=c(min(res$v[,1])-.08,max(res$v[,1])+.08),
+       ylim=c(min(res$v[,2])-.08,max(res$v[,2])+.08))
+text(res$v[,1], res$v[,2], design$libType, pos=1, cex=0.6)
+
+tmp = combatMod(cpm, batch=design$libType, mod=design$condition, noScale=TRUE)
+names(tmp)
+# look at PCA results again
+res = makeSVD(tmp)
+# batch effect is reduced
+pcRes(res$v,res$d, design$condition, design$libType)
+
+plotPC(res$v,res$d, 
+       col=design$condition, # color by batch
+       pch=19, main="PCA plot",
+       xlim=c(min(res$v[,1])-.08,max(res$v[,1])+.08),
+       ylim=c(min(res$v[,2])-.08,max(res$v[,2])+.08))
+text(res$v[,1], res$v[,2], design$libType, pos=1, cex=0.6) 
+
+v = voomMod(tmp, model.matrix(~design$condition), lib.size=libsize, plot=TRUE)
+
+summary(v)
+fit = lmFit(v)
+eb = eBayes(fit)
+top = topTable(eb, coef=2, n=nrow(v$E))
+top$ID = rownames(top)
+
+sel = top$adj.P.Val < 0.05
+plot(top$logFC, -log10(top$adj.P.Val), pch=16, cex=0.3,
+     main=paste(sum(sel), "/", length(sel)),col=ifelse(sel,"red","black"))
+abline(v=c(-1,1), h=-log10(0.05), col="blue")
+
+cond=design$condition
+batch=design$libType
+mod = model.matrix(~cond+batch, contrasts.arg=list(cond="contr.treatment", batch="contr.sum"))
+v1 = voom(counts, mod) 
+fit1 = lmFit(v1)
+eb1 = eBayes(fit1)
+top1 = topTable(eb1, coef=2, n=nrow(v1$E))
+top1$ID = rownames(top1)
+
+sel = top1$adj.P.Val < 0.05
+plot(top1$logFC, -log10(top1$adj.P.Val), pch=16, cex=0.3,
+     main=paste(sum(sel), "/", length(sel)),col=ifelse(sel,"red","black"))
+abline(v=c(-1,1), h=-log10(0.05), col="blue")
+
+tab = merge(top[,c("ID", "adj.P.Val")], top1[,c("ID", "adj.P.Val")], by="ID")
+as.data.frame(table(combat = tab[,2] < 0.05, model = tab[,3] < 0.05))
+
+```
+
+## hpgltools attempt
+
+```{r hpgltools}
+
+library(hpgltools)
+autoloads_all()
+meta = design
+colnames(meta) = c("condition","batch")
+meta$Sample.id = rownames(meta)
+pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=meta)
+pasilla_norm = normalize_expt(expt=pasilla_expt)
+hpgl_pca(expt=pasilla_norm)
+
+```
+
+## Piece by piece comparison
+
+```{r direct_compare}
+
+raw = counts
+qcounts = qNorm(counts)
+# convert counts to log2 counts per milliom. (voom scale)
+cpm = log2CPM(qcounts)
+names(cpm)
+libsize = cpm$lib.size
+cpm = cpm$y
+
+myraw = exprs(pasilla_expt$expressionset)
+cor(raw, myraw)
+
+myqcounts = hpgl_norm(expt=pasilla_expt, norm="quant", transform="raw", convert="raw", filter_low=FALSE)
+myqcounts = myqcounts$counts
+cor(qcounts, myqcounts)
+
+l2 = log2(qcounts + 1)
+myl2 = hpgl_norm(expt=pasilla_expt, norm="quant", transform="log2", filter_low=FALSE)
+myl2 = myl2$counts
+cor(l2, myl2)
+
+l2cpm = log2CPM(qcounts)
+l2cpm = l2cpm$y
+myl2cpm = hpgl_norm(expt=pasilla_expt, norm="quant", transform="log2", convert="cbcbcpm", filter_low=FALSE)
+myl2cpm = myl2cpm$counts
+cor(l2cpm, myl2cpm) ## There is a small difference between log2CPM()'s cpm and edgeR's cpm()
+
+myl2cpm_expt = normalize_expt(expt=pasilla_expt, norm="quant", transform="log2", convert="cpm", filter_low=FALSE)
+myl2cpm_expt = exprs(myl2cpm_expt$expressionset)
+cor(myl2cpm_expt, l2cpm)
+cor(myl2cpm_expt, l2cpm, method="spearman")
+myl2cpm_expt = normalize_expt(expt=pasilla_expt, norm="quant", transform="log2", convert="cbcbcpm", filter_low=FALSE)
+
+res = makeSVD(l2cpm)
+res_table = pcRes(res$v, res$d, design$condition, design$libType)
+my_pca = hpgl_pca(expt=myl2cpm_expt, labels="normal")
+another_res = makeSVD(myl2cpm)
+cor(res$v, another_res$v, method="spearman")
+cor(res$u, another_res$u)
+
+head(res$v)
+head(my_pca$pca$v)
+cor(res$v, my_pca$pca$v)
+head(res$u)
+head(my_pca$pca$u)
+cor(res$u, my_pca$pca$u)
+
+myres_table = pcRes(my_pca$pca$v, my_pca$pca$d, design$condition, design$libType)
+
+res_table
+my_pca$res
+cor(res_table, my_pca$res)
+
+plotPC(res$v,res$d, 
+       col=design$condition, # color by batch
+       pch=19, main="PCA plot",
+       xlim=c(min(res$v[,1])-.08,max(res$v[,1])+.08),
+       ylim=c(min(res$v[,2])-.08,max(res$v[,2])+.08))
+text(res$v[,1], res$v[,2], design$libType, pos=1, cex=0.6)
+dev.new()
+my_pca$plot
+
+```

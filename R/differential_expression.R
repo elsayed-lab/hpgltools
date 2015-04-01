@@ -139,7 +139,7 @@ remove_batch_effect = function(normalized_counts, model) {
 #' @export
 #' @examples
 #' ## funkytown = hpgl_voom(samples, model)
-hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE) {
+hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE, log2=TRUE) {
     out = list()
     if (is.null(libsize)) {
         libsize = colSums(dataframe, na.rm=TRUE)
@@ -239,7 +239,7 @@ limma_subset = function(table, n=NULL, z=NULL) {
 
 
 
-#' balanced_pairwise():  Set up a model matrix and set of contrasts to do
+#' limma_pairwise():  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions/batches.  In this case, there
 #' must be a balanced set of batches for each condition.
 #'
@@ -272,13 +272,20 @@ limma_subset = function(table, n=NULL, z=NULL) {
 #' @export
 #' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
-balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, extra_contrasts=NULL, ...) {
+limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, extra_contrasts=NULL, norm="quant", convert="cpm", ...) {
     if (is.null(expt) & is.null(data)) {
         stop("This requires either an expt or data/condition/batches")
     } else if (!is.null(expt)) {
         conditions = expt$conditions
         batches = expt$batches
         data = as.data.frame(exprs(expt$expressionset))
+        ## Make sure the data isn't in the log2 scale before calling voom.
+        tmp_expt = expt
+        if (expt$transform == "log2") {
+            tmp_expt$expressionset = tmp_expt$original_expressionset
+        }
+        tmp_expt = normalize_expt(expt=tmp_expt, transform="raw", norm=norm, convert=convert)
+        data = exprs(tmp_expt$expressionset)
     }
     condition_table = table(conditions)
     batch_table = table(batches)
@@ -291,8 +298,9 @@ balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     tmpnames = gsub("conditions", "", tmpnames)
     colnames(fun_model) = tmpnames
-    ## voom() it
-    fun_voom = hpgl_voom(data, fun_model)
+    fun_voom = NULL
+    ## voom() it, taking into account whether the data has been log2 transformed.
+    fun_voom = voom(data, fun_model)
     ## Extract the design created by voom()
     ## This is interesting because each column of the design will have a prefix string 'macb' before the
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
@@ -301,7 +309,153 @@ balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL
     ## Do the lmFit() using this model    
     fun_fit = lmFit(fun_voom, fun_model)
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
+    contrasts = make_pairwise_contrasts(fun_model, conditions, extra_contrasts=extra_contrasts)
+    all_pairwise_contrasts = contrasts$all_pairwise_contrasts
+    identities = contrasts$identities
+    contrast_string = contrasts$contrast_string
+    all_pairwise = contrasts$all_pairwise
+    ## Once all that is done, perform the fit
+    ## This will first provide the relative abundances of each condition
+    ## followed by the set of all pairwise comparisons.
+    all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
+    all_pairwise_comparisons = eBayes(all_pairwise_fits)
+    all_tables = try(topTable(all_pairwise_comparisons))
+    limma_result = write_limma(all_pairwise_comparisons, excel=FALSE, ...)
+    result = list(
+        input_data=data,
+        conditions_table=condition_table,
+        batches_table=batch_table,
+        conditions=conditions,
+        batches=batches,
+        model=fun_model,
+        fit=fun_fit,
+        voom_result=fun_voom,
+        voom_design=fun_design,
+        identities=identities,
+        all_pairwise=all_pairwise,
+        contrast_string=contrast_string,
+        pairwise_fits=all_pairwise_fits,
+        pairwise_comparisons=all_pairwise_comparisons,
+        all_tables=all_tables,
+        limma_result=limma_result)
+    return(result)
+}
+
+#' edger_pairwise():  Set up a model matrix and set of contrasts to do
+#' a pairwise comparison of all conditions/batches.  In this case, there
+#' must be a balanced set of batches for each condition.
+#'
+#' @param conditions a factor of conditions in the experiment
+#' @param batches a factor of batches in the experiment
+#' @param extra_contrasts some extra contrasts to add to the list
+#'  This can be pretty neat, lets say one has conditions A,B,C,D,E
+#'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
+#'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
+#'  de_minus_cb = (E-D)-(C-B),"
+#' @param ... The elipsis parameter is fed to write_limma() at the end.
+#'
+#' @return A list including the following information:
+#'   macb = the mashing together of condition/batch so you can look at it
+#'   macb_model = The result of calling model.matrix(~0 + macb)
+#'   macb_fit =  The result of calling lmFit(data, macb_model)
+#'   voom_result = The result from voom()
+#'   voom_design = The design from voom (redundant from voom_result, but convenient)
+#'   macb_table = A table of the number of times each condition/batch pairing happens
+#'   cond_table = A table of the number of times each condition appears (the denominator for the identities)
+#'   batch_table = How many times each batch appears
+#'   identities = The list of strings defining each condition by itself
+#'   all_pairwise = The list of strings defining all the pairwise contrasts
+#'   contrast_string = The string making up the makeContrasts() call
+#'   pairwise_fits = The result from calling contrasts.fit()
+#'   pairwise_comparisons = The result from eBayes()
+#'   edger_result = The result from calling write_limma()
+#'
+#' @seealso \code{\link{write_limma}}
+#' @export
+#' @examples
+#' ## pretend = edger_pairwise(data, conditions, batches)
+edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, extra_contrasts=NULL, ...) {
+    if (is.null(expt) & is.null(data)) {
+        stop("This requires either an expt or data+conditions+batches")
+    } else if (!is.null(expt)) {
+        conditions = expt$conditions
+        batches = expt$batches
+        data = as.data.frame(exprs(expt$expressionset))
+        ## As I understand it, edgeR fits a binomial distribution
+        ## and expects data as floating point counts,
+        ##not a log2 transformation.
+        if (expt$transform == "log2") {
+            data = (2^data) - 1
+        }        
+    }
+    condition_table = table(conditions)
+    batch_table = table(batches)
+    conditions = as.factor(conditions)
+    batches = as.factor(batches)
+    ## Make a model matrix which will have one entry for
+    ## each of the condition/batches
+    cond_model = model.matrix(~0 + conditions)
+    tmpnames = colnames(cond_model)
+    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    tmpnames = gsub("conditions", "", tmpnames)
+    colnames(cond_model) = tmpnames
+    condbatch_model = model.matrix(~0 + conditions + batches)
+    tmpnames = colnames(condbatch_model)
+    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    tmpnames = gsub("conditions", "", tmpnames)        
+    colnames(condbatch_model) = tmpnames
+
+    message("Estimating common dispersion, this takes a few seconds.")
+    common_dis = estimateGLMCommonDisp(data, cond_model)
+    message("Estimating trended dispersion, this takes a few seconds.")
+    trended_dis = estimateGLMTrendedDisp(data, cond_model)
+    message("Estimating tagwise dispersion, this takes a few seconds.")
+    tagwise_dis = estimateGLMTagwiseDisp(common_dis, cond_model)
+    cond_fit = edgeR::glmFit(data, design=cond_model, dispersion=common_dis)
+
+    all_pairwise_contrasts = make_pairwise_contrasts(cond_model, conditions, identities=FALSE)
+    contrast_list = list()
+    result_list = list()
+    for (con in 1:length(colnames(all_pairwise_contrasts))) {
+        list_name = colnames(all_pairwise_contrasts)[con]
+        message(paste("Performing ", list_name, " contrast.", sep=""))
+        cond_lrt = edgeR::glmLRT(cond_fit, contrast=all_pairwise_contrasts[,list_name])
+        contrast_list[[list_name]] = cond_lrt
+        result_list[[list_name]] = topTags(cond_lrt, n=dim(cond_lrt$fitted.values[1]))
+    }
+
+    result = list(
+        input_data=data,
+    )
+    return(result)
+}
+
+#' make_pairwise_contrasts(): Run makeContrasts() with all pairwise comparisons.
+#' 
+#' @param model A model describing the conditions/batches/etc in the experiment
+#' @param conditions A factor of conditions in the experiment
+#' @param do_identities Whether or not to include all the identity strings.
+#' Limma can handle this, edgeR cannot.  True by default.
+#' @param do_pairwise Whether or not to include all the pairwise strings.
+#' This shouldn't need to be set to FALSE, but just in case.
+#' @param extra_contrasts An optional string of extra contrasts to include.
+#'
+#' @return A list including the following information:
+#'   all_pairwise_contrasts = the result from makeContrasts(...)
+#'   identities = the string identifying each condition alone
+#'   all_pairwise = the string identifying each pairwise comparison alone
+#'   contrast_string = the string passed to R to call makeContrasts(...)
+#'   names = the names given to the identities/contrasts
+#'
+#' @seealso \code{\link{makeContrasts}}
+#' @export
+#' @examples
+#' ## pretend = make_pairwise_contrasts(model, conditions)
+make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pairwise=TRUE, extra_contrasts=NULL) {
+    condition_table = table(conditions)
     identities = list()
+    contrast_string = ""
+    eval_strings = list()
     for (c in 1:length(condition_table)) {
         identity_name = names(condition_table[c])
         identity_string = paste(identity_name, " = ", identity_name, ",", sep="")
@@ -323,7 +477,7 @@ balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL
         for (d in nextc:length(identities)) {
             d_name = names(identities[d])
             minus_string = paste(d_name, "_minus_", c_name, sep="")
-            exprs_string = paste(minus_string, " = ", d_name, "-", c_name, ",", sep="")
+            exprs_string = paste(minus_string, "=", d_name, "-", c_name, ",", sep="")
             all_pairwise[minus_string] = exprs_string
         }
     }
@@ -332,13 +486,19 @@ balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL
     ## B-A where B comes somewhere after A in the model matrix.
     ## The goal now is to create the variables in the R environment
     ## and add them to makeContrasts()
-    eval_strings = append(identities, all_pairwise)
+    if (isTRUE(do_identities)) {
+        eval_strings = append(eval_strings, identities)
+    }
+    if (isTRUE(do_pairwise)) {
+        eval_strings = append(eval_strings, all_pairwise)
+    }        
+    
     eval_names = names(eval_strings)
     if (!is.null(extra_contrasts)) {
         extra_eval_strings = strsplit(extra_contrasts, "\\n")
         extra_eval_names = extra_eval_strings
         require.auto("stringi")
-        extra_eval_names = stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")        
+        extra_eval_names = stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")
         eval_strings = append(eval_strings, extra_contrasts)
     }
 ##    for (f in 1:length(eval_strings)) {
@@ -355,7 +515,7 @@ balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL
         contrast_string = paste(contrast_string, eval_string, sep="   ")
     }
     ## The final element of makeContrasts() is the design from voom()
-    contrast_string = paste(contrast_string, "levels=fun_design)")
+    contrast_string = paste(contrast_string, "levels=model)")
     eval(parse(text=contrast_string))
     ## I like to change the column names of the contrasts because by default
     ## they are kind of obnoxious and too long to type
@@ -364,29 +524,13 @@ balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL
         eval_names = append(eval_names, extra_eval_names)
     }
     colnames(all_pairwise_contrasts) = eval_names
-    ## Once all that is done, perform the fit
-    ## This will first provide the relative abundances of each condition
-    ## followed by the set of all pairwise comparisons.
-    all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
-    all_pairwise_comparisons = eBayes(all_pairwise_fits)
-    all_tables = try(topTable(all_pairwise_comparisons))
-    limma_result = write_limma(all_pairwise_comparisons, excel=FALSE, ...)
     result = list(
-        conditions_table=condition_table,
-        batches_table=batch_table,
-        conditions=conditions,
-        batches=batches,
-        model=fun_model,
-        fit=fun_fit,
-        voom_result=fun_voom,
-        voom_design=fun_design,
-        identities=identities,
-        all_pairwise=all_pairwise,
-        contrast_string=contrast_string,
-        pairwise_fits=all_pairwise_fits,
-        pairwise_comparisons=all_pairwise_comparisons,
-        all_tables=all_tables,
-        limma_result=limma_result)
+        all_pairwise_contrasts = all_pairwise_contrasts,
+        identities = identities,
+        all_pairwise = all_pairwise,
+        contrast_string = contrast_string,
+        names = eval_names
+        )
     return(result)
 }
 
@@ -416,13 +560,21 @@ limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC
     if (is.numeric(second_table)) {
         y_name = paste(names(tables)[second_table], second_column, sep=":")
     }
+
+    ## This section is a little bit paranoid
+    ## I want to make absolutely certain that I am adding only the
+    ## two columns I care about and that nothing gets reordered
+    ## As a result I am explicitly pulling a single column, setting
+    ## the names, then pulling the second column, then cbind()ing them.
     x_name = paste(first_table, first_column, sep=":")
     y_name = paste(second_table, second_column, sep=":")
-    df = data.frame(
-        x=tables[[first_table]][[first_column]],
-        y=tables[[second_table]][[second_column]]
-    )
+    df = data.frame(x=tables[[first_table]][[first_column]])
+    rownames(df) = rownames(tables[[first_table]])
+    second_column_list = tables[[second_table]][[second_column]]
+    names(second_column_list) = rownames(tables[[second_table]])
+    df = cbind(df, second_column_list)
     colnames(df) = c(x_name, y_name)
+
     plots = NULL
     if (type == "linear_scatter") {
         plots = hpgl_linear_scatter(df, loess=TRUE, ...)
@@ -455,7 +607,7 @@ limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC
 #' @param combat whether or not to use combatMod().  FALSE by default.
 #' @param combat_noscale whether or not to include combat_noscale (makes combat a little less heavy-handed).  TRUE by default.
 #' @param pvalue_cutoff p-value definition of 'significant.'  0.05 by default.
-#' @param logfc_cutoff fold-change cutoff of significance. 0.6 (and therefore 1.6) by default.
+#' @param logfc_cutoff fold-change cutoff of significance. 0.6 (and therefor 1.6) by default.
 #' @param tooltip_data Text descriptions of genes if one wants google graphs.
 #'
 #' @return A list containing the following pieces:

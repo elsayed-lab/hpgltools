@@ -999,7 +999,8 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     if (!is.null(title)) {
         pca_plot = pca_plot + ggtitle(title)
     }
-    pca_return = list(plot=pca_plot, table=pca_data, res=pca_res, variance=pca_variance)
+    pca_return = list(
+        pca=pca, plot=pca_plot, table=pca_data, res=pca_res, variance=pca_variance)
     return(pca_return)
 }
 
