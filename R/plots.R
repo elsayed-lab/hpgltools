@@ -959,7 +959,7 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     } else {
         hpgl_labels = expt$names
     }
-    pca = cbcbSEQ::makeSVD(hpgl_df)  ## This is a part of cbcbSEQ
+    pca = hpgltools::makeSVD(hpgl_df)  ## This is a part of cbcbSEQ
     if (length(levels(hpgl_design$batch)) == 1) {
         pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition)
     } else {

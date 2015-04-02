@@ -38,7 +38,7 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
         tmp_definitions = meta_dataframe
-    } else {
+   }  else {
         tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
     }
     colnames(tmp_definitions) = tolower(colnames(tmp_definitions))    

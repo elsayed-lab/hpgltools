@@ -98,8 +98,9 @@ filter_counts = function(counts, thresh=2, min_samples=2) {
 #'
 #' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
 #' @export
-normalize_expt = function(expt, transform="raw", norm="raw", convert="raw", filter_low=FALSE, annotations=NULL, verbose=FALSE, use_original=FALSE, thresh=2, min_samples=2, batch=NULL, batch1="batch", batch2=NULL, ...) {
+normalize_expt = function(expt, transform="raw", norm="raw", convert="raw", batch="raw", filter_low=FALSE, annotations=NULL, verbose=FALSE, use_original=FALSE, thresh=2, min_samples=2, batch1="batch", batch2=NULL, ...) {
     new_expt = expt
+    current = expt$expressionset
     if (is.null(new_expt$original_expressionset)) {
         new_expt$original_expressionset = new_expt$expressionset
     } else {
@@ -110,8 +111,9 @@ normalize_expt = function(expt, transform="raw", norm="raw", convert="raw", filt
     old_data = exprs(expt$original_expressionset)
     design = expt$design
 
-    normalized_data = hpgl_norm(df=old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch2=batch2, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples)
-
+    normalized_data = as.matrix(hpgl_norm(df=old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch1=batch1, batch2=batch2, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples)$counts)
+    exprs(current) = normalized_data
+    new_expt$expressionset = current
     new_expt$filtered = filter_low
     new_expt$transform = transform
     new_expt$norm = norm
@@ -211,7 +213,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         # Quantile normalization (Bolstad et al., 2003)
         count_rownames = rownames(count_table)
         count_colnames = colnames(count_table)
-        count_table = normalize.quantiles(as.matrix(count_table))
+        count_table = normalize.quantiles(as.matrix(count_table), copy=TRUE)
         rownames(count_table) = count_rownames
         colnames(count_table) = count_colnames
         # Convert to a DGEList
@@ -301,7 +303,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         print(paste("Applying: ", transform, " transformation.", sep=""))
     }
     counts = count_table$counts
-    if (convert_performed != "cpm") {
+    if (convert_performed != "cpm" & transform != "raw") {
         counts = counts + 1
     }
     if (transform == "log2") {

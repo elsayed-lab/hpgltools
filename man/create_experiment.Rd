@@ -5,10 +5,10 @@
 \title{Wrap bioconductor's expressionset to include some other extraneous
 information.}
 \usage{
-create_experiment(file, color_hash, suffix = ".count.gz", header = FALSE,
-  genes = NULL, by_type = FALSE, by_sample = FALSE,
+create_experiment(file = NULL, color_hash, suffix = ".count.gz",
+  header = FALSE, genes = NULL, by_type = FALSE, by_sample = FALSE,
   include_type = "all", include_gff = NULL, count_dataframe = NULL,
-  sep = ",", ...)
+  meta_dataframe = NULL, sep = ",", ...)
 }
 \arguments{
 \item{file}{a comma separated file describing the samples with
