@@ -13,6 +13,7 @@ require.auto("pasilla")
 ```
 
 ```{r load_data}
+
 ## locate the path of the dataset and read in the dataset
 datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
 counts = read.table(datafile, header=TRUE, row.names=1)
@@ -69,7 +70,8 @@ If diff_df() returns a bunch of 1's, then the columns of the data sets are exact
 ```{r cbcbSEQ_result}
 
 cbcb_quantile = cbcbSEQ::qNorm(counts)
-hpgl_quantile = hpgl_norm(expt=pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE)$counts
+hpgl_quantile_data = hpgl_norm(expt=pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE)
+hpgl_quantile = hpgl_quantile_data$counts
 diff_df(cbcb_quantile, hpgl_quantile)
 
 quantile_expt = normalize_expt(expt=pasilla_expt, convert="raw", transform="raw", filter_low=FALSE, norm="quant")
@@ -82,8 +84,10 @@ diff_df(cbcb_quantile, hpgl_quantile)
 
 ```{r log2cpm_result}
 
-cbcb_l2cpm = log2CPM(cbcb_quantile)$y
-hpgl_l2cpm = hpgl_norm(expt=pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE)$counts
+cbcb_l2 = log2CPM(cbcb_quantile)
+cbcb_l2cpm = cbcb_l2$y
+hpgl_l2cpm_exprs = hpgl_norm(expt=pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE)
+hpgl_l2cpm = hpgl_l2cpm_exprs$counts
 diff_df(cbcb_l2cpm, hpgl_l2cpm)
 
 ```
@@ -99,9 +103,54 @@ diff_df(data.frame(cbcb_svd$v), data.frame(hpgl_svd$v))
 
 cbcb_res = cbcbSEQ::pcRes(cbcb_svd$v, cbcb_svd$d, design$condition, design$libType)
 hpgl_res = hpgl_pca_info$res
+diff_df(cbcb_res, hpgl_res)
 
 ```
 
+## ComBat invocation
+
+```{r combat_result}
+
+cbcb_batch = cbcbSEQ::combatMod(cbcb_l2cpm, batch=design$libType, mod=design$condition, noScale=TRUE)
+hpgl_batch_expt = normalize_expt(expt=pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", filter_low=FALSE)
+hpgl_batch = exprs(hpgl_batch_expt$expressionset)
+diff_df(cbcb_batch, hpgl_batch)
+
+```
+
+## Voom invocation
+
+```{r voom_result}
+
+cbcb_libsize = cbcb_l2$lib.size
+hpgl_libsize = quantile_expt$norm_libsize
+cbcb_voom_ret = voomMod(cbcb_batch, model.matrix(~design$condition), lib.size=cbcb_libsize, plot=TRUE)
+tmp_voom_ret = voomMod(hpgl_batch, model.matrix(~design$condition), lib.size=hpgl_libsize)
+diff_df(cbcb_voom_ret$weights, tmp_voom_ret$weights)
+hpgl_voom_ret = hpgl_voom(hpgl_batch, model.matrix(~design$condition), libsize=hpgl_libsize)
+diff_df(cbcb_voom_ret$weights, hpgl_voom_ret$weights)
+head(cbcb_voom_ret$weights)
+head(tmp_voom_ret$weights)
+head(hpgl_voom_ret$weights)
+
+diff_df(cbcb_voom_ret$E, hpgl_voom_ret$E)
+hpgl_voom_ret = hpgl_voom(hpgl_batch, model.matrix(~ 0 + design$condition), libsize=hpgl_libsize)
+diff_df(cbcb_voom_ret$E, hpgl_voom_ret$E)
+head(hpgl_voom_ret$weights)
+
+```
+
+## Limma invocation
+
+```{r limma_result}
+
+cbcb_fit = lmFit(cbcb_voom_ret)
+cbcb_eb = eBayes(cbcb_fit)
+cbcb_top = topTable(cbcb_eb, number=nrow(cbcb_eb))
+
+hpgl_top = limma_pairwise(expt=hpgl_batch_expt, model_intercept=TRUE, model_batch=FALSE)
+
+```
 
 
 # quantile normalize: adjust counts for library size.
@@ -137,13 +186,7 @@ plotPC(res$v,res$d,
        ylim=c(min(res$v[,2])-.08,max(res$v[,2])+.08))
 text(res$v[,1], res$v[,2], design$libType, pos=1, cex=0.6) 
 
-v = voomMod(tmp, model.matrix(~design$condition), lib.size=libsize, plot=TRUE)
 
-summary(v)
-fit = lmFit(v)
-eb = eBayes(fit)
-top = topTable(eb, coef=2, n=nrow(v$E))
-top$ID = rownames(top)
 
 sel = top$adj.P.Val < 0.05
 plot(top$logFC, -log10(top$adj.P.Val), pch=16, cex=0.3,

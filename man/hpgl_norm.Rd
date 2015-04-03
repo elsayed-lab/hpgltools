@@ -7,7 +7,7 @@
 hpgl_norm(df = NULL, expt = NULL, design = NULL, transform = "raw",
   norm = "raw", convert = "raw", batch = "raw", batch1 = "batch",
   batch2 = NULL, filter_low = TRUE, annotations = NULL, verbose = FALSE,
-  thresh = 2, min_samples = 2, ...)
+  thresh = 2, min_samples = 2, noscale = TRUE, ...)
 }
 \arguments{
 \item{transform}{defines whether to log(2|10) transform the

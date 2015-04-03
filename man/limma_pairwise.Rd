@@ -7,8 +7,9 @@ a pairwise comparison of all conditions/batches.  In this case, there
 must be a balanced set of batches for each condition.}
 \usage{
 limma_pairwise(expt = NULL, data = NULL, conditions = NULL,
-  batches = NULL, extra_contrasts = NULL, norm = "quant",
-  convert = "cpm", ...)
+  batches = NULL, model_cond = TRUE, model_batch = FALSE,
+  model_intercept = FALSE, extra_contrasts = NULL, norm = "quant",
+  convert = "cpm", batch = NULL, alt_model = NULL, ...)
 }
 \arguments{
 \item{conditions}{a factor of conditions in the experiment}

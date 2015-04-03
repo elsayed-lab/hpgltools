@@ -5,8 +5,8 @@
 \title{Replace the data of an expt with normalized data}
 \usage{
 normalize_expt(expt, transform = "raw", norm = "raw", convert = "raw",
-  filter_low = FALSE, annotations = NULL, verbose = FALSE,
-  use_original = FALSE, thresh = 2, min_samples = 2, batch = NULL,
+  batch = "raw", filter_low = FALSE, annotations = NULL,
+  verbose = FALSE, use_original = FALSE, thresh = 2, min_samples = 2,
   batch1 = "batch", batch2 = NULL, ...)
 }
 \arguments{

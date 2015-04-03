@@ -1120,6 +1120,46 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     positives = decomposed$d
     u = decomposed$u
     v = decomposed$v
+    ## A neat idea from Kwame, rank order plot the U's in the svd version of:
+    ## [Covariates] = [U][diagonal][V] for a given PC (usually/always PC1)
+    ## The idea being: the resulting decreasing line should be either a slow even
+    ## decrease if many genes are contributing to the given component
+    ## Conversely, that line should drop suddenly if dominated by one/few genes.
+    plotted_us = u
+    rownames(plotted_us) = rownames(df)
+    plotted_us = abs(plotted_us[,c(1,2,3)])
+    plotted_u1s = plotted_us[order(plotted_us[,1], decreasing=TRUE),]
+    plotted_u2s = plotted_us[order(plotted_us[,2], decreasing=TRUE),]
+    plotted_u3s = plotted_us[order(plotted_us[,3], decreasing=TRUE),]    
+    ##        allS <- BiocGenerics::rank(allS, ties.method = "random")
+    ##    plotted_us$rank = rank(plotted_us[,1], ties.method="random")
+    plotted_u1s = cbind(plotted_u1s, rev(rank(plotted_u1s[,1], ties.method="random")))
+    plotted_u1s = plotted_u1s[,c(1,4)]
+    colnames(plotted_u1s) = c("PC1","rank")
+    plotted_u1s = data.frame(plotted_u1s)
+    plotted_u1s$ID = as.character(rownames(plotted_u1s))
+    plotted_u2s = cbind(plotted_u2s, rev(rank(plotted_u2s[,2], ties.method="random")))
+    plotted_u2s = plotted_u2s[,c(2,4)]
+    colnames(plotted_u2s) = c("PC2","rank")
+    plotted_u2s = data.frame(plotted_u2s)
+    plotted_u2s$ID = as.character(rownames(plotted_u2s))
+    plotted_u3s = cbind(plotted_u3s, rev(rank(plotted_u3s[,3], ties.method="random")))
+    plotted_u3s = plotted_u3s[,c(3,4)]
+    colnames(plotted_u3s) = c("PC3","rank")
+    plotted_u3s = data.frame(plotted_u3s)
+    plotted_u3s$ID = as.character(rownames(plotted_u3s))
+    plotted_us = merge(plotted_u1s, plotted_u2s, by.x="rank", by.y="rank")
+    plotted_us = merge(plotted_us, plotted_u3s, by.x="rank", by.y="rank")
+    colnames(plotted_us) = c("rank","PC1","ID1","PC2","ID2","PC3","ID3")
+    rm(plotted_u1s)
+    rm(plotted_u2s)
+    rm(plotted_u3s)
+    top_threePC = head(plotted_us, n=20)
+    plotted_us = plotted_us[,c("PC1","PC2","PC3")]
+    plotted_us$ID = rownames(plotted_us)
+    plot(plotted_us)
+    u_plot = recordPlot()
+    
     rownames(v) = colnames(data)
     component_variance = round((positives^2) / sum(positives^2) * 100, 3)
     cumulative_pc_variance = cumsum(component_variance)
@@ -1216,7 +1256,10 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
 
             lmwithfactor_test = try(lm(formula=get(pc_name) ~ 1 + get(factor_name), data=tmp_df))
             lmwithoutfactor_test = try(lm(formula=get(pc_name) ~ 1, data=tmp_df))
-            fstat = sum(residuals(lmwithfactor_test)^2) / sum(residuals(lmwithoutfactor_test)^2)            
+            ## This fstat provides a metric of how much variance is removed by including this specific factor
+            ## in the model vs not.  Therefore higher numbers tell us that adding that factor
+            ## removed more variance and are more important.
+            fstat = sum(residuals(lmwithfactor_test)^2) / sum(residuals(lmwithoutfactor_test)^2)
             ##1.  Perform lm(pc ~ 1 + factor) which is fit1
             ##2.  Perform lm(pc ~ 1) which is fit2
             ##3.  The Fstat is then defined as (sum(residuals(fit1)^2) / sum(residuals(fit2)^2))
@@ -1289,6 +1332,7 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     ## Analagously: boxplot(PCn ~ batch)
     
     pca_list = list(
+        pc1_trend=u_plot, strongest_genes=top_threePC,
         svd_d=positives, svd_u=u, svd_v=v, rsquared_table=component_rsquared_table,
         pca_variance=pca_variance, pca_data=pca_data, anova_fstats=anova_fstats,
         anova_sums=anova_sums, anova_f=anova_f, anova_p=anova_p,

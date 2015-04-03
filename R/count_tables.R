@@ -34,7 +34,7 @@
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
 create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
-    if(is.null(meta_dataframe) & is.null(file)) {
+    if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
         tmp_definitions = meta_dataframe
@@ -82,6 +82,7 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
     new_expt$transform = "raw"
     new_expt$norm = "raw"
     new_expt$convert = "raw"
+    new_expt$original_libsize = colSums(exprs(new_expt$expressionset))
     if (!is.null(savefile)) {
         save(list = c("new_expt"), file=paste(savefile, ".Rdata", sep=""))
     }
@@ -110,7 +111,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
     print("The most important ones are: Sample.ID, Stage, Type.")
     print("Other columns it will attempt to create by itself, but if")
     print("batch and condition are provided, that is a nice help.")
-    if(is.null(meta_dataframe) & is.null(file)) {
+    if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
         sample_definitions = meta_dataframe

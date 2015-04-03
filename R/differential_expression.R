@@ -272,55 +272,98 @@ limma_subset = function(table, n=NULL, z=NULL) {
 #' @export
 #' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
-limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, extra_contrasts=NULL, norm="quant", convert="cpm", ...) {
+limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, norm="quant", convert="cpm", batch=NULL, alt_model=NULL, ...) {
     if (is.null(expt) & is.null(data)) {
         stop("This requires either an expt or data/condition/batches")
     } else if (!is.null(expt)) {
         conditions = expt$conditions
         batches = expt$batches
-        data = as.data.frame(exprs(expt$expressionset))
-        ## Make sure the data isn't in the log2 scale before calling voom.
-        tmp_expt = expt
-        if (expt$transform == "log2") {
-            tmp_expt$expressionset = tmp_expt$original_expressionset
+        data = exprs(expt$expressionset)
+        libsize = expt$norm_libsize
+        if (is.null(libsize)) {
+            libsize = expt$original_libsize
         }
-        tmp_expt = normalize_expt(expt=tmp_expt, transform="raw", norm=norm, convert=convert)
-        data = exprs(tmp_expt$expressionset)
+    }
+    if (is.null(libsize)) {
+        libsize = colSums(data)
     }
     condition_table = table(conditions)
     batch_table = table(batches)
     conditions = as.factor(conditions)
     batches = as.factor(batches)
     ## Make a model matrix which will have one entry for each of these condition/batches
-    cond_model = model.matrix(~0 + conditions)
-    fun_model = model.matrix(~0 + conditions + batches)
+    cond_model = model.matrix(~ 0 + conditions)
+    batch_model = model.matrix(~ 0 + batches)
+    condbatch_model = model.matrix(~ 0 + conditions + batches)
+    cond_int_model = model.matrix(~ conditions)
+    batch_int_model = model.matrix(~ batches)
+    condbatch_int_model = model.matrix(~ conditions + batches)
+    fun_model = NULL
+    fun_int_model = NULL
+    if (isTRUE(model_cond) & isTRUE(model_batch)) {
+        fun_model = condbatch_model
+        fun_int_model = condbatch_int_model
+    } else if (isTRUE(model_cond)) {
+        fun_model = cond_model
+        fun_int_model = cond_int_model
+    } else if (isTRUE(model_batch)) {
+        fun_model = batch_model
+        fun_int_model = batch_int_model
+    } else {
+        ## Default to the conditional model
+        fun_model = cond_model
+        fun_int_model = cond_int_model
+    }
+    if (isTRUE(model_intercept)) {
+        fun_model = fun_int_model
+    }
+    if (!is.null(alt_model)) {
+        fun_model = alt_model
+    }    
     tmpnames = colnames(fun_model)
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    tmpnames = gsub("-", "", tmpnames)
+    tmpnames = gsub("+", "", tmpnames)
     tmpnames = gsub("conditions", "", tmpnames)
     colnames(fun_model) = tmpnames
     fun_voom = NULL
     ## voom() it, taking into account whether the data has been log2 transformed.
-    fun_voom = voom(data, fun_model)
+    ##fun_voom = voom(data, fun_model)
+   ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
+    fun_voom = voomMod(data, fun_model, lib.size=libsize)
     ## Extract the design created by voom()
     ## This is interesting because each column of the design will have a prefix string 'macb' before the
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
     ## This will be important in 17 lines from now.
     fun_design = fun_voom$design    
     ## Do the lmFit() using this model    
-    fun_fit = lmFit(fun_voom, fun_model)
+    ##fun_fit = lmFit(fun_voom, fun_model)
+    fun_fit = lmFit(fun_voom)
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
-    contrasts = make_pairwise_contrasts(fun_model, conditions, extra_contrasts=extra_contrasts)
-    all_pairwise_contrasts = contrasts$all_pairwise_contrasts
-    identities = contrasts$identities
-    contrast_string = contrasts$contrast_string
-    all_pairwise = contrasts$all_pairwise
-    ## Once all that is done, perform the fit
-    ## This will first provide the relative abundances of each condition
-    ## followed by the set of all pairwise comparisons.
-    all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
+    if (isTRUE(model_intercept)) {
+        contrasts = "intercept"
+        identities = NULL
+        contrast_string = NULL
+        all_pairwise = NULL
+        all_pairwise_fits = fun_fit
+    } else {
+        contrasts = make_pairwise_contrasts(fun_model, conditions, extra_contrasts=extra_contrasts)
+        all_pairwise_contrasts = contrasts$all_pairwise_contrasts
+        identities = contrasts$identities
+        contrast_string = contrasts$contrast_string
+        all_pairwise = contrasts$all_pairwise
+        ## Once all that is done, perform the fit
+        ## This will first provide the relative abundances of each condition
+        ## followed by the set of all pairwise comparisons.
+        all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
+    }
     all_pairwise_comparisons = eBayes(all_pairwise_fits)
-    all_tables = try(topTable(all_pairwise_comparisons))
-    limma_result = write_limma(all_pairwise_comparisons, excel=FALSE, ...)
+    all_tables = try(topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
+    if (isTRUE(model_intercept)) {
+        limma_result = all_tables
+    } else {
+        limma_result = write_limma(all_pairwise_comparisons, excel=FALSE, ...)
+    }
     result = list(
         input_data=data,
         conditions_table=condition_table,
@@ -452,6 +495,12 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, e
 #' @examples
 #' ## pretend = make_pairwise_contrasts(model, conditions)
 make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pairwise=TRUE, extra_contrasts=NULL) {
+    tmpnames = colnames(model)
+    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    tmpnames = gsub("-", "", tmpnames)
+    tmpnames = gsub("+", "", tmpnames)
+    tmpnames = gsub("conditions", "", tmpnames)
+    colnames(model) = tmpnames
     condition_table = table(conditions)
     identities = list()
     contrast_string = ""
