@@ -9,7 +9,7 @@ must be a balanced set of batches for each condition.}
 limma_pairwise(expt = NULL, data = NULL, conditions = NULL,
   batches = NULL, model_cond = TRUE, model_batch = FALSE,
   model_intercept = FALSE, extra_contrasts = NULL, norm = "quant",
-  convert = "cpm", batch = NULL, alt_model = NULL, ...)
+  convert = "cpm", batch = NULL, alt_model = NULL, libsize = NULL)
 }
 \arguments{
 \item{conditions}{a factor of conditions in the experiment}

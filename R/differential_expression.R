@@ -272,16 +272,19 @@ limma_subset = function(table, n=NULL, z=NULL) {
 #' @export
 #' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
-limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, norm="quant", convert="cpm", batch=NULL, alt_model=NULL, ...) {
+limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, norm="quant", convert="cpm", batch=NULL, alt_model=NULL, libsize=NULL) {
     if (is.null(expt) & is.null(data)) {
         stop("This requires either an expt or data/condition/batches")
     } else if (!is.null(expt)) {
         conditions = expt$conditions
         batches = expt$batches
         data = exprs(expt$expressionset)
-        libsize = expt$norm_libsize
         if (is.null(libsize)) {
-            libsize = expt$original_libsize
+            if (is.null(expt$normalized$normalized_counts$libsize)) {
+                libsize = expt$norm_libsize
+            } else {
+                libsize = expt$normalized$normalized_counts$libsize
+            }
         }
     }
     if (is.null(libsize)) {
@@ -362,7 +365,7 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     if (isTRUE(model_intercept)) {
         limma_result = all_tables
     } else {
-        limma_result = write_limma(all_pairwise_comparisons, excel=FALSE, ...)
+        limma_result = write_limma(all_pairwise_comparisons, excel=FALSE)
     }
     result = list(
         input_data=data,
