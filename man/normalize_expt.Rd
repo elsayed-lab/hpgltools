@@ -4,9 +4,9 @@
 \alias{normalize_expt}
 \title{Replace the data of an expt with normalized data}
 \usage{
-normalize_expt(expt, transform = "log2", norm = "quant", convert = "cpm",
-  filter_low = TRUE, annotations = NULL, verbose = FALSE,
-  use_original = TRUE, thresh = 2, min_samples = 2, batch = NULL,
+normalize_expt(expt, transform = "raw", norm = "raw", convert = "raw",
+  batch = "raw", filter_low = FALSE, annotations = NULL,
+  verbose = FALSE, use_original = FALSE, thresh = 2, min_samples = 2,
   batch1 = "batch", batch2 = NULL, ...)
 }
 \arguments{

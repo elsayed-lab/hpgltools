@@ -347,9 +347,9 @@ hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=
         hpgl_colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
     }
     hpgl_df = data.frame(hpgl_df)
+    hpgl_df[hpgl_df < 0] = 0 ## Likely only needed when using batch correction and it sets a value to < 0
     if (scale != "raw") {
-        hpgl_df = hpgl_df + 1
-        hpgl_df = log2(hpgl_df)
+        hpgl_df = log2(hpgl_df + 1)
     }    
     hpgl_df$id = rownames(hpgl_df)
     dataframe = melt(hpgl_df, id=c("id"))
@@ -959,7 +959,7 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     } else {
         hpgl_labels = expt$names
     }
-    pca = cbcbSEQ::makeSVD(hpgl_df)  ## This is a part of cbcbSEQ
+    pca = hpgltools::makeSVD(hpgl_df)  ## This is a part of cbcbSEQ
     if (length(levels(hpgl_design$batch)) == 1) {
         pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition)
     } else {
@@ -999,7 +999,8 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     if (!is.null(title)) {
         pca_plot = pca_plot + ggtitle(title)
     }
-    pca_return = list(plot=pca_plot, table=pca_data, res=pca_res, variance=pca_variance)
+    pca_return = list(
+        pca=pca, plot=pca_plot, table=pca_data, res=pca_res, variance=pca_variance)
     return(pca_return)
 }
 
@@ -1012,6 +1013,7 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
 #' @return The r^2 values of the linear model as a %
 #'
 #' @seealso \code{\link{fast.svd}}
+#' @export
 factor_rsquared = function(svd_v, factor) {
     svd_lm = try(lm(svd_v ~ factor), silent=TRUE)
     if (class(svd_lm) == 'try-error') {
@@ -1092,6 +1094,10 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
 #'   pca_variance: A table of the pca variances
 #'   pca_data: Coordinates for a pca plot
 #'   pca_cor: A table of the correlations between the factors and principle components
+#'   anova_fstats: the sum of the residuals with the factor vs without (manually calculated)
+#'   anova_f: The result from performing anova(withfactor, withoutfactor), the F slot
+#'   anova_p: The p-value calculated from the anova() call
+#'   anova_sums: The RSS value from the above anova() call
 #'   cor_heatmap: A heatmap from recordPlot() describing pca_cor.
 #' @seealso \code{\link{fast.svd}}, \code{\link{lm}}
 #' 
@@ -1099,16 +1105,74 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
 #' @examples
 #' ## pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
 #' ## pca_info
-pca_information = function(df, design, factors=c("condition","batch"), num_components=NULL, plot_pcas=FALSE, labels="fancy") {
+pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition","batch"), num_components=NULL, plot_pcas=FALSE, labels="fancy") {
+    hpgl_env = environment()
+    if (is.null(expt) & is.null(df)) {
+        stop("This needs either: an expt or a df.")
+    }
+    if (is.null(df)) {
+        df = as.data.frame(exprs(expt$expressionset))
+        design = as.data.frame(expt$design)
+    }
     data = as.matrix(df)
     means = rowMeans(data)
     decomposed = fast.svd(data - means)
     positives = decomposed$d
     u = decomposed$u
     v = decomposed$v
+    ## A neat idea from Kwame, rank order plot the U's in the svd version of:
+    ## [Covariates] = [U][diagonal][V] for a given PC (usually/always PC1)
+    ## The idea being: the resulting decreasing line should be either a slow even
+    ## decrease if many genes are contributing to the given component
+    ## Conversely, that line should drop suddenly if dominated by one/few genes.
+    plotted_us = u
+    rownames(plotted_us) = rownames(df)
+    plotted_us = abs(plotted_us[,c(1,2,3)])
+    plotted_u1s = plotted_us[order(plotted_us[,1], decreasing=TRUE),]
+    plotted_u2s = plotted_us[order(plotted_us[,2], decreasing=TRUE),]
+    plotted_u3s = plotted_us[order(plotted_us[,3], decreasing=TRUE),]    
+    ##        allS <- BiocGenerics::rank(allS, ties.method = "random")
+    ##    plotted_us$rank = rank(plotted_us[,1], ties.method="random")
+    plotted_u1s = cbind(plotted_u1s, rev(rank(plotted_u1s[,1], ties.method="random")))
+    plotted_u1s = plotted_u1s[,c(1,4)]
+    colnames(plotted_u1s) = c("PC1","rank")
+    plotted_u1s = data.frame(plotted_u1s)
+    plotted_u1s$ID = as.character(rownames(plotted_u1s))
+    plotted_u2s = cbind(plotted_u2s, rev(rank(plotted_u2s[,2], ties.method="random")))
+    plotted_u2s = plotted_u2s[,c(2,4)]
+    colnames(plotted_u2s) = c("PC2","rank")
+    plotted_u2s = data.frame(plotted_u2s)
+    plotted_u2s$ID = as.character(rownames(plotted_u2s))
+    plotted_u3s = cbind(plotted_u3s, rev(rank(plotted_u3s[,3], ties.method="random")))
+    plotted_u3s = plotted_u3s[,c(3,4)]
+    colnames(plotted_u3s) = c("PC3","rank")
+    plotted_u3s = data.frame(plotted_u3s)
+    plotted_u3s$ID = as.character(rownames(plotted_u3s))
+    plotted_us = merge(plotted_u1s, plotted_u2s, by.x="rank", by.y="rank")
+    plotted_us = merge(plotted_us, plotted_u3s, by.x="rank", by.y="rank")
+    colnames(plotted_us) = c("rank","PC1","ID1","PC2","ID2","PC3","ID3")
+    rm(plotted_u1s)
+    rm(plotted_u2s)
+    rm(plotted_u3s)
+    top_threePC = head(plotted_us, n=20)
+    plotted_us = plotted_us[,c("PC1","PC2","PC3")]
+    plotted_us$ID = rownames(plotted_us)
+    plot(plotted_us)
+    u_plot = recordPlot()
+    
     rownames(v) = colnames(data)
     component_variance = round((positives^2) / sum(positives^2) * 100, 3)
     cumulative_pc_variance = cumsum(component_variance)
+
+    ## Another method of using PCA
+    con = as.factor(as.numeric(batches))
+    another_pca = try(princomp(x=data, cor=FALSE, scores=TRUE, formula=~con+bat))
+    lowest = NULL
+    highest = NULL
+    if (class(another_pca != 'try-error')) {
+        lowest = head(names(sort(another_pca$x[,"PC1"], decreasing=FALSE)))
+        highest = head(names(sort(another_pca$x[,"PC1"], decreasing=TRUE)))
+    }
 
     ## Include in this table the fstatistic and pvalue described in rnaseq_bma.rmd
     component_rsquared_table = data.frame(
@@ -1158,7 +1222,8 @@ pca_information = function(df, design, factors=c("condition","batch"), num_compo
                 if (pc < second_pc & second_pc <= num_components) {
                     second_name = paste("PC", second_pc, sep="")
                     list_name = paste(name, "_", second_name, sep="")
-                    tmp_plot = print(plot_pcs(pca_data, design=design, variances=pca_variance, first=name, second=second_name, labels=labels))
+                    ## Sometimes these plots fail because too many grid operations are happening.
+                    tmp_plot = try(print(plot_pcs(pca_data, design=design, variances=pca_variance, first=name, second=second_name, labels=labels)))
                     pca_plots[[list_name]] = tmp_plot
                 }
             }
@@ -1179,6 +1244,7 @@ pca_information = function(df, design, factors=c("condition","batch"), num_compo
     anova_sums = data.frame()
     anova_f = data.frame()
     anova_p = data.frame()
+    anova_rss = data.frame()
     anova_fstats = data.frame()
     for (factor in factors) {
         for (pc in 1:num_components) {
@@ -1190,7 +1256,10 @@ pca_information = function(df, design, factors=c("condition","batch"), num_compo
 
             lmwithfactor_test = try(lm(formula=get(pc_name) ~ 1 + get(factor_name), data=tmp_df))
             lmwithoutfactor_test = try(lm(formula=get(pc_name) ~ 1, data=tmp_df))
-            fstat = sum(residuals(lmwithfactor_test)^2) / sum(residuals(lmwithoutfactor_test)^2)            
+            ## This fstat provides a metric of how much variance is removed by including this specific factor
+            ## in the model vs not.  Therefore higher numbers tell us that adding that factor
+            ## removed more variance and are more important.
+            fstat = sum(residuals(lmwithfactor_test)^2) / sum(residuals(lmwithoutfactor_test)^2)
             ##1.  Perform lm(pc ~ 1 + factor) which is fit1
             ##2.  Perform lm(pc ~ 1) which is fit2
             ##3.  The Fstat is then defined as (sum(residuals(fit1)^2) / sum(residuals(fit2)^2))
@@ -1201,10 +1270,12 @@ pca_information = function(df, design, factors=c("condition","batch"), num_compo
                 anova_sums[factor,pc] = 0
                 anova_f[factor,pc] = 0
                 anova_p[factor,pc] = 0
+                anova_rss[factor,pc] = 0
             } else {
                 anova_sums[factor,pc] = another_fstat$S[2]
                 anova_f[factor,pc] = another_fstat$F[2]
                 anova_p[factor,pc] = another_fstat$P[2]
+                anova_rss[factor,pc] = another_fstat$RSS[1]
             }
             anova_fstats[factor,pc] = fstat
 
@@ -1231,17 +1302,43 @@ pca_information = function(df, design, factors=c("condition","batch"), num_compo
     }
     rownames(cor_df) = colnames(factor_df)
     colnames(cor_df) = colnames(pc_df)
+    colnames(anova_sums) = colnames(pc_df)
+    colnames(anova_f) = colnames(pc_df)
+    colnames(anova_p) = colnames(pc_df)
+    colnames(anova_rss) = colnames(pc_df)
+    colnames(anova_fstats) = colnames(pc_df)
+
     cor_df = as.matrix(cor_df)
-    silly_colors = grDevices::colorRampPalette(brewer.pal(9, "Purples"))(100)
+    ##    silly_colors = grDevices::colorRampPalette(brewer.pal(9, "Purples"))(100)
+    silly_colors = grDevices::colorRampPalette(c("purple","black","yellow"))(100)
     cor_df = cor_df[complete.cases(cor_df),]
     sillytime = heatmap.3(cor_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=silly_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="cor(factor, PC)")
     pc_factor_corheat = recordPlot()
+
+    anova_f_colors = grDevices::colorRampPalette(c("blue","black","red"))(100)    
+    anova_f_heat = heatmap.3(as.matrix(anova_f), scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=anova_f_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="anova fstats for (factor, PC)")
+    anova_f_heat = recordPlot()
+
+    anova_fstat_colors = grDevices::colorRampPalette(c("blue","white","red"))(100)
+    anova_fstat_heat = heatmap.3(as.matrix(anova_fstats), scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=anova_fstat_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="anova fstats for (factor, PC)")
+    anova_fstat_heat = recordPlot()
+
+    neglog_p = -1 * log(as.matrix(anova_p) + 1)
+    anova_neglogp_colors = grDevices::colorRampPalette(c("blue","white","red"))(100)
+    anova_neglogp_heat = heatmap.3(as.matrix(neglog_p), scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=anova_f_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="-log(anova_p values)")
+    anova_neglogp_heat = recordPlot()
+    ## Another option: -log10 p-value of the ftest for this heatmap.
+    ## covariate vs PC score
+    ## Analagously: boxplot(PCn ~ batch)
     
     pca_list = list(
+        pc1_trend=u_plot, strongest_genes=top_threePC,
         svd_d=positives, svd_u=u, svd_v=v, rsquared_table=component_rsquared_table,
         pca_variance=pca_variance, pca_data=pca_data, anova_fstats=anova_fstats,
         anova_sums=anova_sums, anova_f=anova_f, anova_p=anova_p,
-        pca_cor=cor_df, cor_heatmap=pc_factor_corheat,
+        pca_cor=cor_df,
+        cor_heatmap=pc_factor_corheat,
+        anova_f_heatmap=anova_f_heat, anova_fstat_heatmap=anova_fstat_heat, anova_neglogp_heatmaph=anova_neglogp_heat,
         pca_plots=pca_plots
     )
    

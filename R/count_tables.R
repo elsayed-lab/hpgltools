@@ -33,8 +33,14 @@
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
-create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
-    tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
+create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
+    if (is.null(meta_dataframe) & is.null(file)) {
+        stop("This requires either a csv file or dataframe of metadata describing the samples.")
+    } else if (is.null(file)) {
+        tmp_definitions = meta_dataframe
+   }  else {
+        tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
+    }
     colnames(tmp_definitions) = tolower(colnames(tmp_definitions))    
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
     ## Thus the next line
@@ -44,7 +50,7 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
     num_colors = length(condition_names)
     colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors))
     color_hash = hash(keys=as.character(condition_names), values=colors)
-    expt_list = create_experiment(file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
+    expt_list = create_experiment(file=file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, meta_dataframe=meta_dataframe, sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
     expt = expt_list$expt
     def = expt_list$def
     new_expt = expt_subset(expt, "")
@@ -67,7 +73,16 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
         new_expt$genes = genes
         new_expt$tooltip = tooltip_data
     }
-
+    ## These entries in new_expt are intended to maintain a record of
+    ## the transformation status of the data, thus if we now call
+    ## normalize_expt() it should change these.
+    ## Therefore, if we call a function like DESeq() which requires
+    ## non-log2 counts, we can check these values and convert accordingly
+    new_expt$filtered = FALSE
+    new_expt$transform = "raw"
+    new_expt$norm = "raw"
+    new_expt$convert = "raw"
+    new_expt$original_libsize = colSums(exprs(new_expt$expressionset))
     if (!is.null(savefile)) {
         save(list = c("new_expt"), file=paste(savefile, ".Rdata", sep=""))
     }
@@ -91,12 +106,18 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
-create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, include_type="all", include_gff=NULL, count_dataframe=NULL, sep=",", ...) {
+create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
     print("Please note that thus function assumes a specific set of columns in the sample sheet:")
     print("The most important ones are: Sample.ID, Stage, Type.")
     print("Other columns it will attempt to create by itself, but if")
     print("batch and condition are provided, that is a nice help.")
-    sample_definitions = read.csv(file=file, comment.char="#", sep=sep)
+    if (is.null(meta_dataframe) & is.null(file)) {
+        stop("This requires either a csv file or dataframe of metadata describing the samples.")
+    } else if (is.null(file)) {
+        sample_definitions = meta_dataframe
+    } else {
+        sample_definitions = read.csv(file=file, comment.char="#", sep=sep)
+    }
     colnames(sample_definitions) = tolower(colnames(sample_definitions))
     ##sample_definitions = sample_definitions[grepl('(^HPGL|^hpgl)', sample_definitions$sample.id, perl=TRUE),]
     if (is.null(sample_definitions$condition)) {

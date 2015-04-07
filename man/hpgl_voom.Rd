@@ -12,7 +12,7 @@ confounded by setting the coefficient to 1 for those samples rather
 than throwing an unhelpful error.  Also, the Elist output gets a
 'plot' slot which contains the plot rather than just printing it.}
 \usage{
-hpgl_voom(dataframe, model, libsize = NULL, stupid = FALSE)
+hpgl_voom(dataframe, model, libsize = NULL, stupid = FALSE, log2 = TRUE)
 }
 \arguments{
 \item{dataframe}{a dataframe of sample counts which have been

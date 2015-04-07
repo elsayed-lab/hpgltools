@@ -5,8 +5,9 @@
 \title{Normalize a dataframe/expt, express it, and/or transform it}
 \usage{
 hpgl_norm(df = NULL, expt = NULL, design = NULL, transform = "raw",
-  norm = "raw", convert = "raw", filter_low = TRUE, annotations = NULL,
-  verbose = FALSE, thresh = 2, min_samples = 2, ...)
+  norm = "raw", convert = "raw", batch = "raw", batch1 = "batch",
+  batch2 = NULL, filter_low = TRUE, annotations = NULL, verbose = FALSE,
+  thresh = 2, min_samples = 2, noscale = TRUE, ...)
 }
 \arguments{
 \item{transform}{defines whether to log(2|10) transform the
@@ -43,7 +44,7 @@ Normalize a dataframe/expt, express it, and/or transform it
 \examples{
 ## df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
 ## df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-## df_ql2rpkm = hpgl_norm(expt=expt, norm_type='quant', filter='log2', out_type='rpkm'  ## Quantile, log2, rpkm
+## df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
 ## count_table = df_ql2rpkm$counts
 }
 \seealso{

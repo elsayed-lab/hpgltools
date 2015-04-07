@@ -33,7 +33,7 @@ simple_comparison(subset, workbook = "simple_comparison.xls",
 
 \item{pvalue_cutoff}{p-value definition of 'significant.'  0.05 by default.}
 
-\item{logfc_cutoff}{fold-change cutoff of significance. 0.6 (and therefore 1.6) by default.}
+\item{logfc_cutoff}{fold-change cutoff of significance. 0.6 (and therefor 1.6) by default.}
 
 \item{tooltip_data}{Text descriptions of genes if one wants google graphs.}
 
