@@ -35,7 +35,6 @@ hpgl_log2cpm = function(counts, lib.size=NULL) {
     if (is.null(lib.size)) {
         lib.size = colSums(counts)
     }
-    cpm
     t(log2(t(counts + 0.5) / (colSums(counts) + 1) * 1e+06))
 }
 
@@ -83,16 +82,23 @@ divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gf
 #' @export
 #' @examples
 #' ## filtered_table = filter_counts(count_table)
-filter_counts = function(counts, thresh=2, min_samples=2) {
+filter_counts = function(counts, threshold=2, min_samples=2, verbose=TRUE) {
     ## I think having a log2cpm here is kind of weird, because the next step in processing is to cpm the data.
     ##cpms = 2^log2CPM(counts, lib.size=lib.size)$y
     ## cpms = 2^hpgl_log2cpm(counts)
-    keep = rowSums(counts > thresh) >= min_samples
+    num_before = nrow(counts)
+
+    if (class(counts) == 'ExpressionSet') {
+        keep = rowSums(exprs(counts) > threshold) >= min_samples
+    } else {
+        keep = rowSums(counts > threshold) >= min_samples
+    }
+
     counts = counts[keep,]
 
     if (verbose) {
         print(sprintf("Removing %d low-count genes (%d remaining).",
-                      nrow(counts) - num_before, nrow(counts)))
+                      num_before - nrow(counts), nrow(counts)))
     }
 
     return(counts)
