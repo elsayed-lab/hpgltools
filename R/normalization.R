@@ -35,7 +35,6 @@ hpgl_log2cpm = function(counts, lib.size=NULL) {
     if (is.null(lib.size)) {
         lib.size = colSums(counts)
     }
-    cpm
     t(log2(t(counts + 0.5) / (colSums(counts) + 1) * 1e+06))
 }
 
