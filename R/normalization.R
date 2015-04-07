@@ -89,7 +89,12 @@ filter_counts = function(counts, threshold=2, min_samples=2, verbose=TRUE) {
     ## cpms = 2^hpgl_log2cpm(counts)
     num_before = nrow(counts)
 
-    keep = rowSums(counts > threshold) >= min_samples
+    if (class(counts) == 'ExpressionSet') {
+        keep = rowSums(exprs(counts) > threshold) >= min_samples
+    } else {
+        keep = rowSums(counts > threshold) >= min_samples
+    }
+
     counts = counts[keep,]
 
     if (verbose) {
