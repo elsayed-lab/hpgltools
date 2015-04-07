@@ -35,7 +35,10 @@ hpgl_log2cpm = function(counts, lib.size=NULL) {
     if (is.null(lib.size)) {
         lib.size = colSums(counts)
     }
-    t(log2(t(counts + 0.5) / (colSums(counts) + 1) * 1e+06))
+    transposed_adjust = t(counts + 0.5)
+    cpm = (transpose_adjust / (lib.size + 1)) * 1e+06
+    l2cpm t(log2(cpm))
+    return(l2cpm)
 }
 
 #' Express a data frame of counts as reads per pattern per
