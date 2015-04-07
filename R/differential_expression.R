@@ -1,6 +1,3 @@
-## Time-stamp: <Fri Jan 30 13:26:59 2015 Ashton Trey Belew (abelew@gmail.com)>
-## differential_expression.R contains functions useful for differential expression tasks.
-
 #' write_limma(): Writes out the results of a limma search using toptable()
 #' However, this will do a couple of things to make one's life easier:
 #' 1.  Make a list of the output, one element for each comparison of the contrast matrix
@@ -16,6 +13,7 @@
 #'
 #' @return a list of data frames comprising the toptable output for each coefficient,
 #'    I also added a qvalue entry to these toptable() outputs.
+#'
 #' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
 #'
 #' @export
@@ -35,7 +33,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
     return_data = list()
     for (c in 1:length(coef)) {
         comparison = coef[c]
-        print(paste("Printing table: ", comparison, sep=""))        
+        message(paste("Printing table: ", comparison, sep=""))        
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -62,7 +60,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         if (isTRUE(excel) | isTRUE(csv)) {
             if (!file.exists(testdir)) {
                 dir.create(testdir)
-                print(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
+                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
             }
         }
         if (isTRUE(excel)) {
@@ -77,6 +75,38 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         return_data[[comparison]] = data_table
     }
     return(return_data)
+}
+
+
+#' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
+#' It just does fast.svd of a matrix against its rowMeans().
+#'
+#' @param data A data frame to decompose
+#'
+#' @return a list containing the s,v,u from fast.svd
+#' @seealso \code{\link{fast.svd}}
+#'
+#' @export
+#' @examples
+#' ## svd = makeSVD(data)
+makeSVD = function (x) {
+    x = as.matrix(x)
+    s = fast.svd(x - rowMeans(x))
+    v = s$v
+    rownames(v) = colnames(x)
+    s = list(v=v, u=s$u, d=s$d)
+    return(s)
+}
+
+## Some code to more strongly remove batch effects
+remove_batch_effect = function(normalized_counts, model) {
+    ## model = model.matrix(~ condition + batch)
+    voomed = hpgl_voom(normalized_counts, model)
+    voomed_fit = lmFit(voomed)
+    modified_model = model
+    modified_model = modified_model[,grep("batch", colnames(modified_model))] = 0 ## Drop batch from the model
+    new_data = tcrossprod(voomed_fit$coefficient, modified_model) + residuals(voomed_fit, normalized_counts)
+    return(new_data)
 }
 
 #' hpgl_voom():  A slight modification of limma's voom() function.
@@ -143,7 +173,7 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE) {
         stat_function(fun=f, colour="red") +
         theme(legend.position="none")
     if (is.null(linear_fit$rank)) {
-        print("Some samples cannot be balanced across the experimental design.")
+        message("Some samples cannot be balanced across the experimental design.")
         if (stupid) {
             ## I think this is telling me I have confounded data, and so
             ## for those replicates I will have no usable coefficients, so
@@ -172,157 +202,42 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE) {
     new("EList", out)
 }
 
-#' unbalanced_pairwise():  Set up a model matrix and set of contrasts to do
-#' a pairwise comparison of all conditions/batches.  In this case, one need
-#' not have a balanced pairing of batches for every condition, because this
-#' will combine all conditions/batches.
+
+#' limma_subset():  A quick and dirty way to pull the top/bottom genes from toptable()
 #'
-#' @param conditions a factor of conditions in the experiment
-#' @param batches a factor of batches in the experiment
-#' @param extra_contrasts some extra contrasts to add to the list
-#'  This can be pretty neat, lets say one has conditions A,B,C,D,E
-#'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
-#'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
-#'  de_minus_cb = (E-D)-(C-B),"
-#' @param ... The elipsis parameter is fed to write_limma() at the end.
+#' @param df The original data from limma
+#' @param n A number of genes to keep
+#' @param z A number of z-scores from the mean
 #'
-#' @return A list including the following information:
-#'   macb = the mashing together of condition/batch so you can look at it
-#'   macb_model = The result of calling model.matrix(~0 + macb)
-#'   macb_fit =  The result of calling lmFit(data, macb_model)
-#'   voom_result = The result from voom()
-#'   voom_design = The design from voom (redundant from voom_result, but convenient)
-#'   macb_table = A table of the number of times each condition/batch pairing happens
-#'   cond_table = A table of the number of times each condition appears (the denominator for the identities)
-#'   batch_table = How many times each batch appears
-#'   identities = The list of strings defining each condition by itself
-#'   all_pairwise = The list of strings defining all the pairwise contrasts
-#'   contrast_string = The string making up the makeContrasts() call
-#'   pairwise_fits = The result from calling contrasts.fit()
-#'   pairwise_comparisons = The result from eBayes()
-#'   limma_result = The result from calling write_limma()
-#'
-#' @seealso \code{\link{write_limma}}
+#' @return a dataframe subset from toptable
+#' 
+#' @seealso \code{\link{limma}}
+#' 
 #' @export
-#' ## pretend = unbalanced_pairwise(data, conditions, batches)
-unbalanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ...) {
-    ## Make a list of combined conditionname_batch_batchname
-    ## This is only useful when the samples do not have balanced batches across condition.
-    macb = paste(conditions, batches, sep="_batch_")
-    ## Make a model matrix which will have one entry for each of these condition/batches
-    fun_model = model.matrix(~0 + macb)
-    ## And voom() it
-    fun_voom = hpgl_voom(data, fun_model)
-    ## Extract the design created by voom()
-    ## This is interesting because each column of the design will have a prefix string 'macb' before the
-    ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
-    ## This will be important in 17 lines from now.
-    fun_design = fun_voom$design    
-    ## Do the lmFit() using this model and voom()d data
-    fun_fit = lmFit(fun_voom, fun_model)
-    ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
-    acb_table = table(macb)
-    cond_table = table(conditions)
-    batch_table = table(batches)
-    ## Here is where things get interesting.
-    ## I like to set up my contrast matrices so that there is an initial set of
-    ## just the sample conditions by themselves; I furthermore like to do this
-    ## in a strange way:  I have been first setting up variables which look like:
-    ##   bob = ((batchA * 1/8) + (batchB * 2/8) + (batchC * 1/8) + (batchD * 4/8))
-    ## So we see that the sample condition bob is comprised of batches A-D and D has 1/2
-    ## of the total data.  When I later put the line into makeContrasts() it
-    ## will look like:  makeContrasts(bob=bob, levels=design)
-    ## With that in mind, identities[] will contain one element for every condition
-    ## in the model matrix.
-    identities = list()
-    for (c in 1:length(cond_table)) {
-        identity_name = names(cond_table[c])
-        identity_string = paste(identity_name, " = \"(", sep="")
-        identity_denominator = as.character(cond_table[c])
-        for (d in 1:length(acb_table)) {
-            acb_name = names(acb_table[d])
-            acb_numerator = as.character(acb_table[d])
-            acb_split = strsplit(acb_name, "_batch_")
-            mycond = acb_split[[1]][1]
-            mybatch = acb_split[[1]][2]
-            if (identity_name == mycond) {
-                ## This line is where the macb from before comes back into play
-                identity_string = paste(identity_string, "(macb", acb_name, " * ", acb_numerator, "/", identity_denominator, ") + ", sep="")
-            }
-        } ## End looking at the comparison of batches in condition.
-        identity_string = gsub(" \\+ $", ")\"", identity_string)
-        identities[identity_name] = identity_string
+#' @examples
+#' ## subset = limma_subset(df, n=400)
+#' ## subset = limma_subset(df, z=1.5)
+limma_subset = function(table, n=NULL, z=NULL) {
+    if (is.null(n) & is.null(z)) {
+        z = 1.5
     }
-    ## If I also create a sample condition 'alice', and also perform a subtraction
-    ## of 'alice' from 'bob', then the full makeContrasts() will be:
-    ## makeContrasts(bob=bob, alice=alice, bob_minus_alice=(bob)-(alice), levels=design)
-    ## The parentheses in this case are superfluous, but they remind me that I am finally
-    ## doing some match, and also they remind me that we can do much more complex things like:
-    ## ((bob-alice)-(jane-alice)) or whatever....
-    all_pairwise = list()
-    identity_names = names(identities)
-    lenminus = length(identities) - 1
-    for (c in 1:lenminus) {
-        c_name = names(identities[c])
-        nextc = c+1
-        for (d in nextc:length(identities)) {
-            d_name = names(identities[d])
-            minus_string = paste(d_name, "_minus_", c_name, sep="")
-            exprs_string = paste(minus_string, " = paste0(\"(\",", d_name, ",\")\", \" - \", \"(\",", c_name, ",\")\")", sep="")
-            all_pairwise[minus_string] = exprs_string
-        }
+    if (is.null(n)) {
+        out_summary = summary(table$logFC)
+        out_mad = mad(table$logFC, na.rm=TRUE)
+        up_median_dist = out_summary["Median"] + (out_mad * z)
+        down_median_dist = out_summary["Median"] - (out_mad * z)
+        up_genes = subset(table, logFC >= up_median_dist)
+        down_genes = subset(table, logFC <= down_median_dist)
+    } else if (is.null(z)) {
+        upranked = table[order(table$logFC, decreasing=TRUE),]
+        up_genes = head(upranked, n=n)
+        down_genes = tail(upranked, n=n)
     }
-    ## At this point, I have strings which represent the definition of every
-    ## sample condition as well as strings which represent every possible
-    ## B-A where B comes somewhere after A in the model matrix.
-    ## The goal now is to create the variables in the R environment
-    ## and add them to makeContrasts()
-    eval_strings = append(identities, all_pairwise)
-    if (!is.null(extra_contrasts)) {
-        eval_strings = append(eval_strings, extra_contrasts)
-    }
-    for (f in 1:length(eval_strings)) {
-        eval_name = names(eval_strings[f])
-        print(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
-        eval(parse(text=as.character(eval_strings[f])))
-    }
-    ## Now we have bob=(somestuff) in memory in R's environment
-    ## Add them to makeContrasts()
-    contrast_string = paste("all_pairwise_contrasts = makeContrasts(")
-    for (f in 1:length(eval_strings)) {
-        eval_name = names(eval_strings[f])
-        eval_string = paste(eval_name, "=", eval_name, ",", sep="")
-        contrast_string = paste(contrast_string, eval_string, sep="")
-    }
-    ## The final element of makeContrasts() is the design from voom()
-    contrast_string = paste(contrast_string, "levels=fun_design)")
-    eval(parse(text=contrast_string))
-    ## I like to change the column names of the contrasts because by default
-    ## they are kind of obnoxious and too long to type
-    colnames(all_pairwise_contrasts) = as.character(names(eval_strings))
-    ## Once all that is done, perform the fit
-    ## This will first provide the relative abundances of each condition
-    ## followed by the set of all pairwise comparisons.
-    all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
-    all_pairwise_comparisons = eBayes(all_pairwise_fits)
-    limma_result = write_limma(all_pairwise_comparisons, excel=FALSE, ...)
-    result = list(
-        macb=macb,
-        macb_model=fun_model,
-        macb_fit=fun_fit,
-        voom_result=fun_voom,
-        voom_design=fun_design,
-        macb_table=acb_table,
-        cond_table=cond_table,
-        batch_table=batch_table,
-        identities=identities,
-        all_pairwise=all_pairwise,
-        contrast_string=contrast_string,
-        pairwise_fits=all_pairwise_fits,
-        pairwise_comparisons=all_pairwise_comparisons,
-        limma_result=limma_result)
-    return(result)
+    ret_list = list(up=up_genes, down=down_genes)
+    return(ret_list)
 }
+
+
 
 #' balanced_pairwise():  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions/batches.  In this case, there
@@ -355,8 +270,16 @@ unbalanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, 
 #'
 #' @seealso \code{\link{write_limma}}
 #' @export
+#' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
-balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ...) {
+balanced_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, extra_contrasts=NULL, ...) {
+    if (is.null(expt) & is.null(data)) {
+        stop("This requires either an expt or data/condition/batches")
+    } else if (!is.null(expt)) {
+        conditions = expt$conditions
+        batches = expt$batches
+        data = as.data.frame(exprs(expt$expressionset))
+    }
     condition_table = table(conditions)
     batch_table = table(batches)
     conditions = as.factor(conditions)
@@ -382,6 +305,7 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
         identity_name = names(condition_table[c])
         identity_string = paste(identity_name, " = ", identity_name, ",", sep="")
         identities[identity_name] = identity_string
+        print(paste("As a reference, the identity is: ", identity_string, sep=""))
     }
     ## If I also create a sample condition 'alice', and also perform a subtraction
     ## of 'alice' from 'bob', then the full makeContrasts() will be:
@@ -408,7 +332,12 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
     ## The goal now is to create the variables in the R environment
     ## and add them to makeContrasts()
     eval_strings = append(identities, all_pairwise)
+    eval_names = names(eval_strings)
     if (!is.null(extra_contrasts)) {
+        extra_eval_strings = strsplit(extra_contrasts, "\\n")
+        extra_eval_names = extra_eval_strings
+        require.auto("stringi")
+        extra_eval_names = stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")        
         eval_strings = append(eval_strings, extra_contrasts)
     }
 ##    for (f in 1:length(eval_strings)) {
@@ -429,12 +358,17 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
     eval(parse(text=contrast_string))
     ## I like to change the column names of the contrasts because by default
     ## they are kind of obnoxious and too long to type
-    colnames(all_pairwise_contrasts) = as.character(names(eval_strings))
+    
+    if (!is.null(extra_contrasts)) {
+        eval_names = append(eval_names, extra_eval_names)
+    }
+    colnames(all_pairwise_contrasts) = eval_names
     ## Once all that is done, perform the fit
     ## This will first provide the relative abundances of each condition
     ## followed by the set of all pairwise comparisons.
     all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
     all_pairwise_comparisons = eBayes(all_pairwise_fits)
+    all_tables = try(topTable(all_pairwise_comparisons))
     limma_result = write_limma(all_pairwise_comparisons, excel=FALSE)
     result = list(
         conditions_table=condition_table,
@@ -450,8 +384,44 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
         contrast_string=contrast_string,
         pairwise_fits=all_pairwise_fits,
         pairwise_comparisons=all_pairwise_comparisons,
+        all_tables=all_tables,
         limma_result=limma_result)
     return(result)
+}
+
+#' Plot arbitrary data from limma
+#'
+#' @param all_pairwise_result The result from calling balanced_pairwise()
+#' @param first_name A table inside all_pairwise_result$limma_result
+#' @param first_type A column within the chosen table
+#' @param second_name Another table inside all_pairwise_result$limma_result
+#' @param second_type A column to compare against
+#' 
+#' @return a hpgl_linear_scatter() set of plots comparing the chosen columns
+#' If you forget to specify tables to compare, it will try the first vs the second.
+#' @seealso \code{\link{hpgl_linear_scatter}}, \code{\link{topTable}},
+#' 
+#' @export
+#' @examples
+#' ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
+#' ## compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+limma_scatter = function(all_pairwise_result, first_table=1, first_column="AveExpr", second_table=2, second_column="AveExpr") {
+    tables = all_pairwise_result$limma_result
+    if (is.numeric(first_table)) {
+        x_name = paste(names(tables)[first_table], first_column, sep=":")
+    }
+    if (is.numeric(second_table)) {
+        y_name = paste(names(tables)[second_table], second_column, sep=":")
+    }
+    x_name = paste(first_table, first_column, sep=":")
+    y_name = paste(second_table, second_column, sep=":")
+    df = data.frame(
+        x=tables[[first_table]][[first_column]],
+        y=tables[[second_table]][[second_column]]
+    )
+    colnames(df) = c(x_name, y_name)
+    plots = hpgl_linear_scatter(df, loess=TRUE)
+    return(plots)
 }
 
 #' simple_comparison():  Perform a simple experimental/control comparison
@@ -476,6 +446,7 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
 #' @param pvalue_cutoff p-value definition of 'significant.'  0.05 by default.
 #' @param logfc_cutoff fold-change cutoff of significance. 0.6 (and therefore 1.6) by default.
 #' @param tooltip_data Text descriptions of genes if one wants google graphs.
+#'
 #' @return A list containing the following pieces:
 #'   amean_histogram = a histogram of the mean values between the two conditions
 #'   coef_amean_cor = a correlation test between the mean values and coefficients (this should be a p-value of 1)
@@ -514,8 +485,13 @@ balanced_pairwise = function(data, conditions, batches, extra_contrasts=NULL, ..
 #' ## check for that, but I have not yet.
 simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="simple_comparison", basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE, pvalue_cutoff=0.05, logfc_cutoff=0.6, tooltip_data=NULL, verbose=FALSE, ...) {
     condition_model = stats::model.matrix(~ 0 + subset$condition)
-    condbatch_model = stats::model.matrix(~ 0 + subset$condition + subset$batch)
-    if (batch) {
+    if (length(levels(subset$batch)) == 1) {
+        print("Hey! There is only one batch! I am only including condition in the model!")
+        condbatch_model = stats::model.matrix(~ 0 + subset$condition)
+    } else {
+        condbatch_model = stats::model.matrix(~ 0 + subset$condition + subset$batch)
+    }
+    if (isTRUE(batch)) {
         model = condbatch_model
     } else {
         model = condition_model
@@ -573,27 +549,27 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
     psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)    
 
     if (verbose) {
-        print("The model looks like:")
-        print(model)
-        print("The mean:variance trend follows")
+        message("The model looks like:")
+        message(model)
+        message("The mean:variance trend follows")
         plot(expt_voom$plot)
-        print("Drawing a scatterplot of the genes.")
-        print("The following statistics describe the relationship between:")
+        message("Drawing a scatterplot of the genes.")
+        message("The following statistics describe the relationship between:")
         print(coefficient_scatter$scatter)
-        print(paste("Setting the column:", colnames(lf$design)[2], "to control"))
-        print(paste("Setting the column:", colnames(lf$design)[1], "to changed"))
-        print("Performing contrasts of the experimental - control.")        
-        print("Taking a histogram of the subtraction values.")
+        message(paste("Setting the column:", colnames(lf$design)[2], "to control"))
+        message(paste("Setting the column:", colnames(lf$design)[1], "to changed"))
+        message("Performing contrasts of the experimental - control.")        
+        message("Taking a histogram of the subtraction values.")
         print(contrast_histogram)
-        print("Taking a histogram of the mean values across samples.")
-        print("The subtraction values should not be related to the mean values.")
+        message("Taking a histogram of the mean values across samples.")
+        message("The subtraction values should not be related to the mean values.")
         print(coef_amean_cor)
-        print("Making a table of the data including p-values and F-statistics.")
-        print("Taking a histogram of the p-values.")
+        message("Making a table of the data including p-values and F-statistics.")
+        message("Taking a histogram of the p-values.")
         print(pvalue_histogram)
-        print("Printing a volcano plot of this data.")
-        print("Printing an maplot of this data.")
-        print(paste("Writing excel sheet:", sheet))               
+        message("Printing a volcano plot of this data.")
+        message("Printing an maplot of this data.")
+        message(paste("Writing excel sheet:", sheet))               
     }
     return_info = list(
         amean_histogram=amean_histogram,
@@ -630,6 +606,7 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
 #' @return a matrix of pretend counts
 #' @seealso \code{\link{makeExampleData}}
 #' @export
+#' @examples
 #' ## pretend = make_exampledata()
 make_exampledata = function (ngenes=1000, columns=5) {
     q0 <- rexp(ngenes, rate = 1/250)

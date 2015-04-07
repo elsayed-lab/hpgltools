@@ -1,5 +1,3 @@
-## Time-stamp: <Fri Jan 30 16:33:21 2015 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Make a bunch of graphs describing the state of an experiment
 #' before/after normalization.
 #'
@@ -61,66 +59,116 @@
 #' @examples
 #' ## toomany_plots = graph_metrics(expt)
 #' ## testnorm = graph_metrics(expt, norm_type="tmm", filter="log2", out_type="rpkm", cormethod="robust")
-graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, cormethod="pearson", distmethod="euclidean", ...) {
+#' ## haha sucker, you are going to be waiting a while!
+graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, cormethod="pearson", distmethod="euclidean", do_cor=TRUE, do_pca=TRUE, do_dis=TRUE, do_qq=FALSE, do_libsize=TRUE, do_density=TRUE, do_boxplot=TRUE, ...) {
+    ## First gather the necessary data for the various plots.
+    options(scipen=999)
     expt_design = expt$design
     expt_colors = expt$colors
     expt_names = expt$names
     expt_raw_data = Biobase::exprs(expt$expressionset)
     expt_norm_data = hpgltools::hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low, ...)$counts
-    print("Graphing number of non-zero genes with respect to CPM by library.")
-    nonzero_plot = hpgltools::graph_nonzero(expt=expt, title="Non zero genes.", ...)
-    print("Graphing library sizes.")
-    libsize_plot = hpgltools::hpgl_libsize(expt=expt, title="Library sizes.", ...)
-    print("Graphing a raw data boxplot on log scale.")
-    raw_boxplot = hpgltools::hpgl_boxplot(expt=expt, title="Boxplot of log(raw data).", scale="log", ...)
-    print("Graphing a normalized boxplot.")
-    norm_boxplot = hpgltools::hpgl_boxplot(df=expt_norm_data, names=expt$names, colors=expt_colors, title="Boxplot of normalized data.", ...)
-    print("Graphing a raw-data correlation heatmap.")
-    raw_corheat = hpgltools::hpgl_corheat(expt=expt, method=cormethod, title="Correlation heatmap of raw data.", ...)
-    print("Graphing a raw-data standard median correlation.")
-    raw_smc = hpgltools::hpgl_smc(expt=expt, method=cormethod, title="Standard Median Correlation, raw data.", ...)
-    print("Graphing a normalized correlation heatmap.")
-    norm_corheat = hpgltools::hpgl_corheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Corrleation heatmap of normalized data.", ...)
-    print("Graphing a normalized standard median correlation.")
-    norm_smc = hpgltools::hpgl_smc(df=expt_norm_data, names=expt$names, colors=expt_colors, method=cormethod, title="Standard Median Correlation, norm. data.", ...)
-    print("Graphing a raw-data distance heatmap.")
-    raw_disheat = hpgltools::hpgl_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...)
-    print("Graphing a raw-data standard median distance.")
-    raw_smd = hpgltools::hpgl_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...)
-    print("Graphing a normalized distance heatmap.")
-    norm_disheat = hpgltools::hpgl_disheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap, norm. data.", ...)
-    print("Graphing a normalized standard median distance.")
-    norm_smd = hpgltools::hpgl_smd(df=expt_norm_data, names=expt$names, colors=expt_colors, method=distmethod, title="Standard Median Distance, norm. data.", ...)
-    print("Graphing a PCA plot of the raw data.")
-    raw_pca = try(hpgltools::hpgl_pca(expt=expt, fancy_labels=FALSE, title="PCA plot of raw data.", ...))
-    print("Printing a qqplot of the raw data.")
-    raw_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
-    raw_density = try(hpgltools::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
-    norm_density = try(hpgltools::hpgl_density_plot(df=expt_norm_data, title="Density plot of normalized data."))    
-    print("Graphing a PCA plot of the normalized data.")
-    norm_pca = try(hpgltools::hpgl_pca(df=expt_norm_data, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
-    print("Printing a qqplot of the normalized data.")
-    norm_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=expt_norm_data)))
-    batch_removed = limma::removeBatchEffect(Biobase::exprs(expt$expressionset), batch=expt$batches)
-    batch_boxplot = hpgltools::hpgl_boxplot(df=batch_removed, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...)
-    batch_disheat = hpgltools::hpgl_disheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...)
-    batch_corheat = hpgltools::hpgl_corheat(df=batch_removed, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Correlation heatmap of batch removed data.", ...)
-    batch_pca = try(hpgltools::hpgl_pca(df=batch_removed, names=expt$names, fancy_labels=FALSE, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
+    batch_removed_data = as.matrix(limma::removeBatchEffect(expt_raw_data, batch=expt$batches))
+    batch_norm_data = as.matrix(limma::removeBatchEffect(expt_norm_data, batch=expt$batches))
+
+    nonzero_plot = libsize_plot = NULL
+    if (isTRUE(do_libsize)) {
+        message("Graphing number of non-zero genes with respect to CPM by library.")
+        nonzero_plot = try(hpgltools::hpgl_nonzero(expt=expt, title="Non zero genes.", ...))
+        message("Graphing library sizes.")
+        libsize_plot = try(hpgltools::hpgl_libsize(expt=expt, title="Library sizes.", ...))
+    }
+
+    raw_boxplot = norm_boxplot = batch_boxplot = batchnorm_boxplot = NULL
+    if (isTRUE(do_boxplot)) {
+        message("Graphing a raw data boxplot on log scale.")
+        raw_boxplot = try(hpgltools::hpgl_boxplot(expt=expt, title="Boxplot of log(raw data).", scale="log", ...))
+        message("Graphing a normalized boxplot.")
+        norm_boxplot = try(hpgltools::hpgl_boxplot(df=expt_norm_data, names=expt$names, colors=expt_colors, title="Boxplot of normalized data.", ...))
+        message("Graphing a batch removed boxplot.")
+        batch_boxplot = try(hpgltools::hpgl_boxplot(df=batch_removed_data, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...))
+        message("Graphing a batch removed normalized boxplot.")
+        batchnorm_boxplot = try(hpgltools::hpgl_boxplot(df=batch_removed_data, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...))
+    }
+    
+    norm_smc = norm_corheat = raw_smc = raw_corheat = batch_corheat = batchnorm_corheat = NULL
+    if (isTRUE(do_cor)) {
+        message("Graphing a raw-data correlation heatmap.")
+        raw_corheat = try(hpgltools::hpgl_corheat(expt=expt, method=cormethod, title="Correlation heatmap of raw data.", ...))
+        message("Graphing a raw-data standard median correlation.")
+        raw_smc = try(hpgltools::hpgl_smc(expt=expt, method=cormethod, title="Standard Median Correlation, raw data.", ...))
+        message("Graphing a normalized correlation heatmap.")
+        norm_corheat = try(hpgltools::hpgl_corheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Corrleation heatmap of normalized data.", ...))
+        message("Graphing a normalized standard median correlation.")
+        norm_smc = try(hpgltools::hpgl_smc(df=expt_norm_data, names=expt$names, colors=expt_colors, method=cormethod, title="Standard Median Correlation, norm. data.", ...))
+        message("Graphing a batch removed correlation heatmap.")
+        batch_corheat = try(hpgltools::hpgl_corheat(df=batch_removed_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Correlation heatmap of batch removed data.", ...))
+        message("Graphing a batch removed normalized correlation heatmap.")
+        batchnorm_corheat = try(hpgltools::hpgl_corheat(df=batch_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Correlation heatmap of batch removed data.", ...))
+    }
+
+    raw_smd = norm_smd = norm_disheat = raw_disheat = batch_disheat = batchnorm_disheat = NULL
+    if (isTRUE(do_dis)) {
+        message("Graphing a raw-data distance heatmap.")
+        raw_disheat = try(hpgltools::hpgl_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...))
+        message("Graphing a raw-data standard median distance.")
+        raw_smd = try(hpgltools::hpgl_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...))
+        message("Graphing a normalized distance heatmap.")
+        norm_disheat = try(hpgltools::hpgl_disheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap, norm. data.", ...))
+        message("Graphing a normalized standard median distance.")
+        norm_smd = try(hpgltools::hpgl_smd(df=expt_norm_data, names=expt$names, colors=expt_colors, method=distmethod, title="Standard Median Distance, norm. data.", ...))
+        message("Graphing batch removed distance heatmap.")
+        batch_disheat = try(hpgltools::hpgl_disheat(df=batch_removed_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...))
+        message("Graphing batch removed normalized distance heatmap.")
+        batchnorm_disheat = try(hpgltools::hpgl_disheat(df=batch_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...))
+    }
+
+    raw_pca = norm_pca = batch_pca = batchnorm_pca = NULL
+    raw_pcatable =  norm_pcatable = batch_pcatable = batchnorm_pcatable = NULL
+    raw_pcares = norm_pcares = batch_pcares = batchnorm_pcares = NULL
+    raw_pcavar = norm_pcavar = batch_pcavar = batchnorm_pcavar = NULL
+    if (isTRUE(do_pca)) {
+        message("Graphing a PCA plot of the raw data.")
+        raw_pca = try(hpgltools::hpgl_pca(expt=expt, title="PCA plot of raw data.", ...))
+        message("Graphing a PCA plot of the normalized data.")
+        norm_pca = try(hpgltools::hpgl_pca(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
+        message("Graphing a PCA plot of the batch removed data.")        
+        batch_pca = try(hpgltools::hpgl_pca(df=batch_removed_data, names=expt$names, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
+        message("Graphing a PCA plot of the batch removed normalized data.")
+        batchnorm_pca = try(hpgltools::hpgl_pca(df=batch_norm_data, names=expt$names, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
+    }
+
+    raw_density = norm_density = batch_density = batchnorm_density = NULL
+    if (isTRUE(do_density)) {
+        message("Plotting a density plot of the raw data.")
+        raw_density = try(hpgltools::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
+        message("Plotting a density plot of the normalized data.")
+        norm_density = try(hpgltools::hpgl_density_plot(df=expt_norm_data, title="Density plot of normalized data."))
+        message("Plotting a density plot of the batch removed data.")
+        batch_density = try(hpgltools::hpgl_density_plot(df=batch_removed_data, title="Density plot of batch removed data.", ...))
+        message("Plotting a density plot of the batch removed normalized data.")
+        batchnorm_density = try(hpgltools::hpgl_density_plot(df=batch_norm_data, title="Density plot of batch removed normalized data.", ...))
+    }
+
+    raw_qq = norm_qq = NULL
+    if (isTRUE(do_qq)) {
+        message("Printing a qqplot of the normalized data.")
+        norm_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=expt_norm_data)))
+        message("Printing a qqplot of the raw data.")
+        raw_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
+    }
     
     ret_data = list(
-        nonzero=nonzero_plot, libsize=libsize_plot, raw_boxplot=raw_boxplot,
-        norm_boxplot=norm_boxplot, raw_corheat=raw_corheat, raw_smc=raw_smc,
-        norm_corheat=norm_corheat, norm_smc=norm_smc, raw_disheat=raw_disheat,
-        raw_smd=raw_smd, norm_disheat=norm_disheat, norm_smd=norm_smd,
-        raw_pcaplot=raw_pca$plot, norm_pcaplot=norm_pca$plot,
-        raw_pcatable=raw_pca$table, norm_pcatable=norm_pca$table,
-        raw_pcares=raw_pca$res, norm_pcares=norm_pca$res,
-        raw_pcavar=raw_pca$variance, norm_pcavar=norm_pca$variance,
-        raw_qq=raw_qq, ##norm_qq=norm_qq,
-        raw_density=raw_density, norm_density=norm_density,
-        batch_boxplot=batch_boxplot, batch_disheat=batch_disheat, batch_corheat=batch_corheat,
-        batch_pcaplot=batch_pca$plot, batch_pcatable=batch_pca$table,
-        batch_pcares=batch_pca$res, batch_pcavar=batch_pca$variance
+        nonzero=nonzero_plot, libsize=libsize_plot,
+        raw_boxplot=raw_boxplot, norm_boxplot=norm_boxplot, batch_boxplot=batch_boxplot, batchnorm_boxplot=batchnorm_boxplot,
+        raw_corheat=raw_corheat, raw_smc=raw_smc, norm_corheat=norm_corheat, norm_smc=norm_smc, batch_corheat=batch_corheat, batchnorm_corheat=batchnorm_corheat,
+        raw_disheat=raw_disheat, raw_smd=raw_smd, norm_disheat=norm_disheat, norm_smd=norm_smd, batch_disheat=batch_disheat, batchnorm_disheat=batchnorm_disheat,
+        raw_pcaplot=raw_pca$plot, norm_pcaplot=norm_pca$plot, batch_pcaplot=batch_pca$plot, batchnorm_pcaplot=batchnorm_pca$plot,
+        raw_pcatable=raw_pca$table, norm_pcatable=norm_pca$table, batch_pcatable=batch_pca$table, batchnorm_pcatable=batchnorm_pca$table,
+        raw_pcares=raw_pca$res, norm_pcares=norm_pca$res, batch_pcares=batch_pca$res, batchnorm_pcares=batchnorm_pca$res,
+        raw_pcavar=raw_pca$variance, norm_pcavar=norm_pca$variance, batch_pcavar=batch_pca$variance, batchnorm_pcavar=batchnorm_pca$variance,
+        raw_density=raw_density, norm_density=norm_density, batch_density=batch_density, batchnorm_density=batchnorm_density,
+        raw_qq=raw_qq, norm_qq=norm_qq
     )
     return(ret_data)
 }
@@ -131,15 +179,19 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
 #' @param df alternately a data frame which must be accompanied by
 #' @param design a design matrix and
 #' @param colors a color scheme
+#' @param labels how do you want to label the graph?  NULL by default,
+#'   'fancy' will use directlabels() to try to match the labels with the positions without overlapping
+#'   anything else will just stick them on a 45' offset next to the graphed point
+#' @param title titles are nice, don't you think?
 #' 
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each library's CPM
 #' @seealso \code{\link{geom_point}}, \code{\link{geom_dl}}
 #' 
 #' @export
 #' @examples
-#' ## nonzero_plot = graph_nonzero(expt=expt)
+#' ## nonzero_plot = hpgl_nonzero(expt=expt)
 #' ## nonzero_plot  ## ooo pretty
-graph_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, title=NULL, ...) {
+hpgl_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, labels=NULL, title=NULL, ...) {
     hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
@@ -169,9 +221,16 @@ graph_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, title=NUL
     non_zero_plot = ggplot2::ggplot(data=non_zero, ggplot2::aes(x=cpm, y=nonzero_genes), environment=hpgl_env,
         colour=hpgl_colors, shape=hpgl_shapes) +
         geom_point(stat="identity", size=3, colour=hpgl_colors, shape=hpgl_shapes) +
-        directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_colors) +
         ylab("Number of non-zero genes observed.") +
-        xlab("Observed CPM")
+        xlab("Observed CPM") +
+        theme_bw()
+    if (!is.null(labels)) {
+        if (labels[[1]] == "fancy") {
+            non_zero_plot = non_zero_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_colors)
+        } else {
+            non_zero_plot = non_zero_plot + geom_text(aes(x=cpm, y=nonzero_genes, label=hpgl_labels), angle=45, size=4, vjust=2)
+        }
+    }
     if (!is.null(title)) {
         non_zero_plot = non_zero_plot + ggplot2::ggtitle(title)
     }
@@ -233,7 +292,7 @@ hpgl_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL,
         libsize_plot = libsize_plot + ggtitle(title)
     }
     if (scale == TRUE) {
-        print("Adding log10")
+        message("Adding log10")
         libsize_plot = libsize_plot + scale_y_log10()
     }
     if (!is.null(hpgl_names)) {
@@ -288,7 +347,7 @@ hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=
         hpgl_colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
     }
     hpgl_df = data.frame(hpgl_df)
-    if (scale == "log") {
+    if (scale != "raw") {
         hpgl_df = hpgl_df + 1
         hpgl_df = log2(hpgl_df)
     }    
@@ -356,7 +415,7 @@ hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE, labels="short") {
     for (i in 1:comparisons) {
         ith = colnames(hpgl_df)[i]
         if (verbose) {
-            print(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
+            message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
         }
         tmpdf = data.frame(ith=hpgl_df[,i], mean=sample_data$mean)
         colnames(tmpdf) = c(ith, "mean")
@@ -415,6 +474,7 @@ hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
         ratio_plot = ratio_plot + xlab("Sorted gene") + ylab(y_string) + theme(legend.position="none")
     } else if (labels == "short") {
         ratio_plot = ratio_plot + ylab(y_string) +
+            theme_bw() +
             theme(axis.text.x=element_blank(),
                   axis.text.y=element_blank(),
                   axis.ticks=element_blank(),
@@ -426,18 +486,19 @@ hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
                   panel.grid.minor=element_blank(),
                   plot.background=element_blank())                  
     } else {
-        ratio_plot = ratio_plot + theme(axis.line=element_blank(),
-            axis.text.x=element_blank(),
-            axis.text.y=element_blank(),
-            axis.ticks=element_blank(),
-            axis.title.x=element_blank(),
-            axis.title.y=element_blank(),
-            legend.position="none",
-            panel.background=element_blank(),
-            panel.border=element_blank(),
-            panel.grid.major=element_blank(),
-            panel.grid.minor=element_blank(),
-            plot.background=element_blank())
+        ratio_plot = ratio_plot + theme_bw()
+            theme(axis.line=element_blank(),
+                  axis.text.x=element_blank(),
+                  axis.text.y=element_blank(),
+                  axis.ticks=element_blank(),
+                  axis.title.x=element_blank(),
+                  axis.title.y=element_blank(),
+                  legend.position="none",
+                  panel.background=element_blank(),
+                  panel.border=element_blank(),
+                  panel.grid.major=element_blank(),
+                  panel.grid.minor=element_blank(),
+                  plot.background=element_blank())
     }
 
     log_df = data.frame(cbind(log(sorted_x), log(sorted_y)))
@@ -463,6 +524,7 @@ hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
                   plot.background=element_blank())                          
     } else {
         log_ratio_plot = log_ratio_plot +
+            theme_bw() +
             theme(axis.line=element_blank(),
                   axis.text.x=element_blank(),
                   axis.text.y=element_blank(),
@@ -509,7 +571,7 @@ hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
             ith = colnames(hpgl_df)[i]
             jth = colnames(hpgl_df)[j]
             if (verbose) {
-                print(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
+                message(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
             }
             tmp = hpgl_qq_plot(df=hpgl_df, x=i, y=j, labels=labels)
             logs[[count]] = tmp$log
@@ -530,6 +592,8 @@ hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
 
 ## I thought multiplot() was a part of ggplot(), but no, weird:
 ## http://stackoverflow.com/questions/24387376/r-wired-error-could-not-find-function-multiplot
+## Also found at:
+## http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_%28ggplot2%29/
 #' Make a grid of plots
 #'
 #' @param plots a list of plots
@@ -860,6 +924,7 @@ hpgl_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclide
 #' @param colors a color scheme
 #' @param method a correlation method to use.  Defaults to pearson.
 #' @param names use pretty names for the samples?
+#' @param labels add labels?  Also, what type?  FALSE, "default", or "fancy"
 #' 
 #' @return a list containing the following:
 #'   plot = ggplot2 pca_plot describing the principle component analysis of the samples.
@@ -875,18 +940,16 @@ hpgl_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclide
 #' @examples
 #' ## pca_plot = hpgl_pca(expt=expt)
 #' ## pca_plot
-hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", title=NULL, fancy_labels=FALSE, ...) {
+hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", title=NULL, labels=NULL, ...) {
     hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors.")
     }
     if (is.null(expt)) {
         hpgl_design = design
-        hpgl_colors = colors
         hpgl_df = df
     } else if (is.null(df)) {
         hpgl_design = expt$design
-        hpgl_colors = expt$colors
         hpgl_df = Biobase::exprs(expt$expressionset)
     } else {
         stop("Both df and expt are defined, that is confusing.")
@@ -897,7 +960,11 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         hpgl_labels = expt$names
     }
     pca = cbcbSEQ::makeSVD(hpgl_df)  ## This is a part of cbcbSEQ
-    pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition, hpgl_design$batch)
+    if (length(levels(hpgl_design$batch)) == 1) {
+        pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition)
+    } else {
+        pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition, hpgl_design$batch)
+    }
     pca_variance = round((pca$d ^ 2) / sum(pca$d ^ 2) * 100, 2)
     xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
@@ -908,19 +975,26 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         PC1=pca$v[,1],
         PC2=pca$v[,2])
 
-    num_batches = length(hpgl_design$batch)
-    pca_plot = ggplot(data=pca_data, environment=hpgl_env)
-    if (num_batches > 6) { ## Then ggplot2 wants shapes specified manually...
-        pca_plot = pca_plot + scale_shape_manual(values=1:num_batches)
-    }
-    pca_plot = pca_plot +
-        geom_point(aes(x=PC1,y=PC2,color=condition,shape=batch), size=3) +
+    num_batches = length(levels(hpgl_design$batch))
+    pca_plot = ggplot(data=pca_data, environment=hpgl_env) +
+        geom_point(aes(x=PC1, y=PC2, color=hpgl_design$condition, shape=hpgl_design$batch), size=3) +        
         scale_colour_discrete(name="Experimental\nCondition") +
-        scale_shape_discrete(name="Experimental\nBatch") + 
-        xlab(xl) + ylab(yl) + theme_bw()
+        xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
+    if (num_batches > 6) { ## Then ggplot2 wants shapes specified manually...
+        pca_plot = pca_plot +
+        scale_shape_manual(values=c(1:num_batches))
+    } else {
+        pca_plot = pca_plot + scale_shape_discrete(name="Experimental\nBatch") 
+    }
 
-    if (fancy_labels == TRUE) {
-        pca_plot = pca_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_colors)
+    if (!is.null(labels)) {
+        if (labels[[1]] == "fancy") {
+            pca_plot = pca_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_design$condition)
+        } else  if (labels[[1]] == "normal") {
+            pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=paste(hpgl_design$condition, hpgl_design$batch, sep="_")), angle=45, size=4, vjust=2)            
+        } else {
+            pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=labels), angle=45, size=4, vjust=2)
+        }
     }
     if (!is.null(title)) {
         pca_plot = pca_plot + ggtitle(title)
@@ -929,6 +1003,251 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     return(pca_return)
 }
 
+#' Collect the r^2 values from a linear model fitting between a singular
+#' value decomposition and factor
+#'
+#' @param svd_v The V' V = I portion of a fast.svd call
+#' @param factor a factor describing the original data
+#'
+#' @return The r^2 values of the linear model as a %
+#'
+#' @seealso \code{\link{fast.svd}}
+factor_rsquared = function(svd_v, factor) {
+    svd_lm = try(lm(svd_v ~ factor), silent=TRUE)
+    if (class(svd_lm) == 'try-error') {
+        result = 0
+    } else {
+        lm_summary = summary.lm(svd_lm)
+        r_squared = lm_summary$r.squared
+        result = round(r_squared * 100, 3)
+    }
+    return(result)
+}
+
+#' A quick and dirty PCA plotter of arbitrary components against one another.
+#'
+#' @param data A dataframe of principle components PC1 .. PCN with any other arbitrary information.
+#' @param first Principle component PCx to put on the x axis
+#' @param second Principle component PCy to put on the y axis
+#' @param variances A list of the pct. variance explained by each component
+#' @param design The experimental design with condition/batch
+#' @param title Title for the plot
+#' @param labels Whether or not one wants fancy labels for the conditions
+#' 
+#' @return a ggplot2 PCA plot
+#'
+#' @seealso \code{\link{ggplot2}}, \code{\link{geom_dl}}
+#' 
+#' @export
+#' @examples
+#' ## pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
+plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL, title=NULL, labels=NULL) {
+    hpgl_env = environment()
+    batches = design$batch
+    point_labels = factor(design$condition)
+    if (is.null(title)) {
+        title = paste(first, " vs. ", second, sep="")
+    }
+    colors = levels(as.factor(unlist(design$color)))
+    pca_plot = ggplot(data=as.data.frame(data), environment=hpgl_env) +
+        geom_point(aes(x=get(first), y=get(second), shape=batches, colour=factor(design$condition)), size=3) +
+        scale_colour_manual(values=colors, name="Condition") +
+        scale_shape_manual(values=batches, name="Batch", guide=guide_legend(override.aes=aes(size=1))) +
+        ggtitle(title) +
+        theme_bw() +
+        theme(legend.key.size=unit(0.5, "cm"))
+
+    if (!is.null(variances)) {
+        x_var_num = as.numeric(gsub("PC", "", first))
+        y_var_num = as.numeric(gsub("PC", "", second))
+        x_label = paste("PC", x_var_num, ": ", variances[[x_var_num]], "%  variance", sep="")
+        y_label = paste("PC", y_var_num, ": ", variances[[y_var_num]], "%  variance", sep="")
+        pca_plot = pca_plot + xlab(x_label) + ylab(y_label)
+    }
+                
+    if (!is.null(labels)) {
+        if (labels[[1]] == "fancy") {
+            pca_plot = pca_plot + geom_dl(aes(x=get(first), y=get(second), label=point_labels), list("top.bumpup", cex=0.5))
+        } else {
+            pca_plot = pca_plot + geom_text(aes(x=get(first), y=get(second), label=point_labels), angle=45, size=4, vjust=2)
+        }
+    }
+    return(pca_plot)
+}
+
+#' Calculate some information useful for generating PCA plots
+#'
+#' @param df The data to analyze (usually exprs(somedataset))
+#' @param design A dataframe describing the experimental design, containing columns with
+#'   useful information like the conditions, batches, number of cells, whatever...
+#' @param factors A character list of columns from the design matrix which will be queried
+#'   for R^2 against the fast.svd of the data.  This defaults to c("condition","batch"), which
+#'   is in all of my experimental designs thus far.
+#' @param components A number of principle components to compare the design factors against.
+#'   If left null, it will query the same number of components as factors asked for.
+#' 
+#' @return a list of fun pca information:
+#'   svd_u/d/v: The u/d/v parameters from fast.svd
+#'   rsquared_table: A table of the rsquared values between each factor and principle component
+#'   pca_variance: A table of the pca variances
+#'   pca_data: Coordinates for a pca plot
+#'   pca_cor: A table of the correlations between the factors and principle components
+#'   cor_heatmap: A heatmap from recordPlot() describing pca_cor.
+#' @seealso \code{\link{fast.svd}}, \code{\link{lm}}
+#' 
+#' @export
+#' @examples
+#' ## pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
+#' ## pca_info
+pca_information = function(df, design, factors=c("condition","batch"), num_components=NULL, plot_pcas=FALSE, labels="fancy") {
+    data = as.matrix(df)
+    means = rowMeans(data)
+    decomposed = fast.svd(data - means)
+    positives = decomposed$d
+    u = decomposed$u
+    v = decomposed$v
+    rownames(v) = colnames(data)
+    component_variance = round((positives^2) / sum(positives^2) * 100, 3)
+    cumulative_pc_variance = cumsum(component_variance)
+
+    ## Include in this table the fstatistic and pvalue described in rnaseq_bma.rmd
+    component_rsquared_table = data.frame(
+        prop_var = component_variance,
+        cumulative_prop_var = cumulative_pc_variance)
+
+    if (is.null(factors)) {
+        factors = colnames(design)
+    } else if (factors[1] == "all") {
+        factors = colnames(design)
+    }
+
+    for (component in factors) {
+        comp = factor(as.character(design[,component]), exclude=FALSE)
+        column = apply(v, 2, factor_rsquared, factor=comp)
+        component_rsquared_table[component] = column
+    }
+    pca_variance = round((positives ^ 2) / sum(positives ^2) * 100, 2)
+    xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
+    yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
+    labels = rownames(design)
+
+    pca_data = data.frame(SampleID=labels,
+        condition=design$condition,
+        batch=design$batch,
+        batch_int=as.integer(design$batch))
+    pc_df = data.frame(SampleID=labels)
+    rownames(pc_df) = make.names(labels)
+    
+    if (is.null(num_components)) {
+        num_components = length(factors)
+    }
+    for (pc in 1:num_components) {
+        name = paste("PC", pc, sep="")
+        pca_data[name] = v[,pc]
+        pc_df[name] = v[,pc]
+
+    }
+    pc_df = pc_df[-1]
+
+    pca_plots = list()    
+    if (isTRUE(plot_pcas)) {
+        for (pc in 1:num_components) {
+            next_pc = pc + 1
+            name = paste("PC", pc, sep="")
+            for (second_pc in next_pc:num_components) {
+                if (pc < second_pc & second_pc <= num_components) {
+                    second_name = paste("PC", second_pc, sep="")
+                    list_name = paste(name, "_", second_name, sep="")
+                    tmp_plot = print(plot_pcs(pca_data, design=design, variances=pca_variance, first=name, second=second_name, labels=labels))
+                    pca_plots[[list_name]] = tmp_plot
+                }
+            }
+        }
+    }
+    
+    factor_df = data.frame(SampleID=labels)
+    rownames(factor_df) = make.names(labels)
+    for (factor in factors) {
+        factor_df[factor] = as.numeric(as.factor(as.character(design[,factor])))
+    }
+    factor_df = factor_df[-1]
+
+    fit_one = data.frame()
+    fit_two = data.frame()
+    cor_df = data.frame()
+    anova_rss = data.frame()
+    anova_sums = data.frame()
+    anova_f = data.frame()
+    anova_p = data.frame()
+    anova_fstats = data.frame()
+    for (factor in factors) {
+        for (pc in 1:num_components) {
+            factor_name = names(factor_df[factor])
+            pc_name = names(pc_df[pc])
+            tmp_df = merge(factor_df, pc_df, by="row.names")
+            rownames(tmp_df) = tmp_df[,1]
+            tmp_df = tmp_df[-1]
+
+            lmwithfactor_test = try(lm(formula=get(pc_name) ~ 1 + get(factor_name), data=tmp_df))
+            lmwithoutfactor_test = try(lm(formula=get(pc_name) ~ 1, data=tmp_df))
+            fstat = sum(residuals(lmwithfactor_test)^2) / sum(residuals(lmwithoutfactor_test)^2)            
+            ##1.  Perform lm(pc ~ 1 + factor) which is fit1
+            ##2.  Perform lm(pc ~ 1) which is fit2
+            ##3.  The Fstat is then defined as (sum(residuals(fit1)^2) / sum(residuals(fit2)^2))
+            ##4.  The resulting p-value is 1 - pf(Fstat, (n-(#levels in the factor)), (n-1))  ## n is the number of samples in the fit
+            ##5.  Look at anova.test() to see if this provides similar/identical information
+            another_fstat = try(anova(lmwithfactor_test, lmwithoutfactor_test), silent=TRUE)
+            if (class(another_fstat)[1] == 'try-error') {
+                anova_sums[factor,pc] = 0
+                anova_f[factor,pc] = 0
+                anova_p[factor,pc] = 0
+            } else {
+                anova_sums[factor,pc] = another_fstat$S[2]
+                anova_f[factor,pc] = another_fstat$F[2]
+                anova_p[factor,pc] = another_fstat$P[2]
+            }
+            anova_fstats[factor,pc] = fstat
+
+            tryCatch(
+                {
+                    cor_test = cor.test(tmp_df[,factor_name], tmp_df[,pc_name], na.rm=TRUE)
+                },
+                error=function(cond) {
+                    message(paste("The correlation failed for ", factor_name, " and ", pc_name, ".", sep=""))
+                    cor_test = 0
+                },
+                warning=function(cond) {
+                    message(paste("The standard deviation was 0 for ", factor_name, " and ", pc_name, ".", sep=""))
+                },
+                finally={
+                }
+            ) ## End of the tryCatch
+            if (class(cor_test) == 'try-error') {
+                cor_df[factor,pc] = 0
+            } else {
+                cor_df[factor,pc] = cor_test$estimate
+            }
+        }
+    }
+    rownames(cor_df) = colnames(factor_df)
+    colnames(cor_df) = colnames(pc_df)
+    cor_df = as.matrix(cor_df)
+    silly_colors = grDevices::colorRampPalette(brewer.pal(9, "Purples"))(100)
+    cor_df = cor_df[complete.cases(cor_df),]
+    sillytime = heatmap.3(cor_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=silly_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="cor(factor, PC)")
+    pc_factor_corheat = recordPlot()
+    
+    pca_list = list(
+        svd_d=positives, svd_u=u, svd_v=v, rsquared_table=component_rsquared_table,
+        pca_variance=pca_variance, pca_data=pca_data, anova_fstats=anova_fstats,
+        anova_sums=anova_sums, anova_f=anova_f, anova_p=anova_p,
+        pca_cor=cor_df, cor_heatmap=pc_factor_corheat,
+        pca_plots=pca_plots
+    )
+   
+    return(pca_list)
+
+}
 #' Make a pretty MA plot from the output of voom/limma/eBayes/toptable
 #'
 #' @param counts df of linear-modelling, normalized counts by sample-type,
@@ -1162,7 +1481,7 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
     
     if (!is.null(gvis_filename)) {
         if (verbose) {
-            print("Generating an interactive graph.")
+            message("Generating an interactive graph.")
         }
         hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename, trendline=gvis_trendline)
     }
@@ -1182,13 +1501,13 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
         second_median=second_median,
         second_mad=second_mad)
     if (verbose) {
-        print(sprintf("Calculating correlation between the axes using:", cormethod))
-        print(correlation)
-        print("Calculating linear model between the axes")
-        print(linear_model_summary)
-        print("Generating histogram of the x axis.")
-        print("Generating histogram of the y axis.")
-        print("Generating a histogram comparing the axes.")
+        message(sprintf("Calculating correlation between the axes using:", cormethod))
+        message(correlation)
+        message("Calculating linear model between the axes")
+        message(linear_model_summary)
+        message("Generating histogram of the x axis.")
+        message("Generating histogram of the y axis.")
+        message("Generating a histogram comparing the axes.")
     }
     return(plots)
 }
@@ -1219,12 +1538,11 @@ hpgl_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE,
         maxval = max(df, na.rm=TRUE)
         binwidth = (maxval - minval) / bins
         if (verbose) {
-            print(paste("No binwidth provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
+            message(paste("No binwidth provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
         }
     }
     a_histogram = ggplot2::ggplot(df, aes(x=values), environment=hpgl_env) +
     geom_histogram(aes(y=..density..), stat="bin", binwidth=binwidth, colour=color, fill=fillcolor, position="identity") +
-##    stat_bin(binwidth=binwidth, color=fillcolor) +
     geom_density(alpha=0.4, fill=fillcolor) +
     geom_vline(aes(xintercept=mean(values, na.rm=T)), color=color, linetype="dashed", size=1) +
     theme_bw()
@@ -1239,7 +1557,7 @@ hpgl_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE,
 
 #' Make a pretty histogram of multiple datasets
 #'
-#' @param df a dataframe of lots of pretty numbers
+#' @param df a dataframe of lots of pretty numbers, this also accepts lists.
 #' 
 #' @return a ggplot histogram comparing multiple data sets
 #' Along the way this generates pairwise t tests of the columns of
@@ -1276,40 +1594,40 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
         maxval = max(play_all$expression, na.rm=TRUE)
         bins = 500
         binwidth = (maxval - minval) / bins
-        print(paste("No binwidth nor bins provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))        
+        message(paste("No binwidth nor bins provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))        
     } else if  (is.null(binwidth)) {
         minval = min(play_all$expression, na.rm=TRUE)
         maxval = max(play_all$expression, na.rm=TRUE)
         binwidth = (maxval - minval) / bins
-        print(paste("Setting binwidth to ", binwidth, " in order to have ", bins, " bins.", sep=""))        
+        message(paste("Setting binwidth to ", binwidth, " in order to have ", bins, " bins.", sep=""))        
     } else if (is.null(bins)) {
-        print(paste("Setting binwidth to ", binwidth, sep=""))
+        message(paste("Setting binwidth to ", binwidth, sep=""))
     } else {
-        print("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
+        message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
     }
     hpgl_multi = ggplot2::ggplot(play_all, aes(x=expression, fill=cond)) +
         geom_histogram(aes(y=..density..), binwidth=binwidth, alpha=0.4, position="identity") +
         xlab("Expression") +
-        ylab("Number of observations") +
+        ylab("Observation likelihood") +
         geom_density(alpha=0.5) +                
         geom_vline(data=play_cdf, aes(xintercept=rating.mean,  colour=cond), linetype="dashed", size=0.75) +
         theme_bw()
     if (log) {
         logged = try(hpgl_multi + scale_x_log10())
-        if (logged != 'try-error') {
+        if (class(logged) != 'try-error') {
             hpgl_multi = logged
         }
     }
     if (verbose) {
-        print("Summarise the data.")
-        print(summary_df)
-        print("Uncorrected t test(s) between columns:")
-        print(uncor_t)
+        message("Summarise the data.")
+        message(summary_df)
+        message("Uncorrected t test(s) between columns:")
+        message(uncor_t)
         if (class(bon_t) == 'try-error') {
-            print("Unable to perform corrected test.")
+            message("Unable to perform corrected test.")
         } else {
-            print("Bon Ferroni corrected t test(s) between columns:")
-            print(bon_t)
+            message("Bon Ferroni corrected t test(s) between columns:")
+            message(bon_t)
         }
     }
     returns = list(plot=hpgl_multi,
@@ -1331,7 +1649,7 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
 #' @export
 hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, position="identity", fill=NULL, title=NULL) {
     hpgl_env = environment()
-    print("This plot looks neat if you do position='fill' or position='stack'")
+    message("This plot looks neat if you do position='fill' or position='stack'")
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df.")
     }
@@ -1350,9 +1668,16 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
     if (!is.null(hpgl_names)) {
         colnames(hpgl_df) = make.names(hpgl_names, unique=TRUE)
     }
-    melted = reshape::melt(hpgl_df)
-    colnames(melted) = c("sample", "counts")
-
+    ## If the columns lose the connectivity between the sample and values, then
+    ## the ggplot below will fail with env missing.
+    melted = reshape::melt(as.matrix(hpgl_df))
+    if (dim(melted)[2] == 3) {
+        colnames(melted) = c("id", "sample", "counts")        
+    } else if (dim(melted)[2] == 2) {
+        colnames(melted) = c("sample","counts")
+    } else {
+        stop("Could not properly melt the data.")
+    }
     colors = factor(hpgl_colors)    
     if (is.null(hpgl_colors)) {
         hpgl_colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(hpgl_df)[2])
@@ -1362,7 +1687,8 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
     }
     densityplot = ggplot2::ggplot(data=melted, aes(x=counts, colour=sample, fill=fill), environment=hpgl_env) +
         geom_density(aes(x=counts, y=..count..), position=position) +
-        theme_bw()
+        theme_bw() +
+        theme(legend.key.size=unit(0.3, "cm"))        
     if (!is.null(title)) {
         densityplot = densityplot + ggplot2::ggtitle(title)
     }

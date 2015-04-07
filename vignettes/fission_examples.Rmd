@@ -1,0 +1,212 @@
+---
+title: "Example hpgltools usage with fission"
+author: "Ashton Trey Belew <abelew@gmail.com>"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{rmarkdown::render}
+  %\usepackage[utf8]{inputenc}
+---
+
+```{r render_vignette, eval=FALSE, include=FALSE}
+
+library(hpgltools)
+autoloads_all()
+render("fission_examples.Rmd", output_format="pdf_document")
+render("fission_examples.Rmd", output_format="html_document")
+
+```
+
+# Example hpgltool usage with a real data set (fission)
+
+This document aims to provide further examples in how to use the hpgltools.
+
+## Setting up
+
+Here are the commands I invoke to get ready to play with new data, including everything
+required to install hpgltools, the software it uses, and the fission data.
+
+```{r setup, include=TRUE, eval=FALSE}
+
+## These first 4 lines are not needed once hpgltools is installed.
+source("http://bioconductor.org/biocLite.R")
+biocLite("devtools")
+library(devtools)
+install_github("elsayed-lab/hpgltools")
+library(hpgltools)
+autoloads_all()
+
+```
+
+## Import fission
+
+```{r fission_fun}
+
+require.auto("fission")
+data(fission)
+
+```
+
+## Data import
+
+All the work I do in Dr. El-Sayed's lab makes some pretty hard assumptions about how data is stored.
+As a result, to use the fission data set I will do a little bit of shenanigans to match it to the
+expected format.  Now that I have played a little with fission, I think its format is quite nice
+and am likely to have my experiment class instead be a SummarizedExperiment.
+
+```{r data_import}
+
+## Extract the meta data from the fission dataset
+meta = as.data.frame(fission@colData)
+## Make conditions and batches
+meta$condition = paste(meta$strain, meta$minute, sep=".")
+meta$batch = meta$replicate
+meta$sample.id = rownames(meta)
+## Write it out in the format expected by my toys
+write.csv(meta, file="fission.csv")
+## Grab the count data
+fission_data = fission@assays$data$counts
+## This will make an experiment superclass called 'expt' and it contains
+## an ExpressionSet along with any arbitrary additional information one might want to include.
+## Along the way it writes a Rdata file which is by default called 'expt.Rdata'
+fission_expt = create_expt("fission.csv", count_dataframe=fission_data)
+
+```
+
+## Normalizing and exploring data
+
+There are lots of toys we have learned to use to play with with raw data and explore stuff like
+batch effects or non-canonical distributions or skewed counts.  hpgltools provides some functionality
+to make this process easier.  The graphs shown below and many more are generated with the wrapper
+'graph_metrics()' but that takes away the chance to explain the graphs as I generate them.
+
+```{r norm_explore}
+
+full_design = fission_expt$definitions
+## First make a bar plot of the library sizes in the experiment.
+## Notice that the colors were auto-chosen by create_expt() and they should
+## be maintained throughout this process
+fis_libsize = hpgl_libsize(expt=fission_expt)
+fis_libsize
+
+## Here we see that the wild type replicate 3 sample for 15 minutes has fewer non-zero genes than all its friends.
+fis_nonzero = hpgl_nonzero(expt=fission_expt, labels="boring", title="nonzero vs. cpm")
+fis_nonzero
+
+```
+
+### An initial pca plot
+
+In most cases, raw data does not cluster very well, lets see if that is also true for the fission experiment.
+Assuming it doesn't, lets normalize the data using the defaults (cpm, quantile, log2) and try again.
+
+```{r pca}
+
+## Unsurprisingly, the raw data doesn't cluster well at all...
+fis_rawpca = hpgl_pca(expt=fission_expt, labels=fission_expt$condition)
+fis_rawpca
+
+## So, normalize the data
+norm_expt = normalize_expt(fission_expt)
+## And try the pca again
+fis_normpca = hpgl_pca(expt=norm_expt, labels=norm_expt$condition, title="normalized pca")
+fis_normpca
+## ok, that caused the 0, 60, 15, and 30 minute samples to cluster nicely
+## the 120 and 180 minute samples are still a bit tight
+
+## pca_information provides some more information about the call to
+## fast.svd that went into making the pca plot
+fis_info = pca_information(df=exprs(norm_expt$expressionset), design=full_design, factors=c("condition","batch","strain","minute"), num_components=6)
+## The r^2 table shows that quite a lot of the variance in the data is explained by condition
+head(fis_info$rsquared_table)
+## We can look at the correlation between the principle components and the factors in the experiment
+## in this case looking at condition/batch vs the first 4 components.
+fis_info$pca_cor
+## And p-values to lend some credence(or not to those assertions)
+fis_info$anova_p
+
+## Try again with batch removed data
+batchnorm_expt = normalize_expt(fission_expt, batch="limma")
+fis_batchnormpca = hpgl_pca(expt=batchnorm_expt, labels=norm_expt$condition, title="limma corrected pca")
+fis_batchnormpca$plot
+test_pca = pca_information(df=exprs(batchnorm_expt$expressionset), design=full_design, factors=c("condition","batch","strain","minute"), num_components=6)
+
+combatnorm_expt = normalize_expt(fission_expt, batch="sva")
+fis_combatnormpca = hpgl_pca(expt=combatnorm_expt, labels=norm_expt$condition, title="sva corrected pca")
+fis_combatnormpca
+test_pca = pca_information(df=exprs(combatnorm_expt$expressionset), design=full_design, factors=c("condition","batch","strain","minute"), num_components=6)
+
+```
+
+Interesting, the batch normalized pca plot looks much the same as the normalized.
+The variances are in fact pretty much the exact same...
+
+## Look at the data distributions
+
+We have some tools which provide visualizations of the distribution of the data:
+
+```{r distributions}
+
+hpgl_boxplot(expt=norm_expt)
+sf_expt = normalize_expt(fission_expt, norm="sf")
+hpgl_boxplot(expt=sf_expt)
+tm_expt = normalize_expt(fission_expt, norm="tmm")
+hpgl_boxplot(expt=tm_expt)
+rle_expt = normalize_expt(fission_expt, norm="rle")
+hpgl_boxplot(expt=rle_expt)
+up_expt = normalize_expt(fission_expt, norm="upperquartile")
+hpgl_boxplot(expt=up_expt)
+
+hpgl_density_plot(expt=norm_expt)
+hpgl_density_plot(expt=sf_expt)
+hpgl_density_plot(expt=tm_expt)
+
+compare_12 = hpgl_qq_plot(exprs(norm_expt$expressionset), x=1, y=2)
+compare_12$ratio
+compare_12$log
+
+```
+
+## See how they cluster
+
+Ok, so we can further check out how the data cluster with respect to one another...
+
+```{r clustering}
+
+hpgl_corheat(expt=norm_expt)
+hpgl_corheat(expt=batchnorm_expt)
+hpgl_disheat(expt=norm_expt)
+hpgl_disheat(expt=batchnorm_expt)
+
+```
+
+# Some simple differential expression analyses
+
+```{r simple_de}
+
+all_pairwise = balanced_pairwise(exprs(norm_expt$expressionset), norm_expt$conditions, norm_expt$batches)
+## I have the following elements in this list:
+### conditions_table     :  how many replicates are there of each condition
+### batches_table        :  how many replicates are there of each batch
+### conditions           :  a factor of all the conditions
+### batches              :  a factor of all the batches
+### model                :  the model of the data used for voom etc.
+### fit                  :  the result of lmfit()
+### voom_result          :  the result of voom()
+### voom_design          :  the design matrix fed to voom()
+### identities           :  the strings fed to makeContrasts() which describe each sample alone
+### all_pairwise         :  the strings describing all the subtractions fed to makeContrasts()
+### contrast_string      :  the entire string fed to makeContrasts() including the design etc.
+### pairwise_fits        :  the result of contrasts.fit()
+### pairwise_comparisons :  the result from eBayes()
+### limma_result         :  a list of toptable()s corresponding to each pairwise comparison
+
+names(all_pairwise$limma_result)
+summary(all_pairwise$limma_result$wt.120_minus_mut.120)
+wt_120 = all_pairwise$limma_result$wt.120
+mut_120 = all_pairwise$limma_result$mut.120
+
+hpgl_linear_scatter(df=data.frame(wt=wt_120$AveExpr, mut=mut_120$AveExpr))
+
+```

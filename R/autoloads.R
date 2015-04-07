@@ -1,16 +1,3 @@
-## Time-stamp: "Wed Jan 28 16:33:30 2015 Ashton Trey Belew (abelew@gmail.com)"
-## autoloads.R contains some short-cuts I wrote for myself to make
-## installing/maintaining packages/dependencies easier
-## 
-## The following are a few reminders that I keep forgetting:
-## clean_environment = environment()
-## devtools::document() ## Scan for roxygen2 comments and generate .Rd files
-## Reminder about roxygen comments:
-##  The first sentence is the title.  The second paragraph is the
-##  description.  The third paragraph are details.
-##  Paragraphs are separated by single #' lines
-## Use load_all() to reload a library which is being currently edited.
-
 #' Automatic loading and/or installing of packages.
 #'
 #' \code{require.auto} loads a library, and installs it first if necessary.
@@ -24,13 +11,17 @@
 #' @export
 #' @examples
 #' ## require.auto("ggplot2")
-require.auto = function(lib, github_path=NULL, verbose=TRUE, update=FALSE) {
+require.auto = function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
+    local({r <- getOption("repos")
+           r["CRAN"] <- "http://cran.r-project.org" 
+           options(repos=r)
+       })
     if (isTRUE(update)) {
         update.packages(ask=FALSE)
     }
     if (isTRUE(lib %in% .packages(all.available=TRUE))) {
         if (verbose) {
-            print(sprintf("Loading %s", lib))
+            message(sprintf("Loading %s", lib))
         }
         eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
     } else {
@@ -39,7 +30,7 @@ require.auto = function(lib, github_path=NULL, verbose=TRUE, update=FALSE) {
             biocLite(character(), ask=FALSE) # update dependencies, if any.
             eval(parse(text=paste("biocLite('", lib, "')", sep="")))
             if (verbose) {
-                print(sprintf("Loading %s", lib))
+                message(sprintf("Loading %s", lib))
             }
             eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
             ## eval(parse(text=paste("install.packages('", lib, "')", sep="")))
@@ -55,6 +46,8 @@ autoloads_ontology = function(...) {
     require.auto("GO.db")
     require.auto("DOSE")
     require.auto("goseq")
+    require.auto("GOstats")
+    require.auto("GSEABase")
     require.auto("KEGGREST")    
     require.auto("pathview")
     require.auto("RamiGO")
@@ -99,6 +92,7 @@ autoloads_helpers = function(...) {
     require.auto("knitrBootstrap", "jimhester/knitrBootstrap")
     require.auto("methods")
     require.auto("plyr")
+    require.auto("RCurl")
     require.auto("reshape")
     require.auto("rjson")
     require.auto("rmarkdown")

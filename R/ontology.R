@@ -7,7 +7,9 @@
 #' 
 #' @export
 #' @examples
-#' ## text = goterm("GO:0032559")
+#' ## goterm("GO:0032559")
+#' ## > GO:0032559
+#' ## > "adenyl ribonucleotide binding" 
 goterm = function(go="GO:0032559") {
     go = as.character(go)
     term = function(id) {
@@ -31,7 +33,49 @@ goterm = function(go="GO:0032559") {
     ## return(goid)
 }
 
+#' Extract more easily readable information from a GOTERM datum
+#'
+#' The output from the GOTERM/GO.db functions is inconsistent, to put it nicely.
+#' This attempts to extract from that heterogeneous datatype something easily readable.
+#' Example:  Synonym() might return any of the following:
+#' NA, NULL, "NA", "NULL", c("NA",NA,"GO:00001"), "GO:00002", c("Some text",NA, NULL, "GO:00003")
+#' This function will boil that down to 'not found', '', 'GO:00004', or "GO:0001,  some text, GO:00004"
+#'
+#' @param The result of try(as.character(somefunction(GOTERM[id])), silent=TRUE)
+#'   somefunction would be 'Synonym' 'Secondary' 'Ontology', etc...
+#'
+#' @return something more sane (hopefully)
+#' @export
+deparse_go_value = function(value) {
+    result = ""
+    if (class(value) == "try-error") {
+        result = "Not found"
+    } else {  ## Not an error
+        if (is.null(value)) {
+            result = ""
+        } else if (is.na(value)) {
+            result = ""
+        } else if (value == "NULL") {
+            result = ""
+        } else if (grepl('^c\\(', as.character(value))) {
+            value = eval(parse(text=as.character(value)))
+            if (class(value) == "logical") {
+                result = ""
+            } else {
+                value = as.character(value[which(complete.cases(value))])            
+                result = value
+            }
+        } else {  ## Just a string "GO:00023409"
+            result = value
+        }
+    }
+    return(result)
+}
+
 #' Get a go synonym from an ID
+#' I think I will need to do similar parsing of the output for this function as per gosec()
+#' In some cases this also returns stuff like c("some text", "GO:someID")
+#' versus "some other text"  versus NULL versus NA
 #'
 #' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
 #' 
@@ -40,22 +84,43 @@ goterm = function(go="GO:0032559") {
 #' 
 #' @export
 #' @examples
-#' ## text = gosyn("GO:0032559")
+#' ## text =  gosyn("GO:0000001")
+#' ## text
+#' ## > GO:000001
+#' ## > "mitochondrial inheritance" 
 gosyn = function(go) {
     go = as.character(go)
-    syn = function(id) {
-        value = try(as.character(AnnotationDbi::Synonym(GOTERM[id])), silent=TRUE)
-        if (class(value) == "try-error") {
-            value = "not found"
-        }             
-        return(value)
-    }
-    go = mapply(syn, go)
+    go = mapply(gosn, go)
     return(go)
+}
+gosn = function(go) {
+    go = as.character(go)
+    result = ""
+    value = try(as.character(AnnotationDbi::Synonym(GOTERM[id])), silent=TRUE)
+    result = deparse_go_value(value)
+    return(result)
+}
+
+#' gosc does the real work for gosec()
+#'
+#' @param go A go id
+#'
+#' @return One of the following:
+#'   "Not found" : for when the goID does not exist
+#'   "" : when there is no secondary id
+#'   or a character list of secondary IDs
+gosc = function(go) {
+    go = as.character(go)
+    result = ""
+    value = try(as.character(AnnotationDbi::Secondary(GOTERM[go])), silent=TRUE)
+    result = deparse_go_value(value)
+    return(result)
 }
 
 #' Get a go secondary ID from an id
 #'
+#' Unfortunately, GOTERM's returns for secondary IDs are not consistent, so this function
+#' has to have a whole bunch of logic to handle the various outputs.
 #' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
 #' 
 #' @return Some text
@@ -63,17 +128,11 @@ gosyn = function(go) {
 #' 
 #' @export
 #' @examples
-#' ## text = gosec("GO:0032559")
+#' ## gosec("GO:0032432")
+#' ## > GO:0032432
+#' ## > "GO:0000141" "GO:0030482"
 gosec = function(go) {
-    go = as.character(go)
-    sec = function(id) {
-        value = try(as.character(AnnotationDbi::Secondary(GOTERM[id])), silent=TRUE)
-        if (class(value) == "try-error") {
-            value = "not found"
-        }             
-        return(value)
-    }
-    go = mapply(sec, go)
+    go = mapply(gosc, go)
     return(go)
 }
 
@@ -86,7 +145,9 @@ gosec = function(go) {
 #' 
 #' @export
 #' @examples
-#' ## text = gosec("GO:0032559")
+#' ## godef("GO:0032432")
+#' ## > GO:0032432
+#' ## > "An assembly of actin filaments that are on the same axis but may be oriented with the same or opposite polarities and may be packed with different levels of tightness."
 godef = function(go) {
     go = as.character(go)
     def = function(id) {
@@ -109,7 +170,9 @@ godef = function(go) {
 #' 
 #' @export
 #' @examples
-#' ## text = gosec("GO:0032559")
+#' ## goont(c("GO:0032432", "GO:0032433"))
+#' ## > GO:0032432 GO:0032433 
+#' ## > "CC" "CC"
 goont = function(go) {
     go = as.character(go)
     ont = function(id) {
@@ -133,12 +196,16 @@ goont = function(go) {
 #' 
 #' @export
 #' @examples
-#' ## text = gosec("GO:0032559")
-golev = function(go) {
+#' ## golev("GO:0032559")
+#' ## > 3
+golev = function(go, verbose=FALSE) {
     go = as.character(go)
     level = 0
-    go = "GO:0005874"
     while(class(try(as.character(AnnotationDbi::Ontology(GOTERM[[go]])), silent=FALSE)) != 'try-error') {
+        if(isTRUE(verbose)) {
+            print(paste("Restarting while loop, level: ", level, go, sep=" "))
+        }
+        ontology = as.character(Ontology(GOTERM[[go]]))
         if (ontology == "MF") {
             ancestors = GOMFANCESTOR[[go]]
         } else if (ontology == "BP") {
@@ -147,15 +214,32 @@ golev = function(go) {
             ancestors = GOCCANCESTOR[[go]]
         } else {
             ## There was an error
-            print(paste("There was an error getting the ontology: ", as.character(id), sep=""))
+            message(paste("There was an error getting the ontology: ", as.character(id), sep=""))
             ancestors = "error"
         }
-        print("Incrementing level")
+        if(isTRUE(verbose)) {
+            print("Incrementing level")            
+        }        
         go = ancestors[1]
         level = level + 1
+        if (go == "all") {
+            return(level)
+        }
     }  ## End while
     return(level)
 }
+
+#' Get a go level approximation from a set of IDs
+#' This just wraps golev() in mapply.
+#' @param id a character list of IDs
+#' 
+#' @return Some text
+#' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
+#' 
+#' @export
+#' @examples
+#' ## golevel(c("GO:0032559", "GO:0000001")
+#' ## > 3 4
 golevel = function(go) {
     mapply(golev, go)
 }
@@ -169,26 +253,41 @@ golevel = function(go) {
 #' 
 #' @export
 #' @examples
-#' ## text = gosec("GO:0032559")
-gotest = function(go) {
+#' ## gotest("GO:0032559")
+#' ## > 1
+#' ## gotest("GO:0923429034823904")
+#' ## > 0
+gotst = function(go) {
     go = as.character(go)
-    tst = function(id) {
-        value = GOTERM[[go]]
-        if (is.null(value)) {
-            return(0)
-        } else {
-            return(1)
-        }
+    value = try(GOTERM[[go]])
+    if (class(value) == 'try-error') {
+        return(0)
     }
-    go = mapply(tst, go)
-    return(go)
+    if (is.null(value)) {
+        return(0)
+    } else {
+        return(1)
+    }
 }
 
-#' Make a table of gene ontology information
+#' Test GO ids to see if they are useful
+#' This just wraps gotst in mapply.
+#'
+#' @param id go IDs
+#' 
+#' @return Some text
+#' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
+#' 
+#' @export
+gotest = function(go) {
+    mapply(gotst, go)    
+}
+
+#' Enhance the goseq table of gene ontology information.
 #'
 #' @param df a dataframe of ontology information.  This is intended to
 #' be the output from goseq including information like
-#' numbers/category, GOids, etc.
+#' numbers/category, GOids, etc.  It requires a column 'category' which contains: GO:000001 and such.
 #' @param file a csv file to which to write the table
 #' 
 #' @return the ontology table with annotation information included
@@ -197,34 +296,38 @@ gotest = function(go) {
 #' @export
 #' @examples
 #' ## annotated_go = goseq_table(go_ids)
+#' ## head(annotated_go, n=1)
+#' ## >        category numDEInCat numInCat over_represented_pvalue
+#' ## > 571  GO:0006364          9       26            4.655108e-08
+#' ## >      under_represented_pvalue       qvalue ontology
+#' ## > 571                 1.0000000 6.731286e-05       BP
+#' ## >                                term
+#' ## > 571                 rRNA processing
+#' ## >                               synonym
+#' ## > 571        "35S primary transcript processing, GO:0006365"
+#' ## >        secondary    definition
+#' ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal RNA (rRNA) transcript into one or more mature rRNA molecules.
 goseq_table = function(df, file=NULL) {
-    ## Testing args:
-    ## df=godata
-    ## end testing
-    keep_columns = c("goid", "over_pval","under_pval","numDEinCat","numInCat", "qvalue")
-    colnames(df) = keep_columns
-    df$good = gotest(df$goid)
-##    df$good = mapply(gotest, df$goid)
-    df = subset(df, good == 1)
-    df = df[, keep_columns]
-    df$term = goterm(df$goid)
-##    df$term = mapply(goterm, df$goid)
-##    df$term = as.character(df$term)
+    if (is.null(df$term)) {
+        df$term = goterm(df$category)
+    }
+    if (is.null(df$ontology)) {
+        df$ontology = goont(df$category)
+    }
     df = subset(df, !is.null(term))
-    df$syn = gosyn(df$goid)
-##    df$syn = mapply(gosyn, df$goid)
-##    df$syn = as.character(df$syn)
-    df$sec = goseq(df$goid)
-##    df$sec = mapply(gosec, df$goid)
-##    df$sec = as.character(df$sec)
-    df$ont = goont(df$goid)
-##    df$ont = mapply(goont, df$goid)
-##    df$ont = as.character(df$ont)
-    df = subset(df, !is.null(ont))
-######    df$level = mapply(golevel, df$goid)
-    df$def = godef(df$goid)
-##    df$def = mapply(godef, df$goid)
-##    df$def = as.character(df$def)
+    print("Testing that go categories are defined.")
+    df$good = gotest(df$category)
+    print("Removing undefined categories.")
+    df = subset(df, good == 1)
+    print("Gathering synonyms.")
+    df$synonym = gosyn(df$category)
+    print("Gathering secondary ids.")
+    df$secondary = gosec(df$category)
+##    print("Gather approximate go levels.")  ## This function is too slow, commented it out.
+##    df$level = golevel(df$categoy)
+    print("Gathering category definitions.")
+    df$definition = godef(df$category)
+    df = df[,c("category","numDEInCat","numInCat","over_represented_pvalue","under_represented_pvalue","qvalue","ontology","term","synonym","secondary","definition")]
     if (!is.null(file)) {
         write.csv(df, file=file)
     }
@@ -237,19 +340,29 @@ goseq_table = function(df, file=NULL) {
 #' @param lengths the length of each gene with an ID in de_genes
 #' @param goids a list of ontology accessions to gene accessions
 #' 
-#' @return a big list including: the pwd:pwf function, alldata:the godata dataframe, pvalue_histogram:p-value histograms, godata_interesting:the ontology information of the enhanced groups, term_table:the goterms with some information about them, mf_subset:a plot of the MF enhanced groups, mfp_plot:the pvalues of the MF group, bp_subset:a plot of the BP enhanced groups, bpp_plot, cc_subset, and ccp_plot
+#' @return a big list including:
+#'   the pwd:pwf function,
+#'   alldata:the godata dataframe,
+#'   pvalue_histogram:p-value histograms,
+#'   godata_interesting:the ontology information of the enhanced groups,
+#'   term_table:the goterms with some information about them,
+#'   mf_subset:a plot of the MF enhanced groups,
+#'   mfp_plot:the pvalues of the MF group,
+#'   bp_subset:a plot of the BP enhanced groups,
+#'   bpp_plot,
+#'   cc_subset,
+#'   and ccp_plot
 #' @seealso \code{\link{goseq}} and \code{\link{clusterProfiler}}
 #' @export
-simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0.1, qvalue=0.1, method="Wallenius") {
-    print("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
-    print("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
-    print("The other table is of gene lengths with columns (gene)ID and (gene)width.")
-    print("Other columns are fine, but ignored.")
+simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius", padjust_method="BH") {
+    message("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
+    message("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
+    message("The other table is of gene lengths with columns (gene)ID and (gene)width.")
+    message("Other columns are fine, but ignored.")
     if (is.null(de_genes$ID)) {
         de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
     de_genes$DE = 1
-    adjust=NULL
     de_table = de_genes[,c("ID","DE")]
     length_table = lengths[,c("ID","width")]
 ##    de_table = merge(de_table, length_table, by="ID")
@@ -264,55 +377,54 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
     pwf_plot = recordPlot()
 ##    godata = goseq(pwf, gene2cat=goids, method='Wallenius')
     colnames(goids) = c("ID", "GO")
-    godata = goseq::goseq(pwf, gene2cat=goids, use_genes_without_cat=TRUE, method=method)
+    godata = goseq::goseq(pwf, gene2cat=goids, use_genes_without_cat=TRUE, method=goseq_method)
     goseq_p = try(hpgltools::hpgl_histogram(godata$over_represented_pvalue, bins=20))
     goseq_p_second = sort(unique(table(goseq_p$data)), decreasing=TRUE)[2]
     ## Set the y scale to 2x the second highest number
     ## (assuming always that the highest is a p-value of 1)
     goseq_y_limit = goseq_p_second * 2
     goseq_p = goseq_p + scale_y_continuous(limits=c(0, goseq_y_limit))
-    print("Calculating q-values")
+    message("Calculating q-values")
     qdata = godata$over_represented_pvalue
     qdata[qdata > 1] = 1 ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.0000000000000001
     qdata = qvalue::qvalue(qdata)
-    godata = cbind(godata, qdata$qvalues)
-    colnames(godata) = c("category","over_represented_pvalue","under_represented_pvalue","numDEInCat","numInCat","qvalue")
-    print("Filling godata table with term information, this takes a while.")
-    godata$ont = goont(godata$category)
     godata$term = goterm(godata$category)
-    if (!is.null(adjust)) {
-        godata_interesting = subset(godata, p.adjust(godata$over_represented_pvalue, method=method) < adjust)
-        adjust_method=method
-        if (dim(godata_interesting)[1] == 0) {
-            print(paste("There are no genes with an adjusted pvalue < ", adjust, " using method: ", method, ".", sep=""))
-            print(sprintf("Providing genes with an un-adjusted pvalue < %s", pvalue))
-            godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
-            adjust_method="none"
-        }
-    } else {
+    godata$ontology = goont(godata$category)    
+    godata = cbind(godata, qdata$qvalues)
+    colnames(godata) = c("category","over_represented_pvalue","under_represented_pvalue","numDEInCat","numInCat","term","ontology","qvalue")
+    if (is.null(adjust)) {
         godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
-        adjust_method="none"
+        padjust_method="none"
+    } else {  ## There is a requested pvalue adjustment
+        godata_interesting = subset(godata, p.adjust(godata$over_represented_pvalue, method=padjust_method) <= adjust)
+        if (dim(godata_interesting)[1] == 0) {
+            message(paste("There are no genes with an adjusted pvalue < ", adjust, " using method: ", padjust_method, ".", sep=""))
+            message(sprintf("Providing genes with an un-adjusted pvalue < %s", pvalue))
+            godata_interesting = subset(godata, godata$over_represented_pvalue <= pvalue)
+            padjust_method="none"
+        }
     }
-    ##    goterms = goseq_table(godata_interesting)
-    print("Making pvalue plots for the ontologies.")
+    message("Filling godata table with term information, this takes a while.")
+    godata_interesting = goseq_table(godata_interesting)
+    message("Making pvalue plots for the ontologies.")
     pvalue_plots = goseq_pval_plots(godata)
-    mf_subset = subset(godata, ont == "MF")
-    bp_subset = subset(godata, ont == "BP")
-    cc_subset = subset(godata, ont == "CC")
-    mf_interesting = subset(godata_interesting, ont == "MF")
+    mf_subset = subset(godata, ontology == "MF")
+    bp_subset = subset(godata, ontology == "BP")
+    cc_subset = subset(godata, ontology == "CC")
+    mf_interesting = subset(godata_interesting, ontology == "MF")
     rownames(mf_interesting) = mf_interesting$category
-    mf_interesting = mf_interesting[,c("ont","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
-    bp_interesting = subset(godata_interesting, ont == "BP")
+    mf_interesting = mf_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
+    bp_interesting = subset(godata_interesting, ontology == "BP")
     rownames(bp_interesting) = bp_interesting$category
-    bp_interesting = bp_interesting[,c("ont","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]    
-    cc_interesting = subset(godata_interesting, ont == "CC")
-    cc_interesting = cc_interesting[,c("ont","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]    
+    bp_interesting = bp_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]    
+    cc_interesting = subset(godata_interesting, ontology == "CC")
+    cc_interesting = cc_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]    
     return_list = list(pwf=pwf, pwf_plot=pwf_plot,
         alldata=godata, pvalue_histogram=goseq_p,
         godata_interesting=godata_interesting,
         mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting,
-        adjust_method=adjust_method,
-        ##term_table=goterms,
+        goadjust_method=goseq_method,
+        adjust_method=padjust_method,
         mf_subset=mf_subset, mfp_plot=pvalue_plots$mfp_plot,
         bp_subset=bp_subset, bpp_plot=pvalue_plots$bpp_plot,
         cc_subset=cc_subset, ccp_plot=pvalue_plots$ccp_plot,
@@ -369,7 +481,7 @@ topgo_pval_plot = function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fish
 goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
     plotting_mf = subset(goterms, complete.cases(goterms))
     plotting_mf$score = plotting_mf$numDEInCat / plotting_mf$numInCat    
-    plotting_mf = subset(plotting_mf, ont == "MF")
+    plotting_mf = subset(plotting_mf, ontology == "MF")
     plotting_mf = subset(plotting_mf, term != "NULL")
     plotting_mf = subset(plotting_mf, over_represented_pvalue <= 0.1)
     plotting_mf = subset(plotting_mf, numInCat > 10)    
@@ -381,7 +493,7 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
 
     plotting_bp = subset(goterms, complete.cases(goterms))
     plotting_bp$score = plotting_bp$numDEInCat / plotting_bp$numInCat
-    plotting_bp = subset(plotting_bp, ont == "BP")
+    plotting_bp = subset(plotting_bp, ontology == "BP")
     plotting_bp = subset(plotting_bp, term != "NULL")
     plotting_bp = subset(plotting_bp, over_represented_pvalue <= 0.1)
     plotting_bp = subset(plotting_bp, numInCat > 10)    
@@ -393,7 +505,7 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
 
     plotting_cc = subset(goterms, complete.cases(goterms))
     plotting_cc$score = plotting_cc$numDEInCat / plotting_cc$numInCat
-    plotting_cc = subset(plotting_cc, ont == "CC")
+    plotting_cc = subset(plotting_cc, ontology == "CC")
     plotting_cc = subset(plotting_cc, term != "NULL")
     plotting_cc = subset(plotting_cc, over_represented_pvalue <= 0.1)
     plotting_cc = subset(plotting_cc, numInCat > 10)    
@@ -405,6 +517,79 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
     
     pval_plots = list(mfp_plot=mf_pval_plot, bpp_plot=bp_pval_plot, ccp_plot=cc_pval_plot,
                       mf_subset=plotting_mf, bp_subset=plotting_bp, cc_subset=plotting_cc)
+    return(pval_plots)    
+}
+
+
+gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_under, wrapped_width=20, cutoff=0.1, n=10) {
+    ##    plotting_mf_over = subset(mf_over, complete.cases(mf_over))
+    plotting_mf_over = mf_over
+    plotting_mf_over$score = plotting_mf_over$ExpCount
+    plotting_mf_over = subset(plotting_mf_over, Term != "NULL")
+    plotting_mf_over = subset(plotting_mf_over, Pvalue <= 0.1)
+    plotting_mf_over = subset(plotting_mf_over, Size > 10)    
+    plotting_mf_over = plotting_mf_over[order(plotting_mf_over$Pvalue),]
+    plotting_mf_over = head(plotting_mf_over, n=n)
+    plotting_mf_over = plotting_mf_over[,c("Term","Pvalue","score")]
+    colnames(plotting_mf_over) = c("term","pvalue","score")
+    mf_pval_plot_over = pval_plot(plotting_mf_over, ontology="MF")
+    plotting_mf_under = mf_under
+    plotting_mf_under$score = plotting_mf_under$ExpCount
+    plotting_mf_under = subset(plotting_mf_under, Term != "NULL")
+    plotting_mf_under = subset(plotting_mf_under, Pvalue <= 0.1)
+    plotting_mf_under = subset(plotting_mf_under, Size > 10)    
+    plotting_mf_under = plotting_mf_under[order(plotting_mf_under$Pvalue),]
+    plotting_mf_under = head(plotting_mf_under, n=n)
+    plotting_mf_under = plotting_mf_under[,c("Term","Pvalue","score")]
+    colnames(plotting_mf_under) = c("term","pvalue","score")
+    mf_pval_plot_under = pval_plot(plotting_mf_under, ontology="MF")
+
+    plotting_bp_over = bp_over
+    plotting_bp_over$score = plotting_bp_over$ExpCount
+    plotting_bp_over = subset(plotting_bp_over, Term != "NULL")
+    plotting_bp_over = subset(plotting_bp_over, Pvalue <= 0.1)
+    plotting_bp_over = subset(plotting_bp_over, Size > 10)    
+    plotting_bp_over = plotting_bp_over[order(plotting_bp_over$Pvalue),]
+    plotting_bp_over = head(plotting_bp_over, n=n)
+    plotting_bp_over = plotting_bp_over[,c("Term","Pvalue","score")]
+    colnames(plotting_bp_over) = c("term","pvalue","score")
+    bp_pval_plot_over = pval_plot(plotting_bp_over, ontology="BP")
+    plotting_bp_under = bp_under
+    plotting_bp_under$score = plotting_bp_under$ExpCount
+    plotting_bp_under = subset(plotting_bp_under, Term != "NULL")
+    plotting_bp_under = subset(plotting_bp_under, Pvalue <= 0.1)
+    plotting_bp_under = subset(plotting_bp_under, Size > 10)    
+    plotting_bp_under = plotting_bp_under[order(plotting_bp_under$Pvalue),]
+    plotting_bp_under = head(plotting_bp_under, n=n)
+    plotting_bp_under = plotting_bp_under[,c("Term","Pvalue","score")]
+    colnames(plotting_bp_under) = c("term","pvalue","score")
+    bp_pval_plot_under = pval_plot(plotting_bp_under, ontology="BP")
+
+    plotting_cc_over = cc_over
+    plotting_cc_over$score = plotting_cc_over$ExpCount
+    plotting_cc_over = subset(plotting_cc_over, Term != "NULL")
+    plotting_cc_over = subset(plotting_cc_over, Pvalue <= 0.1)
+    plotting_cc_over = subset(plotting_cc_over, Size > 10)    
+    plotting_cc_over = plotting_cc_over[order(plotting_cc_over$Pvalue),]
+    plotting_cc_over = head(plotting_cc_over, n=n)
+    plotting_cc_over = plotting_cc_over[,c("Term","Pvalue","score")]
+    colnames(plotting_cc_over) = c("term","pvalue","score")
+    cc_pval_plot_over = pval_plot(plotting_cc_over, ontology="CC")
+    plotting_cc_under = cc_under
+    plotting_cc_under$score = plotting_cc_under$ExpCount
+    plotting_cc_under = subset(plotting_cc_under, Term != "NULL")
+    plotting_cc_under = subset(plotting_cc_under, Pvalue <= 0.1)
+    plotting_cc_under = subset(plotting_cc_under, Size > 10)    
+    plotting_cc_under = plotting_cc_under[order(plotting_cc_under$Pvalue),]
+    plotting_cc_under = head(plotting_cc_under, n=n)
+    plotting_cc_under = plotting_cc_under[,c("Term","Pvalue","score")]
+    colnames(plotting_cc_under) = c("term","pvalue","score")
+    cc_pval_plot_under = pval_plot(plotting_cc_under, ontology="CC")
+
+    pval_plots = list(mfp_plot_over=mf_pval_plot_over, bpp_plot_over=bp_pval_plot_over, ccp_plot_over=cc_pval_plot_over,
+        mf_subset_over=plotting_mf_over, bp_subset_over=plotting_bp_over, cc_subset_over=plotting_cc_over,
+        mfp_plot_under=mf_pval_plot_under, bpp_plot_under=bp_pval_plot_under, ccp_plot_under=cc_pval_plot_under,
+        mf_subset_under=plotting_mf_under, bp_subset_under=plotting_bp_under, cc_subset_under=plotting_cc_under)
     return(pval_plots)    
 }
 
@@ -441,6 +626,14 @@ hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
     quartiles = summary(df)
 }
 
+get_genelengths = function(gff, ID="Note") {
+    annotations = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
+    genes = annotations[annotations$type=="gene",]
+    genes$ID = unlist(genes[,ID])
+    genes = genes[,c("ID","width")]
+    return(genes)
+}
+
 #' Perform ontology searches of the output from limma
 #'
 #' @param limma_out a list of topTables comprising limma outputs
@@ -449,8 +642,8 @@ hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
 #'
 #' @export
 limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
-    print("This function expects a list of limma contrast tables and some annotation information.")
-    print("The annotation information would be gene lengths and ontology ids")
+    message("This function expects a list of limma contrast tables and some annotation information.")
+    message("The annotation information would be gene lengths and ontology ids")
     if (is.null(n) & is.null(z)) {
         z = 1
     }
@@ -459,14 +652,19 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
     if (isTRUE(excel) | isTRUE(csv)) {
         if (!file.exists(testdir)) {
             dir.create(testdir)
-            print(paste("Creating directory: ", testdir, "for writing excel/csv data.", sep=""))
+            message(paste("Creating directory: ", testdir, "for writing excel/csv data.", sep=""))
         }
     }
     
     output = list()
     for (c in 1:length(limma_out)) {
         datum = limma_out[[c]]
+        if (!is.null(datum$Row.names)) {
+            rownames(datum) = datum$Row.names
+            datum = datum[-1]
+        }
         comparison = names(limma_out[c])
+        message(paste("Performing ontology search of:", comparison, sep=""))
         if (is.null(n)) {
             out_summary = summary(datum$logFC)
             out_mad = mad(datum$logFC, na.rm=TRUE)
@@ -679,15 +877,15 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
     mf_first_density = bp_first_density = cc_first_density = NULL
     if (class(tables$mf) != 'try-error') {
         mf_first_group = tables$mf[1, "GO.ID"]
-        mf_first_density = hpgl_GroupDensity(mf_GOdata, mf_first_group, ranks=TRUE)
+        mf_first_density = try(hpgl_GroupDensity(mf_GOdata, mf_first_group, ranks=TRUE))
     }
     if (class(tables$bp) != 'try-error') {
         bp_first_group = tables$bp[1, "GO.ID"]
-        bp_first_density = hpgl_GroupDensity(bp_GOdata, bp_first_group, ranks=TRUE )
+        bp_first_density = try(hpgl_GroupDensity(bp_GOdata, bp_first_group, ranks=TRUE))
     }
     if(class(tables$cc) != 'try-error') {
         cc_first_group = tables$cc[1, "GO.ID"]
-        cc_first_density = hpgl_GroupDensity(cc_GOdata, cc_first_group, ranks=TRUE  )
+        cc_first_density = try(hpgl_GroupDensity(cc_GOdata, cc_first_group, ranks=TRUE))
     }
     first_densities = list(mf=mf_first_density, bp=bp_first_density, cc=cc_first_density)
     
@@ -907,8 +1105,31 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
 #' @param include_cnetplots the cnetplots are often stupid and can be left behind
 #' @param showcategory how many categories to show in p-value plots
 #' 
-#' @return a big list including the various outputs from topgo
+#' @return a big list including the following:
+#'   mf_interesting: A table of the interesting molecular function groups
+#'   bp_interesting: A table of the interesting biological process groups
+#'   cc_interesting: A table of the interesting cellular component groups
+#'   mf_pvals: A histogram of the molecular function p-values
+#'   bp_pvals: Ditto, biological process
+#'   cc_pvals: And cellular component...
+#'   mf_enriched: A table of the enriched molecular function groups by adjusted p-value.
+#'   bp_enriched: yep, you guessed it
+#'   cc_enriched: cellular component, too
+#'   mf_all/bp_all/cc_all: A table of all go categories observed (mf/bp/cc respectively)
+#'   mfp_plot/bpp_plot/ccp_plot: ggplot2 p-value bar plots describing the over represented groups
+#'   mf_cnetplot/bp_cnetplot/cc_cnetplot: clusterProfiler cnetplots
+#'   mf_group_barplot/bp_group_barplot/cc_group_barplot: The group barplots from clusterProfiler
 #' @export
+#' @examples
+#' ## up_cluster = simple_clusterprofiler(mga2_ll_thy_top, goids=goids, gff="reference/genome/gas.gff")
+#' ## > Some chattery while it runs
+#' ## tail(head(up_cluster$bp_interesting, n=10), n=1)
+#' ## > ID ont GeneRatio BgRatio     pvalue   p.adjust    qvalue
+#' ## > 10 GO:0009311  BP     5/195 10/1262 0.01089364 0.01089364 0.1272835
+#' ## >   geneID Count
+#' ## >   10 M5005_Spy1632/M5005_Spy1637/M5005_Spy1635/M5005_Spy1636/M5005_Spy1638     5
+#' ## >   Description
+#' ## >   10 oligosaccharide metabolic process
 simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     qcutoff=1.0, fold_changes=NULL, include_cnetplots=TRUE,
     showcategory=12, universe=NULL, organism="lm", gff=NULL,
@@ -916,7 +1137,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     genetable_test = try(load("geneTable.rda"))
     if (class(genetable_test) == 'try-error') {
         if (!is.null(gff)) {
-            print("Generating the geneTable.rda")
+            message("Generating the geneTable.rda")
             ## clusterProfiler::Gff2GeneTable(gff)
             hpgltools::Gff2GeneTable(gff)            
         } else {
@@ -933,17 +1154,17 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     }
     gomapping_test = try(load("GO2EG.rda"))
     if (class(gomapping_test) == 'try-error') {
-        print("Generating GO mapping data for cluster profiler from the goids data.")
+        message("Generating GO mapping data for cluster profiler from the goids data.")
         gomap = goids
         colnames(gomap) = c("entrezgene", "go_accession")
         clusterProfiler::buildGOmap(gomap)
     } else {
-        print("Using GO mapping data located in GO2EG.rda")
+        message("Using GO mapping data located in GO2EG.rda")
     }
-    print("Testing gseGO")
-    ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
-    print(ego2)
-    print("Starting MF(molecular function) analysis")
+##    message("Testing gseGO")
+##    ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
+##    print(ego2)
+    message("Starting MF(molecular function) analysis")
     mf_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
     mf_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     all_mf_phist = try(hpgltools::hpgl_histogram(mf_all@result$pvalue, bins=20))
@@ -953,7 +1174,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     }
     enriched_mf = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
     
-    print("Starting BP(biological process) analysis")
+    message("Starting BP(biological process) analysis")
     bp_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
     bp_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     all_bp_phist = try(hpgltools::hpgl_histogram(bp_all@result$pvalue, bins=20))
@@ -964,7 +1185,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     
     enriched_bp = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
 
-    print("Starting CC(cellular component) analysis")
+    message("Starting CC(cellular component) analysis")
     cc_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="CC", level=golevel, readable=TRUE)
     cc_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     enriched_cc = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
@@ -993,7 +1214,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     all_mf_barplot = try(barplot(mf_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)    
     enriched_mf_barplot = try(barplot(enriched_mf, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_mf_barplot)[1] == 'try-error') {
-        print("No enriched MF groups were observed.")
+        message("No enriched MF groups were observed.")
     } else {
         enriched_mf_barplot$data$Description = as.character(lapply(strwrap(enriched_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
@@ -1003,7 +1224,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     all_bp_barplot = try(barplot(bp_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)        
     enriched_bp_barplot = try(barplot(enriched_bp, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_bp_barplot)[1] == 'try-error') {
-        print("No enriched BP groups observed.")
+        message("No enriched BP groups observed.")
     } else {
         enriched_bp_barplot$data$Description = as.character(lapply(strwrap(enriched_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
@@ -1014,7 +1235,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     all_cc_barplot = try(barplot(cc_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     enriched_cc_barplot = try(barplot(enriched_cc, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_cc_barplot)[1] == 'try-error') {
-        print("No enriched CC groups observed.")
+        message("No enriched CC groups observed.")
     } else {
         enriched_cc_barplot$data$Description = as.character(lapply(strwrap(enriched_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
@@ -1023,45 +1244,56 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     }
     
     if (include_cnetplots == TRUE) {
-        print("Attempting to include the cnetplots from clusterProfiler.")
-        print("They fail often, if this is causing errors, set:")
-        print("include_cnetplots to FALSE")
+        message("Attempting to include the cnetplots from clusterProfiler.")
+        message("They fail often, if this is causing errors, set:")
+        message("include_cnetplots to FALSE")
         cnetplot_mf = try(clusterProfiler::cnetplot(enriched_mf, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_mf)[1] != 'try-error') {
             cnetplot_mf = recordPlot()
         } else {
-            print("cnetplot just failed for the MF ontology.  Do not be concerned with the previous error.")
+            message("cnetplot just failed for the MF ontology.  Do not be concerned with the previous error.")
         }
         cnetplot_bp = try(clusterProfiler::cnetplot(enriched_bp, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_bp)[1] != 'try-error') {
             cnetplot_bp = recordPlot()
         } else {
-            print("cnetplot just failed for the BP ontology.  Do not be concerned with the previous error.")
+            message("cnetplot just failed for the BP ontology.  Do not be concerned with the previous error.")
         }            
         cnetplot_cc = try(clusterProfiler::cnetplot(enriched_cc, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_cc)[1] != 'try-error') {
             cnetplot_cc = recordPlot()
         } else {
-            print("cnetplot just failed for the CC ontology.  Do not be concerned with the previous error.")
+            message("cnetplot just failed for the CC ontology.  Do not be concerned with the previous error.")
         }
     }
-    mf_interesting = mf_all@result
-    rownames(mf_interesting) = NULL
-    mf_interesting$ont = "MF"
-    mf_interesting = mf_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]    
-    mf_interesting = subset(mf_interesting, pvalue <= 0.1)
-
-    bp_interesting = bp_all@result
-    rownames(bp_interesting) = NULL
-    bp_interesting$ont = "BP"
-    bp_interesting = bp_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]    
-    bp_interesting = subset(bp_interesting, pvalue <= 0.1)
-
-    cc_interesting = cc_all@result
-    rownames(cc_interesting) = NULL
-    cc_interesting$ont = "CC"
-    cc_interesting = cc_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
-    cc_interesting = subset(cc_interesting, pvalue <= 0.1)
+    
+    if (!is.null(mf_all)) {
+        mf_interesting = mf_all@result
+        rownames(mf_interesting) = NULL
+        mf_interesting$ont = "MF"
+        mf_interesting = mf_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]    
+        mf_interesting = subset(mf_interesting, pvalue <= 0.1)
+    } else {
+        mf_interesting = NULL
+    }
+    if (!is.null(bp_all)) {
+        bp_interesting = bp_all@result
+        rownames(bp_interesting) = NULL
+        bp_interesting$ont = "BP"
+        bp_interesting = bp_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]    
+        bp_interesting = subset(bp_interesting, pvalue <= 0.1)
+    } else {
+        bp_interesting = NULL
+    }
+    if (!is.null(cc_all)) {
+        cc_interesting = cc_all@result
+        rownames(cc_interesting) = NULL
+        cc_interesting$ont = "CC"
+        cc_interesting = cc_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
+        cc_interesting = subset(cc_interesting, pvalue <= 0.1)
+    } else {
+        cc_interesting = NULL
+    }
     
     return_information = list(
         mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting,
@@ -1069,25 +1301,35 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         mf_enriched=enriched_mf, bp_enriched=enriched_bp, cc_enriched=enriched_cc,
         mf_all=mf_all, bp_all=bp_all, cc_all=cc_all,
         mf_all_barplot=all_mf_barplot, bp_all_barplot=all_bp_barplot, cc_all_barplot=all_cc_barplot,
-        mf_enriched_barplot=enriched_mf_barplot, bp_enriched_barplot=enriched_bp_barplot, cc_enriched_barplot=enriched_cc_barplot,
+        mfp_plot=enriched_mf_barplot, bpp_plot=enriched_bp_barplot, ccp_plot=enriched_cc_barplot,
         mf_cnetplot=cnetplot_mf, bp_cnetplot=cnetplot_bp, cc_cnetplot=cnetplot_cc,
         mf_group=mf_group, bp_group=bp_group, cc_group=cc_group,
         mf_group_barplot=mf_group_barplot, bp_group_barplot=bp_group_barplot, cc_group_barplot=cc_group_barplot)
     return(return_information)        
 }
 
+#' Make a go mapping from IDs in a format suitable for topGO
+#'
+#' @param goid_map A topGO mapping file
+#' @param goids_df If there is no goid_map, create it with this
+#' @param overwrite A boolean, if it already exists, rewrite the mapping file?
+#' 
+#' @return a summary of the new goid table
+#' 
+#' @export
 make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overwrite=FALSE) {
     id2go_test = file.info(goid_map)
     goids_dir = dirname(goid_map)
+    new_go = NULL
     if (!file.exists(goids_dir)) {
         dir.create(goids_dir, recursive=TRUE)
     }
-
+    new_go = NULL
     if (isTRUE(overwrite)) {
         if (is.null(goids_df)) {
             stop("There is neither a id2go file nor a data frame of goids.")
         } else {
-            print("Attempting to generate a id2go file in the format expected by topGO.")
+            message("Attempting to generate a id2go file in the format expected by topGO.")
             new_go = plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
             write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
             rm(id2go_test)
@@ -1097,13 +1339,14 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
             if (is.null(goids_df)) {
                 stop("There is neither a id2go file nor a data frame of goids.")
             } else {
-                print("Attempting to generate a id2go file in the format expected by topGO.")
+                message("Attempting to generate a id2go file in the format expected by topGO.")
                 new_go = plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
                 write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
                 rm(id2go_test)
             }
         }
     }
+    return(summary(new_go))
 }
 
 #' Make fun trees a la topgo from goseq data.
@@ -1148,7 +1391,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     mf_included = length(which(mf_nodes <= score_limit))
     mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(mf_tree_data) == 'try-error') {
-        print("There was an error generating the MF tree.")
+        message("There was an error generating the MF tree.")
         mf_tree = NULL
     } else {
         mf_tree = recordPlot()
@@ -1160,7 +1403,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     bp_included = length(which(bp_nodes <= score_limit))
     bp_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(bp_tree_data) == 'try-error') {
-        print("There was an error generating the BP tree.")
+        message("There was an error generating the BP tree.")
         bp_tree = NULL
     } else {
         bp_tree = recordPlot()
@@ -1172,7 +1415,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     cc_included = length(which(cc_nodes <= score_limit))
     cc_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(cc_tree_data) == 'try-error') {
-        print("There was an error generating the CC tree.")
+        message("There was an error generating the CC tree.")
         cc_tree = NULL
     } else {
         cc_tree = recordPlot()
@@ -1254,120 +1497,6 @@ cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", go
     return(trees)
 }
 
-## Please note that the KGML parser fails if other XML parsers are loaded into R
-#' Print some data onto KEGG pathways
-#'
-#' @param de_genes some differentially expressed genes
-#' @param godata data from cluster Profiler
-#' @param goids a mapping of IDs to GO in the Ramigo expected format
-#' @param sigforall Print significance on all nodes?
-#' 
-#' @return a plot!
-#' @seealso \code{\link{Ramigo}}
-#' @export
-hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, verbose=FALSE) {
-    ##eh = new.env(hash=TRUE, size=NA)
-    ## There is a weird namespace conflict when using pathview, so I will reload it here
-    try(detach("package:Rgraphviz", unload=TRUE))
-    try(detach("package:topGO", unload=TRUE))
-    try(detach("package:pathview", unload=TRUE))
-    try(detach("package:KEGGgraph", unload=TRUE))
-    try(detach("package:RamiGO", unload=TRUE))
-    try(detach("package:graph", unload=TRUE))
-    library("pathview")
-    ## Testing parameters
-    ##path_data = kegg_list
-    ##indir="pathview_in"
-    ##outdir="pathview_epi_high"
-    ##pathway="all"
-    ##species="tcr"
-    ##string_from="TcCLB."
-    ##string_to=""
-    ##suffix="_epi_high"
-    ## End testing parameters    
-#    environment(eh)
-    ## Massage the names to KEGG compatible names
-    tmp_names = names(path_data)
-    tmp_names = gsub(string_from, string_to, tmp_names)
-    if (!is.null(second_from)) {
-        tmp_names = gsub(second_from, second_to, tmp_names)
-    }
-##    tmp_names = gsub("\\.","_", tmp_names)
-    names(path_data) = tmp_names
-    rm(tmp_names)
-    
-    ## First check that the input pathview directory exists
-    if (!file.exists(indir)) {
-        dir.create(indir)
-    }
-    if (!file.exists(outdir)){
-            dir.create(outdir)
-        }
-    paths = list()
-    if (pathway == "all") {
-        all_pathways = unique(KEGGREST::keggLink("pathway", species))
-        paths = all_pathways
-        paths = gsub("path:", "", paths)
-        all_modules = unique(KEGGREST::keggLink("module", species))
-    } else if (class(pathway) == "list") {
-        paths = pathway
-    } else {
-        paths[1] = pathway
-    }
-    return_list = list()
-    for (count in 1:length(paths)) {
-        path = paths[count]
-        limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
-        if (isTRUE(verbose)) {
-            pv = try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path, species=species, limit=list(gene=limits, cpd=limits), map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix, split.group=TRUE, expand.node=TRUE, kegg.native=TRUE, map.symbol=TRUE, same.layer=FALSE, res=1200, new.signature=FALSE, cex=0.05, key.pos="topright"))
-        } else {
-            pv = suppressMessages(try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path, species=species, limit=list(gene=limits, cpd=limits), map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix, split.group=TRUE, expand.node=TRUE, kegg.native=TRUE, map.symbol=TRUE, same.layer=FALSE, res=1200, new.signature=FALSE, cex=0.05, key.pos="topright")))
-        }
-        if (class(pv) == "numeric") {
-            colored_genes = NULL
-            newfile = NULL
-            up = NULL
-            down = NULL
-        } else {
-            colored_genes = dim(pv$plot.data.gene)[1]
-            ##        "lma04070._proeff.png"
-            oldfile = paste(path, ".", suffix, ".png", sep="")
-            newfile = paste(outdir,"/", path, suffix, ".png", sep="")
-            if (isTRUE(verbose)) {
-                print(paste("Moving file to: ", newfile, sep=""))
-            }
-            file.rename(from=oldfile, to=newfile)
-            data_low = summary(path_data)[2]
-            data_high = summary(path_data)[3]
-            numbers_in_plot = as.numeric(pv$plot.data.gene$mol.data)
-            up = sum(numbers_in_plot > data_high, na.rm=TRUE)
-            down = sum(numbers_in_plot < data_low, na.rm=TRUE)
-        }
-        return_list[[path]]$file = newfile
-        return_list[[path]]$genes = colored_genes
-        return_list[[path]]$up = up
-        return_list[[path]]$down = down
-    }
-
-    retdf = data.frame(rep(NA, length(names(return_list))))
-    rownames(retdf) = names(return_list)
-    retdf$genes = NA
-    retdf$up = NA
-    retdf$down = NA
-    colnames(retdf) = c("file","genes","up","down")
-    for (path in names(return_list)) {
-        if (is.null(return_list[[path]]$genes)) {
-            retdf[path,]$genes = 0
-        } else {
-            retdf[path,]$genes = as.numeric(return_list[[path]]$genes)
-        }
-        retdf[path,]$file = as.character(return_list[[path]]$file)
-        retdf[path,]$up = as.numeric(return_list[[path]]$up)
-        retdf[path,]$down = as.numeric(return_list[[path]]$down)        
-    }
-    retdf = retdf[with(retdf, order(up, down)), ]
-    return(retdf)
-}
 
 #' A minor hack in the clusterProfiler function 'enrichGO'
 #'
@@ -1522,6 +1651,348 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
         x <- setReadable(x)
     }
     return (x)
+}
+
+gostats_trees = function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under, cc_under, goid_map="reference/go/id2go.map", score_limit=0.01, goids_df=NULL, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Val") {
+    make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+    geneID2GO = topGO::readMappings(file=goid_map)
+    annotated_genes = names(geneID2GO)
+    if (is.null(de_genes$ID)) {
+        de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
+    }
+    interesting_genes = factor(annotated_genes %in% de_genes$ID)
+    names(interesting_genes) = annotated_genes
+    if (is.null(de_genes[[pval_column]])) {
+        mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFun.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFun.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFun.gene2GO, gene2GO=geneID2GO)
+    } else {
+        pvals = as.vector(de_genes[[pval_column]])
+        names(pvals) = rownames(de_genes)
+        mf_GOdata = new("topGOdata", description="MF", ontology="MF", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata = new("topGOdata", description="BP", ontology="BP", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata = new("topGOdata", description="CC", ontology="CC", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+    }
+    mf_over_enriched_ids = mf_over$GOMFID
+    bp_over_enriched_ids = bp_over$GOBPID
+    cc_over_enriched_ids = cc_over$GOCCID
+    mf_under_enriched_ids = mf_under$GOMFID
+    bp_under_enriched_ids = bp_under$GOBPID
+    cc_under_enriched_ids = cc_under$GOCCID
+    mf_over_enriched_scores = mf_over$Pvalue
+    names(mf_over_enriched_scores) = mf_over_enriched_ids
+    bp_over_enriched_scores = bp_over$Pvalue
+    names(bp_over_enriched_scores) = bp_over_enriched_ids
+    cc_over_enriched_scores = cc_over$Pvalue
+    names(cc_over_enriched_scores) = cc_over_enriched_ids    
+    mf_under_enriched_scores = mf_under$Pvalue
+    names(mf_under_enriched_scores) = mf_under_enriched_ids    
+    bp_under_enriched_scores = bp_under$Pvalue    
+    names(bp_under_enriched_scores) = bp_under_enriched_ids    
+    cc_under_enriched_scores = cc_under$Pvalue
+    names(cc_under_enriched_scores) = cc_under_enriched_ids
+
+    mf_avail_nodes = as.list(mf_GOdata@graph@nodes)
+    names(mf_avail_nodes) = mf_GOdata@graph@nodes
+    mf_over_nodes = mf_over_enriched_scores[names(mf_over_enriched_scores) %in% names(mf_avail_nodes)]
+    mf_under_nodes = mf_under_enriched_scores[names(mf_under_enriched_scores) %in% names(mf_avail_nodes)]
+    mf_over_included = length(which(mf_over_nodes <= score_limit))
+    mf_under_included = length(which(mf_under_nodes <= score_limit))
+    mf_over_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_over_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_over_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    mf_under_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_under_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_under_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    if (class(mf_over_tree_data) == 'try-error') {
+        message("There was an error generating the over MF tree.")
+        mf_over_tree = NULL
+    } else {
+        mf_over_tree = recordPlot()
+    }
+    if (class(mf_under_tree_data) == 'try-error') {
+        message("There was an error generating the under MF tree.")
+        mf_under_tree = NULL
+    } else {
+        mf_under_tree = recordPlot()
+    }
+
+    bp_avail_nodes = as.list(bp_GOdata@graph@nodes)
+    names(bp_avail_nodes) = bp_GOdata@graph@nodes
+    bp_over_nodes = bp_over_enriched_scores[names(bp_over_enriched_scores) %in% names(bp_avail_nodes)]
+    bp_under_nodes = bp_under_enriched_scores[names(bp_under_enriched_scores) %in% names(bp_avail_nodes)]
+    bp_over_included = length(which(bp_over_nodes <= score_limit))
+    bp_under_included = length(which(bp_under_nodes <= score_limit))
+    bp_over_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_over_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_over_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    bp_under_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_under_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_under_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    if (class(bp_over_tree_data) == 'try-error') {
+        message("There was an error generating the over BP tree.")
+        bp_over_tree = NULL
+    } else {
+        bp_over_tree = recordPlot()
+    }
+    if (class(bp_under_tree_data) == 'try-error') {
+        message("There was an error generating the under BP tree.")
+        bp_under_tree = NULL
+    } else {
+        bp_under_tree = recordPlot()
+    }
+    
+    cc_avail_nodes = as.list(cc_GOdata@graph@nodes)
+    names(cc_avail_nodes) = cc_GOdata@graph@nodes
+    cc_over_nodes = cc_over_enriched_scores[names(cc_over_enriched_scores) %in% names(cc_avail_nodes)]
+    cc_under_nodes = cc_under_enriched_scores[names(cc_under_enriched_scores) %in% names(cc_avail_nodes)]
+    cc_over_included = length(which(cc_over_nodes <= score_limit))
+    cc_under_included = length(which(cc_under_nodes <= score_limit))
+    cc_over_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_over_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_over_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    cc_under_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_under_nodes, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_under_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    if (class(cc_over_tree_data) == 'try-error') {
+        message("There was an error generating the over CC tree.")
+        cc_over_tree = NULL
+    } else {
+        cc_over_tree = recordPlot()
+    }
+    if (class(cc_under_tree_data) == 'try-error') {
+        message("There was an error generating the under CC tree.")
+        cc_under_tree = NULL
+    } else {
+        cc_under_tree = recordPlot()
+    }
+
+    trees = list(
+        MF_over=mf_over_tree, BP_over=bp_over_tree, CC_over=cc_over_tree,
+        MF_overdata=mf_over_tree_data, BP_overdata=bp_over_tree_data, CC_overdata=cc_over_tree_data,
+        MF_under=mf_under_tree, BP_under=bp_under_tree, CC_under=cc_under_tree,
+        MF_underdata=mf_under_tree_data, BP_underdata=bp_under_tree_data, CC_underdata=cc_under_tree_data,
+    )
+    return(trees)
+}
+
+
+#' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
+#'
+#' GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be integers.
+#' As a result, I am going to have this function take a gff file in order to get the go ids and
+#' gene ids on the same page.
+#'
+#' @param gff The annotation information for this genome
+#' @param de_genes The set of differentially expressed genes in the limma format as before
+#' @param goids The set of GOids, as before in the format ID/GO
+#' 
+#' @return dunno yet
+#' @seealso \code{\link{GOstats}}
+#' @export
+simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05, direction="both", conditional=FALSE, categorysize=NULL) {
+    ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should) contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
+    annotation = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
+    if (is.null(annotation[,universe_merge])) {
+        if (is.null(annotation[,second_merge_try])) {
+            stop(paste("This function needs a key to merge the differentially expressed genes against the universe of genes.  It tried: ", universe_merge, " and ", second_merge_try, " to no avail.", sep=""))
+        } else {
+            universe = annotation[,c(second_merge_try, "width")]
+        }
+    } else {
+        universe = annotation[,c(universe_merge, "width")]
+    }
+    universe = universe[complete.cases(universe),]
+    universe$id = rownames(universe)
+    colnames(universe) = c("geneid","width","id")
+    if (is.null(de_genes$ID)) {
+        de_genes$ID = rownames(de_genes)
+    }
+    universe_cross_de = merge(universe, de_genes, by.x="geneid", by.y="ID")
+    degenes_ids = universe_cross_de$id
+    universe_ids = universe$id
+    gostats_go = merge(universe, goids, by.x="geneid", by.y="ID")
+    gostats_go$frame.Evidence = "TAS"
+    colnames(gostats_go) = c("sysName","name","frame.gene_id", "frame.go_id","frame.Evidence")
+    gostats_go = gostats_go[,c("frame.go_id","frame.Evidence","frame.gene_id")]
+    gostats_frame = GOFrame(gostats_go, organism=organism)
+    gostats_all = GOAllFrame(gostats_frame)
+    require.auto("GSEABase", verbose=FALSE)
+    gsc = GeneSetCollection(gostats_all, setType=GOCollection())
+
+    mf_over = bp_over = cc_over = NULL
+    mf_under = bp_under = cc_under = NULL
+    if (direction == "over") {
+        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="MF",
+            pvalueCutoff=pcutoff,
+            conditional=conditional,
+            testDirection="over")
+        mf_over = hyperGTest(mf_params)        
+        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="BP",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="over")
+        bp_over = hyperGTest(bp_params)        
+        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="CC",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="over")
+        cc_over = hyperGTest(cc_params)        
+    } else if (direction == "under") {
+        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="MF",
+            pvalueCutoff=pcutoff,
+            conditional=conditional,
+            testDirection="under")
+        mf_under = hyperGTest(mf_params)        
+        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="BP",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="under")
+        bp_under = hyperGTest(bp_params)        
+        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="CC",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="under")
+        cc_under = hyperGTest(cc_params)        
+    } else {
+        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="MF",
+            pvalueCutoff=pcutoff,
+            conditional=conditional,
+            testDirection="over")
+        mf_over = hyperGTest(mf_params)        
+        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="BP",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="over")
+        bp_over = hyperGTest(bp_params)        
+        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="CC",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="over")
+        cc_over = hyperGTest(cc_params)
+        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="MF",
+            pvalueCutoff=pcutoff,
+            conditional=conditional,
+            testDirection="under")
+        mf_under = hyperGTest(mf_params)        
+        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="BP",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="under")
+        bp_under = hyperGTest(bp_params)        
+        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+            geneSetCollection=gsc,
+            geneIds=degenes_ids,
+            universeGeneIds=universe_ids,
+            ontology="CC",
+            pvalueCutoff=pcutoff,
+            conditional=FALSE,
+            testDirection="under")
+        cc_under = hyperGTest(cc_params)                
+    }
+
+    mf_over_table = bp_over_table = cc_over_table = NULL
+    mf_under_table = bp_under_table = cc_under_table = NULL
+    if (direction == "over") {
+        ## Make tables of the entire ontology
+        mf_over_table = summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
+        bp_over_table = summary(bp_over, pvalue=1.0, htmlLinks=TRUE)
+        cc_over_table = summary(cc_over, pvalue=1.0, htmlLinks=TRUE)
+        mf_over_table$qvalue = qvalue(mf_over_table$Pvalue)$qvalues
+        bp_over_table$qvalue = qvalue(bp_over_table$Pvalue)$qvalues
+        cc_over_table$qvalue = qvalue(cc_over_table$Pvalue)$qvalues
+    } else if (direction == "under") {
+        mf_under_table = summary(mf_under, pvalue=1.0, htmlLinks=TRUE)
+        bp_under_table = summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
+        cc_under_table = summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
+        mf_under_table$qvalue = qvalue(mf_under_table$Pvalue)$qvalues
+        bp_under_table$qvalue = qvalue(bp_under_table$Pvalue)$qvalues
+        cc_under_table$qvalue = qvalue(cc_under_table$Pvalue)$qvalues
+    } else {
+        mf_over_table = summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
+        bp_over_table = summary(bp_over, pvalue=1.0, htmlLinks=TRUE)
+        cc_over_table = summary(cc_over, pvalue=1.0, htmlLinks=TRUE)
+        mf_over_table$qvalue = qvalue(mf_over_table$Pvalue)$qvalues
+        bp_over_table$qvalue = qvalue(bp_over_table$Pvalue)$qvalues
+        cc_over_table$qvalue = qvalue(cc_over_table$Pvalue)$qvalues
+        mf_under_table = summary(mf_under, pvalue=1.0, htmlLinks=TRUE)
+        bp_under_table = summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
+        cc_under_table = summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
+        mf_under_table$qvalue = qvalue(mf_under_table$Pvalue)$qvalues
+        bp_under_table$qvalue = qvalue(bp_under_table$Pvalue)$qvalues
+        cc_under_table$qvalue = qvalue(cc_under_table$Pvalue)$qvalues
+    }
+
+    if (is.null(categorysize)) {
+        mf_over_sig = summary(mf_over)
+        bp_over_sig = summary(bp_over)
+        cc_over_sig = summary(cc_over)
+        mf_under_sig = summary(mf_under)
+        bp_under_sig = summary(bp_under)
+        cc_under_sig = summary(cc_under)        
+    } else {
+        mf_over_sig = summary(mf_over, categorySize=categorysize)
+        bp_over_sig = summary(bp_over, categorySize=categorysize)
+        cc_over_sig = summary(cc_over, categorySize=categorysize)
+        mf_under_sig = summary(mf_under, categorySize=categorysize)
+        bp_under_sig = summary(bp_under, categorySize=categorysize)
+        cc_under_sig = summary(cc_under, categorySize=categorysize)                
+    }
+    mf_over_sig$definition = godef(mf_over_sig$GOMFID)
+    bp_over_sig$definition = godef(bp_over_sig$GOBPID)
+    cc_over_sig$definition = godef(cc_over_sig$GOCCID)
+    mf_under_sig$definition = godef(mf_under_sig$GOMFID)
+    bp_under_sig$definition = godef(bp_under_sig$GOBPID)
+    cc_under_sig$definition = godef(cc_under_sig$GOCCID)    
+
+    pvalue_plots = try(gostats_pval_plots(mf_over_sig, bp_over_sig, cc_over_sig, mf_under_sig, bp_under_sig, cc_under_sig))
+    gostats_p_mf_over = try(hpgl_histogram(mf_over_table$Pvalue, bins=20))
+    gostats_p_mf_under = try(hpgl_histogram(mf_under_table$Pvalue, bins=20))    
+    gostats_p_bp_over = try(hpgl_histogram(bp_over_table$Pvalue, bins=20))
+    gostats_p_bp_under = try(hpgl_histogram(bp_under_table$Pvalue, bins=20))    
+    gostats_p_cc_over = try(hpgl_histogram(cc_over_table$Pvalue, bins=20))
+    gostats_p_cc_under = try(hpgl_histogram(cc_under_table$Pvalue, bins=20))    
+    
+    ret_list = list(mf_over_all=mf_over_table, bp_over_all=bp_over_table, cc_over_all=cc_over_table,
+        mf_under_all=mf_under_table, bp_under_all=bp_under_table, cc_under_all=cc_under_table,        
+        mf_over_enriched=mf_over_sig, bp_over_enriched=bp_over_sig, cc_over_enriched=cc_over_sig,
+        mf_under_enriched=mf_under_sig, bp_under_enriched=bp_under_sig, cc_under_enriched=cc_under_sig,
+        gostats_mfp_over=gostats_p_mf_over, gostats_bpp_over=gostats_p_bp_over, gostats_ccp_over=gostats_p_cc_over,
+        gostats_mfp_under=gostats_p_mf_under, gostats_bpp_under=gostats_p_bp_under, gostats_ccp_under=gostats_p_cc_under,        
+        pvalue_plots=pvalue_plots)
+    return(ret_list)
 }
 
 
@@ -1805,10 +2276,6 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
 
 
 hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
-    ## Testing parameters
-    ##object = mf_GOdata
-    ##whichGO = mf_first_group
-    ## End testing parameters
     groupMembers <- topGO::genesInTerm(object, whichGO)[[1]]
     allS <- topGO::geneScore(object, use.names = TRUE)
     if(rm.one) {
@@ -1825,309 +2292,60 @@ hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     return(plot)
 }
 
-## Functions in this are not exported by topGO
-Gff2GeneTable <- function(gffFile, compress=TRUE) {
-    ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"
-    if (is.data.frame(gffFile)) {
-        GeneID = data.frame(GeneID = gffFile$ID)
-        geneInfo = gffFile
-        geneInfo$start = 1
-        geneInfo$GeneID = gffFile$ID
-        geneInfo$GeneName = gffFile$ID
-        geneInfo$Locus = gffFile$ID        
-        geneInfo$end = geneInfo$width
-        geneInfo$strand = "+"
-    } else {
-        gff <- readGff(gffFile)
-        GeneID <- data.frame(GeneID=getGffAttribution(gff$attributes, field="ID"))
-        geneInfo <- gff[gff$feature == "gene",]
-        geneInfo <- geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
-        geneInfo$GeneID <- getGffAttribution(geneInfo$attributes, field="ID")
-        geneInfo$GeneName <- getGffAttribution(geneInfo$attributes, field="Name")
-        geneInfo$Locus <- getGffAttribution(geneInfo$attributes, field="locus_tag")
-        geneInfo$GeneName[is.na(geneInfo$GeneName)] <- "-"
-        geneInfo <- geneInfo[, -5] ## abondom "attributes" column.
-    }
-            ## GI2GeneID <- data.frame(GI=getGffAttribution(gff$attributes, field="GI"),
-    ##                        GeneID=getGffAttribution(gff$attributes, field="GeneID")
-    ##                                    #,
-    ##                                    #Product=getGffAttribution(gff$attributes, field="product")
-    ##                        )
-    ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$GI),]
-    ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$Gene),]
-
-        
-
-    ## geneTable <- merge(GI2GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
-    geneTable <- merge(GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
-    geneTable <- unique(geneTable)
-    if (compress) {
-        save(geneTable, file="geneTable.rda", compress="xz")
-    } else {
-        save(geneTable, file="geneTable.rda")
-    }
-    print("Gene Table file save in the working directory.")
-}
-
-parseKGML2Graph2 <-function (file, ...) {
-    pathway <- parseKGML2(file)
-    gR <- KEGGpathway2Graph2(pathway, ...)
-    return(gR)
-}
-
-hpgl_base_pathview = function (gene.data = NULL, cpd.data = NULL, xml.file = NULL, 
-    pathway.id, species = "hsa", kegg.dir = ".", cpd.idtype = "kegg", 
-    gene.idtype = "entrez", gene.annotpkg = NULL, min.nnodes = 3, 
-    kegg.native = TRUE, map.null = TRUE, expand.node = FALSE, 
-    split.group = FALSE, map.symbol = TRUE, map.cpdname = TRUE, 
-    node.sum = "sum", discrete = list(gene = FALSE, cpd = FALSE), 
-    limit = list(gene = 1, cpd = 1), bins = list(gene = 10, cpd = 10), 
-    both.dirs = list(gene = T, cpd = T), trans.fun = list(gene = NULL, 
-        cpd = NULL), low = list(gene = "green", cpd = "blue"), 
-    mid = list(gene = "gray", cpd = "gray"), high = list(gene = "red", 
-        cpd = "yellow"), na.col = "transparent", ...) {
-    if (is.character(gene.data)) {
-        gd.names = gene.data
-        gene.data = rep(1, length(gene.data))
-        names(gene.data) = gd.names
-        both.dirs$gene = FALSE
-        ng = length(gene.data)
-        nsamp.g = 1
-    }
-    else if (!is.null(gene.data)) {
-        if (length(dim(gene.data)) == 2) {
-            gd.names = rownames(gene.data)
-            ng = nrow(gene.data)
-            nsamp.g = 2
-        }
-        else if (is.numeric(gene.data) & is.null(dim(gene.data))) {
-            gd.names = names(gene.data)
-            ng = length(gene.data)
-            nsamp.g = 1
-        }
-        else stop("wrong gene.data format!")
-    }
-    else if (is.null(cpd.data)) {
-        stop("gene.data and cpd.data are both NULL!")
-    }
-    gene.idtype = toupper(gene.idtype)
-    data(bods)
-    data(gene.idtype.list)
-    if (species != "ko") {
-        species.data = pathview::kegg.species.code(species, na.rm = T, 
-            code.only = FALSE)
-    }
-    else {
-        species.data = c(kegg.code = "ko", entrez.gnodes = "0", 
-            kegg.geneid = "K01488", ncbi.geneid = "")
-        gene.idtype = "KEGG"
-        msg.fmt = "Only KEGG ortholog gene ID is supported, make sure it looks like \"%s\"!"
-        msg = sprintf(msg.fmt, species.data["kegg.geneid"])
-        message(msg)
-    }
-    if (length(dim(species.data)) == 2) {
-        message("More than two valide species!")
-        species.data = species.data[1, ]
-    }
-    species = species.data["kegg.code"]
-    entrez.gnodes = species.data["entrez.gnodes"] == 1
-    if (is.na(species.data["ncbi.geneid"])) {
-        if (!is.na(species.data["kegg.geneid"])) {
-            msg.fmt = "Only native KEGG gene ID is supported for this species,\nmake sure it looks like \"%s\"!"
-            msg = sprintf(msg.fmt, species.data["kegg.geneid"])
-            message(msg)
-        }
-        else {
-            stop("This species is not annotated in KEGG!")
-        }
-    }
-    if (is.null(gene.annotpkg)) 
-        gene.annotpkg = bods[match(species, bods[, 3]), 1]
-    if (length(grep("ENTREZ|KEGG", gene.idtype)) < 1 & !is.null(gene.data)) {
-        if (is.na(gene.annotpkg)) 
-            stop("No proper gene annotation package available!")
-        if (!gene.idtype %in% gene.idtype.list) 
-            stop("Wrong input gene ID type!")
-        gene.idmap = id2eg(gd.names, category = gene.idtype, 
-            pkg.name = gene.annotpkg)
-        gene.data = mol.sum(gene.data, gene.idmap)
-        gene.idtype = "ENTREZ"
-    }
-    if (gene.idtype == "ENTREZ" & !entrez.gnodes & !is.null(gene.data)) {
-        message("Getting gene ID data from KEGG...")
-        gene.idmap = keggConv("ncbi-geneid", species)
-        message("Done with data retrieval!")
-        kegg.ids = gsub(paste(species, ":", sep = ""), "", names(gene.idmap))
-        ncbi.ids = gsub("ncbi-geneid:", "", gene.idmap)
-        gene.idmap = cbind(ncbi.ids, kegg.ids)
-        gene.data = mol.sum(gene.data, gene.idmap)
-        gene.idtype = "KEGG"
-    }
-    if (is.character(cpd.data)) {
-        cpdd.names = cpd.data
-        cpd.data = rep(1, length(cpd.data))
-        names(cpd.data) = cpdd.names
-        both.dirs$cpd = FALSE
-        ncpd = length(cpd.data)
-    }
-    else if (!is.null(cpd.data)) {
-        if (length(dim(cpd.data)) == 2) {
-            cpdd.names = rownames(cpd.data)
-            ncpd = nrow(cpd.data)
-        }
-        else if (is.numeric(cpd.data) & is.null(dim(cpd.data))) {
-            cpdd.names = names(cpd.data)
-            ncpd = length(cpd.data)
-        }
-        else stop("wrong cpd.data format!")
-    }
-    if (length(grep("kegg", cpd.idtype)) < 1 & !is.null(cpd.data)) {
-        data(rn.list)
-        cpd.types = c(names(rn.list), "name")
-        cpd.types = tolower(cpd.types)
-        cpd.types = cpd.types[-grep("kegg", cpd.types)]
-        if (!tolower(cpd.idtype) %in% cpd.types) 
-            stop("Wrong input cpd ID type!")
-        cpd.idmap = cpd2kegg(cpdd.names, in.type = cpd.idtype)
-        cpd.data = mol.sum(cpd.data, cpd.idmap)
-    }
-    warn.fmt = "Parsing %s file failed, please check the file!"
-    if (length(grep(species, pathway.id)) > 0) {
-        pathway.name = pathway.id
-        pathway.id = gsub(species, "", pathway.id)
-    }
-    else pathway.name = paste(species, pathway.id, sep = "")
-    kfiles = list.files(path = kegg.dir, pattern = "[.]xml|[.]png")
-    tfiles = paste(pathway.name, c("xml", "png"), sep = ".")
-    if (!all(tfiles %in% kfiles)) {
-        dstatus = download.kegg(pathway.id = pathway.id, species = species, 
-            kegg.dir = kegg.dir)
-        if (dstatus == "failed") {
-            warn.fmt = "Failed to download KEGG xml/png files, %s skipped!"
-            warn.msg = sprintf(warn.fmt, pathway.name)
-            message(warn.msg)
-            return(invisible(0))
-        }
-    }
-    if (missing(xml.file)) 
-        xml.file <- paste(kegg.dir, "/", pathway.name, ".xml", 
-            sep = "")
-    if (kegg.native) {
-        node.data = try(node.info(xml.file), silent = T)
-        if (class(node.data) == "try-error") {
-            warn.msg = sprintf(warn.fmt, xml.file)
-            message(warn.msg)
-            return(invisible(0))
-        }
-        node.type = c("gene", "enzyme", "compound", "ortholog")
-        sel.idx = node.data$type %in% node.type
-        nna.idx = !is.na(node.data$x + node.data$y + node.data$width + 
-            node.data$height)
-        sel.idx = sel.idx & nna.idx
-        if (sum(sel.idx) < min.nnodes) {
-            warn.fmt = "Number of mappable nodes is below %d, %s skipped!"
-            warn.msg = sprintf(warn.fmt, min.nnodes, pathway.name)
-            message(warn.msg)
-            return(invisible(0))
-        }
-        node.data = lapply(node.data, "[", sel.idx)
-    }
-    else {
-        gR1 = try(parseKGML2Graph2(xml.file, genes = F, expand = expand.node, 
-            split.group = split.group), silent = T)
-        node.data = try(node.info(gR1), silent = T)
-        if (class(node.data) == "try-error") {
-            warn.msg = sprintf(warn.fmt, xml.file)
-            message(warn.msg)
-            return(invisible(0))
-        }
-    }
-    if (species == "ko") 
-        gene.node.type = "ortholog"
-    else gene.node.type = "gene"
-    if ((!is.null(gene.data) | map.null) & sum(node.data$type == 
-        gene.node.type) > 1) {
-        plot.data.gene = node.map(gene.data, node.data, node.types = gene.node.type, 
-            node.sum = node.sum, entrez.gnodes = entrez.gnodes)
-        kng = plot.data.gene$kegg.names
-        kng.char = gsub("[0-9]", "", unlist(kng))
-        if (any(kng.char > "")) 
-            entrez.gnodes = FALSE
-        if (map.symbol & species != "ko" & entrez.gnodes) {
-            if (is.na(gene.annotpkg)) {
-                warm.fmt = "No annotation package for the species %s, gene symbols not mapped!"
-                warm.msg = sprintf(warm.fmt, species)
-                message(warm.msg)
-            }
-            else {
-                plot.data.gene$labels = eg2id(as.character(plot.data.gene$kegg.names), 
-                  category = "SYMBOL", pkg.name = gene.annotpkg)[, 
-                  2]
-                mapped.gnodes = rownames(plot.data.gene)
-                node.data$labels[mapped.gnodes] = plot.data.gene$labels
-            }
-        }
-        cols.ts.gene = node.color(plot.data.gene, limit$gene, 
-            bins$gene, both.dirs = both.dirs$gene, trans.fun = trans.fun$gene, 
-            discrete = discrete$gene, low = low$gene, mid = mid$gene, 
-            high = high$gene, na.col = na.col)
-    }
-    else plot.data.gene = cols.ts.gene = NULL
-    if ((!is.null(cpd.data) | map.null) & sum(node.data$type == 
-        "compound") > 1) {
-        plot.data.cpd = node.map(cpd.data, node.data, node.types = "compound", 
-            node.sum = node.sum)
-        if (map.cpdname & !kegg.native) {
-            plot.data.cpd$labels = cpdkegg2name(plot.data.cpd$labels)[, 
-                2]
-            mapped.cnodes = rownames(plot.data.cpd)
-            node.data$labels[mapped.cnodes] = plot.data.cpd$labels
-        }
-        cols.ts.cpd = node.color(plot.data.cpd, limit$cpd, bins$cpd, 
-            both.dirs = both.dirs$cpd, trans.fun = trans.fun$cpd, 
-            discrete = discrete$cpd, low = low$cpd, mid = mid$cpd, 
-            high = high$cpd, na.col = na.col)
-    }
-    else plot.data.cpd = cols.ts.cpd = NULL
-    if (kegg.native) {
-        pv.pars = keggview.native(plot.data.gene = plot.data.gene, 
-            cols.ts.gene = cols.ts.gene, plot.data.cpd = plot.data.cpd, 
-            cols.ts.cpd = cols.ts.cpd, node.data = node.data, 
-            pathway.name = pathway.name, kegg.dir = kegg.dir, 
-            limit = limit, bins = bins, both.dirs = both.dirs, 
-            discrete = discrete, low = low, mid = mid, high = high, 
-            na.col = na.col, ...)
-    }
-    else {
-        pv.pars = keggview.graph(plot.data.gene = plot.data.gene, 
-            cols.ts.gene = cols.ts.gene, plot.data.cpd = plot.data.cpd, 
-            cols.ts.cpd = cols.ts.cpd, node.data = node.data, 
-            path.graph = gR1, pathway.name = pathway.name, map.cpdname = map.cpdname, 
-            split.group = split.group, limit = limit, bins = bins, 
-            both.dirs = both.dirs, discrete = discrete, low = low, 
-            mid = mid, high = high, na.col = na.col, ...)
-    }
-    plot.data.gene = cbind(plot.data.gene, cols.ts.gene)
-    if (!is.null(plot.data.gene)) {
-        cnames = colnames(plot.data.gene)[-(1:7)]
-        nsamp = length(cnames)/2
-        if (nsamp > 1) {
-            cnames[(nsamp + 1):(2 * nsamp)] = paste(cnames[(nsamp + 
-                1):(2 * nsamp)], "col", sep = ".")
-        }
-        else cnames[2] = "mol.col"
-        colnames(plot.data.gene)[-(1:7)] = cnames
-    }
-    plot.data.cpd = cbind(plot.data.cpd, cols.ts.cpd)
-    if (!is.null(plot.data.cpd)) {
-        cnames = colnames(plot.data.cpd)[-(1:7)]
-        nsamp = length(cnames)/2
-        if (nsamp > 1) {
-            cnames[(nsamp + 1):(2 * nsamp)] = paste(cnames[(nsamp + 
-                1):(2 * nsamp)], "col", sep = ".")
-        }
-        else cnames[2] = "mol.col"
-        colnames(plot.data.cpd)[-(1:7)] = cnames
-    }
-    return(invisible(list(plot.data.gene = plot.data.gene, plot.data.cpd = plot.data.cpd)))
-}
+#' A copy and paste of clusterProfiler's readGff
+#' @export
+##readGff <- function(gffFile, nrows = -1) {
+##    cat("Reading ", gffFile, ": ", sep="")
+##    gff <- read.table(gffFile, sep="\t", as.is=TRUE, quote="\"", fill=TRUE,
+##                      header=FALSE, comment.char="#", nrows=nrows,
+##                      colClasses=c("character", "character", "character", "integer",
+##                          "integer", "character", "character", "character", "character"))
+##    colnames(gff) = c("seqname", "source", "feature", "start", "end",
+##                "score", "strand", "frame", "attributes")
+##    cat("found", nrow(gff), "rows with classes:",
+##        paste(sapply(gff, class), collapse=", "), "\n")
+##    stopifnot(!any(is.na(gff$start)), !any(is.na(gff$end)))
+##    return(gff)
+##}
+##
+## Functions in this are not exported by clusterProfiler/topGO
+##Gff2GeneTable <- function(gffFile, compress=TRUE) {
+##    ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"
+##    if (is.data.frame(gffFile)) {
+##        GeneID = data.frame(GeneID = gffFile$ID)
+##        geneInfo = gffFile
+##        geneInfo$start = 1
+##        geneInfo$GeneID = gffFile$ID
+##        geneInfo$GeneName = gffFile$ID
+##        geneInfo$Locus = gffFile$ID        
+##        geneInfo$end = geneInfo$width
+##        geneInfo$strand = "+"
+##    } else {
+##        ## readGff was written in clusterProfiler, but isn't exported.
+##        gff <- readGff(gffFile)
+##        GeneID <- data.frame(GeneID=getGffAttribution(gff$attributes, field="ID"))
+##        geneInfo <- gff[gff$feature == "gene",]
+##        geneInfo <- geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
+##        geneInfo$GeneID <- getGffAttribution(geneInfo$attributes, field="ID")
+##        geneInfo$GeneName <- getGffAttribution(geneInfo$attributes, field="Name")
+##        geneInfo$Locus <- getGffAttribution(geneInfo$attributes, field="locus_tag")
+##        geneInfo$GeneName[is.na(geneInfo$GeneName)] <- "-"
+##        geneInfo <- geneInfo[, -5] ## abondom "attributes" column.
+##    }
+##            ## GI2GeneID <- data.frame(GI=getGffAttribution(gff$attributes, field="GI"),
+##    ##                        GeneID=getGffAttribution(gff$attributes, field="GeneID")
+##    ##                                    #,
+##    ##                                    #Product=getGffAttribution(gff$attributes, field="product")
+##    ##                        )
+##    ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$GI),]
+##    ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$Gene),]
+##    ## geneTable <- merge(GI2GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
+##    geneTable <- merge(GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
+##    geneTable <- unique(geneTable)
+##    if (compress) {
+##        save(geneTable, file="geneTable.rda", compress="xz")
+##    } else {
+##        save(geneTable, file="geneTable.rda")
+##    }
+##    message("Gene Table file save in the working directory.")
+##}

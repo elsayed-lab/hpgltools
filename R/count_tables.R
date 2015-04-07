@@ -1,14 +1,27 @@
-## Time-stamp: <Tue Jan 27 12:41:26 2015 Ashton Trey Belew (abelew@gmail.com)>
-### count_tables.R contains some functions for simple count-table manipulations
-### This includes reading in files, creating expressionSets, and subsets.
-
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
 #' expt_subset for everything
 #'
 #' @param file a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc
-#' @param color_hash a hash which describes how to color the samples
+#' @param color_hash a hash which describes how to color the samples,
+#'   NULL by default; it will generate its own colors using colorBrewer
+#' @param suffix when looking for the count tables in processed_data
+#'   look for this suffix on the end of the files.  .count.gz by default.
+#' @param header Does the csv metadata file have a header?  FALSE by default.
+#' @param genes annotation information describing the rows of the data set, usually
+#'   this comes from a call to import.gff()
+#' @param by_type when looking for count tables, are they organized by type?
+#' @param by_sample or by sample?  I do all mine by sample, but others do by type...
+#' @param sep some folks prefer their csv files as tab separated or somesuch
+#' @param include_type I have usually assumed that all gff annotations should be used,
+#'   but that is not always true, this allows one to limit.
+#' @param include_gff A gff file to help in sorting which features to keep
+#' @param count_dataframe If one does not wish to read the count tables from processed_data/
+#'   they may instead be fed here
+#' @param savefile an Rdata file to which to save the data of the resulting expt. expt.Rdata by default.
+#' @param low_files whether or not to explicitly lowercase the filenames when searching in processed_data/
+#'   this is relevant because the ceph object storage by default lowercases filenames.
 #' 
 #' @return  experiment an expressionset
 #' @seealso \code{\link{pData}}, \code{\link{fData}},
@@ -20,18 +33,44 @@
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
-create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", count_dataframe=NULL, ...) {
+create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
     tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
+    colnames(tmp_definitions) = tolower(colnames(tmp_definitions))    
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
     ## Thus the next line
     print("This function needs the conditions and batches to be an explicit column in the sample sheet.")
-    tmp_definitions = subset(tmp_definitions, Sample.ID != "")
+    tmp_definitions = subset(tmp_definitions, sample.id != "")
     condition_names = unique(tmp_definitions$condition)
-    num_colors = length(condition_names)        
-    colors = colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors)
+    num_colors = length(condition_names)
+    colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors))
     color_hash = hash(keys=as.character(condition_names), values=colors)
-    expt = create_experiment(file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, sep=sep)
+    expt_list = create_experiment(file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
+    expt = expt_list$expt
+    def = expt_list$def
     new_expt = expt_subset(expt, "")
+    new_expt$definitions = def
+
+    if (!is.null(expt_list$annotation)) {
+        new_expt$annotation = expt_list$annotation
+        new_expt$gff_file = include_gff
+        tmp_genes = new_expt$annotation
+        tmp_genes = tmp_genes[tmp_genes$type == "gene",]
+        rownames(tmp_genes) = make.names(tmp_genes$Name, unique=TRUE)
+        tooltip_data = tmp_genes
+        tooltip_data = tooltip_data[,c(11,12)]
+        tooltip_data$tooltip = paste(tooltip_data$Name, tooltip_data$description, sep=": ")
+        tooltip_data$tooltip = gsub("\\+", " ", tooltip_data$tooltip)
+        rownames(tooltip_data) = tooltip_data$Name
+        tooltip_data = tooltip_data[-1]
+        tooltip_data = tooltip_data[-1]
+        colnames(tooltip_data) = c("name.tooltip")
+        new_expt$genes = genes
+        new_expt$tooltip = tooltip_data
+    }
+
+    if (!is.null(savefile)) {
+        save(list = c("new_expt"), file=paste(savefile, ".Rdata", sep=""))
+    }
     return(new_expt)
 }
 
@@ -52,56 +91,63 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Dude, you need to remember that this depends on an existing data structure of
 #' ## gene annotations.
-create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, count_dataframe=NULL, sep=",", ...) {
+create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, include_type="all", include_gff=NULL, count_dataframe=NULL, sep=",", ...) {
     print("Please note that thus function assumes a specific set of columns in the sample sheet:")
     print("The most important ones are: Sample.ID, Stage, Type.")
     print("Other columns it will attempt to create by itself, but if")
     print("batch and condition are provided, that is a nice help.")
     sample_definitions = read.csv(file=file, comment.char="#", sep=sep)
-    sample_definitions = sample_definitions[grepl('(^HPGL|^hpgl)', sample_definitions$Sample.ID, perl=TRUE),]
+    colnames(sample_definitions) = tolower(colnames(sample_definitions))
+    ##sample_definitions = sample_definitions[grepl('(^HPGL|^hpgl)', sample_definitions$sample.id, perl=TRUE),]
     if (is.null(sample_definitions$condition)) {
-        sample_definitions$condition = tolower(paste(sample_definitions$Type, sample_definitions$Stage, sep="_"))
-        sample_definitions$batch = gsub("\\s+|\\d+|\\*", "", sample_definitions$Batch, perl=TRUE)
+        sample_definitions$condition = tolower(paste(sample_definitions$type, sample_definitions$stage, sep="_"))
+        sample_definitions$batch = gsub("\\s+|\\d+|\\*", "", sample_definitions$batch, perl=TRUE)
     }
     design_colors_list = as.list.hash(color_hash)
     sample_definitions$colors = as.list(design_colors_list[as.character(sample_definitions$condition)])
-    ##sample_definitions$colors = as.list(color_hash[sample_definitions$condition])
+    sample_definitions = as.data.frame(sample_definitions)
+    rownames(sample_definitions) = make.names(sample_definitions$sample.id, unique=TRUE)
+    
     ## The logic here is that I want by_type to be the default, but only
     ## if no one chooses either.
-    if (!isTRUE(by_type) & !isTRUE(by_sample)) {
-        by_type = TRUE
-    }
-    if (isTRUE(by_type)) {
-        sample_definitions$counts = paste("processed_data/count_tables/", tolower(sample_definitions$Type),
-            "/", tolower(sample_definitions$Stage), "/",
-            sample_definitions$Sample.ID, suffix, sep="")
-        sample_definitions$intercounts = paste("data/count_tables/", tolower(sample_definitions$Type),
-            "/", tolower(sample_definitions$Stage), "/",
-            sample_definitions$Sample.ID, "_inter", suffix, sep="")
-    }
-    if (isTRUE(by_sample)) {
-        sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$Sample.ID), "/", as.character(sample_definitions$Sample.ID), suffix, sep="")
-        sample_definitions$intercounts = paste("processed_data/count_tables/", as.character(sample_definitions$Sample.ID), "/", as.character(sample_definitions$Sample.ID), "_inter", suffix, sep="")
-    }
-    if (is.null(sample_definitions$stage)) {
-        sample_definitions$stage = sample_definitions$Stage
-    }
-    if (is.null(sample_definitions$type)) {
-        sample_definitions$type = sample_definitions$Type
-    }
-    if (is.null(sample_definitions$batch)) {
-        sample_definitions$batch = sample_definitions$Batch
-    }
-    sample_definitions = as.data.frame(sample_definitions)
-    rownames(sample_definitions) = sample_definitions$Sample.ID
-    if (is.null(count_dataframe)) {
-        all_count_tables = hpgl_read_files(as.character(sample_definitions$Sample.ID),
-            as.character(sample_definitions$counts), header=header)
-    } else {
+    filenames = NULL
+    found_counts = NULL
+    ## This stanza allows one to have a field 'file' in the csv with filenames for the count tables.
+    if (!is.null(sample_definitions$file)) {
+        filenames = sample_definitions$file
+        all_count_tables = hpgl_read_files(as.character(sample_definitions$sample.id),
+            as.character(filenames), header=header, suffix=suffix)
+        ## This stanza allows one to fill in the count tables with an external data frame.
+    } else if (!is.null(count_dataframe)) {
         all_count_tables = count_dataframe
         colnames(all_count_tables) = rownames(sample_definitions)
-    }
-    all_count_matrix = data.frame(all_count_tables)
+        ## If neither of these cases is true, start looking for the files in the processed_data/ directory
+
+    } else if (!isTRUE(by_type) & !isTRUE(by_sample) & is.null(filenames)) {
+        ## If neither by_type or by_sample is set, look first by sample
+        sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
+        found_counts = try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
+        if (class(found_counts) == 'try-error') {
+            ## Then try by-type
+            sample_definitions$counts = paste("processed_data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, suffix, sep="")
+            found_counts = try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
+            if (class(found_counts) == 'try-error') {
+                stop("Unable to find count tables, either by sample id nor by type")
+            } else {
+                all_count_tables = found_counts
+            }
+        } else {
+            all_count_tables = found_counts
+        }
+    } else if (isTRUE(by_sample)) {
+        sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
+        all_count_tables = try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
+    } else if (isTRUE(by_type)) {
+        sample_definitions$counts = paste("processed_data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, suffix, sep="")
+        all_count_tables = try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
+    } ## End checking by_type/by_samples
+    all_count_matrix = as.data.frame(all_count_tables)
+
     rownames(all_count_matrix) = gsub("^exon:","", rownames(all_count_matrix))
     rownames(all_count_matrix) = make.names(gsub(":\\d+","", rownames(all_count_matrix)), unique=TRUE)    
     if (is.null(genes)) {
@@ -113,6 +159,29 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
         gene_info = genes[genes$ID %in% rownames(all_count_matrix),]
         all_count_matrix = all_count_matrix[rownames(all_count_matrix) %in% genes$ID,]                
     }
+
+    ## Make sure that all columns have been filled in for every gene.
+    complete_index = complete.cases(all_count_matrix)
+    all_count_matrix = all_count_matrix[complete_index,]
+
+    annotation = NULL
+    if (!is.null(include_gff)) {
+        if (include_type == "all") {
+            print("Reading the annotation information, this may take a while.")            
+            annotation = BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
+            print("Finished reading annotations, we should be done soon.")            
+        } else {
+            print(paste("Excluding entries from the annotation which are not: ", include_type, sep=""))
+            print("Reading the annotation information, this may take a while.")
+            annotation = BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
+            print("Finished reading annotations, we should be done soon.")
+            keepers = annotation[annotation$type==include_type,]$gene_id
+            index = row.names(all_count_matrix) %in% keepers
+            all_count_matrix = all_count_matrix[index,]
+            gene_info = gene_info[index,]
+        }
+    }
+    
     if (is.null(sample_definitions$stage)) {
         sample_definitions$stage = "unknown"
     }
@@ -134,7 +203,7 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     if (is.null(sample_definitions$intercounts)) {
         sample_definitions$intercounts = "unknown"
     }
-    metadata = new("AnnotatedDataFrame", data.frame(sample=as.character(sample_definitions$Sample.ID),
+    metadata = new("AnnotatedDataFrame", data.frame(sample=as.character(sample_definitions$sample.id),
         stage=as.character(sample_definitions$stage),
         type=as.character(sample_definitions$type),
         condition=as.character(sample_definitions$condition),
@@ -147,7 +216,8 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
     featureNames(feature_data) = rownames(all_count_matrix)
     experiment = new("ExpressionSet", exprs=all_count_matrix,
         phenoData=metadata, featureData=feature_data)
-    return(experiment)
+    ret = list(expt=experiment, def=sample_definitions, annotation=annotation)
+    return(ret)
 }
 
 #' Extract a subset of samples following some rule(s) from an
@@ -167,7 +237,7 @@ create_experiment = function(file, color_hash, suffix=".count.gz", header=FALSE,
 #' @examples
 #' ## smaller_expt = expt_subset(big_expt, "condition=='control'")
 #' ## all_expt = expt_subset(expressionset, "")  ## extracts everything
-expt_subset = function(expt, subset) {
+expt_subset = function(expt, subset, by_definitions=FALSE) {
     if (class(expt) == "ExpressionSet") {
         expressionset = expt
     } else if (class(expt) == "expt") {
@@ -175,10 +245,14 @@ expt_subset = function(expt, subset) {
     } else {
         stop("expt is neither an expt nor ExpressionSet")
     }
-    initial_metadata = Biobase::pData(expressionset)
+    if (isTRUE(by_definitions)) {
+        initial_metadata = expt$definitions
+    } else {
+        initial_metadata = Biobase::pData(expressionset)
+    }
     r_expression=paste("subset(initial_metadata,", subset, ")")
     samples = eval(parse(text=r_expression))
-##    design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
+    ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
     design = as.data.frame(samples)
     ## This is to get around stupidity with respect to needing all factors to be in a DESeqDataSet
     conditions = as.factor(as.character(design$condition))
@@ -224,25 +298,45 @@ expt_subset = function(expt, subset) {
 #' @export
 #' @examples
 #' ## count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
-hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE, ...) {
-    # load first sample
-    count_table = read.table(files[1], ...)
-    colnames(count_table) = c("ID", ids[1])
+hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE, suffix=NULL, ...) {
+    ## load first sample
+    lower_filenames = files
+    dirs = dirname(lower_filenames)
+    low_files = tolower(basename(files))
+    if (!is.null(suffix)) {
+        low_hpgl = gsub(suffix, "", basename(files))
+        low_hpgl = tolower(low_hpgl)
+        low_hpgl = paste(low_hpgl, suffix, sep="")
+    } else {
+        low_hpgl = gsub("HPGL","hpgl", basename(files))
+    }
+    lower_filenames = paste(dirs, low_files, sep="/")
+    lowhpgl_filenames = paste(dirs, low_hpgl, sep="/")
 
-    # iterate over and append remaining samples
+    if (file.exists(tolower(files[1]))) {
+        files = tolower(files)
+    } else if (file.exists(lowhpgl_filenames[1])) {
+        files = lowhpgl_filenames
+    } else if (file.exists(lower_filenames[1])) {
+        files = lower_filenames
+    }
+    ##count_table = read.table(files[1], header=header, ...)
+    count_table = read.table(files[1], header=header)    
+    colnames(count_table) = c("ID", ids[1])
+    ## iterate over and append remaining samples
     for (table in 2:length(files)) {
         tmp_count = read.table(files[table], header=header)
         colnames(tmp_count) = c("ID", ids[table])
         count_table = merge(count_table, tmp_count, by="ID")
     }
+    
     rm(tmp_count)
-
-    # set row and columns ids
+    ## set row and columns ids
     rownames(count_table) = count_table$ID
     count_table = count_table[-1]
     colnames(count_table) = ids
 
-    # remove summary fields added by HTSeq
+    ## remove summary fields added by HTSeq
     if (!include_summary_rows) {
         htseq_meta_rows = c('__no_feature', '__ambiguous', '__too_low_aQual',
                             '__not_aligned', '__alignment_not_unique')
