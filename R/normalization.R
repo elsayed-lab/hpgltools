@@ -37,7 +37,7 @@ hpgl_log2cpm = function(counts, lib.size=NULL) {
     }
     transposed_adjust = t(counts + 0.5)
     cpm = (transpose_adjust / (lib.size + 1)) * 1e+06
-    l2cpm t(log2(cpm))
+    l2cpm = t(log2(cpm))
     return(l2cpm)
 }
 
@@ -85,27 +85,213 @@ divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gf
 #' @export
 #' @examples
 #' ## filtered_table = filter_counts(count_table)
-filter_counts = function(counts, threshold=2, min_samples=2, verbose=TRUE) {
+cbcb_filter_counts = function(count_table, threshold=2, min_samples=2, verbose=FALSE) {
     ## I think having a log2cpm here is kind of weird, because the next step in processing is to cpm the data.
     ##cpms = 2^log2CPM(counts, lib.size=lib.size)$y
     ## cpms = 2^hpgl_log2cpm(counts)
-    num_before = nrow(counts)
+    num_before = nrow(count_table)
 
-    if (class(counts) == 'ExpressionSet') {
-        keep = rowSums(exprs(counts) > threshold) >= min_samples
+    if (class(count_table) == 'ExpressionSet') {
+        keep = rowSums(exprs(count_table) > threshold) >= min_samples
     } else {
-        keep = rowSums(counts > threshold) >= min_samples
+        keep = rowSums(count_table > threshold) >= min_samples
     }
 
-    counts = counts[keep,]
+    count_table = count_table[keep,]
+
+    if (verbose) {
+        print(sprintf("Removing %d low-count genes (%d remaining).",
+                      num_before - nrow(count_table), nrow(count_table)))
+    }
+
+    libsize = colSums(count_table)
+    counts = list(count_table=count_table, libsize=libsize)    
+    return(counts)
+}
+
+#' Filter low-count genes from a data set using filterCounts()
+#'
+#' @param df input data frame of counts by sample
+#' @param threshold lower threshold of counts (default: 4)
+#' @param min_samples minimum number of samples (default: 2)
+#' @param verbose If set to true, prints number of genes removed / remaining
+#' @return dataframe of counts without the low-count genes
+#' @seealso \code{\link{log2CPM}} which this uses to decide what to keep
+#' @export
+#' @examples
+#' ## filtered_table = lowfilter_counts(count_table)
+lowfilter_counts = function(count_table, thresh=2, min_samples=2, verbose=FALSE) {
+    original_dim = dim(count_table)
+    count_table = as.matrix(filterCounts(count_table, thresh=thresh, min_samples=min_samples))
+    if (verbose) {
+        following_dim = dim(count_table)
+        lost_rows = original_dim[1] - following_dim[1]
+        print(paste("Low count filtering cost:", lost_rows, "gene(s)."))
+    }
+    libsize = colSums(count_table)
+    counts = list(count_table=count_table, libsize=libsize)
+    return(counts)
+}
+
+#' Filter low-count genes from a data set using genefilter's pOverA()
+#'
+#' I keep thinking this function is pofa... oh well.
+#'
+#' @param counts input data frame of counts by sample
+#' @param p a minimum proportion of each gene's counts/sample to be greater than a minimum(A) (defaults to 0.01)
+#' @param A the minimum number of counts in the above proportion
+#' @param verbose If set to true, prints number of genes removed / remaining
+#' @return dataframe of counts without the low-count genes
+#' @seealso \code{\link{genefilter}} \code{\link{pOverA}} which this uses to decide what to keep
+#' @export
+#' @examples
+#' ## filtered_table = genefilter_pofa_counts(count_table)
+genefilter_pofa_counts = function(count_table, p=0.01, A=100, verbose=FALSE) {
+    ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
+    num_before = nrow(count_table)
+
+    if (class(count_table) == 'ExpressionSet') {
+        counts = exprs(count_table)
+    }
+    test = pOverA(p=p, A=A)
+    filter_list = filterfun(test)
+    answer = genefilter(count_table, filter_list)
+    count_table = count_table[answer,]
 
     if (verbose) {
         print(sprintf("Removing %d low-count genes (%d remaining).",
                       num_before - nrow(counts), nrow(counts)))
     }
-
+    libsize = colSums(count_table)
+    counts = list(count_table=count_table, libsize=libsize)
     return(counts)
 }
+
+#' Filter low-count genes from a data set using genefilter's kOverA()
+#'
+#' @param counts input data frame of counts by sample
+#' @param k a minimum number of samples to have >A counts
+#' @param A the minimum number of counts for each gene's sample in kOverA()
+#' @param verbose If set to true, prints number of genes removed / remaining
+#' @return dataframe of counts without the low-count genes
+#' @seealso \code{\link{genefilter}} \code{\link{kOverA}} which this uses to decide what to keep
+#' @export
+#' @examples
+#' ## filtered_table = genefilter_kofa_counts(count_table)
+genefilter_kofa_counts = function(count_table, k=1, A=1, verbose=FALSE) {
+    ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
+    num_before = nrow(count_table)
+
+    if (class(count_table) == 'ExpressionSet') {
+        counts = exprs(count_table)
+    }
+    test = kOverA(k=k, A=A)
+    filter_list = filterfun(test)
+    answer = genefilter(count_table, filter_list)
+    count_table = count_table[answer,]
+
+    if (verbose) {
+        print(sprintf("Removing %d low-count genes (%d remaining).",
+                      num_before - nrow(count_table), nrow(count_table)))
+    }
+    libsize = colSums(count_table)
+    counts = list(count_table=count_table, libsize=libsize)
+    return(counts)
+}
+
+#' Filter genes from a dataset outside a range of variance
+#'
+#' @param counts input data frame of counts by sample
+#' @param cv_min a minimum coefficient of variance
+#' @param cv_max guess
+#' @param verbose If set to true, prints number of genes removed / remaining
+#' @return dataframe of counts without the low-count genes
+#' @seealso \code{\link{genefilter}} \code{\link{kOverA}} which this uses to decide what to keep
+#' @export
+#' @examples
+#' ## filtered_table = genefilter_kofa_counts(count_table)
+genefilter_cv_counts = function(count_table, cv_min=0.01, cv_max=1000, verbose=FALSE) {
+    ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
+    num_before = nrow(count_table)
+
+    if (class(count_table) == 'ExpressionSet') {
+        counts = exprs(count_table)
+    }
+    test = cv(cv_min, cv_max)
+    filter_list = filterfun(test)
+    answer = genefilter(count_table, filter_list)
+    count_table = count_table[answer,]
+
+    if (verbose) {
+        print(sprintf("Removing %d low-count genes (%d remaining).",
+                      num_before - nrow(count_table), nrow(count_table)))
+    }
+    libsize = colSums(count_table)
+    counts = list(count_table=count_table, libsize=libsize)    
+    return(counts)
+}
+
+
+testme = function() {
+    ## Trying out genefilter
+    library("pasilla")
+    data("pasillaGenes")
+    library("DESeq")
+    cds = estimateSizeFactors(pasillaGenes)
+    cds = estimateDispersions(cds)
+    fit1 = fitNbinomGLMs(cds, count ~ type + condition)
+    fit0 = fitNbinomGLMs(cds, count ~ type)
+    res = data.frame(
+        filterstat=rowMeans(counts(cds)),
+        pvalue=nbinomGLMTest(fit1, fit0),
+        row.names=featureNames(cds))
+
+    dat = counts(cds)
+        
+    sfun <- coxfilter(1, 1, .05)
+    ffun <- filterfun(sfun)
+    l2dat = log2(dat + 1)
+    l2dat = l2dat[complete.cases(l2dat),]
+    which <- genefilter(l2dat, ffun)
+    tt = dat[which,]
+    dim(tt)
+
+    cvfun <- cv(.5,2.5)
+    ffun <- filterfun(cvfun)
+    which <- genefilter(dat, ffun)
+    tt = dat[which,]
+    dim(tt)
+
+    ## coefficient of variation across samples must be between 0.01 and 1000.
+    cvfun = cv(0.01, 1000)
+    ffun = filterfun(cvfun)
+    which = genefilter(dat, ffun)
+    tt = dat[which,]
+    dim(tt)
+    
+    f1 <- kOverA(k=1, A=1)
+    flist <- filterfun(f1)
+    ans <- genefilter(dat, flist)
+    tt = dat[ans,]
+    dim(tt)
+
+    f1 = pOverA(p=0.1, A=10) ## if > p(0.1) proportion elements in a row are > A(10), then it passes to TRUE
+    flist <- filterfun(f1)
+    ans <- genefilter(dat, flist)
+    tt = dat[ans,]
+    dim(tt)    
+
+    cov_fun = cov(l2dat)
+    af <- Anova(cov_fun, .1)
+    flist = filterfun(af)
+    ans = genefilter(l2dat, flist)
+    tt = dat[ans,]
+    dim(tt)
+    
+    ## nsFilter(cds) ## needs an expressionset
+}    
+    
+
 
 #' Replace the data of an expt with normalized data
 #'
@@ -114,7 +300,12 @@ filter_counts = function(counts, threshold=2, min_samples=2, verbose=TRUE) {
 #'
 #' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
 #' @export
-normalize_expt = function(expt, transform="raw", norm="raw", convert="raw", batch="raw", filter_low=FALSE, annotations=NULL, verbose=FALSE, use_original=FALSE, thresh=2, min_samples=2, batch1="batch", batch2=NULL, ...) {
+normalize_expt = function(expt, ## The expt class passed to the normalizer
+    transform="raw", norm="raw", convert="raw", batch="raw", filter_low=FALSE, ## choose the normalization strategy
+    annotations=NULL, verbose=FALSE, use_original=FALSE, ## annotations used for rpkm/cpseqm, original may be used to ensure double-normalization isn't performed.
+    batch1="batch", batch2=NULL, ## extra parameters for batch correction
+    thresh=2, min_samples=2, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
+    ...) {
     new_expt = expt
     current = expt$expressionset
     if (is.null(new_expt$original_expressionset)) {
@@ -126,7 +317,7 @@ normalize_expt = function(expt, transform="raw", norm="raw", convert="raw", batc
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)
     design = expt$design
-    normalized = hpgl_norm(df=old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch1=batch1, batch2=batch2, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples)
+    normalized = hpgl_norm(df=old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch1=batch1, batch2=batch2, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max)
     final_normalized = normalized$final_counts
     libsizes = final_normalized$libsize
     normalized_data = as.matrix(final_normalized$count_table)
@@ -177,13 +368,12 @@ normalize_expt = function(expt, transform="raw", norm="raw", convert="raw", batc
 #' ## df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
 #' ## count_table = df_ql2rpkm$counts
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm|cbcbcpm
-hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, ...) {
+hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
     lowfilter_performed = FALSE
     norm_performed = "raw"    
     convert_performed = "raw"
     transform_performed = "raw"
     batch_performed = "raw"
-    
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors")
     }
@@ -203,20 +393,42 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
     }
 
     raw_libsize = colSums(count_table)
-    print("Raw libsize: ")
-    print(raw_libsize)
     original_counts = list(libsize=raw_libsize, counts=count_table)
     
     ## Step 1: Perform a low count filter
     lowfiltered_counts = NULL
-    if (filter_low == TRUE) {
+    if (filter_low != "FALSE") {
         if (verbose) {
-            print("Filtering low counts")
+            print(paste0("Filtering low counts with: ", filter_low))
         }
-        lowfiltered_counts = lowfilter_counts(count_table, thresh=thresh, min_samples=min_samples)
-        print(lowfiltered_counts$libsize)
-        count_table = lowfiltered_counts$count_table
-        lowfilter_performed = TRUE
+        if (tolower(filter_low) == "povera") {
+            filter_low = "pofa"
+        } else if (tolower(filter_low) == "kovera") {
+            filter_low = "kofa"
+        }
+        if (filter_low == "cbcb") {
+            lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh, min_samples=min_samples)
+            count_table = lowfiltered_counts$count_table
+            lowfilter_performed = "cbcb"
+        } else if (filter_low == "pofa") {
+            lowfiltered_counts = genefilter_pofa_counts(count_table, p=p, A=A)
+            count_table = lowfiltered_counts$count_table
+            lowfilter_performed = "pofa"
+        } else if (filter_low == "kofa") {
+            lowfiltered_counts = genefilter_kofa_counts(count_table, k=k, A=A)
+            count_table = lowfiltered_counts$count_table
+            lowfilter_performed = "kofa"
+        } else if (filter_low == "cv") {
+            lowfiltered_counts = genefilter_cv_counts(count_table, cv_min=cv_min, cv_max=cv_max)
+            count_table = lowfiltered_counts$count_table
+            lowfilter_performed = "cv"
+        } else {
+            print("Did not recognize the filtering argument, defaulting to cbcb's.")
+            print("Recognized filters are: 'cv', 'kofa', 'pofa', 'cbcb'")
+            lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh, min_samples=min_samples)
+            count_table = lowfiltered_counts$count_table
+            lowfilter_performed = "cbcb"            
+        }
     }
     
     ## Step 2: Normalization
@@ -228,7 +440,6 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
             print(paste("Applying normalization:", norm))
         }
         normalized_counts = normalize_counts(count_table, design, norm=norm)
-        print(normalized_counts$libsize)
         count_table = normalized_counts$count_table
         norm_performed = norm
     }
@@ -243,7 +454,6 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
             print(paste("Setting output type as:", convert))
         }
         converted_counts = convert_counts(count_table, convert=convert)
-        print(converted_counts$libsize)
         count_table = converted_counts$count_table
         convert_performed = convert
     }
@@ -255,7 +465,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         if (verbose) {
             print(paste("Applying: ", transform, " transformation.", sep=""))
         }
-        transformed_counts = transform_counts(count_table, transform=transform, annotations=annotations, converted=convert_performed,  ...)
+        transformed_counts = transform_counts(count_table, transform=transform, annotations=annotations, converted=convert_performed, ...)
         count_table = transformed_counts$count_table
         transform_performed = transform
     }
@@ -266,8 +476,8 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         if (verbose) {
             print(paste("Applying: ", batch, " batch correction(raw means nothing).", sep=""))
         }
-        batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
-        print(batched_counts$libsize)
+        ## batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
+        batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design)        
         count_table = batched_counts$count_table
         batch_performed = batch
     }
@@ -282,26 +492,17 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         converted_counts=converted_counts,
         transformed_counts=transformed_counts,
         batched_counts=batched_counts,
-        final_counts=final_counts)
+        final_counts=final_counts,
+        count_table=final_counts$count_table,
+        libsize=final_counts$libsize
+    )
     return(ret_list)
 }
 
-
-lowfilter_counts = function(count_table) {
-    original_dim = dim(count_table)
-    count_table = as.matrix(filter_counts(count_table, thresh=thresh, min_samples=min_samples))
-    if (verbose) {
-        following_dim = dim(count_table)
-        lost_rows = original_dim[1] - following_dim[1]
-        print(paste("Low count filtering cost:", lost_rows, "gene(s)."))
-    }
-    libsize = colSums(count_table)
-    counts = list(count_table=count_table, libsize=libsize)
-    return(counts)
-}
-
-
 batch_counts = function(count_table, design, batch=batch, batch1=batch1, batch2=batch2 , noscale=TRUE, ...) {
+    if (isTRUE(batch)) {
+        batch = "limma"
+    }
     if (batch == "limma") {
         batches1 = as.factor(design[, batch1])
         if (is.null(batch2)) {
@@ -337,6 +538,9 @@ batch_counts = function(count_table, design, batch=batch, batch1=batch1, batch2=
         ## new_expt$mod_sv = mod_sv
         ## new_expt$fsva_result = fsva_result
         count_table = fsva_result$db         
+    } else {
+        print("Did not recognize the batch correction, leaving the table alone.")
+        print("Recognized batch corrections include: 'limma', 'combatmod', 'sva'")
     }
     libsize = colSums(count_table)
     counts = list(count_table=count_table, libsize=libsize)
@@ -353,6 +557,9 @@ transform_counts = function(count_table, transform="raw", converted="raw", ...) 
         count_table = log10(count_table)
     } else if (transform == "log") {  ## Natural log
         count_table = log(count_table)  ## Apparently log1p does this.
+    } else {
+        print("Did not recognize the transformation, leaving the table alone.")
+        print("Recognized transformations include: 'log2', 'log10', 'log'")
     }
     libsize = colSums(count_table)
     counts = list(count_table=count_table, libsize=libsize)
@@ -438,6 +645,8 @@ normalize_counts = function(count_table, design, norm="raw") {
         ## return this to a DGEList
         count_table = as.matrix(factored)
     } else {
+        print("Did not recognize the normalization, leaving the table alone.")
+        print("Recognized normalizations include: 'sf', 'quant', 'tmm', 'upperquartile', and 'rle'")
         count_table = as.matrix(count_table)
     }
     norm_libsize = colSums(count_table)

@@ -6,8 +6,9 @@
 \usage{
 normalize_expt(expt, transform = "raw", norm = "raw", convert = "raw",
   batch = "raw", filter_low = FALSE, annotations = NULL,
-  verbose = FALSE, use_original = FALSE, thresh = 2, min_samples = 2,
-  batch1 = "batch", batch2 = NULL, ...)
+  verbose = FALSE, use_original = FALSE, batch1 = "batch",
+  batch2 = NULL, thresh = 2, min_samples = 2, p = 0.01, A = 1,
+  k = 1, cv_min = 0.01, cv_max = 1000, ...)
 }
 \arguments{
 \item{expt=expt}{The original expt}
