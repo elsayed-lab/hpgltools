@@ -290,13 +290,18 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
         batches = expt$batches
         data = exprs(expt$expressionset)
         if (is.null(libsize)) {
+            message("libsize was not specified, this parameter has profound effects on limma's result.")
             if (is.null(expt$normalized$normalized_counts$libsize)) {
+                message("Using the libsize from expt$norm_libsize.")
                 libsize = expt$norm_libsize
             } else {
+                message("Using the libsize from expt$normalized$normalized_counts.")                
                 libsize = expt$normalized$normalized_counts$libsize
             }
+        } else {
+            message("libsize was specified.  This parameter has profound effects on limma's result.")
         }
-    }
+    } ## End if expt is defined.
     if (is.null(libsize)) {
         libsize = colSums(data)
     }
