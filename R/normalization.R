@@ -37,7 +37,7 @@ hpgl_log2cpm = function(counts, lib.size=NULL) {
     }
     transposed_adjust = t(counts + 0.5)
     cpm = (transpose_adjust / (lib.size + 1)) * 1e+06
-    l2cpm t(log2(cpm))
+    l2cpm = t(log2(cpm))
     return(l2cpm)
 }
 
