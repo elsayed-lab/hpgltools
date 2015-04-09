@@ -311,8 +311,10 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
     if (is.null(new_expt$original_expressionset)) {
         new_expt$original_expressionset = new_expt$expressionset
     } else {
-        print(paste("This function defaults to replacing the expt$expressionset slot with the ", transform, "(", norm, "(", convert, "))'d data.", sep=""))
+        print(paste("This function will replace the expt$expressionset slot with the ", transform, "(", norm, "(", convert, "))'d data.", sep=""))
         print("It saves the current data into a slot named: expt$backup_expressionset")
+        print("It will also save copies of each step along the way in expt$normalized with the corresponding libsizes.")
+        print("Keep the libsizes in mind when invoking limma.  The appropriate libsize is the non-log(cpm(normalized)).")
     }
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)

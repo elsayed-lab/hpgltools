@@ -1159,6 +1159,7 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     top_threePC = head(plotted_us, n=20)
     plotted_us = plotted_us[,c("PC1","PC2","PC3")]
     plotted_us$ID = rownames(plotted_us)
+    message("The more shallow the curves in these plots, the more genes responsible for this principle component.")
     plot(plotted_us)
     u_plot = recordPlot()
     

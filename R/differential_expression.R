@@ -461,7 +461,8 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, e
         ## and expects data as floating point counts,
         ##not a log2 transformation.
         if (expt$transform == "log2") {
-            data = (2^data) - 1
+            ##data = (2^data) - 1
+            data = expt$normalized$normalized_counts$count_table
         }        
     }
     condition_table = table(conditions)
@@ -470,38 +471,54 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, e
     batches = as.factor(batches)
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
-    cond_model = model.matrix(~0 + conditions)
+    cond_model = model.matrix(~ 0 + conditions)
     tmpnames = colnames(cond_model)
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     tmpnames = gsub("conditions", "", tmpnames)
     colnames(cond_model) = tmpnames
-    condbatch_model = model.matrix(~0 + conditions + batches)
+    condbatch_model = model.matrix(~ 0 + conditions + batches)
+    batch_model = model.matrix(~ 0 + batches)
     tmpnames = colnames(condbatch_model)
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     tmpnames = gsub("conditions", "", tmpnames)        
     colnames(condbatch_model) = tmpnames
 
-    message("Estimating common dispersion, this takes a few seconds.")
-    common_dis = estimateGLMCommonDisp(data, cond_model)
-    message("Estimating trended dispersion, this takes a few seconds.")
-    trended_dis = estimateGLMTrendedDisp(data, cond_model)
-    message("Estimating tagwise dispersion, this takes a few seconds.")
-    tagwise_dis = estimateGLMTagwiseDisp(common_dis, cond_model)
-    cond_fit = edgeR::glmFit(data, design=cond_model, dispersion=common_dis)
+    raw = DGEList(counts=data, group=conditions)
+    message("Using EdgeR to normalize the data.")
+    norm = calcNormFactors(raw)
+    message("Estimating the common dispersion.")
+    disp_norm = estimateCommonDisp(norm)
+    message("Estimating dispersion across genes.")
+    tagdisp_norm = estimateTagwiseDisp(disp_norm)
+    message("Estimating GLM Common dispersion.")
+    glm_norm = estimateGLMCommonDisp(tagdisp_norm, cond_model)
+    message("Estimating GLM Trended dispersion.")
+    glm_trended = estimateGLMTrendedDisp(glm_norm, cond_model)
+    message("Estimating GLM Tagged dispersion.")
+    glm_tagged = estimateGLMTagwiseDisp(glm_trended, cond_model)
+    cond_fit = edgeR::glmFit(glm_tagged, design=cond_model)
 
-    all_pairwise_contrasts = make_pairwise_contrasts(cond_model, conditions, identities=FALSE)
+    apc = make_pairwise_contrasts(cond_model, conditions, do_identities=FALSE)
+    ## This is pretty weird because glmLRT only seems to take up to 7 contrasts at a time...
     contrast_list = list()
     result_list = list()
-    for (con in 1:length(colnames(all_pairwise_contrasts))) {
-        list_name = colnames(all_pairwise_contrasts)[con]
-        message(paste("Performing ", list_name, " contrast.", sep=""))
-        cond_lrt = edgeR::glmLRT(cond_fit, contrast=all_pairwise_contrasts[,list_name])
-        contrast_list[[list_name]] = cond_lrt
-        result_list[[list_name]] = topTags(cond_lrt, n=dim(cond_lrt$fitted.values[1]))
+    lrt_list = list()
+    for (con in 1:length(apc$names)) {
+        name = apc$names[[con]]
+        message(paste0("Performing ", name, " contrast."))
+        single_contrast = gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
+        single_contrast = makeContrasts(single_contrast, levels=cond_model)
+        cond_lrt =  edgeR::glmLRT(cond_fit, contrast=single_contrast)
+        lrt_list[[name]] = cond_lrt        
+        contrast_list[[name]] = single_contrast
+        result_list[[name]] = topTags(cond_lrt, n=nrow(data))
     }
 
     result = list(
-        input_data=data,
+        contrasts=apc,
+        lrt=lrt_list,
+        contrasts=contrast_list,
+        results=result_list
     )
     return(result)
 }
