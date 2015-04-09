@@ -139,7 +139,7 @@ test_that("Limma results.", {
     expect_equal(cbcb_top, hpgl_top)
 })
 message("The following low correlation shows how much the results change when libsize is chosen poorly!")
-cor.test(cbcb_top$logFC, hpgl_top$logFC)
+print(cor.test(cbcb_top$logFC, hpgl_top2$logFC))
 message("As a result, recent versions of limma_pairwise go to some trouble to choose libsize.")
 hpgl_toptables = limma_pairwise(expt=hpgl_l2qcpm_expt, model_batch=FALSE)
 message("Using limma_pairwise() without an intercept model adds a qvalue column.")
