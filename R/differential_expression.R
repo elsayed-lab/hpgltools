@@ -139,10 +139,20 @@ remove_batch_effect = function(normalized_counts, model) {
 #' @export
 #' @examples
 #' ## funkytown = hpgl_voom(samples, model)
-hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE, log2=TRUE) {
+hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE, logged=FALSE, converted=FALSE) {
     out = list()
     if (is.null(libsize)) {
         libsize = colSums(dataframe, na.rm=TRUE)
+    }
+    if (!isTRUE(converted)) {
+        message("The voom input was not cpm, converting now.")
+        posed = t(dataframe + 0.5)
+        dataframe = t(posed/(libsize + 1) * 1e+06)
+        ##y <- t(log2(t(counts + 0.5)/(lib.size + 1) * 1000000)) ## from voom()
+    }
+    if (!isTRUE(logged)) {
+        message("The voom input was not log2, transforming now.")
+        dataframe = log2(dataframe)
     }
     dataframe = as.matrix(dataframe)
     linear_fit = limma::lmFit(dataframe, model, method="ls")
@@ -330,10 +340,25 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     tmpnames = gsub("conditions", "", tmpnames)
     colnames(fun_model) = tmpnames
     fun_voom = NULL
+
     ## voom() it, taking into account whether the data has been log2 transformed.
+    logged = expt$transform
+    if (logged == "raw") {
+        logged = FALSE
+    } else {
+        logged = TRUE
+    }
+    converted = expt$convert
+    if (converted == "raw") {
+        converted = FALSE
+    } else {
+        converted = TRUE
+    }
     ##fun_voom = voom(data, fun_model)
-   ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
-    fun_voom = voomMod(data, fun_model, lib.size=libsize)
+    ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
+    ##fun_voom = voomMod(data, fun_model, lib.size=libsize)
+    fun_voom = hpgl_voom(data, fun_model, libsize=libsize, logged=logged, converted=converted)
+    
     ## Extract the design created by voom()
     ## This is interesting because each column of the design will have a prefix string 'macb' before the
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
