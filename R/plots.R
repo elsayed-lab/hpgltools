@@ -67,10 +67,12 @@ graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", fi
     expt_colors = expt$colors
     expt_names = expt$names
     expt_raw_data = Biobase::exprs(expt$expressionset)
-    expt_norm_data = hpgltools::hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low, ...)$counts
-    batch_removed_data = as.matrix(limma::removeBatchEffect(expt_raw_data, batch=expt$batches))
-    batch_norm_data = as.matrix(limma::removeBatchEffect(expt_norm_data, batch=expt$batches))
-
+    ## expt_norm_data = hpgltools::hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low, ...)$count_table
+    expt_norm_data = hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low)$count_table
+    ## batch_removed_data = as.matrix(limma::removeBatchEffect(expt_raw_data, batch=expt$batches))
+    ## batch_norm_data = as.matrix(limma::removeBatchEffect(expt_norm_data, batch=expt$batches))
+    batch_removed_data = hpgl_norm(expt=expt, transform="raw", norm="raw", convert="raw", design=expt_design, batch="limma", filter_low=filter_low)$count_table
+    batch_norm_data = hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, batch=TRUE, design=expt_design, filter_low=filter_low)$count_table
     nonzero_plot = libsize_plot = NULL
     if (isTRUE(do_libsize)) {
         message("Graphing number of non-zero genes with respect to CPM by library.")
@@ -1157,6 +1159,7 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     top_threePC = head(plotted_us, n=20)
     plotted_us = plotted_us[,c("PC1","PC2","PC3")]
     plotted_us$ID = rownames(plotted_us)
+    message("The more shallow the curves in these plots, the more genes responsible for this principle component.")
     plot(plotted_us)
     u_plot = recordPlot()
     
@@ -1165,11 +1168,12 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     cumulative_pc_variance = cumsum(component_variance)
 
     ## Another method of using PCA
-    con = as.factor(as.numeric(batches))
+    con = as.factor(as.numeric(design$condition))
+    bat = as.factor(as.numeric(design$batch))
     another_pca = try(princomp(x=data, cor=FALSE, scores=TRUE, formula=~con+bat))
     lowest = NULL
     highest = NULL
-    if (class(another_pca != 'try-error')) {
+    if (class(another_pca) != 'try-error') {
         lowest = head(names(sort(another_pca$x[,"PC1"], decreasing=FALSE)))
         highest = head(names(sort(another_pca$x[,"PC1"], decreasing=TRUE)))
     }
