@@ -84,6 +84,8 @@ autoloads_graphs = function(...) {
 
 autoloads_helpers = function(...) {
     require.auto("devtools", ...)
+    require.auto("BiocParallel")
+    register(MulticoreParam(4))    
     require.auto("data.table")
     require.auto("gtools")
     require.auto("hash")    

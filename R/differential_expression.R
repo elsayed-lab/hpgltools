@@ -311,11 +311,11 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     batches = as.factor(batches)
     ## Make a model matrix which will have one entry for each of these condition/batches
     cond_model = model.matrix(~ 0 + conditions)
-    batch_model = model.matrix(~ 0 + batches)
-    condbatch_model = model.matrix(~ 0 + conditions + batches)
+    batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
+    condbatch_model = try(model.matrix(~ 0 + conditions + batches), silent=TRUE)
     cond_int_model = model.matrix(~ conditions)
-    batch_int_model = model.matrix(~ batches)
-    condbatch_int_model = model.matrix(~ conditions + batches)
+    batch_int_model = try(model.matrix(~ batches), silent=TRUE)
+    condbatch_int_model = try(model.matrix(~ conditions + batches), silent=TRUE)
     fun_model = NULL
     fun_int_model = NULL
     if (isTRUE(model_cond) & isTRUE(model_batch)) {
@@ -465,6 +465,7 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, e
             data = expt$normalized$normalized_counts$count_table
         }        
     }
+    message("At this time, this only does conditional models.")
     condition_table = table(conditions)
     batch_table = table(batches)
     conditions = as.factor(conditions)
@@ -476,12 +477,12 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, e
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     tmpnames = gsub("conditions", "", tmpnames)
     colnames(cond_model) = tmpnames
-    condbatch_model = model.matrix(~ 0 + conditions + batches)
-    batch_model = model.matrix(~ 0 + batches)
-    tmpnames = colnames(condbatch_model)
-    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
-    tmpnames = gsub("conditions", "", tmpnames)        
-    colnames(condbatch_model) = tmpnames
+    condbatch_model = try(model.matrix(~ 0 + conditions + batches), silent=TRUE)
+    batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
+    ##tmpnames = colnames(condbatch_model)
+    ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    ##tmpnames = gsub("conditions", "", tmpnames)        
+    ##colnames(cond_model) = tmpnames
 
     raw = DGEList(counts=data, group=conditions)
     message("Using EdgeR to normalize the data.")
@@ -521,6 +522,88 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, e
         results=result_list
     )
     return(result)
+}
+
+deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) {
+    if (is.null(expt) & is.null(data)) {
+        stop("This requires either an expt or data+conditions+batches")
+    } else if (!is.null(expt)) {
+        conditions = expt$conditions
+        batches = expt$batches
+        data = as.data.frame(exprs(expt$expressionset))
+        ## As I understand it, edgeR fits a binomial distribution
+        ## and expects data as floating point counts,
+        ##not a log2 transformation.
+        if (expt$transform == "log2") {
+            ##data = (2^data) - 1
+            data = expt$normalized$normalized_counts$count_table
+        }        
+    }
+    condition_table = table(conditions)
+    batch_table = table(batches)
+    conditions = as.factor(conditions)
+    batches = as.factor(batches)
+    ## Make a model matrix which will have one entry for
+    ## each of the condition/batches
+    cond_model = model.matrix(~ 0 + conditions)
+    tmpnames = colnames(cond_model)
+    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    tmpnames = gsub("conditions", "", tmpnames)
+    colnames(cond_model) = tmpnames
+    ##condbatch_model = model.matrix(~ 0 + conditions + batches)
+    ##batch_model = model.matrix(~ 0 + batches)
+    ##tmpnames = colnames(condbatch_model)
+    ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    ##tmpnames = gsub("conditions", "", tmpnames)        
+    ##colnames(condbatch_model) = tmpnames
+
+    ## An interesting note about the use of formulae in DESeq:
+    ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
+    summarized = DESeqDataSetFromMatrix(countData = exprs(expt$expressionset),
+        colData = pData(expt$expressionset),
+        design = ~condition)
+    dataset = DESeqDataSet(se=summarized, design=~condition)
+    deseq_run = DESeq(dataset)
+    deseq_result = results(deseq_run)
+    deseq_mle_result = results(deseq_run, addMLE=TRUE)
+    deseq_df = data.frame(deseq_result[order(deseq_result$log2FoldChange),])
+
+    plotMA(deseq_df)
+    ## identify(deseq_result$baseMean, deseq_result$log2FoldChange)    
+    ma = recordPlot()
+
+    ##d = plotCounts(dataset, gene=which.min(deseq_result$padj), intgroup="condition", returnData=TRUE)
+    ##ggplot(d, aes(x=condition, y=count)) +
+    ##    geom_point(position=position_jitter(w=0.1,h=0)) +
+    ##    scale_y_log10(breaks=c(25,100,400))
+
+    mcols(deseq_result)$description
+    ## DESeq can do multi-factors, but the important one goes last
+    ## design(summarized) = formula(~ batch + condition)
+    ## deseq_run = DESeq(summarized)
+
+    ## Different contrasts may be applied with
+    ## contrast_res = results(deseq_run, contrast=c("condition", "numerator", "denominator"))
+
+    ## data transformations:
+    rld = rlog(deseq_run)
+    vsd = try(varianceStabilizingTransformation(deseq_run), silent=TRUE)
+    rlogMat = assay(rld)
+    vstMat = try(assay(vsd), silent=TRUE)
+    par(mfrow=c(1,3))
+    notAllZero <- (rowSums(counts(deseq_run))>0)
+##    meanSdPlot(log2(counts(deseq_run, normalized=TRUE)[notAllZero,] + 1))
+##    meanSdPlot(assay(rld[notAllZero,]))
+##    meanSdPlot(assay(vsd[notAllZero,]))
+    
+    ret_list = list(
+        run=deseq_run,
+        result=deseq_result,
+        result_mle=deseq_mle_result,
+        result_df=deseq_df
+        
+    )
+    return(ret_list)
 }
 
 #' make_pairwise_contrasts(): Run makeContrasts() with all pairwise comparisons.
