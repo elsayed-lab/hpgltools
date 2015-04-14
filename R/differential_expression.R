@@ -250,9 +250,9 @@ limma_subset = function(table, n=NULL, z=NULL) {
 
 
 #' limma_pairwise():  Set up a model matrix and set of contrasts to do
-#' a pairwise comparison of all conditions/batches.  In this case, there
-#' must be a balanced set of batches for each condition.
+#' a pairwise comparison of all conditions using voom/limma.
 #'
+#' @param expt an expt class containing count tables, normalization state, etc.
 #' @param conditions a factor of conditions in the experiment
 #' @param batches a factor of batches in the experiment
 #' @param extra_contrasts some extra contrasts to add to the list
@@ -260,6 +260,11 @@ limma_subset = function(table, n=NULL, z=NULL) {
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
 #'  de_minus_cb = (E-D)-(C-B),"
+#' @param model_cond Include condition in the model?  This should pretty much always be true.
+#' @param model_batch Include batch in the model? FALSE by default, but hopefully true often.
+#' @param model_intercept Perform a cell-means or intercept model?  FALSE by default because I understand subtraction math better.
+#'   But I have tested and get the same answer either way.
+#' @param libsize I've recently figured out that libsize is far more important than I previously realized.  Play with it here.
 #' @param ... The elipsis parameter is fed to write_limma() at the end.
 #'
 #' @return A list including the following information:
@@ -282,7 +287,7 @@ limma_subset = function(table, n=NULL, z=NULL) {
 #' @export
 #' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
-limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, norm="quant", convert="cpm", batch=NULL, alt_model=NULL, libsize=NULL) {
+limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
     if (is.null(expt) & is.null(data)) {
         stop("This requires either an expt or data/condition/batches")
     } else if (!is.null(expt)) {
@@ -310,11 +315,11 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     conditions = as.factor(conditions)
     batches = as.factor(batches)
     ## Make a model matrix which will have one entry for each of these condition/batches
-    cond_model = model.matrix(~ 0 + conditions)
+    cond_model = model.matrix(~ 0 + conditions)  ## I am not putting a try() on this, because if it fails, then we are effed.
     batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
     condbatch_model = try(model.matrix(~ 0 + conditions + batches), silent=TRUE)
-    cond_int_model = model.matrix(~ conditions)
     batch_int_model = try(model.matrix(~ batches), silent=TRUE)
+    cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
     condbatch_int_model = try(model.matrix(~ conditions + batches), silent=TRUE)
     fun_model = NULL
     fun_int_model = NULL
@@ -418,11 +423,14 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
 }
 
 #' edger_pairwise():  Set up a model matrix and set of contrasts to do
-#' a pairwise comparison of all conditions/batches.  In this case, there
-#' must be a balanced set of batches for each condition.
+#' a pairwise comparison of all conditions using EdgeR.
 #'
+#' @param expt a expt class containing data, normalization state, etc.
 #' @param conditions a factor of conditions in the experiment
 #' @param batches a factor of batches in the experiment
+#' @param model_cond Include condition in the experimental model?  This is pretty much always true.
+#' @param model_batch Include batch in the model?  In most cases this is a good thing(tm).
+#' @param model_intercept Use cell means or intercept? (I default to the former, but they work out the same)
 #' @param extra_contrasts some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
@@ -431,26 +439,17 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
 #' @param ... The elipsis parameter is fed to write_limma() at the end.
 #'
 #' @return A list including the following information:
-#'   macb = the mashing together of condition/batch so you can look at it
-#'   macb_model = The result of calling model.matrix(~0 + macb)
-#'   macb_fit =  The result of calling lmFit(data, macb_model)
-#'   voom_result = The result from voom()
-#'   voom_design = The design from voom (redundant from voom_result, but convenient)
-#'   macb_table = A table of the number of times each condition/batch pairing happens
-#'   cond_table = A table of the number of times each condition appears (the denominator for the identities)
-#'   batch_table = How many times each batch appears
-#'   identities = The list of strings defining each condition by itself
-#'   all_pairwise = The list of strings defining all the pairwise contrasts
-#'   contrast_string = The string making up the makeContrasts() call
-#'   pairwise_fits = The result from calling contrasts.fit()
-#'   pairwise_comparisons = The result from eBayes()
-#'   edger_result = The result from calling write_limma()
+#'   results = A list of tables returned by 'topTags', one for each contrast.
+#'   contrasts = The string representation of the contrasts performed.
+#'   lrt = A list of the results from calling glmLRT(), one for each contrast.
+#'   contrast_list = The list of each call to makeContrasts()
+#'     I do this to avoid running into the limit on # of contrasts addressable by topTags()
 #'
-#' @seealso \code{\link{write_limma}}
+#' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
 #' @export
 #' @examples
 #' ## pretend = edger_pairwise(data, conditions, batches)
-edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, extra_contrasts=NULL, ...) {
+edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, ...) {
     if (is.null(expt) & is.null(data)) {
         stop("This requires either an expt or data+conditions+batches")
     } else if (!is.null(expt)) {
@@ -472,13 +471,41 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, e
     batches = as.factor(batches)
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
+    ## It would be much smarter to generate the models in the following if() {} blocks
+    ## But I have it in my head to eventually compare results using different models.
     cond_model = model.matrix(~ 0 + conditions)
-    tmpnames = colnames(cond_model)
+    batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
+    condbatch_model = try(model.matrix(~ 0 + conditions + batches), silent=TRUE)
+    cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
+    condbatch_int_model = try(model.matrix(~ conditions + batches), silent=TRUE)
+    fun_model = NULL
+    fun_int_model = NULL
+    if (isTRUE(model_cond) & isTRUE(model_batch)) {
+        fun_model = condbatch_model
+        fun_int_model = condbatch_int_model
+    } else if (isTRUE(model_cond)) {
+        fun_model = cond_model
+        fun_int_model = cond_int_model
+    } else if (isTRUE(model_batch)) {
+        fun_model = batch_model
+        fun_int_model = batch_int_model
+    } else {
+        ## Default to the conditional model
+        fun_model = cond_model
+        fun_int_model = cond_int_model
+    }
+    if (isTRUE(model_intercept)) {
+        fun_model = fun_int_model
+    }
+    if (!is.null(alt_model)) {
+        fun_model = alt_model
+    }
+    
+    tmpnames = colnames(fun_model)
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     tmpnames = gsub("conditions", "", tmpnames)
-    colnames(cond_model) = tmpnames
-    condbatch_model = try(model.matrix(~ 0 + conditions + batches), silent=TRUE)
-    batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
+    colnames(fun_model) = tmpnames
+
     ##tmpnames = colnames(condbatch_model)
     ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     ##tmpnames = gsub("conditions", "", tmpnames)        
@@ -492,14 +519,14 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, e
     message("Estimating dispersion across genes.")
     tagdisp_norm = estimateTagwiseDisp(disp_norm)
     message("Estimating GLM Common dispersion.")
-    glm_norm = estimateGLMCommonDisp(tagdisp_norm, cond_model)
+    glm_norm = estimateGLMCommonDisp(tagdisp_norm, fun_model)
     message("Estimating GLM Trended dispersion.")
-    glm_trended = estimateGLMTrendedDisp(glm_norm, cond_model)
+    glm_trended = estimateGLMTrendedDisp(glm_norm, fun_model)
     message("Estimating GLM Tagged dispersion.")
-    glm_tagged = estimateGLMTagwiseDisp(glm_trended, cond_model)
-    cond_fit = edgeR::glmFit(glm_tagged, design=cond_model)
+    glm_tagged = estimateGLMTagwiseDisp(glm_trended, fun_model)
+    cond_fit = edgeR::glmFit(glm_tagged, design=fun_model)
 
-    apc = make_pairwise_contrasts(cond_model, conditions, do_identities=FALSE)
+    apc = make_pairwise_contrasts(fun_model, conditions, do_identities=FALSE)
     ## This is pretty weird because glmLRT only seems to take up to 7 contrasts at a time...
     contrast_list = list()
     result_list = list()
@@ -518,12 +545,36 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, e
     result = list(
         contrasts=apc,
         lrt=lrt_list,
-        contrasts=contrast_list,
+        contrast_list=contrast_list,
         results=result_list
     )
     return(result)
 }
 
+#' deseq2_pairwise():  Set up a model matrix and set of contrasts to do
+#' a pairwise comparison of all conditions using DESeq2.
+#'
+#'  HEY YOU!!@ MAKE THE RESULTS FROM EDGER/LIMMA/DESEQ have the same names!
+#'  ALSO: CURRENTLY DESEQ doesn't bother with multiple contrasts because I haven't figured out how to feed them yet...
+#'
+#' @param expt a expt class containing data, normalization state, etc.
+#' @param conditions a factor of conditions in the experiment
+#' @param batches a factor of batches in the experiment
+#' @param model_cond Include condition in the experimental model?  This is pretty much always true.
+#' @param model_batch Include batch in the model?  In most cases this is a good thing(tm).
+#' @param model_intercept Use cell means or intercept? (I default to the former, but they work out the same)
+#' @param ... The elipsis parameter is fed to write_limma() at the end.
+#'
+#' @return A list including the following information:
+#'   run = the return from calling DESeq()
+#'   result = the return from calling results()
+#'   result_mle = the return from calling results() with the MLE parameter.
+#'   results = the return when a deseq result class is cast as a dataframe.
+#'
+#' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
+#' @export
+#' @examples
+#' ## pretend = edger_pairwise(data, conditions, batches)
 deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) {
     if (is.null(expt) & is.null(data)) {
         stop("This requires either an expt or data+conditions+batches")
@@ -531,9 +582,9 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
         conditions = expt$conditions
         batches = expt$batches
         data = as.data.frame(exprs(expt$expressionset))
-        ## As I understand it, edgeR fits a binomial distribution
+        ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
         ## and expects data as floating point counts,
-        ##not a log2 transformation.
+        ## not a log2 transformation.
         if (expt$transform == "log2") {
             ##data = (2^data) - 1
             data = expt$normalized$normalized_counts$count_table
@@ -550,19 +601,14 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     tmpnames = gsub("conditions", "", tmpnames)
     colnames(cond_model) = tmpnames
-    ##condbatch_model = model.matrix(~ 0 + conditions + batches)
-    ##batch_model = model.matrix(~ 0 + batches)
-    ##tmpnames = colnames(condbatch_model)
-    ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
-    ##tmpnames = gsub("conditions", "", tmpnames)        
-    ##colnames(condbatch_model) = tmpnames
 
     ## An interesting note about the use of formulae in DESeq:
     ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
+    ## Thus, all these formulae should have condition(s) at the end.
     summarized = DESeqDataSetFromMatrix(countData = exprs(expt$expressionset),
         colData = pData(expt$expressionset),
         design = ~condition)
-    dataset = DESeqDataSet(se=summarized, design=~condition)
+    dataset = DESeqDataSet(se=summarized, design=~conditions)
     deseq_run = DESeq(dataset)
     deseq_result = results(deseq_run)
     deseq_mle_result = results(deseq_run, addMLE=TRUE)
@@ -600,7 +646,7 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
         run=deseq_run,
         result=deseq_result,
         result_mle=deseq_mle_result,
-        result_df=deseq_df
+        results=deseq_df
         
     )
     return(ret_list)
