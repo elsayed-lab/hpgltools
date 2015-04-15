@@ -449,7 +449,7 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
 #' @export
 #' @examples
 #' ## pretend = edger_pairwise(data, conditions, batches)
-edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, ...) {
+edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, ...) {
     if (is.null(expt) & is.null(data)) {
         stop("This requires either an expt or data+conditions+batches")
     } else if (!is.null(expt)) {
@@ -535,9 +535,9 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
         name = apc$names[[con]]
         message(paste0("Performing ", name, " contrast."))
         single_contrast = gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
-        single_contrast = makeContrasts(single_contrast, levels=cond_model)
+        single_contrast = makeContrasts(single_contrast, levels=fun_model)
         cond_lrt =  edgeR::glmLRT(cond_fit, contrast=single_contrast)
-        lrt_list[[name]] = cond_lrt        
+        lrt_list[[name]] = cond_lrt
         contrast_list[[name]] = single_contrast
         result_list[[name]] = topTags(cond_lrt, n=nrow(data))
     }
@@ -553,9 +553,6 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
 
 #' deseq2_pairwise():  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using DESeq2.
-#'
-#'  HEY YOU!!@ MAKE THE RESULTS FROM EDGER/LIMMA/DESEQ have the same names!
-#'  ALSO: CURRENTLY DESEQ doesn't bother with multiple contrasts because I haven't figured out how to feed them yet...
 #'
 #' @param expt a expt class containing data, normalization state, etc.
 #' @param conditions a factor of conditions in the experiment
@@ -605,11 +602,11 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     ## An interesting note about the use of formulae in DESeq:
     ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
     ## Thus, all these formulae should have condition(s) at the end.
-    summarized = DESeqDataSetFromMatrix(countData = exprs(expt$expressionset),
-        colData = pData(expt$expressionset),
-        design = ~condition)
-    dataset = DESeqDataSet(se=summarized, design=~conditions)
-    deseq_run = DESeq(dataset)
+    summarized = DESeqDataSetFromMatrix(countData = exprs(expt$expressionset), colData = pData(expt$expressionset), design = ~ 0 + condition)
+    ## If making a model ~0 + condition -- then must set betaPrior=FALSE
+    dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
+    deseq_run = DESeq(dataset, betaPrior=FALSE)
+    ## Set contrast= for each pairwise comparison here!
     deseq_result = results(deseq_run)
     deseq_mle_result = results(deseq_run, addMLE=TRUE)
     deseq_df = data.frame(deseq_result[order(deseq_result$log2FoldChange),])
