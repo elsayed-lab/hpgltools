@@ -531,24 +531,35 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     contrast_list = list()
     result_list = list()
     lrt_list = list()
+    single_contrasts = list()
+    sc = vector("list", length(apc$names))
     for (con in 1:length(apc$names)) {
         name = apc$names[[con]]
-        message(paste0("Performing ", name, " contrast."))
-        single_contrast = gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
-        single_contrast = makeContrasts(single_contrast, levels=fun_model)
-        cond_lrt =  edgeR::glmLRT(cond_fit, contrast=single_contrast)
-        lrt_list[[name]] = cond_lrt
-        contrast_list[[name]] = single_contrast
-        result_list[[name]] = topTags(cond_lrt, n=nrow(data))
+        message(paste0(con, ": Performing ", name, " contrast.")) ## correct
+        ##print(sc)
+        sc[[name]] = gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
+        ##print(sc[[name]])
+        tt = parse(text=sc[[name]])
+        ##print(paste0("Wtf tt: ", tt))
+        ##        contrast_list[[name]] = makeContrasts(tt, levels=fun_model)
+        ctr_string = paste0("tt = makeContrasts(", tt, ", levels=fun_model)")
+        eval(parse(text=ctr_string))
+        contrast_list[[name]] = tt
+        ##print(contrast_list[[name]])
+        lrt_list[[name]] = edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
+        result_list[[name]] = topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")        
+        ##print(sc[[name]])
+        ##print(name)
+        ##print(contrast_list[[name]])
     }
 
-    result = list(
+    final = list(
         contrasts=apc,
         lrt=lrt_list,
         contrast_list=contrast_list,
-        results=result_list
-    )
-    return(result)
+        results=result_list)
+
+    return(final)
 }
 
 #' deseq2_pairwise():  Set up a model matrix and set of contrasts to do
@@ -602,25 +613,43 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     ## An interesting note about the use of formulae in DESeq:
     ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
     ## Thus, all these formulae should have condition(s) at the end.
-    summarized = DESeqDataSetFromMatrix(countData = exprs(expt$expressionset), colData = pData(expt$expressionset), design = ~ 0 + condition)
+    summarized = DESeqDataSetFromMatrix(countData=exprs(expt$expressionset), colData=pData(expt$expressionset), design=~0+condition)
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
     deseq_run = DESeq(dataset, betaPrior=FALSE)
     ## Set contrast= for each pairwise comparison here!
-    deseq_result = results(deseq_run)
-    deseq_mle_result = results(deseq_run, addMLE=TRUE)
-    deseq_df = data.frame(deseq_result[order(deseq_result$log2FoldChange),])
 
-    plotMA(deseq_df)
+    denominators = list()
+    numerators = list()
+    result_list = list()
+    result_mle_list = list()    
+    condition_list = resultsNames(deseq_run)
+    for (c in 1:(length(condition_list) - 1)) {
+        denominator = names(condition_table[c])
+        nextc = c + 1
+        for (d in nextc:length(condition_list)) {
+            numerator = names(condition_table[d])            
+            result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
+            result = result[order(result$log2FoldChange),]
+            result_name = paste0(numerator, "_minus_", denominator)
+            denominators[[result_name]] = denominator
+            numerators[[result_name]] = numerator
+            result_list[[result_name]] = result
+        }
+    }
+    
+    ##    deseq_result = results(deseq_run)
+    ##    deseq_mle_result = results(deseq_run, addMLE=TRUE)
+    ##    deseq_df = data.frame(deseq_result[order(deseq_result$log2FoldChange),])
+    ##    plotMA(deseq_df)
     ## identify(deseq_result$baseMean, deseq_result$log2FoldChange)    
-    ma = recordPlot()
-
+    ##    ma = recordPlot()
     ##d = plotCounts(dataset, gene=which.min(deseq_result$padj), intgroup="condition", returnData=TRUE)
     ##ggplot(d, aes(x=condition, y=count)) +
     ##    geom_point(position=position_jitter(w=0.1,h=0)) +
     ##    scale_y_log10(breaks=c(25,100,400))
 
-    mcols(deseq_result)$description
+    ##  mcols(deseq_result)$description
     ## DESeq can do multi-factors, but the important one goes last
     ## design(summarized) = formula(~ batch + condition)
     ## deseq_run = DESeq(summarized)
@@ -629,22 +658,22 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     ## contrast_res = results(deseq_run, contrast=c("condition", "numerator", "denominator"))
 
     ## data transformations:
-    rld = rlog(deseq_run)
-    vsd = try(varianceStabilizingTransformation(deseq_run), silent=TRUE)
-    rlogMat = assay(rld)
-    vstMat = try(assay(vsd), silent=TRUE)
-    par(mfrow=c(1,3))
-    notAllZero <- (rowSums(counts(deseq_run))>0)
-##    meanSdPlot(log2(counts(deseq_run, normalized=TRUE)[notAllZero,] + 1))
-##    meanSdPlot(assay(rld[notAllZero,]))
-##    meanSdPlot(assay(vsd[notAllZero,]))
+    ## rld = rlog(deseq_run)
+    ## vsd = try(varianceStabilizingTransformation(deseq_run), silent=TRUE)
+    ## rlogMat = assay(rld)
+    ## vstMat = try(assay(vsd), silent=TRUE)
+    ## par(mfrow=c(1,3))
+    ## notAllZero <- (rowSums(counts(deseq_run))>0)
+    ##    meanSdPlot(log2(counts(deseq_run, normalized=TRUE)[notAllZero,] + 1))
+    ##    meanSdPlot(assay(rld[notAllZero,]))
+    ##    meanSdPlot(assay(vsd[notAllZero,]))
     
     ret_list = list(
         run=deseq_run,
-        result=deseq_result,
-        result_mle=deseq_mle_result,
-        results=deseq_df
-        
+        results=result_list,
+        denominators=denominators,
+        numerators=numerators,
+        conditions=condition_list
     )
     return(ret_list)
 }

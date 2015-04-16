@@ -7,7 +7,7 @@ a pairwise comparison of all conditions using EdgeR.}
 \usage{
 edger_pairwise(expt = NULL, data = NULL, conditions = NULL,
   batches = NULL, model_cond = TRUE, model_batch = FALSE,
-  model_intercept = FALSE, extra_contrasts = NULL, ...)
+  model_intercept = FALSE, alt_model = NULL, extra_contrasts = NULL, ...)
 }
 \arguments{
 \item{expt}{a expt class containing data, normalization state, etc.}
