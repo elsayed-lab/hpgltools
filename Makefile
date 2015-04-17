@@ -14,10 +14,10 @@ test:
 	./run_tests.R
 
 roxygen:
-	rm NAMESPACE && Rscript -e "library('roxygen2'); roxygenize()"
+	rm -f NAMESPACE && Rscript -e "library('roxygen2'); roxygenize()"
 
 document:
-	rm NAMESPACE && Rscript -e "library('devtools'); devtools::document()"
+	rm -f NAMESPACE && Rscript -e "library('devtools'); devtools::document()"
 
 vignette:
 	cd ../ && R CMD check hpgltools

@@ -60,117 +60,46 @@
 #' ## toomany_plots = graph_metrics(expt)
 #' ## testnorm = graph_metrics(expt, norm_type="tmm", filter="log2", out_type="rpkm", cormethod="robust")
 #' ## haha sucker, you are going to be waiting a while!
-graph_metrics = function(expt, transform="log2", norm="quant", convert="cpm", filter_low=TRUE, cormethod="pearson", distmethod="euclidean", do_cor=TRUE, do_pca=TRUE, do_dis=TRUE, do_qq=FALSE, do_libsize=TRUE, do_density=TRUE, do_boxplot=TRUE, ...) {
+graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", ...) {
     ## First gather the necessary data for the various plots.
     options(scipen=999)
     expt_design = expt$design
     expt_colors = expt$colors
     expt_names = expt$names
     expt_raw_data = Biobase::exprs(expt$expressionset)
-    ## expt_norm_data = hpgltools::hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low, ...)$count_table
-    expt_norm_data = hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, filter_low=filter_low)$count_table
-    ## batch_removed_data = as.matrix(limma::removeBatchEffect(expt_raw_data, batch=expt$batches))
-    ## batch_norm_data = as.matrix(limma::removeBatchEffect(expt_norm_data, batch=expt$batches))
-    batch_removed_data = hpgl_norm(expt=expt, transform="raw", norm="raw", convert="raw", design=expt_design, batch="limma", filter_low=filter_low)$count_table
-    batch_norm_data = hpgl_norm(expt=expt, transform=transform, norm=norm, convert=convert, batch=TRUE, design=expt_design, filter_low=filter_low)$count_table
-    nonzero_plot = libsize_plot = NULL
-    if (isTRUE(do_libsize)) {
-        message("Graphing number of non-zero genes with respect to CPM by library.")
-        nonzero_plot = try(hpgltools::hpgl_nonzero(expt=expt, title="Non zero genes.", ...))
-        message("Graphing library sizes.")
-        libsize_plot = try(hpgltools::hpgl_libsize(expt=expt, title="Library sizes.", ...))
-    }
 
-    raw_boxplot = norm_boxplot = batch_boxplot = batchnorm_boxplot = NULL
-    if (isTRUE(do_boxplot)) {
-        message("Graphing a raw data boxplot on log scale.")
-        raw_boxplot = try(hpgltools::hpgl_boxplot(expt=expt, title="Boxplot of log(raw data).", scale="log", ...))
-        message("Graphing a normalized boxplot.")
-        norm_boxplot = try(hpgltools::hpgl_boxplot(df=expt_norm_data, names=expt$names, colors=expt_colors, title="Boxplot of normalized data.", ...))
-        message("Graphing a batch removed boxplot.")
-        batch_boxplot = try(hpgltools::hpgl_boxplot(df=batch_removed_data, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...))
-        message("Graphing a batch removed normalized boxplot.")
-        batchnorm_boxplot = try(hpgltools::hpgl_boxplot(df=batch_removed_data, names=expt$names, colors=expt_colors, title="Boxplot of batch removed data.", scale="log", ...))
-    }
-    
-    norm_smc = norm_corheat = raw_smc = raw_corheat = batch_corheat = batchnorm_corheat = NULL
-    if (isTRUE(do_cor)) {
-        message("Graphing a raw-data correlation heatmap.")
-        raw_corheat = try(hpgltools::hpgl_corheat(expt=expt, method=cormethod, title="Correlation heatmap of raw data.", ...))
-        message("Graphing a raw-data standard median correlation.")
-        raw_smc = try(hpgltools::hpgl_smc(expt=expt, method=cormethod, title="Standard Median Correlation, raw data.", ...))
-        message("Graphing a normalized correlation heatmap.")
-        norm_corheat = try(hpgltools::hpgl_corheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Corrleation heatmap of normalized data.", ...))
-        message("Graphing a normalized standard median correlation.")
-        norm_smc = try(hpgltools::hpgl_smc(df=expt_norm_data, names=expt$names, colors=expt_colors, method=cormethod, title="Standard Median Correlation, norm. data.", ...))
-        message("Graphing a batch removed correlation heatmap.")
-        batch_corheat = try(hpgltools::hpgl_corheat(df=batch_removed_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Correlation heatmap of batch removed data.", ...))
-        message("Graphing a batch removed normalized correlation heatmap.")
-        batchnorm_corheat = try(hpgltools::hpgl_corheat(df=batch_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=cormethod, title="Correlation heatmap of batch removed data.", ...))
-    }
-
-    raw_smd = norm_smd = norm_disheat = raw_disheat = batch_disheat = batchnorm_disheat = NULL
-    if (isTRUE(do_dis)) {
-        message("Graphing a raw-data distance heatmap.")
-        raw_disheat = try(hpgltools::hpgl_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...))
-        message("Graphing a raw-data standard median distance.")
-        raw_smd = try(hpgltools::hpgl_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...))
-        message("Graphing a normalized distance heatmap.")
-        norm_disheat = try(hpgltools::hpgl_disheat(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap, norm. data.", ...))
-        message("Graphing a normalized standard median distance.")
-        norm_smd = try(hpgltools::hpgl_smd(df=expt_norm_data, names=expt$names, colors=expt_colors, method=distmethod, title="Standard Median Distance, norm. data.", ...))
-        message("Graphing batch removed distance heatmap.")
-        batch_disheat = try(hpgltools::hpgl_disheat(df=batch_removed_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...))
-        message("Graphing batch removed normalized distance heatmap.")
-        batchnorm_disheat = try(hpgltools::hpgl_disheat(df=batch_norm_data, names=expt$names, colors=expt_colors, design=expt_design, method=distmethod, title="Distance heatmap of batch removed data.", ...))
-    }
-
-    raw_pca = norm_pca = batch_pca = batchnorm_pca = NULL
-    raw_pcatable =  norm_pcatable = batch_pcatable = batchnorm_pcatable = NULL
-    raw_pcares = norm_pcares = batch_pcares = batchnorm_pcares = NULL
-    raw_pcavar = norm_pcavar = batch_pcavar = batchnorm_pcavar = NULL
-    if (isTRUE(do_pca)) {
-        message("Graphing a PCA plot of the raw data.")
-        raw_pca = try(hpgltools::hpgl_pca(expt=expt, title="PCA plot of raw data.", ...))
-        message("Graphing a PCA plot of the normalized data.")
-        norm_pca = try(hpgltools::hpgl_pca(df=expt_norm_data, names=expt$names, colors=expt_colors, design=expt_design, title="PCA plot of norm. data.", ...))
-        message("Graphing a PCA plot of the batch removed data.")        
-        batch_pca = try(hpgltools::hpgl_pca(df=batch_removed_data, names=expt$names, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
-        message("Graphing a PCA plot of the batch removed normalized data.")
-        batchnorm_pca = try(hpgltools::hpgl_pca(df=batch_norm_data, names=expt$names, colors=expt_colors, design=expt_design, title="PCA plot of batch removed data.", ...))
-    }
-
-    raw_density = norm_density = batch_density = batchnorm_density = NULL
-    if (isTRUE(do_density)) {
-        message("Plotting a density plot of the raw data.")
-        raw_density = try(hpgltools::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
-        message("Plotting a density plot of the normalized data.")
-        norm_density = try(hpgltools::hpgl_density_plot(df=expt_norm_data, title="Density plot of normalized data."))
-        message("Plotting a density plot of the batch removed data.")
-        batch_density = try(hpgltools::hpgl_density_plot(df=batch_removed_data, title="Density plot of batch removed data.", ...))
-        message("Plotting a density plot of the batch removed normalized data.")
-        batchnorm_density = try(hpgltools::hpgl_density_plot(df=batch_norm_data, title="Density plot of batch removed normalized data.", ...))
-    }
-
-    raw_qq = norm_qq = NULL
-    if (isTRUE(do_qq)) {
-        message("Printing a qqplot of the normalized data.")
-        norm_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=expt_norm_data)))
-        message("Printing a qqplot of the raw data.")
-        raw_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
-    }
+    message("Graphing number of non-zero genes with respect to CPM by library.")
+    nonzero_plot = try(hpgltools::hpgl_nonzero(expt=expt, title="Non zero genes.", ...))
+    message("Graphing library sizes.")
+    libsize_plot = try(hpgltools::hpgl_libsize(expt=expt, title="Library sizes.", ...))
+    message("Graphing a boxplot on log scale.")
+    raw_boxplot = try(hpgltools::hpgl_boxplot(expt=expt, title="Boxplot of log(raw data).", scale="log", ...))
+    message("Graphing a correlation heatmap.")
+    raw_corheat = try(hpgltools::hpgl_corheat(expt=expt, method=cormethod, title="Correlation heatmap of raw data.", ...))
+    message("Graphing a standard median correlation.")
+    raw_smc = try(hpgltools::hpgl_smc(expt=expt, method=cormethod, title="Standard Median Correlation, raw data.", ...))
+    message("Graphing a distance heatmap.")
+    raw_disheat = try(hpgltools::hpgl_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...))
+    message("Graphing a standard median distance.")
+    raw_smd = try(hpgltools::hpgl_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...))
+    message("Graphing a PCA plot.")
+    raw_pca = try(hpgltools::hpgl_pca(expt=expt, title="PCA plot of raw data.", ...))
+    message("Plotting a density plot.")
+    raw_density = try(hpgltools::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
+    message("QQ plotting!.")    
+    raw_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
     
     ret_data = list(
         nonzero=nonzero_plot, libsize=libsize_plot,
-        raw_boxplot=raw_boxplot, norm_boxplot=norm_boxplot, batch_boxplot=batch_boxplot, batchnorm_boxplot=batchnorm_boxplot,
-        raw_corheat=raw_corheat, raw_smc=raw_smc, norm_corheat=norm_corheat, norm_smc=norm_smc, batch_corheat=batch_corheat, batchnorm_corheat=batchnorm_corheat,
-        raw_disheat=raw_disheat, raw_smd=raw_smd, norm_disheat=norm_disheat, norm_smd=norm_smd, batch_disheat=batch_disheat, batchnorm_disheat=batchnorm_disheat,
-        raw_pcaplot=raw_pca$plot, norm_pcaplot=norm_pca$plot, batch_pcaplot=batch_pca$plot, batchnorm_pcaplot=batchnorm_pca$plot,
-        raw_pcatable=raw_pca$table, norm_pcatable=norm_pca$table, batch_pcatable=batch_pca$table, batchnorm_pcatable=batchnorm_pca$table,
-        raw_pcares=raw_pca$res, norm_pcares=norm_pca$res, batch_pcares=batch_pca$res, batchnorm_pcares=batchnorm_pca$res,
-        raw_pcavar=raw_pca$variance, norm_pcavar=norm_pca$variance, batch_pcavar=batch_pca$variance, batchnorm_pcavar=batchnorm_pca$variance,
-        raw_density=raw_density, norm_density=norm_density, batch_density=batch_density, batchnorm_density=batchnorm_density,
-        raw_qq=raw_qq, norm_qq=norm_qq
+        boxplot=raw_boxplot,
+        corheat=raw_corheat, smc=raw_smc,
+        disheat=raw_disheat, smd=raw_smd,
+        pcaplot=raw_pca$plot,
+        pcatable=raw_pca$table,
+        pcares=raw_pca$res,
+        pcavar=raw_pca$variance,
+        density=raw_density,
+        qq=raw_qq
     )
     return(ret_data)
 }

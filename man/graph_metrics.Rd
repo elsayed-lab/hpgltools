@@ -5,16 +5,10 @@
 \title{Make a bunch of graphs describing the state of an experiment
 before/after normalization.}
 \usage{
-graph_metrics(expt, transform = "log2", norm = "quant", convert = "cpm",
-  filter_low = TRUE, cormethod = "pearson", distmethod = "euclidean",
-  do_cor = TRUE, do_pca = TRUE, do_dis = TRUE, do_qq = FALSE,
-  do_libsize = TRUE, do_density = TRUE, do_boxplot = TRUE, ...)
+graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean", ...)
 }
 \arguments{
 \item{expt}{an expt experiment containing the data, design, and colors}
-
-\item{filter_low}{whether to low-count filter the data.  Defaults
-to TRUE.}
 
 \item{cormethod}{define the correlation test for heatmaps.
 Defaults to pearson (Available: pearson, spearman, kendal, robust)}
@@ -31,6 +25,9 @@ quantile.}
 log2.}
 
 \item{out_type}{whether to cpm/rpkm the data.  Defaults to cpm.}
+
+\item{filter_low}{whether to low-count filter the data.  Defaults
+to TRUE.}
 }
 \value{
 a loooong list of plots including the following:

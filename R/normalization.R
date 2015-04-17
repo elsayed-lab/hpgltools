@@ -595,10 +595,11 @@ convert_counts = function(count_table, convert="raw", annotations=NULL, ...) {
 normalize_counts = function(count_table, design, norm="raw") {
     if (norm == "sf") {
         ## Size-factored normalization is a part of DESeq
-        matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
+        original_cols = colnames(count_table)
+        matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~1)
         size_factor = BiocGenerics::estimateSizeFactors(matrix)
         count_table = BiocGenerics::counts(size_factor, normalized=TRUE)
-        colnames(count_table) = rownames(column_data)
+        colnames(count_table) = original_cols
         norm_performed = "sf"
     } else if (norm == "quant") {
         # Quantile normalization (Bolstad et al., 2003)
@@ -614,7 +615,7 @@ normalize_counts = function(count_table, design, norm="raw") {
         ## Get the tmm normalization factors
         norms = edgeR::calcNormFactors(count_table, method="TMM")
         ## Set up the DESeq data structure to which to apply the new factors
-        deseq_matrix =  DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
+        deseq_matrix =  DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~1)
         ## Apply the edgeR tmm factors to this
         sizeFactors(deseq_matrix) = norms$samples$norm.factors
         ## Get the counts out
@@ -627,7 +628,7 @@ normalize_counts = function(count_table, design, norm="raw") {
         count_table = edgeR::DGEList(counts=count_table)        
         norms = edgeR::calcNormFactors(count_table, method="upperquartile")
         ## Set up the DESeq data structure to which to apply the new factors
-        deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
+        deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~1)
         ## Apply the edgeR tmm factors to this
         sizeFactors(deseq_matrix) = norms$samples$norm.factors
         ## Get the counts out
@@ -639,7 +640,7 @@ normalize_counts = function(count_table, design, norm="raw") {
         count_table = edgeR::DGEList(counts=count_table)
         norms = edgeR::calcNormFactors(count_table, method="RLE")
         ## Set up the DESeq data structure to which to apply the new factors
-        deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=expt_design, design=~1)
+        deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~1)
         ## Apply the edgeR tmm factors to this
         sizeFactors(deseq_matrix) = norms$samples$norm.factors
         ## Get the counts out

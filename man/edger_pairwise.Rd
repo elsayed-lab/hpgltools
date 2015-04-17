@@ -3,16 +3,24 @@
 \name{edger_pairwise}
 \alias{edger_pairwise}
 \title{edger_pairwise():  Set up a model matrix and set of contrasts to do
-a pairwise comparison of all conditions/batches.  In this case, there
-must be a balanced set of batches for each condition.}
+a pairwise comparison of all conditions using EdgeR.}
 \usage{
 edger_pairwise(expt = NULL, data = NULL, conditions = NULL,
-  batches = NULL, extra_contrasts = NULL, ...)
+  batches = NULL, model_cond = TRUE, model_batch = FALSE,
+  model_intercept = FALSE, alt_model = NULL, extra_contrasts = NULL, ...)
 }
 \arguments{
+\item{expt}{a expt class containing data, normalization state, etc.}
+
 \item{conditions}{a factor of conditions in the experiment}
 
 \item{batches}{a factor of batches in the experiment}
+
+\item{model_cond}{Include condition in the experimental model?  This is pretty much always true.}
+
+\item{model_batch}{Include batch in the model?  In most cases this is a good thing(tm).}
+
+\item{model_intercept}{Use cell means or intercept? (I default to the former, but they work out the same)}
 
 \item{extra_contrasts}{some extra contrasts to add to the list
 This can be pretty neat, lets say one has conditions A,B,C,D,E
@@ -24,30 +32,20 @@ de_minus_cb = (E-D)-(C-B),"}
 }
 \value{
 A list including the following information:
-  macb = the mashing together of condition/batch so you can look at it
-  macb_model = The result of calling model.matrix(~0 + macb)
-  macb_fit =  The result of calling lmFit(data, macb_model)
-  voom_result = The result from voom()
-  voom_design = The design from voom (redundant from voom_result, but convenient)
-  macb_table = A table of the number of times each condition/batch pairing happens
-  cond_table = A table of the number of times each condition appears (the denominator for the identities)
-  batch_table = How many times each batch appears
-  identities = The list of strings defining each condition by itself
-  all_pairwise = The list of strings defining all the pairwise contrasts
-  contrast_string = The string making up the makeContrasts() call
-  pairwise_fits = The result from calling contrasts.fit()
-  pairwise_comparisons = The result from eBayes()
-  edger_result = The result from calling write_limma()
+  results = A list of tables returned by 'topTags', one for each contrast.
+  contrasts = The string representation of the contrasts performed.
+  lrt = A list of the results from calling glmLRT(), one for each contrast.
+  contrast_list = The list of each call to makeContrasts()
+    I do this to avoid running into the limit on # of contrasts addressable by topTags()
 }
 \description{
 edger_pairwise():  Set up a model matrix and set of contrasts to do
-a pairwise comparison of all conditions/batches.  In this case, there
-must be a balanced set of batches for each condition.
+a pairwise comparison of all conditions using EdgeR.
 }
 \examples{
 ## pretend = edger_pairwise(data, conditions, batches)
 }
 \seealso{
-\code{\link{write_limma}}
+\code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
 }
 

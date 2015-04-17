@@ -3,24 +3,34 @@
 \name{limma_pairwise}
 \alias{limma_pairwise}
 \title{limma_pairwise():  Set up a model matrix and set of contrasts to do
-a pairwise comparison of all conditions/batches.  In this case, there
-must be a balanced set of batches for each condition.}
+a pairwise comparison of all conditions using voom/limma.}
 \usage{
 limma_pairwise(expt = NULL, data = NULL, conditions = NULL,
   batches = NULL, model_cond = TRUE, model_batch = FALSE,
-  model_intercept = FALSE, extra_contrasts = NULL, norm = "quant",
-  convert = "cpm", batch = NULL, alt_model = NULL, libsize = NULL)
+  model_intercept = FALSE, extra_contrasts = NULL, alt_model = NULL,
+  libsize = NULL)
 }
 \arguments{
+\item{expt}{an expt class containing count tables, normalization state, etc.}
+
 \item{conditions}{a factor of conditions in the experiment}
 
 \item{batches}{a factor of batches in the experiment}
+
+\item{model_cond}{Include condition in the model?  This should pretty much always be true.}
+
+\item{model_batch}{Include batch in the model? FALSE by default, but hopefully true often.}
+
+\item{model_intercept}{Perform a cell-means or intercept model?  FALSE by default because I understand subtraction math better.
+But I have tested and get the same answer either way.}
 
 \item{extra_contrasts}{some extra contrasts to add to the list
 This can be pretty neat, lets say one has conditions A,B,C,D,E
 and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
 de_minus_cb = (E-D)-(C-B),"}
+
+\item{libsize}{I've recently figured out that libsize is far more important than I previously realized.  Play with it here.}
 
 \item{...}{The elipsis parameter is fed to write_limma() at the end.}
 }
@@ -43,8 +53,7 @@ A list including the following information:
 }
 \description{
 limma_pairwise():  Set up a model matrix and set of contrasts to do
-a pairwise comparison of all conditions/batches.  In this case, there
-must be a balanced set of batches for each condition.
+a pairwise comparison of all conditions using voom/limma.
 }
 \examples{
 ## pretend = balanced_pairwise(data, conditions, batches)
