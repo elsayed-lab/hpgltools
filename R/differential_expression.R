@@ -67,7 +67,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
 
         data_table$qvalue = tryCatch(
             {
-                qvalue(data_table$P.Value, robust=TRUE)$qvalues
+                format(signif(qvalue(data_table$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
             },
             error=function(cond) {
                 message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
@@ -81,6 +81,9 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
             finally={
             }
         )
+        data_table$P.Value = format(signif(data_table$P.Value, 4), scientific=TRUE)
+        data_table$adj.P.Val = format(signif(data_table$adj.P.Val, 4), scientific=TRUE)        
+                
         if (!is.null(annotation)) {
             data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
             ###data_table = data_table[-1]
@@ -146,7 +149,7 @@ write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
 
         data_table$qvalue = tryCatch(
             {
-                qvalue(data_table$P.Value, gui=FALSE)$qvalues
+                format(signif(qvalue(data_table$P.Value, gui=FALSE)$qvalues, 4), scientific=TRUE)
             },
             error=function(cond) {
                 message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
@@ -225,7 +228,7 @@ write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel
 
         data_table$qvalue = tryCatch(
             {
-                qvalue(data_table$P.Value, gui=FALSE)$qvalues
+                format(signif(qvalue(data_table$P.Value, gui=FALSE)$qvalues, 4), scientific=TRUE)
             },
             error=function(cond) {
                 message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
@@ -603,8 +606,8 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
         contrast_string=contrast_string,
         pairwise_fits=all_pairwise_fits,
         pairwise_comparisons=all_pairwise_comparisons,
-        all_tables=all_tables,
-        limma_result=limma_result)
+        single_table=all_tables,
+        all_tables=limma_result)
     return(result)
 }
 
@@ -728,14 +731,34 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
         eval(parse(text=ctr_string))
         contrast_list[[name]] = tt
         lrt_list[[name]] = edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
-        result_list[[name]] = topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")        
+        res = topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")
+        res = as.data.frame(res)
+        res$qvalue = tryCatch(
+            {
+                format(signif(qvalue(res$PValue, robust=TRUE)$qvalues, 4), scientific=TRUE)
+            },
+            error=function(cond) {
+                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+                return(1)
+            },
+            warning=function(cond) {
+                message("There was a warning?")
+                message(cond)
+                return(1)
+            },
+            finally={
+            }
+        )
+        res$PValue = format(signif(res$PValue, 4), scientific=TRUE)
+        res$FDR = format(signif(res$FDR, 4), scientific=TRUE)
+        result_list[[name]] = res
     }
 
     final = list(
         contrasts=apc,
         lrt=lrt_list,
         contrast_list=contrast_list,
-        results=result_list)
+        all_tables=result_list)
 
     return(final)
 }
@@ -809,6 +832,27 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
             numerator = names(condition_table[d])            
             result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
             result = result[order(result$log2FoldChange),]
+            colnames(result) = c("baseMean","logFC", "lfcSE","stat","P.Value","adj.P.Val")
+            result[is.na(result$P.Value), "P.Value"] = 1 ## Some p-values come out as NA
+            result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA            
+            result$qvalue = tryCatch(
+                {
+                    format(signif(qvalue(result$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
+                },
+                error=function(cond) {
+                    message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+                    return(1)
+                },
+                warning=function(cond) {
+                    message("There was a warning?")
+                    message(cond)
+                    return(1)
+                },
+                finally={
+                }
+            )
+            result$P.Value = format(signif(result$P.Value, 4), scientific=TRUE)
+            result$adj.P.Val = format(signif(result$adj.P.Val, 4), scientific=TRUE)
             result_name = paste0(numerator, "_minus_", denominator)
             denominators[[result_name]] = denominator
             numerators[[result_name]] = numerator
@@ -848,12 +892,57 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     
     ret_list = list(
         run=deseq_run,
-        results=result_list,
         denominators=denominators,
         numerators=numerators,
-        conditions=condition_list
+        conditions=condition_list,
+        all_tables=result_list        
     )
     return(ret_list)
+}
+
+compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
+    ## Fill each column/row of these with the correlation between tools for one contrast performed
+    len = length(names(deseq))
+    limma_vs_edger = list()
+    limma_vs_deseq = list()
+    edger_vs_deseq = list()
+    
+    cc = 0
+    last = length(names(deseq))
+    for (comp in names(deseq)) {  ## assume all three have the same names() -- note that limma has more than the other two though
+        cc = cc + 1
+        message(paste0(cc, "/", len, ": Comparing analyses for: ", comp))
+        l = data.frame(limma[[comp]])
+        e = data.frame(edger[[comp]])
+        d = data.frame(deseq[[comp]])
+        le = merge(l, e, by.x="row.names", by.y="row.names")
+        le = le[,c("logFC.x","logFC.y")]
+        lec = cor.test(le[,1], le[,2])$estimate
+        ld = merge(l, d, by.x="row.names", by.y="row.names")
+        ld = ld[,c("logFC.x","logFC.y")]            
+        ldc = cor.test(ld[,1], ld[,2])$estimate
+        ed = merge(e, d, by.x="row.names", by.y="row.names")
+        ed = ed[,c("logFC.x","logFC.y")]
+        edc = cor.test(ed[,1], ed[,2])$estimate
+        limma_vs_edger[[comp]] = lec
+        limma_vs_deseq[[comp]] = ldc
+        edger_vs_deseq[[comp]] = edc
+    } ## End loop
+    names(limma_vs_edger) = names(deseq)
+    names(limma_vs_deseq) = names(deseq)
+    names(edger_vs_deseq) = names(deseq)
+
+    tt = rbind(as.numeric(limma_vs_edger), as.numeric(limma_vs_deseq))
+    tt = rbind(tt, as.numeric(edger_vs_deseq))
+    tt = as.matrix(tt)
+    rownames(tt) = c("le", "ld", "ed")
+    colnames(tt) = names(deseq)
+    heat_colors = colorRampPalette(c("white","black"))
+    sillytime = heatmap.3(tt, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=heat_colors, dendrogram="none", Rowv=FALSE, Colv=FALSE, main="Compare DE tools")
+    heat = recordPlot()
+    
+    ret = list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq, edger_vs_deseq, heat=heat)
+    return(ret)
 }
 
 #' make_pairwise_contrasts(): Run makeContrasts() with all pairwise comparisons.
