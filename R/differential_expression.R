@@ -1,3 +1,32 @@
+#' all_pairwise(): Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
+#'
+#' @param expt an expt class containing count tables, normalization state, etc.
+#' @param conditions a factor of conditions in the experiment
+#' @param batches a factor of batches in the experiment
+#' @param extra_contrasts some extra contrasts to add to the list
+#'  This can be pretty neat, lets say one has conditions A,B,C,D,E
+#'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
+#'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
+#'  de_minus_cb = (E-D)-(C-B),"
+#' @param model_cond Include condition in the model?  This should pretty much always be true.
+#' @param model_batch Include batch in the model? FALSE by default, but hopefully true often.
+#' @param model_intercept Perform a cell-means or intercept model?  FALSE by default because I understand subtraction math better.
+#'   But I have tested and get the same answer either way.
+#' @param libsize I've recently figured out that libsize is far more important than I previously realized.  Play with it here.
+#' @param ... The elipsis parameter is fed to write_limma() at the end.
+#'
+#' @return A list of limma, deseq, edger results.
+#' @examples
+#' ## finished_comparison = eBayes(limma_output)
+#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+all_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+    limma_result = limma_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
+    deseq_result = deseq_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
+    edger_result = edger_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
+    ret = list(limma=limma_result, deseq=deseq_result, edger=edger_result)
+    return(ret)
+}
+
 #' write_limma(): Writes out the results of a limma search using toptable()
 #' However, this will do a couple of things to make one's life easier:
 #' 1.  Make a list of the output, one element for each comparison of the contrast matrix
@@ -21,6 +50,85 @@
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
 write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
+    testdir = dirname(workbook)
+    if (n == 0) {
+        n = dim(data$coefficients)[1]
+    }
+    if (is.null(coef)) {
+        coef = colnames(data$contrasts)
+    } else {
+        coef = as.character(coef)
+    }
+    return_data = list()
+    for (c in 1:length(coef)) {
+        comparison = coef[c]
+        message(paste("Printing table: ", comparison, sep=""))        
+        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
+
+        data_table$qvalue = tryCatch(
+            {
+                qvalue(data_table$P.Value, robust=TRUE)$qvalues
+            },
+            error=function(cond) {
+                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+                return(1)
+            },
+            warning=function(cond) {
+                message("There was a warning?")
+                message(cond)
+                return(1)
+            },
+            finally={
+            }
+        )
+        if (!is.null(annotation)) {
+            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
+            ###data_table = data_table[-1]
+        }
+        ## This write_xls runs out of memory annoyingly often
+        if (isTRUE(excel) | isTRUE(csv)) {
+            if (!file.exists(testdir)) {
+                dir.create(testdir)
+                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
+            }
+        }
+        if (isTRUE(excel)) {
+            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
+        }
+        ## Therefore I will write a csv of each comparison, too
+        if (isTRUE(csv)) {
+            csv_filename = gsub(".xls$", "", workbook)            
+            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
+            write.csv(data_table, file=csv_filename)
+        }
+        return_data[[comparison]] = data_table
+    }
+    return(return_data)
+}
+
+#' write_edger(): Writes out the results of an EdgeR search using topTags()
+#' However, this will do a couple of things to make one's life easier:
+#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
+#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
+#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+#'
+#' @param data The output from eBayes()
+#' @param adjust The pvalue adjustment chosen (fdr by default)
+#' @param n The number of entries to report, defaults to 0, which says do them all
+#' @param coef which coefficients/contrasts to report, NULL says do them all
+#' @param workbook an excel filename into which to write the data, used for csv files too.
+#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
+#'
+#' @return a list of data frames comprising the toptable output for each coefficient,
+#'    I also added a qvalue entry to these toptable() outputs.
+#'
+#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
+#'
+#' @export
+#' @examples
+#' ## finished_comparison = eBayes(limma_output)
+#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
     testdir = dirname(workbook)
     if (n == 0) {
         n = dim(data$coefficients)[1]
@@ -77,6 +185,84 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
     return(return_data)
 }
 
+#' write_deseq(): Writes out the results of a DESeq2 search using results()
+#' However, this will do a couple of things to make one's life easier:
+#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
+#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
+#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+#'
+#' @param data The output from eBayes()
+#' @param adjust The pvalue adjustment chosen (fdr by default)
+#' @param n The number of entries to report, defaults to 0, which says do them all
+#' @param coef which coefficients/contrasts to report, NULL says do them all
+#' @param workbook an excel filename into which to write the data, used for csv files too.
+#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
+#'
+#' @return a list of data frames comprising the toptable output for each coefficient,
+#'    I also added a qvalue entry to these toptable() outputs.
+#'
+#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
+#'
+#' @export
+#' @examples
+#' ## finished_comparison = eBayes(limma_output)
+#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
+    testdir = dirname(workbook)
+    if (n == 0) {
+        n = dim(data$coefficients)[1]
+    }
+    if (is.null(coef)) {
+        coef = colnames(data$contrasts)
+    } else {
+        coef = as.character(coef)
+    }
+    return_data = list()
+    for (c in 1:length(coef)) {
+        comparison = coef[c]
+        message(paste("Printing table: ", comparison, sep=""))        
+        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
+
+        data_table$qvalue = tryCatch(
+            {
+                qvalue(data_table$P.Value, gui=FALSE)$qvalues
+            },
+            error=function(cond) {
+                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+                return(1)
+            },
+            warning=function(cond) {
+                message("There was a warning?")
+                message(cond)
+                return(1)
+            },
+            finally={
+            }
+        )
+        if (!is.null(annotation)) {
+            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
+            ###data_table = data_table[-1]
+        }
+        ## This write_xls runs out of memory annoyingly often
+        if (isTRUE(excel) | isTRUE(csv)) {
+            if (!file.exists(testdir)) {
+                dir.create(testdir)
+                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
+            }
+        }
+        if (isTRUE(excel)) {
+            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
+        }
+        ## Therefore I will write a csv of each comparison, too
+        if (isTRUE(csv)) {
+            csv_filename = gsub(".xls$", "", workbook)            
+            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
+            write.csv(data_table, file=csv_filename)
+        }
+        return_data[[comparison]] = data_table
+    }
+    return(return_data)
+}
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -536,21 +722,13 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     for (con in 1:length(apc$names)) {
         name = apc$names[[con]]
         message(paste0(con, ": Performing ", name, " contrast.")) ## correct
-        ##print(sc)
         sc[[name]] = gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
-        ##print(sc[[name]])
         tt = parse(text=sc[[name]])
-        ##print(paste0("Wtf tt: ", tt))
-        ##        contrast_list[[name]] = makeContrasts(tt, levels=fun_model)
         ctr_string = paste0("tt = makeContrasts(", tt, ", levels=fun_model)")
         eval(parse(text=ctr_string))
         contrast_list[[name]] = tt
-        ##print(contrast_list[[name]])
         lrt_list[[name]] = edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
         result_list[[name]] = topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")        
-        ##print(sc[[name]])
-        ##print(name)
-        ##print(contrast_list[[name]])
     }
 
     final = list(
