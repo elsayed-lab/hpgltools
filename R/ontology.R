@@ -354,7 +354,7 @@ goseq_table = function(df, file=NULL) {
 #'   and ccp_plot
 #' @seealso \code{\link{goseq}} and \code{\link{clusterProfiler}}
 #' @export
-simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius", padjust_method="BH") {
+simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius", padjust_method="BH", species=NULL, length_db="ensGene") {
     message("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
     message("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
     message("The other table is of gene lengths with columns (gene)ID and (gene)width.")
@@ -362,22 +362,46 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
     if (is.null(de_genes$ID)) {
         de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
-    de_genes$DE = 1
+    if (is.null(de_genes$DE)) {
+        de_genes$DE = 1
+    }
+    de_vector = NULL
     de_table = de_genes[,c("ID","DE")]
-    length_table = lengths[,c("ID","width")]
-##    de_table = merge(de_table, length_table, by="ID")
-    de_table = merge(de_table, length_table, by="ID", all.y=TRUE)    
-    de_table[is.na(de_table)] = 0
-    rownames(de_table) = make.names(de_table$ID, unique=TRUE)
-    de_vector = as.vector(de_table$DE)
-    names(de_vector) = rownames(de_table)
-    width_vector = as.vector(de_table$width)
-    names(width_vector) = de_table$ID
-    pwf = goseq::nullp(DEgenes=de_vector, bias.data=width_vector, plot.fit=TRUE)
+    if (is.null(lengths) & is.null(all_genes)) {
+        stop("Need either a set of all genes or gene lengths")
+    } else if (!is.null(lengths)) {
+        message("Using the length data to fill in the de vector.")
+        de_table = merge(de_table, lengths, by.x="ID", by.y="ID", all.y=TRUE)
+        de_table[is.na(de_table)] = 0  ## Set the new entries DE status to 0
+        rownames(de_table) = make.names(de_table$ID, unique=TRUE)
+        de_vector = as.vector(de_table$DE)
+        names(de_vector) = rownames(de_table)
+    } else { ## If both lengths and all_genes are defined, use all_genes.
+        message("Using the set of all genes to fill in the de vector.")
+        de_table = merge(de_table, all_genes, by.x="ID", by.y="row.names", all.y=TRUE)
+        de_table[is.na(de_table)] = 0  ## Set the new entries DE status to 0
+        rownames(de_table) = make.names(de_table$ID, unique=TRUE)
+        de_vector = as.vector(de_table$DE)
+        names(de_vector) = rownames(de_table)
+    }
+    pwf = NULL
+    if (is.null(species)) {
+        length_table = lengths[,c("ID","width")]
+        width_vector = as.vector(de_table$width)
+        names(width_vector) = de_table$ID
+        colnames(goids) = c("ID", "GO")
+        pwf = goseq::nullp(DEgenes=de_vector, bias.data=width_vector, plot.fit=TRUE)
+    } else {
+        pwf = goseq::nullp(de_vector, species, length_db, plot.fit=TRUE) ## Taken from the goseq() reference manual
+    }
     pwf_plot = recordPlot()
 ##    godata = goseq(pwf, gene2cat=goids, method='Wallenius')
-    colnames(goids) = c("ID", "GO")
-    godata = goseq::goseq(pwf, gene2cat=goids, use_genes_without_cat=TRUE, method=goseq_method)
+    godata = NULL
+    if (is.null(species)) {
+        godata = goseq::goseq(pwf, gene2cat=goids, use_genes_without_cat=TRUE, method=goseq_method)
+    } else {
+        godata = goseq::goseq(pwf, species, length_db, use_genes_without_cat=TRUE, method=goseq_method)
+    }
     goseq_p = try(hpgltools::hpgl_histogram(godata$over_represented_pvalue, bins=20))
     goseq_p_second = sort(unique(table(goseq_p$data)), decreasing=TRUE)[2]
     ## Set the y scale to 2x the second highest number
@@ -391,6 +415,7 @@ simple_goseq = function(de_genes, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0
     godata$term = goterm(godata$category)
     godata$ontology = goont(godata$category)    
     godata = cbind(godata, qdata$qvalues)
+    print(head(godata))
     colnames(godata) = c("category","over_represented_pvalue","under_represented_pvalue","numDEInCat","numInCat","term","ontology","qvalue")
     if (is.null(adjust)) {
         godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
