@@ -63,7 +63,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
     return_data = list()
     for (c in 1:length(coef)) {
         comparison = coef[c]
-        message(paste("Printing table: ", comparison, sep=""))        
+        message(paste(c ": Printing table: ", comparison, sep=""))        
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -486,9 +486,10 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
         data = exprs(expt$expressionset)
         if (is.null(libsize)) {
             message("libsize was not specified, this parameter has profound effects on limma's result.")
-            if (is.null(expt$normalized$normalized_counts$libsize)) {
-                message("Using the libsize from expt$norm_libsize.")
-                libsize = expt$norm_libsize
+            if (!is.null(expt$best_libsize)) {
+                message("Using the libsize from expt$best_libsize.")
+                ## libsize = expt$norm_libsize
+                libsize = expt$best_libsize
             } else {
                 message("Using the libsize from expt$normalized$normalized_counts.")                
                 libsize = expt$normalized$normalized_counts$libsize
