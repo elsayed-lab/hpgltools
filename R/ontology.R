@@ -359,6 +359,8 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
     message("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
     message("The other table is of gene lengths with columns (gene)ID and (gene)width.")
     message("Other columns are fine, but ignored.")
+    cat2gene = NULL
+    gene2cat = NULL
     if (is.null(de_genes$ID)) {
         de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
@@ -385,6 +387,7 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
         names(de_vector) = rownames(de_table)
     }
     pwf = NULL
+    print("Sometimes nullp throws a warning and some stuff about site-packages, I haven't figured out why, yet.")    
     if (is.null(species)) {
         length_table = lengths[,c("ID","width")]
         width_vector = as.vector(de_table$width)
@@ -399,8 +402,12 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
     godata = NULL
     if (is.null(species)) {
         godata = goseq::goseq(pwf, gene2cat=goids, use_genes_without_cat=TRUE, method=goseq_method)
+        gene2cat = goids
+        cat2gene = goseq:::reversemapping(gene2cat)
     } else {
         godata = goseq::goseq(pwf, species, length_db, use_genes_without_cat=TRUE, method=goseq_method)
+        gene2cat = goseq:::getgo(rownames(pwf), species, length_db)
+        cat2gene = goseq:::reversemapping(gene2cat)
     }
     goseq_p = try(hpgltools::hpgl_histogram(godata$over_represented_pvalue, bins=20))
     goseq_p_second = sort(unique(table(goseq_p$data)), decreasing=TRUE)[2]
@@ -445,6 +452,7 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
     cc_interesting = subset(godata_interesting, ontology == "CC")
     cc_interesting = cc_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]    
     return_list = list(pwf=pwf, pwf_plot=pwf_plot,
+        gene2cat=gene2cat, cat2gene=cat2gene,
         alldata=godata, pvalue_histogram=goseq_p,
         godata_interesting=godata_interesting,
         mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting,
@@ -455,6 +463,32 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
         cc_subset=cc_subset, ccp_plot=pvalue_plots$ccp_plot,
         qdata=qdata)
     return(return_list)
+}
+
+golevel_df = function(ont="MF", savefile="ontlevel.rda") {
+    savefile = paste0(ont, "_", savefile)
+    if (file.exists(savefile)) {
+        load(savefile)
+        return(golevels)
+    } else {
+        level = 0
+        continue = 1
+        golevels = data.frame(GO=NULL,level=NULL)
+        while (continue == 1) {
+            level = level + 1
+            GO = try(clusterProfiler:::getGOLevel(ont, level), silent=TRUE)
+            if (class(GO) != 'character') {
+                golevels$level = as.numeric(golevels$level)
+                save(golevels, file=savefile, compress="gzip")
+                return (golevels)
+            } else {
+                tmpdf = as.data.frame(cbind(GO, level))
+                ## This (hopefully) ensures that each GO id is added only once, and gets the highest possible level.
+                new_go = tmpdf[unique(tmpdf$GO, golevels$GO),]
+                golevels = rbind(golevels, new_go)
+            }
+        }
+    }
 }
 
 #' Make a pvalue plot from topgo data
@@ -503,42 +537,84 @@ topgo_pval_plot = function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fish
 #' @return a plot!
 #' @seealso \code{\link{goseq}}
 #' @export
-goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
+goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.05, n=10, level=NULL, label=FALSE, minde=2, mincat=10, maxp=0.1) {
+    ## The following supports stuff like level = 'level > 3 & level < 6'
+    if (!is.null(level)) {
+        keepers = data.frame()
+        print("Getting all go levels.  This takes a moment.")
+        mf_go = golevel_df(ont="MF")
+        bp_go = golevel_df(ont="BP")
+        cc_go = golevel_df(ont="CC")
+        print("Finished getting go levels.")
+        if (class(level) == 'numeric') {
+            stmt = paste0("subset(mf_go, level == ", level, ")")
+            mf_go = eval(parse(text=stmt))
+            stmt = paste0("subset(bp_go, level == ", level, ")")
+            bp_go = eval(parse(text=stmt))
+            stmt = paste0("subset(cc_go, level == ", level, ")")
+            cc_go = eval(parse(text=stmt))            
+        } else {
+            stmt = paste0("subset(mf_go, ", level, ")")
+            mf_go = eval(parse(text=stmt))
+            stmt = paste0("subset(bp_go, ", level, ")")
+            bp_go = eval(parse(text=stmt))
+            stmt = paste0("subset(cc_go, ", level, ")")
+            cc_go = eval(parse(text=stmt))
+        }
+        mf_idx = !duplicated(mf_go$GO)
+        bp_idx = !duplicated(bp_go$GO)
+        cc_idx = !duplicated(cc_go$GO)
+        mf_go = mf_go[mf_idx,]
+        bp_go = bp_go[bp_idx,]
+        cc_go = cc_go[cc_idx,]
+        keepers = rbind(keepers, mf_go)
+        keepers = rbind(keepers, bp_go)
+        keepers = rbind(keepers, cc_go)
+        print("Extracting the goterms in your chosen level.")
+        goterms = merge(goterms, keepers, by.x="category", by.y="GO")
+    }
+    
     plotting_mf = subset(goterms, complete.cases(goterms))
     plotting_mf$score = plotting_mf$numDEInCat / plotting_mf$numInCat    
     plotting_mf = subset(plotting_mf, ontology == "MF")
     plotting_mf = subset(plotting_mf, term != "NULL")
-    plotting_mf = subset(plotting_mf, over_represented_pvalue <= 0.1)
-    plotting_mf = subset(plotting_mf, numInCat > 10)    
-    plotting_mf = plotting_mf[order(plotting_mf$over_represented_pvalue),]
+    plotting_mf = subset(plotting_mf, over_represented_pvalue <= maxp)
+    plotting_mf = subset(plotting_mf, numInCat >= mincat)
+    plotting_mf = subset(plotting_mf, numDEInCat >= minde)
+    plotting_mf = subset(plotting_mf, score >= cutoff)
+    plotting_mf = plotting_mf[order(plotting_mf$over_represented_pvalue),]    
     plotting_mf = head(plotting_mf, n=n)
-    plotting_mf = plotting_mf[,c("term","over_represented_pvalue","score")]
-    colnames(plotting_mf) = c("term","pvalue","score")
-    mf_pval_plot = pval_plot(plotting_mf, ontology="MF")
+    plotting_mf = plotting_mf[,c("term","over_represented_pvalue","numDEInCat","numInCat","score")]
+    colnames(plotting_mf) = c("term","pvalue","numDE","numcat","score")
+    mf_pval_plot = pval_plot(plotting_mf, ontology="MF", label=label)
 
     plotting_bp = subset(goterms, complete.cases(goterms))
     plotting_bp$score = plotting_bp$numDEInCat / plotting_bp$numInCat
     plotting_bp = subset(plotting_bp, ontology == "BP")
     plotting_bp = subset(plotting_bp, term != "NULL")
-    plotting_bp = subset(plotting_bp, over_represented_pvalue <= 0.1)
-    plotting_bp = subset(plotting_bp, numInCat > 10)    
+    plotting_bp = subset(plotting_bp, over_represented_pvalue <= maxp)
+    plotting_bp = subset(plotting_bp, numInCat >= mincat)
+    plotting_bp = subset(plotting_bp, numDEInCat >= minde)    
+    plotting_bp = subset(plotting_bp, score >= cutoff)    
     plotting_bp = plotting_bp[order(plotting_bp$over_represented_pvalue),]
     plotting_bp = head(plotting_bp, n=n)
-    plotting_bp = plotting_bp[,c("term","over_represented_pvalue","score")]
-    colnames(plotting_bp) = c("term","pvalue","score")
-    bp_pval_plot = pval_plot(plotting_bp, ontology="BP")
+    plotting_bp = plotting_bp[,c("term","over_represented_pvalue","numDEInCat","numInCat","score")]
+    colnames(plotting_bp) = c("term","pvalue","numDE","numcat","score")
+    bp_pval_plot = pval_plot(plotting_bp, ontology="BP", label=label)
 
     plotting_cc = subset(goterms, complete.cases(goterms))
     plotting_cc$score = plotting_cc$numDEInCat / plotting_cc$numInCat
     plotting_cc = subset(plotting_cc, ontology == "CC")
     plotting_cc = subset(plotting_cc, term != "NULL")
-    plotting_cc = subset(plotting_cc, over_represented_pvalue <= 0.1)
-    plotting_cc = subset(plotting_cc, numInCat > 10)    
+    plotting_cc = subset(plotting_cc, over_represented_pvalue <= maxp)
+    plotting_cc = subset(plotting_cc, numInCat >= mincat)
+    plotting_mf = subset(plotting_cc, numDEInCat >= minde)
+    plotting_cc = subset(plotting_cc, score >= cutoff)
     plotting_cc = plotting_cc[order(plotting_cc$over_represented_pvalue),]
     plotting_cc = head(plotting_cc, n=n)
-    plotting_cc = plotting_cc[,c("term","over_represented_pvalue","score")]
+    plotting_cc = plotting_cc[,c("term","over_represented_pvalue","numDEInCat","numInCat","score")]
     colnames(plotting_cc) = c("term","pvalue","score")
-    cc_pval_plot = pval_plot(plotting_cc, ontology="CC")
+    cc_pval_plot = pval_plot(plotting_cc, ontology="CC", label=label)
     
     pval_plots = list(mfp_plot=mf_pval_plot, bpp_plot=bp_pval_plot, ccp_plot=cc_pval_plot,
                       mf_subset=plotting_mf, bp_subset=plotting_bp, cc_subset=plotting_cc)
@@ -546,8 +622,42 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
 }
 
 
-gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_under, wrapped_width=20, cutoff=0.1, n=10) {
+gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_under, wrapped_width=20, cutoff=0.1, n=10, level=NULL) {
     ##    plotting_mf_over = subset(mf_over, complete.cases(mf_over))
+    if (!is.null(level)) {
+        keepers = data.frame()
+        print("Getting all go levels.  This takes a moment.")
+        mf_go = golevel_df(ont="MF")
+        bp_go = golevel_df(ont="BP")
+        cc_go = golevel_df(ont="CC")
+        print("Finished getting go levels.")
+        if (class(level) == 'numeric') {
+            stmt = paste0("subset(mf_go, level == ", level, ")")
+            mf_go = eval(parse(text=stmt))
+            stmt = paste0("subset(bp_go, level == ", level, ")")
+            bp_go = eval(parse(text=stmt))
+            stmt = paste0("subset(cc_go, level == ", level, ")")
+            cc_go = eval(parse(text=stmt))            
+        } else {
+            stmt = paste0("subset(mf_go, ", level, ")")
+            mf_go = eval(parse(text=stmt))
+            stmt = paste0("subset(bp_go, ", level, ")")
+            bp_go = eval(parse(text=stmt))
+            stmt = paste0("subset(cc_go, ", level, ")")
+            cc_go = eval(parse(text=stmt))
+        }
+        keepers = rbind(keepers, mf_go)
+        keepers = rbind(keepers, bp_go)
+        keepers = rbind(keepers, cc_go)
+        print("Extracting the goterms in your chosen level.")
+        mf_over = merge(mf_over, keepers, by.x="category", by.y="GO")
+        bp_over = merge(bp_over, keepers, by.x="category", by.y="GO")
+        cc_over = merge(cc_over, keepers, by.x="category", by.y="GO")
+        mf_under = merge(mf_over, keepers, by.x="category", by.y="GO")
+        bp_under = merge(bp_under, keepers, by.x="category", by.y="GO")
+        cc_under = merge(cc_under, keepers, by.x="category", by.y="GO")        
+    }
+    
     plotting_mf_over = mf_over
     plotting_mf_over$score = plotting_mf_over$ExpCount
     plotting_mf_over = subset(plotting_mf_over, Term != "NULL")
@@ -625,7 +735,7 @@ gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_
 #' @return a plot!
 #' @seealso \code{\link{goseq}}
 #' @export
-pval_plot = function(df, ontology="MF") {
+pval_plot = function(df, ontology="MF", label=FALSE) {
     y_name = paste("Enriched ", ontology, " categories.", sep="")
     pvalue_plot = ggplot2::ggplot(df, aes(term, score)) +
         geom_bar(stat="identity") +
@@ -633,7 +743,11 @@ pval_plot = function(df, ontology="MF") {
         scale_x_discrete(name=y_name) +
         aes(fill=pvalue) +
         scale_fill_continuous(low="red", high="blue") +
+        ylab("Ratio of DE genes / Genes in GO category") +
         theme(text=element_text(size=10))
+    if (isTRUE(label)) {
+        pvalue_plot = pvalue_plot + geom_text(label=paste0(df$numDE, " / ", df$numcat))
+    }
     return(pvalue_plot)
 }
 
@@ -1159,32 +1273,35 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     qcutoff=1.0, fold_changes=NULL, include_cnetplots=TRUE,
     showcategory=12, universe=NULL, organism="lm", gff=NULL,
     wrapped_width=20, method="Walllenius", padjust="BH") {
-    genetable_test = try(load("geneTable.rda"))
-    if (class(genetable_test) == 'try-error') {
-        if (!is.null(gff)) {
-            message("Generating the geneTable.rda")
-            ## clusterProfiler::Gff2GeneTable(gff)
-            hpgltools::Gff2GeneTable(gff)            
-        } else {
-            stop("cluster Profiler requires a geneTable.rda, which requires a gff file to read.")
-        }
-    } else {
-        rm(genetable_test)
-    }
 
     if (is.null(de_genes$ID)) {
         gene_list = as.character(rownames(de_genes))
     } else {
         gene_list = as.character(de_genes$ID)
     }
-    gomapping_test = try(load("GO2EG.rda"))
-    if (class(gomapping_test) == 'try-error') {
-        message("Generating GO mapping data for cluster profiler from the goids data.")
-        gomap = goids
-        colnames(gomap) = c("entrezgene", "go_accession")
-        clusterProfiler::buildGOmap(gomap)
-    } else {
-        message("Using GO mapping data located in GO2EG.rda")
+    
+    if (organism != 'human') {
+        genetable_test = try(load("geneTable.rda"))
+        if (class(genetable_test) == 'try-error') {
+            if (!is.null(gff)) {
+                message("Generating the geneTable.rda")
+                ## clusterProfiler::Gff2GeneTable(gff)
+                hpgltools::Gff2GeneTable(gff)            
+            } else {
+                stop("cluster Profiler requires a geneTable.rda, which requires a gff file to read.")
+            }
+        } else {
+            rm(genetable_test)
+        }
+        gomapping_test = try(load("GO2EG.rda"))
+        if (class(gomapping_test) == 'try-error') {
+            message("Generating GO mapping data for cluster profiler from the goids data.")
+            gomap = goids
+            colnames(gomap) = c("entrezgene", "go_accession")
+            clusterProfiler::buildGOmap(gomap)
+        } else {
+            message("Using GO mapping data located in GO2EG.rda")
+        }
     }
 ##    message("Testing gseGO")
 ##    ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
@@ -1374,6 +1491,40 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
     return(summary(new_go))
 }
 
+make_gene2go = function(genes, genome='hg19', id='ensGene') {
+    goids_list = getgo(genes=genes, genome=genome, id=id)
+    print("Running plyr to make a data frame from this large list.  This will take a while...")
+    goids_list = Filter(Negate(function(x) is.null(unlist(x))), goids_list)
+    goids_df = melt.list(goids_list)
+    colnames(goids_df) = c("GO","ID")
+    goids_df = goids_df[,c("ID","GO")]
+    return(goids_df)
+}
+
+genesfromgo = function(genes, go, ont="MF") {
+    tmp = four_hours_amazon_up
+    genes = as.character(rownames(subset(tmp, DE == 1)))
+    ## go = rownames(head(four_hours_amazon_up_go$mf_interesting, n=1)) ## This one gives 'binding' -- lame!
+    go = "GO:0071294"  ## supposed to have 6 of ~12 cellular response to zinc ion
+    ## So, the question is: which of the genes is in go?
+    
+    foundp = function(gene, go=go, ont="BP") {
+        gowithgene = rownames(summary(groupGO(gene, ont=ont)))
+        hit = length(intersect(go, gowithgene))
+        ret = FALSE
+        if (hit > 0) {
+            ret = TRUE
+        }
+        return(ret)
+    }
+    find_mf = function(gene) {
+        foundp(gene, go=go, ont="BP")
+    }
+    lapply(as.character(genes), find_mf)
+
+        
+}
+
 #' Make fun trees a la topgo from goseq data.
 #'
 #' @param de_genes some differentially expressed genes
@@ -1391,13 +1542,17 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     if (is.null(de_genes$ID)) {
         de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
+    all_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
     interesting_genes = factor(annotated_genes %in% de_genes$ID)
     names(interesting_genes) = annotated_genes    
 
     if (is.null(de_genes[[pval_column]])) {
-        mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)        
+        ## mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        mf_GOdata = new("topGOdata", ontology="MF", allGenes=all_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)        
+        ## bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata = new("topGOdata", ontology="BP", allGenes=all_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)        
+        ## cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata = new("topGOdata", ontology="CC", allGenes=all_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
     } else {
         pvals = as.vector(de_genes[[pval_column]])
         names(pvals) = rownames(de_genes)
@@ -1405,7 +1560,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
         bp_GOdata = new("topGOdata", description="BP", ontology="BP", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
         cc_GOdata = new("topGOdata", description="CC", ontology="CC", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
     }
-        
+
     enriched_ids = godata$alldata$category
     enriched_scores = godata$alldata$over_represented_pvalue
     names(enriched_scores) = enriched_ids
@@ -2372,5 +2527,5 @@ hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
 ##    } else {
 ##        save(geneTable, file="geneTable.rda")
 ##    }
-##    message("Gene Table file save in the working directory.")
+##    message("Gene Table file saved in the working directory.")
 ##}

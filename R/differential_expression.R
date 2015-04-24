@@ -63,7 +63,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
     return_data = list()
     for (c in 1:length(coef)) {
         comparison = coef[c]
-        message(paste(c ": Printing table: ", comparison, sep=""))        
+        message(paste(c, ": Printing table: ", comparison, sep=""))        
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
