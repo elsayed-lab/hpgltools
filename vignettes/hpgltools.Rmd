@@ -1,12 +1,12 @@
 ---
-title: "Using hpgltools for fun and profit"
-author: "Ashton Trey Belew <abelew@gmail.com>"
+title: "hpgltools"
+author: "atb abelew@gmail.com"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: rmarkdown::pdf_document
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
-  %\VignetteEngine{rmarkdown::render}
-  %\usepackage[utf8]{inputenc}
+  %\VignetteIndexEntry{hpgltools}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
 # Hpgltools: Stupid R tricks.
@@ -23,7 +23,7 @@ library("hpgltools")
 ## To set up an initial vignette, use the following line:
 ## devtools::use_vignette("hpgltools")
 autoloads_all()
-opts_knit$set(progress=TRUE, verbose=TRUE, stop_on_error=FALSE, purl=FALSE, error=TRUE, fig.width=7, fig.height=7)
+opts_knit$set(progress=TRUE, verbose=TRUE, purl=FALSE, error=TRUE, stop_on_error=FALSE, fig.width=7, fig.height=7)
 options(java.parameters="-Xmx8g")  ## used for xlconnect -- damn 4g wasn't enough
 theme_set(theme_bw(base_size=10))
 set.seed(1)
@@ -443,11 +443,12 @@ for which blast2GO was performed.
 ```{r ontology_searches}
 
 ontology_info = read.csv(file="data/trinotate_go_trimmed.csv.gz", header=FALSE, sep="\t")
+##ontology_info = read.csv(file="data/transcript_go.csv.gz", header=FALSE, sep="\t")
 colnames(ontology_info) = c("gene_id","transcript_id","group","startend","blast_go","pfam_go")
 ## Drop any entries which don't have a putative length
 ontology_info = subset(ontology_info, startend != 0)
 ## Split the column 'startend' into two columns by the '-' sign
-ontology_info = as.data.frame(transform(ontology_info, startend=colsplit(startend, split="\\-", names=c("start","end"))))
+ontology_info = as.data.frame(transform(ontology_info, startend=reshape::colsplit(startend, split="\\-", names=c("start","end"))))
 ## Make the resulting pieces into two separate columns, start and end.
 ontology_info$start = ontology_info$startend$start
 ontology_info$end = ontology_info$startend$end

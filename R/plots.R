@@ -216,7 +216,7 @@ hpgl_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL,
             ylab("Library size in (pseudo)counts.") +
             theme_bw() +
             theme(axis.text.x=element_text(angle=90, hjust=1.5, vjust=0.5))
-    if (text == TRUE) {
+    if (isTRUE(text)) {
         libsize_plot = libsize_plot + geom_text(ggplot2::aes(reorder(order), label=prettyNum(tmp$sum, big.mark=",")), angle=90, size=3, color="white", hjust=1.2)
     }
     if (!is.null(title)) {

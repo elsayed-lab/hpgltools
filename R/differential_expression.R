@@ -16,6 +16,7 @@
 #' @param ... The elipsis parameter is fed to write_limma() at the end.
 #'
 #' @return A list of limma, deseq, edger results.
+#' @export
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
@@ -62,7 +63,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
     return_data = list()
     for (c in 1:length(coef)) {
         comparison = coef[c]
-        message(paste("Printing table: ", comparison, sep=""))        
+        message(paste(c, ": Printing table: ", comparison, sep=""))        
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -485,9 +486,10 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
         data = exprs(expt$expressionset)
         if (is.null(libsize)) {
             message("libsize was not specified, this parameter has profound effects on limma's result.")
-            if (is.null(expt$normalized$normalized_counts$libsize)) {
-                message("Using the libsize from expt$norm_libsize.")
-                libsize = expt$norm_libsize
+            if (!is.null(expt$best_libsize)) {
+                message("Using the libsize from expt$best_libsize.")
+                ## libsize = expt$norm_libsize
+                libsize = expt$best_libsize
             } else {
                 message("Using the libsize from expt$normalized$normalized_counts.")                
                 libsize = expt$normalized$normalized_counts$libsize
@@ -542,16 +544,30 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
 
     ## voom() it, taking into account whether the data has been log2 transformed.
     logged = expt$transform
-    if (logged == "raw") {
-        logged = FALSE
+    if (is.null(logged)) {
+        print("I don't know if this data is logged, testing if it is integer.")
+        if (is.integer(all_data)) {
+            logged = FALSE
+        } else {
+            logged = TRUE
+        }
     } else {
-        logged = TRUE
+        if (logged == "raw") {
+            logged = FALSE
+        } else {
+            logged = TRUE
+        }
     }
     converted = expt$convert
-    if (converted == "raw") {
+    if (is.null(converted)) {
+        print("I cannot determine if this data has been converted, assuming no.")
         converted = FALSE
     } else {
-        converted = TRUE
+        if (converted == "raw") {
+            converted = FALSE
+        } else {
+            converted = TRUE
+        }
     }
     ##fun_voom = voom(data, fun_model)
     ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
@@ -648,9 +664,11 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
         ## As I understand it, edgeR fits a binomial distribution
         ## and expects data as floating point counts,
         ##not a log2 transformation.
-        if (expt$transform == "log2") {
-            ##data = (2^data) - 1
-            data = expt$normalized$normalized_counts$count_table
+        if (!is.null(expt$transform)) {
+            if (expt$transform == "log2") {
+                ##data = (2^data) - 1
+                data = expt$normalized$normalized_counts$count_table
+            }
         }        
     }
     message("At this time, this only does conditional models.")
@@ -794,9 +812,11 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
         ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
         ## and expects data as floating point counts,
         ## not a log2 transformation.
-        if (expt$transform == "log2") {
-            ##data = (2^data) - 1
-            data = expt$normalized$normalized_counts$count_table
+        if (!is.null(expt$transform)) {
+            if (expt$transform == "log2") {
+                ##data = (2^data) - 1
+                data = expt$normalized$normalized_counts$count_table
+            }
         }        
     }
     condition_table = table(conditions)

@@ -57,13 +57,14 @@ autoloads_ontology = function(...) {
 autoloads_genome = function(...) {
     require.auto("biomaRt", ...)    
     require.auto("BSgenome")
-    require.auto("BSgenome.Lmajor.friedlin")
+    require.auto("BSgenome.Lmajor.friedlin", "elsayed-lab/BSgenome.Lmajor.friedlin")
     require.auto("genomeIntervals")    
     require.auto("rtracklayer")
 }
 
 autoloads_deseq = function(...) {
-    require.auto("cbcbSEQ")
+    require.auto("preprocessCore")
+    require.auto("cbcbSEQ", "kokrah/cbcbSEQ")
     require.auto("DESeq2")
     require.auto("DESeq")
     require.auto("edgeR")

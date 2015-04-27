@@ -42,6 +42,16 @@ or
 
 to have it regenerate the vignettes and check for (new) problems.
 
+## Exploring
+
+The easiest way to poke at this and see what it can do is:
+
+R> library(hpgltools)
+R> browseVignettes("hpgltools")
+
+As of last count, there were a couple examples using the data(fission)
+set and some made up data.
+
 ## Functionality
 
 ### autoloads.R

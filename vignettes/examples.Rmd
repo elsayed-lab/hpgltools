@@ -1,20 +1,14 @@
 ---
-title: "Example hpgltools usage with fission"
-author: "Ashton Trey Belew <abelew@gmail.com>"
+title: "hpgltools examples"
+author: "atb abelew@gmail.com"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: rmarkdown::html_document
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
-  %\VignetteEngine{rmarkdown::render}
-  %\usepackage[utf8]{inputenc}
+  %\VignetteIndexEntry{hpgltools examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
-```{r render_vignette, eval=FALSE}
-
-render("hpgltools.Rmd", output_format="pdf_document")
-render("hpgltools.Rmd", output_format="html_document")
-
-```
 
 # Example hpgltool usage with a real data set (fission)
 
@@ -28,15 +22,17 @@ required to install hpgltools, the software it uses, and the fission data.
 ```{r setup}
 
 ## These first 4 lines are not needed once hpgltools is installed.
-source("http://bioconductor.org/biocLite.R")
-biocLite("devtools")
-library(devtools)
-install_github("elsayed-lab/hpgltools")
+##source("http://bioconductor.org/biocLite.R")
+##biocLite("devtools")
+##library(devtools)
+##install_github("elsayed-lab/hpgltools")
 library(hpgltools)
 autoloads_all()
 require.auto("fission")
 library(fission)
 data(fission)
+opts_knit$set(progress=TRUE, verbose=TRUE, error=TRUE,  fig.width=7, fig.height=7)
+
 
 ```
 
@@ -96,13 +92,13 @@ Assuming it doesn't, lets normalize the data using the defaults (cpm, quantile, 
 
 ## Unsurprisingly, the raw data doesn't cluster well at all...
 fis_rawpca = hpgl_pca(expt=fission_expt, labels=fission_expt$condition)
-fis_rawpca
+fis_rawpca$plot
 
 ## So, normalize the data
 norm_expt = normalize_expt(fission_expt)
 ## And try the pca again
 fis_normpca = hpgl_pca(expt=norm_expt, labels=norm_expt$condition)
-fis_normpca
+fis_normpca$plot
 ## ok, that caused the 0, 60, 15, and 30 minute samples to cluster nicely
 ## the 120 and 180 minute samples are still a bit tight
 

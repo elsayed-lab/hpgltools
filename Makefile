@@ -20,7 +20,12 @@ document:
 	rm -f NAMESPACE && Rscript -e "library('devtools'); devtools::document()"
 
 vignette:
-	cd ../ && R CMD check hpgltools
+	Rscript -e "library('devtools'); devtools::build_vignettes()"
+
+clean_vignette:
+	rm -f inst/doc/*
+
+vt:	clean_vignette vignette install
 
 clean:
 	rm -rf hpgltools/
@@ -28,9 +33,6 @@ clean:
 	rm -rf hpgltools_${VERSION}.tar.gz
 	find . -type d -name excel -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
-	find . -name '*.csv' -exec rm -rf {} ';'
-	find . -name '*.Rdata' -exec rm -rf {} ';'
-	find . -name '*.pdf' -exec rm -rf {} ';'
 
 prereq:
 	Rscript -e "source('http://bioconductor.org/biocLite.R');\

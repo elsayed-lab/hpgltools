@@ -14,10 +14,21 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
     if (class(df) == "edgeR") {
         df = df$counts
     }
-    df = df[rownames(df) %in% rownames(annotations),]
+    df_in = as.data.frame(df[rownames(df) %in% rownames(annotations),])
+    colnames(df_in) = colnames(df)
     merged_annotations = merge(df, annotations, by="row.names")
-    gene_lengths = merged_annotations$width
-    rpkm_df = edgeR::rpkm(df, gene.length=gene_lengths)
+    rownames(merged_annotations) = merged_annotations[,"Row.names"]
+    rownames(df_in) = merged_annotations[,"Row.names"]
+    
+    ## Sometimes I am stupid and call it length...
+    gene_lengths = NULL
+    if (is.null(merged_annotations$width)) {
+        gene_lengths = merged_annotations[,"length"]
+    } else {
+        gene_lengths = merged_annotations[,"width"]
+    }
+    rpkm_df = edgeR::rpkm(df_in, gene.length=gene_lengths)
+    colnames(rpkm_df) = colnames(df)
     return(rpkm_df)
 }
 
@@ -315,6 +326,22 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
         print("It saves the current data into a slot named: expt$backup_expressionset")
         print("It will also save copies of each step along the way in expt$normalized with the corresponding libsizes.")
         print("Keep the libsizes in mind when invoking limma.  The appropriate libsize is the non-log(cpm(normalized)).")
+        print("This is most likely kept in the slot called: 'new_expt$normalized$normalized_counts$libsize' which is copied into new_expt$best_libsize")
+    }
+    if (filter_low == FALSE) {
+        print("Filter low is false, this should likely be set to something, good choices include cbcb, kofa, pofa (anything but FALSE).  If you want this to stay FALSE, keep in mind that if other normalizations are performed, then the resulting libsizes are likely to be odd (potentially negative!)")
+    }
+    if (transform == "raw") {
+        print("Leaving the data in its current base format, keep in mind that some metrics are easier to see when the data is log2 transformed, but EdgeR/DESeq don't like transformed data.")
+    }
+    if (convert == "raw") {
+        print("Leaving the data unconverted.  It is often advisable to cpm/rpkm the data to normalize for sampling differences, keep in mind though that rpkm has some annoying biases, and voom() by default does a cpm (though hpgl_voom() will try to detect this).")
+    }
+    if (norm == "raw") {
+        print("Leaving the data unnormalized.  This is necessary for DESeq, but EdgeR/limma might benefit from normalization.  Good choices include quantile, size-factor, tmm, etc.")
+    }
+    if (batch == "raw") {
+        print ("Not correcting the count-data for batch effects.  If batch is included in EdgerR/limma's model, then this is probably wise; but in extreme batch effects this is a good parameter to play with.")
     }
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)
@@ -329,6 +356,7 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
     new_expt$expressionset = current
     new_expt$filtered = filter_low
     new_expt$transform = transform
+    new_expt$best_libsize = new_expt$normalized$normalized_counts$libsize
     new_expt$norm = norm
     new_expt$convert = convert
     new_expt$batch = batch
