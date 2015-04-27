@@ -24,23 +24,25 @@ tagdispnorm = estimateTagwiseDisp(disp_norm)
 exact_test = exactTest(tagdispnorm)
 exact_result = as.data.frame(topTags(exact_test, n=nrow(raw)))
 
-exact_vs_cbcb = merge(cbcb_top, exact_result, by.x="row.names", by.y="row.names")
-cor.test(exact_vs_cbcb$logFC.x, exact_vs_cbcb$logFC.y)
 
-condition = design$condition
-edger_design = model.matrix(~0 + condition)
+## this depends on stuff from test_vs_cbcbseq.R which is dumb...
+##exact_vs_cbcb = merge(cbcb_top, exact_result, by.x="row.names", by.y="row.names")
+##cor.test(exact_vs_cbcb$logFC.x, exact_vs_cbcb$logFC.y)
 
-glm_norm = estimateGLMCommonDisp(tagdispnorm, edger_design)
-glm_trended = estimateGLMTrendedDisp(glm_norm, edger_design)
-glm_tagged = estimateGLMTagwiseDisp(glm_trended, edger_design)
-edger_fit = glmFit(glm_tagged, design=edger_design)
-lrt = glmLRT(edger_fit, coef=2)
-glm_result = as.data.frame(topTags(lrt, n=nrow(raw)))
+##condition = design$condition
+##edger_design = model.matrix(~0 + condition)
 
-glm_vs_exact = merge(exact_result, glm_result, by.x="row.names", by.y="row.names")
-cor.test(glm_vs_exact$logFC.x, glm_vs_exact$logFC.y)
+##glm_norm = estimateGLMCommonDisp(tagdispnorm, edger_design)
+##glm_trended = estimateGLMTrendedDisp(glm_norm, edger_design)
+##glm_tagged = estimateGLMTagwiseDisp(glm_trended, edger_design)
+##edger_fit = glmFit(glm_tagged, design=edger_design)
+##lrt = glmLRT(edger_fit, coef=2)
+##glm_result = as.data.frame(topTags(lrt, n=nrow(raw)))
 
-hpgl_edger = edger_pairwise(expt=pasilla_expt)
-hpglglm_result = hpgl_edger$results$untreated_minus_treated
-hpgl_vs_exact = merge(exact_result, hpglglm_result, by.x="row.names", by.y="row.names")
-cor.test(hpgl_vs_exact$logFC.x, glm_vs_exact$logFC.y)
+##glm_vs_exact = merge(exact_result, glm_result, by.x="row.names", by.y="row.names")
+##cor.test(glm_vs_exact$logFC.x, glm_vs_exact$logFC.y)
+
+##hpgl_edger = edger_pairwise(expt=pasilla_expt)
+##hpglglm_result = hpgl_edger$results$untreated_minus_treated
+##hpgl_vs_exact = merge(exact_result, hpglglm_result, by.x="row.names", by.y="row.names")
+##cor.test(hpgl_vs_exact$logFC.x, glm_vs_exact$logFC.y)

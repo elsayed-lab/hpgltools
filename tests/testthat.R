@@ -1,4 +1,5 @@
 library(testthat)
 library(hpgltools)
 
-test_dir("tests")
+print(getwd())
+test_dir("testthat")
