@@ -15,6 +15,9 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
         df = df$counts
     }
     df_in = as.data.frame(df[rownames(df) %in% rownames(annotations),])
+    if (dim(df_in)[1] == 0) {
+        stop("When the annotations and df were checked against each other, the result was null.  Perhaps your annotation or df's rownames aren't set?")
+    }
     colnames(df_in) = colnames(df)
     merged_annotations = merge(df, annotations, by="row.names")
     rownames(merged_annotations) = merged_annotations[,"Row.names"]
@@ -23,9 +26,9 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
     ## Sometimes I am stupid and call it length...
     gene_lengths = NULL
     if (is.null(merged_annotations$width)) {
-        gene_lengths = merged_annotations[,"length"]
+        gene_lengths = merged_annotations$length
     } else {
-        gene_lengths = merged_annotations[,"width"]
+        gene_lengths = merged_annotations$width
     }
     rpkm_df = edgeR::rpkm(df_in, gene.length=gene_lengths)
     colnames(rpkm_df) = colnames(df)
@@ -307,7 +310,11 @@ testme = function() {
 #' Replace the data of an expt with normalized data
 #'
 #' @param expt=expt The original expt
-#' @param transform="log2" The transformation desired
+#' @param transform="raw" The transformation desired (raw, log2, log, log10)
+#' @param norm="raw" How to normalize the data (raw, quant, sf, upperquartile, tmm, rle)
+#' @param convert="raw" Conversion to perform (raw, cpm, rpkm, cp_seq_m)
+#' @param filter_low=FALSE Filter out low sequences (cbcb, pofa, kofa, others?)
+#' @param annotations=NULL used for rpkm, a df 
 #'
 #' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
 #' @export
@@ -469,7 +476,11 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         if (verbose) {
             print(paste("Applying normalization:", norm))
         }
-        normalized_counts = normalize_counts(count_table, design, norm=norm)
+        if (is.null(expt_design)) {
+            print("The experimental design is null.  Some normalizations will therefore fail.")
+            print("If you receive an error about an object with no dimensions, that is likely why.")
+        }
+        normalized_counts = normalize_counts(count_table, expt_design, norm=norm)
         count_table = normalized_counts$count_table
         norm_performed = norm
     }
@@ -483,7 +494,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         if (verbose) {
             print(paste("Setting output type as:", convert))
         }
-        converted_counts = convert_counts(count_table, convert=convert)
+        converted_counts = convert_counts(count_table, convert=convert, annotations=annotations)
         count_table = converted_counts$count_table
         convert_performed = convert
     }
@@ -495,7 +506,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         if (verbose) {
             print(paste("Applying: ", transform, " transformation.", sep=""))
         }
-        transformed_counts = transform_counts(count_table, transform=transform, annotations=annotations, converted=convert_performed, ...)
+        transformed_counts = transform_counts(count_table, transform=transform, converted=convert_performed, ...)
         count_table = transformed_counts$count_table
         transform_performed = transform
     }
@@ -507,7 +518,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
             print(paste("Applying: ", batch, " batch correction(raw means nothing).", sep=""))
         }
         ## batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
-        batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design)        
+        batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design)
         count_table = batched_counts$count_table
         batch_performed = batch
     }
@@ -610,10 +621,10 @@ convert_counts = function(count_table, convert="raw", annotations=NULL, ...) {
         if (is.null(annotations)) {
             stop("RPKM conversion requires gene lengths.")
         }
-        count_table = hpgltools::hpgl_rpkm(counts_table, annotations=annotations)
+        count_table = hpgltools::hpgl_rpkm(count_table, annotations=annotations)
     } else if (convert == "cp_seq_m") {
         counts = edgeR::cpm(count_table)
-        counts_table = hpgltools::divide_seq(counts, ...)
+        count_table = hpgltools::divide_seq(counts, ...)
     }
     libsize = colSums(count_table)
     counts = list(count_table=count_table, libsize=libsize)

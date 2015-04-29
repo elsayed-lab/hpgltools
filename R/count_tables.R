@@ -41,15 +41,21 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
    }  else {
         tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
     }
-    colnames(tmp_definitions) = tolower(colnames(tmp_definitions))    
+    colnames(tmp_definitions) = tolower(colnames(tmp_definitions))
+    tmp_definitions = subset(tmp_definitions, sample.id != "")
+    condition_names = unique(tmp_definitions$condition)    
+    if (is.null(color_hash)) {
+        if (!is.null(tmp_definitions$color)) {
+            color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)
+        } else {
+            num_colors = length(condition_names)
+            colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors))
+            color_hash = hash(keys=as.character(condition_names), values=colors)
+        }
+    }
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
     ## Thus the next line
     print("This function needs the conditions and batches to be an explicit column in the sample sheet.")
-    tmp_definitions = subset(tmp_definitions, sample.id != "")
-    condition_names = unique(tmp_definitions$condition)
-    num_colors = length(condition_names)
-    colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors))
-    color_hash = hash(keys=as.character(condition_names), values=colors)
     expt_list = create_experiment(file=file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, meta_dataframe=meta_dataframe, sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
     expt = expt_list$expt
     def = expt_list$def
@@ -333,19 +339,25 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
     }
     lower_filenames = paste(dirs, low_files, sep="/")
     lowhpgl_filenames = paste(dirs, low_hpgl, sep="/")
-
     if (file.exists(tolower(files[1]))) {
-        files = tolower(files)
+        files[1] = tolower(files[1])
     } else if (file.exists(lowhpgl_filenames[1])) {
-        files = lowhpgl_filenames
+        files[1] = lowhpgl_filenames[1]
     } else if (file.exists(lower_filenames[1])) {
-        files = lower_filenames
+        files[1] = lower_filenames[1]
     }
     ##count_table = read.table(files[1], header=header, ...)
     count_table = read.table(files[1], header=header)    
     colnames(count_table) = c("ID", ids[1])
     ## iterate over and append remaining samples
     for (table in 2:length(files)) {
+        if (file.exists(tolower(files[table]))) {
+            files[table] = tolower(files[table])
+        } else if (file.exists(lowhpgl_filenames[table])) {
+            files[table] = lowhpgl_filenames[table]
+        } else if (file.exists(lower_filenames[table])) {
+            files[table] = lower_filenames[table]
+        }
         tmp_count = read.table(files[table], header=header)
         colnames(tmp_count) = c("ID", ids[table])
         count_table = merge(count_table, tmp_count, by="ID")

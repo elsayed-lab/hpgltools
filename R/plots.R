@@ -18,35 +18,17 @@
 #' @return a loooong list of plots including the following:
 #'   nonzero = a ggplot2 plot of the non-zero genes vs library size
 #'   libsize = a ggplot2 bar plot of the library sizes
-#'   raw_boxplot = a ggplot2 boxplot of the raw data
-#'   norm_boxplot = a ggplot2 boxplot of the normalized data
-#'   raw_corheat = a recordPlot()ed pairwise correlation heatmap of the raw data
-#'   norm_corheat = a recordPlot()ed pairwise correlation heatmap of the normalized data
-#'   raw_smc = a recordPlot()ed view of the standard median pairwise correlation of the raw data
-#'   norm_smc = a recordPlot()ed view of the standard median pairwise correlation of the normalized data
-#'   raw_disheat = a recordPlot()ed pairwise euclidean distance heatmap of the raw data
-#'   norm_disheat = a recordPlot()ed pairwise euclidean distance heatmap of the normalized data
-#'   raw_smd = a recordPlot()ed view of the standard median pairwise distance of the raw data
-#'   norm_smd = a recordPlot()ed view of the standard median pairwise distance of the normalized data
-#'   raw_pcaplot = a recordPlot()ed PCA plot of the raw samples
-#'   norm_pcaplot = a recordPlot()ed PCA plot of the normalized samples
-#'   raw_pcatable = a table describing the relative contribution of condition/batch of the raw data
-#'   norm_pcatable = a table describing the relative contribution of condition/batch of the normalized data
-#'   raw_pcares =  a table describing the relative contribution of condition/batch of the raw data
-#'   norm_pcares = a table describing the relative contribution of condition/batch of the normalized data
-#'   raw_pcavar = a table describing the variance of the raw data
-#'   norm_pcavar = a table describing the variance of the normalized data
-#'   raw_qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
-#'   norm_qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every normalized sample
-#'   raw_density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
-#'   norm_density = a ggplot2 view of the density of each normalized
-#'   batch_boxplot = a ggplot2 boxplot of the data after calling limma's removeBatchEffect()
-#'   batch_disheat = a recordPlot() of a distance heatmap after calling limma's removeBatchEffect()
-#'   batch_corheat = a recordPlot() of a correlation heatmap after calling limma's removeBatchEffect()
-#'   batch_pcaplot = a ggplot2 PCA plot after removeBatchEffect()
-#'   batch_pcatable = a pca table of the removeBatchEffect()'d data
-#'   batch_pcares = a pcares table of the removeBatchEffect()'d data
-#'   batch_pcavar = a pcavar table of the removeBatchEffect()'d data
+#'   boxplot = a ggplot2 boxplot of the raw data
+#'   corheat = a recordPlot()ed pairwise correlation heatmap of the raw data
+#'   smc = a recordPlot()ed view of the standard median pairwise correlation of the raw data
+#'   disheat = a recordPlot()ed pairwise euclidean distance heatmap of the raw data
+#'   smd = a recordPlot()ed view of the standard median pairwise distance of the raw data
+#'   pcaplot = a recordPlot()ed PCA plot of the raw samples
+#'   pcatable = a table describing the relative contribution of condition/batch of the raw data
+#'   pcares =  a table describing the relative contribution of condition/batch of the raw data
+#'   pcavar = a table describing the variance of the raw data
+#'   qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
+#'   density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
 #' 
 #' @seealso \code{\link{exprs}}, \code{\link{hpgl_norm}},
 #' \code{\link{graph_nonzero}}, \code{\link{hpgl_libsize}},
@@ -60,7 +42,7 @@
 #' ## toomany_plots = graph_metrics(expt)
 #' ## testnorm = graph_metrics(expt, norm_type="tmm", filter="log2", out_type="rpkm", cormethod="robust")
 #' ## haha sucker, you are going to be waiting a while!
-graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", ...) {
+graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL, scale="raw", sink=FALSE, ...) {
     ## First gather the necessary data for the various plots.
     options(scipen=999)
     expt_design = expt$design
@@ -68,40 +50,113 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", ...)
     expt_names = expt$names
     expt_raw_data = Biobase::exprs(expt$expressionset)
 
+    nonzero_title = "Non zero genes"
+    libsize_title = "Library sizes"
+    boxplot_title = "Boxplot"
+    corheat_title = "Correlation heatmap"
+    smc_title = "Standard Median Correlation"
+    disheat_title = "Distance heatmap"
+    smd_title = "Standard Median Distance"
+    pca_title = "Principle Component Analysis"
+    dens_title = "Density plot"
+    ma_titles = "MA"
+    
+    if (!is.null(title_suffix)) {
+        nonzero_title = paste0(nonzero_title, ": ", title_suffix)        
+        libsize_title = paste0(libsize_title, ": ", title_suffix)
+        boxplot_title = paste0(boxplot_title, ": ", title_suffix)        
+        corheat_title = paste0(corheat_title, ": ", title_suffix)
+        smc_title = paste0(smc_title, ": ", title_suffix)
+        disheat_title = paste0(disheat_title, ": ", title_suffix)        
+        smd_title = paste0(smd_title, ": ", title_suffix)        
+        pca_title = paste0(pca_title, ": ", title_suffix)
+        dens_title = paste0(pca_title, ": ", title_suffix)
+        ma_title = paste0(ma_titles, ": ", title_suffix)
+    }
+
     message("Graphing number of non-zero genes with respect to CPM by library.")
-    nonzero_plot = try(hpgltools::hpgl_nonzero(expt=expt, title="Non zero genes.", ...))
+    nonzero_plot = try(hpgltools::hpgl_nonzero(expt=expt, title=nonzero_title, ...))
     message("Graphing library sizes.")
-    libsize_plot = try(hpgltools::hpgl_libsize(expt=expt, title="Library sizes.", ...))
+    libsize_plot = try(hpgltools::hpgl_libsize(expt=expt, title=libsize_title, ...))
     message("Graphing a boxplot on log scale.")
-    raw_boxplot = try(hpgltools::hpgl_boxplot(expt=expt, title="Boxplot of log(raw data).", scale="log", ...))
+    boxplot = try(hpgltools::hpgl_boxplot(expt=expt, title=boxplot_title, scale=scale, ...))
     message("Graphing a correlation heatmap.")
-    raw_corheat = try(hpgltools::hpgl_corheat(expt=expt, method=cormethod, title="Correlation heatmap of raw data.", ...))
+    corheat = try(hpgltools::hpgl_corheat(expt=expt, method=cormethod, title=corheat_title, ...))
     message("Graphing a standard median correlation.")
-    raw_smc = try(hpgltools::hpgl_smc(expt=expt, method=cormethod, title="Standard Median Correlation, raw data.", ...))
+    smc = try(hpgltools::hpgl_smc(expt=expt, method=cormethod, title=smc_title, ...))
     message("Graphing a distance heatmap.")
-    raw_disheat = try(hpgltools::hpgl_disheat(expt=expt, method=distmethod, title="Distance heatmap, raw data.", ...))
+    disheat = try(hpgltools::hpgl_disheat(expt=expt, method=distmethod, title=disheat_title, ...))
     message("Graphing a standard median distance.")
-    raw_smd = try(hpgltools::hpgl_smd(expt=expt, method=distmethod, title="Standard Median Distance, raw data.", ...))
+    smd = try(hpgltools::hpgl_smd(expt=expt, method=distmethod, title=smd_title, ...))
     message("Graphing a PCA plot.")
-    raw_pca = try(hpgltools::hpgl_pca(expt=expt, title="PCA plot of raw data.", ...))
+    pca = try(hpgltools::hpgl_pca(expt=expt, title=pca_title, ...))
     message("Plotting a density plot.")
-    raw_density = try(hpgltools::hpgl_density_plot(expt=expt, title="Density plot of raw data."))
-    message("QQ plotting!.")    
-    raw_qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
+    density = try(hpgltools::hpgl_density_plot(expt=expt, title=dens_title))
+
+    qq = NULL
+    ma = NULL
+    if (isTRUE(sink)) {
+        message("QQ plotting!.")    
+        qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
+        message("Many MA plots!")
+        ma = try(suppressWarnings(hpgltools::hpgl_pairwise_ma(expt=expt)))
+    }
     
     ret_data = list(
         nonzero=nonzero_plot, libsize=libsize_plot,
-        boxplot=raw_boxplot,
-        corheat=raw_corheat, smc=raw_smc,
-        disheat=raw_disheat, smd=raw_smd,
-        pcaplot=raw_pca$plot,
-        pcatable=raw_pca$table,
-        pcares=raw_pca$res,
-        pcavar=raw_pca$variance,
-        density=raw_density,
-        qq=raw_qq
+        boxplot=boxplot,
+        corheat=corheat, smc=smc,
+        disheat=disheat, smd=smd,
+        pcaplot=pca$plot,
+        pcatable=pca$table,
+        pcares=pca$res,
+        pcavar=pca$variance,
+        density=density,
+        qq=qq, ma=ma
     )
     return(ret_data)
+}
+
+hpgl_pairwise_ma = function(expt=NULL, df=NULL, log=NULL, ...) {
+    if (is.null(expt) & is.null(df)) {
+        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
+    }
+    if (is.null(expt)) {
+        data = df
+    } else if (is.null(df)) {
+        data = exprs(expt$expressionset)
+    } else {
+        stop("Both df and expt are defined, choose one.")
+    }
+    plot_list = list()
+    for (c in 1:(length(colnames(data)) - 1)) {
+        nextc = c + 1
+        for (d in nextc:length(colnames(data))) {
+            first = as.numeric(data[[c]])
+            second = as.numeric(data[[d]])
+            if (max(first) > 1000) {
+                if (is.null(log)) {
+                    print("I suspect you want to set log=TRUE for this.")
+                    print("In fact, I am so sure, I am doing it now.")
+                    print("If I am wrong, set log=FALSE, but I'm not.")
+                    log = TRUE
+                }
+            }
+            firstname = colnames(data)[c]
+            secondname = colnames(data)[d]
+            name = paste0(firstname, "_", secondname)
+            if (isTRUE(log)) {
+                first = log2(first + 1.0)
+                second = log2(second + 1.0)
+            }
+            m = first - second
+            a = (first + second) / 2
+            affy:::ma.plot(A=a, M=m, plot.method="smoothScatter", show.statistics=TRUE, add.loess=TRUE)
+            title(paste0("MA of ", firstname, " vs ", secondname))
+            plot_list[[name]] = recordPlot()
+        }
+    }
+    return(plot_list)
 }
 
 #' Make a ggplot graph of the number of non-zero genes by sample.  Made by Ramzi Temanni.
@@ -1507,7 +1562,7 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
             geom_abline(colour="darkgreen", slope=1, intercept=0, size=1)
     }
     first_vs_second = first_vs_second +
-        theme(legend.position="none")
+        theme(legend.position="none") + theme_bw()
     
     if (!is.null(gvis_filename)) {
         if (verbose) {
