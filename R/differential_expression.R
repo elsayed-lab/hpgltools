@@ -627,6 +627,15 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     return(result)
 }
 
+coefficient_scatter = function(limma_output, x=NULL, y=NULL) {
+    ##  If taking a limma_pairwise output, then this lives in
+    ##  output$pairwise_comparisons$coefficients
+    coefficients = limma_output$pairwise_comparisons$coefficients
+    coefficients = coefficients[,c(x,y)]
+    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE)
+    return(plot)
+}
+
 #' edger_pairwise():  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using EdgeR.
 #'
