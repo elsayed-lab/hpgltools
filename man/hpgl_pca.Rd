@@ -5,7 +5,7 @@
 \title{Make a ggplot PCA plot describing the samples' clustering}
 \usage{
 hpgl_pca(df = NULL, colors = NULL, design = NULL, expt = NULL,
-  shapes = "batch", title = NULL, labels = NULL, ...)
+  shapes = "batch", title = NULL, labels = NULL, size = 3, ...)
 }
 \arguments{
 \item{df}{alternately a data frame which must be accompanied by}

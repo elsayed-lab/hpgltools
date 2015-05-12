@@ -21,10 +21,13 @@
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
 all_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+    
     limma_result = limma_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
-    deseq_result = deseq_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
+    deseq_result = deseq2_pairwise(expt=expt, data=data, conditions=conditions, batches=batches) ## The rest of the arguments should be added back sooner than later.
     edger_result = edger_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
-    ret = list(limma=limma_result, deseq=deseq_result, edger=edger_result)
+
+    result_comparison = compare_tables(limma=limma_result, deseq=deseq_result, edger=edger_result)
+    ret = list(limma=limma_result, deseq=deseq_result, edger=edger_result, comparison=result_comparison)
     return(ret)
 }
 
@@ -68,7 +71,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
 
         data_table$qvalue = tryCatch(
             {
-                format(signif(qvalue(data_table$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
+                as.numeric(format(signif(qvalue(data_table$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
             error=function(cond) {
                 message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
@@ -82,9 +85,9 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
             finally={
             }
         )
-        data_table$P.Value = format(signif(data_table$P.Value, 4), scientific=TRUE)
-        data_table$adj.P.Val = format(signif(data_table$adj.P.Val, 4), scientific=TRUE)        
-                
+        data_table$P.Value = as.numeric(format(signif(data_table$P.Value, 4), scientific=TRUE))
+        data_table$adj.P.Val = as.numeric(format(signif(data_table$adj.P.Val, 4), scientific=TRUE))
+
         if (!is.null(annotation)) {
             data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
             ###data_table = data_table[-1]
@@ -627,12 +630,14 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     return(result)
 }
 
-coefficient_scatter = function(limma_output, x=NULL, y=NULL) {
+coefficient_scatter = function(limma_output, x=NULL, y=NULL, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
+    print("This can do comparisons among the following columns in the limma result:")
+    print(colnames(limma_output$pairwise_comparisons$coefficients))
     coefficients = limma_output$pairwise_comparisons$coefficients
     coefficients = coefficients[,c(x,y)]
-    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE)
+    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline)
     return(plot)
 }
 
@@ -821,13 +826,17 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
         ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
         ## and expects data as floating point counts,
         ## not a log2 transformation.
-        if (!is.null(expt$transform)) {
-            if (expt$transform == "log2") {
-                ##data = (2^data) - 1
-                data = expt$normalized$normalized_counts$count_table
+        if (!is.null(expt$norm)) {
+            if (expt$norm != "raw") {
+                data = exprs(expt$original_expressionset)
+            } else if (!is.null(expt$transform)) {
+                if (expt$transform == "log2") {
+                    ##data = (2^data) - 1
+                    data = expt$normalized$normalized_counts$count_table
+                }
             }
-        }        
-    }
+        }
+    } ## expt is not null.
     condition_table = table(conditions)
     batch_table = table(batches)
     conditions = as.factor(conditions)
@@ -843,7 +852,7 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     ## An interesting note about the use of formulae in DESeq:
     ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
     ## Thus, all these formulae should have condition(s) at the end.
-    summarized = DESeqDataSetFromMatrix(countData=exprs(expt$expressionset), colData=pData(expt$expressionset), design=~0+condition)
+    summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(expt$expressionset), design=~0+condition)
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
     deseq_run = DESeq(dataset, betaPrior=FALSE)
@@ -931,6 +940,12 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
 
 compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
     ## Fill each column/row of these with the correlation between tools for one contrast performed
+    if (class(limma) == "list") { ## Then this was fed the raw output from limma_pairwise, lets assume the same is true for deseq/edger too and pull out the result tables.
+        limma = limma$all_tables
+        deseq = deseq$all_tables
+        edger = edger$all_tables
+    }
+        
     len = length(names(deseq))
     limma_vs_edger = list()
     limma_vs_deseq = list()
@@ -969,7 +984,6 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
     heat_colors = colorRampPalette(c("white","black"))
     sillytime = heatmap.3(tt, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=heat_colors, dendrogram="none", Rowv=FALSE, Colv=FALSE, main="Compare DE tools")
     heat = recordPlot()
-    
     ret = list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq, edger_vs_deseq, heat=heat)
     return(ret)
 }

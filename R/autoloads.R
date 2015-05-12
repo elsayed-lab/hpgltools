@@ -84,6 +84,9 @@ autoloads_graphs = function(...) {
 }
 
 autoloads_helpers = function(...) {
+    require.auto("MASS", ...)
+    require.auto("mgcv")
+    require.auto("Matrix")
     require.auto("devtools", ...)
     require.auto("BiocParallel")
     register(MulticoreParam(4))    

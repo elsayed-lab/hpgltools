@@ -130,7 +130,6 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
     godata$term = goterm(godata$category)
     godata$ontology = goont(godata$category)    
     godata = cbind(godata, qdata$qvalues)
-    print(head(godata))
     colnames(godata) = c("category","over_represented_pvalue","under_represented_pvalue","numDEInCat","numInCat","term","ontology","qvalue")
     if (is.null(adjust)) {
         godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)

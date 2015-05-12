@@ -347,7 +347,8 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
         files[1] = lower_filenames[1]
     }
     ##count_table = read.table(files[1], header=header, ...)
-    count_table = read.table(files[1], header=header)    
+    count_table = read.table(files[1], header=header)
+    print(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
     colnames(count_table) = c("ID", ids[1])
     ## iterate over and append remaining samples
     for (table in 2:length(files)) {
@@ -359,6 +360,7 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
             files[table] = lower_filenames[table]
         }
         tmp_count = read.table(files[table], header=header)
+        print(paste0(files[table], " contains ", length(rownames(count_table)), " rows."))        
         colnames(tmp_count) = c("ID", ids[table])
         count_table = merge(count_table, tmp_count, by="ID")
     }

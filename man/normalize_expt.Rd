@@ -13,7 +13,15 @@ normalize_expt(expt, transform = "raw", norm = "raw", convert = "raw",
 \arguments{
 \item{expt=expt}{The original expt}
 
-\item{transform="log2"}{The transformation desired}
+\item{transform="raw"}{The transformation desired (raw, log2, log, log10)}
+
+\item{norm="raw"}{How to normalize the data (raw, quant, sf, upperquartile, tmm, rle)}
+
+\item{convert="raw"}{Conversion to perform (raw, cpm, rpkm, cp_seq_m)}
+
+\item{filter_low=FALSE}{Filter out low sequences (cbcb, pofa, kofa, others?)}
+
+\item{annotations=NULL}{used for rpkm, a df}
 }
 \value{
 a new expt object with normalized data and the original data saved as 'original_expressionset'

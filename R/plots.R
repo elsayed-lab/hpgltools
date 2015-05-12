@@ -926,7 +926,7 @@ hpgl_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclide
 #' @examples
 #' ## pca_plot = hpgl_pca(expt=expt)
 #' ## pca_plot
-hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", title=NULL, labels=NULL, ...) {
+hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", title=NULL, labels=NULL, size=3, ...) {
     hpgl_env = environment()
     if (is.null(expt) & is.null(df)) {
         stop("This needs either: an expt object containing metadata; or a df, design, and colors.")
@@ -937,6 +937,7 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     } else if (is.null(df)) {
         hpgl_design = expt$design
         hpgl_df = Biobase::exprs(expt$expressionset)
+        colors = expt$color
     } else {
         stop("Both df and expt are defined, that is confusing.")
     }
@@ -959,18 +960,35 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         batch=hpgl_design$batch,
         batch_int = as.integer(hpgl_design$batch),
         PC1=pca$v[,1],
-        PC2=pca$v[,2])
+        PC2=pca$v[,2],
+        colors=colors)
 
     num_batches = length(levels(hpgl_design$batch))
-    pca_plot = ggplot(data=pca_data, environment=hpgl_env) +
-        geom_point(aes(x=PC1, y=PC2, color=hpgl_design$condition, shape=hpgl_design$batch), size=3) +        
-        scale_colour_discrete(name="Experimental\nCondition") +
-        xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
+    ## pca_plot = ggplot(data=pca_data, environment=hpgl_env) +
+    ##     geom_point(aes(x=PC1, y=PC2, color=hpgl_design$condition, shape=hpgl_design$batch), size=size) +
+    ##     scale_colour_discrete(name="Experimental\nCondition") +
+    ##     xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
+    print(colors)
+    pca_plot = ggplot(data=pca_data, environment=hpgl_env, aes(x=PC1, y=PC2))
+    if (is.null(colors)) {
+        pca_plot = pca_plot + geom_point(aes(color=hpgl_design$condition, shape=hpgl_design$batch), size=size)
+    } else {
+        print("Using the variable colors.")
+        ## I need a mapping of condition -> color 1:1, so unique(cbind()) them, then make a list and name them appropriately.
+        mycol = unique(cbind(as.character(hpgl_design$condition), as.character(colors)))
+        mycolors = mycol[,2]
+        names(mycolors) = mycol[,1]
+        print(mycolors)
+        pca_plot = pca_plot + geom_point(aes(x=PC1, y=PC2, shape=hpgl_design$batch, colour=hpgl_design$condition), size=size) +
+            scale_colour_manual(values=mycolors, name="Condition")
+    }
+    pca_plot = pca_plot + xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))    
+    
     if (num_batches > 6) { ## Then ggplot2 wants shapes specified manually...
         pca_plot = pca_plot +
-        scale_shape_manual(values=c(1:num_batches))
+        scale_shape_manual(values=c(1:num_batches), name="Batch")
     } else {
-        pca_plot = pca_plot + scale_shape_discrete(name="Experimental\nBatch") 
+        pca_plot = pca_plot + scale_shape_discrete(name="Batch") 
     }
 
     if (!is.null(labels)) {
@@ -1063,8 +1081,16 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
     return(pca_plot)
 }
 
+## An alternate to plotting rank order of svd$u
+## The plotted_u1s and such below
+## y-axis is z(i), x-axis is i
+## z(i) = cumulative sum of $u squared
+## z = cumsum((svd$u ^ 2))
+
+
 #' Calculate some information useful for generating PCA plots
 #'
+#' @title pca_information
 #' @param df The data to analyze (usually exprs(somedataset))
 #' @param design A dataframe describing the experimental design, containing columns with
 #'   useful information like the conditions, batches, number of cells, whatever...
@@ -1117,8 +1143,8 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     plotted_u1s = plotted_us[order(plotted_us[,1], decreasing=TRUE),]
     plotted_u2s = plotted_us[order(plotted_us[,2], decreasing=TRUE),]
     plotted_u3s = plotted_us[order(plotted_us[,3], decreasing=TRUE),]    
-    ##        allS <- BiocGenerics::rank(allS, ties.method = "random")
-    ##    plotted_us$rank = rank(plotted_us[,1], ties.method="random")
+    ## allS <- BiocGenerics::rank(allS, ties.method = "random")
+    ## plotted_us$rank = rank(plotted_us[,1], ties.method="random")
     plotted_u1s = cbind(plotted_u1s, rev(rank(plotted_u1s[,1], ties.method="random")))
     plotted_u1s = plotted_u1s[,c(1,4)]
     colnames(plotted_u1s) = c("PC1","rank")

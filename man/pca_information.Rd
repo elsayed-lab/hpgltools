@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{pca_information}
 \alias{pca_information}
-\title{Calculate some information useful for generating PCA plots}
+\title{pca_information}
 \usage{
 pca_information(expt = NULL, df = NULL, design = NULL,
   factors = c("condition", "batch"), num_components = NULL,

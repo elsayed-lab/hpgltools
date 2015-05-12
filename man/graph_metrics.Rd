@@ -5,7 +5,8 @@
 \title{Make a bunch of graphs describing the state of an experiment
 before/after normalization.}
 \usage{
-graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean", ...)
+graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
+  title_suffix = NULL, scale = "raw", sink = FALSE, ...)
 }
 \arguments{
 \item{expt}{an expt experiment containing the data, design, and colors}
@@ -33,35 +34,17 @@ to TRUE.}
 a loooong list of plots including the following:
   nonzero = a ggplot2 plot of the non-zero genes vs library size
   libsize = a ggplot2 bar plot of the library sizes
-  raw_boxplot = a ggplot2 boxplot of the raw data
-  norm_boxplot = a ggplot2 boxplot of the normalized data
-  raw_corheat = a recordPlot()ed pairwise correlation heatmap of the raw data
-  norm_corheat = a recordPlot()ed pairwise correlation heatmap of the normalized data
-  raw_smc = a recordPlot()ed view of the standard median pairwise correlation of the raw data
-  norm_smc = a recordPlot()ed view of the standard median pairwise correlation of the normalized data
-  raw_disheat = a recordPlot()ed pairwise euclidean distance heatmap of the raw data
-  norm_disheat = a recordPlot()ed pairwise euclidean distance heatmap of the normalized data
-  raw_smd = a recordPlot()ed view of the standard median pairwise distance of the raw data
-  norm_smd = a recordPlot()ed view of the standard median pairwise distance of the normalized data
-  raw_pcaplot = a recordPlot()ed PCA plot of the raw samples
-  norm_pcaplot = a recordPlot()ed PCA plot of the normalized samples
-  raw_pcatable = a table describing the relative contribution of condition/batch of the raw data
-  norm_pcatable = a table describing the relative contribution of condition/batch of the normalized data
-  raw_pcares =  a table describing the relative contribution of condition/batch of the raw data
-  norm_pcares = a table describing the relative contribution of condition/batch of the normalized data
-  raw_pcavar = a table describing the variance of the raw data
-  norm_pcavar = a table describing the variance of the normalized data
-  raw_qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
-  norm_qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every normalized sample
-  raw_density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
-  norm_density = a ggplot2 view of the density of each normalized
-  batch_boxplot = a ggplot2 boxplot of the data after calling limma's removeBatchEffect()
-  batch_disheat = a recordPlot() of a distance heatmap after calling limma's removeBatchEffect()
-  batch_corheat = a recordPlot() of a correlation heatmap after calling limma's removeBatchEffect()
-  batch_pcaplot = a ggplot2 PCA plot after removeBatchEffect()
-  batch_pcatable = a pca table of the removeBatchEffect()'d data
-  batch_pcares = a pcares table of the removeBatchEffect()'d data
-  batch_pcavar = a pcavar table of the removeBatchEffect()'d data
+  boxplot = a ggplot2 boxplot of the raw data
+  corheat = a recordPlot()ed pairwise correlation heatmap of the raw data
+  smc = a recordPlot()ed view of the standard median pairwise correlation of the raw data
+  disheat = a recordPlot()ed pairwise euclidean distance heatmap of the raw data
+  smd = a recordPlot()ed view of the standard median pairwise distance of the raw data
+  pcaplot = a recordPlot()ed PCA plot of the raw samples
+  pcatable = a table describing the relative contribution of condition/batch of the raw data
+  pcares =  a table describing the relative contribution of condition/batch of the raw data
+  pcavar = a table describing the variance of the raw data
+  qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
+  density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
 }
 \description{
 Make a bunch of graphs describing the state of an experiment
