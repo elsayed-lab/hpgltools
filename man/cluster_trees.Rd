@@ -18,7 +18,7 @@ cluster_trees(de_genes, cpdata, goid_map = "reference/go/id2go.map",
 \item{sigforall}{Print significance on all nodes?}
 }
 \value{
-a plot!
+plots! Trees! oh my!
 }
 \description{
 Make fun trees a la topgo from goseq data.

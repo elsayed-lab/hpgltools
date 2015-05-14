@@ -1,10 +1,22 @@
+## Time-stamp: <Thu May 14 14:38:28 2015 Ashton Trey Belew (abelew@gmail.com)>
+
+## Note to self, @title and @description are not needed in roxygen
+## comments, the first separate #' is the title, the second the
+## description, the third is the long form description.  Then add in
+## the @param @return @seealso @export etc...
+
+#' hpgl_rpkm(): Reads/(kilobase(gene) * million reads)
+#'
 #' Express a data frame of counts as reads per kilobase(gene) per
 #' million(library).
+#'
+#' This function wraps EdgeR's rpkm in an attempt to make sure that
+#' the required gene lengths get sent along.
 #'
 #' @param df a data frame of counts, alternately an edgeR DGEList
 #' @param annotations containing gene lengths, defaulting to
 #' 'gene_annotations'
-#' 
+#'
 #' @return rpkm_df a data frame of counts expressed as rpkm
 #' @seealso \code{\link{edgeR}} and \code{\link{cpm}}
 #' @export
@@ -22,7 +34,6 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
     merged_annotations = merge(df, annotations, by="row.names")
     rownames(merged_annotations) = merged_annotations[,"Row.names"]
     rownames(df_in) = merged_annotations[,"Row.names"]
-    
     ## Sometimes I am stupid and call it length...
     gene_lengths = NULL
     if (is.null(merged_annotations$width)) {
@@ -41,7 +52,7 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
 #' paper.
 #'
 #' @param counts read count matrix
-#' 
+#'
 #' @return log2-CPM read count matrix
 #' @export
 #'
@@ -63,7 +74,7 @@ hpgl_log2cpm = function(counts, lib.size=NULL) {
 #' @param fasta a fasta genome to search
 #' @param gff the gff set of annotations to define start/ends of genes.
 #' @param entry_type which type of gff entry to search against.  Defaults to 'gene'.
-#' 
+#'
 #' @return The 'RPseqM' counts
 #' @export
 divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff", entry_type="gene") {
@@ -119,7 +130,7 @@ cbcb_filter_counts = function(count_table, threshold=2, min_samples=2, verbose=F
     }
 
     libsize = colSums(count_table)
-    counts = list(count_table=count_table, libsize=libsize)    
+    counts = list(count_table=count_table, libsize=libsize)
     return(counts)
 }
 
@@ -241,7 +252,7 @@ genefilter_cv_counts = function(count_table, cv_min=0.01, cv_max=1000, verbose=F
                       num_before - nrow(count_table), nrow(count_table)))
     }
     libsize = colSums(count_table)
-    counts = list(count_table=count_table, libsize=libsize)    
+    counts = list(count_table=count_table, libsize=libsize)
     return(counts)
 }
 
@@ -261,7 +272,7 @@ testme = function() {
         row.names=featureNames(cds))
 
     dat = counts(cds)
-        
+
     sfun <- coxfilter(1, 1, .05)
     ffun <- filterfun(sfun)
     l2dat = log2(dat + 1)
@@ -282,7 +293,7 @@ testme = function() {
     which = genefilter(dat, ffun)
     tt = dat[which,]
     dim(tt)
-    
+
     f1 <- kOverA(k=1, A=1)
     flist <- filterfun(f1)
     ans <- genefilter(dat, flist)
@@ -293,7 +304,7 @@ testme = function() {
     flist <- filterfun(f1)
     ans <- genefilter(dat, flist)
     tt = dat[ans,]
-    dim(tt)    
+    dim(tt)
 
     cov_fun = cov(l2dat)
     af <- Anova(cov_fun, .1)
@@ -301,11 +312,8 @@ testme = function() {
     ans = genefilter(l2dat, flist)
     tt = dat[ans,]
     dim(tt)
-    
     ## nsFilter(cds) ## needs an expressionset
-}    
-    
-
+}
 
 #' Replace the data of an expt with normalized data
 #'
@@ -314,7 +322,7 @@ testme = function() {
 #' @param norm="raw" How to normalize the data (raw, quant, sf, upperquartile, tmm, rle)
 #' @param convert="raw" Conversion to perform (raw, cpm, rpkm, cp_seq_m)
 #' @param filter_low=FALSE Filter out low sequences (cbcb, pofa, kofa, others?)
-#' @param annotations=NULL used for rpkm, a df 
+#' @param annotations=NULL used for rpkm, a df
 #'
 #' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
 #' @export
@@ -397,7 +405,7 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
 #' \code{\link{DESeqDataSetFromMatrix}},
 #' \code{\link{estimateSizeFactors}}, \code{\link{DGEList}},
 #' \code{\link{qNorm}}, \code{\link{calcNormFactors}}
-#' 
+#'
 #' @export
 #' @examples
 #' ## df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
@@ -407,7 +415,7 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm|cbcbcpm
 hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
     lowfilter_performed = FALSE
-    norm_performed = "raw"    
+    norm_performed = "raw"
     convert_performed = "raw"
     transform_performed = "raw"
     batch_performed = "raw"
@@ -431,7 +439,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
 
     raw_libsize = colSums(count_table)
     original_counts = list(libsize=raw_libsize, counts=count_table)
-    
+
     ## Step 1: Perform a low count filter
     lowfiltered_counts = NULL
     if (filter_low != "FALSE") {
@@ -464,10 +472,10 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
             print("Recognized filters are: 'cv', 'kofa', 'pofa', 'cbcb'")
             lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh, min_samples=min_samples)
             count_table = lowfiltered_counts$count_table
-            lowfilter_performed = "cbcb"            
+            lowfilter_performed = "cbcb"
         }
     }
-    
+
     ## Step 2: Normalization
     ## This section handles the various normalization strategies
     ## If nothing is chosen, then the filtering is considered sufficient
@@ -484,7 +492,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         count_table = normalized_counts$count_table
         norm_performed = norm
     }
-    
+
     ## Step 3: Convert the data to (likely) cpm
     ## The following stanza handles the three possible output types
     ## cpm and rpkm are both from edgeR
@@ -498,7 +506,7 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         count_table = converted_counts$count_table
         convert_performed = convert
     }
-        
+
     ## Step 4: Transformation
     ## Finally, this considers whether to log2 the data or no
     transformed_counts = NULL
@@ -510,10 +518,10 @@ hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw
         count_table = transformed_counts$count_table
         transform_performed = transform
     }
-        
+
     ## Step 5: Batch correction
     batched_counts = NULL
-    if (batch != "raw") {    
+    if (batch != "raw") {
         if (verbose) {
             print(paste("Applying: ", batch, " batch correction(raw means nothing).", sep=""))
         }
@@ -578,14 +586,14 @@ batch_counts = function(count_table, design, batch=batch, batch1=batch1, batch2=
         ## new_expt$sva_object = sva_object
         ## new_expt$mod_sv = mod_sv
         ## new_expt$fsva_result = fsva_result
-        count_table = fsva_result$db         
+        count_table = fsva_result$db
     } else {
         print("Did not recognize the batch correction, leaving the table alone.")
         print("Recognized batch corrections include: 'limma', 'combatmod', 'sva'")
     }
     libsize = colSums(count_table)
     counts = list(count_table=count_table, libsize=libsize)
-    return(counts)    
+    return(counts)
 }
 
 transform_counts = function(count_table, transform="raw", converted="raw", ...) {
@@ -647,6 +655,10 @@ normalize_counts = function(count_table, design, norm="raw") {
         count_table = normalize.quantiles(as.matrix(count_table), copy=TRUE)
         rownames(count_table) = count_rownames
         colnames(count_table) = count_colnames
+    } else if (norm == "qsmooth") {
+        count_table = hpgl_qshrink(exprs=count_table, groups=design$condition, verbose=TRUE, plot=TRUE)
+    } else if (norm == "qsmooth_median") {
+        count_table = hpgl_qshrink(exprs=count_table, groups=design$condition, verbose=TRUE, plot=TRUE, refType="median", groupLoc="median", window=50)
     } else if (norm == "tmm") {
         ## TMM normalization is documented in edgeR
         ## Set up the edgeR data structure
@@ -664,7 +676,7 @@ normalize_counts = function(count_table, design, norm="raw") {
         norm_performed = "tmm"
     } else if (norm == "upperquartile") {
         ## Get the tmm normalization factors
-        count_table = edgeR::DGEList(counts=count_table)        
+        count_table = edgeR::DGEList(counts=count_table)
         norms = edgeR::calcNormFactors(count_table, method="upperquartile")
         ## Set up the DESeq data structure to which to apply the new factors
         deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~1)
@@ -696,6 +708,109 @@ normalize_counts = function(count_table, design, norm="raw") {
     return(norm_counts)
 }
 
+hpgl_qstats = function (exprs, groups, refType = "mean", groupLoc = "mean", window = 99) {
+    require.auto("matrixStats")
+    Q = apply(exprs, 2, sort)
+    if (refType == "median") {
+        Qref = matrixStats::rowMedians(Q)
+    }
+    if (refType == "mean") {
+        Qref = rowMeans(Q)
+    }
+
+    QBETAS = c()
+    SIGMA = c()
+    uGroups = unique(groups)
+    for (g in uGroups) {
+        index = (g == groups)
+        if (sum(index) == 1) {
+            print(paste0("There was only replicate of type: ", g))
+            print("This will likely do terrible things to qsmooth.")
+            QBETAS = cbind(QBETAS, Q[, index])
+            SIGMA = cbind(SIGMA, 0)
+        } else if (sum(index) > 1) {
+            if (groupLoc == "mean") {
+                QBETAS = cbind(QBETAS, rowMeans(Q[, index]))
+                SIGMA = cbind(SIGMA, matrixStats::rowVars(Q[, g == groups]))
+            } else if (groupLoc == "median") {
+                QBETAS = cbind(QBETAS, matrixStats::rowMedians(Q[, index]))
+                SIGMA = cbind(SIGMA, (matrixStats::rowMads(Q[, g == groups]))^2)
+            }
+        } else {
+            warning(paste0("There were 0 of type: ", g))
+        }
+    }
+    colnames(QBETAS) = uGroups
+    colnames(SIGMA) = uGroups
+    if (groupLoc == "mean") {
+        TAU = matrixStats::rowVars(QBETAS)
+        SIGMA = rowMeans(SIGMA)
+    } else { ## median
+        TAU = matrixStats::rowMads(QBETAS)^2
+        SIGMA = matrixStats::rowMedians(SIGMA)
+    }
+    roughWeights = SIGMA/(SIGMA + TAU)
+    roughWeights[is.nan(roughWeights)] = 0 ## is this backward?
+    roughWeights[SIGMA < 10^(-6) & TAU < 10^(-6)] = 1
+    smoothWeights = runmed(roughWeights, k = window, endrule = "constant")
+    qstats_model = model.matrix(~0 + factor(groups, levels=uGroups))
+    qstats_result = list(Q=Q,
+        Qref=Qref,
+        QBETAS=QBETAS,
+        TAU=TAU,
+        SIGMA=SIGMA,
+        roughWeights=roughWeights,
+        smoothWeights=smoothWeights,
+        model=qstats_model)
+    return(qstats_result)
+}
+
+hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean", groupLoc="mean", window=99, verbose=FALSE, groupCol=NULL, plot=TRUE, ...) {
+    if (is.null(groups)) {
+        print("Groups were not provided.  Performing a simple quantile normalization.")
+        print("This is probably not what you actually want!")
+        count_rownames = rownames(exprs)
+        count_colnames = colnames(exprs)
+        normExprs = normalize.quantiles(as.matrix(exprs), copy=TRUE)
+        rownames(normExprs) = count_rownames
+        colnames(normExprs) = count_colnames
+        return(normExprs)
+    }
+    res = hpgl_qstats(exprs, groups, refType=refType, groupLoc=groupLoc, window=window)
+    QBETAS = res$QBETAS
+    Qref = res$Qref
+    X = res$model
+    w = res$smoothWeights
+    wQBETAS = QBETAS * (1 - w)
+    wQBETAS = X %*% t(wQBETAS)
+    wQref = Qref * w
+    wQref = matrix(rep(1, nrow(X)), ncol = 1) %*% t(wQref)
+    normExprs = t(wQBETAS + wQref)
+    RANKS = t(matrixStats::colRanks(exprs, ties.method = "average"))
+    for (k in 1:ncol(normExprs)) {
+        x = normExprs[, k]
+        normExprs[, k] = x[RANKS[, k]]
+    }
+    normExprs = qlasso:::aveTies(RANKS, normExprs)
+    rownames(normExprs) = rownames(exprs)
+    colnames(normExprs) = colnames(exprs)
+    if (plot) {
+        oldpar = par(mar = c(4, 4, 1.5, 0.5))
+        lq = length(Qref)
+        u = (1:lq - 0.5)/lq
+        if (length(u) > 10000) {
+            sel = sample(1:lq, 10000)
+            plot(u[sel], w[sel], pch = ".", main = "Quantile reference weights", xlab = "u (normalized gene ranks)", ylab = "Weight", ylim = c(0, 1), ...)
+            ## plot(u[sel], w[sel], pch = ".", main = "Quantile reference weights", xlab = "u (normalized gene ranks)", ylab = "Weight", ylim = c(0, 1))
+        } else {
+            plot(u, w, pch = ".", main = "Quantile reference weights", xlab = "u (normalized gene ranks)", ylab = "Weight", ylim = c(0, 1), ...)
+            ## plot(u, w, pch = ".", main = "Quantile reference weights", xlab = "u (normalized gene ranks)", ylab = "Weight", ylim = c(0, 1))
+        }
+        abline(h = 0.5, v = 0.5, col = "red", lty = 2)
+        par(oldpar)
+    }
+    normExprs
+}
 
 ## My root question, to which I think I have a small idea about the answer:
 ## Two of the very many paths to toptable()/toptags():
@@ -717,7 +832,7 @@ normalize_counts = function(count_table, design, norm="raw") {
 #'
 #' @return a df of batch corrected data
 #' @seealso \code{\link{sva}}, \code{\link{combat}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## df_new = hpgl_combatMod(df, batches, model)
@@ -728,8 +843,9 @@ hpgl_combatMod = function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
     check = apply(mod, 2, function(x) all(x == 1))
     mod = as.matrix(mod[, !check])
     colnames(mod)[ncol(mod)] = "Batch"
-    if (sum(check) > 0 & !is.null(numCovs)) 
+    if (sum(check) > 0 & !is.null(numCovs)) {
         numCovs = numCovs - 1
+    }
     design <- sva:::design.mat(mod, numCov = numCovs)
     batches <- sva:::list.batch(mod)
     n.batch <- length(batches)
@@ -737,25 +853,21 @@ hpgl_combatMod = function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
     n.array <- sum(n.batches)
     NAs = any(is.na(dat))
     if (NAs) {
-        cat(c("Found", sum(is.na(dat)), "Missing Data Values\n"), 
+        cat(c("Found", sum(is.na(dat)), "Missing Data Values\n"),
             sep = " ")
     }
     cat("Standardizing Data across genes\n")
     if (!NAs) {
-        B.hat <- solve(t(design) %*% design) %*% t(design) %*% 
-            t(as.matrix(dat))
-    }
-    else {
+        B.hat <- solve(t(design) %*% design) %*% t(design) %*% t(as.matrix(dat))
+    } else {
         B.hat = apply(dat, 1, Beta.NA, design)
     }
     grand.mean <- t(n.batches/n.array) %*% B.hat[1:n.batch, ]
     if (!NAs) {
-        var.pooled <- ((dat - t(design %*% B.hat))^2) %*% rep(1/n.array, 
-            n.array)
+        var.pooled <- ((dat - t(design %*% B.hat))^2) %*% rep(1/n.array, n.array)
     }
     else {
-        var.pooled <- apply(dat - t(design %*% B.hat), 1, var, 
-            na.rm = T)
+        var.pooled <- apply(dat - t(design %*% B.hat), 1, var, na.rm = T)
     }
     stand.mean <- t(grand.mean) %*% t(rep(1, n.array))
     if (!is.null(design)) {
@@ -763,17 +875,14 @@ hpgl_combatMod = function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
         tmp[, c(1:n.batch)] <- 0
         stand.mean <- stand.mean + t(tmp %*% B.hat)
     }
-    s.data <- (dat - stand.mean)/(sqrt(var.pooled) %*% t(rep(1, 
-        n.array)))
+    s.data <- (dat - stand.mean)/(sqrt(var.pooled) %*% t(rep(1, n.array)))
     if (noScale) {
         m.data <- dat - stand.mean
-        mse <- ((dat - t(design %*% B.hat))^2) %*% rep(1/(n.array - 
-            ncol(design)), n.array)
+        mse <- ((dat - t(design %*% B.hat))^2) %*% rep(1/(n.array - ncol(design)), n.array)
         hld <- NULL
         bayesdata <- dat
         for (k in 1:n.batch) {
-            cat(paste("Fitting 'shrunk' batch ", k, " effects\n", 
-                sep = ""))
+            cat(paste("Fitting 'shrunk' batch ", k, " effects\n", sep = ""))
             sel <- batches[[k]]
             gammaMLE <- rowMeans(m.data[, sel])
             mprior <- mean(gammaMLE, na.rm = TRUE)
@@ -783,28 +892,22 @@ hpgl_combatMod = function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
             for (i in sel) {
                 bayesdata[, i] <- bayesdata[, i] - gammaPost
             }
-            stats <- data.frame(gammaPost = gammaPost, gammaMLE = gammaMLE, 
-                prop = prop)
-            hld[[paste("Batch", k, sep = ".")]] <- list(stats = stats, 
-                indices = sel, mprior = mprior, vprior = vprior)
+            stats <- data.frame(gammaPost = gammaPost, gammaMLE = gammaMLE, prop = prop)
+            hld[[paste("Batch", k, sep = ".")]] <- list(stats = stats, indices = sel, mprior = mprior, vprior = vprior)
         }
         cat("Adjusting data for batch effects\n")
         return(bayesdata)
-    }
-    else {
+    } else {
         cat("Fitting L/S model and finding priors\n")
         batch.design <- design[, 1:n.batch]
         if (!NAs) {
-            gamma.hat <- solve(t(batch.design) %*% batch.design) %*% 
-                t(batch.design) %*% t(as.matrix(s.data))
-        }
-        else {
+            gamma.hat <- solve(t(batch.design) %*% batch.design) %*% t(batch.design) %*% t(as.matrix(s.data))
+        } else {
             gamma.hat = apply(s.data, 1, Beta.NA, batch.design)
         }
         delta.hat <- NULL
         for (i in batches) {
-            delta.hat <- rbind(delta.hat, apply(s.data[, i], 
-                1, var, na.rm = T))
+            delta.hat <- rbind(delta.hat, apply(s.data[, i], 1, var, na.rm = T))
         }
         gamma.bar <- apply(gamma.hat, 1, mean)
         t2 <- apply(gamma.hat, 1, var)
@@ -821,11 +924,9 @@ hpgl_combatMod = function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
             tmp <- density(delta.hat[1, ])
             invgam <- 1/rgamma(ncol(delta.hat), a.prior[1], b.prior[1])
             tmp1 <- density(invgam)
-            plot(tmp, typ = "l", main = "Density Plot", ylim = c(0, 
-                max(tmp$y, tmp1$y)))
+            plot(tmp, typ = "l", main = "Density Plot", ylim = c(0, max(tmp$y, tmp1$y)))
             lines(tmp1, col = 2)
-            qqplot(delta.hat[1, ], invgam, xlab = "Sample Quantiles", 
-                ylab = "Theoretical Quantiles")
+            qqplot(delta.hat[1, ], invgam, xlab = "Sample Quantiles", ylab = "Theoretical Quantiles")
             lines(c(0, max(invgam)), c(0, max(invgam)), col = 2)
             title("Q-Q Plot")
         }
@@ -833,18 +934,14 @@ hpgl_combatMod = function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
         if (par.prior) {
             cat("Finding parametric adjustments\n")
             for (i in 1:n.batch) {
-                temp <- sva:::it.sol(s.data[, batches[[i]]], 
-                  gamma.hat[i, ], delta.hat[i, ], gamma.bar[i], 
-                  t2[i], a.prior[i], b.prior[i])
+                temp <- sva:::it.sol(s.data[, batches[[i]]], gamma.hat[i, ], delta.hat[i, ], gamma.bar[i], t2[i], a.prior[i], b.prior[i])
                 gamma.star <- rbind(gamma.star, temp[1, ])
                 delta.star <- rbind(delta.star, temp[2, ])
             }
-        }
-        else {
+        } else {
             cat("Finding nonparametric adjustments\n")
             for (i in 1:n.batch) {
-                temp <- sva:::int.prior(as.matrix(s.data[, batches[[i]]]), 
-                  gamma.hat[i, ], delta.hat[i, ])
+                temp <- sva:::int.prior(as.matrix(s.data[, batches[[i]]]), gamma.hat[i, ], delta.hat[i, ])
                 gamma.star <- rbind(gamma.star, temp[1, ])
                 delta.star <- rbind(delta.star, temp[2, ])
             }
@@ -853,13 +950,10 @@ hpgl_combatMod = function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
         bayesdata <- s.data
         j <- 1
         for (i in batches) {
-            bayesdata[, i] <- (bayesdata[, i] - t(batch.design[i, 
-                ] %*% gamma.star))/(sqrt(delta.star[j, ]) %*% 
-                t(rep(1, n.batches[j])))
+            bayesdata[, i] <- (bayesdata[, i] - t(batch.design[i,] %*% gamma.star))/(sqrt(delta.star[j, ]) %*% t(rep(1, n.batches[j])))
             j <- j + 1
         }
-        bayesdata <- (bayesdata * (sqrt(var.pooled) %*% t(rep(1, 
-            n.array)))) + stand.mean
+        bayesdata <- (bayesdata * (sqrt(var.pooled) %*% t(rep(1, n.array)))) + stand.mean
         return(bayesdata)
     }
 }

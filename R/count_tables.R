@@ -1,3 +1,5 @@
+## Time-stamp: <Thu May 14 14:38:36 2015 Ashton Trey Belew (abelew@gmail.com)>
+
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
 #' expt_subset for everything
@@ -22,12 +24,12 @@
 #' @param savefile an Rdata file to which to save the data of the resulting expt. expt.Rdata by default.
 #' @param low_files whether or not to explicitly lowercase the filenames when searching in processed_data/
 #'   this is relevant because the ceph object storage by default lowercases filenames.
-#' 
+#'
 #' @return  experiment an expressionset
 #' @seealso \code{\link{pData}}, \code{\link{fData}},
 #' \code{\link{exprs}}, \code{\link{hpgl_read_files}},
 #' \code{\link{as.list.hash}}
-#' 
+#'
 #' @export
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
@@ -43,7 +45,7 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
     }
     colnames(tmp_definitions) = tolower(colnames(tmp_definitions))
     tmp_definitions = subset(tmp_definitions, sample.id != "")
-    condition_names = unique(tmp_definitions$condition)    
+    condition_names = unique(tmp_definitions$condition)
     if (is.null(color_hash)) {
         if (!is.null(tmp_definitions$color)) {
             color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)
@@ -101,12 +103,12 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
 #' @param file a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc
 #' @param color_hash a hash which describes how to color the samples
-#' 
+#'
 #' @return  experiment an expressionset
 #' @seealso \code{\link{pData}}, \code{\link{fData}},
 #' \code{\link{exprs}}, \code{\link{hpgl_read_files}},
 #' \code{\link{as.list.hash}}
-#' 
+#'
 #' @export
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
@@ -134,7 +136,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
     sample_definitions$colors = as.list(design_colors_list[as.character(sample_definitions$condition)])
     sample_definitions = as.data.frame(sample_definitions)
     rownames(sample_definitions) = make.names(sample_definitions$sample.id, unique=TRUE)
-    
+
     ## The logic here is that I want by_type to be the default, but only
     ## if no one chooses either.
     filenames = NULL
@@ -176,7 +178,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
     all_count_matrix = as.data.frame(all_count_tables)
 
     rownames(all_count_matrix) = gsub("^exon:","", rownames(all_count_matrix))
-    rownames(all_count_matrix) = make.names(gsub(":\\d+","", rownames(all_count_matrix)), unique=TRUE)    
+    rownames(all_count_matrix) = make.names(gsub(":\\d+","", rownames(all_count_matrix)), unique=TRUE)
     if (is.null(genes)) {
         gene_info = data.frame(all_count_matrix)
     } else {
@@ -184,7 +186,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
             genes$ID = rownames(genes)
         }
         gene_info = genes[genes$ID %in% rownames(all_count_matrix),]
-        all_count_matrix = all_count_matrix[rownames(all_count_matrix) %in% genes$ID,]                
+        all_count_matrix = all_count_matrix[rownames(all_count_matrix) %in% genes$ID,]
     }
 
     ## Make sure that all columns have been filled in for every gene.
@@ -194,9 +196,9 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
     annotation = NULL
     if (!is.null(include_gff)) {
         if (include_type == "all") {
-            print("Reading the annotation information, this may take a while.")            
+            print("Reading the annotation information, this may take a while.")
             annotation = BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
-            print("Finished reading annotations, we should be done soon.")            
+            print("Finished reading annotations, we should be done soon.")
         } else {
             print(paste("Excluding entries from the annotation which are not: ", include_type, sep=""))
             print("Reading the annotation information, this may take a while.")
@@ -208,7 +210,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
             gene_info = gene_info[index,]
         }
     }
-    
+
     if (is.null(sample_definitions$stage)) {
         sample_definitions$stage = "unknown"
     }
@@ -254,12 +256,12 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
 #' expressionSet, design, colors, etc.
 #' @param subset a valid R expression which defines a subset of the
 #' design to keep.
-#' 
+#'
 #' @return  metadata an expt class which contains the smaller set of
 #' data
 #' @seealso \code{\link{ExpressionSet}}, \code{\link{pData}},
 #' \code{\link{exprs}}, and \code{\link{fData}}
-#' 
+#'
 #' @export
 #' @examples
 #' ## smaller_expt = expt_subset(big_expt, "condition=='control'")
@@ -318,10 +320,10 @@ expt_subset = function(expt, subset, by_definitions=FALSE) {
 #'        (default: FALSE)
 #' @param include_summary_rows whether HTSeq summary rows should be included
 #'        (default: FALSE)
-#' 
+#'
 #' @return  count_table a data frame of count tables
 #' @seealso \code{\link{create_experiment}}
-#' 
+#'
 #' @export
 #' @examples
 #' ## count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
@@ -360,11 +362,11 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
             files[table] = lower_filenames[table]
         }
         tmp_count = read.table(files[table], header=header)
-        print(paste0(files[table], " contains ", length(rownames(count_table)), " rows."))        
+        print(paste0(files[table], " contains ", length(rownames(count_table)), " rows."))
         colnames(tmp_count) = c("ID", ids[table])
         count_table = merge(count_table, tmp_count, by="ID")
     }
-    
+
     rm(tmp_count)
     ## set row and columns ids
     rownames(count_table) = count_table$ID

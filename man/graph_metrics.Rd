@@ -2,8 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{graph_metrics}
 \alias{graph_metrics}
-\title{Make a bunch of graphs describing the state of an experiment
-before/after normalization.}
+\title{graph_metrics() Make lots of graphs!}
 \usage{
 graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
   title_suffix = NULL, scale = "raw", sink = FALSE, ...)
@@ -47,8 +46,10 @@ a loooong list of plots including the following:
   density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
 }
 \description{
-Make a bunch of graphs describing the state of an experiment
-before/after normalization.
+Plot out a set of metrics describing the state of an experiment
+including library sizes, # non-zero genes, heatmaps, boxplots,
+density plots, pca plots, standard median distance/correlation, and
+qq plots.
 }
 \examples{
 ## toomany_plots = graph_metrics(expt)

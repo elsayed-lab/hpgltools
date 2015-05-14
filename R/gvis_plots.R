@@ -1,3 +1,5 @@
+## Time-stamp: <Thu May 14 14:41:33 2015 Ashton Trey Belew (abelew@gmail.com)>
+
 #' Make an html version of an MA plot.
 #'
 #' @param counts df of linear-modelling, normalized counts by sample-type,
@@ -9,12 +11,12 @@
 #' Defaults to NULL in which case the following parameter isn't needed.
 #' @param tooltip_data a df of tooltip information for gvis
 #' graphs. NULL by default.
-#' 
+#'
 #' @return NULL, but along the way an html file is generated which
 #' contains a googleVis MA plot.  See hpgl_ma_plot() for details.
-#' 
+#'
 #' @seealso \code{\link{hpgl_ma_plot}}
-#' 
+#'
 #' @export
 #' @examples
 #' ## hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
@@ -51,7 +53,7 @@ hpgl_gvis_ma_plot = function(counts, degenes, tooltip_data=NULL, filename="html/
         hAxes="[{title:'AvgExp'}]",
         vAxes="[{title:'LogFC'}]",
         title="MA Plot!",
-        gvis.listener.jscode=ma_jscode,    
+        gvis.listener.jscode=ma_jscode,
         axisTitlesPosition="out")
     hpgl_gvis_scatterchart = googleVis::gvisScatterChart(as.data.frame(gvis_final_df), chartid=gvis_chartid, options=gvis_options)
     print(hpgl_gvis_scatterchart, file=filename)
@@ -67,7 +69,7 @@ hpgl_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, t
     gvis_sig = gvis_sig[,c("Row.names","sig_modp", "sig.tooltip")]
     gvis_nsig = gvis_nsig[,c("Row.names","nsig_modp","nsig.tooltip")]
     gvis_df = merge(gvis_raw_df, gvis_nsig, by.x="Row.names", by.y="Row.names", all.x=TRUE)
-    gvis_df = merge(gvis_df, gvis_sig, by.x="Row.names", by.y="Row.names", all.x=TRUE)    
+    gvis_df = merge(gvis_df, gvis_sig, by.x="Row.names", by.y="Row.names", all.x=TRUE)
     rownames(gvis_df) = gvis_df$Row.names
     gvis_df = gvis_df[-1]
     gvis_df = gvis_df[,c("logFC","nsig_modp","nsig.tooltip","sig_modp","sig.tooltip")]
@@ -85,9 +87,9 @@ hpgl_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, t
         tooltip="[{isHtml: true},{trigger:'selection'}]",
         hAxes="[{title:'AvgExp'}]",
         vAxes="[{title:'LogFC'}]",
-        series="[{color:'blue'}, {color:'red'}]",        
+        series="[{color:'blue'}, {color:'red'}]",
         title="Volcano Plot!",
-        gvis.listener.jscode=vol_jscode,    
+        gvis.listener.jscode=vol_jscode,
         axisTitlesPosition="out")
     hpgl_gvis_scatterchart = googleVis::gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
     print(hpgl_gvis_scatterchart, file=filename)
@@ -103,12 +105,12 @@ hpgl_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, t
 #' graphs. NULL by default.
 #' @param base_url a url to send click events which will be suffixed
 #' with the gene name
-#' 
+#'
 #' @return NULL, but along the way an html file is generated which
 #' contains a googleVis scatter plot.  See hpgl_scatter_plot() for details.
-#' 
+#'
 #' @seealso \code{\link{gvisScatterChart}}
-#' 
+#'
 #' @export
 #' @examples
 #' ## hpgl_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html", base_url="http://yeastgenome.org/accession?")

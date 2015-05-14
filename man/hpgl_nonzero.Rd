@@ -2,7 +2,8 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_nonzero}
 \alias{hpgl_nonzero}
-\title{Make a ggplot graph of the number of non-zero genes by sample.  Made by Ramzi Temanni.}
+\title{Make a ggplot graph of the number of non-zero genes by sample.
+Made by Ramzi Temanni <temanni at umd dot edu>}
 \usage{
 hpgl_nonzero(df = NULL, design = NULL, colors = NULL, expt = NULL,
   labels = NULL, title = NULL, ...)
@@ -26,7 +27,8 @@ anything else will just stick them on a 45' offset next to the graphed point}
 a ggplot2 plot of the number of non-zero genes with respect to each library's CPM
 }
 \description{
-Make a ggplot graph of the number of non-zero genes by sample.  Made by Ramzi Temanni.
+Make a ggplot graph of the number of non-zero genes by sample.
+Made by Ramzi Temanni <temanni at umd dot edu>
 }
 \examples{
 ## nonzero_plot = hpgl_nonzero(expt=expt)

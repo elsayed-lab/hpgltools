@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_goseq.R
 \name{simple_goseq}
 \alias{simple_goseq}
-\title{Perform a simplified goseq analysis}
+\title{simple_goseq() Perform a simplified goseq analysis}
 \usage{
 simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids = NULL,
   adjust = 0.1, pvalue = 0.1, qvalue = 0.1, goseq_method = "Wallenius",
@@ -11,9 +11,23 @@ simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids = NULL,
 \arguments{
 \item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}
 
+\item{all_genes}{the universe of possible genes}
+
 \item{lengths}{the length of each gene with an ID in de_genes}
 
 \item{goids}{a list of ontology accessions to gene accessions}
+
+\item{adjust}{minimum adjusted pvalue}
+
+\item{pvalue}{minimum pvalue}
+
+\item{goseq_method}{wallenius statistical test used by goseq}
+
+\item{padjust_method}{BH which method to adjust the pvalues\}
+
+\item{species}{NULL optionally choose a species from supportedOrganisms()}
+
+\item{length_db}{If species is chosen (or if not, really), ensGene may be used to automagically pull the gene lengths.}
 }
 \value{
 a big list including:
@@ -30,7 +44,7 @@ a big list including:
   and ccp_plot
 }
 \description{
-Perform a simplified goseq analysis
+simple_goseq() Perform a simplified goseq analysis
 }
 \seealso{
 \code{\link{goseq}} and \code{\link{clusterProfiler}}

@@ -32,7 +32,8 @@ heatmap.3(x, Rowv = TRUE, Colv = if (symm) "Rowv" else TRUE,
 a heatmap!
 }
 \description{
-slight modification of heatmap.2
+I think I found the suggestion to do this here:
+https://gist.github.com/nachocab/3853004
 }
 \seealso{
 \code{\link{heatmap.2}}

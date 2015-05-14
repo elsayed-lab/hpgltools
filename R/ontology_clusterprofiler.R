@@ -1,3 +1,5 @@
+## Time-stamp: <Thu May 14 14:40:56 2015 Ashton Trey Belew (abelew@gmail.com)>
+
 #' Perform a simplified clusterProfiler analysis
 #'
 #' @param de_genes a data frame of differentially expressed genes, containing IDs and whatever other columns
@@ -9,7 +11,7 @@
 #' @param fold_changes a df of fold changes for the DE genes
 #' @param include_cnetplots the cnetplots are often stupid and can be left behind
 #' @param showcategory how many categories to show in p-value plots
-#' 
+#'
 #' @return a big list including the following:
 #'   mf_interesting: A table of the interesting molecular function groups
 #'   bp_interesting: A table of the interesting biological process groups
@@ -44,7 +46,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         if (!is.null(gff)) {
             message("Generating the geneTable.rda")
             ## clusterProfiler::Gff2GeneTable(gff)
-            hpgltools::Gff2GeneTable(gff)            
+            hpgltools::Gff2GeneTable(gff)
         } else {
             stop("cluster Profiler requires a geneTable.rda, which requires a gff file to read.")
         }
@@ -78,7 +80,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         all_mf_phist = all_mf_phist + scale_y_continuous(limits=c(0, y_limit))
     }
     enriched_mf = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
-    
+
     message("Starting BP(biological process) analysis")
     bp_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
     bp_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
@@ -87,7 +89,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         y_limit = (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
         all_bp_phist = all_bp_phist + scale_y_continuous(limits=c(0, y_limit))
     }
-    
+
     enriched_bp = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
 
     message("Starting CC(cellular component) analysis")
@@ -100,23 +102,23 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         y_limit = (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
         all_cc_phist = all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
     }
-    
+
     mf_group_barplot = try(barplot(mf_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(mf_group_barplot)[1] != 'try-error') {
         mf_group_barplot$data$Description = as.character(lapply(strwrap(mf_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
-    
+
     bp_group_barplot = try(barplot(bp_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(bp_group_barplot)[1] != 'try-error') {
         bp_group_barplot$data$Description = as.character(lapply(strwrap(bp_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
-    
+
     cc_group_barplot = try(barplot(cc_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(cc_group_barplot)[1] != 'try-error') {
         cc_group_barplot$data$Description = as.character(lapply(strwrap(cc_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
 
-    all_mf_barplot = try(barplot(mf_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)    
+    all_mf_barplot = try(barplot(mf_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     enriched_mf_barplot = try(barplot(enriched_mf, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_mf_barplot)[1] == 'try-error') {
         message("No enriched MF groups were observed.")
@@ -126,7 +128,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     if (class(all_mf_barplot)[1] != 'try-error') {
         all_mf_barplot$data$Description = as.character(lapply(strwrap(all_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
-    all_bp_barplot = try(barplot(bp_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)        
+    all_bp_barplot = try(barplot(bp_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     enriched_bp_barplot = try(barplot(enriched_bp, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_bp_barplot)[1] == 'try-error') {
         message("No enriched BP groups observed.")
@@ -147,7 +149,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     if (class(all_cc_barplot)[1] != 'try-error') {
         all_cc_barplot$data$Description = as.character(lapply(strwrap(all_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
-    
+
     if (include_cnetplots == TRUE) {
         message("Attempting to include the cnetplots from clusterProfiler.")
         message("They fail often, if this is causing errors, set:")
@@ -163,7 +165,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
             cnetplot_bp = recordPlot()
         } else {
             message("cnetplot just failed for the BP ontology.  Do not be concerned with the previous error.")
-        }            
+        }
         cnetplot_cc = try(clusterProfiler::cnetplot(enriched_cc, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_cc)[1] != 'try-error') {
             cnetplot_cc = recordPlot()
@@ -171,12 +173,12 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
             message("cnetplot just failed for the CC ontology.  Do not be concerned with the previous error.")
         }
     }
-    
+
     if (!is.null(mf_all)) {
         mf_interesting = mf_all@result
         rownames(mf_interesting) = NULL
         mf_interesting$ont = "MF"
-        mf_interesting = mf_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]    
+        mf_interesting = mf_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
         mf_interesting = subset(mf_interesting, pvalue <= 0.1)
     } else {
         mf_interesting = NULL
@@ -185,7 +187,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         bp_interesting = bp_all@result
         rownames(bp_interesting) = NULL
         bp_interesting$ont = "BP"
-        bp_interesting = bp_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]    
+        bp_interesting = bp_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
         bp_interesting = subset(bp_interesting, pvalue <= 0.1)
     } else {
         bp_interesting = NULL
@@ -199,10 +201,10 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     } else {
         cc_interesting = NULL
     }
-    
+
     return_information = list(
         mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting,
-        mf_pvals=all_mf_phist, bp_pvals=all_bp_phist, cc_pvals=all_cc_phist,        
+        mf_pvals=all_mf_phist, bp_pvals=all_bp_phist, cc_pvals=all_cc_phist,
         mf_enriched=enriched_mf, bp_enriched=enriched_bp, cc_enriched=enriched_cc,
         mf_all=mf_all, bp_all=bp_all, cc_all=cc_all,
         mf_all_barplot=all_mf_barplot, bp_all_barplot=all_bp_barplot, cc_all_barplot=all_cc_barplot,
@@ -210,7 +212,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         mf_cnetplot=cnetplot_mf, bp_cnetplot=cnetplot_bp, cc_cnetplot=cnetplot_cc,
         mf_group=mf_group, bp_group=bp_group, cc_group=cc_group,
         mf_group_barplot=mf_group_barplot, bp_group_barplot=bp_group_barplot, cc_group_barplot=cc_group_barplot)
-    return(return_information)        
+    return(return_information)
 }
 
 
@@ -221,8 +223,8 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
 #' @param godata data from cluster Profiler
 #' @param goids a mapping of IDs to GO in the Ramigo expected format
 #' @param sigforall Print significance on all nodes?
-#' 
-#' @return a plot!
+#'
+#' @return plots! Trees! oh my!
 #' @seealso \code{\link{Ramigo}}
 #' @export
 cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", goids_df=NULL, score_limit=0.1, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Value") {
@@ -238,7 +240,7 @@ cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", go
     if (is.null(de_genes[[pval_column]])) {
         mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)        
+        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
     } else {
         pvals = as.vector(de_genes[[pval_column]])
         names(pvals) = rownames(de_genes)
@@ -293,7 +295,7 @@ cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", go
 #' @param gene some differentially expressed genes
 #' @param organism by default 'human'
 #' @param ont by default 'MF'
-#' 
+#'
 #' @return some clusterProfiler data
 #' @seealso \code{\link{clusterProfiler}}
 #' @export
@@ -319,7 +321,7 @@ hpgl_enrichGO = function(gene, organism="human", ont="MF",
 #' @param gene some differentially expressed genes
 #' @param organism by default 'human'
 #' @param ont by default 'MF'
-#' 
+#'
 #' @return some clusterProfiler data
 #' @seealso \code{\link{clusterProfiler}}
 #' @export
@@ -366,7 +368,7 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
     if (length(qTermID)== 1) {
         M <- nrow(termID2ExtID)
     } else {
-        M <- sapply(termID2ExtID, length) 
+        M <- sapply(termID2ExtID, length)
         M <- M[qTermID]
     }
     N <- rep(length(extID), length(M))
@@ -412,7 +414,7 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
 
     if (length(qTermID) != length(Description)) {
         idx <- qTermID %in% names(tt)
-        Over <- Over[idx,] 
+        Over <- Over[idx,]
     }
     Over$Description <- Description
     nc <- ncol(Over)
@@ -468,7 +470,7 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
 ##        geneInfo$start = 1
 ##        geneInfo$GeneID = gffFile$ID
 ##        geneInfo$GeneName = gffFile$ID
-##        geneInfo$Locus = gffFile$ID        
+##        geneInfo$Locus = gffFile$ID
 ##        geneInfo$end = geneInfo$width
 ##        geneInfo$strand = "+"
 ##    } else {

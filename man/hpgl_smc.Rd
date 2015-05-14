@@ -30,7 +30,8 @@ coefficient.  Any sample which falls below this line is considered
 for removal because it is much less similar to all of its peers.
 }
 \description{
-Make an R plot of the standard median correlation among samples
+This was written by a mix of Kwame Okrah <kokrah at gmail dot com>, Laura
+Dillon <dillonl at umd dot edu>, and Hector Corrada Bravo <hcorrada at umd dot edu>
 }
 \examples{
 ## smc_plot = hpgl_smc(expt=expt)

@@ -1,3 +1,5 @@
+## Time-stamp: <Thu May 14 14:38:53 2015 Ashton Trey Belew (abelew@gmail.com)>
+
 #' all_pairwise(): Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
 #'
 #' @param expt an expt class containing count tables, normalization state, etc.
@@ -21,7 +23,6 @@
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
 all_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
-    
     limma_result = limma_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
     deseq_result = deseq2_pairwise(expt=expt, data=data, conditions=conditions, batches=batches) ## The rest of the arguments should be added back sooner than later.
     edger_result = edger_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
@@ -66,7 +67,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
     return_data = list()
     for (c in 1:length(coef)) {
         comparison = coef[c]
-        message(paste(c, ": Printing table: ", comparison, sep=""))        
+        message(paste(c, ": Printing table: ", comparison, sep=""))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -104,7 +105,7 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         }
         ## Therefore I will write a csv of each comparison, too
         if (isTRUE(csv)) {
-            csv_filename = gsub(".xls$", "", workbook)            
+            csv_filename = gsub(".xls$", "", workbook)
             csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
             write.csv(data_table, file=csv_filename)
         }
@@ -148,7 +149,7 @@ write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
     return_data = list()
     for (c in 1:length(coef)) {
         comparison = coef[c]
-        message(paste("Printing table: ", comparison, sep=""))        
+        message(paste("Printing table: ", comparison, sep=""))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -183,7 +184,7 @@ write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         }
         ## Therefore I will write a csv of each comparison, too
         if (isTRUE(csv)) {
-            csv_filename = gsub(".xls$", "", workbook)            
+            csv_filename = gsub(".xls$", "", workbook)
             csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
             write.csv(data_table, file=csv_filename)
         }
@@ -227,7 +228,7 @@ write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel
     return_data = list()
     for (c in 1:length(coef)) {
         comparison = coef[c]
-        message(paste("Printing table: ", comparison, sep=""))        
+        message(paste("Printing table: ", comparison, sep=""))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -262,7 +263,7 @@ write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel
         }
         ## Therefore I will write a csv of each comparison, too
         if (isTRUE(csv)) {
-            csv_filename = gsub(".xls$", "", workbook)            
+            csv_filename = gsub(".xls$", "", workbook)
             csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
             write.csv(data_table, file=csv_filename)
         }
@@ -319,16 +320,16 @@ remove_batch_effect = function(normalized_counts, model) {
 #' edgeR).  NULL by default.
 #' @param stupid An TRUE/FALSE of whether or not to cheat when the
 #' resulting matrix is not solvable. FALSE by default.
-#' 
+#'
 #' @return an EList containing the following information:
 #'   E = The normalized data
 #'   weights = The weights of said data
 #'   design = The resulting design
 #'   lib.size = The size in pseudocounts of the library
 #'   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
-#' 
+#'
 #' @seealso \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{lmFit}}
-#' 
+#'
 #' @export
 #' @examples
 #' ## funkytown = hpgl_voom(samples, model)
@@ -413,9 +414,9 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE, logged=FALSE,
 #' @param z A number of z-scores from the mean
 #'
 #' @return a dataframe subset from toptable
-#' 
+#'
 #' @seealso \code{\link{limma}}
-#' 
+#'
 #' @export
 #' @examples
 #' ## subset = limma_subset(df, n=400)
@@ -494,7 +495,7 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
                 ## libsize = expt$norm_libsize
                 libsize = expt$best_libsize
             } else {
-                message("Using the libsize from expt$normalized$normalized_counts.")                
+                message("Using the libsize from expt$normalized$normalized_counts.")
                 libsize = expt$normalized$normalized_counts$libsize
             }
         } else {
@@ -536,7 +537,7 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     }
     if (!is.null(alt_model)) {
         fun_model = alt_model
-    }    
+    }
     tmpnames = colnames(fun_model)
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     tmpnames = gsub("-", "", tmpnames)
@@ -576,13 +577,12 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
     ##fun_voom = voomMod(data, fun_model, lib.size=libsize)
     fun_voom = hpgl_voom(data, fun_model, libsize=libsize, logged=logged, converted=converted)
-    
     ## Extract the design created by voom()
     ## This is interesting because each column of the design will have a prefix string 'macb' before the
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
     ## This will be important in 17 lines from now.
-    fun_design = fun_voom$design    
-    ## Do the lmFit() using this model    
+    fun_design = fun_voom$design
+    ## Do the lmFit() using this model
     ##fun_fit = lmFit(fun_voom, fun_model)
     fun_fit = lmFit(fun_voom)
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
@@ -630,6 +630,23 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     return(result)
 }
 
+#' coefficient_scatter(): Plot out 2 coefficients with respect to one another from limma
+#'
+#' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
+#' This hopefully makes that easy.
+#'
+#' @param limma_output The set of pairwise comparisons provided by limma_pairwise()
+#' @param x The name or number of the first coefficient column to extract, this will be the x-axis of the plot
+#' @param y The name or number of the second coefficient column to extract, this will be the y-axis of the plot
+#' @param gvis_filename If provided, an html clicky-plot will be generated with this name
+#' @param gvis_trendline add a trendline to the gvis plot? (TRUE by default)
+#' @param tooltip_data a dataframe of gene annotations to be used in the gvis plot
+#'
+#' @return a ggplot2 plot showing the relationship between the two coefficients
+#' @seealso \code{\link{hpgl_linear_scatter}} \code{\link{limma_pairwise}}
+#' @export
+#' @examples
+#' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
 coefficient_scatter = function(limma_output, x=NULL, y=NULL, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
@@ -683,7 +700,7 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
                 ##data = (2^data) - 1
                 data = expt$normalized$normalized_counts$count_table
             }
-        }        
+        }
     }
     message("At this time, this only does conditional models.")
     condition_table = table(conditions)
@@ -721,7 +738,6 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     if (!is.null(alt_model)) {
         fun_model = alt_model
     }
-    
     tmpnames = colnames(fun_model)
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     tmpnames = gsub("conditions", "", tmpnames)
@@ -729,7 +745,7 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
 
     ##tmpnames = colnames(condbatch_model)
     ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
-    ##tmpnames = gsub("conditions", "", tmpnames)        
+    ##tmpnames = gsub("conditions", "", tmpnames)
     ##colnames(cond_model) = tmpnames
 
     raw = DGEList(counts=data, group=conditions)
@@ -861,18 +877,18 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     denominators = list()
     numerators = list()
     result_list = list()
-    result_mle_list = list()    
+    result_mle_list = list()
     condition_list = resultsNames(deseq_run)
     for (c in 1:(length(condition_list) - 1)) {
         denominator = names(condition_table[c])
         nextc = c + 1
         for (d in nextc:length(condition_list)) {
-            numerator = names(condition_table[d])            
+            numerator = names(condition_table[d])
             result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
             result = result[order(result$log2FoldChange),]
             colnames(result) = c("baseMean","logFC", "lfcSE","stat","P.Value","adj.P.Val")
             result[is.na(result$P.Value), "P.Value"] = 1 ## Some p-values come out as NA
-            result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA            
+            result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA
             result$qvalue = tryCatch(
                 {
                     format(signif(qvalue(result$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
@@ -897,12 +913,11 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
             result_list[[result_name]] = result
         }
     }
-    
     ##    deseq_result = results(deseq_run)
     ##    deseq_mle_result = results(deseq_run, addMLE=TRUE)
     ##    deseq_df = data.frame(deseq_result[order(deseq_result$log2FoldChange),])
     ##    plotMA(deseq_df)
-    ## identify(deseq_result$baseMean, deseq_result$log2FoldChange)    
+    ## identify(deseq_result$baseMean, deseq_result$log2FoldChange)
     ##    ma = recordPlot()
     ##d = plotCounts(dataset, gene=which.min(deseq_result$padj), intgroup="condition", returnData=TRUE)
     ##ggplot(d, aes(x=condition, y=count)) +
@@ -927,17 +942,36 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     ##    meanSdPlot(log2(counts(deseq_run, normalized=TRUE)[notAllZero,] + 1))
     ##    meanSdPlot(assay(rld[notAllZero,]))
     ##    meanSdPlot(assay(vsd[notAllZero,]))
-    
     ret_list = list(
         run=deseq_run,
         denominators=denominators,
         numerators=numerators,
         conditions=condition_list,
-        all_tables=result_list        
+        all_tables=result_list
     )
     return(ret_list)
 }
 
+#' compare_tables(): See how similar are results from limma/deseq/edger.
+#'
+#' limma, DEseq2, and EdgeR all make somewhat different assumptions
+#' and choices about what makes a meaningful set of differentially
+#' expressed genes.  This seeks to provide a quick and dirty metric
+#' describing the degree to which they (dis)agree.
+#'
+#' @param limma  limma data from limma_pairwise()
+#' @param deseq  deseq data from deseq2_pairwise()
+#' @param edger  edger data from edger_pairwise()
+#'
+#' @return a heatmap showing how similar they are along with some
+#' correlations betwee the three players.
+#' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
+#' @export
+#' @examples
+#' ## l = limma_pairwise(expt)
+#' ## d = deseq_pairwise(expt)
+#' ## e = edger_pairwise(expt)
+#' fun = compare_tables(limma=l, deseq=d, edger=e)
 compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
     ## Fill each column/row of these with the correlation between tools for one contrast performed
     if (class(limma) == "list") { ## Then this was fed the raw output from limma_pairwise, lets assume the same is true for deseq/edger too and pull out the result tables.
@@ -945,12 +979,10 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
         deseq = deseq$all_tables
         edger = edger$all_tables
     }
-        
     len = length(names(deseq))
     limma_vs_edger = list()
     limma_vs_deseq = list()
     edger_vs_deseq = list()
-    
     cc = 0
     last = length(names(deseq))
     for (comp in names(deseq)) {  ## assume all three have the same names() -- note that limma has more than the other two though
@@ -963,7 +995,7 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
         le = le[,c("logFC.x","logFC.y")]
         lec = cor.test(le[,1], le[,2])$estimate
         ld = merge(l, d, by.x="row.names", by.y="row.names")
-        ld = ld[,c("logFC.x","logFC.y")]            
+        ld = ld[,c("logFC.x","logFC.y")]
         ldc = cor.test(ld[,1], ld[,2])$estimate
         ed = merge(e, d, by.x="row.names", by.y="row.names")
         ed = ed[,c("logFC.x","logFC.y")]
@@ -989,7 +1021,7 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
 }
 
 #' make_pairwise_contrasts(): Run makeContrasts() with all pairwise comparisons.
-#' 
+#'
 #' @param model A model describing the conditions/batches/etc in the experiment
 #' @param conditions A factor of conditions in the experiment
 #' @param do_identities Whether or not to include all the identity strings.
@@ -1055,8 +1087,7 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
     }
     if (isTRUE(do_pairwise)) {
         eval_strings = append(eval_strings, all_pairwise)
-    }        
-    
+    }
     eval_names = names(eval_strings)
     if (!is.null(extra_contrasts)) {
         extra_eval_strings = strsplit(extra_contrasts, "\\n")
@@ -1083,7 +1114,7 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
     eval(parse(text=contrast_string))
     ## I like to change the column names of the contrasts because by default
     ## they are kind of obnoxious and too long to type
-    
+
     if (!is.null(extra_contrasts)) {
         eval_names = append(eval_names, extra_eval_names)
     }
@@ -1107,11 +1138,11 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
 #' @param second_type A column to compare against
 #' @param type A type of scatter plot (linear model, distance, vanilla)
 #' @param ... so that you may feed it the gvis/tooltip information to make clicky graphs if so desired.
-#' 
+#'
 #' @return a hpgl_linear_scatter() set of plots comparing the chosen columns
 #' If you forget to specify tables to compare, it will try the first vs the second.
 #' @seealso \code{\link{hpgl_linear_scatter}}, \code{\link{topTable}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
@@ -1197,12 +1228,12 @@ limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC
 #'   volcano_plot = a volcano plot of x/y
 #'   voom_data = the result from calling voom()
 #'   voom_plot = a plot from voom(), redunant with voom_data
-#' 
+#'
 #' @seealso \code{\link{hpgl_gvis_ma_plot}}, \code{\link{toptable}},
 #' \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{hpgl_voom}},
 #' \code{\link{lmFit}}, \code{\link{makeContrasts}},
 #' \code{\link{contrasts.fit}}
-#' 
+#'
 #' @export
 #' @examples
 #' ## model = model.matrix(~ 0 + subset$conditions)
@@ -1273,7 +1304,7 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
     upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
     downsignificant_table = subset(cond_table, logFC <= (-1 * logfc_cutoff))
 #    psignificant_table = subset(cond_table, adj.P.Val <= pvalue_cutoff)
-    psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)    
+    psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)
 
     if (verbose) {
         message("The model looks like:")
@@ -1285,7 +1316,7 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
         print(coefficient_scatter$scatter)
         message(paste("Setting the column:", colnames(lf$design)[2], "to control"))
         message(paste("Setting the column:", colnames(lf$design)[1], "to changed"))
-        message("Performing contrasts of the experimental - control.")        
+        message("Performing contrasts of the experimental - control.")
         message("Taking a histogram of the subtraction values.")
         print(contrast_histogram)
         message("Taking a histogram of the mean values across samples.")
@@ -1296,7 +1327,7 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
         print(pvalue_histogram)
         message("Printing a volcano plot of this data.")
         message("Printing an maplot of this data.")
-        message(paste("Writing excel sheet:", sheet))               
+        message(paste("Writing excel sheet:", sheet))
     }
     return_info = list(
         amean_histogram=amean_histogram,
@@ -1307,14 +1338,14 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
         coefficient_both=coefficient_scatter$both_histogram,
         coefficient_lm=coefficient_scatter$lm_model,
         coefficient_lmsummary=coefficient_scatter$lm_summary,
-        coefficient_weights=coefficient_scatter$lm_weights,        
+        coefficient_weights=coefficient_scatter$lm_weights,
         comparisons=cond_comparison,
         contrasts=cond_contrasts,
         contrast_histogram=contrast_histogram,
-        downsignificant=downsignificant_table,        
+        downsignificant=downsignificant_table,
         fit=lf,
         ma_plot=an_ma_plot,
-        psignificant=psignificant_table,        
+        psignificant=psignificant_table,
         pvalue_histogram=pvalue_histogram,
         table=cond_table,
         upsignificant=upsignificant_table,
@@ -1347,8 +1378,8 @@ make_exampledata = function (ngenes=1000, columns=5) {
     ##    conds <- c("A", "A", "B", "B", "B")
     ##x <- sample( LETTERS[1:4], 10000, replace=TRUE, prob=c(0.1, 0.2, 0.65, 0.05) )
     conds = sample(LETTERS[1:cond_types], columns, replace=TRUE)
-    m <- t(sapply(seq_len(ngenes), function(i) sapply(1:columns, function(j) rnbinom(1, 
-        mu = true_sf[j] * ifelse(conds[j] == "A", q0A[i], q0B[i]), 
+    m <- t(sapply(seq_len(ngenes), function(i) sapply(1:columns, function(j) rnbinom(1,
+        mu = true_sf[j] * ifelse(conds[j] == "A", q0A[i], q0B[i]),
         size = 1/0.2))))
     rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
     newCountDataSet(m, conds)
