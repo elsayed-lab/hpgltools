@@ -2,8 +2,8 @@
 % Please edit documentation in R/normalization.R
 \name{hpgl_rpkm}
 \alias{hpgl_rpkm}
-\title{Express a data frame of counts as reads per kilobase(gene) per
-million(library).}
+\title{## comments, the first separateis the title, the second the
+hpgl_rpkm(): Reads/(kilobase(gene) * million reads)}
 \usage{
 hpgl_rpkm(df, annotations = gene_annotations)
 }
@@ -19,6 +19,10 @@ rpkm_df a data frame of counts expressed as rpkm
 \description{
 Express a data frame of counts as reads per kilobase(gene) per
 million(library).
+}
+\details{
+This function wraps EdgeR's rpkm in an attempt to make sure that
+the required gene lengths get sent along.
 }
 \examples{
 ## rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)

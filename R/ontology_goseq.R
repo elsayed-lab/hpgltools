@@ -1,13 +1,15 @@
+## Time-stamp: <Thu May 14 14:43:09 2015 Ashton Trey Belew (abelew@gmail.com)>
+
 #' Enhance the goseq table of gene ontology information.
 #'
 #' @param df a dataframe of ontology information.  This is intended to
 #' be the output from goseq including information like
 #' numbers/category, GOids, etc.  It requires a column 'category' which contains: GO:000001 and such.
 #' @param file a csv file to which to write the table
-#' 
+#'
 #' @return the ontology table with annotation information included
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## annotated_go = goseq_table(go_ids)
@@ -49,12 +51,19 @@ goseq_table = function(df, file=NULL) {
     return(df)
 }
 
-#' Perform a simplified goseq analysis
+#' simple_goseq() Perform a simplified goseq analysis
 #'
 #' @param de_genes a data frame of differentially expressed genes, containing IDs and whatever other columns
+#' @param all_genes the universe of possible genes
 #' @param lengths the length of each gene with an ID in de_genes
 #' @param goids a list of ontology accessions to gene accessions
-#' 
+#' @param adjust minimum adjusted pvalue
+#' @param pvalue minimum pvalue
+#' @param goseq_method wallenius statistical test used by goseq
+#' @param padjust_method BH which method to adjust the pvalues\
+#' @param species NULL optionally choose a species from supportedOrganisms()
+#' @param length_db If species is chosen (or if not, really), ensGene may be used to automagically pull the gene lengths.
+#'
 #' @return a big list including:
 #'   the pwd:pwf function,
 #'   alldata:the godata dataframe,
@@ -128,9 +137,8 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
     qdata[qdata > 1] = 1 ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.0000000000000001
     qdata = qvalue::qvalue(qdata)
     godata$term = goterm(godata$category)
-    godata$ontology = goont(godata$category)    
+    godata$ontology = goont(godata$category)
     godata = cbind(godata, qdata$qvalues)
-    print(head(godata))
     colnames(godata) = c("category","over_represented_pvalue","under_represented_pvalue","numDEInCat","numInCat","term","ontology","qvalue")
     if (is.null(adjust)) {
         godata_interesting = subset(godata, godata$over_represented_pvalue < pvalue)
@@ -156,9 +164,9 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
     mf_interesting = mf_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
     bp_interesting = subset(godata_interesting, ontology == "BP")
     rownames(bp_interesting) = bp_interesting$category
-    bp_interesting = bp_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]    
+    bp_interesting = bp_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
     cc_interesting = subset(godata_interesting, ontology == "CC")
-    cc_interesting = cc_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]    
+    cc_interesting = cc_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
     return_list = list(pwf=pwf, pwf_plot=pwf_plot,
         alldata=godata, pvalue_histogram=goseq_p,
         godata_interesting=godata_interesting,
@@ -175,18 +183,21 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
 
 #' Make a pvalue plot from goseq data
 #'
-#' @param topgo_data some data from goseq!
-#' 
-#' @return a plot!
-#' @seealso \code{\link{goseq}}
+#' @param goterms some data from goseq!
+#' @param wrapped_width 20 the number of characters before wrapping to help legibility
+#' @param cutoff pvalue cutoff for the plot
+#' @param n 10 how many groups to include
+#'
+#' @return plots!
+#' @seealso \code{\link{goseq}} \code{\link{clusterProfiler}} \code{\link{pval_plot}}
 #' @export
 goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
     plotting_mf = subset(goterms, complete.cases(goterms))
-    plotting_mf$score = plotting_mf$numDEInCat / plotting_mf$numInCat    
+    plotting_mf$score = plotting_mf$numDEInCat / plotting_mf$numInCat
     plotting_mf = subset(plotting_mf, ontology == "MF")
     plotting_mf = subset(plotting_mf, term != "NULL")
     plotting_mf = subset(plotting_mf, over_represented_pvalue <= 0.1)
-    plotting_mf = subset(plotting_mf, numInCat > 10)    
+    plotting_mf = subset(plotting_mf, numInCat > 10)
     plotting_mf = plotting_mf[order(plotting_mf$over_represented_pvalue),]
     plotting_mf = head(plotting_mf, n=n)
     plotting_mf = plotting_mf[,c("term","over_represented_pvalue","score")]
@@ -198,7 +209,7 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
     plotting_bp = subset(plotting_bp, ontology == "BP")
     plotting_bp = subset(plotting_bp, term != "NULL")
     plotting_bp = subset(plotting_bp, over_represented_pvalue <= 0.1)
-    plotting_bp = subset(plotting_bp, numInCat > 10)    
+    plotting_bp = subset(plotting_bp, numInCat > 10)
     plotting_bp = plotting_bp[order(plotting_bp$over_represented_pvalue),]
     plotting_bp = head(plotting_bp, n=n)
     plotting_bp = plotting_bp[,c("term","over_represented_pvalue","score")]
@@ -210,16 +221,16 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
     plotting_cc = subset(plotting_cc, ontology == "CC")
     plotting_cc = subset(plotting_cc, term != "NULL")
     plotting_cc = subset(plotting_cc, over_represented_pvalue <= 0.1)
-    plotting_cc = subset(plotting_cc, numInCat > 10)    
+    plotting_cc = subset(plotting_cc, numInCat > 10)
     plotting_cc = plotting_cc[order(plotting_cc$over_represented_pvalue),]
     plotting_cc = head(plotting_cc, n=n)
     plotting_cc = plotting_cc[,c("term","over_represented_pvalue","score")]
     colnames(plotting_cc) = c("term","pvalue","score")
     cc_pval_plot = pval_plot(plotting_cc, ontology="CC")
-    
+
     pval_plots = list(mfp_plot=mf_pval_plot, bpp_plot=bp_pval_plot, ccp_plot=cc_pval_plot,
                       mf_subset=plotting_mf, bp_subset=plotting_bp, cc_subset=plotting_cc)
-    return(pval_plots)    
+    return(pval_plots)
 }
 
 #' Make fun trees a la topgo from goseq data.
@@ -228,7 +239,7 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
 #' @param godata data from goseq
 #' @param goids a mapping of IDs to GO in the Ramigo expected format
 #' @param sigforall Print significance on all nodes?
-#' 
+#'
 #' @return a plot!
 #' @seealso \code{\link{Ramigo}}
 #' @export
@@ -240,12 +251,12 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
         de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
     interesting_genes = factor(annotated_genes %in% de_genes$ID)
-    names(interesting_genes) = annotated_genes    
+    names(interesting_genes) = annotated_genes
 
     if (is.null(de_genes[[pval_column]])) {
         mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)        
+        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
     } else {
         pvals = as.vector(de_genes[[pval_column]])
         names(pvals) = rownames(de_genes)
@@ -253,11 +264,11 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
         bp_GOdata = new("topGOdata", description="BP", ontology="BP", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
         cc_GOdata = new("topGOdata", description="CC", ontology="CC", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
     }
-        
+
     enriched_ids = godata$alldata$category
     enriched_scores = godata$alldata$over_represented_pvalue
     names(enriched_scores) = enriched_ids
-    
+
     mf_avail_nodes = as.list(mf_GOdata@graph@nodes)
     names(mf_avail_nodes) = mf_GOdata@graph@nodes
     mf_nodes = enriched_scores[names(enriched_scores) %in% names(mf_avail_nodes)]
@@ -280,7 +291,7 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
         bp_tree = NULL
     } else {
         bp_tree = recordPlot()
-    }    
+    }
 
     cc_avail_nodes = as.list(cc_GOdata@graph@nodes)
     names(cc_avail_nodes) = cc_GOdata@graph@nodes

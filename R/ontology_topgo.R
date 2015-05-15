@@ -1,8 +1,10 @@
+## Time-stamp: <Thu May 14 14:40:41 2015 Ashton Trey Belew (abelew@gmail.com)>
+
 #' Perform a simplified topgo analysis
 #'
 #' @param de_genes a data frame of differentially expressed genes, containing IDs and whatever other columns
 #' @param goid_map a file containing mappings of genes to goids in the format expected by topgo
-#' 
+#'
 #' @return a big list including the various outputs from topgo
 #' @export
 simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL, pvals=NULL, limitby="fisher", limit=0.1, signodes=100, sigforall=TRUE, numchar=300, selector="topDiffGenes", overwrite=FALSE) {
@@ -49,7 +51,6 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
     bp_weight_result = topGO::getSigGroups(bp_GOdata, test_stat)
     cc_weight_result = topGO::getSigGroups(cc_GOdata, test_stat)
 
-
     mf_fisher_pdist = try(hpgltools::hpgl_histogram(mf_fisher_result@score, bins=20))
     mf_ks_pdist = try(hpgltools::hpgl_histogram(mf_ks_result@score, bins=20))
     mf_el_pdist = try(hpgltools::hpgl_histogram(mf_el_result@score, bins=20))
@@ -66,7 +67,7 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
         mf_ks=mf_ks_pdist, bp_ks=bp_ks_pdist, cc_ks=cc_ks_pdist,
         mf_el=mf_el_pdist, bp_el=bp_el_pdist, cc_el=cc_el_pdist,
         mf_weight=mf_weight_pdist, bp_weight=bp_weight_pdist, cc_weight=cc_weight_pdist)
-        
+
     results = list(mf_godata=mf_GOdata, bp_godata=bp_GOdata, cc_godata=cc_GOdata,
         mf_fisher=mf_fisher_result, bp_fisher=bp_fisher_result, cc_fisher=cc_fisher_result,
         mf_ks=mf_ks_result, bp_ks=bp_ks_result, cc_ks=cc_ks_result,
@@ -89,7 +90,7 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
         cc_first_density = try(hpgl_GroupDensity(cc_GOdata, cc_first_group, ranks=TRUE))
     }
     first_densities = list(mf=mf_first_density, bp=bp_first_density, cc=cc_first_density)
-    
+
     information = list(
         mf_godata=mf_GOdata, bp_godata=bp_GOdata, cc_godata=cc_GOdata,
         results=results, tables=tables, first_densities=first_densities,
@@ -98,15 +99,23 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
 }
 
 
-
-#' Make tables out of topGO data
+#' topgo_tables() Make pretty tables out of topGO data
+#'
+#' The topgo function GenTable is neat, but it needs some simplification to not be obnoxious
+#'
+#' @param result a topgo result
+#' @param limit a pvalue limit defining 'significant'
+#' @param limitby fisher - what type of test to perform
+#' @param numchar 300 how many characters to allow in the description
+#' @param orderby classic which of the available columns to order the table by?
+#' @param ranksof classic which of the available columns are used to rank the data?
 #' @export
 topgo_tables = function(result, limit=0.01, limitby="fisher", numchar=300, orderby="classic", ranksof="classic") {
     ## The following if statement could be replaced by get(limitby)
     ## But I am leaving it as a way to ensure that no shenanigans ensue
     mf_allRes = bp_allRes = cc_allRes = mf_interesting = bp_interesting = cc_interesting = NULL
     if (limitby == "fisher") {
-        mf_siglist = names(which(result$mf_fisher@score <= limit))        
+        mf_siglist = names(which(result$mf_fisher@score <= limit))
         bp_siglist = names(which(result$bp_fisher@score <= limit))
         cc_siglist = names(which(result$bp_fisher@score <= limit))
     } else if (limitby == "KS") {
@@ -183,7 +192,7 @@ topgo_tables = function(result, limit=0.01, limitby="fisher", numchar=300, order
 #'
 #' @param de_genes a data frame of differentially expressed genes, containing IDs and whatever other columns
 #' @param goid_map a file containing mappings of genes to goids in the format expected by topgo
-#' 
+#'
 #' @return a big list including the various outputs from topgo
 #' @export
 topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=TRUE, do_bp_fisher_tree=TRUE, do_cc_fisher_tree=TRUE, do_mf_ks_tree=FALSE, do_bp_ks_tree=FALSE, do_cc_ks_tree=FALSE, do_mf_el_tree=FALSE, do_bp_el_tree=FALSE, do_cc_el_tree=FALSE, do_mf_weight_tree=FALSE, do_bp_weight_tree=FALSE, do_cc_weight_tree=FALSE) {
@@ -205,7 +214,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     }
     cc_fisher_nodes = cc_fisher_tree = NULL
     if (do_cc_fisher_tree) {
-        included = length(which(topGO::score(tg$results$cc_fisher) <= score_limit))        
+        included = length(which(topGO::score(tg$results$cc_fisher) <= score_limit))
         cc_fisher_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_fisher), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_fisher_nodes)[1] != 'try-error') {
             cc_fisher_tree = try(recordPlot())
@@ -213,7 +222,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     }
     mf_ks_nodes = mf_ks_tree = NULL
     if (do_mf_ks_tree) {
-        included = length(which(topGO::score(tg$results$mf_ks) <= score_limit))        
+        included = length(which(topGO::score(tg$results$mf_ks) <= score_limit))
         mf_ks_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_ks), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_ks_nodes)[1] != 'try-error') {
             mf_ks_tree = try(recordPlot())
@@ -229,7 +238,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     }
     cc_ks_nodes = cc_ks_tree = NULL
     if (do_cc_ks_tree) {
-        included = length(which(topGO::score(tg$results$cc_ks) <= score_limit))        
+        included = length(which(topGO::score(tg$results$cc_ks) <= score_limit))
         cc_ks_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_ks), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_ks_nodes)[1] != 'try-error') {
             cc_ks_tree = try(recordPlot())
@@ -237,7 +246,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     }
     mf_el_nodes = mf_el_tree = NULL
     if (do_mf_el_tree) {
-        included = length(which(topGO::score(tg$results$mf_el) <= score_limit))        
+        included = length(which(topGO::score(tg$results$mf_el) <= score_limit))
         mf_el_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_el), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_el_nodes)[1] != 'try-error') {
             mf_el_tree = try(recordPlot())
@@ -245,7 +254,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     }
     bp_el_nodes = bp_el_tree = NULL
     if (do_bp_el_tree) {
-        included = length(which(topGO::score(tg$results$bp_el) <= score_limit))                
+        included = length(which(topGO::score(tg$results$bp_el) <= score_limit))
         bp_el_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_el), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_el_nodes)[1] != 'try-error') {
             bp_el_tree = try(recordPlot())
@@ -253,7 +262,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     }
     cc_el_nodes = cc_el_tree = NULL
     if (do_cc_el_tree) {
-        included = length(which(topGO::score(tg$results$cc_el) <= score_limit))                
+        included = length(which(topGO::score(tg$results$cc_el) <= score_limit))
         cc_el_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_el), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_el_nodes)[1] != 'try-error') {
             cc_el_tree = try(recordPlot())
@@ -261,7 +270,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     }
     mf_weight_nodes = mf_weight_tree = NULL
     if (do_mf_weight_tree) {
-        included = length(which(topGO::score(tg$results$mf_weight) <= score_limit))                
+        included = length(which(topGO::score(tg$results$mf_weight) <= score_limit))
         mf_weight_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_weight), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_weight_nodes)[1] != 'try-error') {
             mf_weight_tree = try(recordPlot())
@@ -269,7 +278,7 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     }
     bp_weight_nodes = bp_weight_tree = NULL
     if (do_bp_weight_tree) {
-        included = length(which(topGO::score(tg$results$bp_weight) <= score_limit))                
+        included = length(which(topGO::score(tg$results$bp_weight) <= score_limit))
         bp_weight_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_weight), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_weight_nodes)[1] != 'try-error') {
             bp_weight_tree = try(recordPlot())
@@ -277,13 +286,13 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
     }
     cc_weight_nodes = cc_weight_tree = NULL
     if (do_cc_weight_tree) {
-        included = length(which(topGO::score(tg$results$cc_weight) <= score_limit))                
+        included = length(which(topGO::score(tg$results$cc_weight) <= score_limit))
         cc_weight_nodes = try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_weight), useInfo="all", sigForAll=sigforall, firstSigNodes=included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_weight_nodes)[1] != 'try-error') {
             cc_weight_tree = try(recordPlot())
         }
     }
-    
+
     trees = list(
         mf_fisher_nodes=mf_fisher_nodes, bp_fisher_nodes=bp_fisher_nodes, cc_fisher_nodes=cc_fisher_nodes,
         mf_ks_nodes=mf_ks_nodes, bp_ks_nodes=bp_ks_nodes, cc_ks_nodes=cc_ks_nodes,
@@ -303,9 +312,9 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
 #' @param goid_map A topGO mapping file
 #' @param goids_df If there is no goid_map, create it with this
 #' @param overwrite A boolean, if it already exists, rewrite the mapping file?
-#' 
+#'
 #' @return a summary of the new goid table
-#' 
+#'
 #' @export
 make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overwrite=FALSE) {
     id2go_test = file.info(goid_map)
@@ -371,7 +380,7 @@ topDiffGenes <- function(allScore) { return(allScore < 0.01) }
 #' Make a pvalue plot from topgo data
 #'
 #' @param topgo_data some data from topgo!
-#' 
+#'
 #' @return a plot!
 #' @seealso \code{\link{goseq}}
 #' @export
@@ -382,7 +391,7 @@ topgo_pval_plot = function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fish
     mf_newdf = subset(mf_newdf, get(type) < cutoff)
     mf_newdf = mf_newdf[order(mf_newdf$pvalue, mf_newdf[[type]]),]
     mf_newdf = head(mf_newdf, n=n)
-    mf_newdf$score = mf_newdf$Significant / mf_newdf$Annotated    
+    mf_newdf$score = mf_newdf$Significant / mf_newdf$Annotated
     mf_pval_plot = pval_plot(mf_newdf, ontology="MF")
 
     bp_newdf = topgo$tables$bp[,c("GO.ID", "Term", "Annotated","Significant",type)]
@@ -400,9 +409,9 @@ topgo_pval_plot = function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fish
     cc_newdf = subset(cc_newdf, get(type) < cutoff)
     cc_newdf = cc_newdf[order(cc_newdf$pvalue, cc_newdf[[type]]),]
     cc_newdf = head(cc_newdf, n=n)
-    cc_newdf$score = cc_newdf$Significant / cc_newdf$Annotated    
+    cc_newdf$score = cc_newdf$Significant / cc_newdf$Annotated
     cc_pval_plot = pval_plot(cc_newdf, ontology="CC")
-    
+
     pval_plots = list(MF=mf_pval_plot, BP=bp_pval_plot, CC=cc_pval_plot)
     return(pval_plots)
 }
@@ -417,12 +426,12 @@ topgo_pval_plot = function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fish
 ## export.to.dot.file: is a global variable given the name of the output .dot file
 
 #' @export
-getEdgeWeights <- function (graph) {  
+getEdgeWeights <- function (graph) {
   weightsList <- graph::edgeWeights(graph)
   to <- lapply(weightsList, names)
   from <- nodes(graph)
 
-  if (any(is.na(unlist(to))) || any(is.na(from))) 
+  if (any(is.na(unlist(to))) || any(is.na(from)))
     stop("Edge names do not match node names.")
 
   edge.names <- paste(rep(from, listLen(to)), unlist(to), sep = "~")
@@ -439,26 +448,26 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
                      nodeShape.type = c('box', 'circle', 'ellipse', 'plaintext')[3],
                      genNodes = NULL, wantedNodes = NULL, showEdges = T, useFullNames = T,
                      oldSigNodes = NULL, nodeInfo=nodeInfo, maxchars=30) {
-    
+
     if(!missing(sigNodes)) {
         sigNodeInd = TRUE
     } else {
         sigNodeInd = FALSE
     }
-    
+
     ## we set the global Graphviz attributes
     ##  graphAttrs <- getDefaultAttrs(layoutType = 'dot')
-    graphAttrs <- Rgraphviz::getDefaultAttrs(layoutType = 'dot')  
+    graphAttrs <- Rgraphviz::getDefaultAttrs(layoutType = 'dot')
     graphAttrs$cluster <- NULL
     graphAttrs$edge$arrowsize = "0.4"
     graphAttrs$edge$weight = "0.01"
-    
+
     ##graphAttrs$graph$splines <- FALSE
     graphAttrs$graph$size = "12.0,12.0"
     graphAttrs$graph$margin = "0.0,0.0"
     ##  graphAttrs$graph$ranksep = "0.02"
-    ##  graphAttrs$graph$nodesep = "0.30"  
-    
+    ##  graphAttrs$graph$nodesep = "0.30"
+
     ## set the node shape
     graphAttrs$node$shape <- nodeShape.type
     ##graphAttrs$node$fixedsize <- FALSE
@@ -469,15 +478,15 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
     graphAttrs$graph$size = "12,12"
     graphAttrs$node$color = "lightblue"
     graphAttrs$node$fontname = "arial"
-    graphAttrs$node$style = "invis"    
-    
+    graphAttrs$node$style = "invis"
+
     ## set the local attributes lists
     nodeAttrs <- list()
     edgeAttrs <- list()
-    
+
     ## try to use adaptive node size
     ##nodeAttrs$fixedsize[nodes(dag)] <- rep(FALSE, numNodes(dag))
-    
+
     if(is.null(nodeInfo)) {
         nodeInfo <- character(numNodes(dag))
         names(nodeInfo) <- nodes(dag)
@@ -485,11 +494,11 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
 ##        print(class(nodeInfo))
 ##        nodeInfo <- paste('\\\n', nodeInfo, sep = '')
         nodeInfo = gsub("(\\w.{18}).*(\\\\\\n)","\\1\\2", nodeInfo, perl=TRUE)
-        nodeInfo <- paste('\\\n', nodeInfo, sep = '')        
+        nodeInfo <- paste('\\\n', nodeInfo, sep = '')
     }
     ##teststring = paste("test:", nodeInfo)
     ##print(teststring)
-    
+
   ## a good idea is to use xxxxxxx instead of GO:xxxxxxx as node labes
     node.names <- nodes(dag)
     if(!useFullNames) {
@@ -519,9 +528,9 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
   if(!is.null(genNodes)) {
     nodeAttrs$color[genNodes] <- rep('lightblue', .ln <- length(genNodes))
     nodeAttrs$shape[genNodes] <- rep('box', .ln)
-    #nodeAttrs$fixedsize[genNodes] <- rep(FALSE, .ln)    
+    #nodeAttrs$fixedsize[genNodes] <- rep(FALSE, .ln)
   }
-  
+
   ## we will use different fillcolors for the nodes
   if(sigNodeInd) {
     if(!is.null(oldSigNodes)) {
@@ -540,8 +549,8 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
     }
     else
       old.logSigNodes <- logSigNodes <- log10(sort(sigNodes))
-    
-    
+
+
     sigColor <- round(logSigNodes - range(logSigNodes)[1] + 1)
     old.sigColor <- round(old.logSigNodes - range(old.logSigNodes)[1] + 1)
 
@@ -552,7 +561,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
     colorMap <- heat.colors(mm)
     nodeAttrs$fillcolor <- unlist(lapply(sigColor, function(x) return(colorMap[x])))
   }
-  
+
   if(!showEdges)
     graphAttrs$edge$color <- 'white'
   else
@@ -561,8 +570,6 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
       ##    0 for a is_a relation,  1 for a part_of relation
         ##edgeAttrs$color <- ifelse(getEdgeWeights(dag) == 0, 'black', 'red')
         edgeAttrs$color <- ifelse(hpgltools::getEdgeWeights(dag) == 0, 'black', 'black')
-  
-
   ##plot(dag, attrs = graphAttrs, nodeAttrs = nodeAttrs, edgeAttrs = edgeAttrs)
 
   return(agopen(graph = dag, name = dag.name, attrs = graphAttrs,
@@ -574,18 +581,18 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
                    nodeShape.type = c('box', 'circle', 'ellipse', 'plaintext')[3],
                    genNodes = NULL, wantedNodes = NULL, showEdges = T, useFullNames = F,
                    oldSigNodes = NULL, nodeInfo = NULL) {
-    
+
   if(!missing(sigNodes))
     sigNodeInd = TRUE
   else
     sigNodeInd = FALSE
-  
+
   ## we set the global Graphviz attributes
   graphAttrs <- Rgraphviz::getDefaultAttrs(layoutType = 'dot')
   graphAttrs$cluster <- NULL
 
   #graphAttrs$graph$splines <- FALSE
-  
+
   ## set the node shape
   graphAttrs$node$shape <- nodeShape.type
 
@@ -600,14 +607,14 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
 
   ## try to use adaptive node size
   #nodeAttrs$fixedsize[nodes(dag)] <- rep(FALSE, numNodes(dag))
-  
+
   if(is.null(nodeInfo)) {
     nodeInfo <- character(numNodes(dag))
     names(nodeInfo) <- nodes(dag)
   }
   else
     nodeInfo <- paste('\\\n', nodeInfo, sep = '')
-  
+
   ## a good idea is to use xxxxxxx instead of GO:xxxxxxx as node labes
   node.names <- nodes(dag)
   if(!useFullNames)
@@ -637,9 +644,9 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
   if(!is.null(genNodes)) {
     nodeAttrs$color[genNodes] <- rep('lightblue', .ln <- length(genNodes))
     nodeAttrs$shape[genNodes] <- rep('box', .ln)
-    #nodeAttrs$fixedsize[genNodes] <- rep(FALSE, .ln)    
+    #nodeAttrs$fixedsize[genNodes] <- rep(FALSE, .ln)
   }
-  
+
   ## we will use different fillcolors for the nodes
   if(sigNodeInd) {
     if(!is.null(oldSigNodes)) {
@@ -658,7 +665,7 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
     }
     else
       old.logSigNodes <- logSigNodes <- log10(sort(sigNodes))
-    
+
     sigColor <- round(logSigNodes - range(logSigNodes)[1] + 1)
     old.sigColor <- round(old.logSigNodes - range(old.logSigNodes)[1] + 1)
 
@@ -669,7 +676,7 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
     colorMap <- heat.colors(mm)
     nodeAttrs$fillcolor <- unlist(lapply(sigColor, function(x) return(colorMap[x])))
   }
-  
+
   if(!showEdges)
     graphAttrs$edge$color <- 'white'
   else
@@ -678,7 +685,7 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
       ##    0 for a is_a relation,  1 for a part_of relation
       ## edgeAttrs$color <- ifelse(getEdgeWeights(dag) == 0, 'black', 'red')
       edgeAttrs$color <- ifelse(hpgltools::getEdgeWeights(dag) == 0, 'black', 'black')
-  
+
 
   ##plot(dag, attrs = graphAttrs, nodeAttrs = nodeAttrs, edgeAttrs = edgeAttrs)
 
@@ -696,7 +703,7 @@ hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     xlab <- "Gene' score"
     if(ranks) {
         allS <- BiocGenerics::rank(allS, ties.method = "random")
-        xlab <- "Gene's rank" 
+        xlab <- "Gene's rank"
     }
     group <- as.integer(names(allS) %in% groupMembers)
     xx <- data.frame(score=allS, group = factor(group, labels=paste(c("complementary", whichGO), "  (", table(group), ")", sep="")))

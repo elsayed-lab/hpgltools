@@ -1,22 +1,25 @@
+## Time-stamp: <Thu May 14 14:43:26 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Most of the functions in here probably shouldn't be exported...
+
 #' Get a go term from ID
 #'
 #' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
-#' 
+#'
 #' @return Some text
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## goterm("GO:0032559")
 #' ## > GO:0032559
-#' ## > "adenyl ribonucleotide binding" 
+#' ## > "adenyl ribonucleotide binding"
 goterm = function(go="GO:0032559") {
     go = as.character(go)
     term = function(id) {
         value = try(as.character(Term(GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value = "not found"
-        }             
+        }
         return(value)
     }
     go = mapply(term, go)
@@ -26,7 +29,7 @@ goterm = function(go="GO:0032559") {
     ##     value = try(as.character(Term(GOTERM[go])), silent=TRUE)
     ##     if (class(value) == "try-error") {
     ##         value = "not found"
-    ##     }             
+    ##     }
     ##    goid[count] = value
     ##     count = count + 1
     ## }
@@ -62,7 +65,7 @@ deparse_go_value = function(value) {
             if (class(value) == "logical") {
                 result = ""
             } else {
-                value = as.character(value[which(complete.cases(value))])            
+                value = as.character(value[which(complete.cases(value))])
                 result = value
             }
         } else {  ## Just a string "GO:00023409"
@@ -78,16 +81,16 @@ deparse_go_value = function(value) {
 #' versus "some other text"  versus NULL versus NA
 #'
 #' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
-#' 
+#'
 #' @return Some text
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## text =  gosyn("GO:0000001")
 #' ## text
 #' ## > GO:000001
-#' ## > "mitochondrial inheritance" 
+#' ## > "mitochondrial inheritance"
 gosyn = function(go) {
     go = as.character(go)
     go = mapply(gosn, go)
@@ -122,10 +125,10 @@ gosc = function(go) {
 #' Unfortunately, GOTERM's returns for secondary IDs are not consistent, so this function
 #' has to have a whole bunch of logic to handle the various outputs.
 #' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
-#' 
+#'
 #' @return Some text
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## gosec("GO:0032432")
@@ -139,10 +142,10 @@ gosec = function(go) {
 #' Get a go long-form definition from an id
 #'
 #' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
-#' 
+#'
 #' @return Some text
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## godef("GO:0032432")
@@ -154,7 +157,7 @@ godef = function(go) {
         value = try(as.character(AnnotationDbi::Definition(GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value = "not found"
-        }             
+        }
         return(value)
     }
     go = mapply(def, go)
@@ -164,14 +167,14 @@ godef = function(go) {
 #' Get a go ontology name from an ID
 #'
 #' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
-#' 
+#'
 #' @return Some text
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## goont(c("GO:0032432", "GO:0032433"))
-#' ## > GO:0032432 GO:0032433 
+#' ## > GO:0032432 GO:0032433
 #' ## > "CC" "CC"
 goont = function(go) {
     go = as.character(go)
@@ -179,7 +182,7 @@ goont = function(go) {
         value = try(as.character(AnnotationDbi::Ontology(GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value = "not found"
-        }             
+        }
         return(value)
     }
     go = mapply(ont, go)
@@ -190,10 +193,10 @@ goont = function(go) {
 #' Get a go level approximation from an ID
 #'
 #' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
-#' 
+#'
 #' @return Some text
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## golev("GO:0032559")
@@ -218,8 +221,8 @@ golev = function(go, verbose=FALSE) {
             ancestors = "error"
         }
         if(isTRUE(verbose)) {
-            print("Incrementing level")            
-        }        
+            print("Incrementing level")
+        }
         go = ancestors[1]
         level = level + 1
         if (go == "all") {
@@ -232,10 +235,10 @@ golev = function(go, verbose=FALSE) {
 #' Get a go level approximation from a set of IDs
 #' This just wraps golev() in mapply.
 #' @param id a character list of IDs
-#' 
+#'
 #' @return Some text
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## golevel(c("GO:0032559", "GO:0000001")
@@ -247,10 +250,10 @@ golevel = function(go) {
 #' Test a GO id to see if it is useful by my arbitrary definition of 'useful'
 #'
 #' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
-#' 
+#'
 #' @return Some text
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#' 
+#'
 #' @export
 #' @examples
 #' ## gotest("GO:0032559")
@@ -274,20 +277,20 @@ gotst = function(go) {
 #' This just wraps gotst in mapply.
 #'
 #' @param id go IDs
-#' 
+#'
 #' @return Some text
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#' 
+#'
 #' @export
 gotest = function(go) {
-    mapply(gotst, go)    
+    mapply(gotst, go)
 }
 
 
 #' Make a pvalue plot from a df of IDs, scores, and p-values
 #'
 #' @param df some data from topgo/goseq/clusterprofiler
-#' 
+#'
 #' @return a plot!
 #' @seealso \code{\link{goseq}}
 #' @export
@@ -303,6 +306,10 @@ pval_plot = function(df, ontology="MF") {
     return(pvalue_plot)
 }
 
+#' get_genelengths() Extract gene lengths from a gff file
+#'
+#' @param gff The file to extract
+#' @param ID Note the field to cross reference against to extract the genes
 get_genelengths = function(gff, ID="Note") {
     annotations = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
     genes = annotations[annotations$type=="gene",]
@@ -310,7 +317,6 @@ get_genelengths = function(gff, ID="Note") {
     genes = genes[,c("ID","width")]
     return(genes)
 }
-
 
 #' Perform ontology searches of the output from limma
 #'
@@ -333,7 +339,7 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
             message(paste("Creating directory: ", testdir, "for writing excel/csv data.", sep=""))
         }
     }
-    
+
     output = list()
     for (c in 1:length(limma_out)) {
         datum = limma_out[[c]]
@@ -357,7 +363,7 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
         }
         goseq_up_ontology = goseq_up_trees = goseq_down_ontology = goseq_down_trees = NULL
         cluster_up_ontology = cluster_up_trees = cluster_down_ontology = cluster_down_trees = NULL
-        topgo_up_ontology = topgo_up_trees = topgo_down_ontology = topgo_down_trees = NULL        
+        topgo_up_ontology = topgo_up_trees = topgo_down_ontology = topgo_down_trees = NULL
         if (isTRUE(do_goseq)) {
             goseq_up_ontology = simple_goseq(up_genes, lengths=gene_lengths, goids=goids)
             goseq_down_ontology = simple_goseq(down_genes, lengths=gene_lengths, goids=goids)

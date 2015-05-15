@@ -1,3 +1,5 @@
+## Time-stamp: <Thu May 14 14:44:44 2015 Ashton Trey Belew (abelew@gmail.com)>
+
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
 #' GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be integers.
@@ -7,7 +9,7 @@
 #' @param gff The annotation information for this genome
 #' @param de_genes The set of differentially expressed genes in the limma format as before
 #' @param goids The set of GOids, as before in the format ID/GO
-#' 
+#'
 #' @return dunno yet
 #' @seealso \code{\link{GOstats}}
 #' @export
@@ -52,7 +54,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=conditional,
             testDirection="over")
-        mf_over = hyperGTest(mf_params)        
+        mf_over = hyperGTest(mf_params)
         bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
             geneSetCollection=gsc,
             geneIds=degenes_ids,
@@ -61,7 +63,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=FALSE,
             testDirection="over")
-        bp_over = hyperGTest(bp_params)        
+        bp_over = hyperGTest(bp_params)
         cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
             geneSetCollection=gsc,
             geneIds=degenes_ids,
@@ -70,7 +72,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=FALSE,
             testDirection="over")
-        cc_over = hyperGTest(cc_params)        
+        cc_over = hyperGTest(cc_params)
     } else if (direction == "under") {
         mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
             geneSetCollection=gsc,
@@ -80,7 +82,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=conditional,
             testDirection="under")
-        mf_under = hyperGTest(mf_params)        
+        mf_under = hyperGTest(mf_params)
         bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
             geneSetCollection=gsc,
             geneIds=degenes_ids,
@@ -89,7 +91,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=FALSE,
             testDirection="under")
-        bp_under = hyperGTest(bp_params)        
+        bp_under = hyperGTest(bp_params)
         cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
             geneSetCollection=gsc,
             geneIds=degenes_ids,
@@ -98,7 +100,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=FALSE,
             testDirection="under")
-        cc_under = hyperGTest(cc_params)        
+        cc_under = hyperGTest(cc_params)
     } else {
         mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
             geneSetCollection=gsc,
@@ -108,7 +110,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=conditional,
             testDirection="over")
-        mf_over = hyperGTest(mf_params)        
+        mf_over = hyperGTest(mf_params)
         bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
             geneSetCollection=gsc,
             geneIds=degenes_ids,
@@ -117,7 +119,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=FALSE,
             testDirection="over")
-        bp_over = hyperGTest(bp_params)        
+        bp_over = hyperGTest(bp_params)
         cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
             geneSetCollection=gsc,
             geneIds=degenes_ids,
@@ -135,7 +137,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=conditional,
             testDirection="under")
-        mf_under = hyperGTest(mf_params)        
+        mf_under = hyperGTest(mf_params)
         bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
             geneSetCollection=gsc,
             geneIds=degenes_ids,
@@ -144,7 +146,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=FALSE,
             testDirection="under")
-        bp_under = hyperGTest(bp_params)        
+        bp_under = hyperGTest(bp_params)
         cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
             geneSetCollection=gsc,
             geneIds=degenes_ids,
@@ -153,7 +155,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
             pvalueCutoff=pcutoff,
             conditional=FALSE,
             testDirection="under")
-        cc_under = hyperGTest(cc_params)                
+        cc_under = hyperGTest(cc_params)
     }
 
     mf_over_table = bp_over_table = cc_over_table = NULL
@@ -194,44 +196,55 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
         cc_over_sig = summary(cc_over)
         mf_under_sig = summary(mf_under)
         bp_under_sig = summary(bp_under)
-        cc_under_sig = summary(cc_under)        
+        cc_under_sig = summary(cc_under)
     } else {
         mf_over_sig = summary(mf_over, categorySize=categorysize)
         bp_over_sig = summary(bp_over, categorySize=categorysize)
         cc_over_sig = summary(cc_over, categorySize=categorysize)
         mf_under_sig = summary(mf_under, categorySize=categorysize)
         bp_under_sig = summary(bp_under, categorySize=categorysize)
-        cc_under_sig = summary(cc_under, categorySize=categorysize)                
+        cc_under_sig = summary(cc_under, categorySize=categorysize)
     }
     mf_over_sig$definition = godef(mf_over_sig$GOMFID)
     bp_over_sig$definition = godef(bp_over_sig$GOBPID)
     cc_over_sig$definition = godef(cc_over_sig$GOCCID)
     mf_under_sig$definition = godef(mf_under_sig$GOMFID)
     bp_under_sig$definition = godef(bp_under_sig$GOBPID)
-    cc_under_sig$definition = godef(cc_under_sig$GOCCID)    
+    cc_under_sig$definition = godef(cc_under_sig$GOCCID)
 
     pvalue_plots = try(gostats_pval_plots(mf_over_sig, bp_over_sig, cc_over_sig, mf_under_sig, bp_under_sig, cc_under_sig))
     gostats_p_mf_over = try(hpgl_histogram(mf_over_table$Pvalue, bins=20))
-    gostats_p_mf_under = try(hpgl_histogram(mf_under_table$Pvalue, bins=20))    
+    gostats_p_mf_under = try(hpgl_histogram(mf_under_table$Pvalue, bins=20))
     gostats_p_bp_over = try(hpgl_histogram(bp_over_table$Pvalue, bins=20))
-    gostats_p_bp_under = try(hpgl_histogram(bp_under_table$Pvalue, bins=20))    
+    gostats_p_bp_under = try(hpgl_histogram(bp_under_table$Pvalue, bins=20))
     gostats_p_cc_over = try(hpgl_histogram(cc_over_table$Pvalue, bins=20))
-    gostats_p_cc_under = try(hpgl_histogram(cc_under_table$Pvalue, bins=20))    
-    
+    gostats_p_cc_under = try(hpgl_histogram(cc_under_table$Pvalue, bins=20))
+
     ret_list = list(mf_over_all=mf_over_table, bp_over_all=bp_over_table, cc_over_all=cc_over_table,
-        mf_under_all=mf_under_table, bp_under_all=bp_under_table, cc_under_all=cc_under_table,        
+        mf_under_all=mf_under_table, bp_under_all=bp_under_table, cc_under_all=cc_under_table,
         mf_over_enriched=mf_over_sig, bp_over_enriched=bp_over_sig, cc_over_enriched=cc_over_sig,
         mf_under_enriched=mf_under_sig, bp_under_enriched=bp_under_sig, cc_under_enriched=cc_under_sig,
         gostats_mfp_over=gostats_p_mf_over, gostats_bpp_over=gostats_p_bp_over, gostats_ccp_over=gostats_p_cc_over,
-        gostats_mfp_under=gostats_p_mf_under, gostats_bpp_under=gostats_p_bp_under, gostats_ccp_under=gostats_p_cc_under,        
+        gostats_mfp_under=gostats_p_mf_under, gostats_bpp_under=gostats_p_bp_under, gostats_ccp_under=gostats_p_cc_under,
         pvalue_plots=pvalue_plots)
     return(ret_list)
 }
 
-
-
-
-
+## Take gostats data and print it on a tree as topGO does
+#' Make fun trees a la topgo from goseq data.
+#'
+#' @param de_genes some differentially expressed genes
+#' @param mf_over/bp_over/cc_over/mf_under/bp_under/cc_under over/under expression data
+#' @param goid_map a mapping of IDs to GO in the Ramigo expected format
+#' @param score_limit maximum score to include as 'significant'
+#' @param goids_df a dataframe of available goids (used to generate goid_map)
+#' @param overwrite overwrite the goid_map?
+#' @param selector a function to choose differentially expressed genes in the data
+#' @param pval_column a column in the data to be used to extract pvalue scores
+#'
+#' @return plots! Trees! oh my!
+#' @seealso \code{\link{topGO}}
+#' @export
 gostats_trees = function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under, cc_under, goid_map="reference/go/id2go.map", score_limit=0.01, goids_df=NULL, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Val") {
     make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO = topGO::readMappings(file=goid_map)
@@ -263,11 +276,11 @@ gostats_trees = function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under
     bp_over_enriched_scores = bp_over$Pvalue
     names(bp_over_enriched_scores) = bp_over_enriched_ids
     cc_over_enriched_scores = cc_over$Pvalue
-    names(cc_over_enriched_scores) = cc_over_enriched_ids    
+    names(cc_over_enriched_scores) = cc_over_enriched_ids
     mf_under_enriched_scores = mf_under$Pvalue
-    names(mf_under_enriched_scores) = mf_under_enriched_ids    
-    bp_under_enriched_scores = bp_under$Pvalue    
-    names(bp_under_enriched_scores) = bp_under_enriched_ids    
+    names(mf_under_enriched_scores) = mf_under_enriched_ids
+    bp_under_enriched_scores = bp_under$Pvalue
+    names(bp_under_enriched_scores) = bp_under_enriched_ids
     cc_under_enriched_scores = cc_under$Pvalue
     names(cc_under_enriched_scores) = cc_under_enriched_ids
 
@@ -312,7 +325,7 @@ gostats_trees = function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under
     } else {
         bp_under_tree = recordPlot()
     }
-    
+
     cc_avail_nodes = as.list(cc_GOdata@graph@nodes)
     names(cc_avail_nodes) = cc_GOdata@graph@nodes
     cc_over_nodes = cc_over_enriched_scores[names(cc_over_enriched_scores) %in% names(cc_avail_nodes)]
@@ -343,14 +356,33 @@ gostats_trees = function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under
     return(trees)
 }
 
-
+#' Make a pvalue plot similar to that from clusterprofiler from gostats data
+#'
+#' clusterprofiler provides beautiful plots describing significantly overrepresented categories.
+#' This function attempts to expand the repetoire of data available to them to include data from gostats.
+#'
+#' @param mf_over molecular function data overrepresented
+#' @param bp_over biological process data overrepresented
+#' @param cc_over cellular component data overrepresented
+#' @param mf_under molecular function data underrepresented
+#' @param bp_under biological process data underrepresented
+#' @param cc_under cellular component data underrepresented
+#' @param cutoff 0.1 what is the maximum pvalue allowed
+#' @param wrapped_width how big to make the text so that it is legible
+#' @param n 10 how many groups to include in the plot
+#' @section
+#' warning hey, the pval_plot function upon which this is based now has a bunch of new helpers now that I understand how the ontology trees work better, this should take advantage of that, but currently does not.
+#'
+#' @return plots!
+#' @seealso \code{\link{clusterProfiler}} \code{\link{pval_plot}}
+#' @export
 gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_under, wrapped_width=20, cutoff=0.1, n=10) {
     ##    plotting_mf_over = subset(mf_over, complete.cases(mf_over))
     plotting_mf_over = mf_over
     plotting_mf_over$score = plotting_mf_over$ExpCount
     plotting_mf_over = subset(plotting_mf_over, Term != "NULL")
     plotting_mf_over = subset(plotting_mf_over, Pvalue <= 0.1)
-    plotting_mf_over = subset(plotting_mf_over, Size > 10)    
+    plotting_mf_over = subset(plotting_mf_over, Size > 10)
     plotting_mf_over = plotting_mf_over[order(plotting_mf_over$Pvalue),]
     plotting_mf_over = head(plotting_mf_over, n=n)
     plotting_mf_over = plotting_mf_over[,c("Term","Pvalue","score")]
@@ -360,7 +392,7 @@ gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_
     plotting_mf_under$score = plotting_mf_under$ExpCount
     plotting_mf_under = subset(plotting_mf_under, Term != "NULL")
     plotting_mf_under = subset(plotting_mf_under, Pvalue <= 0.1)
-    plotting_mf_under = subset(plotting_mf_under, Size > 10)    
+    plotting_mf_under = subset(plotting_mf_under, Size > 10)
     plotting_mf_under = plotting_mf_under[order(plotting_mf_under$Pvalue),]
     plotting_mf_under = head(plotting_mf_under, n=n)
     plotting_mf_under = plotting_mf_under[,c("Term","Pvalue","score")]
@@ -371,7 +403,7 @@ gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_
     plotting_bp_over$score = plotting_bp_over$ExpCount
     plotting_bp_over = subset(plotting_bp_over, Term != "NULL")
     plotting_bp_over = subset(plotting_bp_over, Pvalue <= 0.1)
-    plotting_bp_over = subset(plotting_bp_over, Size > 10)    
+    plotting_bp_over = subset(plotting_bp_over, Size > 10)
     plotting_bp_over = plotting_bp_over[order(plotting_bp_over$Pvalue),]
     plotting_bp_over = head(plotting_bp_over, n=n)
     plotting_bp_over = plotting_bp_over[,c("Term","Pvalue","score")]
@@ -381,7 +413,7 @@ gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_
     plotting_bp_under$score = plotting_bp_under$ExpCount
     plotting_bp_under = subset(plotting_bp_under, Term != "NULL")
     plotting_bp_under = subset(plotting_bp_under, Pvalue <= 0.1)
-    plotting_bp_under = subset(plotting_bp_under, Size > 10)    
+    plotting_bp_under = subset(plotting_bp_under, Size > 10)
     plotting_bp_under = plotting_bp_under[order(plotting_bp_under$Pvalue),]
     plotting_bp_under = head(plotting_bp_under, n=n)
     plotting_bp_under = plotting_bp_under[,c("Term","Pvalue","score")]
@@ -392,7 +424,7 @@ gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_
     plotting_cc_over$score = plotting_cc_over$ExpCount
     plotting_cc_over = subset(plotting_cc_over, Term != "NULL")
     plotting_cc_over = subset(plotting_cc_over, Pvalue <= 0.1)
-    plotting_cc_over = subset(plotting_cc_over, Size > 10)    
+    plotting_cc_over = subset(plotting_cc_over, Size > 10)
     plotting_cc_over = plotting_cc_over[order(plotting_cc_over$Pvalue),]
     plotting_cc_over = head(plotting_cc_over, n=n)
     plotting_cc_over = plotting_cc_over[,c("Term","Pvalue","score")]
@@ -402,7 +434,7 @@ gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_
     plotting_cc_under$score = plotting_cc_under$ExpCount
     plotting_cc_under = subset(plotting_cc_under, Term != "NULL")
     plotting_cc_under = subset(plotting_cc_under, Pvalue <= 0.1)
-    plotting_cc_under = subset(plotting_cc_under, Size > 10)    
+    plotting_cc_under = subset(plotting_cc_under, Size > 10)
     plotting_cc_under = plotting_cc_under[order(plotting_cc_under$Pvalue),]
     plotting_cc_under = head(plotting_cc_under, n=n)
     plotting_cc_under = plotting_cc_under[,c("Term","Pvalue","score")]
@@ -413,5 +445,5 @@ gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_
         mf_subset_over=plotting_mf_over, bp_subset_over=plotting_bp_over, cc_subset_over=plotting_cc_over,
         mfp_plot_under=mf_pval_plot_under, bpp_plot_under=bp_pval_plot_under, ccp_plot_under=cc_pval_plot_under,
         mf_subset_under=plotting_mf_under, bp_subset_under=plotting_bp_under, cc_subset_under=plotting_cc_under)
-    return(pval_plots)    
+    return(pval_plots)
 }
