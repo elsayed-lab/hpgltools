@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:47:33 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 18 11:01:45 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' graph_metrics() Make lots of graphs!
 #'
@@ -226,9 +226,10 @@ hpgl_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, labels=NUL
         cpm=colSums(hpgl_df) * 1e-6,
         condition=hpgl_design$condition,
         batch=hpgl_design$batch)
-    non_zero_plot = ggplot2::ggplot(data=non_zero, ggplot2::aes(x=cpm, y=nonzero_genes), environment=hpgl_env,
-        colour=hpgl_colors, shape=hpgl_shapes) +
-        geom_point(stat="identity", size=3, colour=hpgl_colors, shape=hpgl_shapes) +
+    non_zero_plot = ggplot2::ggplot(data=non_zero, aes(x=cpm, y=nonzero_genes), environment=hpgl_env, fill=hpgl_colors, shape=hpgl_shapes) +
+        ## geom_point(stat="identity", size=3, colour=hpgl_colors, pch=21) +
+        geom_point(aes(fill=hpgl_colors), colour="black", pch=21, stat="identity", size=3) +
+        scale_fill_manual(name="Error Bars", values=levels(as.factor(hpgl_colors)), labels=levels(as.factor(hpgl_design$condition))) +
         ylab("Number of non-zero genes observed.") +
         xlab("Observed CPM") +
         theme_bw()
@@ -852,7 +853,8 @@ hpgl_smc = function(df=NULL, colors=NULL, expt=NULL, method="pearson", names=NUL
     ylimit = c(pmin(min(cor_median), outer_limit), max(cor_median))
     plot(cor_median, xaxt="n", ylim=ylimit,
          xlab="", main="", ylab="Median pairwise correlation",
-         col=hpgl_colors, pch=16, cex=1.5)
+         ## col=hpgl_colors, pch=16, cex=1.5)
+         bg=hpgl_colors, col="black", pch=21, cex=1.5)
     title(title)
     axis(side=1, at=seq(along=cor_median), labels=hpgl_names, las=2)
     abline(h=outer_limit, lty=2)
@@ -917,7 +919,8 @@ hpgl_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclide
     ylimit = c(min(dist_median), pmax(max(dist_median), outer_limit))
     plot(dist_median, xaxt="n", ylim=ylimit,
          xlab="", main="", ylab="Median pairwise distance",
-         col=hpgl_colors, pch=16, cex=1.5)
+         ## col=hpgl_colors, pch=16, cex=1.5)
+         bg=hpgl_colors, col="black", pch=21, cex=1.5)
     title(title)
     axis(side=1, at=seq(along=dist_median), labels=hpgl_names, las=2)
     abline(h=outer_limit, lty=2)

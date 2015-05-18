@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:49:14 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 18 17:52:53 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a ggplot PCA plot describing the samples' clustering
 #'
@@ -53,6 +53,10 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
     pca_variance = round((pca$d ^ 2) / sum(pca$d ^ 2) * 100, 2)
     xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
+    if (is.null(colors)) {
+        colors = as.numeric(levels(hpgl_design$condition))
+    }
+
     pca_data = data.frame(SampleID=hpgl_labels,
         condition=hpgl_design$condition,
         batch=hpgl_design$batch,
@@ -62,48 +66,55 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         colors=colors)
 
     num_batches = length(levels(hpgl_design$batch))
-    ## pca_plot = ggplot(data=pca_data, environment=hpgl_env) +
-    ##     geom_point(aes(x=PC1, y=PC2, color=hpgl_design$condition, shape=hpgl_design$batch), size=size) +
-    ##     scale_colour_discrete(name="Experimental\nCondition") +
-    ##     xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
-    print(colors)
-    pca_plot = ggplot(data=pca_data, environment=hpgl_env, aes(x=PC1, y=PC2))
-    if (is.null(colors)) {
-        pca_plot = pca_plot + geom_point(aes(color=hpgl_design$condition, shape=hpgl_design$batch), size=size)
+    pca_plot = NULL
+    if (num_batches <= 5) {
+        pca_plot = pca_plot_smallbatch(pca_data)
     } else {
-        print("Using the variable colors.")
-        ## I need a mapping of condition -> color 1:1, so unique(cbind()) them, then make a list and name them appropriately.
-        mycol = unique(cbind(as.character(hpgl_design$condition), as.character(colors)))
-        mycolors = mycol[,2]
-        names(mycolors) = mycol[,1]
-        print(mycolors)
-        pca_plot = pca_plot + geom_point(aes(x=PC1, y=PC2, shape=hpgl_design$batch, colour=hpgl_design$condition), size=size) +
-            scale_colour_manual(values=mycolors, name="Condition")
+        pca_plot = pca_plot_largebatch(pca_data)
     }
     pca_plot = pca_plot + xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
-
-    if (num_batches > 6) { ## Then ggplot2 wants shapes specified manually...
-        pca_plot = pca_plot +
-        scale_shape_manual(values=c(1:num_batches), name="Batch")
-    } else {
-        pca_plot = pca_plot + scale_shape_discrete(name="Batch")
-    }
-
     if (!is.null(labels)) {
         if (labels[[1]] == "fancy") {
-            pca_plot = pca_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_design$condition)
-        } else  if (labels[[1]] == "normal") {
+            pca_plot = pca_plot + directlabels::geom_dl(aes(label=SampleID), method="smart.grid")
+        } else if (labels[[1]] == "normal") {
             pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=paste(hpgl_design$condition, hpgl_design$batch, sep="_")), angle=45, size=4, vjust=2)
         } else {
             pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=labels), angle=45, size=4, vjust=2)
         }
     }
+
     if (!is.null(title)) {
         pca_plot = pca_plot + ggtitle(title)
     }
     pca_return = list(
         pca=pca, plot=pca_plot, table=pca_data, res=pca_res, variance=pca_variance)
     return(pca_return)
+}
+
+
+## 6 or more batches
+pca_plot_largebatch = function(df) {
+    env = environment()
+    num_batches = length(levels(factor(df$batch)))
+    plot = ggplot(df, aes(PC1, PC2)) +
+        geom_point(size=3, aes(shape=factor(batch), fill=condition, colour=colors)) +
+        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
+        scale_color_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
+        guides(fill=guide_legend(override.aes=list(colour=levels(factor(colors)))), colour=guide_legend(override.aes="black")) +
+        scale_shape_manual(values=c(1:num_batches), name="Batch")
+    return(plot)
+}
+
+## 5 or fewer batches
+pca_plot_smallbatch = function(df) {
+    env = environment()
+    print(df)
+    plot = ggplot(df, aes(PC1, PC2)) +
+        geom_point(size=3, aes(shape=factor(batch), fill=condition), colour='black') +
+        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
+        scale_shape_manual(name="Batch", labels=levels(as.factor(batch)), values=21:25) +
+        guides(fill=guide_legend(override.aes=list(colour=levels(factor(colors)))), colour=guide_legend(override.aes="black"))
+    return(plot)
 }
 
 #' Collect the r^2 values from a linear model fitting between a singular
@@ -153,13 +164,22 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
         title = paste(first, " vs. ", second, sep="")
     }
     colors = levels(as.factor(unlist(design$color)))
-    pca_plot = ggplot(data=as.data.frame(data), environment=hpgl_env) +
-        geom_point(aes(x=get(first), y=get(second), shape=batches, colour=factor(design$condition)), size=3) +
-        scale_colour_manual(values=colors, name="Condition") +
+    num_batches = length(levels(factor(design$batch)))
+
+    pca_plot = ggplot(data=as.data.frame(data), environment=hpgl_env, fill=factor(design$condiiton)) +
+        geom_point(aes(x=get(first), y=get(second), shape=batches, colour=data$colors), stat="identity", size=3) +
+        scale_color_manual(values=levels(factor(data$colors)), name="Condition") +
         scale_shape_manual(values=batches, name="Batch", guide=guide_legend(override.aes=aes(size=1))) +
         ggtitle(title) +
         theme_bw() +
         theme(legend.key.size=unit(0.5, "cm"))
+
+##    pca_plot = ggplot(data, environment=hpgl_env, fill=factor(design$condition)) +
+##        geom_point(aes(x=get(first), y=get(second), shape=batches, colour="black"), stat="identity", colour="black") +
+##        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
+##        scale_color_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
+##        guides(fill=guide_legend(override.aes=list(colour=levels(factor(colors)))), colour=guide_legend(override.aes="black")) +
+##        scale_shape_manual(values=c(1:num_batches), name="Batch")
 
     if (!is.null(variances)) {
         x_var_num = as.numeric(gsub("PC", "", first))
@@ -184,6 +204,43 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
 ## y-axis is z(i), x-axis is i
 ## z(i) = cumulative sum of $u squared
 ## z = cumsum((svd$u ^ 2))
+
+u_plot = function(plotted_us) {
+    plotted_us = abs(plotted_us[,c(1,2,3)])
+    plotted_u1s = plotted_us[order(plotted_us[,1], decreasing=TRUE),]
+    plotted_u2s = plotted_us[order(plotted_us[,2], decreasing=TRUE),]
+    plotted_u3s = plotted_us[order(plotted_us[,3], decreasing=TRUE),]
+    ## allS <- BiocGenerics::rank(allS, ties.method = "random")
+    ## plotted_us$rank = rank(plotted_us[,1], ties.method="random")
+    plotted_u1s = cbind(plotted_u1s, rev(rank(plotted_u1s[,1], ties.method="random")))
+    plotted_u1s = plotted_u1s[,c(1,4)]
+    colnames(plotted_u1s) = c("PC1","rank")
+    plotted_u1s = data.frame(plotted_u1s)
+    plotted_u1s$ID = as.character(rownames(plotted_u1s))
+    plotted_u2s = cbind(plotted_u2s, rev(rank(plotted_u2s[,2], ties.method="random")))
+    plotted_u2s = plotted_u2s[,c(2,4)]
+    colnames(plotted_u2s) = c("PC2","rank")
+    plotted_u2s = data.frame(plotted_u2s)
+    plotted_u2s$ID = as.character(rownames(plotted_u2s))
+    plotted_u3s = cbind(plotted_u3s, rev(rank(plotted_u3s[,3], ties.method="random")))
+    plotted_u3s = plotted_u3s[,c(3,4)]
+    colnames(plotted_u3s) = c("PC3","rank")
+    plotted_u3s = data.frame(plotted_u3s)
+    plotted_u3s$ID = as.character(rownames(plotted_u3s))
+    plotted_us = merge(plotted_u1s, plotted_u2s, by.x="rank", by.y="rank")
+    plotted_us = merge(plotted_us, plotted_u3s, by.x="rank", by.y="rank")
+    colnames(plotted_us) = c("rank","PC1","ID1","PC2","ID2","PC3","ID3")
+    rm(plotted_u1s)
+    rm(plotted_u2s)
+    rm(plotted_u3s)
+    top_threePC = head(plotted_us, n=20)
+    plotted_us = plotted_us[,c("PC1","PC2","PC3")]
+    plotted_us$ID = rownames(plotted_us)
+    message("The more shallow the curves in these plots, the more genes responsible for this principle component.")
+    plot(plotted_us)
+    u_plot = recordPlot()
+    return(u_plot)
+}
 
 #' pca_information(): Gather information about principle components
 #'
@@ -248,43 +305,12 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     ## The idea being: the resulting decreasing line should be either a slow even
     ## decrease if many genes are contributing to the given component
     ## Conversely, that line should drop suddenly if dominated by one/few genes.
-    plotted_us = u
-    rownames(plotted_us) = rownames(df)
-    plotted_us = abs(plotted_us[,c(1,2,3)])
-    plotted_u1s = plotted_us[order(plotted_us[,1], decreasing=TRUE),]
-    plotted_u2s = plotted_us[order(plotted_us[,2], decreasing=TRUE),]
-    plotted_u3s = plotted_us[order(plotted_us[,3], decreasing=TRUE),]
-    ## allS <- BiocGenerics::rank(allS, ties.method = "random")
-    ## plotted_us$rank = rank(plotted_us[,1], ties.method="random")
-    plotted_u1s = cbind(plotted_u1s, rev(rank(plotted_u1s[,1], ties.method="random")))
-    plotted_u1s = plotted_u1s[,c(1,4)]
-    colnames(plotted_u1s) = c("PC1","rank")
-    plotted_u1s = data.frame(plotted_u1s)
-    plotted_u1s$ID = as.character(rownames(plotted_u1s))
-    plotted_u2s = cbind(plotted_u2s, rev(rank(plotted_u2s[,2], ties.method="random")))
-    plotted_u2s = plotted_u2s[,c(2,4)]
-    colnames(plotted_u2s) = c("PC2","rank")
-    plotted_u2s = data.frame(plotted_u2s)
-    plotted_u2s$ID = as.character(rownames(plotted_u2s))
-    plotted_u3s = cbind(plotted_u3s, rev(rank(plotted_u3s[,3], ties.method="random")))
-    plotted_u3s = plotted_u3s[,c(3,4)]
-    colnames(plotted_u3s) = c("PC3","rank")
-    plotted_u3s = data.frame(plotted_u3s)
-    plotted_u3s$ID = as.character(rownames(plotted_u3s))
-    plotted_us = merge(plotted_u1s, plotted_u2s, by.x="rank", by.y="rank")
-    plotted_us = merge(plotted_us, plotted_u3s, by.x="rank", by.y="rank")
-    colnames(plotted_us) = c("rank","PC1","ID1","PC2","ID2","PC3","ID3")
-    rm(plotted_u1s)
-    rm(plotted_u2s)
-    rm(plotted_u3s)
-    top_threePC = head(plotted_us, n=20)
-    plotted_us = plotted_us[,c("PC1","PC2","PC3")]
-    plotted_us$ID = rownames(plotted_us)
-    message("The more shallow the curves in these plots, the more genes responsible for this principle component.")
-    plot(plotted_us)
-    u_plot = recordPlot()
 
+    rownames(u) = rownames(df)
     rownames(v) = colnames(data)
+
+    u_plot = u_plot(u)
+
     component_variance = round((positives^2) / sum(positives^2) * 100, 3)
     cumulative_pc_variance = cumsum(component_variance)
 
@@ -312,7 +338,8 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     pca_data = data.frame(SampleID=labels,
         condition=design$condition,
         batch=design$batch,
-        batch_int=as.integer(design$batch))
+        batch_int=as.integer(design$batch),
+        colors=design$color)
     pc_df = data.frame(SampleID=labels)
     rownames(pc_df) = make.names(labels)
 
@@ -445,7 +472,7 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     ## covariate vs PC score
     ## Analagously: boxplot(PCn ~ batch)
     pca_list = list(
-        pc1_trend=u_plot, strongest_genes=top_threePC,
+        pc1_trend=u_plot,
         svd_d=positives, svd_u=u, svd_v=v, rsquared_table=component_rsquared_table,
         pca_variance=pca_variance, pca_data=pca_data, anova_fstats=anova_fstats,
         anova_sums=anova_sums, anova_f=anova_f, anova_p=anova_p,

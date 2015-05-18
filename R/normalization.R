@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:38:28 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 18 18:32:52 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -587,6 +587,39 @@ batch_counts = function(count_table, design, batch=batch, batch1=batch1, batch2=
         ## new_expt$mod_sv = mod_sv
         ## new_expt$fsva_result = fsva_result
         count_table = fsva_result$db
+    } else if (batch == "svaseq") {
+        batches = as.factor(design[, batch1])
+        conditions = as.factor(design[,"condition"])
+        df = data.frame(count_table)
+        mtrx = as.matrix(df)
+        conditional_model = model.matrix(~conditions, data=df)
+        null_model = conditional_model[,1]
+        num_surrogates = num.sv(mtrx, conditional_model)
+        svaseq_result = svaseq(mtrx, conditional_model, null_model, n.sv=num_surrogates)
+        plot(svaseq_result$sv, pch=19, col="blue")
+        ## The following was taken from: https://www.biostars.org/p/121489/
+        X = cbind(conditional_model, svaseq_result$sv)
+        Hat = solve(t(X) %*% X) %*% t(X)
+        beta = (Hat %*% t(mtrx))
+        P = ncol(conditional_model)
+        count_table = mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
+    } else if (batch == "ruvg") {
+        ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
+        cond = as.factor(conditions)
+        conditional_model = model.matrix(~conditions, data=df)
+        y = DGEList(counts=count_table, group=cond)
+        y = calcNormFactors(y, method="upperquartile")
+        y = estimateGLMCommonDisp(y, conditional_model)
+        y = estimateGLMTagwiseDisp(y, conditional_model)
+        fit = glmFit(y, conditional_model)
+        lrt = glmLRT(fit, coef=2)
+        controls = rank(lrt$table$LR) <= 400
+        batch_ruv_emp = RUVg(count_table, controls, k=1)$W
+        X = cbind(conditional_model, batch_ruv_emp)
+        Hat = solve(t(X) %*% X) %*% t(X)
+        beta = (Hat %*% t(mtrx))
+        P = ncol(conditional_model)
+        count_table = mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
     } else {
         print("Did not recognize the batch correction, leaving the table alone.")
         print("Recognized batch corrections include: 'limma', 'combatmod', 'sva'")
@@ -766,6 +799,7 @@ hpgl_qstats = function (exprs, groups, refType = "mean", groupLoc = "mean", wind
 }
 
 hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean", groupLoc="mean", window=99, verbose=FALSE, groupCol=NULL, plot=TRUE, ...) {
+    exprs = as.matrix(exprs)
     if (is.null(groups)) {
         print("Groups were not provided.  Performing a simple quantile normalization.")
         print("This is probably not what you actually want!")
