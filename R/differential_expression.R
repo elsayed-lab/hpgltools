@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:38:53 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 19 14:07:28 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' all_pairwise(): Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
 #'
@@ -1148,7 +1148,7 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
 #' ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
 #' ## compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
 limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC", second_table=2, second_column="logFC", type="linear_scatter", ...) {
-    tables = all_pairwise_result$limma_result
+    tables = all_pairwise_result$all_tables
     if (is.numeric(first_table)) {
         x_name = paste(names(tables)[first_table], first_column, sep=":")
     }

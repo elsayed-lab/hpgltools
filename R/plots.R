@@ -1,4 +1,10 @@
-## Time-stamp: <Thu May 14 14:47:33 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 19 14:17:09 2015 Ashton Trey Belew (abelew@gmail.com)>
+## If I see something like:
+## 'In sample_data$mean = means : Coercing LHS to a list'
+## That likely means that I was supposed to have data in the
+## data.frame() format, but instead it is a matrix.  In functions
+## where this is a danger, it is a likely good idea to cast it as a
+## data frame.
 
 #' graph_metrics() Make lots of graphs!
 #'
@@ -7,7 +13,7 @@
 #' density plots, pca plots, standard median distance/correlation, and
 #' qq plots.
 #'
-#' @param expt an expt experiment containing the data, design, and colors
+#' @param data an expt/df/exprs experiment containing the data, design, and colors
 #' @param norm_type normalization strategy for the data.  Defaults to
 #' quantile.
 #' @param filter whether to log2/10 filter the data.  Defaults to
@@ -81,31 +87,31 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
     }
 
     message("Graphing number of non-zero genes with respect to CPM by library.")
-    nonzero_plot = try(hpgltools::hpgl_nonzero(expt=expt, title=nonzero_title, ...))
+    nonzero_plot = try(hpgltools::hpgl_nonzero(expt, title=nonzero_title, ...))
     message("Graphing library sizes.")
-    libsize_plot = try(hpgltools::hpgl_libsize(expt=expt, title=libsize_title, ...))
+    libsize_plot = try(hpgltools::hpgl_libsize(expt, title=libsize_title, ...))
     message("Graphing a boxplot on log scale.")
-    boxplot = try(hpgltools::hpgl_boxplot(expt=expt, title=boxplot_title, scale=scale, ...))
+    boxplot = try(hpgltools::hpgl_boxplot(expt, title=boxplot_title, scale=scale, ...))
     message("Graphing a correlation heatmap.")
-    corheat = try(hpgltools::hpgl_corheat(expt=expt, method=cormethod, title=corheat_title, ...))
+    corheat = try(hpgltools::hpgl_corheat(expt, method=cormethod, title=corheat_title, ...))
     message("Graphing a standard median correlation.")
-    smc = try(hpgltools::hpgl_smc(expt=expt, method=cormethod, title=smc_title, ...))
+    smc = try(hpgltools::hpgl_smc(expt, method=cormethod, title=smc_title, ...))
     message("Graphing a distance heatmap.")
-    disheat = try(hpgltools::hpgl_disheat(expt=expt, method=distmethod, title=disheat_title, ...))
+    disheat = try(hpgltools::hpgl_disheat(expt, method=distmethod, title=disheat_title, ...))
     message("Graphing a standard median distance.")
-    smd = try(hpgltools::hpgl_smd(expt=expt, method=distmethod, title=smd_title, ...))
+    smd = try(hpgltools::hpgl_smd(expt, method=distmethod, title=smd_title, ...))
     message("Graphing a PCA plot.")
-    pca = try(hpgltools::hpgl_pca(expt=expt, title=pca_title, ...))
+    pca = try(hpgltools::hpgl_pca(expt, title=pca_title, ...))
     message("Plotting a density plot.")
-    density = try(hpgltools::hpgl_density_plot(expt=expt, title=dens_title))
+    density = try(hpgltools::hpgl_density_plot(expt, title=dens_title))
 
     qq = NULL
     ma = NULL
     if (isTRUE(sink)) {
         message("QQ plotting!.")
-        qq = try(suppressWarnings(hpgltools::hpgl_qq_all(df=data.frame(exprs(expt$expressionset)))))
+        qq = try(suppressWarnings(hpgltools::hpgl_qq_all(data.frame(exprs(expt$expressionset)))))
         message("Many MA plots!")
-        ma = try(suppressWarnings(hpgltools::hpgl_pairwise_ma(expt=expt)))
+        ma = try(suppressWarnings(hpgltools::hpgl_pairwise_ma(expt)))
     }
 
     ret_data = list(
@@ -138,16 +144,18 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
 #' @export
 #' @examples
 #' ## ma_plots = hpgl_pairwise_ma(expt=some_expt)
-hpgl_pairwise_ma = function(expt=NULL, df=NULL, log=NULL, ...) {
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(expt)) {
-        data = df
-    } else if (is.null(df)) {
-        data = exprs(expt$expressionset)
+hpgl_pairwise_ma = function(data, log=NULL, ...) {
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
     plot_list = list()
     for (c in 1:(length(colnames(data)) - 1)) {
@@ -199,44 +207,55 @@ hpgl_pairwise_ma = function(expt=NULL, df=NULL, log=NULL, ...) {
 #' @examples
 #' ## nonzero_plot = hpgl_nonzero(expt=expt)
 #' ## nonzero_plot  ## ooo pretty
-hpgl_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, labels=NULL, title=NULL, ...) {
+hpgl_nonzero = function(data, design=NULL, colors=NULL, expt=NULL, labels=NULL, title=NULL, ...) {
     hpgl_env = environment()
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(expt)) {
-        hpgl_design = design
-        hpgl_colors = colors
-        hpgl_df = df
-    } else if (is.null(df)) {
-        hpgl_design = expt$design
-        hpgl_colors = expt$colors
-        hpgl_df = exprs(expt$expressionset)
+    names = NULL
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    if (is.null(expt$names)) {
-        hpgl_labels = colnames(hpgl_df)
-    } else {
-        hpgl_labels = expt$names
+
+    if (is.null(labels)) {
+        if (is.null(names)) {
+            labels = colnames(data)
+        } else {
+            labels = names
+        }
+    } else if (labels[1] == 'boring') {
+        if (is.null(names)) {
+            labels = colnames(data)
+        } else {
+            labels = names
+        }
     }
-    hpgl_shapes = as.integer(hpgl_design$batch)
-    non_zero = data.frame(id=colnames(hpgl_df),
-        nonzero_genes=colSums(hpgl_df > 1),
-        cpm=colSums(hpgl_df) * 1e-6,
-        condition=hpgl_design$condition,
-        batch=hpgl_design$batch)
-    non_zero_plot = ggplot2::ggplot(data=non_zero, ggplot2::aes(x=cpm, y=nonzero_genes), environment=hpgl_env,
-        colour=hpgl_colors, shape=hpgl_shapes) +
-        geom_point(stat="identity", size=3, colour=hpgl_colors, shape=hpgl_shapes) +
+
+    shapes = as.integer(design$batch)
+    non_zero = data.frame(id=colnames(data),
+        nonzero_genes=colSums(data >= 1),
+        cpm=colSums(data) * 1e-6,
+        condition=design$condition,
+        batch=design$batch)
+    non_zero_plot = ggplot2::ggplot(data=non_zero, aes(x=cpm, y=nonzero_genes), environment=hpgl_env, fill=colors, shape=shapes) +
+        ## geom_point(stat="identity", size=3, colour=hpgl_colors, pch=21) +
+        geom_point(aes(fill=colors), colour="black", pch=21, stat="identity", size=3) +
+        scale_fill_manual(name="Condition", values=levels(as.factor(colors)), labels=levels(as.factor(design$condition))) +
         ylab("Number of non-zero genes observed.") +
         xlab("Observed CPM") +
         theme_bw()
     if (!is.null(labels)) {
         if (labels[[1]] == "fancy") {
-            non_zero_plot = non_zero_plot + directlabels::geom_dl(aes(label=hpgl_labels), method="smart.grid", colour=hpgl_colors)
+            non_zero_plot = non_zero_plot + directlabels::geom_dl(aes(label=labels), method="smart.grid", colour=colors)
         } else {
-            non_zero_plot = non_zero_plot + geom_text(aes(x=cpm, y=nonzero_genes, label=hpgl_labels), angle=45, size=4, vjust=2)
+            non_zero_plot = non_zero_plot + geom_text(aes(x=cpm, y=nonzero_genes, label=labels), angle=45, size=4, vjust=2)
         }
     }
     if (!is.null(title)) {
@@ -262,29 +281,29 @@ hpgl_nonzero = function(df=NULL, design=NULL, colors=NULL, expt=NULL, labels=NUL
 #' @examples
 #' ## libsize_plot = hpgl_libsize(expt=expt)
 #' ## libsize_plot  ## ooo pretty bargraph
-hpgl_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL, title=NULL, text=TRUE, ...) {
+hpgl_libsize = function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, text=TRUE, ...) {
     hpgl_env = environment()
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(expt)) {
-        hpgl_colors = colors
-        hpgl_df = df
-        hpgl_names = names
-    } else if (is.null(df)) {
-        hpgl_colors = expt$colors
-        hpgl_df = Biobase::exprs(expt$expressionset)
-        hpgl_names = expt$names
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    if (is.null(hpgl_colors)) {
-        hpgl_colors = colorRampPalette(brewer.pal(ncol(hpgl_df),"Dark2"))(ncol(hpgl_df))
+
+    if (is.null(colors)) {
+        colors = colorRampPalette(brewer.pal(ncol(data),"Dark2"))(ncol(data))
     }
-    hpgl_colors = as.character(hpgl_colors)
-    tmp = data.frame(id=colnames(hpgl_df),
-        sum=colSums(hpgl_df),
-        colors=factor(hpgl_colors))
+    colors = as.character(colors)
+    tmp = data.frame(id=colnames(data),
+        sum=colSums(data),
+        colors=factor(colors))
     tmp$order = factor(tmp$id, as.character(tmp$id))
     libsize_plot = ggplot2::ggplot(data=tmp, ggplot2::aes(x=order, y=sum),
         environment=hpgl_env, colour=tmp$colors) +
@@ -303,8 +322,8 @@ hpgl_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL,
         message("Adding log10")
         libsize_plot = libsize_plot + scale_y_log10()
     }
-    if (!is.null(hpgl_names)) {
-        libsize_plot = libsize_plot + scale_x_discrete(labels=hpgl_names)
+    if (!is.null(names)) {
+        libsize_plot = libsize_plot + scale_x_discrete(labels=names)
     }
     return(libsize_plot)
 }
@@ -333,38 +352,37 @@ hpgl_libsize = function(df=NULL, colors=NULL, expt=NULL, scale=TRUE, names=NULL,
 #' @examples
 #' ## a_boxplot = hpgl_boxplot(expt=expt)
 #' ## a_boxplot  ## ooo pretty boxplot look at the lines
-hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=NULL, scale="raw", ...) {
+hpgl_boxplot = function(data, colors=NULL, names=NULL, title=NULL, scale="raw", ...) {
     hpgl_env = environment()
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(expt)) {
-        hpgl_design = design
-        hpgl_colors = colors_fill
-        hpgl_names = names
-        hpgl_df = df
-    } else if (is.null(df)) {
-        hpgl_design = expt$design
-        hpgl_colors = expt$colors
-        hpgl_df = exprs(expt$expressionset)
-        hpgl_names = expt$names
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = as.data.frame(exprs(data$expressionset))
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    if (is.null(hpgl_colors)) {
-        hpgl_colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
+
+    if (is.null(colors)) {
+        colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
     }
-    hpgl_df = data.frame(hpgl_df)
-    hpgl_df[hpgl_df < 0] = 0 ## Likely only needed when using batch correction and it sets a value to < 0
+
+
+    data[data < 0] = 0 ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
     if (scale != "raw") {
-        hpgl_df = log2(hpgl_df + 1)
+        data = log2(data + 1)
     }
-    hpgl_df$id = rownames(hpgl_df)
-    dataframe = melt(hpgl_df, id=c("id"))
+    data$id = rownames(data)
+    dataframe = melt(data, id=c("id"))
     colnames(dataframe) = c("gene","variable","value")
     boxplot = ggplot2::ggplot(data=dataframe, aes(x=variable, y=value)) +
         suppressWarnings(geom_boxplot(aes(fill=variable),
-                     fill=hpgl_colors,
+                     fill=colors,
                      size=0.5,
                      outlier.size=1.5,
                      outlier.colour=alpha("black", 0.2))) +
@@ -375,8 +393,8 @@ hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=
     if (!is.null(title)) {
         boxplot = boxplot + ggtitle(title)
     }
-    if (!is.null(hpgl_names)) {
-        boxplot = boxplot + scale_x_discrete(labels=hpgl_names)
+    if (!is.null(names)) {
+        boxplot = boxplot + scale_x_discrete(labels=names)
     }
     return(boxplot)
 }
@@ -395,39 +413,43 @@ hpgl_boxplot = function(df=NULL, colors_fill=NULL, names=NULL, expt=NULL, title=
 #'   means = a table of the median values of all the summaries of the qq plots
 #'
 #' @export
-hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE, labels="short") {
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    hpgl_df = NULL
-    if (is.null(df)) {
-        hpgl_df = exprs(expt$expressionset)
+hpgl_qq_all = function(data, verbose=FALSE, labels="short") {
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = as.data.frame(exprs(data$expressionset))
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        hpgl_df = df
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    hpgl_df = as.data.frame(hpgl_df)
-    sample_data = hpgl_df[,c(1,2)]
+
+    sample_data = data[,c(1,2)]
     ## This is bizarre, performing this operation with transform fails when called from a function
     ## but works fine when called interactively, wtf indeed?
     ##    sample_data = transform(sample_data, mean=rowMeans(hpgl_df))
-    means = rowMeans(hpgl_df)
+    means = rowMeans(data)
     sample_data$mean=means
     logs = list()
     ratios = list()
     means = list()
-    comparisons = length(colnames(hpgl_df))
+    comparisons = length(colnames(data))
     row_columns = ceiling(sqrt(comparisons))
-    rows = nrow(hpgl_df)
+    rows = nrow(data)
     ## I want to make a square containing the graphs.
     count = 1
     for (i in 1:comparisons) {
-        ith = colnames(hpgl_df)[i]
+        ith = colnames(data)[i]
         if (verbose) {
             message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
         }
-        tmpdf = data.frame(ith=hpgl_df[,i], mean=sample_data$mean)
+        tmpdf = data.frame(ith=data[,i], mean=sample_data$mean)
         colnames(tmpdf) = c(ith, "mean")
-        tmpqq = hpgl_qq_plot(df=tmpdf, x=1, y=2, labels=labels)
+        tmpqq = hpgl_qq_plot(tmpdf, x=1, y=2, labels=labels)
         logs[[count]] = tmpqq$log
         ratios[[count]] = tmpqq$ratio
         means[[count]] = tmpqq$summary[['Median']]
@@ -451,20 +473,26 @@ hpgl_qq_all = function(df=NULL, expt=NULL, verbose=FALSE, labels="short") {
 #'
 #' @return a list of the logs, ratios, and mean between the plots as ggplots.
 #' @export
-hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
+hpgl_qq_plot = function(data, x=1, y=2, labels=TRUE) {
     hpgl_env = environment()
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(df)) {
-        hpgl_df = exprs(expt$expressionset)
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = as.data.frame(exprs(data$expressionset))
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        hpgl_df = df
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    xlabel = colnames(hpgl_df)[x]
-    ylabel = colnames(hpgl_df)[y]
-    xvector = as.vector(hpgl_df[,x])
-    yvector = as.vector(hpgl_df[,y])
+
+    xlabel = colnames(data)[x]
+    ylabel = colnames(data)[y]
+    xvector = as.vector(data[,x])
+    yvector = as.vector(data[,y])
     sorted_x = sort(xvector)
     sorted_y = sort(yvector)
     vector_ratio = sorted_x / sorted_y
@@ -560,28 +588,34 @@ hpgl_qq_plot = function(df=NULL, expt=NULL, x=1, y=2, labels=TRUE) {
 #'
 #' @export
 hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    hpgl_df = NULL
-    if (is.null(df)) {
-        hpgl_df = exprs(expt$expressionset)
+    data_class = class(data)[1]
+    names = NULL
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        hpgl_df = df
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
+
     logs = list()
     ratios = list()
-    rows = length(colnames(hpgl_df))
+    rows = length(colnames(data))
     means = matrix(nrow=rows, ncol=rows)
     count = 1
     for (i in 1:rows) {
         for (j in 1:rows) {
-            ith = colnames(hpgl_df)[i]
-            jth = colnames(hpgl_df)[j]
+            ith = colnames(data)[i]
+            jth = colnames(data)[j]
             if (verbose) {
                 message(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
             }
-            tmp = hpgl_qq_plot(df=hpgl_df, x=i, y=j, labels=labels)
+            tmp = hpgl_qq_plot(data, x=i, y=j, labels=names)
             logs[[count]] = tmp$log
             ratios[[count]] = tmp$ratio
             means[i,j] = tmp$summary[['Mean']]
@@ -661,8 +695,8 @@ multiplot <- function(plots=NULL, file, cols=NULL, layout=NULL) {
 #' @examples
 #' ## corheat_plot = hpgl_corheat(expt=expt, method="robust")
 #' ## corheat_plot
-hpgl_corheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, row="batch", title=NULL, ...) {
-    hpgl_heatmap(df=df, colors=colors, design=design, expt=expt, method=method, names=names, type="correlation", row=row, title=title, ...)
+hpgl_corheat = function(data, colors=NULL, design=NULL, method="pearson", names=NULL, row="batch", title=NULL, ...) {
+    hpgl_heatmap(data, colors=colors, design=design, method=method, names=names, type="correlation", row=row, title=title, ...)
 }
 
 #' Make a heatmap.3 description of the similarity (euclildean distance) between samples.
@@ -681,63 +715,60 @@ hpgl_corheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pe
 #' @examples
 #' ## disheat_plot = hpgl_disheat(expt=expt, method="euclidean")
 #' ## disheat_plot
-hpgl_disheat = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="euclidean", names=NULL, row="batch", title=NULL, ...) {
-    hpgl_heatmap(df=df, colors=colors, design=design, expt=expt, method=method, names=names, type="distance", row=row, title=title, ...)
+hpgl_disheat = function(data, colors=NULL, design=NULL, method="euclidean", names=NULL, row="batch", title=NULL, ...) {
+    hpgl_heatmap(data, colors=colors, design=design, method=method, names=names, type="distance", row=row, title=title, ...)
 }
 
-hpgl_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
+hpgl_heatmap = function(data, colors=NULL, design=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
     hpgl_env = environment()
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(expt)) {
-        hpgl_design = design
-        hpgl_colors = colors
-        hpgl_df = df
-        hpgl_names = names
-    } else if (is.null(df)) {
-        hpgl_design = expt$design
-        hpgl_colors = expt$colors
-        hpgl_df = Biobase::exprs(expt$expressionset)
-        hpgl_names = expt$names
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    if (is.null(hpgl_colors)) {
-        tt = ncol(hpgl_df)
-        hpgl_colors = colorRampPalette(brewer.pal(tt,"Dark2"))(tt)
+
+    if (is.null(colors)) {
+        tt = ncol(data)
+        colors = colorRampPalette(brewer.pal(tt,"Dark2"))(tt)
     }
-    if (is.null(hpgl_names)) {
-        hpgl_names = colnames(hpgl_df)
+    if (is.null(names)) {
+        names = colnames(data)
     }
 
     if (type == "correlation") {
-        heatmap_data = hpgltools::hpgl_cor(hpgl_df, method=method)
+        heatmap_data = hpgltools::hpgl_cor(data, method=method)
         heatmap_colors = grDevices::colorRampPalette(brewer.pal(9, "OrRd"))(100)
     } else if (type == "distance") {
-        heatmap_data = as.matrix(dist(t(hpgl_df)), method=method)
+        heatmap_data = as.matrix(dist(t(data)), method=method)
         heatmap_colors = grDevices::colorRampPalette(brewer.pal(9, "GnBu"))(100)
     }
-    hpgl_colors = as.character(hpgl_colors)
+    colors = as.character(colors)
 
-    if (is.null(hpgl_design)) {
-        row_colors = rep("white", length(hpgl_colors))
-    } else if (length(as.integer(as.factor(as.data.frame(hpgl_design[ row ])[,1]))) >= 2) {
+    if (is.null(design)) {
+        row_colors = rep("white", length(colors))
+    } else if (length(as.integer(as.factor(as.data.frame(design[ row ])[,1]))) >= 2) {
 ##        row_colors = brewer.pal(12, "Set3")[as.integer(as.list(hpgl_design[ row ]))]
-        row_colors = RColorBrewer::brewer.pal(12, "Set3")[as.integer(as.factor(as.data.frame(hpgl_design[ row ])[,1]))]
+        row_colors = RColorBrewer::brewer.pal(12, "Set3")[as.integer(as.factor(as.data.frame(design[ row ])[,1]))]
     } else {
-        row_colors = rep("green", length(hpgl_design[ row ]))
+        row_colors = rep("green", length(design[ row ]))
     }
 
-    ## A temporary hack for the ribosome profiling paper
-    ## Correlation heatmaps shouldn't set the colormap for the moment.
+
     if (type == "correlation") {
-        hpgltools::heatmap.3(heatmap_data, keysize=2, labRow=hpgl_names,
-                  labCol=hpgl_names, ColSideColors=hpgl_colors, RowSideColors=row_colors,
+        hpgltools::heatmap.3(heatmap_data, keysize=2, labRow=names, ##col=heatmap_colors,  ## OrRd is slightly different than what we have now
+                  labCol=names, ColSideColors=colors, RowSideColors=row_colors,
                   margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
     } else {
-        hpgltools::heatmap.3(heatmap_data, keysize=2, labRow=hpgl_names, col=rev(heatmap_colors),
-                  labCol=hpgl_names, ColSideColors=hpgl_colors, RowSideColors=row_colors,
+        hpgltools::heatmap.3(heatmap_data, keysize=2, labRow=names, col=rev(heatmap_colors),
+                  labCol=names, ColSideColors=colors, RowSideColors=row_colors,
                   margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
     }
     hpgl_heatmap_plot = recordPlot()
@@ -757,37 +788,26 @@ hpgl_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pe
 #' \code{\link{heatmap.3}}, \code{\link{recordPlot}}
 #'
 #' @export
-hpgl_sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
+hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
     hpgl_env = environment()
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(expt)) {
-        hpgl_df = df
-        hpgl_design = design
-        if (is.null(colors)) {
-            hpgl_colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(hpgl_df)[2])
-        } else {
-            hpgl_colors = colors
-        }
-        hpgl_names = names
-    } else if (is.null(df)) {
-        hpgl_design = expt$design
-        hpgl_colors = expt$colors
-        hpgl_df = Biobase::exprs(expt$expressionset)
-        hpgl_names = expt$names
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-
     heatmap_colors = redgreen(75)
-    if (is.null(hpgl_names)) {
-        hpgl_names = colnames(hpgl_df)
+    if (is.null(names)) {
+        names = colnames(data)
     }
-
-    heatmap.3(hpgl_df, keysize=2, labRow=NA, col=heatmap_colors,
-                   labCol=hpgl_names, margins=c(12,8), trace="none", linewidth=0.5, main=title)
-
+    heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, labCol=names, margins=c(12,8), trace="none", linewidth=0.5, main=title)
     hpgl_heatmap_plot = recordPlot()
     return(hpgl_heatmap_plot)
 }
@@ -818,33 +838,30 @@ hpgl_sample_heatmap = function(df=NULL, colors=NULL, design=NULL, expt=NULL, met
 #' @export
 #' @examples
 #' ## smc_plot = hpgl_smc(expt=expt)
-hpgl_smc = function(df=NULL, colors=NULL, expt=NULL, method="pearson", names=NULL, title=NULL, ...) {
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(expt)) {
-        hpgl_colors = colors
-        hpgl_df = df
-    } else if (is.null(df)) {
-        hpgl_colors = expt$colors
-        hpgl_df = Biobase::exprs(expt$expressionset)
+hpgl_smc = function(data, colors=NULL, method="pearson", names=NULL, title=NULL, ...) {
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    if (is.null(expt$names)) {
-        if (is.null(names)) {
-            hpgl_names = colnames(hpgl_df)
-        } else {
-            hpgl_names = names
-        }
-    } else {
-        hpgl_names = expt$names
+
+    if (is.null(names)) {
+        names = colnames(data)
     }
-    if (is.null(hpgl_colors)) {
-        hpgl_colors = colorRampPalette(brewer.pal(ncol(fun),"Dark2"))(ncol(fun))
+
+    if (is.null(colors)) {
+        colors = colorRampPalette(brewer.pal(ncol(data),"Dark2"))(ncol(data))
     }
-    hpgl_colors = as.character(hpgl_colors)
-    correlations = hpgl_cor(hpgl_df, method=method)
+    colors = as.character(colors)
+    correlations = hpgl_cor(data, method=method)
     cor_median = matrixStats::rowMedians(correlations)
     cor_spread = stats::quantile(cor_median, p=c(1,3)/4)
     cor_iqr = diff(cor_spread)
@@ -852,11 +869,12 @@ hpgl_smc = function(df=NULL, colors=NULL, expt=NULL, method="pearson", names=NUL
     ylimit = c(pmin(min(cor_median), outer_limit), max(cor_median))
     plot(cor_median, xaxt="n", ylim=ylimit,
          xlab="", main="", ylab="Median pairwise correlation",
-         col=hpgl_colors, pch=16, cex=1.5)
+         ## col=hpgl_colors, pch=16, cex=1.5)
+         bg=colors, col="black", pch=21, cex=1.5)
     title(title)
-    axis(side=1, at=seq(along=cor_median), labels=hpgl_names, las=2)
+    axis(side=1, at=seq(along=cor_median), labels=names, las=2)
     abline(h=outer_limit, lty=2)
-    abline(v=1:length(hpgl_names), lty=3, col="black")
+    abline(v=1:length(names), lty=3, col="black")
     hpgl_smc_plot = recordPlot()
     return(hpgl_smc_plot)
 }
@@ -882,33 +900,29 @@ hpgl_smc = function(df=NULL, colors=NULL, expt=NULL, method="pearson", names=NUL
 #' @export
 #' @examples
 #' ## smd_plot = hpgl_smd(expt=expt)
-hpgl_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclidean", title=NULL, ...) {
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(expt)) {
-        hpgl_colors = colors
-        hpgl_df = df
-    } else if (is.null(df)) {
-        hpgl_colors = expt$colors
-        hpgl_df = Biobase::exprs(expt$expressionset)
+hpgl_smd = function(data, colors=NULL, names=NULL, method="euclidean", title=NULL, ...) {
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    if (is.null(expt$names)) {
-        if (is.null(names)) {
-            hpgl_names = colnames(hpgl_df)
-        } else {
-            hpgl_names = names
-        }
-    } else {
-        hpgl_names = expt$names
+
+    if (is.null(names)) {
+        names = colnames(data)
     }
-    if (is.null(hpgl_colors)) {
-        hpgl_colors = colorRampPalette(brewer.pal(ncol(fun),"Dark2"))(ncol(fun))
+    if (is.null(colors)) {
+        colors = colorRampPalette(brewer.pal(ncol(data),"Dark2"))(ncol(data))
     }
-    hpgl_colors = as.character(hpgl_colors)
-    dists = as.matrix(dist(t(hpgl_df)), method=method)
+    colors = as.character(colors)
+    dists = as.matrix(dist(t(data)), method=method)
     dist_median = matrixStats::rowMedians(dists)
     dist_spread = stats::quantile(dist_median, p=c(1,3)/4)
     dist_iqr = diff(dist_spread)
@@ -917,11 +931,12 @@ hpgl_smd = function(expt=NULL, df=NULL, colors=NULL, names=NULL, method="euclide
     ylimit = c(min(dist_median), pmax(max(dist_median), outer_limit))
     plot(dist_median, xaxt="n", ylim=ylimit,
          xlab="", main="", ylab="Median pairwise distance",
-         col=hpgl_colors, pch=16, cex=1.5)
+         ## col=hpgl_colors, pch=16, cex=1.5)
+         bg=colors, col="black", pch=21, cex=1.5)
     title(title)
-    axis(side=1, at=seq(along=dist_median), labels=hpgl_names, las=2)
+    axis(side=1, at=seq(along=dist_median), labels=names, las=2)
     abline(h=outer_limit, lty=2)
-    abline(v=1:length(hpgl_names), lty=3, col="black")
+    abline(v=1:length(names), lty=3, col="black")
     hpgl_smd_plot = recordPlot()
     return(hpgl_smd_plot)
 }
@@ -1325,30 +1340,28 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
 #'
 #' @return a density plot!
 #' @export
-hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, position="identity", fill=NULL, title=NULL) {
+hpgl_density_plot = function(data, colors=NULL, names=NULL, position="identity", fill=NULL, title=NULL) {
     hpgl_env = environment()
-    message("This plot looks neat if you do position='fill' or position='stack'")
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df.")
-    }
-    if (is.null(expt)) {
-        hpgl_colors = colors
-        hpgl_df = df
-        hpgl_names = names
-    } else if (is.null(df)) {
-        hpgl_colors = expt$colors
-        hpgl_df = Biobase::exprs(expt$expressionset)
-        hpgl_names = expt$names
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both expt and df are defined, please choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
-    if (!is.null(hpgl_names)) {
-        colnames(hpgl_df) = make.names(hpgl_names, unique=TRUE)
+    if (!is.null(names)) {
+        colnames(data) = make.names(names, unique=TRUE)
     }
     ## If the columns lose the connectivity between the sample and values, then
     ## the ggplot below will fail with env missing.
-    melted = reshape::melt(as.matrix(hpgl_df))
+    melted = reshape2::melt(data)
     if (dim(melted)[2] == 3) {
         colnames(melted) = c("id", "sample", "counts")
     } else if (dim(melted)[2] == 2) {
@@ -1356,9 +1369,9 @@ hpgl_density_plot = function(df=NULL, colors=NULL, expt=NULL, names=NULL, positi
     } else {
         stop("Could not properly melt the data.")
     }
-    colors = factor(hpgl_colors)
-    if (is.null(hpgl_colors)) {
-        hpgl_colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(hpgl_df)[2])
+    colors = factor(colors)
+    if (is.null(colors)) {
+        colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(data)[2])
     }
     if (!is.null(fill)) {
         fill = "sample"
@@ -1923,8 +1936,21 @@ heatmap.3 = function (x, Rowv = TRUE, Colv = if (symm) "Rowv" else TRUE,
 #'
 #' @return a plot! of the BCV a la ggplot2
 #' @export
-hpgl_plot_bcv = function(expt) {
-    data = exprs(expt$expressionset)^2
+hpgl_plot_bcv = function(data) {
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    } else {
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    }
+
     data = DGEList(counts=data)
     edisp = estimateDisp(data)
     avg_log_cpm = edisp$AveLogCPM

@@ -8,8 +8,6 @@ graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
   title_suffix = NULL, scale = "raw", sink = FALSE, ...)
 }
 \arguments{
-\item{expt}{an expt experiment containing the data, design, and colors}
-
 \item{cormethod}{define the correlation test for heatmaps.
 Defaults to pearson (Available: pearson, spearman, kendal, robust)}
 
@@ -17,6 +15,8 @@ Defaults to pearson (Available: pearson, spearman, kendal, robust)}
 Defaults to euclidean (Lots are available, I don't understand them.)}
 
 \item{...}{extra parameters optionally fed to the various plots}
+
+\item{data}{an expt/df/exprs experiment containing the data, design, and colors}
 
 \item{norm_type}{normalization strategy for the data.  Defaults to
 quantile.}

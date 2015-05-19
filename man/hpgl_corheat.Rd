@@ -4,19 +4,19 @@
 \alias{hpgl_corheat}
 \title{Make a heatmap.3 description of the correlation between samples.}
 \usage{
-hpgl_corheat(df = NULL, colors = NULL, design = NULL, expt = NULL,
-  method = "pearson", names = NULL, row = "batch", title = NULL, ...)
+hpgl_corheat(data, colors = NULL, design = NULL, method = "pearson",
+  names = NULL, row = "batch", title = NULL, ...)
 }
 \arguments{
-\item{df}{alternately a data frame which must be accompanied by}
-
 \item{colors}{a color scheme}
 
 \item{design}{a design matrix and}
 
+\item{method}{correlation statistic to use.  Defaults to pearson.}
+
 \item{expt}{an expt set of samples}
 
-\item{method}{correlation statistic to use.  Defaults to pearson.}
+\item{df}{alternately a data frame which must be accompanied by}
 }
 \value{
 corheat_plot a gplots heatmap describing how the samples

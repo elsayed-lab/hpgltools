@@ -4,19 +4,19 @@
 \alias{hpgl_disheat}
 \title{Make a heatmap.3 description of the similarity (euclildean distance) between samples.}
 \usage{
-hpgl_disheat(df = NULL, colors = NULL, design = NULL, expt = NULL,
-  method = "euclidean", names = NULL, row = "batch", title = NULL, ...)
+hpgl_disheat(data, colors = NULL, design = NULL, method = "euclidean",
+  names = NULL, row = "batch", title = NULL, ...)
 }
 \arguments{
-\item{df}{alternately a data frame which must be accompanied by}
-
 \item{colors}{a color scheme}
 
 \item{design}{a design matrix and}
 
+\item{method}{correlation statistic to use.  Defaults to euclidean.}
+
 \item{expt}{an expt set of samples}
 
-\item{method}{correlation statistic to use.  Defaults to euclidean.}
+\item{df}{alternately a data frame which must be accompanied by}
 }
 \value{
 a recordPlot() heatmap describing the distance between samples.

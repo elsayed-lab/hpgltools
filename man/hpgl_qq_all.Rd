@@ -4,14 +4,14 @@
 \alias{hpgl_qq_all}
 \title{quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)}
 \usage{
-hpgl_qq_all(df = NULL, expt = NULL, verbose = FALSE, labels = "short")
+hpgl_qq_all(data, verbose = FALSE, labels = "short")
 }
 \arguments{
+\item{verbose}{be chatty while running?}
+
 \item{df}{the counts}
 
 \item{expt}{or the expt class}
-
-\item{verbose}{be chatty while running?}
 
 \item{against}{either the mean of all samples, or a sample dataset generated on the fly}
 

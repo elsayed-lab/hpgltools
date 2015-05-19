@@ -4,19 +4,19 @@
 \alias{hpgl_smd}
 \title{Make an R plot of the standard median distance among samples}
 \usage{
-hpgl_smd(expt = NULL, df = NULL, colors = NULL, names = NULL,
-  method = "euclidean", title = NULL, ...)
+hpgl_smd(data, colors = NULL, names = NULL, method = "euclidean",
+  title = NULL, ...)
 }
 \arguments{
-\item{expt}{an expt set of samples}
-
-\item{df}{alternately a data frame which must be accompanied by}
-
 \item{colors}{a color scheme}
 
 \item{names}{use pretty names for the samples?}
 
 \item{method}{a distance metric to use.  Defaults to euclidean.}
+
+\item{expt}{an expt set of samples}
+
+\item{df}{alternately a data frame which must be accompanied by}
 
 \item{design}{a design matrix and}
 }

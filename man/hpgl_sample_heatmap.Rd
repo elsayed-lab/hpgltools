@@ -4,20 +4,20 @@
 \alias{hpgl_sample_heatmap}
 \title{Make a heatmap.3 description of the similarity of the genes among samples.}
 \usage{
-hpgl_sample_heatmap(df = NULL, colors = NULL, design = NULL,
-  expt = NULL, method = "pearson", names = NULL, type = "correlation",
-  row = "batch", title = NULL, ...)
+hpgl_sample_heatmap(data, colors = NULL, design = NULL,
+  method = "pearson", names = NULL, type = "correlation", row = "batch",
+  title = NULL, ...)
 }
 \arguments{
-\item{df}{alternately a data frame which must be accompanied by}
-
 \item{colors}{a color scheme}
 
 \item{design}{a design matrix and}
 
+\item{method}{correlation statistic to use.  Defaults to euclidean.}
+
 \item{expt}{an expt set of samples}
 
-\item{method}{correlation statistic to use.  Defaults to euclidean.}
+\item{df}{alternately a data frame which must be accompanied by}
 }
 \value{
 a recordPlot() heatmap describing the samples.
