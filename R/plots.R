@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 19 13:55:51 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 19 14:17:09 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
