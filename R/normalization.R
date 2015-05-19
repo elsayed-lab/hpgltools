@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May 18 18:32:52 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 19 14:16:16 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -413,30 +413,27 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
 #' ## df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
 #' ## count_table = df_ql2rpkm$counts
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm|cbcbcpm
-hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
+hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
     lowfilter_performed = FALSE
     norm_performed = "raw"
     convert_performed = "raw"
     transform_performed = "raw"
     batch_performed = "raw"
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(expt)) {
-        if (verbose) {
-            print("expt is null, using df and design.")
-        }
-        count_table = df
-        expt_design = design
-        column_data = colnames(count_table)
-    } else if (is.null(df)) {
-        count_table = as.matrix(exprs(expt$expressionset))
-        expt_design = expt$design
-        column_data = expt$columns
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-
+    column_data = colnames(data)
+    count_table = as.matrix(data)
+    expt_design = design
     raw_libsize = colSums(count_table)
     original_counts = list(libsize=raw_libsize, counts=count_table)
 

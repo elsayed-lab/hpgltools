@@ -4,19 +4,19 @@
 \alias{hpgl_pca}
 \title{Make a ggplot PCA plot describing the samples' clustering}
 \usage{
-hpgl_pca(df = NULL, colors = NULL, design = NULL, expt = NULL,
-  shapes = "batch", title = NULL, labels = NULL, size = 3, ...)
+hpgl_pca(data, colors = NULL, design = NULL, title = NULL,
+  labels = NULL, size = 3, ...)
 }
 \arguments{
-\item{df}{alternately a data frame which must be accompanied by}
-
 \item{colors}{a color scheme}
 
 \item{design}{a design matrix and}
 
+\item{labels}{add labels?  Also, what type?  FALSE, "default", or "fancy"}
+
 \item{expt}{an expt set of samples}
 
-\item{labels}{add labels?  Also, what type?  FALSE, "default", or "fancy"}
+\item{df}{alternately a data frame which must be accompanied by}
 
 \item{method}{a correlation method to use.  Defaults to pearson.}
 

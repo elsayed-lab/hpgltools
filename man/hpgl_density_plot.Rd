@@ -4,19 +4,19 @@
 \alias{hpgl_density_plot}
 \title{Density plots!}
 \usage{
-hpgl_density_plot(df = NULL, colors = NULL, expt = NULL, names = NULL,
+hpgl_density_plot(data, colors = NULL, names = NULL,
   position = "identity", fill = NULL, title = NULL)
 }
 \arguments{
-\item{df}{a data frame to look at}
-
-\item{expt}{or an expt class!}
-
 \item{names}{names of the samples}
 
 \item{position}{stack or identity}
 
 \item{fill}{NULL, but otherwise it fills in the colors for the rainbow coalition!}
+
+\item{df}{a data frame to look at}
+
+\item{expt}{or an expt class!}
 }
 \value{
 a density plot!

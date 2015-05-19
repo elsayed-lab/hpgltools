@@ -4,7 +4,7 @@
 \alias{hpgl_qq_plot}
 \title{Perform a qqplot between two columns of a matrix}
 \usage{
-hpgl_qq_plot(df = NULL, expt = NULL, x = 1, y = 2, labels = TRUE)
+hpgl_qq_plot(data, x = 1, y = 2, labels = TRUE)
 }
 \arguments{
 \item{x}{the first column}

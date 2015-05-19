@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May 18 17:52:53 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 19 13:51:27 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a ggplot PCA plot describing the samples' clustering
 #'
@@ -24,48 +24,58 @@
 #' @examples
 #' ## pca_plot = hpgl_pca(expt=expt)
 #' ## pca_plot
-hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch", title=NULL, labels=NULL, size=3, ...) {
+hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, size=3, ...) {
     hpgl_env = environment()
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors.")
-    }
-    if (is.null(expt)) {
-        hpgl_design = design
-        hpgl_df = df
-    } else if (is.null(df)) {
-        hpgl_design = expt$design
-        hpgl_df = Biobase::exprs(expt$expressionset)
-        colors = expt$color
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        names = data$names
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, that is confusing.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    if (is.null(expt$names)) {
-        hpgl_labels = colnames(hpgl_df)
-    } else {
-        hpgl_labels = expt$names
+
+    if (is.null(labels)) {
+        if (is.null(names)) {
+            labels = colnames(data)
+        } else {
+            labels = names
+        }
+    } else if (labels[1] == 'boring') {
+        if (is.null(names)) {
+            labels = colnames(data)
+        } else {
+            labels = names
+        }
     }
-    pca = hpgltools::makeSVD(hpgl_df)  ## This is a part of cbcbSEQ
-    if (length(levels(hpgl_design$batch)) == 1) {
-        pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition)
+
+    pca = hpgltools::makeSVD(data)  ## This is a part of cbcbSEQ
+    if (length(levels(design$batch)) == 1) {
+        pca_res = cbcbSEQ::pcRes(pca$v, pca$d, design$condition)
     } else {
-        pca_res = cbcbSEQ::pcRes(pca$v, pca$d, hpgl_design$condition, hpgl_design$batch)
+        pca_res = cbcbSEQ::pcRes(pca$v, pca$d, design$condition, design$batch)
     }
     pca_variance = round((pca$d ^ 2) / sum(pca$d ^ 2) * 100, 2)
     xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
     if (is.null(colors)) {
-        colors = as.numeric(levels(hpgl_design$condition))
+        colors = as.numeric(levels(design$condition))
     }
 
-    pca_data = data.frame(SampleID=hpgl_labels,
-        condition=hpgl_design$condition,
-        batch=hpgl_design$batch,
-        batch_int = as.integer(hpgl_design$batch),
+    pca_data = data.frame(SampleID=labels,
+        condition=design$condition,
+        batch=design$batch,
+        batch_int = as.integer(design$batch),
         PC1=pca$v[,1],
         PC2=pca$v[,2],
         colors=colors)
 
-    num_batches = length(levels(hpgl_design$batch))
+    num_batches = length(levels(design$batch))
     pca_plot = NULL
     if (num_batches <= 5) {
         pca_plot = pca_plot_smallbatch(pca_data)
@@ -73,11 +83,12 @@ hpgl_pca = function(df=NULL, colors=NULL, design=NULL, expt=NULL, shapes="batch"
         pca_plot = pca_plot_largebatch(pca_data)
     }
     pca_plot = pca_plot + xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
+    print(labels)
     if (!is.null(labels)) {
         if (labels[[1]] == "fancy") {
             pca_plot = pca_plot + directlabels::geom_dl(aes(label=SampleID), method="smart.grid")
         } else if (labels[[1]] == "normal") {
-            pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=paste(hpgl_design$condition, hpgl_design$batch, sep="_")), angle=45, size=4, vjust=2)
+            pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=paste(design$condition, design$batch, sep="_")), angle=45, size=4, vjust=2)
         } else {
             pca_plot = pca_plot + geom_text(aes(x=PC1, y=PC2, label=labels), angle=45, size=4, vjust=2)
         }
@@ -108,7 +119,6 @@ pca_plot_largebatch = function(df) {
 ## 5 or fewer batches
 pca_plot_smallbatch = function(df) {
     env = environment()
-    print(df)
     plot = ggplot(df, aes(PC1, PC2)) +
         geom_point(size=3, aes(shape=factor(batch), fill=condition), colour='black') +
         scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
@@ -166,9 +176,9 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
     colors = levels(as.factor(unlist(design$color)))
     num_batches = length(levels(factor(design$batch)))
 
-    pca_plot = ggplot(data=as.data.frame(data), environment=hpgl_env, fill=factor(design$condiiton)) +
+    pca_plot = ggplot(data=as.data.frame(data), environment=hpgl_env, fill=factor(design$condititon)) +
         geom_point(aes(x=get(first), y=get(second), shape=batches, colour=data$colors), stat="identity", size=3) +
-        scale_color_manual(values=levels(factor(data$colors)), name="Condition") +
+        scale_color_manual(values=levels(factor(data$colors)), name="Condition", labels=levels(as.factor(design$condition))) +
         scale_shape_manual(values=batches, name="Batch", guide=guide_legend(override.aes=aes(size=1))) +
         ggtitle(title) +
         theme_bw() +

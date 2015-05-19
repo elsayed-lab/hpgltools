@@ -1,4 +1,4 @@
-library(testthat) 
+library(testthat)
 library(hpgltools)
 context("Test usability of EdgeR")
 autoloads_all()
