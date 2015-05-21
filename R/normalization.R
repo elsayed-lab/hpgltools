@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 19 14:16:16 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed May 20 14:50:16 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -171,7 +171,7 @@ lowfilter_counts = function(count_table, thresh=2, min_samples=2, verbose=FALSE)
 #' @export
 #' @examples
 #' ## filtered_table = genefilter_pofa_counts(count_table)
-genefilter_pofa_counts = function(count_table, p=0.01, A=100, verbose=FALSE) {
+genefilter_pofa_counts = function(count_table, p=0.01, A=100, verbose=TRUE) {
     ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
     num_before = nrow(count_table)
 
@@ -183,9 +183,9 @@ genefilter_pofa_counts = function(count_table, p=0.01, A=100, verbose=FALSE) {
     answer = genefilter(count_table, filter_list)
     count_table = count_table[answer,]
 
-    if (verbose) {
-        print(sprintf("Removing %d low-count genes (%d remaining).",
-                      num_before - nrow(counts), nrow(counts)))
+    if (isTRUE(verbose)) {
+        removed = num_before - nrow(count_table)
+        print(paste0("Removing ", removed, " low-count genes (", nrow(count_table), " remaining)."))
     }
     libsize = colSums(count_table)
     counts = list(count_table=count_table, libsize=libsize)
@@ -361,7 +361,7 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)
     design = expt$design
-    normalized = hpgl_norm(df=old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch1=batch1, batch2=batch2, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max)
+    normalized = hpgl_norm(old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch1=batch1, batch2=batch2, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max)
     final_normalized = normalized$final_counts
     libsizes = final_normalized$libsize
     normalized_data = as.matrix(final_normalized$count_table)

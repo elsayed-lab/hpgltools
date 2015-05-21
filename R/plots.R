@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 19 14:17:09 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed May 20 17:07:47 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -1139,6 +1139,7 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
     colnames(df) = c("first","second")
     linear_model = robustbase::lmrob(formula=second ~ first, data=df, method="SMDM")
     linear_model_summary = summary(linear_model)
+    linear_model_rsq = linear_model_summary$r.squared
     linear_model_weights = stats::weights(linear_model, type="robustness", na.action=NULL)
     linear_model_intercept = stats::coef(linear_model_summary)[1]
     linear_model_slope = stats::coef(linear_model_summary)[2]
@@ -1189,6 +1190,7 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
         lm_model=linear_model,
         lm_summary=linear_model_summary,
         lm_weights=linear_model_weights,
+        lm_rsq=linear_model_rsq,
         first_median=first_median,
         first_mad=first_mad,
         second_median=second_median,
@@ -1340,7 +1342,7 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
 #'
 #' @return a density plot!
 #' @export
-hpgl_density_plot = function(data, colors=NULL, names=NULL, position="identity", fill=NULL, title=NULL) {
+hpgl_density_plot = function(data, colors=NULL, names=NULL, position="identity", fill=NULL, title=NULL, log=FALSE) {
     hpgl_env = environment()
     data_class = class(data)[1]
     if (data_class == 'expt') {
@@ -1382,6 +1384,9 @@ hpgl_density_plot = function(data, colors=NULL, names=NULL, position="identity",
         theme(legend.key.size=unit(0.3, "cm"))
     if (!is.null(title)) {
         densityplot = densityplot + ggplot2::ggtitle(title)
+    }
+    if (isTRUE(log)) {
+        densityplot = densityplot + scale_x_log10()
     }
     return(densityplot)
 }
