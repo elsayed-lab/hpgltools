@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:42:18 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 19 14:54:30 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
@@ -65,14 +65,17 @@ autoloads_genome = function(...) {
 
 autoloads_elsayedlab = function(...) {
     require.auto("BSgenome.Lmajor.friedlin", "elsayed-lab/BSgenome.Lmajor.friedlin")
-    require.auto("TxDb.TcruziCLBrener.tritryp24.genes", "elsayed-lab/TxDb.TcruziCLBrener.tritryp24.genes")
-    require.auto("org.TcCLB.tritryp.db", "elsayed-lab/org.TcCLB.tritryp.db")
-    require.auto("Trypanosoma.cruzi.CLBrener", "elsayed-lab/Trypanosoma.cruzi.CLBrener")
-    require.auto("Trypanosoma.cruzi.CLBrener.Esmeraldo", "elsayed-lab/Trypanosoma.cruzi.CLBrener.Esmeraldo")
+    require.auto("BSgenome.Tcruzi.clbrener", "elsayed-lab/BSgenome.Tcruzi.clbrener")
+    require.auto("BSgenome.Tcruzi.esmeraldo", "elsayed-lab/BSgenome.Tcruzi.esmeraldo")
+    require.auto("BSgenome.Tcruzi.nonesmeraldo", "elsayed-lab/BSgenome.Tcruzi.nonesmeraldo")
     require.auto("org.TcCLB.nonesmer.tritryp.db", "elsayed-lab/org.TcCLB.nonesmer.tritryp.db")
     require.auto("org.TcCLB.esmer.tritryp.db", "elsayed-lab/org.TcCLB.esmer.tritryp.db")
+    require.auto("org.TcCLB.tritryp.db", "elsayed-lab/org.TcCLB.tritryp.db")
     require.auto("org.LmjF.tritryp.db", "elsayed-lab/org.LmjF.tritryp.db")
+    require.auto("Trypanosoma.cruzi.CLBrener", "elsayed-lab/Trypanosoma.cruzi.CLBrener")
+    require.auto("Trypanosoma.cruzi.CLBrener.Esmeraldo", "elsayed-lab/Trypanosoma.cruzi.CLBrener.Esmeraldo")
     require.auto("Leishmania.major.Friedlin", "elsayed-lab/Leishmania.major.Friedlin")
+    require.auto("TxDb.TcruziCLBrener.tritryp24.genes", "elsayed-lab/TxDb.TcruziCLBrener.tritryp24.genes")
     require.auto("TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes", "elsayed-lab/TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes")
     require.auto("TxDb.TcruziCLBrenerEsmer.tritryp9.genes", "elsayed-lab/TxDb.TcruziCLBrenerEsmer.tritryp9.genes")
     require.auto("TxDb.LmajorFriedlin.tritryp9.genes", "elsayed-lab/TxDb.LmajorFriedlin.tritryp9.genes")

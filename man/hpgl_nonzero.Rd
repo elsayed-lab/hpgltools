@@ -5,12 +5,10 @@
 \title{Make a ggplot graph of the number of non-zero genes by sample.
 Made by Ramzi Temanni <temanni at umd dot edu>}
 \usage{
-hpgl_nonzero(df = NULL, design = NULL, colors = NULL, expt = NULL,
+hpgl_nonzero(data, design = NULL, colors = NULL, expt = NULL,
   labels = NULL, title = NULL, ...)
 }
 \arguments{
-\item{df}{alternately a data frame which must be accompanied by}
-
 \item{design}{a design matrix and}
 
 \item{colors}{a color scheme}
@@ -22,6 +20,8 @@ hpgl_nonzero(df = NULL, design = NULL, colors = NULL, expt = NULL,
 anything else will just stick them on a 45' offset next to the graphed point}
 
 \item{title}{titles are nice, don't you think?}
+
+\item{df}{alternately a data frame which must be accompanied by}
 }
 \value{
 a ggplot2 plot of the number of non-zero genes with respect to each library's CPM

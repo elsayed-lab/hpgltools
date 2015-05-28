@@ -1,4 +1,4 @@
-library(testthat) 
+library(testthat)
 library(hpgltools)
 context("Test hpgltools and cbcbSEQ")
 
@@ -41,7 +41,7 @@ test_that("Does data from an expt equal a raw dataframe?", {
 ## Check that normalization tools work similarly
 message("Testing quantile raw normalization.")
 cbcb_quantile = cbcbSEQ::qNorm(cbcb_data)
-hpgl_quantile_data = hpgl_norm(expt=pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE, verbose=TRUE)
+hpgl_quantile_data = hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE, verbose=TRUE)
 hpgl_quantile = hpgl_quantile_data$final_counts$count_table
 test_that("Are the quantile normalizations identical?", {
     expect_equal(cbcb_quantile, hpgl_quantile)
@@ -51,7 +51,7 @@ test_that("Are the quantile normalizations identical?", {
 message("Testing quantile(cpm()) normalization using edgeR's cpm().")
 cbcb_qcpm = qNorm(cbcb_data)
 cbcb_qcpm = edgeR::cpm(cbcb_qcpm)
-hpgl_qcpm = hpgl_norm(expt=pasilla_expt, norm="quant", convert="edgecpm", filter_low=FALSE, verbose=TRUE)
+hpgl_qcpm = hpgl_norm(pasilla_expt, norm="quant", convert="edgecpm", filter_low=FALSE, verbose=TRUE)
 hpgl_qcpm = hpgl_qcpm$final_counts$count_table
 test_that("Are cpm conversions identical?", {
     expect_equal(cbcb_qcpm, hpgl_qcpm)
@@ -61,9 +61,9 @@ test_that("Are cpm conversions identical?", {
 message("Testing log2(quantile(cpm())) normalization using the cpm from voom()")
 cbcb_l2qcpm_data = log2CPM(cbcb_quantile)
 cbcb_l2qcpm = cbcb_l2qcpm_data$y
-hpgl_l2qcpm_data = hpgl_norm(expt=pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE, verbose=TRUE)
+hpgl_l2qcpm_data = hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE, verbose=TRUE)
 hpgl_l2qcpm = hpgl_l2qcpm_data$final_counts$count_table
-hpgl_l2qcpm_expt = normalize_expt(expt=pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE)
+hpgl_l2qcpm_expt = normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE)
 hpgl_l2qcpm2 = exprs(hpgl_l2qcpm_expt$expressionset)
 test_that("Are l2qcpm conversions/transformations identical using two codepaths?", {
     expect_equal(cbcb_l2qcpm, hpgl_l2qcpm)
@@ -73,7 +73,7 @@ test_that("Are l2qcpm conversions/transformations identical using two codepaths?
 ## Check that PCA invocations are similar
 message("Testing PCA invocations.")
 cbcb_svd = cbcbSEQ::makeSVD(cbcb_l2qcpm)
-hpgl_pca_info = hpgl_pca(expt=hpgl_l2qcpm_expt)
+hpgl_pca_info = hpgl_pca(hpgl_l2qcpm_expt)
 hpgl_svd = hpgl_pca_info$pca
 cbcb_res = cbcbSEQ::pcRes(cbcb_svd$v, cbcb_svd$d, design$condition, design$libType)
 hpgl_res = hpgl_pca_info$res
@@ -86,7 +86,7 @@ test_that("Do the PCA invocations provide the same results?", {
 ## invocation of batch correction
 message("Testing batch correction results using modified combat.")
 cbcb_batch = cbcbSEQ::combatMod(cbcb_l2qcpm, batch=design$libType, mod=design$condition, noScale=TRUE)
-hpgl_batch_expt = normalize_expt(expt=pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", filter_low=FALSE)
+hpgl_batch_expt = normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", filter_low=FALSE)
 hpgl_batch = exprs(hpgl_batch_expt$expressionset)
 test_that("Does combat batch correction end in the same dataframe?", {
     expect_equal(cbcb_batch, hpgl_batch)

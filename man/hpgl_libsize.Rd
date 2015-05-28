@@ -4,17 +4,17 @@
 \alias{hpgl_libsize}
 \title{Make a ggplot graph of library sizes.}
 \usage{
-hpgl_libsize(df = NULL, colors = NULL, expt = NULL, scale = TRUE,
-  names = NULL, title = NULL, text = TRUE, ...)
+hpgl_libsize(data, colors = NULL, scale = TRUE, names = NULL,
+  title = NULL, text = TRUE, ...)
 }
 \arguments{
-\item{df}{alternately a data frame which must be accompanied by}
-
 \item{colors}{a color scheme}
+
+\item{scale}{whether or not to log10 the y-axis}
 
 \item{expt}{an expt set of samples}
 
-\item{scale}{whether or not to log10 the y-axis}
+\item{df}{alternately a data frame which must be accompanied by}
 
 \item{design}{a design matrix and}
 }

@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:38:28 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed May 20 14:50:16 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -171,7 +171,7 @@ lowfilter_counts = function(count_table, thresh=2, min_samples=2, verbose=FALSE)
 #' @export
 #' @examples
 #' ## filtered_table = genefilter_pofa_counts(count_table)
-genefilter_pofa_counts = function(count_table, p=0.01, A=100, verbose=FALSE) {
+genefilter_pofa_counts = function(count_table, p=0.01, A=100, verbose=TRUE) {
     ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
     num_before = nrow(count_table)
 
@@ -183,9 +183,9 @@ genefilter_pofa_counts = function(count_table, p=0.01, A=100, verbose=FALSE) {
     answer = genefilter(count_table, filter_list)
     count_table = count_table[answer,]
 
-    if (verbose) {
-        print(sprintf("Removing %d low-count genes (%d remaining).",
-                      num_before - nrow(counts), nrow(counts)))
+    if (isTRUE(verbose)) {
+        removed = num_before - nrow(count_table)
+        print(paste0("Removing ", removed, " low-count genes (", nrow(count_table), " remaining)."))
     }
     libsize = colSums(count_table)
     counts = list(count_table=count_table, libsize=libsize)
@@ -361,7 +361,7 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)
     design = expt$design
-    normalized = hpgl_norm(df=old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch1=batch1, batch2=batch2, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max)
+    normalized = hpgl_norm(old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch1=batch1, batch2=batch2, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max)
     final_normalized = normalized$final_counts
     libsizes = final_normalized$libsize
     normalized_data = as.matrix(final_normalized$count_table)
@@ -413,30 +413,27 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
 #' ## df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
 #' ## count_table = df_ql2rpkm$counts
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm|cbcbcpm
-hpgl_norm = function(df=NULL, expt=NULL, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
+hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
     lowfilter_performed = FALSE
     norm_performed = "raw"
     convert_performed = "raw"
     transform_performed = "raw"
     batch_performed = "raw"
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt object containing metadata; or a df, design, and colors")
-    }
-    if (is.null(expt)) {
-        if (verbose) {
-            print("expt is null, using df and design.")
-        }
-        count_table = df
-        expt_design = design
-        column_data = colnames(count_table)
-    } else if (is.null(df)) {
-        count_table = as.matrix(exprs(expt$expressionset))
-        expt_design = expt$design
-        column_data = expt$columns
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
-        stop("Both df and expt are defined, choose one.")
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-
+    column_data = colnames(data)
+    count_table = as.matrix(data)
+    expt_design = design
     raw_libsize = colSums(count_table)
     original_counts = list(libsize=raw_libsize, counts=count_table)
 
@@ -587,6 +584,39 @@ batch_counts = function(count_table, design, batch=batch, batch1=batch1, batch2=
         ## new_expt$mod_sv = mod_sv
         ## new_expt$fsva_result = fsva_result
         count_table = fsva_result$db
+    } else if (batch == "svaseq") {
+        batches = as.factor(design[, batch1])
+        conditions = as.factor(design[,"condition"])
+        df = data.frame(count_table)
+        mtrx = as.matrix(df)
+        conditional_model = model.matrix(~conditions, data=df)
+        null_model = conditional_model[,1]
+        num_surrogates = num.sv(mtrx, conditional_model)
+        svaseq_result = svaseq(mtrx, conditional_model, null_model, n.sv=num_surrogates)
+        plot(svaseq_result$sv, pch=19, col="blue")
+        ## The following was taken from: https://www.biostars.org/p/121489/
+        X = cbind(conditional_model, svaseq_result$sv)
+        Hat = solve(t(X) %*% X) %*% t(X)
+        beta = (Hat %*% t(mtrx))
+        P = ncol(conditional_model)
+        count_table = mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
+    } else if (batch == "ruvg") {
+        ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
+        cond = as.factor(conditions)
+        conditional_model = model.matrix(~conditions, data=df)
+        y = DGEList(counts=count_table, group=cond)
+        y = calcNormFactors(y, method="upperquartile")
+        y = estimateGLMCommonDisp(y, conditional_model)
+        y = estimateGLMTagwiseDisp(y, conditional_model)
+        fit = glmFit(y, conditional_model)
+        lrt = glmLRT(fit, coef=2)
+        controls = rank(lrt$table$LR) <= 400
+        batch_ruv_emp = RUVg(count_table, controls, k=1)$W
+        X = cbind(conditional_model, batch_ruv_emp)
+        Hat = solve(t(X) %*% X) %*% t(X)
+        beta = (Hat %*% t(mtrx))
+        P = ncol(conditional_model)
+        count_table = mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
     } else {
         print("Did not recognize the batch correction, leaving the table alone.")
         print("Recognized batch corrections include: 'limma', 'combatmod', 'sva'")
@@ -766,6 +796,7 @@ hpgl_qstats = function (exprs, groups, refType = "mean", groupLoc = "mean", wind
 }
 
 hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean", groupLoc="mean", window=99, verbose=FALSE, groupCol=NULL, plot=TRUE, ...) {
+    exprs = as.matrix(exprs)
     if (is.null(groups)) {
         print("Groups were not provided.  Performing a simple quantile normalization.")
         print("This is probably not what you actually want!")

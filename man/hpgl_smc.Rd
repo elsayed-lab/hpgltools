@@ -4,19 +4,19 @@
 \alias{hpgl_smc}
 \title{Make an R plot of the standard median correlation among samples}
 \usage{
-hpgl_smc(df = NULL, colors = NULL, expt = NULL, method = "pearson",
-  names = NULL, title = NULL, ...)
+hpgl_smc(data, colors = NULL, method = "pearson", names = NULL,
+  title = NULL, ...)
 }
 \arguments{
-\item{df}{alternately a data frame which must be accompanied by}
-
 \item{colors}{a color scheme}
-
-\item{expt}{an expt set of samples}
 
 \item{method}{a correlation method to use.  Defaults to pearson.}
 
 \item{names}{use pretty names for the samples?}
+
+\item{expt}{an expt set of samples}
+
+\item{df}{alternately a data frame which must be accompanied by}
 
 \item{design}{a design matrix and}
 }

@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:43:09 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 28 11:13:23 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -191,13 +191,42 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
 #' @return plots!
 #' @seealso \code{\link{goseq}} \code{\link{clusterProfiler}} \code{\link{pval_plot}}
 #' @export
-goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
+goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat=10, level=NULL) {
+    ## The following supports stuff like level='level > 3 & level < 6'
+        if (!is.null(level)) {
+        keepers = data.frame()
+        print("Getting all go levels.  This takes a moment.")
+        mf_go = golevel_df(ont="MF")
+        bp_go = golevel_df(ont="BP")
+        cc_go = golevel_df(ont="CC")
+        print("Finished getting go levels.")
+        if (class(level) == 'numeric') {
+            stmt = paste0("subset(mf_go, level == ", level, ")")
+            mf_go = eval(parse(text=stmt))
+            stmt = paste0("subset(bp_go, level == ", level, ")")
+            bp_go = eval(parse(text=stmt))
+            stmt = paste0("subset(cc_go, level == ", level, ")")
+            cc_go = eval(parse(text=stmt))
+        } else {
+            stmt = paste0("subset(mf_go, ", level, ")")
+            mf_go = eval(parse(text=stmt))
+            stmt = paste0("subset(bp_go, ", level, ")")
+            bp_go = eval(parse(text=stmt))
+            stmt = paste0("subset(cc_go, ", level, ")")
+            cc_go = eval(parse(text=stmt))
+        }
+        keepers = rbind(keepers, mf_go)
+        keepers = rbind(keepers, bp_go)
+        keepers = rbind(keepers, cc_go)
+        print("Extracting the goterms in your chosen level.")
+        goterms = merge(goterms, keepers, by.x="category", by.y="GO")
+    }
     plotting_mf = subset(goterms, complete.cases(goterms))
     plotting_mf$score = plotting_mf$numDEInCat / plotting_mf$numInCat
     plotting_mf = subset(plotting_mf, ontology == "MF")
     plotting_mf = subset(plotting_mf, term != "NULL")
-    plotting_mf = subset(plotting_mf, over_represented_pvalue <= 0.1)
-    plotting_mf = subset(plotting_mf, numInCat > 10)
+    plotting_mf = subset(plotting_mf, over_represented_pvalue <= cutoff)
+    plotting_mf = subset(plotting_mf, numInCat > mincat)
     plotting_mf = plotting_mf[order(plotting_mf$over_represented_pvalue),]
     plotting_mf = head(plotting_mf, n=n)
     plotting_mf = plotting_mf[,c("term","over_represented_pvalue","score")]
@@ -208,8 +237,8 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
     plotting_bp$score = plotting_bp$numDEInCat / plotting_bp$numInCat
     plotting_bp = subset(plotting_bp, ontology == "BP")
     plotting_bp = subset(plotting_bp, term != "NULL")
-    plotting_bp = subset(plotting_bp, over_represented_pvalue <= 0.1)
-    plotting_bp = subset(plotting_bp, numInCat > 10)
+    plotting_bp = subset(plotting_bp, over_represented_pvalue <= cutoff)
+    plotting_bp = subset(plotting_bp, numInCat > mincat)
     plotting_bp = plotting_bp[order(plotting_bp$over_represented_pvalue),]
     plotting_bp = head(plotting_bp, n=n)
     plotting_bp = plotting_bp[,c("term","over_represented_pvalue","score")]
@@ -220,8 +249,8 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10) {
     plotting_cc$score = plotting_cc$numDEInCat / plotting_cc$numInCat
     plotting_cc = subset(plotting_cc, ontology == "CC")
     plotting_cc = subset(plotting_cc, term != "NULL")
-    plotting_cc = subset(plotting_cc, over_represented_pvalue <= 0.1)
-    plotting_cc = subset(plotting_cc, numInCat > 10)
+    plotting_cc = subset(plotting_cc, over_represented_pvalue <= cutoff)
+    plotting_cc = subset(plotting_cc, numInCat > mincat)
     plotting_cc = plotting_cc[order(plotting_cc$over_represented_pvalue),]
     plotting_cc = head(plotting_cc, n=n)
     plotting_cc = plotting_cc[,c("term","over_represented_pvalue","score")]

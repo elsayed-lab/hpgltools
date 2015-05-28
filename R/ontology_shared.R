@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:43:26 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 28 11:27:18 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' Get a go term from ID
@@ -435,7 +435,7 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
             }
             if (isTRUE(excel)) {
                 sheetname = paste(comparison, "_topgo_mf_up", sep="")
-                try(write_xls(data=topgo_up_ontology$mf_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
+               try(write_xls(data=topgo_up_ontology$mf_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
                 sheetname = paste(comparison, "_topgo_bp_up", sep="")
                 try(write_xls(data=topgo_up_ontology$bp_interesting, sheet=sheetname, file=workbook, overwrite=TRUE))
                 sheetname = paste(comparison, "_topgo_cc_up", sep="")
@@ -467,4 +467,33 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
     }
     names(output) = names(limma_out)
     return(output)
+}
+
+
+
+
+golevel_df = function(ont="MF", savefile="ontlevel.rda") {
+    savefile = paste0(ont, "_", savefile)
+##    if (file.exists(savefile)) {
+##        load(savefile)
+##        return(golevels)
+##    } else {
+        level = 0
+        continue = 1
+        golevels = data.frame(GO=NULL,level=NULL)
+        while (continue == 1) {
+            level = level + 1
+            GO = try(clusterProfiler:::getGOLevel(ont, level), silent=TRUE)
+            if (class(GO) != 'character') {
+                golevels$level = as.numeric(golevels$level)
+                save(golevels, file=savefile, compress="xz")
+                return (golevels)
+            } else {
+                tmpdf = as.data.frame(cbind(GO, level))
+                ## This (hopefully) ensures that each GO id is added only once, and gets the highest possible level.
+                new_go = tmpdf[unique(tmpdf$GO, golevels$GO),]
+                golevels = rbind(golevels, new_go)
+            }
+        }
+ ##   }
 }

@@ -4,15 +4,15 @@
 \alias{hpgl_pairwise_ma}
 \title{hpgl_pairwise_ma() Plot all pairwise MA plots in an experiment}
 \usage{
-hpgl_pairwise_ma(expt = NULL, df = NULL, log = NULL, ...)
+hpgl_pairwise_ma(data, log = NULL, ...)
 }
 \arguments{
+\item{log}{is the data in log format? (it will likely figure it out
+if not)}
+
 \item{expt}{an expt expressionset superclass or...}
 
 \item{df}{a data frame containing the data to explore.}
-
-\item{log}{is the data in log format? (it will likely figure it out
-if not)}
 }
 \value{
 a list of affy::maplots

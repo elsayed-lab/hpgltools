@@ -4,21 +4,21 @@
 \alias{hpgl_boxplot}
 \title{Make a ggplot boxplot of a set of samples.}
 \usage{
-hpgl_boxplot(df = NULL, colors_fill = NULL, names = NULL, expt = NULL,
-  title = NULL, scale = "raw", ...)
+hpgl_boxplot(data, colors = NULL, names = NULL, title = NULL,
+  scale = "raw", ...)
 }
 \arguments{
-\item{df}{alternately a data frame which must be accompanied by}
+\item{colors}{a color scheme}
 
 \item{names}{a nicer version of the sample names}
 
-\item{expt}{an expt set of samples}
-
 \item{scale}{whether to log scale the y-axis}
 
-\item{design}{a design matrix and}
+\item{expt}{an expt set of samples}
 
-\item{colors}{a color scheme}
+\item{df}{alternately a data frame which must be accompanied by}
+
+\item{design}{a design matrix and}
 }
 \value{
 a ggplot2 boxplot of the samples.  Each boxplot

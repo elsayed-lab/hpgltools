@@ -4,7 +4,7 @@
 \alias{hpgl_plot_bcv}
 \title{Steal EdgeR's plotBCV()}
 \usage{
-hpgl_plot_bcv(expt)
+hpgl_plot_bcv(data)
 }
 \arguments{
 \item{expt}{}
