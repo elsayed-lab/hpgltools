@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:38:36 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jun  4 11:36:29 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -25,6 +25,12 @@
 #' @param low_files whether or not to explicitly lowercase the filenames when searching in processed_data/
 #'   this is relevant because the ceph object storage by default lowercases filenames.
 #'
+#' It is worth noting that this function has a lot of logic used to
+#' find the count tables in the local filesystem.  This logic has been
+#' superceded by simply adding a field to the .csv file called
+#' 'file'.  create_expt() will then just read that filename, it may be
+#' a full pathname or local to the cwd of the project.
+#'
 #' @return  experiment an expressionset
 #' @seealso \code{\link{pData}}, \code{\link{fData}},
 #' \code{\link{exprs}}, \code{\link{hpgl_read_files}},
@@ -33,8 +39,7 @@
 #' @export
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
-#' ## Dude, you need to remember that this depends on an existing data structure of
-#' ## gene annotations.
+#' ## Remember that this depends on an existing data structure of gene annotations.
 create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
@@ -112,8 +117,6 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
 #' @export
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
-#' ## Dude, you need to remember that this depends on an existing data structure of
-#' ## gene annotations.
 create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
     print("Please note that thus function assumes a specific set of columns in the sample sheet:")
     print("The most important ones are: Sample.ID, Stage, Type.")

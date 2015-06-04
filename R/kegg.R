@@ -1,24 +1,4 @@
-## Time-stamp: <Thu May 14 14:41:24 2015 Ashton Trey Belew (abelew@gmail.com)>
-
-#' gostats_kegg()  Use gostats() against kegg pathways
-#'
-#' Does this even work?  I don't think I have ever tested it yet.
-gostats_kegg = function() {
-    frame = toTable(org.Hs.egPATH)
-    keggframedata = data.frame(frame$path_id, frame$gene_id)
-    keggFrame=KEGGFrame(keggframeData,organism="Homo sapiens")
-    gsc <- GeneSetCollection(keggFrame, setType = KEGGCollection())
-    universe = Lkeys(org.Hs.egGO)
-    genes = universe[1:500]
-    kparams <- GSEAKEGGHyperGParams(name="My Custom GSEA based annot Params",
-                                    geneSetCollection=gsc,
-                                    geneIds = genes,
-                                    universeGeneIds = universe,
-                                    pvalueCutoff = 0.05,
-                                    testDirection = "over")
-    kOver <- hyperGTest(params)
-    head(summary(kOver))
-}
+## Time-stamp: <Thu Jun  4 14:56:16 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways
 #'
@@ -143,6 +123,26 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
     }
     retdf = retdf[with(retdf, order(up, down)), ]
     return(retdf)
+}
+
+#' gostats_kegg()  Use gostats() against kegg pathways
+#'
+#' Does this even work?  I don't think I have ever tested it yet.
+gostats_kegg = function() {
+    frame = toTable(org.Hs.egPATH)
+    keggframedata = data.frame(frame$path_id, frame$gene_id)
+    keggFrame=KEGGFrame(keggframeData,organism="Homo sapiens")
+    gsc <- GeneSetCollection(keggFrame, setType = KEGGCollection())
+    universe = Lkeys(org.Hs.egGO)
+    genes = universe[1:500]
+    kparams <- GSEAKEGGHyperGParams(name="My Custom GSEA based annot Params",
+                                    geneSetCollection=gsc,
+                                    geneIds = genes,
+                                    universeGeneIds = universe,
+                                    pvalueCutoff = 0.05,
+                                    testDirection = "over")
+    kOver <- hyperGTest(params)
+    head(summary(kOver))
 }
 
 #' Search the kegg identifier for a given species
