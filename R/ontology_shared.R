@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jun  4 14:56:08 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jun  8 14:04:06 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' Extract more easily readable information from a GOTERM datum
@@ -325,11 +325,21 @@ get_genelengths = function(gff, ID="Note") {
 #' @param z a number of standard deviations to search
 #'
 #' @export
-limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
+limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", gff_file=NULL, goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
     message("This function expects a list of limma contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
+    if (isTRUE(do_goseq) & is.null(gene_lengths)) {
+        stop("Performing a goseq search requires a data frame of gene lengths.")
+    }
+##    if (isTRUE(do_cluster) & is.null(gff_file)) {
+##        stop("Performing a clusterprofiler search requires a gff file.")
+##    }
     if (is.null(n) & is.null(z)) {
         z = 1
+    }
+
+    if (!is.null(limma_out$all_tables)) {
+        limma_out = limma_out$all_tables
     }
 
     testdir = dirname(workbook)
@@ -387,6 +397,10 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
             }
             if (isTRUE(csv)) {
                 csv_base = gsub(".xls$", "", workbook)
+                testdir = dirname(paste(comparison, csv_base, sep=""))
+                if (!file.exists(testdir)) {
+                    dir.create(testdir)
+                }
                 write.csv(goseq_up_ontology$mf_interesting, file=paste(comparison, csv_base, "_goseq_mf_up.csv", sep=""))
                 write.csv(goseq_up_ontology$bp_interesting, file=paste(comparison, csv_base, "_goseq_bp_up.csv", sep=""))
                 write.csv(goseq_up_ontology$cc_interesting, file=paste(comparison, csv_base, "_goseq_cc_up.csv", sep=""))

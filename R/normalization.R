@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jun  4 14:10:44 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jun  8 11:22:00 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -980,7 +980,7 @@ transform_counts = function(count_table, transform="raw", converted="raw", base=
     if (converted != "cpm") {
         count_table = count_table + 1
     }
-    if (!isNULL(base)) {
+    if (!is.null(base)) {
         count_table = (log(count_table) / log(base))
     } else if (transform == "log2") {
         count_table = log2(count_table)

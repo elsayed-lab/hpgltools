@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jun  4 13:30:00 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jun  8 12:13:52 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -7,6 +7,19 @@ Beta.NA = function(y,X) {
     y1 = y[!is.na(y)]
     B = solve(t(des)%*%des)%*%t(des)%*%y1
     return(B)
+}
+
+get_genelengths = function(gff, type="gene") {
+
+    annotations = try(as.data.frame(import.gff3(gff)), silent=TRUE)
+    if (class(annotations) == 'try-error') {
+        annotations = as.data.frame(import.gff2(gff))
+    }
+    if (class(annotations) == 'try-error') {
+        stop("Could not get the annotations from the gff file.")
+    }
+    ret = annotations[,c("ID","width")]
+    return(ret)
 }
 
 #' Wrap cor() to include robust correlations

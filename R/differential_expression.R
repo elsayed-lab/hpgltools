@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jun  4 13:24:20 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jun  8 11:34:45 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -67,11 +67,25 @@ all_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, mod
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-coefficient_scatter = function(limma_output, x=NULL, y=NULL, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL) {
+coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     print("This can do comparisons among the following columns in the limma result:")
-    print(colnames(limma_output$pairwise_comparisons$coefficients))
+    thenames = colnames(limma_output$pairwise_comparisons$coefficients)
+    print(thenames)
+    xname=""
+    yname=""
+    if (is.numeric(x)) {
+        xname = thenames[[x]]
+    } else {
+        xname = x
+    }
+    if (is.numeric(y)) {
+        yname = thenames[[y]]
+    } else {
+        yname = y
+    }
+    print(paste0("Actually comparing ", xname, " and ", yname, "."))
     coefficients = limma_output$pairwise_comparisons$coefficients
     coefficients = coefficients[,c(x,y)]
     plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline)
