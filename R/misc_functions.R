@@ -1,4 +1,26 @@
-## Time-stamp: <Thu May 14 14:41:02 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jun  8 12:13:52 2015 Ashton Trey Belew (abelew@gmail.com)>
+
+#' Beta.NA: Perform a quick solve to gather residuals etc
+#' This was provided by Kwame for something which I don't remember a loong time ago.
+Beta.NA = function(y,X) {
+    des = X[!is.na(y),]
+    y1 = y[!is.na(y)]
+    B = solve(t(des)%*%des)%*%t(des)%*%y1
+    return(B)
+}
+
+get_genelengths = function(gff, type="gene") {
+
+    annotations = try(as.data.frame(import.gff3(gff)), silent=TRUE)
+    if (class(annotations) == 'try-error') {
+        annotations = as.data.frame(import.gff2(gff))
+    }
+    if (class(annotations) == 'try-error') {
+        stop("Could not get the annotations from the gff file.")
+    }
+    ret = annotations[,c("ID","width")]
+    return(ret)
+}
 
 #' Wrap cor() to include robust correlations
 #'
@@ -21,6 +43,26 @@ hpgl_cor = function(df=NULL, method="pearson", ...) {
         correlation = stats::cor(df, method=method, ...)
     }
     return(correlation)
+}
+
+#' A stupid distance function of a point against two axes
+#'
+#' @param firstterm the x-values of the points
+#' @param secondterm the y-values of the points
+#' @param firstaxis the x-value of the vertical axis
+#' @param secondaxis the y-value of the second axis
+#'
+#' @return dataframe of the distances
+#' @export
+sillydist = function(firstterm, secondterm, firstaxis, secondaxis) {
+    dataframe = data.frame(firstterm, secondterm)
+    dataframe$x = (abs(dataframe[,1]) - abs(firstaxis)) / abs(firstaxis)
+    dataframe$y = abs((dataframe[,2] - secondaxis) / secondaxis)
+    dataframe$x = abs(dataframe[,1] / max(dataframe$x))
+    dataframe$y = abs(dataframe[,2] / max(dataframe$y))
+    dataframe$dist = abs(dataframe$x * dataframe$y)
+    dataframe$dist = dataframe$dist / max(dataframe$dist)
+    return(dataframe)
 }
 
 #' Write a dataframe to an excel spreadsheet sheet.
@@ -77,29 +119,5 @@ write_xls = function(data=NULL, sheet="first", file="excel/workbook.xls", rownam
     }
 }
 
-#' A stupid distance function of a point against two axes
-#'
-#' @param firstterm the x-values of the points
-#' @param secondterm the y-values of the points
-#' @param firstaxis the x-value of the vertical axis
-#' @param secondaxis the y-value of the second axis
-#'
-#' @return dataframe of the distances
-#' @export
-sillydist = function(firstterm, secondterm, firstaxis, secondaxis) {
-    dataframe = data.frame(firstterm, secondterm)
-    dataframe$x = (abs(dataframe[,1]) - abs(firstaxis)) / abs(firstaxis)
-    dataframe$y = abs((dataframe[,2] - secondaxis) / secondaxis)
-    dataframe$x = abs(dataframe[,1] / max(dataframe$x))
-    dataframe$y = abs(dataframe[,2] / max(dataframe$y))
-    dataframe$dist = abs(dataframe$x * dataframe$y)
-    dataframe$dist = dataframe$dist / max(dataframe$dist)
-    return(dataframe)
-}
+## EOF
 
-Beta.NA = function(y,X) {
-    des = X[!is.na(y),]
-    y1 = y[!is.na(y)]
-    B = solve(t(des)%*%des)%*%t(des)%*%y1
-    B
-}

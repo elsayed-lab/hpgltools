@@ -1,40 +1,5 @@
-## Time-stamp: <Thu May 28 11:27:18 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jun  8 14:04:06 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
-
-#' Get a go term from ID
-#'
-#' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
-#'
-#' @return Some text
-#' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#'
-#' @export
-#' @examples
-#' ## goterm("GO:0032559")
-#' ## > GO:0032559
-#' ## > "adenyl ribonucleotide binding"
-goterm = function(go="GO:0032559") {
-    go = as.character(go)
-    term = function(id) {
-        value = try(as.character(Term(GOTERM[id])), silent=TRUE)
-        if (class(value) == "try-error") {
-            value = "not found"
-        }
-        return(value)
-    }
-    go = mapply(term, go)
-    return(go)
-    ## count = 1
-    ## for (go in goid) {
-    ##     value = try(as.character(Term(GOTERM[go])), silent=TRUE)
-    ##     if (class(value) == "try-error") {
-    ##         value = "not found"
-    ##     }
-    ##    goid[count] = value
-    ##     count = count + 1
-    ## }
-    ## return(goid)
-}
 
 #' Extract more easily readable information from a GOTERM datum
 #'
@@ -73,6 +38,41 @@ deparse_go_value = function(value) {
         }
     }
     return(result)
+}
+
+#' Get a go term from ID
+#'
+#' @param id A go ID -- this may be a character or list(assuming the elements, not names, are goids)
+#'
+#' @return Some text
+#' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
+#'
+#' @export
+#' @examples
+#' ## goterm("GO:0032559")
+#' ## > GO:0032559
+#' ## > "adenyl ribonucleotide binding"
+goterm = function(go="GO:0032559") {
+    go = as.character(go)
+    term = function(id) {
+        value = try(as.character(Term(GOTERM[id])), silent=TRUE)
+        if (class(value) == "try-error") {
+            value = "not found"
+        }
+        return(value)
+    }
+    go = mapply(term, go)
+    return(go)
+    ## count = 1
+    ## for (go in goid) {
+    ##     value = try(as.character(Term(GOTERM[go])), silent=TRUE)
+    ##     if (class(value) == "try-error") {
+    ##         value = "not found"
+    ##     }
+    ##    goid[count] = value
+    ##     count = count + 1
+    ## }
+    ## return(goid)
 }
 
 #' Get a go synonym from an ID
@@ -325,11 +325,21 @@ get_genelengths = function(gff, ID="Note") {
 #' @param z a number of standard deviations to search
 #'
 #' @export
-limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
+limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", gff_file=NULL, goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
     message("This function expects a list of limma contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
+    if (isTRUE(do_goseq) & is.null(gene_lengths)) {
+        stop("Performing a goseq search requires a data frame of gene lengths.")
+    }
+##    if (isTRUE(do_cluster) & is.null(gff_file)) {
+##        stop("Performing a clusterprofiler search requires a gff file.")
+##    }
     if (is.null(n) & is.null(z)) {
         z = 1
+    }
+
+    if (!is.null(limma_out$all_tables)) {
+        limma_out = limma_out$all_tables
     }
 
     testdir = dirname(workbook)
@@ -387,6 +397,10 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
             }
             if (isTRUE(csv)) {
                 csv_base = gsub(".xls$", "", workbook)
+                testdir = dirname(paste(comparison, csv_base, sep=""))
+                if (!file.exists(testdir)) {
+                    dir.create(testdir)
+                }
                 write.csv(goseq_up_ontology$mf_interesting, file=paste(comparison, csv_base, "_goseq_mf_up.csv", sep=""))
                 write.csv(goseq_up_ontology$bp_interesting, file=paste(comparison, csv_base, "_goseq_bp_up.csv", sep=""))
                 write.csv(goseq_up_ontology$cc_interesting, file=paste(comparison, csv_base, "_goseq_cc_up.csv", sep=""))

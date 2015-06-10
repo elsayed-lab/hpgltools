@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:40:41 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jun  4 14:56:12 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -348,7 +348,6 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
     return(summary(new_go))
 }
 
-
 hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
     ## Testing parameters
     ##scores = pvals
@@ -362,9 +361,6 @@ hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
     quartiles = summary(df)
 }
 
-
-
-
 #' A very simple selector of strong scoring genes (by p-value)
 #'
 #' This function was provided in the topGO documentation, but not defined.
@@ -375,7 +371,6 @@ hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
 #'
 #' @param allScore The scores of the genes
 topDiffGenes <- function(allScore) { return(allScore < 0.01) }
-
 
 #' Make a pvalue plot from topgo data
 #'

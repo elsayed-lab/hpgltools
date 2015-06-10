@@ -1,4 +1,22 @@
-## Time-stamp: <Tue May 19 14:07:28 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jun  8 11:34:45 2015 Ashton Trey Belew (abelew@gmail.com)>
+
+## Test for infected/control/beads -- a placebo effect?
+## The goal is therefore to find responses different than beads
+## The null hypothesis is (H0): (infected == uninfected) || (infected == beads)
+## The alt hypothesis is (HA): (infected != uninfected) && (infected != beads)
+disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
+    stat = pmin(abs(contrast_fit[,coef1]), abs(contrast_fit[,coef2]))
+    pval = pmax(contrast_fit$p.val[,coef1], contrast_fit$p.val[,coef2])
+
+}
+## An F-test only does inf==uninf && inf==bead
+## So the solution is to separately perform the two subtests and subset for the set of genes for which both are true.
+## However, if you do that, the f-statistics are a little screwey, but there are a few ways to handle it:
+## Perform the two separate tests and perform the following combination of the stat and p-value:
+##    stat = min(|inf-uninf|, |inf-bead|)  (logFC)
+##    ^^pval^^ = max(pval(inf-uninf), pval(inf-beads))
+##    adj.pval = p.adjust(^^pval^^, method='BH')
+## ReportingTools hwriter
 
 #' all_pairwise(): Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
 #'
@@ -32,47 +50,396 @@ all_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, mod
     return(ret)
 }
 
-#' write_limma(): Writes out the results of a limma search using toptable()
-#' However, this will do a couple of things to make one's life easier:
-#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
-#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
-#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+#' coefficient_scatter(): Plot out 2 coefficients with respect to one another from limma
 #'
-#' @param data The output from eBayes()
-#' @param adjust The pvalue adjustment chosen (fdr by default)
-#' @param n The number of entries to report, defaults to 0, which says do them all
-#' @param coef which coefficients/contrasts to report, NULL says do them all
-#' @param workbook an excel filename into which to write the data, used for csv files too.
-#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
+#' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
+#' This hopefully makes that easy.
 #'
-#' @return a list of data frames comprising the toptable output for each coefficient,
-#'    I also added a qvalue entry to these toptable() outputs.
+#' @param limma_output The set of pairwise comparisons provided by limma_pairwise()
+#' @param x The name or number of the first coefficient column to extract, this will be the x-axis of the plot
+#' @param y The name or number of the second coefficient column to extract, this will be the y-axis of the plot
+#' @param gvis_filename If provided, an html clicky-plot will be generated with this name
+#' @param gvis_trendline add a trendline to the gvis plot? (TRUE by default)
+#' @param tooltip_data a dataframe of gene annotations to be used in the gvis plot
 #'
-#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
-#'
+#' @return a ggplot2 plot showing the relationship between the two coefficients
+#' @seealso \code{\link{hpgl_linear_scatter}} \code{\link{limma_pairwise}}
 #' @export
 #' @examples
-#' ## finished_comparison = eBayes(limma_output)
-#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
-    testdir = dirname(workbook)
-    if (n == 0) {
-        n = dim(data$coefficients)[1]
-    }
-    if (is.null(coef)) {
-        coef = colnames(data$contrasts)
+#' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL) {
+    ##  If taking a limma_pairwise output, then this lives in
+    ##  output$pairwise_comparisons$coefficients
+    print("This can do comparisons among the following columns in the limma result:")
+    thenames = colnames(limma_output$pairwise_comparisons$coefficients)
+    print(thenames)
+    xname=""
+    yname=""
+    if (is.numeric(x)) {
+        xname = thenames[[x]]
     } else {
-        coef = as.character(coef)
+        xname = x
     }
-    return_data = list()
-    for (c in 1:length(coef)) {
-        comparison = coef[c]
-        message(paste(c, ": Printing table: ", comparison, sep=""))
-        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
+    if (is.numeric(y)) {
+        yname = thenames[[y]]
+    } else {
+        yname = y
+    }
+    print(paste0("Actually comparing ", xname, " and ", yname, "."))
+    coefficients = limma_output$pairwise_comparisons$coefficients
+    coefficients = coefficients[,c(x,y)]
+    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline)
+    return(plot)
+}
 
-        data_table$qvalue = tryCatch(
+#' compare_tables(): See how similar are results from limma/deseq/edger.
+#'
+#' limma, DEseq2, and EdgeR all make somewhat different assumptions
+#' and choices about what makes a meaningful set of differentially
+#' expressed genes.  This seeks to provide a quick and dirty metric
+#' describing the degree to which they (dis)agree.
+#'
+#' @param limma  limma data from limma_pairwise()
+#' @param deseq  deseq data from deseq2_pairwise()
+#' @param edger  edger data from edger_pairwise()
+#'
+#' @return a heatmap showing how similar they are along with some
+#' correlations betwee the three players.
+#' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
+#' @export
+#' @examples
+#' ## l = limma_pairwise(expt)
+#' ## d = deseq_pairwise(expt)
+#' ## e = edger_pairwise(expt)
+#' fun = compare_tables(limma=l, deseq=d, edger=e)
+compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
+    ## Fill each column/row of these with the correlation between tools for one contrast performed
+    if (class(limma) == "list") { ## Then this was fed the raw output from limma_pairwise, lets assume the same is true for deseq/edger too and pull out the result tables.
+        limma = limma$all_tables
+        deseq = deseq$all_tables
+        edger = edger$all_tables
+    }
+    len = length(names(deseq))
+    limma_vs_edger = list()
+    limma_vs_deseq = list()
+    edger_vs_deseq = list()
+    cc = 0
+    last = length(names(deseq))
+    for (comp in names(deseq)) {  ## assume all three have the same names() -- note that limma has more than the other two though
+        cc = cc + 1
+        message(paste0(cc, "/", len, ": Comparing analyses for: ", comp))
+        l = data.frame(limma[[comp]])
+        e = data.frame(edger[[comp]])
+        d = data.frame(deseq[[comp]])
+        le = merge(l, e, by.x="row.names", by.y="row.names")
+        le = le[,c("logFC.x","logFC.y")]
+        lec = cor.test(le[,1], le[,2])$estimate
+        ld = merge(l, d, by.x="row.names", by.y="row.names")
+        ld = ld[,c("logFC.x","logFC.y")]
+        ldc = cor.test(ld[,1], ld[,2])$estimate
+        ed = merge(e, d, by.x="row.names", by.y="row.names")
+        ed = ed[,c("logFC.x","logFC.y")]
+        edc = cor.test(ed[,1], ed[,2])$estimate
+        limma_vs_edger[[comp]] = lec
+        limma_vs_deseq[[comp]] = ldc
+        edger_vs_deseq[[comp]] = edc
+    } ## End loop
+    names(limma_vs_edger) = names(deseq)
+    names(limma_vs_deseq) = names(deseq)
+    names(edger_vs_deseq) = names(deseq)
+
+    comparison_df = rbind(as.numeric(limma_vs_edger), as.numeric(limma_vs_deseq))
+    comparison_df = rbind(comparison_df, as.numeric(edger_vs_deseq))
+    comparison_df = as.matrix(comparison_df)
+    rownames(comparison_df) = c("le", "ld", "ed")
+    colnames(comparison_df) = names(deseq)
+    heat_colors = colorRampPalette(c("white","black"))
+    comparison_heatmap = heatmap.3(comparison_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=heat_colors, dendrogram="none", Rowv=FALSE, Colv=FALSE, main="Compare DE tools")
+    heat = recordPlot()
+    ret = list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq, edger_vs_deseq, heat=heat)
+    return(ret)
+}
+
+#' deseq_pairwise():  Because I can't be trusted to remember '2'
+#'
+#' This calls deseq2_pairwise(...) because I am determined to forget typing deseq2
+#' @param look at deseq2_pairwise
+#'
+#' @return stuff from deseq2_pairwise
+#'
+#' @export
+deseq_pairwise = function(...) {
+    print("Hey you, use deseq2 pairwise.")
+    deseq2_pairwise(...)
+}
+
+#' deseq2_pairwise():  Set up a model matrix and set of contrasts to do
+#' a pairwise comparison of all conditions using DESeq2.
+#'
+#' @param expt a expt class containing data, normalization state, etc.
+#' @param conditions a factor of conditions in the experiment
+#' @param batches a factor of batches in the experiment
+#' @param model_cond Include condition in the experimental model?  This is pretty much always true.
+#' @param model_batch Include batch in the model?  In most cases this is a good thing(tm).
+#' @param model_intercept Use cell means or intercept? (I default to the former, but they work out the same)
+#' @param ... The elipsis parameter is fed to write_limma() at the end.
+#'
+#' @return A list including the following information:
+#'   run = the return from calling DESeq()
+#'   result = the return from calling results()
+#'   result_mle = the return from calling results() with the MLE parameter.
+#'   results = the return when a deseq result class is cast as a dataframe.
+#'
+#' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
+#' @export
+#' @examples
+#' ## pretend = edger_pairwise(data, conditions, batches)
+deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) {
+    if (is.null(expt) & is.null(data)) {
+        stop("This requires either an expt or data+conditions+batches")
+    } else if (!is.null(expt)) {
+        conditions = expt$conditions
+        batches = expt$batches
+        data = as.data.frame(exprs(expt$expressionset))
+        ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
+        ## and expects data as floating point counts,
+        ## not a log2 transformation.
+        if (!is.null(expt$norm)) {
+            if (expt$norm != "raw") {
+                data = exprs(expt$original_expressionset)
+            } else if (!is.null(expt$transform)) {
+                if (expt$transform == "log2") {
+                    ##data = (2^data) - 1
+                    data = expt$normalized$normalized_counts$count_table
+                }
+            }
+        }
+    } ## expt is not null.
+    condition_table = table(conditions)
+    batch_table = table(batches)
+    conditions = as.factor(conditions)
+    batches = as.factor(batches)
+    ## Make a model matrix which will have one entry for
+    ## each of the condition/batches
+    cond_model = model.matrix(~ 0 + conditions)
+    tmpnames = colnames(cond_model)
+    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    tmpnames = gsub("conditions", "", tmpnames)
+    colnames(cond_model) = tmpnames
+
+    ## An interesting note about the use of formulae in DESeq:
+    ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
+    ## Thus, all these formulae should have condition(s) at the end.
+    summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(expt$expressionset), design=~0+condition)
+    ## If making a model ~0 + condition -- then must set betaPrior=FALSE
+    dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
+    deseq_run = DESeq(dataset, betaPrior=FALSE)
+    ## Set contrast= for each pairwise comparison here!
+
+    denominators = list()
+    numerators = list()
+    result_list = list()
+    result_mle_list = list()
+    condition_list = resultsNames(deseq_run)
+    for (c in 1:(length(condition_list) - 1)) {
+        denominator = names(condition_table[c])
+        nextc = c + 1
+        for (d in nextc:length(condition_list)) {
+            numerator = names(condition_table[d])
+            result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
+            result = result[order(result$log2FoldChange),]
+            colnames(result) = c("baseMean","logFC", "lfcSE","stat","P.Value","adj.P.Val")
+            result[is.na(result$P.Value), "P.Value"] = 1 ## Some p-values come out as NA
+            result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA
+            result$qvalue = tryCatch(
+                {
+                    format(signif(qvalue(result$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
+                },
+                error=function(cond) {
+                    message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+                    return(1)
+                },
+                warning=function(cond) {
+                    message("There was a warning?")
+                    message(cond)
+                    return(1)
+                },
+                finally={
+                }
+            )
+            result$P.Value = format(signif(result$P.Value, 4), scientific=TRUE)
+            result$adj.P.Val = format(signif(result$adj.P.Val, 4), scientific=TRUE)
+            result_name = paste0(numerator, "_minus_", denominator)
+            denominators[[result_name]] = denominator
+            numerators[[result_name]] = numerator
+            result_list[[result_name]] = result
+        }
+    }
+    ##    deseq_result = results(deseq_run)
+    ##    deseq_mle_result = results(deseq_run, addMLE=TRUE)
+    ##    deseq_df = data.frame(deseq_result[order(deseq_result$log2FoldChange),])
+    ##    plotMA(deseq_df)
+    ## identify(deseq_result$baseMean, deseq_result$log2FoldChange)
+    ##    ma = recordPlot()
+    ##d = plotCounts(dataset, gene=which.min(deseq_result$padj), intgroup="condition", returnData=TRUE)
+    ##ggplot(d, aes(x=condition, y=count)) +
+    ##    geom_point(position=position_jitter(w=0.1,h=0)) +
+    ##    scale_y_log10(breaks=c(25,100,400))
+
+    ##  mcols(deseq_result)$description
+    ## DESeq can do multi-factors, but the important one goes last
+    ## design(summarized) = formula(~ batch + condition)
+    ## deseq_run = DESeq(summarized)
+
+    ## Different contrasts may be applied with
+    ## contrast_res = results(deseq_run, contrast=c("condition", "numerator", "denominator"))
+
+    ## data transformations:
+    ## rld = rlog(deseq_run)
+    ## vsd = try(varianceStabilizingTransformation(deseq_run), silent=TRUE)
+    ## rlogMat = assay(rld)
+    ## vstMat = try(assay(vsd), silent=TRUE)
+    ## par(mfrow=c(1,3))
+    ## notAllZero <- (rowSums(counts(deseq_run))>0)
+    ##    meanSdPlot(log2(counts(deseq_run, normalized=TRUE)[notAllZero,] + 1))
+    ##    meanSdPlot(assay(rld[notAllZero,]))
+    ##    meanSdPlot(assay(vsd[notAllZero,]))
+    ret_list = list(
+        run=deseq_run,
+        denominators=denominators,
+        numerators=numerators,
+        conditions=condition_list,
+        all_tables=result_list
+    )
+    return(ret_list)
+}
+
+#' edger_pairwise():  Set up a model matrix and set of contrasts to do
+#' a pairwise comparison of all conditions using EdgeR.
+#'
+#' @param expt a expt class containing data, normalization state, etc.
+#' @param conditions a factor of conditions in the experiment
+#' @param batches a factor of batches in the experiment
+#' @param model_cond Include condition in the experimental model?  This is pretty much always true.
+#' @param model_batch Include batch in the model?  In most cases this is a good thing(tm).
+#' @param model_intercept Use cell means or intercept? (I default to the former, but they work out the same)
+#' @param extra_contrasts some extra contrasts to add to the list
+#'  This can be pretty neat, lets say one has conditions A,B,C,D,E
+#'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
+#'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
+#'  de_minus_cb = (E-D)-(C-B),"
+#' @param ... The elipsis parameter is fed to write_limma() at the end.
+#'
+#' @return A list including the following information:
+#'   results = A list of tables returned by 'topTags', one for each contrast.
+#'   contrasts = The string representation of the contrasts performed.
+#'   lrt = A list of the results from calling glmLRT(), one for each contrast.
+#'   contrast_list = The list of each call to makeContrasts()
+#'     I do this to avoid running into the limit on # of contrasts addressable by topTags()
+#'
+#' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
+#' @export
+#' @examples
+#' ## pretend = edger_pairwise(data, conditions, batches)
+edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, ...) {
+    if (is.null(expt) & is.null(data)) {
+        stop("This requires either an expt or data+conditions+batches")
+    } else if (!is.null(expt)) {
+        conditions = expt$conditions
+        batches = expt$batches
+        data = as.data.frame(exprs(expt$expressionset))
+        ## As I understand it, edgeR fits a binomial distribution
+        ## and expects data as floating point counts,
+        ##not a log2 transformation.
+        if (!is.null(expt$transform)) {
+            if (expt$transform == "log2") {
+                ##data = (2^data) - 1
+                data = expt$normalized$normalized_counts$count_table
+            }
+        }
+    }
+    message("At this time, this only does conditional models.")
+    condition_table = table(conditions)
+    batch_table = table(batches)
+    conditions = as.factor(conditions)
+    batches = as.factor(batches)
+    ## Make a model matrix which will have one entry for
+    ## each of the condition/batches
+    ## It would be much smarter to generate the models in the following if() {} blocks
+    ## But I have it in my head to eventually compare results using different models.
+    cond_model = model.matrix(~ 0 + conditions)
+    batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
+    condbatch_model = try(model.matrix(~ 0 + conditions + batches), silent=TRUE)
+    cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
+    condbatch_int_model = try(model.matrix(~ conditions + batches), silent=TRUE)
+    fun_model = NULL
+    fun_int_model = NULL
+    if (isTRUE(model_cond) & isTRUE(model_batch)) {
+        fun_model = condbatch_model
+        fun_int_model = condbatch_int_model
+    } else if (isTRUE(model_cond)) {
+        fun_model = cond_model
+        fun_int_model = cond_int_model
+    } else if (isTRUE(model_batch)) {
+        fun_model = batch_model
+        fun_int_model = batch_int_model
+    } else {
+        ## Default to the conditional model
+        fun_model = cond_model
+        fun_int_model = cond_int_model
+    }
+    if (isTRUE(model_intercept)) {
+        fun_model = fun_int_model
+    }
+    if (!is.null(alt_model)) {
+        fun_model = alt_model
+    }
+    tmpnames = colnames(fun_model)
+    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    tmpnames = gsub("conditions", "", tmpnames)
+    colnames(fun_model) = tmpnames
+
+    ##tmpnames = colnames(condbatch_model)
+    ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    ##tmpnames = gsub("conditions", "", tmpnames)
+    ##colnames(cond_model) = tmpnames
+
+    raw = DGEList(counts=data, group=conditions)
+    message("Using EdgeR to normalize the data.")
+    norm = calcNormFactors(raw)
+    message("Estimating the common dispersion.")
+    disp_norm = estimateCommonDisp(norm)
+    message("Estimating dispersion across genes.")
+    tagdisp_norm = estimateTagwiseDisp(disp_norm)
+    message("Estimating GLM Common dispersion.")
+    glm_norm = estimateGLMCommonDisp(tagdisp_norm, fun_model)
+    message("Estimating GLM Trended dispersion.")
+    glm_trended = estimateGLMTrendedDisp(glm_norm, fun_model)
+    message("Estimating GLM Tagged dispersion.")
+    glm_tagged = estimateGLMTagwiseDisp(glm_trended, fun_model)
+    cond_fit = edgeR::glmFit(glm_tagged, design=fun_model)
+
+    apc = make_pairwise_contrasts(fun_model, conditions, do_identities=FALSE)
+    ## This is pretty weird because glmLRT only seems to take up to 7 contrasts at a time...
+    contrast_list = list()
+    result_list = list()
+    lrt_list = list()
+    single_contrasts = list()
+    sc = vector("list", length(apc$names))
+    for (con in 1:length(apc$names)) {
+        name = apc$names[[con]]
+        message(paste0(con, ": Performing ", name, " contrast.")) ## correct
+        sc[[name]] = gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
+        tt = parse(text=sc[[name]])
+        ctr_string = paste0("tt = makeContrasts(", tt, ", levels=fun_model)")
+        eval(parse(text=ctr_string))
+        contrast_list[[name]] = tt
+        lrt_list[[name]] = edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
+        res = topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")
+        res = as.data.frame(res)
+        res$qvalue = tryCatch(
             {
-                as.numeric(format(signif(qvalue(data_table$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE))
+                format(signif(qvalue(res$PValue, robust=TRUE)$qvalues, 4), scientific=TRUE)
             },
             error=function(cond) {
                 message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
@@ -86,221 +453,18 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
             finally={
             }
         )
-        data_table$P.Value = as.numeric(format(signif(data_table$P.Value, 4), scientific=TRUE))
-        data_table$adj.P.Val = as.numeric(format(signif(data_table$adj.P.Val, 4), scientific=TRUE))
-
-        if (!is.null(annotation)) {
-            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
-            ###data_table = data_table[-1]
-        }
-        ## This write_xls runs out of memory annoyingly often
-        if (isTRUE(excel) | isTRUE(csv)) {
-            if (!file.exists(testdir)) {
-                dir.create(testdir)
-                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
-            }
-        }
-        if (isTRUE(excel)) {
-            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
-        }
-        ## Therefore I will write a csv of each comparison, too
-        if (isTRUE(csv)) {
-            csv_filename = gsub(".xls$", "", workbook)
-            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
-            write.csv(data_table, file=csv_filename)
-        }
-        return_data[[comparison]] = data_table
+        res$PValue = format(signif(res$PValue, 4), scientific=TRUE)
+        res$FDR = format(signif(res$FDR, 4), scientific=TRUE)
+        result_list[[name]] = res
     }
-    return(return_data)
-}
 
-#' write_edger(): Writes out the results of an EdgeR search using topTags()
-#' However, this will do a couple of things to make one's life easier:
-#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
-#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
-#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
-#'
-#' @param data The output from eBayes()
-#' @param adjust The pvalue adjustment chosen (fdr by default)
-#' @param n The number of entries to report, defaults to 0, which says do them all
-#' @param coef which coefficients/contrasts to report, NULL says do them all
-#' @param workbook an excel filename into which to write the data, used for csv files too.
-#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
-#'
-#' @return a list of data frames comprising the toptable output for each coefficient,
-#'    I also added a qvalue entry to these toptable() outputs.
-#'
-#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
-#'
-#' @export
-#' @examples
-#' ## finished_comparison = eBayes(limma_output)
-#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
-    testdir = dirname(workbook)
-    if (n == 0) {
-        n = dim(data$coefficients)[1]
-    }
-    if (is.null(coef)) {
-        coef = colnames(data$contrasts)
-    } else {
-        coef = as.character(coef)
-    }
-    return_data = list()
-    for (c in 1:length(coef)) {
-        comparison = coef[c]
-        message(paste("Printing table: ", comparison, sep=""))
-        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
+    final = list(
+        contrasts=apc,
+        lrt=lrt_list,
+        contrast_list=contrast_list,
+        all_tables=result_list)
 
-        data_table$qvalue = tryCatch(
-            {
-                format(signif(qvalue(data_table$P.Value, gui=FALSE)$qvalues, 4), scientific=TRUE)
-            },
-            error=function(cond) {
-                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
-                return(1)
-            },
-            warning=function(cond) {
-                message("There was a warning?")
-                message(cond)
-                return(1)
-            },
-            finally={
-            }
-        )
-        if (!is.null(annotation)) {
-            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
-            ###data_table = data_table[-1]
-        }
-        ## This write_xls runs out of memory annoyingly often
-        if (isTRUE(excel) | isTRUE(csv)) {
-            if (!file.exists(testdir)) {
-                dir.create(testdir)
-                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
-            }
-        }
-        if (isTRUE(excel)) {
-            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
-        }
-        ## Therefore I will write a csv of each comparison, too
-        if (isTRUE(csv)) {
-            csv_filename = gsub(".xls$", "", workbook)
-            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
-            write.csv(data_table, file=csv_filename)
-        }
-        return_data[[comparison]] = data_table
-    }
-    return(return_data)
-}
-
-#' write_deseq(): Writes out the results of a DESeq2 search using results()
-#' However, this will do a couple of things to make one's life easier:
-#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
-#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
-#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
-#'
-#' @param data The output from eBayes()
-#' @param adjust The pvalue adjustment chosen (fdr by default)
-#' @param n The number of entries to report, defaults to 0, which says do them all
-#' @param coef which coefficients/contrasts to report, NULL says do them all
-#' @param workbook an excel filename into which to write the data, used for csv files too.
-#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
-#'
-#' @return a list of data frames comprising the toptable output for each coefficient,
-#'    I also added a qvalue entry to these toptable() outputs.
-#'
-#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
-#'
-#' @export
-#' @examples
-#' ## finished_comparison = eBayes(limma_output)
-#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
-    testdir = dirname(workbook)
-    if (n == 0) {
-        n = dim(data$coefficients)[1]
-    }
-    if (is.null(coef)) {
-        coef = colnames(data$contrasts)
-    } else {
-        coef = as.character(coef)
-    }
-    return_data = list()
-    for (c in 1:length(coef)) {
-        comparison = coef[c]
-        message(paste("Printing table: ", comparison, sep=""))
-        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
-
-        data_table$qvalue = tryCatch(
-            {
-                format(signif(qvalue(data_table$P.Value, gui=FALSE)$qvalues, 4), scientific=TRUE)
-            },
-            error=function(cond) {
-                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
-                return(1)
-            },
-            warning=function(cond) {
-                message("There was a warning?")
-                message(cond)
-                return(1)
-            },
-            finally={
-            }
-        )
-        if (!is.null(annotation)) {
-            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
-            ###data_table = data_table[-1]
-        }
-        ## This write_xls runs out of memory annoyingly often
-        if (isTRUE(excel) | isTRUE(csv)) {
-            if (!file.exists(testdir)) {
-                dir.create(testdir)
-                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
-            }
-        }
-        if (isTRUE(excel)) {
-            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
-        }
-        ## Therefore I will write a csv of each comparison, too
-        if (isTRUE(csv)) {
-            csv_filename = gsub(".xls$", "", workbook)
-            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
-            write.csv(data_table, file=csv_filename)
-        }
-        return_data[[comparison]] = data_table
-    }
-    return(return_data)
-}
-
-#' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
-#' It just does fast.svd of a matrix against its rowMeans().
-#'
-#' @param data A data frame to decompose
-#'
-#' @return a list containing the s,v,u from fast.svd
-#' @seealso \code{\link{fast.svd}}
-#'
-#' @export
-#' @examples
-#' ## svd = makeSVD(data)
-makeSVD = function (x) {
-    x = as.matrix(x)
-    s = fast.svd(x - rowMeans(x))
-    v = s$v
-    rownames(v) = colnames(x)
-    s = list(v=v, u=s$u, d=s$d)
-    return(s)
-}
-
-## Some code to more strongly remove batch effects
-remove_batch_effect = function(normalized_counts, model) {
-    ## model = model.matrix(~ condition + batch)
-    voomed = hpgl_voom(normalized_counts, model)
-    voomed_fit = lmFit(voomed)
-    modified_model = model
-    modified_model = modified_model[,grep("batch", colnames(modified_model))] = 0 ## Drop batch from the model
-    new_data = tcrossprod(voomed_fit$coefficient, modified_model) + residuals(voomed_fit, normalized_counts)
-    return(new_data)
+    return(final)
 }
 
 #' hpgl_voom():  A slight modification of limma's voom() function.
@@ -405,43 +569,6 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE, logged=FALSE,
     out$plot = mean_var_plot
     new("EList", out)
 }
-
-
-#' limma_subset():  A quick and dirty way to pull the top/bottom genes from toptable()
-#'
-#' @param df The original data from limma
-#' @param n A number of genes to keep
-#' @param z A number of z-scores from the mean
-#'
-#' @return a dataframe subset from toptable
-#'
-#' @seealso \code{\link{limma}}
-#'
-#' @export
-#' @examples
-#' ## subset = limma_subset(df, n=400)
-#' ## subset = limma_subset(df, z=1.5)
-limma_subset = function(table, n=NULL, z=NULL) {
-    if (is.null(n) & is.null(z)) {
-        z = 1.5
-    }
-    if (is.null(n)) {
-        out_summary = summary(table$logFC)
-        out_mad = mad(table$logFC, na.rm=TRUE)
-        up_median_dist = out_summary["Median"] + (out_mad * z)
-        down_median_dist = out_summary["Median"] - (out_mad * z)
-        up_genes = subset(table, logFC >= up_median_dist)
-        down_genes = subset(table, logFC <= down_median_dist)
-    } else if (is.null(z)) {
-        upranked = table[order(table$logFC, decreasing=TRUE),]
-        up_genes = head(upranked, n=n)
-        down_genes = tail(upranked, n=n)
-    }
-    ret_list = list(up=up_genes, down=down_genes)
-    return(ret_list)
-}
-
-
 
 #' limma_pairwise():  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using voom/limma.
@@ -630,394 +757,121 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     return(result)
 }
 
-#' coefficient_scatter(): Plot out 2 coefficients with respect to one another from limma
+#' Plot arbitrary data from limma
 #'
-#' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
-#' This hopefully makes that easy.
+#' @param all_pairwise_result The result from calling balanced_pairwise()
+#' @param first_name A table inside all_pairwise_result$limma_result
+#' @param first_type A column within the chosen table
+#' @param second_name Another table inside all_pairwise_result$limma_result
+#' @param second_type A column to compare against
+#' @param type A type of scatter plot (linear model, distance, vanilla)
+#' @param ... so that you may feed it the gvis/tooltip information to make clicky graphs if so desired.
 #'
-#' @param limma_output The set of pairwise comparisons provided by limma_pairwise()
-#' @param x The name or number of the first coefficient column to extract, this will be the x-axis of the plot
-#' @param y The name or number of the second coefficient column to extract, this will be the y-axis of the plot
-#' @param gvis_filename If provided, an html clicky-plot will be generated with this name
-#' @param gvis_trendline add a trendline to the gvis plot? (TRUE by default)
-#' @param tooltip_data a dataframe of gene annotations to be used in the gvis plot
+#' @return a hpgl_linear_scatter() set of plots comparing the chosen columns
+#' If you forget to specify tables to compare, it will try the first vs the second.
+#' @seealso \code{\link{hpgl_linear_scatter}}, \code{\link{topTable}},
 #'
-#' @return a ggplot2 plot showing the relationship between the two coefficients
-#' @seealso \code{\link{hpgl_linear_scatter}} \code{\link{limma_pairwise}}
 #' @export
 #' @examples
-#' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-coefficient_scatter = function(limma_output, x=NULL, y=NULL, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL) {
-    ##  If taking a limma_pairwise output, then this lives in
-    ##  output$pairwise_comparisons$coefficients
-    print("This can do comparisons among the following columns in the limma result:")
-    print(colnames(limma_output$pairwise_comparisons$coefficients))
-    coefficients = limma_output$pairwise_comparisons$coefficients
-    coefficients = coefficients[,c(x,y)]
-    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline)
-    return(plot)
-}
-
-#' edger_pairwise():  Set up a model matrix and set of contrasts to do
-#' a pairwise comparison of all conditions using EdgeR.
-#'
-#' @param expt a expt class containing data, normalization state, etc.
-#' @param conditions a factor of conditions in the experiment
-#' @param batches a factor of batches in the experiment
-#' @param model_cond Include condition in the experimental model?  This is pretty much always true.
-#' @param model_batch Include batch in the model?  In most cases this is a good thing(tm).
-#' @param model_intercept Use cell means or intercept? (I default to the former, but they work out the same)
-#' @param extra_contrasts some extra contrasts to add to the list
-#'  This can be pretty neat, lets say one has conditions A,B,C,D,E
-#'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
-#'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
-#'  de_minus_cb = (E-D)-(C-B),"
-#' @param ... The elipsis parameter is fed to write_limma() at the end.
-#'
-#' @return A list including the following information:
-#'   results = A list of tables returned by 'topTags', one for each contrast.
-#'   contrasts = The string representation of the contrasts performed.
-#'   lrt = A list of the results from calling glmLRT(), one for each contrast.
-#'   contrast_list = The list of each call to makeContrasts()
-#'     I do this to avoid running into the limit on # of contrasts addressable by topTags()
-#'
-#' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
-#' @export
-#' @examples
-#' ## pretend = edger_pairwise(data, conditions, batches)
-edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, ...) {
-    if (is.null(expt) & is.null(data)) {
-        stop("This requires either an expt or data+conditions+batches")
-    } else if (!is.null(expt)) {
-        conditions = expt$conditions
-        batches = expt$batches
-        data = as.data.frame(exprs(expt$expressionset))
-        ## As I understand it, edgeR fits a binomial distribution
-        ## and expects data as floating point counts,
-        ##not a log2 transformation.
-        if (!is.null(expt$transform)) {
-            if (expt$transform == "log2") {
-                ##data = (2^data) - 1
-                data = expt$normalized$normalized_counts$count_table
-            }
-        }
+#' ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
+#' ## compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC", second_table=2, second_column="logFC", type="linear_scatter", ...) {
+    tables = all_pairwise_result$all_tables
+    if (is.numeric(first_table)) {
+        x_name = paste(names(tables)[first_table], first_column, sep=":")
     }
-    message("At this time, this only does conditional models.")
-    condition_table = table(conditions)
-    batch_table = table(batches)
-    conditions = as.factor(conditions)
-    batches = as.factor(batches)
-    ## Make a model matrix which will have one entry for
-    ## each of the condition/batches
-    ## It would be much smarter to generate the models in the following if() {} blocks
-    ## But I have it in my head to eventually compare results using different models.
-    cond_model = model.matrix(~ 0 + conditions)
-    batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
-    condbatch_model = try(model.matrix(~ 0 + conditions + batches), silent=TRUE)
-    cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
-    condbatch_int_model = try(model.matrix(~ conditions + batches), silent=TRUE)
-    fun_model = NULL
-    fun_int_model = NULL
-    if (isTRUE(model_cond) & isTRUE(model_batch)) {
-        fun_model = condbatch_model
-        fun_int_model = condbatch_int_model
-    } else if (isTRUE(model_cond)) {
-        fun_model = cond_model
-        fun_int_model = cond_int_model
-    } else if (isTRUE(model_batch)) {
-        fun_model = batch_model
-        fun_int_model = batch_int_model
+    if (is.numeric(second_table)) {
+        y_name = paste(names(tables)[second_table], second_column, sep=":")
+    }
+
+    ## This section is a little bit paranoid
+    ## I want to make absolutely certain that I am adding only the
+    ## two columns I care about and that nothing gets reordered
+    ## As a result I am explicitly pulling a single column, setting
+    ## the names, then pulling the second column, then cbind()ing them.
+    x_name = paste(first_table, first_column, sep=":")
+    y_name = paste(second_table, second_column, sep=":")
+    df = data.frame(x=tables[[first_table]][[first_column]])
+    rownames(df) = rownames(tables[[first_table]])
+    second_column_list = tables[[second_table]][[second_column]]
+    names(second_column_list) = rownames(tables[[second_table]])
+    df = cbind(df, second_column_list)
+    colnames(df) = c(x_name, y_name)
+
+    plots = NULL
+    if (type == "linear_scatter") {
+        plots = hpgl_linear_scatter(df, loess=TRUE, ...)
+    } else if (type == "dist_scatter") {
+        plots = hpgl_dist_scatter(df, ...)
     } else {
-        ## Default to the conditional model
-        fun_model = cond_model
-        fun_int_model = cond_int_model
+        plots = hpgl_scatter(df, ...)
     }
-    if (isTRUE(model_intercept)) {
-        fun_model = fun_int_model
-    }
-    if (!is.null(alt_model)) {
-        fun_model = alt_model
-    }
-    tmpnames = colnames(fun_model)
-    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
-    tmpnames = gsub("conditions", "", tmpnames)
-    colnames(fun_model) = tmpnames
-
-    ##tmpnames = colnames(condbatch_model)
-    ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
-    ##tmpnames = gsub("conditions", "", tmpnames)
-    ##colnames(cond_model) = tmpnames
-
-    raw = DGEList(counts=data, group=conditions)
-    message("Using EdgeR to normalize the data.")
-    norm = calcNormFactors(raw)
-    message("Estimating the common dispersion.")
-    disp_norm = estimateCommonDisp(norm)
-    message("Estimating dispersion across genes.")
-    tagdisp_norm = estimateTagwiseDisp(disp_norm)
-    message("Estimating GLM Common dispersion.")
-    glm_norm = estimateGLMCommonDisp(tagdisp_norm, fun_model)
-    message("Estimating GLM Trended dispersion.")
-    glm_trended = estimateGLMTrendedDisp(glm_norm, fun_model)
-    message("Estimating GLM Tagged dispersion.")
-    glm_tagged = estimateGLMTagwiseDisp(glm_trended, fun_model)
-    cond_fit = edgeR::glmFit(glm_tagged, design=fun_model)
-
-    apc = make_pairwise_contrasts(fun_model, conditions, do_identities=FALSE)
-    ## This is pretty weird because glmLRT only seems to take up to 7 contrasts at a time...
-    contrast_list = list()
-    result_list = list()
-    lrt_list = list()
-    single_contrasts = list()
-    sc = vector("list", length(apc$names))
-    for (con in 1:length(apc$names)) {
-        name = apc$names[[con]]
-        message(paste0(con, ": Performing ", name, " contrast.")) ## correct
-        sc[[name]] = gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
-        tt = parse(text=sc[[name]])
-        ctr_string = paste0("tt = makeContrasts(", tt, ", levels=fun_model)")
-        eval(parse(text=ctr_string))
-        contrast_list[[name]] = tt
-        lrt_list[[name]] = edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
-        res = topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")
-        res = as.data.frame(res)
-        res$qvalue = tryCatch(
-            {
-                format(signif(qvalue(res$PValue, robust=TRUE)$qvalues, 4), scientific=TRUE)
-            },
-            error=function(cond) {
-                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
-                return(1)
-            },
-            warning=function(cond) {
-                message("There was a warning?")
-                message(cond)
-                return(1)
-            },
-            finally={
-            }
-        )
-        res$PValue = format(signif(res$PValue, 4), scientific=TRUE)
-        res$FDR = format(signif(res$FDR, 4), scientific=TRUE)
-        result_list[[name]] = res
-    }
-
-    final = list(
-        contrasts=apc,
-        lrt=lrt_list,
-        contrast_list=contrast_list,
-        all_tables=result_list)
-
-    return(final)
+    plots[['dataframe']] = df
+    return(plots)
 }
 
-#' deseq2_pairwise():  Set up a model matrix and set of contrasts to do
-#' a pairwise comparison of all conditions using DESeq2.
+#' limma_subset():  A quick and dirty way to pull the top/bottom genes from toptable()
 #'
-#' @param expt a expt class containing data, normalization state, etc.
-#' @param conditions a factor of conditions in the experiment
-#' @param batches a factor of batches in the experiment
-#' @param model_cond Include condition in the experimental model?  This is pretty much always true.
-#' @param model_batch Include batch in the model?  In most cases this is a good thing(tm).
-#' @param model_intercept Use cell means or intercept? (I default to the former, but they work out the same)
-#' @param ... The elipsis parameter is fed to write_limma() at the end.
+#' @param df The original data from limma
+#' @param n A number of genes to keep
+#' @param z A number of z-scores from the mean
 #'
-#' @return A list including the following information:
-#'   run = the return from calling DESeq()
-#'   result = the return from calling results()
-#'   result_mle = the return from calling results() with the MLE parameter.
-#'   results = the return when a deseq result class is cast as a dataframe.
+#' @return a dataframe subset from toptable
 #'
-#' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
+#' @seealso \code{\link{limma}}
+#'
 #' @export
 #' @examples
-#' ## pretend = edger_pairwise(data, conditions, batches)
-deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) {
-    if (is.null(expt) & is.null(data)) {
-        stop("This requires either an expt or data+conditions+batches")
-    } else if (!is.null(expt)) {
-        conditions = expt$conditions
-        batches = expt$batches
-        data = as.data.frame(exprs(expt$expressionset))
-        ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
-        ## and expects data as floating point counts,
-        ## not a log2 transformation.
-        if (!is.null(expt$norm)) {
-            if (expt$norm != "raw") {
-                data = exprs(expt$original_expressionset)
-            } else if (!is.null(expt$transform)) {
-                if (expt$transform == "log2") {
-                    ##data = (2^data) - 1
-                    data = expt$normalized$normalized_counts$count_table
-                }
-            }
-        }
-    } ## expt is not null.
-    condition_table = table(conditions)
-    batch_table = table(batches)
-    conditions = as.factor(conditions)
-    batches = as.factor(batches)
-    ## Make a model matrix which will have one entry for
-    ## each of the condition/batches
-    cond_model = model.matrix(~ 0 + conditions)
-    tmpnames = colnames(cond_model)
-    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
-    tmpnames = gsub("conditions", "", tmpnames)
-    colnames(cond_model) = tmpnames
-
-    ## An interesting note about the use of formulae in DESeq:
-    ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
-    ## Thus, all these formulae should have condition(s) at the end.
-    summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(expt$expressionset), design=~0+condition)
-    ## If making a model ~0 + condition -- then must set betaPrior=FALSE
-    dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
-    deseq_run = DESeq(dataset, betaPrior=FALSE)
-    ## Set contrast= for each pairwise comparison here!
-
-    denominators = list()
-    numerators = list()
-    result_list = list()
-    result_mle_list = list()
-    condition_list = resultsNames(deseq_run)
-    for (c in 1:(length(condition_list) - 1)) {
-        denominator = names(condition_table[c])
-        nextc = c + 1
-        for (d in nextc:length(condition_list)) {
-            numerator = names(condition_table[d])
-            result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
-            result = result[order(result$log2FoldChange),]
-            colnames(result) = c("baseMean","logFC", "lfcSE","stat","P.Value","adj.P.Val")
-            result[is.na(result$P.Value), "P.Value"] = 1 ## Some p-values come out as NA
-            result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA
-            result$qvalue = tryCatch(
-                {
-                    format(signif(qvalue(result$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
-                },
-                error=function(cond) {
-                    message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
-                    return(1)
-                },
-                warning=function(cond) {
-                    message("There was a warning?")
-                    message(cond)
-                    return(1)
-                },
-                finally={
-                }
-            )
-            result$P.Value = format(signif(result$P.Value, 4), scientific=TRUE)
-            result$adj.P.Val = format(signif(result$adj.P.Val, 4), scientific=TRUE)
-            result_name = paste0(numerator, "_minus_", denominator)
-            denominators[[result_name]] = denominator
-            numerators[[result_name]] = numerator
-            result_list[[result_name]] = result
-        }
+#' ## subset = limma_subset(df, n=400)
+#' ## subset = limma_subset(df, z=1.5)
+limma_subset = function(table, n=NULL, z=NULL) {
+    if (is.null(n) & is.null(z)) {
+        z = 1.5
     }
-    ##    deseq_result = results(deseq_run)
-    ##    deseq_mle_result = results(deseq_run, addMLE=TRUE)
-    ##    deseq_df = data.frame(deseq_result[order(deseq_result$log2FoldChange),])
-    ##    plotMA(deseq_df)
-    ## identify(deseq_result$baseMean, deseq_result$log2FoldChange)
-    ##    ma = recordPlot()
-    ##d = plotCounts(dataset, gene=which.min(deseq_result$padj), intgroup="condition", returnData=TRUE)
-    ##ggplot(d, aes(x=condition, y=count)) +
-    ##    geom_point(position=position_jitter(w=0.1,h=0)) +
-    ##    scale_y_log10(breaks=c(25,100,400))
-
-    ##  mcols(deseq_result)$description
-    ## DESeq can do multi-factors, but the important one goes last
-    ## design(summarized) = formula(~ batch + condition)
-    ## deseq_run = DESeq(summarized)
-
-    ## Different contrasts may be applied with
-    ## contrast_res = results(deseq_run, contrast=c("condition", "numerator", "denominator"))
-
-    ## data transformations:
-    ## rld = rlog(deseq_run)
-    ## vsd = try(varianceStabilizingTransformation(deseq_run), silent=TRUE)
-    ## rlogMat = assay(rld)
-    ## vstMat = try(assay(vsd), silent=TRUE)
-    ## par(mfrow=c(1,3))
-    ## notAllZero <- (rowSums(counts(deseq_run))>0)
-    ##    meanSdPlot(log2(counts(deseq_run, normalized=TRUE)[notAllZero,] + 1))
-    ##    meanSdPlot(assay(rld[notAllZero,]))
-    ##    meanSdPlot(assay(vsd[notAllZero,]))
-    ret_list = list(
-        run=deseq_run,
-        denominators=denominators,
-        numerators=numerators,
-        conditions=condition_list,
-        all_tables=result_list
-    )
+    if (is.null(n)) {
+        out_summary = summary(table$logFC)
+        out_mad = mad(table$logFC, na.rm=TRUE)
+        up_median_dist = out_summary["Median"] + (out_mad * z)
+        down_median_dist = out_summary["Median"] - (out_mad * z)
+        up_genes = subset(table, logFC >= up_median_dist)
+        down_genes = subset(table, logFC <= down_median_dist)
+    } else if (is.null(z)) {
+        upranked = table[order(table$logFC, decreasing=TRUE),]
+        up_genes = head(upranked, n=n)
+        down_genes = tail(upranked, n=n)
+    }
+    ret_list = list(up=up_genes, down=down_genes)
     return(ret_list)
 }
 
-#' compare_tables(): See how similar are results from limma/deseq/edger.
+#' make_exampledata():  A small hack of limma's exampleData()
+#' function to allow for arbitrary data set sizes.
 #'
-#' limma, DEseq2, and EdgeR all make somewhat different assumptions
-#' and choices about what makes a meaningful set of differentially
-#' expressed genes.  This seeks to provide a quick and dirty metric
-#' describing the degree to which they (dis)agree.
+#' @param ngenes how many genes in the fictional data set.  1000 by default.
+#' @param columns how many samples in this data set.  5 by default.
 #'
-#' @param limma  limma data from limma_pairwise()
-#' @param deseq  deseq data from deseq2_pairwise()
-#' @param edger  edger data from edger_pairwise()
-#'
-#' @return a heatmap showing how similar they are along with some
-#' correlations betwee the three players.
-#' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
+#' @return a matrix of pretend counts
+#' @seealso \code{\link{makeExampleData}}
 #' @export
 #' @examples
-#' ## l = limma_pairwise(expt)
-#' ## d = deseq_pairwise(expt)
-#' ## e = edger_pairwise(expt)
-#' fun = compare_tables(limma=l, deseq=d, edger=e)
-compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
-    ## Fill each column/row of these with the correlation between tools for one contrast performed
-    if (class(limma) == "list") { ## Then this was fed the raw output from limma_pairwise, lets assume the same is true for deseq/edger too and pull out the result tables.
-        limma = limma$all_tables
-        deseq = deseq$all_tables
-        edger = edger$all_tables
-    }
-    len = length(names(deseq))
-    limma_vs_edger = list()
-    limma_vs_deseq = list()
-    edger_vs_deseq = list()
-    cc = 0
-    last = length(names(deseq))
-    for (comp in names(deseq)) {  ## assume all three have the same names() -- note that limma has more than the other two though
-        cc = cc + 1
-        message(paste0(cc, "/", len, ": Comparing analyses for: ", comp))
-        l = data.frame(limma[[comp]])
-        e = data.frame(edger[[comp]])
-        d = data.frame(deseq[[comp]])
-        le = merge(l, e, by.x="row.names", by.y="row.names")
-        le = le[,c("logFC.x","logFC.y")]
-        lec = cor.test(le[,1], le[,2])$estimate
-        ld = merge(l, d, by.x="row.names", by.y="row.names")
-        ld = ld[,c("logFC.x","logFC.y")]
-        ldc = cor.test(ld[,1], ld[,2])$estimate
-        ed = merge(e, d, by.x="row.names", by.y="row.names")
-        ed = ed[,c("logFC.x","logFC.y")]
-        edc = cor.test(ed[,1], ed[,2])$estimate
-        limma_vs_edger[[comp]] = lec
-        limma_vs_deseq[[comp]] = ldc
-        edger_vs_deseq[[comp]] = edc
-    } ## End loop
-    names(limma_vs_edger) = names(deseq)
-    names(limma_vs_deseq) = names(deseq)
-    names(edger_vs_deseq) = names(deseq)
-
-    tt = rbind(as.numeric(limma_vs_edger), as.numeric(limma_vs_deseq))
-    tt = rbind(tt, as.numeric(edger_vs_deseq))
-    tt = as.matrix(tt)
-    rownames(tt) = c("le", "ld", "ed")
-    colnames(tt) = names(deseq)
-    heat_colors = colorRampPalette(c("white","black"))
-    sillytime = heatmap.3(tt, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=heat_colors, dendrogram="none", Rowv=FALSE, Colv=FALSE, main="Compare DE tools")
-    heat = recordPlot()
-    ret = list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq, edger_vs_deseq, heat=heat)
-    return(ret)
+#' ## pretend = make_exampledata()
+make_exampledata = function (ngenes=1000, columns=5) {
+    q0 <- rexp(ngenes, rate = 1/250)
+    is_DE <- runif(ngenes) < 0.3
+    lfc <- rnorm(ngenes, sd = 2)
+    q0A <- ifelse(is_DE, q0 * 2^(lfc/2), q0)
+    q0B <- ifelse(is_DE, q0 * 2^(-lfc/2), q0)
+    ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
+    true_sf = abs(rnorm(columns, mean=1, sd=0.4))
+    cond_types = ceiling(sqrt(columns))
+    ##    conds <- c("A", "A", "B", "B", "B")
+    ##x <- sample( LETTERS[1:4], 10000, replace=TRUE, prob=c(0.1, 0.2, 0.65, 0.05) )
+    conds = sample(LETTERS[1:cond_types], columns, replace=TRUE)
+    m <- t(sapply(seq_len(ngenes), function(i) sapply(1:columns, function(j) rnbinom(1,
+        mu = true_sf[j] * ifelse(conds[j] == "A", q0A[i], q0B[i]),
+        size = 1/0.2))))
+    rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
+    newCountDataSet(m, conds)
 }
 
 #' make_pairwise_contrasts(): Run makeContrasts() with all pairwise comparisons.
@@ -1129,57 +983,35 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
     return(result)
 }
 
-#' Plot arbitrary data from limma
+#' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
+#' It just does fast.svd of a matrix against its rowMeans().
 #'
-#' @param all_pairwise_result The result from calling balanced_pairwise()
-#' @param first_name A table inside all_pairwise_result$limma_result
-#' @param first_type A column within the chosen table
-#' @param second_name Another table inside all_pairwise_result$limma_result
-#' @param second_type A column to compare against
-#' @param type A type of scatter plot (linear model, distance, vanilla)
-#' @param ... so that you may feed it the gvis/tooltip information to make clicky graphs if so desired.
+#' @param data A data frame to decompose
 #'
-#' @return a hpgl_linear_scatter() set of plots comparing the chosen columns
-#' If you forget to specify tables to compare, it will try the first vs the second.
-#' @seealso \code{\link{hpgl_linear_scatter}}, \code{\link{topTable}},
+#' @return a list containing the s,v,u from fast.svd
+#' @seealso \code{\link{fast.svd}}
 #'
 #' @export
 #' @examples
-#' ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
-#' ## compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
-limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC", second_table=2, second_column="logFC", type="linear_scatter", ...) {
-    tables = all_pairwise_result$all_tables
-    if (is.numeric(first_table)) {
-        x_name = paste(names(tables)[first_table], first_column, sep=":")
-    }
-    if (is.numeric(second_table)) {
-        y_name = paste(names(tables)[second_table], second_column, sep=":")
-    }
+#' ## svd = makeSVD(data)
+makeSVD = function (x) {
+    x = as.matrix(x)
+    s = fast.svd(x - rowMeans(x))
+    v = s$v
+    rownames(v) = colnames(x)
+    s = list(v=v, u=s$u, d=s$d)
+    return(s)
+}
 
-    ## This section is a little bit paranoid
-    ## I want to make absolutely certain that I am adding only the
-    ## two columns I care about and that nothing gets reordered
-    ## As a result I am explicitly pulling a single column, setting
-    ## the names, then pulling the second column, then cbind()ing them.
-    x_name = paste(first_table, first_column, sep=":")
-    y_name = paste(second_table, second_column, sep=":")
-    df = data.frame(x=tables[[first_table]][[first_column]])
-    rownames(df) = rownames(tables[[first_table]])
-    second_column_list = tables[[second_table]][[second_column]]
-    names(second_column_list) = rownames(tables[[second_table]])
-    df = cbind(df, second_column_list)
-    colnames(df) = c(x_name, y_name)
-
-    plots = NULL
-    if (type == "linear_scatter") {
-        plots = hpgl_linear_scatter(df, loess=TRUE, ...)
-    } else if (type == "dist_scatter") {
-        plots = hpgl_dist_scatter(df, ...)
-    } else {
-        plots = hpgl_scatter(df, ...)
-    }
-    plots[['dataframe']] = df
-    return(plots)
+## Some code to more strongly remove batch effects
+remove_batch_effect = function(normalized_counts, model) {
+    ## model = model.matrix(~ condition + batch)
+    voomed = hpgl_voom(normalized_counts, model)
+    voomed_fit = lmFit(voomed)
+    modified_model = model
+    modified_model = modified_model[,grep("batch", colnames(modified_model))] = 0 ## Drop batch from the model
+    new_data = tcrossprod(voomed_fit$coefficient, modified_model) + residuals(voomed_fit, normalized_counts)
+    return(new_data)
 }
 
 #' simple_comparison():  Perform a simple experimental/control comparison
@@ -1355,32 +1187,244 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
     return(return_info)
 }
 
-#' make_exampledata():  A small hack of limma's exampleData()
-#' function to allow for arbitrary data set sizes.
+#' write_deseq(): Writes out the results of a DESeq2 search using results()
+#' However, this will do a couple of things to make one's life easier:
+#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
+#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
+#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
 #'
-#' @param ngenes how many genes in the fictional data set.  1000 by default.
-#' @param columns how many samples in this data set.  5 by default.
+#' @param data The output from eBayes()
+#' @param adjust The pvalue adjustment chosen (fdr by default)
+#' @param n The number of entries to report, defaults to 0, which says do them all
+#' @param coef which coefficients/contrasts to report, NULL says do them all
+#' @param workbook an excel filename into which to write the data, used for csv files too.
+#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
 #'
-#' @return a matrix of pretend counts
-#' @seealso \code{\link{makeExampleData}}
+#' @return a list of data frames comprising the toptable output for each coefficient,
+#'    I also added a qvalue entry to these toptable() outputs.
+#'
+#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
+#'
 #' @export
 #' @examples
-#' ## pretend = make_exampledata()
-make_exampledata = function (ngenes=1000, columns=5) {
-    q0 <- rexp(ngenes, rate = 1/250)
-    is_DE <- runif(ngenes) < 0.3
-    lfc <- rnorm(ngenes, sd = 2)
-    q0A <- ifelse(is_DE, q0 * 2^(lfc/2), q0)
-    q0B <- ifelse(is_DE, q0 * 2^(-lfc/2), q0)
-    ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
-    true_sf = abs(rnorm(columns, mean=1, sd=0.4))
-    cond_types = ceiling(sqrt(columns))
-    ##    conds <- c("A", "A", "B", "B", "B")
-    ##x <- sample( LETTERS[1:4], 10000, replace=TRUE, prob=c(0.1, 0.2, 0.65, 0.05) )
-    conds = sample(LETTERS[1:cond_types], columns, replace=TRUE)
-    m <- t(sapply(seq_len(ngenes), function(i) sapply(1:columns, function(j) rnbinom(1,
-        mu = true_sf[j] * ifelse(conds[j] == "A", q0A[i], q0B[i]),
-        size = 1/0.2))))
-    rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
-    newCountDataSet(m, conds)
+#' ## finished_comparison = eBayes(limma_output)
+#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
+    testdir = dirname(workbook)
+    if (n == 0) {
+        n = dim(data$coefficients)[1]
+    }
+    if (is.null(coef)) {
+        coef = colnames(data$contrasts)
+    } else {
+        coef = as.character(coef)
+    }
+    return_data = list()
+    for (c in 1:length(coef)) {
+        comparison = coef[c]
+        message(paste("Printing table: ", comparison, sep=""))
+        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
+
+        data_table$qvalue = tryCatch(
+            {
+                format(signif(qvalue(data_table$P.Value, gui=FALSE)$qvalues, 4), scientific=TRUE)
+            },
+            error=function(cond) {
+                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+                return(1)
+            },
+            warning=function(cond) {
+                message("There was a warning?")
+                message(cond)
+                return(1)
+            },
+            finally={
+            }
+        )
+        if (!is.null(annotation)) {
+            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
+            ###data_table = data_table[-1]
+        }
+        ## This write_xls runs out of memory annoyingly often
+        if (isTRUE(excel) | isTRUE(csv)) {
+            if (!file.exists(testdir)) {
+                dir.create(testdir)
+                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
+            }
+        }
+        if (isTRUE(excel)) {
+            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
+        }
+        ## Therefore I will write a csv of each comparison, too
+        if (isTRUE(csv)) {
+            csv_filename = gsub(".xls$", "", workbook)
+            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
+            write.csv(data_table, file=csv_filename)
+        }
+        return_data[[comparison]] = data_table
+    }
+    return(return_data)
 }
+
+#' write_edger(): Writes out the results of an EdgeR search using topTags()
+#' However, this will do a couple of things to make one's life easier:
+#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
+#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
+#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+#'
+#' @param data The output from eBayes()
+#' @param adjust The pvalue adjustment chosen (fdr by default)
+#' @param n The number of entries to report, defaults to 0, which says do them all
+#' @param coef which coefficients/contrasts to report, NULL says do them all
+#' @param workbook an excel filename into which to write the data, used for csv files too.
+#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
+#'
+#' @return a list of data frames comprising the toptable output for each coefficient,
+#'    I also added a qvalue entry to these toptable() outputs.
+#'
+#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
+#'
+#' @export
+#' @examples
+#' ## finished_comparison = eBayes(limma_output)
+#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
+    testdir = dirname(workbook)
+    if (n == 0) {
+        n = dim(data$coefficients)[1]
+    }
+    if (is.null(coef)) {
+        coef = colnames(data$contrasts)
+    } else {
+        coef = as.character(coef)
+    }
+    return_data = list()
+    for (c in 1:length(coef)) {
+        comparison = coef[c]
+        message(paste("Printing table: ", comparison, sep=""))
+        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
+
+        data_table$qvalue = tryCatch(
+            {
+                format(signif(qvalue(data_table$P.Value, gui=FALSE)$qvalues, 4), scientific=TRUE)
+            },
+            error=function(cond) {
+                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+                return(1)
+            },
+            warning=function(cond) {
+                message("There was a warning?")
+                message(cond)
+                return(1)
+            },
+            finally={
+            }
+        )
+        if (!is.null(annotation)) {
+            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
+            ###data_table = data_table[-1]
+        }
+        ## This write_xls runs out of memory annoyingly often
+        if (isTRUE(excel) | isTRUE(csv)) {
+            if (!file.exists(testdir)) {
+                dir.create(testdir)
+                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
+            }
+        }
+        if (isTRUE(excel)) {
+            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
+        }
+        ## Therefore I will write a csv of each comparison, too
+        if (isTRUE(csv)) {
+            csv_filename = gsub(".xls$", "", workbook)
+            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
+            write.csv(data_table, file=csv_filename)
+        }
+        return_data[[comparison]] = data_table
+    }
+    return(return_data)
+}
+
+#' write_limma(): Writes out the results of a limma search using toptable()
+#' However, this will do a couple of things to make one's life easier:
+#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
+#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
+#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+#'
+#' @param data The output from eBayes()
+#' @param adjust The pvalue adjustment chosen (fdr by default)
+#' @param n The number of entries to report, defaults to 0, which says do them all
+#' @param coef which coefficients/contrasts to report, NULL says do them all
+#' @param workbook an excel filename into which to write the data, used for csv files too.
+#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
+#'
+#' @return a list of data frames comprising the toptable output for each coefficient,
+#'    I also added a qvalue entry to these toptable() outputs.
+#'
+#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
+#'
+#' @export
+#' @examples
+#' ## finished_comparison = eBayes(limma_output)
+#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
+    testdir = dirname(workbook)
+    if (n == 0) {
+        n = dim(data$coefficients)[1]
+    }
+    if (is.null(coef)) {
+        coef = colnames(data$contrasts)
+    } else {
+        coef = as.character(coef)
+    }
+    return_data = list()
+    for (c in 1:length(coef)) {
+        comparison = coef[c]
+        message(paste(c, ": Printing table: ", comparison, sep=""))
+        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
+
+        data_table$qvalue = tryCatch(
+            {
+                as.numeric(format(signif(qvalue(data_table$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE))
+            },
+            error=function(cond) {
+                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+                return(1)
+            },
+            warning=function(cond) {
+                message("There was a warning?")
+                message(cond)
+                return(1)
+            },
+            finally={
+            }
+        )
+        data_table$P.Value = as.numeric(format(signif(data_table$P.Value, 4), scientific=TRUE))
+        data_table$adj.P.Val = as.numeric(format(signif(data_table$adj.P.Val, 4), scientific=TRUE))
+
+        if (!is.null(annotation)) {
+            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
+            ###data_table = data_table[-1]
+        }
+        ## This write_xls runs out of memory annoyingly often
+        if (isTRUE(excel) | isTRUE(csv)) {
+            if (!file.exists(testdir)) {
+                dir.create(testdir)
+                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
+            }
+        }
+        if (isTRUE(excel)) {
+            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
+        }
+        ## Therefore I will write a csv of each comparison, too
+        if (isTRUE(csv)) {
+            csv_filename = gsub(".xls$", "", workbook)
+            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
+            write.csv(data_table, file=csv_filename)
+        }
+        return_data[[comparison]] = data_table
+    }
+    return(return_data)
+}
+
+## EOF

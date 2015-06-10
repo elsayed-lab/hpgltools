@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 19 13:51:27 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jun  8 11:22:40 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a ggplot PCA plot describing the samples' clustering
 #'
@@ -83,7 +83,6 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
         pca_plot = pca_plot_largebatch(pca_data)
     }
     pca_plot = pca_plot + xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
-    print(labels)
     if (!is.null(labels)) {
         if (labels[[1]] == "fancy") {
             pca_plot = pca_plot + directlabels::geom_dl(aes(label=SampleID), method="smart.grid")
@@ -108,10 +107,10 @@ pca_plot_largebatch = function(df) {
     env = environment()
     num_batches = length(levels(factor(df$batch)))
     plot = ggplot(df, aes(PC1, PC2)) +
-        geom_point(size=3, aes(shape=factor(batch), fill=condition, colour=colors)) +
-        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
-        scale_color_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
-        guides(fill=guide_legend(override.aes=list(colour=levels(factor(colors)))), colour=guide_legend(override.aes="black")) +
+        geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
+        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(df$conditions)), values=levels(as.factor(df$colors))) +
+        scale_color_manual(name="Condition", guide="legend", labels=levels(as.factor(df$conditions)), values=levels(as.factor(df$colors))) +
+        guides(fill=guide_legend(override.aes=list(colour=levels(factor(df$colors)))), colour=guide_legend(override.aes="black")) +
         scale_shape_manual(values=c(1:num_batches), name="Batch")
     return(plot)
 }
@@ -121,9 +120,9 @@ pca_plot_smallbatch = function(df) {
     env = environment()
     plot = ggplot(df, aes(PC1, PC2)) +
         geom_point(size=3, aes(shape=factor(batch), fill=condition), colour='black') +
-        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
-        scale_shape_manual(name="Batch", labels=levels(as.factor(batch)), values=21:25) +
-        guides(fill=guide_legend(override.aes=list(colour=levels(factor(colors)))), colour=guide_legend(override.aes="black"))
+        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(df$conditions)), values=levels(as.factor(df$colors))) +
+        scale_shape_manual(name="Batch", labels=levels(as.factor(df$batch)), values=21:25) +
+        guides(fill=guide_legend(override.aes=list(colour=levels(factor(df$colors)))), colour=guide_legend(override.aes="black"))
     return(plot)
 }
 
