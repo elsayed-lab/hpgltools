@@ -44,7 +44,13 @@ they may instead be fed here}
 \item{savefile}{an Rdata file to which to save the data of the resulting expt. expt.Rdata by default.}
 
 \item{low_files}{whether or not to explicitly lowercase the filenames when searching in processed_data/
-  this is relevant because the ceph object storage by default lowercases filenames.}
+  this is relevant because the ceph object storage by default lowercases filenames.
+
+It is worth noting that this function has a lot of logic used to
+find the count tables in the local filesystem.  This logic has been
+superceded by simply adding a field to the .csv file called
+'file'.  create_expt() will then just read that filename, it may be
+a full pathname or local to the cwd of the project.}
 }
 \value{
 experiment an expressionset
@@ -56,8 +62,7 @@ expt_subset for everything
 }
 \examples{
 ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
-## Dude, you need to remember that this depends on an existing data structure of
-## gene annotations.
+## Remember that this depends on an existing data structure of gene annotations.
 }
 \seealso{
 \code{\link{pData}}, \code{\link{fData}},
