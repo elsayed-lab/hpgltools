@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.R
 \name{hpgl_norm}
 \alias{hpgl_norm}
-\title{Normalize a dataframe/expt, express it, and/or transform it}
+\title{hpgl_norm(): Normalize a dataframe/expt, express it, and/or transform it}
 \usage{
 hpgl_norm(data, design = NULL, transform = "raw", norm = "raw",
   convert = "raw", batch = "raw", batch1 = "batch", batch2 = NULL,
@@ -40,7 +40,7 @@ edgeR's DGEList expression of a count table.  This seems to
 me to be the easiest to deal with.
 }
 \description{
-Normalize a dataframe/expt, express it, and/or transform it
+hpgl_norm(): Normalize a dataframe/expt, express it, and/or transform it
 }
 \examples{
 ## df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering

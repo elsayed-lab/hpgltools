@@ -5,7 +5,7 @@
 \title{Density plots!}
 \usage{
 hpgl_density_plot(data, colors = NULL, names = NULL,
-  position = "identity", fill = NULL, title = NULL)
+  position = "identity", fill = NULL, title = NULL, log = FALSE)
 }
 \arguments{
 \item{names}{names of the samples}
