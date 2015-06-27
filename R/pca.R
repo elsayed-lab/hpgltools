@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jun  8 11:22:40 2015 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Mon Jun 22 17:51:28 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a ggplot PCA plot describing the samples' clustering
 #'
@@ -24,9 +24,10 @@
 #' @examples
 #' ## pca_plot = hpgl_pca(expt=expt)
 #' ## pca_plot
-hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, size=3, ...) {
+hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, size=5, ...) {
     hpgl_env = environment()
     data_class = class(data)[1]
+    names = NULL
     if (data_class == 'expt') {
         design = data$design
         colors = data$colors
@@ -34,6 +35,11 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
         data = exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         data = exprs(data)
+    } else if (data_class == 'list') {
+        data = data$count_table
+        if (is.null(data)) {
+            stop("The list provided contains no count_table element.")
+        }
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -54,8 +60,16 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
         }
     }
 
+    if (is.null(design)) {
+        print("No design was provided.  Making one with 1 condition, 1 batch.")
+        design = cbind(labels, 1)
+        design = as.data.frame(design)
+        design$condition = as.numeric(design$labels)
+        colnames(design) = c("name","batch","condition")
+    }
     pca = hpgltools::makeSVD(data)  ## This is a part of cbcbSEQ
-    if (length(levels(design$batch)) == 1) {
+    included_batches = as.factor(as.character(design$batch))
+    if (length(levels(included_batches)) == 1) {
         pca_res = cbcbSEQ::pcRes(pca$v, pca$d, design$condition)
     } else {
         pca_res = cbcbSEQ::pcRes(pca$v, pca$d, design$condition, design$batch)
@@ -64,23 +78,24 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
     xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
     if (is.null(colors)) {
-        colors = as.numeric(levels(design$condition))
+        colors = as.numeric(levels(as.factor(design$condition)))
     }
 
     pca_data = data.frame(SampleID=labels,
-        condition=design$condition,
-        batch=design$batch,
+        condition=as.character(design$condition),
+        batch=as.character(design$batch),
         batch_int = as.integer(design$batch),
         PC1=pca$v[,1],
         PC2=pca$v[,2],
-        colors=colors)
+        colors=colors,
+        labels=as.character(labels))
 
-    num_batches = length(levels(design$batch))
+    num_batches = length(levels(included_batches))
     pca_plot = NULL
     if (num_batches <= 5) {
-        pca_plot = pca_plot_smallbatch(pca_data)
+        pca_plot = pca_plot_smallbatch(pca_data, size=size)
     } else {
-        pca_plot = pca_plot_largebatch(pca_data)
+        pca_plot = pca_plot_largebatch(pca_data, size=size)
     }
     pca_plot = pca_plot + xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
     if (!is.null(labels)) {
@@ -103,24 +118,26 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
 
 
 ## 6 or more batches
-pca_plot_largebatch = function(df) {
+pca_plot_largebatch = function(df, size=5) {
     env = environment()
     num_batches = length(levels(factor(df$batch)))
     plot = ggplot(df, aes(PC1, PC2)) +
-        geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
-        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(df$conditions)), values=levels(as.factor(df$colors))) +
-        scale_color_manual(name="Condition", guide="legend", labels=levels(as.factor(df$conditions)), values=levels(as.factor(df$colors))) +
+        ## geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
+        geom_point(size=size, aes(shape=batch, fill=condition, colour=colors)) +
+        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(df$condition)), values=levels(as.factor(df$colors))) +
+        scale_color_manual(name="Condition", guide="legend", labels=levels(as.factor(df$condition)), values=levels(as.factor(df$colors))) +
         guides(fill=guide_legend(override.aes=list(colour=levels(factor(df$colors)))), colour=guide_legend(override.aes="black")) +
         scale_shape_manual(values=c(1:num_batches), name="Batch")
     return(plot)
 }
 
 ## 5 or fewer batches
-pca_plot_smallbatch = function(df) {
+pca_plot_smallbatch = function(df, size=5) {
     env = environment()
     plot = ggplot(df, aes(PC1, PC2)) +
-        geom_point(size=3, aes(shape=factor(batch), fill=condition), colour='black') +
-        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(df$conditions)), values=levels(as.factor(df$colors))) +
+        geom_point(size=size, aes(shape=factor(batch), fill=condition), colour='black') +
+        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(df$condition)), values=levels(as.factor(df$colors))) +
+        ##scale_fill_manual(name="Condition", guide="legend", labels=condition, values=colors) +
         scale_shape_manual(name="Batch", labels=levels(as.factor(df$batch)), values=21:25) +
         guides(fill=guide_legend(override.aes=list(colour=levels(factor(df$colors)))), colour=guide_legend(override.aes="black"))
     return(plot)

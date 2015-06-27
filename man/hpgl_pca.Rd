@@ -5,7 +5,7 @@
 \title{Make a ggplot PCA plot describing the samples' clustering}
 \usage{
 hpgl_pca(data, colors = NULL, design = NULL, title = NULL,
-  labels = NULL, size = 3, ...)
+  labels = NULL, size = 5, ...)
 }
 \arguments{
 \item{colors}{a color scheme}

@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jun  8 14:04:06 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jun 23 15:08:27 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' Extract more easily readable information from a GOTERM datum
@@ -287,6 +287,38 @@ gotest = function(go) {
 }
 
 
+gather_genes = function(goseq_data, ont='MF') {
+    categories = NULL
+    if (ont == 'MF') {
+        categories = goseq_data$mf_subset
+    } else if (ont == 'BP') {
+        categories = goseq_data$bp_subset
+    } else if (ont == 'CC') {
+        categories = goseq_data$cc_subset
+    } else {
+        print('the ont argument didnt make sense, using mf.')
+        categories = goseq_data$mf_subset
+    }
+    input = goseq_data$input
+    categories = subset(categories, over_represented_pvalue < 0.05)
+    cats = categories$category
+
+    load("GO2ALLEG.rda")
+    genes_per_ont = function(cat) {
+        all_entries = GO2ALLEG[[cat]]
+        entries_in_input = input[rownames(input) %in% all_entries,]
+        names = as.character(rownames(entries_in_input))
+        return(names)
+    }
+    allgenes_per_ont = function(cat) {
+        all_entries = GO2ALLEG[[cat]]
+        return(all_entries)
+    }
+    categories$gene_list = mapply(genes_per_ont, cats)
+    categories$all_genes = mapply(allgenes_per_ont, cats)
+    return(categories)
+}
+
 #' Make a pvalue plot from a df of IDs, scores, and p-values
 #'
 #' @param df some data from topgo/goseq/clusterprofiler
@@ -302,21 +334,21 @@ pval_plot = function(df, ontology="MF") {
         scale_x_discrete(name=y_name) +
         aes(fill=pvalue) +
         scale_fill_continuous(low="red", high="blue") +
-        theme(text=element_text(size=10))
+        theme(text=element_text(size=10)) + theme_bw()
     return(pvalue_plot)
 }
 
-#' get_genelengths() Extract gene lengths from a gff file
-#'
-#' @param gff The file to extract
-#' @param ID Note the field to cross reference against to extract the genes
-get_genelengths = function(gff, ID="Note") {
-    annotations = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
-    genes = annotations[annotations$type=="gene",]
-    genes$ID = unlist(genes[,ID])
-    genes = genes[,c("ID","width")]
-    return(genes)
-}
+### #' get_genelengths() Extract gene lengths from a gff file
+### #'
+### #' @param gff The file to extract
+### #' @param ID Note the field to cross reference against to extract the genes
+###get_genelengths = function(gff, ID="Note") {
+###    annotations = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
+###    genes = annotations[annotations$type=="gene",]
+###    genes$ID = unlist(genes[,ID])
+###    genes = genes[,c("ID","width")]
+###    return(genes)
+###}
 
 #' Perform ontology searches of the output from limma
 #'
@@ -482,8 +514,6 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
     names(output) = names(limma_out)
     return(output)
 }
-
-
 
 
 golevel_df = function(ont="MF", savefile="ontlevel.rda") {

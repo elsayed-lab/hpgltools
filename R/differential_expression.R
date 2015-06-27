@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jun  8 11:34:45 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jun 25 14:06:35 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -154,9 +154,12 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
     rownames(comparison_df) = c("le", "ld", "ed")
     colnames(comparison_df) = names(deseq)
     heat_colors = colorRampPalette(c("white","black"))
-    comparison_heatmap = heatmap.3(comparison_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=heat_colors, dendrogram="none", Rowv=FALSE, Colv=FALSE, main="Compare DE tools")
-    heat = recordPlot()
-    ret = list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq, edger_vs_deseq, heat=heat)
+    comparison_heatmap = try(heatmap.3(comparison_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=heat_colors, dendrogram="none", Rowv=FALSE, Colv=FALSE, main="Compare DE tools"), silent=TRUE)
+    heat=NULL
+    if (class(comparison_heatmap) != 'try-error') {
+        heat = recordPlot()
+    }
+    ret = list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq, edger_vs_deseq=edger_vs_deseq, comp=comparison_df, heat=heat)
     return(ret)
 }
 
@@ -502,11 +505,17 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE, logged=FALSE,
     if (is.null(libsize)) {
         libsize = colSums(dataframe, na.rm=TRUE)
     }
+    if (converted == 'cpm') {
+        converted = TRUE
+    }
     if (!isTRUE(converted)) {
         message("The voom input was not cpm, converting now.")
         posed = t(dataframe + 0.5)
         dataframe = t(posed/(libsize + 1) * 1e+06)
         ##y <- t(log2(t(counts + 0.5)/(lib.size + 1) * 1000000)) ## from voom()
+    }
+    if (logged == 'log2') {
+        logged = TRUE
     }
     if (!isTRUE(logged)) {
         message("The voom input was not log2, transforming now.")
@@ -1076,7 +1085,7 @@ remove_batch_effect = function(normalized_counts, model) {
 simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="simple_comparison", basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE, pvalue_cutoff=0.05, logfc_cutoff=0.6, tooltip_data=NULL, verbose=FALSE, ...) {
     condition_model = stats::model.matrix(~ 0 + subset$condition)
     if (length(levels(subset$batch)) == 1) {
-        print("Hey! There is only one batch! I am only including condition in the model!")
+        print("There is only one batch! I can only include condition in the model.")
         condbatch_model = stats::model.matrix(~ 0 + subset$condition)
     } else {
         condbatch_model = stats::model.matrix(~ 0 + subset$condition + subset$batch)
@@ -1087,12 +1096,11 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
         model = condition_model
     }
     expt_data = as.data.frame(exprs(subset$expressionset))
-    colnames(expt_data)
     if (combat) {
 #        expt_data = ComBat(expt_data, subset$batches, condition_model)
         expt_data = cbcbSEQ::combatMod(expt_data, subset$batches, subset$conditions)
     }
-    expt_voom = hpgltools::hpgl_voom(expt_data, model)
+    expt_voom = hpgltools::hpgl_voom(expt_data, model, libsize=subset$original_libsize, logged=subset$transform, converted=subset$convert)
     lf = limma::lmFit(expt_voom)
     colnames(lf$coefficients)
     coefficient_scatter = hpgltools::hpgl_linear_scatter(lf$coefficients)

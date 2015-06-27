@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jun  4 11:36:29 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jun 25 14:04:17 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -294,6 +294,8 @@ expt_subset = function(expt, subset, by_definitions=FALSE) {
     samplenames = as.character(samples$sample)
     colors = as.character(samples$color)
     names = paste(conditions, batches, sep="-")
+    subset_definitions = expt$definitions[rownames(expt$definitions) %in% samplenames, ]
+    subset_libsize = expt$original_libsize[names(expt$original_libsize) %in% samplenames]
     expressionset = expressionset[, sampleNames(expressionset) %in% samplenames]
     columns = data.frame(sample=colnames(exprs(expressionset)))
     rownames(columns) = colnames(exprs(expressionset))
@@ -302,6 +304,7 @@ expt_subset = function(expt, subset, by_definitions=FALSE) {
         expressionset=expressionset,
         samples=samples,
         design=design,
+        definitions=subset_definitions,
         stages=initial_metadata$stage,
         types=initial_metadata$type,
         conditions=conditions,
@@ -309,6 +312,11 @@ expt_subset = function(expt, subset, by_definitions=FALSE) {
         samplenames=samplenames,
         colors=colors,
         names=names,
+        filtered=expt$filtered,
+        transform=expt$transform,
+        norm=expt$norm,
+        convert=expt$convert,
+        original_libsize=subset_libsize,
         columns=columns)
     class(metadata) = "expt"
     return(metadata)
@@ -365,9 +373,11 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
             files[table] = lower_filenames[table]
         }
         tmp_count = read.table(files[table], header=header)
-        print(paste0(files[table], " contains ", length(rownames(count_table)), " rows."))
         colnames(tmp_count) = c("ID", ids[table])
+        pre_merge = length(rownames(tmp_count))
         count_table = merge(count_table, tmp_count, by="ID")
+        post_merge = length(rownames(count_table))
+        print(paste0(files[table], " contains ", pre_merge, " rows and merges to ", post_merge, " rows."))
     }
 
     rm(tmp_count)
@@ -383,4 +393,48 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
         count_table = count_table[!rownames(count_table) %in% htseq_meta_rows,]
     }
     return(count_table)
+}
+
+
+concatenate_runs = function(expt, column='replicate') {
+    data = exprs(expt$expressionset)
+    design = expt$definitions
+    replicates = levels(as.factor(design[,column]))
+    final_expt = expt
+    final_data = NULL
+    final_design = NULL
+    column_names = list()
+    colors = list()
+    conditions = list()
+    batches = list()
+    names = list()
+    for (rep in replicates) {
+        expression = paste0(column, "=='", rep, "'")
+        tmp_expt =  expt_subset(expt, expression, by_definitions=TRUE)
+        tmp_data =  rowSums(exprs(tmp_expt$expressionset))
+        tmp_design = tmp_expt$design[1,]
+        final_data = cbind(final_data, tmp_data)
+        final_design = rbind(final_design, tmp_design)
+        column_names[[rep]] = as.character(tmp_design$sample.id)
+        colors[[rep]] = as.character(tmp_design$color)
+        batches[[rep]] = as.character(tmp_design$batch)
+        conditions[[rep]] = as.character(tmp_design$condition)
+        names[[rep]] = paste(conditions[[rep]], batches[[rep]], sep='-')
+        colnames(final_data) = column_names
+    }
+    final_expt$design = final_design
+    metadata = new("AnnotatedDataFrame", final_design)
+    sampleNames(metadata) = colnames(final_data)
+    feature_data = new("AnnotatedDataFrame", fData(expt$expressionset))
+    featureNames(feature_data) = rownames(final_data)
+    experiment = new("ExpressionSet", exprs=final_data,
+        phenoData=metadata, featureData=feature_data)
+    final_expt$expressionset = experiment
+    final_expt$original_expressionset = experiment
+    final_expt$samples = final_design
+    final_expt$colors = as.character(colors)
+    final_expt$batches = as.character(batches)
+    final_expt$conditions = as.character(conditions)
+    final_expt$names = as.character(names)
+    return(final_expt)
 }

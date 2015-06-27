@@ -1,4 +1,21 @@
-## Time-stamp: <Mon Jun  8 12:13:52 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jun 23 13:13:50 2015 Ashton Trey Belew (abelew@gmail.com)>
+
+pattern_count_genome = function(fasta, gff=NULL, pattern='TA', type='gene', key='locus_tag') {
+    rawseq = FaFile(fasta)
+    if (is.null(gff)) {
+        entry_sequences = rawseq
+    } else {
+        entries = import.gff3(gff, asRangedData=FALSE)
+        type_entries = subset(entries, type==type)
+        names(type_entries) = rownames(type_entries)
+        entry_sequences = getSeq(rawseq, type_entries)
+        names(entry_sequences) = entry_sequences[[,key]]
+    }
+    dict = PDict(pattern, max.mismatch=0)
+    result = vcountPDict(dict, entry_sequences)
+    num_pattern = data.frame(name=names(entry_sequences), num=as.data.frame(t(result)))
+    return(num_pattern)
+}
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -9,16 +26,41 @@ Beta.NA = function(y,X) {
     return(B)
 }
 
+#' Grab gene lengths from a gff file
+#'
+#' @param gff a gff file with (hopefully) IDs and widths
+#' @param type The annotation type to use (gene)
+#'
+#' @return  a data frame of gene IDs and widths.
+#' @export
+#' @seealso \code{\link{import.gff3}}, \code{\link{import.gff}}, \code{\link{import.gff2}}
+#'
+#' @examples
+#' ## tt = hpgltools:::get_genelengths('reference/fun.gff.gz')
+#' ## head(tt)
+#' ##          ID width
+#' ##1   YAL069W   312
+#' ##2   YAL069W   315
+#' ##3   YAL069W     3
+#' ##4 YAL068W-A   252
+#' ##5 YAL068W-A   255
+#' ##6 YAL068W-A     3
 get_genelengths = function(gff, type="gene") {
-
-    annotations = try(as.data.frame(import.gff3(gff)), silent=TRUE)
+    ret = NULL
+    annotations = try(data.frame(import.gff3(gff)), silent=TRUE)
     if (class(annotations) == 'try-error') {
-        annotations = as.data.frame(import.gff2(gff))
+        annotations = try(BiocGenerics:::as.data.frame(import.gff2(gff)), silent=TRUE)
+        if (class(annotations) == 'try-error') {
+            stop("Could not extract the widths from the gff file.")
+        } else {
+            ret = annotations
+        }
+    } else {
+        ret = annotations
     }
-    if (class(annotations) == 'try-error') {
-        stop("Could not get the annotations from the gff file.")
-    }
-    ret = annotations[,c("ID","width")]
+    ##ret = subset(ret, type==type)
+    ret = ret[ret$type == type,]
+    ret = ret[,c("ID","width")]
     return(ret)
 }
 
