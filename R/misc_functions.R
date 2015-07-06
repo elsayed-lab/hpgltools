@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ## Time-stamp: <Mon Jul  6 16:32:19 2015 Ashton Trey Belew (abelew@gmail.com)>
+=======
+## Time-stamp: <Tue Jun 23 13:13:50 2015 Ashton Trey Belew (abelew@gmail.com)>
+>>>>>>> 2dabf8287a4407353244deeb7a58205cbd2f7730
 
 pattern_count_genome = function(fasta, gff=NULL, pattern='TA', type='gene', key='locus_tag') {
     rawseq = FaFile(fasta)
@@ -45,11 +49,19 @@ Beta.NA = function(y,X) {
 #' ##4 YAL068W-A   252
 #' ##5 YAL068W-A   255
 #' ##6 YAL068W-A     3
+<<<<<<< HEAD
 get_genelengths = function(gff, type="gene", key='ID') {
     ret = NULL
     annotations = try(rtracklayer::import.gff3(gff), silent=TRUE)
     if (class(annotations) == 'try-error') {
         annotations = try(import.gff2(gff), silent=TRUE)
+=======
+get_genelengths = function(gff, type="gene") {
+    ret = NULL
+    annotations = try(data.frame(import.gff3(gff)), silent=TRUE)
+    if (class(annotations) == 'try-error') {
+        annotations = try(BiocGenerics:::as.data.frame(import.gff2(gff)), silent=TRUE)
+>>>>>>> 2dabf8287a4407353244deeb7a58205cbd2f7730
         if (class(annotations) == 'try-error') {
             stop("Could not extract the widths from the gff file.")
         } else {
@@ -58,11 +70,17 @@ get_genelengths = function(gff, type="gene", key='ID') {
     } else {
         ret = annotations
     }
+<<<<<<< HEAD
     ret = as.data.frame(ret)
     ##ret = subset(ret, type==type)
     ret = ret[ret$type == type,]
     ret = ret[,c(key,"width")]
     colnames(ret) = c("ID","width")
+=======
+    ##ret = subset(ret, type==type)
+    ret = ret[ret$type == type,]
+    ret = ret[,c("ID","width")]
+>>>>>>> 2dabf8287a4407353244deeb7a58205cbd2f7730
     return(ret)
 }
 

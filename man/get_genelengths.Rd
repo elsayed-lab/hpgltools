@@ -4,7 +4,11 @@
 \alias{get_genelengths}
 \title{Grab gene lengths from a gff file}
 \usage{
+<<<<<<< HEAD
 get_genelengths(gff, type = "gene", key = "ID")
+=======
+get_genelengths(gff, type = "gene")
+>>>>>>> 2dabf8287a4407353244deeb7a58205cbd2f7730
 }
 \arguments{
 \item{gff}{a gff file with (hopefully) IDs and widths}
