@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jun  8 11:22:00 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jun 25 13:30:54 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -28,34 +28,47 @@
 #' @return The 'batch corrected' count table and new library size.  Please remember that this library size may not be what you want for voom/limma.
 #' @export
 batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2='time' , noscale=TRUE, ...) {
+    batches = as.factor(design[, batch1])
+    conditions = as.factor(design[, "condition"])
+
+    num_low = sum(count_table < 1 & count_table > 0)
+    if (num_low > 0) {
+        print(paste0("Before batch correction, ", num_low, " entries 0<x<1."))
+    }
+    num_zero = sum(count_table <= 0)
+    if (num_zero > 0) {
+        print(paste0("Before batch correction, ", num_zero, " entries are >= 0."))
+    }
     if (isTRUE(batch)) {
         batch = "limma"
     }
     if (batch == "limma") {
-        batches1 = as.factor(design[, batch1])
         if (is.null(batch2)) {
             ## A reminder of removeBatchEffect usage
             ## adjusted_batchdonor = removeBatchEffect(data, batch=as.factor(as.character(des$donor)), batch2=as.factor(as.character(des$batch)))
             message("Using limma's removeBatchEffect to remove batch effect.")
-            count_table = limma::removeBatchEffect(count_table, batch=batches1)
+            count_table = limma::removeBatchEffect(count_table, batch=batches)
         } else {
             batches2 = as.factor(design[, batch2])
-            count_table = limma::removeBatchEffect(count_table, batch=batches1, batch2=batches2)
+            count_table = limma::removeBatchEffect(count_table, batch=batches, batch2=batches2)
         }
     } else if (batch == "combatmod") {
         ## message("Using a modified cbcbSeq combatMod for batch correction.")
-        batches = as.factor(design[, batch1])
-        conditions = as.factor(design[, "condition"])
         ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches, mod=conditions, noScale=noscale, ...)
-        count_table = cbcbSEQ::combatMod(dat=data.frame(count_table), batch=batches, mod=conditions, noScale=noscale, ...)
+        count_table = hpgl_combatMod(dat=data.frame(count_table), batch=batches, mod=conditions, noScale=noscale, ...)
     } else if (batch == "sva") {
-        batches = as.factor(design[, batch1])
-        conditions = as.factor(design[,"condition"])
         df = data.frame(count_table)
         mtrx = as.matrix(df)
         conditional_model = model.matrix(~conditions, data=df)
         null_model = conditional_model[,1]
-        num_surrogates = num.sv(mtrx, conditional_model)
+        num_surrogates = 0
+        be_surrogates = num.sv(mtrx, conditional_model, method="be")
+        leek_surrogates = num.sv(mtrx, conditional_model, method="leek")
+        if (be_surrogates >= 1) {
+            num_surrogates = be_surrogates
+        } else {
+            num_surrogates = leek_surrogates
+        }
         sva_object = sva(mtrx, conditional_model, null_model, n.sv=num_surrogates)
         mod_sv = cbind(conditional_model, sva_object$sv)
         fsva_result = fsva(mtrx, conditional_model, sva_object, newdat=mtrx, method="exact")
@@ -66,9 +79,11 @@ batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2=
         ## new_expt$mod_sv = mod_sv
         ## new_expt$fsva_result = fsva_result
         count_table = fsva_result$db
+    } else if (batch == 'combat_noprior') {
+        count_table = ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=FALSE)
+    } else if (batch == 'combat') {
+        count_table = ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE)
     } else if (batch == "svaseq") {
-        batches = as.factor(design[, batch1])
-        conditions = as.factor(design[,"condition"])
         df = data.frame(count_table)
         mtrx = as.matrix(df)
         conditional_model = model.matrix(~conditions, data=df)
@@ -84,9 +99,8 @@ batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2=
         count_table = mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
     } else if (batch == "ruvg") {
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
-        cond = as.factor(conditions)
         conditional_model = model.matrix(~conditions, data=df)
-        y = DGEList(counts=count_table, group=cond)
+        y = DGEList(counts=count_table, group=conditions)
         y = calcNormFactors(y, method="upperquartile")
         y = estimateGLMCommonDisp(y, conditional_model)
         y = estimateGLMTagwiseDisp(y, conditional_model)
@@ -102,6 +116,11 @@ batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2=
     } else {
         print("Did not recognize the batch correction, leaving the table alone.")
         print("Recognized batch corrections include: 'limma', 'combatmod', 'sva'")
+    }
+    num_low = sum(count_table < 0)
+    if (num_low > 0) {
+        print(paste0("The number of elements which are < 0 after batch correction is: ", num_low))
+        count_table[count_table < 0] = 0
     }
     libsize = colSums(count_table)
     counts = list(count_table=count_table, libsize=libsize)
@@ -160,7 +179,19 @@ cbcb_filter_counts = function(count_table, threshold=2, min_samples=2, verbose=F
 #' @export
 #' @examples
 #' ## converted_table = convert_counts(count_table, convert='edgecpm')
-convert_counts = function(count_table, convert="raw", annotations=NULL, ...) {
+convert_counts = function(data, convert="raw", annotations=NULL, fasta=NULL, gff=NULL, ...) {
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        count_table = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        count_table = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        count_table = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    } else {
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    }
     if (convert == "edgecpm") {
         count_table = edgeR::cpm(count_table)
     } else if (convert == "cpm") {
@@ -177,7 +208,8 @@ convert_counts = function(count_table, convert="raw", annotations=NULL, ...) {
         count_table = hpgltools::hpgl_rpkm(count_table, annotations=annotations)
     } else if (convert == "cp_seq_m") {
         counts = edgeR::cpm(count_table)
-        count_table = hpgltools::divide_seq(counts, ...)
+        ## count_table = divide_seq(counts, ...)
+        count_table = divide_seq(counts, fasta=fasta, gff=gff, pattern='TA')
     }
     libsize = colSums(count_table)
     counts = list(count_table=count_table, libsize=libsize)
@@ -197,23 +229,27 @@ convert_counts = function(count_table, convert="raw", annotations=NULL, ...) {
 #' @export
 divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff", entry_type="gene") {
     raw_seq = FaFile(fasta)
-    gff_entries = import.gff3(gff, asRangedData=FALSE)
-    cds_entries = subset(gff_entries, type==entry_type)
-    names(cds_entries) = cds_entries$locus_tag
+    gff_entries = import.gff(gff, asRangedData=FALSE)
+    ## print(head(gff_entries))
+    ##    cds_entries = subset(gff_entries, type==entry_type)
+    cds_entries = subset(gff_entries, type=='gene')
+    names(cds_entries) = make.names(cds_entries$locus_tag, unique=TRUE)
     cds_seq = getSeq(raw_seq, cds_entries)
     names(cds_seq) = cds_entries$locus_tag
     dict = PDict(pattern, max.mismatch=0)
     result = vcountPDict(dict, cds_seq)
     num_tas = data.frame(name=names(cds_seq), tas=as.data.frame(t(result)))
+    rownames(num_tas) = make.names(num_tas$name, unique=TRUE)
     colnames(num_tas) = c("name","TAs")
     num_tas$TAs = num_tas$TAs + 1
     factor = median(num_tas$TAs)
     num_tas$TAs = num_tas$TAs / factor
-    merged_tas = merge(counts, num_tas, by.x="row.names", by.y="name")
+    merged_tas = merge(counts, num_tas, by="row.names", all.x=TRUE)
     rownames(merged_tas) = merged_tas$Row.names
     merged_tas = merged_tas[-1]
+    merged_tas = subset(merged_tas, select=-c(name))  ## Two different ways of removing columns...
     merged_tas = merged_tas / merged_tas$TAs
-    merged_tas = merged_tas[, !(colnames(merged_tas) %in% c("TAs"))]
+    merged_tas = merged_tas[, !(colnames(merged_tas) %in% c("TAs"))]  ## Here is another!
     return(merged_tas)
 }
 
@@ -340,8 +376,10 @@ hpgl_combatMod = function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
     if (sum(check) > 0 & !is.null(numCovs)) {
         numCovs = numCovs - 1
     }
-    design <- sva:::design.mat(mod, numCov = numCovs)
-    batches <- sva:::list.batch(mod)
+    ##    design <- sva:::design.mat(mod, numCov = numCovs)
+    require.auto("survJamda")
+    design <- design.mat(mod)
+    batches <- list.batch(mod)
     n.batch <- length(batches)
     n.batches <- sapply(batches, length)
     n.array <- sum(n.batches)
@@ -506,7 +544,7 @@ hpgl_log2cpm = function(counts, lib.size=NULL) {
 #' ## df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
 #' ## count_table = df_ql2rpkm$counts
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm|cbcbcpm
-hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=TRUE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
+hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=FALSE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
     lowfilter_performed = FALSE
     norm_performed = "raw"
     convert_performed = "raw"
@@ -519,6 +557,11 @@ hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="ra
         data = exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         data = exprs(data)
+    } else if (data_class == 'list') {
+        data = data$count_table
+        if (is.null(data)) {
+            stop("The list provided contains no count_table.")
+        }
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -530,40 +573,20 @@ hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="ra
     raw_libsize = colSums(count_table)
     original_counts = list(libsize=raw_libsize, counts=count_table)
 
-    ## Step 1: Perform a low count filter
+    if (verbose) {
+        print("This function performs normalization in a static order: low-count filter, normalization, batch, conversion, transform")
+        print("These steps may be mixed/matched with the following functions: lowfilter_counts, normalize_counts, batch_counts, convert_counts, transform_counts")
+    }
+
+    ## Step 1: Low-count filtering
     lowfiltered_counts = NULL
-    if (filter_low != "FALSE") {
+    if (filter_low != FALSE) {
         if (verbose) {
-            print(paste0("Filtering low counts with: ", filter_low))
+            print(paste0("Performing low-count filter with: ", filter_low))
         }
-        if (tolower(filter_low) == "povera") {
-            filter_low = "pofa"
-        } else if (tolower(filter_low) == "kovera") {
-            filter_low = "kofa"
-        }
-        if (filter_low == "cbcb") {
-            lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh, min_samples=min_samples)
-            count_table = lowfiltered_counts$count_table
-            lowfilter_performed = "cbcb"
-        } else if (filter_low == "pofa") {
-            lowfiltered_counts = genefilter_pofa_counts(count_table, p=p, A=A)
-            count_table = lowfiltered_counts$count_table
-            lowfilter_performed = "pofa"
-        } else if (filter_low == "kofa") {
-            lowfiltered_counts = genefilter_kofa_counts(count_table, k=k, A=A)
-            count_table = lowfiltered_counts$count_table
-            lowfilter_performed = "kofa"
-        } else if (filter_low == "cv") {
-            lowfiltered_counts = genefilter_cv_counts(count_table, cv_min=cv_min, cv_max=cv_max)
-            count_table = lowfiltered_counts$count_table
-            lowfilter_performed = "cv"
-        } else {
-            print("Did not recognize the filtering argument, defaulting to cbcb's.")
-            print("Recognized filters are: 'cv', 'kofa', 'pofa', 'cbcb'")
-            lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh, min_samples=min_samples)
-            count_table = lowfiltered_counts$count_table
-            lowfilter_performed = "cbcb"
-        }
+        count_table = lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2)
+        ##count_table = lowfilter_counts(count_table, type=filter_low)
+        lowfilter_performed = filter_low
     }
 
     ## Step 2: Normalization
@@ -597,7 +620,25 @@ hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="ra
         convert_performed = convert
     }
 
-    ## Step 4: Transformation
+    ## Step 4: Batch correction
+    batched_counts = NULL
+    if (batch != "raw") {
+        if (verbose) {
+            print(paste("Applying: ", batch, " batch correction(raw means nothing).", sep=""))
+        }
+        ## batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
+        tmp_counts = try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design), silent=TRUE)
+        batched_counts = list(count_table=count_table)
+        if (class(tmp_counts) == 'try-error') {
+            warning("The batch_counts called failed.  Returning non-batch reduced data.")
+        } else {
+            batched_counts = tmp_counts
+        }
+        count_table = batched_counts$count_table
+        batch_performed = batch
+    }
+
+    ## Step 5: Transformation
     ## Finally, this considers whether to log2 the data or no
     transformed_counts = NULL
     if (transform != "raw") {
@@ -607,18 +648,6 @@ hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="ra
         transformed_counts = transform_counts(count_table, transform=transform, converted=convert_performed, ...)
         count_table = transformed_counts$count_table
         transform_performed = transform
-    }
-
-    ## Step 5: Batch correction
-    batched_counts = NULL
-    if (batch != "raw") {
-        if (verbose) {
-            print(paste("Applying: ", batch, " batch correction(raw means nothing).", sep=""))
-        }
-        ## batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
-        batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design)
-        count_table = batched_counts$count_table
-        batch_performed = batch
     }
 
     final_counts = list(count_table=count_table, libsize=colSums(count_table))
@@ -690,6 +719,33 @@ hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean", groupLoc="mean"
         par(oldpar)
     }
     normExprs
+}
+
+#' lowfilter_counts(): A caller for different low-count filters
+#'
+#'
+lowfilter_counts = function(count_table, type='cbcb', p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, thresh=2, min_samples=2) {
+    if (tolower(type) == 'povera') {
+        filter_low = 'pofa'
+    } else if (tolower(type) == 'kovera') {
+        filter_low = 'kofa'
+    }
+    lowfiltered_counts = NULL
+    if (type == 'cbcb') {
+        lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh, min_samples=min_samples)
+    } else if (type == 'pofa') {
+        lowfiltered_counts = genefilter_pofa_counts(count_table, p=p, A=A)
+    } else if (type == 'kofa') {
+        lowfiltered_counts = genefilter_kofa_counts(count_table, k=k, A=A)
+    } else if (type == 'cv') {
+        lowfiltered_counts = genefilter_cv_counts(count_table, cv_min=cv_min, cv_max=cv_max)
+    } else {
+        print("Did not recognize the filtering argument, defaulting to cbcb's.")
+        print("Recognized filters are: 'cv', 'kofa', 'pofa', 'cbcb'")
+        lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh, min_samples=min_samples)
+    }
+    count_table = lowfiltered_counts$count_table
+    return(count_table)
 }
 
 #' hpgl_qstats(): A hacked copy of Kwame's qsmooth/qstats code
@@ -807,7 +863,7 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
 #' @export
 #' @examples
 #' ## filtered_table = lowfilter_counts(count_table)
-lowfilter_counts = function(count_table, thresh=2, min_samples=2, verbose=FALSE) {
+qlasso_lowfilter_counts = function(count_table, thresh=2, min_samples=2, verbose=FALSE) {
     original_dim = dim(count_table)
     count_table = as.matrix(filterCounts(count_table, thresh=thresh, min_samples=min_samples))
     if (verbose) {
@@ -833,15 +889,53 @@ lowfilter_counts = function(count_table, thresh=2, min_samples=2, verbose=FALSE)
 #' @export
 #' @examples
 #' ## norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
-normalize_counts = function(count_table, design=NULL, norm="raw") {
+normalize_counts = function(data, design=NULL, norm="raw") {
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        colors = data$colors
+        count_table = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        count_table = exprs(data)
+    } else if (data_class == 'list') {
+        count_table = data$count_table
+        if (is.null(data)) {
+            stop("The list provided contains no count_table.")
+        }
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        count_table = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    } else {
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    }
     if (norm == "sf") {
         ## Size-factored normalization is a part of DESeq
-        original_cols = colnames(count_table)
-        matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~1)
-        size_factor = BiocGenerics::estimateSizeFactors(matrix)
-        count_table = BiocGenerics::counts(size_factor, normalized=TRUE)
-        colnames(count_table) = original_cols
+        factors = DESeq2::estimateSizeFactorsForMatrix(count_table)
+        num_rows = dim(count_table)[1]
+        sf_counts = count_table / do.call(rbind, rep(list(factors), num_rows))
+        ##sf_counts = counts / (libsizes * factors)
+        count_table = as.matrix(sf_counts)
         norm_performed = "sf"
+    } else if (norm == 'sf2') {
+        original_cols = colnames(count_table)
+        conds = design$conditions
+        if (is.null(conds)) {
+            conds = original_cols
+        }
+        cds = newCountDataSet(count_table, conditions=conds)
+        factors = estimateSizeFactors(cds)
+        count_table = counts(factors, normalized=TRUE)
+        norm_performed = 'sf2'
+    } else if (norm == 'vsd') {
+        original_cols = colnames(count_table)
+        conds = design$conditions
+        if (is.null(conds)) {
+            conds = original_cols
+        }
+        cds = newCountDataSet(count_table, conditions=conds)
+        factors = estimateSizeFactors(cds)
+        dispersions = estimateDispersions(factors, method='blind')
+        count_table = getVarianceStabilizedData(dispersions)
+        norm_performed = 'vsd'
     } else if (norm == "quant") {
         # Quantile normalization (Bolstad et al., 2003)
         count_rownames = rownames(count_table)
@@ -849,52 +943,47 @@ normalize_counts = function(count_table, design=NULL, norm="raw") {
         count_table = normalize.quantiles(as.matrix(count_table), copy=TRUE)
         rownames(count_table) = count_rownames
         colnames(count_table) = count_colnames
+        norm_performed = 'quant'
     } else if (norm == "qsmooth") {
         count_table = hpgl_qshrink(exprs=count_table, groups=design$condition, verbose=TRUE, plot=TRUE)
+        norm_performed = 'qsmooth'
     } else if (norm == "qsmooth_median") {
         count_table = hpgl_qshrink(exprs=count_table, groups=design$condition, verbose=TRUE, plot=TRUE, refType="median", groupLoc="median", window=50)
+        norm_performed = 'qsmooth_median'
     } else if (norm == "tmm") {
         ## TMM normalization is documented in edgeR
         ## Set up the edgeR data structure
         count_table = edgeR::DGEList(counts=count_table)
-        ## Get the tmm normalization factors
         norms = edgeR::calcNormFactors(count_table, method="TMM")
-        ## Set up the DESeq data structure to which to apply the new factors
-        deseq_matrix =  DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~1)
-        ## Apply the edgeR tmm factors to this
-        sizeFactors(deseq_matrix) = norms$samples$norm.factors
-        ## Get the counts out
-        factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
-        ## return this to a DGEList
-        count_table = as.matrix(factored)
+        libsizes = count_table$samples$lib.size
+        factors = norms$samples$norm.factors
+        counts = norms$counts
+        tmm_counts = counts / (libsizes * factors)
+        count_table = as.matrix(tmm_counts)
         norm_performed = "tmm"
     } else if (norm == "upperquartile") {
         ## Get the tmm normalization factors
         count_table = edgeR::DGEList(counts=count_table)
         norms = edgeR::calcNormFactors(count_table, method="upperquartile")
-        ## Set up the DESeq data structure to which to apply the new factors
-        deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~1)
-        ## Apply the edgeR tmm factors to this
-        sizeFactors(deseq_matrix) = norms$samples$norm.factors
-        ## Get the counts out
-        factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
-        ## return this to a DGEList
-        count_table = as.matrix(factored)
+        libsizes = count_table$samples$lib.size
+        factors = norms$samples$norm.factors
+        counts = norms$counts
+        tmm_counts = counts / (libsizes * factors)
+        count_table = as.matrix(tmm_counts)
+        norm_performed = "upperquartile"
     } else if (norm == "rle") {
         ## Get the tmm normalization factors
         count_table = edgeR::DGEList(counts=count_table)
         norms = edgeR::calcNormFactors(count_table, method="RLE")
-        ## Set up the DESeq data structure to which to apply the new factors
-        deseq_matrix = DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~1)
-        ## Apply the edgeR tmm factors to this
-        sizeFactors(deseq_matrix) = norms$samples$norm.factors
-        ## Get the counts out
-        factored = BiocGenerics::counts(deseq_matrix, normalized=TRUE)
-        ## return this to a DGEList
-        count_table = as.matrix(factored)
+        libsizes = count_table$samples$lib.size
+        factors = norms$samples$norm.factors
+        counts = norms$counts
+        tmm_counts = counts / (libsizes * factors)
+        count_table = as.matrix(tmm_counts)
+        norm_performed = "rle"
     } else {
         print("Did not recognize the normalization, leaving the table alone.")
-        print("Recognized normalizations include: 'sf', 'quant', 'tmm', 'upperquartile', and 'rle'")
+        print("Recognized normalizations include: 'qsmooth', 'sf', 'quant', 'tmm', 'upperquartile', and 'rle'")
         count_table = as.matrix(count_table)
     }
     norm_libsize = colSums(count_table)
@@ -965,6 +1054,13 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
     return(new_expt)
 }
 
+replace_data = function(expt, data) {
+    current = exprs(expt$expressionset)
+    exprs(current) = data
+    expt$expressionset = current
+    return(expt)
+}
+
 #' transform_counts(): Perform a simple transformation of a count table (log2)
 #'
 #' @param count_table A matrix of count data
@@ -976,9 +1072,20 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
 #' @export
 #' @examples
 #' ## filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
-transform_counts = function(count_table, transform="raw", converted="raw", base=NULL) {
-    if (converted != "cpm") {
-        count_table = count_table + 1
+transform_counts = function(count_table, transform="raw", converted="raw", base=NULL, add=0.5) {
+
+
+##    if (converted != "cpm") {
+##        count_table = count_table + 1
+    ##    }
+    num_zero = sum(count_table == 0)
+    num_low = sum(count_table < 0)
+    if (num_low > 0) {
+        print(paste0("Found ", num_low, " values less than 0."))
+    }
+    if (num_zero > 0) {
+        print(paste0("Found ", num_zero, " values equal to 0, adding ", add, " to the matrix."))
+        count_table = count_table + add
     }
     if (!is.null(base)) {
         count_table = (log(count_table) / log(base))

@@ -4,7 +4,7 @@
 \alias{coefficient_scatter}
 \title{coefficient_scatter(): Plot out 2 coefficients with respect to one another from limma}
 \usage{
-coefficient_scatter(limma_output, x = NULL, y = NULL,
+coefficient_scatter(limma_output, x = 1, y = 2,
   gvis_filename = "limma_scatter.html", gvis_trendline = TRUE,
   tooltip_data = NULL)
 }

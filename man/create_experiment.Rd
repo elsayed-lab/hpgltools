@@ -25,8 +25,6 @@ information.
 }
 \examples{
 ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
-## Dude, you need to remember that this depends on an existing data structure of
-## gene annotations.
 }
 \seealso{
 \code{\link{pData}}, \code{\link{fData}},

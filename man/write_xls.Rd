@@ -5,7 +5,7 @@
 \title{Write a dataframe to an excel spreadsheet sheet.}
 \usage{
 write_xls(data = NULL, sheet = "first", file = "excel/workbook.xls",
-  rowname = "rownames", overwrite = FALSE)
+  rowname = "rownames", overwritefile = FALSE, overwritesheet = TRUE)
 }
 \arguments{
 \item{data}{a dataframe of information}

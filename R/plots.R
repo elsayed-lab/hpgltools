@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jun  4 14:47:46 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jun 16 17:08:52 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -103,7 +103,7 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
     message("Graphing a PCA plot.")
     pca = try(hpgltools::hpgl_pca(expt, title=pca_title, ...))
     message("Plotting a density plot.")
-    density = try(hpgltools::hpgl_density_plot(expt, title=dens_title))
+    density = try(hpgltools::hpgl_density(expt, title=dens_title))
 
     qq = NULL
     ma = NULL
@@ -225,9 +225,14 @@ hpgl_boxplot = function(data, colors=NULL, names=NULL, title=NULL, scale="raw", 
 
 
     data[data < 0] = 0 ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
-    if (scale != "raw") {
+    if (scale == "raw") {
+        if (max(data) > 10000) {
+            print("I think this probably should be put on a log scale to be visible.")
+        }
+    } else {
         data = log2(data + 1)
     }
+
     data$id = rownames(data)
     dataframe = melt(data, id=c("id"))
     colnames(dataframe) = c("gene","variable","value")
@@ -260,7 +265,7 @@ hpgl_boxplot = function(data, colors=NULL, names=NULL, title=NULL, scale="raw", 
 #'
 #' @return a density plot!
 #' @export
-hpgl_density_plot = function(data, colors=NULL, names=NULL, position="identity", fill=NULL, title=NULL, log=FALSE) {
+hpgl_density = function(data, colors=NULL, names=NULL, position="identity", fill=NULL, title=NULL, log=FALSE) {  ## also position='stack'
     hpgl_env = environment()
     data_class = class(data)[1]
     if (data_class == 'expt') {
@@ -276,6 +281,11 @@ hpgl_density_plot = function(data, colors=NULL, names=NULL, position="identity",
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
+    if (!isTRUE(log)) {
+        if (max(data) > 10000) {
+            print("Perhaps this data should be plotted on the log scale, add log=TRUE to try it out.")
+        }
+    }
     if (!is.null(names)) {
         colnames(data) = make.names(names, unique=TRUE)
     }
@@ -298,6 +308,8 @@ hpgl_density_plot = function(data, colors=NULL, names=NULL, position="identity",
     }
     densityplot = ggplot2::ggplot(data=melted, aes(x=counts, colour=sample, fill=fill), environment=hpgl_env) +
         geom_density(aes(x=counts, y=..count..), position=position) +
+        ylab("Number of genes.") +
+        xlab("Number of hits/gene.") +
         theme_bw() +
         theme(legend.key.size=unit(0.3, "cm"))
     if (!is.null(title)) {
