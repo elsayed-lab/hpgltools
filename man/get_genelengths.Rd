@@ -2,20 +2,24 @@
 % Please edit documentation in R/misc_functions.R
 \name{get_genelengths}
 \alias{get_genelengths}
-\title{Grab gene lengths from a gff file}
+\title{get_genelengths()  Grab gene lengths from a gff file.}
 \usage{
 get_genelengths(gff, type = "gene", key = "ID")
 }
 \arguments{
 \item{gff}{a gff file with (hopefully) IDs and widths}
 
-\item{type}{The annotation type to use (gene)}
+\item{type}{default='gene'  the annotation type to use.}
+
+\item{key}{default='ID'  the identifier in the 10th column of the gff file to use.
+
+This function attempts to be robust to the differences in output from importing gff2/gff3 files.  But it certainly isn't perfect.}
 }
 \value{
 a data frame of gene IDs and widths.
 }
 \description{
-Grab gene lengths from a gff file
+get_genelengths()  Grab gene lengths from a gff file.
 }
 \examples{
 ## tt = hpgltools:::get_genelengths('reference/fun.gff.gz')

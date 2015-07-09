@@ -2,26 +2,30 @@
 % Please edit documentation in R/misc_functions.R
 \name{write_xls}
 \alias{write_xls}
-\title{Write a dataframe to an excel spreadsheet sheet.}
+\title{write_xls()  Write a dataframe to an excel spreadsheet sheet.}
 \usage{
-write_xls(data = NULL, sheet = "first", file = "excel/workbook.xls",
+write_xls(data, sheet = "first", file = "excel/workbook.xls",
   rowname = "rownames", overwritefile = FALSE, overwritesheet = TRUE)
 }
 \arguments{
-\item{data}{a dataframe of information}
+\item{data}{a dataframe of information.}
 
-\item{sheet}{the name of an excel sheet in a workbook.}
+\item{sheet}{default='first'  the name of an excel sheet in a workbook.}
 
-\item{file}{an excel workbook to which to write.  Defaults to "excel/workbook.xls"}
+\item{file}{default='excel/workbook.xls'  an excel workbook to which to write.}
 
-\item{rowname}{include rownames?  Defalts to no.}
+\item{rowname}{default='rownames'  what will the rownames be?}
+
+\item{overwritefile}{default=FALSE  overwrite the xls file with this new data, or use the original?}
+
+\item{overwritesheet}{default=TRUE  overwrite the xls sheet with this new data?  (if true it will make a backup sheet .bak).}
 }
 \value{
 NULL, on the say it creates a workbook if necessary,
 creates a sheet, and writes the data to it.
 }
 \description{
-Write a dataframe to an excel spreadsheet sheet.
+write_xls()  Write a dataframe to an excel spreadsheet sheet.
 }
 \examples{
 ## write_xls(dataframe, "hpgl_data")

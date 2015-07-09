@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jun 16 17:08:52 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jul  9 17:56:52 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -6,25 +6,19 @@
 ## where this is a danger, it is a likely good idea to cast it as a
 ## data frame.
 
-#' graph_metrics() Make lots of graphs!
+#' graph_metrics()  Make lots of graphs!
 #'
 #' Plot out a set of metrics describing the state of an experiment
 #' including library sizes, # non-zero genes, heatmaps, boxplots,
 #' density plots, pca plots, standard median distance/correlation, and
 #' qq plots.
 #'
-#' @param data an expt/df/exprs experiment containing the data, design, and colors
-#' @param norm_type normalization strategy for the data.  Defaults to
-#' quantile.
-#' @param filter whether to log2/10 filter the data.  Defaults to
-#' log2.
-#' @param out_type whether to cpm/rpkm the data.  Defaults to cpm.
-#' @param filter_low whether to low-count filter the data.  Defaults
-#' to TRUE.
-#' @param cormethod define the correlation test for heatmaps.
-#' Defaults to pearson (Available: pearson, spearman, kendal, robust)
-#' @param distmethod define the distance metric for heatmaps.
-#' Defaults to euclidean (Lots are available, I don't understand them.)
+#' @param expt  an expt to process
+#' @param cormethod default='pearson'  the correlation test for heatmaps.
+#' @param distmethod default='euclidean'  define the distance metric for heatmaps.
+#' @param title_suffix default=NULL  text to add to the titles of the plots.
+#' @param scale default='raw'  scale for the axes, sometimes useful to set as log2.
+#' @param sink default=FALSE  add in the kitchen sink?  This includes all pairwise ma plots and qq plots and takes potentially forever.
 #' @param ... extra parameters optionally fed to the various plots
 #'
 #' @return a loooong list of plots including the following:
@@ -179,14 +173,12 @@ hpgl_bcv_plot = function(data) {
     return(disp_plot)
 }
 
-#' Make a ggplot boxplot of a set of samples.
+#' hpgl_boxplot()  Make a ggplot boxplot of a set of samples.
 #'
-#' @param expt an expt set of samples
-#' @param df alternately a data frame which must be accompanied by
-#' @param design a design matrix and
-#' @param colors a color scheme
-#' @param names a nicer version of the sample names
-#' @param scale whether to log scale the y-axis
+#' @param data  an expt or data frame set of samples.
+#' @param colors default=NULL  a color scheme, if not provided will make its own.
+#' @param names default=NULL  a nicer version of the sample names.
+#' @param scale default='raw'  whether to log scale the y-axis.
 #'
 #' @return a ggplot2 boxplot of the samples.  Each boxplot
 #' contains the following information: a centered line describing the
@@ -223,7 +215,6 @@ hpgl_boxplot = function(data, colors=NULL, names=NULL, title=NULL, scale="raw", 
         colors = colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
     }
 
-
     data[data < 0] = 0 ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
     if (scale == "raw") {
         if (max(data) > 10000) {
@@ -255,13 +246,15 @@ hpgl_boxplot = function(data, colors=NULL, names=NULL, title=NULL, scale="raw", 
     return(boxplot)
 }
 
-#' Density plots!
+#' hpgl_density()  Density plots!
 #'
-#' @param df a data frame to look at
-#' @param expt or an expt class!
-#' @param names names of the samples
-#' @param position stack or identity
-#' @param fill NULL, but otherwise it fills in the colors for the rainbow coalition!
+#' @param data  an expt, expressionset, or data frame.
+#' @param colors default=NULL  a color scheme to use.
+#' @param names default=NULL  names of the samples.
+#' @param position default='identity'  how to place the lines, either let them overlap (identity), or stack them.
+#' @param fill default=NULL  fill the distributions?  This might make the plot unreasonably colorful.
+#' @param title default=NULL  a title for the plot.
+#' @param log default=FALSE  plot on the log scale?
 #'
 #' @return a density plot!
 #' @export
@@ -321,14 +314,14 @@ hpgl_density = function(data, colors=NULL, names=NULL, position="identity", fill
     return(densityplot)
 }
 
-#' Make a pretty scatter plot between two sets of numbers with a
+#' hpgl_dist_scatter()  Make a pretty scatter plot between two sets of numbers with a
 #' cheesy distance metric and some statistics of the two sets.
 #'
-#' @param df a dataframe likely containing two columns
-#' @param gvis_filename a filename to write a fancy html graph.
+#' @param df  a dataframe likely containing two columns
+#' @param gvis_filename default=NULL  a filename to write a fancy html graph.
 #' Defaults to NULL in which case the following parameter isn't needed.
-#' @param tooltip_data a df of tooltip information for gvis
-#' graphs. NULL by default.
+#' @param tooltip_data default=NULL  a df of tooltip information for gvis
+#' graphs.
 #'
 #' @return a ggplot2 scatter plot.  This plot provides a "bird's eye"
 #' view of two data sets.  This plot assumes the two data structures
@@ -387,13 +380,15 @@ hpgl_dist_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, size=3) 
     return(first_vs_second)
 }
 
-#' Make a heatmap.3 description of the correlation between samples.
+#' hpgl_corheat()  Make a heatmap.3 description of the correlation between samples.
 #'
-#' @param expt an expt set of samples
-#' @param df alternately a data frame which must be accompanied by
-#' @param design a design matrix and
-#' @param colors a color scheme
-#' @param method correlation statistic to use.  Defaults to pearson.
+#' @param data  a dataframe, expt, or expressionset to work with.
+#' @param design default=NULL  a design matrix.
+#' @param colors default=NULL  a color scheme.
+#' @param method default='pearson'   correlation statistic to use.
+#' @param names default=NULL  alternate names to use.
+#' @param row default='batch'  what to place on the row of the map, batches or conditions?
+#' @param title default=NULL  a title for the plot.
 #'
 #' @return  corheat_plot a gplots heatmap describing how the samples
 #' pairwise correlate with one another.
@@ -408,14 +403,16 @@ hpgl_corheat = function(data, colors=NULL, design=NULL, method="pearson", names=
     hpgl_heatmap(data, colors=colors, design=design, method=method, names=names, type="correlation", row=row, title=title, ...)
 }
 
-#' Make a heatmap.3 description of the similarity (euclildean distance) between samples.
+#' hpgl_disheat()  Make a heatmap.3 description of the similarity (euclildean distance) between samples.
 #'
-#' @param expt an expt set of samples
-#' @param df alternately a data frame which must be accompanied by
-#' @param design a design matrix and
-#' @param colors a color scheme
-#' @param method correlation statistic to use.  Defaults to euclidean.
-#'
+#' @param data  a dataframe, expt, or expressionset to work with.
+#' @param design default=NULL  a design matrix.
+#' @param colors default=NULL  a color scheme.
+#' @param method default='euclidean'   distance metric to use.
+#' @param names default=NULL  alternate names to use.
+#' @param row default='batch'  what to place on the row of the map, batches or conditions?
+#' @param title default=NULL  a title for the plot.
+#' 
 #' @return a recordPlot() heatmap describing the distance between samples.
 #' @seealso \code{\link{brewer.pal}},
 #' \code{\link{heatmap.2}}, \code{\link{recordPlot}}
@@ -429,6 +426,19 @@ hpgl_disheat = function(data, colors=NULL, design=NULL, method="euclidean", name
 }
 
 
+#' hpgl_heatmap()  Make a heatmap.3 plots, does the work for hpgl_disheat and hpgl_corheat.
+#'
+#' @param data  a dataframe, expt, or expressionset to work with.
+#' @param design default=NULL  a design matrix.
+#' @param colors default=NULL  a color scheme.
+#' @param method default='pearson'   distance or correlation metric to use.
+#' @param names default=NULL  alternate names to use.
+#' @param row default='batch'  what to place on the row of the map, batches or conditions?
+#' @param title default=NULL  a title for the plot.
+#' 
+#' @return a recordPlot() heatmap describing the distance between samples.
+#' @seealso \code{\link{brewer.pal}},
+#' \code{\link{heatmap.2}}, \code{\link{recordPlot}}
 hpgl_heatmap = function(data, colors=NULL, design=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
     hpgl_env = environment()
     data_class = class(data)[1]
@@ -486,9 +496,14 @@ hpgl_heatmap = function(data, colors=NULL, design=NULL, method="pearson", names=
 }
 
 
-#' Make a pretty histogram of something
+#' hpgl_histogram()  Make a pretty histogram of something.
 #'
-#' @param df a dataframe of lots of pretty numbers
+#' @param df  a dataframe of lots of pretty numbers.
+#' @param binwidth default=NULL  width of the bins for the histogram.
+#' @param log default=FALSE  replot on the log scale?
+#' @param verbose default=FALSE  be verbose?
+#' @param fillcolor default='darkgrey'  change the fill colors of the plotted elements.
+#' @param color default='black'  change the color of the lines of the plotted elements.
 #'
 #' @return a ggplot histogram
 #' @seealso \code{\link{geom_histogram}}, \code{\link{geom_density}},
@@ -529,13 +544,15 @@ hpgl_histogram = function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE,
     return(a_histogram)
 }
 
-#' Make a ggplot graph of library sizes.
+#' hpgl_libsize()  Make a ggplot graph of library sizes.
 #'
-#' @param expt an expt set of samples
-#' @param df alternately a data frame which must be accompanied by
-#' @param design a design matrix and
-#' @param colors a color scheme
-#' @param scale whether or not to log10 the y-axis
+#' @param data  an expt, dataframe, or expressionset of samples.
+#' @param design default=NULL  a design matrix.
+#' @param colors default=NULL  a color scheme.
+#' @param scale default=TRUE   whether or not to log10 the y-axis.
+#' @param names default=NULL  alternate names for the x-axis.
+#' @param title default=NULL  a title for the plot.
+#' @param text default=TRUE  add the numeric values inside the top of the bars of the plot?
 #'
 #' @return a ggplot2 bar plot of every sample's size
 #' @seealso \code{\link{geom_bar}}, \code{\link{geom_text}},
@@ -592,16 +609,19 @@ hpgl_libsize = function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, t
     return(libsize_plot)
 }
 
-#' Make a pretty scatter plot between two sets of numbers with a
+#' hpgl_linear_scatter()  Make a pretty scatter plot between two sets of numbers with a
 #' linear model superimposed and some supporting statistics.
 #'
-#' @param df a dataframe likely containing two columns
-#' @param gvis_filename a filename to write a fancy html graph.
-#' Defaults to NULL in which case the following parameter isn't needed.
-#' @param tooltip_data a df of tooltip information for gvis
-#' graphs. NULL by default.
-#' @param cormethod what type of correlation to check?  Defaults to
-#' 'pearson'
+#' @param df  a dataframe likely containing two columns
+#' @param gvis_filename default=NULL  a filename to write a fancy html graph.
+#' @param tooltip_data default=NULL  a df of tooltip information for gvis
+#' graphs.
+#' @param cormethod default='pearson'  what type of correlation to check?
+#' @param size default=2  size of the dots on the plot.
+#' @param verbose default=FALSE  be verbose?
+#' @param loess default=FALSE  add a loess estimation?
+#' @param identity default=FALSE  add the identity line?
+#' @param gvis_trendline default=NULL add a trendline to the gvis plot?  There are a couple possible types, I think linear is the most common.
 #'
 #' @return a list including a ggplot2 scatter plot and some
 #' histograms.  This plot provides a "bird's eye"
@@ -623,7 +643,7 @@ hpgl_libsize = function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, t
 #' @export
 #' @examples
 #' ## hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, histargs=NULL, loess=FALSE, identity=FALSE, gvis_trendline=NULL, ...) {
+hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, loess=FALSE, identity=FALSE, gvis_trendline=NULL, ...) {
     hpgl_env = environment()
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
@@ -703,19 +723,17 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
 }
 
 
-#' Make a pretty MA plot from the output of voom/limma/eBayes/toptable
+#' hpgl_ma_plot()  Make a pretty MA plot from the output of voom/limma/eBayes/toptable.
 #'
-#' @param counts df of linear-modelling, normalized counts by sample-type,
+#' @param counts  df of linear-modelling, normalized counts by sample-type,
 #' which is to say the output from voom/voomMod/hpgl_voom().
-#' @param de_genes df from toptable or its friends containing p-values.
-#' @param adjpval_cutoff a cutoff defining significant from not.
-#' Defaults to 0.05.
-#' @param alpha how transparent to make the dots.  Defaults to 0.6.
-#' @param size how big are the dots?  Defaults to 2.
-#' @param gvis_filename a filename to write a fancy html graph.
-#' Defaults to NULL in which case the following parameter isn't needed.
-#' @param tooltip_data a df of tooltip information for gvis
-#' graphs. NULL by default.
+#' @param de_genes  df from toptable or its friends containing p-values.
+#' @param adjpval_cutoff default=0.05  a cutoff defining significant from not.
+#' @param alpha default=0.6  how transparent to make the dots.
+#' @param size default=2  how big are the dots?
+#' @param gvis_filename default=NULL  a filename to write a fancy html graph.
+#' @param tooltip_data default=NULL  a df of tooltip information for gvis
+#' graphs.
 #'
 #' @return a ggplot2 MA scatter plot.  This is defined as the rowmeans
 #' of the normalized counts by type across all sample types on the
@@ -757,9 +775,13 @@ hpgl_ma_plot = function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6, size=2
 ##+   scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256))
 
 
-#' Make a pretty histogram of multiple datasets
+#' hpgl_multihistogram()  Make a pretty histogram of multiple datasets.
 #'
-#' @param df a dataframe of lots of pretty numbers, this also accepts lists.
+#' @param data  a dataframe of lots of pretty numbers, this also accepts lists.
+#' @param log default=FALSE  plot the data on the log scale?
+#' @param bins default=NULL  set a static # of bins of an unknown width?
+#' @param binwidth default=NULL  set a static bin width with an unknown # of bins?  If neither of these are provided, then bins is set to 500, if both are provided, then bins wins.
+#' @param verbose default=FALSE  be verbose?
 #'
 #' @return a ggplot histogram comparing multiple data sets
 #' Along the way this generates pairwise t tests of the columns of
@@ -841,17 +863,16 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
 
 
 
-#' Make a ggplot graph of the number of non-zero genes by sample.
+#' hpgl_nonzero()  Make a ggplot graph of the number of non-zero genes by sample.
 #' Made by Ramzi Temanni <temanni at umd dot edu>
 #'
-#' @param expt an expt set of samples
-#' @param df alternately a data frame which must be accompanied by
-#' @param design a design matrix and
-#' @param colors a color scheme
-#' @param labels how do you want to label the graph?  NULL by default,
+#' @param data an expt, expressionset, or dataframe.
+#' @param design default=NULL  a design matrix.
+#' @param colors default=NULL  a color scheme.
+#' @param labels default=NULL  how do you want to label the graph?
 #'   'fancy' will use directlabels() to try to match the labels with the positions without overlapping
 #'   anything else will just stick them on a 45' offset next to the graphed point
-#' @param title titles are nice, don't you think?
+#' @param title default=NULL  add a title?
 #'
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each library's CPM
 #' @seealso \code{\link{geom_point}}, \code{\link{geom_dl}}
@@ -860,7 +881,7 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
 #' @examples
 #' ## nonzero_plot = hpgl_nonzero(expt=expt)
 #' ## nonzero_plot  ## ooo pretty
-hpgl_nonzero = function(data, design=NULL, colors=NULL, expt=NULL, labels=NULL, title=NULL, ...) {
+hpgl_nonzero = function(data, design=NULL, colors=NULL, labels=NULL, title=NULL, ...) {
     hpgl_env = environment()
     names = NULL
     data_class = class(data)[1]
@@ -918,17 +939,13 @@ hpgl_nonzero = function(data, design=NULL, colors=NULL, expt=NULL, labels=NULL, 
     return(non_zero_plot)
 }
 
-
-
-#' hpgl_pairwise_ma() Plot all pairwise MA plots in an experiment
+#' hpgl_pairwise_ma()  Plot all pairwise MA plots in an experiment.
 #'
 #' Use affy's ma.plot() on every pair of columns in a data set to help
 #' diagnose problematic samples.
 #'
-#' @param expt an expt expressionset superclass or...
-#' @param df a data frame containing the data to explore.
-#' @param log is the data in log format? (it will likely figure it out
-#' if not)
+#' @param data an expt expressionset or data frame
+#' @param log default=NULL  is the data in log format?
 #'
 #' @return a list of affy::maplots
 #' @seealso \code{\link{ma.plot}}
@@ -961,6 +978,13 @@ hpgl_pairwise_ma = function(data, log=NULL, ...) {
                     print("If I am wrong, set log=FALSE, but I'm not.")
                     log = TRUE
                 }
+            } else if (max(first) < 80) {
+                if (!is.null(log)) {
+                    print("I suspect you want to set log=FALSE for this.")
+                    print("In fact, I am so  sure, I am doing it now.")
+                    print("If I am wrong, set log=TRUE.")
+                    log = FALSE
+                }
             }
             firstname = colnames(data)[c]
             secondname = colnames(data)[d]
@@ -979,13 +1003,11 @@ hpgl_pairwise_ma = function(data, log=NULL, ...) {
     return(plot_list)
 }
 
-#' quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)
+#' hpgl_qq_all()  quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)
 #'
-#' @param df the counts
-#' @param expt or the expt class
-#' @param verbose be chatty while running?
-#' @param against either the mean of all samples, or a sample dataset generated on the fly
-#' @param norm normalize the data? -- this is no longer needed I think
+#' @param data  an expressionset, expt, or dataframe of samples.
+#' @param verbose default=FALSE  be chatty while running?
+#' @param labels default='short'  what kind of labels to print?
 #'
 #' @return a list containing:
 #'   logs = a recordPlot() of the pairwise log qq plots
@@ -1043,13 +1065,12 @@ hpgl_qq_all = function(data, verbose=FALSE, labels="short") {
     return(plots)
 }
 
-#' Perform a qqplot between two columns of a matrix
+#' hpgl_qq_plot()  Perform a qqplot between two columns of a matrix.
 #'
-#' @param a data frame
-#' @param or an expt!
-#' @param x the first column
-#' @param y the second column
-#' @param labels whether to include the labels
+#' @param data  data frame/expt/expressionset.
+#' @param x default=1  the first column.
+#' @param y default=2  the second column.
+#' @param labels default=TRUE  include the lables?
 #'
 #' @return a list of the logs, ratios, and mean between the plots as ggplots.
 #' @export
@@ -1159,7 +1180,8 @@ hpgl_qq_plot = function(data, x=1, y=2, labels=TRUE) {
     return(qq_plots)
 }
 
-#' Perform qq plots of every column against every other column of a dataset
+#' hpgl_qq_all_pairwise()  Perform qq plots of every column against every other column of a dataset.
+#' This function is stupid, don't use it.
 #'
 #' @param df the data
 #' @param expt or an expt class
@@ -1212,20 +1234,20 @@ hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
     return(plots)
 }
 
-#' Make a heatmap.3 description of the similarity of the genes among samples.
+#' hpgl_sample_heatmap()  Make a heatmap.3 description of the similarity of the genes among samples.
 #'
-#' @param expt an expt set of samples
-#' @param df alternately a data frame which must be accompanied by
-#' @param design a design matrix and
-#' @param colors a color scheme
-#' @param method correlation statistic to use.  Defaults to euclidean.
+#' @param data  an expt/expressionset/dataframe set of samples
+#' @param design default=NULL  a design matrix
+#' @param colors default=NULL  a color scheme
+#' @param names default=NULL  add names?
+#' @param title default=NULL  title of the plot.
 #'
 #' @return a recordPlot() heatmap describing the samples.
 #' @seealso \code{\link{brewer.pal}},
 #' \code{\link{heatmap.3}}, \code{\link{recordPlot}}
 #'
 #' @export
-hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, method="pearson", names=NULL, type="correlation", row="batch", title=NULL, ...) {
+hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, names=NULL, title=NULL, ...) {
     hpgl_env = environment()
     data_class = class(data)[1]
     if (data_class == 'expt') {
@@ -1249,13 +1271,13 @@ hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, method="pearson",
     return(hpgl_heatmap_plot)
 }
 
-#' Make a pretty scatter plot between two sets of numbers
+#' hpgl_scatter()  Make a pretty scatter plot between two sets of numbers.
 #'
-#' @param df a dataframe likely containing two columns
-#' @param gvis_filename a filename to write a fancy html graph.
-#' Defaults to NULL in which case the following parameter isn't needed.
-#' @param tooltip_data a df of tooltip information for gvis
-#' graphs. NULL by default.
+#' @param df  a dataframe likely containing two columns
+#' @param gvis_filename default=NULL  a filename to write a fancy html graph.
+#' @param tooltip_data default=NULL  a df of tooltip information for gvis
+#' @param size default=3  the size of the dots on the graph.
+#' @param color default='black'  color of the dots on the graph.
 #'
 #' @return a ggplot2 scatter plot.
 #'
@@ -1284,17 +1306,16 @@ hpgl_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL
     return(first_vs_second)
 }
 
-#' Make an R plot of the standard median correlation among samples
+#' hpgl_smc()  Make an R plot of the standard median correlation among samples.
 #'
 #' This was written by a mix of Kwame Okrah <kokrah at gmail dot com>, Laura
 #' Dillon <dillonl at umd dot edu>, and Hector Corrada Bravo <hcorrada at umd dot edu>
 #'
-#' @param expt an expt set of samples
-#' @param df alternately a data frame which must be accompanied by
-#' @param design a design matrix and
-#' @param colors a color scheme
-#' @param method a correlation method to use.  Defaults to pearson.
-#' @param names use pretty names for the samples?
+#' @param data  an expt, expressionset, or data frame.
+#' @param colors default=NULL  a color scheme
+#' @param method default='pearson'  a correlation method to use.
+#' @param names default=NULL  use pretty names for the samples?
+#' @param title default=NULL  title for the graph.
 #'
 #' @return a recordPlot() of the standard median pairwise correlation
 #' among the samples.  This will also write to an
@@ -1351,14 +1372,13 @@ hpgl_smc = function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     return(hpgl_smc_plot)
 }
 
-#' Make an R plot of the standard median distance among samples
+#' hpgl_smd()  Make an R plot of the standard median distance among samples.
 #'
-#' @param expt an expt set of samples
-#' @param df alternately a data frame which must be accompanied by
-#' @param design a design matrix and
-#' @param colors a color scheme
-#' @param method a distance metric to use.  Defaults to euclidean.
-#' @param names use pretty names for the samples?
+#' @param data an expt/expressionset/data frame of samples.
+#' @param colors default=NULL  a color scheme
+#' @param method defaul='euclidean'  a distance metric to use.
+#' @param names default=NULL  use pretty names for the samples?
+#' @param title default=NULL  title for the graph.
 #'
 #' @return smd_plot a recordPlot of plot.  This will also write to an
 #' open device.  This plot takes the median distance of each sample
@@ -1413,21 +1433,18 @@ hpgl_smd = function(data, colors=NULL, names=NULL, method="euclidean", title=NUL
     return(hpgl_smd_plot)
 }
 
-#' Make a pretty Volcano plot!
+#' hpgl_volcano_plot()  Make a pretty Volcano plot!
 #'
-#' @param toptable_data a dataframe from limma's toptable which
+#' @param toptable_data  a dataframe from limma's toptable which
 #' includes log(fold change) and an adjusted p-value.
-#' @param p_cutoff a cutoff defining significant from not.
-#' Defaults to 0.05.
-#' @param fc_cutoff a cutoff defining the minimum/maximum fold change
+#' @param p_cutoff default=0.05  a cutoff defining significant from not.
+#' @param fc_cutoff default=0.8  a cutoff defining the minimum/maximum fold change
 #' for interesting.  This is log, so I went with +/- 0.8 mostly
 #' arbitrarily as the default.
-#' @param alpha how transparent to make the dots.  Defaults to 0.6.
-#' @param size how big are the dots?  Defaults to 2.
-#' @param gvis_filename a filename to write a fancy html graph.
-#' Defaults to NULL in which case the following parameter isn't needed.
-#' @param tooltip_data a df of tooltip information for gvis
-#' graphs. NULL by default.
+#' @param alpha default=0.6  how transparent to make the dots.
+#' @param size default=2  how big are the dots?
+#' @param gvis_filename default=NULL a filename to write a fancy html graph.
+#' @param tooltip_data default=NULL  a df of tooltip information for gvis.
 #'
 #' @return a ggplot2 MA scatter plot.  This is defined as the
 #' -log10(p-value) with respect to log(fold change).  The cutoff
@@ -1470,15 +1487,16 @@ hpgl_volcano_plot = function(toptable_data, tooltip_data=NULL, gvis_filename=NUL
 ## http://stackoverflow.com/questions/24387376/r-wired-error-could-not-find-function-multiplot
 ## Also found at:
 ## http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_%28ggplot2%29/
-#' Make a grid of plots
+#' multiplot()  Make a grid of plots.
 #'
-#' @param plots a list of plots
-#' @param file a file to write to
-#' @param cols the number of columns in the grid
+#' @param plots  a list of plots
+#' @param file  a file to write to
+#' @param cols default=NULL  the number of columns in the grid
+#' @param layout default=NULL set the layout specifically
 #'
 #' @return a multiplot!
 #' @export
-multiplot <- function(plots=NULL, file, cols=NULL, layout=NULL) {
+multiplot <- function(plots, file, cols=NULL, layout=NULL) {
   ## Make a list from the ... arguments and plotlist
   ##  plots <- c(list(...), plotlist)
   numPlots = length(plots)
@@ -1512,9 +1530,7 @@ multiplot <- function(plots=NULL, file, cols=NULL, layout=NULL) {
   }
 }
 
-
-
-#' slight modification of heatmap.2
+#' heatmap.3()  slight modification of heatmap.2.
 #'
 #' I think I found the suggestion to do this here:
 #' https://gist.github.com/nachocab/3853004

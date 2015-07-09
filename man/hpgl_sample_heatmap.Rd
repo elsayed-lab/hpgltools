@@ -2,28 +2,27 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_sample_heatmap}
 \alias{hpgl_sample_heatmap}
-\title{Make a heatmap.3 description of the similarity of the genes among samples.}
+\title{hpgl_sample_heatmap()  Make a heatmap.3 description of the similarity of the genes among samples.}
 \usage{
-hpgl_sample_heatmap(data, colors = NULL, design = NULL,
-  method = "pearson", names = NULL, type = "correlation", row = "batch",
+hpgl_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
   title = NULL, ...)
 }
 \arguments{
-\item{colors}{a color scheme}
+\item{data}{an expt/expressionset/dataframe set of samples}
 
-\item{design}{a design matrix and}
+\item{colors}{default=NULL  a color scheme}
 
-\item{method}{correlation statistic to use.  Defaults to euclidean.}
+\item{design}{default=NULL  a design matrix}
 
-\item{expt}{an expt set of samples}
+\item{names}{default=NULL  add names?}
 
-\item{df}{alternately a data frame which must be accompanied by}
+\item{title}{default=NULL  title of the plot.}
 }
 \value{
 a recordPlot() heatmap describing the samples.
 }
 \description{
-Make a heatmap.3 description of the similarity of the genes among samples.
+hpgl_sample_heatmap()  Make a heatmap.3 description of the similarity of the genes among samples.
 }
 \seealso{
 \code{\link{brewer.pal}},

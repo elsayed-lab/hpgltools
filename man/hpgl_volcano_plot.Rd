@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_volcano_plot}
 \alias{hpgl_volcano_plot}
-\title{Make a pretty Volcano plot!}
+\title{hpgl_volcano_plot()  Make a pretty Volcano plot!}
 \usage{
 hpgl_volcano_plot(toptable_data, tooltip_data = NULL, gvis_filename = NULL,
   fc_cutoff = 0.8, p_cutoff = 0.05, size = 2, alpha = 0.6, ...)
@@ -11,22 +11,19 @@ hpgl_volcano_plot(toptable_data, tooltip_data = NULL, gvis_filename = NULL,
 \item{toptable_data}{a dataframe from limma's toptable which
 includes log(fold change) and an adjusted p-value.}
 
-\item{tooltip_data}{a df of tooltip information for gvis
-graphs. NULL by default.}
+\item{tooltip_data}{default=NULL  a df of tooltip information for gvis.}
 
-\item{gvis_filename}{a filename to write a fancy html graph.
-Defaults to NULL in which case the following parameter isn't needed.}
+\item{gvis_filename}{default=NULL a filename to write a fancy html graph.}
 
-\item{fc_cutoff}{a cutoff defining the minimum/maximum fold change
+\item{fc_cutoff}{default=0.8  a cutoff defining the minimum/maximum fold change
 for interesting.  This is log, so I went with +/- 0.8 mostly
 arbitrarily as the default.}
 
-\item{p_cutoff}{a cutoff defining significant from not.
-Defaults to 0.05.}
+\item{p_cutoff}{default=0.05  a cutoff defining significant from not.}
 
-\item{size}{how big are the dots?  Defaults to 2.}
+\item{size}{default=2  how big are the dots?}
 
-\item{alpha}{how transparent to make the dots.  Defaults to 0.6.}
+\item{alpha}{default=0.6  how transparent to make the dots.}
 }
 \value{
 a ggplot2 MA scatter plot.  This is defined as the
@@ -36,7 +33,7 @@ values are delineated with lines and mark the boundaries between
 if requested.
 }
 \description{
-Make a pretty Volcano plot!
+hpgl_volcano_plot()  Make a pretty Volcano plot!
 }
 \examples{
 ## hpgl_volcano_plot(toptable_data, gvis_filename="html/fun_ma_plot.html")

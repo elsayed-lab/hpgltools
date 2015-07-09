@@ -2,24 +2,32 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_linear_scatter}
 \alias{hpgl_linear_scatter}
-\title{Make a pretty scatter plot between two sets of numbers with a
+\title{hpgl_linear_scatter()  Make a pretty scatter plot between two sets of numbers with a
 linear model superimposed and some supporting statistics.}
 \usage{
 hpgl_linear_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
-  cormethod = "pearson", size = 2, verbose = FALSE, histargs = NULL,
-  loess = FALSE, identity = FALSE, gvis_trendline = NULL, ...)
+  cormethod = "pearson", size = 2, verbose = FALSE, loess = FALSE,
+  identity = FALSE, gvis_trendline = NULL, ...)
 }
 \arguments{
 \item{df}{a dataframe likely containing two columns}
 
-\item{tooltip_data}{a df of tooltip information for gvis
-graphs. NULL by default.}
+\item{tooltip_data}{default=NULL  a df of tooltip information for gvis
+graphs.}
 
-\item{gvis_filename}{a filename to write a fancy html graph.
-Defaults to NULL in which case the following parameter isn't needed.}
+\item{gvis_filename}{default=NULL  a filename to write a fancy html graph.}
 
-\item{cormethod}{what type of correlation to check?  Defaults to
-'pearson'}
+\item{cormethod}{default='pearson'  what type of correlation to check?}
+
+\item{size}{default=2  size of the dots on the plot.}
+
+\item{verbose}{default=FALSE  be verbose?}
+
+\item{loess}{default=FALSE  add a loess estimation?}
+
+\item{identity}{default=FALSE  add the identity line?}
+
+\item{gvis_trendline}{default=NULL add a trendline to the gvis plot?  There are a couple possible types, I think linear is the most common.}
 }
 \value{
 a list including a ggplot2 scatter plot and some
@@ -37,7 +45,7 @@ similarity.  This will make a fun clicky googleVis graph if
 requested.
 }
 \description{
-Make a pretty scatter plot between two sets of numbers with a
+hpgl_linear_scatter()  Make a pretty scatter plot between two sets of numbers with a
 linear model superimposed and some supporting statistics.
 }
 \examples{

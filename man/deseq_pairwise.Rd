@@ -2,7 +2,7 @@
 % Please edit documentation in R/differential_expression.R
 \name{deseq_pairwise}
 \alias{deseq_pairwise}
-\title{deseq_pairwise():  Because I can't be trusted to remember '2'}
+\title{deseq_pairwise()  Because I can't be trusted to remember '2'}
 \usage{
 deseq_pairwise(...)
 }

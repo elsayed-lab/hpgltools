@@ -2,21 +2,23 @@
 % Please edit documentation in R/plots.R
 \name{multiplot}
 \alias{multiplot}
-\title{Make a grid of plots}
+\title{multiplot()  Make a grid of plots.}
 \usage{
-multiplot(plots = NULL, file, cols = NULL, layout = NULL)
+multiplot(plots, file, cols = NULL, layout = NULL)
 }
 \arguments{
 \item{plots}{a list of plots}
 
 \item{file}{a file to write to}
 
-\item{cols}{the number of columns in the grid}
+\item{cols}{default=NULL  the number of columns in the grid}
+
+\item{layout}{default=NULL set the layout specifically}
 }
 \value{
 a multiplot!
 }
 \description{
-Make a grid of plots
+multiplot()  Make a grid of plots.
 }
 

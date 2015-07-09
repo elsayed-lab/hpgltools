@@ -2,22 +2,24 @@
 % Please edit documentation in R/differential_expression.R
 \name{limma_subset}
 \alias{limma_subset}
-\title{limma_subset():  A quick and dirty way to pull the top/bottom genes from toptable()}
+\title{limma_subset()  A quick and dirty way to pull the top/bottom genes from toptable()}
 \usage{
 limma_subset(table, n = NULL, z = NULL)
 }
 \arguments{
-\item{n}{A number of genes to keep}
+\item{table}{the original data from limma}
 
-\item{z}{A number of z-scores from the mean}
+\item{n}{default=NULL  a number of genes to keep}
 
-\item{df}{The original data from limma}
+\item{z}{default=NULL  a number of z-scores from the mean
+
+If neither n nor z is provided, it assumes you want 1.5 z-scores from the median.}
 }
 \value{
 a dataframe subset from toptable
 }
 \description{
-limma_subset():  A quick and dirty way to pull the top/bottom genes from toptable()
+limma_subset()  A quick and dirty way to pull the top/bottom genes from toptable()
 }
 \examples{
 ## subset = limma_subset(df, n=400)

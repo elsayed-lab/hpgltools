@@ -2,35 +2,39 @@
 % Please edit documentation in R/differential_expression.R
 \name{write_edger}
 \alias{write_edger}
-\title{write_edger(): Writes out the results of an EdgeR search using topTags()
+\title{write_edger()  Writes out the results of an EdgeR search using topTags()
 However, this will do a couple of things to make one's life easier:
 1.  Make a list of the output, one element for each comparison of the contrast matrix
 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
 3.  Since I have been using qvalues a lot for other stuff, add a column for them.}
 \usage{
-write_edger(data = NULL, adjust = "fdr", n = 0, coef = NULL,
-  workbook = "excel/limma.xls", excel = FALSE, csv = TRUE,
+write_edger(data, adjust = "fdr", n = 0, coef = NULL,
+  workbook = "excel/edger.xls", excel = FALSE, csv = TRUE,
   annotation = NULL)
 }
 \arguments{
-\item{data}{The output from eBayes()}
+\item{data}{the output from EdgeR}
 
-\item{adjust}{The pvalue adjustment chosen (fdr by default)}
+\item{adjust}{default='fdr'  the pvalue adjustment chosen.}
 
-\item{n}{The number of entries to report, defaults to 0, which says do them all}
+\item{n}{default=0  the number of entries to report, 0 says to do them all.}
 
-\item{coef}{which coefficients/contrasts to report, NULL says do them all}
+\item{coef}{default=NULL  which coefficients/contrasts to report, NULL says do them all.}
 
-\item{workbook}{an excel filename into which to write the data, used for csv files too.}
+\item{workbook}{default='excel/edger.xls'  an excel filename into which to write the data, used for csv files too.}
 
-\item{excel}{T/F whether or not to write an excel workbook (useful if they are too big)}
+\item{excel}{default=FALSE  whether or not to write an excel workbook rather than csv.}
+
+\item{csv}{default=TRUE  whether to write out the output tables as csv files.}
+
+\item{annotation}{default=NULL  an optional data frame of annotations to include with the tables.}
 }
 \value{
 a list of data frames comprising the toptable output for each coefficient,
    I also added a qvalue entry to these toptable() outputs.
 }
 \description{
-write_edger(): Writes out the results of an EdgeR search using topTags()
+write_edger()  Writes out the results of an EdgeR search using topTags()
 However, this will do a couple of things to make one's life easier:
 1.  Make a list of the output, one element for each comparison of the contrast matrix
 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel

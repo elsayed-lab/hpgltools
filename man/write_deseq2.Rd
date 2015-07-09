@@ -2,35 +2,39 @@
 % Please edit documentation in R/differential_expression.R
 \name{write_deseq2}
 \alias{write_deseq2}
-\title{write_deseq(): Writes out the results of a DESeq2 search using results()
+\title{write_deseq()  Writes out the results of a DESeq2 search using results()
 However, this will do a couple of things to make one's life easier:
 1.  Make a list of the output, one element for each comparison of the contrast matrix
 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
 3.  Since I have been using qvalues a lot for other stuff, add a column for them.}
 \usage{
-write_deseq2(data = NULL, adjust = "fdr", n = 0, coef = NULL,
-  workbook = "excel/limma.xls", excel = FALSE, csv = TRUE,
+write_deseq2(data, adjust = "fdr", n = 0, coef = NULL,
+  workbook = "excel/deseq.xls", excel = FALSE, csv = TRUE,
   annotation = NULL)
 }
 \arguments{
-\item{data}{The output from eBayes()}
+\item{data}{the output from DESeq2}
 
-\item{adjust}{The pvalue adjustment chosen (fdr by default)}
+\item{adjust}{default='fdr'  the pvalue adjustment chosen.}
 
-\item{n}{The number of entries to report, defaults to 0, which says do them all}
+\item{n}{default=0  the number of entries to report, 0 means do all.}
 
-\item{coef}{which coefficients/contrasts to report, NULL says do them all}
+\item{coef}{default=NULL  which coefficients/contrasts to report, NULL says do them all}
 
-\item{workbook}{an excel filename into which to write the data, used for csv files too.}
+\item{workbook}{default='excel/deseq.xls'  an excel filename into which to write the data, used for csv files too.}
 
-\item{excel}{T/F whether or not to write an excel workbook (useful if they are too big)}
+\item{excel}{default=FALSE  whether or not to write an excel workbook (useful if they are too big)}
+
+\item{csv}{default=TRUE  whether or not to write a csv copy of the output tables}
+
+\item{annotation}{default=NULL  a dataframe to be merged onto the data with annotation information.}
 }
 \value{
 a list of data frames comprising the toptable output for each coefficient,
    I also added a qvalue entry to these toptable() outputs.
 }
 \description{
-write_deseq(): Writes out the results of a DESeq2 search using results()
+write_deseq()  Writes out the results of a DESeq2 search using results()
 However, this will do a couple of things to make one's life easier:
 1.  Make a list of the output, one element for each comparison of the contrast matrix
 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel

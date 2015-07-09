@@ -1,13 +1,17 @@
-## Time-stamp: <Tue May 19 14:54:30 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jul  9 16:33:28 2015 Ashton Trey Belew (abelew@gmail.com)>
 
-#' Automatic loading and/or installing of packages.
+#' require.auto()  Automatic loading and/or installing of packages.
 #'
 #' \code{require.auto} loads a library, and installs it first if necessary.
 #'
 #' This was taken from:
 #' http://sbamin.com/2012/11/05/tips-for-working-in-r-automatically-install-missing-package/
 #'
-#' @param lib string name of a library
+#' @param lib  string name of a library
+#' @param github_path default=NULL  an optional github username/path.
+#' @param verbose default=FALSE  print some information while loading.
+#' @param update default=FALSE  update packages?
+#' 
 #' @return NULL currently
 #' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}
 #' @export

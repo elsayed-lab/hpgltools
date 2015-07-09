@@ -2,8 +2,7 @@
 % Please edit documentation in R/normalization.R
 \name{batch_counts}
 \alias{batch_counts}
-\title{## comments, the first separateis the title, the second the
-batch_counts() Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ}
+\title{batch_counts() Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ}
 \usage{
 batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
   batch2 = "time", noscale = TRUE, ...)
@@ -25,7 +24,6 @@ batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
 The 'batch corrected' count table and new library size.  Please remember that this library size may not be what you want for voom/limma.
 }
 \description{
-## comments, the first separateis the title, the second the
 batch_counts() Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ
 }
 

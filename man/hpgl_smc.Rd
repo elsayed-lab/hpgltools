@@ -2,23 +2,21 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_smc}
 \alias{hpgl_smc}
-\title{Make an R plot of the standard median correlation among samples}
+\title{hpgl_smc()  Make an R plot of the standard median correlation among samples.}
 \usage{
 hpgl_smc(data, colors = NULL, method = "pearson", names = NULL,
   title = NULL, ...)
 }
 \arguments{
-\item{colors}{a color scheme}
+\item{data}{an expt, expressionset, or data frame.}
 
-\item{method}{a correlation method to use.  Defaults to pearson.}
+\item{colors}{default=NULL  a color scheme}
 
-\item{names}{use pretty names for the samples?}
+\item{method}{default='pearson'  a correlation method to use.}
 
-\item{expt}{an expt set of samples}
+\item{names}{default=NULL  use pretty names for the samples?}
 
-\item{df}{alternately a data frame which must be accompanied by}
-
-\item{design}{a design matrix and}
+\item{title}{default=NULL  title for the graph.}
 }
 \value{
 a recordPlot() of the standard median pairwise correlation

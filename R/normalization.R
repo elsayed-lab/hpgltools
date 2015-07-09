@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jun 25 13:30:54 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jul  9 16:21:24 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -14,6 +14,19 @@
 ##  Why is #1 better than #2?
 ### More well understood and conservative.
 ##  Why have we nonetheless done #2 in a few instances?  (not only because we learned that first)
+
+## Some code to more strongly remove batch effects
+remove_batch_effect = function(normalized_counts, model) {
+    ## model = model.matrix(~ condition + batch)
+    voomed = hpgl_voom(normalized_counts, model)
+    voomed_fit = lmFit(voomed)
+    modified_model = model
+    modified_model = modified_model[,grep("batch", colnames(modified_model))] = 0 ## Drop batch from the model
+    new_data = tcrossprod(voomed_fit$coefficient, modified_model) + residuals(voomed_fit, normalized_counts)
+    return(new_data)
+}
+
+
 
 
 #' batch_counts() Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ

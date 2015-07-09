@@ -1,5 +1,17 @@
-## Time-stamp: <Thu Jul  9 14:36:47 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jul  9 16:58:20 2015 Ashton Trey Belew (abelew@gmail.com)>
 
+#' pattern_count_genome()  Find how many times a given pattern occurs in every gene of a genome.
+#'
+#' @param fasta  a fasta genome
+#' @param gff default=NULL  an optional gff of annotations (if not provided it will just ask the whole genome.
+#' @param pattern default='TA'  what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.
+#' @param key default='locus_tag'  what type of entry of the gff file to key from?
+#'
+#' @return num_pattern a data frame of names and numbers.
+#' @export
+#' @seealso \code{\link{PDict}} \code{\link{FaFile}}
+#' @examples
+#' ## num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
 pattern_count_genome = function(fasta, gff=NULL, pattern='TA', type='gene', key='locus_tag') {
     rawseq = FaFile(fasta)
     if (is.null(gff)) {
@@ -26,10 +38,13 @@ Beta.NA = function(y,X) {
     return(B)
 }
 
-#' Grab gene lengths from a gff file
+#' get_genelengths()  Grab gene lengths from a gff file.
 #'
-#' @param gff a gff file with (hopefully) IDs and widths
-#' @param type The annotation type to use (gene)
+#' @param gff  a gff file with (hopefully) IDs and widths
+#' @param type default='gene'  the annotation type to use.
+#' @param key default='ID'  the identifier in the 10th column of the gff file to use.
+#'
+#' This function attempts to be robust to the differences in output from importing gff2/gff3 files.  But it certainly isn't perfect.
 #'
 #' @return  a data frame of gene IDs and widths.
 #' @export
@@ -66,11 +81,11 @@ get_genelengths = function(gff, type="gene", key='ID') {
     return(ret)
 }
 
-#' Wrap cor() to include robust correlations
+#' hpgl_cor()  Wrap cor() to include robust correlations.
 #'
-#' @param df a data frame to test
-#' @param method Correlation method to use.  Defaults to pearson.
-#' Includes pearson, spearman, kendal, robust.
+#' @param df  a data frame to test.
+#' @param method default='pearson'  correlation method to use. Includes pearson, spearman, kendal, robust.
+#' @param ...  other options to pass to stats::cor()
 #'
 #' @return  correlation some fun correlation statistics
 #' @seealso \code{\link{cor}}, \code{\link{cov}}, \code{\link{covRob}}
@@ -79,7 +94,7 @@ get_genelengths = function(gff, type="gene", key='ID') {
 #' @examples
 #' ## hpgl_cor(df=df)
 #' ## hpgl_cor(df=df, method="robust")
-hpgl_cor = function(df=NULL, method="pearson", ...) {
+hpgl_cor = function(df, method="pearson", ...) {
     if (method == "robust") {
         robust_cov = robust::covRob(df, corr=TRUE)
         correlation = robust_cov$cov
@@ -89,12 +104,12 @@ hpgl_cor = function(df=NULL, method="pearson", ...) {
     return(correlation)
 }
 
-#' A stupid distance function of a point against two axes
+#' sillydist()  A stupid distance function of a point against two axes.
 #'
-#' @param firstterm the x-values of the points
-#' @param secondterm the y-values of the points
-#' @param firstaxis the x-value of the vertical axis
-#' @param secondaxis the y-value of the second axis
+#' @param firstterm  the x-values of the points.
+#' @param secondterm  the y-values of the points.
+#' @param firstaxis  the x-value of the vertical axis.
+#' @param secondaxis  the y-value of the second axis.
 #'
 #' @return dataframe of the distances
 #' @export
@@ -109,12 +124,14 @@ sillydist = function(firstterm, secondterm, firstaxis, secondaxis) {
     return(dataframe)
 }
 
-#' Write a dataframe to an excel spreadsheet sheet.
+#' write_xls()  Write a dataframe to an excel spreadsheet sheet.
 #'
-#' @param data a dataframe of information
-#' @param sheet the name of an excel sheet in a workbook.
-#' @param file an excel workbook to which to write.  Defaults to "excel/workbook.xls"
-#' @param rowname include rownames?  Defalts to no.
+#' @param data  a dataframe of information.
+#' @param sheet default='first'  the name of an excel sheet in a workbook.
+#' @param file default='excel/workbook.xls'  an excel workbook to which to write.
+#' @param rowname default='rownames'  what will the rownames be?
+#' @param overwritefile default=FALSE  overwrite the xls file with this new data, or use the original?
+#' @param overwritesheet default=TRUE  overwrite the xls sheet with this new data?  (if true it will make a backup sheet .bak).
 #'
 #' @return NULL, on the say it creates a workbook if necessary,
 #' creates a sheet, and writes the data to it.
@@ -127,7 +144,7 @@ sillydist = function(firstterm, secondterm, firstaxis, secondaxis) {
 #' ## write_xls(dataframe, "hpgl_data")
 #' ## Sometimes it is a good idea to go in and delete the workbook and
 #' ## re-create it if this is used heavily, because it will get crufty.
-write_xls = function(data=NULL, sheet="first", file="excel/workbook.xls", rowname="rownames", overwritefile=FALSE, overwritesheet=TRUE) {
+write_xls = function(data, sheet="first", file="excel/workbook.xls", rowname="rownames", overwritefile=FALSE, overwritesheet=TRUE) {
     excel_dir = dirname(file)
     if (!file.exists(excel_dir)) {
         dir.create(excel_dir, recursive=TRUE)
@@ -159,6 +176,10 @@ write_xls = function(data=NULL, sheet="first", file="excel/workbook.xls", rownam
     saveWorkbook(xls)
 }
 
+#' backup_file()  Make a backup of an existing file with n revisions, like VMS!
+#'
+#' @param file  the file to backup.
+#' @param backups default=10  how many revisions?
 backup_file = function(file, backups=10) {
     for (i in backups:01) {
         j = i + 1

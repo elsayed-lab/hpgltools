@@ -2,13 +2,21 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_multihistogram}
 \alias{hpgl_multihistogram}
-\title{Make a pretty histogram of multiple datasets}
+\title{hpgl_multihistogram()  Make a pretty histogram of multiple datasets.}
 \usage{
 hpgl_multihistogram(data, log = FALSE, binwidth = NULL, bins = NULL,
   verbose = FALSE)
 }
 \arguments{
-\item{df}{a dataframe of lots of pretty numbers, this also accepts lists.}
+\item{data}{a dataframe of lots of pretty numbers, this also accepts lists.}
+
+\item{log}{default=FALSE  plot the data on the log scale?}
+
+\item{binwidth}{default=NULL  set a static bin width with an unknown # of bins?  If neither of these are provided, then bins is set to 500, if both are provided, then bins wins.}
+
+\item{bins}{default=NULL  set a static # of bins of an unknown width?}
+
+\item{verbose}{default=FALSE  be verbose?}
 }
 \value{
 a ggplot histogram comparing multiple data sets
@@ -16,7 +24,7 @@ Along the way this generates pairwise t tests of the columns of
 data.
 }
 \description{
-Make a pretty histogram of multiple datasets
+hpgl_multihistogram()  Make a pretty histogram of multiple datasets.
 }
 \examples{
 ## kittytime = hpgl_multihistogram(df)

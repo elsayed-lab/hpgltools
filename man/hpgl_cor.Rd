@@ -2,21 +2,22 @@
 % Please edit documentation in R/misc_functions.R
 \name{hpgl_cor}
 \alias{hpgl_cor}
-\title{Wrap cor() to include robust correlations}
+\title{hpgl_cor()  Wrap cor() to include robust correlations.}
 \usage{
-hpgl_cor(df = NULL, method = "pearson", ...)
+hpgl_cor(df, method = "pearson", ...)
 }
 \arguments{
-\item{df}{a data frame to test}
+\item{df}{a data frame to test.}
 
-\item{method}{Correlation method to use.  Defaults to pearson.
-Includes pearson, spearman, kendal, robust.}
+\item{method}{default='pearson'  correlation method to use. Includes pearson, spearman, kendal, robust.}
+
+\item{...}{other options to pass to stats::cor()}
 }
 \value{
 correlation some fun correlation statistics
 }
 \description{
-Wrap cor() to include robust correlations
+hpgl_cor()  Wrap cor() to include robust correlations.
 }
 \examples{
 ## hpgl_cor(df=df)

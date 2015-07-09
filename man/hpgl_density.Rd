@@ -2,26 +2,30 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_density}
 \alias{hpgl_density}
-\title{Density plots!}
+\title{hpgl_density()  Density plots!}
 \usage{
 hpgl_density(data, colors = NULL, names = NULL, position = "identity",
   fill = NULL, title = NULL, log = FALSE)
 }
 \arguments{
-\item{names}{names of the samples}
+\item{data}{an expt, expressionset, or data frame.}
 
-\item{position}{stack or identity}
+\item{colors}{default=NULL  a color scheme to use.}
 
-\item{fill}{NULL, but otherwise it fills in the colors for the rainbow coalition!}
+\item{names}{default=NULL  names of the samples.}
 
-\item{df}{a data frame to look at}
+\item{position}{default='identity'  how to place the lines, either let them overlap (identity), or stack them.}
 
-\item{expt}{or an expt class!}
+\item{fill}{default=NULL  fill the distributions?  This might make the plot unreasonably colorful.}
+
+\item{title}{default=NULL  a title for the plot.}
+
+\item{log}{default=FALSE  plot on the log scale?}
 }
 \value{
 a density plot!
 }
 \description{
-Density plots!
+hpgl_density()  Density plots!
 }
 

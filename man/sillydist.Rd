@@ -2,23 +2,23 @@
 % Please edit documentation in R/misc_functions.R
 \name{sillydist}
 \alias{sillydist}
-\title{A stupid distance function of a point against two axes}
+\title{sillydist()  A stupid distance function of a point against two axes.}
 \usage{
 sillydist(firstterm, secondterm, firstaxis, secondaxis)
 }
 \arguments{
-\item{firstterm}{the x-values of the points}
+\item{firstterm}{the x-values of the points.}
 
-\item{secondterm}{the y-values of the points}
+\item{secondterm}{the y-values of the points.}
 
-\item{firstaxis}{the x-value of the vertical axis}
+\item{firstaxis}{the x-value of the vertical axis.}
 
-\item{secondaxis}{the y-value of the second axis}
+\item{secondaxis}{the y-value of the second axis.}
 }
 \value{
 dataframe of the distances
 }
 \description{
-A stupid distance function of a point against two axes
+sillydist()  A stupid distance function of a point against two axes.
 }
 

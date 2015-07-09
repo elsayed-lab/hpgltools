@@ -2,32 +2,25 @@
 % Please edit documentation in R/plots.R
 \name{graph_metrics}
 \alias{graph_metrics}
-\title{graph_metrics() Make lots of graphs!}
+\title{graph_metrics()  Make lots of graphs!}
 \usage{
 graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
   title_suffix = NULL, scale = "raw", sink = FALSE, ...)
 }
 \arguments{
-\item{cormethod}{define the correlation test for heatmaps.
-Defaults to pearson (Available: pearson, spearman, kendal, robust)}
+\item{expt}{an expt to process}
 
-\item{distmethod}{define the distance metric for heatmaps.
-Defaults to euclidean (Lots are available, I don't understand them.)}
+\item{cormethod}{default='pearson'  the correlation test for heatmaps.}
+
+\item{distmethod}{default='euclidean'  define the distance metric for heatmaps.}
+
+\item{title_suffix}{default=NULL  text to add to the titles of the plots.}
+
+\item{scale}{default='raw'  scale for the axes, sometimes useful to set as log2.}
+
+\item{sink}{default=FALSE  add in the kitchen sink?  This includes all pairwise ma plots and qq plots and takes potentially forever.}
 
 \item{...}{extra parameters optionally fed to the various plots}
-
-\item{data}{an expt/df/exprs experiment containing the data, design, and colors}
-
-\item{norm_type}{normalization strategy for the data.  Defaults to
-quantile.}
-
-\item{filter}{whether to log2/10 filter the data.  Defaults to
-log2.}
-
-\item{out_type}{whether to cpm/rpkm the data.  Defaults to cpm.}
-
-\item{filter_low}{whether to low-count filter the data.  Defaults
-to TRUE.}
 }
 \value{
 a loooong list of plots including the following:

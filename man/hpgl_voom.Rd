@@ -2,7 +2,7 @@
 % Please edit documentation in R/differential_expression.R
 \name{hpgl_voom}
 \alias{hpgl_voom}
-\title{hpgl_voom():  A slight modification of limma's voom() function.
+\title{hpgl_voom()  A slight modification of limma's voom() function.
 Estimate mean-variance relationship between samples and generate
 'observational-level weights' in preparation for linear modelling
 RNAseq data.  This particular implementation was primarily scabbed
@@ -12,20 +12,23 @@ confounded by setting the coefficient to 1 for those samples rather
 than throwing an unhelpful error.  Also, the Elist output gets a
 'plot' slot which contains the plot rather than just printing it.}
 \usage{
-hpgl_voom(dataframe, model, libsize = NULL, stupid = FALSE,
+hpgl_voom(dataframe, model = NULL, libsize = NULL, stupid = FALSE,
   logged = FALSE, converted = FALSE)
 }
 \arguments{
 \item{dataframe}{a dataframe of sample counts which have been
 normalized and log transformed}
 
-\item{model}{an experimental model defining batches/conditions/etc}
+\item{model}{default=NULL  an experimental model defining batches/conditions/etc}
 
-\item{libsize}{the size of the libraries (usually provided by
-edgeR).  NULL by default.}
+\item{libsize}{default=NULL  the size of the libraries (usually provided by
+edgeR).}
 
-\item{stupid}{An TRUE/FALSE of whether or not to cheat when the
-resulting matrix is not solvable. FALSE by default.}
+\item{stupid}{default=FALSE  whether or not to cheat when the resulting matrix is not solvable.}
+
+\item{logged}{default=FALSE  whether the input data is known to be logged.}
+
+\item{converted}{default=FALSE  whether the input data is known to be cpm converted.}
 }
 \value{
 an EList containing the following information:
@@ -36,7 +39,7 @@ an EList containing the following information:
   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
 }
 \description{
-hpgl_voom():  A slight modification of limma's voom() function.
+hpgl_voom()  A slight modification of limma's voom() function.
 Estimate mean-variance relationship between samples and generate
 'observational-level weights' in preparation for linear modelling
 RNAseq data.  This particular implementation was primarily scabbed
