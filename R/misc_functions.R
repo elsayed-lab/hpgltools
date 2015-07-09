@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jun 23 13:13:50 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jul  9 14:36:47 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 pattern_count_genome = function(fasta, gff=NULL, pattern='TA', type='gene', key='locus_tag') {
     rawseq = FaFile(fasta)
@@ -45,11 +45,11 @@ Beta.NA = function(y,X) {
 #' ##4 YAL068W-A   252
 #' ##5 YAL068W-A   255
 #' ##6 YAL068W-A     3
-get_genelengths = function(gff, type="gene") {
+get_genelengths = function(gff, type="gene", key='ID') {
     ret = NULL
-    annotations = try(data.frame(import.gff3(gff)), silent=TRUE)
+    annotations = try(rtracklayer::import.gff3(gff), silent=TRUE)
     if (class(annotations) == 'try-error') {
-        annotations = try(BiocGenerics:::as.data.frame(import.gff2(gff)), silent=TRUE)
+        annotations = try(import.gff2(gff), silent=TRUE)
         if (class(annotations) == 'try-error') {
             stop("Could not extract the widths from the gff file.")
         } else {
@@ -58,9 +58,11 @@ get_genelengths = function(gff, type="gene") {
     } else {
         ret = annotations
     }
+    ret = as.data.frame(ret)
     ##ret = subset(ret, type==type)
     ret = ret[ret$type == type,]
-    ret = ret[,c("ID","width")]
+    ret = ret[,c(key,"width")]
+    colnames(ret) = c("ID","width")
     return(ret)
 }
 
@@ -125,40 +127,50 @@ sillydist = function(firstterm, secondterm, firstaxis, secondaxis) {
 #' ## write_xls(dataframe, "hpgl_data")
 #' ## Sometimes it is a good idea to go in and delete the workbook and
 #' ## re-create it if this is used heavily, because it will get crufty.
-write_xls = function(data=NULL, sheet="first", file="excel/workbook.xls", rowname="rownames", overwrite=FALSE) {
+write_xls = function(data=NULL, sheet="first", file="excel/workbook.xls", rowname="rownames", overwritefile=FALSE, overwritesheet=TRUE) {
     excel_dir = dirname(file)
     if (!file.exists(excel_dir)) {
         dir.create(excel_dir, recursive=TRUE)
     }
-    if (is.na(file.info(file)$size)) {
-        xls = XLConnect::loadWorkbook(file, create=TRUE)
-    } else if (file.info(file)$size == 0) {
-        file.remove(file)
-        xls = XLConnect::loadWorkbook(file, create=TRUE)
-    } else {
-        xls = XLConnect::loadWorkbook(file)
-    }
 
-    write_sheet = 0
-    if (isTRUE(existsSheet(xls, sheet))) {
-        if (isTRUE(overwrite)) {
-            write_sheet = 1
-        } else {
-            write_sheet = 0
+    if (file.exists(file)) {
+        if (isTRUE(overwritefile)) {
+            backup_file(file)
         }
-    } else {
-        write_sheet = 1
     }
+    xls = loadWorkbook(file, create=TRUE)
 
-    if (write_sheet == 1) {
-        XLConnect::createSheet(xls, name=sheet)
-        if (is.na(rowname)) {
-            XLConnect::writeWorksheet(xls, data, sheet=sheet)
-        } else {
-            XLConnect::writeWorksheet(xls, data, sheet=sheet, rowname=rowname)
+    if (isTRUE(overwritesheet)) {
+        newname = paste0(sheet, '.bak')
+        if (existsSheet(xls, newname)) {
+            removeSheet(xls, sheet=newname)
         }
-        XLConnect::saveWorkbook(xls)
+        if (existsSheet(xls, sheet)) {
+            renameSheet(xls, sheet=sheet, newName=newname)
+        }
     }
+    
+    createSheet(xls, name=sheet)
+    if (is.na(rowname)) {
+        writeWorksheet(xls, data, sheet=sheet)
+    } else {
+        writeWorksheet(xls, data, sheet=sheet, rowname=rowname)
+    }
+    saveWorkbook(xls)
+}
+
+backup_file = function(file, backups=10) {
+    for (i in backups:01) {
+        j = i + 1
+        i = sprintf("%02d", i)
+        j = sprintf("%02d", j)
+        test = paste0(file, ".", i)
+        new = paste0(file, ".", j)
+        if (file.exists(test)) {
+            file.rename(test, new)
+        }
+    }
+    file.rename(file, paste0(file, ".", i))
 }
 
 ## EOF

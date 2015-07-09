@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jul  9 14:25:08 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jul  9 14:35:24 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -428,9 +428,10 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     lrt_list = list()
     single_contrasts = list()
     sc = vector("list", length(apc$names))
+    end = length(apc$names)
     for (con in 1:length(apc$names)) {
         name = apc$names[[con]]
-        message(paste0(con, ": Performing ", name, " contrast.")) ## correct
+        message(paste0(con, "/", end, ": Performing ", name, " contrast.")) ## correct
         sc[[name]] = gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
         tt = parse(text=sc[[name]])
         ctr_string = paste0("tt = makeContrasts(", tt, ", levels=fun_model)")
@@ -1227,9 +1228,10 @@ write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel
         coef = as.character(coef)
     }
     return_data = list()
-    for (c in 1:length(coef)) {
+    end = length(coef)
+    for (c in 1:end) {
         comparison = coef[c]
-        message(paste("Printing table: ", comparison, sep=""))
+        message(paste0(c, "/", end, ": Printing table: ", comparison))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -1306,9 +1308,10 @@ write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         coef = as.character(coef)
     }
     return_data = list()
-    for (c in 1:length(coef)) {
+    end = length(coef)
+    for (c in 1:end) {
         comparison = coef[c]
-        message(paste("Printing table: ", comparison, sep=""))
+        message(paste0(c, "/", end, ": Printing table: ", comparison))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -1385,9 +1388,10 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         coef = as.character(coef)
     }
     return_data = list()
-    for (c in 1:length(coef)) {
+    end = length(coef)
+    for (c in 1:end) {
         comparison = coef[c]
-        message(paste(c, ": Printing table: ", comparison, sep=""))
+        message(paste0(c, "/", end, ": Printing table: ", comparison))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
