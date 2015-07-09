@@ -2,13 +2,15 @@
 % Please edit documentation in R/ontology_shared.R
 \name{limma_ontology}
 \alias{limma_ontology}
-\title{Perform ontology searches of the output from limma}
+\title{###get_genelengths() Extract gene lengths from a gff file
+###
+###}
 \usage{
 limma_ontology(limma_out, gene_lengths = NULL, goids = NULL, n = NULL,
   z = NULL, overwrite = FALSE, goid_map = "reference/go/id2go.map",
-  goids_df = NULL, do_goseq = TRUE, do_cluster = TRUE, do_topgo = TRUE,
-  do_trees = FALSE, workbook = "excel/ontology.xls", csv = TRUE,
-  excel = FALSE)
+  gff_file = NULL, goids_df = NULL, do_goseq = TRUE, do_cluster = TRUE,
+  do_topgo = TRUE, do_trees = FALSE, workbook = "excel/ontology.xls",
+  csv = TRUE, excel = FALSE)
 }
 \arguments{
 \item{limma_out}{a list of topTables comprising limma outputs}
@@ -16,8 +18,16 @@ limma_ontology(limma_out, gene_lengths = NULL, goids = NULL, n = NULL,
 \item{n}{a number of genes at the top/bottom to search}
 
 \item{z}{a number of standard deviations to search}
+
+\item{gff}{The file to extract
+###}
+
+\item{ID}{Note the field to cross reference against to extract the genes
+Perform ontology searches of the output from limma}
 }
 \description{
-Perform ontology searches of the output from limma
+###get_genelengths() Extract gene lengths from a gff file
+###
+###
 }
 

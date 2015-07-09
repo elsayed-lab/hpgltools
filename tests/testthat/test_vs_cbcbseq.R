@@ -43,7 +43,9 @@ message("Testing quantile raw normalization.")
 cbcb_quantile = cbcbSEQ::qNorm(cbcb_data)
 hpgl_quantile_data = hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE, verbose=TRUE)
 hpgl_quantile = hpgl_quantile_data$final_counts$count_table
+tt = hpgl_quantile_data$count_table
 test_that("Are the quantile normalizations identical?", {
+    expect_equal(hpgl_quantile, tt)
     expect_equal(cbcb_quantile, hpgl_quantile)
 })
 
@@ -51,8 +53,17 @@ test_that("Are the quantile normalizations identical?", {
 message("Testing quantile(cpm()) normalization using edgeR's cpm().")
 cbcb_qcpm = qNorm(cbcb_data)
 cbcb_qcpm = edgeR::cpm(cbcb_qcpm)
+
+cbcb_quantile = qNorm(cbcb_data)
+hpgl_quantile = hpgl_norm(pasilla_expt, norm="quant")
+hpgl_quantile = hpgl_quantile$count_table
+test_that("Are quantiles identical?", {
+    expect_equal(cbcb_quantile, hpgl_quantile)
+})
+
 hpgl_qcpm = hpgl_norm(pasilla_expt, norm="quant", convert="edgecpm", filter_low=FALSE, verbose=TRUE)
-hpgl_qcpm = hpgl_qcpm$final_counts$count_table
+##hpgl_qcpm = hpgl_qcpm$final_counts$count_table
+hpgl_qcpm = hpgl_qcpm$count_table
 test_that("Are cpm conversions identical?", {
     expect_equal(cbcb_qcpm, hpgl_qcpm)
 })
@@ -85,12 +96,13 @@ test_that("Do the PCA invocations provide the same results?", {
 
 ## invocation of batch correction
 message("Testing batch correction results using modified combat.")
-cbcb_batch = cbcbSEQ::combatMod(cbcb_l2qcpm, batch=design$libType, mod=design$condition, noScale=TRUE)
-hpgl_batch_expt = normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", filter_low=FALSE)
-hpgl_batch = exprs(hpgl_batch_expt$expressionset)
-test_that("Does combat batch correction end in the same dataframe?", {
-    expect_equal(cbcb_batch, hpgl_batch)
-})
+## sva no longer has a function 'design.mat'
+##cbcb_batch = cbcbSEQ::combatMod(cbcb_l2qcpm, batch=design$libType, mod=design$condition, noScale=TRUE)
+##hpgl_batch_expt = normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", filter_low=FALSE)
+##hpgl_batch = exprs(hpgl_batch_expt$expressionset)
+##test_that("Does combat batch correction end in the same dataframe?", {
+##    expect_equal(cbcb_batch, hpgl_batch)
+##})
 
 ## voom invocation
 ## This is a peculiar thing, the cbcbSEQ log2CPM() returns the normalized libsizes rather than those following log2() transformation.

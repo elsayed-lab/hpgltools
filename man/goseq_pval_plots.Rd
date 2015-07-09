@@ -4,7 +4,8 @@
 \alias{goseq_pval_plots}
 \title{Make a pvalue plot from goseq data}
 \usage{
-goseq_pval_plots(goterms, wrapped_width = 20, cutoff = 0.1, n = 10)
+goseq_pval_plots(goterms, wrapped_width = 20, cutoff = 0.1, n = 10,
+  mincat = 10, level = NULL)
 }
 \arguments{
 \item{goterms}{some data from goseq!}
