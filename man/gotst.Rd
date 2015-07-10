@@ -2,18 +2,18 @@
 % Please edit documentation in R/ontology_shared.R
 \name{gotst}
 \alias{gotst}
-\title{Test a GO id to see if it is useful by my arbitrary definition of 'useful'}
+\title{gotst()  Test a GO id to see if it is useful by my arbitrary definition of 'useful'.}
 \usage{
 gotst(go)
 }
 \arguments{
-\item{id}{A go ID -- this may be a character or list(assuming the elements, not names, are goids)}
+\item{go}{a go ID, this may be a character or list (assuming the elements are goids).}
 }
 \value{
 Some text
 }
 \description{
-Test a GO id to see if it is useful by my arbitrary definition of 'useful'
+gotst()  Test a GO id to see if it is useful by my arbitrary definition of 'useful'.
 }
 \examples{
 ## gotest("GO:0032559")

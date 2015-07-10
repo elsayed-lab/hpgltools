@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jul  9 16:35:05 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jul 10 16:44:26 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -415,7 +415,7 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
 }
 
 
-#' concatenate_runs(): Sum the reads/gene for multiple sequencing runs of a single condition/batch
+#' concatenate_runs()  Sum the reads/gene for multiple sequencing runs of a single condition/batch
 #'
 #' @param expt  an experiment class containing the requisite metadata and count tables
 #' @param column default='replicate'  a column of the design matrix used to specify which samples are replicates

@@ -2,18 +2,18 @@
 % Please edit documentation in R/ontology_shared.R
 \name{goont}
 \alias{goont}
-\title{Get a go ontology name from an ID}
+\title{goont()  Get a go ontology name from an ID.}
 \usage{
 goont(go)
 }
 \arguments{
-\item{id}{A go ID -- this may be a character or list(assuming the elements, not names, are goids)}
+\item{go}{a go ID, this may be a character or list (assuming the elements are goids).}
 }
 \value{
 Some text
 }
 \description{
-Get a go ontology name from an ID
+goont()  Get a go ontology name from an ID.
 }
 \examples{
 ## goont(c("GO:0032432", "GO:0032433"))

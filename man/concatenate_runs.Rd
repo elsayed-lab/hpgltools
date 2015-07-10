@@ -2,7 +2,7 @@
 % Please edit documentation in R/count_tables.R
 \name{concatenate_runs}
 \alias{concatenate_runs}
-\title{concatenate_runs(): Sum the reads/gene for multiple sequencing runs of a single condition/batch}
+\title{concatenate_runs()  Sum the reads/gene for multiple sequencing runs of a single condition/batch}
 \usage{
 concatenate_runs(expt, column = "replicate")
 }
@@ -15,7 +15,7 @@ concatenate_runs(expt, column = "replicate")
 the input expt with the new design matrix, batches, conditions, colors, and count tables.
 }
 \description{
-concatenate_runs(): Sum the reads/gene for multiple sequencing runs of a single condition/batch
+concatenate_runs()  Sum the reads/gene for multiple sequencing runs of a single condition/batch
 }
 \examples{
 ## compressed = concatenate_runs(expt)

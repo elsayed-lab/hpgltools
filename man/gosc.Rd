@@ -2,12 +2,12 @@
 % Please edit documentation in R/ontology_shared.R
 \name{gosc}
 \alias{gosc}
-\title{gosc does the real work for gosec()}
+\title{gosc()  does the real work for gosec()}
 \usage{
 gosc(go)
 }
 \arguments{
-\item{go}{A go id}
+\item{go}{a go id.}
 }
 \value{
 One of the following:
@@ -16,6 +16,6 @@ One of the following:
   or a character list of secondary IDs
 }
 \description{
-gosc does the real work for gosec()
+gosc()  does the real work for gosec()
 }
 

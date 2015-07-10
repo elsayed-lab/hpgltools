@@ -2,19 +2,19 @@
 % Please edit documentation in R/ontology_shared.R
 \name{gotest}
 \alias{gotest}
-\title{Test GO ids to see if they are useful
+\title{gotest()  Test GO ids to see if they are useful.
 This just wraps gotst in mapply.}
 \usage{
 gotest(go)
 }
 \arguments{
-\item{id}{go IDs}
+\item{go}{go IDs as characters.}
 }
 \value{
 Some text
 }
 \description{
-Test GO ids to see if they are useful
+gotest()  Test GO ids to see if they are useful.
 This just wraps gotst in mapply.
 }
 \seealso{

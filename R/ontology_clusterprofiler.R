@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jun  8 16:56:05 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jul 10 16:44:21 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified clusterProfiler analysis
 #'
