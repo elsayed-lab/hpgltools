@@ -2,28 +2,27 @@
 % Please edit documentation in R/pca.R
 \name{hpgl_pca}
 \alias{hpgl_pca}
-\title{Make a ggplot PCA plot describing the samples' clustering}
+\title{hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.}
 \usage{
 hpgl_pca(data, colors = NULL, design = NULL, title = NULL,
   labels = NULL, size = 5, ...)
 }
 \arguments{
-\item{colors}{a color scheme}
+\item{data}{an expt set of samples.}
 
-\item{design}{a design matrix and}
+\item{colors}{default=NULL  a color scheme.}
 
-\item{labels}{add labels?  Also, what type?  FALSE, "default", or "fancy"}
+\item{design}{default=NULL  a design matrix and.}
 
-\item{expt}{an expt set of samples}
+\item{title}{default=NULL  a title for the plot.}
 
-\item{df}{alternately a data frame which must be accompanied by}
+\item{labels}{default=NULL  add labels?  Also, what type?  FALSE, "default", or "fancy".}
 
-\item{method}{a correlation method to use.  Defaults to pearson.}
-
-\item{names}{use pretty names for the samples?}
+\item{size}{default=5  size for the glyphs on the plot.}
 }
 \value{
 a list containing the following:
+  pca = the result of fast.svd()
   plot = ggplot2 pca_plot describing the principle component analysis of the samples.
   table = a table of the PCA plot data
   res = a table of the PCA res data
@@ -31,7 +30,7 @@ a list containing the following:
 This makes use of cbcbSEQ and prints the table of variance by component.
 }
 \description{
-Make a ggplot PCA plot describing the samples' clustering
+hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
 }
 \examples{
 ## pca_plot = hpgl_pca(expt=expt)

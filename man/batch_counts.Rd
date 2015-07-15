@@ -2,28 +2,29 @@
 % Please edit documentation in R/normalization.R
 \name{batch_counts}
 \alias{batch_counts}
-\title{batch_counts() Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ}
+\title{batch_counts()  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.}
 \usage{
 batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
-  batch2 = "time", noscale = TRUE, ...)
+  batch2 = NULL, noscale = TRUE, ...)
 }
 \arguments{
-\item{count_table}{A matrix of counts}
+\item{count_table}{a matrix of (pseudo)counts.}
 
-\item{design}{A model matrix defining the experimental conditions/batches/etc}
+\item{design}{a model matrix defining the experimental conditions/batches/etc}
 
-\item{batch}{A string describing the method to try to remove the batch effect (or FALSE to leave it alone)}
+\item{batch}{default=TRUE  a string describing the method to try to remove the batch effect (or FALSE to leave it alone, TRUE uses limma)}
 
-\item{batch1}{The column in the design table describing the presumed primary covariant (batch effect)}
+\item{batch1}{default='batch'  the column in the design table describing the presumed covariant to remove.}
 
-\item{batch2}{The column in the design table describing the seconary covariant (only used by limma atm)}
+\item{batch2}{default=NULL  the column in the design table describing the second covariant to remove (only used by limma at the moment).}
 
-\item{noscale}{Used for combatmod, remove the scaling parameter from the invocation of the modified combat.}
+\item{noscale}{default=TRUE  used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.}
 }
 \value{
-The 'batch corrected' count table and new library size.  Please remember that this library size may not be what you want for voom/limma.
+The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this
+may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
 }
 \description{
-batch_counts() Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ
+batch_counts()  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
 }
 

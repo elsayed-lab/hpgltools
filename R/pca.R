@@ -1,4 +1,4 @@
-# Time-stamp: <Wed Jul 15 11:20:29 2015 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Wed Jul 15 11:24:19 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
 #'
@@ -256,7 +256,7 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
 #'
 #' @param plotted_us  a list of svd$u elements
 #'
-#' @result a recordPlot() plot showing the first 3 PCs by rank-order svd$u.
+#' @return a recordPlot() plot showing the first 3 PCs by rank-order svd$u.
 u_plot = function(plotted_us) {
     plotted_us = abs(plotted_us[,c(1,2,3)])
     plotted_u1s = plotted_us[order(plotted_us[,1], decreasing=TRUE),]
