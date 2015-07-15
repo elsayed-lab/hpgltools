@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jul  9 16:21:24 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jul 13 16:15:48 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -29,18 +29,19 @@ remove_batch_effect = function(normalized_counts, model) {
 
 
 
-#' batch_counts() Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ
+#' batch_counts()  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
 #'
-#' @param count_table A matrix of counts
-#' @param design A model matrix defining the experimental conditions/batches/etc
-#' @param batch A string describing the method to try to remove the batch effect (or FALSE to leave it alone)
-#' @param batch1 The column in the design table describing the presumed primary covariant (batch effect)
-#' @param batch2 The column in the design table describing the seconary covariant (only used by limma atm)
-#' @param noscale Used for combatmod, remove the scaling parameter from the invocation of the modified combat.
+#' @param count_table  a matrix of (pseudo)counts.
+#' @param design  a model matrix defining the experimental conditions/batches/etc
+#' @param batch default=TRUE  a string describing the method to try to remove the batch effect (or FALSE to leave it alone, TRUE uses limma)
+#' @param batch1 default='batch'  the column in the design table describing the presumed covariant to remove.
+#' @param batch2 default=NULL  the column in the design table describing the second covariant to remove (only used by limma at the moment).
+#' @param noscale default=TRUE  used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.
 #'
-#' @return The 'batch corrected' count table and new library size.  Please remember that this library size may not be what you want for voom/limma.
+#' @return The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this
+#' may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
 #' @export
-batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2='time' , noscale=TRUE, ...) {
+batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2=NULL , noscale=TRUE, ...) {
     batches = as.factor(design[, batch1])
     conditions = as.factor(design[, "condition"])
 

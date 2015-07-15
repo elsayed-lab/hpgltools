@@ -1,10 +1,10 @@
-## Time-stamp: <Fri Jul 10 16:44:26 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 14 15:09:22 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
 #' expt_subset for everything
 #'
-#' @param file default=NULL  a comma separated file describing the samples with
+#' @param file  a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc
 #' @param color_hash default=NULL  a hash which describes how to color the samples,
 #' it will generate its own colors using colorBrewer
@@ -41,7 +41,7 @@
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Remember that this depends on an existing data structure of gene annotations.
-create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
+create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
@@ -52,13 +52,16 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
     colnames(tmp_definitions) = tolower(colnames(tmp_definitions))
     tmp_definitions = subset(tmp_definitions, sample.id != "")
     condition_names = unique(tmp_definitions$condition)
+    if (is.null(condition_names)) {
+        warn("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
+    }
     if (is.null(color_hash)) {
-        if (!is.null(tmp_definitions$color)) {
-            color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)
-        } else {
+        if (is.null(tmp_definitions$color)) {
             num_colors = length(condition_names)
             colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors))
             color_hash = hash(keys=as.character(condition_names), values=colors)
+        } else {
+            color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)            
         }
     }
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
@@ -67,7 +70,7 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
     expt_list = create_experiment(file=file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, meta_dataframe=meta_dataframe, sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
     expt = expt_list$expt
     def = expt_list$def
-    new_expt = expt_subset(expt, "")
+    new_expt = expt_subset(expt)
     new_expt$definitions = def
 
     if (!is.null(expt_list$annotation)) {
@@ -286,7 +289,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
 #' @examples
 #' ## smaller_expt = expt_subset(big_expt, "condition=='control'")
 #' ## all_expt = expt_subset(expressionset, "")  ## extracts everything
-expt_subset = function(expt, subset, by_definitions=TRUE) {
+expt_subset = function(expt, subset=NULL, by_definitions=FALSE) {
     if (class(expt) == "ExpressionSet") {
         expressionset = expt
     } else if (class(expt) == "expt") {
@@ -295,13 +298,22 @@ expt_subset = function(expt, subset, by_definitions=TRUE) {
         stop("expt is neither an expt nor ExpressionSet")
     }
     if (isTRUE(by_definitions)) {
-        initial_metadata = expt$definitions
+        if (is.null(expt$definitions)) {
+            warn("There is no expt$definitions, using the expressionset.")
+            initial_metadata = pData(expressionset)
+        } else {
+            initial_metadata = expt$definitions
+        }
     } else {
         initial_metadata = Biobase::pData(expressionset)
     }
-    r_expression=paste("subset(initial_metadata,", subset, ")")
-    samples = eval(parse(text=r_expression))
-    ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
+    if (is.null(subset)) {
+        samples = initial_metadata
+    } else {
+        r_expression=paste("subset(initial_metadata,", subset, ")")
+        samples = eval(parse(text=r_expression))
+        ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
+    }
     design = as.data.frame(samples)
     ## This is to get around stupidity with respect to needing all factors to be in a DESeqDataSet
     conditions = as.factor(as.character(design$condition))

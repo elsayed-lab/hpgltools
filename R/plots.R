@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jul  9 17:56:52 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 14 15:16:04 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -953,6 +953,7 @@ hpgl_nonzero = function(data, design=NULL, colors=NULL, labels=NULL, title=NULL,
 #' @examples
 #' ## ma_plots = hpgl_pairwise_ma(expt=some_expt)
 hpgl_pairwise_ma = function(data, log=NULL, ...) {
+    require.auto('affy')
     data_class = class(data)[1]
     if (data_class == 'expt') {
         design = data$design
