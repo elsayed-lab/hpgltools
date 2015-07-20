@@ -1,4 +1,4 @@
-# Time-stamp: <Wed Jul 15 11:24:19 2015 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Mon Jul 20 11:58:06 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
 #'
@@ -351,7 +351,7 @@ pca_information = function(data, design=NULL, factors=c("condition","batch"), nu
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    data = as.matrix(df)
+    data = as.matrix(data)
     means = rowMeans(data)
     decomposed = fast.svd(data - means)
     positives = decomposed$d
