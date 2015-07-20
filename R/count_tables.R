@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jul 14 15:09:22 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 15 11:33:57 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -53,7 +53,7 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
     tmp_definitions = subset(tmp_definitions, sample.id != "")
     condition_names = unique(tmp_definitions$condition)
     if (is.null(condition_names)) {
-        warn("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
+        warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
     }
     if (is.null(color_hash)) {
         if (is.null(tmp_definitions$color)) {
@@ -299,7 +299,7 @@ expt_subset = function(expt, subset=NULL, by_definitions=FALSE) {
     }
     if (isTRUE(by_definitions)) {
         if (is.null(expt$definitions)) {
-            warn("There is no expt$definitions, using the expressionset.")
+            warning("There is no expt$definitions, using the expressionset.")
             initial_metadata = pData(expressionset)
         } else {
             initial_metadata = expt$definitions

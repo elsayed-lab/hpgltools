@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jul 13 16:15:48 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 15 12:22:17 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -141,12 +141,15 @@ batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2=
     return(counts)
 }
 
-#' Filter low-count genes from a data set.
+#' cbcb_filter_counts()  Filter low-count genes from a data set.
 #'
-#' @param df input data frame of counts by sample
-#' @param threshold lower threshold of counts (default: 4)
-#' @param min_samples minimum number of samples (default: 2)
-#' @param verbose If set to true, prints number of genes removed / remaining
+#' This was a function written by Kwame Okrah and perhaps also Laura Dillon to remove low-count genes.  It drops genes based on a threshold and number of samples.
+#' 
+#' @param count_table  a data frame of (pseudo)counts by sample.
+#' @param threshold  default=2  lower threshold of counts for each gene.
+#' @param min_samples default=2   minimum number of samples
+#' @param verbose default=FALSE  if set to true, prints number of genes removed and remaining.
+#'
 #' @return dataframe of counts without the low-count genes
 #' @seealso \code{\link{log2CPM}} which this uses to decide what to keep
 #' @export
@@ -972,7 +975,7 @@ normalize_counts = function(data, design=NULL, norm="raw") {
         libsizes = count_table$samples$lib.size
         factors = norms$samples$norm.factors
         counts = norms$counts
-        tmm_counts = counts / (libsizes * factors)
+        tmm_counts = counts / factors
         count_table = as.matrix(tmm_counts)
         norm_performed = "tmm"
     } else if (norm == "upperquartile") {
@@ -982,7 +985,7 @@ normalize_counts = function(data, design=NULL, norm="raw") {
         libsizes = count_table$samples$lib.size
         factors = norms$samples$norm.factors
         counts = norms$counts
-        tmm_counts = counts / (libsizes * factors)
+        tmm_counts = counts / factors
         count_table = as.matrix(tmm_counts)
         norm_performed = "upperquartile"
     } else if (norm == "rle") {
@@ -992,7 +995,7 @@ normalize_counts = function(data, design=NULL, norm="raw") {
         libsizes = count_table$samples$lib.size
         factors = norms$samples$norm.factors
         counts = norms$counts
-        tmm_counts = counts / (libsizes * factors)
+        tmm_counts = counts / factors
         count_table = as.matrix(tmm_counts)
         norm_performed = "rle"
     } else {

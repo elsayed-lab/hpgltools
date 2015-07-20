@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jul  9 16:33:28 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jul 17 13:25:15 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -68,6 +68,7 @@ autoloads_genome = function(...) {
 }
 
 autoloads_elsayedlab = function(...) {
+    require.auto("OrganismDbi")
     require.auto("BSgenome.Lmajor.friedlin", "elsayed-lab/BSgenome.Lmajor.friedlin")
     require.auto("BSgenome.Tcruzi.clbrener", "elsayed-lab/BSgenome.Tcruzi.clbrener")
     require.auto("BSgenome.Tcruzi.esmeraldo", "elsayed-lab/BSgenome.Tcruzi.esmeraldo")
