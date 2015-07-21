@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jul  9 16:58:20 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 21 15:17:42 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' pattern_count_genome()  Find how many times a given pattern occurs in every gene of a genome.
 #'
@@ -62,7 +62,7 @@ Beta.NA = function(y,X) {
 #' ##6 YAL068W-A     3
 get_genelengths = function(gff, type="gene", key='ID') {
     ret = NULL
-    annotations = try(rtracklayer::import.gff3(gff), silent=TRUE)
+    annotations = try(import.gff3(gff), silent=TRUE)
     if (class(annotations) == 'try-error') {
         annotations = try(import.gff2(gff), silent=TRUE)
         if (class(annotations) == 'try-error') {
@@ -73,6 +73,7 @@ get_genelengths = function(gff, type="gene", key='ID') {
     } else {
         ret = annotations
     }
+    ##print(head(ret))
     ret = as.data.frame(ret)
     ##ret = subset(ret, type==type)
     ret = ret[ret$type == type,]

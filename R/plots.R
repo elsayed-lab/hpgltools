@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jul 14 15:16:04 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jul 20 13:41:02 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -217,8 +217,9 @@ hpgl_boxplot = function(data, colors=NULL, names=NULL, title=NULL, scale="raw", 
 
     data[data < 0] = 0 ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
     if (scale == "raw") {
-        if (max(data) > 10000) {
+        if (max(data) > 1000) {
             print("I think this probably should be put on a log scale to be visible.")
+            print("Run this function with 'scale=\"log\"' to try it out.")
         }
     } else {
         data = log2(data + 1)
@@ -1176,6 +1177,8 @@ hpgl_qq_plot = function(data, x=1, y=2, labels=TRUE) {
                   panel.grid.minor=element_blank(),
                   plot.background=element_blank())
     }
+    ratio_plot = ratio_plot + theme_bw()
+    log_ratio_plot = log_ratio_plot + theme_bw()
     log_summary = summary(log_df$sub)
     qq_plots = list(ratio=ratio_plot, log=log_ratio_plot, summary=log_summary)
     return(qq_plots)

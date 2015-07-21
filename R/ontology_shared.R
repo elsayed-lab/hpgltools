@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jul 10 16:46:40 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 21 15:16:45 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -312,13 +312,13 @@ gotest = function(go) {
 #' @examples
 #' ## data = simple_goseq(de_genes=limma_output, lengths=annotation_df, goids=goids_df)
 #' ## genes_in_cats = gather_genes(data, ont='BP')
-gather_genes = function(goseq_data, ontology='MF', pval=0.05) {
+gather_genes = function(goseq_data, ontology='MF', pval=0.05, include_all=FALSE) {
     categories = NULL
-    if (ont == 'MF') {
+    if (ontology == 'MF') {
         categories = goseq_data$mf_subset
-    } else if (ont == 'BP') {
+    } else if (ontology == 'BP') {
         categories = goseq_data$bp_subset
-    } else if (ont == 'CC') {
+    } else if (ontology == 'CC') {
         categories = goseq_data$cc_subset
     } else {
         print('the ont argument didnt make sense, using mf.')
@@ -339,8 +339,13 @@ gather_genes = function(goseq_data, ontology='MF', pval=0.05) {
         all_entries = GO2ALLEG[[cat]]
         return(all_entries)
     }
-    categories$gene_list = mapply(genes_per_ont, cats)
-    categories$all_genes = mapply(allgenes_per_ont, cats)
+    gene_list = mapply(genes_per_ont, cats)
+    all_genes = mapply(allgenes_per_ont, cats)
+    require.auto("stringr")
+    categories$gene_list = mapply(str_c, gene_list, collapse=' ')
+    if (isTRUE(include_all)) {
+        categories$all_genes = mapply(str_c, all_genes, collapse=' ')
+    }
     return(categories)
 }
 
@@ -407,9 +412,22 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
     if (is.null(n) & is.null(z)) {
         z = 1
     }
-
+    goid_map = get0('goid_map')
+    if (is.null(goid_map)) {
+        goid_map = "reference/go/id2go.map"
+    }
+    
+    ## Take a moment to detect what the data input looks like
+    ## Perhaps a list of tables?
     if (!is.null(limma_out$all_tables)) {
         limma_out = limma_out$all_tables
+    }
+    ## Perhaps a single data frame of logFC etc
+    ## In which case, coerse it to a list of 1
+    if (!is.null(limma_out$logFC)) {
+        tmp = limma_out
+        limma_out = list("first"=tmp)
+        rm(tmp)
     }
 
     testdir = dirname(workbook)

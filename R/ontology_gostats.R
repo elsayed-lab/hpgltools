@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:44:44 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 21 15:17:51 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -15,19 +15,27 @@
 #' @export
 simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05, direction="both", conditional=FALSE, categorysize=NULL) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should) contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
-    annotation = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
-    if (is.null(annotation[,universe_merge])) {
-        if (is.null(annotation[,second_merge_try])) {
-            stop(paste("This function needs a key to merge the differentially expressed genes against the universe of genes.  It tried: ", universe_merge, " and ", second_merge_try, " to no avail.", sep=""))
-        } else {
-            universe = annotation[,c(second_merge_try, "width")]
+    annotation = try(import.gff3(gff), silent=TRUE)
+    if (class(annotation) == 'try-error') {
+        annotation = try(import.gff2(gff), silent=TRUE)
+        if (class(annotation) == 'try-error') {
+            stop("Could not extract the widths from the gff file.")
         }
-    } else {
-        universe = annotation[,c(universe_merge, "width")]
     }
-    universe = universe[complete.cases(universe),]
+    annotation = as.data.frame(annotation)
+    annotation = subset(annotation, type=='gene')
+    if (universe_merge %in% names(annotation)) {
+        universe = annotation[,c(universe_merge, "width")]
+    } else if (second_merge_try %in% names(annotation)) {
+        universe = annotation[,c(second_merge_try, "width")]
+    } else if ("transcript_name" %in% names(annotation)) {
+        universe = annotation[,c("transcript_name", "width")]
+    } else {
+        stop("Unable to cross reference the annotations into a universe for background checks.")
+    }
+    colnames(universe) = c("geneid","width")
     universe$id = rownames(universe)
-    colnames(universe) = c("geneid","width","id")
+    universe = universe[complete.cases(universe),]
     if (is.null(de_genes$ID)) {
         de_genes$ID = rownames(de_genes)
     }

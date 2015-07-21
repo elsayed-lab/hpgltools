@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jul 10 16:44:21 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 21 12:06:07 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified clusterProfiler analysis
 #'
@@ -79,7 +79,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     mf_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
     mf_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     all_mf_phist = try(hpgltools::hpgl_histogram(mf_all@result$pvalue, bins=20))
-    if (class(all_mf_phist) != 'try-error') {
+    if (class(all_mf_phist)[1] != 'try-error') {
         y_limit = (sort(unique(table(all_mf_phist$data)), decreasing=TRUE)[2]) * 2
         all_mf_phist = all_mf_phist + scale_y_continuous(limits=c(0, y_limit))
     }
@@ -89,7 +89,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     bp_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
     bp_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     all_bp_phist = try(hpgltools::hpgl_histogram(bp_all@result$pvalue, bins=20))
-    if (class(all_bp_phist) != 'try-error') {
+    if (class(all_bp_phist)[1] != 'try-error') {
         y_limit = (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
         all_bp_phist = all_bp_phist + scale_y_continuous(limits=c(0, y_limit))
     }
@@ -102,7 +102,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     enriched_cc = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
     all_cc_phist = try(hpgltools::hpgl_histogram(cc_all@result$pvalue, bins=20))
     ## Try and catch if there are no significant hits.
-    if (class(all_cc_phist) != 'try-error') {
+    if (class(all_cc_phist)[1] != 'try-error') {
         y_limit = (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
         all_cc_phist = all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
     }

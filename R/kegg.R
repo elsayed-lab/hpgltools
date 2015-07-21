@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jun  4 14:56:16 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 21 11:31:37 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways
 #'
@@ -29,6 +29,17 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
     try(detach("package:RamiGO", unload=TRUE))
     try(detach("package:graph", unload=TRUE))
     require.auto("pathview")
+    ## If a table from limma was passed to this, just assume that one wants logFC
+    ## Similar stanzas should probably be added for deseq/edger
+    ## This is added because pathview() only works with dataframes/lists with only numbers.
+    ## So it is wise to pull only the column of numbers one cares about.
+    if (!is.null(path_data$logFC)) {
+        tmp_data = as.data.frame(path_data[, "logFC"])
+        rownames(tmp_data) = rownames(path_data)
+        colnames(tmp_data) = c("logFC")
+        path_data = tmp_data
+        rm(tmp_data)
+    }
     tmp_names = names(path_data)
     tmp_names = gsub(string_from, string_to, tmp_names)
     if (!is.null(second_from)) {
@@ -92,7 +103,11 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
             if (isTRUE(verbose)) {
                 message(paste("Moving file to: ", newfile, sep=""))
             }
-            file.rename(from=oldfile, to=newfile)
+            rename_try = try(file.rename(from=oldfile, to=newfile))
+            if (class(rename_try == 'try-error')) {
+                warning("There was an error renaming a png file, likely because it didn't download properly.")
+                warning("It is likely easiest to just delete the pathview input directory.")
+            }
             data_low = summary(path_data)[2]
             data_high = summary(path_data)[3]
             numbers_in_plot = as.numeric(pv$plot.data.gene$mol.data)
@@ -156,14 +171,17 @@ gostats_kegg = function() {
 #' ## fun = kegg_get_orgn('Canis')
 #' ## >     Tid     orgid      species                   phylogeny
 #' ## >  17 T01007   cfa Canis familiaris (dog) Eukaryotes;Animals;Vertebrates;Mammals
-kegg_get_orgn = function(species="Leishmania") {
+kegg_get_orgn = function(species="Leishmania", short=TRUE) {
     all_organisms = getURL("http://rest.kegg.jp/list/organism")
     org_tsv = textConnection(all_organisms)
     all = read.table(org_tsv, sep="\t", quote="", fill=TRUE)
     close(org_tsv)
     colnames(all) = c("Tid","orgid","species","phylogeny")
     candidates = all[grepl(species, all$species),]  ## Look for the search string in the species column
-    return(candidates)
+    if (isTRUE(short)) {
+        candidates = as.character(candidates$orgid)
+    }
+    return(candidates)    
 }
 
 
