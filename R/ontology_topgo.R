@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jul 21 14:35:57 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 22 12:12:16 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -122,7 +122,8 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
     
     information = list(
         mf_godata=mf_GOdata, bp_godata=bp_GOdata, cc_godata=cc_GOdata,
-        results=results, tables=tables, first_densities=first_densities,
+        results=results, tables=tables,
+        mf_densities=mf_densities, bp_densities=bp_densities, cc_densities=cc_densities,
         pdists=p_dists)
     return(information)
 }

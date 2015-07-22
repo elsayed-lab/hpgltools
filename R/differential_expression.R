@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jul  9 16:32:05 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 22 12:07:46 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -19,8 +19,7 @@ disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
 
 #' all_pairwise()  Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
 #'
-#' @param expt default=NULL  an expt class containing count tables, normalization state, etc.
-#' @param data default=NULL  an alternate data frame for loading the data
+#' @param input  a dataframe/vector or expt class containing count tables, normalization state, etc.
 #' @param conditions default=NULL  a factor of conditions in the experiment
 #' @param batches default=NULL  a factor of batches in the experiment
 #' @param model_cond default=TRUE  include condition in the model?  This is likely always true.
@@ -40,10 +39,10 @@ disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-all_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
-    limma_result = limma_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
-    deseq_result = deseq2_pairwise(expt=expt, data=data, conditions=conditions, batches=batches) ## The rest of the arguments should be added back sooner than later.
-    edger_result = edger_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
+all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+    limma_result = limma_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
+    deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches) ## The rest of the arguments should be added back sooner than later.
+    edger_result = edger_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
 
     result_comparison = compare_tables(limma=limma_result, deseq=deseq_result, edger=edger_result)
     ret = list(limma=limma_result, deseq=deseq_result, edger=edger_result, comparison=result_comparison)
@@ -67,7 +66,7 @@ all_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, mod
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL) {
+coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     print("This can do comparisons among the following columns in the limma result:")
@@ -84,6 +83,17 @@ coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scat
         yname = thenames[[y]]
     } else {
         yname = y
+    }
+    ## This is just a shortcut in case I want to flip axes without thinking.
+    if (isTRUE(flip)) {
+        tmp = x
+        tmpname = xname
+        x = y
+        xname = yname
+        y = tmp
+        yname = tmpname
+        rm(tmp)
+        rm(tmpname)
     }
     print(paste0("Actually comparing ", xname, " and ", yname, "."))
     coefficients = limma_output$pairwise_comparisons$coefficients
@@ -179,8 +189,7 @@ deseq_pairwise = function(...) {
 #' deseq2_pairwise()  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using DESeq2.
 #'
-#' @param expt default=NULL  a expt class containing data, normalization state, etc.
-#' @param data default=NULL  alternately pass a dataframe
+#' @param input  a dataframe/vector or  expt class containing data, normalization state, etc.
 #' @param conditions default=NULL  a factor of conditions in the experiment
 #' @param batches default=NULL a factor of batches in the experiment
 #'
@@ -194,27 +203,29 @@ deseq_pairwise = function(...) {
 #' @export
 #' @examples
 #' ## pretend = deseq2_pairwise(data, conditions, batches)
-deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) {
-    if (is.null(expt) & is.null(data)) {
-        stop("This requires either an expt or data+conditions+batches")
-    } else if (!is.null(expt)) {
-        conditions = expt$conditions
-        batches = expt$batches
-        data = as.data.frame(exprs(expt$expressionset))
-        ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
-        ## and expects data as floating point counts,
-        ## not a log2 transformation.
-        if (!is.null(expt$norm)) {
-            if (expt$norm != "raw") {
-                data = exprs(expt$original_expressionset)
-            } else if (!is.null(expt$transform)) {
-                if (expt$transform == "log2") {
+deseq2_pairwise = function(input, conditions=NULL, batches=NULL) {
+    input_class = class(input)[1]
+    if (input_class == 'expt') {
+        conditions = input$conditions
+        batches = input$batches
+        data = as.data.frame(exprs(input$expressionset))
+        if (!is.null(input$norm)) {
+            ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
+            ## and expects data as floating point counts,
+            ## not a log2 transformation.
+            if (input$norm != "raw") {
+                print("DESeq2 demands raw data as input, reverting to the original expressionset.")
+                data = exprs(input$original_expressionset)
+            } else if (!is.null(input$transform)) {
+                if (input$transform == "log2") {
                     ##data = (2^data) - 1
-                    data = expt$normalized$normalized_counts$count_table
+                    data = input$normalized$normalized_counts$count_table
                 }
             }
-        }
-    } ## expt is not null.
+        } ## End testing if normalization has been performed
+    } else {
+        data = as.data.frame(input)
+    }
     condition_table = table(conditions)
     batch_table = table(batches)
     conditions = as.factor(conditions)
@@ -230,7 +241,7 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     ## An interesting note about the use of formulae in DESeq:
     ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
     ## Thus, all these formulae should have condition(s) at the end.
-    summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(expt$expressionset), design=~0+condition)
+    summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~0+condition)
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
     deseq_run = DESeq(dataset, betaPrior=FALSE)
@@ -317,7 +328,7 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
 #' edger_pairwise()  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using EdgeR.
 #'
-#' @param expt default=NULL  a expt class containing data, normalization state, etc.
+#' @param input  a dataframe/vector or expt class containing data, normalization state, etc.
 #' @param conditions default=NULL  a factor of conditions in the experiment
 #' @param batches default=NULL  a factor of batches in the experiment
 #' @param model_cond default=TRUE  Include condition in the experimental model?  This is pretty much always true.
@@ -341,22 +352,23 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
 #' @export
 #' @examples
 #' ## pretend = edger_pairwise(data, conditions, batches)
-edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, ...) {
-    if (is.null(expt) & is.null(data)) {
-        stop("This requires either an expt or data+conditions+batches")
-    } else if (!is.null(expt)) {
-        conditions = expt$conditions
-        batches = expt$batches
-        data = as.data.frame(exprs(expt$expressionset))
+edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, ...) {
+    input_class = class(input)[1]
+    if (input_class == 'expt') {
+        conditions = input$conditions
+        batches = input$batches
+        data = as.data.frame(exprs(input$expressionset))
         ## As I understand it, edgeR fits a binomial distribution
         ## and expects data as floating point counts,
-        ##not a log2 transformation.
-        if (!is.null(expt$transform)) {
-            if (expt$transform == "log2") {
+        ## not a log2 transformation.
+        if (!is.null(input$transform)) {
+            if (input$transform == "log2") {
                 ##data = (2^data) - 1
-                data = expt$normalized$normalized_counts$count_table
-            }
-        }
+                data = input$normalized$normalized_counts$count_table
+            } ## End checking for log2 normalized data
+        } ## End checking for transformed data
+    } else { ## End checking if this is an expt
+        data = as.data.frame(input)
     }
     message("At this time, this only does conditional models.")
     condition_table = table(conditions)
@@ -595,8 +607,7 @@ hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=F
 #' limma_pairwise()  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using voom/limma.
 #'
-#' @param expt default=NULL  an expt class containing count tables, normalization state, etc.
-#' @param data default=NULL  an optional data frame instead of expt
+#' @param input  a dataframe/vector or expt class containing count tables, normalization state, etc.
 #' @param conditions default=NULL  a factor of conditions in the experiment
 #' @param batches default=NULL  a factor of batches in the experiment
 #' @param extra_contrasts default=NULL  some extra contrasts to add to the list
@@ -631,27 +642,28 @@ hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=F
 #' @export
 #' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
-limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
-    if (is.null(expt) & is.null(data)) {
-        stop("This requires either an expt or data/condition/batches")
-    } else if (!is.null(expt)) {
-        conditions = expt$conditions
-        batches = expt$batches
-        data = exprs(expt$expressionset)
+limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+    input_class = class(input)[1]
+    if (input_class == 'expt') {
+        conditions = input$conditions
+        batches = input$batches
+        data = exprs(input$expressionset)
         if (is.null(libsize)) {
             message("libsize was not specified, this parameter has profound effects on limma's result.")
-            if (!is.null(expt$best_libsize)) {
+            if (!is.null(input$best_libsize)) {
                 message("Using the libsize from expt$best_libsize.")
                 ## libsize = expt$norm_libsize
-                libsize = expt$best_libsize
+                libsize = input$best_libsize
             } else {
                 message("Using the libsize from expt$normalized$normalized_counts.")
-                libsize = expt$normalized$normalized_counts$libsize
+                libsize = input$normalized$normalized_counts$libsize
             }
         } else {
             message("libsize was specified.  This parameter has profound effects on limma's result.")
         }
-    } ## End if expt is defined.
+    } else {  ## Not an expt class, data frame or matrix
+        data = as.data.frame(input)
+    }
     if (is.null(libsize)) {
         libsize = colSums(data)
     }
@@ -697,7 +709,7 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     fun_voom = NULL
 
     ## voom() it, taking into account whether the data has been log2 transformed.
-    logged = expt$transform
+    logged = input$transform
     if (is.null(logged)) {
         print("I don't know if this data is logged, testing if it is integer.")
         if (is.integer(all_data)) {
@@ -712,7 +724,7 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
             logged = TRUE
         }
     }
-    converted = expt$convert
+    converted = input$convert
     if (is.null(converted)) {
         print("I cannot determine if this data has been converted, assuming no.")
         converted = FALSE

@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jul 21 15:16:45 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 22 12:19:12 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -464,8 +464,8 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
         topgo_up_ontology = topgo_up_trees = topgo_down_ontology = topgo_down_trees = NULL
         gostats_up_ontology = gostats_up_trees = gostats_down_ontology = gostats_down_trees = NULL
         if (isTRUE(do_goseq)) {
-            goseq_up_ontology = simple_goseq(up_genes, lengths=gene_lengths, goids=goids)
-            goseq_down_ontology = simple_goseq(down_genes, lengths=gene_lengths, goids=goids)
+            goseq_up_ontology = try(simple_goseq(up_genes, lengths=gene_lengths, goids=goids))
+            goseq_down_ontology = try(simple_goseq(down_genes, lengths=gene_lengths, goids=goids))
             if (isTRUE(do_trees)) {
                 goseq_up_trees = try(goseq_trees(up_genes, goseq_up_ontology, goid_map=goid_map, goids_df=goids, overwrite=overwrite))
                 goseq_down_trees = try(goseq_trees(down_genes, goseq_down_ontology, goid_map=goid_map, goids_df=goids))
@@ -499,8 +499,8 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
             }
         }
         if (isTRUE(do_cluster)) {
-            cluster_up_ontology = simple_clusterprofiler(up_genes, goids=goids, gff=goids)
-            cluster_down_ontology = simple_clusterprofiler(down_genes, goids=goids, gff=goids)
+            cluster_up_ontology = try(simple_clusterprofiler(up_genes, goids=goids, gff=goids))
+            cluster_down_ontology = try(simple_clusterprofiler(down_genes, goids=goids, gff=goids))
             if (isTRUE(do_trees)) {
                 cluster_up_trees = try(cluster_trees(up_genes, cluster_up_ontology, goid_map=goid_map, goids_df=goids))
                 cluster_down_trees = try(cluster_trees(down_genes, cluster_down_ontology, goid_map=goid_map, goids_df=goids))
@@ -530,8 +530,8 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
             }
         }
         if (isTRUE(do_topgo)) {
-            topgo_up_ontology = simple_topgo(up_genes, goid_map=goid_map, goids_df=goids)
-            topgo_down_ontology = simple_topgo(down_genes, goid_map=goid_map, goids_df=goids)
+            topgo_up_ontology = try(simple_topgo(up_genes, goid_map=goid_map, goids_df=goids))
+            topgo_down_ontology = try(simple_topgo(down_genes, goid_map=goid_map, goids_df=goids))
             if (isTRUE(do_trees)) {
                 topgo_up_trees = try(topgo_trees(topgo_up_ontology))
                 topgo_down_trees = try(topgo_trees(topgo_down_ontology))
@@ -561,8 +561,8 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
             }
         }
         if (isTRUE(do_gostats)) {
-            topgo_up_ontology = simple_gostats(up_genes, gff, goids)
-            topgo_down_ontology = simple_gostats(down_genes, gff, goids)
+            topgo_up_ontology = try(simple_gostats(up_genes, gff, goids))
+            topgo_down_ontology = try(simple_gostats(down_genes, gff, goids))
             if (isTRUE(do_trees)) {
                 message("gostats_trees has never been tested, this is commented out for the moment.")
                 ## topgo_up_trees = try(gostats_trees(topgo_up_ontology))
@@ -592,15 +592,16 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
                 write.csv(gostats_down_ontology$cc_interesting, file=paste(comparison, csv_base, "_topgo_cc_down.csv", sep=""))
             }
         }        
-        c_data = list(up_goseq=goseq_up_ontology, down_goseq=goseq_down_ontology,
-            up_cluster=cluster_up_ontology, down_cluster=cluster_down_ontology,
-            up_topgo=topgo_up_ontology, down_topgo=topgo_down_ontology,
-            up_goseqtrees=goseq_up_trees, down_goseqtrees=goseq_down_trees,
-            up_clustertrees=cluster_up_trees, down_clustertrees=cluster_down_trees,
-            up_topgotrees=topgo_up_trees, down_topgotrees=topgo_down_trees,
-            up_gostats=gostats_up_ontology, down_gostats=gostats_down_ontology,
-            up_gostatstrees=gostats_up_trees, down_gostatstrees=gostats_down_trees)
-            output[[c]] = c_data
+        c_data = list(up_table=up_genes, down_table=down_genes,
+                      up_goseq=goseq_up_ontology, down_goseq=goseq_down_ontology,
+                      up_cluster=cluster_up_ontology, down_cluster=cluster_down_ontology,
+                      up_topgo=topgo_up_ontology, down_topgo=topgo_down_ontology,
+                      up_goseqtrees=goseq_up_trees, down_goseqtrees=goseq_down_trees,
+                      up_clustertrees=cluster_up_trees, down_clustertrees=cluster_down_trees,
+                      up_topgotrees=topgo_up_trees, down_topgotrees=topgo_down_trees,
+                      up_gostats=gostats_up_ontology, down_gostats=gostats_down_ontology,
+                      up_gostatstrees=gostats_up_trees, down_gostatstrees=gostats_down_trees)
+        output[[c]] = c_data
     }
     names(output) = names(limma_out)
     return(output)

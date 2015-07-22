@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jul 21 15:17:42 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 22 11:31:22 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' pattern_count_genome()  Find how many times a given pattern occurs in every gene of a genome.
 #'
@@ -73,9 +73,9 @@ get_genelengths = function(gff, type="gene", key='ID') {
     } else {
         ret = annotations
     }
-    ##print(head(ret))
-    ret = as.data.frame(ret)
-    ##ret = subset(ret, type==type)
+    ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
+    ## no method to coerce an S4 class to a vector.
+    ret = GenomicRanges::as.data.frame(ret)
     ret = ret[ret$type == type,]
     ret = ret[,c(key,"width")]
     colnames(ret) = c("ID","width")
