@@ -185,7 +185,7 @@ hpgl_disheat(batchnorm_expt)
 
 ```{r simple_de}
 
-all_pairwise = limma_pairwise(expt=normbatch_expt, conditions=norm_expt$conditions, batches=norm_expt$batches)
+all_pairwise = limma_pairwise(normbatch_expt, conditions=norm_expt$conditions, batches=norm_expt$batches)
 ## I have the following elements in this list:
 ### conditions_table     :  how many replicates are there of each condition
 ### batches_table        :  how many replicates are there of each batch
@@ -218,6 +218,6 @@ scatter_wt_mut$both_histogram
 
 ```{r de_comparisons}
 
-all_comparison = all_pairwise(expt=normbatch_expt)
+all_comparison = all_pairwise(normbatch_expt)
 
 ```

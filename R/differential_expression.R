@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jul 22 12:07:46 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 22 16:12:35 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -98,7 +98,8 @@ coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scat
     print(paste0("Actually comparing ", xname, " and ", yname, "."))
     coefficients = limma_output$pairwise_comparisons$coefficients
     coefficients = coefficients[,c(x,y)]
-    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline)
+    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline, first=xname, second=yname)
+    plot$df = coefficients
     return(plot)
 }
 

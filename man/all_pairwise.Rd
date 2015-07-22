@@ -4,15 +4,12 @@
 \alias{all_pairwise}
 \title{all_pairwise()  Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.}
 \usage{
-all_pairwise(expt = NULL, data = NULL, conditions = NULL,
-  batches = NULL, model_cond = TRUE, model_batch = FALSE,
-  model_intercept = FALSE, extra_contrasts = NULL, alt_model = NULL,
-  libsize = NULL)
+all_pairwise(input, conditions = NULL, batches = NULL, model_cond = TRUE,
+  model_batch = FALSE, model_intercept = FALSE, extra_contrasts = NULL,
+  alt_model = NULL, libsize = NULL)
 }
 \arguments{
-\item{expt}{default=NULL  an expt class containing count tables, normalization state, etc.}
-
-\item{data}{default=NULL  an alternate data frame for loading the data}
+\item{input}{a dataframe/vector or expt class containing count tables, normalization state, etc.}
 
 \item{conditions}{default=NULL  a factor of conditions in the experiment}
 

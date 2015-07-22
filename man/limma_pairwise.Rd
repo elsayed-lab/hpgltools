@@ -5,15 +5,12 @@
 \title{limma_pairwise()  Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using voom/limma.}
 \usage{
-limma_pairwise(expt = NULL, data = NULL, conditions = NULL,
-  batches = NULL, model_cond = TRUE, model_batch = FALSE,
-  model_intercept = FALSE, extra_contrasts = NULL, alt_model = NULL,
-  libsize = NULL)
+limma_pairwise(input, conditions = NULL, batches = NULL,
+  model_cond = TRUE, model_batch = FALSE, model_intercept = FALSE,
+  extra_contrasts = NULL, alt_model = NULL, libsize = NULL)
 }
 \arguments{
-\item{expt}{default=NULL  an expt class containing count tables, normalization state, etc.}
-
-\item{data}{default=NULL  an optional data frame instead of expt}
+\item{input}{a dataframe/vector or expt class containing count tables, normalization state, etc.}
 
 \item{conditions}{default=NULL  a factor of conditions in the experiment}
 

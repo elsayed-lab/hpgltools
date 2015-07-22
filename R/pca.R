@@ -1,4 +1,4 @@
-# Time-stamp: <Mon Jul 20 11:58:06 2015 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Wed Jul 22 16:41:11 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
 #'
@@ -363,7 +363,7 @@ pca_information = function(data, design=NULL, factors=c("condition","batch"), nu
     ## decrease if many genes are contributing to the given component
     ## Conversely, that line should drop suddenly if dominated by one/few genes.
 
-    rownames(u) = rownames(df)
+    rownames(u) = rownames(data)
     rownames(v) = colnames(data)
 
     u_plot = u_plot(u)

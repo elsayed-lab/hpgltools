@@ -5,13 +5,10 @@
 \title{deseq2_pairwise()  Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using DESeq2.}
 \usage{
-deseq2_pairwise(expt = NULL, data = NULL, conditions = NULL,
-  batches = NULL)
+deseq2_pairwise(input, conditions = NULL, batches = NULL)
 }
 \arguments{
-\item{expt}{default=NULL  a expt class containing data, normalization state, etc.}
-
-\item{data}{default=NULL  alternately pass a dataframe}
+\item{input}{a dataframe/vector or  expt class containing data, normalization state, etc.}
 
 \item{conditions}{default=NULL  a factor of conditions in the experiment}
 

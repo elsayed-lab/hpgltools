@@ -7,7 +7,8 @@ linear model superimposed and some supporting statistics.}
 \usage{
 hpgl_linear_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
   cormethod = "pearson", size = 2, verbose = FALSE, loess = FALSE,
-  identity = FALSE, gvis_trendline = NULL, ...)
+  identity = FALSE, gvis_trendline = NULL, first = NULL, second = NULL,
+  ...)
 }
 \arguments{
 \item{df}{a dataframe likely containing two columns}

@@ -6,7 +6,7 @@
 \usage{
 coefficient_scatter(limma_output, x = 1, y = 2,
   gvis_filename = "limma_scatter.html", gvis_trendline = TRUE,
-  tooltip_data = NULL)
+  tooltip_data = NULL, flip = FALSE)
 }
 \arguments{
 \item{limma_output}{the set of pairwise comparisons provided by limma_pairwise()}

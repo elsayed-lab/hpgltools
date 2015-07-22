@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jul 20 13:41:02 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 22 15:26:23 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -644,7 +644,7 @@ hpgl_libsize = function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, t
 #' @export
 #' @examples
 #' ## hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, loess=FALSE, identity=FALSE, gvis_trendline=NULL, ...) {
+hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, loess=FALSE, identity=FALSE, gvis_trendline=NULL, first=NULL, second=NULL, ...) {
     hpgl_env = environment()
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
@@ -694,6 +694,13 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
             message("Generating an interactive graph.")
         }
         hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename, trendline=gvis_trendline)
+    }
+    if (!is.null(first) & !is.null(second)) {
+        colnames(df) = c(first, second)
+    } else if (!is.null(first)) {
+        colnames(df) = c(first, 'second')
+    } else if (!is.null(second)) {
+        colnames(df) = c('first', second)
     }
     x_histogram = hpgltools::hpgl_histogram(data.frame(df[,1]), verbose=verbose, fillcolor="lightblue", color="blue")
     y_histogram = hpgltools::hpgl_histogram(data.frame(df[,2]), verbose=verbose, fillcolor="pink", color="red")

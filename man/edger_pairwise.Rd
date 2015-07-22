@@ -5,12 +5,12 @@
 \title{edger_pairwise()  Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using EdgeR.}
 \usage{
-edger_pairwise(expt = NULL, data = NULL, conditions = NULL,
-  batches = NULL, model_cond = TRUE, model_batch = FALSE,
-  model_intercept = FALSE, alt_model = NULL, extra_contrasts = NULL, ...)
+edger_pairwise(input, conditions = NULL, batches = NULL,
+  model_cond = TRUE, model_batch = FALSE, model_intercept = FALSE,
+  alt_model = NULL, extra_contrasts = NULL, ...)
 }
 \arguments{
-\item{expt}{default=NULL  a expt class containing data, normalization state, etc.}
+\item{input}{a dataframe/vector or expt class containing data, normalization state, etc.}
 
 \item{conditions}{default=NULL  a factor of conditions in the experiment}
 
