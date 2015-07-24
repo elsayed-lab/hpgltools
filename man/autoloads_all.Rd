@@ -4,7 +4,7 @@
 \alias{autoloads_all}
 \title{Automatic loading of stuff I use}
 \usage{
-autoloads_all(...)
+autoloads_all(update = FALSE)
 }
 \value{
 NULL currently
