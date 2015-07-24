@@ -4,7 +4,7 @@
 \alias{kegg_get_orgn}
 \title{Search the kegg identifier for a given species}
 \usage{
-kegg_get_orgn(species = "Leishmania")
+kegg_get_orgn(species = "Leishmania", short = TRUE)
 }
 \arguments{
 \item{species}{A search string (Something like 'Homo sapiens')}

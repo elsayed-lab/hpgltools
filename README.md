@@ -59,6 +59,7 @@ set and some made up data.
 - **require.auto**: Handles autoloading/updating of packages (stolen and modified from Ramzi Temanni).
 - **autoloads_ontology**: Loads a set of useful ontology packages.
 - **autoloads_genome**: Loads a set of packages used in manipulating genomic ranges or downloading genomes.
+- **autoloads_elsayedlab**: Loads packages not in CRAN and specific for the El-Sayed lab.
 - **autoloads_deseq**: Loads tools explicitly for differential expression analysis.
 - **autoloads_graphs**: Loads extensions to R's plotting capabilities.
 - **autoloads_helpers**: Loads development tools, reporting tools, and generally useful toys.
@@ -81,85 +82,165 @@ sample IDs
 
 Generic methods for working with differential expression data
 
-- **write_limma**: Takes a large # of toptables(), adds qvalues, puts them into a list, and optionally writes them as csv/excel spreadsheets.
+- **all_pairwise**: Performs a full pairwise analysis of an expt using limma, deseq2, and edger by calling limma_pairwise(), deseq2_pairwise(), and edger_pairwise().
+- **coefficient_scatter**: Perform arbitrary scatter plots of columns across toptable() tables.
+- **compare_tables**: Perform simple comparisons of the toptable-like outputs from limma/deseq/edger.
+- **deseq2_pairwise**: Sets up model matrices and all pairwise contrasts, then performs the comparisons in limma.
+- **edger_pairwise**: Sets up model matrices and all pairwise contrasts, then performs the comparisons in EdgeR.
 - **hpgl_voom**: A minor hack on limma's voom() function to give a prettier plot.
-- **unbalanced_pairwise**: Sets up model matrices and contrasts as per a discussion with Kwame in the case when there are irreconcilable batches/conditions, then performs every possible pairwise comparison in limma.
-- **balanced_pairwise**: Sets up model matrices and contrasts when one has balanced batch/conditions, then performs every possible pairwise comparison in limma.
+- **limma_pairwise**: Sets up model matrices and all pairwise contrasts, then performs the comparisons in limma.
+- **limma_scatter**: Scatterplot arbitrary data across limma toptables.
+- **limma_subset**: Grabs the top/bottom n genes from toptable(), or takes the genes outside a given z-score from the median.
+- **make_exampledata**: A hack of limma's exampledata to have arbitrarily sized matrices returned.
+- **make_pairwise_contrasts**: Make all possible pairwise contrasts in formats suitable for limma/deseq/edger.
+- **makeSVD**: Calls fast.svd and returns the v,u,d elements, not particularly interesting.
+- **remove_batch_effect**: An alternate batch removal method resulting from discussions with the Corrada-Bravo lab.
 - **simple_comparison**: An example function of a changed vs. control comparison, this provides an example implementation of tasks that may be performed with voom/limma/combat/etc.
-- **make_exampledata**: A hack of limma's exampleData() to allow for arbitrary data set sizes.
+- **write_deseq2**: Currently incomplete, intended to take the tables from DESeq2 and write them to csv/excel spreadsheets.
+- **write_edger**: Currently incomplete, intended to take the tables from EdgeR and write them to csv/excel spreadsheets.
+- **write_limma**: Takes a large # of toptables(), adds qvalues, puts them into a list, and optionally writes them as csv/excel spreadsheets.
 
 ### misc_functions.R
 
-- **hpgl_cor**: A correlation wrapper
-- **write_xls**: Writing excel sheets is easier this way
-- **sillydist**: A very simplistic distance function in order to get weights from arbitrary axes.
 - **Beta.NA**: A quick solver for voom added by Kwame
+- **hpgl_cor**: A correlation wrapper
+- **sillydist**: A very simplistic distance function in order to get weights from arbitrary axes.
+- **write_xls**: Writing excel sheets is easier this way
 
 ### normalization.R
 
 Some simple normalization functions.
 
-- **hpgl_rpkm**: Calculate RPKM using a gff annotation and data frame
-- **hpgl_log2cpm**: Convert count matrix to log2 counts-per-million reads
-- **divide_seq**: Calculate RPKseqM -- reads per Kilo-sequence Million reads, useful for TNSeq and normalizing by # of TAs
-- **filter_counts**: Kwame's suggested filter_counts() from one of our lab meetings.
-- **normalize_expt**: Takes an expt class, performs a normalization, and returns the class with the data normalized and backed up.
+- **batch_counts**: Try out different batch/covariant correction/removal methods. Steals ideas/code from cbcbSEQ/sva/ruvg/limma.
+- **cbcb_filter_counts**: A stolen copy of cbcbSEQ's filter_counts() function with some extra talky talky.
+- **convert_counts**: Perform cpm/rpkm/etc conversions.
+- **divide_seq**: Calculate RPKseqM -- reads per Kilo-sequence Million reads, useful for TNSeq and normalizing by # of TAs.
+- **genefilter_pofa_counts**: Use genefilter's PofA method to low-count filter.
+- **genefilter_cv_counts**: Use genefilter's cv method to low-count filter.
+- **genefilter_kofa_counts**: Use genefilter's kOverA method to low-count filter.
+- **hpgl_combatMod**: A stolen copy of cbcbSEQ's combatMod with some hacks to make it not die on odd data.
+- **hpgl_log2cpm**: Log2CPM stolen from cbcbSEQ.
 - **hpgl_norm**: Wrapper for the many possible normalization schemes, standardizes them all into a DGEList
+- **hpgl_qshrink**: A stolen/hacked copy of Kwame's qshrink/qstats functions
+- **hpgl_qstats**: A stolen/hacked copy of Kwame's qshrink/qstats functions
+- **hpgl_rpkm**: Calculate RPKM using a gff annotation and data frame
+- **lowfilter_counts**: The low-count filter stolen from Kwame/cbcbSEQ with extra talkytalky.
+- **normalize_counts**: Perform sf|quant|qsmooth|rle|upperquartile|tmm|whatever normalization.
+- **normalize_expt**: Takes an expt class, performs a normalization, and returns the class with the data normalized and backed up.
+- **transform_counts**: Perform logn transformation (or not)
 
-### ontology.R
+### gvis_plots.R
 
-Functions to help simplify/combine gene ontology analyses.
+Fun click-able googleVis html/javascript plots.
 
+- **hpgl_gvis_ma_plot**: A clicky ma plot
+- **hpgl_gvis_volcano_plot**: A clicky volcano plot
+- **hpgl_gvis_scatter**: A clicky scatter
+
+### kegg.R
+
+Some functions to help deal with KEGG data
+
+- **hpgl_base_pathview**: A hacked copy of the pathview function.  There was some dumb error in this, but I don't remember what it was anymore.
+- **hpgl_pathview**: Iterate through every pathway and fill in gene for a given species with pretty colors.
+- **gostats_kegg**: Use gostats' hyperGTest on kegg pathways
+- **kegg_get_orgn**: Figure out the KEGG species identifier given a species string like 'Leishmania'
+
+### ontology_clusterprofiler.R
+
+Working with clusterProfiler doesn't have to be obnoxious.
+
+- **simple_clusterprofiler**: Perform a clusterprofiler search given a set of de genes and goids.
+- **cluster_trees**: Use topgo's showSigOfNodes() to make pretty trees from clusterprofiler data.
+- **hpgl_enrichGO**: A hack of clusterprofiler's enrichGO to make it not fail on corner-cases.
+- **hpgl_enrich.internal**: A hack of clusterprofiler's enrich.internal to make it not fail on corner-cases.
+
+### ontology_goseq.R
+
+Working with goseq doesn't have to be irksome.
+
+- **goseq_table**: Prettyify GO tables from goseq.
+- **simple_goseq**: Perform a goseq search given a set of de genes and goids.
+- **goseq_trees**: Use topgo's showSigOfNodes() to make pretty trees from goseq data.
+- **goseq_pval_plots**: Make pretty clusterProfiler-ish barplots of goseq data.
+
+### ontology_gostats.R
+
+Working with gostats doesn't have to be tiresome.
+
+- **simple_gostats**: Perform a gostats search given a set of de genes and goids.
+- **gostats_trees**: Use topgo's showSigOfNodes() to make pretty trees from gostats data.
+- **gostats_pval_plots**: Make pretty clusterProfiler-ish barplots of gostats data.
+
+### ontology_topgo.R
+
+Working with goseq doesn't have to be irksome.
+
+- **topgo_tables**: Prettyify GO tables from topgo.
+- **simple_topgo**: Perform a topgo search given a set of de genes and goids.
+- **topgo_trees**: Use topgo's showSigOfNodes() to make pretty trees.
+- **make_id2gomap**: Make a id2go.map file in the topgo preferred format given a df of goids in the goseq format.
+- **hpgl_topdiffgenes**: A copy of the topdiffgenes function, with the hopes of making it more interesting
+- **topgo_pval_plots**: Make pretty clusterProfiler-ish barplots of topgo data.
+- **getEdgeWeights**: A hack of the DAG graphing functions to make the lines less bold
+- **hpgl_GOplot**: A hack of the DAG graphing functions to make the lines less bold
+
+
+### ontology_shared.R
+
+Functions to help simplify/combine gene ontology analyses, shared among gostats/goseq/clusterprofiler/topgo
+
+- **deparse_go_value**: The GOTERM function returns complex data structures which don't print well.  Clean it up.
 - **goterm**: Pull go terms from GO.db
 - **gosyn**: Pull go synonyms from GO.db
-- **gosyn**: Pull go secondary terms from GO.db
+- **gosec**: Pull go secondary terms from GO.db
 - **godef**: Pull go definitions from GO.db
 - **goont**: Pull go top-level ontologies from GO.db
 - **golev**: Pull approximate go levels from GO.db
 - **gotest**: Test whether a given GOid is valid in GO.db (some TriTrypDB ones are not.)
-- **goseq_table**: Add some annotation information to the tables generated by goseq() so that they become human readable
-- **simple_goseq**: Make performing a goseq() analysis simpler and hopefully more robust.  Attempts to handle using non-standard organisms.
-- **topgo_pval_plots**: Create clusterProfiler() p-value barplots using topGO data.
-- **goseq_pval_plots**: Create clusterProfiler() p-value barplots using goseq data.
-- **pval_plot**: Makes a ggplot2 pvalue plot from IDs, scores, and p-values as per clusterProfiler().
-- **limma_ontology**: Given a list of limma toptables() (provided by write_limma()), perform ontology searches of the top/bottom n or z genes.
-- **simple_topgo**: Make performing a topGO() analysis simpler and hopefully more robust.  Attempts to handle using non-standard organisms.
-- **topgo_tables**: Given the difficult results from a topGO() search, return a consistent table.
-- **topgo_trees**: Simplify the generation and printing of ontology trees from topGO()
-- **simple_clusterprofiler**: Make performing a clusterProfiler() analysis simpler and hopefully handle non-standard organisms.  Also attempts to get around some error conditions often thrown by clusterProfiler.
-- **make_id2gomap**: Creates topGO() formatted mappings of gene ID to go ID.
-- **goseq_trees**: Generates topGO-like trees from goseq() data.
-- **cluster_trees**: Generates topGO-like trees from clusterProfiler() data.
-- **hpgl_pathview**: Attempts to color every available KEGG pathway given some DE data.  Is moderately non-stupid in handling mappings from known gene-names to KEGG gene-names.
-- **hpgl_enrichGO**: A small hack of clusterProfiler to avoid some errors.
-- **hpgl_enrich.internal**: Continues the hack from enrichGO(), makes it useful for sparser organisms like Leishmania.
-- **hpgl_GOplot**: A hack on the topGO GOplot() function to make it possible to change line widths etc as per Najib's preferences.
-- **Gff2GeneTable**: A hack on clusterProfiler()'s function to make geneID to GOID mappings.  The original implementation did not attempt to limit the gff file in any way and therefore would easily run any computer out of memory.
+- **pval_plot**: A generic p-value plotter of GO data.
+- **get_genelengths**: Grab gene lengths from a gff file, I should put this with the rpkm function.
+- **limma_ontology**: Pass a limma toptable(s) straight to goseq/clusterprofiler/topgo/gostats
+- **golevel_df**: Use clusterprofiler's getgolevel() to quickly extract ontology levels to make more succinct plots/trees/tables.
 
 ### plots.R
 
+Plots!
+
 - **graph_metrics**: Graph all the various metrics of samples in one function call.  Normalize the data and do it again.  removeBatchEffect() and do it again.
-- **graph_nonzero**: A minor hack of Ramzi's nonzero_plot() function.  Plots the # of non-zero genes with respect to CPM by library.
-- **hpgl_libsize**: A pretty bargraph of the library size of every sample in an experiment.
+- **hpgl_bcv_plot**: EdgeR's plotBCV as a ggplot2 plot.
 - **hpgl_boxplot**: A prettified boxplot of the samples in an experiment.
-- **hpgl_qq_all**: Performs a qq plot of every sample in an experiment vs. the mean of all samples.
-- **hpgl_qq_plot**: Makes a qqplot (log and ratio) between two samples.
-- **multiplot**: A grid layout of lots of plots.
+- **hpgl_density_plot**: A prettified density plotter.
+- **hpgl_dist_scatter**: Performs a scatter plot and colors dots with weights, may give a googleVis version.
 - **hpgl_corheat**: A heatmap.3 correlation heatmap.
 - **hpgl_disheat**: A heatmap.3 distance heatmap.
 - **hpgl_heatmap**: Does the work for the above-two functions' heatmaps.
+- **hpgl_histogram**: ggplot2() histograms with some defaults set to make it less annoying.
+- **hpgl_libsize**: A pretty bargraph of the library size of every sample in an experiment.
+- **hpgl_linear_scatter**: Performs a scatter plot, estimates the linear relationship between the two samples, and colors dots accordingly, may give a googleVis version.
+- **hpgl_ma_plot**: Performs an MA plot, may give a googleVis version.
+- **hpgl_multihistogram**: ggplot2() histograms of multiple distributions with some defaults set.
+- **hpgl_nonzero**: A minor hack of Ramzi's nonzero_plot() function.  Plots the # of non-zero genes with respect to CPM by library.
+- **hpgl_pairwise_ma**: Plot all the ma relationships between samples of an experiment.
+- **hpgl_qq_all**: Performs a qq plot of every sample in an experiment vs. the mean of all samples.
+- **hpgl_qq_plot**: Makes a qqplot (log and ratio) between two samples.
 - **hpgl_sample_heatmap**: A heatmap.3 of all the genes of a set of samples.
+- **hpgl_scatter**: Performs a scatter plot of two samples, may give a googleVis version.
 - **hpgl_smc**: Plot the standard median correlation of a set of samples.
 - **hpgl_smd**: Plot the standard median distance of a set of samples.
-- **hpgl_pca**: Standardizes PCA plots of samples.
-- **hpgl_ma_plot**: Performs an MA plot, may give a googleVis version.
-- **hpgl_dist_scatter**: Performs a scatter plot and colors dots with weights, may give a googleVis version.
-- **hpgl_scatter**: Performs a scatter plot of two samples, may give a googleVis version.
-- **hpgl_linear_scatter**: Performs a scatter plot, estimates the linear relationship between the two samples, and colors dots accordingly, may give a googleVis version.
-- **hpgl_histogram**: ggplot2() histograms with some defaults set to make it less annoying.
-- **hpgl_multihistogram**: ggplot2() histograms of multiple distributions with some defaults set.
-- **hpgl_density_plot**: Plot a density plot of the samples in an experiment.  It makes a rainbow!
 - **hpgl_volcano_plot**: Plot a volcano plot of some toptable() data, may give a googleVis version.
+- **multiplot**: A grid layout of lots of plots.
 - **heatmap.3**: A hack of heatmap.2 to allow for changes to line widths as per Najib's perference.
-- **hpgl_plot_bcv**: An implementation of EdgeR's plotBCV() (essentially voom's plot)
 
+### pca.R
+
+PCA is weird.
+
+- **hpgl_pca**: A PCA plotter mutated from cbcbSEQ's
+- **plot_pcs**: A Principle Component plotter.
+- **pca_plot_largebatch**: A PCA for experiments with lots of batches.
+- **pca_plot_smallbatch**: A PCA for experiments with > 6 batches. (prettier)
+- **factor_rsquared**: Get r^2 values between a given experimental factor and the data's SVD.
+- **u_plot**: Plot the rank-order slope change of svd's u field.
+- **pca_information**: Play with the various data returned from svd.
+- **pca_highscores**: Get the highest scoring genes for each PC.

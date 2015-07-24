@@ -2,35 +2,39 @@
 % Please edit documentation in R/differential_expression.R
 \name{write_limma}
 \alias{write_limma}
-\title{write_limma(): Writes out the results of a limma search using toptable()
+\title{write_limma()  Writes out the results of a limma search using toptable()
 However, this will do a couple of things to make one's life easier:
 1.  Make a list of the output, one element for each comparison of the contrast matrix
 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
 3.  Since I have been using qvalues a lot for other stuff, add a column for them.}
 \usage{
-write_limma(data = NULL, adjust = "fdr", n = 0, coef = NULL,
+write_limma(data, adjust = "fdr", n = 0, coef = NULL,
   workbook = "excel/limma.xls", excel = FALSE, csv = TRUE,
   annotation = NULL)
 }
 \arguments{
-\item{data}{The output from eBayes()}
+\item{data}{the output from eBayes()}
 
-\item{adjust}{The pvalue adjustment chosen (fdr by default)}
+\item{adjust}{default='fdr'  the pvalue adjustment chosen.}
 
-\item{n}{The number of entries to report, defaults to 0, which says do them all}
+\item{n}{default=0  the number of entries to report, 0 says do them all.}
 
-\item{coef}{which coefficients/contrasts to report, NULL says do them all}
+\item{coef}{default=NULL  which coefficients/contrasts to report, NULL says do them all.}
 
-\item{workbook}{an excel filename into which to write the data, used for csv files too.}
+\item{workbook}{default='excel/limma.xls'  an excel filename into which to write the data, used for csv files too.}
 
-\item{excel}{T/F whether or not to write an excel workbook (useful if they are too big)}
+\item{excel}{default=FALSE  write an excel workbook?}
+
+\item{csv}{default=TRUE  write out csv files of the tables?}
+
+\item{annotation}{default=NULL  an optional data frame including annotation information to include with the tables.}
 }
 \value{
 a list of data frames comprising the toptable output for each coefficient,
    I also added a qvalue entry to these toptable() outputs.
 }
 \description{
-write_limma(): Writes out the results of a limma search using toptable()
+write_limma()  Writes out the results of a limma search using toptable()
 However, this will do a couple of things to make one's life easier:
 1.  Make a list of the output, one element for each comparison of the contrast matrix
 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel

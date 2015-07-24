@@ -2,19 +2,29 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_histogram}
 \alias{hpgl_histogram}
-\title{Make a pretty histogram of something}
+\title{hpgl_histogram()  Make a pretty histogram of something.}
 \usage{
 hpgl_histogram(df, binwidth = NULL, log = FALSE, bins = 500,
   verbose = FALSE, fillcolor = "darkgrey", color = "black")
 }
 \arguments{
-\item{df}{a dataframe of lots of pretty numbers}
+\item{df}{a dataframe of lots of pretty numbers.}
+
+\item{binwidth}{default=NULL  width of the bins for the histogram.}
+
+\item{log}{default=FALSE  replot on the log scale?}
+
+\item{verbose}{default=FALSE  be verbose?}
+
+\item{fillcolor}{default='darkgrey'  change the fill colors of the plotted elements.}
+
+\item{color}{default='black'  change the color of the lines of the plotted elements.}
 }
 \value{
 a ggplot histogram
 }
 \description{
-Make a pretty histogram of something
+hpgl_histogram()  Make a pretty histogram of something.
 }
 \examples{
 ## kittytime = hpgl_histogram(df)

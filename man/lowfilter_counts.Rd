@@ -2,30 +2,12 @@
 % Please edit documentation in R/normalization.R
 \name{lowfilter_counts}
 \alias{lowfilter_counts}
-\title{Filter low-count genes from a data set using filterCounts()}
+\title{lowfilter_counts(): A caller for different low-count filters}
 \usage{
-lowfilter_counts(count_table, thresh = 2, min_samples = 2,
-  verbose = FALSE)
-}
-\arguments{
-\item{min_samples}{minimum number of samples (default: 2)}
-
-\item{verbose}{If set to true, prints number of genes removed / remaining}
-
-\item{df}{input data frame of counts by sample}
-
-\item{threshold}{lower threshold of counts (default: 4)}
-}
-\value{
-dataframe of counts without the low-count genes
+lowfilter_counts(count_table, type = "cbcb", p = 0.01, A = 1, k = 1,
+  cv_min = 0.01, cv_max = 1000, thresh = 2, min_samples = 2)
 }
 \description{
-Filter low-count genes from a data set using filterCounts()
-}
-\examples{
-## filtered_table = lowfilter_counts(count_table)
-}
-\seealso{
-\code{\link{log2CPM}} which this uses to decide what to keep
+lowfilter_counts(): A caller for different low-count filters
 }
 

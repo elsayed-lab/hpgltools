@@ -84,11 +84,11 @@ full_design = fission_expt$definitions
 ## First make a bar plot of the library sizes in the experiment.
 ## Notice that the colors were auto-chosen by create_expt() and they should
 ## be maintained throughout this process
-fis_libsize = hpgl_libsize(expt=fission_expt)
+fis_libsize = hpgl_libsize(fission_expt)
 fis_libsize
 
 ## Here we see that the wild type replicate 3 sample for 15 minutes has fewer non-zero genes than all its friends.
-fis_nonzero = hpgl_nonzero(expt=fission_expt, labels="boring", title="nonzero vs. cpm")
+fis_nonzero = hpgl_nonzero(fission_expt, labels="boring", title="nonzero vs. cpm")
 fis_nonzero
 
 ```
@@ -101,20 +101,24 @@ Assuming it doesn't, lets normalize the data using the defaults (cpm, quantile, 
 ```{r pca}
 
 ## Unsurprisingly, the raw data doesn't cluster well at all...
-fis_rawpca = hpgl_pca(expt=fission_expt, labels=fission_expt$condition)
+fis_rawpca = hpgl_pca(fission_expt, labels=fission_expt$condition)
 fis_rawpca$plot
 
 ## So, normalize the data
 norm_expt = normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm")
 ## And try the pca again
-fis_normpca = hpgl_pca(expt=norm_expt, labels=norm_expt$condition, title="normalized pca")
+fis_normpca = hpgl_pca(norm_expt, labels=norm_expt$condition, title="normalized pca")
 fis_normpca$plot
+
+normbatch_expt = normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm", batch="sva")
+fis_normbatchpca = hpgl_pca(normbatch_expt, title="Normalized PCA with batch effect correction.")
+fis_normbatchpca$plot
 ## ok, that caused the 0, 60, 15, and 30 minute samples to cluster nicely
 ## the 120 and 180 minute samples are still a bit tight
 
 ## pca_information provides some more information about the call to
 ## fast.svd that went into making the pca plot
-fis_info = pca_information(df=exprs(norm_expt$expressionset), design=full_design, factors=c("condition","batch","strain","minute"), num_components=6)
+fis_info = pca_information(exprs(norm_expt$expressionset), design=full_design, factors=c("condition","batch","strain","minute"), num_components=6)
 ## The r^2 table shows that quite a lot of the variance in the data is explained by condition
 head(fis_info$rsquared_table)
 ## We can look at the correlation between the principle components and the factors in the experiment
@@ -124,10 +128,10 @@ fis_info$pca_cor
 fis_info$anova_p
 
 ## Try again with batch removed data
-batchnorm_expt = normalize_expt(fission_expt, batch="limma")
-fis_batchnormpca = hpgl_pca(expt=batchnorm_expt, labels=norm_expt$condition, title="limma corrected pca")
+batchnorm_expt = normalize_expt(fission_expt, batch="limma", norm="quant", transform="log2", convert="cpm")
+fis_batchnormpca = hpgl_pca(batchnorm_expt, labels=norm_expt$condition, title="limma corrected pca")
 fis_batchnormpca$plot
-test_pca = pca_information(df=exprs(batchnorm_expt$expressionset), design=full_design, factors=c("condition","batch","strain","minute"), num_components=6)
+test_pca = pca_information(exprs(batchnorm_expt$expressionset), design=full_design, factors=c("condition","batch","strain","minute"), num_components=6)
 
 ##combatnorm_expt = normalize_expt(fission_expt, batch="sva")
 ##fis_combatnormpca = hpgl_pca(expt=combatnorm_expt, labels=norm_expt$condition, title="sva corrected pca")
@@ -145,22 +149,21 @@ We have some tools which provide visualizations of the distribution of the data:
 
 ```{r distributions}
 
-hpgl_boxplot(expt=norm_expt)
-sf_expt = normalize_expt(expt=fission_expt, norm="sf")
-hpgl_boxplot(expt=sf_expt)
-tm_expt = normalize_expt(expt=fission_expt, norm="tmm")
-hpgl_boxplot(expt=tm_expt)
-rle_expt = normalize_expt(expt=fission_expt, norm="rle")
-hpgl_boxplot(expt=rle_expt)
-up_expt = normalize_expt(expt=fission_expt, norm="upperquartile")
-hpgl_boxplot(expt=up_expt)
+hpgl_boxplot(norm_expt, scale="log2")
+sf_expt = normalize_expt(fission_expt, norm="sf")
+hpgl_boxplot(sf_expt, scale="log2")
+tm_expt = normalize_expt(fission_expt, norm="tmm")
+hpgl_boxplot(tm_expt, scale="log2")
+rle_expt = normalize_expt(fission_expt, norm="rle")
+hpgl_boxplot(rle_expt, scale="log2")
+up_expt = normalize_expt(fission_expt, norm="upperquartile")
+hpgl_boxplot(up_expt, scale="log2")
 
-hpgl_density_plot(expt=norm_expt)
-hpgl_density_plot(expt=sf_expt)
-hpgl_density_plot(expt=tm_expt)
+hpgl_density(norm_expt, log=TRUE)
+hpgl_density(sf_expt, log=TRUE)
+hpgl_density(tm_expt, log=TRUE)
 
 compare_12 = hpgl_qq_plot(exprs(norm_expt$expressionset), x=1, y=2)
-compare_12$ratio
 compare_12$log
 
 ```
@@ -171,10 +174,10 @@ Ok, so we can further check out how the data cluster with respect to one another
 
 ```{r clustering}
 
-hpgl_corheat(expt=norm_expt)
-hpgl_corheat(expt=batchnorm_expt)
-hpgl_disheat(expt=norm_expt)
-hpgl_disheat(expt=batchnorm_expt)
+hpgl_corheat(norm_expt)
+hpgl_corheat(batchnorm_expt)
+hpgl_disheat(norm_expt)
+hpgl_disheat(batchnorm_expt)
 
 ```
 
@@ -182,7 +185,7 @@ hpgl_disheat(expt=batchnorm_expt)
 
 ```{r simple_de}
 
-all_pairwise = limma_pairwise(expt=norm_expt, conditions=norm_expt$conditions, batches=norm_expt$batches)
+all_pairwise = limma_pairwise(normbatch_expt, conditions=norm_expt$conditions, batches=norm_expt$batches)
 ## I have the following elements in this list:
 ### conditions_table     :  how many replicates are there of each condition
 ### batches_table        :  how many replicates are there of each batch
@@ -199,14 +202,22 @@ all_pairwise = limma_pairwise(expt=norm_expt, conditions=norm_expt$conditions, b
 ### pairwise_comparisons :  the result from eBayes()
 ### limma_result         :  a list of toptable()s corresponding to each pairwise comparison
 
-names(all_pairwise$limma_result)
-summary(all_pairwise$limma_result$wt.120_minus_mut.120)
+names(all_pairwise$all_tables)
+summary(all_pairwise$all_tables$wt.120_minus_mut.120)
 wt_120 = all_pairwise$all_tables$wt.120
 mut_120 = all_pairwise$all_tables$mut.120
 
-scatter_wt_mut = hpgl_linear_scatter(df=data.frame(wt=wt_120$AveExpr, mut=mut_120$AveExpr))
+scatter_wt_mut = coefficient_scatter(all_pairwise, x="wt.120", y="mut.120", gvis_filename=NULL)
 scatter_wt_mut$scatter
 scatter_wt_mut$both_histogram
 
+```
+
+
+## Compare limma/DESeq2/EdgeR
+
+```{r de_comparisons}
+
+all_comparison = all_pairwise(normbatch_expt)
 
 ```

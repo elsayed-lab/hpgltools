@@ -2,24 +2,23 @@
 % Please edit documentation in R/ontology_shared.R
 \name{gosyn}
 \alias{gosyn}
-\title{Get a go synonym from an ID
-I think I will need to do similar parsing of the output for this function as per gosec()
-In some cases this also returns stuff like c("some text", "GO:someID")
-versus "some other text"  versus NULL versus NA}
+\title{gosyn()  Get a go synonym from an ID.}
 \usage{
 gosyn(go)
 }
 \arguments{
-\item{id}{A go ID -- this may be a character or list(assuming the elements, not names, are goids)}
+\item{go}{a go ID, this may be a character or list(assuming the elements are goids).}
 }
 \value{
 Some text
 }
 \description{
-Get a go synonym from an ID
 I think I will need to do similar parsing of the output for this function as per gosec()
 In some cases this also returns stuff like c("some text", "GO:someID")
 versus "some other text"  versus NULL versus NA
+}
+\details{
+This function just goes a mapply(gosn, go).
 }
 \examples{
 ## text =  gosyn("GO:0000001")

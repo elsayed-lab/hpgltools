@@ -23,7 +23,7 @@ simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids = NULL,
 
 \item{goseq_method}{wallenius statistical test used by goseq}
 
-\item{padjust_method}{BH which method to adjust the pvalues\}
+\item{padjust_method}{BH which method to adjust the pvalues}
 
 \item{species}{NULL optionally choose a species from supportedOrganisms()}
 
@@ -47,6 +47,6 @@ a big list including:
 simple_goseq() Perform a simplified goseq analysis
 }
 \seealso{
-\code{\link{goseq}} and \code{\link{clusterProfiler}}
+\code{\link{goseq}} \code{\link{clusterProfiler}}
 }
 

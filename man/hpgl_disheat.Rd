@@ -2,27 +2,31 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_disheat}
 \alias{hpgl_disheat}
-\title{Make a heatmap.3 description of the similarity (euclildean distance) between samples.}
+\title{hpgl_disheat()  Make a heatmap.3 description of the similarity (euclildean distance) between samples.}
 \usage{
 hpgl_disheat(data, colors = NULL, design = NULL, method = "euclidean",
   names = NULL, row = "batch", title = NULL, ...)
 }
 \arguments{
-\item{colors}{a color scheme}
+\item{data}{a dataframe, expt, or expressionset to work with.}
 
-\item{design}{a design matrix and}
+\item{colors}{default=NULL  a color scheme.}
 
-\item{method}{correlation statistic to use.  Defaults to euclidean.}
+\item{design}{default=NULL  a design matrix.}
 
-\item{expt}{an expt set of samples}
+\item{method}{default='euclidean'   distance metric to use.}
 
-\item{df}{alternately a data frame which must be accompanied by}
+\item{names}{default=NULL  alternate names to use.}
+
+\item{row}{default='batch'  what to place on the row of the map, batches or conditions?}
+
+\item{title}{default=NULL  a title for the plot.}
 }
 \value{
 a recordPlot() heatmap describing the distance between samples.
 }
 \description{
-Make a heatmap.3 description of the similarity (euclildean distance) between samples.
+hpgl_disheat()  Make a heatmap.3 description of the similarity (euclildean distance) between samples.
 }
 \examples{
 ## disheat_plot = hpgl_disheat(expt=expt, method="euclidean")

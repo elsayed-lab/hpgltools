@@ -2,10 +2,10 @@
 % Please edit documentation in R/count_tables.R
 \name{expt_subset}
 \alias{expt_subset}
-\title{Extract a subset of samples following some rule(s) from an
+\title{expt_subset()  Extract a subset of samples following some rule(s) from an
 experiment class}
 \usage{
-expt_subset(expt, subset, by_definitions = FALSE)
+expt_subset(expt, subset = NULL, by_definitions = FALSE)
 }
 \arguments{
 \item{expt}{an expt which is a home-grown class containing an
@@ -13,13 +13,16 @@ expressionSet, design, colors, etc.}
 
 \item{subset}{a valid R expression which defines a subset of the
 design to keep.}
+
+\item{by_definitions}{default=TRUE  whether to use the definitions dataframe or design from pData(expressionset).
+The definitions dataframe often has much more information.}
 }
 \value{
 metadata an expt class which contains the smaller set of
 data
 }
 \description{
-Extract a subset of samples following some rule(s) from an
+expt_subset()  Extract a subset of samples following some rule(s) from an
 experiment class
 }
 \examples{

@@ -2,18 +2,20 @@
 % Please edit documentation in R/ontology_shared.R
 \name{golev}
 \alias{golev}
-\title{Get a go level approximation from an ID}
+\title{golev()  Get a go level approximation from an ID.}
 \usage{
 golev(go, verbose = FALSE)
 }
 \arguments{
-\item{id}{A go ID -- this may be a character or list(assuming the elements, not names, are goids)}
+\item{go}{a go ID, this may be a character or list (assuming the elements are goids).}
+
+\item{verbose}{default=FALSE  print some information as it recurses.}
 }
 \value{
 Some text
 }
 \description{
-Get a go level approximation from an ID
+golev()  Get a go level approximation from an ID.
 }
 \examples{
 ## golev("GO:0032559")

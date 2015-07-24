@@ -2,32 +2,32 @@
 % Please edit documentation in R/differential_expression.R
 \name{limma_scatter}
 \alias{limma_scatter}
-\title{Plot arbitrary data from limma}
+\title{limma_scatter()  Plot arbitrary data from limma}
 \usage{
 limma_scatter(all_pairwise_result, first_table = 1, first_column = "logFC",
   second_table = 2, second_column = "logFC", type = "linear_scatter", ...)
 }
 \arguments{
-\item{all_pairwise_result}{The result from calling balanced_pairwise()}
+\item{all_pairwise_result}{the result from calling balanced_pairwise()}
+
+\item{first_table}{default=1  the first table from all_pairwise_result$limma_result to look at (may be a name or number)}
+
+\item{first_column}{default='logFC'  the name of the column to plot from the first table}
+
+\item{second_table}{default=2  the second table inside all_pairwise_result$limma_result (name or number)}
+
+\item{second_column}{a column to compare against}
 
 \item{type}{A type of scatter plot (linear model, distance, vanilla)}
 
 \item{...}{so that you may feed it the gvis/tooltip information to make clicky graphs if so desired.}
-
-\item{first_name}{A table inside all_pairwise_result$limma_result}
-
-\item{first_type}{A column within the chosen table}
-
-\item{second_name}{Another table inside all_pairwise_result$limma_result}
-
-\item{second_type}{A column to compare against}
 }
 \value{
 a hpgl_linear_scatter() set of plots comparing the chosen columns
 If you forget to specify tables to compare, it will try the first vs the second.
 }
 \description{
-Plot arbitrary data from limma
+limma_scatter()  Plot arbitrary data from limma
 }
 \examples{
 ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")

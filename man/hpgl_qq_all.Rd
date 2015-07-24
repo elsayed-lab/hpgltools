@@ -2,20 +2,16 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_qq_all}
 \alias{hpgl_qq_all}
-\title{quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)}
+\title{hpgl_qq_all()  quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)}
 \usage{
 hpgl_qq_all(data, verbose = FALSE, labels = "short")
 }
 \arguments{
-\item{verbose}{be chatty while running?}
+\item{data}{an expressionset, expt, or dataframe of samples.}
 
-\item{df}{the counts}
+\item{verbose}{default=FALSE  be chatty while running?}
 
-\item{expt}{or the expt class}
-
-\item{against}{either the mean of all samples, or a sample dataset generated on the fly}
-
-\item{norm}{normalize the data? -- this is no longer needed I think}
+\item{labels}{default='short'  what kind of labels to print?}
 }
 \value{
 a list containing:
@@ -24,6 +20,6 @@ a list containing:
   means = a table of the median values of all the summaries of the qq plots
 }
 \description{
-quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)
+hpgl_qq_all()  quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)
 }
 

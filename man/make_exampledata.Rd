@@ -2,21 +2,21 @@
 % Please edit documentation in R/differential_expression.R
 \name{make_exampledata}
 \alias{make_exampledata}
-\title{make_exampledata():  A small hack of limma's exampleData()
+\title{make_exampledata()  A small hack of limma's exampleData()
 function to allow for arbitrary data set sizes.}
 \usage{
 make_exampledata(ngenes = 1000, columns = 5)
 }
 \arguments{
-\item{ngenes}{how many genes in the fictional data set.  1000 by default.}
+\item{ngenes}{default=1000  how many genes in the fictional data set.}
 
-\item{columns}{how many samples in this data set.  5 by default.}
+\item{columns}{default=5  how many samples in this data set.}
 }
 \value{
 a matrix of pretend counts
 }
 \description{
-make_exampledata():  A small hack of limma's exampleData()
+make_exampledata()  A small hack of limma's exampleData()
 function to allow for arbitrary data set sizes.
 }
 \examples{

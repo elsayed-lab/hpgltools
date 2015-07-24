@@ -2,7 +2,7 @@
 % Please edit documentation in R/differential_expression.R
 \name{simple_comparison}
 \alias{simple_comparison}
-\title{simple_comparison():  Perform a simple experimental/control comparison
+\title{simple_comparison()  Perform a simple experimental/control comparison
 This is a function written primarily to provide examples for how to use limma.
 It does the following:  1.  Makes a model matrix using condition/batch
 2.  Optionally uses sva's combat (from cbcbSEQ)  3.  Runs voom/lmfit
@@ -21,25 +21,25 @@ simple_comparison(subset, workbook = "simple_comparison.xls",
 \arguments{
 \item{subset}{an experimental subset with two conditions to compare.}
 
-\item{workbook}{an excel workbook to which to write. simple_comparison.xls by default.}
+\item{workbook}{default='simple_comparison.xls'  an excel workbook to which to write.}
 
-\item{basename}{a url to which to send click evens in clicky volcano/ma plots.  NA by default.}
+\item{basename}{default=NA  a url to which to send click evens in clicky volcano/ma plots.}
 
-\item{batch}{whether or not to include batch in limma's model.  TRUE by default.}
+\item{batch}{default=TRUE  whether or not to include batch in limma's model.}
 
-\item{combat}{whether or not to use combatMod().  FALSE by default.}
+\item{combat}{default=FALSE  whether or not to use combatMod().}
 
-\item{combat_noscale}{whether or not to include combat_noscale (makes combat a little less heavy-handed).  TRUE by default.}
+\item{combat_noscale}{default=TRUE  whether or not to include combat_noscale (makes combat a little less heavy-handed).}
 
-\item{pvalue_cutoff}{p-value definition of 'significant.'  0.05 by default.}
+\item{pvalue_cutoff}{default=0.05  p-value definition of 'significant.'}
 
-\item{logfc_cutoff}{fold-change cutoff of significance. 0.6 (and therefor 1.6) by default.}
+\item{logfc_cutoff}{default=0.6  fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.}
 
-\item{tooltip_data}{Text descriptions of genes if one wants google graphs.}
+\item{tooltip_data}{default=NULL  text descriptions of genes if one wants google graphs.}
 
-\item{model}{a model describing the experiment.}
+\item{verbose}{default=FALSE  be verbose?}
 
-\item{worksheet}{an excel worksheet to which to write. simple_comparison by default.}
+\item{worksheet}{default='simple_comparison'  an excel worksheet to which to write.}
 }
 \value{
 A list containing the following pieces:
@@ -67,7 +67,7 @@ A list containing the following pieces:
   voom_plot = a plot from voom(), redunant with voom_data
 }
 \description{
-simple_comparison():  Perform a simple experimental/control comparison
+simple_comparison()  Perform a simple experimental/control comparison
 This is a function written primarily to provide examples for how to use limma.
 It does the following:  1.  Makes a model matrix using condition/batch
 2.  Optionally uses sva's combat (from cbcbSEQ)  3.  Runs voom/lmfit

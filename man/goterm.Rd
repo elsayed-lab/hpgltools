@@ -2,18 +2,19 @@
 % Please edit documentation in R/ontology_shared.R
 \name{goterm}
 \alias{goterm}
-\title{Get a go term from ID}
+\title{goterm()  Get a go term from ID.}
 \usage{
 goterm(go = "GO:0032559")
 }
 \arguments{
-\item{id}{A go ID -- this may be a character or list(assuming the elements, not names, are goids)}
+\item{go}{default='GO:0032559'  a go ID or list thereof
+this may be a character or list(assuming the elements, not names, are goids)}
 }
 \value{
 Some text
 }
 \description{
-Get a go term from ID
+goterm()  Get a go term from ID.
 }
 \examples{
 ## goterm("GO:0032559")

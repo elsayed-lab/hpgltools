@@ -2,27 +2,31 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_libsize}
 \alias{hpgl_libsize}
-\title{Make a ggplot graph of library sizes.}
+\title{hpgl_libsize()  Make a ggplot graph of library sizes.}
 \usage{
 hpgl_libsize(data, colors = NULL, scale = TRUE, names = NULL,
   title = NULL, text = TRUE, ...)
 }
 \arguments{
-\item{colors}{a color scheme}
+\item{data}{an expt, dataframe, or expressionset of samples.}
 
-\item{scale}{whether or not to log10 the y-axis}
+\item{colors}{default=NULL  a color scheme.}
 
-\item{expt}{an expt set of samples}
+\item{scale}{default=TRUE   whether or not to log10 the y-axis.}
 
-\item{df}{alternately a data frame which must be accompanied by}
+\item{names}{default=NULL  alternate names for the x-axis.}
 
-\item{design}{a design matrix and}
+\item{title}{default=NULL  a title for the plot.}
+
+\item{text}{default=TRUE  add the numeric values inside the top of the bars of the plot?}
+
+\item{design}{default=NULL  a design matrix.}
 }
 \value{
 a ggplot2 bar plot of every sample's size
 }
 \description{
-Make a ggplot graph of library sizes.
+hpgl_libsize()  Make a ggplot graph of library sizes.
 }
 \examples{
 ## libsize_plot = hpgl_libsize(expt=expt)

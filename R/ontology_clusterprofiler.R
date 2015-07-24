@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:40:56 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 21 12:06:07 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified clusterProfiler analysis
 #'
@@ -45,8 +45,8 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     if (class(genetable_test) == 'try-error') {
         if (!is.null(gff)) {
             message("Generating the geneTable.rda")
-            ## clusterProfiler::Gff2GeneTable(gff)
-            hpgltools::Gff2GeneTable(gff)
+            hpgltools:::hpgl_Gff2GeneTable(gff)
+            ##clusterProfiler:::Gff2GeneTable(gff)
         } else {
             stop("cluster Profiler requires a geneTable.rda, which requires a gff file to read.")
         }
@@ -63,7 +63,11 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     if (class(gomapping_test) == 'try-error') {
         message("Generating GO mapping data for cluster profiler from the goids data.")
         gomap = goids
+        gomap = gomap[,c(1,2)]
         colnames(gomap) = c("entrezgene", "go_accession")
+        ## It turns out that the author of clusterprofiler reversed these fields...
+        ## Column 1 must be GO ID, column 2 must be gene accession.
+        gomap = gomap[,c("go_accession","entrezgene")]
         clusterProfiler::buildGOmap(gomap)
     } else {
         message("Using GO mapping data located in GO2EG.rda")
@@ -75,7 +79,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     mf_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
     mf_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     all_mf_phist = try(hpgltools::hpgl_histogram(mf_all@result$pvalue, bins=20))
-    if (class(all_mf_phist) != 'try-error') {
+    if (class(all_mf_phist)[1] != 'try-error') {
         y_limit = (sort(unique(table(all_mf_phist$data)), decreasing=TRUE)[2]) * 2
         all_mf_phist = all_mf_phist + scale_y_continuous(limits=c(0, y_limit))
     }
@@ -85,7 +89,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     bp_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
     bp_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     all_bp_phist = try(hpgltools::hpgl_histogram(bp_all@result$pvalue, bins=20))
-    if (class(all_bp_phist) != 'try-error') {
+    if (class(all_bp_phist)[1] != 'try-error') {
         y_limit = (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
         all_bp_phist = all_bp_phist + scale_y_continuous(limits=c(0, y_limit))
     }
@@ -98,7 +102,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     enriched_cc = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
     all_cc_phist = try(hpgltools::hpgl_histogram(cc_all@result$pvalue, bins=20))
     ## Try and catch if there are no significant hits.
-    if (class(all_cc_phist) != 'try-error') {
+    if (class(all_cc_phist)[1] != 'try-error') {
         y_limit = (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
         all_cc_phist = all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
     }
@@ -172,6 +176,19 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         } else {
             message("cnetplot just failed for the CC ontology.  Do not be concerned with the previous error.")
         }
+        cnetplot_mfall = cnetplot_bpall = cnetplot_ccall = NULL
+        cnetplot_mfall = try(clusterProfiler::cnetplot(mf_all, categorySize="pvalue", foldChange=fold_changes))
+        if (class(cnetplot_mfall)[1] != 'try-error') {
+            cnetplot_mfall = recordPlot()
+        }
+        cnetplot_bpall = try(clusterProfiler::cnetplot(bp_all, categorySize="pvalue", foldChange=fold_changes))
+        if (class(cnetplot_bpall)[1] != 'try-error') {
+            cnetplot_bpall = recordPlot()
+        }
+        cnetplot_ccall = try(clusterProfiler::cnetplot(cc_all, categorySize="pvalue", foldChange=fold_changes))
+        if (class(cnetplot_ccall)[1] != 'try-error') {
+            cnetplot_ccall = recordPlot()
+        }
     }
 
     if (!is.null(mf_all)) {
@@ -210,6 +227,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         mf_all_barplot=all_mf_barplot, bp_all_barplot=all_bp_barplot, cc_all_barplot=all_cc_barplot,
         mfp_plot=enriched_mf_barplot, bpp_plot=enriched_bp_barplot, ccp_plot=enriched_cc_barplot,
         mf_cnetplot=cnetplot_mf, bp_cnetplot=cnetplot_bp, cc_cnetplot=cnetplot_cc,
+        mfall_cnetplot=cnetplot_mfall, bpall_cnetplot=cnetplot_bpall, ccall_cnetplot=cnetplot_ccall,
         mf_group=mf_group, bp_group=bp_group, cc_group=cc_group,
         mf_group_barplot=mf_group_barplot, bp_group_barplot=bp_group_barplot, cc_group_barplot=cc_group_barplot)
     return(return_information)
@@ -461,44 +479,103 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
 ##    return(gff)
 ##}
 ##
+
+## I had to hack getGffAttribution for gff files with bad encoding (yeast)
 ## Functions in this are not exported by clusterProfiler/topGO
-##Gff2GeneTable <- function(gffFile, compress=TRUE) {
-##    ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"
-##    if (is.data.frame(gffFile)) {
-##        GeneID = data.frame(GeneID = gffFile$ID)
-##        geneInfo = gffFile
-##        geneInfo$start = 1
-##        geneInfo$GeneID = gffFile$ID
-##        geneInfo$GeneName = gffFile$ID
-##        geneInfo$Locus = gffFile$ID
-##        geneInfo$end = geneInfo$width
-##        geneInfo$strand = "+"
-##    } else {
-##        ## readGff was written in clusterProfiler, but isn't exported.
-##        gff <- readGff(gffFile)
-##        GeneID <- data.frame(GeneID=getGffAttribution(gff$attributes, field="ID"))
-##        geneInfo <- gff[gff$feature == "gene",]
-##        geneInfo <- geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
-##        geneInfo$GeneID <- getGffAttribution(geneInfo$attributes, field="ID")
-##        geneInfo$GeneName <- getGffAttribution(geneInfo$attributes, field="Name")
-##        geneInfo$Locus <- getGffAttribution(geneInfo$attributes, field="locus_tag")
-##        geneInfo$GeneName[is.na(geneInfo$GeneName)] <- "-"
-##        geneInfo <- geneInfo[, -5] ## abondom "attributes" column.
-##    }
-##            ## GI2GeneID <- data.frame(GI=getGffAttribution(gff$attributes, field="GI"),
-##    ##                        GeneID=getGffAttribution(gff$attributes, field="GeneID")
-##    ##                                    #,
-##    ##                                    #Product=getGffAttribution(gff$attributes, field="product")
-##    ##                        )
-##    ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$GI),]
-##    ## GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$Gene),]
-##    ## geneTable <- merge(GI2GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
-##    geneTable <- merge(GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
-##    geneTable <- unique(geneTable)
-##    if (compress) {
-##        save(geneTable, file="geneTable.rda", compress="xz")
-##    } else {
-##        save(geneTable, file="geneTable.rda")
-##    }
-##    message("Gene Table file save in the working directory.")
-##}
+hpgl_Gff2GeneTable <- function(gffFile, compress=TRUE, split="=") {
+    ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"
+    if (is.data.frame(gffFile)) {
+        GeneID = data.frame(GeneID = gffFile$ID)
+        geneInfo = gffFile
+        geneInfo$start = 1
+        geneInfo$GeneID = gffFile$ID
+        geneInfo$GeneName = gffFile$ID
+        geneInfo$Locus = gffFile$ID
+        geneInfo$end = geneInfo$width
+        geneInfo$strand = "+"
+    } else {
+        gff = clusterProfiler:::readGff(gffFile)
+        GeneID = data.frame(GeneID=hpgl_getGffAttribution(gff$attributes, field="ID", split=split))
+        geneInfo = gff[gff$feature == "gene",]
+        geneInfo = geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
+        geneInfo$GeneID = hpgl_getGffAttribution(geneInfo$attributes, field="ID", split=split)
+        geneInfo$GeneName = hpgl_getGffAttribution(geneInfo$attributes, field="gene", split=split)
+        first_locus = hpgl_getGffAttribution(geneInfo$attributes, field="locus_tag", split=split)
+        first_sum = sum(is.na(first_locus))
+        second_locus = NULL
+        second_sum = first_sum
+        if (first_sum > (length(geneInfo$attributes) / 2)) { ## Using this to approximate whether locus_tag has a useful meaning.
+            ## If more than 1/2 of the attributes have no locus tag, try using gene_id instead -- which is what yeast uses (btw).
+            print("Trying to use gene_id insteady of locus_tag, because locus_tag is poorly defined.")
+            second_locus = hpgl_getGffAttribution(geneInfo$attributes, field="gene_id", split=split)
+            second_sum = sum(is.na(second_locus))
+        }
+        if (first_sum > second_sum) {
+            geneInfo$Locus = second_locus
+        } else {
+            geneInfo$Locus = first_locus
+        }
+        geneInfo$GeneName[is.na(geneInfo$GeneName)] = "-"
+        geneInfo <- geneInfo[, -5] ## drop "attributes" column.
+    }
+    ##GI2GeneID <- data.frame(GI=getGffAttribution(gff$attributes, field="GI"),
+    ##GeneID=getGffAttribution(gff$attributes, field="GeneID"),
+    ##Product=getGffAttribution(gff$attributes, field="product"))
+    ##GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$GI),]
+    ##GI2GeneID <- GI2GeneID[!is.na(GI2GeneID$Gene),]
+    ##geneTable <- merge(GI2GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
+    geneTable <- merge(GeneID, geneInfo, by.x="GeneID", by.y="GeneID")
+    geneTable <- unique(geneTable)
+    if (compress) {
+        save(geneTable, file="geneTable.rda", compress="xz")
+    } else {
+        save(geneTable, file="geneTable.rda")
+    }
+    message("Gene Table file save in the working directory.")
+}
+
+
+hpgl_getGffAttribution = function (x, field, attrsep=";", split='=') {
+    s = strsplit(x, split=attrsep, fixed=TRUE)
+    sapply(s, function(atts) {
+        atts = gsub("^ ", "", x=atts, perl=TRUE)
+        a = strsplit(atts, split=split, fixed = TRUE)
+        m = match(field, sapply(a, "[", 1))
+        if (!is.na(m)) {
+            rv = a[[m]][2]
+        } else {
+            b = sapply(a, function(atts) {
+                strsplit(atts[2], split=",", fixed = TRUE)
+            })
+            rv = as.character(NA)
+            sapply(b, function(atts) {
+                secA <- strsplit(atts, split = ":", fixed = TRUE)
+                m = match(field, sapply(secA, "[", 1))
+                if (!is.na(m)) {
+                  rv <<- secA[[m]][2]
+                }
+            })
+        }
+        return(rv)
+    })
+}
+
+
+
+mygroupgo = function (gene, organism = "human", ont = "CC", level = 2, readable = FALSE) {
+    GOLevel <- clusterProfiler:::getGOLevel(ont, level)
+    class(GOLevel) <- ont
+    GO2ExtID <- TERMID2EXTID.GO(GOLevel, organism)
+    geneID.list <- lapply(GO2ExtID, function(x) gene[gene %in% x])
+    geneID <- sapply(geneID.list, function(i) paste(i, collapse = "/"))
+    Count <- unlist(lapply(geneID.list, length))
+    GeneRatio <- paste(Count, length(unique(unlist(gene))), sep = "/")
+    Descriptions <- TERM2NAME(GOLevel)
+    result = data.frame(ID = as.character(GOLevel), Description = Descriptions, Count = Count, GeneRatio = GeneRatio, geneID = geneID)
+    x <- new("groupGOResult", result = result, ontology = ont, level = level, organism = organism, gene = gene, geneInCategory = geneID.list)
+    if (readable == TRUE) {
+        x <- setReadable(x)
+    }
+    return(x)
+}
+

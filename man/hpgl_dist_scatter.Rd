@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_dist_scatter}
 \alias{hpgl_dist_scatter}
-\title{Make a pretty scatter plot between two sets of numbers with a
+\title{hpgl_dist_scatter()  Make a pretty scatter plot between two sets of numbers with a
 cheesy distance metric and some statistics of the two sets.}
 \usage{
 hpgl_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL, size = 3)
@@ -10,10 +10,10 @@ hpgl_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL, size = 3)
 \arguments{
 \item{df}{a dataframe likely containing two columns}
 
-\item{tooltip_data}{a df of tooltip information for gvis
-graphs. NULL by default.}
+\item{tooltip_data}{default=NULL  a df of tooltip information for gvis
+graphs.}
 
-\item{gvis_filename}{a filename to write a fancy html graph.
+\item{gvis_filename}{default=NULL  a filename to write a fancy html graph.
 Defaults to NULL in which case the following parameter isn't needed.}
 }
 \value{
@@ -32,7 +32,7 @@ distances from each axis, multiplied by each other, summed by axis,
 then normalized against the maximum.
 }
 \description{
-Make a pretty scatter plot between two sets of numbers with a
+hpgl_dist_scatter()  Make a pretty scatter plot between two sets of numbers with a
 cheesy distance metric and some statistics of the two sets.
 }
 \examples{

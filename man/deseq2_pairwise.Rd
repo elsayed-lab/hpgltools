@@ -2,26 +2,17 @@
 % Please edit documentation in R/differential_expression.R
 \name{deseq2_pairwise}
 \alias{deseq2_pairwise}
-\title{deseq2_pairwise():  Set up a model matrix and set of contrasts to do
+\title{deseq2_pairwise()  Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using DESeq2.}
 \usage{
-deseq2_pairwise(expt = NULL, data = NULL, conditions = NULL,
-  batches = NULL)
+deseq2_pairwise(input, conditions = NULL, batches = NULL)
 }
 \arguments{
-\item{expt}{a expt class containing data, normalization state, etc.}
+\item{input}{a dataframe/vector or  expt class containing data, normalization state, etc.}
 
-\item{conditions}{a factor of conditions in the experiment}
+\item{conditions}{default=NULL  a factor of conditions in the experiment}
 
-\item{batches}{a factor of batches in the experiment}
-
-\item{model_cond}{Include condition in the experimental model?  This is pretty much always true.}
-
-\item{model_batch}{Include batch in the model?  In most cases this is a good thing(tm).}
-
-\item{model_intercept}{Use cell means or intercept? (I default to the former, but they work out the same)}
-
-\item{...}{The elipsis parameter is fed to write_limma() at the end.}
+\item{batches}{default=NULL a factor of batches in the experiment}
 }
 \value{
 A list including the following information:
@@ -31,11 +22,11 @@ A list including the following information:
   results = the return when a deseq result class is cast as a dataframe.
 }
 \description{
-deseq2_pairwise():  Set up a model matrix and set of contrasts to do
+deseq2_pairwise()  Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using DESeq2.
 }
 \examples{
-## pretend = edger_pairwise(data, conditions, batches)
+## pretend = deseq2_pairwise(data, conditions, batches)
 }
 \seealso{
 \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}

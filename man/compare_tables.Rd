@@ -2,16 +2,16 @@
 % Please edit documentation in R/differential_expression.R
 \name{compare_tables}
 \alias{compare_tables}
-\title{compare_tables(): See how similar are results from limma/deseq/edger.}
+\title{compare_tables()  See how similar are results from limma/deseq/edger.}
 \usage{
 compare_tables(limma = NULL, deseq = NULL, edger = NULL)
 }
 \arguments{
-\item{limma}{limma data from limma_pairwise()}
+\item{limma}{default=NULL  limma data from limma_pairwise()}
 
-\item{deseq}{deseq data from deseq2_pairwise()}
+\item{deseq}{default=NULL  deseq data from deseq2_pairwise()}
 
-\item{edger}{edger data from edger_pairwise()}
+\item{edger}{default=NULL  edger data from edger_pairwise()}
 }
 \value{
 a heatmap showing how similar they are along with some

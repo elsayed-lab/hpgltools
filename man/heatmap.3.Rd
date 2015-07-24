@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{heatmap.3}
 \alias{heatmap.3}
-\title{slight modification of heatmap.2}
+\title{heatmap.3()  slight modification of heatmap.2.}
 \usage{
 heatmap.3(x, Rowv = TRUE, Colv = if (symm) "Rowv" else TRUE,
   distfun = dist, hclustfun = hclust, dendrogram = c("both", "row",

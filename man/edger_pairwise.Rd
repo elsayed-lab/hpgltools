@@ -2,33 +2,33 @@
 % Please edit documentation in R/differential_expression.R
 \name{edger_pairwise}
 \alias{edger_pairwise}
-\title{edger_pairwise():  Set up a model matrix and set of contrasts to do
+\title{edger_pairwise()  Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using EdgeR.}
 \usage{
-edger_pairwise(expt = NULL, data = NULL, conditions = NULL,
-  batches = NULL, model_cond = TRUE, model_batch = FALSE,
-  model_intercept = FALSE, alt_model = NULL, extra_contrasts = NULL, ...)
+edger_pairwise(input, conditions = NULL, batches = NULL,
+  model_cond = TRUE, model_batch = FALSE, model_intercept = FALSE,
+  alt_model = NULL, extra_contrasts = NULL, ...)
 }
 \arguments{
-\item{expt}{a expt class containing data, normalization state, etc.}
+\item{input}{a dataframe/vector or expt class containing data, normalization state, etc.}
 
-\item{conditions}{a factor of conditions in the experiment}
+\item{conditions}{default=NULL  a factor of conditions in the experiment}
 
-\item{batches}{a factor of batches in the experiment}
+\item{batches}{default=NULL  a factor of batches in the experiment}
 
-\item{model_cond}{Include condition in the experimental model?  This is pretty much always true.}
+\item{model_cond}{default=TRUE  Include condition in the experimental model?  This is pretty much always true.}
 
-\item{model_batch}{Include batch in the model?  In most cases this is a good thing(tm).}
+\item{model_batch}{default=FALSE  Include batch in the model?  In most cases this is a good thing(tm).}
 
-\item{model_intercept}{Use cell means or intercept? (I default to the former, but they work out the same)}
+\item{model_intercept}{default=FALSE Use cell means or intercept? (I default to the former, but they work out the same)}
 
-\item{extra_contrasts}{some extra contrasts to add to the list
+\item{extra_contrasts}{default=NULL  some extra contrasts to add to the list
 This can be pretty neat, lets say one has conditions A,B,C,D,E
 and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
 de_minus_cb = (E-D)-(C-B),"}
 
-\item{...}{The elipsis parameter is fed to write_limma() at the end.}
+\item{...}{The elipsis parameter is fed to write_edger() at the end.}
 }
 \value{
 A list including the following information:
@@ -39,7 +39,7 @@ A list including the following information:
     I do this to avoid running into the limit on # of contrasts addressable by topTags()
 }
 \description{
-edger_pairwise():  Set up a model matrix and set of contrasts to do
+edger_pairwise()  Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using EdgeR.
 }
 \examples{

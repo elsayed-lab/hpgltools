@@ -2,28 +2,32 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_corheat}
 \alias{hpgl_corheat}
-\title{Make a heatmap.3 description of the correlation between samples.}
+\title{hpgl_corheat()  Make a heatmap.3 description of the correlation between samples.}
 \usage{
 hpgl_corheat(data, colors = NULL, design = NULL, method = "pearson",
   names = NULL, row = "batch", title = NULL, ...)
 }
 \arguments{
-\item{colors}{a color scheme}
+\item{data}{a dataframe, expt, or expressionset to work with.}
 
-\item{design}{a design matrix and}
+\item{colors}{default=NULL  a color scheme.}
 
-\item{method}{correlation statistic to use.  Defaults to pearson.}
+\item{design}{default=NULL  a design matrix.}
 
-\item{expt}{an expt set of samples}
+\item{method}{default='pearson'   correlation statistic to use.}
 
-\item{df}{alternately a data frame which must be accompanied by}
+\item{names}{default=NULL  alternate names to use.}
+
+\item{row}{default='batch'  what to place on the row of the map, batches or conditions?}
+
+\item{title}{default=NULL  a title for the plot.}
 }
 \value{
 corheat_plot a gplots heatmap describing how the samples
 pairwise correlate with one another.
 }
 \description{
-Make a heatmap.3 description of the correlation between samples.
+hpgl_corheat()  Make a heatmap.3 description of the correlation between samples.
 }
 \examples{
 ## corheat_plot = hpgl_corheat(expt=expt, method="robust")

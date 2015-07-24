@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_scatter}
 \alias{hpgl_scatter}
-\title{Make a pretty scatter plot between two sets of numbers}
+\title{hpgl_scatter()  Make a pretty scatter plot between two sets of numbers.}
 \usage{
 hpgl_scatter(df, tooltip_data = NULL, color = "black",
   gvis_filename = NULL, size = 3)
@@ -10,17 +10,19 @@ hpgl_scatter(df, tooltip_data = NULL, color = "black",
 \arguments{
 \item{df}{a dataframe likely containing two columns}
 
-\item{tooltip_data}{a df of tooltip information for gvis
-graphs. NULL by default.}
+\item{tooltip_data}{default=NULL  a df of tooltip information for gvis}
 
-\item{gvis_filename}{a filename to write a fancy html graph.
-Defaults to NULL in which case the following parameter isn't needed.}
+\item{color}{default='black'  color of the dots on the graph.}
+
+\item{gvis_filename}{default=NULL  a filename to write a fancy html graph.}
+
+\item{size}{default=3  the size of the dots on the graph.}
 }
 \value{
 a ggplot2 scatter plot.
 }
 \description{
-Make a pretty scatter plot between two sets of numbers
+hpgl_scatter()  Make a pretty scatter plot between two sets of numbers.
 }
 \examples{
 ## hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")

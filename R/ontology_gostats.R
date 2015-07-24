@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 14 14:44:44 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 22 13:33:11 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -13,21 +13,35 @@
 #' @return dunno yet
 #' @seealso \code{\link{GOstats}}
 #' @export
-simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05, direction="both", conditional=FALSE, categorysize=NULL) {
+simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05, direction="over", conditional=FALSE, categorysize=NULL) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should) contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
-    annotation = BiocGenerics::as.data.frame(rtracklayer::import(gff, asRangedData=FALSE))
-    if (is.null(annotation[,universe_merge])) {
-        if (is.null(annotation[,second_merge_try])) {
-            stop(paste("This function needs a key to merge the differentially expressed genes against the universe of genes.  It tried: ", universe_merge, " and ", second_merge_try, " to no avail.", sep=""))
-        } else {
-            universe = annotation[,c(second_merge_try, "width")]
+    annotation = try(import.gff3(gff), silent=TRUE)
+    if (class(annotation) == 'try-error') {
+        annotation = try(import.gff2(gff), silent=TRUE)
+        if (class(annotation) == 'try-error') {
+            stop("Could not extract the widths from the gff file.")
         }
-    } else {
-        universe = annotation[,c(universe_merge, "width")]
     }
-    universe = universe[complete.cases(universe),]
+    annotation = GenomicRanges::as.data.frame(annotation)
+    annotation = subset(annotation, type=='gene')
+    if (universe_merge %in% names(annotation)) {
+        universe = annotation[,c(universe_merge, "width")]
+    } else if (second_merge_try %in% names(annotation)) {
+        universe = annotation[,c(second_merge_try, "width")]
+    } else if ("transcript_name" %in% names(annotation)) {
+        universe = annotation[,c("transcript_name", "width")]
+    } else {
+        stop("Unable to cross reference the annotations into a universe for background checks.")
+    }
+    ## This section is a little odd
+    ## The goal is to collect a consistent set of numeric gene IDs
+    ## In addition, one must cross reference those IDs consistently with the universe of all genes.
+    ## Thus in a few linues I will be doing a merge of all genes against the de_genes and another merge
+    ## of the gene<->go mappings, finally extracting the portions of the resulting dataframe into a format suitable for
+    ## casting as a GOFrame/GOAllFrame
+    colnames(universe) = c("geneid","width")
     universe$id = rownames(universe)
-    colnames(universe) = c("geneid","width","id")
+    universe = universe[complete.cases(universe),]
     if (is.null(de_genes$ID)) {
         de_genes$ID = rownames(de_genes)
     }
@@ -36,7 +50,7 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
     universe_ids = universe$id
     gostats_go = merge(universe, goids, by.x="geneid", by.y="ID")
     gostats_go$frame.Evidence = "TAS"
-    colnames(gostats_go) = c("sysName","name","frame.gene_id", "frame.go_id","frame.Evidence")
+    colnames(gostats_go) = c("sysName","width", "frame.gene_id", "frame.go_id", "gene_name", "frame.Evidence")
     gostats_go = gostats_go[,c("frame.go_id","frame.Evidence","frame.gene_id")]
     gostats_frame = GOFrame(gostats_go, organism=organism)
     gostats_all = GOAllFrame(gostats_frame)
@@ -45,150 +59,88 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
 
     mf_over = bp_over = cc_over = NULL
     mf_under = bp_under = cc_under = NULL
-    if (direction == "over") {
-        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="MF",
-            pvalueCutoff=pcutoff,
-            conditional=conditional,
-            testDirection="over")
-        mf_over = hyperGTest(mf_params)
-        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="BP",
-            pvalueCutoff=pcutoff,
-            conditional=FALSE,
-            testDirection="over")
-        bp_over = hyperGTest(bp_params)
-        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="CC",
-            pvalueCutoff=pcutoff,
-            conditional=FALSE,
-            testDirection="over")
-        cc_over = hyperGTest(cc_params)
-    } else if (direction == "under") {
-        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="MF",
-            pvalueCutoff=pcutoff,
-            conditional=conditional,
-            testDirection="under")
-        mf_under = hyperGTest(mf_params)
-        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="BP",
-            pvalueCutoff=pcutoff,
-            conditional=FALSE,
-            testDirection="under")
-        bp_under = hyperGTest(bp_params)
-        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="CC",
-            pvalueCutoff=pcutoff,
-            conditional=FALSE,
-            testDirection="under")
-        cc_under = hyperGTest(cc_params)
-    } else {
-        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="MF",
-            pvalueCutoff=pcutoff,
-            conditional=conditional,
-            testDirection="over")
-        mf_over = hyperGTest(mf_params)
-        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="BP",
-            pvalueCutoff=pcutoff,
-            conditional=FALSE,
-            testDirection="over")
-        bp_over = hyperGTest(bp_params)
-        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="CC",
-            pvalueCutoff=pcutoff,
-            conditional=FALSE,
-            testDirection="over")
-        cc_over = hyperGTest(cc_params)
-        mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="MF",
-            pvalueCutoff=pcutoff,
-            conditional=conditional,
-            testDirection="under")
-        mf_under = hyperGTest(mf_params)
-        bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="BP",
-            pvalueCutoff=pcutoff,
-            conditional=FALSE,
-            testDirection="under")
-        bp_under = hyperGTest(bp_params)
-        cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
-            geneSetCollection=gsc,
-            geneIds=degenes_ids,
-            universeGeneIds=universe_ids,
-            ontology="CC",
-            pvalueCutoff=pcutoff,
-            conditional=FALSE,
-            testDirection="under")
-        cc_under = hyperGTest(cc_params)
-    }
+    mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+                                   geneSetCollection=gsc,
+                                   geneIds=degenes_ids,
+                                   universeGeneIds=universe_ids,
+                                   ontology="MF",
+                                   pvalueCutoff=pcutoff,
+                                   conditional=conditional,
+                                   testDirection="over")
+    mf_over = hyperGTest(mf_params)
+    bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+                                   geneSetCollection=gsc,
+                                   geneIds=degenes_ids,
+                                   universeGeneIds=universe_ids,
+                                   ontology="BP",
+                                   pvalueCutoff=pcutoff,
+                                   conditional=FALSE,
+                                   testDirection="over")
+    bp_over = hyperGTest(bp_params)
+    cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+                                   geneSetCollection=gsc,
+                                   geneIds=degenes_ids,
+                                   universeGeneIds=universe_ids,
+                                   ontology="CC",
+                                   pvalueCutoff=pcutoff,
+                                   conditional=FALSE,
+                                   testDirection="over")
+    cc_over = hyperGTest(cc_params)
+    mf_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+                                   geneSetCollection=gsc,
+                                   geneIds=degenes_ids,
+                                   universeGeneIds=universe_ids,
+                                   ontology="MF",
+                                   pvalueCutoff=pcutoff,
+                                   conditional=conditional,
+                                   testDirection="under")
+    mf_under = hyperGTest(mf_params)
+    bp_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+                                   geneSetCollection=gsc,
+                                   geneIds=degenes_ids,
+                                   universeGeneIds=universe_ids,
+                                   ontology="BP",
+                                   pvalueCutoff=pcutoff,
+                                   conditional=FALSE,
+                                   testDirection="under")
+    bp_under = hyperGTest(bp_params)
+    cc_params = GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""),
+                                   geneSetCollection=gsc,
+                                   geneIds=degenes_ids,
+                                   universeGeneIds=universe_ids,
+                                   ontology="CC",
+                                   pvalueCutoff=pcutoff,
+                                   conditional=FALSE,
+                                   testDirection="under")
+    cc_under = hyperGTest(cc_params)
 
     mf_over_table = bp_over_table = cc_over_table = NULL
     mf_under_table = bp_under_table = cc_under_table = NULL
-    if (direction == "over") {
-        ## Make tables of the entire ontology
-        mf_over_table = summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
-        bp_over_table = summary(bp_over, pvalue=1.0, htmlLinks=TRUE)
-        cc_over_table = summary(cc_over, pvalue=1.0, htmlLinks=TRUE)
+    mf_over_table = summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
+    bp_over_table = summary(bp_over, pvalue=1.0, htmlLinks=TRUE)
+    cc_over_table = summary(cc_over, pvalue=1.0, htmlLinks=TRUE)
+    mf_under_table = summary(mf_under, pvalue=1.0, htmlLinks=TRUE)
+    bp_under_table = summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
+    cc_under_table = summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
+    if (!is.null(dim(mf_over_table))) {
         mf_over_table$qvalue = qvalue(mf_over_table$Pvalue)$qvalues
+    }
+    if (!is.null(dim(bp_over_table))) {
         bp_over_table$qvalue = qvalue(bp_over_table$Pvalue)$qvalues
+    }
+    if (!is.null(dim(cc_over_table))) {
         cc_over_table$qvalue = qvalue(cc_over_table$Pvalue)$qvalues
-    } else if (direction == "under") {
-        mf_under_table = summary(mf_under, pvalue=1.0, htmlLinks=TRUE)
-        bp_under_table = summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
-        cc_under_table = summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
+    }
+    if (!is.null(dim(mf_under_table))) {
         mf_under_table$qvalue = qvalue(mf_under_table$Pvalue)$qvalues
+    }
+    if (!is.null(dim(bp_under_table))) {
         bp_under_table$qvalue = qvalue(bp_under_table$Pvalue)$qvalues
-        cc_under_table$qvalue = qvalue(cc_under_table$Pvalue)$qvalues
-    } else {
-        mf_over_table = summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
-        bp_over_table = summary(bp_over, pvalue=1.0, htmlLinks=TRUE)
-        cc_over_table = summary(cc_over, pvalue=1.0, htmlLinks=TRUE)
-        mf_over_table$qvalue = qvalue(mf_over_table$Pvalue)$qvalues
-        bp_over_table$qvalue = qvalue(bp_over_table$Pvalue)$qvalues
-        cc_over_table$qvalue = qvalue(cc_over_table$Pvalue)$qvalues
-        mf_under_table = summary(mf_under, pvalue=1.0, htmlLinks=TRUE)
-        bp_under_table = summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
-        cc_under_table = summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
-        mf_under_table$qvalue = qvalue(mf_under_table$Pvalue)$qvalues
-        bp_under_table$qvalue = qvalue(bp_under_table$Pvalue)$qvalues
+    }
+    if (!is.null(dim(cc_under_table))) {
         cc_under_table$qvalue = qvalue(cc_under_table$Pvalue)$qvalues
     }
+
 
     if (is.null(categorysize)) {
         mf_over_sig = summary(mf_over)
@@ -205,20 +157,46 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
         bp_under_sig = summary(bp_under, categorySize=categorysize)
         cc_under_sig = summary(cc_under, categorySize=categorysize)
     }
-    mf_over_sig$definition = godef(mf_over_sig$GOMFID)
-    bp_over_sig$definition = godef(bp_over_sig$GOBPID)
-    cc_over_sig$definition = godef(cc_over_sig$GOCCID)
-    mf_under_sig$definition = godef(mf_under_sig$GOMFID)
-    bp_under_sig$definition = godef(bp_under_sig$GOBPID)
-    cc_under_sig$definition = godef(cc_under_sig$GOCCID)
-
-    pvalue_plots = try(gostats_pval_plots(mf_over_sig, bp_over_sig, cc_over_sig, mf_under_sig, bp_under_sig, cc_under_sig))
-    gostats_p_mf_over = try(hpgl_histogram(mf_over_table$Pvalue, bins=20))
-    gostats_p_mf_under = try(hpgl_histogram(mf_under_table$Pvalue, bins=20))
-    gostats_p_bp_over = try(hpgl_histogram(bp_over_table$Pvalue, bins=20))
-    gostats_p_bp_under = try(hpgl_histogram(bp_under_table$Pvalue, bins=20))
-    gostats_p_cc_over = try(hpgl_histogram(cc_over_table$Pvalue, bins=20))
-    gostats_p_cc_under = try(hpgl_histogram(cc_under_table$Pvalue, bins=20))
+    if (!is.null(dim(mf_over_sig))) {
+        mf_over_sig$definition = try(godef(mf_over_sig$GOMFID), silent=TRUE)
+    } else {
+        mf_over_sig = NULL
+    }
+    if (!is.null(dim(bp_over_sig))) {
+        bp_over_sig$definition = try(godef(bp_over_sig$GOBPID), silent=TRUE)
+    } else {
+        bp_over_sig = NULL
+    }
+    if (!is.null(dim(cc_over_sig))) {
+        cc_over_sig$definition = try(godef(cc_over_sig$GOCCID), silent=TRUE)
+    } else {
+        bp_over_sig = NULL
+    }
+    if (!is.null(dim(mf_under_sig))) {
+        mf_under_sig$definition = try(godef(mf_under_sig$GOMFID), silent=TRUE)
+    } else {
+        mf_under_sig = NULL
+    }
+    if (!is.null(dim(bp_under_sig))) {
+        bp_under_sig$definition = try(godef(bp_under_sig$GOBPID), silent=TRUE)
+    } else {
+        bp_under_sig = NULL
+    }
+    if (!is.null(dim(cc_under_sig))) {
+        cc_under_sig$definition = try(godef(cc_under_sig$GOCCID), silent=TRUE)
+    } else {
+        bp_under_sig = NULL
+    }    
+    
+    pvalue_plots = NULL
+    pvalue_plots = try(gostats_pval_plots(mf_over=mf_over, bp_over=bp_over, cc_over=cc_over,
+                                          mf_under=mf_under, bp_under=bp_under, cc_under=cc_under), silent=TRUE)
+    gostats_p_mf_over = try(hpgl_histogram(mf_over_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_mf_under = try(hpgl_histogram(mf_under_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_bp_over = try(hpgl_histogram(bp_over_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_bp_under = try(hpgl_histogram(bp_under_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_cc_over = try(hpgl_histogram(cc_over_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_cc_under = try(hpgl_histogram(cc_under_table$Pvalue, bins=20), silent=TRUE)
 
     ret_list = list(mf_over_all=mf_over_table, bp_over_all=bp_over_table, cc_over_all=cc_over_table,
         mf_under_all=mf_under_table, bp_under_all=bp_under_table, cc_under_all=cc_under_table,
@@ -376,71 +354,98 @@ gostats_trees = function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under
 #' @return plots!
 #' @seealso \code{\link{clusterProfiler}} \code{\link{pval_plot}}
 #' @export
-gostats_pval_plots = function(mf_over, bp_over, cc_over, mf_under, bp_under, cc_under, wrapped_width=20, cutoff=0.1, n=10) {
+gostats_pval_plots = function(mf_over=NULL, bp_over=NULL, cc_over=NULL, mf_under=NULL, bp_under=NULL, cc_under=NULL, wrapped_width=20, cutoff=0.1, n=12) {
     ##    plotting_mf_over = subset(mf_over, complete.cases(mf_over))
-    plotting_mf_over = mf_over
-    plotting_mf_over$score = plotting_mf_over$ExpCount
-    plotting_mf_over = subset(plotting_mf_over, Term != "NULL")
-    plotting_mf_over = subset(plotting_mf_over, Pvalue <= 0.1)
-    plotting_mf_over = subset(plotting_mf_over, Size > 10)
-    plotting_mf_over = plotting_mf_over[order(plotting_mf_over$Pvalue),]
-    plotting_mf_over = head(plotting_mf_over, n=n)
-    plotting_mf_over = plotting_mf_over[,c("Term","Pvalue","score")]
-    colnames(plotting_mf_over) = c("term","pvalue","score")
-    mf_pval_plot_over = pval_plot(plotting_mf_over, ontology="MF")
-    plotting_mf_under = mf_under
-    plotting_mf_under$score = plotting_mf_under$ExpCount
-    plotting_mf_under = subset(plotting_mf_under, Term != "NULL")
-    plotting_mf_under = subset(plotting_mf_under, Pvalue <= 0.1)
-    plotting_mf_under = subset(plotting_mf_under, Size > 10)
-    plotting_mf_under = plotting_mf_under[order(plotting_mf_under$Pvalue),]
-    plotting_mf_under = head(plotting_mf_under, n=n)
-    plotting_mf_under = plotting_mf_under[,c("Term","Pvalue","score")]
-    colnames(plotting_mf_under) = c("term","pvalue","score")
-    mf_pval_plot_under = pval_plot(plotting_mf_under, ontology="MF")
-
-    plotting_bp_over = bp_over
-    plotting_bp_over$score = plotting_bp_over$ExpCount
-    plotting_bp_over = subset(plotting_bp_over, Term != "NULL")
-    plotting_bp_over = subset(plotting_bp_over, Pvalue <= 0.1)
-    plotting_bp_over = subset(plotting_bp_over, Size > 10)
-    plotting_bp_over = plotting_bp_over[order(plotting_bp_over$Pvalue),]
-    plotting_bp_over = head(plotting_bp_over, n=n)
-    plotting_bp_over = plotting_bp_over[,c("Term","Pvalue","score")]
-    colnames(plotting_bp_over) = c("term","pvalue","score")
-    bp_pval_plot_over = pval_plot(plotting_bp_over, ontology="BP")
-    plotting_bp_under = bp_under
-    plotting_bp_under$score = plotting_bp_under$ExpCount
-    plotting_bp_under = subset(plotting_bp_under, Term != "NULL")
-    plotting_bp_under = subset(plotting_bp_under, Pvalue <= 0.1)
-    plotting_bp_under = subset(plotting_bp_under, Size > 10)
-    plotting_bp_under = plotting_bp_under[order(plotting_bp_under$Pvalue),]
-    plotting_bp_under = head(plotting_bp_under, n=n)
-    plotting_bp_under = plotting_bp_under[,c("Term","Pvalue","score")]
-    colnames(plotting_bp_under) = c("term","pvalue","score")
-    bp_pval_plot_under = pval_plot(plotting_bp_under, ontology="BP")
-
-    plotting_cc_over = cc_over
-    plotting_cc_over$score = plotting_cc_over$ExpCount
-    plotting_cc_over = subset(plotting_cc_over, Term != "NULL")
-    plotting_cc_over = subset(plotting_cc_over, Pvalue <= 0.1)
-    plotting_cc_over = subset(plotting_cc_over, Size > 10)
-    plotting_cc_over = plotting_cc_over[order(plotting_cc_over$Pvalue),]
-    plotting_cc_over = head(plotting_cc_over, n=n)
-    plotting_cc_over = plotting_cc_over[,c("Term","Pvalue","score")]
-    colnames(plotting_cc_over) = c("term","pvalue","score")
-    cc_pval_plot_over = pval_plot(plotting_cc_over, ontology="CC")
-    plotting_cc_under = cc_under
-    plotting_cc_under$score = plotting_cc_under$ExpCount
-    plotting_cc_under = subset(plotting_cc_under, Term != "NULL")
-    plotting_cc_under = subset(plotting_cc_under, Pvalue <= 0.1)
-    plotting_cc_under = subset(plotting_cc_under, Size > 10)
-    plotting_cc_under = plotting_cc_under[order(plotting_cc_under$Pvalue),]
-    plotting_cc_under = head(plotting_cc_under, n=n)
-    plotting_cc_under = plotting_cc_under[,c("Term","Pvalue","score")]
-    colnames(plotting_cc_under) = c("term","pvalue","score")
-    cc_pval_plot_under = pval_plot(plotting_cc_under, ontology="CC")
-
+    plotting_mf_over = summary(mf_over)
+    if (is.null(mf_over)) {
+        mf_pval_plot_over = NULL
+        plotting_mf_over = NULL
+    } else {
+        plotting_mf_over$score = plotting_mf_over$ExpCount
+        plotting_mf_over = subset(plotting_mf_over, Term != "NULL")
+        plotting_mf_over = subset(plotting_mf_over, Pvalue <= 0.1)
+        plotting_mf_over = subset(plotting_mf_over, Size > 10)
+        plotting_mf_over = plotting_mf_over[order(plotting_mf_over$Pvalue),]
+        plotting_mf_over = head(plotting_mf_over, n=n)
+        plotting_mf_over = plotting_mf_over[,c("Term","Pvalue","score")]
+        colnames(plotting_mf_over) = c("term","pvalue","score")
+        mf_pval_plot_over = pval_plot(plotting_mf_over, ontology="MF")
+    }
+    plotting_mf_under = summary(mf_under)
+    if (is.null(mf_under)) {
+        mf_pval_plot_under = NULL
+        plotting_mf_under = NULL
+    } else {
+        plotting_mf_under$score = plotting_mf_under$ExpCount
+        plotting_mf_under = subset(plotting_mf_under, Term != "NULL")
+        plotting_mf_under = subset(plotting_mf_under, Pvalue <= 0.1)
+        plotting_mf_under = subset(plotting_mf_under, Size > 10)
+        plotting_mf_under = plotting_mf_under[order(plotting_mf_under$Pvalue),]
+        plotting_mf_under = head(plotting_mf_under, n=n)
+        plotting_mf_under = plotting_mf_under[,c("Term","Pvalue","score")]
+        colnames(plotting_mf_under) = c("term","pvalue","score")
+        mf_pval_plot_under = pval_plot(plotting_mf_under, ontology="MF")
+    }
+    plotting_bp_over = summary(bp_over)
+    if (is.null(bp_over)) {
+        bp_pval_plot_over = NULL
+        plotting_bp_over = NULL
+    } else {
+        plotting_bp_over$score = plotting_bp_over$ExpCount
+        plotting_bp_over = subset(plotting_bp_over, Term != "NULL")
+        plotting_bp_over = subset(plotting_bp_over, Pvalue <= 0.1)
+        plotting_bp_over = subset(plotting_bp_over, Size > 10)
+        plotting_bp_over = plotting_bp_over[order(plotting_bp_over$Pvalue),]
+        plotting_bp_over = head(plotting_bp_over, n=n)
+        plotting_bp_over = plotting_bp_over[,c("Term","Pvalue","score")]
+        colnames(plotting_bp_over) = c("term","pvalue","score")
+        bp_pval_plot_over = pval_plot(plotting_bp_over, ontology="BP")
+    }
+    plotting_bp_under = summary(bp_under)
+    if (is.null(bp_under)) {
+        bp_pval_plot_under = NULL
+        plotting_bp_under = NULL
+    } else {
+        plotting_bp_under$score = plotting_bp_under$ExpCount
+        plotting_bp_under = subset(plotting_bp_under, Term != "NULL")
+        plotting_bp_under = subset(plotting_bp_under, Pvalue <= 0.1)
+        plotting_bp_under = subset(plotting_bp_under, Size > 10)
+        plotting_bp_under = plotting_bp_under[order(plotting_bp_under$Pvalue),]
+        plotting_bp_under = head(plotting_bp_under, n=n)
+        plotting_bp_under = plotting_bp_under[,c("Term","Pvalue","score")]
+        colnames(plotting_bp_under) = c("term","pvalue","score")
+        bp_pval_plot_under = pval_plot(plotting_bp_under, ontology="BP")
+    }
+    plotting_cc_over = summary(cc_over)
+    if (is.null(cc_over)) {
+        cc_pval_plot_over = NULL
+        plotting_cc_over = NULL
+    } else {
+        plotting_cc_over$score = plotting_cc_over$ExpCount
+        plotting_cc_over = subset(plotting_cc_over, Term != "NULL")
+        plotting_cc_over = subset(plotting_cc_over, Pvalue <= 0.1)
+        plotting_cc_over = subset(plotting_cc_over, Size > 10)
+        plotting_cc_over = plotting_cc_over[order(plotting_cc_over$Pvalue),]
+        plotting_cc_over = head(plotting_cc_over, n=n)
+        plotting_cc_over = plotting_cc_over[,c("Term","Pvalue","score")]
+        colnames(plotting_cc_over) = c("term","pvalue","score")
+        cc_pval_plot_over = pval_plot(plotting_cc_over, ontology="CC")
+    }
+    plotting_cc_under = summary(cc_under)
+    if (is.null(cc_under)) {
+        cc_pval_plot_under = NULL
+        plotting_cc_under = NULL
+    } else {
+        plotting_cc_under$score = plotting_cc_under$ExpCount
+        plotting_cc_under = subset(plotting_cc_under, Term != "NULL")
+        plotting_cc_under = subset(plotting_cc_under, Pvalue <= 0.1)
+        plotting_cc_under = subset(plotting_cc_under, Size > 10)
+        plotting_cc_under = plotting_cc_under[order(plotting_cc_under$Pvalue),]
+        plotting_cc_under = head(plotting_cc_under, n=n)
+        plotting_cc_under = plotting_cc_under[,c("Term","Pvalue","score")]
+        colnames(plotting_cc_under) = c("term","pvalue","score")
+        cc_pval_plot_under = pval_plot(plotting_cc_under, ontology="CC")
+    }
     pval_plots = list(mfp_plot_over=mf_pval_plot_over, bpp_plot_over=bp_pval_plot_over, ccp_plot_over=cc_pval_plot_over,
         mf_subset_over=plotting_mf_over, bp_subset_over=plotting_bp_over, cc_subset_over=plotting_cc_over,
         mfp_plot_under=mf_pval_plot_under, bpp_plot_under=bp_pval_plot_under, ccp_plot_under=cc_pval_plot_under,

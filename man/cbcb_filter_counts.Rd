@@ -2,25 +2,25 @@
 % Please edit documentation in R/normalization.R
 \name{cbcb_filter_counts}
 \alias{cbcb_filter_counts}
-\title{Filter low-count genes from a data set.}
+\title{cbcb_filter_counts()  Filter low-count genes from a data set.}
 \usage{
 cbcb_filter_counts(count_table, threshold = 2, min_samples = 2,
   verbose = FALSE)
 }
 \arguments{
-\item{threshold}{lower threshold of counts (default: 4)}
+\item{count_table}{a data frame of (pseudo)counts by sample.}
 
-\item{min_samples}{minimum number of samples (default: 2)}
+\item{threshold}{default=2  lower threshold of counts for each gene.}
 
-\item{verbose}{If set to true, prints number of genes removed / remaining}
+\item{min_samples}{default=2   minimum number of samples}
 
-\item{df}{input data frame of counts by sample}
+\item{verbose}{default=FALSE  if set to true, prints number of genes removed and remaining.}
 }
 \value{
 dataframe of counts without the low-count genes
 }
 \description{
-Filter low-count genes from a data set.
+This was a function written by Kwame Okrah and perhaps also Laura Dillon to remove low-count genes.  It drops genes based on a threshold and number of samples.
 }
 \examples{
 ## filtered_table = filter_counts(count_table)

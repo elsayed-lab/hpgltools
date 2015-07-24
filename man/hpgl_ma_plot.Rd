@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_ma_plot}
 \alias{hpgl_ma_plot}
-\title{Make a pretty MA plot from the output of voom/limma/eBayes/toptable}
+\title{hpgl_ma_plot()  Make a pretty MA plot from the output of voom/limma/eBayes/toptable.}
 \usage{
 hpgl_ma_plot(counts, de_genes, adjpval_cutoff = 0.05, alpha = 0.6,
   size = 2, tooltip_data = NULL, gvis_filename = NULL, ...)
@@ -13,18 +13,16 @@ which is to say the output from voom/voomMod/hpgl_voom().}
 
 \item{de_genes}{df from toptable or its friends containing p-values.}
 
-\item{adjpval_cutoff}{a cutoff defining significant from not.
-Defaults to 0.05.}
+\item{adjpval_cutoff}{default=0.05  a cutoff defining significant from not.}
 
-\item{alpha}{how transparent to make the dots.  Defaults to 0.6.}
+\item{alpha}{default=0.6  how transparent to make the dots.}
 
-\item{size}{how big are the dots?  Defaults to 2.}
+\item{size}{default=2  how big are the dots?}
 
-\item{tooltip_data}{a df of tooltip information for gvis
-graphs. NULL by default.}
+\item{tooltip_data}{default=NULL  a df of tooltip information for gvis
+graphs.}
 
-\item{gvis_filename}{a filename to write a fancy html graph.
-Defaults to NULL in which case the following parameter isn't needed.}
+\item{gvis_filename}{default=NULL  a filename to write a fancy html graph.}
 }
 \value{
 a ggplot2 MA scatter plot.  This is defined as the rowmeans
@@ -34,7 +32,7 @@ Dots are colored depending on if they are 'significant.'  This will
 make a fun clicky googleVis graph if requested.
 }
 \description{
-Make a pretty MA plot from the output of voom/limma/eBayes/toptable
+hpgl_ma_plot()  Make a pretty MA plot from the output of voom/limma/eBayes/toptable.
 }
 \examples{
 ## hpgl_ma_plot(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")

@@ -2,18 +2,18 @@
 % Please edit documentation in R/ontology_shared.R
 \name{godef}
 \alias{godef}
-\title{Get a go long-form definition from an id}
+\title{godef()  Get a go long-form definition from an id.}
 \usage{
 godef(go)
 }
 \arguments{
-\item{id}{A go ID -- this may be a character or list(assuming the elements, not names, are goids)}
+\item{go}{a go ID, this may be a character or list (assuming the elements are goids).}
 }
 \value{
 Some text
 }
 \description{
-Get a go long-form definition from an id
+godef()  Get a go long-form definition from an id.
 }
 \examples{
 ## godef("GO:0032432")

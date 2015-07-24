@@ -2,24 +2,24 @@
 % Please edit documentation in R/differential_expression.R
 \name{coefficient_scatter}
 \alias{coefficient_scatter}
-\title{coefficient_scatter(): Plot out 2 coefficients with respect to one another from limma}
+\title{coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma}
 \usage{
-coefficient_scatter(limma_output, x = NULL, y = NULL,
+coefficient_scatter(limma_output, x = 1, y = 2,
   gvis_filename = "limma_scatter.html", gvis_trendline = TRUE,
-  tooltip_data = NULL)
+  tooltip_data = NULL, flip = FALSE)
 }
 \arguments{
-\item{limma_output}{The set of pairwise comparisons provided by limma_pairwise()}
+\item{limma_output}{the set of pairwise comparisons provided by limma_pairwise()}
 
-\item{x}{The name or number of the first coefficient column to extract, this will be the x-axis of the plot}
+\item{x}{default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot}
 
-\item{y}{The name or number of the second coefficient column to extract, this will be the y-axis of the plot}
+\item{y}{default=2  the name or number of the second coefficient column to extract, this will be the y-axis of the plot}
 
-\item{gvis_filename}{If provided, an html clicky-plot will be generated with this name}
+\item{gvis_filename}{default='limma_scatter.html'  A filename for plotting gvis interactive graphs of the data.}
 
-\item{gvis_trendline}{add a trendline to the gvis plot? (TRUE by default)}
+\item{gvis_trendline}{default=TRUE  add a trendline to the gvis plot?}
 
-\item{tooltip_data}{a dataframe of gene annotations to be used in the gvis plot}
+\item{tooltip_data}{default=NULL  a dataframe of gene annotations to be used in the gvis plot}
 }
 \value{
 a ggplot2 plot showing the relationship between the two coefficients

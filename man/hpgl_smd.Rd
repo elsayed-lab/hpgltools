@@ -2,23 +2,21 @@
 % Please edit documentation in R/plots.R
 \name{hpgl_smd}
 \alias{hpgl_smd}
-\title{Make an R plot of the standard median distance among samples}
+\title{hpgl_smd()  Make an R plot of the standard median distance among samples.}
 \usage{
 hpgl_smd(data, colors = NULL, names = NULL, method = "euclidean",
   title = NULL, ...)
 }
 \arguments{
-\item{colors}{a color scheme}
+\item{data}{an expt/expressionset/data frame of samples.}
 
-\item{names}{use pretty names for the samples?}
+\item{colors}{default=NULL  a color scheme}
 
-\item{method}{a distance metric to use.  Defaults to euclidean.}
+\item{names}{default=NULL  use pretty names for the samples?}
 
-\item{expt}{an expt set of samples}
+\item{method}{defaul='euclidean'  a distance metric to use.}
 
-\item{df}{alternately a data frame which must be accompanied by}
-
-\item{design}{a design matrix and}
+\item{title}{default=NULL  title for the graph.}
 }
 \value{
 smd_plot a recordPlot of plot.  This will also write to an
@@ -28,7 +26,7 @@ range of distances.  Any sample which has a median distance greater
 than this is considered for removal.
 }
 \description{
-Make an R plot of the standard median distance among samples
+hpgl_smd()  Make an R plot of the standard median distance among samples.
 }
 \examples{
 ## smd_plot = hpgl_smd(expt=expt)

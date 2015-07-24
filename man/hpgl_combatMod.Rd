@@ -2,7 +2,8 @@
 % Please edit documentation in R/normalization.R
 \name{hpgl_combatMod}
 \alias{hpgl_combatMod}
-\title{Use a modified version of combat on some data}
+\title{Use a modified version of combat on some data
+This is a hack of Kwame's combatMod to make it not fail on corner-cases.}
 \usage{
 hpgl_combatMod(dat, batch, mod, noScale = TRUE, prior.plots = FALSE)
 }
@@ -22,6 +23,7 @@ a df of batch corrected data
 }
 \description{
 Use a modified version of combat on some data
+This is a hack of Kwame's combatMod to make it not fail on corner-cases.
 }
 \examples{
 ## df_new = hpgl_combatMod(df, batches, model)

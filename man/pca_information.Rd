@@ -2,24 +2,26 @@
 % Please edit documentation in R/pca.R
 \name{pca_information}
 \alias{pca_information}
-\title{pca_information(): Gather information about principle components}
+\title{pca_information()  Gather information about principle components.}
 \usage{
-pca_information(expt = NULL, df = NULL, design = NULL,
-  factors = c("condition", "batch"), num_components = NULL,
-  plot_pcas = FALSE, labels = "fancy")
+pca_information(data, design = NULL, factors = c("condition", "batch"),
+  num_components = NULL, plot_pcas = FALSE, labels = "fancy")
 }
 \arguments{
-\item{df}{The data to analyze (usually exprs(somedataset))}
+\item{data}{the data to analyze (usually exprs(somedataset)).}
 
-\item{design}{A dataframe describing the experimental design, containing columns with
+\item{design}{default=NULL  a dataframe describing the experimental design, containing columns with
 useful information like the conditions, batches, number of cells, whatever...}
 
-\item{factors}{A character list of columns from the design matrix which will be queried
-for R^2 against the fast.svd of the data.  This defaults to c("condition","batch"), which
-is in all of my experimental designs thus far.}
+\item{factors}{default=c("condition","batch")  a character list of experimental conditions to query
+for R^2 against the fast.svd of the data.}
 
-\item{components}{A number of principle components to compare the design factors against.
-  If left null, it will query the same number of components as factors asked for.}
+\item{plot_pcas}{default=FALSE  plot the set of PCA plots for every pair of PCs queried.}
+
+\item{labels}{default="fancy"  how to label the glyphs on the plot.}
+
+\item{components}{default=NULL  a number of principle components to compare the design factors against.
+If left null, it will query the same number of components as factors asked for.}
 }
 \value{
 a list of fun pca information:
