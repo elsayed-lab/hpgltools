@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jul 15 11:33:57 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 28 13:10:15 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -391,7 +391,10 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
         files[1] = lower_filenames[1]
     }
     ##count_table = read.table(files[1], header=header, ...)
-    count_table = read.table(files[1], header=header)
+    count_table = try(read.table(files[1], header=header))
+    if (class(count_table)[1] == 'try-error') {
+        stop(paste0("There was an error reading: ", files[1]))
+    }
     print(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
     colnames(count_table) = c("ID", ids[1])
     ## iterate over and append remaining samples
@@ -403,7 +406,10 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
         } else if (file.exists(lower_filenames[table])) {
             files[table] = lower_filenames[table]
         }
-        tmp_count = read.table(files[table], header=header)
+        tmp_count = try(read.table(files[table], header=header))
+        if (class(tmp_count)[1] == 'try-error') {
+            stop(paste0("There was an error reading: ", files[table]))
+        }        
         colnames(tmp_count) = c("ID", ids[table])
         pre_merge = length(rownames(tmp_count))
         count_table = merge(count_table, tmp_count, by="ID")

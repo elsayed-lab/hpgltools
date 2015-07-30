@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jul 15 12:22:17 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 28 15:44:44 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -196,7 +196,7 @@ cbcb_filter_counts = function(count_table, threshold=2, min_samples=2, verbose=F
 #' @export
 #' @examples
 #' ## converted_table = convert_counts(count_table, convert='edgecpm')
-convert_counts = function(data, convert="raw", annotations=NULL, fasta=NULL, gff=NULL, ...) {
+convert_counts = function(data, convert="raw", annotations=NULL, fasta=NULL, pattern='TA', entry_type='gene', ...) {
     data_class = class(data)[1]
     if (data_class == 'expt') {
         design = data$design
@@ -226,7 +226,7 @@ convert_counts = function(data, convert="raw", annotations=NULL, fasta=NULL, gff
     } else if (convert == "cp_seq_m") {
         counts = edgeR::cpm(count_table)
         ## count_table = divide_seq(counts, ...)
-        count_table = divide_seq(counts, fasta=fasta, gff=gff, pattern='TA')
+        count_table = divide_seq(counts, fasta=fasta, gff=annotations, pattern=pattern, entry_type=entry_type)
     }
     libsize = colSums(count_table)
     counts = list(count_table=count_table, libsize=libsize)
@@ -245,11 +245,16 @@ convert_counts = function(data, convert="raw", annotations=NULL, fasta=NULL, gff
 #' @return The 'RPseqM' counts
 #' @export
 divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff", entry_type="gene") {
-    raw_seq = FaFile(fasta)
-    gff_entries = import.gff(gff, asRangedData=FALSE)
+    raw_seq = try(FaFile(fasta))
+    if (class(raw_seq)[1] == 'try-error') {
+        stop(paste0("There was a problem reading: ", fasta))
+    }
+    gff_entries = rtracklayer::import(gff, asRangedData=FALSE)
     ## print(head(gff_entries))
     ##    cds_entries = subset(gff_entries, type==entry_type)
-    cds_entries = subset(gff_entries, type=='gene')
+    found_entries = (gff_entries$type == entry_type)
+    ##cds_entries = subset(gff_entries, type==entry_type)
+    cds_entries = gff_entries[found_entries,]
     names(cds_entries) = make.names(cds_entries$locus_tag, unique=TRUE)
     cds_seq = getSeq(raw_seq, cds_entries)
     names(cds_seq) = cds_entries$locus_tag
@@ -561,7 +566,7 @@ hpgl_log2cpm = function(counts, lib.size=NULL) {
 #' ## df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
 #' ## count_table = df_ql2rpkm$counts
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm|cbcbcpm
-hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=FALSE, annotations=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
+hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="raw", batch="raw", batch1="batch", batch2=NULL, filter_low=FALSE, annotations=NULL, entry_type="gene", fasta=NULL, verbose=FALSE, thresh=2, min_samples=2, noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
     lowfilter_performed = FALSE
     norm_performed = "raw"
     convert_performed = "raw"
@@ -632,7 +637,7 @@ hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="ra
         if (verbose) {
             print(paste("Setting output type as:", convert))
         }
-        converted_counts = convert_counts(count_table, convert=convert, annotations=annotations)
+        converted_counts = convert_counts(count_table, convert=convert, annotations=annotations, fasta=fasta, entry_type=entry_type)
         count_table = converted_counts$count_table
         convert_performed = convert
     }
@@ -1021,7 +1026,7 @@ normalize_counts = function(data, design=NULL, norm="raw") {
 #' @export
 normalize_expt = function(expt, ## The expt class passed to the normalizer
     transform="raw", norm="raw", convert="raw", batch="raw", filter_low=FALSE, ## choose the normalization strategy
-    annotations=NULL, verbose=FALSE, use_original=FALSE, ## annotations used for rpkm/cpseqm, original may be used to ensure double-normalization isn't performed.
+    annotations=NULL, fasta=NULL, entry_type="gene", verbose=FALSE, use_original=FALSE, ## annotations used for rpkm/cpseqm, original may be used to ensure double-normalization isn't performed.
     batch1="batch", batch2=NULL, ## extra parameters for batch correction
     thresh=2, min_samples=2, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
     ...) {
@@ -1054,7 +1059,7 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)
     design = expt$design
-    normalized = hpgl_norm(old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch1=batch1, batch2=batch2, filter_low=filter_low, annotations=annotations, verbose=verbose, thresh=thresh, min_samples=min_samples, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max)
+    normalized = hpgl_norm(old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch1=batch1, batch2=batch2, filter_low=filter_low, annotations=annotations, fasta=fasta, verbose=verbose, thresh=thresh, min_samples=min_samples, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
     final_normalized = normalized$final_counts
     libsizes = final_normalized$libsize
     normalized_data = as.matrix(final_normalized$count_table)
