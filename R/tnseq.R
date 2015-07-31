@@ -57,3 +57,20 @@ tnseq_saturation = function(file) {
     return(data_plot)
 }
 
+
+plot_essentiality = function(file) {
+    ess = read.csv(file=file, comment.char="#", sep="\t", header=FALSE)
+    colnames(ess) = c("gene","orf_hits","orf_tas","max_run","max_run_span","posterior_zbar","call")
+    ess = ess[with(ess, order(posterior_zbar)), ]
+    ess = subset(ess, posterior_zbar > -1)
+    ess = transform(ess, rank=ave(posterior_zbar, FUN=function(x) order(x,decreasing=FALSE)))
+    zbar_plot = ggplot(data=ess, aes(x=rank, y=posterior_zbar)) +
+        geom_point(stat="identity", size=2) +
+        geom_hline(color="grey", yintercept=0.0371) +
+        geom_hline(color="grey", yintercept=0.9902) +
+        theme_bw()
+    span_df = ess[,c("max_run","max_run_span")]
+    span_plot = my_linear_scatter(span_df)
+    returns = list(zbar=zbar_plot, scatter=span_plot$scatter)
+    return(returns)
+}

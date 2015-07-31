@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jul 28 15:44:44 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jul 31 14:34:06 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -25,9 +25,6 @@ remove_batch_effect = function(normalized_counts, model) {
     new_data = tcrossprod(voomed_fit$coefficient, modified_model) + residuals(voomed_fit, normalized_counts)
     return(new_data)
 }
-
-
-
 
 #' batch_counts()  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
 #'
@@ -66,6 +63,11 @@ batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2=
             batches2 = as.factor(design[, batch2])
             count_table = limma::removeBatchEffect(count_table, batch=batches, batch2=batches2)
         }
+    } else if (batch == 'limmaresid') {
+        batch_model = model.matrix(~batches)
+        batch_voom = voom(data.frame(count_table), batch_model, normalize.method="quantile", plot=FALSE)
+        batch_fit = lmFit(batch_voom, design=batch_model)
+        count_table = residuals(batch_fit, batch_voom$E)
     } else if (batch == "combatmod") {
         ## message("Using a modified cbcbSeq combatMod for batch correction.")
         ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches, mod=conditions, noScale=noscale, ...)
