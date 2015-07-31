@@ -177,7 +177,7 @@ autoloads_all = function(update=FALSE) {
     png = CairoPNG
     x11 = CairoX11
     svg = CairoSVG
-    if (is.TRUE(update)) {
+    if (isTRUE(update)) {
         update.packages()
     }
 }

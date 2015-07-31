@@ -5,7 +5,7 @@
 \title{convert_counts(): Perform a cpm/rpkm/whatever transformation of a count table.}
 \usage{
 convert_counts(data, convert = "raw", annotations = NULL, fasta = NULL,
-  gff = NULL, ...)
+  pattern = "TA", entry_type = "gene", ...)
 }
 \arguments{
 \item{count_table}{A matrix of count data}

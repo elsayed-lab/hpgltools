@@ -6,9 +6,10 @@
 \usage{
 hpgl_norm(data, design = NULL, transform = "raw", norm = "raw",
   convert = "raw", batch = "raw", batch1 = "batch", batch2 = NULL,
-  filter_low = FALSE, annotations = NULL, verbose = FALSE, thresh = 2,
-  min_samples = 2, noscale = TRUE, p = 0.01, A = 1, k = 1,
-  cv_min = 0.01, cv_max = 1000, ...)
+  filter_low = FALSE, annotations = NULL, entry_type = "gene",
+  fasta = NULL, verbose = FALSE, thresh = 2, min_samples = 2,
+  noscale = TRUE, p = 0.01, A = 1, k = 1, cv_min = 0.01,
+  cv_max = 1000, ...)
 }
 \arguments{
 \item{transform}{defines whether to log(2|10) transform the
