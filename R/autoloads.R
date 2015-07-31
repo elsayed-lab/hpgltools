@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jul 24 10:32:50 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jul 24 10:13:40 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -69,6 +69,11 @@ autoloads_genome = function() {
 
 autoloads_elsayedlab = function() {
     require.auto("OrganismDbi")
+    require.auto("TxDb.TcruziCLBrener.tritryp24.genes", "elsayed-lab/TxDb.TcruziCLBrener.tritryp24.genes")
+    require.auto("TxDb.TcruziCLBrenerEsmer.tritryp24.genes", "elsayed-lab/TxDb.TcruziCLBrenerEsmer.tritryp24.genes")
+    require.auto("TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes", "elsayed-lab/TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes")    
+    require.auto("TxDb.LmajorFriedlin.tritryp9.genes", "elsayed-lab/TxDb.LmajorFriedlin.tritryp9.genes")
+
     require.auto("BSgenome.Lmajor.friedlin", "elsayed-lab/BSgenome.Lmajor.friedlin")
     require.auto("BSgenome.Tcruzi.clbrener", "elsayed-lab/BSgenome.Tcruzi.clbrener")
     require.auto("BSgenome.Tcruzi.esmeraldo", "elsayed-lab/BSgenome.Tcruzi.esmeraldo")
@@ -80,10 +85,6 @@ autoloads_elsayedlab = function() {
     require.auto("Trypanosoma.cruzi.CLBrener", "elsayed-lab/Trypanosoma.cruzi.CLBrener")
     require.auto("Trypanosoma.cruzi.CLBrener.Esmeraldo", "elsayed-lab/Trypanosoma.cruzi.CLBrener.Esmeraldo")
     require.auto("Leishmania.major.Friedlin", "elsayed-lab/Leishmania.major.Friedlin")
-    require.auto("TxDb.TcruziCLBrener.tritryp24.genes", "elsayed-lab/TxDb.TcruziCLBrener.tritryp24.genes")
-    require.auto("TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes", "elsayed-lab/TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes")
-    require.auto("TxDb.TcruziCLBrenerEsmer.tritryp9.genes", "elsayed-lab/TxDb.TcruziCLBrenerEsmer.tritryp9.genes")
-    require.auto("TxDb.LmajorFriedlin.tritryp9.genes", "elsayed-lab/TxDb.LmajorFriedlin.tritryp9.genes")
 }
 
 autoloads_deseq = function() {
