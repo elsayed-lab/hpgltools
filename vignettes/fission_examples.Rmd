@@ -213,11 +213,27 @@ scatter_wt_mut$both_histogram
 
 ```
 
-
 ## Compare limma/DESeq2/EdgeR
 
 ```{r de_comparisons}
 
 all_comparison = all_pairwise(normbatch_expt)
+
+```
+
+## Ontology searches
+
+```{r ontology}
+
+limma_results = all_comparison$limma$all_tables
+names(limma_results)
+table = limma_results$wt.180_minus_wt.0
+dim(table)
+
+updown_genes = get_sig_genes(table, fc=0.8)
+##goseq_search = simple_goseq(de_genes=updown_genes$up_genes, species='sacCer2')
+## oh yeah, the fission dataset is pombe, not cerevisiae... I am an idiot.
+##orthologs = read.table("ftp://ftp.ebi.ac.uk/pub/databases/pombase/pombe/orthologs/cerevisiae-orthologs.txt")
+##colnames(orthologs) = c("pombe","cerevisiae")
 
 ```

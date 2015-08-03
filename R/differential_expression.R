@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jul 22 16:12:35 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jul 31 16:06:43 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -1460,6 +1460,61 @@ write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma
         return_data[[comparison]] = data_table
     }
     return(return_data)
+}
+
+#' get_sig_genes()  Get a set of up/down genes using the top/bottom n or >/< z scores away from the median.
+#'
+#' @param table  a table from limma/edger/deseq.
+#' @param n default=NULL  a rank-order top/bottom number of genes to take.
+#' @param z default=NULL  a number of z-scores >/< the median to take.
+#' @param fc default=NULL  a number of fold-changes to take
+#' @param fold default='plusminus'  an identifier reminding how to get the bottom portion of a fold-change (plusminus says to get the negative of the positive, otherwise 1/positive is taken).
+#' @param column default='logFC'  a column to use to distinguish top/bottom
+#'
+#' @return a list of up/down genes
+#' @export
+get_sig_genes = function(table, n=NULL, z=NULL, fc=NULL, column='logFC', fold='plusminus') {
+    if (is.null(z) & is.null(n) & is.null(fc)) {
+        print("No n, z, nor fc provided, setting z to 1.")
+        z = 1
+    }
+    if (!is.null(n)) {
+        ## Take a specific number of genes at the top/bottom of the rank ordered list.
+        print("Getting the n genes up and down.")
+        upranked = table[order(table[,column], decreasing=TRUE),]
+        up_genes = head(upranked, n=n)
+        down_genes = tail(upranked, n=n)
+    } else if (!is.null(z)) {
+        ## Take an arbitrary number which are >= and <= a value which is z zscores from the median.
+        print("Getting the genes >= z scores away from the median.")
+        out_summary = summary(table[,column])
+        out_mad = mad(table[,column], na.rm=TRUE)
+        up_median_dist = out_summary["Median"] + (out_mad * z)
+        down_median_dist = out_summary["Median"] - (out_mad * z)
+        up_idx = table[,column] >= up_median_dist
+        up_genes = table[up_idx,]
+        down_idx = table[,column] <= down_median_dist
+        down_genes = table[down_idx,]
+        print(paste0("The up genes table has ", dim(up_genes)[1], " genes."))
+        print(paste0("The down genes table has ", dim(down_genes)[1], " genes."))        
+    } else {
+        ## Take an arbitrary number which are >= and <= a given fold value        
+        up_idx = table[,column] >= fc
+        up_genes = table[up_idx,]
+        if (fold == 'plusminus') {
+            ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
+            down_idx = table[,column] <= (fc * -1)
+            down_genes = table[down_idx,]
+        } else {
+            ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
+            down_idx = table[,column] <= (1 / fc)
+            down_genes = table[down_idx,]
+        }
+        print(paste0("The up genes table has ", dim(up_genes)[1], " genes."))
+        print(paste0("The down genes table has ", dim(down_genes)[1], " genes."))        
+    }
+    ret = list(up_genes=up_genes, down_genes=down_genes)
+    return(ret)
 }
 
 ## EOF

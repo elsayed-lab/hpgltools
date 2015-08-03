@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jul 22 12:19:12 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jul 31 16:08:28 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -400,18 +400,16 @@ pval_plot = function(df, ontology="MF") {
 #' ## many_comparisons = limma_pairwise(expt=an_expt)
 #' ## tables = many_comparisons$limma_result
 #' ## this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
-limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", gff_file=NULL, goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_gostats=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
+limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, fc=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", gff_file=NULL, goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_gostats=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
     message("This function expects a list of limma contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
     if (isTRUE(do_goseq) & is.null(gene_lengths)) {
         stop("Performing a goseq search requires a data frame of gene lengths.")
     }
-##    if (isTRUE(do_cluster) & is.null(gff_file)) {
-##        stop("Performing a clusterprofiler search requires a gff file.")
-##    }
-    if (is.null(n) & is.null(z)) {
-        z = 1
-    }
+    ## if (isTRUE(do_cluster) & is.null(gff_file)) {
+    ##  stop("Performing a clusterprofiler search requires a gff file.")
+    ## }
+
     goid_map = get0('goid_map')
     if (is.null(goid_map)) {
         goid_map = "reference/go/id2go.map"
@@ -447,18 +445,10 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
         }
         comparison = names(limma_out[c])
         message(paste("Performing ontology search of:", comparison, sep=""))
-        if (is.null(n)) {
-            out_summary = summary(datum$logFC)
-            out_mad = mad(datum$logFC, na.rm=TRUE)
-            up_median_dist = out_summary["Median"] + (out_mad * z)
-            down_median_dist = out_summary["Median"] - (out_mad * z)
-            up_genes = subset(datum, logFC >= up_median_dist)
-            down_genes = subset(datum, logFC <= down_median_dist)
-        } else if (is.null(z)) {
-            upranked = datum[order(datum$logFC, decreasing=TRUE),]
-            up_genes = head(upranked, n=n)
-            down_genes = tail(upranked, n=n)
-        }
+        updown_genes = get_sig_genes(datum, n=n, z=z, fc=fc)
+        up_genes = updown_genes$up_genes
+        down_genes = updown_genes$down_genes
+
         goseq_up_ontology = goseq_up_trees = goseq_down_ontology = goseq_down_trees = NULL
         cluster_up_ontology = cluster_up_trees = cluster_down_ontology = cluster_down_trees = NULL
         topgo_up_ontology = topgo_up_trees = topgo_down_ontology = topgo_down_trees = NULL

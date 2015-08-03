@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jun 24 13:47:06 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Aug  3 11:47:13 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -91,12 +91,21 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
     }
     de_vector = NULL
     de_table = de_genes[,c("ID","DE")]
-    if (is.null(lengths) & is.null(all_genes)) {
+    if (is.null(lengths) & is.null(all_genes) & is.null(species)) {
         stop("Need either a set of all genes or gene lengths")
     } else if (!is.null(lengths)) {
         message("Using the length data to fill in the de vector.")
         de_table = merge(de_table, lengths, by.x="ID", by.y="ID", all.y=TRUE)
         de_table[is.na(de_table)] = 0  ## Set the new entries DE status to 0
+        rownames(de_table) = make.names(de_table$ID, unique=TRUE)
+        de_vector = as.vector(de_table$DE)
+        names(de_vector) = rownames(de_table)
+    } else if (!is.null(species)) {
+        print("Going to use species and length_db to get required metadata.")
+        gene_names = as.data.frame(get(paste(species, length_db, "LENGTH", sep = "."))$Gene)
+        colnames(gene_names) = c("ID")
+        de_table = merge(de_table, gene_names, by.x="ID", by.y="ID", all.y=TRUE)
+        de_table[is.na(de_table)] = 0
         rownames(de_table) = make.names(de_table$ID, unique=TRUE)
         de_vector = as.vector(de_table$DE)
         names(de_vector) = rownames(de_table)

@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jul 22 11:31:22 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jul 31 15:35:17 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' pattern_count_genome()  Find how many times a given pattern occurs in every gene of a genome.
 #'
@@ -196,4 +196,3 @@ backup_file = function(file, backups=10) {
 }
 
 ## EOF
-
