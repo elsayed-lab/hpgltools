@@ -31,6 +31,8 @@ clean:
 	rm -rf hpgltools/
 	rm -rf hpgltools.Rcheck/
 	rm -rf hpgltools_${VERSION}.tar.gz
+	find . -type f -name '*.Rdata' -exec rm -rf {} ';' 2>/dev/null
+	find . -type f -name '*.rda' -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name excel -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
 

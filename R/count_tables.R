@@ -1,29 +1,30 @@
-## Time-stamp: <Thu Jun  4 11:36:29 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jul 28 13:10:15 2015 Ashton Trey Belew (abelew@gmail.com)>
 
-#' Wrap bioconductor's expressionset to include some other extraneous
+#' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
 #' expt_subset for everything
 #'
-#' @param file a comma separated file describing the samples with
+#' @param file  a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc
-#' @param color_hash a hash which describes how to color the samples,
-#'   NULL by default; it will generate its own colors using colorBrewer
-#' @param suffix when looking for the count tables in processed_data
-#'   look for this suffix on the end of the files.  .count.gz by default.
-#' @param header Does the csv metadata file have a header?  FALSE by default.
-#' @param genes annotation information describing the rows of the data set, usually
-#'   this comes from a call to import.gff()
-#' @param by_type when looking for count tables, are they organized by type?
-#' @param by_sample or by sample?  I do all mine by sample, but others do by type...
-#' @param sep some folks prefer their csv files as tab separated or somesuch
-#' @param include_type I have usually assumed that all gff annotations should be used,
-#'   but that is not always true, this allows one to limit.
-#' @param include_gff A gff file to help in sorting which features to keep
-#' @param count_dataframe If one does not wish to read the count tables from processed_data/
-#'   they may instead be fed here
-#' @param savefile an Rdata file to which to save the data of the resulting expt. expt.Rdata by default.
-#' @param low_files whether or not to explicitly lowercase the filenames when searching in processed_data/
-#'   this is relevant because the ceph object storage by default lowercases filenames.
+#' @param color_hash default=NULL  a hash which describes how to color the samples,
+#' it will generate its own colors using colorBrewer
+#' @param suffix default='.count.gz'  when looking for the count tables in processed_data
+#' look for this suffix on the end of the files.
+#' @param header default=FALSE  Does the csv metadata file have a header?
+#' @param genes default=NULL  annotation information describing the rows of the data set, usually
+#' this comes from a call to import.gff()
+#' @param by_type default=FALSE  when looking for count tables, are they organized by type?
+#' @param by_sample default=FALSE  or by sample?  I do all mine by sample, but others do by type...
+#' @param sep default=','  some people prefer their csv files as tab or semicolon separated.
+#' @param include_type default='all'  I have usually assumed that all gff annotations should be used,
+#' but that is not always true, this allows one to limit.
+#' @param include_gff default=NULL  A gff file to help in sorting which features to keep
+#' @param count_dataframe default=NULL  If one does not wish to read the count tables from processed_data/
+#' they may instead be fed here
+#' @param meta_dataframe default=NULL  an optional dataframe containing the metadata rather than a file
+#' @param savefile default='expt'  an Rdata filename prefix for saving the data of the resulting expt.
+#' @param low_files default=FALSE  whether or not to explicitly lowercase the filenames when searching in processed_data/
+#' this is relevant because the ceph object storage by default lowercases filenames.
 #'
 #' It is worth noting that this function has a lot of logic used to
 #' find the count tables in the local filesystem.  This logic has been
@@ -40,7 +41,7 @@
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Remember that this depends on an existing data structure of gene annotations.
-create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
+create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
@@ -51,13 +52,16 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
     colnames(tmp_definitions) = tolower(colnames(tmp_definitions))
     tmp_definitions = subset(tmp_definitions, sample.id != "")
     condition_names = unique(tmp_definitions$condition)
+    if (is.null(condition_names)) {
+        warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
+    }
     if (is.null(color_hash)) {
-        if (!is.null(tmp_definitions$color)) {
-            color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)
-        } else {
+        if (is.null(tmp_definitions$color)) {
             num_colors = length(condition_names)
             colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors))
             color_hash = hash(keys=as.character(condition_names), values=colors)
+        } else {
+            color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)            
         }
     }
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
@@ -66,7 +70,7 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
     expt_list = create_experiment(file=file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, meta_dataframe=meta_dataframe, sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
     expt = expt_list$expt
     def = expt_list$def
-    new_expt = expt_subset(expt, "")
+    new_expt = expt_subset(expt)
     new_expt$definitions = def
 
     if (!is.null(expt_list$annotation)) {
@@ -102,12 +106,26 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
     return(new_expt)
 }
 
-#' Wrap bioconductor's expressionset to include some other extraneous
+#' create_experiment()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.
 #'
-#' @param file a comma separated file describing the samples with
-#' information like condition,batch,count_filename,etc
-#' @param color_hash a hash which describes how to color the samples
+#' @param file default=NULL  a comma separated file describing the samples with
+#' information like condition,batch,count_filename,etc.
+#' @param color_hash  a hash which describes how to color the samples
+#' @param suffix default='.count.gz'  when looking for the count tables in processed_data
+#' look for this suffix on the end of the files.
+#' @param header default=FALSE  Does the csv metadata file have a header?
+#' @param genes default=NULL  annotation information describing the rows of the data set, usually
+#' this comes from a call to import.gff()
+#' @param by_type default=FALSE  when looking for count tables, are they organized by type?
+#' @param by_sample default=FALSE  or by sample?  I do all mine by sample, but others do by type...
+#' @param sep default=','  some people prefer their csv files as tab or semicolon separated.
+#' @param include_type default='all'  I have usually assumed that all gff annotations should be used,
+#' but that is not always true, this allows one to limit.
+#' @param include_gff default=NULL  A gff file to help in sorting which features to keep
+#' @param count_dataframe default=NULL  If one does not wish to read the count tables from processed_data/
+#' they may instead be fed here
+#' @param meta_dataframe default=NULL  an optional dataframe containing the metadata rather than a file
 #'
 #' @return  experiment an expressionset
 #' @seealso \code{\link{pData}}, \code{\link{fData}},
@@ -252,13 +270,15 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
     return(ret)
 }
 
-#' Extract a subset of samples following some rule(s) from an
+#' expt_subset()  Extract a subset of samples following some rule(s) from an
 #' experiment class
 #'
-#' @param expt an expt which is a home-grown class containing an
+#' @param expt  an expt which is a home-grown class containing an
 #' expressionSet, design, colors, etc.
-#' @param subset a valid R expression which defines a subset of the
+#' @param subset  a valid R expression which defines a subset of the
 #' design to keep.
+#' @param by_definitions default=TRUE  whether to use the definitions dataframe or design from pData(expressionset).
+#' The definitions dataframe often has much more information.
 #'
 #' @return  metadata an expt class which contains the smaller set of
 #' data
@@ -269,7 +289,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
 #' @examples
 #' ## smaller_expt = expt_subset(big_expt, "condition=='control'")
 #' ## all_expt = expt_subset(expressionset, "")  ## extracts everything
-expt_subset = function(expt, subset, by_definitions=FALSE) {
+expt_subset = function(expt, subset=NULL, by_definitions=FALSE) {
     if (class(expt) == "ExpressionSet") {
         expressionset = expt
     } else if (class(expt) == "expt") {
@@ -278,13 +298,22 @@ expt_subset = function(expt, subset, by_definitions=FALSE) {
         stop("expt is neither an expt nor ExpressionSet")
     }
     if (isTRUE(by_definitions)) {
-        initial_metadata = expt$definitions
+        if (is.null(expt$definitions)) {
+            warning("There is no expt$definitions, using the expressionset.")
+            initial_metadata = pData(expressionset)
+        } else {
+            initial_metadata = expt$definitions
+        }
     } else {
         initial_metadata = Biobase::pData(expressionset)
     }
-    r_expression=paste("subset(initial_metadata,", subset, ")")
-    samples = eval(parse(text=r_expression))
-    ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
+    if (is.null(subset)) {
+        samples = initial_metadata
+    } else {
+        r_expression=paste("subset(initial_metadata,", subset, ")")
+        samples = eval(parse(text=r_expression))
+        ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
+    }
     design = as.data.frame(samples)
     ## This is to get around stupidity with respect to needing all factors to be in a DESeqDataSet
     conditions = as.factor(as.character(design$condition))
@@ -294,6 +323,8 @@ expt_subset = function(expt, subset, by_definitions=FALSE) {
     samplenames = as.character(samples$sample)
     colors = as.character(samples$color)
     names = paste(conditions, batches, sep="-")
+    subset_definitions = expt$definitions[rownames(expt$definitions) %in% samplenames, ]
+    subset_libsize = expt$original_libsize[names(expt$original_libsize) %in% samplenames]
     expressionset = expressionset[, sampleNames(expressionset) %in% samplenames]
     columns = data.frame(sample=colnames(exprs(expressionset)))
     rownames(columns) = colnames(exprs(expressionset))
@@ -302,6 +333,7 @@ expt_subset = function(expt, subset, by_definitions=FALSE) {
         expressionset=expressionset,
         samples=samples,
         design=design,
+        definitions=subset_definitions,
         stages=initial_metadata$stage,
         types=initial_metadata$type,
         conditions=conditions,
@@ -309,20 +341,27 @@ expt_subset = function(expt, subset, by_definitions=FALSE) {
         samplenames=samplenames,
         colors=colors,
         names=names,
+        filtered=expt$filtered,
+        transform=expt$transform,
+        norm=expt$norm,
+        convert=expt$convert,
+        original_libsize=subset_libsize,
         columns=columns)
     class(metadata) = "expt"
     return(metadata)
 }
 
-#' Read a bunch of count tables and create a usable data frame from
+#' hpgl_read_files()  Read a bunch of count tables and create a usable data frame from
 #' them.
 #'
-#' @param ids a list of experimental ids
-#' @param files a list of files to read
-#' @param header whether or not the count tables include a header row
-#'        (default: FALSE)
-#' @param include_summary_rows whether HTSeq summary rows should be included
-#'        (default: FALSE)
+#' @param ids  a list of experimental ids
+#' @param files  a list of files to read
+#' @param header default=FALSE  whether or not the count tables include a header row.
+#' @param include_summary_rows default=FALSE  whether HTSeq summary rows should be included.
+#' @param suffix default=NULL  an optional suffix to add to the filenames when reading them.
+#'
+#' It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
+#' It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.
 #'
 #' @return  count_table a data frame of count tables
 #' @seealso \code{\link{create_experiment}}
@@ -352,7 +391,10 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
         files[1] = lower_filenames[1]
     }
     ##count_table = read.table(files[1], header=header, ...)
-    count_table = read.table(files[1], header=header)
+    count_table = try(read.table(files[1], header=header))
+    if (class(count_table)[1] == 'try-error') {
+        stop(paste0("There was an error reading: ", files[1]))
+    }
     print(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
     colnames(count_table) = c("ID", ids[1])
     ## iterate over and append remaining samples
@@ -364,10 +406,15 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
         } else if (file.exists(lower_filenames[table])) {
             files[table] = lower_filenames[table]
         }
-        tmp_count = read.table(files[table], header=header)
-        print(paste0(files[table], " contains ", length(rownames(count_table)), " rows."))
+        tmp_count = try(read.table(files[table], header=header))
+        if (class(tmp_count)[1] == 'try-error') {
+            stop(paste0("There was an error reading: ", files[table]))
+        }        
         colnames(tmp_count) = c("ID", ids[table])
+        pre_merge = length(rownames(tmp_count))
         count_table = merge(count_table, tmp_count, by="ID")
+        post_merge = length(rownames(count_table))
+        print(paste0(files[table], " contains ", pre_merge, " rows and merges to ", post_merge, " rows."))
     }
 
     rm(tmp_count)
@@ -384,3 +431,58 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
     }
     return(count_table)
 }
+
+
+#' concatenate_runs()  Sum the reads/gene for multiple sequencing runs of a single condition/batch
+#'
+#' @param expt  an experiment class containing the requisite metadata and count tables
+#' @param column default='replicate'  a column of the design matrix used to specify which samples are replicates
+#'
+#' @return the input expt with the new design matrix, batches, conditions, colors, and count tables.
+#' @export
+#' @examples
+#' ## compressed = concatenate_runs(expt)
+concatenate_runs = function(expt, column='replicate') {
+    data = exprs(expt$expressionset)
+    design = expt$definitions
+    replicates = levels(as.factor(design[,column]))
+    final_expt = expt
+    final_data = NULL
+    final_design = NULL
+    column_names = list()
+    colors = list()
+    conditions = list()
+    batches = list()
+    names = list()
+    for (rep in replicates) {
+        expression = paste0(column, "=='", rep, "'")
+        tmp_expt =  expt_subset(expt, expression, by_definitions=TRUE)
+        tmp_data =  rowSums(exprs(tmp_expt$expressionset))
+        tmp_design = tmp_expt$design[1,]
+        final_data = cbind(final_data, tmp_data)
+        final_design = rbind(final_design, tmp_design)
+        column_names[[rep]] = as.character(tmp_design$sample.id)
+        colors[[rep]] = as.character(tmp_design$color)
+        batches[[rep]] = as.character(tmp_design$batch)
+        conditions[[rep]] = as.character(tmp_design$condition)
+        names[[rep]] = paste(conditions[[rep]], batches[[rep]], sep='-')
+        colnames(final_data) = column_names
+    }
+    final_expt$design = final_design
+    metadata = new("AnnotatedDataFrame", final_design)
+    sampleNames(metadata) = colnames(final_data)
+    feature_data = new("AnnotatedDataFrame", fData(expt$expressionset))
+    featureNames(feature_data) = rownames(final_data)
+    experiment = new("ExpressionSet", exprs=final_data,
+                     phenoData=metadata, featureData=feature_data)
+    final_expt$expressionset = experiment
+    final_expt$original_expressionset = experiment
+    final_expt$samples = final_design
+    final_expt$colors = as.character(colors)
+    final_expt$batches = as.character(batches)
+    final_expt$conditions = as.character(conditions)
+    final_expt$names = as.character(names)
+    return(final_expt)
+}
+
+## EOF

@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jun  4 14:56:16 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 22 13:57:44 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways
 #'
@@ -22,13 +22,24 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
     ## Please note that the KGML parser fails if other XML parsers are loaded into R
     ## eh = new.env(hash=TRUE, size=NA)
     ## There is a weird namespace conflict when using pathview, so I will reload it here
-    try(detach("package:Rgraphviz", unload=TRUE))
-    try(detach("package:topGO", unload=TRUE))
-    try(detach("package:pathview", unload=TRUE))
-    try(detach("package:KEGGgraph", unload=TRUE))
-    try(detach("package:RamiGO", unload=TRUE))
-    try(detach("package:graph", unload=TRUE))
+    try(detach("package:Rgraphviz", unload=TRUE), silent=TRUE)
+    try(detach("package:topGO", unload=TRUE), silent=TRUE)
+    try(detach("package:pathview", unload=TRUE), silent=TRUE)
+    try(detach("package:KEGGgraph", unload=TRUE), silent=TRUE)
+    try(detach("package:RamiGO", unload=TRUE), silent=TRUE)
+    try(detach("package:graph", unload=TRUE), silent=TRUE)
     require.auto("pathview")
+    ## If a table from limma was passed to this, just assume that one wants logFC
+    ## Similar stanzas should probably be added for deseq/edger
+    ## This is added because pathview() only works with dataframes/lists with only numbers.
+    ## So it is wise to pull only the column of numbers one cares about.
+    if (!is.null(path_data$logFC)) {
+        tmp_data = as.data.frame(path_data[, "logFC"])
+        rownames(tmp_data) = rownames(path_data)
+        colnames(tmp_data) = c("logFC")
+        path_data = tmp_data
+        rm(tmp_data)
+    }
     tmp_names = names(path_data)
     tmp_names = gsub(string_from, string_to, tmp_names)
     if (!is.null(second_from)) {
@@ -65,7 +76,11 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
         path_name = tolower(path_name)
         path_name = gsub(" ", "_", path_name)
         gene_examples = try(keggLink(paste("path", path, sep=":"))[,2])  ## RCurl is crap and fails sometimes for no apparent reason.
-        limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
+        ##limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
+        limit_test = c(abs(min(path_data, na.rm=TRUE)), abs(max(path_data, na.rm=TRUE)))
+        limit_min = -1.0 * max(limit_test)
+        limit_max = max(limit_test)
+        limits = c(limit_min, limit_max)
         if (isTRUE(verbose)) {
             print(paste("Here are some path gene examples: ", gene_examples, sep=""))
             print(paste("Here are your genes: ", head(names(path_data))), sep="")
@@ -86,13 +101,17 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
             ## Dr. McIver wants path names...
             if (filenames == "id") {
                 newfile = paste(outdir,"/", path, suffix, ".png", sep="")
-            } else {
+            } else {  ## If filenames is not 'id', put in the path name...
                 newfile = paste(outdir, "/", path_name, suffix, ".png", sep="")
             }
             if (isTRUE(verbose)) {
                 message(paste("Moving file to: ", newfile, sep=""))
             }
-            file.rename(from=oldfile, to=newfile)
+            rename_try = try(file.rename(from=oldfile, to=newfile))
+            if (class(rename_try)[1] == 'try-error') {
+                warning("There was an error renaming a png file, likely because it didn't download properly.")
+                warning("It is likely easiest to just delete the pathview input directory.")
+            }
             data_low = summary(path_data)[2]
             data_high = summary(path_data)[3]
             numbers_in_plot = as.numeric(pv$plot.data.gene$mol.data)
@@ -156,14 +175,17 @@ gostats_kegg = function() {
 #' ## fun = kegg_get_orgn('Canis')
 #' ## >     Tid     orgid      species                   phylogeny
 #' ## >  17 T01007   cfa Canis familiaris (dog) Eukaryotes;Animals;Vertebrates;Mammals
-kegg_get_orgn = function(species="Leishmania") {
+kegg_get_orgn = function(species="Leishmania", short=TRUE) {
     all_organisms = getURL("http://rest.kegg.jp/list/organism")
     org_tsv = textConnection(all_organisms)
     all = read.table(org_tsv, sep="\t", quote="", fill=TRUE)
     close(org_tsv)
     colnames(all) = c("Tid","orgid","species","phylogeny")
     candidates = all[grepl(species, all$species),]  ## Look for the search string in the species column
-    return(candidates)
+    if (isTRUE(short)) {
+        candidates = as.character(candidates$orgid)
+    }
+    return(candidates)    
 }
 
 

@@ -1,22 +1,21 @@
-## Time-stamp: <Mon Jun  8 11:22:40 2015 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Wed Jul 22 16:41:11 2015 Ashton Trey Belew (abelew@gmail.com)>
 
-#' Make a ggplot PCA plot describing the samples' clustering
+#' hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
 #'
-#' @param expt an expt set of samples
-#' @param df alternately a data frame which must be accompanied by
-#' @param design a design matrix and
-#' @param colors a color scheme
-#' @param method a correlation method to use.  Defaults to pearson.
-#' @param names use pretty names for the samples?
-#' @param labels add labels?  Also, what type?  FALSE, "default", or "fancy"
+#' @param data  an expt set of samples.
+#' @param design default=NULL  a design matrix and.
+#' @param colors default=NULL  a color scheme.
+#' @param title default=NULL  a title for the plot.
+#' @param size default=5  size for the glyphs on the plot.
+#' @param labels default=NULL  add labels?  Also, what type?  FALSE, "default", or "fancy".
 #'
 #' @return a list containing the following:
+#'   pca = the result of fast.svd()
 #'   plot = ggplot2 pca_plot describing the principle component analysis of the samples.
 #'   table = a table of the PCA plot data
 #'   res = a table of the PCA res data
 #'   variance = a table of the PCA plot variance
 #' This makes use of cbcbSEQ and prints the table of variance by component.
-#'
 #' @seealso \code{\link{makeSVD}}, \code{\link{pcRes}},
 #' \code{\link{geom_dl}}
 #'
@@ -24,9 +23,10 @@
 #' @examples
 #' ## pca_plot = hpgl_pca(expt=expt)
 #' ## pca_plot
-hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, size=3, ...) {
+hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, size=5, ...) {
     hpgl_env = environment()
     data_class = class(data)[1]
+    names = NULL
     if (data_class == 'expt') {
         design = data$design
         colors = data$colors
@@ -34,6 +34,11 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
         data = exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         data = exprs(data)
+    } else if (data_class == 'list') {
+        data = data$count_table
+        if (is.null(data)) {
+            stop("The list provided contains no count_table element.")
+        }
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -54,8 +59,23 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
         }
     }
 
+    if (is.null(design)) {
+        print("No design was provided.  Making one with 1 condition, 1 batch.")
+        design = cbind(labels, 1)
+        design = as.data.frame(design)
+        design$condition = as.numeric(design$labels)
+        colnames(design) = c("name","batch","condition")
+    }
     pca = hpgltools::makeSVD(data)  ## This is a part of cbcbSEQ
-    if (length(levels(design$batch)) == 1) {
+    included_batches = as.factor(as.character(design$batch))
+    included_conditions = as.factor(as.character(design$condition))
+    if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
+        warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
+    } else if (length(levels(included_conditions)) == 1) {
+        warning("There is only one condition, but more than one batch.   Going to run pcRes with the batch information.")
+        pca_res = cbcbSEQ::pcRes(pca$v, pca$d, design$batch)
+    } else if (length(levels(included_batches)) == 1) {
+        print("There is just one batch in this data.")
         pca_res = cbcbSEQ::pcRes(pca$v, pca$d, design$condition)
     } else {
         pca_res = cbcbSEQ::pcRes(pca$v, pca$d, design$condition, design$batch)
@@ -64,23 +84,24 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
     xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
     if (is.null(colors)) {
-        colors = as.numeric(levels(design$condition))
+        colors = as.numeric(levels(as.factor(design$condition)))
     }
 
     pca_data = data.frame(SampleID=labels,
-        condition=design$condition,
-        batch=design$batch,
+        condition=as.character(design$condition),
+        batch=as.character(design$batch),
         batch_int = as.integer(design$batch),
         PC1=pca$v[,1],
         PC2=pca$v[,2],
-        colors=colors)
+        colors=colors,
+        labels=as.character(labels))
 
-    num_batches = length(levels(design$batch))
+    num_batches = length(levels(included_batches))
     pca_plot = NULL
     if (num_batches <= 5) {
-        pca_plot = pca_plot_smallbatch(pca_data)
+        pca_plot = pca_plot_smallbatch(pca_data, size=size, first='PC1', second='PC2')
     } else {
-        pca_plot = pca_plot_largebatch(pca_data)
+        pca_plot = pca_plot_largebatch(pca_data, size=size, first='PC1', second='PC2')
     }
     pca_plot = pca_plot + xlab(xl) + ylab(yl) + theme_bw() + theme(legend.key.size=unit(0.5, "cm"))
     if (!is.null(labels)) {
@@ -102,40 +123,64 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
 }
 
 
-## 6 or more batches
-pca_plot_largebatch = function(df) {
-    env = environment()
+#' pca_plot_largebatch()  ggplot2 plots of PCA data with >= 6 batches.
+#' 
+#' @param df  A dataframe of PC1/PC2 and other arbitrary data.
+#' @param size default=5  The size of glyphs in the plot.
+#'
+#' @return a ggplot2 plot of principle components 1 and 2.
+pca_plot_largebatch = function(df, size=5, first="PC1", second="PC2") {
+    hpgl_env = environment()
+    ## The following 8 lines were written when I forgot to add environment= to ggplot() and it started throwing errors
+    ## because it could not find the variable 'first', so I made it explicitly impossible for them to be nonexistent.
+    ## get0 will set the value to null if the object does not exist, I then check for null and set the default value.
+    ## This is entirely too verbose, but kind of nice if I will find myself debugging a bunch of code in the future.
+    first = get0('first')
+    second = get0('second')
+    if (is.null(first)) {
+        first = 'PC1'
+    }
+    if (is.null(second)) {
+        second = 'PC2'
+    }
     num_batches = length(levels(factor(df$batch)))
-    plot = ggplot(df, aes(PC1, PC2)) +
-        geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
-        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(df$conditions)), values=levels(as.factor(df$colors))) +
-        scale_color_manual(name="Condition", guide="legend", labels=levels(as.factor(df$conditions)), values=levels(as.factor(df$colors))) +
+    plot = ggplot(df, aes(x=get(first), y=get(second)), environment=hpgl_env) +
+        ## geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
+        geom_point(size=size, aes(shape=batch, fill=condition, colour=colors)) +
+        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(df$condition)), values=levels(as.factor(df$colors))) +
+        scale_color_manual(name="Condition", guide="legend", labels=levels(as.factor(df$condition)), values=levels(as.factor(df$colors))) +
         guides(fill=guide_legend(override.aes=list(colour=levels(factor(df$colors)))), colour=guide_legend(override.aes="black")) +
-        scale_shape_manual(values=c(1:num_batches), name="Batch")
+        scale_shape_manual(values=c(1:num_batches), name="Batch") + theme_bw()
     return(plot)
 }
 
-## 5 or fewer batches
-pca_plot_smallbatch = function(df) {
-    env = environment()
-    plot = ggplot(df, aes(PC1, PC2)) +
-        geom_point(size=3, aes(shape=factor(batch), fill=condition), colour='black') +
-        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(df$conditions)), values=levels(as.factor(df$colors))) +
+#' pca_plot_smallbatch()  ggplot2 plots of PCA data with <= 5 batches.
+#'
+#' This uses hard-coded scale_shape_manual values 21-25 to have solid shapes in the plot.
+#' @param df  A dataframe of PC1/PC2 and other arbitrary data.
+#' @param size default=5  The size of glyphs in the plot.
+#'
+#' @return a ggplot2 plot of principle components 1 and 2.
+pca_plot_smallbatch = function(df, size=5, first='PC1', second='PC2') {
+    hpgl_env = environment()
+    plot = ggplot(df, aes(x=get(first), y=get(second)), environment=hpgl_env) +
+        geom_point(size=size, aes(shape=factor(batch), fill=condition), colour='black') +
+        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(df$condition)), values=levels(as.factor(df$colors))) +
+        ##scale_fill_manual(name="Condition", guide="legend", labels=condition, values=colors) +
         scale_shape_manual(name="Batch", labels=levels(as.factor(df$batch)), values=21:25) +
         guides(fill=guide_legend(override.aes=list(colour=levels(factor(df$colors)))), colour=guide_legend(override.aes="black"))
     return(plot)
 }
 
-#' Collect the r^2 values from a linear model fitting between a singular
-#' value decomposition and factor
+#' factor_rsquared()  Collect the r^2 values from a linear model fitting between a singular
+#' value decomposition and factor.
 #'
-#' @param svd_v The V' V = I portion of a fast.svd call
-#' @param factor a factor describing the original data
+#' @param svd_v  the V' V = I portion of a fast.svd call.
+#' @param factor  an experimental factor from the original data.
 #'
-#' @return The r^2 values of the linear model as a %
+#' @return The r^2 values of the linear model as a percentage.
 #'
 #' @seealso \code{\link{fast.svd}}
-#' @export
 factor_rsquared = function(svd_v, factor) {
     svd_lm = try(lm(svd_v ~ factor), silent=TRUE)
     if (class(svd_lm) == 'try-error') {
@@ -148,15 +193,15 @@ factor_rsquared = function(svd_v, factor) {
     return(result)
 }
 
-#' A quick and dirty PCA plotter of arbitrary components against one another.
+#' plot_pcs()  A quick and dirty PCA plotter of arbitrary components against one another.
 #'
-#' @param data A dataframe of principle components PC1 .. PCN with any other arbitrary information.
-#' @param first Principle component PCx to put on the x axis
-#' @param second Principle component PCy to put on the y axis
-#' @param variances A list of the pct. variance explained by each component
-#' @param design The experimental design with condition/batch
-#' @param title Title for the plot
-#' @param labels Whether or not one wants fancy labels for the conditions
+#' @param data  a dataframe of principle components PC1 .. PCN with any other arbitrary information.
+#' @param first default='PC1'  principle component PCx to put on the x axis.
+#' @param second default='PC2'  principle component PCy to put on the y axis.
+#' @param variances default=NULL  a list of the percent variance explained by each component.
+#' @param design default=NULL  the experimental design with condition batch factors.
+#' @param title default=NULL  a title for the plot.
+#' @param labels default=NULL  a parameter for the labels on the plot.
 #'
 #' @return a ggplot2 PCA plot
 #'
@@ -183,13 +228,6 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
         theme_bw() +
         theme(legend.key.size=unit(0.5, "cm"))
 
-##    pca_plot = ggplot(data, environment=hpgl_env, fill=factor(design$condition)) +
-##        geom_point(aes(x=get(first), y=get(second), shape=batches, colour="black"), stat="identity", colour="black") +
-##        scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
-##        scale_color_manual(name="Condition", guide="legend", labels=levels(as.factor(conditions)), values=levels(as.factor(colors))) +
-##        guides(fill=guide_legend(override.aes=list(colour=levels(factor(colors)))), colour=guide_legend(override.aes="black")) +
-##        scale_shape_manual(values=c(1:num_batches), name="Batch")
-
     if (!is.null(variances)) {
         x_var_num = as.numeric(gsub("PC", "", first))
         y_var_num = as.numeric(gsub("PC", "", second))
@@ -214,6 +252,11 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
 ## z(i) = cumulative sum of $u squared
 ## z = cumsum((svd$u ^ 2))
 
+#' u_plot()  Plot the rank order svd$u elements to get a view of how much the first genes contribute to the total variance by PC.
+#'
+#' @param plotted_us  a list of svd$u elements
+#'
+#' @return a recordPlot() plot showing the first 3 PCs by rank-order svd$u.
 u_plot = function(plotted_us) {
     plotted_us = abs(plotted_us[,c(1,2,3)])
     plotted_u1s = plotted_us[order(plotted_us[,1], decreasing=TRUE),]
@@ -251,7 +294,7 @@ u_plot = function(plotted_us) {
     return(u_plot)
 }
 
-#' pca_information(): Gather information about principle components
+#' pca_information()  Gather information about principle components.
 #'
 #' Calculate some information useful for generating PCA plots.
 #'
@@ -268,14 +311,15 @@ u_plot = function(plotted_us) {
 #' @section Warning:
 #'  This function has gotten too damn big and needs to be split up.
 #'
-#' @param df The data to analyze (usually exprs(somedataset))
-#' @param design A dataframe describing the experimental design, containing columns with
+#' @param data  the data to analyze (usually exprs(somedataset)).
+#' @param design default=NULL  a dataframe describing the experimental design, containing columns with
 #'   useful information like the conditions, batches, number of cells, whatever...
-#' @param factors A character list of columns from the design matrix which will be queried
-#'   for R^2 against the fast.svd of the data.  This defaults to c("condition","batch"), which
-#'   is in all of my experimental designs thus far.
-#' @param components A number of principle components to compare the design factors against.
+#' @param factors default=c("condition","batch")  a character list of experimental conditions to query
+#'   for R^2 against the fast.svd of the data.
+#' @param components default=NULL  a number of principle components to compare the design factors against.
 #'   If left null, it will query the same number of components as factors asked for.
+#' @param plot_pcas default=FALSE  plot the set of PCA plots for every pair of PCs queried.
+#' @param labels default="fancy"  how to label the glyphs on the plot.
 #'
 #' @return a list of fun pca information:
 #'   svd_u/d/v: The u/d/v parameters from fast.svd
@@ -294,16 +338,20 @@ u_plot = function(plotted_us) {
 #' @examples
 #' ## pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
 #' ## pca_info
-pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition","batch"), num_components=NULL, plot_pcas=FALSE, labels="fancy") {
+pca_information = function(data, design=NULL, factors=c("condition","batch"), num_components=NULL, plot_pcas=FALSE, labels="fancy") {
     hpgl_env = environment()
-    if (is.null(expt) & is.null(df)) {
-        stop("This needs either: an expt or a df.")
+    data_class = class(data)[1]
+    if (data_class == 'expt') {
+        design = data$design
+        data = exprs(data$expressionset)
+    } else if (data_class == 'ExpressionSet') {
+        data = exprs(data)
+    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+        data = as.matrix(data)
+    } else {
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    if (is.null(df)) {
-        df = as.data.frame(exprs(expt$expressionset))
-        design = as.data.frame(expt$design)
-    }
-    data = as.matrix(df)
+    data = as.matrix(data)
     means = rowMeans(data)
     decomposed = fast.svd(data - means)
     positives = decomposed$d
@@ -315,7 +363,7 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     ## decrease if many genes are contributing to the given component
     ## Conversely, that line should drop suddenly if dominated by one/few genes.
 
-    rownames(u) = rownames(df)
+    rownames(u) = rownames(data)
     rownames(v) = colnames(data)
 
     u_plot = u_plot(u)
@@ -493,17 +541,16 @@ pca_information = function(expt=NULL, df=NULL, design=NULL, factors=c("condition
     return(pca_list)
 }
 
-#' pca_highscores(): Get the highest/lowest scoring genes for every principle component
+#' pca_highscores()  Get the highest/lowest scoring genes for every principle component.
 #'
 #' This function uses princomp to acquire a principle component biplot
 #' for some data and extracts a dataframe of the top n genes for each
 #' component by score.
 #'
-#' @param df A dataframe of (pseudo)counts
-#' @param conditions A factor or character of conditions in the
-#' experiment
-#' @param batches a factor or character of batches in the experiment
-#' @param n (20) the number of genes to extract
+#' @param df default=NULL  a dataframe of (pseudo)counts
+#' @param conditions default=NULL  a factor or character of conditions in the experiment.
+#' @param batches default=NULL  a factor or character of batches in the experiment.
+#' @param n default=20  the number of genes to extract.
 #'
 #' @return a list including the princomp biplot, histogram, and tables
 #' of top/bottom n scored genes with their scores by component.
@@ -544,3 +591,5 @@ pca_highscores = function(df=NULL, conditions=NULL, batches=NULL, n=20) {
         lowest=lowest)
     return(ret_list)
 }
+
+## EOF

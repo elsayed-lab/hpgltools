@@ -1,13 +1,17 @@
-## Time-stamp: <Tue May 19 14:54:30 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jul 24 10:13:40 2015 Ashton Trey Belew (abelew@gmail.com)>
 
-#' Automatic loading and/or installing of packages.
+#' require.auto()  Automatic loading and/or installing of packages.
 #'
 #' \code{require.auto} loads a library, and installs it first if necessary.
 #'
 #' This was taken from:
 #' http://sbamin.com/2012/11/05/tips-for-working-in-r-automatically-install-missing-package/
 #'
-#' @param lib string name of a library
+#' @param lib  string name of a library
+#' @param github_path default=NULL  an optional github username/path.
+#' @param verbose default=FALSE  print some information while loading.
+#' @param update default=FALSE  update packages?
+#' 
 #' @return NULL currently
 #' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}
 #' @export
@@ -43,8 +47,8 @@ require.auto = function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
     }
 }
 
-autoloads_ontology = function(...) {
-    require.auto("clusterProfiler", ...)
+autoloads_ontology = function() {
+    require.auto("clusterProfiler")
     require.auto("GO.db")
     require.auto("DOSE")
     require.auto("goseq")
@@ -56,14 +60,20 @@ autoloads_ontology = function(...) {
     require.auto("topGO")
 }
 
-autoloads_genome = function(...) {
-    require.auto("biomaRt", ...)
+autoloads_genome = function() {
+    require.auto("biomaRt")
     require.auto("BSgenome")
     require.auto("genomeIntervals")
     require.auto("rtracklayer")
 }
 
-autoloads_elsayedlab = function(...) {
+autoloads_elsayedlab = function() {
+    require.auto("OrganismDbi")
+    require.auto("TxDb.TcruziCLBrener.tritryp24.genes", "elsayed-lab/TxDb.TcruziCLBrener.tritryp24.genes")
+    require.auto("TxDb.TcruziCLBrenerEsmer.tritryp24.genes", "elsayed-lab/TxDb.TcruziCLBrenerEsmer.tritryp24.genes")
+    require.auto("TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes", "elsayed-lab/TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes")    
+    require.auto("TxDb.LmajorFriedlin.tritryp9.genes", "elsayed-lab/TxDb.LmajorFriedlin.tritryp9.genes")
+
     require.auto("BSgenome.Lmajor.friedlin", "elsayed-lab/BSgenome.Lmajor.friedlin")
     require.auto("BSgenome.Tcruzi.clbrener", "elsayed-lab/BSgenome.Tcruzi.clbrener")
     require.auto("BSgenome.Tcruzi.esmeraldo", "elsayed-lab/BSgenome.Tcruzi.esmeraldo")
@@ -75,13 +85,9 @@ autoloads_elsayedlab = function(...) {
     require.auto("Trypanosoma.cruzi.CLBrener", "elsayed-lab/Trypanosoma.cruzi.CLBrener")
     require.auto("Trypanosoma.cruzi.CLBrener.Esmeraldo", "elsayed-lab/Trypanosoma.cruzi.CLBrener.Esmeraldo")
     require.auto("Leishmania.major.Friedlin", "elsayed-lab/Leishmania.major.Friedlin")
-    require.auto("TxDb.TcruziCLBrener.tritryp24.genes", "elsayed-lab/TxDb.TcruziCLBrener.tritryp24.genes")
-    require.auto("TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes", "elsayed-lab/TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes")
-    require.auto("TxDb.TcruziCLBrenerEsmer.tritryp9.genes", "elsayed-lab/TxDb.TcruziCLBrenerEsmer.tritryp9.genes")
-    require.auto("TxDb.LmajorFriedlin.tritryp9.genes", "elsayed-lab/TxDb.LmajorFriedlin.tritryp9.genes")
 }
 
-autoloads_deseq = function(...) {
+autoloads_deseq = function() {
     require.auto("preprocessCore")
     require.auto("DESeq2")
     require.auto("DESeq")
@@ -94,7 +100,7 @@ autoloads_deseq = function(...) {
     require.auto("qlasso", "kokrah/qsmooth")
 }
 
-autoloads_graphs = function(...) {
+autoloads_graphs = function() {
     require.auto("Cairo")
     require.auto("directlabels")
     require.auto("ggplot2")
@@ -106,11 +112,11 @@ autoloads_graphs = function(...) {
     require.auto("Rgraphviz")
 }
 
-autoloads_helpers = function(...) {
-    require.auto("MASS", ...)
+autoloads_helpers = function() {
+    require.auto("MASS")
     require.auto("mgcv")
     require.auto("Matrix")
-    require.auto("devtools", ...)
+    require.auto("devtools")
     require.auto("BiocParallel")
     register(MulticoreParam(4))
     require.auto("data.table")
@@ -132,14 +138,14 @@ autoloads_helpers = function(...) {
     require.auto("xtable")
 }
 
-autoloads_stats = function(...) {
-    require.auto("multtest", ...)
+autoloads_stats = function() {
+    require.auto("multtest")
     require.auto("qvalue")
     require.auto("robust")
 }
 
-autoloads_misc = function(...) {
-    require.auto("motifRG", ...)
+autoloads_misc = function() {
+    require.auto("motifRG")
     require.auto("Rsamtools")
     require.auto("scales")
     require.auto("seqinr")
@@ -150,17 +156,14 @@ autoloads_misc = function(...) {
 #' @return NULL currently
 #' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}
 #' @export
-autoloads_all = function(...) {
-    ## I added the ... to the first entry
-    ## So that it will do update.packages() if update=TRUE
-    ## I don't need it after the first I think.
-    autoloads_helpers(...)
-    autoloads_misc(...)
-    autoloads_genome(...)
-    autoloads_graphs(...)
-    autoloads_stats(...)
-    autoloads_deseq(...)
-    autoloads_ontology(...)
+autoloads_all = function(update=FALSE) {
+    autoloads_helpers()
+    autoloads_misc()
+    autoloads_genome()
+    autoloads_graphs()
+    autoloads_stats()
+    autoloads_deseq()
+    autoloads_ontology()
     ##cite_options(tooltip=TRUE)
     ##cleanbib()
     options(gvis.plot.tag="chart")
@@ -174,4 +177,7 @@ autoloads_all = function(...) {
     png = CairoPNG
     x11 = CairoX11
     svg = CairoSVG
+    if (isTRUE(update)) {
+        update.packages()
+    }
 }

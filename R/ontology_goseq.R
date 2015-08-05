@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 28 11:13:23 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Aug  3 11:47:13 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -60,7 +60,7 @@ goseq_table = function(df, file=NULL) {
 #' @param adjust minimum adjusted pvalue
 #' @param pvalue minimum pvalue
 #' @param goseq_method wallenius statistical test used by goseq
-#' @param padjust_method BH which method to adjust the pvalues\
+#' @param padjust_method BH which method to adjust the pvalues
 #' @param species NULL optionally choose a species from supportedOrganisms()
 #' @param length_db If species is chosen (or if not, really), ensGene may be used to automagically pull the gene lengths.
 #'
@@ -76,7 +76,7 @@ goseq_table = function(df, file=NULL) {
 #'   bpp_plot,
 #'   cc_subset,
 #'   and ccp_plot
-#' @seealso \code{\link{goseq}} and \code{\link{clusterProfiler}}
+#' @seealso \code{\link{goseq}} \code{\link{clusterProfiler}}
 #' @export
 simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius", padjust_method="BH", species=NULL, length_db="ensGene") {
     message("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
@@ -91,12 +91,21 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
     }
     de_vector = NULL
     de_table = de_genes[,c("ID","DE")]
-    if (is.null(lengths) & is.null(all_genes)) {
+    if (is.null(lengths) & is.null(all_genes) & is.null(species)) {
         stop("Need either a set of all genes or gene lengths")
     } else if (!is.null(lengths)) {
         message("Using the length data to fill in the de vector.")
         de_table = merge(de_table, lengths, by.x="ID", by.y="ID", all.y=TRUE)
         de_table[is.na(de_table)] = 0  ## Set the new entries DE status to 0
+        rownames(de_table) = make.names(de_table$ID, unique=TRUE)
+        de_vector = as.vector(de_table$DE)
+        names(de_vector) = rownames(de_table)
+    } else if (!is.null(species)) {
+        print("Going to use species and length_db to get required metadata.")
+        gene_names = as.data.frame(get(paste(species, length_db, "LENGTH", sep = "."))$Gene)
+        colnames(gene_names) = c("ID")
+        de_table = merge(de_table, gene_names, by.x="ID", by.y="ID", all.y=TRUE)
+        de_table[is.na(de_table)] = 0
         rownames(de_table) = make.names(de_table$ID, unique=TRUE)
         de_vector = as.vector(de_table$DE)
         names(de_vector) = rownames(de_table)
@@ -113,6 +122,9 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
         length_table = lengths[,c("ID","width")]
         width_vector = as.vector(de_table$width)
         names(width_vector) = de_table$ID
+        if (is.null(goids)) {
+            stop("The goids are not defined.")
+        }
         colnames(goids) = c("ID", "GO")
         pwf = goseq::nullp(DEgenes=de_vector, bias.data=width_vector, plot.fit=TRUE)
     } else {
@@ -167,7 +179,7 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
     bp_interesting = bp_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
     cc_interesting = subset(godata_interesting, ontology == "CC")
     cc_interesting = cc_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
-    return_list = list(pwf=pwf, pwf_plot=pwf_plot,
+    return_list = list(input=de_genes, pwf=pwf, pwf_plot=pwf_plot,
         alldata=godata, pvalue_histogram=goseq_p,
         godata_interesting=godata_interesting,
         mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting,

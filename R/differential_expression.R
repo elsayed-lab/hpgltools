@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jun  8 11:34:45 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jul 31 16:06:43 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -7,7 +7,6 @@
 disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
     stat = pmin(abs(contrast_fit[,coef1]), abs(contrast_fit[,coef2]))
     pval = pmax(contrast_fit$p.val[,coef1], contrast_fit$p.val[,coef2])
-
 }
 ## An F-test only does inf==uninf && inf==bead
 ## So the solution is to separately perform the two subtests and subset for the set of genes for which both are true.
@@ -18,21 +17,21 @@ disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
 ##    adj.pval = p.adjust(^^pval^^, method='BH')
 ## ReportingTools hwriter
 
-#' all_pairwise(): Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
+#' all_pairwise()  Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
 #'
-#' @param expt an expt class containing count tables, normalization state, etc.
-#' @param conditions a factor of conditions in the experiment
-#' @param batches a factor of batches in the experiment
-#' @param extra_contrasts some extra contrasts to add to the list
+#' @param input  a dataframe/vector or expt class containing count tables, normalization state, etc.
+#' @param conditions default=NULL  a factor of conditions in the experiment
+#' @param batches default=NULL  a factor of batches in the experiment
+#' @param model_cond default=TRUE  include condition in the model?  This is likely always true.
+#' @param model_batch default=FALSE  include batch in the model?
+#' @param model_intercept default=FALSE  use an intercept model instead of cell means?
+#' @param extra_contrasts default=NULL some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
 #'  de_minus_cb = (E-D)-(C-B),"
-#' @param model_cond Include condition in the model?  This should pretty much always be true.
-#' @param model_batch Include batch in the model? FALSE by default, but hopefully true often.
-#' @param model_intercept Perform a cell-means or intercept model?  FALSE by default because I understand subtraction math better.
-#'   But I have tested and get the same answer either way.
-#' @param libsize I've recently figured out that libsize is far more important than I previously realized.  Play with it here.
+#' @param alt_model default=NULL an optional alternate model to use rather than just condition/batch
+#' @param libsize default=NULL the library size of the original data to help voom()
 #' @param ... The elipsis parameter is fed to write_limma() at the end.
 #'
 #' @return A list of limma, deseq, edger results.
@@ -40,34 +39,34 @@ disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-all_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
-    limma_result = limma_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
-    deseq_result = deseq2_pairwise(expt=expt, data=data, conditions=conditions, batches=batches) ## The rest of the arguments should be added back sooner than later.
-    edger_result = edger_pairwise(expt=expt, data=data, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
+all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+    limma_result = limma_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
+    deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches) ## The rest of the arguments should be added back sooner than later.
+    edger_result = edger_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
 
     result_comparison = compare_tables(limma=limma_result, deseq=deseq_result, edger=edger_result)
     ret = list(limma=limma_result, deseq=deseq_result, edger=edger_result, comparison=result_comparison)
     return(ret)
 }
 
-#' coefficient_scatter(): Plot out 2 coefficients with respect to one another from limma
+#' coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
 #' This hopefully makes that easy.
 #'
-#' @param limma_output The set of pairwise comparisons provided by limma_pairwise()
-#' @param x The name or number of the first coefficient column to extract, this will be the x-axis of the plot
-#' @param y The name or number of the second coefficient column to extract, this will be the y-axis of the plot
-#' @param gvis_filename If provided, an html clicky-plot will be generated with this name
-#' @param gvis_trendline add a trendline to the gvis plot? (TRUE by default)
-#' @param tooltip_data a dataframe of gene annotations to be used in the gvis plot
+#' @param limma_output the set of pairwise comparisons provided by limma_pairwise()
+#' @param x default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot
+#' @param y default=2  the name or number of the second coefficient column to extract, this will be the y-axis of the plot
+#' @param gvis_filename default='limma_scatter.html'  A filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline default=TRUE  add a trendline to the gvis plot?
+#' @param tooltip_data default=NULL  a dataframe of gene annotations to be used in the gvis plot
 #'
 #' @return a ggplot2 plot showing the relationship between the two coefficients
 #' @seealso \code{\link{hpgl_linear_scatter}} \code{\link{limma_pairwise}}
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL) {
+coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     print("This can do comparisons among the following columns in the limma result:")
@@ -85,23 +84,35 @@ coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scat
     } else {
         yname = y
     }
+    ## This is just a shortcut in case I want to flip axes without thinking.
+    if (isTRUE(flip)) {
+        tmp = x
+        tmpname = xname
+        x = y
+        xname = yname
+        y = tmp
+        yname = tmpname
+        rm(tmp)
+        rm(tmpname)
+    }
     print(paste0("Actually comparing ", xname, " and ", yname, "."))
     coefficients = limma_output$pairwise_comparisons$coefficients
     coefficients = coefficients[,c(x,y)]
-    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline)
+    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline, first=xname, second=yname)
+    plot$df = coefficients
     return(plot)
 }
 
-#' compare_tables(): See how similar are results from limma/deseq/edger.
+#' compare_tables()  See how similar are results from limma/deseq/edger.
 #'
 #' limma, DEseq2, and EdgeR all make somewhat different assumptions
 #' and choices about what makes a meaningful set of differentially
 #' expressed genes.  This seeks to provide a quick and dirty metric
 #' describing the degree to which they (dis)agree.
 #'
-#' @param limma  limma data from limma_pairwise()
-#' @param deseq  deseq data from deseq2_pairwise()
-#' @param edger  edger data from edger_pairwise()
+#' @param limma default=NULL  limma data from limma_pairwise()
+#' @param deseq default=NULL  deseq data from deseq2_pairwise()
+#' @param edger default=NULL  edger data from edger_pairwise()
 #'
 #' @return a heatmap showing how similar they are along with some
 #' correlations betwee the three players.
@@ -154,13 +165,16 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
     rownames(comparison_df) = c("le", "ld", "ed")
     colnames(comparison_df) = names(deseq)
     heat_colors = colorRampPalette(c("white","black"))
-    comparison_heatmap = heatmap.3(comparison_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=heat_colors, dendrogram="none", Rowv=FALSE, Colv=FALSE, main="Compare DE tools")
-    heat = recordPlot()
-    ret = list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq, edger_vs_deseq, heat=heat)
+    comparison_heatmap = try(heatmap.3(comparison_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=heat_colors, dendrogram="none", Rowv=FALSE, Colv=FALSE, main="Compare DE tools"), silent=TRUE)
+    heat=NULL
+    if (class(comparison_heatmap) != 'try-error') {
+        heat = recordPlot()
+    }
+    ret = list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq, edger_vs_deseq=edger_vs_deseq, comp=comparison_df, heat=heat)
     return(ret)
 }
 
-#' deseq_pairwise():  Because I can't be trusted to remember '2'
+#' deseq_pairwise()  Because I can't be trusted to remember '2'
 #'
 #' This calls deseq2_pairwise(...) because I am determined to forget typing deseq2
 #' @param look at deseq2_pairwise
@@ -173,16 +187,12 @@ deseq_pairwise = function(...) {
     deseq2_pairwise(...)
 }
 
-#' deseq2_pairwise():  Set up a model matrix and set of contrasts to do
+#' deseq2_pairwise()  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using DESeq2.
 #'
-#' @param expt a expt class containing data, normalization state, etc.
-#' @param conditions a factor of conditions in the experiment
-#' @param batches a factor of batches in the experiment
-#' @param model_cond Include condition in the experimental model?  This is pretty much always true.
-#' @param model_batch Include batch in the model?  In most cases this is a good thing(tm).
-#' @param model_intercept Use cell means or intercept? (I default to the former, but they work out the same)
-#' @param ... The elipsis parameter is fed to write_limma() at the end.
+#' @param input  a dataframe/vector or  expt class containing data, normalization state, etc.
+#' @param conditions default=NULL  a factor of conditions in the experiment
+#' @param batches default=NULL a factor of batches in the experiment
 #'
 #' @return A list including the following information:
 #'   run = the return from calling DESeq()
@@ -193,28 +203,30 @@ deseq_pairwise = function(...) {
 #' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
 #' @export
 #' @examples
-#' ## pretend = edger_pairwise(data, conditions, batches)
-deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) {
-    if (is.null(expt) & is.null(data)) {
-        stop("This requires either an expt or data+conditions+batches")
-    } else if (!is.null(expt)) {
-        conditions = expt$conditions
-        batches = expt$batches
-        data = as.data.frame(exprs(expt$expressionset))
-        ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
-        ## and expects data as floating point counts,
-        ## not a log2 transformation.
-        if (!is.null(expt$norm)) {
-            if (expt$norm != "raw") {
-                data = exprs(expt$original_expressionset)
-            } else if (!is.null(expt$transform)) {
-                if (expt$transform == "log2") {
+#' ## pretend = deseq2_pairwise(data, conditions, batches)
+deseq2_pairwise = function(input, conditions=NULL, batches=NULL) {
+    input_class = class(input)[1]
+    if (input_class == 'expt') {
+        conditions = input$conditions
+        batches = input$batches
+        data = as.data.frame(exprs(input$expressionset))
+        if (!is.null(input$norm)) {
+            ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
+            ## and expects data as floating point counts,
+            ## not a log2 transformation.
+            if (input$norm != "raw") {
+                print("DESeq2 demands raw data as input, reverting to the original expressionset.")
+                data = exprs(input$original_expressionset)
+            } else if (!is.null(input$transform)) {
+                if (input$transform == "log2") {
                     ##data = (2^data) - 1
-                    data = expt$normalized$normalized_counts$count_table
+                    data = input$normalized$normalized_counts$count_table
                 }
             }
-        }
-    } ## expt is not null.
+        } ## End testing if normalization has been performed
+    } else {
+        data = as.data.frame(input)
+    }
     condition_table = table(conditions)
     batch_table = table(batches)
     conditions = as.factor(conditions)
@@ -230,7 +242,7 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     ## An interesting note about the use of formulae in DESeq:
     ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
     ## Thus, all these formulae should have condition(s) at the end.
-    summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(expt$expressionset), design=~0+condition)
+    summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~0+condition)
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
     deseq_run = DESeq(dataset, betaPrior=FALSE)
@@ -314,21 +326,21 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
     return(ret_list)
 }
 
-#' edger_pairwise():  Set up a model matrix and set of contrasts to do
+#' edger_pairwise()  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using EdgeR.
 #'
-#' @param expt a expt class containing data, normalization state, etc.
-#' @param conditions a factor of conditions in the experiment
-#' @param batches a factor of batches in the experiment
-#' @param model_cond Include condition in the experimental model?  This is pretty much always true.
-#' @param model_batch Include batch in the model?  In most cases this is a good thing(tm).
-#' @param model_intercept Use cell means or intercept? (I default to the former, but they work out the same)
-#' @param extra_contrasts some extra contrasts to add to the list
+#' @param input  a dataframe/vector or expt class containing data, normalization state, etc.
+#' @param conditions default=NULL  a factor of conditions in the experiment
+#' @param batches default=NULL  a factor of batches in the experiment
+#' @param model_cond default=TRUE  Include condition in the experimental model?  This is pretty much always true.
+#' @param model_batch default=FALSE  Include batch in the model?  In most cases this is a good thing(tm).
+#' @param model_intercept default=FALSE Use cell means or intercept? (I default to the former, but they work out the same)
+#' @param extra_contrasts default=NULL  some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
 #'  de_minus_cb = (E-D)-(C-B),"
-#' @param ... The elipsis parameter is fed to write_limma() at the end.
+#' @param ... The elipsis parameter is fed to write_edger() at the end.
 #'
 #' @return A list including the following information:
 #'   results = A list of tables returned by 'topTags', one for each contrast.
@@ -341,22 +353,23 @@ deseq2_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL) 
 #' @export
 #' @examples
 #' ## pretend = edger_pairwise(data, conditions, batches)
-edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, ...) {
-    if (is.null(expt) & is.null(data)) {
-        stop("This requires either an expt or data+conditions+batches")
-    } else if (!is.null(expt)) {
-        conditions = expt$conditions
-        batches = expt$batches
-        data = as.data.frame(exprs(expt$expressionset))
+edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, ...) {
+    input_class = class(input)[1]
+    if (input_class == 'expt') {
+        conditions = input$conditions
+        batches = input$batches
+        data = as.data.frame(exprs(input$expressionset))
         ## As I understand it, edgeR fits a binomial distribution
         ## and expects data as floating point counts,
-        ##not a log2 transformation.
-        if (!is.null(expt$transform)) {
-            if (expt$transform == "log2") {
+        ## not a log2 transformation.
+        if (!is.null(input$transform)) {
+            if (input$transform == "log2") {
                 ##data = (2^data) - 1
-                data = expt$normalized$normalized_counts$count_table
-            }
-        }
+                data = input$normalized$normalized_counts$count_table
+            } ## End checking for log2 normalized data
+        } ## End checking for transformed data
+    } else { ## End checking if this is an expt
+        data = as.data.frame(input)
     }
     message("At this time, this only does conditional models.")
     condition_table = table(conditions)
@@ -426,9 +439,10 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     lrt_list = list()
     single_contrasts = list()
     sc = vector("list", length(apc$names))
+    end = length(apc$names)
     for (con in 1:length(apc$names)) {
         name = apc$names[[con]]
-        message(paste0(con, ": Performing ", name, " contrast.")) ## correct
+        message(paste0(con, "/", end, ": Performing ", name, " contrast.")) ## correct
         sc[[name]] = gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
         tt = parse(text=sc[[name]])
         ctr_string = paste0("tt = makeContrasts(", tt, ", levels=fun_model)")
@@ -467,7 +481,7 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     return(final)
 }
 
-#' hpgl_voom():  A slight modification of limma's voom() function.
+#' hpgl_voom()  A slight modification of limma's voom() function.
 #' Estimate mean-variance relationship between samples and generate
 #' 'observational-level weights' in preparation for linear modelling
 #' RNAseq data.  This particular implementation was primarily scabbed
@@ -479,11 +493,12 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
 #'
 #' @param dataframe a dataframe of sample counts which have been
 #' normalized and log transformed
-#' @param model an experimental model defining batches/conditions/etc
-#' @param libsize the size of the libraries (usually provided by
-#' edgeR).  NULL by default.
-#' @param stupid An TRUE/FALSE of whether or not to cheat when the
-#' resulting matrix is not solvable. FALSE by default.
+#' @param model default=NULL  an experimental model defining batches/conditions/etc
+#' @param libsize default=NULL  the size of the libraries (usually provided by
+#' edgeR).
+#' @param stupid default=FALSE  whether or not to cheat when the resulting matrix is not solvable.
+#' @param logged default=FALSE  whether the input data is known to be logged.
+#' @param converted default=FALSE  whether the input data is known to be cpm converted.
 #'
 #' @return an EList containing the following information:
 #'   E = The normalized data
@@ -497,10 +512,13 @@ edger_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
 #' @export
 #' @examples
 #' ## funkytown = hpgl_voom(samples, model)
-hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE, logged=FALSE, converted=FALSE) {
+hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=FALSE, converted=FALSE) {
     out = list()
     if (is.null(libsize)) {
         libsize = colSums(dataframe, na.rm=TRUE)
+    }
+    if (converted == 'cpm') {
+        converted = TRUE
     }
     if (!isTRUE(converted)) {
         message("The voom input was not cpm, converting now.")
@@ -508,11 +526,28 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE, logged=FALSE,
         dataframe = t(posed/(libsize + 1) * 1e+06)
         ##y <- t(log2(t(counts + 0.5)/(lib.size + 1) * 1000000)) ## from voom()
     }
-    if (!isTRUE(logged)) {
+    if (logged == 'log2') {
+        logged = TRUE
+    }
+    if (isTRUE(logged)) {
+        if (max(dataframe) > 1000) {
+            warning("This data appears to not be logged, the lmfit will do weird things.")
+        }
+    } else {
+        if (max(dataframe) < 400) {
+            warning("This data says it was not logged, but the maximum counts seem small.")
+            warning("If it really was log2 transformed, then we are about to double-log it and that would be very bad.")
+        }        
         message("The voom input was not log2, transforming now.")
         dataframe = log2(dataframe)
     }
     dataframe = as.matrix(dataframe)
+
+    if (is.null(design)) {
+        design = matrix(1, ncol(dataframe), 1)
+        rownames(design) = colnames(dataframe)
+        colnames(design) = "GrandMean"
+    }
     linear_fit = limma::lmFit(dataframe, model, method="ls")
     if (is.null(linear_fit$Amean)) {
         linear_fit$Amean = rowMeans(dataframe, na.rm=TRUE)
@@ -570,22 +605,22 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE, logged=FALSE,
     new("EList", out)
 }
 
-#' limma_pairwise():  Set up a model matrix and set of contrasts to do
+#' limma_pairwise()  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using voom/limma.
 #'
-#' @param expt an expt class containing count tables, normalization state, etc.
-#' @param conditions a factor of conditions in the experiment
-#' @param batches a factor of batches in the experiment
-#' @param extra_contrasts some extra contrasts to add to the list
+#' @param input  a dataframe/vector or expt class containing count tables, normalization state, etc.
+#' @param conditions default=NULL  a factor of conditions in the experiment
+#' @param batches default=NULL  a factor of batches in the experiment
+#' @param extra_contrasts default=NULL  some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
 #'  de_minus_cb = (E-D)-(C-B),"
-#' @param model_cond Include condition in the model?  This should pretty much always be true.
-#' @param model_batch Include batch in the model? FALSE by default, but hopefully true often.
-#' @param model_intercept Perform a cell-means or intercept model?  FALSE by default because I understand subtraction math better.
-#'   But I have tested and get the same answer either way.
-#' @param libsize I've recently figured out that libsize is far more important than I previously realized.  Play with it here.
+#' @param model_cond default=TRUE  include condition in the model?
+#' @param model_batch default=FALSE  include batch in the model? This is hopefully TRUE.
+#' @param model_intercept default=FALSE  perform a cell-means or intercept model?  A little more difficult for me to understand.  I have tested and get the same answer either way.
+#' @param alt_model default=NULL  a separate model matrix instead of the normal condition/batch.
+#' @param libsize default=NULL  I've recently figured out that libsize is far more important than I previously realized.  Play with it here.
 #' @param ... The elipsis parameter is fed to write_limma() at the end.
 #'
 #' @return A list including the following information:
@@ -608,27 +643,28 @@ hpgl_voom = function(dataframe, model, libsize=NULL, stupid=FALSE, logged=FALSE,
 #' @export
 #' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
-limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
-    if (is.null(expt) & is.null(data)) {
-        stop("This requires either an expt or data/condition/batches")
-    } else if (!is.null(expt)) {
-        conditions = expt$conditions
-        batches = expt$batches
-        data = exprs(expt$expressionset)
+limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+    input_class = class(input)[1]
+    if (input_class == 'expt') {
+        conditions = input$conditions
+        batches = input$batches
+        data = exprs(input$expressionset)
         if (is.null(libsize)) {
             message("libsize was not specified, this parameter has profound effects on limma's result.")
-            if (!is.null(expt$best_libsize)) {
+            if (!is.null(input$best_libsize)) {
                 message("Using the libsize from expt$best_libsize.")
                 ## libsize = expt$norm_libsize
-                libsize = expt$best_libsize
+                libsize = input$best_libsize
             } else {
                 message("Using the libsize from expt$normalized$normalized_counts.")
-                libsize = expt$normalized$normalized_counts$libsize
+                libsize = input$normalized$normalized_counts$libsize
             }
         } else {
             message("libsize was specified.  This parameter has profound effects on limma's result.")
         }
-    } ## End if expt is defined.
+    } else {  ## Not an expt class, data frame or matrix
+        data = as.data.frame(input)
+    }
     if (is.null(libsize)) {
         libsize = colSums(data)
     }
@@ -674,7 +710,7 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     fun_voom = NULL
 
     ## voom() it, taking into account whether the data has been log2 transformed.
-    logged = expt$transform
+    logged = input$transform
     if (is.null(logged)) {
         print("I don't know if this data is logged, testing if it is integer.")
         if (is.integer(all_data)) {
@@ -689,7 +725,7 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
             logged = TRUE
         }
     }
-    converted = expt$convert
+    converted = input$convert
     if (is.null(converted)) {
         print("I cannot determine if this data has been converted, assuming no.")
         converted = FALSE
@@ -757,13 +793,13 @@ limma_pairwise = function(expt=NULL, data=NULL, conditions=NULL, batches=NULL, m
     return(result)
 }
 
-#' Plot arbitrary data from limma
+#' limma_scatter()  Plot arbitrary data from limma
 #'
-#' @param all_pairwise_result The result from calling balanced_pairwise()
-#' @param first_name A table inside all_pairwise_result$limma_result
-#' @param first_type A column within the chosen table
-#' @param second_name Another table inside all_pairwise_result$limma_result
-#' @param second_type A column to compare against
+#' @param all_pairwise_result  the result from calling balanced_pairwise()
+#' @param first_table default=1  the first table from all_pairwise_result$limma_result to look at (may be a name or number)
+#' @param first_column default='logFC'  the name of the column to plot from the first table
+#' @param second_table default=2  the second table inside all_pairwise_result$limma_result (name or number)
+#' @param second_column  a column to compare against
 #' @param type A type of scatter plot (linear model, distance, vanilla)
 #' @param ... so that you may feed it the gvis/tooltip information to make clicky graphs if so desired.
 #'
@@ -810,11 +846,13 @@ limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC
     return(plots)
 }
 
-#' limma_subset():  A quick and dirty way to pull the top/bottom genes from toptable()
+#' limma_subset()  A quick and dirty way to pull the top/bottom genes from toptable()
 #'
-#' @param df The original data from limma
-#' @param n A number of genes to keep
-#' @param z A number of z-scores from the mean
+#' @param table  the original data from limma
+#' @param n default=NULL  a number of genes to keep
+#' @param z default=NULL  a number of z-scores from the mean
+#'
+#' If neither n nor z is provided, it assumes you want 1.5 z-scores from the median.
 #'
 #' @return a dataframe subset from toptable
 #'
@@ -844,11 +882,11 @@ limma_subset = function(table, n=NULL, z=NULL) {
     return(ret_list)
 }
 
-#' make_exampledata():  A small hack of limma's exampleData()
+#' make_exampledata()  A small hack of limma's exampleData()
 #' function to allow for arbitrary data set sizes.
 #'
-#' @param ngenes how many genes in the fictional data set.  1000 by default.
-#' @param columns how many samples in this data set.  5 by default.
+#' @param ngenes default=1000  how many genes in the fictional data set.
+#' @param columns default=5  how many samples in this data set.
 #'
 #' @return a matrix of pretend counts
 #' @seealso \code{\link{makeExampleData}}
@@ -874,15 +912,15 @@ make_exampledata = function (ngenes=1000, columns=5) {
     newCountDataSet(m, conds)
 }
 
-#' make_pairwise_contrasts(): Run makeContrasts() with all pairwise comparisons.
+#' make_pairwise_contrasts()  Run makeContrasts() with all pairwise comparisons.
 #'
-#' @param model A model describing the conditions/batches/etc in the experiment
-#' @param conditions A factor of conditions in the experiment
-#' @param do_identities Whether or not to include all the identity strings.
-#' Limma can handle this, edgeR cannot.  True by default.
-#' @param do_pairwise Whether or not to include all the pairwise strings.
+#' @param model  a model describing the conditions/batches/etc in the experiment
+#' @param conditions  a factor of conditions in the experiment
+#' @param do_identities default=TRUE  whether or not to include all the identity strings.
+#' Limma can handle this, edgeR cannot.
+#' @param do_pairwise default=TRUE  whether or not to include all the pairwise strings.
 #' This shouldn't need to be set to FALSE, but just in case.
-#' @param extra_contrasts An optional string of extra contrasts to include.
+#' @param extra_contrasts default=NULL  an optional string of extra contrasts to include.
 #'
 #' @return A list including the following information:
 #'   all_pairwise_contrasts = the result from makeContrasts(...)
@@ -1003,18 +1041,7 @@ makeSVD = function (x) {
     return(s)
 }
 
-## Some code to more strongly remove batch effects
-remove_batch_effect = function(normalized_counts, model) {
-    ## model = model.matrix(~ condition + batch)
-    voomed = hpgl_voom(normalized_counts, model)
-    voomed_fit = lmFit(voomed)
-    modified_model = model
-    modified_model = modified_model[,grep("batch", colnames(modified_model))] = 0 ## Drop batch from the model
-    new_data = tcrossprod(voomed_fit$coefficient, modified_model) + residuals(voomed_fit, normalized_counts)
-    return(new_data)
-}
-
-#' simple_comparison():  Perform a simple experimental/control comparison
+#' simple_comparison()  Perform a simple experimental/control comparison
 #' This is a function written primarily to provide examples for how to use limma.
 #' It does the following:  1.  Makes a model matrix using condition/batch
 #' 2.  Optionally uses sva's combat (from cbcbSEQ)  3.  Runs voom/lmfit
@@ -1025,17 +1052,17 @@ remove_batch_effect = function(normalized_counts, model) {
 #' an excel sheet, pulls the up/down significant and p-value significant (maybe this should be
 #' replaced with write_limma()? 8.  And returns a list containining these data and plots.
 #'
-#' @param subset an experimental subset with two conditions to compare.
-#' @param model a model describing the experiment.
-#' @param workbook an excel workbook to which to write. simple_comparison.xls by default.
-#' @param worksheet an excel worksheet to which to write. simple_comparison by default.
-#' @param basename a url to which to send click evens in clicky volcano/ma plots.  NA by default.
-#' @param batch whether or not to include batch in limma's model.  TRUE by default.
-#' @param combat whether or not to use combatMod().  FALSE by default.
-#' @param combat_noscale whether or not to include combat_noscale (makes combat a little less heavy-handed).  TRUE by default.
-#' @param pvalue_cutoff p-value definition of 'significant.'  0.05 by default.
-#' @param logfc_cutoff fold-change cutoff of significance. 0.6 (and therefor 1.6) by default.
-#' @param tooltip_data Text descriptions of genes if one wants google graphs.
+#' @param subset  an experimental subset with two conditions to compare.
+#' @param workbook default='simple_comparison.xls'  an excel workbook to which to write.
+#' @param worksheet default='simple_comparison'  an excel worksheet to which to write.
+#' @param basename default=NA  a url to which to send click evens in clicky volcano/ma plots.
+#' @param batch default=TRUE  whether or not to include batch in limma's model.
+#' @param combat default=FALSE  whether or not to use combatMod().
+#' @param combat_noscale default=TRUE  whether or not to include combat_noscale (makes combat a little less heavy-handed).
+#' @param pvalue_cutoff default=0.05  p-value definition of 'significant.'
+#' @param logfc_cutoff default=0.6  fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.
+#' @param tooltip_data default=NULL  text descriptions of genes if one wants google graphs.
+#' @param verbose default=FALSE  be verbose?
 #'
 #' @return A list containing the following pieces:
 #'   amean_histogram = a histogram of the mean values between the two conditions
@@ -1076,7 +1103,7 @@ remove_batch_effect = function(normalized_counts, model) {
 simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="simple_comparison", basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE, pvalue_cutoff=0.05, logfc_cutoff=0.6, tooltip_data=NULL, verbose=FALSE, ...) {
     condition_model = stats::model.matrix(~ 0 + subset$condition)
     if (length(levels(subset$batch)) == 1) {
-        print("Hey! There is only one batch! I am only including condition in the model!")
+        print("There is only one batch! I can only include condition in the model.")
         condbatch_model = stats::model.matrix(~ 0 + subset$condition)
     } else {
         condbatch_model = stats::model.matrix(~ 0 + subset$condition + subset$batch)
@@ -1087,12 +1114,11 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
         model = condition_model
     }
     expt_data = as.data.frame(exprs(subset$expressionset))
-    colnames(expt_data)
     if (combat) {
 #        expt_data = ComBat(expt_data, subset$batches, condition_model)
         expt_data = cbcbSEQ::combatMod(expt_data, subset$batches, subset$conditions)
     }
-    expt_voom = hpgltools::hpgl_voom(expt_data, model)
+    expt_voom = hpgltools::hpgl_voom(expt_data, model, libsize=subset$original_libsize, logged=subset$transform, converted=subset$convert)
     lf = limma::lmFit(expt_voom)
     colnames(lf$coefficients)
     coefficient_scatter = hpgltools::hpgl_linear_scatter(lf$coefficients)
@@ -1187,18 +1213,20 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
     return(return_info)
 }
 
-#' write_deseq(): Writes out the results of a DESeq2 search using results()
+#' write_deseq()  Writes out the results of a DESeq2 search using results()
 #' However, this will do a couple of things to make one's life easier:
 #' 1.  Make a list of the output, one element for each comparison of the contrast matrix
 #' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
 #' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
 #'
-#' @param data The output from eBayes()
-#' @param adjust The pvalue adjustment chosen (fdr by default)
-#' @param n The number of entries to report, defaults to 0, which says do them all
-#' @param coef which coefficients/contrasts to report, NULL says do them all
-#' @param workbook an excel filename into which to write the data, used for csv files too.
-#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
+#' @param data  the output from DESeq2
+#' @param adjust default='fdr'  the pvalue adjustment chosen.
+#' @param n default=0  the number of entries to report, 0 means do all.
+#' @param coef default=NULL  which coefficients/contrasts to report, NULL says do them all
+#' @param workbook default='excel/deseq.xls'  an excel filename into which to write the data, used for csv files too.
+#' @param excel default=FALSE  whether or not to write an excel workbook (useful if they are too big)
+#' @param csv default=TRUE  whether or not to write a csv copy of the output tables
+#' @param annotation default=NULL  a dataframe to be merged onto the data with annotation information.
 #'
 #' @return a list of data frames comprising the toptable output for each coefficient,
 #'    I also added a qvalue entry to these toptable() outputs.
@@ -1209,7 +1237,7 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
+write_deseq2 = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/deseq.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
     testdir = dirname(workbook)
     if (n == 0) {
         n = dim(data$coefficients)[1]
@@ -1220,9 +1248,10 @@ write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel
         coef = as.character(coef)
     }
     return_data = list()
-    for (c in 1:length(coef)) {
+    end = length(coef)
+    for (c in 1:end) {
         comparison = coef[c]
-        message(paste("Printing table: ", comparison, sep=""))
+        message(paste0(c, "/", end, ": Printing table: ", comparison))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -1266,18 +1295,20 @@ write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel
     return(return_data)
 }
 
-#' write_edger(): Writes out the results of an EdgeR search using topTags()
+#' write_edger()  Writes out the results of an EdgeR search using topTags()
 #' However, this will do a couple of things to make one's life easier:
 #' 1.  Make a list of the output, one element for each comparison of the contrast matrix
 #' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
 #' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
 #'
-#' @param data The output from eBayes()
-#' @param adjust The pvalue adjustment chosen (fdr by default)
-#' @param n The number of entries to report, defaults to 0, which says do them all
-#' @param coef which coefficients/contrasts to report, NULL says do them all
-#' @param workbook an excel filename into which to write the data, used for csv files too.
-#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
+#' @param data  the output from EdgeR
+#' @param adjust default='fdr'  the pvalue adjustment chosen.
+#' @param n default=0  the number of entries to report, 0 says to do them all.
+#' @param coef default=NULL  which coefficients/contrasts to report, NULL says do them all.
+#' @param workbook default='excel/edger.xls'  an excel filename into which to write the data, used for csv files too.
+#' @param excel default=FALSE  whether or not to write an excel workbook rather than csv.
+#' @param csv default=TRUE  whether to write out the output tables as csv files.
+#' @param annotation default=NULL  an optional data frame of annotations to include with the tables.
 #'
 #' @return a list of data frames comprising the toptable output for each coefficient,
 #'    I also added a qvalue entry to these toptable() outputs.
@@ -1288,7 +1319,7 @@ write_deseq2 = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
+write_edger = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/edger.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
     testdir = dirname(workbook)
     if (n == 0) {
         n = dim(data$coefficients)[1]
@@ -1299,9 +1330,10 @@ write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         coef = as.character(coef)
     }
     return_data = list()
-    for (c in 1:length(coef)) {
+    end = length(coef)
+    for (c in 1:end) {
         comparison = coef[c]
-        message(paste("Printing table: ", comparison, sep=""))
+        message(paste0(c, "/", end, ": Printing table: ", comparison))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -1345,18 +1377,20 @@ write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
     return(return_data)
 }
 
-#' write_limma(): Writes out the results of a limma search using toptable()
+#' write_limma()  Writes out the results of a limma search using toptable()
 #' However, this will do a couple of things to make one's life easier:
 #' 1.  Make a list of the output, one element for each comparison of the contrast matrix
 #' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
 #' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
 #'
-#' @param data The output from eBayes()
-#' @param adjust The pvalue adjustment chosen (fdr by default)
-#' @param n The number of entries to report, defaults to 0, which says do them all
-#' @param coef which coefficients/contrasts to report, NULL says do them all
-#' @param workbook an excel filename into which to write the data, used for csv files too.
-#' @param excel T/F whether or not to write an excel workbook (useful if they are too big)
+#' @param data  the output from eBayes()
+#' @param adjust default='fdr'  the pvalue adjustment chosen.
+#' @param n default=0  the number of entries to report, 0 says do them all.
+#' @param coef default=NULL  which coefficients/contrasts to report, NULL says do them all.
+#' @param workbook default='excel/limma.xls'  an excel filename into which to write the data, used for csv files too.
+#' @param excel default=FALSE  write an excel workbook?
+#' @param csv default=TRUE  write out csv files of the tables?
+#' @param annotation default=NULL  an optional data frame including annotation information to include with the tables.
 #'
 #' @return a list of data frames comprising the toptable output for each coefficient,
 #'    I also added a qvalue entry to these toptable() outputs.
@@ -1367,7 +1401,7 @@ write_edger = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
+write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
     testdir = dirname(workbook)
     if (n == 0) {
         n = dim(data$coefficients)[1]
@@ -1378,9 +1412,10 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         coef = as.character(coef)
     }
     return_data = list()
-    for (c in 1:length(coef)) {
+    end = length(coef)
+    for (c in 1:end) {
         comparison = coef[c]
-        message(paste(c, ": Printing table: ", comparison, sep=""))
+        message(paste0(c, "/", end, ": Printing table: ", comparison))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -1425,6 +1460,61 @@ write_limma = function(data=NULL, adjust="fdr", n=0, coef=NULL, workbook="excel/
         return_data[[comparison]] = data_table
     }
     return(return_data)
+}
+
+#' get_sig_genes()  Get a set of up/down genes using the top/bottom n or >/< z scores away from the median.
+#'
+#' @param table  a table from limma/edger/deseq.
+#' @param n default=NULL  a rank-order top/bottom number of genes to take.
+#' @param z default=NULL  a number of z-scores >/< the median to take.
+#' @param fc default=NULL  a number of fold-changes to take
+#' @param fold default='plusminus'  an identifier reminding how to get the bottom portion of a fold-change (plusminus says to get the negative of the positive, otherwise 1/positive is taken).
+#' @param column default='logFC'  a column to use to distinguish top/bottom
+#'
+#' @return a list of up/down genes
+#' @export
+get_sig_genes = function(table, n=NULL, z=NULL, fc=NULL, column='logFC', fold='plusminus') {
+    if (is.null(z) & is.null(n) & is.null(fc)) {
+        print("No n, z, nor fc provided, setting z to 1.")
+        z = 1
+    }
+    if (!is.null(n)) {
+        ## Take a specific number of genes at the top/bottom of the rank ordered list.
+        print("Getting the n genes up and down.")
+        upranked = table[order(table[,column], decreasing=TRUE),]
+        up_genes = head(upranked, n=n)
+        down_genes = tail(upranked, n=n)
+    } else if (!is.null(z)) {
+        ## Take an arbitrary number which are >= and <= a value which is z zscores from the median.
+        print("Getting the genes >= z scores away from the median.")
+        out_summary = summary(table[,column])
+        out_mad = mad(table[,column], na.rm=TRUE)
+        up_median_dist = out_summary["Median"] + (out_mad * z)
+        down_median_dist = out_summary["Median"] - (out_mad * z)
+        up_idx = table[,column] >= up_median_dist
+        up_genes = table[up_idx,]
+        down_idx = table[,column] <= down_median_dist
+        down_genes = table[down_idx,]
+        print(paste0("The up genes table has ", dim(up_genes)[1], " genes."))
+        print(paste0("The down genes table has ", dim(down_genes)[1], " genes."))        
+    } else {
+        ## Take an arbitrary number which are >= and <= a given fold value        
+        up_idx = table[,column] >= fc
+        up_genes = table[up_idx,]
+        if (fold == 'plusminus') {
+            ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
+            down_idx = table[,column] <= (fc * -1)
+            down_genes = table[down_idx,]
+        } else {
+            ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
+            down_idx = table[,column] <= (1 / fc)
+            down_genes = table[down_idx,]
+        }
+        print(paste0("The up genes table has ", dim(up_genes)[1], " genes."))
+        print(paste0("The down genes table has ", dim(down_genes)[1], " genes."))        
+    }
+    ret = list(up_genes=up_genes, down_genes=down_genes)
+    return(ret)
 }
 
 ## EOF

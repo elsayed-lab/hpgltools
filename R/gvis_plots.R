@@ -1,16 +1,14 @@
-## Time-stamp: <Thu May 14 14:41:33 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jul  9 16:46:42 2015 Ashton Trey Belew (abelew@gmail.com)>
 
-#' Make an html version of an MA plot.
+#' hpgl_gvis_ma_plot()  Make an html version of an MA plot.
 #'
-#' @param counts df of linear-modelling, normalized counts by sample-type,
+#' @param counts  df of linear-modelling, normalized counts by sample-type,
 #' which is to say the output from voom/voomMod/hpgl_voom().
-#' @param de_genes df from toptable or its friends containing p-values.
-#' @param adjpval_cutoff a cutoff defining significant from not.
-#' Defaults to 0.05.
-#' @param gvis_filename a filename to write a fancy html graph.
-#' Defaults to NULL in which case the following parameter isn't needed.
-#' @param tooltip_data a df of tooltip information for gvis
-#' graphs. NULL by default.
+#' @param de_genes  df from toptable or its friends containing p-values.
+#' @param adjpval_cutoff default=0.05  a cutoff defining significant from not.
+#' @param filename default='html/gvis_ma_plot.html'  a filename to write a fancy html graph.
+#' @param tooltip_data default=NULL  a df of tooltip information.
+#' @param base_url default=''  a string with a basename used for generating URLs for clicking dots on the graph.
 #'
 #' @return NULL, but along the way an html file is generated which
 #' contains a googleVis MA plot.  See hpgl_ma_plot() for details.
@@ -59,6 +57,24 @@ hpgl_gvis_ma_plot = function(counts, degenes, tooltip_data=NULL, filename="html/
     print(hpgl_gvis_scatterchart, file=filename)
 }
 
+
+#' hpgl_gvis_volcano_plot()  Make an html version of an volcano plot.
+#'
+#' @param toptable_data  df of toptable() data
+#' @param fc_cutoff default=0.8  fold change cutoff.
+#' @param p_cutoff default=0.05  maximum p value to allow.
+#' @param filename default='html/gvis_vol_plot.html'  a filename to write a fancy html graph.
+#' @param tooltip_data default=NULL  a df of tooltip information.
+#' @param base_url default=''  a string with a basename used for generating URLs for clicking dots on the graph.
+#'
+#' @return NULL, but along the way an html file is generated which
+#' contains a googleVis MA plot.  See hpgl_ma_plot() for details.
+#'
+#' @seealso \code{\link{hpgl_volcano_plot}}
+#'
+#' @export
+#' @examples
+#' ## hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
 hpgl_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, tooltip_data=NULL, filename="html/gvis_vol_plot.html", base_url="", ...) {
     gvis_raw_df = toptable_data[,c("logFC", "modified_p", "P.Value")]
     gvis_raw_df = merge(gvis_raw_df, tooltip_data, by="row.names")
@@ -95,16 +111,13 @@ hpgl_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, t
     print(hpgl_gvis_scatterchart, file=filename)
 }
 
-
-#' Make an html version of a scatter plot.
+#' hpgl_gvis_scatter()  Make an html version of a scatter plot.
 #'
-#' @param counts df of two columns to compare
-#' @param filename a filename to write a fancy html graph.
-#' Defaults to NULL in which case the following parameter isn't needed.
-#' @param tooltip_data a df of tooltip information for gvis
-#' graphs. NULL by default.
-#' @param base_url a url to send click events which will be suffixed
-#' with the gene name
+#' @param df  df of two columns to compare
+#' @param filename default='html/gvis_scatter.html'  a filename to write a fancy html graph.
+#' @param tooltip_data default=NULL  a df of tooltip information for gvis graphs.
+#' @param base_url default=''  a url to send click events which will be suffixed with the gene name
+#' @param trendline default=NULL  add a trendline?
 #'
 #' @return NULL, but along the way an html file is generated which
 #' contains a googleVis scatter plot.  See hpgl_scatter_plot() for details.
@@ -143,3 +156,5 @@ hpgl_gvis_scatter = function(df, tooltip_data=NULL, filename="html/gvis_scatter.
     hpgl_gvis_scatterchart = googleVis::gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
     print(hpgl_gvis_scatterchart, file=filename)
 }
+
+## EOF

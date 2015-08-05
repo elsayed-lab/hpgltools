@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jun  4 14:56:12 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jul 22 12:12:16 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -16,15 +16,21 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
 ### sum(x) ## the number of selected genes
 ### If we do something like above to give scores to all the 'DEgenes', then we set up the GOdata object like this:
 ### mf_GOdata = new("topGOdata", description="something", ontology="BP", allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO, gene2GO=geneID2GO, nodeSize=2)
-    make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+    ## The following library invocation is in case it was unloaded for pathview
+    library(topGO)
+    gomap_info = make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO = topGO::readMappings(file=goid_map)
     annotated_genes = names(geneID2GO)
     if (is.null(de_genes$ID)) {
         de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
     ##    interesting_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
-    interesting_genes = factor(annotated_genes %in% de_genes$ID)
+    interesting_genes = as.factor(annotated_genes %in% de_genes$ID)
     names(interesting_genes) = annotated_genes
+    if (!is.null(de_genes$P.Value)) {
+        pvals = de_genes$P.Value
+        names(pvals) = rownames(de_genes)
+    }
     if (is.null(pvals)) {
         mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
@@ -75,25 +81,49 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
         mf_weight=mf_weight_result, bp_weight=bp_weight_result, cc_weight=cc_weight_result)
 
     tables = try(topgo_tables(results, limitby=limitby, limit=limit))
+    if (class(tables)[1] == 'try-error') {
+        tables = NULL
+    }
 
-    mf_first_density = bp_first_density = cc_first_density = NULL
-    if (class(tables$mf) != 'try-error') {
-        mf_first_group = tables$mf[1, "GO.ID"]
-        mf_first_density = try(hpgl_GroupDensity(mf_GOdata, mf_first_group, ranks=TRUE))
-    }
-    if (class(tables$bp) != 'try-error') {
-        bp_first_group = tables$bp[1, "GO.ID"]
-        bp_first_density = try(hpgl_GroupDensity(bp_GOdata, bp_first_group, ranks=TRUE))
-    }
-    if(class(tables$cc) != 'try-error') {
-        cc_first_group = tables$cc[1, "GO.ID"]
-        cc_first_density = try(hpgl_GroupDensity(cc_GOdata, cc_first_group, ranks=TRUE))
-    }
-    first_densities = list(mf=mf_first_density, bp=bp_first_density, cc=cc_first_density)
+##    mf_first_density = bp_first_density = cc_first_density = NULL
+##    if (class(tables$mf) != 'try-error') {
+##        mf_first_group = tables$mf[1, "GO.ID"]
+##        mf_first_density = try(hpgltools:::hpgl_GroupDensity(mf_GOdata, mf_first_group, ranks=TRUE))
+##    }
+##    if (class(tables$bp) != 'try-error') {
+##        bp_first_group = tables$bp[1, "GO.ID"]
+##        bp_first_density = try(hpgltools:::hpgl_GroupDensity(bp_GOdata, bp_first_group, ranks=TRUE))
+##    }
+##    if(class(tables$cc) != 'try-error') {
+##        cc_first_group = tables$cc[1, "GO.ID"]
+##        cc_first_density = try(hpgltools:::hpgl_GroupDensity(cc_GOdata, cc_first_group, ranks=TRUE))
+##    }
+##    first_densities = list(mf=mf_first_density, bp=bp_first_density, cc=cc_first_density)
 
+    mf_densities = bp_densities = cc_densities = list()
+    for (id in tables$mf$GO.ID) {
+        print(id)
+        print(hpgltools:::hpgl_GroupDensity(mf_GOdata, id, ranks=TRUE))
+        added_plot = recordPlot()
+        mf_densities[[id]] = added_plot
+    }
+    for (id in tables$bp$GO.ID) {
+        print(id)
+        print(hpgltools:::hpgl_GroupDensity(bp_GOdata, id, ranks=TRUE))
+        added_plot = recordPlot()
+        bp_densities[[id]] = added_plot
+    }
+    for (id in tables$cc$GO.ID) {
+        print(id)
+        print(hpgltools:::hpgl_GroupDensity(cc_GOdata, id, ranks=TRUE))
+        added_plot = recordPlot()
+        cc_densities[[id]] = added_plot
+    }
+    
     information = list(
         mf_godata=mf_GOdata, bp_godata=bp_GOdata, cc_godata=cc_GOdata,
-        results=results, tables=tables, first_densities=first_densities,
+        results=results, tables=tables,
+        mf_densities=mf_densities, bp_densities=bp_densities, cc_densities=cc_densities,
         pdists=p_dists)
     return(information)
 }
@@ -323,7 +353,6 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
     if (!file.exists(goids_dir)) {
         dir.create(goids_dir, recursive=TRUE)
     }
-    new_go = NULL
     if (isTRUE(overwrite)) {
         if (is.null(goids_df)) {
             stop("There is neither a id2go file nor a data frame of goids.")
@@ -333,7 +362,7 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
             write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
             rm(id2go_test)
         }
-    } else {
+    } else { ## overwrite is not true
         if (is.na(id2go_test$size)) {
             if (is.null(goids_df)) {
                 stop("There is neither a id2go file nor a data frame of goids.")
@@ -343,9 +372,11 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
                 write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
                 rm(id2go_test)
             }
+        } else { ## There already exists a file, so return its stats
+            new_go = id2go_test
         }
     }
-    return(summary(new_go))
+    return(new_go)
 }
 
 hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
@@ -370,6 +401,7 @@ hpgl_topdiffgenes = function(scores, df=de_genes, direction="up") {
 #' But it still is likely to be useful to be able to further subset the data.
 #'
 #' @param allScore The scores of the genes
+#' @export
 topDiffGenes <- function(allScore) { return(allScore < 0.01) }
 
 #' Make a pvalue plot from topgo data
@@ -689,8 +721,19 @@ GOplot.orig <- function(dag, sigNodes, dag.name = 'GO terms', edgeTypes = T,
 }
 
 
+#' hpgl_GroupDensity()  A hack of topGO's groupDensity()
+#'
+#' This just adds a couple wrappers to avoid errors in groupDensity.
+#'
+#' @param object  a topGO enrichment object
+#' @param whichGO  an individual ontology group to compare with
+#' @param ranks default=TRUE  rank order the set of ontologies
+#' @param rm.one default=FALSE  remove pvalue=1 groups
 hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
-    groupMembers <- topGO::genesInTerm(object, whichGO)[[1]]
+    groupMembers <- try(topGO::genesInTerm(object, whichGO)[[1]])
+    if (class(groupMembers)[1] == 'try-error') {
+        return(NULL)
+    }
     allS <- topGO::geneScore(object, use.names = TRUE)
     if(rm.one) {
         allS <- allS[allS < 0.99]
