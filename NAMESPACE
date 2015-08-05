@@ -7,10 +7,7 @@ export(cbcb_filter_counts)
 export(cluster_trees)
 export(coefficient_scatter)
 export(compare_tables)
-<<<<<<< HEAD
-=======
 export(concatenate_runs)
->>>>>>> abelew/master
 export(convert_counts)
 export(create_experiment)
 export(create_expt)
