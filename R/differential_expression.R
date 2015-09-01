@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Sep  1 11:27:16 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Sep  1 12:06:30 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -238,7 +238,7 @@ deseq_pairwise = function(...) {
 #' @export
 #' @examples
 #' ## pretend = deseq2_pairwise(data, conditions, batches)
-deseq2_pairwise = function(input, conditions=NULL, batches=NULL) {
+deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, csv=TRUE, annotation=NULL, workbook="excel/deseq.xls", ...) {
     print("Starting DESeq2 pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -283,7 +283,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL) {
     message("DESeq: Starting DESeq()")
     deseq_run = DESeq(dataset, betaPrior=FALSE)
     ## Set contrast= for each pairwise comparison here!
-
+    
     denominators = list()
     numerators = list()
     result_list = list()
@@ -294,6 +294,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL) {
         nextc = c + 1
         for (d in nextc:length(condition_list)) {
             numerator = names(condition_table[d])
+            message(paste0("DESeq2:", c, "/", d, ": Printing table: ", numerator, "_vs_", denominator))
             result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
             result = result[order(result$log2FoldChange),]
             colnames(result) = c("baseMean","logFC", "lfcSE","stat","P.Value","adj.P.Val")
@@ -321,6 +322,25 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL) {
             denominators[[result_name]] = denominator
             numerators[[result_name]] = numerator
             result_list[[result_name]] = result
+
+            if (!is.null(annotation)) {
+                result = merge(result, annotation, by.x="row.names", by.y="row.names")
+            }
+            testdir = dirname(workbook)
+            if (isTRUE(excel) | isTRUE(csv)) {
+                if (!file.exists(testdir)) {
+                    dir.create(testdir)
+                    message(paste0("Creating directory: ", testdir, "for writing excel/csv data."))
+                }
+            }
+            if (isTRUE(excel)) {
+                try(write_xls(data=result, sheet=result_name, file=workbook, overwrite=TRUE))
+            }
+            if (isTRUE(csv)) {
+                csv_filename = gsub(".xls$", "", workbook)
+                csv_filename = paste0(csv_filename, "_", result_name, ".csv")
+                write.csv(result, file=csv_filename)
+            }
         }
     }
     ##    deseq_result = results(deseq_run)
@@ -389,7 +409,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL) {
 #' @export
 #' @examples
 #' ## pretend = edger_pairwise(data, conditions, batches)
-edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, ...) {
+edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, excel=FALSE, csv=TRUE, annotation=NULL, workbook="excel/edger.xls", ...) {
     print("Starting EdgeR pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -479,7 +499,7 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     end = length(apc$names)
     for (con in 1:length(apc$names)) {
         name = apc$names[[con]]
-        message(paste0(con, "/", end, ": Performing ", name, " contrast.")) ## correct
+        message(paste0("EdgeR:", con, "/", end, ": Printing table: ", name, ".")) ## correct
         sc[[name]] = gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
         tt = parse(text=sc[[name]])
         ctr_string = paste0("tt = makeContrasts(", tt, ", levels=fun_model)")
@@ -490,7 +510,7 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         res = as.data.frame(res)
         res$qvalue = tryCatch(
             {
-                format(signif(qvalue(res$PValue, robust=TRUE)$qvalues, 4), scientific=TRUE)
+                as.numeric(format(signif(qvalue(res$PValue, robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
             error=function(cond) {
                 message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
@@ -507,6 +527,21 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         res$PValue = format(signif(res$PValue, 4), scientific=TRUE)
         res$FDR = format(signif(res$FDR, 4), scientific=TRUE)
         result_list[[name]] = res
+    }
+    testdir = dirname(workbook)
+    if (isTRUE(excel) | isTRUE(csv)) {
+        if (!file.exists(testdir)) {
+            dir.create(testdir)
+            message(paste0("Creating directory: ", testdir, "for writing excel/csv data."))
+        }
+    }
+    if (isTRUE(excel)) {
+        try(write_xls(data=res, sheet=name, file=workbook, overwrite=TRUE))
+    }
+    if (isTRUE(csv)) {
+        csv_filename = gsub(".xls$", "", workbook)
+        csv_filename = paste0(csv_filename, "_", name, ".csv")
+        write.csv(res, file=csv_filename)
     }
 
     final = list(
@@ -1251,170 +1286,6 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
     return(return_info)
 }
 
-#' write_deseq()  Writes out the results of a DESeq2 search using results()
-#' However, this will do a couple of things to make one's life easier:
-#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
-#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
-#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
-#'
-#' @param data  the output from DESeq2
-#' @param adjust default='fdr'  the pvalue adjustment chosen.
-#' @param n default=0  the number of entries to report, 0 means do all.
-#' @param coef default=NULL  which coefficients/contrasts to report, NULL says do them all
-#' @param workbook default='excel/deseq.xls'  an excel filename into which to write the data, used for csv files too.
-#' @param excel default=FALSE  whether or not to write an excel workbook (useful if they are too big)
-#' @param csv default=TRUE  whether or not to write a csv copy of the output tables
-#' @param annotation default=NULL  a dataframe to be merged onto the data with annotation information.
-#'
-#' @return a list of data frames comprising the toptable output for each coefficient,
-#'    I also added a qvalue entry to these toptable() outputs.
-#'
-#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
-#'
-#' @export
-#' @examples
-#' ## finished_comparison = eBayes(limma_output)
-#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-write_deseq2 = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/deseq.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
-    testdir = dirname(workbook)
-    if (n == 0) {
-        n = dim(data$coefficients)[1]
-    }
-    if (is.null(coef)) {
-        coef = colnames(data$contrasts)
-    } else {
-        coef = as.character(coef)
-    }
-    return_data = list()
-    end = length(coef)
-    for (c in 1:end) {
-        comparison = coef[c]
-        message(paste0("DESeq2:", c, "/", end, ": Printing table: ", comparison))
-        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
-
-        data_table$qvalue = tryCatch(
-            {
-                format(signif(qvalue(data_table$P.Value, gui=FALSE)$qvalues, 4), scientific=TRUE)
-            },
-            error=function(cond) {
-                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
-                return(1)
-            },
-            warning=function(cond) {
-                message("There was a warning?")
-                message(cond)
-                return(1)
-            },
-            finally={
-            }
-        )
-        if (!is.null(annotation)) {
-            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
-            ###data_table = data_table[-1]
-        }
-        ## This write_xls runs out of memory annoyingly often
-        if (isTRUE(excel) | isTRUE(csv)) {
-            if (!file.exists(testdir)) {
-                dir.create(testdir)
-                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
-            }
-        }
-        if (isTRUE(excel)) {
-            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
-        }
-        ## Therefore I will write a csv of each comparison, too
-        if (isTRUE(csv)) {
-            csv_filename = gsub(".xls$", "", workbook)
-            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
-            write.csv(data_table, file=csv_filename)
-        }
-        return_data[[comparison]] = data_table
-    }
-    return(return_data)
-}
-
-#' write_edger()  Writes out the results of an EdgeR search using topTags()
-#' However, this will do a couple of things to make one's life easier:
-#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
-#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
-#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
-#'
-#' @param data  the output from EdgeR
-#' @param adjust default='fdr'  the pvalue adjustment chosen.
-#' @param n default=0  the number of entries to report, 0 says to do them all.
-#' @param coef default=NULL  which coefficients/contrasts to report, NULL says do them all.
-#' @param workbook default='excel/edger.xls'  an excel filename into which to write the data, used for csv files too.
-#' @param excel default=FALSE  whether or not to write an excel workbook rather than csv.
-#' @param csv default=TRUE  whether to write out the output tables as csv files.
-#' @param annotation default=NULL  an optional data frame of annotations to include with the tables.
-#'
-#' @return a list of data frames comprising the toptable output for each coefficient,
-#'    I also added a qvalue entry to these toptable() outputs.
-#'
-#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
-#'
-#' @export
-#' @examples
-#' ## finished_comparison = eBayes(limma_output)
-#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-write_edger = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/edger.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
-    testdir = dirname(workbook)
-    if (n == 0) {
-        n = dim(data$coefficients)[1]
-    }
-    if (is.null(coef)) {
-        coef = colnames(data$contrasts)
-    } else {
-        coef = as.character(coef)
-    }
-    return_data = list()
-    end = length(coef)
-    for (c in 1:end) {
-        comparison = coef[c]
-        message(paste0("EdgeR:", c, "/", end, ": Printing table: ", comparison))
-        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
-
-        data_table$qvalue = tryCatch(
-            {
-                format(signif(qvalue(data_table$P.Value, gui=FALSE)$qvalues, 4), scientific=TRUE)
-            },
-            error=function(cond) {
-                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
-                return(1)
-            },
-            warning=function(cond) {
-                message("There was a warning?")
-                message(cond)
-                return(1)
-            },
-            finally={
-            }
-        )
-        if (!is.null(annotation)) {
-            data_table = merge(data_table, annotation, by.x="row.names", by.y="row.names")
-            ###data_table = data_table[-1]
-        }
-        ## This write_xls runs out of memory annoyingly often
-        if (isTRUE(excel) | isTRUE(csv)) {
-            if (!file.exists(testdir)) {
-                dir.create(testdir)
-                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
-            }
-        }
-        if (isTRUE(excel)) {
-            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
-        }
-        ## Therefore I will write a csv of each comparison, too
-        if (isTRUE(csv)) {
-            csv_filename = gsub(".xls$", "", workbook)
-            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
-            write.csv(data_table, file=csv_filename)
-        }
-        return_data[[comparison]] = data_table
-    }
-    return(return_data)
-}
-
 #' write_limma()  Writes out the results of a limma search using toptable()
 #' However, this will do a couple of things to make one's life easier:
 #' 1.  Make a list of the output, one element for each comparison of the contrast matrix
@@ -1453,7 +1324,7 @@ write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma
     end = length(coef)
     for (c in 1:end) {
         comparison = coef[c]
-        message(paste0("limma:", c, "/", end, ": Printing table: ", comparison))
+        message(paste0("limma:", c, "/", end, ": Printing table: ", comparison, "."))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -1483,7 +1354,7 @@ write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma
         if (isTRUE(excel) | isTRUE(csv)) {
             if (!file.exists(testdir)) {
                 dir.create(testdir)
-                message(paste("Creating directory: ", testdir, " for writing excel/csv data.", sep=""))
+                message(paste0("Creating directory: ", testdir, " for writing excel/csv data."))
             }
         }
         if (isTRUE(excel)) {
@@ -1492,7 +1363,7 @@ write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma
         ## Therefore I will write a csv of each comparison, too
         if (isTRUE(csv)) {
             csv_filename = gsub(".xls$", "", workbook)
-            csv_filename = paste(csv_filename, "_", comparison, ".csv", sep="")
+            csv_filename = paste0(csv_filename, "_", comparison, ".csv")
             write.csv(data_table, file=csv_filename)
         }
         return_data[[comparison]] = data_table
