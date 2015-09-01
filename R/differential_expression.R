@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jul 31 16:06:43 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Sep  1 11:27:16 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -47,6 +47,40 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, m
     result_comparison = compare_tables(limma=limma_result, deseq=deseq_result, edger=edger_result)
     ret = list(limma=limma_result, deseq=deseq_result, edger=edger_result, comparison=result_comparison)
     return(ret)
+}
+
+#' combine_tables()  Combine portions of deseq/limma/edger table output
+#'
+#' This hopefully makes it easy to compare the outputs from limma/DESeq2/EdgeR on a table-by-table basis.
+#'
+#' @param all_pairwise_result  the output from all_pairwise()
+#' @param table default='wt_minus_mut'  the name of a table comparison performed by deseq/limma/edger.
+#'
+#' @return a table combinine limma/edger/deseq outputs.
+#' @seealso \code{\link{all_pairwise}}
+#' @examples
+#' ## pretty = combine_tables(big_result, table='t12_minus_t0')
+combine_tables = function(all_pairwise_result, table='wt_minus_mut') {
+    limma = all_pairwise_result$limma
+    deseq = all_pairwise_result$deseq
+    edger = all_pairwise_result$edger
+    limma = limma$all_tables[[table]]
+    colnames(limma) = c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
+    limma = limma[,c("limma_logfc","limma_ave","limma_t","limma_b","limma_p","limma_adjp","limma_q")]
+    deseq = deseq$all_tables[[table]]
+    colnames(deseq) = c("deseq_basemean","deseq_logfc","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")
+    deseq = deseq[,c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
+    edger = edger$all_tables[[table]]
+    colnames(edger) = c("edger_logfc","edger_logcpm","edger_lr","edger_pval","edger_adjp","edger_q")
+    combined = merge(limma, deseq, by="row.names")
+    combined = merge(combined, edger, by.x="Row.names", by.y="row.names")
+    rownames(combined) = combined$Row.names
+    combined = combined[-1]
+    combined[is.na(combined)] = 0
+    combined$fc_med = rowMeans(combined[,c("limma_logfc","edger_logfc","deseq_logfc")], na.rm=TRUE)
+    combined$fc_var = rowVars(combined[,c("limma_logfc","edger_logfc","deseq_logfc")], na.rm=TRUE)
+    combined$fc_varbymed = combined$fc_var / combined$fc_med
+    return(combined)
 }
 
 #' coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
@@ -205,6 +239,7 @@ deseq_pairwise = function(...) {
 #' @examples
 #' ## pretend = deseq2_pairwise(data, conditions, batches)
 deseq2_pairwise = function(input, conditions=NULL, batches=NULL) {
+    print("Starting DESeq2 pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
         conditions = input$conditions
@@ -245,6 +280,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL) {
     summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~0+condition)
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
+    message("DESeq: Starting DESeq()")
     deseq_run = DESeq(dataset, betaPrior=FALSE)
     ## Set contrast= for each pairwise comparison here!
 
@@ -354,6 +390,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL) {
 #' @examples
 #' ## pretend = edger_pairwise(data, conditions, batches)
 edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, ...) {
+    print("Starting EdgeR pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
         conditions = input$conditions
@@ -420,15 +457,15 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     raw = DGEList(counts=data, group=conditions)
     message("Using EdgeR to normalize the data.")
     norm = calcNormFactors(raw)
-    message("Estimating the common dispersion.")
+    message("EdgeR: Estimating the common dispersion.")
     disp_norm = estimateCommonDisp(norm)
-    message("Estimating dispersion across genes.")
+    message("EdgeR: Estimating dispersion across genes.")
     tagdisp_norm = estimateTagwiseDisp(disp_norm)
-    message("Estimating GLM Common dispersion.")
+    message("EdgeR: Estimating GLM Common dispersion.")
     glm_norm = estimateGLMCommonDisp(tagdisp_norm, fun_model)
-    message("Estimating GLM Trended dispersion.")
+    message("EdgeR: Estimating GLM Trended dispersion.")
     glm_trended = estimateGLMTrendedDisp(glm_norm, fun_model)
-    message("Estimating GLM Tagged dispersion.")
+    message("EdgeR: Estimating GLM Tagged dispersion.")
     glm_tagged = estimateGLMTagwiseDisp(glm_trended, fun_model)
     cond_fit = edgeR::glmFit(glm_tagged, design=fun_model)
 
@@ -644,6 +681,7 @@ hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=F
 #' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
 limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+    print("Starting limma pairwise comparison.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
         conditions = input$conditions
@@ -1251,7 +1289,7 @@ write_deseq2 = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/dese
     end = length(coef)
     for (c in 1:end) {
         comparison = coef[c]
-        message(paste0(c, "/", end, ": Printing table: ", comparison))
+        message(paste0("DESeq2:", c, "/", end, ": Printing table: ", comparison))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -1333,7 +1371,7 @@ write_edger = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/edger
     end = length(coef)
     for (c in 1:end) {
         comparison = coef[c]
-        message(paste0(c, "/", end, ": Printing table: ", comparison))
+        message(paste0("EdgeR:", c, "/", end, ": Printing table: ", comparison))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
@@ -1415,7 +1453,7 @@ write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma
     end = length(coef)
     for (c in 1:end) {
         comparison = coef[c]
-        message(paste0(c, "/", end, ": Printing table: ", comparison))
+        message(paste0("limma:", c, "/", end, ": Printing table: ", comparison))
         data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
