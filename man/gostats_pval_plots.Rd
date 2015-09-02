@@ -4,9 +4,9 @@
 \alias{gostats_pval_plots}
 \title{Make a pvalue plot similar to that from clusterprofiler from gostats data}
 \usage{
-gostats_pval_plots(mf_over = NULL, bp_over = NULL, cc_over = NULL,
-  mf_under = NULL, bp_under = NULL, cc_under = NULL, wrapped_width = 20,
-  cutoff = 0.1, n = 12)
+gostats_pval_plots(gostats_result = NULL, mf_over = NULL, bp_over = NULL,
+  cc_over = NULL, mf_under = NULL, bp_under = NULL, cc_under = NULL,
+  wrapped_width = 20, cutoff = 0.1, n = 12, group_minsize = 5)
 }
 \arguments{
 \item{mf_over}{molecular function data overrepresented}

@@ -4,13 +4,11 @@
 \alias{cluster_trees}
 \title{Make fun trees a la topgo from goseq data.}
 \usage{
-cluster_trees(de_genes, cpdata, goid_map = "reference/go/id2go.map",
-  goids_df = NULL, score_limit = 0.1, overwrite = FALSE,
-  selector = "topDiffGenes", pval_column = "adj.P.Value")
+cluster_trees(cpdata, goid_map = "reference/go/id2go.map", goids_df = NULL,
+  score_limit = 0.2, overwrite = FALSE, selector = "topDiffGenes",
+  pval_column = "P.Value")
 }
 \arguments{
-\item{de_genes}{some differentially expressed genes}
-
 \item{godata}{data from cluster Profiler}
 
 \item{goids}{a mapping of IDs to GO in the Ramigo expected format}

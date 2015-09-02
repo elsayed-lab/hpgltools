@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Sep  1 12:06:30 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep  2 13:35:26 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -49,7 +49,7 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, m
     return(ret)
 }
 
-#' combine_tables()  Combine portions of deseq/limma/edger table output
+#' combine_de_tables()  Combine portions of deseq/limma/edger table output
 #'
 #' This hopefully makes it easy to compare the outputs from limma/DESeq2/EdgeR on a table-by-table basis.
 #'
@@ -59,8 +59,8 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, m
 #' @return a table combinine limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
 #' @examples
-#' ## pretty = combine_tables(big_result, table='t12_minus_t0')
-combine_tables = function(all_pairwise_result, table='wt_minus_mut') {
+#' ## pretty = combine_de_tables(big_result, table='t12_minus_t0')
+combine_de_tables = function(all_pairwise_result, table='wt_minus_mut') {
     limma = all_pairwise_result$limma
     deseq = all_pairwise_result$deseq
     edger = all_pairwise_result$edger

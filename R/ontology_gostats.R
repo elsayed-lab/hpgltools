@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Sep  1 13:45:21 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep  2 17:54:06 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -49,8 +49,11 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
     degenes_ids = universe_cross_de$id
     universe_ids = universe$id
     gostats_go = merge(universe, goids, by.x="geneid", by.y="ID")
+    if (nrow(gostats_go) == 0) {
+        stop("The merging of the universe vs. goids failed.")
+    }
     gostats_go$frame.Evidence = "TAS"
-    colnames(gostats_go) = c("sysName","width", "frame.gene_id", "frame.go_id", "gene_name", "frame.Evidence")
+    colnames(gostats_go) = c("sysName","width", "frame.gene_id", "frame.go_id", "frame.Evidence")
     gostats_go = gostats_go[,c("frame.go_id","frame.Evidence","frame.gene_id")]
     gostats_frame = GOFrame(gostats_go, organism=organism)
     gostats_all = GOAllFrame(gostats_frame)
@@ -354,7 +357,16 @@ gostats_trees = function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under
 #' @return plots!
 #' @seealso \code{\link{clusterProfiler}} \code{\link{pval_plot}}
 #' @export
-gostats_pval_plots = function(mf_over=NULL, bp_over=NULL, cc_over=NULL, mf_under=NULL, bp_under=NULL, cc_under=NULL, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5) {
+gostats_pval_plots = function(gostats_result=NULL, mf_over=NULL, bp_over=NULL, cc_over=NULL, mf_under=NULL, bp_under=NULL, cc_under=NULL, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5) {
+    if (!is.null(gostats_result)) {
+        mf_over = gostats_result$mf_over_enriched
+        mf_under = gostats_result$mf_under_enriched
+        bp_over = gostats_result$bp_over_enriched
+        bp_under = gostats_result$bp_under_enriched
+        cc_over = gostats_result$cc_over_enriched
+        cc_under = gostats_result$cc_under_enriched
+    }
+
     ##    plotting_mf_over = subset(mf_over, complete.cases(mf_over))
     plotting_mf_over = summary(mf_over)
     mf_pval_plot_over = NULL
