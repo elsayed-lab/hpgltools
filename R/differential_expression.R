@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep  2 13:35:26 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Sep  3 18:44:35 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -77,9 +77,9 @@ combine_de_tables = function(all_pairwise_result, table='wt_minus_mut') {
     rownames(combined) = combined$Row.names
     combined = combined[-1]
     combined[is.na(combined)] = 0
-    combined$fc_med = rowMeans(combined[,c("limma_logfc","edger_logfc","deseq_logfc")], na.rm=TRUE)
-    combined$fc_var = rowVars(combined[,c("limma_logfc","edger_logfc","deseq_logfc")], na.rm=TRUE)
-    combined$fc_varbymed = combined$fc_var / combined$fc_med
+    combined$fc_meta = rowMeans(preprocessCore::normalize.quantiles(as.matrix(combined[,c("limma_logfc","edger_logfc","deseq_logfc")], na.rm=TRUE)))
+    combined$fc_var = rowVars(preprocessCore::normalize.quantiles(as.matrix(combined[,c("limma_logfc","edger_logfc","deseq_logfc")], na.rm=TRUE)))
+    combined$fc_varbymed = combined$fc_var / combined$fc_meta
     return(combined)
 }
 
