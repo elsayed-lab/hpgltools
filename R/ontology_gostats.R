@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jul 22 13:33:11 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep  2 17:54:06 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -13,7 +13,7 @@
 #' @return dunno yet
 #' @seealso \code{\link{GOstats}}
 #' @export
-simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.05, direction="over", conditional=FALSE, categorysize=NULL) {
+simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", second_merge_try="gene_id", organism="fun", pcutoff=0.10, direction="over", conditional=FALSE, categorysize=NULL) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should) contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
     annotation = try(import.gff3(gff), silent=TRUE)
     if (class(annotation) == 'try-error') {
@@ -49,8 +49,11 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="locus_tag", seco
     degenes_ids = universe_cross_de$id
     universe_ids = universe$id
     gostats_go = merge(universe, goids, by.x="geneid", by.y="ID")
+    if (nrow(gostats_go) == 0) {
+        stop("The merging of the universe vs. goids failed.")
+    }
     gostats_go$frame.Evidence = "TAS"
-    colnames(gostats_go) = c("sysName","width", "frame.gene_id", "frame.go_id", "gene_name", "frame.Evidence")
+    colnames(gostats_go) = c("sysName","width", "frame.gene_id", "frame.go_id", "frame.Evidence")
     gostats_go = gostats_go[,c("frame.go_id","frame.Evidence","frame.gene_id")]
     gostats_frame = GOFrame(gostats_go, organism=organism)
     gostats_all = GOAllFrame(gostats_frame)
@@ -354,41 +357,54 @@ gostats_trees = function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under
 #' @return plots!
 #' @seealso \code{\link{clusterProfiler}} \code{\link{pval_plot}}
 #' @export
-gostats_pval_plots = function(mf_over=NULL, bp_over=NULL, cc_over=NULL, mf_under=NULL, bp_under=NULL, cc_under=NULL, wrapped_width=20, cutoff=0.1, n=12) {
+gostats_pval_plots = function(gostats_result=NULL, mf_over=NULL, bp_over=NULL, cc_over=NULL, mf_under=NULL, bp_under=NULL, cc_under=NULL, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5) {
+    if (!is.null(gostats_result)) {
+        mf_over = gostats_result$mf_over_enriched
+        mf_under = gostats_result$mf_under_enriched
+        bp_over = gostats_result$bp_over_enriched
+        bp_under = gostats_result$bp_under_enriched
+        cc_over = gostats_result$cc_over_enriched
+        cc_under = gostats_result$cc_under_enriched
+    }
+
     ##    plotting_mf_over = subset(mf_over, complete.cases(mf_over))
     plotting_mf_over = summary(mf_over)
+    mf_pval_plot_over = NULL
     if (is.null(mf_over)) {
-        mf_pval_plot_over = NULL
         plotting_mf_over = NULL
     } else {
         plotting_mf_over$score = plotting_mf_over$ExpCount
         plotting_mf_over = subset(plotting_mf_over, Term != "NULL")
-        plotting_mf_over = subset(plotting_mf_over, Pvalue <= 0.1)
-        plotting_mf_over = subset(plotting_mf_over, Size > 10)
+        plotting_mf_over = subset(plotting_mf_over, Pvalue <= cutoff)
+        plotting_mf_over = subset(plotting_mf_over, Size >= group_minsize)
         plotting_mf_over = plotting_mf_over[order(plotting_mf_over$Pvalue),]
         plotting_mf_over = head(plotting_mf_over, n=n)
         plotting_mf_over = plotting_mf_over[,c("Term","Pvalue","score")]
         colnames(plotting_mf_over) = c("term","pvalue","score")
+    }
+    if (nrow(plotting_mf_over) > 0) {
         mf_pval_plot_over = pval_plot(plotting_mf_over, ontology="MF")
     }
     plotting_mf_under = summary(mf_under)
+    mf_pval_plot_under = NULL
     if (is.null(mf_under)) {
-        mf_pval_plot_under = NULL
         plotting_mf_under = NULL
     } else {
         plotting_mf_under$score = plotting_mf_under$ExpCount
         plotting_mf_under = subset(plotting_mf_under, Term != "NULL")
-        plotting_mf_under = subset(plotting_mf_under, Pvalue <= 0.1)
-        plotting_mf_under = subset(plotting_mf_under, Size > 10)
+        plotting_mf_under = subset(plotting_mf_under, Pvalue <= cutoff)
+        plotting_mf_under = subset(plotting_mf_under, Size >= group_minsize)
         plotting_mf_under = plotting_mf_under[order(plotting_mf_under$Pvalue),]
         plotting_mf_under = head(plotting_mf_under, n=n)
         plotting_mf_under = plotting_mf_under[,c("Term","Pvalue","score")]
         colnames(plotting_mf_under) = c("term","pvalue","score")
+    }
+    if (nrow(plotting_mf_under) > 0) {
         mf_pval_plot_under = pval_plot(plotting_mf_under, ontology="MF")
     }
     plotting_bp_over = summary(bp_over)
+    bp_pval_plot_over = NULL    
     if (is.null(bp_over)) {
-        bp_pval_plot_over = NULL
         plotting_bp_over = NULL
     } else {
         plotting_bp_over$score = plotting_bp_over$ExpCount
@@ -399,11 +415,13 @@ gostats_pval_plots = function(mf_over=NULL, bp_over=NULL, cc_over=NULL, mf_under
         plotting_bp_over = head(plotting_bp_over, n=n)
         plotting_bp_over = plotting_bp_over[,c("Term","Pvalue","score")]
         colnames(plotting_bp_over) = c("term","pvalue","score")
+    }
+    if (nrow(plotting_bp_over) > 0) {
         bp_pval_plot_over = pval_plot(plotting_bp_over, ontology="BP")
     }
     plotting_bp_under = summary(bp_under)
+    bp_pval_plot_under = NULL    
     if (is.null(bp_under)) {
-        bp_pval_plot_under = NULL
         plotting_bp_under = NULL
     } else {
         plotting_bp_under$score = plotting_bp_under$ExpCount
@@ -414,11 +432,13 @@ gostats_pval_plots = function(mf_over=NULL, bp_over=NULL, cc_over=NULL, mf_under
         plotting_bp_under = head(plotting_bp_under, n=n)
         plotting_bp_under = plotting_bp_under[,c("Term","Pvalue","score")]
         colnames(plotting_bp_under) = c("term","pvalue","score")
+    }
+    if (nrow(plotting_bp_under) > 0) {
         bp_pval_plot_under = pval_plot(plotting_bp_under, ontology="BP")
     }
     plotting_cc_over = summary(cc_over)
+    cc_pval_plot_over = NULL    
     if (is.null(cc_over)) {
-        cc_pval_plot_over = NULL
         plotting_cc_over = NULL
     } else {
         plotting_cc_over$score = plotting_cc_over$ExpCount
@@ -429,11 +449,13 @@ gostats_pval_plots = function(mf_over=NULL, bp_over=NULL, cc_over=NULL, mf_under
         plotting_cc_over = head(plotting_cc_over, n=n)
         plotting_cc_over = plotting_cc_over[,c("Term","Pvalue","score")]
         colnames(plotting_cc_over) = c("term","pvalue","score")
+    }
+    if (nrow(plotting_cc_over) > 0) {
         cc_pval_plot_over = pval_plot(plotting_cc_over, ontology="CC")
     }
     plotting_cc_under = summary(cc_under)
+    cc_pval_plot_under = NULL    
     if (is.null(cc_under)) {
-        cc_pval_plot_under = NULL
         plotting_cc_under = NULL
     } else {
         plotting_cc_under$score = plotting_cc_under$ExpCount
@@ -444,6 +466,8 @@ gostats_pval_plots = function(mf_over=NULL, bp_over=NULL, cc_over=NULL, mf_under
         plotting_cc_under = head(plotting_cc_under, n=n)
         plotting_cc_under = plotting_cc_under[,c("Term","Pvalue","score")]
         colnames(plotting_cc_under) = c("term","pvalue","score")
+    }
+    if (nrow(plotting_cc_under) > 0) {
         cc_pval_plot_under = pval_plot(plotting_cc_under, ontology="CC")
     }
     pval_plots = list(mfp_plot_over=mf_pval_plot_over, bpp_plot_over=bp_pval_plot_over, ccp_plot_over=cc_pval_plot_over,

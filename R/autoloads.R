@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jul 24 10:13:40 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Aug 27 12:33:37 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -97,7 +97,7 @@ autoloads_deseq = function() {
     require.auto("pasilla")  ## for cbcbSEQ
     require.auto("preprocessCore") ## for cbcbSEQ
     require.auto("cbcbSEQ", "kokrah/cbcbSEQ")  ## cbcbSeq has to be loaded last because its DESCRIPTION file is missing a couple of dependencies
-    require.auto("qlasso", "kokrah/qsmooth")
+##    require.auto("qlasso", "kokrah/qsmooth")
 }
 
 autoloads_graphs = function() {

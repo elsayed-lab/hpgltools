@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jul 21 12:06:07 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep  2 18:05:18 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified clusterProfiler analysis
 #'
@@ -220,6 +220,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     }
 
     return_information = list(
+        de_genes=de_genes,
         mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting,
         mf_pvals=all_mf_phist, bp_pvals=all_bp_phist, cc_pvals=all_cc_phist,
         mf_enriched=enriched_mf, bp_enriched=enriched_bp, cc_enriched=enriched_cc,
@@ -237,7 +238,6 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
 ## Take clusterprofile group data and print it on a tree as topGO does
 #' Make fun trees a la topgo from goseq data.
 #'
-#' @param de_genes some differentially expressed genes
 #' @param godata data from cluster Profiler
 #' @param goids a mapping of IDs to GO in the Ramigo expected format
 #' @param sigforall Print significance on all nodes?
@@ -245,7 +245,8 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
 #' @return plots! Trees! oh my!
 #' @seealso \code{\link{Ramigo}}
 #' @export
-cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", goids_df=NULL, score_limit=0.1, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Value") {
+cluster_trees = function(cpdata, goid_map="reference/go/id2go.map", goids_df=NULL, score_limit=0.2, overwrite=FALSE, selector="topDiffGenes", pval_column="P.Value") {
+    de_genes = cpdata$de_genes
     make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO = topGO::readMappings(file=goid_map)
     annotated_genes = names(geneID2GO)
@@ -255,6 +256,7 @@ cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", go
     interesting_genes = factor(annotated_genes %in% de_genes$ID)
     names(interesting_genes) = annotated_genes
 
+    print(paste0("Checking the de_table for a p-value column:", pval_column))
     if (is.null(de_genes[[pval_column]])) {
         mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
@@ -283,7 +285,8 @@ cluster_trees = function(de_genes, cpdata, goid_map="reference/go/id2go.map", go
     names(bp_all_scores) = bp_all_ids
     names(cc_all_scores) = cc_all_ids
     mf_included = length(which(mf_all_scores <= score_limit))
-    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    ##    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=floor(mf_included * 1.5) , useFullNames=TRUE, plotFunction=hpgl_GOplot)))    
     if (class(mf_tree_data)[1] == 'try-error') {
         mf_tree = NULL
     } else {
@@ -578,4 +581,3 @@ mygroupgo = function (gene, organism = "human", ont = "CC", level = 2, readable 
     }
     return(x)
 }
-

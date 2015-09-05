@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jul 22 12:12:16 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Sep  1 13:20:32 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -7,7 +7,7 @@
 #'
 #' @return a big list including the various outputs from topgo
 #' @export
-simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL, pvals=NULL, limitby="fisher", limit=0.1, signodes=100, sigforall=TRUE, numchar=300, selector="topDiffGenes", overwrite=FALSE) {
+simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL, pvals=NULL, limitby="fisher", limit=0.1, signodes=100, sigforall=TRUE, numchar=300, selector="topDiffGenes", overwrite=FALSE, densities=FALSE) {
 ### Some neat ideas from the topGO documentation:
 ### geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
 ### A variant of these operations make it possible to give topGO scores so that
@@ -100,24 +100,13 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
 ##    }
 ##    first_densities = list(mf=mf_first_density, bp=bp_first_density, cc=cc_first_density)
 
-    mf_densities = bp_densities = cc_densities = list()
-    for (id in tables$mf$GO.ID) {
-        print(id)
-        print(hpgltools:::hpgl_GroupDensity(mf_GOdata, id, ranks=TRUE))
-        added_plot = recordPlot()
-        mf_densities[[id]] = added_plot
-    }
-    for (id in tables$bp$GO.ID) {
-        print(id)
-        print(hpgltools:::hpgl_GroupDensity(bp_GOdata, id, ranks=TRUE))
-        added_plot = recordPlot()
-        bp_densities[[id]] = added_plot
-    }
-    for (id in tables$cc$GO.ID) {
-        print(id)
-        print(hpgltools:::hpgl_GroupDensity(cc_GOdata, id, ranks=TRUE))
-        added_plot = recordPlot()
-        cc_densities[[id]] = added_plot
+    mf_densities = bp_densities = cc_densities = list()    
+    if (isTRUE(densities)) {
+        mf_densities = hpgltools:::plot_topgo_densities(mf_GOdata, tables$mf)
+        bp_densities = hpgltools:::plot_topgo_densities(bp_GOdata, tables$bp)
+        cc_densities = hpgltools:::plot_topgo_densities(cc_GOdata, tables$cc)
+    } else {
+        print("Set densities=TRUE if you want to see the ontology density lattice plots.")
     }
     
     information = list(
@@ -128,6 +117,16 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
     return(information)
 }
 
+plot_topgo_densities = function(godata, table) {
+    ret = list()
+    for (id in table$GO.ID) {
+        print(id)
+        print(hpgltools:::hpgl_GroupDensity(godata, id, ranks=TRUE))
+        added_plot = recordPlot()
+        ret[[id]] = added_plot
+    }
+    return(ret)
+}
 
 #' topgo_tables() Make pretty tables out of topGO data
 #'
@@ -334,8 +333,6 @@ topgo_trees = function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=T
         mf_weight_tree=mf_weight_tree, bp_weight_tree=bp_weight_tree, cc_weight_tree=cc_weight_tree)
     return(trees)
 }
-
-
 
 #' Make a go mapping from IDs in a format suitable for topGO
 #'

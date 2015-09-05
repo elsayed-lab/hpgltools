@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jul 31 16:08:28 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep  2 16:26:49 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -113,7 +113,7 @@ gosn = function(go) {
     go = as.character(go)
     result = ""
     value = try(as.character(AnnotationDbi::Synonym(GOTERM[go])), silent=TRUE)
-    result = deparse_go_value(value)
+    result = paste(deparse_go_value(value), collapse="; ")
     return(result)
 }
 
@@ -370,13 +370,13 @@ pval_plot = function(df, ontology="MF") {
     return(pvalue_plot)
 }
 
-#' limma_ontology()  Perform ontology searches of the output from limma.
+#' all_ontology_searches()  Perform ontology searches of the output from limma.
 #'
 #' This passes a set of limma results to (optionally) goseq, clusterprofiler, topgo, and gostats,
 #' collects the outputs, and provides them as a list.  This function needs a species argument,
 #' as I recently made the simple_() functions able to automatically use the various supported organisms.
 #' 
-#' @param limma_out  a list of topTables comprising limma outputs.
+#' @param de_out  a list of topTables comprising limma/deseq/edger outputs.
 #' @param n default=NULL  a number of genes at the top/bottom to search.
 #' @param z default=NULL  a number of standard deviations to search. (if this and n are null, it assumes 1z)
 #' @param gene_lengths default=NULL  a data frame of gene lengths for goseq.
@@ -400,8 +400,8 @@ pval_plot = function(df, ontology="MF") {
 #' ## many_comparisons = limma_pairwise(expt=an_expt)
 #' ## tables = many_comparisons$limma_result
 #' ## this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
-limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, fc=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", gff_file=NULL, goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_gostats=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
-    message("This function expects a list of limma contrast tables and some annotation information.")
+all_ontology_searches = function(de_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, fc=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", gff_file=NULL, goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_gostats=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
+    message("This function expects a list of de contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
     if (isTRUE(do_goseq) & is.null(gene_lengths)) {
         stop("Performing a goseq search requires a data frame of gene lengths.")
@@ -417,14 +417,14 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
     
     ## Take a moment to detect what the data input looks like
     ## Perhaps a list of tables?
-    if (!is.null(limma_out$all_tables)) {
-        limma_out = limma_out$all_tables
+    if (!is.null(de_out$all_tables)) {
+        de_out = de_out$all_tables
     }
     ## Perhaps a single data frame of logFC etc
     ## In which case, coerse it to a list of 1
-    if (!is.null(limma_out$logFC)) {
-        tmp = limma_out
-        limma_out = list("first"=tmp)
+    if (!is.null(de_out$logFC)) {
+        tmp = de_out
+        de_out = list("first"=tmp)
         rm(tmp)
     }
 
@@ -437,13 +437,13 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
     }
 
     output = list()
-    for (c in 1:length(limma_out)) {
-        datum = limma_out[[c]]
+    for (c in 1:length(de_out)) {
+        datum = de_out[[c]]
         if (!is.null(datum$Row.names)) {
             rownames(datum) = datum$Row.names
             datum = datum[-1]
         }
-        comparison = names(limma_out[c])
+        comparison = names(de_out[c])
         message(paste("Performing ontology search of:", comparison, sep=""))
         updown_genes = get_sig_genes(datum, n=n, z=z, fc=fc)
         up_genes = updown_genes$up_genes
@@ -593,7 +593,7 @@ limma_ontology = function(limma_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NU
                       up_gostatstrees=gostats_up_trees, down_gostatstrees=gostats_down_trees)
         output[[c]] = c_data
     }
-    names(output) = names(limma_out)
+    names(output) = names(de_out)
     return(output)
 }
 
