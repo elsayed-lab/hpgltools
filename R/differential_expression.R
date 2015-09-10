@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Sep  3 18:44:35 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Sep 10 10:41:05 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -71,15 +71,36 @@ combine_de_tables = function(all_pairwise_result, table='wt_minus_mut') {
     colnames(deseq) = c("deseq_basemean","deseq_logfc","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")
     deseq = deseq[,c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
     edger = edger$all_tables[[table]]
-    colnames(edger) = c("edger_logfc","edger_logcpm","edger_lr","edger_pval","edger_adjp","edger_q")
+    colnames(edger) = c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
     combined = merge(limma, deseq, by="row.names")
     combined = merge(combined, edger, by.x="Row.names", by.y="row.names")
     rownames(combined) = combined$Row.names
     combined = combined[-1]
     combined[is.na(combined)] = 0
-    combined$fc_meta = rowMeans(preprocessCore::normalize.quantiles(as.matrix(combined[,c("limma_logfc","edger_logfc","deseq_logfc")], na.rm=TRUE)))
-    combined$fc_var = rowVars(preprocessCore::normalize.quantiles(as.matrix(combined[,c("limma_logfc","edger_logfc","deseq_logfc")], na.rm=TRUE)))
+    temp_fc = cbind(as.numeric(combined$limma_logfc), as.numeric(combined$edger_logfc), as.numeric(combined$deseq_logfc))
+    temp_fc = preprocessCore::normalize.quantiles(as.matrix(temp_fc))
+    combined$fc_meta = rowMeans(temp_fc, na.rm=TRUE)
+    combined$fc_var = rowVars(temp_fc, na.rm=TRUE)
     combined$fc_varbymed = combined$fc_var / combined$fc_meta
+    temp_p = cbind(as.numeric(combined$limma_p), as.numeric(combined$edger_p), as.numeric(combined$deseq_p))
+    combined$p_meta = rowMeans(temp_p, na.rm=TRUE)
+    combined$p_var = rowVars(temp_p, na.rm=TRUE)
+
+    combined$q_meta = tryCatch(
+    {
+        format(signif(qvalue(combined$p_meta, robust=TRUE)$qvalues, 4), scientific=TRUE)
+    },
+    error=function(cond) {
+        message(paste0("The meta qvalue estimation failed."))
+        return(1)
+    },
+    warning=function(cond) {
+        message("There was a warning!")
+        message(cond)
+        return(1)
+    },
+    finally={
+    })
     return(combined)
 }
 
@@ -305,7 +326,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, cs
                     format(signif(qvalue(result$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
                 },
                 error=function(cond) {
-                    message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+                    message(paste0("The qvalue estimation failed for ", comparison, "."))
                     return(1)
                 },
                 warning=function(cond) {
