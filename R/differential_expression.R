@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Sep 10 10:41:05 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep 16 11:40:04 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -121,7 +121,7 @@ combine_de_tables = function(all_pairwise_result, table='wt_minus_mut') {
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE) {
+coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     print("This can do comparisons among the following columns in the limma result:")
@@ -153,7 +153,7 @@ coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scat
     print(paste0("Actually comparing ", xname, " and ", yname, "."))
     coefficients = limma_output$pairwise_comparisons$coefficients
     coefficients = coefficients[,c(x,y)]
-    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline, first=xname, second=yname)
+    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline, first=xname, second=yname, tooltip_data=tooltip_data, base_url=base_url)
     plot$df = coefficients
     return(plot)
 }

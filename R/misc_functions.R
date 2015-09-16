@@ -1,33 +1,4 @@
-## Time-stamp: <Fri Jul 31 15:35:17 2015 Ashton Trey Belew (abelew@gmail.com)>
-
-#' pattern_count_genome()  Find how many times a given pattern occurs in every gene of a genome.
-#'
-#' @param fasta  a fasta genome
-#' @param gff default=NULL  an optional gff of annotations (if not provided it will just ask the whole genome.
-#' @param pattern default='TA'  what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.
-#' @param key default='locus_tag'  what type of entry of the gff file to key from?
-#'
-#' @return num_pattern a data frame of names and numbers.
-#' @export
-#' @seealso \code{\link{PDict}} \code{\link{FaFile}}
-#' @examples
-#' ## num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
-pattern_count_genome = function(fasta, gff=NULL, pattern='TA', type='gene', key='locus_tag') {
-    rawseq = FaFile(fasta)
-    if (is.null(gff)) {
-        entry_sequences = rawseq
-    } else {
-        entries = import.gff3(gff, asRangedData=FALSE)
-        type_entries = subset(entries, type==type)
-        names(type_entries) = rownames(type_entries)
-        entry_sequences = getSeq(rawseq, type_entries)
-        names(entry_sequences) = entry_sequences[[,key]]
-    }
-    dict = PDict(pattern, max.mismatch=0)
-    result = vcountPDict(dict, entry_sequences)
-    num_pattern = data.frame(name=names(entry_sequences), num=as.data.frame(t(result)))
-    return(num_pattern)
-}
+## Time-stamp: <Wed Sep 16 11:29:09 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -103,6 +74,90 @@ hpgl_cor = function(df, method="pearson", ...) {
         correlation = stats::cor(df, method=method, ...)
     }
     return(correlation)
+}
+
+make_tooltips = function(annotations=NULL, gff=NULL) {
+    if (is.null(annotations) & is.null(gff)) {
+        stop("I need either a data frame or gff file.")
+    } else {
+        if (!is.null(annotations)) {
+            tooltip_data = annotations[,c("ID","Name","locus_tag")]
+        } else {
+            ret = NULL
+            annotations = try(import.gff3(gff), silent=TRUE)
+            if (class(annotations) == 'try-error') {
+                annotations = try(import.gff2(gff), silent=TRUE)
+                if (class(annotations) == 'try-error') {
+                    stop("Could not extract the widths from the gff file.")
+                } else {
+                    ret = annotations
+                }
+            } else {
+                ret = annotations
+            }
+            ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
+            ## no method to coerce an S4 class to a vector.
+            tooltip_data = GenomicRanges::as.data.frame(ret)
+        }
+    }
+    tooltip_data$tooltip = ""
+    if (is.null(tooltip_data$locus_tag) & is.null(tooltip_data$Name) & is.null(tooltip_data$ID)) {
+        stop("I need a name!")
+    } else {
+        if (is.null(tooltip_data$locus_tag)) {
+            tooltip_data$locus_tag = ""
+        } else {
+            tooltip_data$tooltip = paste(tooltip_data$tooltip, tooltip_data$locus_tag, sep=": ")
+        } 
+        if (is.null(tooltip_data$Name)) {
+            tooltip_data$Name = ""
+        } else {
+            tooltip_data$tooltip = paste(tooltip_data$tooltip, tooltip_data$Name, sep=": ")
+        }
+        if (is.null(tooltip_data$ID)) {
+            tooltip_data$ID = ""
+        } else {
+            tooltip_data$tooltip = paste(tooltip_data$tooltip, tooltip_data$ID, sep=": ")
+        }
+    }
+    tooltip_data$tooltip = gsub("\\+", " ", tooltip_data$tooltip)
+    tooltip_data$tooltip = gsub(": $", "", tooltip_data$tooltip)
+    tooltip_data$tooltip = gsub("^: ", "", tooltip_data$tooltip)
+    rownames(tooltip_data) = make.names(tooltip_data$ID, unique=TRUE)
+    tooltip_data = tooltip_data[,c("ID","Name","locus_tag", "1.tooltip")]
+    tooltip_data = tooltip_data[-1]
+    tooltip_data = tooltip_data[-1]
+    tooltip_data = tooltip_data[-1]
+    return(tooltip_data)
+}
+
+#' pattern_count_genome()  Find how many times a given pattern occurs in every gene of a genome.
+#'
+#' @param fasta  a fasta genome
+#' @param gff default=NULL  an optional gff of annotations (if not provided it will just ask the whole genome.
+#' @param pattern default='TA'  what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.
+#' @param key default='locus_tag'  what type of entry of the gff file to key from?
+#'
+#' @return num_pattern a data frame of names and numbers.
+#' @export
+#' @seealso \code{\link{PDict}} \code{\link{FaFile}}
+#' @examples
+#' ## num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
+pattern_count_genome = function(fasta, gff=NULL, pattern='TA', type='gene', key='locus_tag') {
+    rawseq = FaFile(fasta)
+    if (is.null(gff)) {
+        entry_sequences = rawseq
+    } else {
+        entries = import.gff3(gff, asRangedData=FALSE)
+        type_entries = subset(entries, type==type)
+        names(type_entries) = rownames(type_entries)
+        entry_sequences = getSeq(rawseq, type_entries)
+        names(entry_sequences) = entry_sequences[[,key]]
+    }
+    dict = PDict(pattern, max.mismatch=0)
+    result = vcountPDict(dict, entry_sequences)
+    num_pattern = data.frame(name=names(entry_sequences), num=as.data.frame(t(result)))
+    return(num_pattern)
 }
 
 #' sillydist()  A stupid distance function of a point against two axes.

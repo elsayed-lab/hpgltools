@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jul  9 16:46:42 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep 16 11:42:39 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_gvis_ma_plot()  Make an html version of an MA plot.
 #'
@@ -134,7 +134,7 @@ hpgl_gvis_scatter = function(df, tooltip_data=NULL, filename="html/gvis_scatter.
     gvis_df = gvis_df[-1]
     json_ids = rjson::toJSON(row.names(gvis_df))
     gvis_chartid=gsub("\\.html$", "", basename(filename))
-    scatter_jscode = paste(" var IDs=", json_ids, "
+    scatter_jscode = paste0(" var IDs=", json_ids, "
  var sel = chart.getSelection();
  var row = sel[0].row;
  var text = IDs[row];
@@ -153,7 +153,7 @@ hpgl_gvis_scatter = function(df, tooltip_data=NULL, filename="html/gvis_scatter.
             trendlines=trendline_string,
             axisTitlesPosition="out")
     }
-    hpgl_gvis_scatterchart = googleVis::gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
+    hpgl_gvis_scatterchart = gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
     print(hpgl_gvis_scatterchart, file=filename)
 }
 

@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jul 28 13:10:15 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Sep 15 10:45:51 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -289,7 +289,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
 #' @examples
 #' ## smaller_expt = expt_subset(big_expt, "condition=='control'")
 #' ## all_expt = expt_subset(expressionset, "")  ## extracts everything
-expt_subset = function(expt, subset=NULL, by_definitions=FALSE) {
+expt_subset = function(expt, subset=NULL) {
     if (class(expt) == "ExpressionSet") {
         expressionset = expt
     } else if (class(expt) == "expt") {
@@ -297,15 +297,11 @@ expt_subset = function(expt, subset=NULL, by_definitions=FALSE) {
     } else {
         stop("expt is neither an expt nor ExpressionSet")
     }
-    if (isTRUE(by_definitions)) {
-        if (is.null(expt$definitions)) {
-            warning("There is no expt$definitions, using the expressionset.")
-            initial_metadata = pData(expressionset)
-        } else {
-            initial_metadata = expt$definitions
-        }
+    if (is.null(expt$definitions)) {
+        warning("There is no expt$definitions, using the expressionset.")
+        initial_metadata = pData(expressionset)
     } else {
-        initial_metadata = Biobase::pData(expressionset)
+        initial_metadata = expt$definitions
     }
     if (is.null(subset)) {
         samples = initial_metadata
@@ -320,7 +316,7 @@ expt_subset = function(expt, subset=NULL, by_definitions=FALSE) {
     batches = as.factor(as.character(design$batch))
     design$condition = conditions
     design$batch = batches
-    samplenames = as.character(samples$sample)
+    samplenames = as.character(samples$sample.id)
     colors = as.character(samples$color)
     names = paste(conditions, batches, sep="-")
     subset_definitions = expt$definitions[rownames(expt$definitions) %in% samplenames, ]
