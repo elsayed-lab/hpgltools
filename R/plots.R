@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep 16 11:42:19 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep 16 12:22:23 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -826,7 +826,7 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
         maxval = max(play_all$expression, na.rm=TRUE)
         bins = 500
         binwidth = (maxval - minval) / bins
-        message(paste("No binwidth nor bins provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
+        message(paste("Setting binwidth to ", binwidth, " in order to have ", bins, " bins.", sep=""))
     } else if  (is.null(binwidth)) {
         minval = min(play_all$expression, na.rm=TRUE)
         maxval = max(play_all$expression, na.rm=TRUE)
