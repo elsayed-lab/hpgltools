@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Sep 21 15:17:44 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep 16 15:23:23 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -436,7 +436,7 @@ hpgl_disheat = function(data, colors=NULL, design=NULL, method="euclidean", name
 #' @param names default=NULL  alternate names to use.
 #' @param row default='batch'  what to place on the row of the map, batches or conditions?
 #' @param title default=NULL  a title for the plot.
-#' 
+#'
 #' @return a recordPlot() heatmap describing the distance between samples.
 #' @seealso \code{\link{brewer.pal}},
 #' \code{\link{heatmap.2}}, \code{\link{recordPlot}}
@@ -710,7 +710,8 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
     x_histogram = hpgltools::hpgl_histogram(data.frame(df[,1]), verbose=verbose, fillcolor="lightblue", color="blue")
     y_histogram = hpgltools::hpgl_histogram(data.frame(df[,2]), verbose=verbose, fillcolor="pink", color="red")
     both_histogram = hpgltools::hpgl_multihistogram(df, verbose=verbose)
-    plots = list(scatter=first_vs_second,
+    plots = list(data=df,
+        scatter=first_vs_second,
         x_histogram=x_histogram,
         y_histogram=y_histogram,
         both_histogram=both_histogram,
