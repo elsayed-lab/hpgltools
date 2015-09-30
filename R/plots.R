@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep 16 12:22:23 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Sep 21 15:17:44 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -644,7 +644,7 @@ hpgl_libsize = function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, t
 #' @export
 #' @examples
 #' ## hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, loess=FALSE, identity=FALSE, gvis_trendline=NULL, first=NULL, second=NULL, base_url=NULL) {
+hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, loess=FALSE, identity=FALSE, gvis_trendline=NULL, first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE) {
     hpgl_env = environment()
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
@@ -673,11 +673,16 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
         geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
         geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
         geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
-        geom_abline(colour="grey", slope=linear_model_slope, intercept=linear_model_intercept, size=line_size) +
-        geom_point(colour=hsv(linear_model_weights * 9/20,
-                       linear_model_weights/20 + 19/20,
-                       (1.0 - linear_model_weights)),
+        geom_abline(colour="grey", slope=linear_model_slope, intercept=linear_model_intercept, size=line_size)
+    if (isTRUE(pretty_colors)) {
+        first_vs_second = first_vs_second +
+            geom_point(colour=hsv(linear_model_weights * 9/20,
+                                  linear_model_weights/20 + 19/20,
+                                  (1.0 - linear_model_weights)),
                        size=size, alpha=0.4)
+    } else {
+        first_vs_second = first_vs_second + geom_point(colour="black", size=size, alpha=0.4)
+    }
     if (loess == TRUE) {
         first_vs_second = first_vs_second +
             geom_smooth(method="loess")

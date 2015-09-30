@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep 16 11:40:04 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Sep 21 15:47:01 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -60,7 +60,7 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, m
 #' @seealso \code{\link{all_pairwise}}
 #' @examples
 #' ## pretty = combine_de_tables(big_result, table='t12_minus_t0')
-combine_de_tables = function(all_pairwise_result, table='wt_minus_mut') {
+combine_de_tables = function(all_pairwise_result, table='wt_minus_mut', annot_df=NULL) {
     limma = all_pairwise_result$limma
     deseq = all_pairwise_result$deseq
     edger = all_pairwise_result$edger
@@ -101,10 +101,15 @@ combine_de_tables = function(all_pairwise_result, table='wt_minus_mut') {
     },
     finally={
     })
+    if (!is.null(annot_df)) {
+        combined = merge(annot_df, combined, by="row.names")
+        rownames(combined) = combined$Row.names
+        combined = combined[-1]
+    }
     return(combined)
 }
 
-#' coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
+#' limma_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
 #' This hopefully makes that easy.
@@ -121,11 +126,11 @@ combine_de_tables = function(all_pairwise_result, table='wt_minus_mut') {
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
+limma_coefficient_scatter = function(output, toptable=NULL, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     print("This can do comparisons among the following columns in the limma result:")
-    thenames = colnames(limma_output$pairwise_comparisons$coefficients)
+    thenames = colnames(output$pairwise_comparisons$coefficients)
     print(thenames)
     xname=""
     yname=""
@@ -151,10 +156,95 @@ coefficient_scatter = function(limma_output, x=1, y=2, gvis_filename="limma_scat
         rm(tmpname)
     }
     print(paste0("Actually comparing ", xname, " and ", yname, "."))
-    coefficients = limma_output$pairwise_comparisons$coefficients
+    coefficients = output$pairwise_comparisons$coefficients
     coefficients = coefficients[,c(x,y)]
-    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline, first=xname, second=yname, tooltip_data=tooltip_data, base_url=base_url)
+    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline, first=xname, second=yname, tooltip_data=tooltip_data, base_url=base_url, pretty_colors=FALSE)
+
+    if (!is.null(toptable)) {
+        theplot = plot$scatter + theme_bw()
+        sig = limma_subset(toptable, z=1.5)
+        sigup = sig$up
+        sigdown = sig$down
+        sigup = subset(sigup, qvalue < 0.1)
+        sigdown = subset(sigdown, qvalue < 0.1)
+        if (isTRUE(flip)) {
+            tmp = sigup
+            sigup = sigdown
+            sigdown = tmp
+            rm(tmp)
+        }
+        up_index = rownames(coefficients) %in% rownames(sigup)
+        down_index = rownames(coefficients) %in% rownames(sigdown)
+        up_df = as.data.frame(coefficients[up_index, ])
+        down_df = as.data.frame(coefficients[down_index, ])
+        colnames(up_df) = c("first","second")
+        colnames(down_df) = c("first","second")
+        theplot = theplot + geom_point(data=up_df, colour="#7B9F35") + geom_point(data=down_df, colour="#DD0000")
+        plot$scatter = theplot
+    }
     plot$df = coefficients
+    return(plot)
+}
+
+#' coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
+#'
+#' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
+#' This hopefully makes that easy.
+#'
+#' @param limma_output the set of pairwise comparisons provided by limma_pairwise()
+#' @param x default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot
+#' @param y default=2  the name or number of the second coefficient column to extract, this will be the y-axis of the plot
+#' @param gvis_filename default='limma_scatter.html'  A filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline default=TRUE  add a trendline to the gvis plot?
+#' @param tooltip_data default=NULL  a dataframe of gene annotations to be used in the gvis plot
+#'
+#' @return a ggplot2 plot showing the relationship between the two coefficients
+#' @seealso \code{\link{hpgl_linear_scatter}} \code{\link{limma_pairwise}}
+#' @export
+#' @examples
+#' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+deseq_coefficient_scatter = function(output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
+    ##  If taking a limma_pairwise output, then this lives in
+    ##  output$pairwise_comparisons$coefficients
+    print("This can do comparisons among the following columns in the limma result:")
+    thenames = names(output$coefficients)
+    print(thenames)
+    xname=""
+    yname=""
+    if (is.numeric(x)) {
+        xname = thenames[[x]]
+    } else {
+        xname = x
+    }
+    if (is.numeric(y)) {
+        yname = thenames[[y]]
+    } else {
+        yname = y
+    }
+    ## This is just a shortcut in case I want to flip axes without thinking.
+    if (isTRUE(flip)) {
+        tmp = x
+        tmpname = xname
+        x = y
+        xname = yname
+        y = tmp
+        yname = tmpname
+        rm(tmp)
+        rm(tmpname)
+    }
+    print(paste0("Actually comparing ", xname, " and ", yname, "."))
+    first_col = output$coefficients[[xname]][,c("baseMean","log2FoldChange")]
+    colnames(first_col) = c("mean.1", xname)
+    second_col = output$coefficients[[yname]][,c("baseMean","log2FoldChange")]
+    colnames(second_col) = c("mean.2", yname)
+    coefficient_df = merge(first_col, second_col, by="row.names")
+    rownames(coefficient_df) = coefficient_df$Row.names
+    coefficient_df = coefficient_df[-1]
+    coefficient_df = coefficient_df[,c(xname, yname, "mean.1", "mean.2")]
+    coefficient_df[is.na(coefficient_df)] = 0
+    
+    plot = hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline, first=xname, second=yname, tooltip_data=tooltip_data, base_url=base_url)
+    plot$df = coefficient_df
     return(plot)
 }
 
@@ -259,7 +349,7 @@ deseq_pairwise = function(...) {
 #' @export
 #' @examples
 #' ## pretend = deseq2_pairwise(data, conditions, batches)
-deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, csv=TRUE, annotation=NULL, workbook="excel/deseq.xls", ...) {
+deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, csv=TRUE, annot_df=NULL, workbook="excel/deseq.xls", ...) {
     print("Starting DESeq2 pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -302,16 +392,23 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, cs
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
     message("DESeq: Starting DESeq()")
-    deseq_run = DESeq(dataset, betaPrior=FALSE)
+    deseq_sf = estimateSizeFactors(dataset)
+    deseq_disp = estimateDispersions(deseq_sf)
+    deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
+##    deseq_run = DESeq(dataset, betaPrior=FALSE)
     ## Set contrast= for each pairwise comparison here!
     
     denominators = list()
     numerators = list()
     result_list = list()
     result_mle_list = list()
+    binom_list = list()
+    coefficient_list = list()
     condition_list = resultsNames(deseq_run)
     for (c in 1:(length(condition_list) - 1)) {
         denominator = names(condition_table[c])
+        denominator_name = paste0("condition", denominator)
+        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
         nextc = c + 1
         for (d in nextc:length(condition_list)) {
             numerator = names(condition_table[d])
@@ -344,8 +441,8 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, cs
             numerators[[result_name]] = numerator
             result_list[[result_name]] = result
 
-            if (!is.null(annotation)) {
-                result = merge(result, annotation, by.x="row.names", by.y="row.names")
+            if (!is.null(annot_df)) {
+                result = merge(result, annot_df, by.x="row.names", by.y="row.names")
             }
             testdir = dirname(workbook)
             if (isTRUE(excel) | isTRUE(csv)) {
@@ -362,8 +459,12 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, cs
                 csv_filename = paste0(csv_filename, "_", result_name, ".csv")
                 write.csv(result, file=csv_filename)
             }
-        }
-    }
+        } ## End for each d
+        ## Fill in the last coefficient (since the for loop above goes from 1 to n-1
+        denominator = names(condition_table[length(condition_list)])
+        denominator_name = paste0("condition", denominator)        
+        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))        
+    }  ## End for each c
     ##    deseq_result = results(deseq_run)
     ##    deseq_mle_result = results(deseq_run, addMLE=TRUE)
     ##    deseq_df = data.frame(deseq_result[order(deseq_result$log2FoldChange),])
@@ -398,6 +499,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, cs
         denominators=denominators,
         numerators=numerators,
         conditions=condition_list,
+        coefficients=coefficient_list,
         all_tables=result_list
     )
     return(ret_list)

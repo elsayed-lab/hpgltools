@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Sep 15 10:45:51 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Sep 21 15:47:59 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does

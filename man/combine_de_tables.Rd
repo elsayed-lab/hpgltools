@@ -4,7 +4,8 @@
 \alias{combine_de_tables}
 \title{combine_de_tables()  Combine portions of deseq/limma/edger table output}
 \usage{
-combine_de_tables(all_pairwise_result, table = "wt_minus_mut")
+combine_de_tables(all_pairwise_result, table = "wt_minus_mut",
+  annot_df = NULL)
 }
 \arguments{
 \item{all_pairwise_result}{the output from all_pairwise()}

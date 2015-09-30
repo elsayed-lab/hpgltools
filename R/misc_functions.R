@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep 16 11:29:09 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Sep 21 11:55:46 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -32,6 +32,14 @@ Beta.NA = function(y,X) {
 #' ##5 YAL068W-A   255
 #' ##6 YAL068W-A     3
 get_genelengths = function(gff, type="gene", key='ID') {
+    ret = gff2df(gff)
+    ret = ret[ret$type == type,]
+    ret = ret[,c(key,"width")]
+    colnames(ret) = c("ID","width")
+    return(ret)
+}
+
+gff2df = function(gff) {
     ret = NULL
     annotations = try(import.gff3(gff), silent=TRUE)
     if (class(annotations) == 'try-error') {
@@ -47,9 +55,6 @@ get_genelengths = function(gff, type="gene", key='ID') {
     ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
     ## no method to coerce an S4 class to a vector.
     ret = GenomicRanges::as.data.frame(ret)
-    ret = ret[ret$type == type,]
-    ret = ret[,c(key,"width")]
-    colnames(ret) = c("ID","width")
     return(ret)
 }
 
