@@ -22,7 +22,7 @@ write_karyotype = function(outfile='circos/conf/karyotypes/default.txt', length=
     close(out)
 }
 
-write_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='chr1', outer=1.0, width=0.08) {
+write_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='chr1', outer=1.0, width=0.08, spacing=0.0) {
     plus_cfg_file = cfgout
     minus_cfg_file = cfgout
     plus_cfg_file = gsub(".conf$", "_plus_go.conf", plus_cfg_file)
@@ -203,7 +203,7 @@ write_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='ch
     close(plus_cfg_out)
 
     ## Now move the ring in one width and print the minus strand.
-    outer = inner
+    outer = inner - spacing
     inner = outer - width
     minus_cfg_out = file(minus_cfg_file, open='w+')
     minus_cfg_filename = gsub("^circos/", "", minus_file)    
@@ -359,6 +359,7 @@ write_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='ch
     cat(minus_cfg_string, file=minus_cfg_out, sep="")
     close(minus_cfg_out)
     message("Wrote the +/- config files.  Appending their inclusion to the master file.")
+
     master_cfg_out = file(cfgout, open="a+")
     plus_cfg_include = plus_cfg_filename
     plus_cfg_include = gsub("^circos/", "", plus_cfg_file)
@@ -375,24 +376,30 @@ write_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='ch
     close(master_cfg_out)
 
     message(paste0("Returning the inner width: ", inner, ".  Use it as the outer for the next ring."))
-    return(inner)
+    new_outer = inner - spacing
+    return(new_outer)
 }
 
-circos_calls = function(df, outfile="calls.txt", name='chr1', stanza_file="circos_stanza.txt", colors=NULL, outer=0.9, width=0.08) {
+circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
     ## because I am tired of mistyping something stupid.
-    if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) | is.null(df$call)) {
-        stop("This requires columns: start, end, rownames, and call")
+    if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) | is.null(df[[colname]])) {
+        stop("This requires columns: start, end, rownames, and datum")
     }
-    df$chr = name
-    df = df[,c("chr","start","end","call")]
-    write.table(df, file=outfile, quote=FALSE, row.names=FALSE, col.names=FALSE)
-    message(paste0("Writing ", stanza_file, " with a suitable circos configuration stanza for this data."))
-    ## If colors is not provided, use colorbrewer to make up colors for every condition found in the factor of
-    ## df$call.
-    ## If colors is provided, it needs to have 1 element for every found condition.
+    datum_cfg_file = cfgout
+    datum_cfg_file = gsub(".conf$", "", datum_cfg_file)
+    datum_cfg_file = paste0(datum_cfg_file, "_", colname, "_tile.conf")
+    df$chr = chr
+    df = df[,c("chr","start","end", colname)]
+    data_prefix = cfgout
+    data_prefix = gsub("/conf/", "/data/", data_prefix)
+    data_prefix = gsub(".conf$", "", data_prefix)
+    data_filename = paste0(data_prefix, "_", colname, "_hist.txt")
+    message(paste0("Writing data file: ", data_file, " with the ", colname, " column."))
+    write.table(df, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
+
     num_colors = 1
     if (is.null(colors)) {
         conditions = levels(as.factor(df$call))
@@ -400,9 +407,12 @@ circos_calls = function(df, outfile="calls.txt", name='chr1', stanza_file="circo
         colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors, "Dark2"))(num_colors))
         names(colors) = conditions
     }
-    out = file(stanza_file, open='w+')
+    
+    ## Now write the config stanza
     inner = outer - width
-    start_string = sprintf("
+    data_cfg_out = file(datum_cfg_file, open="w+")
+    data_cfg_filename = gsub("^circos/", "", data_filename)
+    data_cfg_string = sprintf("
  <plot>
   type = tile
   file = %s
@@ -419,8 +429,8 @@ circos_calls = function(df, outfile="calls.txt", name='chr1', stanza_file="circo
   r1 = %fr
   r0 = %fr
   <rules>
-", outfile, outer, inner)
-    cat(start_string, file=out, sep="")
+", data_cfg_filename, outer, inner)
+    cat(data_cfg_string, file=data_cfg_out, sep="")
     for (c in 1:num_colors) {
         red_component = paste0("0x", substr(colors[[c]], 2, 3))
         green_component = paste0("0x", substr(colors[[c]], 4, 5))
@@ -435,12 +445,91 @@ circos_calls = function(df, outfile="calls.txt", name='chr1', stanza_file="circo
     color = %s
    </rule>
 ", names(colors)[[c]], color_string, color_string)
-        cat(new_string, file=out, sep="")
+        cat(new_string, file=data_cfg_out, sep="")
     }
     end_string = sprintf("  </rules>\n </plot>", sep="")
-    cat(end_string, file=out, sep="")
-    close(out)
-    return(inner)
+    cat(end_string, file=data_cfg_out, sep="")
+    close(data_cfg_out)
+
+    ## Now add to the master configuration file.
+    master_cfg_out = file(cfgout, open="a+")
+    data_cfg_include = data_cfg_filename
+    data_cfg_include = gsub("^circos/", "", data_cfg_include)
+    master_cfg_string = sprintf("
+## The tile ring for %s
+<<include %s>>
+
+", colname, data_cfg_include)
+    cat(master_cfg_string, file=master_cfg_out, sep="")
+    close(master_cfg_out)
+
+    new_outer = inner - spacing
+    return(new_outer)
+}
+
+circos_hist = function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1', color="blue", fill_color="blue", outer=0.9, width=0.08, spacing=0.0) {
+    ## I am going to have this take as input a data frame with genes as rownames
+    ## starts, ends, and functional calls
+    ## I will tell R to print out a suitable stanza for circos while I am at it
+    ## because I am tired of mistyping something stupid.
+    if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) | is.null(df[[colname]])) {
+        stop("This requires columns: start, end, rownames, and datum")
+    }
+    datum_cfg_file = cfgout
+    datum_cfg_file = gsub(".conf$", "", datum_cfg_file)
+    datum_cfg_file = paste0(datum_cfg_file, "_", colname, "_hist.conf")
+    df$chr = chr
+    df = df[,c("chr","start","end", colname)]
+    data_prefix = cfgout
+    data_prefix = gsub("/conf/", "/data/", data_prefix)
+    data_prefix = gsub(".conf$", "", data_prefix)
+    data_filename = paste0(data_prefix, "_", colname, "_hist.txt")
+    message(paste0("Writing data file: ", data_file, " with the ", colname, " column."))
+    write.table(df, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+    num_colors = 1
+    if (is.null(colors)) {
+        conditions = levels(as.factor(df$call))
+        num_colors = length(conditions)
+        colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors, "Dark2"))(num_colors))
+        names(colors) = conditions
+    }
+    
+    ## Now write the config stanza
+    inner = outer - width
+    data_cfg_out = file(datum_cfg_file, open="w+")
+    data_cfg_filename = gsub("^circos/", "", data_filename)
+    data_cfg_string = sprintf("
+ <plot>
+  type = histogram
+  file = %s
+  extend_bin = no
+  fill_under = yes
+  fill_color = %s
+  color = %s
+  thickness = 0
+  r1 = %fr
+  r0 = %fr
+  orientation = out
+ </plot>
+", data_cfg_string, fill_color, color, outer, inner)
+    cat(data_cfg_string, file=data_cfg_out, sep="")
+    close(data_cfg_out)
+
+    ## Now add to the master configuration file.
+    master_cfg_out = file(cfgout, open="a+")
+    data_cfg_include = data_cfg_filename
+    data_cfg_include = gsub("^circos/", "", data_cfg_include)
+    master_cfg_string = sprintf("
+## The histogram ring for %s
+<<include %s>>
+
+", colname, data_cfg_include)
+    cat(master_cfg_string, file=master_cfg_out, sep="")
+    close(master_cfg_out)
+
+    new_outer = inner - spacing
+    return(new_outer)
 }
 
 circos_makefile = function(output="circos/Makefile", circos="/usr/bin/circos") {
