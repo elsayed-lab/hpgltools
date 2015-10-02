@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jul 22 13:57:44 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep 16 10:44:00 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways
 #'
@@ -34,9 +34,8 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
     ## This is added because pathview() only works with dataframes/lists with only numbers.
     ## So it is wise to pull only the column of numbers one cares about.
     if (!is.null(path_data$logFC)) {
-        tmp_data = as.data.frame(path_data[, "logFC"])
-        rownames(tmp_data) = rownames(path_data)
-        colnames(tmp_data) = c("logFC")
+        tmp_data = as.vector(path_data[, "logFC"])
+        names(tmp_data) = rownames(path_data)
         path_data = tmp_data
         rm(tmp_data)
     }
@@ -107,7 +106,7 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
             if (isTRUE(verbose)) {
                 message(paste("Moving file to: ", newfile, sep=""))
             }
-            rename_try = try(file.rename(from=oldfile, to=newfile))
+            rename_try = try(file.rename(from=oldfile, to=newfile), silent=TRUE)
             if (class(rename_try)[1] == 'try-error') {
                 warning("There was an error renaming a png file, likely because it didn't download properly.")
                 warning("It is likely easiest to just delete the pathview input directory.")
@@ -122,7 +121,8 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
         return_list[[path]]$genes = colored_genes
         return_list[[path]]$up = up
         return_list[[path]]$down = down
-    }
+        message(paste0(count, "/", length(paths), ": Finished ", path_name))
+    } ## End for loop
 
     retdf = data.frame(rep(NA, length(names(return_list))))
     rownames(retdf) = names(return_list)

@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jul 31 14:34:06 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Sep  4 13:19:17 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -1097,11 +1097,9 @@ replace_data = function(expt, data) {
 #' @examples
 #' ## filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
 transform_counts = function(count_table, transform="raw", converted="raw", base=NULL, add=0.5) {
-
-
-##    if (converted != "cpm") {
-##        count_table = count_table + 1
-    ##    }
+    ## if (converted != "cpm") {
+    ##     count_table = count_table + 1
+    ## }
     num_zero = sum(count_table == 0)
     num_low = sum(count_table < 0)
     if (num_low > 0) {

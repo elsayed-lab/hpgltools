@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep  2 16:26:49 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Sep 18 09:16:02 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -398,7 +398,7 @@ pval_plot = function(df, ontology="MF") {
 #' @export
 #' @examples
 #' ## many_comparisons = limma_pairwise(expt=an_expt)
-#' ## tables = many_comparisons$limma_result
+#' ## tables = many_comparisons$limma
 #' ## this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
 all_ontology_searches = function(de_out, gene_lengths=NULL, goids=NULL, n=NULL, z=NULL, fc=NULL, overwrite=FALSE, goid_map="reference/go/id2go.map", gff_file=NULL, goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE, do_gostats=TRUE, do_trees=FALSE, workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
     message("This function expects a list of de contrast tables and some annotation information.")
@@ -406,9 +406,9 @@ all_ontology_searches = function(de_out, gene_lengths=NULL, goids=NULL, n=NULL, 
     if (isTRUE(do_goseq) & is.null(gene_lengths)) {
         stop("Performing a goseq search requires a data frame of gene lengths.")
     }
-    ## if (isTRUE(do_cluster) & is.null(gff_file)) {
-    ##  stop("Performing a clusterprofiler search requires a gff file.")
-    ## }
+    if (isTRUE(do_cluster) & is.null(gff_file)) {
+        stop("Performing a clusterprofiler search requires a gff file.")
+    }
 
     goid_map = get0('goid_map')
     if (is.null(goid_map)) {
@@ -417,7 +417,11 @@ all_ontology_searches = function(de_out, gene_lengths=NULL, goids=NULL, n=NULL, 
     
     ## Take a moment to detect what the data input looks like
     ## Perhaps a list of tables?
-    if (!is.null(de_out$all_tables)) {
+    if (is.null(de_out$all_tables)) {
+        if (sum(grepl(pattern="_minus_", x=names(de_out))) == 0) {
+            stop("This assumes you are passing it a limma/deseq/edger output from limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
+        }
+    } else {  ## In this case, you fed it something$limma rather than something$limma$all_tables
         de_out = de_out$all_tables
     }
     ## Perhaps a single data frame of logFC etc
@@ -489,8 +493,8 @@ all_ontology_searches = function(de_out, gene_lengths=NULL, goids=NULL, n=NULL, 
             }
         }
         if (isTRUE(do_cluster)) {
-            cluster_up_ontology = try(simple_clusterprofiler(up_genes, goids=goids, gff=goids))
-            cluster_down_ontology = try(simple_clusterprofiler(down_genes, goids=goids, gff=goids))
+            cluster_up_ontology = try(simple_clusterprofiler(up_genes, goids=goids, gff=gff_file))
+            cluster_down_ontology = try(simple_clusterprofiler(down_genes, goids=goids, gff=gff_file))
             if (isTRUE(do_trees)) {
                 cluster_up_trees = try(cluster_trees(up_genes, cluster_up_ontology, goid_map=goid_map, goids_df=goids))
                 cluster_down_trees = try(cluster_trees(down_genes, cluster_down_ontology, goid_map=goid_map, goids_df=goids))

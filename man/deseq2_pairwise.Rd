@@ -6,7 +6,7 @@
 a pairwise comparison of all conditions using DESeq2.}
 \usage{
 deseq2_pairwise(input, conditions = NULL, batches = NULL, excel = FALSE,
-  csv = TRUE, annotation = NULL, workbook = "excel/deseq.xls", ...)
+  csv = TRUE, annot_df = NULL, workbook = "excel/deseq.xls", ...)
 }
 \arguments{
 \item{input}{a dataframe/vector or  expt class containing data, normalization state, etc.}

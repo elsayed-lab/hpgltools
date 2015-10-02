@@ -56,7 +56,7 @@ as I recently made the simple_() functions able to automatically use the various
 }
 \examples{
 ## many_comparisons = limma_pairwise(expt=an_expt)
-## tables = many_comparisons$limma_result
+## tables = many_comparisons$limma
 ## this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
 }
 

@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep  2 18:05:18 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep  9 13:33:38 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified clusterProfiler analysis
 #'
@@ -59,7 +59,7 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     } else {
         gene_list = as.character(de_genes$ID)
     }
-    gomapping_test = try(load("GO2EG.rda"))
+    gomapping_test = try(load("GO2EG.rda"), silent=TRUE)
     if (class(gomapping_test) == 'try-error') {
         message("Generating GO mapping data for cluster profiler from the goids data.")
         gomap = goids

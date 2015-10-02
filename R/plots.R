@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jul 22 15:26:23 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Sep 16 15:23:23 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -436,7 +436,7 @@ hpgl_disheat = function(data, colors=NULL, design=NULL, method="euclidean", name
 #' @param names default=NULL  alternate names to use.
 #' @param row default='batch'  what to place on the row of the map, batches or conditions?
 #' @param title default=NULL  a title for the plot.
-#' 
+#'
 #' @return a recordPlot() heatmap describing the distance between samples.
 #' @seealso \code{\link{brewer.pal}},
 #' \code{\link{heatmap.2}}, \code{\link{recordPlot}}
@@ -644,7 +644,7 @@ hpgl_libsize = function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, t
 #' @export
 #' @examples
 #' ## hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, loess=FALSE, identity=FALSE, gvis_trendline=NULL, first=NULL, second=NULL, ...) {
+hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson", size=2, verbose=FALSE, loess=FALSE, identity=FALSE, gvis_trendline=NULL, first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE) {
     hpgl_env = environment()
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
@@ -673,11 +673,16 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
         geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
         geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
         geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
-        geom_abline(colour="grey", slope=linear_model_slope, intercept=linear_model_intercept, size=line_size) +
-        geom_point(colour=hsv(linear_model_weights * 9/20,
-                       linear_model_weights/20 + 19/20,
-                       (1.0 - linear_model_weights)),
+        geom_abline(colour="grey", slope=linear_model_slope, intercept=linear_model_intercept, size=line_size)
+    if (isTRUE(pretty_colors)) {
+        first_vs_second = first_vs_second +
+            geom_point(colour=hsv(linear_model_weights * 9/20,
+                                  linear_model_weights/20 + 19/20,
+                                  (1.0 - linear_model_weights)),
                        size=size, alpha=0.4)
+    } else {
+        first_vs_second = first_vs_second + geom_point(colour="black", size=size, alpha=0.4)
+    }
     if (loess == TRUE) {
         first_vs_second = first_vs_second +
             geom_smooth(method="loess")
@@ -693,7 +698,7 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
         if (verbose) {
             message("Generating an interactive graph.")
         }
-        hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename, trendline=gvis_trendline)
+        hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename, trendline=gvis_trendline, base_url=base_url)
     }
     if (!is.null(first) & !is.null(second)) {
         colnames(df) = c(first, second)
@@ -705,7 +710,8 @@ hpgl_linear_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, cormet
     x_histogram = hpgltools::hpgl_histogram(data.frame(df[,1]), verbose=verbose, fillcolor="lightblue", color="blue")
     y_histogram = hpgltools::hpgl_histogram(data.frame(df[,2]), verbose=verbose, fillcolor="pink", color="red")
     both_histogram = hpgltools::hpgl_multihistogram(df, verbose=verbose)
-    plots = list(scatter=first_vs_second,
+    plots = list(data=df,
+        scatter=first_vs_second,
         x_histogram=x_histogram,
         y_histogram=y_histogram,
         both_histogram=both_histogram,
@@ -826,7 +832,7 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
         maxval = max(play_all$expression, na.rm=TRUE)
         bins = 500
         binwidth = (maxval - minval) / bins
-        message(paste("No binwidth nor bins provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
+        message(paste("Setting binwidth to ", binwidth, " in order to have ", bins, " bins.", sep=""))
     } else if  (is.null(binwidth)) {
         minval = min(play_all$expression, na.rm=TRUE)
         maxval = max(play_all$expression, na.rm=TRUE)

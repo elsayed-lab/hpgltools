@@ -5,7 +5,7 @@
 \title{expt_subset()  Extract a subset of samples following some rule(s) from an
 experiment class}
 \usage{
-expt_subset(expt, subset = NULL, by_definitions = FALSE)
+expt_subset(expt, subset = NULL)
 }
 \arguments{
 \item{expt}{an expt which is a home-grown class containing an
