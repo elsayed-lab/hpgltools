@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct  8 11:44:47 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Oct 13 16:24:18 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -41,7 +41,7 @@
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Remember that this depends on an existing data structure of gene annotations.
-create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, gene_info=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
+create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE, gene_info=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
