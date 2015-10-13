@@ -6,7 +6,7 @@
 information.}
 \usage{
 create_experiment(file = NULL, color_hash, suffix = ".count.gz",
-  header = FALSE, genes = NULL, by_type = FALSE, by_sample = FALSE,
+  header = FALSE, gene_info = NULL, by_type = FALSE, by_sample = FALSE,
   include_type = "all", include_gff = NULL, count_dataframe = NULL,
   meta_dataframe = NULL, sep = ",", ...)
 }
@@ -20,9 +20,6 @@ information like condition,batch,count_filename,etc.}
 look for this suffix on the end of the files.}
 
 \item{header}{default=FALSE  Does the csv metadata file have a header?}
-
-\item{genes}{default=NULL  annotation information describing the rows of the data set, usually
-this comes from a call to import.gff()}
 
 \item{by_type}{default=FALSE  when looking for count tables, are they organized by type?}
 
@@ -39,6 +36,9 @@ they may instead be fed here}
 \item{meta_dataframe}{default=NULL  an optional dataframe containing the metadata rather than a file}
 
 \item{sep}{default=','  some people prefer their csv files as tab or semicolon separated.}
+
+\item{genes}{default=NULL  annotation information describing the rows of the data set, usually
+this comes from a call to import.gff()}
 }
 \value{
 experiment an expressionset

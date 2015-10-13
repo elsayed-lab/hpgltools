@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Sep 18 09:16:02 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Oct  8 14:35:00 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -638,4 +638,3 @@ golevel_df = function(ont="MF", savefile="ontlevel.rda") {
 }
 
 ## EOF
-

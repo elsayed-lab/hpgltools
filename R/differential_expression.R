@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Sep 21 15:47:01 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Oct 12 11:38:21 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -40,6 +40,24 @@ disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
 all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+    conditions = get0('conditions')
+    batches = get0('batches')
+    model_cond = get0('model_cond')
+    model_batch = get0('model_batch')
+    model_intercept = get0('model_intercept')
+    extra_contrasts = get0('model_contrasts')
+    alt_model = get0('alt_model')
+    libsize = get0('libsize')
+    if (is.null(model_cond)) {
+        model_cond = TRUE
+    }
+    if (is.null(model_batch)) {
+        model_batch = FALSE
+    }
+    if (is.null(model_intercept)) {
+        model_intercept = FALSE
+    }
+    
     limma_result = limma_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
     deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches) ## The rest of the arguments should be added back sooner than later.
     edger_result = edger_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
@@ -749,6 +767,9 @@ hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=F
     }
     sx = linear_fit$Amean + mean(log2(libsize + 1)) - log2(1e+06)
     sy = sqrt(linear_fit$sigma)
+    if (is.na(sum(sy))) { ## 1 replicate
+        return(NULL)
+    }
     allzero = rowSums(dataframe) == 0
     stupid_NAs = is.na(sx)
     sx = sx[!stupid_NAs]
@@ -936,14 +957,22 @@ limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
     ##fun_voom = voomMod(data, fun_model, lib.size=libsize)
     fun_voom = hpgl_voom(data, fun_model, libsize=libsize, logged=logged, converted=converted)
+    one_replicate = FALSE
+    if (is.null(fun_voom)) {
+        one_replicate = TRUE
+        fun_voom = data
+        fun_design = design
+    } else {
+        fun_design = fun_voom$design
+    }
+   
     ## Extract the design created by voom()
     ## This is interesting because each column of the design will have a prefix string 'macb' before the
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
     ## This will be important in 17 lines from now.
-    fun_design = fun_voom$design
     ## Do the lmFit() using this model
-    ##fun_fit = lmFit(fun_voom, fun_model)
-    fun_fit = lmFit(fun_voom)
+    fun_fit = lmFit(fun_voom, fun_model)
+    ##fun_fit = lmFit(fun_voom)
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
     if (isTRUE(model_intercept)) {
         contrasts = "intercept"
@@ -962,12 +991,17 @@ limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         ## followed by the set of all pairwise comparisons.
         all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
     }
-    all_pairwise_comparisons = eBayes(all_pairwise_fits)
-    all_tables = try(topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
+    all_tables = NULL
+    if (isTRUE(one_replicate)) {
+        all_pairwise_comparisons = all_pairwise_fits$coefficients
+    } else {
+        all_pairwise_comparisons = eBayes(all_pairwise_fits)
+        all_tables = try(topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
+    }
     if (isTRUE(model_intercept)) {
         limma_result = all_tables
     } else {
-        limma_result = write_limma(all_pairwise_comparisons, excel=FALSE)
+        limma_result = try(write_limma(all_pairwise_comparisons, excel=FALSE))
     }
     result = list(
         input_data=data,

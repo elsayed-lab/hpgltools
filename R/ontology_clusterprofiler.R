@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep  9 13:33:38 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Oct  8 14:37:02 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified clusterProfiler analysis
 #'
@@ -563,8 +563,6 @@ hpgl_getGffAttribution = function (x, field, attrsep=";", split='=') {
     })
 }
 
-
-
 mygroupgo = function (gene, organism = "human", ont = "CC", level = 2, readable = FALSE) {
     GOLevel <- clusterProfiler:::getGOLevel(ont, level)
     class(GOLevel) <- ont
@@ -581,3 +579,5 @@ mygroupgo = function (gene, organism = "human", ont = "CC", level = 2, readable 
     }
     return(x)
 }
+
+# EOF

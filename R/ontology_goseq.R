@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Aug  3 11:47:13 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Oct  8 14:36:35 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -348,3 +348,5 @@ goseq_trees = function(de_genes, godata, goid_map="reference/go/id2go.map", scor
     trees = list(MF=mf_tree, BP=bp_tree, CC=cc_tree, MFdata=mf_tree_data, BPdata=bp_tree_data, CCdata=cc_tree_data)
     return(trees)
 }
+
+# EOF

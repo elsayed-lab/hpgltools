@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Sep  4 13:19:17 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Oct 13 12:20:09 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -865,13 +865,14 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
     rownames(merged_annotations) = merged_annotations[,"Row.names"]
     rownames(df_in) = merged_annotations[,"Row.names"]
     ## Sometimes I am stupid and call it length...
-    gene_lengths = NULL
+    lenvec = NULL
     if (is.null(merged_annotations$width)) {
-        gene_lengths = merged_annotations$length
+        lenvec = as.vector(merged_annotations$length)
     } else {
-        gene_lengths = merged_annotations$width
+        lenvec = as.vector(merged_annotations$width)
     }
-    rpkm_df = edgeR::rpkm(df_in, gene.length=gene_lengths)
+    names(lenvec) = rownames(merged_annotations)
+    rpkm_df = edgeR::rpkm(df_in, gene.length=lenvec)
     colnames(rpkm_df) = colnames(df)
     return(rpkm_df)
 }

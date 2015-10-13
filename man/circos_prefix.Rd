@@ -4,13 +4,15 @@
 \alias{circos_prefix}
 \title{circos_prefix()  Write the beginning of a circos configuration file.}
 \usage{
-circos_prefix(cfgout = "circos/conf/default.conf", radius = 1800)
+circos_prefix(name = "default", conf_dir = "circos/conf", radius = 1800,
+  band_url = NULL)
 }
 \arguments{
-\item{cfgout}{default='circos/conf/default.conf'  The master
-configuration file to write.}
+\item{name}{default='default'  The name of the map, called with 'make name'}
 
 \item{radius}{default=1800  The size of the image.}
+
+\item{circos_dir}{default='circos/conf'  The directory containing the circos configuration data.}
 }
 \value{
 undef
