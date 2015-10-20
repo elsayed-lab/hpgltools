@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Oct 12 11:38:21 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Oct 20 17:23:33 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -59,7 +59,7 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, m
     }
     
     limma_result = limma_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
-    deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches) ## The rest of the arguments should be added back sooner than later.
+    deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
     edger_result = edger_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
 
     result_comparison = compare_tables(limma=limma_result, deseq=deseq_result, edger=edger_result)
@@ -367,7 +367,7 @@ deseq_pairwise = function(...) {
 #' @export
 #' @examples
 #' ## pretend = deseq2_pairwise(data, conditions, batches)
-deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, csv=TRUE, annot_df=NULL, workbook="excel/deseq.xls", ...) {
+deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, excel=FALSE, csv=TRUE, annot_df=NULL, workbook="excel/deseq.xls", ...) {
     print("Starting DESeq2 pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -393,27 +393,45 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, cs
     }
     condition_table = table(conditions)
     batch_table = table(batches)
-    conditions = as.factor(conditions)
-    batches = as.factor(batches)
+    conditions = levels(as.factor(conditions))
+    batches = levels(as.factor(batches))
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
-    cond_model = model.matrix(~ 0 + conditions)
-    tmpnames = colnames(cond_model)
-    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
-    tmpnames = gsub("conditions", "", tmpnames)
-    colnames(cond_model) = tmpnames
 
     ## An interesting note about the use of formulae in DESeq:
     ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
-    ## Thus, all these formulae should have condition(s) at the end.
-    summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~0+condition)
+    ## Thus, all these formulae should have condition(s) at the end.    
+    ##cond_model = model.matrix(~ 0 + conditions)
+    ##batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
+    ##condbatch_model = try(model.matrix(~ 0 + batches + conditions), silent=TRUE)
+    ##cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
+    ##condbatch_int_model = try(model.matrix(~ batches + conditions), silent=TRUE)    
+    ##tmpnames = colnames(cond_model)
+    ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    ##tmpnames = gsub("conditions", "", tmpnames)
+    ##colnames(cond_model) = tmpnames
+    ##fun_model = NULL
+    ##fun_int_model = NULL
+    summarized = NULL
+    if (isTRUE(model_batch) & isTRUE(model_cond)) {
+        message("Attempting to include batch and condition in the model for DESeq.")
+        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + batch + condition)
+        dataset = DESeqDataSet(se=summarized, design=~ 0 + batch + condition)
+    } else if (isTRUE(model_batch)) {
+        message("Attempting to include only batch in the deseq model, this will likely fail.")
+        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + batch)
+        dataset = DESeqDataSet(se=summarized, design=~ 0 + batch)
+    } else {
+        message("Including only condition in the deseq model.")
+        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition)
+        dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
+    }
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
-    dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
-    message("DESeq: Starting DESeq()")
+    ##dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)    
     deseq_sf = estimateSizeFactors(dataset)
     deseq_disp = estimateDispersions(deseq_sf)
     deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
-##    deseq_run = DESeq(dataset, betaPrior=FALSE)
+    ##    deseq_run = DESeq(dataset, betaPrior=FALSE)
     ## Set contrast= for each pairwise comparison here!
     
     denominators = list()
@@ -422,11 +440,20 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, cs
     result_mle_list = list()
     binom_list = list()
     coefficient_list = list()
-    condition_list = resultsNames(deseq_run)
+    if (isTRUE(model_cond)) {
+        condition_list = grep("^condition", resultsNames(deseq_run), value=TRUE)
+    } else if (isTRUE(model_batch)) {
+        condition_list = grep("^batch", resultsNames(deseq_run), value=TRUE)
+    }
     for (c in 1:(length(condition_list) - 1)) {
         denominator = names(condition_table[c])
+        ## This is where it will fall down if you only want to look at batch.
         denominator_name = paste0("condition", denominator)
-        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
+        my_contrast = as.numeric(denominator_name == resultsNames(deseq_run))
+        if (sum(my_contrast) == 0) {
+            next
+        }
+        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=my_contrast))
         nextc = c + 1
         for (d in nextc:length(condition_list)) {
             numerator = names(condition_table[d])

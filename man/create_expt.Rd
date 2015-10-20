@@ -6,10 +6,11 @@
 information.  This simply calls create_experiment and then does
 expt_subset for everything}
 \usage{
-create_expt(file, color_hash = NULL, suffix = ".count.gz", header = FALSE,
-  gene_info = NULL, by_type = FALSE, by_sample = FALSE, sep = ",",
-  include_type = "all", include_gff = NULL, count_dataframe = NULL,
-  meta_dataframe = NULL, savefile = "expt", low_files = FALSE, ...)
+create_expt(file = NULL, color_hash = NULL, suffix = ".count.gz",
+  header = FALSE, gene_info = NULL, by_type = FALSE, by_sample = FALSE,
+  sep = ",", include_type = "all", include_gff = NULL,
+  count_dataframe = NULL, meta_dataframe = NULL, savefile = "expt",
+  low_files = FALSE, ...)
 }
 \arguments{
 \item{file}{a comma separated file describing the samples with

@@ -4,8 +4,9 @@
 \alias{write_xls}
 \title{write_xls()  Write a dataframe to an excel spreadsheet sheet.}
 \usage{
-write_xls(data, sheet = "first", file = "excel/workbook.xls",
-  rowname = "rownames", overwritefile = FALSE, overwritesheet = TRUE)
+write_xls(data, sheet = "first", file = "excel/workbook",
+  rowname = "rownames", overwritefile = FALSE, overwritesheet = TRUE,
+  dated = TRUE, suffix = ".xls")
 }
 \arguments{
 \item{data}{a dataframe of information.}
