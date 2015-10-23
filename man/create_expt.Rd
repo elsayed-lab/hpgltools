@@ -6,10 +6,11 @@
 information.  This simply calls create_experiment and then does
 expt_subset for everything}
 \usage{
-create_expt(file, color_hash = NULL, suffix = ".count.gz", header = FALSE,
-  genes = NULL, by_type = FALSE, by_sample = FALSE, sep = ",",
-  include_type = "all", include_gff = NULL, count_dataframe = NULL,
-  meta_dataframe = NULL, savefile = "expt", low_files = FALSE, ...)
+create_expt(file = NULL, color_hash = NULL, suffix = ".count.gz",
+  header = FALSE, gene_info = NULL, by_type = FALSE, by_sample = FALSE,
+  sep = ",", include_type = "all", include_gff = NULL,
+  count_dataframe = NULL, meta_dataframe = NULL, savefile = "expt",
+  low_files = FALSE, ...)
 }
 \arguments{
 \item{file}{a comma separated file describing the samples with
@@ -22,9 +23,6 @@ it will generate its own colors using colorBrewer}
 look for this suffix on the end of the files.}
 
 \item{header}{default=FALSE  Does the csv metadata file have a header?}
-
-\item{genes}{default=NULL  annotation information describing the rows of the data set, usually
-this comes from a call to import.gff()}
 
 \item{by_type}{default=FALSE  when looking for count tables, are they organized by type?}
 
@@ -52,6 +50,9 @@ find the count tables in the local filesystem.  This logic has been
 superceded by simply adding a field to the .csv file called
 'file'.  create_expt() will then just read that filename, it may be
 a full pathname or local to the cwd of the project.}
+
+\item{genes}{default=NULL  annotation information describing the rows of the data set, usually
+this comes from a call to import.gff()}
 }
 \value{
 experiment an expressionset

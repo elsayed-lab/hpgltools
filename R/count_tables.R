@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Sep 21 15:47:59 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Oct 13 16:24:18 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -41,7 +41,7 @@
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Remember that this depends on an existing data structure of gene annotations.
-create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
+create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE, gene_info=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
@@ -67,7 +67,7 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
     ## Thus the next line
     print("This function needs the conditions and batches to be an explicit column in the sample sheet.")
-    expt_list = create_experiment(file=file, color_hash, suffix=suffix, header=header, genes=genes, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, meta_dataframe=meta_dataframe, sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
+    expt_list = create_experiment(file=file, color_hash, suffix=suffix, header=header, gene_info=gene_info, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, meta_dataframe=meta_dataframe, sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
     expt = expt_list$expt
     def = expt_list$def
     new_expt = expt_subset(expt)
@@ -135,7 +135,7 @@ create_expt = function(file, color_hash=NULL, suffix=".count.gz", header=FALSE, 
 #' @export
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
-create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=FALSE, genes=NULL, by_type=FALSE, by_sample=FALSE, include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
+create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=FALSE, gene_info=NULL, by_type=FALSE, by_sample=FALSE, include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
     print("Please note that thus function assumes a specific set of columns in the sample sheet:")
     print("The most important ones are: Sample.ID, Stage, Type.")
     print("Other columns it will attempt to create by itself, but if")
@@ -166,13 +166,12 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
     if (!is.null(sample_definitions$file)) {
         filenames = sample_definitions$file
         all_count_tables = hpgl_read_files(as.character(sample_definitions$sample.id),
-            as.character(filenames), header=header, suffix=suffix)
+            as.character(filenames), header=header, suffix=NULL)
         ## This stanza allows one to fill in the count tables with an external data frame.
     } else if (!is.null(count_dataframe)) {
         all_count_tables = count_dataframe
         colnames(all_count_tables) = rownames(sample_definitions)
         ## If neither of these cases is true, start looking for the files in the processed_data/ directory
-
     } else if (!isTRUE(by_type) & !isTRUE(by_sample) & is.null(filenames)) {
         ## If neither by_type or by_sample is set, look first by sample
         sample_definitions$counts = paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
@@ -200,13 +199,13 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
 
     rownames(all_count_matrix) = gsub("^exon:","", rownames(all_count_matrix))
     rownames(all_count_matrix) = make.names(gsub(":\\d+","", rownames(all_count_matrix)), unique=TRUE)
-    if (is.null(genes)) {
+    if (is.null(gene_info)) {
         gene_info = data.frame(all_count_matrix)
     } else {
-        if (is.null(genes$ID)) {
-            genes$ID = rownames(genes)
+        if (is.null(gene_info$ID)) {
+            gene_info$ID = rownames(gene_info)
         }
-        gene_info = genes[genes$ID %in% rownames(all_count_matrix),]
+        gene_info = gene_info[gene_info$ID %in% rownames(all_count_matrix),]
         all_count_matrix = all_count_matrix[rownames(all_count_matrix) %in% genes$ID,]
     }
 
@@ -265,7 +264,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
     feature_data = new("AnnotatedDataFrame", gene_info)
     featureNames(feature_data) = rownames(all_count_matrix)
     experiment = new("ExpressionSet", exprs=all_count_matrix,
-        phenoData=metadata, featureData=feature_data)
+                     phenoData=metadata, featureData=feature_data)
     ret = list(expt=experiment, def=sample_definitions, annotation=annotation)
     return(ret)
 }
@@ -316,7 +315,11 @@ expt_subset = function(expt, subset=NULL) {
     batches = as.factor(as.character(design$batch))
     design$condition = conditions
     design$batch = batches
-    samplenames = as.character(samples$sample.id)
+    if (is.null(samples$sample.id)) {
+        samplenames = as.character(samples$sample)
+    } else {
+        samplenames = as.character(samples$sample.id)
+    }
     colors = as.character(samples$color)
     names = paste(conditions, batches, sep="-")
     subset_definitions = expt$definitions[rownames(expt$definitions) %in% samplenames, ]

@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Sep 21 15:47:01 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Oct 20 17:23:33 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -40,8 +40,26 @@ disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
 all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+    conditions = get0('conditions')
+    batches = get0('batches')
+    model_cond = get0('model_cond')
+    model_batch = get0('model_batch')
+    model_intercept = get0('model_intercept')
+    extra_contrasts = get0('model_contrasts')
+    alt_model = get0('alt_model')
+    libsize = get0('libsize')
+    if (is.null(model_cond)) {
+        model_cond = TRUE
+    }
+    if (is.null(model_batch)) {
+        model_batch = FALSE
+    }
+    if (is.null(model_intercept)) {
+        model_intercept = FALSE
+    }
+    
     limma_result = limma_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
-    deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches) ## The rest of the arguments should be added back sooner than later.
+    deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
     edger_result = edger_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
 
     result_comparison = compare_tables(limma=limma_result, deseq=deseq_result, edger=edger_result)
@@ -349,7 +367,7 @@ deseq_pairwise = function(...) {
 #' @export
 #' @examples
 #' ## pretend = deseq2_pairwise(data, conditions, batches)
-deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, csv=TRUE, annot_df=NULL, workbook="excel/deseq.xls", ...) {
+deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, excel=FALSE, csv=TRUE, annot_df=NULL, workbook="excel/deseq.xls", ...) {
     print("Starting DESeq2 pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -375,27 +393,45 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, cs
     }
     condition_table = table(conditions)
     batch_table = table(batches)
-    conditions = as.factor(conditions)
-    batches = as.factor(batches)
+    conditions = levels(as.factor(conditions))
+    batches = levels(as.factor(batches))
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
-    cond_model = model.matrix(~ 0 + conditions)
-    tmpnames = colnames(cond_model)
-    tmpnames = gsub("data[[:punct:]]", "", tmpnames)
-    tmpnames = gsub("conditions", "", tmpnames)
-    colnames(cond_model) = tmpnames
 
     ## An interesting note about the use of formulae in DESeq:
     ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
-    ## Thus, all these formulae should have condition(s) at the end.
-    summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~0+condition)
+    ## Thus, all these formulae should have condition(s) at the end.    
+    ##cond_model = model.matrix(~ 0 + conditions)
+    ##batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
+    ##condbatch_model = try(model.matrix(~ 0 + batches + conditions), silent=TRUE)
+    ##cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
+    ##condbatch_int_model = try(model.matrix(~ batches + conditions), silent=TRUE)    
+    ##tmpnames = colnames(cond_model)
+    ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
+    ##tmpnames = gsub("conditions", "", tmpnames)
+    ##colnames(cond_model) = tmpnames
+    ##fun_model = NULL
+    ##fun_int_model = NULL
+    summarized = NULL
+    if (isTRUE(model_batch) & isTRUE(model_cond)) {
+        message("Attempting to include batch and condition in the model for DESeq.")
+        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + batch + condition)
+        dataset = DESeqDataSet(se=summarized, design=~ 0 + batch + condition)
+    } else if (isTRUE(model_batch)) {
+        message("Attempting to include only batch in the deseq model, this will likely fail.")
+        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + batch)
+        dataset = DESeqDataSet(se=summarized, design=~ 0 + batch)
+    } else {
+        message("Including only condition in the deseq model.")
+        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition)
+        dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
+    }
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
-    dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
-    message("DESeq: Starting DESeq()")
+    ##dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)    
     deseq_sf = estimateSizeFactors(dataset)
     deseq_disp = estimateDispersions(deseq_sf)
     deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
-##    deseq_run = DESeq(dataset, betaPrior=FALSE)
+    ##    deseq_run = DESeq(dataset, betaPrior=FALSE)
     ## Set contrast= for each pairwise comparison here!
     
     denominators = list()
@@ -404,11 +440,20 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, excel=FALSE, cs
     result_mle_list = list()
     binom_list = list()
     coefficient_list = list()
-    condition_list = resultsNames(deseq_run)
+    if (isTRUE(model_cond)) {
+        condition_list = grep("^condition", resultsNames(deseq_run), value=TRUE)
+    } else if (isTRUE(model_batch)) {
+        condition_list = grep("^batch", resultsNames(deseq_run), value=TRUE)
+    }
     for (c in 1:(length(condition_list) - 1)) {
         denominator = names(condition_table[c])
+        ## This is where it will fall down if you only want to look at batch.
         denominator_name = paste0("condition", denominator)
-        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
+        my_contrast = as.numeric(denominator_name == resultsNames(deseq_run))
+        if (sum(my_contrast) == 0) {
+            next
+        }
+        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=my_contrast))
         nextc = c + 1
         for (d in nextc:length(condition_list)) {
             numerator = names(condition_table[d])
@@ -749,6 +794,9 @@ hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=F
     }
     sx = linear_fit$Amean + mean(log2(libsize + 1)) - log2(1e+06)
     sy = sqrt(linear_fit$sigma)
+    if (is.na(sum(sy))) { ## 1 replicate
+        return(NULL)
+    }
     allzero = rowSums(dataframe) == 0
     stupid_NAs = is.na(sx)
     sx = sx[!stupid_NAs]
@@ -936,14 +984,22 @@ limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
     ##fun_voom = voomMod(data, fun_model, lib.size=libsize)
     fun_voom = hpgl_voom(data, fun_model, libsize=libsize, logged=logged, converted=converted)
+    one_replicate = FALSE
+    if (is.null(fun_voom)) {
+        one_replicate = TRUE
+        fun_voom = data
+        fun_design = design
+    } else {
+        fun_design = fun_voom$design
+    }
+   
     ## Extract the design created by voom()
     ## This is interesting because each column of the design will have a prefix string 'macb' before the
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
     ## This will be important in 17 lines from now.
-    fun_design = fun_voom$design
     ## Do the lmFit() using this model
-    ##fun_fit = lmFit(fun_voom, fun_model)
-    fun_fit = lmFit(fun_voom)
+    fun_fit = lmFit(fun_voom, fun_model)
+    ##fun_fit = lmFit(fun_voom)
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
     if (isTRUE(model_intercept)) {
         contrasts = "intercept"
@@ -962,12 +1018,17 @@ limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         ## followed by the set of all pairwise comparisons.
         all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
     }
-    all_pairwise_comparisons = eBayes(all_pairwise_fits)
-    all_tables = try(topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
+    all_tables = NULL
+    if (isTRUE(one_replicate)) {
+        all_pairwise_comparisons = all_pairwise_fits$coefficients
+    } else {
+        all_pairwise_comparisons = eBayes(all_pairwise_fits)
+        all_tables = try(topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
+    }
     if (isTRUE(model_intercept)) {
         limma_result = all_tables
     } else {
-        limma_result = write_limma(all_pairwise_comparisons, excel=FALSE)
+        limma_result = try(write_limma(all_pairwise_comparisons, excel=FALSE))
     }
     result = list(
         input_data=data,

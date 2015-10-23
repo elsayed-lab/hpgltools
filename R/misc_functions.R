@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Sep 21 11:55:46 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Oct 20 17:22:12 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -36,9 +36,99 @@ get_genelengths = function(gff, type="gene", key='ID') {
     ret = ret[ret$type == type,]
     ret = ret[,c(key,"width")]
     colnames(ret) = c("ID","width")
+    if (dim(genelengths)[1] == 0) {
+        stop(paste0("No genelengths were found.  Perhaps you are using the wrong 'type' or 'key' arguments, type is: ", type, ", key is: ", key))
+    }
     return(ret)
 }
 
+
+#' sum_exons()  Given a data frame of exon counts and annotation information, sum the exons.
+#'
+#' @param data  a count table by exon
+#' @param gff default=NULL  a gff filename
+#' @param annotdf default=NULL  a dataframe of annotations (probably from gff2df)
+#' @param parent default='Parent'  a column from the annotations with the gene names
+#' @param child default='row.names'  a column from the annotations with the exon names
+#'
+#' This function will merge a count table to an annotation table by the child column.
+#' It will then sum all rows of exons by parent gene and sum the widths of the exons.
+#' Finally it will return a list containing a df of gene lengths and summed counts.
+#'
+#' @return  a list of 2 data frames.
+#' @export
+sum_exons = function(data, gff=NULL, annotdf=NULL, parent='Parent', child='row.names') {
+    if (is.null(annotdf) & is.null(gff)) {
+        stop("I need either a df with parents, children, and widths; or a gff filename.")
+    } else if (is.null(annotdf)) {
+        annotdf = gff2df(gff)
+    }
+
+    tmp_data = merge(data, annotdf, by=child)
+    rownames(tmp_data) = tmp_data$Row.names
+    tmp_data = tmp_data[-1]
+    ## Start out by summing the gene widths
+    column = aggregate(tmp_data[,"width"], by=list(Parent=tmp_data[,parent]), FUN=sum)
+    new_data = data.frame(column$x)
+    rownames(new_data) = column$Parent
+    colnames(new_data) = c("width")
+
+    for (c in 1:length(colnames(data))) {
+        column_name = colnames(data)[[c]]
+        column = aggregate(tmp_data[,column_name], by=list(Parent=tmp_data[,parent]), FUN=sum)
+        rownames(column) = column$Parent
+        new_data = cbind(new_data, column$x)
+    } ## End for loop
+    width_df = data.frame(new_data$width)
+    rownames(width_df) = rownames(new_data)
+    colnames(width_df) = c("width")
+    new_data = new_data[-1]
+    colnames(new_data) = colnames(data)
+    rownames(new_data) = rownames(column)
+    ret = list(width=width_df, counts=new_data)
+    return(ret)
+}
+
+#' make_report()  Make a knitr report with some defaults set
+#'
+#' @param type default='pdf'  html/pdf/fancy html reports?
+#'
+#' @return a dated report file
+make_report = function(name="report", type='pdf') {
+    opts_knit$set(progress=FALSE, verbose=FALSE, error=FALSE, fig.width=7, fig.height=7)
+    theme_set(theme_bw(base_size=10))
+    options(java.parameters="-Xmx8g")
+    set.seed(1)
+    output_date = format(Sys.time(), "%Y%m%d-%H%M")
+    input_filename = name
+    ## In case I add .rmd on the end.
+    input_filename = gsub("\\.rmd", "", input_filename, perl=TRUE)
+    input_filename = paste0(input_filename, ".rmd")
+    if (type == 'html') {
+        output_filename = paste0(name, "-", output_date, ".html")
+        output_format = 'html_document'
+        render(output_filename, output_format)
+    } else if (type == 'pdf') {
+        output_filename = paste0(name, "-", output_date, ".pdf")
+        output_format = 'pdf_document'
+    } else {
+        output_filename = paste0(name, "-", output_date, ".html")
+        output_format = 'knitrBootstrap::bootstrap_document'
+    }
+    message(paste0("About to run: render(input=", input_filename, ", output_file=", output_filename, " and output_format=", output_format))
+    result = try(render(input=input_filename, output_file=output_filename, output_format=output_format), silent=TRUE)
+    return(result)
+}
+
+
+#' gff2df()  Try to make import.gff a little more robust
+#'
+#' @param gff  a gff filename
+#'
+#' This function wraps import.gff/import.gff3/import.gff2 calls in try()
+#' Because sometimes those functions fail in unpredictable ways.
+#'
+#' @return  a df!
 gff2df = function(gff) {
     ret = NULL
     annotations = try(import.gff3(gff), silent=TRUE)
@@ -205,18 +295,27 @@ sillydist = function(firstterm, secondterm, firstaxis, secondaxis) {
 #' ## write_xls(dataframe, "hpgl_data")
 #' ## Sometimes it is a good idea to go in and delete the workbook and
 #' ## re-create it if this is used heavily, because it will get crufty.
-write_xls = function(data, sheet="first", file="excel/workbook.xls", rowname="rownames", overwritefile=FALSE, overwritesheet=TRUE) {
+write_xls = function(data, sheet="first", file="excel/workbook", rowname="rownames", overwritefile=FALSE, overwritesheet=TRUE, dated=TRUE, suffix=".xls") {
     excel_dir = dirname(file)
     if (!file.exists(excel_dir)) {
         dir.create(excel_dir, recursive=TRUE)
     }
 
-    if (file.exists(file)) {
+    file = gsub(pattern="\\.xls.", replacement="", file, perl=TRUE)
+    filename = NULL
+    if (isTRUE(dated)) {
+        timestamp = format(Sys.time(), "%Y%m%d-%H%M")
+        filename = paste0(file, "-", timestamp, suffix)
+    } else {
+        filename = paste0(file, suffix)
+    }
+    
+    if (file.exists(filename)) {
         if (isTRUE(overwritefile)) {
-            backup_file(file)
+            backup_file(filename)
         }
     }
-    xls = loadWorkbook(file, create=TRUE)
+    xls = loadWorkbook(filename, create=TRUE)
 
     if (isTRUE(overwritesheet)) {
         newname = paste0(sheet, '.bak')

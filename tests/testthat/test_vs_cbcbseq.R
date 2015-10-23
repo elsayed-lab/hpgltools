@@ -140,24 +140,9 @@ message("Test the final results from limma by invoking it through different code
 cbcb_fit = lmFit(cbcb_voom)
 cbcb_eb = eBayes(cbcb_fit)
 cbcb_top = topTable(cbcb_eb, number=nrow(cbcb_eb))
-hpgl_toptables = limma_pairwise(expt=hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize)
-hpgl_top = hpgl_toptables$limma_result
-
-## Changing the libsize does have a very small effect on the result
-##test_libsize = hpgl_l2qcpm_data$final_counts$libsize
-##hpgl_toptables = limma_pairwise(expt=hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=test_libsize)
-##hpgl_top2 = hpgl_toptables$limma_result
-##test_that("Limma results.", {
-##    expect_equal(cbcb_top, hpgl_top)
-##})
-##message("The following low correlation shows how much the results change when libsize is chosen poorly!")
-##print(cor.test(cbcb_top$logFC, hpgl_top2$logFC))
-##message("As a result, recent versions of limma_pairwise go to some trouble to choose libsize.")
-##hpgl_toptables = limma_pairwise(expt=hpgl_l2qcpm_expt, model_batch=FALSE)
-##message("Using limma_pairwise() without an intercept model adds a qvalue column.")
-##hpgl_top = hpgl_toptables$limma_result$untreated_minus_treated
-##hpgl_top = hpgl_top[,c(1,2,3,4,5,6)]
-##test_that("Limma results with automatic libsize.", {
-##    expect_equal(cbcb_top, hpgl_top)
-##})
+hpgl_toptables = limma_pairwise(hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize)
+hpgl_top = hpgl_toptables$all_tables
+test_that("Limma results.", {
+    expect_equal(cbcb_top, hpgl_top)
+})
 

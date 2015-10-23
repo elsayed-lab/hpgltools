@@ -4,22 +4,22 @@
 \alias{circos_karyotype}
 \title{circos_karyotype()  Create the description of (a)chromosome(s) for circos.}
 \usage{
-circos_karyotype(outfile = "circos/conf/karyotypes/default.txt",
-  length = 1838554, name = "chr1", segments = 6, color = "white",
+circos_karyotype(name = "default", conf_dir = "circos/conf",
+  length = 1838554, chr_name = "chr1", segments = 6, color = "white",
   chr_num = 1)
 }
 \arguments{
-\item{outfile}{default='circos/conf/karyotypes/default.txt'  a file to write}
+\item{name}{default='chr1'  the name of the chromosome (This currently assumes a bacterial chromosome)}
 
 \item{length}{default=1838554  the default length of the chromosome (That is mgas5005)}
-
-\item{name}{default='chr1'  the name of the chromosome (This currently assumes a bacterial chromosome)}
 
 \item{segments}{default=6  how many segments to cut it into}
 
 \item{color}{default='white'  how to colors the chromosomal arc. (circos images are cluttered enough)}
 
 \item{chr_num}{default=1  the number to record (This and name above should change for multi-chromosomal species)}
+
+\item{outfile}{default='circos/conf/karyotypes/default.txt'  a file to write}
 }
 \value{
 undef

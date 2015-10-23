@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep 16 10:44:00 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Oct  8 14:37:47 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways
 #'
@@ -428,3 +428,5 @@ hpgl_base_pathview = function (gene.data = NULL, cpd.data = NULL, xml.file = NUL
     }
     return(invisible(list(plot.data.gene = plot.data.gene, plot.data.cpd = plot.data.cpd)))
 }
+
+# EOF

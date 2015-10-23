@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Sep  1 13:20:32 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Oct  8 14:37:23 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -746,3 +746,4 @@ hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     return(plot)
 }
 
+# EOF

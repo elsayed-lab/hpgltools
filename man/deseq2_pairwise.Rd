@@ -5,8 +5,9 @@
 \title{deseq2_pairwise()  Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using DESeq2.}
 \usage{
-deseq2_pairwise(input, conditions = NULL, batches = NULL, excel = FALSE,
-  csv = TRUE, annot_df = NULL, workbook = "excel/deseq.xls", ...)
+deseq2_pairwise(input, conditions = NULL, batches = NULL,
+  model_cond = TRUE, model_batch = FALSE, excel = FALSE, csv = TRUE,
+  annot_df = NULL, workbook = "excel/deseq.xls", ...)
 }
 \arguments{
 \item{input}{a dataframe/vector or  expt class containing data, normalization state, etc.}
