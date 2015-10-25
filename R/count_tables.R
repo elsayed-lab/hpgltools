@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Oct 13 16:24:18 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Oct 25 14:05:21 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -46,8 +46,15 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
         tmp_definitions = meta_dataframe
-   }  else {
-        tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
+    }  else {
+        if (file_ext(file) == 'csv') {
+            tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
+        } else if (file_ext(file) == 'xls' | file_ext(file) == 'xlsx') {
+            xls = loadWorkbook(file, create=FALSE)
+            tmp_definitions = readWorksheet(xls, 1)
+        } else {
+            tmp_definitions = read.table(file=file)
+        }
     }
     colnames(tmp_definitions) = tolower(colnames(tmp_definitions))
     tmp_definitions = subset(tmp_definitions, sample.id != "")
@@ -145,7 +152,14 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
     } else if (is.null(file)) {
         sample_definitions = meta_dataframe
     } else {
-        sample_definitions = read.csv(file=file, comment.char="#", sep=sep)
+        if (file_ext(file) == 'csv') {
+            sample_definitions = read.csv(file=file, comment.char="#", sep=sep)
+        } else if (file_ext(file) == 'xls' | file_ext(file) == 'xlsx') {
+            xls = loadWorkbook(file, create=FALSE)
+            sample_definitions = readWorksheet(xls, 1)
+        } else {
+            sample_definitions = read.table(file=file)
+        }
     }
     colnames(sample_definitions) = tolower(colnames(sample_definitions))
     ##sample_definitions = sample_definitions[grepl('(^HPGL|^hpgl)', sample_definitions$sample.id, perl=TRUE),]

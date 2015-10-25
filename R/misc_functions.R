@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Oct 20 17:22:12 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Oct 25 13:56:53 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -128,6 +128,7 @@ make_report = function(name="report", type='pdf') {
 #' This function wraps import.gff/import.gff3/import.gff2 calls in try()
 #' Because sometimes those functions fail in unpredictable ways.
 #'
+#' @export
 #' @return  a df!
 gff2df = function(gff) {
     ret = NULL
@@ -148,6 +149,33 @@ gff2df = function(gff) {
     return(ret)
 }
 
+#' gff2irange()  Try to make import.gff a little more robust
+#'
+#' @param gff  a gff filename
+#'
+#' This function wraps import.gff/import.gff3/import.gff2 calls in try()
+#' Because sometimes those functions fail in unpredictable ways.
+#'
+#' @export
+#' @return  an iranges! (useful for getSeq())
+gff2irange = function(gff) {
+    ret = NULL
+    annotations = try(import.gff3(gff), silent=TRUE)
+    if (class(annotations) == 'try-error') {
+        annotations = try(import.gff2(gff), silent=TRUE)
+        if (class(annotations) == 'try-error') {
+            stop("Could not extract the widths from the gff file.")
+        } else {
+            ret = annotations
+        }
+    } else {
+        ret = annotations
+    }
+    ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
+    ## no method to coerce an S4 class to a vector.
+     return(ret)
+}
+    
 #' hpgl_cor()  Wrap cor() to include robust correlations.
 #'
 #' @param df  a data frame to test.
@@ -171,6 +199,11 @@ hpgl_cor = function(df, method="pearson", ...) {
     return(correlation)
 }
 
+#' make_tooltips()  Create a simple df from gff which contains tooltip usable information for gVis graphs.
+#'
+#' @param gff or annotations: Either a gff file or annotation data frame (which likely came from a gff file.)
+#'
+#' @return a df of tooltip information
 make_tooltips = function(annotations=NULL, gff=NULL) {
     if (is.null(annotations) & is.null(gff)) {
         stop("I need either a data frame or gff file.")
@@ -304,7 +337,7 @@ write_xls = function(data, sheet="first", file="excel/workbook", rowname="rownam
     file = gsub(pattern="\\.xls.", replacement="", file, perl=TRUE)
     filename = NULL
     if (isTRUE(dated)) {
-        timestamp = format(Sys.time(), "%Y%m%d-%H%M")
+        timestamp = format(Sys.time(), "%Y%m%d%H")
         filename = paste0(file, "-", timestamp, suffix)
     } else {
         filename = paste0(file, suffix)

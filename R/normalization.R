@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Oct 20 15:43:12 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Oct 22 11:22:44 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -247,14 +247,31 @@ convert_counts = function(data, convert="raw", annotations=NULL, fasta=NULL, pat
 #' @return The 'RPseqM' counts
 #' @export
 divide_seq = function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff", entry_type="gene") {
+    if (!file.exists(fasta)) {
+        compressed_fasta = paste0(fasta, '.xz')
+        system(paste0("xz -d ", compressed_fasta))
+    }
     raw_seq = try(FaFile(fasta))
     if (class(raw_seq)[1] == 'try-error') {
         stop(paste0("There was a problem reading: ", fasta))
     }
-    gff_entries = rtracklayer::import(gff, asRangedData=FALSE)
+    gff_entries = hpgltools:::gff2irange(gff)
     ## print(head(gff_entries))
     ##    cds_entries = subset(gff_entries, type==entry_type)
     found_entries = (gff_entries$type == entry_type)
+    if (sum(found_entries) == 0) {
+        message(paste0("There were no found entries of type: ", entry_type, "."))
+        message("Going to try locus_tag, and failing that, mRNA.")
+        locus_entries = (gff_entries$type == 'locus_tag')
+        mrna_entries = (gff_entries$type == 'mRNA')
+        if ((sum(locus_entries) > sum(mrna_entries)) & sum(locus_entries) > 100) {
+            found_entries = locus_entries
+        } else if (sum(mrna_entries) > 100) {
+            found_entries = mrna_entries
+        } else {
+            stop("Unable to find any entries of type locus_tag nor mrna.")
+        }
+    }
     ##cds_entries = subset(gff_entries, type==entry_type)
     cds_entries = gff_entries[found_entries,]
     names(cds_entries) = make.names(cds_entries$locus_tag, unique=TRUE)
