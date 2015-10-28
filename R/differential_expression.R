@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Oct 20 17:23:33 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Oct 27 17:02:54 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -57,7 +57,7 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, m
     if (is.null(model_intercept)) {
         model_intercept = FALSE
     }
-    
+
     limma_result = limma_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
     deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
     edger_result = edger_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
@@ -76,6 +76,7 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, m
 #'
 #' @return a table combinine limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
+#' @export
 #' @examples
 #' ## pretty = combine_de_tables(big_result, table='t12_minus_t0')
 combine_de_tables = function(all_pairwise_result, table='wt_minus_mut', annot_df=NULL) {
