@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Oct 27 17:02:54 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Oct 29 12:35:54 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -225,7 +225,7 @@ limma_coefficient_scatter = function(output, toptable=NULL, x=1, y=2, gvis_filen
 deseq_coefficient_scatter = function(output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
-    print("This can do comparisons among the following columns in the limma result:")
+    print("This can do comparisons among the following columns in the deseq2 result:")
     thenames = names(output$coefficients)
     print(thenames)
     xname=""
@@ -252,16 +252,20 @@ deseq_coefficient_scatter = function(output, x=1, y=2, gvis_filename="limma_scat
         rm(tmpname)
     }
     print(paste0("Actually comparing ", xname, " and ", yname, "."))
-    first_col = output$coefficients[[xname]][,c("baseMean","log2FoldChange")]
-    colnames(first_col) = c("mean.1", xname)
-    second_col = output$coefficients[[yname]][,c("baseMean","log2FoldChange")]
-    colnames(second_col) = c("mean.2", yname)
+    first_df = output$coefficients[[xname]]
+    first_df$delta = log2(first_df$baseMean) + first_df$log2FoldChange
+    second_df = output$coefficients[[yname]]
+    second_df$delta = log2(second_df$baseMean) + second_df$log2FoldChange
+    first_col = first_df[,c("baseMean","log2FoldChange","delta")]
+    colnames(first_col) = c("mean.1", "fc.1", xname)
+    second_col = second_df[,c("baseMean","log2FoldChange","delta")]
+    colnames(second_col) = c("mean.2", "fc.2", yname)
     coefficient_df = merge(first_col, second_col, by="row.names")
     rownames(coefficient_df) = coefficient_df$Row.names
     coefficient_df = coefficient_df[-1]
     coefficient_df = coefficient_df[,c(xname, yname, "mean.1", "mean.2")]
     coefficient_df[is.na(coefficient_df)] = 0
-    
+
     plot = hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline, first=xname, second=yname, tooltip_data=tooltip_data, base_url=base_url)
     plot$df = coefficient_df
     return(plot)
@@ -401,12 +405,12 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
 
     ## An interesting note about the use of formulae in DESeq:
     ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
-    ## Thus, all these formulae should have condition(s) at the end.    
+    ## Thus, all these formulae should have condition(s) at the end.
     ##cond_model = model.matrix(~ 0 + conditions)
     ##batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
     ##condbatch_model = try(model.matrix(~ 0 + batches + conditions), silent=TRUE)
     ##cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
-    ##condbatch_int_model = try(model.matrix(~ batches + conditions), silent=TRUE)    
+    ##condbatch_int_model = try(model.matrix(~ batches + conditions), silent=TRUE)
     ##tmpnames = colnames(cond_model)
     ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     ##tmpnames = gsub("conditions", "", tmpnames)
@@ -416,52 +420,67 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     summarized = NULL
     if (isTRUE(model_batch) & isTRUE(model_cond)) {
         message("Attempting to include batch and condition in the model for DESeq.")
-        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + batch + condition)
-        dataset = DESeqDataSet(se=summarized, design=~ 0 + batch + condition)
+        ##        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
+        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ batch + condition)
+        dataset = DESeqDataSet(se=summarized, design=~ batch + condition)
     } else if (isTRUE(model_batch)) {
         message("Attempting to include only batch in the deseq model, this will likely fail.")
-        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + batch)
-        dataset = DESeqDataSet(se=summarized, design=~ 0 + batch)
+        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ batch)
+        dataset = DESeqDataSet(se=summarized, design=~ batch)
     } else {
         message("Including only condition in the deseq model.")
-        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition)
-        dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
+        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ condition)
+        dataset = DESeqDataSet(se=summarized, design=~ condition)
     }
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
-    ##dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)    
+    ##dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
     deseq_sf = estimateSizeFactors(dataset)
     deseq_disp = estimateDispersions(deseq_sf)
-    deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
-    ##    deseq_run = DESeq(dataset, betaPrior=FALSE)
+    ##deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
+    ##deseq_run = nbinomWaldTest(deseq_disp)
+    deseq_run = DESeq(deseq_disp)
+    res = results(deseq_run, contrast=c("condition", "t2", "t1"))
     ## Set contrast= for each pairwise comparison here!
-    
+    result_names = resultsNames(deseq_run)
     denominators = list()
     numerators = list()
     result_list = list()
     result_mle_list = list()
     binom_list = list()
     coefficient_list = list()
-    if (isTRUE(model_cond)) {
-        condition_list = grep("^condition", resultsNames(deseq_run), value=TRUE)
-    } else if (isTRUE(model_batch)) {
-        condition_list = grep("^batch", resultsNames(deseq_run), value=TRUE)
-    }
-    for (c in 1:(length(condition_list) - 1)) {
-        denominator = names(condition_table[c])
-        ## This is where it will fall down if you only want to look at batch.
-        denominator_name = paste0("condition", denominator)
-        my_contrast = as.numeric(denominator_name == resultsNames(deseq_run))
-        if (sum(my_contrast) == 0) {
-            next
-        }
-        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=my_contrast))
+##    if (isTRUE(model_cond)) {
+##        condition_list = grep("^condition", resultsNames(deseq_run), value=TRUE)
+##    } else if (isTRUE(model_batch)) {
+##        condition_list = grep("^batch", resultsNames(deseq_run), value=TRUE)
+##    }
+##    for (c in 1:(length(condition_list) - 1)) {
+##        denominator = names(condition_table[c])
+##        ## This is where it will fall down if you only want to look at batch.
+##        denominator_name = paste0("condition", denominator)
+##        my_contrast = as.numeric(denominator_name == resultsNames(deseq_run))
+##        if (sum(my_contrast) == 0) {
+##            next
+##        }
+##        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=my_contrast))
+##        nextc = c + 1
+##        for (d in nextc:length(condition_list)) {
+##            numerator = names(condition_table[d])
+##            message(paste0("DESeq2:", c, "/", d, ": Printing table: ", numerator, "_vs_", denominator))
+##            result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
+##            result = result[order(result$log2FoldChange),]
+##            colnames(result) = c("baseMean","logFC", "lfcSE","stat","P.Value","adj.P.Val")
+
+    ## The following is an attempted simplification of the contrast formulae
+    for (c in 1:(length(conditions) - 1)) {
+        denominator = conditions[c]
         nextc = c + 1
-        for (d in nextc:length(condition_list)) {
-            numerator = names(condition_table[d])
+        for (d in nextc:length(conditions)) {
+            numerator = conditions[d]
             message(paste0("DESeq2:", c, "/", d, ": Printing table: ", numerator, "_vs_", denominator))
             result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
             result = result[order(result$log2FoldChange),]
-            colnames(result) = c("baseMean","logFC", "lfcSE","stat","P.Value","adj.P.Val")
+            colnames(result) = c("baseMean","logFC","lfcSE","stat","P.Value","adj.P.Val")
+            ## From here on everything is the same.
             result[is.na(result$P.Value), "P.Value"] = 1 ## Some p-values come out as NA
             result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA
             result$qvalue = tryCatch(
@@ -508,9 +527,25 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         } ## End for each d
         ## Fill in the last coefficient (since the for loop above goes from 1 to n-1
         denominator = names(condition_table[length(condition_list)])
-        denominator_name = paste0("condition", denominator)        
-        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))        
+        denominator_name = paste0("condition", denominator)
     }  ## End for each c
+    ## Now that we finished the contrasts, fill in the coefficient list with each set of values
+    for (c in 1:(length(conditions))) {
+        coef = conditions[c]
+        coef_name = paste0("condition", coef)
+        coefficient_list[[coef]] = as.data.frame(results(deseq_run, contrast=as.numeric(coef_name == resultsNames(deseq_run))))
+##        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
+    }
+
+    ret_list = list(
+        run=deseq_run,
+        denominators=denominators,
+        numerators=numerators,
+        conditions=condition_list,
+        coefficients=coefficient_list,
+        all_tables=result_list
+    )
+    return(ret_list)
     ##    deseq_result = results(deseq_run)
     ##    deseq_mle_result = results(deseq_run, addMLE=TRUE)
     ##    deseq_df = data.frame(deseq_result[order(deseq_result$log2FoldChange),])
@@ -540,15 +575,6 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ##    meanSdPlot(log2(counts(deseq_run, normalized=TRUE)[notAllZero,] + 1))
     ##    meanSdPlot(assay(rld[notAllZero,]))
     ##    meanSdPlot(assay(vsd[notAllZero,]))
-    ret_list = list(
-        run=deseq_run,
-        denominators=denominators,
-        numerators=numerators,
-        conditions=condition_list,
-        coefficients=coefficient_list,
-        all_tables=result_list
-    )
-    return(ret_list)
 }
 
 #' edger_pairwise()  Set up a model matrix and set of contrasts to do

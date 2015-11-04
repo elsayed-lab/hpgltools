@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Oct 25 13:58:48 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Oct 29 23:24:11 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -33,7 +33,7 @@ require.auto = function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
     } else {
         if (is.null(github_path)) {
             source("http://bioconductor.org/biocLite.R")
-            biocLite(character(), ask=FALSE) # update dependencies, if any.
+            ##biocLite(character(), ask=FALSE) # update dependencies, if any.
             eval(parse(text=paste("biocLite('", lib, "')", sep="")))
             if (verbose) {
                 message(sprintf("Loading %s", lib))

@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep 16 15:23:23 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Oct 29 17:36:14 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -1283,6 +1283,7 @@ hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, names=NULL, title
     if (is.null(names)) {
         names = colnames(data)
     }
+    data = as.matrix(data)
     heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, labCol=names, margins=c(12,8), trace="none", linewidth=0.5, main=title)
     hpgl_heatmap_plot = recordPlot()
     return(hpgl_heatmap_plot)

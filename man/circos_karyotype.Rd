@@ -5,8 +5,8 @@
 \title{circos_karyotype()  Create the description of (a)chromosome(s) for circos.}
 \usage{
 circos_karyotype(name = "default", conf_dir = "circos/conf",
-  length = 1838554, chr_name = "chr1", segments = 6, color = "white",
-  chr_num = 1)
+  length = NULL, chr_name = "chr1", segments = 6, color = "white",
+  chr_num = 1, fasta = NULL)
 }
 \arguments{
 \item{name}{default='chr1'  the name of the chromosome (This currently assumes a bacterial chromosome)}

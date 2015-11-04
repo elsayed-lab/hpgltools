@@ -7,9 +7,6 @@ circos.}
 \usage{
 circos_tile(df, cfgout = "circos/conf/default.conf", colname = "datum",
   chr = "chr1", colors = NULL, outer = 0.9, width = 0.08, spacing = 0)
-
-circos_tile(df, cfgout = "circos/conf/default.conf", colname = "datum",
-  chr = "chr1", colors = NULL, outer = 0.9, width = 0.08, spacing = 0)
 }
 \arguments{
 \item{df}{a dataframe with starts/ends and the floating point information}
@@ -34,33 +31,8 @@ into which to place the plus-strand data}
 \item{color}{default='blue'  the color of the histogram}
 
 \item{fill_color}{default='blue'  guess}
-
-\item{df}{a dataframe with starts/ends and the floating point information}
-
-\item{cfgout}{default='circos/conf/default.conf'  The master
-configuration file to write.}
-
-\item{colname}{default='datum'  The name of the column with the
-data of interest.}
-
-\item{chr}{default='chr1'  the name of the chromosome (This
-currently assumes a bacterial chromosome)}
-
-\item{color}{default='blue'  the color of the histogram}
-
-\item{fill_color}{default='blue'  guess}
-
-\item{outer}{default=1.0  the floating point radius of the circle
-into which to place the plus-strand data}
-
-\item{width}{default=0.08  the radial width of each tile}
-
-\item{spacing}{default=0.0  the radial distance between outer,inner
-    and inner,whatever follows.}
 }
 \value{
-the radius after adding the histogram and the spacing.
-
 the radius after adding the histogram and the spacing.
 }
 \description{
@@ -71,15 +43,6 @@ from df in the circos histogram format into
 circos/data/bob_tile.txt
 It then writes out a configuration plot stanza in
 circos/conf/bob_tile.conf
-and finally adds an include to circos/bob.conf
-
-This function tries to make the writing circos heatmaps easier.  Like
-circos_plus_minus() and circos_hist() it works in 3 stages,
-It writes out a data file using cfgout as a basename and the data
-from df in the circos histogram format into
-circos/data/bob_heatmap.txt
-It then writes out a configuration plot stanza in
-circos/conf/bob_heatmap.conf
 and finally adds an include to circos/bob.conf
 }
 
