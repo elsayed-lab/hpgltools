@@ -1,4 +1,24 @@
-## Time-stamp: <Sun Oct 25 13:56:53 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Nov  5 14:27:24 2015 Ashton Trey Belew (abelew@gmail.com)>
+
+#' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
+#' It just does fast.svd of a matrix against its rowMeans().
+#'
+#' @param data A data frame to decompose
+#'
+#' @return a list containing the s,v,u from fast.svd
+#' @seealso \code{\link{fast.svd}}
+#'
+#' @export
+#' @examples
+#' ## svd = makeSVD(data)
+makeSVD = function (x) {
+    x = as.matrix(x)
+    s = fast.svd(x - rowMeans(x))
+    v = s$v
+    rownames(v) = colnames(x)
+    s = list(v=v, u=s$u, d=s$d)
+    return(s)
+}
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.

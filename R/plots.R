@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct 29 17:36:14 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Nov  5 22:03:16 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -819,7 +819,7 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
         }
     } else if (is.list(data)) {
         summary_df = summary(data)
-        play_all = reshape::melt(data)
+        play_all = reshape2::melt(data)
         colnames(play_all) = c("expression","cond")
     } else {
         stop("This can only work with a list or data frame.")

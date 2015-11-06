@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct 29 12:35:54 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Nov  5 15:59:12 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -39,7 +39,7 @@ disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=TRUE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
     conditions = get0('conditions')
     batches = get0('batches')
     model_cond = get0('model_cond')
@@ -439,7 +439,6 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ##deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
     ##deseq_run = nbinomWaldTest(deseq_disp)
     deseq_run = DESeq(deseq_disp)
-    res = results(deseq_run, contrast=c("condition", "t2", "t1"))
     ## Set contrast= for each pairwise comparison here!
     result_names = resultsNames(deseq_run)
     denominators = list()
@@ -804,7 +803,7 @@ hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=F
         if (max(dataframe) < 400) {
             warning("This data says it was not logged, but the maximum counts seem small.")
             warning("If it really was log2 transformed, then we are about to double-log it and that would be very bad.")
-        }        
+        }
         message("The voom input was not log2, transforming now.")
         dataframe = log2(dataframe)
     }
@@ -1019,7 +1018,7 @@ limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     } else {
         fun_design = fun_voom$design
     }
-   
+
     ## Extract the design created by voom()
     ## This is interesting because each column of the design will have a prefix string 'macb' before the
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
@@ -1303,26 +1302,6 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
         names = eval_names
         )
     return(result)
-}
-
-#' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
-#' It just does fast.svd of a matrix against its rowMeans().
-#'
-#' @param data A data frame to decompose
-#'
-#' @return a list containing the s,v,u from fast.svd
-#' @seealso \code{\link{fast.svd}}
-#'
-#' @export
-#' @examples
-#' ## svd = makeSVD(data)
-makeSVD = function (x) {
-    x = as.matrix(x)
-    s = fast.svd(x - rowMeans(x))
-    v = s$v
-    rownames(v) = colnames(x)
-    s = list(v=v, u=s$u, d=s$d)
-    return(s)
 }
 
 #' simple_comparison()  Perform a simple experimental/control comparison
@@ -1616,9 +1595,9 @@ get_sig_genes = function(table, n=NULL, z=NULL, fc=NULL, column='logFC', fold='p
         down_idx = table[,column] <= down_median_dist
         down_genes = table[down_idx,]
         print(paste0("The up genes table has ", dim(up_genes)[1], " genes."))
-        print(paste0("The down genes table has ", dim(down_genes)[1], " genes."))        
+        print(paste0("The down genes table has ", dim(down_genes)[1], " genes."))
     } else {
-        ## Take an arbitrary number which are >= and <= a given fold value        
+        ## Take an arbitrary number which are >= and <= a given fold value
         up_idx = table[,column] >= fc
         up_genes = table[up_idx,]
         if (fold == 'plusminus') {
@@ -1631,7 +1610,7 @@ get_sig_genes = function(table, n=NULL, z=NULL, fc=NULL, column='logFC', fold='p
             down_genes = table[down_idx,]
         }
         print(paste0("The up genes table has ", dim(up_genes)[1], " genes."))
-        print(paste0("The down genes table has ", dim(down_genes)[1], " genes."))        
+        print(paste0("The down genes table has ", dim(down_genes)[1], " genes."))
     }
     ret = list(up_genes=up_genes, down_genes=down_genes)
     return(ret)

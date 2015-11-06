@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Oct 25 14:05:21 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Nov  5 14:24:32 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -469,7 +469,7 @@ concatenate_runs = function(expt, column='replicate') {
     names = list()
     for (rep in replicates) {
         expression = paste0(column, "=='", rep, "'")
-        tmp_expt =  expt_subset(expt, expression, by_definitions=TRUE)
+        tmp_expt =  expt_subset(expt, expression)
         tmp_data =  rowSums(exprs(tmp_expt$expressionset))
         tmp_design = tmp_expt$design[1,]
         final_data = cbind(final_data, tmp_data)

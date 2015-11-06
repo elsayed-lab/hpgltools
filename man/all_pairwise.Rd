@@ -5,7 +5,7 @@
 \title{all_pairwise()  Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.}
 \usage{
 all_pairwise(input, conditions = NULL, batches = NULL, model_cond = TRUE,
-  model_batch = FALSE, model_intercept = FALSE, extra_contrasts = NULL,
+  model_batch = TRUE, model_intercept = FALSE, extra_contrasts = NULL,
   alt_model = NULL, libsize = NULL)
 }
 \arguments{

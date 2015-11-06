@@ -1,4 +1,4 @@
-# Time-stamp: <Wed Jul 22 16:41:11 2015 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Thu Nov  5 14:36:51 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
 #'
@@ -66,7 +66,7 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
         design$condition = as.numeric(design$labels)
         colnames(design) = c("name","batch","condition")
     }
-    pca = hpgltools::makeSVD(data)  ## This is a part of cbcbSEQ
+    pca = hpgltools:::makeSVD(data)  ## This is a part of cbcbSEQ
     included_batches = as.factor(as.character(design$batch))
     included_conditions = as.factor(as.character(design$condition))
     if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
