@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Nov  5 14:24:32 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Nov 18 11:33:33 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -68,7 +68,7 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
             colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors))
             color_hash = hash(keys=as.character(condition_names), values=colors)
         } else {
-            color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)            
+            color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)
         }
     }
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
@@ -220,7 +220,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
             gene_info$ID = rownames(gene_info)
         }
         gene_info = gene_info[gene_info$ID %in% rownames(all_count_matrix),]
-        all_count_matrix = all_count_matrix[rownames(all_count_matrix) %in% genes$ID,]
+        all_count_matrix = all_count_matrix[rownames(all_count_matrix) %in% gene_info$ID,]
     }
 
     ## Make sure that all columns have been filled in for every gene.

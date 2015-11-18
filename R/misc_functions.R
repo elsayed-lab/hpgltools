@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Nov  5 14:27:24 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Nov 18 11:17:24 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -195,7 +195,7 @@ gff2irange = function(gff) {
     ## no method to coerce an S4 class to a vector.
      return(ret)
 }
-    
+
 #' hpgl_cor()  Wrap cor() to include robust correlations.
 #'
 #' @param df  a data frame to test.
@@ -224,12 +224,12 @@ hpgl_cor = function(df, method="pearson", ...) {
 #' @param gff or annotations: Either a gff file or annotation data frame (which likely came from a gff file.)
 #'
 #' @return a df of tooltip information
-make_tooltips = function(annotations=NULL, gff=NULL) {
+make_tooltips = function(annotations=NULL, gff=NULL, desc_col='description') {
     if (is.null(annotations) & is.null(gff)) {
         stop("I need either a data frame or gff file.")
     } else {
         if (!is.null(annotations)) {
-            tooltip_data = annotations[,c("ID","Name","locus_tag")]
+            tooltip_data = annotations[,c("ID", desc_col)]
         } else {
             ret = NULL
             annotations = try(import.gff3(gff), silent=TRUE)
@@ -249,31 +249,16 @@ make_tooltips = function(annotations=NULL, gff=NULL) {
         }
     }
     tooltip_data$tooltip = ""
-    if (is.null(tooltip_data$locus_tag) & is.null(tooltip_data$Name) & is.null(tooltip_data$ID)) {
+    if (is.null(tooltip_data[[desc_col]])) {
         stop("I need a name!")
     } else {
-        if (is.null(tooltip_data$locus_tag)) {
-            tooltip_data$locus_tag = ""
-        } else {
-            tooltip_data$tooltip = paste(tooltip_data$tooltip, tooltip_data$locus_tag, sep=": ")
-        } 
-        if (is.null(tooltip_data$Name)) {
-            tooltip_data$Name = ""
-        } else {
-            tooltip_data$tooltip = paste(tooltip_data$tooltip, tooltip_data$Name, sep=": ")
-        }
-        if (is.null(tooltip_data$ID)) {
-            tooltip_data$ID = ""
-        } else {
-            tooltip_data$tooltip = paste(tooltip_data$tooltip, tooltip_data$ID, sep=": ")
-        }
+        tooltip_data$tooltip = paste0(tooltip_data$ID, ': ', tooltip_data[[desc_col]])
     }
     tooltip_data$tooltip = gsub("\\+", " ", tooltip_data$tooltip)
     tooltip_data$tooltip = gsub(": $", "", tooltip_data$tooltip)
     tooltip_data$tooltip = gsub("^: ", "", tooltip_data$tooltip)
     rownames(tooltip_data) = make.names(tooltip_data$ID, unique=TRUE)
-    tooltip_data = tooltip_data[,c("ID","Name","locus_tag", "1.tooltip")]
-    tooltip_data = tooltip_data[-1]
+    tooltip_data = tooltip_data[,c("ID", desc_col, "1.tooltip")]
     tooltip_data = tooltip_data[-1]
     tooltip_data = tooltip_data[-1]
     return(tooltip_data)
@@ -362,7 +347,7 @@ write_xls = function(data, sheet="first", file="excel/workbook", rowname="rownam
     } else {
         filename = paste0(file, suffix)
     }
-    
+
     if (file.exists(filename)) {
         if (isTRUE(overwritefile)) {
             backup_file(filename)
@@ -379,7 +364,7 @@ write_xls = function(data, sheet="first", file="excel/workbook", rowname="rownam
             renameSheet(xls, sheet=sheet, newName=newname)
         }
     }
-    
+
     createSheet(xls, name=sheet)
     if (is.na(rowname)) {
         writeWorksheet(xls, data, sheet=sheet)
@@ -393,18 +378,49 @@ write_xls = function(data, sheet="first", file="excel/workbook", rowname="rownam
 #'
 #' @param file  the file to backup.
 #' @param backups default=10  how many revisions?
-backup_file = function(file, backups=10) {
-    for (i in backups:01) {
-        j = i + 1
-        i = sprintf("%02d", i)
-        j = sprintf("%02d", j)
-        test = paste0(file, ".", i)
-        new = paste0(file, ".", j)
-        if (file.exists(test)) {
-            file.rename(test, new)
+backup_file = function(backup_file, backups=10) {
+    if (file.exists(backup_file)) {
+        for (i in backups:01) {
+            j = i + 1
+            i = sprintf("%02d", i)
+            j = sprintf("%02d", j)
+            test = paste0(backup_file, ".", i)
+            new = paste0(backup_file, ".", j)
+            if (file.exists(test)) {
+                file.rename(test, new)
+            }
         }
+        newfile = paste0(backup_file, ".", i)
+        message(paste0("Renaming ", backup_file, " to ", newfile, "."))
+        file.rename(backup_file, newfile)
+    } else {
+        message("The file does not yet exist.")
     }
-    file.rename(file, paste0(file, ".", i))
+}
+
+loadme = function(dir="savefiles") {
+    savefile = paste0(getwd(), "/", dir, "/RData.rda.xz")
+    load(savefile)
+}
+
+#' saveme()  Make a backup rdata file for future reference
+#'
+#' @param dir  the directory to save the Rdata file.
+#' @param backups default=10  how many revisions?
+saveme = function(directory="savefiles", backups=4) {
+    environment()
+    if (!file.exists(directory)) {
+        dir.create(directory)
+    }
+    savefile = paste0(getwd(), "/", directory, "/RData.rda.xz")
+    message(paste0("The savefile is: ", savefile))
+    backup_file(savefile, backups=backups)
+    ## The following save strings work:
+    ## save_string <- paste0("save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file='", savefile, "')")
+    ## save_string <- paste0("con <- base::pipe(paste0('pigz -p8 > ", savefile, "'), 'wb');\n save(list=ls(all.names=TRUE, envir=globalenv(), envir=globalenv(), file=con);\n close(con)")
+    save_string <- paste0("con <- base::pipe(paste0('pxz -T4 > ", savefile, "'), 'wb');\n save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n close(con)")
+    message(paste0("The save string is: ", save_string))
+    eval(parse(text=save_string))
 }
 
 ## EOF

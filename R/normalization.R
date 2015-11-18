@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct 22 11:22:44 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Nov 18 10:44:49 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -714,11 +714,14 @@ hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="ra
 #' it not fail when on corner-cases.  I sent him a diff, but haven't
 #' checked to see if it was useful yet.
 #'
-hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean", groupLoc="mean", window=99, verbose=FALSE, groupCol=NULL, plot=TRUE, ...) {
+hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean",
+                        groupLoc="mean", window=99, verbose=FALSE,
+                        groupCol=NULL, plot=TRUE, ...) {
     exprs = as.matrix(exprs)
     if (is.null(groups)) {
-        print("Groups were not provided.  Performing a simple quantile normalization.")
-        print("This is probably not what you actually want!")
+        cat("Groups were not provided.  Performing a simple quantile
+  normalization. This is probably not what you actually want!
+")
         count_rownames = rownames(exprs)
         count_colnames = colnames(exprs)
         normExprs = normalize.quantiles(as.matrix(exprs), copy=TRUE)
@@ -726,7 +729,8 @@ hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean", groupLoc="mean"
         colnames(normExprs) = count_colnames
         return(normExprs)
     }
-    res = hpgl_qstats(exprs, groups, refType=refType, groupLoc=groupLoc, window=window)
+    res = hpgl_qstats(exprs, groups, refType=refType,
+                      groupLoc=groupLoc, window=window)
     QBETAS = res$QBETAS
     Qref = res$Qref
     X = res$model
@@ -734,9 +738,9 @@ hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean", groupLoc="mean"
     wQBETAS = QBETAS * (1 - w)
     wQBETAS = X %*% t(wQBETAS)
     wQref = Qref * w
-    wQref = matrix(rep(1, nrow(X)), ncol = 1) %*% t(wQref)
+    wQref = matrix(rep(1, nrow(X)), ncol=1) %*% t(wQref)
     normExprs = t(wQBETAS + wQref)
-    RANKS = t(matrixStats::colRanks(exprs, ties.method = "average"))
+    RANKS = t(matrixStats::colRanks(exprs, ties.method="average"))
     for (k in 1:ncol(normExprs)) {
         x = normExprs[, k]
         normExprs[, k] = x[RANKS[, k]]
@@ -745,18 +749,22 @@ hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean", groupLoc="mean"
     rownames(normExprs) = rownames(exprs)
     colnames(normExprs) = colnames(exprs)
     if (plot) {
-        oldpar = par(mar = c(4, 4, 1.5, 0.5))
+        oldpar = par(mar=c(4, 4, 1.5, 0.5))
         lq = length(Qref)
         u = (1:lq - 0.5)/lq
         if (length(u) > 10000) {
             sel = sample(1:lq, 10000)
-            plot(u[sel], w[sel], pch = ".", main = "Quantile reference weights", xlab = "u (normalized gene ranks)", ylab = "Weight", ylim = c(0, 1), ...)
-            ## plot(u[sel], w[sel], pch = ".", main = "Quantile reference weights", xlab = "u (normalized gene ranks)", ylab = "Weight", ylim = c(0, 1))
+            plot(u[sel], w[sel], pch=".", main="Quantile reference weights",
+                 xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1), ...)
+            ## plot(u[sel], w[sel], pch=".", main="Quantile reference weights",
+            ##      xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1))
         } else {
-            plot(u, w, pch = ".", main = "Quantile reference weights", xlab = "u (normalized gene ranks)", ylab = "Weight", ylim = c(0, 1), ...)
-            ## plot(u, w, pch = ".", main = "Quantile reference weights", xlab = "u (normalized gene ranks)", ylab = "Weight", ylim = c(0, 1))
+            plot(u, w, pch=".", main="Quantile reference weights",
+                 xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1), ...)
+            ## plot(u, w, pch=".", main="Quantile reference weights",
+            ##      xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1))
         }
-        abline(h = 0.5, v = 0.5, col = "red", lty = 2)
+        abline(h=0.5, v=0.5, col="red", lty=2)
         par(oldpar)
     }
     normExprs
@@ -765,7 +773,8 @@ hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean", groupLoc="mean"
 #' lowfilter_counts(): A caller for different low-count filters
 #'
 #'
-lowfilter_counts = function(count_table, type='cbcb', p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, thresh=2, min_samples=2) {
+lowfilter_counts = function(count_table, type='cbcb', p=0.01, A=1, k=1,
+                            cv_min=0.01, cv_max=1000, thresh=2, min_samples=2) {
     if (tolower(type) == 'povera') {
         filter_low = 'pofa'
     } else if (tolower(type) == 'kovera') {
@@ -773,17 +782,21 @@ lowfilter_counts = function(count_table, type='cbcb', p=0.01, A=1, k=1, cv_min=0
     }
     lowfiltered_counts = NULL
     if (type == 'cbcb') {
-        lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh, min_samples=min_samples)
+        lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh,
+                                                min_samples=min_samples)
     } else if (type == 'pofa') {
         lowfiltered_counts = genefilter_pofa_counts(count_table, p=p, A=A)
     } else if (type == 'kofa') {
         lowfiltered_counts = genefilter_kofa_counts(count_table, k=k, A=A)
     } else if (type == 'cv') {
-        lowfiltered_counts = genefilter_cv_counts(count_table, cv_min=cv_min, cv_max=cv_max)
+        lowfiltered_counts = genefilter_cv_counts(count_table, cv_min=cv_min,
+                                                  cv_max=cv_max)
     } else {
-        print("Did not recognize the filtering argument, defaulting to cbcb's.")
-        print("Recognized filters are: 'cv', 'kofa', 'pofa', 'cbcb'")
-        lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh, min_samples=min_samples)
+        cat("Did not recognize the filtering argument, defaulting to cbcb's.
+ Recognized filters are: 'cv', 'kofa', 'pofa', 'cbcb'
+")
+        lowfiltered_counts = cbcb_filter_counts(count_table, thresh=thresh,
+                                                min_samples=min_samples)
     }
     count_table = lowfiltered_counts$count_table
     return(count_table)
@@ -795,7 +808,8 @@ lowfilter_counts = function(count_table, type='cbcb', p=0.01, A=1, k=1, cv_min=0
 #' it not fail when on corner-cases.  I sent him a diff, but haven't
 #' checked to see if it was useful yet.
 #'
-hpgl_qstats = function (exprs, groups, refType="mean", groupLoc="mean", window=99) {
+hpgl_qstats = function (exprs, groups, refType="mean",
+                        groupLoc="mean", window=99) {
     require.auto("matrixStats")
     Q = apply(exprs, 2, sort)
     if (refType == "median") {
@@ -839,7 +853,7 @@ hpgl_qstats = function (exprs, groups, refType="mean", groupLoc="mean", window=9
     roughWeights = SIGMA/(SIGMA + TAU)
     roughWeights[is.nan(roughWeights)] = 0 ## is this backward?
     roughWeights[SIGMA < 10^(-6) & TAU < 10^(-6)] = 1
-    smoothWeights = runmed(roughWeights, k = window, endrule = "constant")
+    smoothWeights = runmed(roughWeights, k=window, endrule="constant")
     qstats_model = model.matrix(~0 + factor(groups, levels=uGroups))
     qstats_result = list(Q=Q,
         Qref=Qref,
@@ -875,7 +889,9 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
     }
     df_in = as.data.frame(df[rownames(df) %in% rownames(annotations),])
     if (dim(df_in)[1] == 0) {
-        stop("When the annotations and df were checked against each other, the result was null.  Perhaps your annotation or df's rownames aren't set?")
+        stop("When the annotations and df were checked against each other,
+ the result was null.  Perhaps your annotation or df's rownames aren't set?
+")
     }
     colnames(df_in) = colnames(df)
     merged_annotations = merge(df, annotations, by="row.names")
@@ -905,9 +921,11 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
 #' @export
 #' @examples
 #' ## filtered_table = lowfilter_counts(count_table)
-qlasso_lowfilter_counts = function(count_table, thresh=2, min_samples=2, verbose=FALSE) {
+qlasso_lowfilter_counts = function(count_table, thresh=2,
+                                   min_samples=2, verbose=FALSE) {
     original_dim = dim(count_table)
-    count_table = as.matrix(filterCounts(count_table, thresh=thresh, min_samples=min_samples))
+    count_table = as.matrix(filterCounts(count_table, thresh=thresh,
+                                         min_samples=min_samples))
     if (verbose) {
         following_dim = dim(count_table)
         lost_rows = original_dim[1] - following_dim[1]
@@ -945,9 +963,12 @@ normalize_counts = function(data, design=NULL, norm="raw") {
             stop("The list provided contains no count_table.")
         }
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
-        count_table = as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        ## some functions prefer matrix, so I am keeping this explicit
+        count_table = as.data.frame(data)
     } else {
-        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+        stop(paste0("You provided a class of type: ", data_class, ".
+This works with: expt, ExpressionSet, data.frame, and matrices.
+"))
     }
     if (norm == "sf") {
         ## Size-factored normalization is a part of DESeq
@@ -987,10 +1008,13 @@ normalize_counts = function(data, design=NULL, norm="raw") {
         colnames(count_table) = count_colnames
         norm_performed = 'quant'
     } else if (norm == "qsmooth") {
-        count_table = hpgl_qshrink(exprs=count_table, groups=design$condition, verbose=TRUE, plot=TRUE)
+        count_table = hpgl_qshrink(exprs=count_table, groups=design$condition,
+                                   verbose=TRUE, plot=TRUE)
         norm_performed = 'qsmooth'
     } else if (norm == "qsmooth_median") {
-        count_table = hpgl_qshrink(exprs=count_table, groups=design$condition, verbose=TRUE, plot=TRUE, refType="median", groupLoc="median", window=50)
+        count_table = hpgl_qshrink(exprs=count_table, groups=design$condition,
+                                   verbose=TRUE, plot=TRUE, refType="median",
+                                   groupLoc="median", window=50)
         norm_performed = 'qsmooth_median'
     } else if (norm == "tmm") {
         ## TMM normalization is documented in edgeR
@@ -1025,7 +1049,8 @@ normalize_counts = function(data, design=NULL, norm="raw") {
         norm_performed = "rle"
     } else {
         print("Did not recognize the normalization, leaving the table alone.")
-        print("Recognized normalizations include: 'qsmooth', 'sf', 'quant', 'tmm', 'upperquartile', and 'rle'")
+        print("Recognized normalizations include: 'qsmooth', 'sf', 'quant', ")
+        print("'tmm', 'upperquartile', and 'rle'")
         count_table = as.matrix(count_table)
     }
     norm_libsize = colSums(count_table)
@@ -1045,8 +1070,10 @@ normalize_counts = function(data, design=NULL, norm="raw") {
 #' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
 #' @export
 normalize_expt = function(expt, ## The expt class passed to the normalizer
-    transform="raw", norm="raw", convert="raw", batch="raw", filter_low=FALSE, ## choose the normalization strategy
-    annotations=NULL, fasta=NULL, entry_type="gene", verbose=FALSE, use_original=FALSE, ## annotations used for rpkm/cpseqm, original may be used to ensure double-normalization isn't performed.
+    ## choose the normalization strategy
+    transform="raw", norm="raw", convert="raw", batch="raw", filter_low=FALSE,
+    ## annotations used for rpkm/cpseqm, original may be used to ensure double-normalization isn't performed.
+    annotations=NULL, fasta=NULL, entry_type="gene", verbose=FALSE, use_original=FALSE,
     batch1="batch", batch2=NULL, ## extra parameters for batch correction
     thresh=2, min_samples=2, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
     ...) {
@@ -1055,31 +1082,60 @@ normalize_expt = function(expt, ## The expt class passed to the normalizer
     if (is.null(new_expt$original_expressionset)) {
         new_expt$original_expressionset = new_expt$expressionset
     } else {
-        print(paste("This function will replace the expt$expressionset slot with the ", transform, "(", norm, "(", convert, "))'d data.", sep=""))
-        print("It saves the current data into a slot named: expt$backup_expressionset")
-        print("It will also save copies of each step along the way in expt$normalized with the corresponding libsizes.")
-        print("Keep the libsizes in mind when invoking limma.  The appropriate libsize is the non-log(cpm(normalized)).")
-        print("This is most likely kept in the slot called: 'new_expt$normalized$normalized_counts$libsize' which is copied into new_expt$best_libsize")
+        cat(paste0("This function will replace the expt$expressionset slot with
+ the ", transform, "(", norm, "(", convert, "))'d data.
+"))
+        cat("It saves the current data into a slot named:
+ expt$backup_expressionset. It will also save copies of each step along the way
+ in expt$normalized with the corresponding libsizes. Keep the libsizes in mind
+ when invoking limma.  The appropriate libsize is the non-log(cpm(normalized)).
+ This is most likely kept in the slot called:
+ 'new_expt$normalized$normalized_counts$libsize' which is copied into
+ new_expt$best_libsize
+")
     }
     if (filter_low == FALSE) {
-        print("Filter low is false, this should likely be set to something, good choices include cbcb, kofa, pofa (anything but FALSE).  If you want this to stay FALSE, keep in mind that if other normalizations are performed, then the resulting libsizes are likely to be odd (potentially negative!)")
+        cat("Filter low is false, this should likely be set to something, good
+ choices include cbcb, kofa, pofa (anything but FALSE).  If you want this to
+ stay FALSE, keep in mind that if other normalizations are performed, then the
+ resulting libsizes are likely to be odd (potentially negative!)
+")
     }
     if (transform == "raw") {
-        print("Leaving the data in its current base format, keep in mind that some metrics are easier to see when the data is log2 transformed, but EdgeR/DESeq don't like transformed data.")
+        cat("Leaving the data in its current base format, keep in mind that
+ some metrics are easier to see when the data is log2 transformed, but
+ EdgeR/DESeq don't like transformed data.
+")
     }
     if (convert == "raw") {
-        print("Leaving the data unconverted.  It is often advisable to cpm/rpkm the data to normalize for sampling differences, keep in mind though that rpkm has some annoying biases, and voom() by default does a cpm (though hpgl_voom() will try to detect this).")
+        cat("Leaving the data unconverted.  It is often advisable to cpm/rpkm
+ the data to normalize for sampling differences, keep in mind though that rpkm
+ has some annoying biases, and voom() by default does a cpm (though hpgl_voom()
+ will try to detect this).
+")
     }
     if (norm == "raw") {
-        print("Leaving the data unnormalized.  This is necessary for DESeq, but EdgeR/limma might benefit from normalization.  Good choices include quantile, size-factor, tmm, etc.")
+        cat("Leaving the data unnormalized.  This is necessary for DESeq, but
+ EdgeR/limma might benefit from normalization.  Good choices include quantile,
+ size-factor, tmm, etc.
+")
     }
     if (batch == "raw") {
-        print ("Not correcting the count-data for batch effects.  If batch is included in EdgerR/limma's model, then this is probably wise; but in extreme batch effects this is a good parameter to play with.")
+        cat("Not correcting the count-data for batch effects.  If batch is
+ included in EdgerR/limma's model, then this is probably wise; but in extreme
+ batch effects this is a good parameter to play with.
+")
     }
     new_expt$backup_expressionset = new_expt$expressionset
     old_data = exprs(expt$original_expressionset)
     design = expt$design
-    normalized = hpgl_norm(old_data, design=design, transform=transform, norm=norm, convert=convert, batch=batch, batch1=batch1, batch2=batch2, filter_low=filter_low, annotations=annotations, fasta=fasta, verbose=verbose, thresh=thresh, min_samples=min_samples, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
+    normalized = hpgl_norm(old_data, design=design, transform=transform,
+                           norm=norm, convert=convert, batch=batch,
+                           batch1=batch1, batch2=batch2,
+                           filter_low=filter_low, annotations=annotations,
+                           fasta=fasta, verbose=verbose, thresh=thresh,
+                           min_samples=min_samples, p=p, A=A, k=k,
+                           cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
     final_normalized = normalized$final_counts
     libsizes = final_normalized$libsize
     normalized_data = as.matrix(final_normalized$count_table)
@@ -1108,13 +1164,15 @@ replace_data = function(expt, data) {
 #' @param count_table A matrix of count data
 #' @param transform='raw' A type of transformation to perform: log2/log10/log
 #' @param converted='raw' Whether or not the data has been converted.
-#' Only important if the data was previously cpm'd because that does a +1 so we don't want to double+1 the data.
+#' Only important if the data was previously cpm'd because that does a +1, thus
+#' this will avoid a double+1 on the data.
 #'
 #' @return dataframe of logx(counts)
 #' @export
 #' @examples
 #' ## filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
-transform_counts = function(count_table, transform="raw", converted="raw", base=NULL, add=0.5) {
+transform_counts = function(count_table, transform="raw", converted="raw",
+                            base=NULL, add=0.5) {
     ## if (converted != "cpm") {
     ##     count_table = count_table + 1
     ## }
@@ -1124,7 +1182,9 @@ transform_counts = function(count_table, transform="raw", converted="raw", base=
         print(paste0("Found ", num_low, " values less than 0."))
     }
     if (num_zero > 0) {
-        print(paste0("Found ", num_zero, " values equal to 0, adding ", add, " to the matrix."))
+        cat(paste0("Found ", num_zero, " values equal to 0, adding ", add, "
+ to the matrix.
+"))
         count_table = count_table + add
     }
     if (!is.null(base)) {
@@ -1136,8 +1196,9 @@ transform_counts = function(count_table, transform="raw", converted="raw", base=
     } else if (transform == "log") {  ## Natural log
         count_table = log(count_table)  ## Apparently log1p does this.
     } else {
-        print("Did not recognize the transformation, leaving the table alone.")
-        print("Recognized transformations include: 'log2', 'log10', 'log'")
+        cat("Did not recognize the transformation, leaving the table.
+ Recognized transformations include: 'log2', 'log10', 'log'
+")
     }
     libsize = colSums(count_table)
     counts = list(count_table=count_table, libsize=libsize)

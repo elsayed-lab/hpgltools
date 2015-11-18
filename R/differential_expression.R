@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Nov  5 15:59:12 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Nov 16 15:39:18 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -1474,6 +1474,80 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
         voom_data=expt_voom,
         voom_plot=expt_voom$plot)
     return(return_info)
+}
+
+#' ignorant_pairwise()  Perform a pairwise comparison among conditions which takes
+#' nothing into account.  It _only_ takes the conditions, a mean value/variance among
+#' them, divides by condition, and returns the result.  No fancy nomalizations, no
+#' statistical models, no nothing.  It should be the very worst method possible.
+#' But, it should also provide a baseline to compare the other tools against, they should
+#' all do better than this, always.
+#'
+#' @param input
+#' @param conditions
+#'
+#' @return I am not sure yet
+#'
+#' @seealso \code{\link{limma}} \code{\link{deseq2}} \code{\link{edger}}
+ignorant_pairwise = function(input, design) {
+##    input = data.frame(hpgl010=c(1,2,3,4,5), hpgl011=c(2,3,4,5,6), hpgl012=c(3,4,5,6,7), hpgl013=c(4,5,6,7,8))
+    input = as.matrix(input)
+##    design = data.frame(sample=c("hpgl010","hpgl011","hpgl012","hpgl013"), condition=c("a","b","c","a"))
+    conditions = as.factor(design$condition)
+    types = levels(conditions)
+    num_conds = length(types)
+    median_table = data.frame()  ## This will be filled with num_conds columns and numRows(input) rows.
+    variance_table = data.frame() ## This will be filled with num_conds columns and numRows(input) rows.
+    ## First use conditions to rbind a table of medians by condition.
+    for (c in 1:num_conds) {
+        condition_name = types[c]
+        columns = which(design$condition == condition_name)
+        if (length(columns) == 1) {
+            med = data.frame(input[,columns])
+            var = as.data.frame(matrix(NA, ncol=1, nrow=nrow(med)))
+        } else {
+            med_input = input[,columns]
+            med = data.frame(Biobase::rowMedians(med_input))
+            var = matrixStats::rowVars(med_input)
+        }
+
+        if (c == 1) {
+            median_table = med
+            variance_table = var
+        } else {
+            median_table = cbind(median_table, med)
+            variance_table = cbind(variance_table, var)
+        }
+    } ## end creation of median table / variance table
+    colnames(median_table) = types
+    colnames(variance_table) = types
+    rownames(median_table) = rownames(input)
+    rownames(variance_table) = rownames(input)
+    ## We have tables of the median values by condition
+    ## Now perform the pairwise comparisons
+
+    comparisons = data.frame()
+    lenminus = num_conds - 1
+    num_done = 0
+    column_list = c()
+    for (c in 1:lenminus) {
+        c_name = types[c]
+        nextc = c+1
+        for (d in nextc:length(types)) {
+            num_done = num_done + 1
+            d_name = types[d]
+            division = data.frame(median_table[,c] / median_table[,d])
+            column_list = append(column_list, paste0(c_name, "_over_", d_name))
+            if (num_done == 1) {
+                comparisons = division
+            } else {
+                comparisons = cbind(comparisons, division)
+            }
+        } ## End for each d
+    }
+    colnames(comparisons) = column_list
+    retlist = list(comparisons=comparisons, medians=median_table, variances=variance_table)
+    return(retlist)
 }
 
 #' write_limma()  Writes out the results of a limma search using toptable()
