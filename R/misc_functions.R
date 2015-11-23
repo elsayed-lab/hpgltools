@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Nov 20 15:01:42 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Nov 23 10:07:00 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -258,9 +258,6 @@ make_tooltips = function(annotations=NULL, gff=NULL, desc_col='description') {
     tooltip_data$tooltip = gsub(": $", "", tooltip_data$tooltip)
     tooltip_data$tooltip = gsub("^: ", "", tooltip_data$tooltip)
     rownames(tooltip_data) = make.names(tooltip_data$ID, unique=TRUE)
-    tooltip_data = tooltip_data[,c("ID", desc_col, "tooltip")]
-    tooltip_data = tooltip_data[-1]
-    tooltip_data = tooltip_data[-1]
     colnames(tooltip_data) = c("1.tooltip")
     return(tooltip_data)
 }
