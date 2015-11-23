@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Nov  5 22:03:16 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Nov 23 10:11:21 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -76,7 +76,7 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
         disheat_title = paste0(disheat_title, ": ", title_suffix)
         smd_title = paste0(smd_title, ": ", title_suffix)
         pca_title = paste0(pca_title, ": ", title_suffix)
-        dens_title = paste0(pca_title, ": ", title_suffix)
+        dens_title = paste0(dens_title, ": ", title_suffix)
         ma_title = paste0(ma_titles, ": ", title_suffix)
     }
 
