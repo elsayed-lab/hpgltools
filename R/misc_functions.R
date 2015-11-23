@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Nov 18 11:17:24 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Nov 20 15:01:42 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -258,9 +258,10 @@ make_tooltips = function(annotations=NULL, gff=NULL, desc_col='description') {
     tooltip_data$tooltip = gsub(": $", "", tooltip_data$tooltip)
     tooltip_data$tooltip = gsub("^: ", "", tooltip_data$tooltip)
     rownames(tooltip_data) = make.names(tooltip_data$ID, unique=TRUE)
-    tooltip_data = tooltip_data[,c("ID", desc_col, "1.tooltip")]
+    tooltip_data = tooltip_data[,c("ID", desc_col, "tooltip")]
     tooltip_data = tooltip_data[-1]
     tooltip_data = tooltip_data[-1]
+    colnames(tooltip_data) = c("1.tooltip")
     return(tooltip_data)
 }
 
@@ -400,7 +401,9 @@ backup_file = function(backup_file, backups=10) {
 
 loadme = function(dir="savefiles") {
     savefile = paste0(getwd(), "/", dir, "/RData.rda.xz")
-    load(savefile)
+    message(paste0("Loading the savefile: ", savefile))
+    load_string <- paste0("load(", savefile, ", envir=globalenv())")
+    eval(parse(text=load_string))
 }
 
 #' saveme()  Make a backup rdata file for future reference

@@ -4,7 +4,8 @@
 \alias{compare_tables}
 \title{compare_tables()  See how similar are results from limma/deseq/edger.}
 \usage{
-compare_tables(limma = NULL, deseq = NULL, edger = NULL)
+compare_tables(limma = NULL, deseq = NULL, edger = NULL, basic = NULL,
+  include_basic = TRUE)
 }
 \arguments{
 \item{limma}{default=NULL  limma data from limma_pairwise()}

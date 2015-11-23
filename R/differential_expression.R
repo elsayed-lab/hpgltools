@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Nov 16 15:39:18 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Nov 20 14:47:16 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -28,8 +28,8 @@ disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
 #' @param extra_contrasts default=NULL some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
-#'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
-#'  de_minus_cb = (E-D)-(C-B),"
+#'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
+#'  de_vs_cb = (E-D)-(C-B),"
 #' @param alt_model default=NULL an optional alternate model to use rather than just condition/batch
 #' @param libsize default=NULL the library size of the original data to help voom()
 #' @param ... The elipsis parameter is fed to write_limma() at the end.
@@ -61,9 +61,10 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, m
     limma_result = limma_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
     deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
     edger_result = edger_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
+    basic_result = basic_pairwise(input, conditions)
 
-    result_comparison = compare_tables(limma=limma_result, deseq=deseq_result, edger=edger_result)
-    ret = list(limma=limma_result, deseq=deseq_result, edger=edger_result, comparison=result_comparison)
+    result_comparison = compare_tables(limma=limma_result, deseq=deseq_result, edger=edger_result, basic=basic_result)
+    ret = list(limma=limma_result, deseq=deseq_result, edger=edger_result, basic=basic_result, comparison=result_comparison)
     return(ret)
 }
 
@@ -72,14 +73,14 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, m
 #' This hopefully makes it easy to compare the outputs from limma/DESeq2/EdgeR on a table-by-table basis.
 #'
 #' @param all_pairwise_result  the output from all_pairwise()
-#' @param table default='wt_minus_mut'  the name of a table comparison performed by deseq/limma/edger.
+#' @param table default='wt_vs_mut'  the name of a table comparison performed by deseq/limma/edger.
 #'
 #' @return a table combinine limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
 #' @export
 #' @examples
-#' ## pretty = combine_de_tables(big_result, table='t12_minus_t0')
-combine_de_tables = function(all_pairwise_result, table='wt_minus_mut', annot_df=NULL) {
+#' ## pretty = combine_de_tables(big_result, table='t12_vs_t0')
+combine_de_tables = function(all_pairwise_result, table='wt_vs_mut', annot_df=NULL) {
     limma = all_pairwise_result$limma
     deseq = all_pairwise_result$deseq
     edger = all_pairwise_result$edger
@@ -291,17 +292,21 @@ deseq_coefficient_scatter = function(output, x=1, y=2, gvis_filename="limma_scat
 #' ## d = deseq_pairwise(expt)
 #' ## e = edger_pairwise(expt)
 #' fun = compare_tables(limma=l, deseq=d, edger=e)
-compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
+compare_tables = function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL, include_basic=TRUE) {
     ## Fill each column/row of these with the correlation between tools for one contrast performed
     if (class(limma) == "list") { ## Then this was fed the raw output from limma_pairwise, lets assume the same is true for deseq/edger too and pull out the result tables.
         limma = limma$all_tables
         deseq = deseq$all_tables
         edger = edger$all_tables
+        basic = basic$all_tables
     }
     len = length(names(deseq))
     limma_vs_edger = list()
     limma_vs_deseq = list()
+    limma_vs_basic = list()
     edger_vs_deseq = list()
+    edger_vs_basic = list()
+    deseq_vs_basic = list()
     cc = 0
     last = length(names(deseq))
     for (comp in names(deseq)) {  ## assume all three have the same names() -- note that limma has more than the other two though
@@ -310,27 +315,50 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
         l = data.frame(limma[[comp]])
         e = data.frame(edger[[comp]])
         d = data.frame(deseq[[comp]])
+        b = data.frame(basic[[comp]])
         le = merge(l, e, by.x="row.names", by.y="row.names")
         le = le[,c("logFC.x","logFC.y")]
         lec = cor.test(le[,1], le[,2])$estimate
         ld = merge(l, d, by.x="row.names", by.y="row.names")
         ld = ld[,c("logFC.x","logFC.y")]
         ldc = cor.test(ld[,1], ld[,2])$estimate
+        lb = merge(l, b, by.x="row.names", by.y="row.names")
+        lb = lb[,c("logFC.x","logFC.y")]
+        lbc = cor.test(lb[,1], lb[,2])$estimate
         ed = merge(e, d, by.x="row.names", by.y="row.names")
         ed = ed[,c("logFC.x","logFC.y")]
         edc = cor.test(ed[,1], ed[,2])$estimate
+        eb = merge(e, b, by.x="row.names", by.y="row.names")
+        eb = eb[,c("logFC.x","logFC.y")]
+        ebc = cor.test(eb[,1], eb[,2])$estimate
+        db = merge(d, b, by.x="row.names", by.y="row.names")
+        db = db[,c("logFC.x","logFC.y")]
+        dbc = cor.test(db[,1], db[,2])$estimate
         limma_vs_edger[[comp]] = lec
         limma_vs_deseq[[comp]] = ldc
         edger_vs_deseq[[comp]] = edc
+        limma_vs_basic[[comp]] = lbc
+        edger_vs_basic[[comp]] = ebc
+        deseq_vs_basic[[comp]] = dbc
     } ## End loop
     names(limma_vs_edger) = names(deseq)
     names(limma_vs_deseq) = names(deseq)
     names(edger_vs_deseq) = names(deseq)
+    names(limma_vs_basic) = names(deseq)
+    names(edger_vs_basic) = names(deseq)
+    names(deseq_vs_basic) = names(deseq)
 
     comparison_df = rbind(as.numeric(limma_vs_edger), as.numeric(limma_vs_deseq))
     comparison_df = rbind(comparison_df, as.numeric(edger_vs_deseq))
+    if (isTRUE(include_basic)) {
+        comparison_df = rbind(comparison_df, as.numeric(limma_vs_basic))
+        comparison_df = rbind(comparison_df, as.numeric(edger_vs_basic))
+        comparison_df = rbind(comparison_df, as.numeric(deseq_vs_basic))
+        rownames(comparison_df) = c("le", "ld", "ed", "lb", "eb", "db")
+    } else {
+        rownames(comparison_df) = c("le", "ld", "ed")
+    }
     comparison_df = as.matrix(comparison_df)
-    rownames(comparison_df) = c("le", "ld", "ed")
     colnames(comparison_df) = names(deseq)
     heat_colors = colorRampPalette(c("white","black"))
     comparison_heatmap = try(heatmap.3(comparison_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=heat_colors, dendrogram="none", Rowv=FALSE, Colv=FALSE, main="Compare DE tools"), silent=TRUE)
@@ -338,7 +366,10 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL) {
     if (class(comparison_heatmap) != 'try-error') {
         heat = recordPlot()
     }
-    ret = list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq, edger_vs_deseq=edger_vs_deseq, comp=comparison_df, heat=heat)
+    ret = list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq, limma_vs_basic=limma_vs_basic,
+               edger_vs_deseq=edger_vs_deseq, edger_vs_basic=edger_vs_basic,
+               deseq_vs_basic=deseq_vs_basic,
+               comp=comparison_df, heat=heat)
     return(ret)
 }
 
@@ -500,7 +531,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             )
             result$P.Value = format(signif(result$P.Value, 4), scientific=TRUE)
             result$adj.P.Val = format(signif(result$adj.P.Val, 4), scientific=TRUE)
-            result_name = paste0(numerator, "_minus_", denominator)
+            result_name = paste0(numerator, "_vs_", denominator)
             denominators[[result_name]] = denominator
             numerators[[result_name]] = numerator
             result_list[[result_name]] = result
@@ -525,7 +556,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             }
         } ## End for each d
         ## Fill in the last coefficient (since the for loop above goes from 1 to n-1
-        denominator = names(condition_table[length(condition_list)])
+        denominator = names(condition_table[length(conditions)])
         denominator_name = paste0("condition", denominator)
     }  ## End for each c
     ## Now that we finished the contrasts, fill in the coefficient list with each set of values
@@ -540,7 +571,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         run=deseq_run,
         denominators=denominators,
         numerators=numerators,
-        conditions=condition_list,
+        conditions=conditions,
         coefficients=coefficient_list,
         all_tables=result_list
     )
@@ -588,8 +619,8 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
 #' @param extra_contrasts default=NULL  some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
-#'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
-#'  de_minus_cb = (E-D)-(C-B),"
+#'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
+#'  de_vs_cb = (E-D)-(C-B),"
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #'
 #' @return A list including the following information:
@@ -883,8 +914,8 @@ hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=F
 #' @param extra_contrasts default=NULL  some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
-#'  with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
-#'  de_minus_cb = (E-D)-(C-B),"
+#'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
+#'  de_vs_cb = (E-D)-(C-B),"
 #' @param model_cond default=TRUE  include condition in the model?
 #' @param model_batch default=FALSE  include batch in the model? This is hopefully TRUE.
 #' @param model_intercept default=FALSE  perform a cell-means or intercept model?  A little more difficult for me to understand.  I have tested and get the same answer either way.
@@ -1235,7 +1266,7 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
     }
     ## If I also create a sample condition 'alice', and also perform a subtraction
     ## of 'alice' from 'bob', then the full makeContrasts() will be:
-    ## makeContrasts(bob=bob, alice=alice, bob_minus_alice=(bob)-(alice), levels=design)
+    ## makeContrasts(bob=bob, alice=alice, bob_vs_alice=(bob)-(alice), levels=design)
     ## The parentheses in this case are superfluous, but they remind me that I am finally
     ## doing some match, and also they remind me that we can do much more complex things like:
     ## ((bob-alice)-(jane-alice)) or whatever....
@@ -1247,7 +1278,7 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
         nextc = c+1
         for (d in nextc:length(identities)) {
             d_name = names(identities[d])
-            minus_string = paste(d_name, "_minus_", c_name, sep="")
+            minus_string = paste(d_name, "_vs_", c_name, sep="")
             exprs_string = paste(minus_string, "=", d_name, "-", c_name, ",", sep="")
             all_pairwise[minus_string] = exprs_string
         }
@@ -1476,24 +1507,33 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
     return(return_info)
 }
 
-#' ignorant_pairwise()  Perform a pairwise comparison among conditions which takes
+#' basic_pairwise()  Perform a pairwise comparison among conditions which takes
 #' nothing into account.  It _only_ takes the conditions, a mean value/variance among
 #' them, divides by condition, and returns the result.  No fancy nomalizations, no
 #' statistical models, no nothing.  It should be the very worst method possible.
 #' But, it should also provide a baseline to compare the other tools against, they should
 #' all do better than this, always.
 #'
-#' @param input
-#' @param conditions
+#' @param input a count table by sample
+#' @param conditions a data frame of samples and conditions
 #'
 #' @return I am not sure yet
 #'
 #' @seealso \code{\link{limma}} \code{\link{deseq2}} \code{\link{edger}}
-ignorant_pairwise = function(input, design) {
-##    input = data.frame(hpgl010=c(1,2,3,4,5), hpgl011=c(2,3,4,5,6), hpgl012=c(3,4,5,6,7), hpgl013=c(4,5,6,7,8))
-    input = as.matrix(input)
-##    design = data.frame(sample=c("hpgl010","hpgl011","hpgl012","hpgl013"), condition=c("a","b","c","a"))
-    conditions = as.factor(design$condition)
+basic_pairwise = function(input, design=NULL) {
+    print("Starting basic pairwise comparison.")
+    input_class = class(input)[1]
+    if (input_class == 'expt') {
+        conditions = input$conditions
+        batches = input$batches
+        data = exprs(input$expressionset)
+    } else {  ## Not an expt class, data frame or matrix
+        data = as.data.frame(input)
+        conditions = as.factor(design$condition)
+    }
+    ## design = data.frame(sample=c("hpgl010","hpgl011","hpgl012","hpgl013"), condition=c("a","b","c","a"))
+
+    condition_table = table(conditions)
     types = levels(conditions)
     num_conds = length(types)
     median_table = data.frame()  ## This will be filled with num_conds columns and numRows(input) rows.
@@ -1501,14 +1541,14 @@ ignorant_pairwise = function(input, design) {
     ## First use conditions to rbind a table of medians by condition.
     for (c in 1:num_conds) {
         condition_name = types[c]
-        columns = which(design$condition == condition_name)
+        columns = which(conditions == condition_name)
         if (length(columns) == 1) {
-            med = data.frame(input[,columns])
+            med = data.frame(data[,columns])
             var = as.data.frame(matrix(NA, ncol=1, nrow=nrow(med)))
         } else {
-            med_input = input[,columns]
-            med = data.frame(Biobase::rowMedians(med_input))
-            var = matrixStats::rowVars(med_input)
+            med_input = data[,columns]
+            med = data.frame(Biobase::rowMedians(as.matrix(med_input)))
+            var = matrixStats::rowVars(as.matrix(med_input))
         }
 
         if (c == 1) {
@@ -1536,8 +1576,10 @@ ignorant_pairwise = function(input, design) {
         for (d in nextc:length(types)) {
             num_done = num_done + 1
             d_name = types[d]
-            division = data.frame(median_table[,c] / median_table[,d])
-            column_list = append(column_list, paste0(c_name, "_over_", d_name))
+            message(paste0("Basic:", d, "/", c, ": Performing division: ", d_name, "_vs_", c_name))
+            division = data.frame(median_table[,d] / median_table[,c])
+            comparison_name = paste0(d_name, "_vs_", c_name)
+            column_list = append(column_list, comparison_name)
             if (num_done == 1) {
                 comparisons = division
             } else {
@@ -1546,7 +1588,30 @@ ignorant_pairwise = function(input, design) {
         } ## End for each d
     }
     colnames(comparisons) = column_list
-    retlist = list(comparisons=comparisons, medians=median_table, variances=variance_table)
+    comparisons[is.na(comparisons)] = 1
+    rownames(comparisons) = rownames(input)
+
+    all_tables = list()
+    for (e in 1:length(colnames(comparisons))) {
+        colname = colnames(comparisons)[[e]]
+        column = comparisons[,e]
+        column[mapply(is.infinite, column)] = 1
+        column[column == 0] = 1
+        tmpdf = cbind(column, log2(column))
+        colnames(tmpdf) = c(colname, "logFC")
+        rownames(tmpdf) = rownames(data)
+        all_tables[[e]] = tmpdf
+    }
+    names(all_tables) = colnames(comparisons)
+
+    retlist = list(
+        input_data=data,
+        conditions_table=table(conditions),
+        conditions=conditions,
+        all_pairwise=comparisons,
+        all_tables=all_tables,
+        medians=median_table,
+        variances=variance_table)
     return(retlist)
 }
 

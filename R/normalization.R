@@ -540,7 +540,6 @@ hpgl_combatMod = function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
 #'
 #' @return log2-CPM read count matrix
 #' @export
-#'
 hpgl_log2cpm = function(counts, lib.size=NULL) {
     if (is.null(lib.size)) {
         lib.size = colSums(counts)

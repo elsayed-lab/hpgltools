@@ -26,8 +26,8 @@ edger_pairwise(input, conditions = NULL, batches = NULL,
 \item{extra_contrasts}{default=NULL  some extra contrasts to add to the list
 This can be pretty neat, lets say one has conditions A,B,C,D,E
 and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
-with a string like: "c_minus_b_ctrla = (C-B)-A, e_minus_d_ctrla = (E-D)-A,
-de_minus_cb = (E-D)-(C-B),"}
+with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
+de_vs_cb = (E-D)-(C-B),"}
 
 \item{...}{The elipsis parameter is fed to write_edger() at the end.}
 }

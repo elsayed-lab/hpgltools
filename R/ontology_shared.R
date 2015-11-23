@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct  8 14:35:00 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Nov 23 09:54:30 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -375,7 +375,7 @@ pval_plot = function(df, ontology="MF") {
 #' This passes a set of limma results to (optionally) goseq, clusterprofiler, topgo, and gostats,
 #' collects the outputs, and provides them as a list.  This function needs a species argument,
 #' as I recently made the simple_() functions able to automatically use the various supported organisms.
-#' 
+#'
 #' @param de_out  a list of topTables comprising limma/deseq/edger outputs.
 #' @param n default=NULL  a number of genes at the top/bottom to search.
 #' @param z default=NULL  a number of standard deviations to search. (if this and n are null, it assumes 1z)
