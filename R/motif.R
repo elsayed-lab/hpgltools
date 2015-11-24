@@ -2,6 +2,7 @@
 simple_gadem = function() {
     require.auto('rGADEM')
     require.auto('BSgenome.Hsapiens.UCSC.hg19')
+    require.auto("Biostrings")
     ## The following is for using bed files.
     pwd<-"" #INPUT FILES- BedFiles, FASTA, etc.
     path<- system.file("extdata/Test_100.bed",package="rGADEM")
@@ -14,7 +15,7 @@ simple_gadem = function() {
     pwd<-"" #INPUT FILES- BedFiles, FASTA, etc.
     path<- system.file("extdata/Test_100.fasta",package="rGADEM")
     FastaFile<-paste(pwd,path,sep="")
-    Sequences <- read.DNAStringSet(FastaFile, "fasta")
+    Sequences <- readDNAStringSet(FastaFile, "fasta")
     ## The actual gadem analysis follows
     gadem<-GADEM(Sequences,verbose=1,genome=Hsapiens)
     ## Or use a seeded analysis to go faster...
@@ -22,8 +23,9 @@ simple_gadem = function() {
     seededPwm<-readPWMfile(path)
     grep("STAT1",names(seededPwm))
     STAT1.PWM=seededPwm[103]
-    gadem<-GADEM(Sequences,verbose=1,genome=Hsapiens,Spwm=STAT1.PWM, fixSeeded=TRUE)
+    ##    gadem<-GADEM(Sequences,verbose=1,genome=Hsapiens,Spwm=STAT1.PWM, fixSeeded=TRUE)
     gadem<-GADEM(Sequences,verbose=1,genome=Hsapiens,Spwm=STAT1.PWM)
+    ## gadem<-GADEM(Sequences,verbose=1,genome=Hsapiens,Spwm=STAT1.PWM)
     ## viewing results
     nOccurrences(gadem)
     consensus(gadem)
@@ -35,6 +37,7 @@ simple_gadem = function() {
     ## print(foxa1.alignment[[1]] )
     ## plot(foxa1.filter.combine ,gadem,ncol=2, type="distribution", correction=TRUE, group=FALSE, bysim=TRUE, strand=FALSE, sort=TRUE, main="Distribution of FOXA")
     ## plot(foxa1.filter.combine ,gadem,type="distance", correction=TRUE, group=TRUE, bysim=TRUE, main="Distance between FOXA and AP-1", strand=FALSE, xlim=c(-100,100), bw=8)
+    return(motifs)
 }
 
 simple_motifRG = function() {
@@ -96,7 +99,6 @@ simple_motifstack = function() {
     motif<-pcm2pfm(protein)
     motif<-new("pfm", mat=motif, name="CAP", color=colorset(alphabet="AA",colorScheme="chemistry"))
     plot(motif)
-    
 }
 
 
@@ -115,7 +117,7 @@ flanking_sequence = function(bsgenome, annotation, distance=200, type='gene', pr
     }
     seqinfo = as.data.frame(bsgenome@seqinfo)
     annotations = merge(annotations, seqinfo, by.x='seqnames', by.y='row.names', all.x=TRUE)
-    
+
     before = GRanges(seqnames=Rle(annotations[,'seqnames']),
                      ranges=IRanges(ifelse(annotations[,'start'] <= distance, 1, annotations[,'start'] - distance), end=(annotations[,'start'] + 2)),
                      strand=Rle(annotations[,'strand']),
@@ -125,7 +127,7 @@ flanking_sequence = function(bsgenome, annotation, distance=200, type='gene', pr
                     ranges=IRanges(annotations[,'end'], end=ifelse(annotations[,'seqlengths'] <= (annotations[,'end'] + distance), annotations[,'seqlengths'], annotations[,'end'] + distance)),
                     strand=Rle(annotations[,'strand']),
                     name=Rle(annotations[,name_key]))
-        
+
     before_seq = Biostrings::getSeq(bsgenome, before)
     after_seq = Biostrings::getSeq(bsgenome, after)
     retlist = list(before=before_seq, after=after_seq)

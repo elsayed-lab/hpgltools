@@ -4,8 +4,8 @@
 \alias{simple_gostats}
 \title{A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.}
 \usage{
-simple_gostats(de_genes, gff, goids, universe_merge = "locus_tag",
-  second_merge_try = "gene_id", organism = "fun", pcutoff = 0.1,
+simple_gostats(de_genes, gff, goids, universe_merge = "ID",
+  second_merge_try = "locus_tag", organism = "fun", pcutoff = 0.1,
   direction = "over", conditional = FALSE, categorysize = NULL)
 }
 \arguments{

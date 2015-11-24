@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Nov 23 11:12:32 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 17:41:42 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -51,10 +51,10 @@
 graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL, scale="raw", sink=FALSE, ...) {
     ## First gather the necessary data for the various plots.
     options(scipen=999)
-    expt_design = expt$design
-    expt_colors = expt$colors
-    expt_names = expt$names
-    expt_raw_data = Biobase::exprs(expt$expressionset)
+    ## expt_design = expt$design
+    ## expt_colors = expt$colors
+    ## expt_names = expt$names
+    ## expt_raw_data = Biobase::exprs(expt$expressionset)
 
     nonzero_title = "Non zero genes"
     libsize_title = "Library sizes"
@@ -65,7 +65,6 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
     smd_title = "Standard Median Distance"
     pca_title = "Principle Component Analysis"
     dens_title = "Density plot"
-    ma_titles = "MA"
 
     if (!is.null(title_suffix)) {
         nonzero_title = paste0(nonzero_title, ": ", title_suffix)
@@ -77,7 +76,6 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
         smd_title = paste0(smd_title, ": ", title_suffix)
         pca_title = paste0(pca_title, ": ", title_suffix)
         dens_title = paste0(dens_title, ": ", title_suffix)
-        ma_title = paste0(ma_titles, ": ", title_suffix)
     }
 
     message("Graphing number of non-zero genes with respect to CPM by library.")
@@ -133,9 +131,9 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
 hpgl_bcv_plot = function(data) {
     data_class = class(data)[1]
     if (data_class == 'expt') {
-        design = data$design
-        colors = data$colors
-        names = data$names
+        ## design = data$design
+        ## colors = data$colors
+        ## names = data$names
         data = exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         data = exprs(data)

@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 11:04:15 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 17:02:52 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -396,6 +396,9 @@ backup_file = function(backup_file, backups=10) {
     }
 }
 
+#' saveme()  Load a backup rdata file
+#'
+#' @param dir default='savefiles'  the directory containing the RData.rda.xz file.
 loadme = function(dir="savefiles") {
     savefile = paste0(getwd(), "/", dir, "/RData.rda.xz")
     message(paste0("Loading the savefile: ", savefile))

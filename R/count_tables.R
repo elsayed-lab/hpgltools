@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Nov 18 11:33:33 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 16:17:38 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -57,6 +57,7 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
         }
     }
     colnames(tmp_definitions) = tolower(colnames(tmp_definitions))
+    ## "no visible binding for global variable 'sample.id'"  ## hmm sample.id is a column from the csv file.
     tmp_definitions = subset(tmp_definitions, sample.id != "")
     condition_names = unique(tmp_definitions$condition)
     if (is.null(condition_names)) {
@@ -422,7 +423,7 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
         tmp_count = try(read.table(files[table], header=header))
         if (class(tmp_count)[1] == 'try-error') {
             stop(paste0("There was an error reading: ", files[table]))
-        }        
+        }
         colnames(tmp_count) = c("ID", ids[table])
         pre_merge = length(rownames(tmp_count))
         count_table = merge(count_table, tmp_count, by="ID")
@@ -445,7 +446,6 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
     return(count_table)
 }
 
-
 #' concatenate_runs()  Sum the reads/gene for multiple sequencing runs of a single condition/batch
 #'
 #' @param expt  an experiment class containing the requisite metadata and count tables
@@ -456,7 +456,6 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
 #' @examples
 #' ## compressed = concatenate_runs(expt)
 concatenate_runs = function(expt, column='replicate') {
-    data = exprs(expt$expressionset)
     design = expt$definitions
     replicates = levels(as.factor(design[,column]))
     final_expt = expt

@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct 29 23:24:11 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 16:03:44 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -11,7 +11,7 @@
 #' @param github_path default=NULL  an optional github username/path.
 #' @param verbose default=FALSE  print some information while loading.
 #' @param update default=FALSE  update packages?
-#' 
+#'
 #' @return NULL currently
 #' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}
 #' @export
@@ -174,10 +174,10 @@ autoloads_all = function(update=FALSE) {
                bold = paste(mainfont, "style=Bold", sep = ":"),
                italic = paste("SimSun", "style=Regular", sep = ":"),
                bolditalic = paste(mainfont, "style=Bold Italic,BoldItalic", sep = ":"))
-    pdf = CairoPDF
-    png = CairoPNG
-    x11 = CairoX11
-    svg = CairoSVG
+    ##pdf = CairoPDF
+    ##png = CairoPNG
+    ##x11 = CairoX11
+    ##svg = CairoSVG
     if (isTRUE(update)) {
         update.packages()
     }

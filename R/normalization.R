@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Nov 18 10:44:49 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 17:19:45 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -86,7 +86,7 @@ batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2=
             num_surrogates = leek_surrogates
         }
         sva_object = sva(mtrx, conditional_model, null_model, n.sv=num_surrogates)
-        mod_sv = cbind(conditional_model, sva_object$sv)
+        ## mod_sv = cbind(conditional_model, sva_object$sv)
         fsva_result = fsva(mtrx, conditional_model, sva_object, newdat=mtrx, method="exact")
         ## new_expt$conditional_model = conditional_model
         ## new_expt$null_model = null_model
@@ -115,6 +115,7 @@ batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2=
         count_table = mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
     } else if (batch == "ruvg") {
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
+        require.auto("RUVSeq")
         conditional_model = model.matrix(~conditions, data=df)
         y = DGEList(counts=count_table, group=conditions)
         y = calcNormFactors(y, method="upperquartile")
@@ -146,7 +147,7 @@ batch_counts = function(count_table, design, batch=TRUE, batch1='batch', batch2=
 #' cbcb_filter_counts()  Filter low-count genes from a data set.
 #'
 #' This was a function written by Kwame Okrah and perhaps also Laura Dillon to remove low-count genes.  It drops genes based on a threshold and number of samples.
-#' 
+#'
 #' @param count_table  a data frame of (pseudo)counts by sample.
 #' @param threshold  default=2  lower threshold of counts for each gene.
 #' @param min_samples default=2   minimum number of samples
@@ -201,8 +202,6 @@ cbcb_filter_counts = function(count_table, threshold=2, min_samples=2, verbose=F
 convert_counts = function(data, convert="raw", annotations=NULL, fasta=NULL, pattern='TA', entry_type='gene', ...) {
     data_class = class(data)[1]
     if (data_class == 'expt') {
-        design = data$design
-        colors = data$colors
         count_table = exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         count_table = exprs(data)
@@ -593,7 +592,6 @@ hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="ra
     data_class = class(data)[1]
     if (data_class == 'expt') {
         design = data$design
-        colors = data$colors
         data = exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         data = exprs(data)
@@ -607,7 +605,6 @@ hpgl_norm = function(data, design=NULL, transform="raw", norm="raw", convert="ra
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    column_data = colnames(data)
     count_table = as.matrix(data)
     expt_design = design
     raw_libsize = colSums(count_table)
@@ -775,9 +772,9 @@ hpgl_qshrink = function(exprs=NULL, groups=NULL, refType="mean",
 lowfilter_counts = function(count_table, type='cbcb', p=0.01, A=1, k=1,
                             cv_min=0.01, cv_max=1000, thresh=2, min_samples=2) {
     if (tolower(type) == 'povera') {
-        filter_low = 'pofa'
+        type = 'pofa'
     } else if (tolower(type) == 'kovera') {
-        filter_low = 'kofa'
+        type = 'kofa'
     }
     lowfiltered_counts = NULL
     if (type == 'cbcb') {
@@ -923,7 +920,7 @@ hpgl_rpkm = function(df, annotations=gene_annotations) {
 qlasso_lowfilter_counts = function(count_table, thresh=2,
                                    min_samples=2, verbose=FALSE) {
     original_dim = dim(count_table)
-    count_table = as.matrix(filterCounts(count_table, thresh=thresh,
+    count_table = as.matrix(cbcbSeq::filterCounts(count_table, thresh=thresh,
                                          min_samples=min_samples))
     if (verbose) {
         following_dim = dim(count_table)
@@ -949,10 +946,12 @@ qlasso_lowfilter_counts = function(count_table, thresh=2,
 #' @examples
 #' ## norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
 normalize_counts = function(data, design=NULL, norm="raw") {
+    ## Note that checkUsage flagged my 'libsize = ' calls
+    ## I set norm_libsize at the bottom of the function
+    ## but perhaps instead I should be using these libsizes?
     data_class = class(data)[1]
     if (data_class == 'expt') {
         design = data$design
-        colors = data$colors
         count_table = exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         count_table = exprs(data)
@@ -976,7 +975,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         sf_counts = count_table / do.call(rbind, rep(list(factors), num_rows))
         ##sf_counts = counts / (libsizes * factors)
         count_table = as.matrix(sf_counts)
-        norm_performed = "sf"
+        norm_performed = 'sf'
     } else if (norm == 'sf2') {
         original_cols = colnames(count_table)
         conds = design$conditions
@@ -1020,7 +1019,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         ## Set up the edgeR data structure
         count_table = edgeR::DGEList(counts=count_table)
         norms = edgeR::calcNormFactors(count_table, method="TMM")
-        libsizes = count_table$samples$lib.size
+        ## libsizes = count_table$samples$lib.size
         factors = norms$samples$norm.factors
         counts = norms$counts
         tmm_counts = counts / factors
@@ -1030,7 +1029,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         ## Get the tmm normalization factors
         count_table = edgeR::DGEList(counts=count_table)
         norms = edgeR::calcNormFactors(count_table, method="upperquartile")
-        libsizes = count_table$samples$lib.size
+        ## libsizes = count_table$samples$lib.size
         factors = norms$samples$norm.factors
         counts = norms$counts
         tmm_counts = counts / factors
@@ -1040,7 +1039,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         ## Get the tmm normalization factors
         count_table = edgeR::DGEList(counts=count_table)
         norms = edgeR::calcNormFactors(count_table, method="RLE")
-        libsizes = count_table$samples$lib.size
+        ## libsizes = count_table$samples$lib.size
         factors = norms$samples$norm.factors
         counts = norms$counts
         tmm_counts = counts / factors
@@ -1053,7 +1052,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         count_table = as.matrix(count_table)
     }
     norm_libsize = colSums(count_table)
-    norm_counts = list(count_table=count_table, libsize=norm_libsize)
+    norm_counts = list(count_table=count_table, libsize=norm_libsize, norm_performed=norm_performed)
     return(norm_counts)
 }
 

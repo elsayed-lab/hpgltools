@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Nov 20 14:47:16 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 16:53:08 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -206,7 +206,7 @@ limma_coefficient_scatter = function(output, toptable=NULL, x=1, y=2, gvis_filen
     return(plot)
 }
 
-#' coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
+#' deseq_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
 #' This hopefully makes that easy.
@@ -308,7 +308,6 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL, includ
     edger_vs_basic = list()
     deseq_vs_basic = list()
     cc = 0
-    last = length(names(deseq))
     for (comp in names(deseq)) {  ## assume all three have the same names() -- note that limma has more than the other two though
         cc = cc + 1
         message(paste0(cc, "/", len, ": Comparing analyses for: ", comp))
@@ -428,26 +427,10 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         data = as.data.frame(input)
     }
     condition_table = table(conditions)
-    batch_table = table(batches)
     conditions = levels(as.factor(conditions))
     batches = levels(as.factor(batches))
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
-
-    ## An interesting note about the use of formulae in DESeq:
-    ## "you should put the variable of interest at the end of the formula and make sure the control level is the first level."
-    ## Thus, all these formulae should have condition(s) at the end.
-    ##cond_model = model.matrix(~ 0 + conditions)
-    ##batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
-    ##condbatch_model = try(model.matrix(~ 0 + batches + conditions), silent=TRUE)
-    ##cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
-    ##condbatch_int_model = try(model.matrix(~ batches + conditions), silent=TRUE)
-    ##tmpnames = colnames(cond_model)
-    ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
-    ##tmpnames = gsub("conditions", "", tmpnames)
-    ##colnames(cond_model) = tmpnames
-    ##fun_model = NULL
-    ##fun_int_model = NULL
     summarized = NULL
     if (isTRUE(model_batch) & isTRUE(model_cond)) {
         message("Attempting to include batch and condition in the model for DESeq.")
@@ -471,42 +454,18 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ##deseq_run = nbinomWaldTest(deseq_disp)
     deseq_run = DESeq(deseq_disp)
     ## Set contrast= for each pairwise comparison here!
-    result_names = resultsNames(deseq_run)
     denominators = list()
     numerators = list()
     result_list = list()
-    result_mle_list = list()
-    binom_list = list()
     coefficient_list = list()
-##    if (isTRUE(model_cond)) {
-##        condition_list = grep("^condition", resultsNames(deseq_run), value=TRUE)
-##    } else if (isTRUE(model_batch)) {
-##        condition_list = grep("^batch", resultsNames(deseq_run), value=TRUE)
-##    }
-##    for (c in 1:(length(condition_list) - 1)) {
-##        denominator = names(condition_table[c])
-##        ## This is where it will fall down if you only want to look at batch.
-##        denominator_name = paste0("condition", denominator)
-##        my_contrast = as.numeric(denominator_name == resultsNames(deseq_run))
-##        if (sum(my_contrast) == 0) {
-##            next
-##        }
-##        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=my_contrast))
-##        nextc = c + 1
-##        for (d in nextc:length(condition_list)) {
-##            numerator = names(condition_table[d])
-##            message(paste0("DESeq2:", c, "/", d, ": Printing table: ", numerator, "_vs_", denominator))
-##            result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
-##            result = result[order(result$log2FoldChange),]
-##            colnames(result) = c("baseMean","logFC", "lfcSE","stat","P.Value","adj.P.Val")
-
     ## The following is an attempted simplification of the contrast formulae
     for (c in 1:(length(conditions) - 1)) {
         denominator = conditions[c]
         nextc = c + 1
         for (d in nextc:length(conditions)) {
             numerator = conditions[d]
-            message(paste0("DESeq2:", c, "/", d, ": Printing table: ", numerator, "_vs_", denominator))
+            comparison = paste0(numerator, "_vs_", denominator)
+            message(paste0("DESeq2:", c, "/", d, ": Printing table: ", comparison))
             result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
             result = result[order(result$log2FoldChange),]
             colnames(result) = c("baseMean","logFC","lfcSE","stat","P.Value","adj.P.Val")
@@ -547,7 +506,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
                 }
             }
             if (isTRUE(excel)) {
-                try(write_xls(data=result, sheet=result_name, file=workbook, overwrite=TRUE))
+                try(write_xls(result, sheet=result_name, file=workbook, overwritefile=TRUE))
             }
             if (isTRUE(csv)) {
                 csv_filename = gsub(".xls$", "", workbook)
@@ -557,14 +516,14 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         } ## End for each d
         ## Fill in the last coefficient (since the for loop above goes from 1 to n-1
         denominator = names(condition_table[length(conditions)])
-        denominator_name = paste0("condition", denominator)
+        ## denominator_name = paste0("condition", denominator)  ## maybe needed in 6 lines
     }  ## End for each c
     ## Now that we finished the contrasts, fill in the coefficient list with each set of values
     for (c in 1:(length(conditions))) {
         coef = conditions[c]
         coef_name = paste0("condition", coef)
         coefficient_list[[coef]] = as.data.frame(results(deseq_run, contrast=as.numeric(coef_name == resultsNames(deseq_run))))
-##        coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
+        ## coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
     }
 
     ret_list = list(
@@ -576,35 +535,6 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         all_tables=result_list
     )
     return(ret_list)
-    ##    deseq_result = results(deseq_run)
-    ##    deseq_mle_result = results(deseq_run, addMLE=TRUE)
-    ##    deseq_df = data.frame(deseq_result[order(deseq_result$log2FoldChange),])
-    ##    plotMA(deseq_df)
-    ## identify(deseq_result$baseMean, deseq_result$log2FoldChange)
-    ##    ma = recordPlot()
-    ##d = plotCounts(dataset, gene=which.min(deseq_result$padj), intgroup="condition", returnData=TRUE)
-    ##ggplot(d, aes(x=condition, y=count)) +
-    ##    geom_point(position=position_jitter(w=0.1,h=0)) +
-    ##    scale_y_log10(breaks=c(25,100,400))
-
-    ##  mcols(deseq_result)$description
-    ## DESeq can do multi-factors, but the important one goes last
-    ## design(summarized) = formula(~ batch + condition)
-    ## deseq_run = DESeq(summarized)
-
-    ## Different contrasts may be applied with
-    ## contrast_res = results(deseq_run, contrast=c("condition", "numerator", "denominator"))
-
-    ## data transformations:
-    ## rld = rlog(deseq_run)
-    ## vsd = try(varianceStabilizingTransformation(deseq_run), silent=TRUE)
-    ## rlogMat = assay(rld)
-    ## vstMat = try(assay(vsd), silent=TRUE)
-    ## par(mfrow=c(1,3))
-    ## notAllZero <- (rowSums(counts(deseq_run))>0)
-    ##    meanSdPlot(log2(counts(deseq_run, normalized=TRUE)[notAllZero,] + 1))
-    ##    meanSdPlot(assay(rld[notAllZero,]))
-    ##    meanSdPlot(assay(vsd[notAllZero,]))
 }
 
 #' edger_pairwise()  Set up a model matrix and set of contrasts to do
@@ -654,8 +584,6 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         data = as.data.frame(input)
     }
     message("At this time, this only does conditional models.")
-    condition_table = table(conditions)
-    batch_table = table(batches)
     conditions = as.factor(conditions)
     batches = as.factor(batches)
     ## Make a model matrix which will have one entry for
@@ -666,6 +594,7 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
     condbatch_model = try(model.matrix(~ 0 + conditions + batches), silent=TRUE)
     cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
+    batch_int_model = try(model.matrix(~ batches), silent=TRUE)
     condbatch_int_model = try(model.matrix(~ conditions + batches), silent=TRUE)
     fun_model = NULL
     fun_int_model = NULL
@@ -719,7 +648,6 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     contrast_list = list()
     result_list = list()
     lrt_list = list()
-    single_contrasts = list()
     sc = vector("list", length(apc$names))
     end = length(apc$names)
     for (con in 1:length(apc$names)) {
@@ -738,7 +666,7 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                 as.numeric(format(signif(qvalue(res$PValue, robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
             error=function(cond) {
-                message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+                message(paste0("The qvalue estimation failed for ", name, "."))
                 return(1)
             },
             warning=function(cond) {
@@ -761,7 +689,7 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         }
     }
     if (isTRUE(excel)) {
-        try(write_xls(data=res, sheet=name, file=workbook, overwrite=TRUE))
+        try(write_xls(data=res, sheet=name, file=workbook, overwritefile=TRUE))
     }
     if (isTRUE(csv)) {
         csv_filename = gsub(".xls$", "", workbook)
@@ -1014,7 +942,7 @@ limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     logged = input$transform
     if (is.null(logged)) {
         print("I don't know if this data is logged, testing if it is integer.")
-        if (is.integer(all_data)) {
+        if (is.integer(data)) {
             logged = FALSE
         } else {
             logged = TRUE
@@ -1185,8 +1113,11 @@ limma_subset = function(table, n=NULL, z=NULL) {
         out_mad = mad(table$logFC, na.rm=TRUE)
         up_median_dist = out_summary["Median"] + (out_mad * z)
         down_median_dist = out_summary["Median"] - (out_mad * z)
-        up_genes = subset(table, logFC >= up_median_dist)
-        down_genes = subset(table, logFC <= down_median_dist)
+
+        up_genes = table[ which(table$logFC >= up_median_dist), ]
+        ## up_genes = subset(table, logFC >= up_median_dist)
+        down_genes = table[ which(table$logFC <= down_median_dist), ]
+        ## down_genes = subset(table, logFC <= down_median_dist)
     } else if (is.null(z)) {
         upranked = table[order(table$logFC, decreasing=TRUE),]
         up_genes = head(upranked, n=n)
@@ -1248,6 +1179,7 @@ make_exampledata = function (ngenes=1000, columns=5) {
 #' @examples
 #' ## pretend = make_pairwise_contrasts(model, conditions)
 make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pairwise=TRUE, extra_contrasts=NULL) {
+    hpgltools::require.auto("stringi")
     tmpnames = colnames(model)
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     tmpnames = gsub("-", "", tmpnames)
@@ -1311,7 +1243,7 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
     ## Add them to makeContrasts()
     contrast_string = paste("all_pairwise_contrasts = makeContrasts(")
     for (f in 1:length(eval_strings)) {
-        eval_name = names(eval_strings[f])
+        ## eval_name = names(eval_strings[f])
         eval_string = paste(eval_strings[f], sep="")
         contrast_string = paste(contrast_string, eval_string, sep="   ")
     }
@@ -1326,11 +1258,12 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
     }
     colnames(all_pairwise_contrasts) = eval_names
     result = list(
-        all_pairwise_contrasts = all_pairwise_contrasts,
-        identities = identities,
-        all_pairwise = all_pairwise,
-        contrast_string = contrast_string,
-        names = eval_names
+        all_pairwise_contrasts=all_pairwise_contrasts,
+        identities=identities,
+        identity_names=identity_names,
+        all_pairwise=all_pairwise,
+        contrast_string=contrast_string,
+        names=eval_names
         )
     return(result)
 }
@@ -1429,7 +1362,8 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
             colnames(lf$coefficients)[counter] = newname
         }
     }
-    contrast_matrix = limma::makeContrasts(changed_v_control = changed - control, levels=lf$design)
+    contrast_matrix = limma::makeContrasts(changed_v_control="changed-control", levels=lf$design)
+    ## contrast_matrix = limma::makeContrasts(changed_v_control=changed-control, levels=lf$design)
     cond_contrasts = contrasts.fit(lf, contrast_matrix)
     hist_df = data.frame(values=cond_contrasts$coefficients)
     contrast_histogram = hpgltools::hpgl_histogram(hist_df)
@@ -1453,10 +1387,13 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
         an_ma_plot = hpgltools::hpgl_ma_plot(expt_voom$E, cond_table)
     }
     hpgltools::write_xls(cond_table, sheet, file=workbook, rowname="row.names")
-    upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
-    downsignificant_table = subset(cond_table, logFC <= (-1 * logfc_cutoff))
-#    psignificant_table = subset(cond_table, adj.P.Val <= pvalue_cutoff)
-    psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)
+    ## upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
+    upsignificant_table = cond_table[ which(cond_table$logFC >= logfc_cutoff), ]
+    ## downsignificant_table = subset(cond_table, logFC <= (-1 * logfc_cutoff))
+    downsignificant_table = cond_table[ which(cond_table$logFC <= (-1 * logfc_cutoff)), ]
+    ## psignificant_table = subset(cond_table, adj.P.Val <= pvalue_cutoff)
+    ## psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)
+    psignificant_table = cond_table[ which(cond_table$P.Value <= pvalue_cutoff), ]
 
     if (verbose) {
         message("The model looks like:")
@@ -1525,7 +1462,6 @@ basic_pairwise = function(input, design=NULL) {
     input_class = class(input)[1]
     if (input_class == 'expt') {
         conditions = input$conditions
-        batches = input$batches
         data = exprs(input$expressionset)
     } else {  ## Not an expt class, data frame or matrix
         data = as.data.frame(input)
@@ -1533,7 +1469,6 @@ basic_pairwise = function(input, design=NULL) {
     }
     ## design = data.frame(sample=c("hpgl010","hpgl011","hpgl012","hpgl013"), condition=c("a","b","c","a"))
 
-    condition_table = table(conditions)
     types = levels(conditions)
     num_conds = length(types)
     median_table = data.frame()  ## This will be filled with num_conds columns and numRows(input) rows.
@@ -1687,7 +1622,7 @@ write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma
             }
         }
         if (isTRUE(excel)) {
-            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwrite=TRUE))
+            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwritefile=TRUE))
         }
         ## Therefore I will write a csv of each comparison, too
         if (isTRUE(csv)) {

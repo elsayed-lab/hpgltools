@@ -1,3 +1,4 @@
+## Time-stamp: <Tue Nov 24 17:43:50 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' tnseq_saturation()  Make a plot and some simple numbers about tnseq saturation
 #'
@@ -26,7 +27,7 @@ tnseq_saturation = function(file) {
     data_plot = data_plot + scale_x_continuous(limits=c(0,6)) + scale_y_continuous(limits=c(0,2))
     print(sprintf("The maximum value is: %s ", max_reads))
     print(summary(data_list))
-    raw = table(unlist(data_list))    
+    raw = table(unlist(data_list))
     num_zeros = raw[as.numeric(names(raw)) == 0]
     num_zeros
     num_gt_ones = raw[as.numeric(names(raw)) >= 1]
@@ -52,12 +53,17 @@ tnseq_saturation = function(file) {
     saturation_ratio_8 = num_gt_eight / num_zeros
     print(sprintf("Saturation ratio of 8 to 0s is: %s", saturation_ratio_8))
     saturation_ratio_32 = num_gt_thirtytwo / num_zeros
-    print(sprintf("Saturation ratio of 32 to 0s is: %s", saturation_ratio_32))    
+    print(sprintf("Saturation ratio of 32 to 0s is: %s", saturation_ratio_32))
     print(sprintf("The number of zeros, ones, twos, fours, eights, sixteens, thirtytwos, saturation1, saturation8, saturation32 are: %s %s %s %s %s %s %s %s %s %s", num_zeros, num_gt_one, num_gt_two, num_gt_four, num_gt_eight, num_gt_sixteen, num_gt_thirtytwo, saturation_ratio_1, saturation_ratio_8, saturation_ratio_32))
     return(data_plot)
 }
 
 
+#' plot_essentiality()  Plot the essentiality of a library as per DeJesus et al.
+#'
+#' @param file  a file created using the perl script 'essentiality_tas.pl'
+#'
+#' @return A couple of plots
 plot_essentiality = function(file) {
     ess = read.csv(file=file, comment.char="#", sep="\t", header=FALSE)
     colnames(ess) = c("gene","orf_hits","orf_tas","max_run","max_run_span","posterior_zbar","call")
@@ -74,3 +80,5 @@ plot_essentiality = function(file) {
     returns = list(zbar=zbar_plot, scatter=span_plot$scatter)
     return(returns)
 }
+
+## EOF

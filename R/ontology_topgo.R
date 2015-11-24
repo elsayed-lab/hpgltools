@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 11:40:06 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 17:31:29 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -20,6 +20,7 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
     library(topGO)
     library(Hmisc)
     gomap_info = make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+    print(paste0("Found an ID->GO mapping file: ", gomap_info))
     geneID2GO = topGO::readMappings(file=goid_map)
     annotated_genes = names(geneID2GO)
     if (is.null(de_genes$ID)) {
@@ -38,7 +39,7 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
             ks_interesting_genes[[name]] = pvals[p]
         }
     }
-    ks_interesting_genes = as.vector(interesting_genes)
+    ks_interesting_genes = as.vector(ks_interesting_genes)
     names(ks_interesting_genes) = annotated_genes
 
     fisher_mf_GOdata = new("topGOdata", ontology="MF", allGenes=fisher_interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
@@ -99,9 +100,9 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
 
     mf_densities = bp_densities = cc_densities = list()
     if (isTRUE(densities)) {
-        mf_densities = hpgltools:::plot_topgo_densities(mf_GOdata, tables$mf)
-        bp_densities = hpgltools:::plot_topgo_densities(bp_GOdata, tables$bp)
-        cc_densities = hpgltools:::plot_topgo_densities(cc_GOdata, tables$cc)
+        mf_densities = hpgltools:::plot_topgo_densities(fisher_mf_GOdata, tables$mf)
+        bp_densities = hpgltools:::plot_topgo_densities(fisher_bp_GOdata, tables$bp)
+        cc_densities = hpgltools:::plot_topgo_densities(fisher_cc_GOdata, tables$cc)
     } else {
         print("Set densities=TRUE if you want to see the ontology density lattice plots.")
     }
@@ -370,7 +371,7 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
                 message("Attempting to generate a id2go file in the format expected by topGO.")
                 new_go = plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
                 write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
-                rm(id2go_test)
+                id2go_test = file.info(goid_map)
             }
         } else { ## There already exists a file, so return its stats
             new_go = id2go_test

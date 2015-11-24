@@ -1,5 +1,4 @@
 simple_reactome = function(de_list, annotations, shortname="org.Sc.sgd") {
-    
     require.auto("reactome.db")
     require.auto(annotations)
     xx = as.list(reactomeEXTID2PATHID)
@@ -32,7 +31,6 @@ simple_reactome = function(de_list, annotations, shortname="org.Sc.sgd") {
     ## enrichMap(y)
     ## gseaplot(y, geneSetID = "1280215")
     ## viewPathway("E2F mediated regulation of DNA replication", readable=TRUE, foldChange=geneList)
-    
 }
 
 

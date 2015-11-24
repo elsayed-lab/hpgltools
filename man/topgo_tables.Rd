@@ -4,7 +4,7 @@
 \alias{topgo_tables}
 \title{topgo_tables() Make pretty tables out of topGO data}
 \usage{
-topgo_tables(result, limit = 0.01, limitby = "fisher", numchar = 300,
+topgo_tables(result, limit = 0.1, limitby = "fisher", numchar = 300,
   orderby = "classic", ranksof = "classic")
 }
 \arguments{

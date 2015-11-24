@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Oct 28 16:16:52 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 16:15:51 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## The karyotype file is circos/data/5005_5448_karyotype.txt
 ## The 5005 genome is 1838562 nt. long (looking at reference/genbank/mgas_5005.gb)
@@ -57,7 +57,16 @@ circos_karyotype = function(name='default', conf_dir='circos/conf', length=NULL,
     return(outfile)
 }
 
-
+#' circos_ideogram()  Create the description of chromosome markings
+#'
+#' This function writes ideogram files for circos.
+#' Currently it only has a single format.
+#'
+#' @param name default='default'  the name of the configuration
+#' @param conf_dir default='circos/conf'  where does the configuration live?
+#' @param band_url default=NULL  provide a url for making these imagemaps.
+#'
+#' @return undef
 circos_ideogram = function(name='default', conf_dir='circos/conf', band_url=NULL) {
     ideogram_outfile = paste0(conf_dir, '/ideograms/', name, ".conf")
     out = file(ideogram_outfile, open='w+')
@@ -109,8 +118,6 @@ circos_ideogram = function(name='default', conf_dir='circos/conf', band_url=NULL
     message(paste0("This should match the karyotype= line in ", name, ".conf"))
     return(out)
 }
-
-
 
 #' circos_plus_minus()  Write tiles of bacterial ontology groups using the categories from microbesonline.org
 #'
@@ -673,8 +680,6 @@ circos_heatmap = function(df, cfgout="circos/conf/default.conf", colname="datum"
     inner = outer - width
     data_cfg_out = file(datum_cfg_file, open="w+")
     data_cfg_filename = gsub("^circos/", "", datum_cfg_file)
-    data_file_string =  gsub("^circos/", "", data_filename)
-
     data_cfg_string = sprintf("## This is a circos heatmap configuration stanza.
  <plot>
   type = heatmap
@@ -889,8 +894,8 @@ circos_arc = function(df, cfgout="circos/conf/default.conf", first_col='chr1', s
     data_prefix = cfgout
     data_prefix = gsub("/conf/", "/data/", data_prefix)
     data_prefix = gsub(".conf$", "", data_prefix)
-    data_filename = paste0(data_prefix, "_", colname, "_arc.txt")
-    message(paste0("Writing data file: ", data_file, " with the ", colname, " column."))
+    data_filename = paste0(data_prefix, "_", first_col, "_arc.txt")
+    message(paste0("Writing data file: ", data_filename, " with the ", first_col, " column."))
     print_arc = function(x) {
         cat(x[5], " chr5005 ", x[1], " ", x[2], "\n", x[5], " chr5448 ", x[3], " ", x[4], "\n\n", file="circos/data/crossref_5005_5448.txt", append=TRUE, sep="")
     }
@@ -927,7 +932,7 @@ circos_arc = function(df, cfgout="circos/conf/default.conf", first_col='chr1', s
 ## The histogram ring for %s
 <<include %s>>
 
-", colname, data_cfg_include)
+", first_col, data_cfg_include)
     cat(master_cfg_string, file=master_cfg_out, sep="")
     close(master_cfg_out)
 

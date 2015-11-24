@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct  8 14:37:47 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 17:00:37 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways
 #'
@@ -60,7 +60,7 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
         all_pathways = unique(KEGGREST::keggLink("pathway", species))
         paths = all_pathways
         paths = gsub("path:", "", paths)
-        all_modules = unique(KEGGREST::keggLink("module", species))
+        ## all_modules = unique(KEGGREST::keggLink("module", species))
     } else if (class(pathway) == "list") {
         paths = pathway
     } else {
@@ -150,18 +150,18 @@ hpgl_pathview = function(path_data, indir="pathview_in", outdir="pathview", path
 gostats_kegg = function() {
     frame = toTable(org.Hs.egPATH)
     keggframedata = data.frame(frame$path_id, frame$gene_id)
-    keggFrame=KEGGFrame(keggframeData,organism="Homo sapiens")
-    gsc <- GeneSetCollection(keggFrame, setType = KEGGCollection())
+    keggFrame = KEGGFrame(keggframedata, organism="Homo sapiens")
+    gsc = GeneSetCollection(keggFrame, setType = KEGGCollection())
     universe = Lkeys(org.Hs.egGO)
     genes = universe[1:500]
-    kparams <- GSEAKEGGHyperGParams(name="My Custom GSEA based annot Params",
+    kparams = GSEAKEGGHyperGParams(name="My Custom GSEA based annot Params",
                                     geneSetCollection=gsc,
                                     geneIds = genes,
                                     universeGeneIds = universe,
                                     pvalueCutoff = 0.05,
                                     testDirection = "over")
-    kOver <- hyperGTest(params)
-    head(summary(kOver))
+    kOver <- hyperGTest(kparams)
+    return(kOver)
 }
 
 #' Search the kegg identifier for a given species
