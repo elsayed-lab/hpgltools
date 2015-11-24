@@ -5,7 +5,7 @@
 \title{hpgl_dist_scatter()  Make a pretty scatter plot between two sets of numbers with a
 cheesy distance metric and some statistics of the two sets.}
 \usage{
-hpgl_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL, size = 3)
+hpgl_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL, size = 2)
 }
 \arguments{
 \item{df}{a dataframe likely containing two columns}

@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Nov 23 10:11:21 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Nov 23 11:12:32 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -344,7 +344,7 @@ hpgl_density = function(data, colors=NULL, names=NULL, position="identity", fill
 #' @export
 #' @examples
 #' ## hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-hpgl_dist_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, size=3) {
+hpgl_dist_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, size=2) {
     hpgl_env = environment()
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
@@ -1305,7 +1305,7 @@ hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, names=NULL, title
 #' @export
 #' @examples
 #' ## hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-hpgl_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=3) {
+hpgl_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=2) {
     hpgl_env = environment()
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]

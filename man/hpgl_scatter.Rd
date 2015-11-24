@@ -5,7 +5,7 @@
 \title{hpgl_scatter()  Make a pretty scatter plot between two sets of numbers.}
 \usage{
 hpgl_scatter(df, tooltip_data = NULL, color = "black",
-  gvis_filename = NULL, size = 3)
+  gvis_filename = NULL, size = 2)
 }
 \arguments{
 \item{df}{a dataframe likely containing two columns}

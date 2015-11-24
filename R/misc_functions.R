@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Nov 23 10:07:00 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 11:04:15 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -399,7 +399,8 @@ backup_file = function(backup_file, backups=10) {
 loadme = function(dir="savefiles") {
     savefile = paste0(getwd(), "/", dir, "/RData.rda.xz")
     message(paste0("Loading the savefile: ", savefile))
-    load_string <- paste0("load(", savefile, ", envir=globalenv())")
+    load_string <- paste0("load('", savefile, "', envir=globalenv())")
+    message(paste0("Command run: ", load_string))
     eval(parse(text=load_string))
 }
 
