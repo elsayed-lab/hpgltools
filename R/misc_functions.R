@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 17:02:52 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Nov 25 14:53:22 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -140,6 +140,93 @@ make_report = function(name="report", type='pdf') {
     return(result)
 }
 
+#' hpgl_arescore()  Implement the arescan function in R
+#'
+#' This function was taken almost verbatim from AREScore() in SeqTools
+#' Available at: https://github.com/lianos/seqtools.git
+#' At least on my computer I could not make that implementation work
+#' So I rewrapped its apply() calls and am now hoping to extend its logic
+#' a little to make it more sensitive and get rid of some of the spurious
+#' parameters or at least make them more transparent.
+#'
+#' @param stringset  A DNA/RNA StringSet containing the UTR sequences of interest
+#' @param basal default=1  I dunno.
+#' @param overlapping default=1.5
+#' @param d1.3 default=0.75  These parameter names are so stupid, lets be realistic
+#' @param d4.6 default=0.4
+#' @param d7.9 default=0.2
+#' @param within.AU default=0.3
+#' @param aub.min.length default=10
+#' @param aub.p.to.start default=0.8
+#' @param aub.p.to.end default=0.55
+#'
+#' @return a DataFrame of scores
+hpgl_arescore = function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
+                        d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
+                        aub.p.to.end=0.55) {
+    xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
+    if (xtype == "DNA") {
+        pentamer = "ATTTA"
+        overmer = "ATTTATTTA"
+    } else {
+        pentamer = "AUUUA"
+        overmer = "ATTTATTTA"
+    }
+    x = as(x, "DNAStringSet")
+    pmatches = vmatchPattern(pentamer, x)
+    omatches = vmatchPattern(overmer, x)
+    basal.score = elementLengths(pmatches) * basal
+    over.score = elementLengths(omatches) * overlapping
+    no.cluster = data.frame(d1.3 = 0, d4.6 = 0, d7.9 = 0)
+    clust = lapply(pmatches, function(m) {
+        if (length(m) < 2) {
+            return(no.cluster)
+        }
+        wg = width(gaps(m))
+        data.frame(d1.3=sum(wg <= 3), d4.6=sum(wg >= 4 & wg <= 6), d7.9=sum(wg >= 7 & wg <= 9))
+    })
+    clust = do.call(rbind, clust)
+    dscores = clust$d1.3 * d1.3 + clust$d4.6 * d4.6 + clust$d7.9 *  d7.9
+    library("Biostrings")
+    au.blocks = hpgltools:::my_identifyAUBlocks(x, aub.min.length, aub.p.to.start, aub.p.to.end)
+    aub.score = sum(countOverlaps(pmatches, au.blocks) * within.AU)
+    score = basal.score + over.score + dscores + aub.score
+    ans = DataFrame(score=score, n.pentamer=elementLengths(pmatches), n.overmer=elementLengths(omatches),
+                    au.blocks=au.blocks, n.au.blocks=elementLengths(au.blocks))
+    cbind(ans, DataFrame(clust))
+}
+my_identifyAUBlocks = function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
+    xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
+    stopifnot(isSingleNumber(min.length) && min.length >= 5 &&  min.length <= 50)
+    stopifnot(isSingleNumber(p.to.start) && p.to.start >= 0.5 && p.to.start <= 0.95)
+    stopifnot(isSingleNumber(p.to.end) && p.to.end >= 0.2 && p.to.end <= 0.7)
+    stopifnot(p.to.start > p.to.end)
+    if (xtype == "DNA") {
+        AU <- "AT"
+    } else {
+        AU <- "AU"
+    }
+    y <- as(x, sprintf("%sStringSet", xtype))
+
+    widths <- width(x)
+    fun = function(i) {
+        one_seq = x[[i]]
+        au <- Biostrings::letterFrequencyInSlidingView(one_seq, min.length, AU, as.prob = TRUE)
+        if (is.null(au) | nrow(au) == 0) {
+                return(IRanges())
+            }
+        au <- as.numeric(au)
+        can.start <- au >= p.to.start
+        can.end <- au <= p.to.end
+        posts <- .Call("find_au_start_end", au, p.to.start, p.to.end, PACKAGE = "SeqTools")
+        blocks <- IRanges(posts$start, posts$end + min.length -  1L)
+        end(blocks) <- ifelse(end(blocks) > widths[i], widths[i], end(blocks))
+        IRanges::reduce(blocks)
+    }
+    au.blocks = lapply(1:length(x), fun)
+    IRangesList(au.blocks)
+}
+
 
 #' gff2df()  Try to make import.gff a little more robust
 #'
@@ -258,7 +345,9 @@ make_tooltips = function(annotations=NULL, gff=NULL, desc_col='description') {
     tooltip_data$tooltip = gsub(": $", "", tooltip_data$tooltip)
     tooltip_data$tooltip = gsub("^: ", "", tooltip_data$tooltip)
     rownames(tooltip_data) = make.names(tooltip_data$ID, unique=TRUE)
-    colnames(tooltip_data) = c("1.tooltip")
+    tooltip_data = tooltip_data[-1]
+    colnames(tooltip_data) = c("short", "1.tooltip")
+    tooltip_data = tooltip_data[-1]
     return(tooltip_data)
 }
 
