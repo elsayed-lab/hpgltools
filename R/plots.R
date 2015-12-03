@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 17:41:42 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Nov 30 15:51:58 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -1262,7 +1262,7 @@ hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
 #' \code{\link{heatmap.3}}, \code{\link{recordPlot}}
 #'
 #' @export
-hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, names=NULL, title=NULL, ...) {
+hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=FALSE, ...) {
     hpgl_env = environment()
     data_class = class(data)[1]
     if (data_class == 'expt') {
@@ -1282,7 +1282,7 @@ hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, names=NULL, title
         names = colnames(data)
     }
     data = as.matrix(data)
-    heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, labCol=names, margins=c(12,8), trace="none", linewidth=0.5, main=title)
+    heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, labCol=names, margins=c(12,8), trace="none", linewidth=0.5, main=title, Rowv=Rowv)
     hpgl_heatmap_plot = recordPlot()
     return(hpgl_heatmap_plot)
 }

@@ -5,7 +5,7 @@
 \title{hpgl_sample_heatmap()  Make a heatmap.3 description of the similarity of the genes among samples.}
 \usage{
 hpgl_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
-  title = NULL, ...)
+  title = NULL, Rowv = FALSE, ...)
 }
 \arguments{
 \item{data}{an expt/expressionset/dataframe set of samples}
