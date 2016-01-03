@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct  8 14:37:02 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 17:22:04 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified clusterProfiler analysis
 #'
@@ -196,7 +196,8 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         rownames(mf_interesting) = NULL
         mf_interesting$ont = "MF"
         mf_interesting = mf_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
-        mf_interesting = subset(mf_interesting, pvalue <= 0.1)
+        ## mf_interesting = subset(mf_interesting, pvalue <= 0.1)
+        mf_interesting = mf_interesting[ which(mf_interesting$pvalue <= 0.1), ]
     } else {
         mf_interesting = NULL
     }
@@ -205,7 +206,8 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         rownames(bp_interesting) = NULL
         bp_interesting$ont = "BP"
         bp_interesting = bp_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
-        bp_interesting = subset(bp_interesting, pvalue <= 0.1)
+        ## bp_interesting = subset(bp_interesting, pvalue <= 0.1)
+        bp_interesting = bp_interesting[ which(bp_interesting$pvalue <= 0.1), ]
     } else {
         bp_interesting = NULL
     }
@@ -214,7 +216,8 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         rownames(cc_interesting) = NULL
         cc_interesting$ont = "CC"
         cc_interesting = cc_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
-        cc_interesting = subset(cc_interesting, pvalue <= 0.1)
+        ## cc_interesting = subset(cc_interesting, pvalue <= 0.1)
+        cc_interesting = cc_interesting[ which(cc_interesting$pvalue <= 0.1), ]
     } else {
         cc_interesting = NULL
     }
@@ -270,11 +273,11 @@ cluster_trees = function(cpdata, goid_map="reference/go/id2go.map", goids_df=NUL
     }
 
     mf_all = cpdata$mf_all
-    mf_enriched = cpdata$mf_enriched
+    ## mf_enriched = cpdata$mf_enriched
     bp_all = cpdata$bp_all
-    bp_enriched = cpdata$bp_enriched
+    ## bp_enriched = cpdata$bp_enriched
     cc_all = cpdata$cc_all
-    cc_enriched = cpdata$cc_enriched
+    ## cc_enriched = cpdata$cc_enriched
     mf_all_ids = mf_all@result$ID
     bp_all_ids = bp_all@result$ID
     cc_all_ids = cc_all@result$ID

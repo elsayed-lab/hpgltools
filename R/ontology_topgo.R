@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct  8 14:37:23 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 17:31:29 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -7,7 +7,7 @@
 #'
 #' @return a big list including the various outputs from topgo
 #' @export
-simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL, pvals=NULL, limitby="fisher", limit=0.1, signodes=100, sigforall=TRUE, numchar=300, selector="topDiffGenes", overwrite=FALSE, densities=FALSE) {
+simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL, pvals=NULL, limitby="fisher", limit=0.1, signodes=100, sigforall=TRUE, numchar=300, selector="topDiffGenes", overwrite=FALSE, densities=FALSE, pval_plots=TRUE) {
 ### Some neat ideas from the topGO documentation:
 ### geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
 ### A variant of these operations make it possible to give topGO scores so that
@@ -18,44 +18,56 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
 ### mf_GOdata = new("topGOdata", description="something", ontology="BP", allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO, gene2GO=geneID2GO, nodeSize=2)
     ## The following library invocation is in case it was unloaded for pathview
     library(topGO)
+    library(Hmisc)
     gomap_info = make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+    print(paste0("Found an ID->GO mapping file: ", gomap_info))
     geneID2GO = topGO::readMappings(file=goid_map)
     annotated_genes = names(geneID2GO)
     if (is.null(de_genes$ID)) {
         de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
     ##    interesting_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
-    interesting_genes = as.factor(annotated_genes %in% de_genes$ID)
-    names(interesting_genes) = annotated_genes
+    fisher_interesting_genes = as.factor(as.integer(annotated_genes %in% de_genes$ID))
+    names(fisher_interesting_genes) = annotated_genes
+    ks_interesting_genes = as.integer(annotated_genes %nin% de_genes$ID)
     if (!is.null(de_genes$P.Value)) {
+        ## I think this needs to include the entire gene universe, not only the set of x differentially expressed genes
         pvals = de_genes$P.Value
         names(pvals) = rownames(de_genes)
+        for (p in 1:length(pvals)) {
+            name = names(pvals)[p]
+            ks_interesting_genes[[name]] = pvals[p]
+        }
     }
-    if (is.null(pvals)) {
-        mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-    } else {
-        mf_GOdata = new("topGOdata", description="MF", ontology="MF", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata = new("topGOdata", description="BP", ontology="BP", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata = new("topGOdata", description="CC", ontology="CC", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
-    }
+    ks_interesting_genes = as.vector(ks_interesting_genes)
+    names(ks_interesting_genes) = annotated_genes
+
+    fisher_mf_GOdata = new("topGOdata", ontology="MF", allGenes=fisher_interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+    fisher_bp_GOdata = new("topGOdata", ontology="BP", allGenes=fisher_interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+    fisher_cc_GOdata = new("topGOdata", ontology="CC", allGenes=fisher_interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+    ks_mf_GOdata = new("topGOdata", description="MF", ontology="MF", allGenes=ks_interesting_genes,
+                       geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+    ks_bp_GOdata = new("topGOdata", description="BP", ontology="BP", allGenes=ks_interesting_genes,
+                       geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+    ks_cc_GOdata = new("topGOdata", description="CC", ontology="CC", allGenes=ks_interesting_genes,
+                        geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+
     test_stat = new("classicCount", testStatistic=GOFisherTest, name="Fisher test")
-    mf_fisher_result = topGO::getSigGroups(mf_GOdata, test_stat)
-    bp_fisher_result = topGO::getSigGroups(bp_GOdata, test_stat)
-    cc_fisher_result = topGO::getSigGroups(cc_GOdata, test_stat)
+    mf_fisher_result = topGO::getSigGroups(fisher_mf_GOdata, test_stat)
+    bp_fisher_result = topGO::getSigGroups(fisher_bp_GOdata, test_stat)
+    cc_fisher_result = topGO::getSigGroups(fisher_cc_GOdata, test_stat)
     test_stat = new("classicScore", testStatistic=GOKSTest, name="KS tests")
-    mf_ks_result = topGO::getSigGroups(mf_GOdata, test_stat)
-    bp_ks_result = topGO::getSigGroups(bp_GOdata, test_stat)
-    cc_ks_result = topGO::getSigGroups(cc_GOdata, test_stat)
+    mf_ks_result = topGO::getSigGroups(ks_mf_GOdata, test_stat)
+    bp_ks_result = topGO::getSigGroups(ks_bp_GOdata, test_stat)
+    cc_ks_result = topGO::getSigGroups(ks_cc_GOdata, test_stat)
     test_stat = new("elimScore", testStatistic=GOKSTest, name="Fisher test", cutOff=0.01)
-    mf_el_result = topGO::getSigGroups(mf_GOdata, test_stat)
-    bp_el_result = topGO::getSigGroups(bp_GOdata, test_stat)
-    cc_el_result = topGO::getSigGroups(cc_GOdata, test_stat)
+    mf_el_result = topGO::getSigGroups(fisher_mf_GOdata, test_stat)
+    bp_el_result = topGO::getSigGroups(fisher_bp_GOdata, test_stat)
+    cc_el_result = topGO::getSigGroups(fisher_cc_GOdata, test_stat)
     test_stat = new("weightCount", testStatistic=GOFisherTest, name="Fisher test", sigRatio="ratio")
-    mf_weight_result = topGO::getSigGroups(mf_GOdata, test_stat)
-    bp_weight_result = topGO::getSigGroups(bp_GOdata, test_stat)
-    cc_weight_result = topGO::getSigGroups(cc_GOdata, test_stat)
+    mf_weight_result = topGO::getSigGroups(fisher_mf_GOdata, test_stat)
+    bp_weight_result = topGO::getSigGroups(fisher_bp_GOdata, test_stat)
+    cc_weight_result = topGO::getSigGroups(fisher_cc_GOdata, test_stat)
 
     mf_fisher_pdist = try(hpgltools::hpgl_histogram(mf_fisher_result@score, bins=20))
     mf_ks_pdist = try(hpgltools::hpgl_histogram(mf_ks_result@score, bins=20))
@@ -74,46 +86,38 @@ simple_topgo = function(de_genes, goid_map="reference/go/id2go.map", goids_df=NU
         mf_el=mf_el_pdist, bp_el=bp_el_pdist, cc_el=cc_el_pdist,
         mf_weight=mf_weight_pdist, bp_weight=bp_weight_pdist, cc_weight=cc_weight_pdist)
 
-    results = list(mf_godata=mf_GOdata, bp_godata=bp_GOdata, cc_godata=cc_GOdata,
-        mf_fisher=mf_fisher_result, bp_fisher=bp_fisher_result, cc_fisher=cc_fisher_result,
-        mf_ks=mf_ks_result, bp_ks=bp_ks_result, cc_ks=cc_ks_result,
-        mf_el=mf_el_result, bp_el=bp_el_result, cc_el=cc_el_result,
-        mf_weight=mf_weight_result, bp_weight=bp_weight_result, cc_weight=cc_weight_result)
+    results = list(fmf_godata=fisher_mf_GOdata, fbp_godata=fisher_bp_GOdata, fcc_godata=fisher_cc_GOdata,
+                   kmf_godata=ks_mf_GOdata, kbp_godata=ks_bp_GOdata, kcc_godata=ks_cc_GOdata,
+                   mf_fisher=mf_fisher_result, bp_fisher=bp_fisher_result, cc_fisher=cc_fisher_result,
+                   mf_ks=mf_ks_result, bp_ks=bp_ks_result, cc_ks=cc_ks_result,
+                   mf_el=mf_el_result, bp_el=bp_el_result, cc_el=cc_el_result,
+                   mf_weight=mf_weight_result, bp_weight=bp_weight_result, cc_weight=cc_weight_result)
 
     tables = try(topgo_tables(results, limitby=limitby, limit=limit))
     if (class(tables)[1] == 'try-error') {
         tables = NULL
     }
 
-##    mf_first_density = bp_first_density = cc_first_density = NULL
-##    if (class(tables$mf) != 'try-error') {
-##        mf_first_group = tables$mf[1, "GO.ID"]
-##        mf_first_density = try(hpgltools:::hpgl_GroupDensity(mf_GOdata, mf_first_group, ranks=TRUE))
-##    }
-##    if (class(tables$bp) != 'try-error') {
-##        bp_first_group = tables$bp[1, "GO.ID"]
-##        bp_first_density = try(hpgltools:::hpgl_GroupDensity(bp_GOdata, bp_first_group, ranks=TRUE))
-##    }
-##    if(class(tables$cc) != 'try-error') {
-##        cc_first_group = tables$cc[1, "GO.ID"]
-##        cc_first_density = try(hpgltools:::hpgl_GroupDensity(cc_GOdata, cc_first_group, ranks=TRUE))
-##    }
-##    first_densities = list(mf=mf_first_density, bp=bp_first_density, cc=cc_first_density)
-
-    mf_densities = bp_densities = cc_densities = list()    
+    mf_densities = bp_densities = cc_densities = list()
     if (isTRUE(densities)) {
-        mf_densities = hpgltools:::plot_topgo_densities(mf_GOdata, tables$mf)
-        bp_densities = hpgltools:::plot_topgo_densities(bp_GOdata, tables$bp)
-        cc_densities = hpgltools:::plot_topgo_densities(cc_GOdata, tables$cc)
+        mf_densities = hpgltools:::plot_topgo_densities(fisher_mf_GOdata, tables$mf)
+        bp_densities = hpgltools:::plot_topgo_densities(fisher_bp_GOdata, tables$bp)
+        cc_densities = hpgltools:::plot_topgo_densities(fisher_cc_GOdata, tables$cc)
     } else {
         print("Set densities=TRUE if you want to see the ontology density lattice plots.")
     }
-    
+
     information = list(
-        mf_godata=mf_GOdata, bp_godata=bp_GOdata, cc_godata=cc_GOdata,
+        mf_godata=fisher_mf_GOdata, bp_godata=fisher_bp_GOdata, cc_godata=fisher_cc_GOdata,
+        kmf_godata=ks_mf_GOdata, kbp_godata=ks_bp_GOdata, kcc_godata=ks_cc_GOdata,
         results=results, tables=tables,
         mf_densities=mf_densities, bp_densities=bp_densities, cc_densities=cc_densities,
         pdists=p_dists)
+
+    if (isTRUE(pval_plots)) {
+        information$pvalue_plots = topgo_pval_plot(information)
+    }
+
     return(information)
 }
 
@@ -139,7 +143,7 @@ plot_topgo_densities = function(godata, table) {
 #' @param orderby classic which of the available columns to order the table by?
 #' @param ranksof classic which of the available columns are used to rank the data?
 #' @export
-topgo_tables = function(result, limit=0.01, limitby="fisher", numchar=300, orderby="classic", ranksof="classic") {
+topgo_tables = function(result, limit=0.1, limitby="fisher", numchar=300, orderby="classic", ranksof="classic") {
     ## The following if statement could be replaced by get(limitby)
     ## But I am leaving it as a way to ensure that no shenanigans ensue
     mf_allRes = bp_allRes = cc_allRes = mf_interesting = bp_interesting = cc_interesting = NULL
@@ -164,7 +168,7 @@ topgo_tables = function(result, limit=0.01, limitby="fisher", numchar=300, order
     }
     mf_topnodes = length(mf_siglist)
     if (mf_topnodes > 0) {
-        mf_allRes = try(topGO::GenTable(result$mf_godata, classic=result$mf_fisher, KS=result$mf_ks,
+        mf_allRes = try(topGO::GenTable(result$fmf_godata, classic=result$mf_fisher, KS=result$mf_ks,
             EL=result$mf_el, weight=result$mf_weight, orderBy=orderby,
             ranksOf=ranksof, topNodes=mf_topnodes, numChar=numchar))
         if (class(mf_allRes) != 'try-error') {
@@ -181,7 +185,7 @@ topgo_tables = function(result, limit=0.01, limitby="fisher", numchar=300, order
     }
     bp_topnodes = length(bp_siglist)
     if (bp_topnodes > 0) {
-        bp_allRes = try(topGO::GenTable(result$bp_godata, classic=result$bp_fisher, KS=result$bp_ks,
+        bp_allRes = try(topGO::GenTable(result$fbp_godata, classic=result$bp_fisher, KS=result$bp_ks,
             EL=result$bp_el, weight=result$bp_weight, orderBy=orderby,
             ranksOf=ranksof, topNodes=bp_topnodes, numChar=numchar))
         if (class(bp_allRes) != 'try-error') {
@@ -198,7 +202,7 @@ topgo_tables = function(result, limit=0.01, limitby="fisher", numchar=300, order
     }
     cc_topnodes = length(cc_siglist)
     if (cc_topnodes > 0) {
-        cc_allRes = try(topGO::GenTable(result$cc_godata, classic=result$cc_fisher, KS=result$cc_ks,
+        cc_allRes = try(topGO::GenTable(result$fcc_godata, classic=result$cc_fisher, KS=result$cc_ks,
             EL=result$cc_el, weight=result$cc_weight, orderBy=orderby,
             ranksOf=ranksof, topNodes=cc_topnodes, numChar=numchar))
         if (class(cc_allRes) != 'try-error') {
@@ -367,7 +371,7 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
                 message("Attempting to generate a id2go file in the format expected by topGO.")
                 new_go = plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
                 write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
-                rm(id2go_test)
+                id2go_test = file.info(goid_map)
             }
         } else { ## There already exists a file, so return its stats
             new_go = id2go_test
@@ -409,7 +413,7 @@ topDiffGenes <- function(allScore) { return(allScore < 0.01) }
 #' @seealso \code{\link{goseq}}
 #' @export
 topgo_pval_plot = function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
-    mf_newdf = topgo$tables$mf[,c("GO.ID", "Term", "Annotated","Significant",type)]
+    mf_newdf = topgo$tables$mf[,c("GO.ID", "Term", "Annotated","Significant", type)]
     mf_newdf$term = as.character(lapply(strwrap(mf_newdf$Term, wrapped_width, simplify=F), paste, collapse="\n"))
     mf_newdf$pvalue = as.numeric(mf_newdf[[type]])
     mf_newdf = subset(mf_newdf, get(type) < cutoff)

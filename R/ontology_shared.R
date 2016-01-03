@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct  8 14:35:00 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 14:49:22 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -375,7 +375,7 @@ pval_plot = function(df, ontology="MF") {
 #' This passes a set of limma results to (optionally) goseq, clusterprofiler, topgo, and gostats,
 #' collects the outputs, and provides them as a list.  This function needs a species argument,
 #' as I recently made the simple_() functions able to automatically use the various supported organisms.
-#' 
+#'
 #' @param de_out  a list of topTables comprising limma/deseq/edger outputs.
 #' @param n default=NULL  a number of genes at the top/bottom to search.
 #' @param z default=NULL  a number of standard deviations to search. (if this and n are null, it assumes 1z)
@@ -414,7 +414,7 @@ all_ontology_searches = function(de_out, gene_lengths=NULL, goids=NULL, n=NULL, 
     if (is.null(goid_map)) {
         goid_map = "reference/go/id2go.map"
     }
-    
+
     ## Take a moment to detect what the data input looks like
     ## Perhaps a list of tables?
     if (is.null(de_out$all_tables)) {
@@ -585,7 +585,7 @@ all_ontology_searches = function(de_out, gene_lengths=NULL, goids=NULL, n=NULL, 
                 write.csv(gostats_down_ontology$bp_interesting, file=paste(comparison, csv_base, "_topgo_bp_down.csv", sep=""))
                 write.csv(gostats_down_ontology$cc_interesting, file=paste(comparison, csv_base, "_topgo_cc_down.csv", sep=""))
             }
-        }        
+        }
         c_data = list(up_table=up_genes, down_table=down_genes,
                       up_goseq=goseq_up_ontology, down_goseq=goseq_down_ontology,
                       up_cluster=cluster_up_ontology, down_cluster=cluster_down_ontology,
@@ -635,6 +635,21 @@ golevel_df = function(ont="MF", savefile="ontlevel.rda") {
         }
     }
     return(golevels)
+}
+
+write_go_xls = function(goseq, cluster, topgo, gostats, go_file="excel/merged_go") {
+    write_xls(head(goseq$mf_subset, n=30), sheet="goseq_mf", file=go_file)
+    write_xls(head(summary(cluster$mf_all), n=30), sheet="cluster_mf", file=go_file)
+    write_xls(topgo$tables$mf_interesting, sheet="topgo_mf", file=go_file)
+    write_xls(head(gostats$mf_over_all, n=30), sheet="gostats_mf", file=go_file)
+    write_xls(head(goseq$bp_subset, n=30), sheet="goseq_bp", file=go_file)
+    write_xls(head(summary(cluster$bp_all), n=30), sheet="cluster_bp", file=go_file)
+    write_xls(topgo$tables$bp_interesting, sheet="topgo_bp", file=go_file)
+    write_xls(head(gostats$bp_over_all, n=30), sheet="gostats_bp", file=go_file)
+    write_xls(head(goseq$cc_subset, n=30), sheet="goseq_cc", file=go_file)
+    write_xls(head(summary(cluster$cc_all), n=30), sheet="cluster_cc", file=go_file)
+    write_xls(topgo$tables$cc_interesting, sheet="topgo_cc", file=go_file)
+    write_xls(head(gostats$cc_over_all, n=30), sheet="gostats_cc", file=go_file)
 }
 
 ## EOF

@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Oct 13 16:24:18 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 16:17:38 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -46,10 +46,18 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
         tmp_definitions = meta_dataframe
-   }  else {
-        tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
+    }  else {
+        if (file_ext(file) == 'csv') {
+            tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
+        } else if (file_ext(file) == 'xls' | file_ext(file) == 'xlsx') {
+            xls = loadWorkbook(file, create=FALSE)
+            tmp_definitions = readWorksheet(xls, 1)
+        } else {
+            tmp_definitions = read.table(file=file)
+        }
     }
     colnames(tmp_definitions) = tolower(colnames(tmp_definitions))
+    ## "no visible binding for global variable 'sample.id'"  ## hmm sample.id is a column from the csv file.
     tmp_definitions = subset(tmp_definitions, sample.id != "")
     condition_names = unique(tmp_definitions$condition)
     if (is.null(condition_names)) {
@@ -61,7 +69,7 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
             colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors))
             color_hash = hash(keys=as.character(condition_names), values=colors)
         } else {
-            color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)            
+            color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)
         }
     }
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
@@ -145,7 +153,14 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
     } else if (is.null(file)) {
         sample_definitions = meta_dataframe
     } else {
-        sample_definitions = read.csv(file=file, comment.char="#", sep=sep)
+        if (file_ext(file) == 'csv') {
+            sample_definitions = read.csv(file=file, comment.char="#", sep=sep)
+        } else if (file_ext(file) == 'xls' | file_ext(file) == 'xlsx') {
+            xls = loadWorkbook(file, create=FALSE)
+            sample_definitions = readWorksheet(xls, 1)
+        } else {
+            sample_definitions = read.table(file=file)
+        }
     }
     colnames(sample_definitions) = tolower(colnames(sample_definitions))
     ##sample_definitions = sample_definitions[grepl('(^HPGL|^hpgl)', sample_definitions$sample.id, perl=TRUE),]
@@ -206,7 +221,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
             gene_info$ID = rownames(gene_info)
         }
         gene_info = gene_info[gene_info$ID %in% rownames(all_count_matrix),]
-        all_count_matrix = all_count_matrix[rownames(all_count_matrix) %in% genes$ID,]
+        all_count_matrix = all_count_matrix[rownames(all_count_matrix) %in% gene_info$ID,]
     }
 
     ## Make sure that all columns have been filled in for every gene.
@@ -408,7 +423,7 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
         tmp_count = try(read.table(files[table], header=header))
         if (class(tmp_count)[1] == 'try-error') {
             stop(paste0("There was an error reading: ", files[table]))
-        }        
+        }
         colnames(tmp_count) = c("ID", ids[table])
         pre_merge = length(rownames(tmp_count))
         count_table = merge(count_table, tmp_count, by="ID")
@@ -431,7 +446,6 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
     return(count_table)
 }
 
-
 #' concatenate_runs()  Sum the reads/gene for multiple sequencing runs of a single condition/batch
 #'
 #' @param expt  an experiment class containing the requisite metadata and count tables
@@ -442,7 +456,6 @@ hpgl_read_files = function(ids, files, header=FALSE, include_summary_rows=FALSE,
 #' @examples
 #' ## compressed = concatenate_runs(expt)
 concatenate_runs = function(expt, column='replicate') {
-    data = exprs(expt$expressionset)
     design = expt$definitions
     replicates = levels(as.factor(design[,column]))
     final_expt = expt
@@ -455,7 +468,7 @@ concatenate_runs = function(expt, column='replicate') {
     names = list()
     for (rep in replicates) {
         expression = paste0(column, "=='", rep, "'")
-        tmp_expt =  expt_subset(expt, expression, by_definitions=TRUE)
+        tmp_expt =  expt_subset(expt, expression)
         tmp_data =  rowSums(exprs(tmp_expt$expressionset))
         tmp_design = tmp_expt$design[1,]
         final_data = cbind(final_data, tmp_data)

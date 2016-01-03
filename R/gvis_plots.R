@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Sep 18 09:13:59 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 16:56:08 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_gvis_ma_plot()  Make an html version of an MA plot.
 #'
@@ -21,13 +21,15 @@
 hpgl_gvis_ma_plot = function(counts, degenes, tooltip_data=NULL, filename="html/gvis_ma_plot.html", base_url="", ...) {
     gvis_chartid=gsub("\\.html$", "", basename(filename))
     gvis_df = data.frame(AvgExp=rowMeans(counts[rownames(degenes),]), LogFC=degenes$logFC, AdjPVal=degenes$adj.P.Val)
-    gvis_sig = subset(gvis_df, AdjPVal <= 0.05)
+    ## gvis_sig = subset(gvis_df, AdjPVal <= 0.05)
+    gvis_sig = gvis_df[ which(gvis_df$AdjPVal <= 0.05), ]
     gvis_sig = gvis_sig[,c(1,2)]
     gvis_sig = merge(gvis_sig, tooltip_data, by="row.names")
     rownames(gvis_sig) = gvis_sig$Row.names
     gvis_sig = gvis_sig[-1]
     colnames(gvis_sig) = c("AvgExp","Significant","sig.tooltip")
-    gvis_nonsig = subset(gvis_df, AdjPVal > 0.05)
+    ## gvis_nonsig = subset(gvis_df, AdjPVal > 0.05)
+    gvis_nonsig = gvis_df[ which(gvis_df$AdjPVal > 0.05), ]
     gvis_nonsig = gvis_nonsig[,c(1,2)]
     gvis_nonsig = merge(gvis_nonsig, tooltip_data, by="row.names")
     rownames(gvis_nonsig) = gvis_nonsig$Row.names
@@ -80,8 +82,10 @@ hpgl_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, t
     if (!is.null(tooltip_data)) {
         gvis_raw_df = merge(gvis_raw_df, tooltip_data, by="row.names")
     }
-    gvis_sig = subset(gvis_raw_df, P.Value <= p_cutoff)
-    gvis_nsig = subset(gvis_raw_df, P.Value > p_cutoff)
+    ## gvis_sig = subset(gvis_raw_df, P.Value <= p_cutoff)
+    gvis_sig = gvis_raw_df[ which(gvis_raw_df$P.Value <= p_cutoff), ]
+    ## gvis_nsig = subset(gvis_raw_df, P.Value > p_cutoff)
+    gvis_nsig = gvis_raw_df[ which(gvis_raw_df$P.Value > p_cutoff), ]
     colnames(gvis_sig) = c("Row.names","logFCsig","sig_modp","sig_p","sig.tooltip")
     colnames(gvis_nsig) = c("Row.names","logFCnsig","nsig_modp","nsig_p","nsig.tooltip")
     gvis_sig = gvis_sig[,c("Row.names","sig_modp", "sig.tooltip")]

@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct  8 11:18:40 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 16:15:51 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 ## The karyotype file is circos/data/5005_5448_karyotype.txt
 ## The 5005 genome is 1838562 nt. long (looking at reference/genbank/mgas_5005.gb)
@@ -17,7 +17,7 @@
 #' in variable conditions.  Next time I make one of these graphs I will do that I suspect.
 #' In addition, this currently only understands how to write bacterial chromosomes, that will
 #' likely be fixed when I am asked to write out a L.major karyotype.
-#' 
+#'
 #' These defaults were chosen because I have a chromosome of this length that is correct.
 #' @param outfile default='circos/conf/karyotypes/default.txt'  a file to write
 #' @param length default=1838554  the default length of the chromosome (That is mgas5005)
@@ -27,16 +27,27 @@
 #' @param chr_num default=1  the number to record (This and name above should change for multi-chromosomal species)
 #'
 #' @return undef
-circos_karyotype = function(name='default', conf_dir='circos/conf', length=1838554, chr_name='chr1', segments=6, color='white', chr_num=1) {
+circos_karyotype = function(name='default', conf_dir='circos/conf', length=NULL, chr_name='chr1', segments=6, color='white', chr_num=1, fasta=NULL) {
+    genome_length = 0
+    if (is.null(length) & is.null(fasta)) {
+        stop("circos_karyotype() requires a chromosome length or fasta file to gather sequence data from.")
+    } else if (!is.null(length)) {
+        genome_length = length
+    } else {
+        raw_seq = FaFile(fasta)
+        all_seq = getSeq(raw_seq)
+        genome_length = sum(as.data.frame(all_seq@ranges)$width)
+    }
+
     outfile = paste0(conf_dir, '/karyotypes/', name, ".conf")
     out = file(outfile, open='w+')
     ## First write the summary line
-    start_string = sprintf("chr - %s %d 0 %d %s", chr_name, chr_num, length, color)
+    start_string = sprintf("chr - %s %d 0 %d %s", chr_name, chr_num, genome_length, color)
     cat(start_string, file=out, sep="\n")
     for (segment in 1:segments) {
         current = segment - 1
-        begin = floor(current * (length / segments))
-        end = floor(segment * (length / segments))
+        begin = floor(current * (genome_length / segments))
+        end = floor(segment * (genome_length / segments))
         string = sprintf("band %s %d.1 %d.1 %d %d %s", chr_name, chr_num, chr_num, begin, end, color)
         cat(string, file=out, sep="\n")
     }
@@ -46,7 +57,16 @@ circos_karyotype = function(name='default', conf_dir='circos/conf', length=18385
     return(outfile)
 }
 
-
+#' circos_ideogram()  Create the description of chromosome markings
+#'
+#' This function writes ideogram files for circos.
+#' Currently it only has a single format.
+#'
+#' @param name default='default'  the name of the configuration
+#' @param conf_dir default='circos/conf'  where does the configuration live?
+#' @param band_url default=NULL  provide a url for making these imagemaps.
+#'
+#' @return undef
 circos_ideogram = function(name='default', conf_dir='circos/conf', band_url=NULL) {
     ideogram_outfile = paste0(conf_dir, '/ideograms/', name, ".conf")
     out = file(ideogram_outfile, open='w+')
@@ -82,23 +102,22 @@ circos_ideogram = function(name='default', conf_dir='circos/conf', band_url=NULL
  fill_bands = yes
 ", show_label)
     cat(ideogram_string, file=out, sep="")
+    ideogram_band = ""
     if (!is.null(band_url)) {
         ideogram_band = sprintf("
  band_url = %s
 # image_map_missing_parameter=removeparam
  ideogram_url = %s
 ", band_url)
+        cat(ideogram_band, file=out, sep="")
     }
-    cat(ideogram_band, file=out, sep="")
     end_string = "\n</ideogram>\n"
     cat(end_string, file=out, sep="")
     close(out)
-    message(paste0("Wrote karyotype to ", outfile))
+    message(paste0("Wrote karyotype to ", out))
     message(paste0("This should match the karyotype= line in ", name, ".conf"))
-    return(outfile)
+    return(out)
 }
-
-
 
 #' circos_plus_minus()  Write tiles of bacterial ontology groups using the categories from microbesonline.org
 #'
@@ -110,7 +129,7 @@ circos_ideogram = function(name='default', conf_dir='circos/conf', band_url=NULL
 #' with two configuration files circos/conf/bob_minus_go.conf and
 #' circos/conf/bob_plus_go.conf and finally adds an include to
 #' circos/bob.conf
-#' 
+#'
 #' @param go_table  a dataframe with starts/ends and categories
 #' @param cfgout default='circos/conf/default.conf'  The master
 #'     configuration file to write.
@@ -131,15 +150,18 @@ circos_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='c
     go_minus = as.data.frame(go_table[go_table$strand == "-",])
     go_plus$chr = chr
     go_minus$chr = chr
-    go_plus = go_plus[,c(5,1,2,4)]
-    go_minus = go_minus[,c(5,1,2,4)]
+    ##    go_plus = go_plus[,c(5,1,2,4)]
+    message("This function assumes an input go table including the columns: 'start', 'end', 'strand', and 'go'")
+    go_plus = go_plus[,c("chr","start","end","go")]
+    ##go_minus = go_minus[,c(5,1,2,4)]
+    go_minus = go_minus[,c("chr","start","end","go")]
     go_plus$COGFun = paste0("value=", go_plus$COGFun, "0")
     go_minus$COGFun = paste0("value=", go_minus$COGFun, "0")
     data_prefix = cfgout
     data_prefix = gsub("/conf/", "/data/", data_prefix)
     data_prefix = gsub(".conf$", "", data_prefix)
 
-    plus_file = paste0(data_prefix, "_plus_go.txt")        
+    plus_file = paste0(data_prefix, "_plus_go.txt")
     message(paste0("Writing data file: ", plus_file, " with the + strand GO data."))
     write.table(go_plus, file=plus_file, quote=FALSE, row.names=FALSE, col.names=FALSE, na="no_go")
 
@@ -308,7 +330,7 @@ circos_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='c
     second_outer = first_inner - spacing
     second_inner = second_outer - width
     minus_cfg_out = file(minus_cfg_file, open='w+')
-    minus_cfg_filename = gsub("^circos/", "", minus_file)    
+    minus_cfg_filename = gsub("^circos/", "", minus_file)
     minus_cfg_string = sprintf("## The following plot stanza describes the broad ontological categories
 ## Of genes on the minus strand.
  <plot>
@@ -494,7 +516,7 @@ circos_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='c
 #' It then writes out a configuration plot stanza in
 #' circos/conf/bob_tile.conf
 #' and finally adds an include to circos/bob.conf
-#' 
+#'
 #' @param df  a dataframe with starts/ends and the floating point information
 #' @param cfgout default='circos/conf/default.conf'  The master
 #'     configuration file to write.
@@ -538,13 +560,13 @@ circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", c
         colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors, "Dark2"))(num_colors))
         names(colors) = conditions
     }
-    
+
     ## Now write the config stanza
     inner = outer - width
     data_cfg_out = file(datum_cfg_file, open="w+")
     data_cfg_filename = gsub("^circos/", "", datum_cfg_file)
     data_file_string =  gsub("^circos/", "", data_filename)
-    
+
     data_cfg_string = sprintf("## This is a circos tile configuration stanza.
  <plot>
   type = tile
@@ -588,7 +610,7 @@ circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", c
     master_cfg_out = file(cfgout, open="a+")
     data_cfg_include = data_cfg_filename
     data_cfg_include = gsub("^circos/", "", data_cfg_include)
-    new_outer = inner - spacing    
+    new_outer = inner - spacing
     master_cfg_string = sprintf("## The tile ring for column:%s, extending from %sr to %sr
 <<include %s>>
 ", colname, outer, new_outer, data_cfg_include)
@@ -609,7 +631,7 @@ circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", c
 #' It then writes out a configuration plot stanza in
 #' circos/conf/bob_heatmap.conf
 #' and finally adds an include to circos/bob.conf
-#' 
+#'
 #' @param df  a dataframe with starts/ends and the floating point information
 #' @param cfgout default='circos/conf/default.conf'  The master
 #'     configuration file to write.
@@ -626,7 +648,7 @@ circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", c
 #'     and inner,whatever follows.
 #'
 #' @return the radius after adding the histogram and the spacing.
-circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
+circos_heatmap = function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
@@ -653,13 +675,11 @@ circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", c
         colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors, "Dark2"))(num_colors))
         names(colors) = conditions
     }
-    
+
     ## Now write the config stanza
     inner = outer - width
     data_cfg_out = file(datum_cfg_file, open="w+")
     data_cfg_filename = gsub("^circos/", "", datum_cfg_file)
-    data_file_string =  gsub("^circos/", "", data_filename)
-    
     data_cfg_string = sprintf("## This is a circos heatmap configuration stanza.
  <plot>
   type = heatmap
@@ -690,7 +710,7 @@ circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", c
     master_cfg_out = file(cfgout, open="a+")
     data_cfg_include = data_cfg_filename
     data_cfg_include = gsub("^circos/", "", data_cfg_include)
-    new_outer = inner - spacing    
+    new_outer = inner - spacing
     master_cfg_string = sprintf("## The tile ring for column:%s, extending from %sr to %sr
 <<include %s>>
 ", colname, outer, new_outer, data_cfg_include)
@@ -711,7 +731,7 @@ circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", c
 #' It then writes out a configuration plot stanza in
 #' circos/conf/bob_hist.conf
 #' and finally adds an include to circos/bob.conf
-#' 
+#'
 #' @param df  a dataframe with starts/ends and the floating point information
 #' @param cfgout default='circos/conf/default.conf'  The master
 #'     configuration file to write.
@@ -745,7 +765,7 @@ circos_hist = function(df, cfgout="circos/conf/default.conf", colname="datum", c
     data_prefix = gsub("/conf/", "/data/", data_prefix)
     data_prefix = gsub(".conf$", "", data_prefix)
     data_filename = paste0(data_prefix, "_", colname, "_hist.txt")
-    message(paste0("Writing data file: ", data_file, " with the ", colname, " column."))
+    message(paste0("Writing data file: ", data_filename, " with the ", colname, " column."))
     write.table(df, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
     num_colors = 1
@@ -755,11 +775,12 @@ circos_hist = function(df, cfgout="circos/conf/default.conf", colname="datum", c
         colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors, "Dark2"))(num_colors))
         names(colors) = conditions
     }
-    
+
     ## Now write the config stanza
     inner = outer - width
     data_cfg_out = file(datum_cfg_file, open="w+")
-    data_cfg_filename = gsub("^circos/", "", data_filename)
+    data_cfg_filename = gsub("^circos/", "", datum_cfg_file)
+    data_relative_filename = gsub(pattern="circos/", replacement="", x=data_filename)
     data_cfg_string = sprintf("
  <plot>
   type = histogram
@@ -773,7 +794,7 @@ circos_hist = function(df, cfgout="circos/conf/default.conf", colname="datum", c
   r0 = %fr
   orientation = out
  </plot>
-", data_cfg_string, fill_color, color, outer, inner)
+", data_relative_filename, fill_color, color, outer, inner)
     cat(data_cfg_string, file=data_cfg_out, sep="")
     close(data_cfg_out)
 
@@ -797,7 +818,7 @@ circos_hist = function(df, cfgout="circos/conf/default.conf", colname="datum", c
 #'
 #' I regenerate all my circos pictures with make(1).  This is my
 #' makefile.
-#' 
+#'
 #' @param output default='circos/Makefile' the makefile
 #' @param circos default='/usr/bin/circos'  the location of circos. (I
 #'     have a copy in home/bin/circos and use that sometimes.
@@ -809,7 +830,7 @@ circos_make = function(target="", output="circos/Makefile", circos="/usr/bin/cir
         message(paste0("The circos directory does not exist, creating: ", circos_dir))
         dir.create(circos_dir, recursive=TRUE)
     }
-    out = file(output, open='w+')    
+    out = file(output, open='w+')
     makefile_string = sprintf("
 .PHONY:\tclean
 CIRCOS=\"%s\"
@@ -844,7 +865,7 @@ CIRCOS=\"%s\"
 #' In its current implementation, this only understands two
 #' chromosomes.  A minimal amount of logic and data organization will
 #' address this weakness.
-#' 
+#'
 #' @param df  a dataframe with starts/ends and the floating point information
 #' @param cfgout default='circos/conf/default.conf'  The master
 #'     configuration file to write.
@@ -873,8 +894,8 @@ circos_arc = function(df, cfgout="circos/conf/default.conf", first_col='chr1', s
     data_prefix = cfgout
     data_prefix = gsub("/conf/", "/data/", data_prefix)
     data_prefix = gsub(".conf$", "", data_prefix)
-    data_filename = paste0(data_prefix, "_", colname, "_arc.txt")
-    message(paste0("Writing data file: ", data_file, " with the ", colname, " column."))
+    data_filename = paste0(data_prefix, "_", first_col, "_arc.txt")
+    message(paste0("Writing data file: ", data_filename, " with the ", first_col, " column."))
     print_arc = function(x) {
         cat(x[5], " chr5005 ", x[1], " ", x[2], "\n", x[5], " chr5448 ", x[3], " ", x[4], "\n\n", file="circos/data/crossref_5005_5448.txt", append=TRUE, sep="")
     }
@@ -911,7 +932,7 @@ circos_arc = function(df, cfgout="circos/conf/default.conf", first_col='chr1', s
 ## The histogram ring for %s
 <<include %s>>
 
-", colname, data_cfg_include)
+", first_col, data_cfg_include)
     cat(master_cfg_string, file=master_cfg_out, sep="")
     close(master_cfg_out)
 
@@ -928,7 +949,7 @@ circos_arc = function(df, cfgout="circos/conf/default.conf", first_col='chr1', s
 #' be no highlight stanzas and at most 1 link stanza.
 #' chromosomes.  A minimal amount of logic and data organization will
 #' address these weaknesses.
-#' 
+#'
 #' @param name default='default'  The name of the map, called with 'make name'
 #' @param circos_dir default='circos/conf'  The directory containing the circos configuration data.
 #' @param radius default=1800  The size of the image.
@@ -940,36 +961,49 @@ circos_prefix = function(name="default", conf_dir="circos/conf", radius=1800, ba
     cfgout = paste0(conf_dir, "/", name, ".conf")
     message(paste0("It will write ", cfgout, " with a reasonable first approximation config file."))
 
+    data_dir = gsub(pattern="conf", replacement="data", x=conf_dir)
+    if (!file.exists(data_dir)) {
+        message(paste0("Creating the data directory: ", data_dir))
+        dir.create(data_dir, recursive=TRUE)
+    }
     if (!file.exists(conf_dir)) {
-        message(paste0("The circos directory does not exist, creating: ", circos_dir))
+        message(paste0("The circos directory does not exist, creating: ", conf_dir))
         dir.create(conf_dir, recursive=TRUE)
     }
     karyotype_dir = paste0(conf_dir, "/karyotypes")
+    ideogram_dir = paste0(conf_dir, "/ideograms")
     if (!file.exists(karyotype_dir)) {
         message(paste0("The karyotype directory does not exist, creating: ", karyotype_dir))
         dir.create(karyotype_dir, recursive=TRUE)
     }
+    if (!file.exists(paste0(conf_dir, '/ideograms'))) {
+        message(paste0("The ideogram directory does not exist, creating: ", ideogram_dir))
+        dir.create(ideogram_dir, recursive=TRUE)
+    }
     karyotype_file = gsub("circos/conf", "conf/karyotypes", cfgout)
-
     ideogram_file = gsub("circos/conf", "conf/ideograms", cfgout)
+    etc_file = paste0(path.package("hpgltools"), "/inst/circos/circos_etc.tar.xz")
+    etc_cmd = paste0("tar -C ", dirname(conf_dir), " -xavf ", etc_file)
+    system(command=etc_cmd)
+
     ## If you want clickable ideograms, add band_url='script?start=[start]&end=[end]&label=[label]
-    ## for example, thus one could bring up 
+    ## for example, thus one could bring up
     circos_ideogram(name=name, conf_dir=conf_dir, band_url=band_url)
-    
-    out = file(cfgout, open='w+')        
+
+    out = file(cfgout, open='w+')
     prefix_string = sprintf("## This is the prefix of a circos configuration file written by hpgltools.
 <colors>
- <<include colors/colors.conf>>
+ <<include etc/colors.conf>>
 </colors>
 <fonts>
- <<include fonts/fonts.conf>>
+ <<include etc/fonts/fonts.conf>>
 </fonts>
 
 ## The ideograms are generated by circos_ideogram() in R.
 <<include %s>>
 
-<<include conf/ticks.conf>>
-<<include conf/housekeeping.conf>>
+<<include etc/ticks.conf>>
+<<include etc/housekeeping.conf>>
 
 karyotype = %s
 
@@ -991,7 +1025,6 @@ chromosomes_display_default = yes
     cat(prefix_string, file=out, sep="")
     close(out)
     to_path = paste0(name, ".conf")
-    print(paste0("TESTME: ", to_path))
     if (!file.exists(to_path)) {
         wd = getwd()
         tmpwd = paste0(wd, "/circos")
@@ -1012,7 +1045,7 @@ chromosomes_display_default = yes
 #'     configuration file to write.
 #' @return undef
 circos_suffix = function(cfgout="circos/conf/default.conf") {
-    out = file(cfgout, open='a+')        
+    out = file(cfgout, open='a+')
     suffix_string = "</plots>"
     cat(suffix_string, file=out, sep="\n")
     close(out)

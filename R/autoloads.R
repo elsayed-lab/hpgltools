@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Aug 27 12:33:37 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 16:03:44 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -11,7 +11,7 @@
 #' @param github_path default=NULL  an optional github username/path.
 #' @param verbose default=FALSE  print some information while loading.
 #' @param update default=FALSE  update packages?
-#' 
+#'
 #' @return NULL currently
 #' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}
 #' @export
@@ -33,7 +33,7 @@ require.auto = function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
     } else {
         if (is.null(github_path)) {
             source("http://bioconductor.org/biocLite.R")
-            biocLite(character(), ask=FALSE) # update dependencies, if any.
+            ##biocLite(character(), ask=FALSE) # update dependencies, if any.
             eval(parse(text=paste("biocLite('", lib, "')", sep="")))
             if (verbose) {
                 message(sprintf("Loading %s", lib))
@@ -133,6 +133,7 @@ autoloads_helpers = function() {
     require.auto("rmarkdown")
     require.auto("roxygen2")
     require.auto("testthat")
+    require.auto("tools")    
     options(java.parameters = "-Xmx4g")  ## used for xlconnect
     require.auto("XLConnect")
     require.auto("xtable")
@@ -173,10 +174,10 @@ autoloads_all = function(update=FALSE) {
                bold = paste(mainfont, "style=Bold", sep = ":"),
                italic = paste("SimSun", "style=Regular", sep = ":"),
                bolditalic = paste(mainfont, "style=Bold Italic,BoldItalic", sep = ":"))
-    pdf = CairoPDF
-    png = CairoPNG
-    x11 = CairoX11
-    svg = CairoSVG
+    ##pdf = CairoPDF
+    ##png = CairoPNG
+    ##x11 = CairoX11
+    ##svg = CairoSVG
     if (isTRUE(update)) {
         update.packages()
     }

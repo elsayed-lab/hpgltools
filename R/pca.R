@@ -1,4 +1,4 @@
-# Time-stamp: <Wed Jul 22 16:41:11 2015 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Tue Nov 24 17:39:22 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
 #'
@@ -24,7 +24,7 @@
 #' ## pca_plot = hpgl_pca(expt=expt)
 #' ## pca_plot
 hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, size=5, ...) {
-    hpgl_env = environment()
+    ## hpgl_env = environment()
     data_class = class(data)[1]
     names = NULL
     if (data_class == 'expt') {
@@ -66,7 +66,7 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
         design$condition = as.numeric(design$labels)
         colnames(design) = c("name","batch","condition")
     }
-    pca = hpgltools::makeSVD(data)  ## This is a part of cbcbSEQ
+    pca = hpgltools:::makeSVD(data)  ## This is a part of cbcbSEQ
     included_batches = as.factor(as.character(design$batch))
     included_conditions = as.factor(as.character(design$condition))
     if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
@@ -124,7 +124,7 @@ hpgl_pca = function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, siz
 
 
 #' pca_plot_largebatch()  ggplot2 plots of PCA data with >= 6 batches.
-#' 
+#'
 #' @param df  A dataframe of PC1/PC2 and other arbitrary data.
 #' @param size default=5  The size of glyphs in the plot.
 #'
@@ -217,8 +217,8 @@ plot_pcs = function(data, first="PC1", second="PC2", variances=NULL, design=NULL
     if (is.null(title)) {
         title = paste(first, " vs. ", second, sep="")
     }
-    colors = levels(as.factor(unlist(design$color)))
-    num_batches = length(levels(factor(design$batch)))
+    ## colors = levels(as.factor(unlist(design$color)))
+    ## num_batches = length(levels(factor(design$batch)))
 
     pca_plot = ggplot(data=as.data.frame(data), environment=hpgl_env, fill=factor(design$condititon)) +
         geom_point(aes(x=get(first), y=get(second), shape=batches, colour=data$colors), stat="identity", size=3) +
@@ -285,7 +285,7 @@ u_plot = function(plotted_us) {
     rm(plotted_u1s)
     rm(plotted_u2s)
     rm(plotted_u3s)
-    top_threePC = head(plotted_us, n=20)
+    ## top_threePC = head(plotted_us, n=20)
     plotted_us = plotted_us[,c("PC1","PC2","PC3")]
     plotted_us$ID = rownames(plotted_us)
     message("The more shallow the curves in these plots, the more genes responsible for this principle component.")
@@ -339,7 +339,7 @@ u_plot = function(plotted_us) {
 #' ## pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
 #' ## pca_info
 pca_information = function(data, design=NULL, factors=c("condition","batch"), num_components=NULL, plot_pcas=FALSE, labels="fancy") {
-    hpgl_env = environment()
+    ## hpgl_env = environment()
     data_class = class(data)[1]
     if (data_class == 'expt') {
         design = data$design
@@ -389,7 +389,9 @@ pca_information = function(data, design=NULL, factors=c("condition","batch"), nu
     }
     pca_variance = round((positives ^ 2) / sum(positives ^2) * 100, 2)
     xl = sprintf("PC1: %.2f%% variance", pca_variance[1])
+    print(xl)
     yl = sprintf("PC2: %.2f%% variance", pca_variance[2])
+    print(yl)
     labels = rownames(design)
 
     pca_data = data.frame(SampleID=labels,
@@ -435,8 +437,8 @@ pca_information = function(data, design=NULL, factors=c("condition","batch"), nu
     }
     factor_df = factor_df[-1]
 
-    fit_one = data.frame()
-    fit_two = data.frame()
+    ## fit_one = data.frame()
+    ## fit_two = data.frame()
     cor_df = data.frame()
     anova_rss = data.frame()
     anova_sums = data.frame()
@@ -477,6 +479,7 @@ pca_information = function(data, design=NULL, factors=c("condition","batch"), nu
             }
             anova_fstats[factor,pc] = fstat
 
+            cor_test = NULL
             tryCatch(
                 {
                     cor_test = cor.test(tmp_df[,factor_name], tmp_df[,pc_name], na.rm=TRUE)
@@ -510,7 +513,7 @@ pca_information = function(data, design=NULL, factors=c("condition","batch"), nu
     ##    silly_colors = grDevices::colorRampPalette(brewer.pal(9, "Purples"))(100)
     silly_colors = grDevices::colorRampPalette(c("purple","black","yellow"))(100)
     cor_df = cor_df[complete.cases(cor_df),]
-    sillytime = heatmap.3(cor_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=silly_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="cor(factor, PC)")
+    pc_factor_corheat = heatmap.3(cor_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=silly_colors, dendrogram = "none", Rowv=FALSE, Colv=FALSE, main="cor(factor, PC)")
     pc_factor_corheat = recordPlot()
 
     anova_f_colors = grDevices::colorRampPalette(c("blue","black","red"))(100)
@@ -561,8 +564,8 @@ pca_information = function(data, design=NULL, factors=c("condition","batch"), nu
 #' ## information$pca_bitplot  ## oo pretty
 pca_highscores = function(df=NULL, conditions=NULL, batches=NULL, n=20) {
     ## Another method of using PCA
-    cond = as.factor(as.numeric(conditions))
-    batch = as.factor(as.numeric(batches))
+    ## cond = as.factor(as.numeric(conditions))
+    ## batch = as.factor(as.numeric(batches))
     another_pca = try(princomp(x=df, cor=TRUE, scores=TRUE, formula=~0 + cond + batch))
     plot(another_pca)
     pca_hist = recordPlot()

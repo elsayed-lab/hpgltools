@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Oct  8 14:36:35 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Nov 24 17:25:17 2015 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -31,11 +31,13 @@ goseq_table = function(df, file=NULL) {
     if (is.null(df$ontology)) {
         df$ontology = goont(df$category)
     }
-    df = subset(df, !is.null(term))
+    ## df = subset(df, !is.null(term))
+    df = df[ which(!is.null(df$term)), ]
     print("Testing that go categories are defined.")
     df$good = gotest(df$category)
     print("Removing undefined categories.")
-    df = subset(df, good == 1)
+    ## df = subset(df, good == 1)
+    df = df[ which(df$good == 1), ]
     print("Gathering synonyms.")
     df$synonym = gosyn(df$category)
     print("Gathering secondary ids.")
@@ -119,7 +121,7 @@ simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adju
     }
     pwf = NULL
     if (is.null(species)) {
-        length_table = lengths[,c("ID","width")]
+        ## length_table = lengths[,c("ID","width")]
         width_vector = as.vector(de_table$width)
         names(width_vector) = de_table$ID
         if (is.null(goids)) {
@@ -233,6 +235,7 @@ goseq_pval_plots = function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat=
         print("Extracting the goterms in your chosen level.")
         goterms = merge(goterms, keepers, by.x="category", by.y="GO")
     }
+    ## TODO: Replace the subset calls with the less noxious which calls.
     plotting_mf = subset(goterms, complete.cases(goterms))
     plotting_mf$score = plotting_mf$numDEInCat / plotting_mf$numInCat
     plotting_mf = subset(plotting_mf, ontology == "MF")

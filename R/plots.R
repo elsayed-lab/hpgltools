@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Sep 16 15:23:23 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Nov 30 15:51:58 2015 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -51,10 +51,10 @@
 graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL, scale="raw", sink=FALSE, ...) {
     ## First gather the necessary data for the various plots.
     options(scipen=999)
-    expt_design = expt$design
-    expt_colors = expt$colors
-    expt_names = expt$names
-    expt_raw_data = Biobase::exprs(expt$expressionset)
+    ## expt_design = expt$design
+    ## expt_colors = expt$colors
+    ## expt_names = expt$names
+    ## expt_raw_data = Biobase::exprs(expt$expressionset)
 
     nonzero_title = "Non zero genes"
     libsize_title = "Library sizes"
@@ -65,7 +65,6 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
     smd_title = "Standard Median Distance"
     pca_title = "Principle Component Analysis"
     dens_title = "Density plot"
-    ma_titles = "MA"
 
     if (!is.null(title_suffix)) {
         nonzero_title = paste0(nonzero_title, ": ", title_suffix)
@@ -76,8 +75,7 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
         disheat_title = paste0(disheat_title, ": ", title_suffix)
         smd_title = paste0(smd_title, ": ", title_suffix)
         pca_title = paste0(pca_title, ": ", title_suffix)
-        dens_title = paste0(pca_title, ": ", title_suffix)
-        ma_title = paste0(ma_titles, ": ", title_suffix)
+        dens_title = paste0(dens_title, ": ", title_suffix)
     }
 
     message("Graphing number of non-zero genes with respect to CPM by library.")
@@ -133,9 +131,9 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
 hpgl_bcv_plot = function(data) {
     data_class = class(data)[1]
     if (data_class == 'expt') {
-        design = data$design
-        colors = data$colors
-        names = data$names
+        ## design = data$design
+        ## colors = data$colors
+        ## names = data$names
         data = exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         data = exprs(data)
@@ -344,7 +342,7 @@ hpgl_density = function(data, colors=NULL, names=NULL, position="identity", fill
 #' @export
 #' @examples
 #' ## hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-hpgl_dist_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, size=3) {
+hpgl_dist_scatter = function(df, tooltip_data=NULL, gvis_filename=NULL, size=2) {
     hpgl_env = environment()
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]
@@ -819,7 +817,7 @@ hpgl_multihistogram = function(data, log=FALSE, binwidth=NULL, bins=NULL, verbos
         }
     } else if (is.list(data)) {
         summary_df = summary(data)
-        play_all = reshape::melt(data)
+        play_all = reshape2::melt(data)
         colnames(play_all) = c("expression","cond")
     } else {
         stop("This can only work with a list or data frame.")
@@ -1264,7 +1262,7 @@ hpgl_qq_all_pairwise = function(df=NULL, expt=NULL, verbose=FALSE) {
 #' \code{\link{heatmap.3}}, \code{\link{recordPlot}}
 #'
 #' @export
-hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, names=NULL, title=NULL, ...) {
+hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=FALSE, ...) {
     hpgl_env = environment()
     data_class = class(data)[1]
     if (data_class == 'expt') {
@@ -1283,7 +1281,8 @@ hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, names=NULL, title
     if (is.null(names)) {
         names = colnames(data)
     }
-    heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, labCol=names, margins=c(12,8), trace="none", linewidth=0.5, main=title)
+    data = as.matrix(data)
+    heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, labCol=names, margins=c(12,8), trace="none", linewidth=0.5, main=title, Rowv=Rowv)
     hpgl_heatmap_plot = recordPlot()
     return(hpgl_heatmap_plot)
 }
@@ -1304,7 +1303,7 @@ hpgl_sample_heatmap = function(data, colors=NULL, design=NULL, names=NULL, title
 #' @export
 #' @examples
 #' ## hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
-hpgl_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=3) {
+hpgl_scatter = function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=2) {
     hpgl_env = environment()
     df = data.frame(df[,c(1,2)])
     df = df[complete.cases(df),]

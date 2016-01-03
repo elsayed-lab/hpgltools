@@ -1,4 +1,24 @@
-## Time-stamp: <Tue Oct 20 17:22:12 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Nov 25 14:53:22 2015 Ashton Trey Belew (abelew@gmail.com)>
+
+#' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
+#' It just does fast.svd of a matrix against its rowMeans().
+#'
+#' @param data A data frame to decompose
+#'
+#' @return a list containing the s,v,u from fast.svd
+#' @seealso \code{\link{fast.svd}}
+#'
+#' @export
+#' @examples
+#' ## svd = makeSVD(data)
+makeSVD = function (x) {
+    x = as.matrix(x)
+    s = fast.svd(x - rowMeans(x))
+    v = s$v
+    rownames(v) = colnames(x)
+    s = list(v=v, u=s$u, d=s$d)
+    return(s)
+}
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -120,6 +140,93 @@ make_report = function(name="report", type='pdf') {
     return(result)
 }
 
+#' hpgl_arescore()  Implement the arescan function in R
+#'
+#' This function was taken almost verbatim from AREScore() in SeqTools
+#' Available at: https://github.com/lianos/seqtools.git
+#' At least on my computer I could not make that implementation work
+#' So I rewrapped its apply() calls and am now hoping to extend its logic
+#' a little to make it more sensitive and get rid of some of the spurious
+#' parameters or at least make them more transparent.
+#'
+#' @param stringset  A DNA/RNA StringSet containing the UTR sequences of interest
+#' @param basal default=1  I dunno.
+#' @param overlapping default=1.5
+#' @param d1.3 default=0.75  These parameter names are so stupid, lets be realistic
+#' @param d4.6 default=0.4
+#' @param d7.9 default=0.2
+#' @param within.AU default=0.3
+#' @param aub.min.length default=10
+#' @param aub.p.to.start default=0.8
+#' @param aub.p.to.end default=0.55
+#'
+#' @return a DataFrame of scores
+hpgl_arescore = function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
+                        d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
+                        aub.p.to.end=0.55) {
+    xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
+    if (xtype == "DNA") {
+        pentamer = "ATTTA"
+        overmer = "ATTTATTTA"
+    } else {
+        pentamer = "AUUUA"
+        overmer = "ATTTATTTA"
+    }
+    x = as(x, "DNAStringSet")
+    pmatches = vmatchPattern(pentamer, x)
+    omatches = vmatchPattern(overmer, x)
+    basal.score = elementLengths(pmatches) * basal
+    over.score = elementLengths(omatches) * overlapping
+    no.cluster = data.frame(d1.3 = 0, d4.6 = 0, d7.9 = 0)
+    clust = lapply(pmatches, function(m) {
+        if (length(m) < 2) {
+            return(no.cluster)
+        }
+        wg = width(gaps(m))
+        data.frame(d1.3=sum(wg <= 3), d4.6=sum(wg >= 4 & wg <= 6), d7.9=sum(wg >= 7 & wg <= 9))
+    })
+    clust = do.call(rbind, clust)
+    dscores = clust$d1.3 * d1.3 + clust$d4.6 * d4.6 + clust$d7.9 *  d7.9
+    library("Biostrings")
+    au.blocks = hpgltools:::my_identifyAUBlocks(x, aub.min.length, aub.p.to.start, aub.p.to.end)
+    aub.score = sum(countOverlaps(pmatches, au.blocks) * within.AU)
+    score = basal.score + over.score + dscores + aub.score
+    ans = DataFrame(score=score, n.pentamer=elementLengths(pmatches), n.overmer=elementLengths(omatches),
+                    au.blocks=au.blocks, n.au.blocks=elementLengths(au.blocks))
+    cbind(ans, DataFrame(clust))
+}
+my_identifyAUBlocks = function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
+    xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
+    stopifnot(isSingleNumber(min.length) && min.length >= 5 &&  min.length <= 50)
+    stopifnot(isSingleNumber(p.to.start) && p.to.start >= 0.5 && p.to.start <= 0.95)
+    stopifnot(isSingleNumber(p.to.end) && p.to.end >= 0.2 && p.to.end <= 0.7)
+    stopifnot(p.to.start > p.to.end)
+    if (xtype == "DNA") {
+        AU <- "AT"
+    } else {
+        AU <- "AU"
+    }
+    y <- as(x, sprintf("%sStringSet", xtype))
+
+    widths <- width(x)
+    fun = function(i) {
+        one_seq = x[[i]]
+        au <- Biostrings::letterFrequencyInSlidingView(one_seq, min.length, AU, as.prob = TRUE)
+        if (is.null(au) | nrow(au) == 0) {
+                return(IRanges())
+            }
+        au <- as.numeric(au)
+        can.start <- au >= p.to.start
+        can.end <- au <= p.to.end
+        posts <- .Call("find_au_start_end", au, p.to.start, p.to.end, PACKAGE = "SeqTools")
+        blocks <- IRanges(posts$start, posts$end + min.length -  1L)
+        end(blocks) <- ifelse(end(blocks) > widths[i], widths[i], end(blocks))
+        IRanges::reduce(blocks)
+    }
+    au.blocks = lapply(1:length(x), fun)
+    IRangesList(au.blocks)
+}
+
 
 #' gff2df()  Try to make import.gff a little more robust
 #'
@@ -128,6 +235,7 @@ make_report = function(name="report", type='pdf') {
 #' This function wraps import.gff/import.gff3/import.gff2 calls in try()
 #' Because sometimes those functions fail in unpredictable ways.
 #'
+#' @export
 #' @return  a df!
 gff2df = function(gff) {
     ret = NULL
@@ -146,6 +254,33 @@ gff2df = function(gff) {
     ## no method to coerce an S4 class to a vector.
     ret = GenomicRanges::as.data.frame(ret)
     return(ret)
+}
+
+#' gff2irange()  Try to make import.gff a little more robust
+#'
+#' @param gff  a gff filename
+#'
+#' This function wraps import.gff/import.gff3/import.gff2 calls in try()
+#' Because sometimes those functions fail in unpredictable ways.
+#'
+#' @export
+#' @return  an iranges! (useful for getSeq())
+gff2irange = function(gff) {
+    ret = NULL
+    annotations = try(import.gff3(gff), silent=TRUE)
+    if (class(annotations) == 'try-error') {
+        annotations = try(import.gff2(gff), silent=TRUE)
+        if (class(annotations) == 'try-error') {
+            stop("Could not extract the widths from the gff file.")
+        } else {
+            ret = annotations
+        }
+    } else {
+        ret = annotations
+    }
+    ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
+    ## no method to coerce an S4 class to a vector.
+     return(ret)
 }
 
 #' hpgl_cor()  Wrap cor() to include robust correlations.
@@ -171,12 +306,17 @@ hpgl_cor = function(df, method="pearson", ...) {
     return(correlation)
 }
 
-make_tooltips = function(annotations=NULL, gff=NULL) {
+#' make_tooltips()  Create a simple df from gff which contains tooltip usable information for gVis graphs.
+#'
+#' @param gff or annotations: Either a gff file or annotation data frame (which likely came from a gff file.)
+#'
+#' @return a df of tooltip information
+make_tooltips = function(annotations=NULL, gff=NULL, desc_col='description') {
     if (is.null(annotations) & is.null(gff)) {
         stop("I need either a data frame or gff file.")
     } else {
         if (!is.null(annotations)) {
-            tooltip_data = annotations[,c("ID","Name","locus_tag")]
+            tooltip_data = annotations[,c("ID", desc_col)]
         } else {
             ret = NULL
             annotations = try(import.gff3(gff), silent=TRUE)
@@ -196,32 +336,17 @@ make_tooltips = function(annotations=NULL, gff=NULL) {
         }
     }
     tooltip_data$tooltip = ""
-    if (is.null(tooltip_data$locus_tag) & is.null(tooltip_data$Name) & is.null(tooltip_data$ID)) {
+    if (is.null(tooltip_data[[desc_col]])) {
         stop("I need a name!")
     } else {
-        if (is.null(tooltip_data$locus_tag)) {
-            tooltip_data$locus_tag = ""
-        } else {
-            tooltip_data$tooltip = paste(tooltip_data$tooltip, tooltip_data$locus_tag, sep=": ")
-        } 
-        if (is.null(tooltip_data$Name)) {
-            tooltip_data$Name = ""
-        } else {
-            tooltip_data$tooltip = paste(tooltip_data$tooltip, tooltip_data$Name, sep=": ")
-        }
-        if (is.null(tooltip_data$ID)) {
-            tooltip_data$ID = ""
-        } else {
-            tooltip_data$tooltip = paste(tooltip_data$tooltip, tooltip_data$ID, sep=": ")
-        }
+        tooltip_data$tooltip = paste0(tooltip_data$ID, ': ', tooltip_data[[desc_col]])
     }
     tooltip_data$tooltip = gsub("\\+", " ", tooltip_data$tooltip)
     tooltip_data$tooltip = gsub(": $", "", tooltip_data$tooltip)
     tooltip_data$tooltip = gsub("^: ", "", tooltip_data$tooltip)
     rownames(tooltip_data) = make.names(tooltip_data$ID, unique=TRUE)
-    tooltip_data = tooltip_data[,c("ID","Name","locus_tag", "1.tooltip")]
     tooltip_data = tooltip_data[-1]
-    tooltip_data = tooltip_data[-1]
+    colnames(tooltip_data) = c("short", "1.tooltip")
     tooltip_data = tooltip_data[-1]
     return(tooltip_data)
 }
@@ -304,12 +429,12 @@ write_xls = function(data, sheet="first", file="excel/workbook", rowname="rownam
     file = gsub(pattern="\\.xls.", replacement="", file, perl=TRUE)
     filename = NULL
     if (isTRUE(dated)) {
-        timestamp = format(Sys.time(), "%Y%m%d-%H%M")
+        timestamp = format(Sys.time(), "%Y%m%d%H")
         filename = paste0(file, "-", timestamp, suffix)
     } else {
         filename = paste0(file, suffix)
     }
-    
+
     if (file.exists(filename)) {
         if (isTRUE(overwritefile)) {
             backup_file(filename)
@@ -326,7 +451,7 @@ write_xls = function(data, sheet="first", file="excel/workbook", rowname="rownam
             renameSheet(xls, sheet=sheet, newName=newname)
         }
     }
-    
+
     createSheet(xls, name=sheet)
     if (is.na(rowname)) {
         writeWorksheet(xls, data, sheet=sheet)
@@ -340,18 +465,55 @@ write_xls = function(data, sheet="first", file="excel/workbook", rowname="rownam
 #'
 #' @param file  the file to backup.
 #' @param backups default=10  how many revisions?
-backup_file = function(file, backups=10) {
-    for (i in backups:01) {
-        j = i + 1
-        i = sprintf("%02d", i)
-        j = sprintf("%02d", j)
-        test = paste0(file, ".", i)
-        new = paste0(file, ".", j)
-        if (file.exists(test)) {
-            file.rename(test, new)
+backup_file = function(backup_file, backups=10) {
+    if (file.exists(backup_file)) {
+        for (i in backups:01) {
+            j = i + 1
+            i = sprintf("%02d", i)
+            j = sprintf("%02d", j)
+            test = paste0(backup_file, ".", i)
+            new = paste0(backup_file, ".", j)
+            if (file.exists(test)) {
+                file.rename(test, new)
+            }
         }
+        newfile = paste0(backup_file, ".", i)
+        message(paste0("Renaming ", backup_file, " to ", newfile, "."))
+        file.rename(backup_file, newfile)
+    } else {
+        message("The file does not yet exist.")
     }
-    file.rename(file, paste0(file, ".", i))
+}
+
+#' saveme()  Load a backup rdata file
+#'
+#' @param dir default='savefiles'  the directory containing the RData.rda.xz file.
+loadme = function(dir="savefiles") {
+    savefile = paste0(getwd(), "/", dir, "/RData.rda.xz")
+    message(paste0("Loading the savefile: ", savefile))
+    load_string <- paste0("load('", savefile, "', envir=globalenv())")
+    message(paste0("Command run: ", load_string))
+    eval(parse(text=load_string))
+}
+
+#' saveme()  Make a backup rdata file for future reference
+#'
+#' @param dir  the directory to save the Rdata file.
+#' @param backups default=10  how many revisions?
+saveme = function(directory="savefiles", backups=4) {
+    environment()
+    if (!file.exists(directory)) {
+        dir.create(directory)
+    }
+    savefile = paste0(getwd(), "/", directory, "/RData.rda.xz")
+    message(paste0("The savefile is: ", savefile))
+    backup_file(savefile, backups=backups)
+    ## The following save strings work:
+    ## save_string <- paste0("save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file='", savefile, "')")
+    ## save_string <- paste0("con <- base::pipe(paste0('pigz -p8 > ", savefile, "'), 'wb');\n save(list=ls(all.names=TRUE, envir=globalenv(), envir=globalenv(), file=con);\n close(con)")
+    save_string <- paste0("con <- base::pipe(paste0('pxz -T4 > ", savefile, "'), 'wb');\n save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n close(con)")
+    message(paste0("The save string is: ", save_string))
+    eval(parse(text=save_string))
 }
 
 ## EOF
