@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 14:49:22 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan  4 15:57:14 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -651,5 +651,100 @@ write_go_xls = function(goseq, cluster, topgo, gostats, go_file="excel/merged_go
     write_xls(topgo$tables$cc_interesting, sheet="topgo_cc", file=go_file)
     write_xls(head(gostats$cc_over_all, n=30), sheet="gostats_cc", file=go_file)
 }
+
+compare_go_searches = function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NULL) {
+    goseq_mf_data = goseq_bp_data = goseq_cc_data = NULL
+    if (!is.null(goseq)) {
+        goseq_mf_data = goseq$mf_subset[,c("category","over_represented_pvalue")]
+        goseq_bp_data = goseq$bp_subset[,c("category","over_represented_pvalue")]
+        goseq_cc_data = goseq$cc_subset[,c("category","over_represented_pvalue")]
+        colnames(goseq_mf_data) = c("goseq_id","goseq_pvalue")
+        colnames(goseq_bp_data) = c("goseq_id","goseq_pvalue")
+        colnames(goseq_cc_data) = c("goseq_id","goseq_pvalue")
+    }
+    cluster_mf_data = cluster_bp_data = cluster_cc_data = NULL
+    if (!is.null(cluster)) {
+        cluster_mf_data = as.data.frame(summary(cluster$mf_all))[,c("ID","pvalue")]
+        cluster_bp_data = as.data.frame(summary(cluster$bp_all))[,c("ID","pvalue")]
+        cluster_cc_data = as.data.frame(summary(cluster$cc_all))[,c("ID","pvalue")]
+        colnames(cluster_mf_data) = c("cluster_id","cluster_pvalue")
+        colnames(cluster_bp_data) = c("cluster_id","cluster_pvalue")
+        colnames(cluster_cc_data) = c("cluster_id","cluster_pvalue")
+    }
+    topgo_mf_data = topgo_bp_data = topgo_cc_data = NULL
+    if (!is.null(topgo)) {
+        topgo_mf_data = topgo$tables$mf[,c("GO.ID","fisher","KS","EL","weight")]
+        topgo_bp_data = topgo$tables$bp[,c("GO.ID","fisher","KS","EL","weight")]
+        topgo_cc_data = topgo$tables$cc[,c("GO.ID","fisher","KS","EL","weight")]
+        colnames(topgo_mf_data) = c("topgo_id","topgo_fisher_pvalue","topgo_el_pvalue","topgo_ks_pvalue","topgo_weight_pvalue")
+        colnames(topgo_bp_data) = c("topgo_id","topgo_fisher_pvalue","topgo_el_pvalue","topgo_ks_pvalue","topgo_weight_pvalue")
+        colnames(topgo_cc_data) = c("topgo_id","topgo_fisher_pvalue","topgo_el_pvalue","topgo_ks_pvalue","topgo_weight_pvalue")
+    }
+    gostats_mf_data = gostats_bp_data = gostats_cc_data = NULL
+    if (!is.null(gostats)) {
+        gostats_mf_data = gostats$mf_over_all[,c("GOMFID","Pvalue")]
+        gostats_bp_data = gostats$bp_over_all[,c("GOBPID","Pvalue")]
+        gostats_cc_data = gostats$cc_over_all[,c("GOCCID","Pvalue")]
+        colnames(gostats_mf_data) = c("gostats_id","gostats_pvalue")
+        colnames(gostats_bp_data) = c("gostats_id","gostats_pvalue")
+        colnames(gostats_cc_data) = c("gostats_id","gostats_pvalue")
+    }
+    ## Now combine them...
+    all_mf = merge(goseq_mf_data, cluster_mf_data, by.x="goseq_id", by.y="cluster_id", all.x=TRUE, all.y=TRUE)
+    all_mf = merge(all_mf, topgo_mf_data, by.x="goseq_id", by.y="topgo_id", all.x=TRUE, all.y=TRUE)
+    all_mf = merge(all_mf, gostats_mf_data, by.x="goseq_id", by.y="gostats_id", all.x=TRUE, all.y=TRUE)
+    rownames(all_mf) = all_mf$goseq_id
+    all_mf = all_mf[-1]
+    all_mf[is.na(all_mf)] = 1
+    all_mf$goseq_pvalue = 1 - as.numeric(all_mf$goseq_pvalue)
+    all_mf$cluster_pvalue = 1 - as.numeric(all_mf$cluster_pvalue)
+    all_mf$topgo_fisher_pvalue = 1 - as.numeric(all_mf$topgo_fisher_pvalue)
+    all_mf$topgo_el_pvalue = 1 - as.numeric(all_mf$topgo_el_pvalue)
+    all_mf$topgo_ks_pvalue = 1 - as.numeric(all_mf$topgo_ks_pvalue)
+    all_mf$topgo_weight_pvalue = 1 - as.numeric(all_mf$topgo_weight_pvalue)
+    all_mf$gostats_pvalue = 1 - as.numeric(all_mf$gostats_pvalue)
+    all_mf[is.na(all_mf)] = 0
+    print(cor(all_mf))
+    mf_summary = rowSums(all_mf)
+    print(summary(mf_summary))
+
+    all_bp = merge(goseq_bp_data, cluster_bp_data, by.x="goseq_id", by.y="cluster_id", all.x=TRUE, all.y=TRUE)
+    all_bp = merge(all_bp, topgo_bp_data, by.x="goseq_id", by.y="topgo_id", all.x=TRUE, all.y=TRUE)
+    all_bp = merge(all_bp, gostats_bp_data, by.x="goseq_id", by.y="gostats_id", all.x=TRUE, all.y=TRUE)
+    rownames(all_bp) = all_bp$goseq_id
+    all_bp = all_bp[-1]
+    all_bp[is.na(all_bp)] = 1
+    all_bp$goseq_pvalue = 1 - as.numeric(all_bp$goseq_pvalue)
+    all_bp$cluster_pvalue = 1 - as.numeric(all_bp$cluster_pvalue)
+    all_bp$topgo_fisher_pvalue = 1 - as.numeric(all_bp$topgo_fisher_pvalue)
+    all_bp$topgo_el_pvalue = 1 - as.numeric(all_bp$topgo_el_pvalue)
+    all_bp$topgo_ks_pvalue = 1 - as.numeric(all_bp$topgo_ks_pvalue)
+    all_bp$topgo_weight_pvalue = 1 - as.numeric(all_bp$topgo_weight_pvalue)
+    all_bp$gostats_pvalue = 1 - as.numeric(all_bp$gostats_pvalue)
+    all_bp[is.na(all_bp)] = 0
+    print(cor(all_bp))
+    bp_summary = rowSums(all_bp)
+    print(summary(bp_summary))
+
+    all_cc = merge(goseq_cc_data, cluster_cc_data, by.x="goseq_id", by.y="cluster_id", all.x=TRUE, all.y=TRUE)
+    all_cc = merge(all_cc, topgo_cc_data, by.x="goseq_id", by.y="topgo_id", all.x=TRUE, all.y=TRUE)
+    all_cc = merge(all_cc, gostats_cc_data, by.x="goseq_id", by.y="gostats_id", all.x=TRUE, all.y=TRUE)
+    rownames(all_cc) = all_cc$goseq_id
+    all_cc = all_cc[-1]
+    all_cc[is.na(all_cc)] = 1
+    all_cc$goseq_pvalue = 1 - as.numeric(all_cc$goseq_pvalue)
+    all_cc$cluster_pvalue = 1 - as.numeric(all_cc$cluster_pvalue)
+    all_cc$topgo_fisher_pvalue = 1 - as.numeric(all_cc$topgo_fisher_pvalue)
+    all_cc$topgo_el_pvalue = 1 - as.numeric(all_cc$topgo_el_pvalue)
+    all_cc$topgo_ks_pvalue = 1 - as.numeric(all_cc$topgo_ks_pvalue)
+    all_cc$topgo_weight_pvalue = 1 - as.numeric(all_cc$topgo_weight_pvalue)
+    all_cc$gostats_pvalue = 1 - as.numeric(all_cc$gostats_pvalue)
+    all_cc[is.na(all_cc)] = 0
+    print(cor(all_cc))
+    cc_summary = rowSums(all_cc)
+    print(summary(cc_summary))
+
+}
+
 
 ## EOF

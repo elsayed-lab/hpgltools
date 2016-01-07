@@ -89,6 +89,12 @@ tooltip_data = tooltip_data[-1]
 colnames(tooltip_data) = c("name.tooltip")
 head(tooltip_data)
 
+## Here are the newer ways I do the above:
+## Ahh crap though I don't have the directory reference/gff/, I only saved a rdata image for these examples
+## Well, the following is an easier way of doing the above
+##  new_annotations = hpgltools:::gff2df(gff="reference/gff/clbrener_8.1_complete.gff.gz")
+##  tooltip_data = make_tooltips(annotations=new_annotations)  ## or gff= works too
+
 ```
 
 ### Reading count tables

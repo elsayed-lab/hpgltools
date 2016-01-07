@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 17:27:18 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan  4 12:47:10 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -13,10 +13,13 @@
 #' @return dunno yet
 #' @seealso \code{\link{GOstats}}
 #' @export
-simple_gostats = function(de_genes, gff, goids, universe_merge="ID", second_merge_try="locus_tag", organism="fun", pcutoff=0.10, direction="over", conditional=FALSE, categorysize=NULL) {
+simple_gostats = function(de_genes, gff, goids, universe_merge="ID", second_merge_try="locus_tag", organism="fun", pcutoff=0.10, direction="over", conditional=FALSE, categorysize=NULL, gff_type="CDS") {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should)
     ## contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
     annotation = hpgltools:::gff2df(gff)
+    ## This is similar to logic in ontology_goseq and is similarly problematic.
+    annotation = annotation[annotation$type == gff_type, ]
+    annotation[, universe_merge] = make.names(annotation[, universe_merge], unique=TRUE)
     if (universe_merge %in% names(annotation)) {
         universe = annotation[,c(universe_merge, "width")]
     } else if (second_merge_try %in% names(annotation)) {
@@ -42,13 +45,13 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="ID", second_merg
     universe_cross_de = merge(universe, de_genes, by.x="geneid", by.y="ID")
     degenes_ids = universe_cross_de$id
     universe_ids = universe$id
-    gostats_go = merge(universe, goids, by.x="geneid", by.y="ORF")
+    gostats_go = merge(universe, goids, by.x="geneid", by.y="ID")
     if (nrow(gostats_go) == 0) {
         stop("The merging of the universe vs. goids failed.")
     }
     gostats_go$frame.Evidence = "TAS"
     colnames(gostats_go) = c("sysName","width", "frame.gene_id", "frame.go_id", "frame.Evidence")
-    gostats_go = gostats_go[,c("frame.go_id","frame.Evidence","frame.gene_id")]
+    gostats_go = gostats_go[,c("frame.go_id", "frame.Evidence", "frame.gene_id")]
     gostats_frame = GOFrame(gostats_go, organism=organism)
     gostats_all = GOAllFrame(gostats_frame)
     require.auto("GSEABase", verbose=FALSE)

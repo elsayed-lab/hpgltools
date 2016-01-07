@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 17:22:04 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan  4 11:45:56 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified clusterProfiler analysis
 #'
@@ -289,7 +289,7 @@ cluster_trees = function(cpdata, goid_map="reference/go/id2go.map", goids_df=NUL
     names(cc_all_scores) = cc_all_ids
     mf_included = length(which(mf_all_scores <= score_limit))
     ##    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=floor(mf_included * 1.5) , useFullNames=TRUE, plotFunction=hpgl_GOplot)))    
+    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=floor(mf_included * 1.5) , useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(mf_tree_data)[1] == 'try-error') {
         mf_tree = NULL
     } else {

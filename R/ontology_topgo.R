@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 17:31:29 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan  4 12:07:14 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'

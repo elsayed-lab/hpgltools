@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Nov 25 14:53:22 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan  7 11:33:06 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -164,6 +164,15 @@ make_report = function(name="report", type='pdf') {
 hpgl_arescore = function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
                         d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
                         aub.p.to.end=0.55) {
+    ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
+    ## However, the repository I want for it is 'seqtools'
+    ## Ergo my stupid require.auto() will be confused by definition because it assumes equivalent names
+    if (isTRUE('SeqTools' %in% .packages(all.available=TRUE))) {
+        library('SeqTools')
+    } else {
+        require.auto("lianos/seqtools/R/pkg")
+        library('SeqTools')
+    }
     xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
     if (xtype == "DNA") {
         pentamer = "ATTTA"
@@ -187,7 +196,7 @@ hpgl_arescore = function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
     })
     clust = do.call(rbind, clust)
     dscores = clust$d1.3 * d1.3 + clust$d4.6 * d4.6 + clust$d7.9 *  d7.9
-    library("Biostrings")
+    require.auto("Biostrings")
     au.blocks = hpgltools:::my_identifyAUBlocks(x, aub.min.length, aub.p.to.start, aub.p.to.end)
     aub.score = sum(countOverlaps(pmatches, au.blocks) * within.AU)
     score = basal.score + over.score + dscores + aub.score
@@ -195,6 +204,7 @@ hpgl_arescore = function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
                     au.blocks=au.blocks, n.au.blocks=elementLengths(au.blocks))
     cbind(ans, DataFrame(clust))
 }
+
 my_identifyAUBlocks = function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
     xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
     stopifnot(isSingleNumber(min.length) && min.length >= 5 &&  min.length <= 50)

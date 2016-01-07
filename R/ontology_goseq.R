@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 17:25:17 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan  4 11:54:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -80,11 +80,22 @@ goseq_table = function(df, file=NULL) {
 #'   and ccp_plot
 #' @seealso \code{\link{goseq}} \code{\link{clusterProfiler}}
 #' @export
-simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius", padjust_method="BH", species=NULL, length_db="ensGene") {
+simple_goseq = function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius", padjust_method="BH", species=NULL, length_db="ensGene", gff=NULL) {
     message("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
     message("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
     message("The other table is of gene lengths with columns (gene)ID and (gene)width.")
     message("Other columns are fine, but ignored.")
+    if (is.null(lengths) & is.null(gff)) {
+        stop("Need wither a length dataframe or gff file to extract gene lengths.")
+    } else if (!is.null(lengths)) {
+        message("Using the explicit lengths df for gene lengths.")
+    } else {
+        ## This is probably hopelessly fragile and requires further thought
+        length_df = gff2df(gff)
+        lengths = length_df[length_df$type == 'CDS', ]
+        lengths = length_df[,c("gene_id", "width")]
+        colnames(lengths) = c("ID","width")
+    }
     if (is.null(de_genes$ID)) {
         de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
     }
