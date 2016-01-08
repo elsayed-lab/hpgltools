@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan  4 11:54:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jan  8 11:44:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -32,7 +32,8 @@ goseq_table = function(df, file=NULL) {
         df$ontology = goont(df$category)
     }
     ## df = subset(df, !is.null(term))
-    df = df[ which(!is.null(df$term)), ]
+    ## Something about this is a disaster FIXME
+    ## df = df[ which(!is.null(df$term)), ]
     print("Testing that go categories are defined.")
     df$good = gotest(df$category)
     print("Removing undefined categories.")

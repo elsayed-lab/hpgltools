@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan  4 12:47:10 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jan  8 10:23:36 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -18,7 +18,16 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="ID", second_merg
     ## contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
     annotation = hpgltools:::gff2df(gff)
     ## This is similar to logic in ontology_goseq and is similarly problematic.
+    ## Some gff files I use have all the annotation data in the type called 'gene', others use 'CDS', others use 'exon'
+    ## I need a robust method of finding the correct feature type to call upon.
+    message(paste0("Currently, gff_type is set to ", gff_type, " if this fails with bad merges, perhaps change that."))
+    types = c("CDS","gene","exon")
+    for (type in types) {
+        print(paste0("Type ", type, " has ", sum(annotation$type == type), " annotations in the gff file."))
+    }
+
     annotation = annotation[annotation$type == gff_type, ]
+    print(paste0("The current set of annotations has dimensions of: ", dim(annotation)))
     annotation[, universe_merge] = make.names(annotation[, universe_merge], unique=TRUE)
     if (universe_merge %in% names(annotation)) {
         universe = annotation[,c(universe_merge, "width")]
@@ -45,6 +54,9 @@ simple_gostats = function(de_genes, gff, goids, universe_merge="ID", second_merg
     universe_cross_de = merge(universe, de_genes, by.x="geneid", by.y="ID")
     degenes_ids = universe_cross_de$id
     universe_ids = universe$id
+    ## Sometimes I have the columns set to 'ID','GO' -- others I have 'ORF','GO'
+    ## FIXME!  This should be standardized.
+    colnames(goids) = c("ID","GO")
     gostats_go = merge(universe, goids, by.x="geneid", by.y="ID")
     if (nrow(gostats_go) == 0) {
         stop("The merging of the universe vs. goids failed.")
