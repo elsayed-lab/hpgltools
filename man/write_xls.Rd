@@ -4,37 +4,23 @@
 \alias{write_xls}
 \title{write_xls()  Write a dataframe to an excel spreadsheet sheet.}
 \usage{
-write_xls(data, sheet = "first", file = "excel/workbook",
-  rowname = "rownames", overwritefile = FALSE, overwritesheet = TRUE,
-  dated = TRUE, suffix = ".xls")
+write_xls(type = "xlsx", ...)
 }
 \arguments{
-\item{data}{a dataframe of information.}
+\item{type}{default='xlsx'  whether to use the xlsx or XLConnect package.}
 
-\item{sheet}{default='first'  the name of an excel sheet in a workbook.}
-
-\item{file}{default='excel/workbook.xls'  an excel workbook to which to write.}
-
-\item{rowname}{default='rownames'  what will the rownames be?}
-
-\item{overwritefile}{default=FALSE  overwrite the xls file with this new data, or use the original?}
-
-\item{overwritesheet}{default=TRUE  overwrite the xls sheet with this new data?  (if true it will make a backup sheet .bak).}
+\item{tripledots}{the set of arguments given to either xlsx or XLConnect}
 }
 \value{
-NULL, on the say it creates a workbook if necessary,
-creates a sheet, and writes the data to it.
+an excel workbook
 }
 \description{
 write_xls()  Write a dataframe to an excel spreadsheet sheet.
 }
 \examples{
 ## write_xls(dataframe, "hpgl_data")
-## Sometimes it is a good idea to go in and delete the workbook and
-## re-create it if this is used heavily, because it will get crufty.
 }
 \seealso{
-\code{\link{loadWorkbook}}, \code{\link{createSheet}},
-\code{\link{writeWorksheet}}, \code{\link{saveWorkbook}}
+\code{\link{XLConnect}}, \code{\link{xlsx}},
 }
 

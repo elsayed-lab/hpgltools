@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan  4 15:57:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 11 20:22:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -67,16 +67,6 @@ goterm = function(go="GO:0032559") {
     }
     go = mapply(term, go)
     return(go)
-    ## count = 1
-    ## for (go in goid) {
-    ##     value = try(as.character(Term(GOTERM[go])), silent=TRUE)
-    ##     if (class(value) == "try-error") {
-    ##         value = "not found"
-    ##     }
-    ##    goid[count] = value
-    ##     count = count + 1
-    ## }
-    ## return(goid)
 }
 
 #' gosyn()  Get a go synonym from an ID.
@@ -100,21 +90,15 @@ goterm = function(go="GO:0032559") {
 #' ## > "mitochondrial inheritance"
 gosyn = function(go) {
     go = as.character(go)
+    gosn = function(go) {
+        go = as.character(go)
+        result = ""
+        value = try(as.character(AnnotationDbi::Synonym(GOTERM[go])), silent=TRUE)
+        result = paste(deparse_go_value(value), collapse="; ")
+        return(result)
+    }
     go = mapply(gosn, go)
     return(go)
-}
-#' gosn()  Does the actual go synonym extraction for gosyn()
-#'
-#' This merely calls as.character(Synonym(GOTERM[go]))
-#'
-#' @param go  a go ID.
-#' @return some text
-gosn = function(go) {
-    go = as.character(go)
-    result = ""
-    value = try(as.character(AnnotationDbi::Synonym(GOTERM[go])), silent=TRUE)
-    result = paste(deparse_go_value(value), collapse="; ")
-    return(result)
 }
 
 #' Get a go secondary ID from an id
@@ -132,23 +116,15 @@ gosn = function(go) {
 #' ## > GO:0032432
 #' ## > "GO:0000141" "GO:0030482"
 gosec = function(go) {
+    gosc = function(go) {
+        go = as.character(go)
+        result = ""
+        value = try(as.character(AnnotationDbi::Secondary(GOTERM[go])), silent=TRUE)
+        result = deparse_go_value(value)
+        return(result)
+    }
     go = mapply(gosc, go)
     return(go)
-}
-#' gosc()  does the real work for gosec()
-#'
-#' @param go  a go id.
-#'
-#' @return One of the following:
-#'   "Not found" : for when the goID does not exist
-#'   "" : when there is no secondary id
-#'   or a character list of secondary IDs
-gosc = function(go) {
-    go = as.character(go)
-    result = ""
-    value = try(as.character(AnnotationDbi::Secondary(GOTERM[go])), silent=TRUE)
-    result = deparse_go_value(value)
-    return(result)
 }
 
 #' godef()  Get a go long-form definition from an id.
@@ -257,30 +233,6 @@ golevel = function(go) {
     mapply(golev, go)
 }
 
-#' gotst()  Test a GO id to see if it is useful by my arbitrary definition of 'useful'.
-#'
-#' @param go  a go ID, this may be a character or list (assuming the elements are goids).
-#'
-#' @return Some text
-#' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#'
-#' @examples
-#' ## gotest("GO:0032559")
-#' ## > 1
-#' ## gotest("GO:0923429034823904")
-#' ## > 0
-gotst = function(go) {
-    go = as.character(go)
-    value = try(GOTERM[[go]])
-    if (class(value) == 'try-error') {
-        return(0)
-    }
-    if (is.null(value)) {
-        return(0)
-    } else {
-        return(1)
-    }
-}
 #' gotest()  Test GO ids to see if they are useful.
 #' This just wraps gotst in mapply.
 #'
@@ -290,7 +242,24 @@ gotst = function(go) {
 #' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
 #'
 #' @export
+#' @examples
+#' ## gotest("GO:0032559")
+#' ## > 1
+#' ## gotest("GO:0923429034823904")
+#' ## > 0
 gotest = function(go) {
+    gotst = function(go) {
+        go = as.character(go)
+        value = try(GOTERM[[go]])
+        if (class(value) == 'try-error') {
+            return(0)
+        }
+        if (is.null(value)) {
+            return(0)
+        } else {
+            return(1)
+        }
+    }
     mapply(gotst, go)
 }
 
@@ -637,21 +606,197 @@ golevel_df = function(ont="MF", savefile="ontlevel.rda") {
     return(golevels)
 }
 
-write_go_xls = function(goseq, cluster, topgo, gostats, go_file="excel/merged_go") {
-    write_xls(head(goseq$mf_subset, n=30), sheet="goseq_mf", file=go_file)
-    write_xls(head(summary(cluster$mf_all), n=30), sheet="cluster_mf", file=go_file)
-    write_xls(topgo$tables$mf_interesting, sheet="topgo_mf", file=go_file)
-    write_xls(head(gostats$mf_over_all, n=30), sheet="gostats_mf", file=go_file)
-    write_xls(head(goseq$bp_subset, n=30), sheet="goseq_bp", file=go_file)
-    write_xls(head(summary(cluster$bp_all), n=30), sheet="cluster_bp", file=go_file)
-    write_xls(topgo$tables$bp_interesting, sheet="topgo_bp", file=go_file)
-    write_xls(head(gostats$bp_over_all, n=30), sheet="gostats_bp", file=go_file)
-    write_xls(head(goseq$cc_subset, n=30), sheet="goseq_cc", file=go_file)
-    write_xls(head(summary(cluster$cc_all), n=30), sheet="cluster_cc", file=go_file)
-    write_xls(topgo$tables$cc_interesting, sheet="topgo_cc", file=go_file)
-    write_xls(head(gostats$cc_over_all, n=30), sheet="gostats_cc", file=go_file)
+#' write_go_xls()  Write gene ontology tables for excel
+#'
+#' Combine the results from goseq, cluster profiler, topgo, and gostats and drop them into excel
+#' Hopefully with a relatively consistent look.
+#'
+#' @param goseq  The goseq result from simple_goseq()
+#' @param cluster The result from simple_clusterprofiler()
+#' @param topgo  Guess
+#' @param gostats  Yep, ditto
+#' @param go_file default='excel/merged_go'  the file to save the results.
+#' @param n default=30  the number of ontology categories to include in each table.
+write_go_xls = function(goseq, cluster, topgo, gostats, file="excel/merged_go", n=30) {
+    n = get0('n')
+    if (is.null(n)) {
+        n = 30
+    }
+    file = get0('file')
+    if (is.null(file)) {
+        file = "excel/merged_go"
+    }
+    excel_dir = dirname(file)
+    if (!file.exists(excel_dir)) {
+        dir.create(excel_dir, recursive=TRUE)
+    }
+
+    file = gsub(pattern="\\.xls.", replacement="", file, perl=TRUE)
+    filename = NULL
+    if (isTRUE(dated)) {
+        timestamp = format(Sys.time(), "%Y%m%d%H")
+        filename = paste0(file, "-", timestamp, suffix)
+    } else {
+        filename = paste0(file, suffix)
+    }
+
+    if (file.exists(filename)) {
+        if (isTRUE(overwritefile)) {
+            backup_file(filename)
+        }
+    }
+
+    ## require.auto("kassambara/r2excel")
+    wb = xlsx::createWorkbook(type="xlsx")
+    sheet = xlsx::createSheet(wb, sheetName="goseq")
+
+    ## Massage the goseq tables to match Najib's request
+    goseq_mf = head(goseq$mf_subset, n=n)
+    goseq_bp = head(goseq$bp_subset, n=n)
+    goseq_cc = head(goseq$cc_subset, n=n)
+    goseq_mf = goseq_mf[,c(7,1,6,2,4,5,8)]
+    goseq_bp = goseq_bp[,c(7,1,6,2,4,5,8)]
+    goseq_cc = goseq_cc[,c(7,1,6,2,4,5,8)]
+    colnames(goseq_mf) = c("Ontology","Category","Term","Over p-value", "Num. DE", "Num. in cat.", "Q-value")
+    colnames(goseq_bp) = c("Ontology","Category","Term","Over p-value", "Num. DE", "Num. in cat.", "Q-value")
+    colnames(goseq_cc) = c("Ontology","Category","Term","Over p-value", "Num. DE", "Num. in cat.", "Q-value")
+
+    ## Massage the clusterProfiler tables similarly
+    cluster_mf = head(as.data.frame(cluster$mf_all@result), n=n)
+    cluster_bp = head(as.data.frame(cluster$bp_all@result), n=n)
+    cluster_cc = head(as.data.frame(cluster$cc_all@result), n=n)
+    cluster_mf$geneID = gsub(cluster_mf$geneID, pattern="/", replacement=" ")
+    cluster_bp$geneID = gsub(cluster_bp$geneID, pattern="/", replacement=" ")
+    cluster_cc$geneID = gsub(cluster_cc$geneID, pattern="/", replacement=" ")
+    cluster_mf$ontology = "MF"
+    cluster_bp$ontology = "BP"
+    cluster_cc$ontology = "CC"
+    cluster_mf = cluster_mf[,c(10,1,2,5,3,4,6,7,9,8)]
+    cluster_bp = cluster_bp[,c(10,1,2,5,3,4,6,7,9,8)]
+    cluster_cc = cluster_cc[,c(10,1,2,5,3,4,6,7,9,8)]
+    colnames(cluster_mf) = c("Ontology","Category","Term","Over p-value","Gene ratio","BG ratio","Adj. p-value","Q-value","Count","Genes")
+    colnames(cluster_bp) = c("Ontology","Category","Term","Over p-value","Gene ratio","BG ratio","Adj. p-value","Q-value","Count","Genes")
+    colnames(cluster_cc) = c("Ontology","Category","Term","Over p-value","Gene ratio","BG ratio","Adj. p-value","Q-value","Count","Genes")
+
+    ## Now do the topgo data
+    topgo_mf = head(topgo$tables$mf_interesting, n=n)
+    topgo_bp = head(topgo$tables$bp_interesting, n=n)
+    topgo_cc = head(topgo$tables$cc_interesting, n=n)
+    topgo_mf = topgo_mf[,c(2,1,11,6,7,8,9,10,4,3,5)]
+    topgo_bp = topgo_bp[,c(2,1,11,6,7,8,9,10,4,3,5)]
+    topgo_cc = topgo_cc[,c(2,1,11,6,7,8,9,10,4,3,5)]
+    colnames(topgo_mf) = c("Ontology","Category","Term","Fisher p-value","Q-value","KS score","EL score","Weight score","Num. DE","Num. in cat.","Exp. in cat.")
+    colnames(topgo_bp) = c("Ontology","Category","Term","Fisher p-value","Q-value","KS score","EL score","Weight score","Num. DE","Num. in cat.","Exp. in cat.")
+    colnames(topgo_cc) = c("Ontology","Category","Term","Fisher p-value","Q-value","KS score","EL score","Weight score","Num. DE","Num. in cat.","Exp. in cat.")
+
+    ## And the gostats data
+    gostats_mf = head(gostats$mf_over_all, n=n)
+    gostats_bp = head(gostats$bp_over_all, n=n)
+    gostats_cc = head(gostats$cc_over_all, n=n)
+    gostats_mf$t = gsub(gostats_mf$Term, pattern=".*\">(.*)</a>", replace="\\1")
+    gostats_bp$t = gsub(gostats_bp$Term, pattern=".*\">(.*)</a>", replace="\\1")
+    gostats_cc$t = gsub(gostats_cc$Term, pattern=".*\">(.*)</a>", replace="\\1")
+    gostats_mf$Term = gsub(gostats_mf$Term, pattern="<a href=\"(.*)\">.*", replace="\\1")
+    gostats_bp$Term = gsub(gostats_bp$Term, pattern="<a href=\"(.*)\">.*", replace="\\1")
+    gostats_cc$Term = gsub(gostats_cc$Term, pattern="<a href=\"(.*)\">.*", replace="\\1")
+    gostats_mf$ont = "MF"
+    gostats_bp$ont = "BP"
+    gostats_cc$ont = "CC"
+    gostats_mf = gostats_mf[,c(10,1,9,2,5,6,3,4,8,7)]
+    gostats_bp = gostats_bp[,c(10,1,9,2,5,6,3,4,8,7)]
+    gostats_cc = gostats_cc[,c(10,1,9,2,5,6,3,4,8,7)]
+    colnames(gostats_mf) = c("Ontology","Category","Term","Fisher p-value","Num. DE","Num. in cat.","Odds ratio","Exp. in cat.","Q-value","Link")
+    colnames(gostats_bp) = c("Ontology","Category","Term","Fisher p-value","Num. DE","Num. in cat.","Odds ratio","Exp. in cat.","Q-value","Link")
+    colnames(gostats_cc) = c("Ontology","Category","Term","Fisher p-value","Num. DE","Num. in cat.","Odds ratio","Exp. in cat.","Q-value","Link")
+
+    r2excel::xlsx.addHeader(wb, sheet, value="BP Results from goseq.", color="darkblue")
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addTable(wb, sheet, goseq_bp,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addHeader(wb, sheet, value="MF Results from goseq.", color="darkblue")
+    r2excel::xlsx.addTable(wb, sheet, goseq_mf,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addHeader(wb, sheet, value="CC Results from goseq.", color="darkblue")
+    xlsx.addTable(wb, sheet, goseq_cc,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+
+    sheet = xlsx::createSheet(wb, sheetName="clusterProfiler")
+    r2excel::xlsx.addHeader(wb, sheet, value="BP Results from clusterProfiler.", color="darkblue")
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addTable(wb, sheet, cluster_bp,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addHeader(wb, sheet, value="MF Results from clusterProfiler.", color="darkblue")
+    r2excel::xlsx.addTable(wb, sheet, cluster_mf,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addHeader(wb, sheet, value="CC Results from clusterProfiler.", color="darkblue")
+    r2excel::xlsx.addTable(wb, sheet, cluster_cc,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+
+    sheet = xlsx::createSheet(wb, sheetName="topGO")
+    r2excel::xlsx.addHeader(wb, sheet, value="BP Results from topGO.", color="darkblue")
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addTable(wb, sheet, topgo_bp,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addHeader(wb, sheet, value="MF Results from topGO.", color="darkblue")
+    r2excel::xlsx.addTable(wb, sheet, topgo_mf,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addHeader(wb, sheet, value="CC Results from topGO.", color="darkblue")
+    r2excel::xlsx.addTable(wb, sheet, topgo_cc,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+
+    sheet = xlsx::createSheet(wb, sheetName="GOStats")
+    r2excel::xlsx.addHeader(wb, sheet, value="BP Results from GOStats.", color="darkblue")
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addTable(wb, sheet, gostats_bp,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addHeader(wb, sheet, value="MF Results from GOStats.", color="darkblue")
+    r2excel::xlsx.addTable(wb, sheet, gostats_mf,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addHeader(wb, sheet, value="CC Results from GOStats.", color="darkblue")
+    r2excel::xlsx.addTable(wb, sheet, gostats_cc,
+                           col.names=TRUE, row.names=FALSE, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+
+    res = saveWorkbook(wb, paste0(file, ".xlsx"))
+    return(res)
 }
 
+#' compare_go_searches()  Compare the results from different ontology tools
+#'
+#' Combine the results from goseq, cluster profiler, topgo, and gostats; poke at them
+#' with a stick and see what happens.
+#' The general idea is to pull the p-value data from each tool and contrast that to the
+#' set of all possibile ontologies.  This allows one to do a correlation coefficient
+#' between them.  In addition, take the 1-pvalue for each ontology for each tool.
+#' Thus for strong p-values the score will be near 1 and so we can sum the scores
+#' for all the tools.  Since topgo has 4 tools, the total possible is 7 if everything
+#' has a p-value equal to 0.
+#'
+#' @param goseq  The goseq result from simple_goseq()
+#' @param cluster The result from simple_clusterprofiler()
+#' @param topgo  Guess
+#' @param gostats  Yep, ditto
+#' @param go_file default='excel/merged_go'  the file to save the results.
+#' @param n default=30  the number of ontology categories to include in each table.
 compare_go_searches = function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NULL) {
     goseq_mf_data = goseq_bp_data = goseq_cc_data = NULL
     if (!is.null(goseq)) {
@@ -745,6 +890,5 @@ compare_go_searches = function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NUL
     print(summary(cc_summary))
 
 }
-
 
 ## EOF

@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Dec 14 15:14:34 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 11 21:06:37 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -120,7 +120,6 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
     )
     return(ret_data)
 }
-
 
 #' Steal EdgeR's plotBCV()
 #'

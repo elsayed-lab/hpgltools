@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 16:03:44 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 11 15:23:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -133,9 +133,10 @@ autoloads_helpers = function() {
     require.auto("rmarkdown")
     require.auto("roxygen2")
     require.auto("testthat")
-    require.auto("tools")    
+    require.auto("tools")
+    require.auto("xlsx")
     options(java.parameters = "-Xmx4g")  ## used for xlconnect
-    require.auto("XLConnect")
+    ##require.auto("XLConnect")
     require.auto("xtable")
 }
 

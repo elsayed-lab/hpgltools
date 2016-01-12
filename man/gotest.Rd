@@ -17,6 +17,12 @@ Some text
 gotest()  Test GO ids to see if they are useful.
 This just wraps gotst in mapply.
 }
+\examples{
+## gotest("GO:0032559")
+## > 1
+## gotest("GO:0923429034823904")
+## > 0
+}
 \seealso{
 \code{\link{GOTERM}}, \code{\link{GO.db}},
 }

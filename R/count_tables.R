@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 16:17:38 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 11 21:02:50 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -41,7 +41,10 @@
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Remember that this depends on an existing data structure of gene annotations.
-create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE, gene_info=NULL, by_type=FALSE, by_sample=FALSE, sep=",", include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
+create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE,
+                       gene_info=NULL, by_type=FALSE, by_sample=FALSE, sep=",",
+                       include_type="all", include_gff=NULL, count_dataframe=NULL,
+                       meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
@@ -75,7 +78,10 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
     ## Thus the next line
     print("This function needs the conditions and batches to be an explicit column in the sample sheet.")
-    expt_list = create_experiment(file=file, color_hash, suffix=suffix, header=header, gene_info=gene_info, by_type=by_type, by_sample=by_sample, count_dataframe=count_dataframe, meta_dataframe=meta_dataframe, sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
+    expt_list = create_experiment(file=file, color_hash, suffix=suffix, header=header,
+                                  gene_info=gene_info, by_type=by_type, by_sample=by_sample,
+                                  count_dataframe=count_dataframe, meta_dataframe=meta_dataframe,
+                                  sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
     expt = expt_list$expt
     def = expt_list$def
     new_expt = expt_subset(expt)
@@ -143,7 +149,9 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
 #' @export
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
-create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=FALSE, gene_info=NULL, by_type=FALSE, by_sample=FALSE, include_type="all", include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
+create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=FALSE,
+                             gene_info=NULL, by_type=FALSE, by_sample=FALSE, include_type="all",
+                             include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
     print("Please note that thus function assumes a specific set of columns in the sample sheet:")
     print("The most important ones are: Sample.ID, Stage, Type.")
     print("Other columns it will attempt to create by itself, but if")
