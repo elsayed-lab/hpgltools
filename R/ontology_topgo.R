@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 17:31:29 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jan  8 10:29:14 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -374,7 +374,8 @@ make_id2gomap = function(goid_map="reference/go/id2go.map", goids_df=NULL, overw
                 id2go_test = file.info(goid_map)
             }
         } else { ## There already exists a file, so return its stats
-            new_go = id2go_test
+            ## new_go = id2go_test
+            new_go = goid_map
         }
     }
     return(new_go)

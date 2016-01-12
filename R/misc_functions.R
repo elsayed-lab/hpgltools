@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Nov 25 14:53:22 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 11 20:45:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -162,15 +162,24 @@ make_report = function(name="report", type='pdf') {
 #'
 #' @return a DataFrame of scores
 hpgl_arescore = function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
-                        d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
-                        aub.p.to.end=0.55) {
+                          d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
+                          aub.p.to.end=0.55) {
+    ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
+    ## However, the repository I want for it is 'seqtools'
+    ## Ergo my stupid require.auto() will be confused by definition because it assumes equivalent names
+    if (isTRUE('SeqTools' %in% .packages(all.available=TRUE))) {
+        library('SeqTools')
+    } else {
+        require.auto("lianos/seqtools/R/pkg")
+        library('SeqTools')
+    }
     xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
     if (xtype == "DNA") {
         pentamer = "ATTTA"
         overmer = "ATTTATTTA"
     } else {
         pentamer = "AUUUA"
-        overmer = "ATTTATTTA"
+        overmer = "AUUUAUUUA"
     }
     x = as(x, "DNAStringSet")
     pmatches = vmatchPattern(pentamer, x)
@@ -187,7 +196,7 @@ hpgl_arescore = function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
     })
     clust = do.call(rbind, clust)
     dscores = clust$d1.3 * d1.3 + clust$d4.6 * d4.6 + clust$d7.9 *  d7.9
-    library("Biostrings")
+    require.auto("Biostrings")
     au.blocks = hpgltools:::my_identifyAUBlocks(x, aub.min.length, aub.p.to.start, aub.p.to.end)
     aub.score = sum(countOverlaps(pmatches, au.blocks) * within.AU)
     score = basal.score + over.score + dscores + aub.score
@@ -195,6 +204,18 @@ hpgl_arescore = function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
                     au.blocks=au.blocks, n.au.blocks=elementLengths(au.blocks))
     cbind(ans, DataFrame(clust))
 }
+
+#' my_identifyAUBlocks()  copy/paste the function from SeqTools
+#' and find where it falls on its ass.
+#'
+#' Yeah, I do not remember what I changed in this function.
+#'
+#' @param x  A sequence object
+#' @param min.length default=20  I dunno.
+#' @param p.to.start default=0.8  the p to start of course
+#' @param p.to.end default=0.8  and the p to end
+#'
+#' @return a list of IRanges which contain a bunch of As and Us.
 my_identifyAUBlocks = function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
     xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
     stopifnot(isSingleNumber(min.length) && min.length >= 5 &&  min.length <= 50)
@@ -226,7 +247,6 @@ my_identifyAUBlocks = function (x, min.length=20, p.to.start=0.8, p.to.end=0.55)
     au.blocks = lapply(1:length(x), fun)
     IRangesList(au.blocks)
 }
-
 
 #' gff2df()  Try to make import.gff a little more robust
 #'
@@ -402,6 +422,26 @@ sillydist = function(firstterm, secondterm, firstaxis, secondaxis) {
 
 #' write_xls()  Write a dataframe to an excel spreadsheet sheet.
 #'
+#' @param type default='xlsx'  whether to use the xlsx or XLConnect package.
+#' @param tripledots  the set of arguments given to either xlsx or XLConnect
+#'
+#' @return an excel workbook
+#'
+#' @seealso \code{\link{XLConnect}}, \code{\link{xlsx}},
+#'
+#' @export
+#' @examples
+#' ## write_xls(dataframe, "hpgl_data")
+write_xls = function(type="xlsx", ...) {
+    if (type == 'xlsx') {
+        write_xlsx_xlsx(...)
+    } else {
+        write_xls_xlconnect(...)
+    }
+}
+
+#' write_xls_xlconnect()  Write a dataframe to an excel spreadsheet sheet.
+#'
 #' @param data  a dataframe of information.
 #' @param sheet default='first'  the name of an excel sheet in a workbook.
 #' @param file default='excel/workbook.xls'  an excel workbook to which to write.
@@ -415,12 +455,11 @@ sillydist = function(firstterm, secondterm, firstaxis, secondaxis) {
 #' @seealso \code{\link{loadWorkbook}}, \code{\link{createSheet}},
 #' \code{\link{writeWorksheet}}, \code{\link{saveWorkbook}}
 #'
-#' @export
 #' @examples
-#' ## write_xls(dataframe, "hpgl_data")
+#' ## write_xls_xlconnect(dataframe, "hpgl_data")
 #' ## Sometimes it is a good idea to go in and delete the workbook and
 #' ## re-create it if this is used heavily, because it will get crufty.
-write_xls = function(data, sheet="first", file="excel/workbook", rowname="rownames", overwritefile=FALSE, overwritesheet=TRUE, dated=TRUE, suffix=".xls") {
+write_xls_xlconnect = function(data, sheet="first", file="excel/workbook", rowname="rownames", overwritefile=FALSE, overwritesheet=TRUE, dated=TRUE, suffix=".xls") {
     excel_dir = dirname(file)
     if (!file.exists(excel_dir)) {
         dir.create(excel_dir, recursive=TRUE)
@@ -461,6 +500,56 @@ write_xls = function(data, sheet="first", file="excel/workbook", rowname="rownam
     saveWorkbook(xls)
 }
 
+#' write_xls_xlsx()  Write a dataframe to an excel spreadsheet sheet using xlsx.
+#'
+#' @param data  a dataframe of information.
+#' @param sheet default='first'  the name of an excel sheet in a workbook.
+#' @param file default='excel/workbook.xls'  an excel workbook to which to write.
+#' @param header default='Data Table'  a header to prepend to the printed worksheet.
+#' @param rownames default=TRUE  add the rownames to the left side of the table?
+#' @param colnames default=TRUE  add the column names to the top of the table?
+#' @param overwritefile default=FALSE  overwrite the xls file with this new data, or use the original?
+#' @param dated default=TRUE  append a dated suffix to the filename.
+#' @param suffix default='.xlsx'
+#'
+#' @return NULL, on the say it creates a workbook if necessary,
+#' creates a sheet, and writes the data to it.
+#'
+#' @seealso \code{\link{xlsx.addTable}}
+#'
+#' @examples
+#' ## write_xls_xlsx(dataframe)
+write_xls_xlsx = function(data, sheet="first", file="excel/workbook", header="Data Table", rownames=TRUE, colnames=TRUE, overwritefile=FALSE, dated=TRUE, suffix=".xlsx") {
+    excel_dir = dirname(file)
+    if (!file.exists(excel_dir)) {
+        dir.create(excel_dir, recursive=TRUE)
+    }
+
+    file = gsub(pattern="\\.xls.", replacement="", file, perl=TRUE)
+    filename = NULL
+    if (isTRUE(dated)) {
+        timestamp = format(Sys.time(), "%Y%m%d%H")
+        filename = paste0(file, "-", timestamp, suffix)
+    } else {
+        filename = paste0(file, suffix)
+    }
+
+    if (file.exists(filename)) {
+        if (isTRUE(overwritefile)) {
+            backup_file(filename)
+        }
+    }
+
+    wb = xlsx::createWorkbook(type="xlsx")
+    sheet = xlsx::createSheet(wb, sheetName=sheet)
+    r2excel::xlsx.addHeader(wb, sheet, value=header, color="darkblue")
+    r2excel::xlsx.addLineBreak(sheet, 1)
+    r2excel::xlsx.addTable(wb, sheet, data, col.names=colnames, row.names=rownames, fontColor="black",
+                           fontSize=12, rowFill=c("white","lightgrey"))
+    res = saveWorkbook(wb, file)
+    return(res)
+}
+
 #' backup_file()  Make a backup of an existing file with n revisions, like VMS!
 #'
 #' @param file  the file to backup.
@@ -488,6 +577,10 @@ backup_file = function(backup_file, backups=10) {
 #' saveme()  Load a backup rdata file
 #'
 #' @param dir default='savefiles'  the directory containing the RData.rda.xz file.
+#'
+#' I often use R over a sshfs connection, sometimes with significant latency, and
+#' I want to be able to save/load my R sessions relatively quickly.
+#' Thus this function uses my backup directory to load its R environment.
 loadme = function(dir="savefiles") {
     savefile = paste0(getwd(), "/", dir, "/RData.rda.xz")
     message(paste0("Loading the savefile: ", savefile))
@@ -500,6 +593,10 @@ loadme = function(dir="savefiles") {
 #'
 #' @param dir  the directory to save the Rdata file.
 #' @param backups default=10  how many revisions?
+#'
+#' I often use R over a sshfs connection, sometimes with significant latency, and
+#' I want to be able to save/load my R sessions relatively quickly.
+#' Thus this function uses pxz to compress the R session maximally and relatively fast.
 saveme = function(directory="savefiles", backups=4) {
     environment()
     if (!file.exists(directory)) {

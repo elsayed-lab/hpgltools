@@ -7,7 +7,11 @@
 loadme(dir = "savefiles")
 }
 \arguments{
-\item{dir}{default='savefiles'  the directory containing the RData.rda.xz file.}
+\item{dir}{default='savefiles'  the directory containing the RData.rda.xz file.
+
+I often use R over a sshfs connection, sometimes with significant latency, and
+I want to be able to save/load my R sessions relatively quickly.
+Thus this function uses my backup directory to load its R environment.}
 }
 \description{
 saveme()  Load a backup rdata file

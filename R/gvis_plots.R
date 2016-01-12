@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 16:56:08 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 11 21:03:38 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_gvis_ma_plot()  Make an html version of an MA plot.
 #'
@@ -59,7 +59,6 @@ hpgl_gvis_ma_plot = function(counts, degenes, tooltip_data=NULL, filename="html/
     print(hpgl_gvis_scatterchart, file=filename)
 }
 
-
 #' hpgl_gvis_volcano_plot()  Make an html version of an volcano plot.
 #'
 #' @param toptable_data  df of toptable() data
@@ -77,7 +76,8 @@ hpgl_gvis_ma_plot = function(counts, degenes, tooltip_data=NULL, filename="html/
 #' @export
 #' @examples
 #' ## hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
-hpgl_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05, tooltip_data=NULL, filename="html/gvis_vol_plot.html", base_url="", ...) {
+hpgl_gvis_volcano_plot = function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
+                                  tooltip_data=NULL, filename="html/gvis_vol_plot.html", base_url="", ...) {
     gvis_raw_df = toptable_data[,c("logFC", "modified_p", "P.Value")]
     if (!is.null(tooltip_data)) {
         gvis_raw_df = merge(gvis_raw_df, tooltip_data, by="row.names")

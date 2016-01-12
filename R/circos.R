@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 16:15:51 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 11 20:58:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## The karyotype file is circos/data/5005_5448_karyotype.txt
 ## The 5005 genome is 1838562 nt. long (looking at reference/genbank/mgas_5005.gb)
@@ -27,7 +27,9 @@
 #' @param chr_num default=1  the number to record (This and name above should change for multi-chromosomal species)
 #'
 #' @return undef
-circos_karyotype = function(name='default', conf_dir='circos/conf', length=NULL, chr_name='chr1', segments=6, color='white', chr_num=1, fasta=NULL) {
+circos_karyotype = function(name='default', conf_dir='circos/conf', length=NULL,
+                            chr_name='chr1', segments=6, color='white',
+                            chr_num=1, fasta=NULL) {
     genome_length = 0
     if (is.null(length) & is.null(fasta)) {
         stop("circos_karyotype() requires a chromosome length or fasta file to gather sequence data from.")
@@ -141,7 +143,8 @@ circos_ideogram = function(name='default', conf_dir='circos/conf', band_url=NULL
 #'     and inner,whatever follows.
 #'
 #' @return the radius after adding the plus/minus information and the spacing between them.
-circos_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='chr1', outer=1.0, width=0.08, spacing=0.0) {
+circos_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='chr1',
+                             outer=1.0, width=0.08, spacing=0.0) {
     plus_cfg_file = cfgout
     minus_cfg_file = cfgout
     plus_cfg_file = gsub(".conf$", "_plus_go.conf", plus_cfg_file)
@@ -533,7 +536,8 @@ circos_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='c
 #'     and inner,whatever follows.
 #'
 #' @return the radius after adding the histogram and the spacing.
-circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
+circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum",
+                       chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
@@ -648,7 +652,8 @@ circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum", c
 #'     and inner,whatever follows.
 #'
 #' @return the radius after adding the histogram and the spacing.
-circos_heatmap = function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
+circos_heatmap = function(df, cfgout="circos/conf/default.conf", colname="datum",
+                          chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
@@ -748,7 +753,8 @@ circos_heatmap = function(df, cfgout="circos/conf/default.conf", colname="datum"
 #'     and inner,whatever follows.
 #'
 #' @return the radius after adding the histogram and the spacing.
-circos_hist = function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1', color="blue", fill_color="blue", outer=0.9, width=0.08, spacing=0.0) {
+circos_hist = function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1',
+                       color="blue", fill_color="blue", outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
@@ -876,8 +882,10 @@ CIRCOS=\"%s\"
 #' @param thickness default=3  integer thickness of the arcs
 #'
 #' @return undef
-circos_arc = function(df, cfgout="circos/conf/default.conf", first_col='chr1', second_col='chr2', color="blue", radius=0.75, thickness=3) {
-    if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) | is.null(df[[first_col]]) | is.null(df[[second_col]])) {
+circos_arc = function(df, cfgout="circos/conf/default.conf", first_col='chr1', second_col='chr2',
+                      color="blue", radius=0.75, thickness=3) {
+    if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) |
+        is.null(df[[first_col]]) | is.null(df[[second_col]])) {
         stop("This requires columns: start, end, rownames, and datum")
     }
     datum_cfg_file = cfgout
@@ -938,7 +946,6 @@ circos_arc = function(df, cfgout="circos/conf/default.conf", first_col='chr1', s
 
     return(radius)
 }
-
 
 #' circos_prefix()  Write the beginning of a circos configuration file.
 #'
@@ -1051,3 +1058,4 @@ circos_suffix = function(cfgout="circos/conf/default.conf") {
     close(out)
 }
 
+## EOF

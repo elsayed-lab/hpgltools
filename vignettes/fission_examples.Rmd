@@ -207,7 +207,7 @@ summary(all_pairwise$all_tables$wt.120_minus_mut.120)
 wt_120 = all_pairwise$all_tables$wt.120
 mut_120 = all_pairwise$all_tables$mut.120
 
-scatter_wt_mut = coefficient_scatter(all_pairwise, x="wt.120", y="mut.120", gvis_filename=NULL)
+scatter_wt_mut = limma_coefficient_scatter(all_pairwise, x="wt.120", y="mut.120", gvis_filename=NULL)
 scatter_wt_mut$scatter
 scatter_wt_mut$both_histogram
 
@@ -227,13 +227,20 @@ all_comparison = all_pairwise(normbatch_expt)
 
 limma_results = all_comparison$limma$all_tables
 names(limma_results)
-table = limma_results$wt.180_minus_wt.0
+table = limma_results$wt.180_vs_wt.0
 dim(table)
 
 updown_genes = get_sig_genes(table, fc=0.8)
-##goseq_search = simple_goseq(de_genes=updown_genes$up_genes, species='sacCer2')
+orthologs = read.table("ftp://ftp.ebi.ac.uk/pub/databases/pombase/pombe/orthologs/cerevisiae-orthologs.txt")
+colnames(orthologs) = c("pombe","cerevisiae")
+
+head(updown_genes$up_genes)
+updown_genes$up_genes = merge(updown_genes$up_genes, orthologs, by.x="row.names", by.y="pombe")
+rownames(updown_genes$up_genes) = make.names(updown_genes$up_genes$cerevisiae, unique=TRUE)
+updown_genes$down_genes = merge(updown_genes$down_genes, orthologs, by.x="row.names", by.y="pombe")
+rownames(updown_genes$down_genes) = make.names(updown_genes$down_genes$cerevisiae, unique=TRUE)
+
+goseq_search = simple_goseq(de_genes=updown_genes$up_genes, species='sacCer2')
 ## oh yeah, the fission dataset is pombe, not cerevisiae... I am an idiot.
-##orthologs = read.table("ftp://ftp.ebi.ac.uk/pub/databases/pombase/pombe/orthologs/cerevisiae-orthologs.txt")
-##colnames(orthologs) = c("pombe","cerevisiae")
 
 ```

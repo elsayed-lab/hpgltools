@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Nov 30 15:51:58 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 11 21:06:37 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -120,7 +120,6 @@ graph_metrics = function(expt, cormethod="pearson", distmethod="euclidean", titl
     )
     return(ret_data)
 }
-
 
 #' Steal EdgeR's plotBCV()
 #'
@@ -1499,6 +1498,139 @@ hpgl_volcano_plot = function(toptable_data, tooltip_data=NULL, gvis_filename=NUL
     return(plt)
 }
 
+
+
+#' spirograph()  Make spirographs!  Taken (with modifications) from: http://menugget.blogspot.com/2012/12/spirograph-with-r.html#more
+#'
+#' @param rad_a default=1  The radius of the primary circle.
+#' @param rad_b default=2  The radius of the circle travelling around a.
+#' @param c  a point relative to the center of 'b' which rotates with the turning of 'b'.
+#' @param bc the distance from the center of 'b' to 'c'.
+#' @param rev_a default=4  The number of revolutions for 'b' to travel about 'a'.
+#' @param increments default=360  The number of radial increments to be calculated per revolution
+#' @param cen_a default=list(x=0,y=0)  The position of the center of 'a'.
+#'
+#' A positive value for 'B' will result in a epitrochoid, while a negative value will result in a hypotrochoid.
+#' @return somethign which I don't yet know.
+spirograph = function(radius_a=1, radius_b=-4, dist_bc=-2, revolutions=158, increments=3160, center_a=list(x=0, y=0)) {
+    require.auto("ggplot2")
+    ##A.RADIUS=1, B.RADIUS=-4, BC=-2, A.REV=4, N.PER.A.REV=360, A.CEN=list(x=0, y=0)){
+
+    ##  B.CEN.START <- list(x=0, y=A.CEN$y + A.RADIUS + B.RADIUS) #starting position of B circle
+    center_b_start = list(x=0, y=center_a$y + radius_a + radius_b)
+    ## A.ANGLE <- seq(0, 2*pi*A.REV,, A.REV*N.PER.A.REV) #Radians around A for calculation
+    angle_a = seq(0, 2 * pi * revolutions, , revolutions * increments)
+    ## A.CIR <- 2*pi*A.RADIUS  ## Circumference of A
+    circum_a = 2 * pi * radius_a
+    ## B.CIR <- 2*pi*B.RADIUS ## Circumference of B
+    circum_b = 2 * pi * radius_b
+
+    ## Find position of B.CEN
+    ## B.CEN <- c()
+    center_b = c()
+    ## HYP <- A.RADIUS + B.RADIUS
+    hypotenuse = radius_a + radius_b
+    ## ADJ <- sin(A.ANGLE) * HYP
+    adjacent = sin(angle_a) * hypotenuse
+    ## OPP <- cos(A.ANGLE) * HYP
+    opposite = cos(angle_a) * hypotenuse
+    ## B.CEN$x <- A.CEN$x + ADJ
+    center_b$x = center_a$x + adjacent
+    ## B.CEN$y <- A.CEN$y + OPP
+    center_b$y = center_a$y + opposite
+
+    ## Find position of C.POINT
+    ## C.POINT <- c()
+    point_c = c()
+    ## A.CIR.DIST <- A.CIR * A.ANGLE / (2*pi)
+    circle_a_dist = (circum_a * angle_a) / (2 * pi)
+    ## B.POINT.ANGLE <- A.CIR.DIST / B.CIR * 2*pi
+    angle_b_point = circle_a_dist / (circum_b * (2 * pi))
+    ## HYP <- BC
+    hypotenuse = dist_bc
+    ## ADJ <- sin(B.POINT.ANGLE) * HYP
+    adjacent = sin(angle_b_point) * hypotenuse
+    ## OPP <- cos(B.POINT.ANGLE) * HYP
+    opposite = cos(angle_b_point) * hypotenuse
+    ## C.POINT$x <- B.CEN$x + ADJ
+    point_c$x = center_b$x + adjacent
+    ## C.POINT$y <- B.CEN$y + OPP
+    point_c$y = center_b$y + opposite
+    ## Return trajectory of C
+    ## C.POINT
+    points = data.frame(point_c)
+    points$counter = seq(1, nrow(points))
+    spiro = ggplot(data=points, aes(x=x, y=y)) +
+        geom_point(aes(colour=counter), size=0.5) + theme_bw() +
+        scale_colour_gradientn(colours=rainbow(4)) +
+        theme(axis.line=element_blank(),axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),legend.position="none",
+          panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(),plot.background=element_blank())
+    return(spiro)
+}
+
+## 3,7,1 should give the classic 7 leaf clover
+hypotrochoid = function(radius_a=7, radius_b=1, dist_b=5, revolutions=7, increments=6480) {
+    points = seq(0, revolutions * increments)
+    radians = points / (2 * pi)
+
+    getx = function(t) {
+        x = ((radius_a - radius_b) * cos(t)) + (dist_b * cos((t * ((radius_a - radius_b) / radius_b))))
+        return(x)
+    }
+    gety = function(t) {
+        y = ((radius_a - radius_b) * sin(t)) + (dist_b * sin((t * ((radius_a - radius_b) / radius_b))))
+        return(y)
+    }
+    x_points = as.numeric(lapply(radians, getx))
+    y_points = as.numeric(lapply(radians, gety))
+    positions = cbind(points, x_points)
+    positions = cbind(positions, y_points)
+    positions = as.data.frame(positions)
+    petals = dist_b / radius_b
+    message(paste0("The spirograph will have ", petals, " petals."))
+   image = ggplot(data=positions, aes(x=x_points, y=y_points)) +
+        geom_point(size=1) + theme_bw() +
+        theme(axis.line=element_blank(),axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),legend.position="none",
+          panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(),plot.background=element_blank())
+    return(image)
+}
+
+epitrochoid = function(radius_a=7, radius_b=2, dist_b=6, revolutions=7, increments=6480) {
+    points = seq(0, revolutions * increments)
+    radians = points / (2 * pi)
+
+    getx = function(t) {
+        x = ((radius_a + radius_b) * cos(t)) - (dist_b * cos((t * ((radius_a + radius_b) / radius_b))))
+        return(x)
+    }
+    gety = function(t) {
+        y = ((radius_a + radius_b) * sin(t)) - (dist_b * sin((t * ((radius_a + radius_b) / radius_b))))
+        return(y)
+    }
+    x_points = as.numeric(lapply(radians, getx))
+    y_points = as.numeric(lapply(radians, gety))
+    positions = cbind(points, x_points)
+    positions = cbind(positions, y_points)
+    positions = as.data.frame(positions)
+   image = ggplot(data=positions, aes(x=x_points, y=y_points)) +
+        geom_point(size=1) + theme_bw() +
+        theme(axis.line=element_blank(),axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),legend.position="none",
+          panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(),plot.background=element_blank())
+    image
+}
+
 ## I thought multiplot() was a part of ggplot(), but no, weird:
 ## http://stackoverflow.com/questions/24387376/r-wired-error-could-not-find-function-multiplot
 ## Also found at:
@@ -1512,7 +1644,7 @@ hpgl_volcano_plot = function(toptable_data, tooltip_data=NULL, gvis_filename=NUL
 #'
 #' @return a multiplot!
 #' @export
-multiplot <- function(plots, file, cols=NULL, layout=NULL) {
+hmultiplot <- function(plots, file, cols=NULL, layout=NULL) {
   ## Make a list from the ... arguments and plotlist
   ##  plots <- c(list(...), plotlist)
   numPlots = length(plots)

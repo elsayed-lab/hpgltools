@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Nov 24 16:53:08 2015 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 11 20:56:29 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -39,7 +39,9 @@ disjunct_tab = function(contrast_fit, coef1, coef2, ...) {
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=TRUE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
+                        model_batch=TRUE, model_intercept=FALSE, extra_contrasts=NULL,
+                        alt_model=NULL, libsize=NULL) {
     conditions = get0('conditions')
     batches = get0('batches')
     model_cond = get0('model_cond')
@@ -58,9 +60,18 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, m
         model_intercept = FALSE
     }
 
-    limma_result = limma_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
-    deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
-    edger_result = edger_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize)
+    limma_result = limma_pairwise(input, conditions=conditions, batches=batches,
+                                  model_cond=model_cond, model_batch=model_batch,
+                                  model_intercept=model_intercept, extra_contrasts=extra_contrasts,
+                                  alt_model=alt_model, libsize=libsize)
+    deseq_result = deseq2_pairwise(input, conditions=conditions, batches=batches,
+                                   model_cond=model_cond, model_batch=model_batch,
+                                   model_intercept=model_intercept, extra_contrasts=extra_contrasts,
+                                   alt_model=alt_model, libsize=libsize)
+    edger_result = edger_pairwise(input, conditions=conditions, batches=batches,
+                                  model_cond=model_cond, model_batch=model_batch,
+                                  model_intercept=model_intercept, extra_contrasts=extra_contrasts,
+                                  alt_model=alt_model, libsize=libsize)
     basic_result = basic_pairwise(input, conditions)
 
     result_comparison = compare_tables(limma=limma_result, deseq=deseq_result, edger=edger_result, basic=basic_result)
@@ -146,7 +157,8 @@ combine_de_tables = function(all_pairwise_result, table='wt_vs_mut', annot_df=NU
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-limma_coefficient_scatter = function(output, toptable=NULL, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
+limma_coefficient_scatter = function(output, toptable=NULL, x=1, y=2, gvis_filename="limma_scatter.html",
+                                     gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     print("This can do comparisons among the following columns in the limma result:")
@@ -178,7 +190,9 @@ limma_coefficient_scatter = function(output, toptable=NULL, x=1, y=2, gvis_filen
     print(paste0("Actually comparing ", xname, " and ", yname, "."))
     coefficients = output$pairwise_comparisons$coefficients
     coefficients = coefficients[,c(x,y)]
-    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline, first=xname, second=yname, tooltip_data=tooltip_data, base_url=base_url, pretty_colors=FALSE)
+    plot = hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
+                               gvis_trendline=gvis_trendline, first=xname, second=yname,
+                               tooltip_data=tooltip_data, base_url=base_url, pretty_colors=FALSE)
 
     if (!is.null(toptable)) {
         theplot = plot$scatter + theme_bw()
@@ -223,7 +237,9 @@ limma_coefficient_scatter = function(output, toptable=NULL, x=1, y=2, gvis_filen
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-deseq_coefficient_scatter = function(output, x=1, y=2, gvis_filename="limma_scatter.html", gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
+deseq_coefficient_scatter = function(output, x=1, y=2, gvis_filename="limma_scatter.html",
+                                     gvis_trendline=TRUE, tooltip_data=NULL,
+                                     flip=FALSE, base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     print("This can do comparisons among the following columns in the deseq2 result:")
@@ -267,7 +283,9 @@ deseq_coefficient_scatter = function(output, x=1, y=2, gvis_filename="limma_scat
     coefficient_df = coefficient_df[,c(xname, yname, "mean.1", "mean.2")]
     coefficient_df[is.na(coefficient_df)] = 0
 
-    plot = hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename, gvis_trendline=gvis_trendline, first=xname, second=yname, tooltip_data=tooltip_data, base_url=base_url)
+    plot = hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+                               gvis_trendline=gvis_trendline, first=xname, second=yname,
+                               tooltip_data=tooltip_data, base_url=base_url)
     plot$df = coefficient_df
     return(plot)
 }
@@ -294,7 +312,9 @@ deseq_coefficient_scatter = function(output, x=1, y=2, gvis_filename="limma_scat
 #' fun = compare_tables(limma=l, deseq=d, edger=e)
 compare_tables = function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL, include_basic=TRUE) {
     ## Fill each column/row of these with the correlation between tools for one contrast performed
-    if (class(limma) == "list") { ## Then this was fed the raw output from limma_pairwise, lets assume the same is true for deseq/edger too and pull out the result tables.
+    if (class(limma) == "list") {
+        ## Then this was fed the raw output from limma_pairwise,
+        ## lets assume the same is true for deseq/edger too and pull out the result tables.
         limma = limma$all_tables
         deseq = deseq$all_tables
         edger = edger$all_tables
@@ -308,7 +328,8 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL, includ
     edger_vs_basic = list()
     deseq_vs_basic = list()
     cc = 0
-    for (comp in names(deseq)) {  ## assume all three have the same names() -- note that limma has more than the other two though
+    for (comp in names(deseq)) {
+        ## assume all three have the same names() -- note that limma has more than the other two though
         cc = cc + 1
         message(paste0(cc, "/", len, ": Comparing analyses for: ", comp))
         l = data.frame(limma[[comp]])
@@ -360,7 +381,10 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL, includ
     comparison_df = as.matrix(comparison_df)
     colnames(comparison_df) = names(deseq)
     heat_colors = colorRampPalette(c("white","black"))
-    comparison_heatmap = try(heatmap.3(comparison_df, scale="none", trace="none", linewidth=0.5, keysize=2, margins=c(8,8), col=heat_colors, dendrogram="none", Rowv=FALSE, Colv=FALSE, main="Compare DE tools"), silent=TRUE)
+    comparison_heatmap = try(heatmap.3(comparison_df, scale="none", trace="none",
+                                       linewidth=0.5, keysize=2, margins=c(8,8),
+                                       col=heat_colors, dendrogram="none", Rowv=FALSE,
+                                       Colv=FALSE, main="Compare DE tools"), silent=TRUE)
     heat=NULL
     if (class(comparison_heatmap) != 'try-error') {
         heat = recordPlot()
@@ -402,7 +426,9 @@ deseq_pairwise = function(...) {
 #' @export
 #' @examples
 #' ## pretend = deseq2_pairwise(data, conditions, batches)
-deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, excel=FALSE, csv=TRUE, annot_df=NULL, workbook="excel/deseq.xls", ...) {
+deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
+                           model_batch=FALSE, excel=FALSE, csv=TRUE, annot_df=NULL,
+                           workbook="excel/deseq.xls", ...) {
     print("Starting DESeq2 pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -434,7 +460,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     summarized = NULL
     if (isTRUE(model_batch) & isTRUE(model_cond)) {
         message("Attempting to include batch and condition in the model for DESeq.")
-        ##        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
+        ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
         summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ batch + condition)
         dataset = DESeqDataSet(se=summarized, design=~ batch + condition)
     } else if (isTRUE(model_batch)) {
@@ -447,11 +473,11 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         dataset = DESeqDataSet(se=summarized, design=~ condition)
     }
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
-    ##dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
+    ## dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
     deseq_sf = estimateSizeFactors(dataset)
     deseq_disp = estimateDispersions(deseq_sf)
-    ##deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
-    ##deseq_run = nbinomWaldTest(deseq_disp)
+    ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
+    ## deseq_run = nbinomWaldTest(deseq_disp)
     deseq_run = DESeq(deseq_disp)
     ## Set contrast= for each pairwise comparison here!
     denominators = list()
@@ -564,7 +590,10 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
 #' @export
 #' @examples
 #' ## pretend = edger_pairwise(data, conditions, batches)
-edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, alt_model=NULL, extra_contrasts=NULL, excel=FALSE, csv=TRUE, annotation=NULL, workbook="excel/edger.xls", ...) {
+edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
+                          model_batch=FALSE, model_intercept=FALSE, alt_model=NULL,
+                          extra_contrasts=NULL, excel=FALSE, csv=TRUE, annotation=NULL,
+                          workbook="excel/edger.xls", ...) {
     print("Starting EdgeR pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -871,7 +900,9 @@ hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=F
 #' @export
 #' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
-limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE, model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL, alt_model=NULL, libsize=NULL) {
+limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
+                          model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL,
+                          alt_model=NULL, libsize=NULL) {
     print("Starting limma pairwise comparison.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -1053,7 +1084,8 @@ limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
 #' @examples
 #' ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
 #' ## compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
-limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC", second_table=2, second_column="logFC", type="linear_scatter", ...) {
+limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC",
+                         second_table=2, second_column="logFC", type="linear_scatter", ...) {
     tables = all_pairwise_result$all_tables
     if (is.numeric(first_table)) {
         x_name = paste(names(tables)[first_table], first_column, sep=":")
@@ -1467,7 +1499,6 @@ basic_pairwise = function(input, design=NULL) {
         data = as.data.frame(input)
         conditions = as.factor(design$condition)
     }
-    ## design = data.frame(sample=c("hpgl010","hpgl011","hpgl012","hpgl013"), condition=c("a","b","c","a"))
 
     types = levels(conditions)
     num_conds = length(types)
@@ -1574,7 +1605,8 @@ basic_pairwise = function(input, design=NULL) {
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls", excel=FALSE, csv=TRUE, annotation=NULL) {
+write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
+                       excel=FALSE, csv=TRUE, annotation=NULL) {
     testdir = dirname(workbook)
     if (n == 0) {
         n = dim(data$coefficients)[1]

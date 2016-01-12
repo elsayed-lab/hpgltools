@@ -6,7 +6,8 @@
 \usage{
 simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids = NULL,
   adjust = 0.1, pvalue = 0.1, qvalue = 0.1, goseq_method = "Wallenius",
-  padjust_method = "BH", species = NULL, length_db = "ensGene")
+  padjust_method = "BH", species = NULL, length_db = "ensGene",
+  gff = NULL)
 }
 \arguments{
 \item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}

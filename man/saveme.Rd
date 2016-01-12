@@ -7,7 +7,11 @@
 saveme(directory = "savefiles", backups = 4)
 }
 \arguments{
-\item{backups}{default=10  how many revisions?}
+\item{backups}{default=10  how many revisions?
+
+I often use R over a sshfs connection, sometimes with significant latency, and
+I want to be able to save/load my R sessions relatively quickly.
+Thus this function uses pxz to compress the R session maximally and relatively fast.}
 
 \item{dir}{the directory to save the Rdata file.}
 }
