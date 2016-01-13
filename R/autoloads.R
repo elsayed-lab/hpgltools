@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan 11 15:23:01 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 12 16:19:18 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -153,7 +153,7 @@ autoloads_misc = function() {
     require.auto("seqinr")
 }
 
-#' Automatic loading of stuff I use
+#' Automatic loading of stuff I use, I am deprecating this now.
 #'
 #' @return NULL currently
 #' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}

@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan 11 20:56:29 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 12 17:33:53 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -91,7 +91,9 @@ all_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
 #' @export
 #' @examples
 #' ## pretty = combine_de_tables(big_result, table='t12_vs_t0')
+#' @import qvalue
 combine_de_tables = function(all_pairwise_result, table='wt_vs_mut', annot_df=NULL) {
+    require.auto("qvalue")
     limma = all_pairwise_result$limma
     deseq = all_pairwise_result$deseq
     edger = all_pairwise_result$edger
@@ -119,7 +121,7 @@ combine_de_tables = function(all_pairwise_result, table='wt_vs_mut', annot_df=NU
 
     combined$q_meta = tryCatch(
     {
-        format(signif(qvalue(combined$p_meta, robust=TRUE)$qvalues, 4), scientific=TRUE)
+        format(signif(qvalue::qvalue(combined$p_meta, robust=TRUE)$qvalues, 4), scientific=TRUE)
     },
     error=function(cond) {
         message(paste0("The meta qvalue estimation failed."))
@@ -157,6 +159,7 @@ combine_de_tables = function(all_pairwise_result, table='wt_vs_mut', annot_df=NU
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' @import ggplot2
 limma_coefficient_scatter = function(output, toptable=NULL, x=1, y=2, gvis_filename="limma_scatter.html",
                                      gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
@@ -213,7 +216,7 @@ limma_coefficient_scatter = function(output, toptable=NULL, x=1, y=2, gvis_filen
         down_df = as.data.frame(coefficients[down_index, ])
         colnames(up_df) = c("first","second")
         colnames(down_df) = c("first","second")
-        theplot = theplot + geom_point(data=up_df, colour="#7B9F35") + geom_point(data=down_df, colour="#DD0000")
+        theplot = theplot + ggplot2::geom_point(data=up_df, colour="#7B9F35") + ggplot2::geom_point(data=down_df, colour="#DD0000")
         plot$scatter = theplot
     }
     plot$df = coefficients
@@ -310,6 +313,7 @@ deseq_coefficient_scatter = function(output, x=1, y=2, gvis_filename="limma_scat
 #' ## d = deseq_pairwise(expt)
 #' ## e = edger_pairwise(expt)
 #' fun = compare_tables(limma=l, deseq=d, edger=e)
+#' @import grDevices
 compare_tables = function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL, include_basic=TRUE) {
     ## Fill each column/row of these with the correlation between tools for one contrast performed
     if (class(limma) == "list") {
@@ -380,7 +384,7 @@ compare_tables = function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL, includ
     }
     comparison_df = as.matrix(comparison_df)
     colnames(comparison_df) = names(deseq)
-    heat_colors = colorRampPalette(c("white","black"))
+    heat_colors = grDevices::colorRampPalette(c("white","black"))
     comparison_heatmap = try(heatmap.3(comparison_df, scale="none", trace="none",
                                        linewidth=0.5, keysize=2, margins=c(8,8),
                                        col=heat_colors, dendrogram="none", Rowv=FALSE,
@@ -426,9 +430,13 @@ deseq_pairwise = function(...) {
 #' @export
 #' @examples
 #' ## pretend = deseq2_pairwise(data, conditions, batches)
+#' @import DESeq2 Biobase qvalue
 deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                            model_batch=FALSE, excel=FALSE, csv=TRUE, annot_df=NULL,
                            workbook="excel/deseq.xls", ...) {
+    require.auto("DESeq2")
+    require.auto("Biobase")
+    require.auto("qvalue")
     print("Starting DESeq2 pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -441,7 +449,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             ## not a log2 transformation.
             if (input$norm != "raw") {
                 print("DESeq2 demands raw data as input, reverting to the original expressionset.")
-                data = exprs(input$original_expressionset)
+                data = Biobase::exprs(input$original_expressionset)
             } else if (!is.null(input$transform)) {
                 if (input$transform == "log2") {
                     ##data = (2^data) - 1
@@ -461,24 +469,24 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     if (isTRUE(model_batch) & isTRUE(model_cond)) {
         message("Attempting to include batch and condition in the model for DESeq.")
         ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
-        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ batch + condition)
-        dataset = DESeqDataSet(se=summarized, design=~ batch + condition)
+        summarized = DESeq2::DESeqDataSetFromMatrix(countData=data, colData=Biobase::pData(input$expressionset), design=~ batch + condition)
+        dataset = DESeq2::DESeqDataSet(se=summarized, design=~ batch + condition)
     } else if (isTRUE(model_batch)) {
         message("Attempting to include only batch in the deseq model, this will likely fail.")
-        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ batch)
-        dataset = DESeqDataSet(se=summarized, design=~ batch)
+        summarized = DESeq2::DESeqDataSetFromMatrix(countData=data, colData=Biobase::pData(input$expressionset), design=~ batch)
+        dataset = DESeq2::DESeqDataSet(se=summarized, design=~ batch)
     } else {
         message("Including only condition in the deseq model.")
-        summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ condition)
-        dataset = DESeqDataSet(se=summarized, design=~ condition)
+        summarized = DESeq2::DESeqDataSetFromMatrix(countData=data, colData=Biobase::pData(input$expressionset), design=~ condition)
+        dataset = DESeq2::DESeqDataSet(se=summarized, design=~ condition)
     }
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     ## dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
-    deseq_sf = estimateSizeFactors(dataset)
-    deseq_disp = estimateDispersions(deseq_sf)
+    deseq_sf = DESeq2::estimateSizeFactors(dataset)
+    deseq_disp = DESeq2::estimateDispersions(deseq_sf)
     ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
     ## deseq_run = nbinomWaldTest(deseq_disp)
-    deseq_run = DESeq(deseq_disp)
+    deseq_run = DESeq2::DESeq(deseq_disp)
     ## Set contrast= for each pairwise comparison here!
     denominators = list()
     numerators = list()
@@ -492,7 +500,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             numerator = conditions[d]
             comparison = paste0(numerator, "_vs_", denominator)
             message(paste0("DESeq2:", c, "/", d, ": Printing table: ", comparison))
-            result = as.data.frame(results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
+            result = as.data.frame(DESeq2::results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
             result = result[order(result$log2FoldChange),]
             colnames(result) = c("baseMean","logFC","lfcSE","stat","P.Value","adj.P.Val")
             ## From here on everything is the same.
@@ -500,7 +508,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA
             result$qvalue = tryCatch(
                 {
-                    format(signif(qvalue(result$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
+                    format(signif(qvalue::qvalue(result$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
                 },
                 error=function(cond) {
                     message(paste0("The qvalue estimation failed for ", comparison, "."))
@@ -548,7 +556,7 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     for (c in 1:(length(conditions))) {
         coef = conditions[c]
         coef_name = paste0("condition", coef)
-        coefficient_list[[coef]] = as.data.frame(results(deseq_run, contrast=as.numeric(coef_name == resultsNames(deseq_run))))
+        coefficient_list[[coef]] = as.data.frame(DESeq2::results(deseq_run, contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
         ## coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
     }
 
@@ -590,16 +598,21 @@ deseq2_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE
 #' @export
 #' @examples
 #' ## pretend = edger_pairwise(data, conditions, batches)
+#' @import edgeR Biobase stats qvalue
 edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                           model_batch=FALSE, model_intercept=FALSE, alt_model=NULL,
                           extra_contrasts=NULL, excel=FALSE, csv=TRUE, annotation=NULL,
                           workbook="excel/edger.xls", ...) {
-    print("Starting EdgeR pairwise comparisons.")
+    require.auto("edgeR")
+    require.auto("Biobase")
+    require.auto("stats")
+    require.auto("qvalue")
+    print("Starting edgeR pairwise comparisons.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
         conditions = input$conditions
         batches = input$batches
-        data = as.data.frame(exprs(input$expressionset))
+        data = as.data.frame(Biobase::exprs(input$expressionset))
         ## As I understand it, edgeR fits a binomial distribution
         ## and expects data as floating point counts,
         ## not a log2 transformation.
@@ -619,12 +632,12 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     ## each of the condition/batches
     ## It would be much smarter to generate the models in the following if() {} blocks
     ## But I have it in my head to eventually compare results using different models.
-    cond_model = model.matrix(~ 0 + conditions)
-    batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
-    condbatch_model = try(model.matrix(~ 0 + conditions + batches), silent=TRUE)
-    cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
-    batch_int_model = try(model.matrix(~ batches), silent=TRUE)
-    condbatch_int_model = try(model.matrix(~ conditions + batches), silent=TRUE)
+    cond_model = stats::model.matrix(~ 0 + conditions)
+    batch_model = try(stats::model.matrix(~ 0 + batches), silent=TRUE)
+    condbatch_model = try(stats::model.matrix(~ 0 + conditions + batches), silent=TRUE)
+    cond_int_model = try(stats::model.matrix(~ conditions), silent=TRUE)
+    batch_int_model = try(stats::model.matrix(~ batches), silent=TRUE)
+    condbatch_int_model = try(stats::model.matrix(~ conditions + batches), silent=TRUE)
     fun_model = NULL
     fun_int_model = NULL
     if (isTRUE(model_cond) & isTRUE(model_batch)) {
@@ -657,19 +670,19 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     ##tmpnames = gsub("conditions", "", tmpnames)
     ##colnames(cond_model) = tmpnames
 
-    raw = DGEList(counts=data, group=conditions)
+    raw = edgeR::DGEList(counts=data, group=conditions)
     message("Using EdgeR to normalize the data.")
-    norm = calcNormFactors(raw)
+    norm = edgeR::calcNormFactors(raw)
     message("EdgeR: Estimating the common dispersion.")
-    disp_norm = estimateCommonDisp(norm)
+    disp_norm = edgeR::estimateCommonDisp(norm)
     message("EdgeR: Estimating dispersion across genes.")
-    tagdisp_norm = estimateTagwiseDisp(disp_norm)
+    tagdisp_norm = edgeR::estimateTagwiseDisp(disp_norm)
     message("EdgeR: Estimating GLM Common dispersion.")
-    glm_norm = estimateGLMCommonDisp(tagdisp_norm, fun_model)
+    glm_norm = edgeR::estimateGLMCommonDisp(tagdisp_norm, fun_model)
     message("EdgeR: Estimating GLM Trended dispersion.")
-    glm_trended = estimateGLMTrendedDisp(glm_norm, fun_model)
+    glm_trended = edgeR::estimateGLMTrendedDisp(glm_norm, fun_model)
     message("EdgeR: Estimating GLM Tagged dispersion.")
-    glm_tagged = estimateGLMTagwiseDisp(glm_trended, fun_model)
+    glm_tagged = edgeR::estimateGLMTagwiseDisp(glm_trended, fun_model)
     cond_fit = edgeR::glmFit(glm_tagged, design=fun_model)
 
     apc = make_pairwise_contrasts(fun_model, conditions, do_identities=FALSE)
@@ -692,7 +705,7 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         res = as.data.frame(res)
         res$qvalue = tryCatch(
             {
-                as.numeric(format(signif(qvalue(res$PValue, robust=TRUE)$qvalues, 4), scientific=TRUE))
+                as.numeric(format(signif(qvalue::qvalue(res$PValue, robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
             error=function(cond) {
                 message(paste0("The qvalue estimation failed for ", name, "."))
@@ -766,7 +779,12 @@ edger_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
 #' @export
 #' @examples
 #' ## funkytown = hpgl_voom(samples, model)
+#' @import limma gplots stats ggplot2
 hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=FALSE, converted=FALSE) {
+    require.auto("limma")
+    require.auto("gplots")
+    require.auto("stats")
+    require.auto("ggplot2")
     out = list()
     if (is.null(libsize)) {
         libsize = colSums(dataframe, na.rm=TRUE)
@@ -900,9 +918,12 @@ hpgl_voom = function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=F
 #' @export
 #' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
+#' @import limma stats
 limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                           model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL,
                           alt_model=NULL, libsize=NULL) {
+    require.auto("limma")
+    require.auto("stats")
     print("Starting limma pairwise comparison.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -933,12 +954,12 @@ limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     conditions = as.factor(conditions)
     batches = as.factor(batches)
     ## Make a model matrix which will have one entry for each of these condition/batches
-    cond_model = model.matrix(~ 0 + conditions)  ## I am not putting a try() on this, because if it fails, then we are effed.
-    batch_model = try(model.matrix(~ 0 + batches), silent=TRUE)
-    condbatch_model = try(model.matrix(~ 0 + conditions + batches), silent=TRUE)
-    batch_int_model = try(model.matrix(~ batches), silent=TRUE)
-    cond_int_model = try(model.matrix(~ conditions), silent=TRUE)
-    condbatch_int_model = try(model.matrix(~ conditions + batches), silent=TRUE)
+    cond_model = stats::model.matrix(~ 0 + conditions)  ## I am not putting a try() on this, because if it fails, then we are effed.
+    batch_model = try(stats::model.matrix(~ 0 + batches), silent=TRUE)
+    condbatch_model = try(stats::model.matrix(~ 0 + conditions + batches), silent=TRUE)
+    batch_int_model = try(stats::model.matrix(~ batches), silent=TRUE)
+    cond_int_model = try(stats::model.matrix(~ conditions), silent=TRUE)
+    condbatch_int_model = try(stats::model.matrix(~ conditions + batches), silent=TRUE)
     fun_model = NULL
     fun_int_model = NULL
     if (isTRUE(model_cond) & isTRUE(model_batch)) {
@@ -1014,7 +1035,7 @@ limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
     ## This will be important in 17 lines from now.
     ## Do the lmFit() using this model
-    fun_fit = lmFit(fun_voom, fun_model)
+    fun_fit = limma::lmFit(fun_voom, fun_model)
     ##fun_fit = lmFit(fun_voom)
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
     if (isTRUE(model_intercept)) {
@@ -1032,13 +1053,13 @@ limma_pairwise = function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         ## Once all that is done, perform the fit
         ## This will first provide the relative abundances of each condition
         ## followed by the set of all pairwise comparisons.
-        all_pairwise_fits = contrasts.fit(fun_fit, all_pairwise_contrasts)
+        all_pairwise_fits = limma::contrasts.fit(fun_fit, all_pairwise_contrasts)
     }
     all_tables = NULL
     if (isTRUE(one_replicate)) {
         all_pairwise_comparisons = all_pairwise_fits$coefficients
     } else {
-        all_pairwise_comparisons = eBayes(all_pairwise_fits)
+        all_pairwise_comparisons = limma::eBayes(all_pairwise_fits)
         all_tables = try(topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
     }
     if (isTRUE(model_intercept)) {
@@ -1136,13 +1157,15 @@ limma_scatter = function(all_pairwise_result, first_table=1, first_column="logFC
 #' @examples
 #' ## subset = limma_subset(df, n=400)
 #' ## subset = limma_subset(df, z=1.5)
+#' @import stats
 limma_subset = function(table, n=NULL, z=NULL) {
+    require.auto("stats")
     if (is.null(n) & is.null(z)) {
         z = 1.5
     }
     if (is.null(n)) {
         out_summary = summary(table$logFC)
-        out_mad = mad(table$logFC, na.rm=TRUE)
+        out_mad = stats::mad(table$logFC, na.rm=TRUE)
         up_median_dist = out_summary["Median"] + (out_mad * z)
         down_median_dist = out_summary["Median"] - (out_mad * z)
 
@@ -1170,14 +1193,17 @@ limma_subset = function(table, n=NULL, z=NULL) {
 #' @export
 #' @examples
 #' ## pretend = make_exampledata()
+#' @import stats DESeq
 make_exampledata = function (ngenes=1000, columns=5) {
-    q0 <- rexp(ngenes, rate = 1/250)
-    is_DE <- runif(ngenes) < 0.3
-    lfc <- rnorm(ngenes, sd = 2)
+    require.auto("stats")
+    require.auto("DESeq")
+    q0 <- stats::rexp(ngenes, rate = 1/250)
+    is_DE <- stats::runif(ngenes) < 0.3
+    lfc <- stats::rnorm(ngenes, sd = 2)
     q0A <- ifelse(is_DE, q0 * 2^(lfc/2), q0)
     q0B <- ifelse(is_DE, q0 * 2^(-lfc/2), q0)
     ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
-    true_sf = abs(rnorm(columns, mean=1, sd=0.4))
+    true_sf = abs(stats::rnorm(columns, mean=1, sd=0.4))
     cond_types = ceiling(sqrt(columns))
     ##    conds <- c("A", "A", "B", "B", "B")
     ##x <- sample( LETTERS[1:4], 10000, replace=TRUE, prob=c(0.1, 0.2, 0.65, 0.05) )
@@ -1186,7 +1212,7 @@ make_exampledata = function (ngenes=1000, columns=5) {
         mu = true_sf[j] * ifelse(conds[j] == "A", q0A[i], q0B[i]),
         size = 1/0.2))))
     rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
-    newCountDataSet(m, conds)
+    DESeq::newCountDataSet(m, conds)
 }
 
 #' make_pairwise_contrasts()  Run makeContrasts() with all pairwise comparisons.
@@ -1210,8 +1236,9 @@ make_exampledata = function (ngenes=1000, columns=5) {
 #' @export
 #' @examples
 #' ## pretend = make_pairwise_contrasts(model, conditions)
+#' @import stringi
 make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pairwise=TRUE, extra_contrasts=NULL) {
-    hpgltools::require.auto("stringi")
+    require.auto("stringi")
     tmpnames = colnames(model)
     tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     tmpnames = gsub("-", "", tmpnames)
@@ -1262,8 +1289,7 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
     if (!is.null(extra_contrasts)) {
         extra_eval_strings = strsplit(extra_contrasts, "\\n")
         extra_eval_names = extra_eval_strings
-        require.auto("stringi")
-        extra_eval_names = stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")
+        extra_eval_names = stringi::stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")
         eval_strings = append(eval_strings, extra_contrasts)
     }
 ##    for (f in 1:length(eval_strings)) {
@@ -1359,7 +1385,11 @@ make_pairwise_contrasts = function(model, conditions, do_identities=TRUE, do_pai
 #' ## Currently this assumes that a variant of toptable was used which
 #' ## gives adjusted p-values.  This is not always the case and I should
 #' ## check for that, but I have not yet.
+#' @import stats cbcbSEQ sva limma
 simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="simple_comparison", basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE, pvalue_cutoff=0.05, logfc_cutoff=0.6, tooltip_data=NULL, verbose=FALSE, ...) {
+    require.auto("stats")
+    require.auto("limma")
+    require.auto("sva")
     condition_model = stats::model.matrix(~ 0 + subset$condition)
     if (length(levels(subset$batch)) == 1) {
         print("There is only one batch! I can only include condition in the model.")
@@ -1489,7 +1519,10 @@ simple_comparison = function(subset, workbook="simple_comparison.xls", sheet="si
 #' @return I am not sure yet
 #'
 #' @seealso \code{\link{limma}} \code{\link{deseq2}} \code{\link{edger}}
+#' @import matrixStats Biobase
 basic_pairwise = function(input, design=NULL) {
+    require.auto("matrixStats")
+    require.auto("Biobase")
     print("Starting basic pairwise comparison.")
     input_class = class(input)[1]
     if (input_class == 'expt') {
@@ -1605,8 +1638,11 @@ basic_pairwise = function(input, design=NULL) {
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+#' @import limma qvalue
 write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
                        excel=FALSE, csv=TRUE, annotation=NULL) {
+    require.auto("limma")
+    require.auto("qvalue")
     testdir = dirname(workbook)
     if (n == 0) {
         n = dim(data$coefficients)[1]
@@ -1621,7 +1657,7 @@ write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma
     for (c in 1:end) {
         comparison = coef[c]
         message(paste0("limma:", c, "/", end, ": Printing table: ", comparison, "."))
-        data_table = topTable(data, adjust=adjust, n=n, coef=comparison)
+        data_table = limma::topTable(data, adjust=adjust, n=n, coef=comparison)
 
         data_table$qvalue = tryCatch(
             {
@@ -1678,7 +1714,9 @@ write_limma = function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma
 #'
 #' @return a list of up/down genes
 #' @export
+#' @import stats
 get_sig_genes = function(table, n=NULL, z=NULL, fc=NULL, column='logFC', fold='plusminus') {
+    require.auto("stats")
     if (is.null(z) & is.null(n) & is.null(fc)) {
         print("No n, z, nor fc provided, setting z to 1.")
         z = 1
@@ -1693,7 +1731,7 @@ get_sig_genes = function(table, n=NULL, z=NULL, fc=NULL, column='logFC', fold='p
         ## Take an arbitrary number which are >= and <= a value which is z zscores from the median.
         print("Getting the genes >= z scores away from the median.")
         out_summary = summary(table[,column])
-        out_mad = mad(table[,column], na.rm=TRUE)
+        out_mad = stats::mad(table[,column], na.rm=TRUE)
         up_median_dist = out_summary["Median"] + (out_mad * z)
         down_median_dist = out_summary["Median"] - (out_mad * z)
         up_idx = table[,column] >= up_median_dist

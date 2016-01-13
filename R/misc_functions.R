@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan 11 20:45:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 12 16:18:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -432,12 +432,37 @@ sillydist = function(firstterm, secondterm, firstaxis, secondaxis) {
 #' @export
 #' @examples
 #' ## write_xls(dataframe, "hpgl_data")
-write_xls = function(type="xlsx", ...) {
-    if (type == 'xlsx') {
-        write_xlsx_xlsx(...)
-    } else {
-        write_xls_xlconnect(...)
+write_xls = function(data, sheet="first", file="excel/workbook", overwrite_file=TRUE, overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", type="openxlsx", ...) {
+    excel_dir = dirname(file)
+    if (!file.exists(excel_dir)) {
+        dir.create(excel_dir, recursive=TRUE)
     }
+
+    file = gsub(pattern="\\.xlsx", replacement="", file, perl=TRUE)
+    file = gsub(pattern="\\.xls", replacement="", file, perl=TRUE)
+    filename = NULL
+    if (isTRUE(dated)) {
+        timestamp = format(Sys.time(), "%Y%m%d%H")
+        filename = paste0(file, "-", timestamp, suffix)
+    } else {
+        filename = paste0(file, suffix)
+    }
+
+    if (file.exists(filename)) {
+        if (isTRUE(overwrite_file)) {
+            backup_file(filename)
+        }
+    }
+
+    ret = NULL
+    if (type == 'xlsx') {
+        ret = write_xls_xlsx(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated, ...)
+    } else if (type == 'openxlsx') {
+        ret = write_xls_openxlsx(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated, ...)
+    } else {
+        ret = write_xls_xlconnect(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated, ...)
+    }
+    return(ret)
 }
 
 #' write_xls_xlconnect()  Write a dataframe to an excel spreadsheet sheet.
@@ -459,45 +484,27 @@ write_xls = function(type="xlsx", ...) {
 #' ## write_xls_xlconnect(dataframe, "hpgl_data")
 #' ## Sometimes it is a good idea to go in and delete the workbook and
 #' ## re-create it if this is used heavily, because it will get crufty.
-write_xls_xlconnect = function(data, sheet="first", file="excel/workbook", rowname="rownames", overwritefile=FALSE, overwritesheet=TRUE, dated=TRUE, suffix=".xls") {
-    excel_dir = dirname(file)
-    if (!file.exists(excel_dir)) {
-        dir.create(excel_dir, recursive=TRUE)
-    }
-
-    file = gsub(pattern="\\.xls.", replacement="", file, perl=TRUE)
-    filename = NULL
-    if (isTRUE(dated)) {
-        timestamp = format(Sys.time(), "%Y%m%d%H")
-        filename = paste0(file, "-", timestamp, suffix)
-    } else {
-        filename = paste0(file, suffix)
-    }
-
-    if (file.exists(filename)) {
-        if (isTRUE(overwritefile)) {
-            backup_file(filename)
-        }
-    }
-    xls = loadWorkbook(filename, create=TRUE)
-
+write_xls_xlconnect = function(data, sheet="first", file="excel/workbook.xls", overwrite_file=TRUE, overwrite_sheet=TRUE, dated=TRUE, suffix=".xls", ...) {
+    require.auto("XLConnect")
+    xls = XLConnect::loadWorkbook(file, create=TRUE)
     if (isTRUE(overwritesheet)) {
         newname = paste0(sheet, '.bak')
         if (existsSheet(xls, newname)) {
-            removeSheet(xls, sheet=newname)
+            XLConnect::removeSheet(xls, sheet=newname)
         }
         if (existsSheet(xls, sheet)) {
-            renameSheet(xls, sheet=sheet, newName=newname)
+            XLConnect::renameSheet(xls, sheet=sheet, newName=newname)
         }
     }
 
-    createSheet(xls, name=sheet)
+    XLConnect::createSheet(xls, name=sheet)
     if (is.na(rowname)) {
-        writeWorksheet(xls, data, sheet=sheet)
+        XLConnect::writeWorksheet(xls, data, sheet=sheet)
     } else {
-        writeWorksheet(xls, data, sheet=sheet, rowname=rowname)
+        XLConnect::writeWorksheet(xls, data, sheet=sheet, rowname=rowname)
     }
-    saveWorkbook(xls)
+    ret = XLConnect::saveWorkbook(xls)
+    return(ret)
 }
 
 #' write_xls_xlsx()  Write a dataframe to an excel spreadsheet sheet using xlsx.
@@ -519,27 +526,9 @@ write_xls_xlconnect = function(data, sheet="first", file="excel/workbook", rowna
 #'
 #' @examples
 #' ## write_xls_xlsx(dataframe)
-write_xls_xlsx = function(data, sheet="first", file="excel/workbook", header="Data Table", rownames=TRUE, colnames=TRUE, overwritefile=FALSE, dated=TRUE, suffix=".xlsx") {
-    excel_dir = dirname(file)
-    if (!file.exists(excel_dir)) {
-        dir.create(excel_dir, recursive=TRUE)
-    }
-
-    file = gsub(pattern="\\.xls.", replacement="", file, perl=TRUE)
-    filename = NULL
-    if (isTRUE(dated)) {
-        timestamp = format(Sys.time(), "%Y%m%d%H")
-        filename = paste0(file, "-", timestamp, suffix)
-    } else {
-        filename = paste0(file, suffix)
-    }
-
-    if (file.exists(filename)) {
-        if (isTRUE(overwritefile)) {
-            backup_file(filename)
-        }
-    }
-
+write_xls_xlsx = function(data, sheet="first", file="excel/workbook.xls", overwrite_file=TRUE, overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", ...) {
+    require.auto("xlsx")
+    ## require.auto("kassambara/r2excel")
     wb = xlsx::createWorkbook(type="xlsx")
     sheet = xlsx::createSheet(wb, sheetName=sheet)
     r2excel::xlsx.addHeader(wb, sheet, value=header, color="darkblue")
@@ -549,6 +538,30 @@ write_xls_xlsx = function(data, sheet="first", file="excel/workbook", header="Da
     res = saveWorkbook(wb, file)
     return(res)
 }
+
+write_xls_openxlsx = function(data, sheet="first", file="excel/workbook.xlsx", overwrite_file=TRUE, overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", ...) {
+    require.auto("openxlsx")
+    arglist = list(...)
+
+    wb = openxlsx::createWorkbook(creator="atb")
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    hs1 = openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
+    new_row = 1
+    if (!is.null(arglist$title)) {
+        openxlsx::writeData(wb, sheet, x=arglist$title, startRow=new_row)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        new_row = new_row + 1
+    }
+
+    openxlsx::writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row = new_row + nrow(data) + 2
+
+    openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=1:ncol(data))
+    openxlsx::saveWorkbook(wb, file, overwrite=overwrite_sheet)
+
+    return(new_row)
+}
+
 
 #' backup_file()  Make a backup of an existing file with n revisions, like VMS!
 #'

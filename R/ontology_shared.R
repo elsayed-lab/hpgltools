@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan 11 20:22:59 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 12 17:34:03 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -617,7 +617,7 @@ golevel_df = function(ont="MF", savefile="ontlevel.rda") {
 #' @param gostats  Yep, ditto
 #' @param go_file default='excel/merged_go'  the file to save the results.
 #' @param n default=30  the number of ontology categories to include in each table.
-write_go_xls = function(goseq, cluster, topgo, gostats, file="excel/merged_go", n=30) {
+write_go_xls = function(goseq, cluster, topgo, gostats, file="excel/merged_go", dated=TRUE, n=30, writer="openxlsx") {
     n = get0('n')
     if (is.null(n)) {
         n = 30
@@ -631,7 +631,9 @@ write_go_xls = function(goseq, cluster, topgo, gostats, file="excel/merged_go", 
         dir.create(excel_dir, recursive=TRUE)
     }
 
-    file = gsub(pattern="\\.xls.", replacement="", file, perl=TRUE)
+    suffix = ".xlsx"
+    file = gsub(pattern="\\.xlsx", replacement="", file, perl=TRUE)
+    file = gsub(pattern="\\.xls", replacement="", file, perl=TRUE)
     filename = NULL
     if (isTRUE(dated)) {
         timestamp = format(Sys.time(), "%Y%m%d%H")
@@ -645,10 +647,6 @@ write_go_xls = function(goseq, cluster, topgo, gostats, file="excel/merged_go", 
             backup_file(filename)
         }
     }
-
-    ## require.auto("kassambara/r2excel")
-    wb = xlsx::createWorkbook(type="xlsx")
-    sheet = xlsx::createSheet(wb, sheetName="goseq")
 
     ## Massage the goseq tables to match Najib's request
     goseq_mf = head(goseq$mf_subset, n=n)
@@ -709,74 +707,189 @@ write_go_xls = function(goseq, cluster, topgo, gostats, file="excel/merged_go", 
     colnames(gostats_bp) = c("Ontology","Category","Term","Fisher p-value","Num. DE","Num. in cat.","Odds ratio","Exp. in cat.","Q-value","Link")
     colnames(gostats_cc) = c("Ontology","Category","Term","Fisher p-value","Num. DE","Num. in cat.","Odds ratio","Exp. in cat.","Q-value","Link")
 
+    lst = list(goseq_mf=goseq_mf, goseq_bp=goseq_bp, goseq_cc=goseq_cc,
+               cluster_mf=cluster_mf, cluster_bp=cluster_bp, cluster_cc=cluster_cc,
+               topgo_mf=topgo_mf, topgo_bp=topgo_bp, topgo_cc=topgo_cc,
+               gostats_mf=gostats_mf, gostats_bp=gostats_bp, gostats_cc=gostats_cc)
+
+    if (writer == "xlsx") {
+        write_go_xlsx(lst, filename)
+    } else {
+        write_go_openxlsx(lst, filename)
+    }
+}
+
+write_go_xlsx = function(lst, file) {
+    ## require.auto("kassambara/r2excel")
+    wb = xlsx::createWorkbook(type="xlsx")
+    sheet = xlsx::createSheet(wb, sheetName="goseq")
+
     r2excel::xlsx.addHeader(wb, sheet, value="BP Results from goseq.", color="darkblue")
     r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addTable(wb, sheet, goseq_bp,
+    r2excel::xlsx.addTable(wb, sheet, lst$goseq_bp,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
     r2excel::xlsx.addLineBreak(sheet, 1)
     r2excel::xlsx.addHeader(wb, sheet, value="MF Results from goseq.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, goseq_mf,
+    r2excel::xlsx.addTable(wb, sheet, lst$goseq_mf,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
     r2excel::xlsx.addLineBreak(sheet, 1)
     r2excel::xlsx.addHeader(wb, sheet, value="CC Results from goseq.", color="darkblue")
-    xlsx.addTable(wb, sheet, goseq_cc,
+    xlsx.addTable(wb, sheet, lst$goseq_cc,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
 
     sheet = xlsx::createSheet(wb, sheetName="clusterProfiler")
     r2excel::xlsx.addHeader(wb, sheet, value="BP Results from clusterProfiler.", color="darkblue")
     r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addTable(wb, sheet, cluster_bp,
+    r2excel::xlsx.addTable(wb, sheet, lst$cluster_bp,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
     r2excel::xlsx.addLineBreak(sheet, 1)
     r2excel::xlsx.addHeader(wb, sheet, value="MF Results from clusterProfiler.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, cluster_mf,
+    r2excel::xlsx.addTable(wb, sheet, lst$cluster_mf,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
     r2excel::xlsx.addLineBreak(sheet, 1)
     r2excel::xlsx.addHeader(wb, sheet, value="CC Results from clusterProfiler.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, cluster_cc,
+    r2excel::xlsx.addTable(wb, sheet, lst$cluster_cc,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
 
     sheet = xlsx::createSheet(wb, sheetName="topGO")
     r2excel::xlsx.addHeader(wb, sheet, value="BP Results from topGO.", color="darkblue")
     r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addTable(wb, sheet, topgo_bp,
+    r2excel::xlsx.addTable(wb, sheet, lst$topgo_bp,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
     r2excel::xlsx.addLineBreak(sheet, 1)
     r2excel::xlsx.addHeader(wb, sheet, value="MF Results from topGO.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, topgo_mf,
+    r2excel::xlsx.addTable(wb, sheet, lst$topgo_mf,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
     r2excel::xlsx.addLineBreak(sheet, 1)
     r2excel::xlsx.addHeader(wb, sheet, value="CC Results from topGO.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, topgo_cc,
+    r2excel::xlsx.addTable(wb, sheet, lst$topgo_cc,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
 
     sheet = xlsx::createSheet(wb, sheetName="GOStats")
     r2excel::xlsx.addHeader(wb, sheet, value="BP Results from GOStats.", color="darkblue")
     r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addTable(wb, sheet, gostats_bp,
+    r2excel::xlsx.addTable(wb, sheet, lst$gostats_bp,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
     r2excel::xlsx.addLineBreak(sheet, 1)
     r2excel::xlsx.addHeader(wb, sheet, value="MF Results from GOStats.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, gostats_mf,
+    r2excel::xlsx.addTable(wb, sheet, lst$gostats_mf,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
     r2excel::xlsx.addLineBreak(sheet, 1)
     r2excel::xlsx.addHeader(wb, sheet, value="CC Results from GOStats.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, gostats_cc,
+    r2excel::xlsx.addTable(wb, sheet, lst$gostats_cc,
                            col.names=TRUE, row.names=FALSE, fontColor="black",
                            fontSize=12, rowFill=c("white","lightgrey"))
 
     res = saveWorkbook(wb, paste0(file, ".xlsx"))
+    return(res)
+}
+
+write_go_openxlsx = function(lst, file) {
+    ## require.auto("awalker89/openxlsx")
+    wb = openxlsx::createWorkbook(creator="atb")
+    hs1 = openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
+
+    ## This stanza will be repeated so I am just incrementing the new_row
+    new_row = 1
+    sheet = "goseq"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$goseq_bp, tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row = new_row + nrow(lst$goseq_bp) + 2
+    openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$goseq_mf, tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row = new_row + nrow(lst$goseq_mf) + 2
+    openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$goseq_cc, tableStyle="TableStyleMedium9", startRow=new_row)
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
+
+    new_row = 1
+    sheet = "clusterProfiler"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$cluster_bp, tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row = new_row + nrow(lst$cluster_bp) + 2
+    openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$cluster_mf, tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row = new_row + nrow(lst$cluster_mf) + 2
+    openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$cluster_cc, tableStyle="TableStyleMedium9", startRow=new_row)
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+
+    new_row = 1
+    sheet = "topgo"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$topgo_bp, tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row = new_row + nrow(lst$topgo_bp) + 2
+    openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$topgo_mf, tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row = new_row + nrow(lst$topgo_mf) + 2
+    openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$topgo_cc, tableStyle="TableStyleMedium9", startRow=new_row)
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:11, widths="auto")
+
+    new_row = 1
+    sheet = "gostats"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$gostats_bp, tableStyle="TableStyleMedium9", startRow=new_row)
+    links = lst$gostats_bp$Link
+    class(links) = 'hyperlink'
+    names(links) = lst$gostats_bp$Category
+    openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
+    new_row = new_row + nrow(lst$gostats_bp) + 2
+    openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$gostats_mf, tableStyle="TableStyleMedium9", startRow=new_row)
+    links = lst$gostats_mf$Link
+    class(links) = 'hyperlink'
+    names(links) = lst$gostats_mf$Category
+    openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
+    new_row = new_row + nrow(lst$gostats_mf) + 2
+    openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row = new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=lst$gostats_cc, tableStyle="TableStyleMedium9", startRow=new_row)
+    links = lst$gostats_cc$Link
+    class(links) = 'hyperlink'
+    names(links) = lst$gostats_cc$Category
+    openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+
+    res = openxlsx::saveWorkbook(wb, file, overwrite=TRUE)
     return(res)
 }
 

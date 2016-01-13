@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan 11 21:02:50 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 12 17:08:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -41,10 +41,14 @@
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Remember that this depends on an existing data structure of gene annotations.
+#' @import openxlsx grDevices RColorBrewer
 create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE,
                        gene_info=NULL, by_type=FALSE, by_sample=FALSE, sep=",",
                        include_type="all", include_gff=NULL, count_dataframe=NULL,
                        meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
+    require.auto("openxlsx")
+    require.auto("grDevices")
+    require.auto("RColorBrewer")
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
@@ -53,8 +57,9 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
         if (file_ext(file) == 'csv') {
             tmp_definitions = read.csv(file=file, comment.char="#", sep=sep)
         } else if (file_ext(file) == 'xls' | file_ext(file) == 'xlsx') {
-            xls = loadWorkbook(file, create=FALSE)
-            tmp_definitions = readWorksheet(xls, 1)
+            ## xls = loadWorkbook(file, create=FALSE)
+            ## tmp_definitions = readWorksheet(xls, 1)
+            tmp_definitions = openxlsx::read.xlsx(xlsxFile=file, sheet=1)
         } else {
             tmp_definitions = read.table(file=file)
         }
@@ -69,7 +74,7 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
     if (is.null(color_hash)) {
         if (is.null(tmp_definitions$color)) {
             num_colors = length(condition_names)
-            colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors,"Dark2"))(num_colors))
+            colors = suppressWarnings(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_colors,"Dark2"))(num_colors))
             color_hash = hash(keys=as.character(condition_names), values=colors)
         } else {
             color_hash = hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)
@@ -149,9 +154,14 @@ create_expt = function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FA
 #' @export
 #' @examples
 #' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
+#' @import openxlsx hash BiocGenerics rtracklayer
 create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=FALSE,
                              gene_info=NULL, by_type=FALSE, by_sample=FALSE, include_type="all",
                              include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
+    require.auto("openxlsx")
+    require.auto("hash")
+    require.auto("BiocGenerics")
+    require.auto("rtracklayer")
     print("Please note that thus function assumes a specific set of columns in the sample sheet:")
     print("The most important ones are: Sample.ID, Stage, Type.")
     print("Other columns it will attempt to create by itself, but if")
@@ -164,8 +174,9 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
         if (file_ext(file) == 'csv') {
             sample_definitions = read.csv(file=file, comment.char="#", sep=sep)
         } else if (file_ext(file) == 'xls' | file_ext(file) == 'xlsx') {
-            xls = loadWorkbook(file, create=FALSE)
-            sample_definitions = readWorksheet(xls, 1)
+            ## xls = loadWorkbook(file, create=FALSE)
+            ## sample_definitions = readWorksheet(xls, 1)
+            sample_definitions = openxlsx::read.xlsx(file, sheet=1)
         } else {
             sample_definitions = read.table(file=file)
         }
@@ -176,7 +187,7 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
         sample_definitions$condition = tolower(paste(sample_definitions$type, sample_definitions$stage, sep="_"))
         sample_definitions$batch = gsub("\\s+|\\d+|\\*", "", sample_definitions$batch, perl=TRUE)
     }
-    design_colors_list = as.list.hash(color_hash)
+    design_colors_list = hash::as.list.hash(color_hash)
     sample_definitions$colors = as.list(design_colors_list[as.character(sample_definitions$condition)])
     sample_definitions = as.data.frame(sample_definitions)
     rownames(sample_definitions) = make.names(sample_definitions$sample.id, unique=TRUE)
@@ -311,7 +322,9 @@ create_experiment = function(file=NULL, color_hash, suffix=".count.gz", header=F
 #' @examples
 #' ## smaller_expt = expt_subset(big_expt, "condition=='control'")
 #' ## all_expt = expt_subset(expressionset, "")  ## extracts everything
+#' @import Biobase
 expt_subset = function(expt, subset=NULL) {
+    require.auto("Biobase")
     if (class(expt) == "ExpressionSet") {
         expressionset = expt
     } else if (class(expt) == "expt") {
@@ -321,7 +334,7 @@ expt_subset = function(expt, subset=NULL) {
     }
     if (is.null(expt$definitions)) {
         warning("There is no expt$definitions, using the expressionset.")
-        initial_metadata = pData(expressionset)
+        initial_metadata = Biobase::pData(expressionset)
     } else {
         initial_metadata = expt$definitions
     }

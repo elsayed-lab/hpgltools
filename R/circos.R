@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan 11 20:58:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 12 16:59:13 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## The karyotype file is circos/data/5005_5448_karyotype.txt
 ## The 5005 genome is 1838562 nt. long (looking at reference/genbank/mgas_5005.gb)
@@ -27,17 +27,20 @@
 #' @param chr_num default=1  the number to record (This and name above should change for multi-chromosomal species)
 #'
 #' @return undef
+#' @import Rsamtools Biostrings
 circos_karyotype = function(name='default', conf_dir='circos/conf', length=NULL,
                             chr_name='chr1', segments=6, color='white',
                             chr_num=1, fasta=NULL) {
+    require.auto("Rsamtools")  ## For FaFile
+    require.auto("Biostrings")  ## For getSeq
     genome_length = 0
     if (is.null(length) & is.null(fasta)) {
         stop("circos_karyotype() requires a chromosome length or fasta file to gather sequence data from.")
     } else if (!is.null(length)) {
         genome_length = length
     } else {
-        raw_seq = FaFile(fasta)
-        all_seq = getSeq(raw_seq)
+        raw_seq = Rsamtools::FaFile(fasta)
+        all_seq = Biostrings::getSeq(raw_seq)
         genome_length = sum(as.data.frame(all_seq@ranges)$width)
     }
 
@@ -536,12 +539,15 @@ circos_plus_minus = function(go_table, cfgout="circos/conf/default.conf", chr='c
 #'     and inner,whatever follows.
 #'
 #' @return the radius after adding the histogram and the spacing.
+#' @import grDevices RColorBrewer
 circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum",
                        chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
     ## because I am tired of mistyping something stupid.
+    require.auto("RColorBrewer") ## brewer.pal
+    require.auto("grDevices") ## colorRampPalette
     if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) | is.null(df[[colname]])) {
         stop("This requires columns: start, end, rownames, and datum")
     }
@@ -561,7 +567,7 @@ circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum",
     if (is.null(colors)) {
         conditions = levels(as.factor(df[[colname]]))
         num_colors = length(conditions)
-        colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors, "Dark2"))(num_colors))
+        colors = suppressWarnings(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
         names(colors) = conditions
     }
 
@@ -652,12 +658,15 @@ circos_tile = function(df, cfgout="circos/conf/default.conf", colname="datum",
 #'     and inner,whatever follows.
 #'
 #' @return the radius after adding the histogram and the spacing.
+#' @import grDevices RColorBrewer
 circos_heatmap = function(df, cfgout="circos/conf/default.conf", colname="datum",
                           chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
     ## because I am tired of mistyping something stupid.
+    require.auto("RColorBrewer") ## brewer.pal
+    require.auto("grDevices") ## colorRampPalette
     if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) | is.null(df[[colname]])) {
         stop("This requires columns: start, end, rownames, and datum")
     }
@@ -677,7 +686,7 @@ circos_heatmap = function(df, cfgout="circos/conf/default.conf", colname="datum"
     if (is.null(colors)) {
         conditions = levels(as.factor(df[[colname]]))
         num_colors = length(conditions)
-        colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors, "Dark2"))(num_colors))
+        colors = suppressWarnings(RColorBrewer::colorRampPalette(grDevices::brewer.pal(num_colors, "Dark2"))(num_colors))
         names(colors) = conditions
     }
 
@@ -753,12 +762,15 @@ circos_heatmap = function(df, cfgout="circos/conf/default.conf", colname="datum"
 #'     and inner,whatever follows.
 #'
 #' @return the radius after adding the histogram and the spacing.
+#' @import grDevices RColorBrewer
 circos_hist = function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1',
                        color="blue", fill_color="blue", outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
     ## because I am tired of mistyping something stupid.
+    require.auto("RColorBrewer") ## brewer.pal
+    require.auto("grDevices") ## colorRampPalette
     if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) | is.null(df[[colname]])) {
         stop("This requires columns: start, end, rownames, and datum")
     }
@@ -778,7 +790,7 @@ circos_hist = function(df, cfgout="circos/conf/default.conf", colname="datum", c
     if (is.null(colors)) {
         conditions = levels(as.factor(df$call))
         num_colors = length(conditions)
-        colors = suppressWarnings(colorRampPalette(brewer.pal(num_colors, "Dark2"))(num_colors))
+        colors = suppressWarnings(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
         names(colors) = conditions
     }
 
