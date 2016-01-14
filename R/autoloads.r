@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jan 12 16:19:18 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jan 13 14:15:39 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -17,7 +17,7 @@
 #' @export
 #' @examples
 #' ## require.auto("ggplot2")
-require.auto = function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
+require.auto <- function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
     local({r <- getOption("repos")
            r["CRAN"] <- "http://cran.r-project.org"
            options(repos=r)
@@ -47,7 +47,7 @@ require.auto = function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
     }
 }
 
-autoloads_ontology = function() {
+autoloads_ontology <- function() {
     require.auto("clusterProfiler")
     require.auto("GO.db")
     require.auto("DOSE")
@@ -60,18 +60,18 @@ autoloads_ontology = function() {
     require.auto("topGO")
 }
 
-autoloads_genome = function() {
+autoloads_genome <- function() {
     require.auto("biomaRt")
     require.auto("BSgenome")
     require.auto("genomeIntervals")
     require.auto("rtracklayer")
 }
 
-autoloads_elsayedlab = function() {
+autoloads_elsayedlab <- function() {
     require.auto("OrganismDbi")
     require.auto("TxDb.TcruziCLBrener.tritryp24.genes", "elsayed-lab/TxDb.TcruziCLBrener.tritryp24.genes")
     require.auto("TxDb.TcruziCLBrenerEsmer.tritryp24.genes", "elsayed-lab/TxDb.TcruziCLBrenerEsmer.tritryp24.genes")
-    require.auto("TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes", "elsayed-lab/TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes")    
+    require.auto("TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes", "elsayed-lab/TxDb.TcruziCLBrenerNonEsmer.tritryp9.genes")
     require.auto("TxDb.LmajorFriedlin.tritryp9.genes", "elsayed-lab/TxDb.LmajorFriedlin.tritryp9.genes")
 
     require.auto("BSgenome.Lmajor.friedlin", "elsayed-lab/BSgenome.Lmajor.friedlin")
@@ -87,7 +87,7 @@ autoloads_elsayedlab = function() {
     require.auto("Leishmania.major.Friedlin", "elsayed-lab/Leishmania.major.Friedlin")
 }
 
-autoloads_deseq = function() {
+autoloads_deseq <- function() {
     require.auto("preprocessCore")
     require.auto("DESeq2")
     require.auto("DESeq")
@@ -100,7 +100,7 @@ autoloads_deseq = function() {
 ##    require.auto("qlasso", "kokrah/qsmooth")
 }
 
-autoloads_graphs = function() {
+autoloads_graphs <- function() {
     require.auto("Cairo")
     require.auto("directlabels")
     require.auto("ggplot2")
@@ -112,7 +112,7 @@ autoloads_graphs = function() {
     require.auto("Rgraphviz")
 }
 
-autoloads_helpers = function() {
+autoloads_helpers <- function() {
     require.auto("MASS")
     require.auto("mgcv")
     require.auto("Matrix")
@@ -140,13 +140,13 @@ autoloads_helpers = function() {
     require.auto("xtable")
 }
 
-autoloads_stats = function() {
+autoloads_stats <- function() {
     require.auto("multtest")
     require.auto("qvalue")
     require.auto("robust")
 }
 
-autoloads_misc = function() {
+autoloads_misc <- function() {
     require.auto("motifRG")
     require.auto("Rsamtools")
     require.auto("scales")
@@ -158,7 +158,7 @@ autoloads_misc = function() {
 #' @return NULL currently
 #' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}
 #' @export
-autoloads_all = function(update=FALSE) {
+autoloads_all <- function(update=FALSE) {
     autoloads_helpers()
     autoloads_misc()
     autoloads_genome()
@@ -183,3 +183,5 @@ autoloads_all = function(update=FALSE) {
         update.packages()
     }
 }
+
+## EOF

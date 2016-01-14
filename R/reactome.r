@@ -1,20 +1,20 @@
-simple_reactome = function(de_list, annotations, shortname="org.Sc.sgd") {
+simple_reactome <- function(de_list, annotations, shortname="org.Sc.sgd") {
     require.auto("reactome.db")
     require.auto(annotations)
-    xx = as.list(reactomeEXTID2PATHID)
+    xx <- as.list(reactomeEXTID2PATHID)
     ## ls("package:org.Sc.sgd.db")
     ## ok, I am starting to get it, I need to cross from sgd IDs to
     ## Entrez gene identifiers, from there I can pass to reactome IDs.
     ## Once I have that, I can pass along to reactomePA.
     ## The Sc.sgd.db package has sgdENTREZID
-    shortname = "org.Sc.sgd"
-    x = eval(parse(text=paste0(shortname, "ENTREZID")))
-    mapped = mappedkeys(x)
-    all_entrez = as.list(x[mapped])
-    entrezids = all_entrez[(names(de_list))]
+    shortname <- "org.Sc.sgd"
+    x <- eval(parse(text=paste0(shortname, "ENTREZID")))
+    mapped <- mappedkeys(x)
+    all_entrez <- as.list(x[mapped])
+    entrezids <- all_entrez[(names(de_list))]
     ## Drop null elements
-    entrezids = entrezids[!unlist(lapply(entrezids, is.null))]
-    ids = as.character(entrezids)
+    entrezids <- entrezids[!unlist(lapply(entrezids, is.null))]
+    ids <- as.character(entrezids)
     x <- enrichPathway(gene=ids, pvalueCutoff=0.2, organism="yeast")
     summary(x)
     barplot(x, showCategory=8)
@@ -33,5 +33,4 @@ simple_reactome = function(de_list, annotations, shortname="org.Sc.sgd") {
     ## viewPathway("E2F mediated regulation of DNA replication", readable=TRUE, foldChange=geneList)
 }
 
-
-
+## EOF

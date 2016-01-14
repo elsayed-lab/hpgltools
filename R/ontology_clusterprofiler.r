@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan  4 11:45:56 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Jan 13 17:10:41 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified clusterProfiler analysis
 #'
@@ -37,11 +37,11 @@
 #' ## >   10 M5005_Spy1632/M5005_Spy1637/M5005_Spy1635/M5005_Spy1636/M5005_Spy1638     5
 #' ## >   Description
 #' ## >   10 oligosaccharide metabolic process
-simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
-    qcutoff=1.0, fold_changes=NULL, include_cnetplots=TRUE,
-    showcategory=12, universe=NULL, organism="lm", gff=NULL,
-    wrapped_width=20, method="Walllenius", padjust="BH") {
-    genetable_test = try(load("geneTable.rda"))
+simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
+                                   qcutoff=1.0, fold_changes=NULL, include_cnetplots=TRUE,
+                                   showcategory=12, universe=NULL, organism="lm", gff=NULL,
+                                   wrapped_width=20, method="Walllenius", padjust="BH") {
+    genetable_test <- try(load("geneTable.rda"))
     if (class(genetable_test) == 'try-error') {
         if (!is.null(gff)) {
             message("Generating the geneTable.rda")
@@ -55,19 +55,19 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     }
 
     if (is.null(de_genes$ID)) {
-        gene_list = as.character(rownames(de_genes))
+        gene_list <- as.character(rownames(de_genes))
     } else {
-        gene_list = as.character(de_genes$ID)
+        gene_list <- as.character(de_genes$ID)
     }
-    gomapping_test = try(load("GO2EG.rda"), silent=TRUE)
+    gomapping_test <- try(load("GO2EG.rda"), silent=TRUE)
     if (class(gomapping_test) == 'try-error') {
         message("Generating GO mapping data for cluster profiler from the goids data.")
-        gomap = goids
-        gomap = gomap[,c(1,2)]
-        colnames(gomap) = c("entrezgene", "go_accession")
+        gomap <- goids
+        gomap <- gomap[,c(1,2)]
+        colnames(gomap) <- c("entrezgene", "go_accession")
         ## It turns out that the author of clusterprofiler reversed these fields...
         ## Column 1 must be GO ID, column 2 must be gene accession.
-        gomap = gomap[,c("go_accession","entrezgene")]
+        gomap <- gomap[,c("go_accession","entrezgene")]
         clusterProfiler::buildGOmap(gomap)
     } else {
         message("Using GO mapping data located in GO2EG.rda")
@@ -76,153 +76,162 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
 ##    ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
 ##    print(ego2)
     message("Starting MF(molecular function) analysis")
-    mf_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
-    mf_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    all_mf_phist = try(hpgltools::hpgl_histogram(mf_all@result$pvalue, bins=20))
+    mf_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
+    mf_all <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF",
+                                       pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
+    all_mf_phist <- try(hpgltools::hpgl_histogram(mf_all@result$pvalue, bins=20))
     if (class(all_mf_phist)[1] != 'try-error') {
-        y_limit = (sort(unique(table(all_mf_phist$data)), decreasing=TRUE)[2]) * 2
-        all_mf_phist = all_mf_phist + scale_y_continuous(limits=c(0, y_limit))
+        y_limit <- (sort(unique(table(all_mf_phist$data)), decreasing=TRUE)[2]) * 2
+        all_mf_phist <- all_mf_phist + scale_y_continuous(limits=c(0, y_limit))
     }
-    enriched_mf = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    enriched_mf <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF",
+                                            pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
 
     message("Starting BP(biological process) analysis")
-    bp_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
-    bp_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    all_bp_phist = try(hpgltools::hpgl_histogram(bp_all@result$pvalue, bins=20))
+    bp_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
+    bp_all <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0,
+                                       qvalueCutoff=1.0, pAdjustMethod="none")
+    all_bp_phist <- try(hpgltools::hpgl_histogram(bp_all@result$pvalue, bins=20))
     if (class(all_bp_phist)[1] != 'try-error') {
-        y_limit = (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
-        all_bp_phist = all_bp_phist + scale_y_continuous(limits=c(0, y_limit))
+        y_limit <- (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
+        all_bp_phist <- all_bp_phist + scale_y_continuous(limits=c(0, y_limit))
     }
 
-    enriched_bp = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    enriched_bp <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP",
+                                            pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
 
     message("Starting CC(cellular component) analysis")
-    cc_group = clusterProfiler::groupGO(gene_list, organism=organism, ont="CC", level=golevel, readable=TRUE)
-    cc_all = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    enriched_cc = hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
-    all_cc_phist = try(hpgltools::hpgl_histogram(cc_all@result$pvalue, bins=20))
+    cc_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="CC", level=golevel, readable=TRUE)
+    cc_all <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0,
+                                       qvalueCutoff=1.0, pAdjustMethod="none")
+    enriched_cc <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff,
+                                            qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    all_cc_phist <- try(hpgltools::hpgl_histogram(cc_all@result$pvalue, bins=20))
     ## Try and catch if there are no significant hits.
     if (class(all_cc_phist)[1] != 'try-error') {
-        y_limit = (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
-        all_cc_phist = all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
+        y_limit <- (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
+        all_cc_phist <- all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
     }
 
-    mf_group_barplot = try(barplot(mf_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
+    mf_group_barplot <- try(barplot(mf_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(mf_group_barplot)[1] != 'try-error') {
-        mf_group_barplot$data$Description = as.character(lapply(strwrap(mf_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        mf_group_barplot$data$Description <- as.character(lapply(strwrap(mf_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
 
-    bp_group_barplot = try(barplot(bp_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
+    bp_group_barplot <- try(barplot(bp_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(bp_group_barplot)[1] != 'try-error') {
-        bp_group_barplot$data$Description = as.character(lapply(strwrap(bp_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        bp_group_barplot$data$Description <- as.character(lapply(strwrap(bp_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
 
-    cc_group_barplot = try(barplot(cc_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
+    cc_group_barplot <- try(barplot(cc_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(cc_group_barplot)[1] != 'try-error') {
-        cc_group_barplot$data$Description = as.character(lapply(strwrap(cc_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        cc_group_barplot$data$Description <- as.character(lapply(strwrap(cc_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
 
-    all_mf_barplot = try(barplot(mf_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
-    enriched_mf_barplot = try(barplot(enriched_mf, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    all_mf_barplot <- try(barplot(mf_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    enriched_mf_barplot <- try(barplot(enriched_mf, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_mf_barplot)[1] == 'try-error') {
         message("No enriched MF groups were observed.")
     } else {
-        enriched_mf_barplot$data$Description = as.character(lapply(strwrap(enriched_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        enriched_mf_barplot$data$Description <- as.character(lapply(strwrap(enriched_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
     if (class(all_mf_barplot)[1] != 'try-error') {
-        all_mf_barplot$data$Description = as.character(lapply(strwrap(all_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        all_mf_barplot$data$Description <- as.character(lapply(strwrap(all_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
-    all_bp_barplot = try(barplot(bp_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
-    enriched_bp_barplot = try(barplot(enriched_bp, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    all_bp_barplot <- try(barplot(bp_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    enriched_bp_barplot <- try(barplot(enriched_bp, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_bp_barplot)[1] == 'try-error') {
         message("No enriched BP groups observed.")
     } else {
-        enriched_bp_barplot$data$Description = as.character(lapply(strwrap(enriched_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        enriched_bp_barplot$data$Description <- as.character(lapply(strwrap(enriched_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
     if (class(all_bp_barplot)[1] != 'try-error') {
-        all_bp_barplot$data$Description = as.character(lapply(strwrap(all_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        all_bp_barplot$data$Description <- as.character(lapply(strwrap(all_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
 
-    all_cc_barplot = try(barplot(cc_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
-    enriched_cc_barplot = try(barplot(enriched_cc, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    all_cc_barplot <- try(barplot(cc_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    enriched_cc_barplot <- try(barplot(enriched_cc, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_cc_barplot)[1] == 'try-error') {
         message("No enriched CC groups observed.")
     } else {
-        enriched_cc_barplot$data$Description = as.character(lapply(strwrap(enriched_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        enriched_cc_barplot$data$Description <- as.character(lapply(strwrap(enriched_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
     if (class(all_cc_barplot)[1] != 'try-error') {
-        all_cc_barplot$data$Description = as.character(lapply(strwrap(all_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        all_cc_barplot$data$Description <- as.character(lapply(strwrap(all_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
 
     if (include_cnetplots == TRUE) {
         message("Attempting to include the cnetplots from clusterProfiler.")
         message("They fail often, if this is causing errors, set:")
         message("include_cnetplots to FALSE")
-        cnetplot_mf = try(clusterProfiler::cnetplot(enriched_mf, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_mf <- try(clusterProfiler::cnetplot(enriched_mf, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_mf)[1] != 'try-error') {
-            cnetplot_mf = recordPlot()
+            cnetplot_mf <- recordPlot()
         } else {
             message("cnetplot just failed for the MF ontology.  Do not be concerned with the previous error.")
         }
-        cnetplot_bp = try(clusterProfiler::cnetplot(enriched_bp, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_bp <- try(clusterProfiler::cnetplot(enriched_bp, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_bp)[1] != 'try-error') {
-            cnetplot_bp = recordPlot()
+            cnetplot_bp <- recordPlot()
         } else {
             message("cnetplot just failed for the BP ontology.  Do not be concerned with the previous error.")
         }
-        cnetplot_cc = try(clusterProfiler::cnetplot(enriched_cc, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_cc <- try(clusterProfiler::cnetplot(enriched_cc, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_cc)[1] != 'try-error') {
-            cnetplot_cc = recordPlot()
+            cnetplot_cc <- recordPlot()
         } else {
             message("cnetplot just failed for the CC ontology.  Do not be concerned with the previous error.")
         }
-        cnetplot_mfall = cnetplot_bpall = cnetplot_ccall = NULL
-        cnetplot_mfall = try(clusterProfiler::cnetplot(mf_all, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_mfall <- cnetplot_bpall <- cnetplot_ccall <- NULL
+        cnetplot_mfall <- try(clusterProfiler::cnetplot(mf_all, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_mfall)[1] != 'try-error') {
-            cnetplot_mfall = recordPlot()
+            cnetplot_mfall <- recordPlot()
         }
-        cnetplot_bpall = try(clusterProfiler::cnetplot(bp_all, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_bpall <- try(clusterProfiler::cnetplot(bp_all, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_bpall)[1] != 'try-error') {
-            cnetplot_bpall = recordPlot()
+            cnetplot_bpall <- recordPlot()
         }
-        cnetplot_ccall = try(clusterProfiler::cnetplot(cc_all, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_ccall <- try(clusterProfiler::cnetplot(cc_all, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_ccall)[1] != 'try-error') {
-            cnetplot_ccall = recordPlot()
+            cnetplot_ccall <- recordPlot()
         }
     }
 
     if (!is.null(mf_all)) {
-        mf_interesting = mf_all@result
+        mf_interesting <- mf_all@result
         rownames(mf_interesting) = NULL
-        mf_interesting$ont = "MF"
-        mf_interesting = mf_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
+        mf_interesting$ont <- "MF"
+        mf_interesting <- mf_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue",
+                                            "p.adjust","qvalue","geneID","Count","Description")]
         ## mf_interesting = subset(mf_interesting, pvalue <= 0.1)
-        mf_interesting = mf_interesting[ which(mf_interesting$pvalue <= 0.1), ]
+        mf_interesting <- mf_interesting[ which(mf_interesting$pvalue <= 0.1), ]
     } else {
-        mf_interesting = NULL
+        mf_interesting <- NULL
     }
     if (!is.null(bp_all)) {
-        bp_interesting = bp_all@result
-        rownames(bp_interesting) = NULL
-        bp_interesting$ont = "BP"
-        bp_interesting = bp_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
+        bp_interesting <- bp_all@result
+        rownames(bp_interesting) <- NULL
+        bp_interesting$ont <- "BP"
+        bp_interesting <- bp_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue",
+                                            "p.adjust","qvalue","geneID","Count","Description")]
         ## bp_interesting = subset(bp_interesting, pvalue <= 0.1)
-        bp_interesting = bp_interesting[ which(bp_interesting$pvalue <= 0.1), ]
+        bp_interesting <- bp_interesting[ which(bp_interesting$pvalue <= 0.1), ]
     } else {
-        bp_interesting = NULL
+        bp_interesting <- NULL
     }
     if (!is.null(cc_all)) {
-        cc_interesting = cc_all@result
-        rownames(cc_interesting) = NULL
-        cc_interesting$ont = "CC"
-        cc_interesting = cc_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue","p.adjust","qvalue","geneID","Count","Description")]
+        cc_interesting <- cc_all@result
+        rownames(cc_interesting) <- NULL
+        cc_interesting$ont <- "CC"
+        cc_interesting <- cc_interesting[,c("ID","ont","GeneRatio","BgRatio","pvalue",
+                                            "p.adjust","qvalue","geneID","Count","Description")]
         ## cc_interesting = subset(cc_interesting, pvalue <= 0.1)
-        cc_interesting = cc_interesting[ which(cc_interesting$pvalue <= 0.1), ]
+        cc_interesting <- cc_interesting[ which(cc_interesting$pvalue <= 0.1), ]
     } else {
-        cc_interesting = NULL
+        cc_interesting <- NULL
     }
 
-    return_information = list(
+    return_information <- list(
         de_genes=de_genes,
         mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting,
         mf_pvals=all_mf_phist, bp_pvals=all_bp_phist, cc_pvals=all_cc_phist,
@@ -248,68 +257,78 @@ simple_clusterprofiler = function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
 #' @return plots! Trees! oh my!
 #' @seealso \code{\link{Ramigo}}
 #' @export
-cluster_trees = function(cpdata, goid_map="reference/go/id2go.map", goids_df=NULL, score_limit=0.2, overwrite=FALSE, selector="topDiffGenes", pval_column="P.Value") {
-    de_genes = cpdata$de_genes
+cluster_trees <- function(cpdata, goid_map="reference/go/id2go.map", goids_df=NULL,
+                          score_limit=0.2, overwrite=FALSE, selector="topDiffGenes", pval_column="P.Value") {
+    de_genes <- cpdata$de_genes
     make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
-    geneID2GO = topGO::readMappings(file=goid_map)
-    annotated_genes = names(geneID2GO)
+    geneID2GO <- topGO::readMappings(file=goid_map)
+    annotated_genes <- names(geneID2GO)
     if (is.null(de_genes$ID)) {
-        de_genes$ID = make.names(rownames(de_genes), unique=TRUE)
+        de_genes$ID <- make.names(rownames(de_genes), unique=TRUE)
     }
-    interesting_genes = factor(annotated_genes %in% de_genes$ID)
-    names(interesting_genes) = annotated_genes
+    interesting_genes <- factor(annotated_genes %in% de_genes$ID)
+    names(interesting_genes) <- annotated_genes
 
     print(paste0("Checking the de_table for a p-value column:", pval_column))
     if (is.null(de_genes[[pval_column]])) {
-        mf_GOdata = new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata = new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata = new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
     } else {
-        pvals = as.vector(de_genes[[pval_column]])
-        names(pvals) = rownames(de_genes)
-        mf_GOdata = new("topGOdata", description="MF", ontology="MF", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata = new("topGOdata", description="BP", ontology="BP", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata = new("topGOdata", description="CC", ontology="CC", allGenes=pvals, geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        pvals <- as.vector(de_genes[[pval_column]])
+        names(pvals) <- rownames(de_genes)
+        mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
+                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata <- new("topGOdata", description="BP", ontology="BP", allGenes=pvals,
+                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=pvals,
+                        geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
     }
 
-    mf_all = cpdata$mf_all
+    mf_all <- cpdata$mf_all
     ## mf_enriched = cpdata$mf_enriched
-    bp_all = cpdata$bp_all
+    bp_all <- cpdata$bp_all
     ## bp_enriched = cpdata$bp_enriched
-    cc_all = cpdata$cc_all
+    cc_all <- cpdata$cc_all
     ## cc_enriched = cpdata$cc_enriched
-    mf_all_ids = mf_all@result$ID
-    bp_all_ids = bp_all@result$ID
-    cc_all_ids = cc_all@result$ID
-    mf_all_scores = mf_all@result$p.adjust
-    bp_all_scores = bp_all@result$p.adjust
-    cc_all_scores = cc_all@result$p.adjust
-    names(mf_all_scores) = mf_all_ids
-    names(bp_all_scores) = bp_all_ids
-    names(cc_all_scores) = cc_all_ids
-    mf_included = length(which(mf_all_scores <= score_limit))
-    ##    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=floor(mf_included * 1.5) , useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    mf_all_ids <- mf_all@result$ID
+    bp_all_ids <- bp_all@result$ID
+    cc_all_ids <- cc_all@result$ID
+    mf_all_scores <- mf_all@result$p.adjust
+    bp_all_scores <- bp_all@result$p.adjust
+    cc_all_scores <- cc_all@result$p.adjust
+    names(mf_all_scores) <- mf_all_ids
+    names(bp_all_scores) <- bp_all_ids
+    names(cc_all_scores) <- cc_all_ids
+    mf_included <- length(which(mf_all_scores <= score_limit))
+    ## mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    mf_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all",
+                                                               sigForAll=TRUE, firstSigNodes=floor(mf_included * 1.5),
+                                                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(mf_tree_data)[1] == 'try-error') {
-        mf_tree = NULL
+        mf_tree <- NULL
     } else {
-        mf_tree = recordPlot()
+        mf_tree <- recordPlot()
     }
-    bp_included = length(which(bp_all_scores <= score_limit))
-    bp_tree_data = try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=bp_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    bp_included <- length(which(bp_all_scores <= score_limit))
+    bp_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_all_scores, useInfo="all",
+                                                              sigForAll=TRUE, firstSigNodes=bp_included,
+                                                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(bp_tree_data)[1] == 'try-error') {
-        bp_tree = NULL
+        bp_tree <- NULL
     } else {
-        bp_tree = recordPlot()
+        bp_tree <- recordPlot()
     }
-    cc_included = length(which(cc_all_scores <= score_limit))
-    cc_tree_data = try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=cc_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    cc_included <- length(which(cc_all_scores <= score_limit))
+    cc_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_all_scores, useInfo="all",
+                                                               sigForAll=TRUE, firstSigNodes=cc_included,
+                                                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(cc_tree_data)[1] == 'try-error') {
-        cc_tree = NULL
+        cc_tree <- NULL
     } else {
-        cc_tree = recordPlot()
+        cc_tree <- recordPlot()
     }
-    trees = list(MF=mf_tree, BP=bp_tree, CC=cc_tree, MFdata=mf_tree_data, BPdata=bp_tree_data, CCdata=cc_tree_data)
+    trees <- list(MF=mf_tree, BP=bp_tree, CC=cc_tree, MFdata=mf_tree_data, BPdata=bp_tree_data, CCdata=cc_tree_data)
     return(trees)
 }
 
@@ -323,19 +342,13 @@ cluster_trees = function(cpdata, goid_map="reference/go/id2go.map", goids_df=NUL
 #' @return some clusterProfiler data
 #' @seealso \code{\link{clusterProfiler}}
 #' @export
-hpgl_enrichGO = function(gene, organism="human", ont="MF",
-    pvalueCutoff=0.05, pAdjustMethod="BH", universe,
-    qvalueCutoff=0.2, minGSSize=2, readable=FALSE) {
-    ## Testing parameters
-    ##gene=gene_list
-    ##organism="lm"
-    ##ont="BP"
-    ##minGSSize=2
-    ## End testing parameters
-    information = hpgl_enrich.internal(gene, organism=organism, pvalueCutoff=pvalueCutoff,
+hpgl_enrichGO <- function(gene, organism="human", ont="MF",
+                          pvalueCutoff=0.05, pAdjustMethod="BH", universe,
+                          qvalueCutoff=0.2, minGSSize=2, readable=FALSE) {
+    information <- hpgl_enrich.internal(gene, organism=organism, pvalueCutoff=pvalueCutoff,
 ##        pAdjustMethod=pAdjustMethod, ont=ont, universe=universe,
-        pAdjustMethod=pAdjustMethod, ont=ont,
-        qvalueCutoff=qvalueCutoff, minGSSize=minGSSize)
+                                        pAdjustMethod=pAdjustMethod, ont=ont,
+                                        qvalueCutoff=qvalueCutoff, minGSSize=minGSSize)
 ##    print(summary(information))
     return(information)
 }
@@ -349,11 +362,11 @@ hpgl_enrichGO = function(gene, organism="human", ont="MF",
 #' @return some clusterProfiler data
 #' @seealso \code{\link{clusterProfiler}}
 #' @export
-hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="BH",
-    ont, minGSSize=2, qvalueCutoff=0.2, readable=FALSE, universe=NULL) {
+hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="BH",
+                                 ont, minGSSize=2, qvalueCutoff=0.2, readable=FALSE, universe=NULL) {
     gene <- as.character(gene)
     class(gene) <- ont
-    qExtID2TermID = DOSE::EXTID2TERMID(gene, organism)
+    qExtID2TermID <- DOSE::EXTID2TERMID(gene, organism)
     qTermID <- unlist(qExtID2TermID)
     if (is.null(qTermID)) {
         return(NA)
@@ -491,35 +504,35 @@ hpgl_enrich.internal = function(gene, organism, pvalueCutoff=1, pAdjustMethod="B
 hpgl_Gff2GeneTable <- function(gffFile, compress=TRUE, split="=") {
     ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"
     if (is.data.frame(gffFile)) {
-        GeneID = data.frame(GeneID = gffFile$ID)
-        geneInfo = gffFile
-        geneInfo$start = 1
-        geneInfo$GeneID = gffFile$ID
-        geneInfo$GeneName = gffFile$ID
-        geneInfo$Locus = gffFile$ID
-        geneInfo$end = geneInfo$width
-        geneInfo$strand = "+"
+        GeneID <- data.frame(GeneID = gffFile$ID)
+        geneInfo <- gffFile
+        geneInfo$start <- 1
+        geneInfo$GeneID <- gffFile$ID
+        geneInfo$GeneName <- gffFile$ID
+        geneInfo$Locus <- gffFile$ID
+        geneInfo$end <- geneInfo$width
+        geneInfo$strand <- "+"
     } else {
-        gff = clusterProfiler:::readGff(gffFile)
-        GeneID = data.frame(GeneID=hpgl_getGffAttribution(gff$attributes, field="ID", split=split))
-        geneInfo = gff[gff$feature == "gene",]
-        geneInfo = geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
-        geneInfo$GeneID = hpgl_getGffAttribution(geneInfo$attributes, field="ID", split=split)
-        geneInfo$GeneName = hpgl_getGffAttribution(geneInfo$attributes, field="gene", split=split)
-        first_locus = hpgl_getGffAttribution(geneInfo$attributes, field="locus_tag", split=split)
-        first_sum = sum(is.na(first_locus))
-        second_locus = NULL
-        second_sum = first_sum
+        gff <- clusterProfiler:::readGff(gffFile)
+        GeneID <- data.frame(GeneID=hpgl_getGffAttribution(gff$attributes, field="ID", split=split))
+        geneInfo <- gff[gff$feature == "gene",]
+        geneInfo <- geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
+        geneInfo$GeneID <- hpgl_getGffAttribution(geneInfo$attributes, field="ID", split=split)
+        geneInfo$GeneName <- hpgl_getGffAttribution(geneInfo$attributes, field="gene", split=split)
+        first_locus <- hpgl_getGffAttribution(geneInfo$attributes, field="locus_tag", split=split)
+        first_sum <- sum(is.na(first_locus))
+        second_locus <- NULL
+        second_sum <- first_sum
         if (first_sum > (length(geneInfo$attributes) / 2)) { ## Using this to approximate whether locus_tag has a useful meaning.
             ## If more than 1/2 of the attributes have no locus tag, try using gene_id instead -- which is what yeast uses (btw).
             print("Trying to use gene_id insteady of locus_tag, because locus_tag is poorly defined.")
-            second_locus = hpgl_getGffAttribution(geneInfo$attributes, field="gene_id", split=split)
-            second_sum = sum(is.na(second_locus))
+            second_locus <- hpgl_getGffAttribution(geneInfo$attributes, field="gene_id", split=split)
+            second_sum <- sum(is.na(second_locus))
         }
         if (first_sum > second_sum) {
-            geneInfo$Locus = second_locus
+            geneInfo$Locus <- second_locus
         } else {
-            geneInfo$Locus = first_locus
+            geneInfo$Locus <- first_locus
         }
         geneInfo$GeneName[is.na(geneInfo$GeneName)] = "-"
         geneInfo <- geneInfo[, -5] ## drop "attributes" column.
@@ -541,22 +554,22 @@ hpgl_Gff2GeneTable <- function(gffFile, compress=TRUE, split="=") {
 }
 
 
-hpgl_getGffAttribution = function (x, field, attrsep=";", split='=') {
-    s = strsplit(x, split=attrsep, fixed=TRUE)
+hpgl_getGffAttribution <- function(x, field, attrsep=";", split='=') {
+    s <- strsplit(x, split=attrsep, fixed=TRUE)
     sapply(s, function(atts) {
-        atts = gsub("^ ", "", x=atts, perl=TRUE)
-        a = strsplit(atts, split=split, fixed = TRUE)
-        m = match(field, sapply(a, "[", 1))
+        atts <- gsub("^ ", "", x=atts, perl=TRUE)
+        a <- strsplit(atts, split=split, fixed = TRUE)
+        m <- match(field, sapply(a, "[", 1))
         if (!is.na(m)) {
-            rv = a[[m]][2]
+            rv <- a[[m]][2]
         } else {
-            b = sapply(a, function(atts) {
+            b <- sapply(a, function(atts) {
                 strsplit(atts[2], split=",", fixed = TRUE)
             })
-            rv = as.character(NA)
+            rv <- as.character(NA)
             sapply(b, function(atts) {
                 secA <- strsplit(atts, split = ":", fixed = TRUE)
-                m = match(field, sapply(secA, "[", 1))
+                m <- match(field, sapply(secA, "[", 1))
                 if (!is.na(m)) {
                   rv <<- secA[[m]][2]
                 }
@@ -566,7 +579,7 @@ hpgl_getGffAttribution = function (x, field, attrsep=";", split='=') {
     })
 }
 
-mygroupgo = function (gene, organism = "human", ont = "CC", level = 2, readable = FALSE) {
+mygroupgo <- function(gene, organism="human", ont="CC", level=2, readable=FALSE) {
     GOLevel <- clusterProfiler:::getGOLevel(ont, level)
     class(GOLevel) <- ont
     GO2ExtID <- TERMID2EXTID.GO(GOLevel, organism)
@@ -575,8 +588,10 @@ mygroupgo = function (gene, organism = "human", ont = "CC", level = 2, readable 
     Count <- unlist(lapply(geneID.list, length))
     GeneRatio <- paste(Count, length(unique(unlist(gene))), sep = "/")
     Descriptions <- TERM2NAME(GOLevel)
-    result = data.frame(ID = as.character(GOLevel), Description = Descriptions, Count = Count, GeneRatio = GeneRatio, geneID = geneID)
-    x <- new("groupGOResult", result = result, ontology = ont, level = level, organism = organism, gene = gene, geneInCategory = geneID.list)
+    result = data.frame(ID=as.character(GOLevel), Description=Descriptions, Count=Count,
+                        GeneRatio=GeneRatio, geneID=geneID)
+    x <- new("groupGOResult", result=result, ontology=ont, level=level,
+             organism=organism, gene=gene, geneInCategory=geneID.list)
     if (readable == TRUE) {
         x <- setReadable(x)
     }
