@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 15:35:24 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jan 15 13:35:31 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -121,16 +121,16 @@ combine_de_tables <- function(all_pairwise_result, table='wt_vs_mut', annot_df=N
     {
         format(signif(qvalue::qvalue(combined$p_meta, robust=TRUE)$qvalues, 4), scientific=TRUE)
     },
-    error <- function(cond) {
+    error=function(cond) {
         message(paste0("The meta qvalue estimation failed."))
         return(1)
     },
-    warning <- function(cond) {
+    warning=function(cond) {
         message("There was a warning!")
         message(cond)
         return(1)
     },
-    finally <- {
+    finally={
     })
     if (!is.null(annot_df)) {
         combined <- merge(annot_df, combined, by="row.names")
@@ -502,16 +502,16 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                 {
                     format(signif(qvalue::qvalue(result$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
                 },
-                error <- function(cond) {
+                error=function(cond) {
                     message(paste0("The qvalue estimation failed for ", comparison, "."))
                     return(1)
                 },
-                warning <- function(cond) {
+                warning=function(cond) {
                     message("There was a warning?")
                     message(cond)
                     return(1)
                 },
-                finally <- {
+                finally={
                 }
             )
             result$P.Value <- format(signif(result$P.Value, 4), scientific=TRUE)
@@ -694,16 +694,16 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             {
                 as.numeric(format(signif(qvalue::qvalue(res$PValue, robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
-            error <- function(cond) {
+            error=function(cond) {
                 message(paste0("The qvalue estimation failed for ", name, "."))
                 return(1)
             },
-            warning <- function(cond) {
+            warning=function(cond) {
                 message("There was a warning?")
                 message(cond)
                 return(1)
             },
-            finally <- {
+            finally={
             }
         )
         res$PValue <- format(signif(res$PValue, 4), scientific=TRUE)
@@ -827,7 +827,8 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
         geom_point() +
         xlab("Log2(count size + 0.5)") +
         ylab("Square root of the standard deviation.") +
-        stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
+        ## stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
+        stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE, show.legend=FALSE) +
         scale_fill_gradientn(colours=colorRampPalette(c("white","black"))(256)) +
         geom_smooth(method="loess") +
         stat_function(fun=f, colour="red") +
@@ -1625,16 +1626,16 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
             {
                 as.numeric(format(signif(qvalue(data_table$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
-            error <- function(cond) {
+            error=function(cond) {
                 message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
                 return(1)
             },
-            warning <- function(cond) {
+            warning=function(cond) {
                 message("There was a warning?")
                 message(cond)
                 return(1)
             },
-            finally <- {
+            finally={
             }
         )
         data_table$P.Value <- as.numeric(format(signif(data_table$P.Value, 4), scientific=TRUE))

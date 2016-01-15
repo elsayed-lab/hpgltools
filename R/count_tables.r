@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 14:42:38 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 14 16:33:29 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -200,8 +200,10 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
     } else if (!isTRUE(by_type) & !isTRUE(by_sample) & is.null(filenames)) {
         ## If neither by_type or by_sample is set, look first by sample
         sample_definitions$counts <- paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
-        found_counts <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
+        found_counts <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix), silent=TRUE)
         if (class(found_counts) == 'try-error') {
+            message("Attempted reading count tables by sample name in processed_data/ and did not find them, now trying by sample type.")
+            message("If you just got an error reading the files, but this still completes, that is why.")
             ## Then try by-type
             sample_definitions$counts <- paste("processed_data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, suffix, sep="")
             found_counts <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))

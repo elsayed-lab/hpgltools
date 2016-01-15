@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 23:43:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 14 16:39:30 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -1057,9 +1057,9 @@ hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
         means[[count]] <- tmpqq$summary[['Median']]
         count <- count + 1
     }
-    multiplot(logs)
+    hpgl_multiplot(logs)
     log_plots <- recordPlot()
-    multiplot(ratios)
+    hpgl_multiplot(ratios)
     ratio_plots <- recordPlot()
     plots <- list(logs=log_plots, ratios=ratio_plots, medians=means)
     return(plots)
@@ -1608,7 +1608,7 @@ epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6, revolutions=7, increme
 #'
 #' @return a multiplot!
 #' @export
-hmultiplot <- function(plots, file, cols=NULL, layout=NULL) {
+hpgl_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
   ## Make a list from the ... arguments and plotlist
   ##  plots <- c(list(...), plotlist)
   numPlots <- length(plots)

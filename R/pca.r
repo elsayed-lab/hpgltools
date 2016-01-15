@@ -1,4 +1,4 @@
-# Time-stamp: <Wed Jan 13 23:13:05 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Thu Jan 14 17:00:14 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
 #'
@@ -477,14 +477,14 @@ pca_information <- function(data, design=NULL, factors=c("condition","batch"),
                 {
                     cor_test <- cor.test(tmp_df[,factor_name], tmp_df[,pc_name], na.rm=TRUE)
                 },
-                error <- function(cond) {
+                error=function(cond) {
                     message(paste("The correlation failed for ", factor_name, " and ", pc_name, ".", sep=""))
                     cor_test <- 0
                 },
-                warning <- function(cond) {
+                warning=function(cond) {
                     message(paste("The standard deviation was 0 for ", factor_name, " and ", pc_name, ".", sep=""))
                 },
-                finally <- {
+                finally={
                 }
             ) ## End of the tryCatch
             if (class(cor_test) == 'try-error') {

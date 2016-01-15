@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 14:15:39 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 14 16:35:13 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -116,6 +116,7 @@ autoloads_helpers <- function() {
     require.auto("MASS")
     require.auto("mgcv")
     require.auto("Matrix")
+    require.auto("matrixStats")
     require.auto("devtools")
     require.auto("BiocParallel")
     register(MulticoreParam(4))
@@ -137,6 +138,7 @@ autoloads_helpers <- function() {
     require.auto("xlsx")
     options(java.parameters = "-Xmx4g")  ## used for xlconnect
     ##require.auto("XLConnect")
+    require.auto("openxlsx")
     require.auto("xtable")
 }
 

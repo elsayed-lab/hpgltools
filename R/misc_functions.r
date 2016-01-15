@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 16:09:34 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 14 15:22:45 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -257,7 +257,7 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #'
 #' @export
 #' @return  a df!
-gff2df <- function(gff) {
+gff2df <- function(gff, type=NULL) {
     ret <- NULL
     annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
     if (class(annotations) == 'try-error') {
@@ -273,6 +273,10 @@ gff2df <- function(gff) {
     ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
     ## no method to coerce an S4 class to a vector.
     ret <- GenomicRanges::as.data.frame(ret)
+    if (!is.null(type)) {
+        index <- ret[, "type"] == type
+        ret <- ret[index, ]
+    }
     return(ret)
 }
 
@@ -552,7 +556,7 @@ write_xls_openxlsx <- function(data, sheet="first", file="excel/workbook.xlsx", 
 
     ## I might have run into a bug in openxlsx, in WorkbookClass.R there is a call to is.nan() for a data.frame
     ## and it appears to me to be called oddly and causing problems
-    openxlsx::writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9", startRow=new_row)
+    openxlsx::writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9", startRow=new_row, rowNames=TRUE)
     new_row <- new_row + nrow(data) + 2
 
     openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=1:ncol(data))
