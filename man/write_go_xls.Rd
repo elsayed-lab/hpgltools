@@ -5,7 +5,7 @@
 \title{write_go_xls()  Write gene ontology tables for excel}
 \usage{
 write_go_xls(goseq, cluster, topgo, gostats, file = "excel/merged_go",
-  dated = TRUE, n = 30, writer = "openxlsx")
+  dated = TRUE, n = 30, writer = "openxlsx", overwritefile = TRUE)
 }
 \arguments{
 \item{goseq}{The goseq result from simple_goseq()}

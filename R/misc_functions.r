@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 14 15:22:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Jan 17 11:11:11 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -335,30 +335,16 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' @param gff or annotations: Either a gff file or annotation data frame (which likely came from a gff file.)
 #'
 #' @return a df of tooltip information
-make_tooltips <- function(annotations=NULL, gff=NULL, desc_col='description') {
-    if (is.null(annotations) & is.null(gff)) {
-        stop("I need either a data frame or gff file.")
+make_tooltips <- function(annotations, desc_col='description') {
+    tooltip_data <- NULL
+    if (class(annotations) == 'character') {
+        tooltip_data <- gff2df(annotations)
+    } else if (class(annotations) == 'data.frame') {
+        tooltip_data <- annotations
     } else {
-        if (!is.null(annotations)) {
-            tooltip_data <- annotations[,c("ID", desc_col)]
-        } else {
-            ret <- NULL
-            annotations <- try(import.gff3(gff), silent=TRUE)
-            if (class(annotations) == 'try-error') {
-                annotations <- try(import.gff2(gff), silent=TRUE)
-                if (class(annotations) == 'try-error') {
-                    stop("Could not extract the widths from the gff file.")
-                } else {
-                    ret <- annotations
-                }
-            } else {
-                ret <- annotations
-            }
-            ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
-            ## no method to coerce an S4 class to a vector.
-            tooltip_data <- GenomicRanges::as.data.frame(ret)
-        }
+        stop("This requires either a filename or data frame.")
     }
+    tooltip_data <- tooltip_data[,c("ID", desc_col)]
     tooltip_data$tooltip <- ""
     if (is.null(tooltip_data[[desc_col]])) {
         stop("I need a name!")
@@ -436,7 +422,8 @@ sillydist <- function(firstterm, secondterm, firstaxis, secondaxis) {
 #' @export
 #' @examples
 #' ## write_xls(dataframe, "hpgl_data")
-write_xls <- function(data, sheet="first", file="excel/workbook", overwrite_file=TRUE, overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", type="openxlsx", ...) {
+write_xls <- function(data, sheet="first", file="excel/workbook", overwrite_file=TRUE, newsheet=FALSE,
+                      overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", type="openxlsx", ...) {
     excel_dir <- dirname(file)
     if (!file.exists(excel_dir)) {
         dir.create(excel_dir, recursive=TRUE)
@@ -453,7 +440,7 @@ write_xls <- function(data, sheet="first", file="excel/workbook", overwrite_file
     }
 
     if (file.exists(filename)) {
-        if (isTRUE(overwrite_file)) {
+        if (!isTRUE(newsheet) | !isTRUE(overwrite_file)) {
             backup_file(filename)
         }
     }
@@ -543,8 +530,11 @@ write_xls_xlsx <- function(data, sheet="first", file="excel/workbook.xls", overw
 
 write_xls_openxlsx <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite_file=TRUE, overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", ...) {
     arglist = list(...)
-
-    wb <- openxlsx::createWorkbook(creator="atb")
+    if (file.exists(file)) {
+        wb <- openxlsx::loadWorkbook(file)
+    } else {
+        wb <- openxlsx::createWorkbook(creator="atb")
+    }
     openxlsx::addWorksheet(wb, sheetName=sheet)
     hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
     new_row <- 1

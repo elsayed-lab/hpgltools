@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jan 15 13:35:31 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Jan 17 11:04:04 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -91,53 +91,94 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
 #' @export
 #' @examples
 #' ## pretty = combine_de_tables(big_result, table='t12_vs_t0')
-combine_de_tables <- function(all_pairwise_result, table='wt_vs_mut', annot_df=NULL) {
+combine_de_tables <- function(all_pairwise_result, table='all', annot_df=NULL,
+                              excel=NULL, excel_title="Table Sxx: Combined Differential Expression",
+                              excel_sheet="combined_DE") {
     limma <- all_pairwise_result$limma
     deseq <- all_pairwise_result$deseq
     edger <- all_pairwise_result$edger
-    limma <- limma$all_tables[[table]]
-    colnames(limma) <- c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
-    limma <- limma[,c("limma_logfc","limma_ave","limma_t","limma_b","limma_p","limma_adjp","limma_q")]
-    deseq <- deseq$all_tables[[table]]
-    colnames(deseq) <- c("deseq_basemean","deseq_logfc","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")
-    deseq <- deseq[,c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
-    edger <- edger$all_tables[[table]]
-    colnames(edger) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
-    combined <- merge(limma, deseq, by="row.names")
-    combined <- merge(combined, edger, by.x="Row.names", by.y="row.names")
-    rownames(combined) <- combined$Row.names
-    combined <- combined[-1]
-    combined[is.na(combined)] <- 0
-    temp_fc <- cbind(as.numeric(combined$limma_logfc), as.numeric(combined$edger_logfc), as.numeric(combined$deseq_logfc))
-    temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
-    combined$fc_meta <- rowMeans(temp_fc, na.rm=TRUE)
-    combined$fc_var <- rowVars(temp_fc, na.rm=TRUE)
-    combined$fc_varbymed <- combined$fc_var / combined$fc_meta
-    temp_p <- cbind(as.numeric(combined$limma_p), as.numeric(combined$edger_p), as.numeric(combined$deseq_p))
-    combined$p_meta <- rowMeans(temp_p, na.rm=TRUE)
-    combined$p_var <- rowVars(temp_p, na.rm=TRUE)
 
-    combined$q_meta <- tryCatch(
-    {
-        format(signif(qvalue::qvalue(combined$p_meta, robust=TRUE)$qvalues, 4), scientific=TRUE)
-    },
-    error=function(cond) {
-        message(paste0("The meta qvalue estimation failed."))
-        return(1)
-    },
-    warning=function(cond) {
-        message("There was a warning!")
-        message(cond)
-        return(1)
-    },
-    finally={
-    })
-    if (!is.null(annot_df)) {
-        combined <- merge(annot_df, combined, by="row.names")
-        rownames(combined) <- combined$Row.names
-        combined <- combined[-1]
+    combine <- function(li, ed, de, table) {
+        li <- li$all_tables[[table]]
+        colnames(li) <- c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
+        li <- li[,c("limma_logfc","limma_ave","limma_t","limma_b","limma_p","limma_adjp","limma_q")]
+        de <- de$all_tables[[table]]
+        colnames(de) <- c("deseq_basemean","deseq_logfc","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")
+        de <- de[,c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
+        ed <- ed$all_tables[[table]]
+        colnames(ed) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
+        comb <- merge(li, de, by="row.names")
+        comb <- merge(comb, ed, by.x="Row.names", by.y="row.names")
+        rownames(comb) <- comb$Row.names
+        comb <- comb[-1]
+        comb[is.na(comb)] <- 0
+        temp_fc <- cbind(as.numeric(comb$limma_logfc), as.numeric(comb$edger_logfc), as.numeric(comb$deseq_logfc))
+        temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
+        comb$fc_meta <- rowMeans(temp_fc, na.rm=TRUE)
+        comb$fc_var <- rowVars(temp_fc, na.rm=TRUE)
+        comb$fc_varbymed <- comb$fc_var / comb$fc_meta
+        temp_p <- cbind(as.numeric(comb$limma_p), as.numeric(comb$edger_p), as.numeric(comb$deseq_p))
+        comb$p_meta <- rowMeans(temp_p, na.rm=TRUE)
+        comb$p_var <- rowVars(temp_p, na.rm=TRUE)
+        comb$q_meta <- tryCatch(
+        {
+            format(signif(qvalue::qvalue(comb$p_meta, robust=TRUE)$qvalues, 4), scientific=TRUE)
+        },
+        error=function(cond) {
+            message(paste0("The meta qvalue estimation failed."))
+            return(1)
+        },
+        warning=function(cond) {
+            message("There was a warning!")
+            message(cond)
+            return(1)
+        },
+        finally={
+        })
+        if (!is.null(annot_df)) {
+            comb <- merge(annot_df, comb, by="row.names")
+            rownames(comb) <- comb$Row.names
+            comb <- comb[-1]
+        }
+        return(comb)
     }
-    return(combined)
+
+    if (table == 'all') {
+        combo = list()
+        for (tab in names(edger$contrast_list)) {
+            dat <- combine(limma, edger, deseq, tab)
+            combo[[tab]] <- dat
+        }
+    } else {
+        if (table %in% names(edger$contrast_list)) {
+            print(paste0("I found ", table, " in the available contrasts."))
+        } else {
+            print(paste0("I did not find ", table, " in the available contrasts."))
+            print(paste0("The available tables are: ", names(edger$contrast_list)))
+            table <- names(edger$contrast_list)[[1]]
+            print(paste0("Choosing the first table: ", table))
+        }
+        combo <- combine(limma, edger, deseq, table)
+    }
+    if (!is.null(excel)) {
+        if (class(combo) == 'list') {
+            count <- 0
+            for (tab in names(combo)) {
+                count <- count + 1
+                ## message(paste0("TESTME: printing excel: ", tab, " number ", count))
+                ## datum <- combined[[tab]]
+                ddd <- combo[[count]]
+                ## print(class(ddd))
+                r_is_stupid = summary(ddd) ## until I did this I was getting errors I am guessing devtools::load_all() isn't clearing everything
+                ## print("GOT HERE")
+                excel_title <- paste0("Table Sxx, Differential Expression Table of: ", tab)
+                write_xls(data=ddd, sheet=tab, file=excel, title=excel_title, newsheet=TRUE)
+            }
+        } else { ## not a list
+            write_xls(data=combo, sheet=excel_sheet, file=excel, title=excel_title)
+        }
+    }
+    return(combo)
 }
 
 #' limma_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma

@@ -4,7 +4,7 @@
 \alias{gff2df}
 \title{gff2df()  Try to make import.gff a little more robust}
 \usage{
-gff2df(gff)
+gff2df(gff, type = NULL)
 }
 \arguments{
 \item{gff}{a gff filename

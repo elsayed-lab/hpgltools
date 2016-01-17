@@ -4,10 +4,11 @@
 \alias{hpgl_GOplot}
 \title{A minor hack in the topGO GOplot function}
 \usage{
-hpgl_GOplot(dag, sigNodes, dag.name = "GO terms", edgeTypes = T,
+hpgl_GOplot(dag, sigNodes, dag.name = "GO terms", edgeTypes = TRUE,
   nodeShape.type = c("box", "circle", "ellipse", "plaintext")[3],
-  genNodes = NULL, wantedNodes = NULL, showEdges = T, useFullNames = T,
-  oldSigNodes = NULL, nodeInfo = nodeInfo, maxchars = 30)
+  genNodes = NULL, wantedNodes = NULL, showEdges = TRUE,
+  useFullNames = TRUE, oldSigNodes = NULL, nodeInfo = nodeInfo,
+  maxchars = 30)
 }
 \description{
 A minor hack in the topGO GOplot function
