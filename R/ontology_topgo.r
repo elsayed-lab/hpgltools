@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 22:41:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 18 14:10:45 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' simple_topgo()  Perform a simplified topgo analysis
 #'
@@ -23,7 +23,7 @@
 simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL,
                          pvals=NULL, limitby="fisher", limit=0.1, signodes=100,
                          sigforall=TRUE, numchar=300, selector="topDiffGenes",
-                         overwrite=FALSE, densities=FALSE, pval_plots=TRUE) {
+                         pval_column="adj.P.Val", overwrite=FALSE, densities=FALSE, pval_plots=TRUE) {
 ### Some neat ideas from the topGO documentation:
 ### geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
 ### A variant of these operations make it possible to give topGO scores so that
@@ -48,7 +48,8 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
     ks_interesting_genes <- as.integer(annotated_genes %nin% de_genes$ID)
     if (!is.null(de_genes$P.Value)) {
         ## I think this needs to include the entire gene universe, not only the set of x differentially expressed genes
-        pvals <- de_genes$P.Value
+        ## Making this an explicit as.vector(as.numeric()) because it turns out the values from DESeq are characters.
+        pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
         names(pvals) <- rownames(de_genes)
         for (p in 1:length(pvals)) {
             name <- names(pvals)[p]
@@ -268,8 +269,8 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                         do_bp_ks_tree=FALSE, do_cc_ks_tree=FALSE, do_mf_el_tree=FALSE,
                         do_bp_el_tree=FALSE, do_cc_el_tree=FALSE, do_mf_weight_tree=FALSE,
                         do_bp_weight_tree=FALSE, do_cc_weight_tree=FALSE) {
-    mf_fisher_nodes <- mf_fisher_tree = NULL
-    if (do_mf_fisher_tree) {
+    mf_fisher_nodes <- mf_fisher_tree <- NULL
+    if (isTRUE(do_mf_fisher_tree)) {
         included <- length(which(topGO::score(tg$results$mf_fisher) <= score_limit))
         mf_fisher_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_fisher),
                                                                       useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -279,7 +280,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
         }
     }
     bp_fisher_nodes <- bp_fisher_tree <- NULL
-    if (do_bp_fisher_tree) {
+    if (isTRUE(do_bp_fisher_tree)) {
         included <- length(which(topGO::score(tg$results$bp_fisher) <= score_limit))
         bp_fisher_nodes <- try(suppressWarnings(showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_fisher),
                                                                useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -288,8 +289,8 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
             bp_fisher_tree <- try(recordPlot())
         }
     }
-    cc_fisher_nodes <- cc_fisher_tree = NULL
-    if (do_cc_fisher_tree) {
+    cc_fisher_nodes <- cc_fisher_tree <- NULL
+    if (isTRUE(do_cc_fisher_tree)) {
         included <- length(which(topGO::score(tg$results$cc_fisher) <= score_limit))
         cc_fisher_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_fisher),
                                                                       useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -299,7 +300,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
         }
     }
     mf_ks_nodes <- mf_ks_tree <- NULL
-    if (do_mf_ks_tree) {
+    if (isTRUE(do_mf_ks_tree)) {
         included <- length(which(topGO::score(tg$results$mf_ks) <= score_limit))
         mf_ks_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_ks),
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -309,7 +310,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
         }
     }
     bp_ks_nodes <- bp_ks_tree <- NULL
-    if (do_bp_ks_tree) {
+    if (isTRUE(do_bp_ks_tree)) {
         included <- length(which(topGO::score(tg$results$bp_ks) <= score_limit))
         bp_ks_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_ks),
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -319,7 +320,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
         }
     }
     cc_ks_nodes <- cc_ks_tree <- NULL
-    if (do_cc_ks_tree) {
+    if (isTRUE(do_cc_ks_tree)) {
         included <- length(which(topGO::score(tg$results$cc_ks) <= score_limit))
         cc_ks_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_ks),
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -329,7 +330,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
         }
     }
     mf_el_nodes <- mf_el_tree <- NULL
-    if (do_mf_el_tree) {
+    if (isTRUE(do_mf_el_tree)) {
         included <- length(which(topGO::score(tg$results$mf_el) <= score_limit))
         mf_el_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_el),
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -339,7 +340,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
         }
     }
     bp_el_nodes <- bp_el_tree <- NULL
-    if (do_bp_el_tree) {
+    if (isTRUE(do_bp_el_tree)) {
         included <- length(which(topGO::score(tg$results$bp_el) <= score_limit))
         bp_el_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_el),
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -349,7 +350,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
         }
     }
     cc_el_nodes <- cc_el_tree <- NULL
-    if (do_cc_el_tree) {
+    if (isTRUE(do_cc_el_tree)) {
         included <- length(which(topGO::score(tg$results$cc_el) <= score_limit))
         cc_el_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_el),
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -359,7 +360,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
         }
     }
     mf_weight_nodes <- mf_weight_tree <- NULL
-    if (do_mf_weight_tree) {
+    if (isTRUE(do_mf_weight_tree)) {
         included <- length(which(topGO::score(tg$results$mf_weight) <= score_limit))
         mf_weight_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$mf_godata, topGO::score(tg$results$mf_weight),
                                                                       useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -369,7 +370,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
         }
     }
     bp_weight_nodes <- bp_weight_tree <- NULL
-    if (do_bp_weight_tree) {
+    if (isTRUE(do_bp_weight_tree)) {
         included <- length(which(topGO::score(tg$results$bp_weight) <= score_limit))
         bp_weight_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_weight),
                                                                       useInfo="all", sigForAll=sigforall, firstSigNodes=included,
@@ -379,7 +380,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
         }
     }
     cc_weight_nodes <- cc_weight_tree <- NULL
-    if (do_cc_weight_tree) {
+    if (isTRUE(do_cc_weight_tree)) {
         included <- length(which(topGO::score(tg$results$cc_weight) <= score_limit))
         cc_weight_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$cc_godata, topGO::score(tg$results$cc_weight),
                                                                       useInfo="all", sigForAll=sigforall, firstSigNodes=included,

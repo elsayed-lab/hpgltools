@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 17:10:41 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 18 14:00:52 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified clusterProfiler analysis
 #'
@@ -257,8 +257,8 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
 #' @return plots! Trees! oh my!
 #' @seealso \code{\link{Ramigo}}
 #' @export
-cluster_trees <- function(cpdata, goid_map="reference/go/id2go.map", goids_df=NULL,
-                          score_limit=0.2, overwrite=FALSE, selector="topDiffGenes", pval_column="P.Value") {
+cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", goids_df=NULL,
+                          score_limit=0.2, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Val") {
     de_genes <- cpdata$de_genes
     make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO <- topGO::readMappings(file=goid_map)
@@ -275,7 +275,7 @@ cluster_trees <- function(cpdata, goid_map="reference/go/id2go.map", goids_df=NU
         bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
         cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
     } else {
-        pvals <- as.vector(de_genes[[pval_column]])
+        pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
         names(pvals) <- rownames(de_genes)
         mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
                          geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)

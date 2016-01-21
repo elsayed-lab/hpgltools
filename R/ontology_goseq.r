@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 22:00:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Jan 18 13:56:54 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -319,7 +319,7 @@ goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
         bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
         cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
     } else {
-        pvals <- as.vector(de_genes[[pval_column]])
+        pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
         names(pvals) <- rownames(de_genes)
         mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
                          geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)

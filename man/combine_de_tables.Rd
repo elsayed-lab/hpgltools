@@ -4,10 +4,14 @@
 \alias{combine_de_tables}
 \title{combine_de_tables()  Combine portions of deseq/limma/edger table output}
 \usage{
-combine_de_tables(all_pairwise_result, table = "wt_vs_mut", annot_df = NULL)
+combine_de_tables(all_pairwise_result, annot_df = NULL, excel = NULL,
+  excel_title = "Table SXXX: Combined Differential Expression of YYY",
+  excel_sheet = "combined_DE", keepers = NULL)
 }
 \arguments{
 \item{all_pairwise_result}{the output from all_pairwise()}
+
+\item{keepers}{default NULL  a list of reformatted table names to explicitly keep certain contrasts in specific orders}
 
 \item{table}{default='wt_vs_mut'  the name of a table comparison performed by deseq/limma/edger.}
 }

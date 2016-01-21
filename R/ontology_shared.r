@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 16:57:48 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 21 13:12:05 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -367,14 +367,15 @@ pval_plot <- function(df, ontology="MF") {
 #' @export
 #' @examples
 #' ## many_comparisons = limma_pairwise(expt=an_expt)
+#'
 #' ## tables = many_comparisons$limma
 #' ## this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
-                                  z=NULL, fc=NULL, overwrite=FALSE,
+                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE,
                                   goid_map="reference/go/id2go.map", gff_file=NULL,
                                   goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE,
                                   do_topgo=TRUE, do_gostats=TRUE, do_trees=FALSE,
-                                  workbook="excel/ontology.xls", csv=TRUE, excel=FALSE) {
+                                  workbook="excel/ontology.xls", csv=FALSE, excel=FALSE) {
     message("This function expects a list of de contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
     if (isTRUE(do_goseq) & is.null(gene_lengths)) {
@@ -392,7 +393,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
     ## Take a moment to detect what the data input looks like
     ## Perhaps a list of tables?
     if (is.null(de_out$all_tables)) {
-        if (sum(grepl(pattern="_minus_", x=names(de_out))) == 0) {
+        if (sum(grepl(pattern="_vs_", x=names(de_out))) == 0) {
             stop("This assumes you are passing it a limma/deseq/edger output from limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
         }
     } else {  ## In this case, you fed it something$limma rather than something$limma$all_tables
@@ -423,7 +424,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
         }
         comparison <- names(de_out[c])
         message(paste("Performing ontology search of:", comparison, sep=""))
-        updown_genes <- get_sig_genes(datum, n=n, z=z, fc=fc)
+        updown_genes <- get_sig_genes(datum, n=n, z=z, fc=fc, p=p)
         up_genes <- updown_genes$up_genes
         down_genes <- updown_genes$down_genes
 

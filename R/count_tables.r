@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 14 16:33:29 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 19 15:14:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -507,6 +507,32 @@ concatenate_runs <- function(expt, column='replicate') {
     final_expt$conditions <- as.character(conditions)
     final_expt$names <- as.character(names)
     return(final_expt)
+}
+
+#' median_by_factor()  Create a data frame of the medians of rows by a given factor in the data
+#'
+#' This assumes of course that (like expressionsets) there are separate columns for each replicate
+#' of the conditions.  This will just iterate through the levels of a factor describing the columns,
+#' extract them, calculate the median, and add that as a new column in a separate data frame.
+#'
+#' @param data  a data frame, presumably of counts.
+#' @param fact  a factor describing the columns in the data.
+#'
+#' @return a data frame of the medians
+#' @export
+#' @examples
+#' ## compressed = hpgltools:::median_by_factor(data, experiment$condition)
+median_by_factor <- function(data, fact) {
+    medians <- data.frame(ID=rownames(data))
+    rownames(medians) = rownames(data)
+    for (type in levels(fact)) {
+        columns <- grep(pattern=type, fact)
+        med <- rowMedians(data[, columns])
+        medians <- cbind(medians, med)
+    }
+    medians <- medians[-1]
+    colnames(medians) <- levels(fact)
+    return(medians)
 }
 
 ## EOF

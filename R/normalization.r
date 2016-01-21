@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 16:36:53 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Jan 19 13:35:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -879,11 +879,17 @@ hpgl_rpkm <- function(df, annotations=gene_annotations) {
     if (class(df) == "edgeR") {
         df <- df$counts
     }
-    df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations),])
+    df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
     if (dim(df_in)[1] == 0) {
-        stop("When the annotations and df were checked against each other,
+        print("When the annotations and df were checked against each other,
  the result was null.  Perhaps your annotation or df's rownames aren't set?
+ Going to attempt to use the column 'ID'.
 ")
+        rownames(annotations) = make.names(annotations$ID, unique=TRUE)
+        df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
+        if (dim(df_in)[1] == 0) {
+            stop("The ID column failed too.")
+        }
     }
     colnames(df_in) <- colnames(df)
     merged_annotations <- merge(df, annotations, by="row.names")

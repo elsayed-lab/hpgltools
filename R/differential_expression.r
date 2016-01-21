@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Jan 17 11:04:04 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 21 13:09:27 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -79,106 +79,192 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     return(ret)
 }
 
+combine_de_table <- function(li, ed, de, table, annot_df=NULL, inverse=FALSE) {
+    li <- li$all_tables[[table]]
+    colnames(li) <- c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
+    li <- li[,c("limma_logfc","limma_ave","limma_t","limma_b","limma_p","limma_adjp","limma_q")]
+    de <- de$all_tables[[table]]
+    colnames(de) <- c("deseq_basemean","deseq_logfc","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")
+    de <- de[,c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
+    ed <- ed$all_tables[[table]]
+    colnames(ed) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
+    comb <- merge(li, de, by="row.names")
+    comb <- merge(comb, ed, by.x="Row.names", by.y="row.names")
+    rownames(comb) <- comb$Row.names
+    comb <- comb[-1]
+    comb[is.na(comb)] <- 0
+    if (isTRUE(inverse)) {
+        comb$limma_logfc <- comb$limma_logfc * -1
+        comb$deseq_logfc <- comb$deseq_logfc * -1
+        comb$edger_logfc <- comb$edger_logfc * -1
+    }
+    temp_fc <- cbind(as.numeric(comb$limma_logfc), as.numeric(comb$edger_logfc), as.numeric(comb$deseq_logfc))
+    temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
+    comb$fc_meta <- rowMeans(temp_fc, na.rm=TRUE)
+    comb$fc_var <- rowVars(temp_fc, na.rm=TRUE)
+    comb$fc_varbymed <- comb$fc_var / comb$fc_meta
+    temp_p <- cbind(as.numeric(comb$limma_p), as.numeric(comb$edger_p), as.numeric(comb$deseq_p))
+    comb$p_meta <- rowMeans(temp_p, na.rm=TRUE)
+    comb$p_var <- rowVars(temp_p, na.rm=TRUE)
+    comb$q_meta <- tryCatch(
+    {
+        format(signif(qvalue::qvalue(comb$p_meta, robust=TRUE)$qvalues, 4), scientific=TRUE)
+    },
+    error=function(cond) {
+        message(paste0("The meta qvalue estimation failed."))
+        return(1)
+    },
+    warning=function(cond) {
+        message("There was a warning!")
+        message(cond)
+        return(1)
+    },
+    finally={
+    })
+    if (!is.null(annot_df)) {
+        comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
+        rownames(comb) <- comb$Row.names
+        comb <- comb[-1]
+    }
+    return(comb)
+}
+
+deprint <- function(f){
+    return(function(...) {capture.output(w<-f(...)); return(w); })
+}
+
 #' combine_de_tables()  Combine portions of deseq/limma/edger table output
 #'
 #' This hopefully makes it easy to compare the outputs from limma/DESeq2/EdgeR on a table-by-table basis.
 #'
 #' @param all_pairwise_result  the output from all_pairwise()
 #' @param table default='wt_vs_mut'  the name of a table comparison performed by deseq/limma/edger.
+#' @param keepers default NULL  a list of reformatted table names to explicitly keep certain contrasts in specific orders
 #'
 #' @return a table combinine limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
 #' @export
 #' @examples
 #' ## pretty = combine_de_tables(big_result, table='t12_vs_t0')
-combine_de_tables <- function(all_pairwise_result, table='all', annot_df=NULL,
-                              excel=NULL, excel_title="Table Sxx: Combined Differential Expression",
-                              excel_sheet="combined_DE") {
+combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
+                              excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
+                              excel_sheet="combined_DE", keepers=NULL, add_plots=FALSE) {
     limma <- all_pairwise_result$limma
     deseq <- all_pairwise_result$deseq
     edger <- all_pairwise_result$edger
 
-    combine <- function(li, ed, de, table) {
-        li <- li$all_tables[[table]]
-        colnames(li) <- c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
-        li <- li[,c("limma_logfc","limma_ave","limma_t","limma_b","limma_p","limma_adjp","limma_q")]
-        de <- de$all_tables[[table]]
-        colnames(de) <- c("deseq_basemean","deseq_logfc","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")
-        de <- de[,c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
-        ed <- ed$all_tables[[table]]
-        colnames(ed) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
-        comb <- merge(li, de, by="row.names")
-        comb <- merge(comb, ed, by.x="Row.names", by.y="row.names")
-        rownames(comb) <- comb$Row.names
-        comb <- comb[-1]
-        comb[is.na(comb)] <- 0
-        temp_fc <- cbind(as.numeric(comb$limma_logfc), as.numeric(comb$edger_logfc), as.numeric(comb$deseq_logfc))
-        temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
-        comb$fc_meta <- rowMeans(temp_fc, na.rm=TRUE)
-        comb$fc_var <- rowVars(temp_fc, na.rm=TRUE)
-        comb$fc_varbymed <- comb$fc_var / comb$fc_meta
-        temp_p <- cbind(as.numeric(comb$limma_p), as.numeric(comb$edger_p), as.numeric(comb$deseq_p))
-        comb$p_meta <- rowMeans(temp_p, na.rm=TRUE)
-        comb$p_var <- rowVars(temp_p, na.rm=TRUE)
-        comb$q_meta <- tryCatch(
-        {
-            format(signif(qvalue::qvalue(comb$p_meta, robust=TRUE)$qvalues, 4), scientific=TRUE)
-        },
-        error=function(cond) {
-            message(paste0("The meta qvalue estimation failed."))
-            return(1)
-        },
-        warning=function(cond) {
-            message("There was a warning!")
-            message(cond)
-            return(1)
-        },
-        finally={
-        })
-        if (!is.null(annot_df)) {
-            comb <- merge(annot_df, comb, by="row.names")
-            rownames(comb) <- comb$Row.names
-            comb <- comb[-1]
+    combo <- list()
+    plots <- list()
+    if (class(keepers) == 'list') {
+        ## Then keep specific tables in specific orientations.
+        for (name in names(keepers)) {
+            numerator <- keepers[[name]][[1]]
+            denominator <- keepers[[name]][[2]]
+            same_string <- paste0(numerator, "_vs_", denominator)
+            inverse_string <- paste0(denominator, "_vs_", numerator)
+            dat <- NULL
+            plt <- NULL
+            for (tab in names(edger$contrast_list)) {
+                if (tab == same_string) {
+                    dat <- combine_de_table(limma, edger, deseq, tab, annot_df=annot_df)
+                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL))$scatter
+                } else if (tab == inverse_string) {
+                    dat <- combine_de_table(limma, edger, deseq, tab, annot_df=annot_df, inverse=TRUE)
+                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL))$scatter
+                }
+            }
+            combo[[name]] <- dat
+            plots[[name]] <- plt
         }
-        return(comb)
+    } else if (class(keepers) == 'character' & keepers == 'all') {
+        for (tab in names(edger$contrast_list)) {
+            dat <- combine_de_table(limma, edger, deseq, tab, annot_df=annot_df)
+            combo[[tab]] <- dat
+            splitted <- strsplit(x=tab, split="_vs_")
+            xname <- splitted[[1]][1]
+            yname <- splitted[[1]][2]
+            plots[[tab]] <- suppressMessages(hpgltools::limma_coefficient_scatter(limma, x=xname, y=yname, gvis_filename=NULL))$scatter
+        }
+    } else if (class(keepers) == 'character') {
+        table <- keepers
+        if (table %in% names(edger$contrast_list)) {
+            message(paste0("I found ", table, " in the available contrasts."))
+        } else {
+            message(paste0("I did not find ", table, " in the available contrasts."))
+            message(paste0("The available tables are: ", names(edger$contrast_list)))
+            table <- names(edger$contrast_list)[[1]]
+            message(paste0("Choosing the first table: ", table))
+        }
+        combo[[table]] <- combine_de_table(limma, edger, deseq, table, annot_df=annot_df)
+        splitted <- strsplit(x=tab, split="_vs_")
+        xname <- splitted[[1]][1]
+        yname <- splitted[[1]][2]
+        plots[[name]] <- suppressMessages(limma_coefficient_scatter(limma, x=xname, y=yname))$scatter
+    } else {
+        stop("I don't know what to do with your specification of tables to keep.")
     }
 
-    if (table == 'all') {
-        combo = list()
-        for (tab in names(edger$contrast_list)) {
-            dat <- combine(limma, edger, deseq, tab)
-            combo[[tab]] <- dat
-        }
-    } else {
-        if (table %in% names(edger$contrast_list)) {
-            print(paste0("I found ", table, " in the available contrasts."))
-        } else {
-            print(paste0("I did not find ", table, " in the available contrasts."))
-            print(paste0("The available tables are: ", names(edger$contrast_list)))
-            table <- names(edger$contrast_list)[[1]]
-            print(paste0("Choosing the first table: ", table))
-        }
-        combo <- combine(limma, edger, deseq, table)
-    }
     if (!is.null(excel)) {
-        if (class(combo) == 'list') {
-            count <- 0
-            for (tab in names(combo)) {
-                count <- count + 1
-                ## message(paste0("TESTME: printing excel: ", tab, " number ", count))
-                ## datum <- combined[[tab]]
-                ddd <- combo[[count]]
-                ## print(class(ddd))
-                r_is_stupid = summary(ddd) ## until I did this I was getting errors I am guessing devtools::load_all() isn't clearing everything
-                ## print("GOT HERE")
-                excel_title <- paste0("Table Sxx, Differential Expression Table of: ", tab)
-                write_xls(data=ddd, sheet=tab, file=excel, title=excel_title, newsheet=TRUE)
+        count <- 0
+        for (tab in names(combo)) {
+            count <- count + 1
+            ddd <- combo[[count]]
+            r_is_stupid = summary(ddd) ## until I did this I was getting errors I am guessing devtools::load_all() isn't clearing everything
+            excel_title <- gsub(pattern='YYY', replacement=tab, x=excel_title)
+            xls_result <- write_xls(data=ddd, sheet=tab, file=excel, title=excel_title, newsheet=TRUE)
+            if (isTRUE(add_plots)) {
+                a_plot <- plots[[count]]
+                print(a_plot$scatter)
+                insertPlot(xls_result$workbook, tab, width=6, height=6, startCol=xls_result$end_col + 2, startRow=2, fileType="png", units="in")
+                saveWorkbook(xls_result$workbook, xls_result$file, overwrite=TRUE)
             }
-        } else { ## not a list
-            write_xls(data=combo, sheet=excel_sheet, file=excel, title=excel_title)
         }
     }
-    return(combo)
+    ret <- list(data=combo, plots=plots)
+    return(ret)
+}
+
+extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=0.05, z=NULL,
+                                      n=NULL, sig_table="excel/significant_genes.xlsx") {
+    trimmed_up <- list()
+    trimmed_down <- list()
+    change_counts_up <- list()
+    change_counts_down <- list()
+    for (table_name in names(combined)) {
+        table <- combined[[table_name]]
+        fc_column <- paste0(according_to, "_logfc")
+        p_column <- paste0(according_to, "_adjp")
+        trimming <- hpgltools::get_sig_genes(table, fc=fc, p=p, z=z, n=n, column=fc_column, p_column=p_column)
+        trimmed_up[[table_name]] <- trimming$up_genes
+        change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
+        trimmed_down[[table_name]] <- trimming$down_genes
+        change_counts_down[[table_name]] <- nrow(trimmed_down[[table_name]])
+        title_append <- ""
+        if (!is.null(fc)) {
+            title_append <- paste0(title_append, " fc><", fc)
+        }
+        if (!is.null(p)) {
+            title_append <- paste0(title_append, " p<", p)
+        }
+        if (!is.null(z)) {
+            title_append <- paste0(title_append, " z><", z)
+        }
+        if (!is.null(n)) {
+            title_append <- paste0(title_append, " top|bottom n=", n)
+        }
+        up_title <- paste0("Table SXXX: Genes deemed significantly up in ", table_name, " with", title_append)
+        down_title <- paste0("Table SXXX: Genes deemed significantly down in ", table_name, " with", title_append)
+        xls_result <- write_xls(data=trimmed_up[[table_name]], sheet=paste0("up_",table_name), file=sig_table,
+                                title=up_title, overwrite_file=TRUE, newsheet=TRUE)
+        xls_result <- write_xls(data=trimmed_down[[table_name]], sheet=paste0("down_",table_name), file=sig_table,
+                                title=down_title, overwrite_file=TRUE, newsheet=TRUE)
+    }
+    change_counts <- cbind(change_counts_up, change_counts_down)
+    xls_result <- write_xls(data=change_counts, sheet="number_changed_genes", file=sig_table,
+                            title=paste0("Counting the number of changed genes by contrast with ", title_append),
+                            overwrite_file=TRUE, newsheet=TRUE)
+    ret <- list(ups=change_counts_up, downs=change_counts_down, counts=change_counts)
+    return(ret)
 }
 
 #' limma_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
@@ -202,9 +288,9 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, gvis_file
                                       gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
-    print("This can do comparisons among the following columns in the limma result:")
+    message("This can do comparisons among the following columns in the limma result:")
     thenames <- colnames(output$pairwise_comparisons$coefficients)
-    print(thenames)
+    message(thenames)
     xname <- ""
     yname <- ""
     if (is.numeric(x)) {
@@ -228,7 +314,7 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, gvis_file
         rm(tmp)
         rm(tmpname)
     }
-    print(paste0("Actually comparing ", xname, " and ", yname, "."))
+    message(paste0("Actually comparing ", xname, " and ", yname, "."))
     coefficients <- output$pairwise_comparisons$coefficients
     coefficients <- coefficients[,c(x,y)]
     plot <- hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
@@ -283,9 +369,9 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, gvis_filename="limma_sca
                                      flip=FALSE, base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
-    print("This can do comparisons among the following columns in the deseq2 result:")
+    message("This can do comparisons among the following columns in the deseq2 result:")
     thenames <- names(output$coefficients)
-    print(thenames)
+    message(thenames)
     xname <- ""
     yname <- ""
     if (is.numeric(x)) {
@@ -309,7 +395,7 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, gvis_filename="limma_sca
         rm(tmp)
         rm(tmpname)
     }
-    print(paste0("Actually comparing ", xname, " and ", yname, "."))
+    message(paste0("Actually comparing ", xname, " and ", yname, "."))
     first_df <- output$coefficients[[xname]]
     first_df$delta <- log2(first_df$baseMean) + first_df$log2FoldChange
     second_df <- output$coefficients[[yname]]
@@ -446,7 +532,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL, inclu
 #'
 #' @export
 deseq_pairwise <- function(...) {
-    print("Hey you, use deseq2 pairwise.")
+    message("Hey you, use deseq2 pairwise.")
     deseq2_pairwise(...)
 }
 
@@ -468,9 +554,9 @@ deseq_pairwise <- function(...) {
 #' @examples
 #' ## pretend = deseq2_pairwise(data, conditions, batches)
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                            model_batch=FALSE, excel=FALSE, csv=TRUE, annot_df=NULL,
+                            model_batch=FALSE, excel=FALSE, csv=FALSE, annot_df=NULL,
                             workbook="excel/deseq.xls", ...) {
-    print("Starting DESeq2 pairwise comparisons.")
+    message("Starting DESeq2 pairwise comparisons.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
         conditions <- input$conditions
@@ -481,7 +567,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             ## and expects data as floating point counts,
             ## not a log2 transformation.
             if (input$norm != "raw") {
-                print("DESeq2 demands raw data as input, reverting to the original expressionset.")
+                message("DESeq2 demands raw data as input, reverting to the original expressionset.")
                 data <- Biobase::exprs(input$original_expressionset)
             } else if (!is.null(input$transform)) {
                 if (input$transform == "log2") {
@@ -633,9 +719,9 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
 #' ## pretend = edger_pairwise(data, conditions, batches)
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                           model_batch=FALSE, model_intercept=FALSE, alt_model=NULL,
-                          extra_contrasts=NULL, excel=FALSE, csv=TRUE, annotation=NULL,
+                          extra_contrasts=NULL, excel=FALSE, csv=FALSE, annotation=NULL,
                           workbook="excel/edger.xls", ...) {
-    print("Starting edgeR pairwise comparisons.")
+    message("Starting edgeR pairwise comparisons.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
         conditions <- input$conditions
@@ -945,7 +1031,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
 limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                            model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL,
                            alt_model=NULL, libsize=NULL) {
-    print("Starting limma pairwise comparison.")
+    message("Starting limma pairwise comparison.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
         conditions <- input$conditions
@@ -1014,7 +1100,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ## voom() it, taking into account whether the data has been log2 transformed.
     logged <- input$transform
     if (is.null(logged)) {
-        print("I don't know if this data is logged, testing if it is integer.")
+        message("I don't know if this data is logged, testing if it is integer.")
         if (is.integer(data)) {
             logged <- FALSE
         } else {
@@ -1029,7 +1115,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     }
     converted = input$convert
     if (is.null(converted)) {
-        print("I cannot determine if this data has been converted, assuming no.")
+        message("I cannot determine if this data has been converted, assuming no.")
         converted <- FALSE
     } else {
         if (converted == "raw") {
@@ -1267,7 +1353,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE, do_pa
         identity_name <- names(condition_table[c])
         identity_string <- paste(identity_name, " = ", identity_name, ",", sep="")
         identities[identity_name] <- identity_string
-        print(paste("As a reference, the identity is: ", identity_string, sep=""))
+        message(paste("As a reference, the identity is: ", identity_string, sep=""))
     }
     ## If I also create a sample condition 'alice', and also perform a subtraction
     ## of 'alice' from 'bob', then the full makeContrasts() will be:
@@ -1402,7 +1488,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE, do_pa
 simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="simple_comparison", basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE, pvalue_cutoff=0.05, logfc_cutoff=0.6, tooltip_data=NULL, verbose=FALSE, ...) {
     condition_model <- stats::model.matrix(~ 0 + subset$condition)
     if (length(levels(subset$batch)) == 1) {
-        print("There is only one batch! I can only include condition in the model.")
+        message("There is only one batch! I can only include condition in the model.")
         condbatch_model <- stats::model.matrix(~ 0 + subset$condition)
     } else {
         condbatch_model <- stats::model.matrix(~ 0 + subset$condition + subset$batch)
@@ -1530,7 +1616,7 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
 #'
 #' @seealso \code{\link{limma}} \code{\link{deseq2}} \code{\link{edger}}
 basic_pairwise <- function(input, design=NULL) {
-    print("Starting basic pairwise comparison.")
+    message("Starting basic pairwise comparison.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
         conditions <- input$conditions
@@ -1646,7 +1732,7 @@ basic_pairwise <- function(input, design=NULL) {
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
 write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
-                       excel=FALSE, csv=TRUE, annotation=NULL) {
+                       excel=FALSE, csv=FALSE, annotation=NULL) {
     testdir <- dirname(workbook)
     if (n == 0) {
         n <- dim(data$coefficients)[1]
@@ -1713,51 +1799,94 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
 #' @param n default=NULL  a rank-order top/bottom number of genes to take.
 #' @param z default=NULL  a number of z-scores >/< the median to take.
 #' @param fc default=NULL  a number of fold-changes to take
+#' @param p default=NULL  a p-value cutoff
 #' @param fold default='plusminus'  an identifier reminding how to get the bottom portion of a fold-change (plusminus says to get the negative of the positive, otherwise 1/positive is taken).
 #' @param column default='logFC'  a column to use to distinguish top/bottom
+#' @param p_column default='adj.P.Val'  a column containing (adjusted or not)p-values
 #'
 #' @return a list of up/down genes
 #' @export
-get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, column='logFC', fold='plusminus') {
+get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
+                          column='logFC', fold='plusminus', p_column='adj.P.Val') {
     if (is.null(z) & is.null(n) & is.null(fc)) {
-        print("No n, z, nor fc provided, setting z to 1.")
+        message("No n, z, nor fc provided, setting z to 1.")
         z <- 1
     }
-    if (!is.null(n)) {
-        ## Take a specific number of genes at the top/bottom of the rank ordered list.
-        print("Getting the n genes up and down.")
-        upranked <- table[order(table[,column], decreasing=TRUE),]
-        up_genes <- head(upranked, n=n)
-        down_genes <- tail(upranked, n=n)
-    } else if (!is.null(z)) {
+    up_genes <- table
+    down_genes <- table
+
+    if (!is.null(p)) {
+        up_idx <- up_genes[, p_column] <= p
+        up_genes <- up_genes[up_idx, ]
+        down_idx <- down_genes[, p_column] <= p
+        down_genes <- down_genes[down_idx, ]
+        ## Going to add logic in case one does not ask for fold change
+        ## In that case, a p-value assertion should still know the difference between up and down
+        ## But it should also still know the difference between ratio and log changes
+        if (fold == 'plusminus' | fold == 'log') {
+            message(paste0("Assuming the fold changes are on the log scale and so taking >< 0"))
+            up_idx <- up_genes[, column] > 0.0
+            up_genes <- up_genes[up_idx, ]
+            down_idx <- down_genes[, column] < 0.0
+            down_genes <- down_genes[down_idx, ]
+        } else {
+            ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
+            up_idx <- up_genes[, column] > 1.0
+            up_genes <- up_genes[up_idx, ]
+            down_idx <- down_genes[, column] < 1.0
+            down_genes <- down_genes[down_idx, ]
+        }
+        message(paste0("After (adj)p filter, the up genes table has ", dim(up_genes)[1], " genes."))
+        message(paste0("After (adj)p filter, the down genes table has ", dim(down_genes)[1], " genes."))
+    }
+
+    if (!is.null(fc)) {
+        up_idx <- up_genes[, column] >= fc
+        up_genes <- up_genes[up_idx, ]
+        if (fold == 'plusminus' | fold == 'log') {
+            message(paste0("Assuming the fold changes are on the log scale and so taking -1 * fc"))
+            ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
+            down_idx <- down_genes[, column] <= (fc * -1)
+            down_genes <- down_genes[down_idx, ]
+        } else {
+            message(paste0("Assuming the fold changes are on a ratio scale and so taking 1/fc"))
+            ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
+            down_idx <- down_genes[, column] <= (1 / fc)
+            down_genes <- down_genes[down_idx, ]
+        }
+        message(paste0("After fold change filter, the up genes table has ", dim(up_genes)[1], " genes."))
+        message(paste0("After fold change filter, the down genes table has ", dim(down_genes)[1], " genes."))
+    }
+
+    if (!is.null(z)) {
         ## Take an arbitrary number which are >= and <= a value which is z zscores from the median.
-        print("Getting the genes >= z scores away from the median.")
+        message(paste0("Getting the genes >= ", z, " z scores away from the median of all."))
+        ## Use the entire table for the summary
         out_summary <- summary(table[,column])
         out_mad <- stats::mad(table[,column], na.rm=TRUE)
         up_median_dist <- out_summary["Median"] + (out_mad * z)
         down_median_dist <- out_summary["Median"] - (out_mad * z)
-        up_idx <- table[,column] >= up_median_dist
-        up_genes <- table[up_idx,]
-        down_idx <- table[,column] <= down_median_dist
-        down_genes <- table[down_idx,]
-        print(paste0("The up genes table has ", dim(up_genes)[1], " genes."))
-        print(paste0("The down genes table has ", dim(down_genes)[1], " genes."))
-    } else {
-        ## Take an arbitrary number which are >= and <= a given fold value
-        up_idx <- table[,column] >= fc
-        up_genes <- table[up_idx,]
-        if (fold == 'plusminus') {
-            ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
-            down_idx <- table[,column] <= (fc * -1)
-            down_genes <- table[down_idx,]
-        } else {
-            ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
-            down_idx <- table[,column] <= (1 / fc)
-            down_genes <- table[down_idx,]
-        }
-        print(paste0("The up genes table has ", dim(up_genes)[1], " genes."))
-        print(paste0("The down genes table has ", dim(down_genes)[1], " genes."))
+        ## But use the (potentially already trimmed) up/down tables for indexing
+        up_idx <- up_genes[, column] >= up_median_dist
+        up_genes <- up_genes[up_idx, ]
+        down_idx <- down_genes[, column] <= down_median_dist
+        down_genes <- down_genes[down_idx, ]
+        message(paste0("After z filter, the up genes table has ", dim(up_genes)[1], " genes."))
+        message(paste0("After z filter, the down genes table has ", dim(down_genes)[1], " genes."))
     }
+
+    if (!is.null(n)) {
+        ## Take a specific number of genes at the top/bottom of the rank ordered list.
+        message(paste0("Getting the top and bottom ", n, " genes."))
+        upranked <- up_genes[order(up_genes[, column], decreasing=TRUE), ]
+        up_genes <- head(upranked, n=n)
+        downranked <- down_genes[order(down_genes[, column]), ]
+        down_genes <- head(downranked, n=n)
+        message(paste0("After top-n filter, the up genes table has ", dim(up_genes)[1], " genes."))
+        message(paste0("After bottom-n filter, the down genes table has ", dim(down_genes)[1], " genes."))
+    }
+    up_genes <- up_genes[order(up_genes[, column], decreasing=TRUE), ]
+    down_genes <- down_genes[order(down_genes[, column], decreasing=FALSE), ]
     ret = list(up_genes=up_genes, down_genes=down_genes)
     return(ret)
 }

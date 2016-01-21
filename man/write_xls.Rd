@@ -5,8 +5,8 @@
 \title{write_xls()  Write a dataframe to an excel spreadsheet sheet.}
 \usage{
 write_xls(data, sheet = "first", file = "excel/workbook",
-  overwrite_file = TRUE, overwrite_sheet = TRUE, dated = TRUE,
-  suffix = ".xlsx", type = "openxlsx", ...)
+  overwrite_file = TRUE, newsheet = FALSE, overwrite_sheet = TRUE,
+  dated = TRUE, suffix = ".xlsx", type = "openxlsx", ...)
 }
 \arguments{
 \item{type}{default='xlsx'  whether to use the xlsx or XLConnect package.}

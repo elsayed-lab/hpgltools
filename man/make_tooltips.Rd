@@ -4,7 +4,7 @@
 \alias{make_tooltips}
 \title{make_tooltips()  Create a simple df from gff which contains tooltip usable information for gVis graphs.}
 \usage{
-make_tooltips(annotations = NULL, gff = NULL, desc_col = "description")
+make_tooltips(annotations, desc_col = "description")
 }
 \arguments{
 \item{gff}{or annotations: Either a gff file or annotation data frame (which likely came from a gff file.)}

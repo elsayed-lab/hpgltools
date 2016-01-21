@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Jan 17 11:11:11 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 21 11:17:56 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -445,13 +445,17 @@ write_xls <- function(data, sheet="first", file="excel/workbook", overwrite_file
         }
     }
 
+    if (class(data) == 'matrix') {
+        data <- as.data.frame(data)
+    }
     ret <- NULL
     if (type == 'xlsx') {
         ret <- write_xls_xlsx(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated, ...)
     } else if (type == 'openxlsx') {
         ret <- write_xls_openxlsx(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated, ...)
+        ##ret <- hpgltools:::write_xls_openxlsx(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated)
     } else {
-        ret <- write_xls_xlconnect(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated, ...)
+        ret <- hpgltools:::write_xls_xlconnect(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated, ...)
     }
     return(ret)
 }
@@ -475,7 +479,8 @@ write_xls <- function(data, sheet="first", file="excel/workbook", overwrite_file
 #' ## write_xls_xlconnect(dataframe, "hpgl_data")
 #' ## Sometimes it is a good idea to go in and delete the workbook and
 #' ## re-create it if this is used heavily, because it will get crufty.
-write_xls_xlconnect <- function(data, sheet="first", file="excel/workbook.xls", overwrite_file=TRUE, overwrite_sheet=TRUE, dated=TRUE, suffix=".xls", ...) {
+write_xls_xlconnect <- function(data, sheet="first", file="excel/workbook.xls", overwrite_file=TRUE,
+                                overwrite_sheet=TRUE, dated=TRUE, suffix=".xls", ...) {
     xls <- XLConnect::loadWorkbook(file, create=TRUE)
     if (isTRUE(overwritesheet)) {
         newname <- paste0(sheet, '.bak')
@@ -516,7 +521,8 @@ write_xls_xlconnect <- function(data, sheet="first", file="excel/workbook.xls", 
 #'
 #' @examples
 #' ## write_xls_xlsx(dataframe)
-write_xls_xlsx <- function(data, sheet="first", file="excel/workbook.xls", overwrite_file=TRUE, overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", ...) {
+write_xls_xlsx <- function(data, sheet="first", file="excel/workbook.xls", overwrite_file=TRUE,
+                           overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", ...) {
     ## require.auto("kassambara/r2excel")
     wb <- xlsx::createWorkbook(type="xlsx")
     sheet <- xlsx::createSheet(wb, sheetName=sheet)
@@ -528,7 +534,9 @@ write_xls_xlsx <- function(data, sheet="first", file="excel/workbook.xls", overw
     return(res)
 }
 
-write_xls_openxlsx <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite_file=TRUE, overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", ...) {
+write_xls_openxlsx <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite_file=TRUE,
+                               overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx",
+                               first_two_widths=c("30","60"), ...) {
     arglist = list(...)
     if (file.exists(file)) {
         wb <- openxlsx::loadWorkbook(file)
@@ -538,6 +546,7 @@ write_xls_openxlsx <- function(data, sheet="first", file="excel/workbook.xlsx", 
     openxlsx::addWorksheet(wb, sheetName=sheet)
     hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
     new_row <- 1
+    ##print(paste0("GOT HERE openxlswrite, title? ", arglist$title))
     if (!is.null(arglist$title)) {
         openxlsx::writeData(wb, sheet, x=arglist$title, startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
@@ -546,13 +555,29 @@ write_xls_openxlsx <- function(data, sheet="first", file="excel/workbook.xlsx", 
 
     ## I might have run into a bug in openxlsx, in WorkbookClass.R there is a call to is.nan() for a data.frame
     ## and it appears to me to be called oddly and causing problems
-    openxlsx::writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9", startRow=new_row, rowNames=TRUE)
+    ## I hacked the writeDataTable() function in openxlsx and sent a bug report.
+    ## Another way to trip this up is for a column in the table to be of class 'list'
+    for (col in colnames(data)) {
+        if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector') {
+            data[[col]] <- as.character(data[[col]])
+        }
+    }
+    writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9", startRow=new_row, rowNames=TRUE)
     new_row <- new_row + nrow(data) + 2
 
-    openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=1:ncol(data))
+    ## Going to make an assumption about columns 1,2
+    ## Maybe make this a parameter? nah for now at least
+    openxlsx::setColWidths(wb, sheet=sheet, widths=first_two_widths, cols=c(1,2))
+    openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=3:ncol(data))
     openxlsx::saveWorkbook(wb, file, overwrite=overwrite_sheet)
 
-    return(new_row)
+    end_col <- ncol(data) + 1
+    ret <- list(workbook=wb, end_row=new_row, end_col=end_col, file=file)
+    return(ret)
+}
+
+openxlsx_add_plot <- function(wb, plot) {
+
 }
 
 my_writeDataTable <- function(wb, sheet, x, startCol=1, startRow=1, xy=NULL,
@@ -684,7 +709,7 @@ backup_file <- function(backup_file, backups=10) {
         }
         newfile <- paste0(backup_file, ".", i)
         message(paste0("Renaming ", backup_file, " to ", newfile, "."))
-        file.rename(backup_file, newfile)
+        file.copy(backup_file, newfile)
     } else {
         message("The file does not yet exist.")
     }

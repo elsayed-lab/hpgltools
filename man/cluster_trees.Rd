@@ -4,9 +4,9 @@
 \alias{cluster_trees}
 \title{Make fun trees a la topgo from goseq data.}
 \usage{
-cluster_trees(cpdata, goid_map = "reference/go/id2go.map", goids_df = NULL,
-  score_limit = 0.2, overwrite = FALSE, selector = "topDiffGenes",
-  pval_column = "P.Value")
+cluster_trees(de_genes, cpdata, goid_map = "reference/go/id2go.map",
+  goids_df = NULL, score_limit = 0.2, overwrite = FALSE,
+  selector = "topDiffGenes", pval_column = "adj.P.Val")
 }
 \arguments{
 \item{godata}{data from cluster Profiler}
