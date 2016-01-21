@@ -9,7 +9,7 @@ However, this will do a couple of things to make one's life easier:
 3.  Since I have been using qvalues a lot for other stuff, add a column for them.}
 \usage{
 write_limma(data, adjust = "fdr", n = 0, coef = NULL,
-  workbook = "excel/limma.xls", excel = FALSE, csv = TRUE,
+  workbook = "excel/limma.xls", excel = FALSE, csv = FALSE,
   annotation = NULL)
 }
 \arguments{

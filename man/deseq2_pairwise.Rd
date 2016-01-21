@@ -6,7 +6,7 @@
 a pairwise comparison of all conditions using DESeq2.}
 \usage{
 deseq2_pairwise(input, conditions = NULL, batches = NULL,
-  model_cond = TRUE, model_batch = FALSE, excel = FALSE, csv = TRUE,
+  model_cond = TRUE, model_batch = FALSE, excel = FALSE, csv = FALSE,
   annot_df = NULL, workbook = "excel/deseq.xls", ...)
 }
 \arguments{

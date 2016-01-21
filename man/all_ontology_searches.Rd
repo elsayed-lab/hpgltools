@@ -5,11 +5,11 @@
 \title{all_ontology_searches()  Perform ontology searches of the output from limma.}
 \usage{
 all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
-  z = NULL, fc = NULL, overwrite = FALSE,
+  z = NULL, fc = NULL, p = NULL, overwrite = FALSE,
   goid_map = "reference/go/id2go.map", gff_file = NULL, goids_df = NULL,
   do_goseq = TRUE, do_cluster = TRUE, do_topgo = TRUE,
   do_gostats = TRUE, do_trees = FALSE, workbook = "excel/ontology.xls",
-  csv = TRUE, excel = FALSE)
+  csv = FALSE, excel = FALSE)
 }
 \arguments{
 \item{de_out}{a list of topTables comprising limma/deseq/edger outputs.}
@@ -56,6 +56,7 @@ as I recently made the simple_() functions able to automatically use the various
 }
 \examples{
 ## many_comparisons = limma_pairwise(expt=an_expt)
+
 ## tables = many_comparisons$limma
 ## this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
 }
