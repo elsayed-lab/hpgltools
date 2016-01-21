@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 22:54:44 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 21 14:45:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -18,7 +18,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
                            categorysize=NULL, gff_type="CDS") {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should)
     ## contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
-    annotation <- hpgltools:::gff2df(gff)
+    annotation <- hpgltools:::gff2df(gff, gff_type=gff_type)
     ## This is similar to logic in ontology_goseq and is similarly problematic.
     ## Some gff files I use have all the annotation data in the type called 'gene', others use 'CDS', others use 'exon'
     ## I need a robust method of finding the correct feature type to call upon.

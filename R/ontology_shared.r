@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 21 13:12:05 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 21 14:45:53 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -372,7 +372,7 @@ pval_plot <- function(df, ontology="MF") {
 #' ## this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                                   z=NULL, fc=NULL, p=NULL, overwrite=FALSE,
-                                  goid_map="reference/go/id2go.map", gff_file=NULL,
+                                  goid_map="reference/go/id2go.map", gff_file=NULL, gff_type="gene",
                                   goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE,
                                   do_topgo=TRUE, do_gostats=TRUE, do_trees=FALSE,
                                   workbook="excel/ontology.xls", csv=FALSE, excel=FALSE) {
@@ -530,8 +530,8 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
             }
         }
         if (isTRUE(do_gostats)) {
-            topgo_up_ontology <- try(simple_gostats(up_genes, gff, goids))
-            topgo_down_ontology <- try(simple_gostats(down_genes, gff, goids))
+            topgo_up_ontology <- try(simple_gostats(up_genes, gff, goids, gff_type=gff_type))
+            topgo_down_ontology <- try(simple_gostats(down_genes, gff, goids, gff_type=gff_type))
             if (isTRUE(do_trees)) {
                 message("gostats_trees has never been tested, this is commented out for the moment.")
                 ## topgo_up_trees = try(gostats_trees(topgo_up_ontology))
