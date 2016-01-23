@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 21 22:42:59 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Jan 23 15:30:27 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' simple_topgo()  Perform a simplified topgo analysis
 #'
@@ -480,7 +480,7 @@ topDiffGenes <- function(allScore) { return(allScore < 0.01) }
 #' @export
 topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
     mf_newdf <- topgo$tables$mf[,c("GO.ID", "Term", "Annotated","Significant", type)]
-    mf_newdf$term <- as.character(lapply(strwrap(mf_newdf$Term, wrapped_width, simplify=F), paste, collapse="\n"))
+    mf_newdf$term <- as.character(lapply(strwrap(mf_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     mf_newdf$pvalue <- as.numeric(mf_newdf[[type]])
     mf_newdf <- subset(mf_newdf, get(type) < cutoff)
     mf_newdf <- mf_newdf[order(mf_newdf$pvalue, mf_newdf[[type]]),]
@@ -489,7 +489,7 @@ topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
     mf_pval_plot <- pval_plot(mf_newdf, ontology="MF")
 
     bp_newdf <- topgo$tables$bp[,c("GO.ID", "Term", "Annotated","Significant",type)]
-    bp_newdf$term <- as.character(lapply(strwrap(bp_newdf$Term, wrapped_width, simplify=F), paste, collapse="\n"))
+    bp_newdf$term <- as.character(lapply(strwrap(bp_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     bp_newdf$pvalue <- as.numeric(bp_newdf[[type]])
     bp_newdf <- subset(bp_newdf, get(type) < cutoff)
     bp_newdf <- bp_newdf[order(bp_newdf$pvalue, bp_newdf[[type]]),]
@@ -498,7 +498,7 @@ topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
     bp_pval_plot <- pval_plot(bp_newdf, ontology="MF")
 
     cc_newdf <- topgo$tables$cc[,c("GO.ID", "Term", "Annotated","Significant",type)]
-    cc_newdf$term <- as.character(lapply(strwrap(cc_newdf$Term, wrapped_width, simplify=F), paste, collapse="\n"))
+    cc_newdf$term <- as.character(lapply(strwrap(cc_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     cc_newdf$pvalue <- as.numeric(cc_newdf[[type]])
     cc_newdf <- subset(cc_newdf, get(type) < cutoff)
     cc_newdf <- cc_newdf[order(cc_newdf$pvalue, cc_newdf[[type]]),]

@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Jan 23 12:30:30 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Jan 23 15:30:37 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
