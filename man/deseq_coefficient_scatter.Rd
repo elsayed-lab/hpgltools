@@ -4,9 +4,9 @@
 \alias{deseq_coefficient_scatter}
 \title{deseq_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma}
 \usage{
-deseq_coefficient_scatter(output, x = 1, y = 2,
-  gvis_filename = "limma_scatter.html", gvis_trendline = TRUE,
-  tooltip_data = NULL, flip = FALSE, base_url = NULL)
+deseq_coefficient_scatter(output, x = 1, y = 2, gvis_filename = NULL,
+  gvis_trendline = TRUE, tooltip_data = NULL, flip = FALSE,
+  base_url = NULL)
 }
 \arguments{
 \item{x}{default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot}

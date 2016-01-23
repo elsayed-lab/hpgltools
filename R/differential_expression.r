@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 21 13:09:27 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Jan 23 12:30:30 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -75,10 +75,16 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     basic_result <- basic_pairwise(input, conditions)
 
     result_comparison <- compare_tables(limma=limma_result, deseq=deseq_result, edger=edger_result, basic=basic_result)
-    ret <- list(limma=limma_result, deseq=deseq_result, edger=edger_result, basic=basic_result, comparison=result_comparison)
+    ret <- list(limma=limma_result, deseq=deseq_result, edger=edger_result,
+                basic=basic_result, comparison=result_comparison)
     return(ret)
 }
 
+#' combine_de_table()  Given a limma, edger, and deseq table, combine them
+#'
+#' @param li  a limma output
+#' @param ed  a edger output
+#' @param de  a deseq output
 combine_de_table <- function(li, ed, de, table, annot_df=NULL, inverse=FALSE) {
     li <- li$all_tables[[table]]
     colnames(li) <- c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
@@ -106,21 +112,21 @@ combine_de_table <- function(li, ed, de, table, annot_df=NULL, inverse=FALSE) {
     temp_p <- cbind(as.numeric(comb$limma_p), as.numeric(comb$edger_p), as.numeric(comb$deseq_p))
     comb$p_meta <- rowMeans(temp_p, na.rm=TRUE)
     comb$p_var <- rowVars(temp_p, na.rm=TRUE)
-    comb$q_meta <- tryCatch(
-    {
-        format(signif(qvalue::qvalue(comb$p_meta, robust=TRUE)$qvalues, 4), scientific=TRUE)
-    },
-    error=function(cond) {
-        message(paste0("The meta qvalue estimation failed."))
-        return(1)
-    },
-    warning=function(cond) {
-        message("There was a warning!")
-        message(cond)
-        return(1)
-    },
-    finally={
-    })
+##    comb$q_meta <- tryCatch(
+##    {
+##        format(signif(qvalue::qvalue(comb$p_meta, robust=TRUE)$qvalues, 4), scientific=TRUE)
+##    },
+##    error=function(cond) {
+##        message(paste0("The meta qvalue estimation failed."))
+##        return(1)
+##    },
+##    warning=function(cond) {
+##        message("There was a warning!")
+##        message(cond)
+##        return(1)
+##    },
+##    finally={
+##    })
     if (!is.null(annot_df)) {
         comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
         rownames(comb) <- comb$Row.names
@@ -210,8 +216,8 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             count <- count + 1
             ddd <- combo[[count]]
             r_is_stupid = summary(ddd) ## until I did this I was getting errors I am guessing devtools::load_all() isn't clearing everything
-            excel_title <- gsub(pattern='YYY', replacement=tab, x=excel_title)
-            xls_result <- write_xls(data=ddd, sheet=tab, file=excel, title=excel_title, newsheet=TRUE)
+            final_excel_title <- gsub(pattern='YYY', replacement=tab, x=excel_title)
+            xls_result <- write_xls(data=ddd, sheet=tab, file=excel, title=final_excel_title, newsheet=TRUE)
             if (isTRUE(add_plots)) {
                 a_plot <- plots[[count]]
                 print(a_plot$scatter)
@@ -224,13 +230,45 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
     return(ret)
 }
 
+#' extract_significant_genes()  Pull the highly up/down genes in combined tables
+#'
+#' Given the output from combine_de_tables(), extract the fun genes.
+#'
+#' @param combined  the output from combine_de_tables()
+#' @param according_to default='limma'  one may use the deseq, edger, limma, or meta data.
+#' @param fc default=1.0  a log fold change to define 'significant'
+#' @param p default=0.05  a (adjusted)p-value to define 'significant'
+#' @param z default=NULL  a z-score to define 'significant'
+#' @param n default=NULL  a set of top/bottom-n genes
+#' @param sig_table default="excel/significant_genes.xlsx"  an excel file to write
+#'
+#' @return a set of up-genes, down-genes, and numbers therein
+#' @seealso \code{\link{combine_de_tables}}
+#' @export
 extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=0.05, z=NULL,
                                       n=NULL, sig_table="excel/significant_genes.xlsx") {
     trimmed_up <- list()
     trimmed_down <- list()
     change_counts_up <- list()
     change_counts_down <- list()
+    title_append <- ""
+    if (!is.null(fc)) {
+        title_append <- paste0(title_append, " fc><", fc)
+    }
+    if (!is.null(p)) {
+        title_append <- paste0(title_append, " p<", p)
+    }
+    if (!is.null(z)) {
+        title_append <- paste0(title_append, " z><", z)
+    }
+    if (!is.null(n)) {
+        title_append <- paste0(title_append, " top|bottom n=", n)
+    }
+    num_tables <- length(names(combined))
+    table_count <- 0
     for (table_name in names(combined)) {
+        table_count <- table_count + 1
+        message(paste0("Writing excel data sheet ", table_count, "/", num_tables))
         table <- combined[[table_name]]
         fc_column <- paste0(according_to, "_logfc")
         p_column <- paste0(according_to, "_adjp")
@@ -239,19 +277,6 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
         change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
         trimmed_down[[table_name]] <- trimming$down_genes
         change_counts_down[[table_name]] <- nrow(trimmed_down[[table_name]])
-        title_append <- ""
-        if (!is.null(fc)) {
-            title_append <- paste0(title_append, " fc><", fc)
-        }
-        if (!is.null(p)) {
-            title_append <- paste0(title_append, " p<", p)
-        }
-        if (!is.null(z)) {
-            title_append <- paste0(title_append, " z><", z)
-        }
-        if (!is.null(n)) {
-            title_append <- paste0(title_append, " top|bottom n=", n)
-        }
         up_title <- paste0("Table SXXX: Genes deemed significantly up in ", table_name, " with", title_append)
         down_title <- paste0("Table SXXX: Genes deemed significantly down in ", table_name, " with", title_append)
         xls_result <- write_xls(data=trimmed_up[[table_name]], sheet=paste0("up_",table_name), file=sig_table,
@@ -260,10 +285,11 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
                                 title=down_title, overwrite_file=TRUE, newsheet=TRUE)
     }
     change_counts <- cbind(change_counts_up, change_counts_down)
+    summary_title <- paste0("Counting the number of changed genes by contrast with ", title_append)
     xls_result <- write_xls(data=change_counts, sheet="number_changed_genes", file=sig_table,
-                            title=paste0("Counting the number of changed genes by contrast with ", title_append),
+                            title=summary_title,
                             overwrite_file=TRUE, newsheet=TRUE)
-    ret <- list(ups=change_counts_up, downs=change_counts_down, counts=change_counts)
+    ret <- list(ups=trimmed_up, downs=trimmed_down, counts=change_counts)
     return(ret)
 }
 
@@ -284,7 +310,8 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, gvis_filename="limma_scatter.html",
+limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_filename="limma_scatter.html",
+                                      gvis_filename=NULL,
                                       gvis_trendline=TRUE, tooltip_data=NULL, flip=FALSE, base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
@@ -364,9 +391,10 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, gvis_file
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-deseq_coefficient_scatter <- function(output, x=1, y=2, gvis_filename="limma_scatter.html",
-                                     gvis_trendline=TRUE, tooltip_data=NULL,
-                                     flip=FALSE, base_url=NULL) {
+deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_scatter.html",
+                                      gvis_filename=NULL,
+                                      gvis_trendline=TRUE, tooltip_data=NULL,
+                                      flip=FALSE, base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     message("This can do comparisons among the following columns in the deseq2 result:")
@@ -554,8 +582,7 @@ deseq_pairwise <- function(...) {
 #' @examples
 #' ## pretend = deseq2_pairwise(data, conditions, batches)
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                            model_batch=FALSE, excel=FALSE, csv=FALSE, annot_df=NULL,
-                            workbook="excel/deseq.xls", ...) {
+                            model_batch=FALSE, ...) {
     message("Starting DESeq2 pairwise comparisons.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
@@ -612,13 +639,16 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     result_list <- list()
     coefficient_list <- list()
     ## The following is an attempted simplification of the contrast formulae
+    number_comparisons <- sum(2:length(conditions))
+    inner_count <- 0
     for (c in 1:(length(conditions) - 1)) {
         denominator <- conditions[c]
         nextc <- c + 1
         for (d in nextc:length(conditions)) {
+            inner_count <- inner_count + 1
             numerator <- conditions[d]
             comparison <- paste0(numerator, "_vs_", denominator)
-            message(paste0("DESeq2:", c, "/", d, ": Printing table: ", comparison))
+            message(paste0("DESeq2:", inner_count, "/", number_comparisons, ": Printing table: ", comparison))
             result <- as.data.frame(DESeq2::results(deseq_run, contrast=c("condition", numerator, denominator), format="DataFrame"))
             result <- result[order(result$log2FoldChange),]
             colnames(result) <- c("baseMean","logFC","lfcSE","stat","P.Value","adj.P.Val")
@@ -650,21 +680,6 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
 
             if (!is.null(annot_df)) {
                 result <- merge(result, annot_df, by.x="row.names", by.y="row.names")
-            }
-            testdir <- dirname(workbook)
-            if (isTRUE(excel) | isTRUE(csv)) {
-                if (!file.exists(testdir)) {
-                    dir.create(testdir)
-                    message(paste0("Creating directory: ", testdir, "for writing excel/csv data."))
-                }
-            }
-            if (isTRUE(excel)) {
-                try(write_xls(result, sheet=result_name, file=workbook, overwritefile=TRUE))
-            }
-            if (isTRUE(csv)) {
-                csv_filename <- gsub(".xls$", "", workbook)
-                csv_filename <- paste0(csv_filename, "_", result_name, ".csv")
-                write.csv(result, file=csv_filename)
             }
         } ## End for each d
         ## Fill in the last coefficient (since the for loop above goes from 1 to n-1
@@ -719,8 +734,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
 #' ## pretend = edger_pairwise(data, conditions, batches)
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                           model_batch=FALSE, model_intercept=FALSE, alt_model=NULL,
-                          extra_contrasts=NULL, excel=FALSE, csv=FALSE, annotation=NULL,
-                          workbook="excel/edger.xls", ...) {
+                          extra_contrasts=NULL, annotation=NULL, ...) {
     message("Starting edgeR pairwise comparisons.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
@@ -739,7 +753,6 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     } else { ## End checking if this is an expt
         data <- as.data.frame(input)
     }
-    message("At this time, this only does conditional models.")
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
     ## Make a model matrix which will have one entry for
@@ -836,21 +849,6 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         res$PValue <- format(signif(res$PValue, 4), scientific=TRUE)
         res$FDR <- format(signif(res$FDR, 4), scientific=TRUE)
         result_list[[name]] <- res
-    }
-    testdir <- dirname(workbook)
-    if (isTRUE(excel) | isTRUE(csv)) {
-        if (!file.exists(testdir)) {
-            dir.create(testdir)
-            message(paste0("Creating directory: ", testdir, "for writing excel/csv data."))
-        }
-    }
-    if (isTRUE(excel)) {
-        try(write_xls(data=res, sheet=name, file=workbook, overwritefile=TRUE))
-    }
-    if (isTRUE(csv)) {
-        csv_filename <- gsub(".xls$", "", workbook)
-        csv_filename <- paste0(csv_filename, "_", name, ".csv")
-        write.csv(res, file=csv_filename)
     }
 
     final <- list(
@@ -1175,22 +1173,12 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         limma_result <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
     }
     result <- list(
-        input_data=data,
-        conditions_table=condition_table,
-        batches_table=batch_table,
-        conditions=conditions,
-        batches=batches,
-        model=fun_model,
-        fit=fun_fit,
-        voom_result=fun_voom,
-        voom_design=fun_design,
-        identities=identities,
-        all_pairwise=all_pairwise,
-        contrast_string=contrast_string,
-        pairwise_fits=all_pairwise_fits,
-        pairwise_comparisons=all_pairwise_comparisons,
-        single_table=all_tables,
-        all_tables=limma_result)
+        input_data=data, conditions_table=condition_table, batches_table=batch_table,
+        conditions=conditions, batches=batches, model=fun_model, fit=fun_fit,
+        voom_result=fun_voom, voom_design=fun_design, identities=identities,
+        all_pairwise=all_pairwise, contrast_string=contrast_string,
+        pairwise_fits=all_pairwise_fits, pairwise_comparisons=all_pairwise_comparisons,
+        single_table=all_tables, all_tables=limma_result)
     return(result)
 }
 
@@ -1338,7 +1326,8 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 #' @export
 #' @examples
 #' ## pretend = make_pairwise_contrasts(model, conditions)
-make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE, do_pairwise=TRUE, extra_contrasts=NULL) {
+make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
+                                    do_pairwise=TRUE, extra_contrasts=NULL) {
     tmpnames <- colnames(model)
     tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
     tmpnames <- gsub("-", "", tmpnames)

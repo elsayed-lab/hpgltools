@@ -7,7 +7,7 @@
 simple_gostats(de_genes, gff, goids, universe_merge = "ID",
   second_merge_try = "locus_tag", organism = "fun", pcutoff = 0.1,
   direction = "over", conditional = FALSE, categorysize = NULL,
-  gff_type = "CDS")
+  gff_type = "CDS", ...)
 }
 \arguments{
 \item{de_genes}{The set of differentially expressed genes in the limma format as before}

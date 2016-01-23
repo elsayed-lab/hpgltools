@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan 18 14:10:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 21 22:42:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' simple_topgo()  Perform a simplified topgo analysis
 #'
@@ -23,7 +23,8 @@
 simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL,
                          pvals=NULL, limitby="fisher", limit=0.1, signodes=100,
                          sigforall=TRUE, numchar=300, selector="topDiffGenes",
-                         pval_column="adj.P.Val", overwrite=FALSE, densities=FALSE, pval_plots=TRUE) {
+                         pval_column="adj.P.Val", overwrite=FALSE, densities=FALSE,
+                         pval_plots=TRUE, ...) {
 ### Some neat ideas from the topGO documentation:
 ### geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
 ### A variant of these operations make it possible to give topGO scores so that
@@ -36,7 +37,7 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
     require.auto("topGO")
     require.auto("Hmisc")
     gomap_info <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
-    print(paste0("Found an ID->GO mapping file: ", gomap_info))
+    message(paste0("simple_topgo(): Found ID->GO map: ", gomap_info))
     geneID2GO <- topGO::readMappings(file=goid_map)
     annotated_genes <- names(geneID2GO)
     if (is.null(de_genes$ID)) {
@@ -128,7 +129,7 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
         bp_densities <- hpgltools:::plot_topgo_densities(fisher_bp_GOdata, tables$bp)
         cc_densities <- hpgltools:::plot_topgo_densities(fisher_cc_GOdata, tables$cc)
     } else {
-        print("Set densities=TRUE if you want to see the ontology density lattice plots.")
+        message("simple_topgo(): Set densities=TRUE for ontology densitya plots.")
     }
 
     information <- list(
@@ -152,7 +153,7 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
 plot_topgo_densities <- function(godata, table) {
     ret <- list()
     for (id in table$GO.ID) {
-        print(id)
+        message(id)
         print(hpgltools:::hpgl_GroupDensity(godata, id, ranks=TRUE))
         added_plot <- recordPlot()
         ret[[id]] <- added_plot

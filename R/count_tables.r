@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jan 19 15:14:55 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jan 22 19:54:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -78,7 +78,7 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
     }
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
     ## Thus the next line
-    print("This function needs the conditions and batches to be an explicit column in the sample sheet.")
+    message("create_expt(): This needs columns with conditions and batches in the sample sheet.")
     expt_list <- create_experiment(file=file, color_hash, suffix=suffix, header=header,
                                    gene_info=gene_info, by_type=by_type, by_sample=by_sample,
                                    count_dataframe=count_dataframe, meta_dataframe=meta_dataframe,
@@ -153,10 +153,8 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
 create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=FALSE,
                               gene_info=NULL, by_type=FALSE, by_sample=FALSE, include_type="all",
                               include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
-    print("Please note that thus function assumes a specific set of columns in the sample sheet:")
-    print("The most important ones are: Sample.ID, Stage, Type.")
-    print("Other columns it will attempt to create by itself, but if")
-    print("batch and condition are provided, that is a nice help.")
+    message("create_experiment():  This function assumes some columns in the sample sheet:")
+    message("Sample.ID, Stage, Type, condition, batch")
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
@@ -242,15 +240,12 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
 
     annotation <- NULL
     if (!is.null(include_gff)) {
+        message("create_experiment(): Reading annotation gff, this is slow.")
         if (include_type == "all") {
-            print("Reading the annotation information, this may take a while.")
             annotation = BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
-            print("Finished reading annotations, we should be done soon.")
         } else {
-            print(paste("Excluding entries from the annotation which are not: ", include_type, sep=""))
-            print("Reading the annotation information, this may take a while.")
+            message(paste0("create_experiment(): Including only entries of type: ", include_type))
             annotation <- BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
-            print("Finished reading annotations, we should be done soon.")
             keepers <- annotation[annotation$type==include_type,]$gene_id
             index <- row.names(all_count_matrix) %in% keepers
             all_count_matrix <- all_count_matrix[index,]
@@ -421,7 +416,7 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
     if (class(count_table)[1] == 'try-error') {
         stop(paste0("There was an error reading: ", files[1]))
     }
-    print(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
+    message(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
     colnames(count_table) <- c("ID", ids[1])
     ## iterate over and append remaining samples
     for (table in 2:length(files)) {
@@ -440,7 +435,7 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
         pre_merge <- length(rownames(tmp_count))
         count_table <- merge(count_table, tmp_count, by="ID")
         post_merge <- length(rownames(count_table))
-        print(paste0(files[table], " contains ", pre_merge, " rows and merges to ", post_merge, " rows."))
+        message(paste0(files[table], " contains ", pre_merge, " rows and merges to ", post_merge, " rows."))
     }
 
     rm(tmp_count)

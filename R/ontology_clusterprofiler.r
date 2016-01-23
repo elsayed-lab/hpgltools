@@ -1,4 +1,32 @@
-## Time-stamp: <Mon Jan 18 14:00:52 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Jan 23 00:30:03 2016 Ashton Trey Belew (abelew@gmail.com)>
+
+check_clusterprofiler <- function(gff='test.gff') {
+    genetable_test <- try(load("geneTable.rda"))
+    if (class(genetable_test) == 'try-error') {
+        if (!is.null(gff)) {
+            message("simple_clus(): Generating the geneTable.rda")
+            hpgltools:::hpgl_Gff2GeneTable(gff)
+            ##clusterProfiler:::Gff2GeneTable(gff)
+        } else {
+            stop("simple_clus(): requires geneTable.rda, thus a gff file.")
+        }
+    } else {
+        rm(genetable_test)
+    }
+    gomapping_test <- try(load("GO2EG.rda"), silent=TRUE)
+    if (class(gomapping_test) == 'try-error') {
+        message("simple_clus(): Generating GO mapping data.")
+        gomap <- goids
+        gomap <- gomap[,c(1,2)]
+        colnames(gomap) <- c("entrezgene", "go_accession")
+        ## It turns out that the author of clusterprofiler reversed these fields...
+        ## Column 1 must be GO ID, column 2 must be gene accession.
+        gomap <- gomap[,c("go_accession","entrezgene")]
+        clusterProfiler::buildGOmap(gomap)
+    } else {
+        message("Using GO mapping data located in GO2EG.rda")
+    }
+}
 
 #' Perform a simplified clusterProfiler analysis
 #'
@@ -40,42 +68,18 @@
 simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
                                    qcutoff=1.0, fold_changes=NULL, include_cnetplots=TRUE,
                                    showcategory=12, universe=NULL, organism="lm", gff=NULL,
-                                   wrapped_width=20, method="Walllenius", padjust="BH") {
-    genetable_test <- try(load("geneTable.rda"))
-    if (class(genetable_test) == 'try-error') {
-        if (!is.null(gff)) {
-            message("Generating the geneTable.rda")
-            hpgltools:::hpgl_Gff2GeneTable(gff)
-            ##clusterProfiler:::Gff2GeneTable(gff)
-        } else {
-            stop("cluster Profiler requires a geneTable.rda, which requires a gff file to read.")
-        }
-    } else {
-        rm(genetable_test)
-    }
+                                   wrapped_width=20, method="Walllenius", padjust="BH", ...) {
 
+    check_clusterprofiler(gff)
     if (is.null(de_genes$ID)) {
         gene_list <- as.character(rownames(de_genes))
     } else {
         gene_list <- as.character(de_genes$ID)
     }
-    gomapping_test <- try(load("GO2EG.rda"), silent=TRUE)
-    if (class(gomapping_test) == 'try-error') {
-        message("Generating GO mapping data for cluster profiler from the goids data.")
-        gomap <- goids
-        gomap <- gomap[,c(1,2)]
-        colnames(gomap) <- c("entrezgene", "go_accession")
-        ## It turns out that the author of clusterprofiler reversed these fields...
-        ## Column 1 must be GO ID, column 2 must be gene accession.
-        gomap <- gomap[,c("go_accession","entrezgene")]
-        clusterProfiler::buildGOmap(gomap)
-    } else {
-        message("Using GO mapping data located in GO2EG.rda")
-    }
 ##    message("Testing gseGO")
 ##    ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
 ##    print(ego2)
-    message("Starting MF(molecular function) analysis")
+    message("simple_clus(): Starting MF(molecular function) analysis")
     mf_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
     mf_all <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF",
                                        pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
@@ -87,7 +91,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     enriched_mf <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF",
                                             pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
 
-    message("Starting BP(biological process) analysis")
+    message("simple_clus(): Starting BP(biological process) analysis")
     bp_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
     bp_all <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0,
                                        qvalueCutoff=1.0, pAdjustMethod="none")
@@ -100,7 +104,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     enriched_bp <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP",
                                             pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
 
-    message("Starting CC(cellular component) analysis")
+    message("simple_clus(): Starting CC(cellular component) analysis")
     cc_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="CC", level=golevel, readable=TRUE)
     cc_all <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0,
                                        qvalueCutoff=1.0, pAdjustMethod="none")
@@ -131,7 +135,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     all_mf_barplot <- try(barplot(mf_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     enriched_mf_barplot <- try(barplot(enriched_mf, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_mf_barplot)[1] == 'try-error') {
-        message("No enriched MF groups were observed.")
+        message("simple_clus(): No enriched MF groups were observed.")
     } else {
         enriched_mf_barplot$data$Description <- as.character(lapply(strwrap(enriched_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
@@ -141,7 +145,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     all_bp_barplot <- try(barplot(bp_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     enriched_bp_barplot <- try(barplot(enriched_bp, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_bp_barplot)[1] == 'try-error') {
-        message("No enriched BP groups observed.")
+        message("simple_clus(): No enriched BP groups observed.")
     } else {
         enriched_bp_barplot$data$Description <- as.character(lapply(strwrap(enriched_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
@@ -152,7 +156,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     all_cc_barplot <- try(barplot(cc_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     enriched_cc_barplot <- try(barplot(enriched_cc, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     if (class(enriched_cc_barplot)[1] == 'try-error') {
-        message("No enriched CC groups observed.")
+        message("simple_clus(): No enriched CC groups observed.")
     } else {
         enriched_cc_barplot$data$Description <- as.character(lapply(strwrap(enriched_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
@@ -160,29 +164,29 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         all_cc_barplot$data$Description <- as.character(lapply(strwrap(all_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
     }
 
+    cnetplot_mf <- cnetplot_bp <- cnetplot_cc <- NULL
+    cnetplot_mfall <- cnetplot_bpall <- cnetplot_ccall <- NULL
     if (include_cnetplots == TRUE) {
-        message("Attempting to include the cnetplots from clusterProfiler.")
-        message("They fail often, if this is causing errors, set:")
-        message("include_cnetplots to FALSE")
+        message("simple_clus(): Attempting to include the cnetplots.")
+        message("simple_clus(): If they fail, set include_cnetplots to FALSE")
         cnetplot_mf <- try(clusterProfiler::cnetplot(enriched_mf, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_mf)[1] != 'try-error') {
             cnetplot_mf <- recordPlot()
         } else {
-            message("cnetplot just failed for the MF ontology.  Do not be concerned with the previous error.")
+            message("simple_clus(): cnetplot failed for MF, no worries.")
         }
         cnetplot_bp <- try(clusterProfiler::cnetplot(enriched_bp, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_bp)[1] != 'try-error') {
             cnetplot_bp <- recordPlot()
         } else {
-            message("cnetplot just failed for the BP ontology.  Do not be concerned with the previous error.")
+            message("simple_clus(): cnetplot failed for BP, no worries.")
         }
         cnetplot_cc <- try(clusterProfiler::cnetplot(enriched_cc, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_cc)[1] != 'try-error') {
             cnetplot_cc <- recordPlot()
         } else {
-            message("cnetplot just failed for the CC ontology.  Do not be concerned with the previous error.")
+            message("simple_clus(): cnetplot failed for CC, no worries.")
         }
-        cnetplot_mfall <- cnetplot_bpall <- cnetplot_ccall <- NULL
         cnetplot_mfall <- try(clusterProfiler::cnetplot(mf_all, categorySize="pvalue", foldChange=fold_changes))
         if (class(cnetplot_mfall)[1] != 'try-error') {
             cnetplot_mfall <- recordPlot()
@@ -246,7 +250,6 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     return(return_information)
 }
 
-
 ## Take clusterprofile group data and print it on a tree as topGO does
 #' Make fun trees a la topgo from goseq data.
 #'
@@ -269,7 +272,7 @@ cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", g
     interesting_genes <- factor(annotated_genes %in% de_genes$ID)
     names(interesting_genes) <- annotated_genes
 
-    print(paste0("Checking the de_table for a p-value column:", pval_column))
+    message(paste0("Checking the de_table for a p-value column:", pval_column))
     if (is.null(de_genes[[pval_column]])) {
         mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
@@ -432,7 +435,7 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
                        pvalue=pvalues)
     original_over = Over
     p.adj <- p.adjust(Over$pvalue, method=pAdjustMethod)
-    cat(sprintf("The minimum observed adjusted pvalue is: %f\n", min(p.adj)))
+    cat(sprintf("The minimum observed pvalue is: %f\n", min(pvalues)))
     qobj = try(qvalue(p=Over$pvalue, lambda=0.05, pi0.method="bootstrap"), silent=TRUE)
     if (class(qobj) == "qvalue") {
         qvalues <- qobj$qvalues
@@ -525,7 +528,7 @@ hpgl_Gff2GeneTable <- function(gffFile, compress=TRUE, split="=") {
         second_sum <- first_sum
         if (first_sum > (length(geneInfo$attributes) / 2)) { ## Using this to approximate whether locus_tag has a useful meaning.
             ## If more than 1/2 of the attributes have no locus tag, try using gene_id instead -- which is what yeast uses (btw).
-            print("Trying to use gene_id insteady of locus_tag, because locus_tag is poorly defined.")
+            message("Trying to use gene_id insteady of locus_tag, because locus_tag is poorly defined.")
             second_locus <- hpgl_getGffAttribution(geneInfo$attributes, field="gene_id", split=split)
             second_sum <- sum(is.na(second_locus))
         }

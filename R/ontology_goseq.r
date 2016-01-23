@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Jan 18 13:56:54 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Jan 23 15:16:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -34,22 +34,25 @@ goseq_table <- function(df, file=NULL) {
     ## df = subset(df, !is.null(term))
     ## Something about this is a disaster FIXME
     ## df = df[ which(!is.null(df$term)), ]
-    print("Testing that go categories are defined.")
+    message("Testing that go categories are defined.")
     df$good <- gotest(df$category)
-    print("Removing undefined categories.")
+    message("Removing undefined categories.")
     ## df = subset(df, good == 1)
     df <- df[ which(df$good == 1), ]
-    print("Gathering synonyms.")
+    message("Gathering synonyms.")
     df$synonym <- gosyn(df$category)
-    print("Gathering secondary ids.")
-    df$secondary <- gosec(df$category)
+    ##message("Gathering secondary ids.")
+    ##secondary <- try(gosec(df$category), silent=TRUE)
+    ##if (class(secondary) != 'try-error') {
+    ##    df$secondary <- secondary
+    ##}
 ##    print("Gather approximate go levels.")  ## This function is too slow, commented it out.
 ##    df$level = golevel(df$categoy)
-    print("Gathering category definitions.")
+    message("Gathering category definitions.")
     df$definition <- godef(df$category)
     df <- df[,c("category","numDEInCat","numInCat","over_represented_pvalue",
                 "under_represented_pvalue","qvalue","ontology","term",
-                "synonym","secondary","definition")]
+                "synonym","definition")]
     if (!is.null(file)) {
         write.csv(df, file=file)
     }
@@ -83,17 +86,17 @@ goseq_table <- function(df, file=NULL) {
 #'   and ccp_plot
 #' @seealso \code{\link{goseq}} \code{\link{clusterProfiler}}
 #' @export
-simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL,
+simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius",
-                         padjust_method="BH", species=NULL, length_db="ensGene", gff=NULL) {
+                         padjust_method="BH", species=NULL, length_db="ensGene", gff=NULL, ...) {
     message("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
     message("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
     message("The other table is of gene lengths with columns (gene)ID and (gene)width.")
     message("Other columns are fine, but ignored.")
     if (is.null(lengths) & is.null(gff)) {
-        stop("Need wither a length dataframe or gff file to extract gene lengths.")
+        stop("simple_goseq(): Need a length dataframe or gff file for gene lengths.")
     } else if (!is.null(lengths)) {
-        message("Using the explicit lengths df for gene lengths.")
+        message("simple_goseq(): Using the explicit lengths df for gene lengths.")
     } else {
         ## This is probably hopelessly fragile and requires further thought
         length_df <- gff2df(gff)
@@ -110,16 +113,16 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL,
     de_vector <- NULL
     de_table <- de_genes[,c("ID","DE")]
     if (is.null(lengths) & is.null(all_genes) & is.null(species)) {
-        stop("Need either a set of all genes or gene lengths")
+        stop("simple_goseq(): Need either a set of all genes or gene lengths")
     } else if (!is.null(lengths)) {
-        message("Using the length data to fill in the de vector.")
+        message("simple_goseq(): Using the length data to fill in the de vector.")
         de_table <- merge(de_table, lengths, by.x="ID", by.y="ID", all.y=TRUE)
         de_table[is.na(de_table)] <- 0  ## Set the new entries DE status to 0
         rownames(de_table) <- make.names(de_table$ID, unique=TRUE)
         de_vector <- as.vector(de_table$DE)
         names(de_vector) <- rownames(de_table)
     } else if (!is.null(species)) {
-        print("Going to use species and length_db to get required metadata.")
+        message("simple_goseq(): Using species and length_db to get metadata.")
         gene_names <- as.data.frame(get(paste(species, length_db, "LENGTH", sep = "."))$Gene)
         colnames(gene_names) <- c("ID")
         de_table <- merge(de_table, gene_names, by.x="ID", by.y="ID", all.y=TRUE)
@@ -128,7 +131,7 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL,
         de_vector <- as.vector(de_table$DE)
         names(de_vector) <- rownames(de_table)
     } else { ## If both lengths and all_genes are defined, use all_genes.
-        message("Using the set of all genes to fill in the de vector.")
+        message("simple_goseq(): Using all genes to fill in the de vector.")
         de_table <- merge(de_table, all_genes, by.x="ID", by.y="row.names", all.y=TRUE)
         de_table[is.na(de_table)] <- 0  ## Set the new entries DE status to 0
         rownames(de_table) <- make.names(de_table$ID, unique=TRUE)
@@ -141,14 +144,17 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL,
         width_vector <- as.vector(de_table$width)
         names(width_vector) <- de_table$ID
         if (is.null(goids)) {
-            stop("The goids are not defined.")
+            stop("simple_goseq(): The goids are not defined.")
         }
         colnames(goids) <- c("ID", "GO")
-        pwf <- goseq::nullp(DEgenes=de_vector, bias.data=width_vector, plot.fit=TRUE)
+        pwf <- goseq::nullp(DEgenes=de_vector, bias.data=width_vector, plot.fit=doplot)
     } else {
-        pwf <- goseq::nullp(de_vector, species, length_db, plot.fit=TRUE) ## Taken from the goseq() reference manual
+        pwf <- goseq::nullp(de_vector, species, length_db, plot.fit=doplot) ## Taken from the goseq() reference manual
     }
-    pwf_plot <- recordPlot()
+    pwf_plot <- NULL
+    if (isTRUE(doplot)) {
+        pwf_plot <- recordPlot()
+    }
 ##    godata = goseq(pwf, gene2cat=goids, method='Wallenius')
     godata <- NULL
     if (is.null(species)) {
@@ -162,7 +168,7 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL,
     ## (assuming always that the highest is a p-value of 1)
     goseq_y_limit <- goseq_p_second * 2
     goseq_p <- goseq_p + scale_y_continuous(limits=c(0, goseq_y_limit))
-    message("Calculating q-values")
+    message("simple_goseq(): Calculating q-values")
     qdata <- godata$over_represented_pvalue
     qdata[qdata > 1] <- 1 ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.0000000000000001
     qdata <- qvalue::qvalue(qdata)
@@ -177,15 +183,15 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL,
     } else {  ## There is a requested pvalue adjustment
         godata_interesting <- subset(godata, p.adjust(godata$over_represented_pvalue, method=padjust_method) <= adjust)
         if (dim(godata_interesting)[1] == 0) {
-            message(paste("There are no genes with an adjusted pvalue < ", adjust, " using method: ", padjust_method, ".", sep=""))
-            message(sprintf("Providing genes with an un-adjusted pvalue < %s", pvalue))
+            message(paste("simple_goseq(): There are no genes with an adj.p<", adjust, " using: ", padjust_method, ".", sep=""))
+            message(sprintf("simple_goseq(): Providing genes with raw pvalue<%s", pvalue))
             godata_interesting <- subset(godata, godata$over_represented_pvalue <= pvalue)
             padjust_method <- "none"
         }
     }
-    message("Filling godata table with term information, this takes a while.")
+    message("simple_goseq(): Filling godata with terms, this is slow.")
     godata_interesting <- goseq_table(godata_interesting)
-    message("Making pvalue plots for the ontologies.")
+    message("simple_goseq(): Making pvalue plots for the ontologies.")
     pvalue_plots <- goseq_pval_plots(godata)
     mf_subset <- subset(godata, ontology == "MF")
     bp_subset <- subset(godata, ontology == "BP")
@@ -224,11 +230,11 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
     ## The following supports stuff like level='level > 3 & level < 6'
         if (!is.null(level)) {
         keepers <- data.frame()
-        print("Getting all go levels.  This takes a moment.")
+        message("Getting all go levels.  This takes a moment.")
         mf_go <- golevel_df(ont="MF")
         bp_go <- golevel_df(ont="BP")
         cc_go <- golevel_df(ont="CC")
-        print("Finished getting go levels.")
+        message("Finished getting go levels.")
         if (class(level) == 'numeric') {
             stmt <- paste0("subset(mf_go, level == ", level, ")")
             mf_go <- eval(parse(text=stmt))
@@ -247,7 +253,7 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
         keepers <- rbind(keepers, mf_go)
         keepers <- rbind(keepers, bp_go)
         keepers <- rbind(keepers, cc_go)
-        print("Extracting the goterms in your chosen level.")
+        message("Extracting the goterms in your chosen level.")
         goterms <- merge(goterms, keepers, by.x="category", by.y="GO")
     }
     ## TODO: Replace the subset calls with the less noxious which calls.
@@ -260,6 +266,7 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
     plotting_mf <- plotting_mf[order(plotting_mf$over_represented_pvalue),]
     plotting_mf <- head(plotting_mf, n=n)
     plotting_mf <- plotting_mf[,c("term","over_represented_pvalue","score")]
+    plotting_mf$term <- as.character(lapply(strwrap(plotting_mf$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     colnames(plotting_mf) <- c("term","pvalue","score")
     mf_pval_plot <- pval_plot(plotting_mf, ontology="MF")
 
@@ -273,6 +280,7 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
     plotting_bp <- head(plotting_bp, n=n)
     plotting_bp <- plotting_bp[,c("term","over_represented_pvalue","score")]
     colnames(plotting_bp) <- c("term","pvalue","score")
+    plotting_bp$term <- as.character(lapply(strwrap(plotting_bp$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     bp_pval_plot <- pval_plot(plotting_bp, ontology="BP")
 
     plotting_cc <- subset(goterms, complete.cases(goterms))
@@ -285,6 +293,7 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
     plotting_cc <- head(plotting_cc, n=n)
     plotting_cc <- plotting_cc[,c("term","over_represented_pvalue","score")]
     colnames(plotting_cc) <- c("term","pvalue","score")
+    plotting_cc$term <- as.character(lapply(strwrap(plotting_cc$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     cc_pval_plot <- pval_plot(plotting_cc, ontology="CC")
 
     pval_plots <- list(mfp_plot=mf_pval_plot, bpp_plot=bp_pval_plot, ccp_plot=cc_pval_plot,

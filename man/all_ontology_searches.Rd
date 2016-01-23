@@ -6,10 +6,9 @@
 \usage{
 all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
   z = NULL, fc = NULL, p = NULL, overwrite = FALSE,
-  goid_map = "reference/go/id2go.map", gff_file = NULL, goids_df = NULL,
-  do_goseq = TRUE, do_cluster = TRUE, do_topgo = TRUE,
-  do_gostats = TRUE, do_trees = FALSE, workbook = "excel/ontology.xls",
-  csv = FALSE, excel = FALSE)
+  goid_map = "reference/go/id2go.map", gff_file = NULL, gff_type = "gene",
+  goids_df = NULL, do_goseq = TRUE, do_cluster = TRUE, do_topgo = TRUE,
+  do_gostats = TRUE, do_trees = FALSE)
 }
 \arguments{
 \item{de_out}{a list of topTables comprising limma/deseq/edger outputs.}

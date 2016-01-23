@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 21 14:45:55 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Jan 21 22:43:16 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -15,21 +15,21 @@
 #' @export
 simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_merge_try="locus_tag",
                            organism="fun", pcutoff=0.10, direction="over", conditional=FALSE,
-                           categorysize=NULL, gff_type="CDS") {
+                           categorysize=NULL, gff_type="CDS", ...) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should)
     ## contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
-    annotation <- hpgltools:::gff2df(gff, gff_type=gff_type)
+    annotation <- hpgltools:::gff2df(gff, type=gff_type)
     ## This is similar to logic in ontology_goseq and is similarly problematic.
     ## Some gff files I use have all the annotation data in the type called 'gene', others use 'CDS', others use 'exon'
     ## I need a robust method of finding the correct feature type to call upon.
-    message(paste0("Currently, gff_type is set to ", gff_type, " if this fails with bad merges, perhaps change that."))
+    message(paste0("simple_gostats(): gff_type is: ", gff_type, ". Change that if there are bad merges."))
     types <- c("CDS","gene","exon")
     for (type in types) {
-        print(paste0("Type ", type, " has ", sum(annotation$type == type), " annotations in the gff file."))
+        message(paste0("simple_gostats(): type ", type, " has ", sum(annotation$type == type), " annotations."))
     }
 
     annotation <- annotation[annotation$type == gff_type, ]
-    print(paste0("The current set of annotations has dimensions of: ", nrow(annotation), " rows and ", ncol(annotation), " columns."))
+    message(paste0("simple_gostats(): the current annotations has: ", nrow(annotation), " rows and ", ncol(annotation), " columns."))
     annotation[, universe_merge] <- make.names(annotation[, universe_merge], unique=TRUE)
     if (universe_merge %in% names(annotation)) {
         universe <- annotation[,c(universe_merge, "width")]
@@ -38,7 +38,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     } else if ("transcript_name" %in% names(annotation)) {
         universe <- annotation[,c("transcript_name", "width")]
     } else {
-        stop("Unable to cross reference the annotations into a universe for background checks.")
+        stop("simple_gostats(): Unable to cross reference annotations into universe.")
     }
     ## This section is a little odd
     ## The goal is to collect a consistent set of numeric gene IDs
@@ -61,7 +61,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     colnames(goids) <- c("ID","GO")
     gostats_go <- merge(universe, goids, by.x="geneid", by.y="ID")
     if (nrow(gostats_go) == 0) {
-        stop("The merging of the universe vs. goids failed.")
+        stop("simple_gostats(): The merging of the universe vs. goids failed.")
     }
     gostats_go$frame.Evidence <- "TAS"
     colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "frame.Evidence")
@@ -69,53 +69,53 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     gostats_frame <- GOFrame(gostats_go, organism=organism)
     gostats_all <- GOAllFrame(gostats_frame)
     require.auto("GSEABase", verbose=FALSE)
-    message("Creating the gene set collection.")
+    message("simple_gostats(): Creating the gene set collection.")
     gsc <- GeneSetCollection(gostats_all, setType=GOCollection())
 
     mf_over <- bp_over <- cc_over <- NULL
     mf_under <- bp_under <- cc_under <- NULL
-    message("Performing gene set enrichment of molecular function over representation.")
+    message("simple_gostats(): Performing MF GSEA.")
     mf_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
                                     geneIds=degenes_ids, universeGeneIds=universe_ids,
                                     ontology="MF", pvalueCutoff=pcutoff,
                                     conditional=conditional, testDirection="over")
     mf_over <- hyperGTest(mf_params)
-    message(paste0("Found ", nrow(GOstats::summary(mf_over)), " over represented molecular function categories."))
-    message("Performing gene set enrichment of biological process over representation.")
+    message(paste0("Found ", nrow(GOstats::summary(mf_over)), " over MF categories."))
+    message("simple_gostats(): Performing BP GSEA.")
     bp_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
                                     geneIds=degenes_ids, universeGeneIds=universe_ids,
                                     ontology="BP", pvalueCutoff=pcutoff,
                                     conditional=FALSE, testDirection="over")
     bp_over <- hyperGTest(bp_params)
-    message(paste0("Found ", nrow(GOstats::summary(bp_over)), " over represented biological process categories."))
-    message("Performing gene set enrichment of cellular component over representation.")
+    message(paste0("Found ", nrow(GOstats::summary(bp_over)), " over BP categories."))
+    message("simple_gostats(): Performing CC GSEA.")
     cc_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
                                     geneIds=degenes_ids, universeGeneIds=universe_ids,
                                     ontology="CC", pvalueCutoff=pcutoff,
                                     conditional=FALSE, testDirection="over")
     cc_over <- hyperGTest(cc_params)
-    message(paste0("Found ", nrow(GOstats::summary(cc_over)), " over represented cellular component categories."))
-    message("Performing gene set enrichment of molecular function under representation.")
+    message(paste0("Found ", nrow(GOstats::summary(cc_over)), " over CC categories."))
+    message("simple_gostats(): Performing under MF GSEA.")
     mf_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
                                     geneIds=degenes_ids, universeGeneIds=universe_ids,
                                     ontology="MF", pvalueCutoff=pcutoff,
                                     conditional=conditional, testDirection="under")
     mf_under <- hyperGTest(mf_params)
-    message(paste0("Found ", nrow(GOstats::summary(mf_under)), " under represented molecular function categories."))
-    message("Performing gene set enrichment of biological process under representation.")
+    message(paste0("Found ", nrow(GOstats::summary(mf_under)), " under MF categories."))
+    message("simple_gostats(): Performing under BP GSEA.")
     bp_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
                                     geneIds=degenes_ids, universeGeneIds=universe_ids,
                                     ontology="BP", pvalueCutoff=pcutoff,
                                     conditional=FALSE, testDirection="under")
     bp_under <- hyperGTest(bp_params)
-    message(paste0("Found ", nrow(GOstats::summary(bp_under)), " under represented biological process categories."))
-    message("Performing gene set enrichment of cellular component under representation.")
+    message(paste0("Found ", nrow(GOstats::summary(bp_under)), " under BP categories."))
+    message("simple_gostats(): Performing under CC GSEA.")
     cc_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
                                     geneIds=degenes_ids, universeGeneIds=universe_ids,
                                     ontology="CC", pvalueCutoff=pcutoff,
                                     conditional=FALSE, testDirection="under")
     cc_under <- hyperGTest(cc_params)
-    message(paste0("Found ", nrow(GOstats::summary(cc_under)), " under represented cellular component categories."))
+    message(paste0("Found ", nrow(GOstats::summary(cc_under)), " under CC categories."))
     mf_over_table <- bp_over_table <- cc_over_table <- NULL
     mf_under_table <- bp_under_table <- cc_under_table <- NULL
     mf_over_table <- GOstats::summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
@@ -212,7 +212,6 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
 
     pvalue_plots <- try(hpgltools:::gostats_pval_plots(ret_list))
     ret_list$pvalue_plots <- pvalue_plots
-
     return(ret_list)
 }
 

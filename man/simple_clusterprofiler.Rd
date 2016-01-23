@@ -7,7 +7,7 @@
 simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
   qcutoff = 1, fold_changes = NULL, include_cnetplots = TRUE,
   showcategory = 12, universe = NULL, organism = "lm", gff = NULL,
-  wrapped_width = 20, method = "Walllenius", padjust = "BH")
+  wrapped_width = 20, method = "Walllenius", padjust = "BH", ...)
 }
 \arguments{
 \item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}
