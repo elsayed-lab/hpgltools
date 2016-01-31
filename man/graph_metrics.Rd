@@ -5,7 +5,7 @@
 \title{graph_metrics()  Make lots of graphs!}
 \usage{
 graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
-  title_suffix = NULL, scale = "raw", sink = FALSE, ...)
+  title_suffix = NULL, qq = NULL, ma = NULL, ...)
 }
 \arguments{
 \item{expt}{an expt to process}
@@ -16,11 +16,11 @@ graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
 
 \item{title_suffix}{default=NULL  text to add to the titles of the plots.}
 
+\item{...}{extra parameters optionally fed to the various plots}
+
 \item{scale}{default='raw'  scale for the axes, sometimes useful to set as log2.}
 
 \item{sink}{default=FALSE  add in the kitchen sink?  This includes all pairwise ma plots and qq plots and takes potentially forever.}
-
-\item{...}{extra parameters optionally fed to the various plots}
 }
 \value{
 a loooong list of plots including the following:

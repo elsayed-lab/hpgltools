@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 14:28:52 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jan 29 12:35:31 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## The karyotype file is circos/data/5005_5448_karyotype.txt
 ## The 5005 genome is 1838562 nt. long (looking at reference/genbank/mgas_5005.gb)
@@ -26,6 +26,7 @@
 #' @param color default='white'  how to colors the chromosomal arc. (circos images are cluttered enough)
 #' @param chr_num default=1  the number to record (This and name above should change for multi-chromosomal species)
 #'
+#' @export
 #' @return undef
 circos_karyotype <- function(name='default', conf_dir='circos/conf', length=NULL,
                             chr_name='chr1', segments=6, color='white',
@@ -68,6 +69,7 @@ circos_karyotype <- function(name='default', conf_dir='circos/conf', length=NULL
 #' @param conf_dir default='circos/conf'  where does the configuration live?
 #' @param band_url default=NULL  provide a url for making these imagemaps.
 #'
+#' @export
 #' @return undef
 circos_ideogram <- function(name='default', conf_dir='circos/conf', band_url=NULL) {
     ideogram_outfile <- paste0(conf_dir, '/ideograms/', name, ".conf")
@@ -142,6 +144,7 @@ circos_ideogram <- function(name='default', conf_dir='circos/conf', band_url=NUL
 #' @param spacing default=0.0  the radial distance between outer,inner
 #'     and inner,whatever follows.
 #'
+#' @export
 #' @return the radius after adding the plus/minus information and the spacing between them.
 circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr='chr1',
                              outer=1.0, width=0.08, spacing=0.0) {
@@ -158,8 +161,8 @@ circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr='
     go_plus <- go_plus[,c("chr","start","end","go")]
     ##go_minus = go_minus[,c(5,1,2,4)]
     go_minus <- go_minus[,c("chr","start","end","go")]
-    go_plus$COGFun <- paste0("value=", go_plus$COGFun, "0")
-    go_minus$COGFun <- paste0("value=", go_minus$COGFun, "0")
+    go_plus$go <- paste0("value=", go_plus$go, "0")
+    go_minus$go <- paste0("value=", go_minus$go, "0")
     data_prefix <- cfgout
     data_prefix <- gsub("/conf/", "/data/", data_prefix)
     data_prefix <- gsub(".conf$", "", data_prefix)
@@ -535,6 +538,7 @@ circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr='
 #' @param spacing default=0.0  the radial distance between outer,inner
 #'     and inner,whatever follows.
 #'
+#' @export
 #' @return the radius after adding the histogram and the spacing.
 circos_tile <- function(df, cfgout="circos/conf/default.conf", colname="datum",
                        chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
@@ -651,6 +655,7 @@ circos_tile <- function(df, cfgout="circos/conf/default.conf", colname="datum",
 #' @param spacing default=0.0  the radial distance between outer,inner
 #'     and inner,whatever follows.
 #'
+#' @export
 #' @return the radius after adding the histogram and the spacing.
 circos_heatmap <- function(df, cfgout="circos/conf/default.conf", colname="datum",
                           chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
@@ -751,6 +756,7 @@ circos_heatmap <- function(df, cfgout="circos/conf/default.conf", colname="datum
 #' @param spacing default=0.0  the radial distance between outer,inner
 #'     and inner,whatever follows.
 #'
+#' @export
 #' @return the radius after adding the histogram and the spacing.
 circos_hist <- function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1',
                        color="blue", fill_color="blue", outer=0.9, width=0.08, spacing=0.0) {
@@ -828,6 +834,7 @@ circos_hist <- function(df, cfgout="circos/conf/default.conf", colname="datum", 
 #' @param circos default='/usr/bin/circos'  the location of circos. (I
 #'     have a copy in home/bin/circos and use that sometimes.
 #'
+#' @export
 #' @return a kitten
 circos_make <- function(target="", output="circos/Makefile", circos="/usr/bin/circos") {
     circos_dir <- dirname(output)
@@ -852,7 +859,12 @@ CIRCOS=\"%s\"
     cat(makefile_string, file=out, sep="")
     close(out)
 
-    system(paste0("cd circos && make ", target))
+    make_target <- gsub(pattern="circos/conf/", replacement="", x=target)
+    make_target_svg <- gsub(pattern="\\.conf", replacement="\\.svg", x=make_target)
+    make_target_png <- gsub(pattern="\\.conf", replacement="\\.png", x=make_target)
+    make_command <- paste0("cd circos && make ", make_target_svg, " && make ", make_target_png)
+    message(paste0("Running: ", make_command))
+    system(make_command)
 }
 
 #' circos_arc()  Write arcs between chromosomes in circos.
@@ -880,6 +892,7 @@ CIRCOS=\"%s\"
 #' @param radius default=0.75  the radius at which to add the arcs
 #' @param thickness default=3  integer thickness of the arcs
 #'
+#' @export
 #' @return undef
 circos_arc <- function(df, cfgout="circos/conf/default.conf", first_col='chr1', second_col='chr2',
                       color="blue", radius=0.75, thickness=3) {
@@ -960,6 +973,7 @@ circos_arc <- function(df, cfgout="circos/conf/default.conf", first_col='chr1', 
 #' @param circos_dir default='circos/conf'  The directory containing the circos configuration data.
 #' @param radius default=1800  The size of the image.
 #'
+#' @export
 #' @return undef
 circos_prefix <- function(name="default", conf_dir="circos/conf", radius=1800, band_url=NULL) {
     message("This assumes you have a colors.conf in circos/colors/ and fonts.conf in circos/fonts/")
@@ -1049,6 +1063,8 @@ chromosomes_display_default = yes
 #'
 #' @param cfgout default='circos/conf/default.conf'  The master
 #'     configuration file to write.
+#'
+#' @export
 #' @return undef
 circos_suffix <- function(cfgout="circos/conf/default.conf") {
     out <- file(cfgout, open='a+')

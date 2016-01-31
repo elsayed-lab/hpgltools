@@ -5,7 +5,7 @@
 \title{hpgl_boxplot()  Make a ggplot boxplot of a set of samples.}
 \usage{
 hpgl_boxplot(data, colors = NULL, names = NULL, title = NULL,
-  scale = "raw", ...)
+  scale = NULL, ...)
 }
 \arguments{
 \item{data}{an expt or data frame set of samples.}

@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Jan 23 15:16:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Jan 31 10:18:17 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -167,7 +167,7 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     ## Set the y scale to 2x the second highest number
     ## (assuming always that the highest is a p-value of 1)
     goseq_y_limit <- goseq_p_second * 2
-    goseq_p <- goseq_p + scale_y_continuous(limits=c(0, goseq_y_limit))
+    goseq_p <- goseq_p + ggplot2::scale_y_continuous(limits=c(0, goseq_y_limit))
     message("simple_goseq(): Calculating q-values")
     qdata <- godata$over_represented_pvalue
     qdata[qdata > 1] <- 1 ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.0000000000000001

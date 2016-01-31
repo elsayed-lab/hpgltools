@@ -6,7 +6,7 @@
 \usage{
 all_pairwise(input, conditions = NULL, batches = NULL, model_cond = TRUE,
   model_batch = TRUE, model_intercept = FALSE, extra_contrasts = NULL,
-  alt_model = NULL, libsize = NULL)
+  alt_model = NULL, libsize = NULL, annot_df = NULL, ...)
 }
 \arguments{
 \item{input}{a dataframe/vector or expt class containing count tables, normalization state, etc.}

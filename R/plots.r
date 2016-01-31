@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 14 16:39:30 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Jan 30 11:58:33 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -48,14 +48,13 @@
 #' ## toomany_plots = graph_metrics(expt)
 #' ## testnorm = graph_metrics(expt, norm_type="tmm", filter="log2", out_type="rpkm", cormethod="robust")
 #' ## haha sucker, you are going to be waiting a while!
-graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL, scale="raw", sink=FALSE, ...) {
+graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL, qq=NULL, ma=NULL, ...) {
     ## First gather the necessary data for the various plots.
     options(scipen=999)
     ## expt_design = expt$design
     ## expt_colors = expt$colors
     ## expt_names = expt$names
     ## expt_raw_data = Biobase::exprs(expt$expressionset)
-
     nonzero_title <- "Non zero genes"
     libsize_title <- "Library sizes"
     boxplot_title <- "Boxplot"
@@ -65,7 +64,6 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     smd_title <- "Standard Median Distance"
     pca_title <- "Principle Component Analysis"
     dens_title <- "Density plot"
-
     if (!is.null(title_suffix)) {
         nonzero_title <- paste0(nonzero_title, ": ", title_suffix)
         libsize_title <- paste0(libsize_title, ": ", title_suffix)
@@ -77,39 +75,43 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
         pca_title <- paste0(pca_title, ": ", title_suffix)
         dens_title <- paste0(dens_title, ": ", title_suffix)
     }
-
     message("Graphing number of non-zero genes with respect to CPM by library.")
-    nonzero_plot <- try(hpgltools::hpgl_nonzero(expt, title=nonzero_title, ...))
+    nonzero_plot <- try(hpgl_nonzero(expt, title=nonzero_title, ...))
     message("Graphing library sizes.")
-    libsize_plot <- try(hpgltools::hpgl_libsize(expt, title=libsize_title, ...))
-    message("Graphing a boxplot on log scale.")
-    boxplot <- try(hpgltools::hpgl_boxplot(expt, title=boxplot_title, scale=scale, ...))
+    libsize_plot <- try(hpgl_libsize(expt, title=libsize_title, ...))
+    message("Graphing a boxplot.")
+    boxplot <- try(hpgl_boxplot(expt, title=boxplot_title, ...))
     message("Graphing a correlation heatmap.")
-    corheat <- try(hpgltools::hpgl_corheat(expt, method=cormethod, title=corheat_title, ...))
+    corheat <- try(hpgl_corheat(expt, method=cormethod, title=corheat_title, ...))
     message("Graphing a standard median correlation.")
-    smc <- try(hpgltools::hpgl_smc(expt, method=cormethod, title=smc_title, ...))
+    smc <- try(hpgl_smc(expt, method=cormethod, title=smc_title, ...))
     message("Graphing a distance heatmap.")
-    disheat <- try(hpgltools::hpgl_disheat(expt, method=distmethod, title=disheat_title, ...))
+    disheat <- try(hpgl_disheat(expt, method=distmethod, title=disheat_title, ...))
     message("Graphing a standard median distance.")
-    smd <- try(hpgltools::hpgl_smd(expt, method=distmethod, title=smd_title, ...))
+    smd <- try(hpgl_smd(expt, method=distmethod, title=smd_title, ...))
     message("Graphing a PCA plot.")
-    pca <- try(hpgltools::hpgl_pca(expt, title=pca_title, ...))
+    pca <- try(hpgl_pca(expt, title=pca_title, ...))
     message("Plotting a density plot.")
-    density <- try(hpgltools::hpgl_density(expt, title=dens_title))
+    density <- try(hpgl_density(expt, title=dens_title))
 
-    qq <- NULL
-    ma <- NULL
-    if (isTRUE(sink)) {
+    qq_logs <- NULL
+    qq_ratios <- NULL
+    if (isTRUE(qq)) {
         message("QQ plotting!.")
-        qq <- try(suppressWarnings(hpgltools::hpgl_qq_all(data.frame(exprs(expt$expressionset)))))
+        qq_plots <- try(suppressWarnings(hpgl_qq_all(expt)))
+        qq_logs <- qq_plots$logs
+        qq_ratios <- qq_plots$ratios
+    }
+
+    if (isTRUE(ma)) {
         message("Many MA plots!")
-        ma <- try(suppressWarnings(hpgltools::hpgl_pairwise_ma(expt)))
+        ma_plots <- try(suppressWarnings(hpgl_pairwise_ma(expt)))
     }
 
     ret_data <- list(
         nonzero=nonzero_plot, libsize=libsize_plot, boxplot=boxplot, corheat=corheat, smc=smc,
         disheat=disheat, smd=smd, pcaplot=pca$plot, pcatable=pca$table, pcares=pca$res,
-        pcavar=pca$variance, density=density, qq=qq, ma=ma)
+        pcavar=pca$variance, density=density, qqlog=qq_logs, qqrat=qq_ratios, ma=ma)
     return(ret_data)
 }
 
@@ -125,40 +127,41 @@ hpgl_bcv_plot <- function(data) {
         ## design = data$design
         ## colors = data$colors
         ## names = data$names
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
-    data <- DGEList(counts=data)
-    edisp <- estimateDisp(data)
+    data <- edgeR::DGEList(counts=data)
+    edisp <- edgeR::estimateDisp(data)
     avg_log_cpm <- edisp$AveLogCPM
     if (is.null(avg_log_cpm)) {
-        avg_log_cpm <- aveLogCPM(edisp$counts, offset=getOffset(edisp))
+        avg_log_cpm <- edgeR::aveLogCPM(edisp$counts, offset=getOffset(edisp))
     }
-    disper <- getDispersion(edisp)
+    disper <- edgeR::getDispersion(edisp)
     if (is.null(disper)) {
         stop("No dispersions to plot")
     }
     if (attr(disper, "type") == "common") {
-        disper <- rep(disper, length = length(avg_log_cpm))
+        disper <- rep(disper, length=length(avg_log_cpm))
     }
     disp_df <- data.frame(A=avg_log_cpm, disp=sqrt(disper))
     fitted_disp <- gplots::lowess(disp_df$A, disp_df$disp, f=0.5)
     f <- stats::approxfun(fitted_disp, rule=2)
-    disp_plot <- ggplot2::ggplot(disp_df, aes(x=A, y=disp)) +
-        geom_point() +
-        xlab("Average log(CPM)") +
-        ylab("Dispersion of Biological Variance") +
-        stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
-        scale_fill_gradientn(colours=colorRampPalette(c("white","black"))(256)) +
-        geom_smooth(method="loess") +
-        stat_function(fun=f, colour="red") +
-        theme(legend.position="none")
+    disp_plot <- ggplot2::ggplot(disp_df, ggplot2::aes(x=A, y=disp)) +
+        ggplot2::geom_point() +
+        ggplot2::xlab("Average log(CPM)") +
+        ggplot2::ylab("Dispersion of Biological Variance") +
+        ##ggplot2::stat_density2d(geom="tile", ggplot2::aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
+        ggplot2::stat_density2d(geom="tile", ggplot2::aes(fill=..density..^0.25), contour=FALSE, show.legend=FALSE) +
+        ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white","black"))(256)) +
+        ggplot2::geom_smooth(method="loess") +
+        ggplot2::stat_function(fun=f, colour="red") +
+        ggplot2::theme(legend.position="none")
     return(disp_plot)
 }
 
@@ -184,16 +187,16 @@ hpgl_bcv_plot <- function(data) {
 #' @examples
 #' ## a_boxplot = hpgl_boxplot(expt=expt)
 #' ## a_boxplot  ## ooo pretty boxplot look at the lines
-hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale="raw", ...) {
+hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, ...) {
     hpgl_env <- environment()
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- as.data.frame(exprs(data$expressionset))
+        data <- as.data.frame(Biobase::exprs(data$expressionset))
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -201,35 +204,43 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale="raw",
     }
 
     if (is.null(colors)) {
-        colors <- colorRampPalette(brewer.pal(9,"Blues"))(dim(df)[2])
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9,"Blues"))(dim(df)[2])
     }
-
+    data_matrix <- as.matrix(data)
     data[data < 0] <- 0 ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
-    if (scale == "raw") {
-        if (max(data) > 1000) {
-            print("I think this probably should be put on a log scale to be visible.")
-            print("Run this function with 'scale=\"log\"' to try it out.")
-        }
-    } else {
-        data <- log2(data + 1)
-    }
 
     data$id <- rownames(data)
-    dataframe <- melt(data, id=c("id"))
+    dataframe <- reshape2::melt(data, id=c("id"))
     colnames(dataframe) <- c("gene","variable","value")
-    boxplot <- ggplot2::ggplot(data=dataframe, aes(x=variable, y=value)) +
-        suppressWarnings(geom_boxplot(aes(fill=variable), fill=colors,
-                                      size=0.5, outlier.size=1.5,
-                                      outlier.colour=alpha("black", 0.2))) +
-        theme_bw() +
-        theme(axis.text.x = element_text(angle=90, hjust=1)) +
-        xlab("Sample") +
-        ylab("Per-gene log(counts)")
+    boxplot <- ggplot2::ggplot(data=dataframe, ggplot2::aes(x=variable, y=value)) +
+        suppressWarnings(ggplot2::geom_boxplot(ggplot2::aes(fill=variable),
+                                               fill=colors,
+                                               size=0.5,
+                                               outlier.size=1.5,
+                                               outlier.colour=ggplot2::alpha("black", 0.2))) +
+        ggplot2::theme_bw() +
+        ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
+        ggplot2::xlab("Sample") +
+        ggplot2::ylab("Per-gene log(counts)")
     if (!is.null(title)) {
-        boxplot <- boxplot + ggtitle(title)
+        boxplot <- boxplot + ggplot2::ggtitle(title)
     }
     if (!is.null(names)) {
-        boxplot <- boxplot + scale_x_discrete(labels=names)
+        boxplot <- boxplot + ggplot2::scale_x_discrete(labels=names)
+    }
+
+    if (is.null(scale)) {
+        if (max(data_matrix) > 1000) {
+            message("I am reasonably sure this should be log scaled and am setting it.")
+            message("If this is incorrect, set scale='raw'")
+            boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+        }
+    } else {
+        if (scale == 'log') {
+            boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+        } else if (scale == 'logdim') {
+            boxplot <- boxplot + ggplot2::coord_trans(y="log2")
+        }
     }
     return(boxplot)
 }
@@ -247,27 +258,30 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale="raw",
 #' @return a density plot!
 #' @export
 hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
-                         fill=NULL, title=NULL, log=FALSE) {  ## also position='stack'
+                         fill=NULL, title=NULL, scale=NULL) {  ## also position='stack'
     hpgl_env <- environment()
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
-    if (!isTRUE(log)) {
+    if (is.null(scale)) {
         if (max(data) > 10000) {
-            print("Perhaps this data should be plotted on the log scale, add log=TRUE to try it out.")
+            message("This data will benefit from being displayed on the log scale.")
+            message("If this is not desired, set scale='raw'")
+            scale <- 'log'
         }
     }
+
     if (!is.null(names)) {
         colnames(data) <- make.names(names, unique=TRUE)
     }
@@ -287,22 +301,26 @@ hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
     }
     densityplot <- NULL
     if (is.null(fill)) {
-        densityplot <- ggplot2::ggplot(data=melted, aes(x=counts, colour=sample), environment=hpgl_env)
+        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes(x=counts, colour=sample), environment=hpgl_env)
     } else {
         fill <- "sample"
-        densityplot <- ggplot2::ggplot(data=melted, aes(x=counts, colour=sample, fill=fill), environment=hpgl_env)
+        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes(x=counts, colour=sample, fill=fill), environment=hpgl_env)
     }
     densityplot <- densityplot +
-        geom_density(aes(x=counts, y=..count..), position=position) +
-        ylab("Number of genes.") +
-        xlab("Number of hits/gene.") +
-        theme_bw() +
-        theme(legend.key.size=unit(0.3, "cm"))
+        ggplot2::geom_density(ggplot2::aes(x=counts, y=..count..), position=position) +
+        ggplot2::ylab("Number of genes.") +
+        ggplot2::xlab("Number of hits/gene.") +
+        ggplot2::theme_bw() +
+        ggplot2::theme(legend.key.size=ggplot2::unit(0.3, "cm"))
     if (!is.null(title)) {
         densityplot <- densityplot + ggplot2::ggtitle(title)
     }
-    if (isTRUE(log)) {
-        densityplot <- densityplot + scale_x_log10()
+    if (scale == 'log') {
+        densityplot <- densityplot + ggplot2::scale_x_continuous(trans=scales::log2_trans())
+    } else if (scale == 'logdim') {
+        densityplot <- densityplot + ggplot2::coord_trans(x="log2")
+    } else if (isTRUE(scale)) {
+        densityplot <- densityplot + ggplot2::scale_x_log10()
     }
     return(densityplot)
 }
@@ -356,17 +374,17 @@ hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
     mydist$dist <- mydist$x * mydist$y
     mydist$dist <- mydist$dist / max(mydist$dist)
     line_size <- size / 2
-    first_vs_second <- ggplot2::ggplot(df, aes(x=first, y=second), environment=hpgl_env) +
-        xlab(paste("Expression of", df_x_axis)) +
-        ylab(paste("Expression of", df_y_axis)) +
-        geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
-        geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
-        geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
-        geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
-        geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
-        geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
-        geom_point(colour=hsv(mydist$dist, 1, mydist$dist), alpha=0.6, size=size) +
-        theme(legend.position="none")
+    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes(x=first, y=second), environment=hpgl_env) +
+        ggplot2::xlab(paste("Expression of", df_x_axis)) +
+        ggplot2::ylab(paste("Expression of", df_y_axis)) +
+        ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
+        ggplot2::geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
+        ggplot2::geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
+        ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
+        ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
+        ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
+        ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist), alpha=0.6, size=size) +
+        ggplot2::theme(legend.position="none")
     if (!is.null(gvis_filename)) {
         hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
     }
@@ -444,9 +462,9 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -455,43 +473,43 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
 
     if (is.null(colors)) {
         tt <- ncol(data)
-        colors <- colorRampPalette(brewer.pal(tt,"Dark2"))(tt)
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(tt,"Dark2"))(tt)
     }
     if (is.null(names)) {
         names <- colnames(data)
     }
 
     if (type == "correlation") {
-        heatmap_data <- hpgltools::hpgl_cor(data, method=method)
-        heatmap_colors <- grDevices::colorRampPalette(brewer.pal(9, "OrRd"))(100)
+        heatmap_data <- hpgl_cor(data, method=method)
+        heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
     } else if (type == "distance") {
         heatmap_data <- as.matrix(dist(t(data)), method=method)
-        heatmap_colors <- grDevices::colorRampPalette(brewer.pal(9, "GnBu"))(100)
+        heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "GnBu"))(100)
     }
     colors <- as.character(colors)
 
     if (is.null(design)) {
         row_colors <- rep("white", length(colors))
-    } else if (length(as.integer(as.factor(as.data.frame(design[ row ])[,1]))) >= 2) {
+    } else if (length(as.integer(as.factor(as.data.frame(design[row])[,1]))) >= 2) {
         ## row_colors = brewer.pal(12, "Set3")[as.integer(as.list(hpgl_design[ row ]))]
         row_colors <- RColorBrewer::brewer.pal(12, "Set3")[as.integer(as.factor(as.data.frame(design[ row ])[,1]))]
     } else {
-        row_colors <- rep("green", length(design[ row ]))
+        row_colors <- rep("green", length(design[row]))
     }
 
     if (type == "correlation") {
-        hpgltools::heatmap.3(heatmap_data, keysize=2, labRow=names, ##col=heatmap_colors,  ## OrRd is slightly different than what we have now
-                             labCol=names, ColSideColors=colors, RowSideColors=row_colors,
-                             margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
+        heatmap.3(heatmap_data, keysize=2, labRow=names,
+                  ##col=heatmap_colors,  ## OrRd is slightly different than what we have now
+                  labCol=names, ColSideColors=colors, RowSideColors=row_colors,
+                  margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
     } else {
-        hpgltools::heatmap.3(heatmap_data, keysize=2, labRow=names, col=rev(heatmap_colors),
+        heatmap.3(heatmap_data, keysize=2, labRow=names, col=rev(heatmap_colors),
                   labCol=names, ColSideColors=colors, RowSideColors=row_colors,
                   margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
     }
-    hpgl_heatmap_plot <- recordPlot()
+    hpgl_heatmap_plot <- grDevices::recordPlot()
     return(hpgl_heatmap_plot)
 }
-
 
 #' hpgl_histogram()  Make a pretty histogram of something.
 #'
@@ -508,7 +526,8 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
 #' @export
 #' @examples
 #' ## kittytime = hpgl_histogram(df)
-hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE, fillcolor="darkgrey", color="black") {
+hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE,
+                           fillcolor="darkgrey", color="black") {
     hpgl_env <- environment()
     if (class(df) == "data.frame") {
         colnames(df) <- c("values")
@@ -527,13 +546,14 @@ hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE
             message(paste("No binwidth provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
         }
     }
-    a_histogram <- ggplot2::ggplot(df, aes(x=values), environment=hpgl_env) +
-        geom_histogram(aes(y=..density..), stat="bin", binwidth=binwidth, colour=color, fill=fillcolor, position="identity") +
-        geom_density(alpha=0.4, fill=fillcolor) +
-        geom_vline(aes(xintercept=mean(values, na.rm=T)), color=color, linetype="dashed", size=1) +
-        theme_bw()
+    a_histogram <- ggplot2::ggplot(df, ggplot2::aes(x=values), environment=hpgl_env) +
+        ggplot2::geom_histogram(ggplot2::aes(y=..density..), stat="bin", binwidth=binwidth,
+                                colour=color, fill=fillcolor, position="identity") +
+        ggplot2::geom_density(alpha=0.4, fill=fillcolor) +
+        ggplot2::geom_vline(ggplot2::aes(xintercept=mean(values, na.rm=T)), color=color, linetype="dashed", size=1) +
+        ggplot2::theme_bw()
     if (log) {
-        log_histogram <- try(a_histogram + scale_x_log10())
+        log_histogram <- try(a_histogram + ggplot2::scale_x_log10())
         if (log_histogram != 'try-error') {
             a_histogram <- log_histogram
         }
@@ -566,9 +586,9 @@ hpgl_libsize <- function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, 
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -576,7 +596,7 @@ hpgl_libsize <- function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, 
     }
 
     if (is.null(colors)) {
-        colors <- colorRampPalette(brewer.pal(ncol(data),"Dark2"))(ncol(data))
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data),"Dark2"))(ncol(data))
     }
     colors <- as.character(colors)
     tmp <- data.frame(id=colnames(data),
@@ -585,25 +605,25 @@ hpgl_libsize <- function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, 
     tmp$order <- factor(tmp$id, as.character(tmp$id))
     libsize_plot <- ggplot2::ggplot(data=tmp, ggplot2::aes(x=order, y=sum),
                                     environment=hpgl_env, colour=tmp$colors) +
-        geom_bar(aes(x=order), stat="identity", colour="black", fill=tmp$colors) +
-        xlab("Sample ID") +
-        ylab("Library size in (pseudo)counts.") +
-        theme_bw() +
-        theme(axis.text.x=element_text(angle=90, hjust=1.5, vjust=0.5))
+        ggplot2::geom_bar(ggplot2::aes(x=order), stat="identity", colour="black", fill=tmp$colors) +
+        ggplot2::xlab("Sample ID") +
+        ggplot2::ylab("Library size in (pseudo)counts.") +
+        ggplot2::theme_bw() +
+        ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=1.5, vjust=0.5))
     if (isTRUE(text)) {
         libsize_plot <- libsize_plot +
-            geom_text(ggplot2::aes(reorder(order), label=prettyNum(tmp$sum, big.mark=",")),
-                      angle=90, size=3, color="white", hjust=1.2)
+            ggplot2::geom_text(ggplot2::aes(reorder(order), label=prettyNum(tmp$sum, big.mark=",")),
+                               angle=90, size=3, color="white", hjust=1.2)
     }
     if (!is.null(title)) {
-        libsize_plot <- libsize_plot + ggtitle(title)
+        libsize_plot <- libsize_plot + ggplot2::ggtitle(title)
     }
     if (scale == TRUE) {
         message("Adding log10")
-        libsize_plot <- libsize_plot + scale_y_log10()
+        libsize_plot <- libsize_plot + ggplot2::scale_y_log10()
     }
     if (!is.null(names)) {
-        libsize_plot <- libsize_plot + scale_x_discrete(labels=names)
+        libsize_plot <- libsize_plot + ggplot2::scale_x_discrete(labels=names)
     }
     return(libsize_plot)
 }
@@ -664,35 +684,37 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     first_mad <- stats::mad(df$first, na.rm=TRUE)
     second_mad <- stats::mad(df$second, na.rm=TRUE)
     line_size <- size / 2
-    first_vs_second <- ggplot2::ggplot(df, aes(x=first, y=second), environment=hpgl_env) +
-        xlab(paste("Expression of", df_x_axis)) +
-        ylab(paste("Expression of", df_y_axis)) +
-        geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
-        geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
-        geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
-        geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
-        geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
-        geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
-        geom_abline(colour="grey", slope=linear_model_slope, intercept=linear_model_intercept, size=line_size)
+    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes(x=first, y=second), environment=hpgl_env) +
+        ggplot2::xlab(paste("Expression of", df_x_axis)) +
+        ggplot2::ylab(paste("Expression of", df_y_axis)) +
+        ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
+        ggplot2::geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
+        ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
+        ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
+        ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
+        ggplot2::geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
+        ggplot2::geom_abline(colour="grey", slope=linear_model_slope, intercept=linear_model_intercept, size=line_size)
     if (isTRUE(pretty_colors)) {
         first_vs_second <- first_vs_second +
-            geom_point(colour=hsv(linear_model_weights * 9/20,
-                                  linear_model_weights/20 + 19/20,
-                                  (1.0 - linear_model_weights)),
-                       size=size, alpha=0.4)
+            ggplot2::geom_point(size=size, alpha=0.4,
+                                colour=grDevices::hsv(linear_model_weights * 9/20,
+                                                      linear_model_weights/20 + 19/20,
+                                                      (1.0 - linear_model_weights)))
     } else {
-        first_vs_second <- first_vs_second + geom_point(colour="black", size=size, alpha=0.4)
+        first_vs_second <- first_vs_second +
+            ggplot2::geom_point(colour="black", size=size, alpha=0.4)
     }
     if (loess == TRUE) {
         first_vs_second <- first_vs_second +
-            geom_smooth(method="loess")
+            ggplot2::geom_smooth(method="loess")
     }
     if (identity == TRUE) {
         first_vs_second <- first_vs_second +
-            geom_abline(colour="darkgreen", slope=1, intercept=0, size=1)
+            ggplot2::geom_abline(colour="darkgreen", slope=1, intercept=0, size=1)
     }
     first_vs_second <- first_vs_second +
-        theme(legend.position="none") + theme_bw()
+        ggplot2::theme(legend.position="none") +
+        ggplot2::theme_bw()
 
     if (!is.null(gvis_filename)) {
         if (verbose) {
@@ -708,13 +730,15 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     } else if (!is.null(second)) {
         colnames(df) <- c('first', second)
     }
-    x_histogram <- hpgltools::hpgl_histogram(data.frame(df[,1]), verbose=verbose, fillcolor="lightblue", color="blue")
-    y_histogram <- hpgltools::hpgl_histogram(data.frame(df[,2]), verbose=verbose, fillcolor="pink", color="red")
-    both_histogram <- hpgltools::hpgl_multihistogram(df, verbose=verbose)
-    plots <- list(data=df, scatter=first_vs_second, x_histogram=x_histogram, y_histogram=y_histogram,
-                  both_histogram=both_histogram, correlation=correlation, lm_model=linear_model,
-                  lm_summary=linear_model_summary, lm_weights=linear_model_weights, lm_rsq=linear_model_rsq,
-                  first_median=first_median, first_mad=first_mad, second_median=second_median, second_mad=second_mad)
+    x_histogram <- hpgl_histogram(data.frame(df[,1]), verbose=verbose, fillcolor="lightblue", color="blue")
+    y_histogram <- hpgl_histogram(data.frame(df[,2]), verbose=verbose, fillcolor="pink", color="red")
+    both_histogram <- hpgl_multihistogram(df, verbose=verbose)
+    plots <- list(data=df, scatter=first_vs_second, x_histogram=x_histogram,
+                  y_histogram=y_histogram, both_histogram=both_histogram,
+                  correlation=correlation, lm_model=linear_model, lm_summary=linear_model_summary,
+                  lm_weights=linear_model_weights, lm_rsq=linear_model_rsq,
+                  first_median=first_median, first_mad=first_mad,
+                  second_median=second_median, second_mad=second_mad)
     if (verbose) {
         message(sprintf("Calculating correlation between the axes using:", cormethod))
         message(correlation)
@@ -762,13 +786,13 @@ hpgl_ma_plot <- function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6,
     df <- data.frame(AvgExp=rowMeans(counts[rownames(de_genes),]),
                      ## LogFC=de_genes$logFC, AdjPVal=de_genes$adj.P.Val)
                      LogFC=de_genes$logFC, AdjPVal=de_genes$P.Value)
-    plt <- ggplot2::ggplot(df, aes(AvgExp, LogFC, color=(AdjPVal < adjpval_cutoff)), environment=hpgl_env) +
-        geom_hline(yintercept=c(-1,1), color="Red", size=size) +
-        geom_point(stat="identity", size=size, alpha=alpha) +
-        theme(axis.text.x=element_text(angle=-90)) +
-        xlab("Average Count (Millions of Reads)") +
-        ylab("log fold change") +
-        theme_bw()
+    plt <- ggplot2::ggplot(df, ggplot2::aes(AvgExp, LogFC, color=(AdjPVal < adjpval_cutoff)), environment=hpgl_env) +
+        ggplot2::geom_hline(yintercept=c(-1,1), color="Red", size=size) +
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
+        ggplot2::theme(axis.text.x=element_text(angle=-90)) +
+        ggplot2::xlab("Average Count (Millions of Reads)") +
+        ggplot2::ylab("log fold change") +
+        ggplot2::theme_bw()
     if (!is.null(gvis_filename)) {
         hpgl_gvis_ma_plot(counts, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
     }
@@ -778,7 +802,6 @@ hpgl_ma_plot <- function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6,
 ##ggplot(mydata) + aes(x=x, y=y) + scale_x_log10() + scale_y_log10() +
 ##+   stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE) +
 ##+   scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256))
-
 
 #' hpgl_multihistogram()  Make a pretty histogram of multiple datasets.
 #'
@@ -815,7 +838,7 @@ hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, verbo
     } else {
         stop("This can only work with a list or data frame.")
     }
-    play_cdf <- plyr::ddply(play_all, "cond", summarise, rating.mean=mean(expression, na.rm=TRUE))
+    play_cdf <- plyr::ddply(play_all, "cond", plyr::summarise, rating.mean=mean(expression, na.rm=TRUE))
     uncor_t <- stats::pairwise.t.test(play_all$expression, play_all$cond, p.adjust="none")
     bon_t <- try(stats::pairwise.t.test(play_all$expression, play_all$cond, p.adjust="bon", na.rm=TRUE))
     if (is.null(bins) & is.null(binwidth)) {
@@ -834,15 +857,15 @@ hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, verbo
     } else {
         message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
     }
-    hpgl_multi <- ggplot2::ggplot(play_all, aes(x=expression, fill=cond)) +
-        geom_histogram(aes(y=..density..), binwidth=binwidth, alpha=0.4, position="identity") +
-        xlab("Expression") +
-        ylab("Observation likelihood") +
-        geom_density(alpha=0.5) +
-        geom_vline(data=play_cdf, aes(xintercept=rating.mean,  colour=cond), linetype="dashed", size=0.75) +
-        theme_bw()
+    hpgl_multi <- ggplot2::ggplot(play_all, ggplot2::aes(x=expression, fill=cond)) +
+        ggplot2::geom_histogram(ggplot2::aes(y=..density..), binwidth=binwidth, alpha=0.4, position="identity") +
+        ggplot2::xlab("Expression") +
+        ggplot2::ylab("Observation likelihood") +
+        ggplot2::geom_density(alpha=0.5) +
+        ggplot2::geom_vline(data=play_cdf, ggplot2::aes(xintercept=rating.mean,  colour=cond), linetype="dashed", size=0.75) +
+        ggplot2::theme_bw()
     if (log) {
-        logged <- try(hpgl_multi + scale_x_log10())
+        logged <- try(hpgl_multi + ggplot2::scale_x_log10())
         if (class(logged) != 'try-error') {
             hpgl_multi <- logged
         }
@@ -890,9 +913,9 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -914,27 +937,34 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     }
 
     shapes <- as.integer(design$batch)
-    non_zero <- data.frame(id=colnames(data), nonzero_genes=colSums(data >= 1),
-                           cpm=colSums(data) * 1e-6, condition=design$condition,
+    non_zero <- data.frame(id=colnames(data),
+                           nonzero_genes=colSums(data >= 1),
+                           cpm=colSums(data) * 1e-6,
+                           condition=design$condition,
                            batch=design$batch)
-    non_zero_plot <- ggplot2::ggplot(data=non_zero, aes(x=cpm, y=nonzero_genes), environment=hpgl_env, fill=colors, shape=shapes) +
+    non_zero_plot <- ggplot2::ggplot(data=non_zero, ggplot2::aes(x=cpm, y=nonzero_genes), environment=hpgl_env, fill=colors, shape=shapes) +
         ## geom_point(stat="identity", size=3, colour=hpgl_colors, pch=21) +
-        geom_point(aes(fill=colors), colour="black", pch=21, stat="identity", size=3) +
-        scale_fill_manual(name="Condition", values=levels(as.factor(colors)), labels=levels(as.factor(design$condition))) +
-        ylab("Number of non-zero genes observed.") +
-        xlab("Observed CPM") +
-        theme_bw()
+        ggplot2::geom_point(ggplot2::aes(fill=colors), colour="black", pch=21, stat="identity", size=3) +
+        ggplot2::scale_fill_manual(name="Condition", values=levels(as.factor(colors)), labels=levels(as.factor(design$condition))) +
+        ggplot2::ylab("Number of non-zero genes observed.") +
+        ggplot2::xlab("Observed CPM") +
+        ggplot2::theme_bw()
     if (!is.null(labels)) {
         if (labels[[1]] == "fancy") {
-            non_zero_plot <- non_zero_plot + directlabels::geom_dl(aes(label=labels), method="smart.grid", colour=colors)
+            non_zero_plot <- non_zero_plot +
+                directlabels::geom_dl(ggplot2::aes(label=labels),
+                                      method="smart.grid", colour=colors)
         } else {
-            non_zero_plot <- non_zero_plot + geom_text(aes(x=cpm, y=nonzero_genes, label=labels), angle=45, size=4, vjust=2)
+            non_zero_plot <- non_zero_plot +
+                ggplot2::geom_text(ggplot2::aes(x=cpm, y=nonzero_genes, label=labels),
+                                   angle=45, size=4, vjust=2)
         }
     }
     if (!is.null(title)) {
         non_zero_plot <- non_zero_plot + ggplot2::ggtitle(title)
     }
-    non_zero_plot <- non_zero_plot + ggplot2::theme(axis.ticks=element_blank(), axis.text.x=element_text(angle=90))
+    non_zero_plot <- non_zero_plot +
+        ggplot2::theme(axis.ticks=ggplot2::element_blank(), axis.text.x=ggplot2::element_text(angle=90))
     return(non_zero_plot)
 }
 
@@ -952,14 +982,14 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
 #' @examples
 #' ## ma_plots = hpgl_pairwise_ma(expt=some_expt)
 hpgl_pairwise_ma <- function(data, log=NULL, ...) {
-    require.auto('affy')
+    ##require.auto('affy')
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         design <- data$design
         colors <- data$colors
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -973,16 +1003,16 @@ hpgl_pairwise_ma <- function(data, log=NULL, ...) {
             second <- as.numeric(data[[d]])
             if (max(first) > 1000) {
                 if (is.null(log)) {
-                    print("I suspect you want to set log=TRUE for this.")
-                    print("In fact, I am so sure, I am doing it now.")
-                    print("If I am wrong, set log=FALSE, but I'm not.")
+                    message("I suspect you want to set log=TRUE for this.")
+                    message("In fact, I am so sure, I am doing it now.")
+                    message("If I am wrong, set log=FALSE, but I'm not.")
                     log <- TRUE
                 }
             } else if (max(first) < 80) {
                 if (!is.null(log)) {
-                    print("I suspect you want to set log=FALSE for this.")
-                    print("In fact, I am so  sure, I am doing it now.")
-                    print("If I am wrong, set log=TRUE.")
+                    message("I suspect you want to set log=FALSE for this.")
+                    message("In fact, I am so  sure, I am doing it now.")
+                    message("If I am wrong, set log=TRUE.")
                     log <- FALSE
                 }
             }
@@ -997,7 +1027,7 @@ hpgl_pairwise_ma <- function(data, log=NULL, ...) {
             a <- (first + second) / 2
             affy:::ma.plot(A=a, M=m, plot.method="smoothScatter", show.statistics=TRUE, add.loess=TRUE)
             title(paste0("MA of ", firstname, " vs ", secondname))
-            plot_list[[name]] = recordPlot()
+            plot_list[[name]] = grDevices::recordPlot()
         }
     }
     return(plot_list)
@@ -1021,9 +1051,9 @@ hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- as.data.frame(exprs(data$expressionset))
+        data <- as.data.frame(Biobase::exprs(data$expressionset))
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -1058,9 +1088,9 @@ hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
         count <- count + 1
     }
     hpgl_multiplot(logs)
-    log_plots <- recordPlot()
+    log_plots <- grDevices::recordPlot()
     hpgl_multiplot(ratios)
-    ratio_plots <- recordPlot()
+    ratio_plots <- grDevices::recordPlot()
     plots <- list(logs=log_plots, ratios=ratio_plots, medians=means)
     return(plots)
 }
@@ -1081,9 +1111,9 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- as.data.frame(exprs(data$expressionset))
+        data <- as.data.frame(Biobase::exprs(data$expressionset))
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -1104,79 +1134,89 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     } else {
         y_string <- paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
     }
-    ratio_plot <- ggplot2::ggplot(ratio_df, aes(x=increment, y=vector_ratio), environment=hpgl_env) +
-        geom_point(colour=suppressWarnings(densCols(vector_ratio)), stat="identity", size=1, alpha=0.2, na.rm=TRUE) +
-        scale_y_continuous(limits=c(0,2))
+    ratio_plot <- ggplot2::ggplot(ratio_df, ggplot2::aes(x=increment, y=vector_ratio), environment=hpgl_env) +
+        ggplot2::geom_point(colour=suppressWarnings(grDevices::densCols(vector_ratio)), stat="identity", size=1, alpha=0.2, na.rm=TRUE) +
+        ggplot2::scale_y_continuous(limits=c(0,2))
     if (isTRUE(labels)) {
-        ratio_plot <- ratio_plot + xlab("Sorted gene") + ylab(y_string) + theme(legend.position="none")
+        ratio_plot <- ratio_plot +
+            ggplots::xlab("Sorted gene") +
+            ggplot2::ylab(y_string) +
+            ggplot2::theme(legend.position="none")
     } else if (labels == "short") {
-        ratio_plot <- ratio_plot + ylab(y_string) +
-            theme_bw() +
-            theme(axis.text.x=element_blank(),
-                  axis.text.y=element_blank(),
-                  axis.ticks=element_blank(),
-                  axis.title.x=element_blank(),
-                  legend.position="none",
-                  panel.background=element_blank(),
-                  panel.border=element_blank(),
-                  panel.grid.major=element_blank(),
-                  panel.grid.minor=element_blank(),
-                  plot.background=element_blank())
+        ratio_plot <- ratio_plot +
+            ggplot2::ylab(y_string) +
+            ggplot2::theme_bw() +
+            ggplot2::theme(axis.text.x=ggplot2::element_blank(),
+                           axis.text.y=ggplot2::element_blank(),
+                           axis.ticks=ggplot2::element_blank(),
+                           axis.title.x=ggplot2::element_blank(),
+                           legend.position="none",
+                           panel.background=ggplot2::element_blank(),
+                           panel.border=ggplot2::element_blank(),
+                           panel.grid.major=ggplot2::element_blank(),
+                           panel.grid.minor=ggplot2::element_blank(),
+                           plot.background=ggplot2::element_blank())
     } else {
-        ratio_plot <- ratio_plot + theme_bw()
-            theme(axis.line=element_blank(),
-                  axis.text.x=element_blank(),
-                  axis.text.y=element_blank(),
-                  axis.ticks=element_blank(),
-                  axis.title.x=element_blank(),
-                  axis.title.y=element_blank(),
-                  legend.position="none",
-                  panel.background=element_blank(),
-                  panel.border=element_blank(),
-                  panel.grid.major=element_blank(),
-                  panel.grid.minor=element_blank(),
-                  plot.background=element_blank())
+        ratio_plot <- ratio_plot + ggplot2::theme_bw() +
+            ggplot2::theme(axis.line=ggplot2::element_blank(),
+                           axis.text.x=ggplot2::element_blank(),
+                           axis.text.y=ggplot2::element_blank(),
+                           axis.ticks=ggplot2::element_blank(),
+                           axis.title.x=ggplot2::element_blank(),
+                           axis.title.y=ggplot2::element_blank(),
+                           legend.position="none",
+                           panel.background=ggplot2::element_blank(),
+                           panel.border=ggplot2::element_blank(),
+                           panel.grid.major=ggplot2::element_blank(),
+                           panel.grid.minor=ggplot2::element_blank(),
+                           plot.background=ggplot2::element_blank())
     }
 
     log_df <- data.frame(cbind(log(sorted_x), log(sorted_y)))
     gg_max <- max(log_df)
     colnames(log_df) <- c(xlabel, ylabel)
     log_df$sub <- log_df[,1] - log_df[,2]
-    log_ratio_plot <- ggplot2::ggplot(log_df, aes(x=get(xlabel), y=get(ylabel)), environment=hpgl_env) +
-        geom_point(colour=suppressWarnings(densCols(sorted_x, sorted_y)), na.rm=TRUE) +
-        scale_y_continuous(limits=c(0, gg_max)) + scale_x_continuous(limits=c(0, gg_max))
+    log_ratio_plot <- ggplot2::ggplot(log_df, ggplot2::aes(x=get(xlabel), y=get(ylabel)), environment=hpgl_env) +
+        ggplot2::geom_point(colour=suppressWarnings(grDevices::densCols(sorted_x, sorted_y)), na.rm=TRUE) +
+        ggplot2::scale_y_continuous(limits=c(0, gg_max)) +
+        ggplot2::scale_x_continuous(limits=c(0, gg_max))
     if (isTRUE(labels)) {
-        log_ratio_plot <- log_ratio_plot + xlab(paste("log sorted ", xlabel)) + ylab(paste("log sorted ", ylabel)) + theme(legend.position="none")
+        log_ratio_plot <- log_ratio_plot +
+            ggplot2::xlab(paste("log sorted ", xlabel)) +
+            ggplot2::ylab(paste("log sorted ", ylabel)) +
+            ggplot2::theme(legend.position="none")
     } else if (labels == "short") {
-        log_ratio_plot <- log_ratio_plot + xlab("gene") + ylab(y_string) +
-            theme(axis.text.x=element_blank(),
-                  axis.text.y=element_blank(),
-                  axis.ticks=element_blank(),
-                  axis.title.x=element_blank(),
-                  legend.position="none",
-                  panel.background=element_blank(),
-                  panel.border=element_blank(),
-                  panel.grid.major=element_blank(),
-                  panel.grid.minor=element_blank(),
-                  plot.background=element_blank())
+        log_ratio_plot <- log_ratio_plot +
+            ggplot2::xlab("gene") +
+            ggplot2::ylab(y_string) +
+            ggplot2::theme(axis.text.x=ggplot2::element_blank(),
+                           axis.text.y=ggplot2::element_blank(),
+                           axis.ticks=ggplot2::element_blank(),
+                           axis.title.x=ggplot2::element_blank(),
+                           legend.position="none",
+                           panel.background=ggplot2::element_blank(),
+                           panel.border=ggplot2::element_blank(),
+                           panel.grid.major=ggplot2::element_blank(),
+                           panel.grid.minor=ggplot2::element_blank(),
+                           plot.background=ggplot2::element_blank())
     } else {
         log_ratio_plot <- log_ratio_plot +
-            theme_bw() +
-            theme(axis.line=element_blank(),
-                  axis.text.x=element_blank(),
-                  axis.text.y=element_blank(),
-                  axis.ticks=element_blank(),
-                  axis.title.x=element_blank(),
-                  axis.title.y=element_blank(),
-                  legend.position="none",
-                  panel.background=element_blank(),
-                  panel.border=element_blank(),
-                  panel.grid.major=element_blank(),
-                  panel.grid.minor=element_blank(),
-                  plot.background=element_blank())
+            ggplot2::theme_bw() +
+            ggplot2::theme(axis.line=ggplot2::element_blank(),
+                           axis.text.x=ggplot2::element_blank(),
+                           axis.text.y=ggplot2::element_blank(),
+                           axis.ticks=ggplot2::element_blank(),
+                           axis.title.x=ggplot2::element_blank(),
+                           axis.title.y=ggplot2::element_blank(),
+                           legend.position="none",
+                           panel.background=ggplot2::element_blank(),
+                           panel.border=ggplot2::element_blank(),
+                           panel.grid.major=ggplot2::element_blank(),
+                           panel.grid.minor=ggplot2::element_blank(),
+                           plot.background=ggplot2::element_blank())
     }
-    ratio_plot <- ratio_plot + theme_bw()
-    log_ratio_plot <- log_ratio_plot + theme_bw()
+    ratio_plot <- ratio_plot + ggplot2::theme_bw()
+    log_ratio_plot <- log_ratio_plot + ggplot2::theme_bw()
     log_summary <- summary(log_df$sub)
     qq_plots <- list(ratio=ratio_plot, log=log_ratio_plot, summary=log_summary)
     return(qq_plots)
@@ -1198,9 +1238,9 @@ hpgl_qq_all_pairwise <- function(df=NULL, expt=NULL, verbose=FALSE) {
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -1227,11 +1267,11 @@ hpgl_qq_all_pairwise <- function(df=NULL, expt=NULL, verbose=FALSE) {
         }
     }
     multiplot(logs)
-    log_plots <- recordPlot()
+    log_plots <- grDevices::recordPlot()
     multiplot(ratios)
-    ratio_plots <- recordPlot()
+    ratio_plots <- grDevices::recordPlot()
     heatmap.3(means, trace="none")
-    means_heatmap <- recordPlot()
+    means_heatmap <- grDevices::recordPlot()
     plots <- list(logs=log_plots, ratios=ratio_plots, means=means_heatmap)
     return(plots)
 }
@@ -1256,22 +1296,22 @@ hpgl_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    heatmap_colors <- redgreen(75)
+    heatmap_colors <- gplots::redgreen(75)
     if (is.null(names)) {
         names <- colnames(data)
     }
     data <- as.matrix(data)
     heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors,
               labCol=names, margins=c(12,8), trace="none", linewidth=0.5, main=title, Rowv=Rowv)
-    hpgl_heatmap_plot <- recordPlot()
+    hpgl_heatmap_plot <- grDevices::recordPlot()
     return(hpgl_heatmap_plot)
 }
 
@@ -1299,11 +1339,11 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]
     colnames(df) <- c("first","second")
-    first_vs_second <- ggplot2::ggplot(df, aes(x=first, y=second), environment=hpgl_env) +
-        xlab(paste("Expression of", df_x_axis)) +
-        ylab(paste("Expression of", df_y_axis)) +
-        geom_point(colour=color, alpha=0.6, size=size) +
-        theme(legend.position="none")
+    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes(x=first, y=second), environment=hpgl_env) +
+        ggplot2::xlab(paste("Expression of", df_x_axis)) +
+        ggplot2::ylab(paste("Expression of", df_y_axis)) +
+        ggplot2::geom_point(colour=color, alpha=0.6, size=size) +
+        ggplot2::theme(legend.position="none")
     if (!is.null(gvis_filename)) {
         hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
     }
@@ -1341,9 +1381,9 @@ hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -1355,7 +1395,7 @@ hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL
     }
 
     if (is.null(colors)) {
-        colors <- colorRampPalette(brewer.pal(ncol(data),"Dark2"))(ncol(data))
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data),"Dark2"))(ncol(data))
     }
     colors <- as.character(colors)
     correlations <- hpgl_cor(data, method=method)
@@ -1372,7 +1412,7 @@ hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL
     axis(side=1, at=seq(along=cor_median), labels=names, las=2)
     abline(h=outer_limit, lty=2)
     abline(v=1:length(names), lty=3, col="black")
-    hpgl_smc_plot <- recordPlot()
+    hpgl_smc_plot <- grDevices::recordPlot()
     return(hpgl_smc_plot)
 }
 
@@ -1402,9 +1442,9 @@ hpgl_smd <- function(data, colors=NULL, names=NULL, method="euclidean", title=NU
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         data <- as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -1415,7 +1455,7 @@ hpgl_smd <- function(data, colors=NULL, names=NULL, method="euclidean", title=NU
         names <- colnames(data)
     }
     if (is.null(colors)) {
-        colors <- colorRampPalette(brewer.pal(ncol(data),"Dark2"))(ncol(data))
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data),"Dark2"))(ncol(data))
     }
     colors <- as.character(colors)
     dists <- as.matrix(dist(t(data)), method=method)
@@ -1433,7 +1473,7 @@ hpgl_smd <- function(data, colors=NULL, names=NULL, method="euclidean", title=NU
     axis(side=1, at=seq(along=dist_median), labels=names, las=2)
     abline(h=outer_limit, lty=2)
     abline(v=1:length(names), lty=3, col="black")
-    hpgl_smd_plot <- recordPlot()
+    hpgl_smd_plot <- grDevices::recordPlot()
     return(hpgl_smd_plot)
 }
 
@@ -1473,22 +1513,20 @@ hpgl_volcano_plot <- function(toptable_data, tooltip_data=NULL, gvis_filename=NU
     low_vert_line <- 0.0 - fc_cutoff
     horiz_line <- -1 * log10(p_cutoff)
     toptable_data$modified_p <- -1 * log10(toptable_data$P.Value)
-    plt <- ggplot2::ggplot(toptable_data, aes(x=logFC, y=modified_p, color=(P.Value <= p_cutoff)), environment=hpgl_env) +
-        geom_hline(yintercept=horiz_line, color="black", size=size) +
-        geom_vline(xintercept=fc_cutoff, color="black", size=size) +
-        geom_vline(xintercept=low_vert_line, color="black", size=size) +
-        geom_point(stat="identity", size=size, alpha=alpha) +
+    plt <- ggplot2::ggplot(toptable_data, ggplot2::aes(x=logFC, y=modified_p, color=(P.Value <= p_cutoff)), environment=hpgl_env) +
+        ggplot2::geom_hline(yintercept=horiz_line, color="black", size=size) +
+        ggplot2::geom_vline(xintercept=fc_cutoff, color="black", size=size) +
+        ggplot2::geom_vline(xintercept=low_vert_line, color="black", size=size) +
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
         ## theme(axis.text.x=element_text(angle=-90)) +
-        xlab("log fold change") +
-        ylab("-log10(adjusted p value)") +
-        theme(legend.position="none")
+        ggplot2::xlab("log fold change") +
+        ggplot2::ylab("-log10(adjusted p value)") +
+        ggplot2::theme(legend.position="none")
     if (!is.null(gvis_filename)) {
         hpgl_gvis_volcano_plot(toptable_data, fc_cutoff=fc_cutoff, p_cutoff=p_cutoff, tooltip_data=tooltip_data, filename=gvis_filename)
     }
     return(plt)
 }
-
-
 
 #' spirograph()  Make spirographs!  Taken (with modifications) from: http://menugget.blogspot.com/2012/12/spirograph-with-r.html#more
 #'
@@ -1502,8 +1540,8 @@ hpgl_volcano_plot <- function(toptable_data, tooltip_data=NULL, gvis_filename=NU
 #'
 #' A positive value for 'B' will result in a epitrochoid, while a negative value will result in a hypotrochoid.
 #' @return somethign which I don't yet know.
-spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2, revolutions=158, increments=3160, center_a=list(x=0, y=0)) {
-    require.auto("ggplot2")
+spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
+                       revolutions=158, increments=3160, center_a=list(x=0, y=0)) {
     center_b_start <- list(x=0, y=center_a$y + radius_a + radius_b)
     angle_a <- seq(0, 2 * pi * revolutions, , revolutions * increments)
     circum_a <- 2 * pi * radius_a
@@ -1524,15 +1562,16 @@ spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2, revolutions=158, inc
     point_c$y <- center_b$y + opposite
     points <- data.frame(point_c)
     points$counter <- seq(1, nrow(points))
-    spiro <- ggplot(data=points, aes(x=x, y=y)) +
-        geom_point(aes(colour=counter), size=0.5) + theme_bw() +
-        scale_colour_gradientn(colours=rainbow(4)) +
-        theme(axis.line=element_blank(),axis.text.x=element_blank(),
-          axis.text.y=element_blank(),axis.ticks=element_blank(),
-          axis.title.x=element_blank(),
-          axis.title.y=element_blank(),legend.position="none",
-          panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-          panel.grid.minor=element_blank(),plot.background=element_blank())
+    spiro <- ggplot2::ggplot(data=points, ggplot2::aes(x=x, y=y)) +
+        ggplot2::geom_point(ggplot2::aes(colour=counter), size=0.5) +
+        ggplot2::theme_bw() +
+        ggplot2::scale_colour_gradientn(colours=grDevices::rainbow(4)) +
+        ggplot2::theme(axis.line=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),
+                       axis.text.y=ggplot2::element_blank(), axis.ticks=ggplot2::element_blank(),
+                       axis.title.x=ggplot2::element_blank(), axis.title.y=ggplot2::element_blank(),
+                       legend.position="none", panel.background=ggplot2::element_blank(),
+                       panel.border=ggplot2::element_blank(), panel.grid.major=ggplot2::element_blank(),
+                       panel.grid.minor=ggplot2::element_blank(), plot.background=ggplot2::element_blank())
     return(spiro)
 }
 
@@ -1540,7 +1579,6 @@ spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2, revolutions=158, inc
 hypotrochoid <- function(radius_a=7, radius_b=1, dist_b=5, revolutions=7, increments=6480) {
     points <- seq(0, revolutions * increments)
     radians <- points / (2 * pi)
-
     getx <- function(t) {
         x <- ((radius_a - radius_b) * cos(t)) + (dist_b * cos((t * ((radius_a - radius_b) / radius_b))))
         return(x)
@@ -1556,21 +1594,20 @@ hypotrochoid <- function(radius_a=7, radius_b=1, dist_b=5, revolutions=7, increm
     positions <- as.data.frame(positions)
     petals <- dist_b / radius_b
     message(paste0("The spirograph will have ", petals, " petals."))
-   image <- ggplot(data=positions, aes(x=x_points, y=y_points)) +
-        geom_point(size=1) + theme_bw() +
-        theme(axis.line=element_blank(),axis.text.x=element_blank(),
-          axis.text.y=element_blank(),axis.ticks=element_blank(),
-          axis.title.x=element_blank(),
-          axis.title.y=element_blank(),legend.position="none",
-          panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-          panel.grid.minor=element_blank(),plot.background=element_blank())
+    image <- ggplot2::ggplot(data=positions, ggplot2::aes(x=x_points, y=y_points)) +
+        ggplot2::geom_point(size=1) + ggplot2::theme_bw() +
+        ggplot2::theme(axis.line=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),
+                       axis.text.y=ggplot2::element_blank(), axis.ticks=ggplot2::element_blank(),
+                       axis.title.x=ggplot2::element_blank(), axis.title.y=ggplot2::element_blank(),
+                       legend.position="none", panel.background=ggplot2::element_blank(),
+                       panel.border=ggplot2::element_blank(), panel.grid.major=ggplot2::element_blank(),
+                       panel.grid.minor=ggplot2::element_blank(), plot.background=ggplot2::element_blank())
     return(image)
 }
 
 epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6, revolutions=7, increments=6480) {
     points <- seq(0, revolutions * increments)
     radians <- points / (2 * pi)
-
     getx <- function(t) {
         x <- ((radius_a + radius_b) * cos(t)) - (dist_b * cos((t * ((radius_a + radius_b) / radius_b))))
         return(x)
@@ -1584,14 +1621,14 @@ epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6, revolutions=7, increme
     positions <- cbind(points, x_points)
     positions <- cbind(positions, y_points)
     positions <- as.data.frame(positions)
-   image <- ggplot(data=positions, aes(x=x_points, y=y_points)) +
-        geom_point(size=1) + theme_bw() +
-        theme(axis.line=element_blank(),axis.text.x=element_blank(),
-          axis.text.y=element_blank(),axis.ticks=element_blank(),
-          axis.title.x=element_blank(),
-          axis.title.y=element_blank(),legend.position="none",
-          panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-          panel.grid.minor=element_blank(),plot.background=element_blank())
+   image <- ggplot2::ggplot(data=positions, ggplot2::aes(x=x_points, y=y_points)) +
+       ggplot2::geom_point(size=1) + ggplot2::theme_bw() +
+       ggplot2::theme(axis.line=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),
+                      axis.text.y=ggplot2::element_blank(), axis.ticks=ggplot2::element_blank(),
+                      axis.title.x=ggplot2::element_blank(), axis.title.y=ggplot2::element_blank(),
+                      legend.position="none", panel.background=ggplot2::element_blank(),
+                      panel.border=ggplot2::element_blank(), panel.grid.major=ggplot2::element_blank(),
+                      panel.grid.minor=ggplot2::element_blank(), plot.background=ggplot2::element_blank())
     return(image)
 }
 
@@ -1621,23 +1658,21 @@ hpgl_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
       ## ncol: Number of columns of plots
       ## nrow: Number of rows needed, calculated from # of cols
       layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                       ncol = cols, nrow = ceiling(numPlots/cols))
+                       ncol=cols, nrow=ceiling(numPlots/cols))
   }
 
   if (numPlots==1) {
       print(plots[[1]])
   } else {
       ## Set up the page
-      grid.newpage()
-      pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-
+      grid::grid.newpage()
+      grid::pushViewport(grid::viewport(layout=grid::grid.layout(nrow(layout), ncol(layout))))
       ## Make each plot, in the correct location
       for (i in 1:numPlots) {
           ## Get the i,j matrix positions of the regions that contain this subplot
-          matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-
-          print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-                                layout.pos.col = matchidx$col))
+          matchidx <- as.data.frame(which(layout == i, arr.ind=TRUE))
+          print(plots[[i]], vp=grid::viewport(layout.pos.row=matchidx$row,
+                                              layout.pos.col=matchidx$col))
       }
   }
 }
@@ -1906,7 +1941,7 @@ heatmap.3 <- function (x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
         retval$colDendrogram <- ddc
     retval$breaks <- breaks
     retval$col <- col
-    if (!invalid(na.color) & any(is.na(x))) {
+    if (!gtools::invalid(na.color) & any(is.na(x))) {
         mmat <- ifelse(is.na(x), 1, NA)
         image(1:nc, 1:nr, mmat, axes = FALSE, xlab = "", ylab = "",
             col = na.color, add = TRUE)

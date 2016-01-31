@@ -10,7 +10,7 @@ However, this will do a couple of things to make one's life easier:
 \usage{
 write_limma(data, adjust = "fdr", n = 0, coef = NULL,
   workbook = "excel/limma.xls", excel = FALSE, csv = FALSE,
-  annotation = NULL)
+  annot_df = NULL)
 }
 \arguments{
 \item{data}{the output from eBayes()}
@@ -27,7 +27,7 @@ write_limma(data, adjust = "fdr", n = 0, coef = NULL,
 
 \item{csv}{default=TRUE  write out csv files of the tables?}
 
-\item{annotation}{default=NULL  an optional data frame including annotation information to include with the tables.}
+\item{annot_df}{default=NULL  an optional data frame including annotation information to include with the tables.}
 }
 \value{
 a list of data frames comprising the toptable output for each coefficient,

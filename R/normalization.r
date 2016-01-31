@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Jan 19 13:35:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Jan 30 09:55:09 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -19,7 +19,7 @@
 remove_batch_effect <- function(normalized_counts, model) {
     ## model = model.matrix(~ condition + batch)
     voomed <- hpgl_voom(normalized_counts, model)
-    voomed_fit <- lmFit(voomed)
+    voomed_fit <- limma::lmFit(voomed)
     modified_model <- model
     modified_model <- modified_model[,grep("batch", colnames(modified_model))] = 0 ## Drop batch from the model
     new_data <- tcrossprod(voomed_fit$coefficient, modified_model) + residuals(voomed_fit, normalized_counts)
@@ -44,11 +44,11 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
 
     num_low <- sum(count_table < 1 & count_table > 0)
     if (num_low > 0) {
-        print(paste0("Before batch correction, ", num_low, " entries 0<x<1."))
+        message(paste0("Before batch correction, ", num_low, " entries 0<x<1."))
     }
     num_zero <- sum(count_table <= 0)
     if (num_zero > 0) {
-        print(paste0("Before batch correction, ", num_zero, " entries are >= 0."))
+        message(paste0("Before batch correction, ", num_zero, " entries are >= 0."))
     }
     if (isTRUE(batch)) {
         batch <- "limma"
@@ -65,8 +65,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         }
     } else if (batch == 'limmaresid') {
         batch_model <- model.matrix(~batches)
-        batch_voom <- voom(data.frame(count_table), batch_model, normalize.method="quantile", plot=FALSE)
-        batch_fit <- lmFit(batch_voom, design=batch_model)
+        batch_voom <- limma::voom(data.frame(count_table), batch_model, normalize.method="quantile", plot=FALSE)
+        batch_fit <- limma::lmFit(batch_voom, design=batch_model)
         count_table <- residuals(batch_fit, batch_voom$E)
     } else if (batch == "combatmod") {
         ## message("Using a modified cbcbSeq combatMod for batch correction.")
@@ -78,16 +78,16 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         conditional_model <- model.matrix(~conditions, data=df)
         null_model <- conditional_model[,1]
         num_surrogates <- 0
-        be_surrogates <- num.sv(mtrx, conditional_model, method="be")
-        leek_surrogates <- num.sv(mtrx, conditional_model, method="leek")
+        be_surrogates <- sva::num.sv(mtrx, conditional_model, method="be")
+        leek_surrogates <- sva::num.sv(mtrx, conditional_model, method="leek")
         if (be_surrogates >= 1) {
             num_surrogates <- be_surrogates
         } else {
             num_surrogates <- leek_surrogates
         }
-        sva_object <- sva(mtrx, conditional_model, null_model, n.sv=num_surrogates)
+        sva_object <- sva::sva(mtrx, conditional_model, null_model, n.sv=num_surrogates)
         ## mod_sv = cbind(conditional_model, sva_object$sv)
-        fsva_result <- fsva(mtrx, conditional_model, sva_object, newdat=mtrx, method="exact")
+        fsva_result <- sva::fsva(mtrx, conditional_model, sva_object, newdat=mtrx, method="exact")
         ## new_expt$conditional_model = conditional_model
         ## new_expt$null_model = null_model
         ## new_expt$num_surrogates = num_surrogates
@@ -96,16 +96,16 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         ## new_expt$fsva_result = fsva_result
         count_table <- fsva_result$db
     } else if (batch == 'combat_noprior') {
-        count_table <- ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=FALSE)
+        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=FALSE)
     } else if (batch == 'combat') {
-        count_table <- ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE)
+        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE)
     } else if (batch == "svaseq") {
         df <- data.frame(count_table)
         mtrx <- as.matrix(df)
         conditional_model <- model.matrix(~conditions, data=df)
         null_model <- conditional_model[,1]
-        num_surrogates <- num.sv(mtrx, conditional_model)
-        svaseq_result <- svaseq(mtrx, conditional_model, null_model, n.sv=num_surrogates)
+        num_surrogates <- sva::num.sv(mtrx, conditional_model)
+        svaseq_result <- sva::svaseq(mtrx, conditional_model, null_model, n.sv=num_surrogates)
         plot(svaseq_result$sv, pch=19, col="blue")
         ## The following was taken from: https://www.biostars.org/p/121489/
         X <- cbind(conditional_model, svaseq_result$sv)
@@ -115,28 +115,28 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
     } else if (batch == "ruvg") {
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
-        require.auto("RUVSeq")
+        ##require.auto("RUVSeq")
         conditional_model <- model.matrix(~conditions, data=df)
-        y <- DGEList(counts=count_table, group=conditions)
-        y <- calcNormFactors(y, method="upperquartile")
-        y <- estimateGLMCommonDisp(y, conditional_model)
-        y <- estimateGLMTagwiseDisp(y, conditional_model)
-        fit <- glmFit(y, conditional_model)
-        lrt <- glmLRT(fit, coef=2)
+        y <- edgeR::DGEList(counts=count_table, group=conditions)
+        y <- edgeR::calcNormFactors(y, method="upperquartile")
+        y <- edgeR::estimateGLMCommonDisp(y, conditional_model)
+        y <- edgeR::estimateGLMTagwiseDisp(y, conditional_model)
+        fit <- edgeR::glmFit(y, conditional_model)
+        lrt <- edgeR::glmLRT(fit, coef=2)
         controls <- rank(lrt$table$LR) <= 400
-        batch_ruv_emp <- RUVg(count_table, controls, k=1)$W
+        batch_ruv_emp <- RUVSeq::RUVg(count_table, controls, k=1)$W
         X <- cbind(conditional_model, batch_ruv_emp)
         Hat <- solve(t(X) %*% X) %*% t(X)
         beta <- (Hat %*% t(mtrx))
         P <- ncol(conditional_model)
         count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
     } else {
-        print("Did not recognize the batch correction, leaving the table alone.")
-        print("Recognized batch corrections include: 'limma', 'combatmod', 'sva'")
+        message("Did not recognize the batch correction, leaving the table alone.")
+        message("Recognized batch corrections include: 'limma', 'combatmod', 'sva'")
     }
     num_low <- sum(count_table < 0)
     if (num_low > 0) {
-        print(paste0("The number of elements which are < 0 after batch correction is: ", num_low))
+        message(paste0("The number of elements which are < 0 after batch correction is: ", num_low))
         count_table[count_table < 0] <- 0
     }
     libsize <- colSums(count_table)
@@ -173,7 +173,7 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=
     count_table <- count_table[keep,]
 
     if (verbose) {
-        print(sprintf("Removing %d low-count genes (%d remaining).",
+        message(sprintf("Removing %d low-count genes (%d remaining).",
                       num_before - nrow(count_table), nrow(count_table)))
     }
 
@@ -202,9 +202,9 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=
 convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pattern='TA', entry_type='gene', ...) {
     data_class <- class(data)[1]
     if (data_class == 'expt') {
-        count_table <- exprs(data$expressionset)
+        count_table <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        count_table <- exprs(data)
+        count_table <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
         count_table <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -223,7 +223,7 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
         if (is.null(annotations)) {
             stop("RPKM conversion requires gene lengths.")
         }
-        count_table <- hpgltools::hpgl_rpkm(count_table, annotations=annotations)
+        count_table <- hpgl_rpkm(count_table, annotations=annotations)
     } else if (convert == "cp_seq_m") {
         counts <- edgeR::cpm(count_table)
         ## count_table = divide_seq(counts, ...)
@@ -254,7 +254,7 @@ divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.g
     if (class(raw_seq)[1] == 'try-error') {
         stop(paste0("There was a problem reading: ", fasta))
     }
-    gff_entries <- hpgltools:::gff2irange(gff)
+    gff_entries <- gff2irange(gff)
     ## print(head(gff_entries))
     ##    cds_entries = subset(gff_entries, type==entry_type)
     found_entries <- (gff_entries$type == entry_type)
@@ -274,10 +274,10 @@ divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.g
     ##cds_entries = subset(gff_entries, type==entry_type)
     cds_entries <- gff_entries[found_entries,]
     names(cds_entries) <- make.names(cds_entries$locus_tag, unique=TRUE)
-    cds_seq <- getSeq(raw_seq, cds_entries)
+    cds_seq <- Biostrings::getSeq(raw_seq, cds_entries)
     names(cds_seq) <- cds_entries$locus_tag
-    dict <- PDict(pattern, max.mismatch=0)
-    result <- vcountPDict(dict, cds_seq)
+    dict <- Biostrings::PDict(pattern, max.mismatch=0)
+    result <- Biostrings::vcountPDict(dict, cds_seq)
     num_tas <- data.frame(name=names(cds_seq), tas=as.data.frame(t(result)))
     rownames(num_tas) <- make.names(num_tas$name, unique=TRUE)
     colnames(num_tas) <- c("name","TAs")
@@ -311,16 +311,16 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100, verbose=TRUE) {
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {
-        counts <- exprs(count_table)
+        counts <- Biobase::exprs(count_table)
     }
-    test <- pOverA(p=p, A=A)
-    filter_list <- filterfun(test)
-    answer <- genefilter(count_table, filter_list)
+    test <- genefilter::pOverA(p=p, A=A)
+    filter_list <- genefilter::filterfun(test)
+    answer <- genefilter::genefilter(count_table, filter_list)
     count_table <- count_table[answer,]
 
     if (isTRUE(verbose)) {
         removed <- num_before - nrow(count_table)
-        print(paste0("Removing ", removed, " low-count genes (", nrow(count_table), " remaining)."))
+        message(paste0("Removing ", removed, " low-count genes (", nrow(count_table), " remaining)."))
     }
     libsize <- colSums(count_table)
     counts <- list(count_table=count_table, libsize=libsize)
@@ -343,15 +343,15 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000, verbose=
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {
-        counts <- exprs(count_table)
+        counts <- Biobase::exprs(count_table)
     }
-    test <- cv(cv_min, cv_max)
-    filter_list <- filterfun(test)
-    answer <- genefilter(count_table, filter_list)
+    test <- genefilter::cv(cv_min, cv_max)
+    filter_list <- genefilter::filterfun(test)
+    answer <- genefilter::genefilter(count_table, filter_list)
     count_table <- count_table[answer,]
 
     if (verbose) {
-        print(sprintf("Removing %d low-count genes (%d remaining).",
+        message(sprintf("Removing %d low-count genes (%d remaining).",
                       num_before - nrow(count_table), nrow(count_table)))
     }
     libsize <- colSums(count_table)
@@ -375,15 +375,15 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1, verbose=FALSE) {
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {
-        counts <- exprs(count_table)
+        counts <- Bioase::exprs(count_table)
     }
-    test <- kOverA(k=k, A=A)
-    filter_list <- filterfun(test)
-    answer <- genefilter(count_table, filter_list)
+    test <- genefilter::kOverA(k=k, A=A)
+    filter_list <- genefilter::filterfun(test)
+    answer <- genefilter::genefilter(count_table, filter_list)
     count_table <- count_table[answer,]
 
     if (verbose) {
-        print(sprintf("Removing %d low-count genes (%d remaining).",
+        message(sprintf("Removing %d low-count genes (%d remaining).",
                       num_before - nrow(count_table), nrow(count_table)))
     }
     libsize <- colSums(count_table)
@@ -406,7 +406,7 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1, verbose=FALSE) {
 #' @export
 #' @examples
 #' ## df_new = hpgl_combatMod(df, batches, model)
-hpgl_combatMod <- function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
+hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
     par.prior <- TRUE
     numCovs <- NULL
     mod <- cbind(mod, batch)
@@ -417,17 +417,17 @@ hpgl_combatMod <- function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
         numCovs <- numCovs - 1
     }
     ##    design <- sva:::design.mat(mod, numCov = numCovs)
-    require.auto("survJamda")
-    design <- design.mat(mod)
+    ## require.auto("survJamda")
+    design <- survJamda::design.mat(mod)
     batches <- list.batch(mod)
     n.batch <- length(batches)
     n.batches <- sapply(batches, length)
     n.array <- sum(n.batches)
     NAs <- any(is.na(dat))
     if (NAs) {
-        cat(c("Found", sum(is.na(dat)), "Missing Data Values\n"), sep=" ")
+        message(paste0("Found ", sum(is.na(dat)), " missing data values."))
     }
-    cat("Standardizing Data across genes\n")
+    message("Standardizing data across genes\n")
     if (!NAs) {
         B.hat <- solve(t(design) %*% design) %*% t(design) %*% t(as.matrix(dat))
     } else {
@@ -446,19 +446,19 @@ hpgl_combatMod <- function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
         tmp[, c(1:n.batch)] <- 0
         stand.mean <- stand.mean + t(tmp %*% B.hat)
     }
-    s.data <- (dat - stand.mean)/(sqrt(var.pooled) %*% t(rep(1, n.array)))
+    s.data <- (dat - stand.mean) / (sqrt(var.pooled) %*% t(rep(1, n.array)))
     if (noScale) {
         m.data <- dat - stand.mean
         mse <- ((dat - t(design %*% B.hat))^2) %*% rep(1/(n.array - ncol(design)), n.array)
         hld <- NULL
         bayesdata <- dat
         for (k in 1:n.batch) {
-            cat(paste("Fitting 'shrunk' batch ", k, " effects\n", sep = ""))
+            message(paste0("Fitting 'shrunk' batch ", k, " effects."))
             sel <- batches[[k]]
             gammaMLE <- rowMeans(m.data[, sel])
             mprior <- mean(gammaMLE, na.rm = TRUE)
             vprior <- var(gammaMLE, na.rm = TRUE)
-            prop <- vprior/(mse/(length(sel)) + vprior)
+            prop <- vprior / (mse / (length(sel)) + vprior)
             gammaPost <- prop * gammaMLE + (1 - prop) * mprior
             for (i in sel) {
                 bayesdata[, i] <- bayesdata[, i] - gammaPost
@@ -466,10 +466,10 @@ hpgl_combatMod <- function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
             stats <- data.frame(gammaPost=gammaPost, gammaMLE=gammaMLE, prop=prop)
             hld[[paste("Batch", k, sep=".")]] <- list(stats=stats, indices=sel, mprior=mprior, vprior=vprior)
         }
-        cat("Adjusting data for batch effects\n")
+        message("Adjusting data for batch effects.")
         return(bayesdata)
     } else {
-        cat("Fitting L/S model and finding priors\n")
+        message("Fitting L/S model and finding priors.")
         batch.design <- design[, 1:n.batch]
         if (!NAs) {
             gamma.hat <- solve(t(batch.design) %*% batch.design) %*% t(batch.design) %*% t(as.matrix(s.data))
@@ -490,20 +490,20 @@ hpgl_combatMod <- function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
             plot(tmp, type="l", main="Density Plot")
             xx <- seq(min(tmp$x), max(tmp$x), length = 100)
             lines(xx, dnorm(xx, gamma.bar[1], sqrt(t2[1])), col = 2)
-            qqnorm(gamma.hat[1, ])
-            qqline(gamma.hat[1, ], col = 2)
-            tmp <- density(delta.hat[1, ])
-            invgam <- 1/rgamma(ncol(delta.hat), a.prior[1], b.prior[1])
-            tmp1 <- density(invgam)
+            stats::qqnorm(gamma.hat[1, ])
+            stats::qqline(gamma.hat[1, ], col = 2)
+            tmp <- stats::density(delta.hat[1, ])
+            invgam <- 1 / stats::rgamma(ncol(delta.hat), a.prior[1], b.prior[1])
+            tmp1 <- stats::density(invgam)
             plot(tmp, typ="l", main="Density Plot", ylim=c(0, max(tmp$y, tmp1$y)))
             lines(tmp1, col = 2)
-            qqplot(delta.hat[1, ], invgam, xlab="Sample Quantiles", ylab="Theoretical Quantiles")
+            stats::qqplot(delta.hat[1, ], invgam, xlab="Sample Quantiles", ylab="Theoretical Quantiles")
             lines(c(0, max(invgam)), c(0, max(invgam)), col=2)
             title("Q-Q Plot")
         }
         gamma.star <- delta.star <- NULL
         if (par.prior) {
-            cat("Finding parametric adjustments\n")
+            message("Finding parametric adjustments.")
             for (i in 1:n.batch) {
                 temp <- sva:::it.sol(s.data[, batches[[i]]], gamma.hat[i, ],
                                      delta.hat[i, ], gamma.bar[i],
@@ -512,18 +512,19 @@ hpgl_combatMod <- function (dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
                 delta.star <- rbind(delta.star, temp[2, ])
             }
         } else {
-            cat("Finding nonparametric adjustments\n")
+            message("Finding nonparametric adjustments.")
             for (i in 1:n.batch) {
                 temp <- sva:::int.prior(as.matrix(s.data[, batches[[i]]]), gamma.hat[i, ], delta.hat[i, ])
                 gamma.star <- rbind(gamma.star, temp[1, ])
                 delta.star <- rbind(delta.star, temp[2, ])
             }
         }
-        cat("Adjusting the Data\n")
+        message("Adjusting the Data.")
         bayesdata <- s.data
         j <- 1
         for (i in batches) {
-            bayesdata[, i] <- (bayesdata[, i] - t(batch.design[i,] %*% gamma.star))/(sqrt(delta.star[j, ]) %*% t(rep(1, n.batches[j])))
+            bayesdata[, i] <- (bayesdata[, i] - t(batch.design[i,] %*% gamma.star)) /
+                (sqrt(delta.star[j, ]) %*% t(rep(1, n.batches[j])))
             j <- j + 1
         }
         bayesdata <- (bayesdata * (sqrt(var.pooled) %*% t(rep(1, n.array)))) + stand.mean
@@ -597,9 +598,9 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         design <- data$design
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'list') {
         data <- data$count_table
         if (is.null(data)) {
@@ -616,15 +617,15 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     original_counts <- list(libsize=raw_libsize, counts=count_table)
 
     if (verbose) {
-        print("This function performs normalization in a static order: low-count filter, normalization, batch, conversion, transform")
-        print("These steps may be mixed/matched with the following functions: lowfilter_counts, normalize_counts, batch_counts, convert_counts, transform_counts")
+        message("This function performs normalization in a static order: low-count filter, normalization, batch, conversion, transform")
+        message("These steps may be mixed/matched with the following functions: lowfilter_counts, normalize_counts, batch_counts, convert_counts, transform_counts")
     }
 
     ## Step 1: Low-count filtering
     lowfiltered_counts <- NULL
     if (filter_low != FALSE) {
         if (verbose) {
-            print(paste0("Performing low-count filter with: ", filter_low))
+            message(paste0("Performing low-count filter with: ", filter_low))
         }
         count_table <- lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2)
         ##count_table = lowfilter_counts(count_table, type=filter_low)
@@ -637,11 +638,11 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     normalized_counts <- NULL
     if (norm != "raw") {
         if (verbose) {
-            print(paste("Applying normalization:", norm))
+            message(paste0("Applying normalization: ", norm))
         }
         if (is.null(expt_design)) {
-            print("The experimental design is null.  Some normalizations will therefore fail.")
-            print("If you receive an error about an object with no dimensions, that is likely why.")
+            message("The experimental design is null.  Some normalizations will therefore fail.")
+            message("If you receive an error about an object with no dimensions, that is likely why.")
         }
         normalized_counts <- normalize_counts(count_table, expt_design, norm=norm)
         count_table <- normalized_counts$count_table
@@ -655,7 +656,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     converted_counts <- NULL
     if (convert != "raw") {
         if (verbose) {
-            print(paste("Setting output type as:", convert))
+            message(paste0("Setting output type as: ", convert))
         }
         converted_counts <- convert_counts(count_table, convert=convert, annotations=annotations, fasta=fasta, entry_type=entry_type)
         count_table <- converted_counts$count_table
@@ -666,7 +667,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     batched_counts <- NULL
     if (batch != "raw") {
         if (verbose) {
-            print(paste("Applying: ", batch, " batch correction(raw means nothing).", sep=""))
+            message(paste0("Applying: ", batch, " batch correction(raw means nothing)."))
         }
         ## batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
         tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design), silent=TRUE)
@@ -685,7 +686,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     transformed_counts <- NULL
     if (transform != "raw") {
         if (verbose) {
-            print(paste("Applying: ", transform, " transformation.", sep=""))
+            message(paste0("Applying: ", transform, " transformation."))
         }
         transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed, ...)
         count_table <- transformed_counts$count_table
@@ -716,12 +717,11 @@ hpgl_qshrink <- function(exprs=NULL, groups=NULL, refType="mean",
                         groupCol=NULL, plot=TRUE, ...) {
     exprs <- as.matrix(exprs)
     if (is.null(groups)) {
-        cat("Groups were not provided.  Performing a simple quantile
-  normalization. This is probably not what you actually want!
-")
+        message("Groups were not provided.  Performing a simple quantile")
+        message("normalization. This is probably not what you actually want!")
         count_rownames <- rownames(exprs)
         count_colnames <- colnames(exprs)
-        normExprs <- normalize.quantiles(as.matrix(exprs), copy=TRUE)
+        normExprs <- preprocessCore::normalize.quantiles(as.matrix(exprs), copy=TRUE)
         rownames(normExprs) <- count_rownames
         colnames(normExprs) <- count_colnames
         return(normExprs)
@@ -807,7 +807,7 @@ lowfilter_counts <- function(count_table, type='cbcb', p=0.01, A=1, k=1,
 #'
 hpgl_qstats <- function (exprs, groups, refType="mean",
                          groupLoc="mean", window=99) {
-    require.auto("matrixStats")
+    ## require.auto("matrixStats")
     Q <- apply(exprs, 2, sort)
     if (refType == "median") {
         Qref <- matrixStats::rowMedians(Q)
@@ -822,8 +822,8 @@ hpgl_qstats <- function (exprs, groups, refType="mean",
     for (g in uGroups) {
         index <- (g == groups)
         if (sum(index) == 1) {
-            print(paste0("There was only replicate of type: ", g))
-            print("This will likely do terrible things to qsmooth.")
+            message(paste0("There was only replicate of type: ", g))
+            message("This will likely do terrible things to qsmooth.")
             QBETAS <- cbind(QBETAS, Q[, index])
             SIGMA <- cbind(SIGMA, 0)
         } else if (sum(index) > 1) {
@@ -850,7 +850,7 @@ hpgl_qstats <- function (exprs, groups, refType="mean",
     roughWeights <- SIGMA/(SIGMA + TAU)
     roughWeights[is.nan(roughWeights)] = 0 ## is this backward?
     roughWeights[SIGMA < 10^(-6) & TAU < 10^(-6)] = 1
-    smoothWeights <- runmed(roughWeights, k=window, endrule="constant")
+    smoothWeights <- stats::runmed(roughWeights, k=window, endrule="constant")
     qstats_model <- model.matrix(~0 + factor(groups, levels=uGroups))
     qstats_result <- list(Q=Q, Qref=Qref, QBETAS=QBETAS, TAU=TAU,
                           SIGMA=SIGMA, roughWeights=roughWeights,
@@ -881,10 +881,9 @@ hpgl_rpkm <- function(df, annotations=gene_annotations) {
     }
     df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
     if (dim(df_in)[1] == 0) {
-        print("When the annotations and df were checked against each other,
- the result was null.  Perhaps your annotation or df's rownames aren't set?
- Going to attempt to use the column 'ID'.
-")
+        message("When the annotations and df were checked against each other")
+        message("the result was null.  Perhaps your annotation or df's rownames")
+        message("aren't set? Going to attempt to use the column 'ID'.")
         rownames(annotations) = make.names(annotations$ID, unique=TRUE)
         df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
         if (dim(df_in)[1] == 0) {
@@ -927,7 +926,7 @@ qlasso_lowfilter_counts <- function(count_table, thresh=2,
     if (verbose) {
         following_dim <- dim(count_table)
         lost_rows <- original_dim[1] - following_dim[1]
-        print(paste("Low count filtering cost:", lost_rows, "gene(s)."))
+        message(paste0("Low count filtering cost: ", lost_rows, " gene(s)."))
     }
     libsize <- colSums(count_table)
     counts <- list(count_table=count_table, libsize=libsize)
@@ -954,9 +953,9 @@ normalize_counts <- function(data, design=NULL, norm="raw") {
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         design <- data$design
-        count_table <- exprs(data$expressionset)
+        count_table <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        count_table <- exprs(data)
+        count_table <- Biobase::exprs(data)
     } else if (data_class == 'list') {
         count_table <- data$count_table
         if (is.null(data)) {
@@ -984,9 +983,9 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         if (is.null(conds)) {
             conds <- original_cols
         }
-        cds <- newCountDataSet(count_table, conditions=conds)
-        factors <- estimateSizeFactors(cds)
-        count_table <- counts(factors, normalized=TRUE)
+        cds <- DESeq::newCountDataSet(count_table, conditions=conds)
+        factors <- BiocGenerics::estimateSizeFactors(cds)
+        count_table <- BiocGenerics::counts(factors, normalized=TRUE)
         norm_performed <- 'sf2'
     } else if (norm == 'vsd') {
         original_cols <- colnames(count_table)
@@ -994,16 +993,16 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         if (is.null(conds)) {
             conds <- original_cols
         }
-        cds <- newCountDataSet(count_table, conditions=conds)
-        factors <- estimateSizeFactors(cds)
-        dispersions <- estimateDispersions(factors, method='blind')
-        count_table <- getVarianceStabilizedData(dispersions)
+        cds <- DESeq::newCountDataSet(count_table, conditions=conds)
+        factors <- BiocGenerics::estimateSizeFactors(cds)
+        dispersions <- BiocGenerics::estimateDispersions(factors, method='blind')
+        count_table <- DESeq::getVarianceStabilizedData(dispersions)
         norm_performed <- 'vsd'
     } else if (norm == "quant") {
         # Quantile normalization (Bolstad et al., 2003)
         count_rownames <- rownames(count_table)
         count_colnames <- colnames(count_table)
-        count_table <- normalize.quantiles(as.matrix(count_table), copy=TRUE)
+        count_table <- preprocessCore::normalize.quantiles(as.matrix(count_table), copy=TRUE)
         rownames(count_table) <- count_rownames
         colnames(count_table) <- count_colnames
         norm_performed <- 'quant'
@@ -1048,9 +1047,9 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         count_table <- as.matrix(tmm_counts)
         norm_performed <- "rle"
     } else {
-        print("Did not recognize the normalization, leaving the table alone.")
-        print("Recognized normalizations include: 'qsmooth', 'sf', 'quant', ")
-        print("'tmm', 'upperquartile', and 'rle'")
+        message("Did not recognize the normalization, leaving the table alone.")
+        message("Recognized normalizations include: 'qsmooth', 'sf', 'quant', ")
+        message("'tmm', 'upperquartile', and 'rle'")
         count_table <- as.matrix(count_table)
     }
     norm_libsize <- colSums(count_table)
@@ -1082,10 +1081,10 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     if (is.null(new_expt$original_expressionset)) {
         new_expt$original_expressionset = new_expt$expressionset
     } else {
-        cat(paste0("This function will replace the expt$expressionset slot with
+        message(paste0("This function will replace the expt$expressionset slot with
  the ", transform, "(", norm, "(", convert, "))'d data.
 "))
-        cat("It saves the current data into a slot named:
+        message("It saves the current data into a slot named:
  expt$backup_expressionset. It will also save copies of each step along the way
  in expt$normalized with the corresponding libsizes. Keep the libsizes in mind
  when invoking limma.  The appropriate libsize is the non-log(cpm(normalized)).
@@ -1095,39 +1094,39 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 ")
     }
     if (filter_low == FALSE) {
-        cat("Filter low is false, this should likely be set to something, good
+        message("Filter low is false, this should likely be set to something, good
  choices include cbcb, kofa, pofa (anything but FALSE).  If you want this to
  stay FALSE, keep in mind that if other normalizations are performed, then the
  resulting libsizes are likely to be odd (potentially negative!)
 ")
     }
     if (transform == "raw") {
-        cat("Leaving the data in its current base format, keep in mind that
+        message("Leaving the data in its current base format, keep in mind that
  some metrics are easier to see when the data is log2 transformed, but
  EdgeR/DESeq don't like transformed data.
 ")
     }
     if (convert == "raw") {
-        cat("Leaving the data unconverted.  It is often advisable to cpm/rpkm
+        message("Leaving the data unconverted.  It is often advisable to cpm/rpkm
  the data to normalize for sampling differences, keep in mind though that rpkm
  has some annoying biases, and voom() by default does a cpm (though hpgl_voom()
  will try to detect this).
 ")
     }
     if (norm == "raw") {
-        cat("Leaving the data unnormalized.  This is necessary for DESeq, but
+        message("Leaving the data unnormalized.  This is necessary for DESeq, but
  EdgeR/limma might benefit from normalization.  Good choices include quantile,
  size-factor, tmm, etc.
 ")
     }
     if (batch == "raw") {
-        cat("Not correcting the count-data for batch effects.  If batch is
+        message("Not correcting the count-data for batch effects.  If batch is
  included in EdgerR/limma's model, then this is probably wise; but in extreme
  batch effects this is a good parameter to play with.
 ")
     }
     new_expt$backup_expressionset <- new_expt$expressionset
-    old_data <- exprs(expt$original_expressionset)
+    old_data <- Biobase::exprs(expt$original_expressionset)
     design <- expt$design
     normalized <- hpgl_norm(old_data, design=design, transform=transform,
                             norm=norm, convert=convert, batch=batch,
@@ -1153,8 +1152,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 }
 
 replace_data <- function(expt, data) {
-    current <- exprs(expt$expressionset)
-    exprs(current) <- data
+    current <- Biobase::exprs(expt$expressionset)
+    Biobase::exprs(current) <- data
     expt$expressionset <- current
     return(expt)
 }
@@ -1179,10 +1178,10 @@ transform_counts <- function(count_table, transform="raw", converted="raw",
     num_zero <- sum(count_table == 0)
     num_low <- sum(count_table < 0)
     if (num_low > 0) {
-        print(paste0("Found ", num_low, " values less than 0."))
+        message(paste0("Found ", num_low, " values less than 0."))
     }
     if (num_zero > 0) {
-        cat(paste0("Found ", num_zero, " values equal to 0, adding ", add, "
+        message(paste0("Found ", num_zero, " values equal to 0, adding ", add, "
  to the matrix.
 "))
         count_table <- count_table + add
@@ -1196,7 +1195,7 @@ transform_counts <- function(count_table, transform="raw", converted="raw",
     } else if (transform == "log") {  ## Natural log
         count_table <- log(count_table)  ## Apparently log1p does this.
     } else {
-        cat("Did not recognize the transformation, leaving the table.
+        message("Did not recognize the transformation, leaving the table.
  Recognized transformations include: 'log2', 'log10', 'log'
 ")
     }

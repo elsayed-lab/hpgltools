@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jan 22 19:54:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Jan 29 20:19:04 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -50,9 +50,9 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
     } else if (is.null(file)) {
         tmp_definitions <- meta_dataframe
     }  else {
-        if (file_ext(file) == 'csv') {
+        if (tools::file_ext(file) == 'csv') {
             tmp_definitions <- read.csv(file=file, comment.char="#", sep=sep)
-        } else if (file_ext(file) == 'xls' | file_ext(file) == 'xlsx') {
+        } else if (tools::file_ext(file) == 'xls' | tools::file_ext(file) == 'xlsx') {
             ## xls = loadWorkbook(file, create=FALSE)
             ## tmp_definitions = readWorksheet(xls, 1)
             tmp_definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1)
@@ -160,9 +160,9 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
     } else if (is.null(file)) {
         sample_definitions <- meta_dataframe
     } else {
-        if (file_ext(file) == 'csv') {
+        if (tools::file_ext(file) == 'csv') {
             sample_definitions <- read.csv(file=file, comment.char="#", sep=sep)
-        } else if (file_ext(file) == 'xls' | file_ext(file) == 'xlsx') {
+        } else if (tools::file_ext(file) == 'xls' | tools::file_ext(file) == 'xlsx') {
             ## xls = loadWorkbook(file, create=FALSE)
             ## sample_definitions = readWorksheet(xls, 1)
             sample_definitions <- openxlsx::read.xlsx(file, sheet=1)
@@ -206,7 +206,7 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
             sample_definitions$counts <- paste("processed_data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, suffix, sep="")
             found_counts <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
             if (class(found_counts) == 'try-error') {
-                stop("Unable to find count tables, either by sample id nor by type")
+                stop("Unable to find count tables, neither by sample id nor by type")
             } else {
                 all_count_tables <- found_counts
             }
@@ -220,7 +220,7 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
         sample_definitions$counts <- paste("processed_data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, suffix, sep="")
         all_count_tables <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
     } ## End checking by_type/by_samples
-    all_count_matrix <- as.data.frame(all_count_tables)
+    all_count_matrix <- as.data.frame(all_count_tables)  ## haha sucker
 
     rownames(all_count_matrix) <- gsub("^exon:","", rownames(all_count_matrix))
     rownames(all_count_matrix) <- make.names(gsub(":\\d+","", rownames(all_count_matrix)), unique=TRUE)
@@ -274,14 +274,18 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
     if (is.null(sample_definitions$intercounts)) {
         sample_definitions$intercounts <- "unknown"
     }
-    metadata <- new("AnnotatedDataFrame", data.frame(sample=as.character(sample_definitions$sample.id),
-                                                     stage=as.character(sample_definitions$stage),
-                                                     type=as.character(sample_definitions$type),
-                                                     condition=as.character(sample_definitions$condition),
-                                                     batch=as.character(sample_definitions$batch),
-                                                     color=as.character(sample_definitions$colors),
-                                                     counts=sample_definitions$counts,
-                                                     intercounts=sample_definitions$intercounts))
+    meta_frame <- data.frame(
+        sample=as.character(sample_definitions$sample.id),
+        stage=as.character(sample_definitions$stage),
+        type=as.character(sample_definitions$type),
+        condition=as.character(sample_definitions$condition),
+        batch=as.character(sample_definitions$batch),
+        color=as.character(sample_definitions$colors),
+        counts=sample_definitions$counts,
+        intercounts=sample_definitions$intercounts)
+    require.auto("Biobase")
+    metadata <- new("AnnotatedDataFrame", meta_frame)
+
     sampleNames(metadata) <- colnames(all_count_matrix)
     feature_data <- new("AnnotatedDataFrame", gene_info)
     featureNames(feature_data) <- rownames(all_count_matrix)
@@ -418,6 +422,8 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
     }
     message(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
     colnames(count_table) <- c("ID", ids[1])
+    rownames(count_table) <- make.names(count_table$ID, unique=TRUE)
+    count_table <- count_table[-1]
     ## iterate over and append remaining samples
     for (table in 2:length(files)) {
         if (file.exists(tolower(files[table]))) {
@@ -432,16 +438,21 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
             stop(paste0("There was an error reading: ", files[table]))
         }
         colnames(tmp_count) <- c("ID", ids[table])
+        ##tmp_count <- tmp_count[, c("ID", ids[table])]
+        rownames(tmp_count) <- make.names(tmp_count$ID, unique=TRUE)
+        tmp_count <- tmp_count[-1]
         pre_merge <- length(rownames(tmp_count))
-        count_table <- merge(count_table, tmp_count, by="ID")
+        count_table <- merge(count_table, tmp_count, by.x="row.names", by.y="row.names", all.x=TRUE)
+        rownames(count_table) <- count_table$Row.names
+        count_table <- count_table[-1]
         post_merge <- length(rownames(count_table))
         message(paste0(files[table], " contains ", pre_merge, " rows and merges to ", post_merge, " rows."))
     }
 
     rm(tmp_count)
     ## set row and columns ids
-    rownames(count_table) <- count_table$ID
-    count_table <- count_table[-1]
+    ## rownames(count_table) <- make.names(count_table$ID, unique=TRUE)
+    ## count_table <- count_table[-1]
     colnames(count_table) <- ids
 
     ## remove summary fields added by HTSeq

@@ -7,7 +7,8 @@ a pairwise comparison of all conditions using voom/limma.}
 \usage{
 limma_pairwise(input, conditions = NULL, batches = NULL,
   model_cond = TRUE, model_batch = FALSE, model_intercept = FALSE,
-  extra_contrasts = NULL, alt_model = NULL, libsize = NULL)
+  extra_contrasts = NULL, alt_model = NULL, libsize = NULL,
+  annot_df = NULL, ...)
 }
 \arguments{
 \item{input}{a dataframe/vector or expt class containing count tables, normalization state, etc.}

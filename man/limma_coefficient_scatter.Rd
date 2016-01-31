@@ -5,8 +5,9 @@
 \title{limma_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma}
 \usage{
 limma_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
-  gvis_filename = NULL, gvis_trendline = TRUE, tooltip_data = NULL,
-  flip = FALSE, base_url = NULL)
+  gvis_filename = NULL, gvis_trendline = TRUE, z = 1.5,
+  tooltip_data = NULL, flip = FALSE, base_url = NULL,
+  up_color = "#7B9F35", down_color = "#DD0000")
 }
 \arguments{
 \item{x}{default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot}

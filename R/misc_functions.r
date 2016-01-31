@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 21 11:17:56 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Jan 30 12:12:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -13,7 +13,7 @@
 #' ## svd = makeSVD(data)
 makeSVD <- function (x) {
     x <- as.matrix(x)
-    s <- fast.svd(x - rowMeans(x))
+    s <- corpcor::fast.svd(x - rowMeans(x))
     v <- s$v
     rownames(v) <- colnames(x)
     s <- list(v=v, u=s$u, d=s$d)
@@ -259,17 +259,24 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #' @return  a df!
 gff2df <- function(gff, type=NULL) {
     ret <- NULL
-    annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
-    if (class(annotations) == 'try-error') {
-        annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
+    gff_test <- grepl("\\.gff", gff_file)
+    gtf_test <- grepl("\\.gtf", gff_file)
+    annotations <- NULL
+    if (isTRUE(gtf_test)) {  ## Start with an attempted import of gtf files.
+        ret <- try(rtracklayer::import.gff(gff, format="gtf"), silent=TRUE)
+    } else {
+        annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
         if (class(annotations) == 'try-error') {
-            stop("Could not extract the widths from the gff file.")
+            annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
+            if (class(annotations) == 'try-error') {
+                stop("Could not extract the widths from the gff file.")
+            } else {
+                ret <- annotations
+            }
         } else {
             ret <- annotations
         }
-    } else {
-        ret <- annotations
-    }
+    } ## End else this is not a gtf file
     ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
     ## no method to coerce an S4 class to a vector.
     ret <- GenomicRanges::as.data.frame(ret)
@@ -334,6 +341,7 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #'
 #' @param gff or annotations: Either a gff file or annotation data frame (which likely came from a gff file.)
 #'
+#' @export
 #' @return a df of tooltip information
 make_tooltips <- function(annotations, desc_col='description') {
     tooltip_data <- NULL
@@ -543,7 +551,16 @@ write_xls_openxlsx <- function(data, sheet="first", file="excel/workbook.xlsx", 
     } else {
         wb <- openxlsx::createWorkbook(creator="atb")
     }
-    openxlsx::addWorksheet(wb, sheetName=sheet)
+    newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
+    if (class(newsheet) == 'try-error') {
+        ## assume for the moment that this is because it already exists.
+        ## For the moment, leave it alone though and see what happens
+        replace_sheet <- FALSE
+        if (isTRUE(replace_sheet)) {
+            openxlsx::removeWorksheet(wb=wb, sheet=sheet)
+            try(openxlsx::addWorksheet(wb, sheetName=sheet))
+        }
+    }
     hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
     new_row <- 1
     ##print(paste0("GOT HERE openxlswrite, title? ", arglist$title))
@@ -562,7 +579,8 @@ write_xls_openxlsx <- function(data, sheet="first", file="excel/workbook.xlsx", 
             data[[col]] <- as.character(data[[col]])
         }
     }
-    writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9", startRow=new_row, rowNames=TRUE)
+    openxlsx::writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9",
+                             startRow=new_row, rowNames=TRUE)
     new_row <- new_row + nrow(data) + 2
 
     ## Going to make an assumption about columns 1,2
