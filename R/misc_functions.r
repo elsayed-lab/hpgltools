@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Jan 30 12:12:01 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  1 15:31:04 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -420,7 +420,6 @@ sillydist <- function(firstterm, secondterm, firstaxis, secondaxis) {
 
 #' write_xls()  Write a dataframe to an excel spreadsheet sheet.
 #'
-#' @param type default='xlsx'  whether to use the xlsx or XLConnect package.
 #' @param tripledots  the set of arguments given to either xlsx or XLConnect
 #'
 #' @return an excel workbook
@@ -430,8 +429,9 @@ sillydist <- function(firstterm, secondterm, firstaxis, secondaxis) {
 #' @export
 #' @examples
 #' ## write_xls(dataframe, "hpgl_data")
-write_xls <- function(data, sheet="first", file="excel/workbook", overwrite_file=TRUE, newsheet=FALSE,
-                      overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", type="openxlsx", ...) {
+write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite_file=TRUE, newsheet=FALSE,
+                      overwrite_sheet=TRUE, dated=TRUE, first_two_widths=c("30","60"), ...) {
+    arglist <- list(...)
     excel_dir <- dirname(file)
     if (!file.exists(excel_dir)) {
         dir.create(excel_dir, recursive=TRUE)
@@ -456,96 +456,7 @@ write_xls <- function(data, sheet="first", file="excel/workbook", overwrite_file
     if (class(data) == 'matrix') {
         data <- as.data.frame(data)
     }
-    ret <- NULL
-    if (type == 'xlsx') {
-        ret <- write_xls_xlsx(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated, ...)
-    } else if (type == 'openxlsx') {
-        ret <- write_xls_openxlsx(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated, ...)
-        ##ret <- hpgltools:::write_xls_openxlsx(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated)
-    } else {
-        ret <- hpgltools:::write_xls_xlconnect(data, sheet=sheet, file=filename, overwrite_file=overwrite_file, overwrite_sheet=overwrite_sheet, dated=dated, ...)
-    }
-    return(ret)
-}
 
-#' write_xls_xlconnect()  Write a dataframe to an excel spreadsheet sheet.
-#'
-#' @param data  a dataframe of information.
-#' @param sheet default='first'  the name of an excel sheet in a workbook.
-#' @param file default='excel/workbook.xls'  an excel workbook to which to write.
-#' @param rowname default='rownames'  what will the rownames be?
-#' @param overwritefile default=FALSE  overwrite the xls file with this new data, or use the original?
-#' @param overwritesheet default=TRUE  overwrite the xls sheet with this new data?  (if true it will make a backup sheet .bak).
-#'
-#' @return NULL, on the say it creates a workbook if necessary,
-#' creates a sheet, and writes the data to it.
-#'
-#' @seealso \code{\link{loadWorkbook}}, \code{\link{createSheet}},
-#' \code{\link{writeWorksheet}}, \code{\link{saveWorkbook}}
-#'
-#' @examples
-#' ## write_xls_xlconnect(dataframe, "hpgl_data")
-#' ## Sometimes it is a good idea to go in and delete the workbook and
-#' ## re-create it if this is used heavily, because it will get crufty.
-write_xls_xlconnect <- function(data, sheet="first", file="excel/workbook.xls", overwrite_file=TRUE,
-                                overwrite_sheet=TRUE, dated=TRUE, suffix=".xls", ...) {
-    xls <- XLConnect::loadWorkbook(file, create=TRUE)
-    if (isTRUE(overwritesheet)) {
-        newname <- paste0(sheet, '.bak')
-        if (existsSheet(xls, newname)) {
-            XLConnect::removeSheet(xls, sheet=newname)
-        }
-        if (existsSheet(xls, sheet)) {
-            XLConnect::renameSheet(xls, sheet=sheet, newName=newname)
-        }
-    }
-
-    XLConnect::createSheet(xls, name=sheet)
-    if (is.na(rowname)) {
-        XLConnect::writeWorksheet(xls, data, sheet=sheet)
-    } else {
-        XLConnect::writeWorksheet(xls, data, sheet=sheet, rowname=rowname)
-    }
-    ret <- XLConnect::saveWorkbook(xls)
-    return(ret)
-}
-
-#' write_xls_xlsx()  Write a dataframe to an excel spreadsheet sheet using xlsx.
-#'
-#' @param data  a dataframe of information.
-#' @param sheet default='first'  the name of an excel sheet in a workbook.
-#' @param file default='excel/workbook.xls'  an excel workbook to which to write.
-#' @param header default='Data Table'  a header to prepend to the printed worksheet.
-#' @param rownames default=TRUE  add the rownames to the left side of the table?
-#' @param colnames default=TRUE  add the column names to the top of the table?
-#' @param overwritefile default=FALSE  overwrite the xls file with this new data, or use the original?
-#' @param dated default=TRUE  append a dated suffix to the filename.
-#' @param suffix default='.xlsx'
-#'
-#' @return NULL, on the say it creates a workbook if necessary,
-#' creates a sheet, and writes the data to it.
-#'
-#' @seealso \code{\link{xlsx.addTable}}
-#'
-#' @examples
-#' ## write_xls_xlsx(dataframe)
-write_xls_xlsx <- function(data, sheet="first", file="excel/workbook.xls", overwrite_file=TRUE,
-                           overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx", ...) {
-    ## require.auto("kassambara/r2excel")
-    wb <- xlsx::createWorkbook(type="xlsx")
-    sheet <- xlsx::createSheet(wb, sheetName=sheet)
-    r2excel::xlsx.addHeader(wb, sheet, value=header, color="darkblue")
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addTable(wb, sheet, data, col.names=colnames, row.names=rownames, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-    res <- saveWorkbook(wb, file)
-    return(res)
-}
-
-write_xls_openxlsx <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite_file=TRUE,
-                               overwrite_sheet=TRUE, dated=TRUE, suffix=".xlsx",
-                               first_two_widths=c("30","60"), ...) {
-    arglist = list(...)
     if (file.exists(file)) {
         wb <- openxlsx::loadWorkbook(file)
     } else {
@@ -594,8 +505,12 @@ write_xls_openxlsx <- function(data, sheet="first", file="excel/workbook.xlsx", 
     return(ret)
 }
 
-openxlsx_add_plot <- function(wb, plot) {
 
+openxlsx_add_plot <- function(wb, plot) {
+    ## Not implemented yet, my thought was to do a test for the worksheet
+    ## if it is there, place the plot intelligently
+    ## if not, create the worksheet and place the plot
+    ## then make sure the workbook is saveable
 }
 
 my_writeDataTable <- function(wb, sheet, x, startCol=1, startRow=1, xy=NULL,
@@ -707,7 +622,6 @@ my_writeDataTable <- function(wb, sheet, x, startCol=1, startRow=1, xy=NULL,
     colNames <- replaceIllegalCharacters(colNames)
     wb$buildTable(sheet, colNames, ref, showColNames, tableStyle, tableName, withFilter[1])
 }
-
 
 #' backup_file()  Make a backup of an existing file with n revisions, like VMS!
 #'

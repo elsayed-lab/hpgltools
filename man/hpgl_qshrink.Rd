@@ -4,7 +4,7 @@
 \alias{hpgl_qshrink}
 \title{hpgl_qstats(): A hacked copy of Kwame's qsmooth/qstats code}
 \usage{
-hpgl_qshrink(exprs = NULL, groups = NULL, refType = "mean",
+hpgl_qshrink(data = NULL, groups = NULL, refType = "mean",
   groupLoc = "mean", window = 99, verbose = FALSE, groupCol = NULL,
   plot = TRUE, ...)
 }

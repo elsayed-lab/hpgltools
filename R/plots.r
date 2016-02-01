@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Jan 30 11:58:33 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  1 12:51:07 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -231,8 +231,9 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 
     if (is.null(scale)) {
         if (max(data_matrix) > 1000) {
-            message("I am reasonably sure this should be log scaled and am setting it.")
-            message("If this is incorrect, set scale='raw'")
+            message("I am reasonably sure this should be log scaled and am setting it.
+  If this is incorrect, set scale='raw'
+")
             boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
         }
     } else {
@@ -279,6 +280,8 @@ hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
             message("This data will benefit from being displayed on the log scale.")
             message("If this is not desired, set scale='raw'")
             scale <- 'log'
+        } else {
+            scale <- 'raw'
         }
     }
 
@@ -315,6 +318,7 @@ hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
     if (!is.null(title)) {
         densityplot <- densityplot + ggplot2::ggtitle(title)
     }
+
     if (scale == 'log') {
         densityplot <- densityplot + ggplot2::scale_x_continuous(trans=scales::log2_trans())
     } else if (scale == 'logdim') {
@@ -579,8 +583,17 @@ hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE
 #' @examples
 #' ## libsize_plot = hpgl_libsize(expt=expt)
 #' ## libsize_plot  ## ooo pretty bargraph
-hpgl_libsize <- function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, text=TRUE, ...) {
+hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  yscale=NULL, ...) {
     hpgl_env <- environment()
+    arglist <- list(...)
+    colors <- get0('colors')
+    names <- get0('names')
+    text <- get0('text')
+    title <- get0('title')
+    yscale <- get0('yscale')
+    if (is.null(text)) {
+        text <- TRUE
+    }
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         design <- data$design
@@ -604,26 +617,39 @@ hpgl_libsize <- function(data, colors=NULL, scale=TRUE, names=NULL, title=NULL, 
                       colors=factor(colors))
     tmp$order <- factor(tmp$id, as.character(tmp$id))
     libsize_plot <- ggplot2::ggplot(data=tmp, ggplot2::aes(x=order, y=sum),
-                                    environment=hpgl_env, colour=tmp$colors) +
+                                    environment=hpgl_env, colour=colors) +
         ggplot2::geom_bar(ggplot2::aes(x=order), stat="identity", colour="black", fill=tmp$colors) +
         ggplot2::xlab("Sample ID") +
         ggplot2::ylab("Library size in (pseudo)counts.") +
         ggplot2::theme_bw() +
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=1.5, vjust=0.5))
     if (isTRUE(text)) {
-        libsize_plot <- libsize_plot +
-            ggplot2::geom_text(ggplot2::aes(reorder(order), label=prettyNum(tmp$sum, big.mark=",")),
-                               angle=90, size=3, color="white", hjust=1.2)
+        ## ggplot2::geom_text(ggplot2::aes(data=tmp, label=prettyNum(sum, big.mark=",")),
+        ##                                 angle=90, size=3, color="white", hjust=1.2)
+        tmp$sum <- sprintf("%.2f", round(tmp$sum, 2))
+        libsize_plot <- libsize_plot + ggplot2::geom_text(ggplot2::aes(x=order, label=prettyNum(as.character(tmp$sum), big.mark=",")),
+                                            angle=90, size=3, color="white", hjust=1.2)
     }
     if (!is.null(title)) {
         libsize_plot <- libsize_plot + ggplot2::ggtitle(title)
     }
+    if (is.null(yscale)) {
+        scale_difference <- max(as.numeric(tmp$sum)) / min(as.numeric(tmp$sum))
+        if (scale_difference > 10.0) {
+            message("The scale difference between the smallest and largest
+   libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
+            scale = TRUE
+        } else {
+            scale = FALSE
+        }
+    }
     if (scale == TRUE) {
-        message("Adding log10")
-        libsize_plot <- libsize_plot + ggplot2::scale_y_log10()
+        libsize_plot <- libsize_plot +
+            ggplot2::scale_y_log10()
     }
     if (!is.null(names)) {
-        libsize_plot <- libsize_plot + ggplot2::scale_x_discrete(labels=names)
+        libsize_plot <- libsize_plot +
+            ggplot2::scale_x_discrete(labels=names)
     }
     return(libsize_plot)
 }

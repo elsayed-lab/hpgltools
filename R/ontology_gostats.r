@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 21 22:43:16 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Jan 31 13:02:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -18,7 +18,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
                            categorysize=NULL, gff_type="CDS", ...) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should)
     ## contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
-    annotation <- hpgltools:::gff2df(gff, type=gff_type)
+    annotation <- gff2df(gff, type=gff_type)
     ## This is similar to logic in ontology_goseq and is similarly problematic.
     ## Some gff files I use have all the annotation data in the type called 'gene', others use 'CDS', others use 'exon'
     ## I need a robust method of finding the correct feature type to call upon.
@@ -32,11 +32,11 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("simple_gostats(): the current annotations has: ", nrow(annotation), " rows and ", ncol(annotation), " columns."))
     annotation[, universe_merge] <- make.names(annotation[, universe_merge], unique=TRUE)
     if (universe_merge %in% names(annotation)) {
-        universe <- annotation[,c(universe_merge, "width")]
+        universe <- annotation[, c(universe_merge, "width")]
     } else if (second_merge_try %in% names(annotation)) {
-        universe <- annotation[,c(second_merge_try, "width")]
+        universe <- annotation[, c(second_merge_try, "width")]
     } else if ("transcript_name" %in% names(annotation)) {
-        universe <- annotation[,c("transcript_name", "width")]
+        universe <- annotation[, c("transcript_name", "width")]
     } else {
         stop("simple_gostats(): Unable to cross reference annotations into universe.")
     }
@@ -48,7 +48,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     ## casting as a GOFrame/GOAllFrame
     colnames(universe) <- c("geneid","width")
     universe$id <- rownames(universe)
-    universe <- universe[complete.cases(universe),]
+    universe <- universe[complete.cases(universe), ]
 
     if (is.null(de_genes$ID)) {
         de_genes$ID <- rownames(de_genes)
@@ -68,53 +68,59 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     gostats_go <- gostats_go[,c("frame.go_id", "frame.Evidence", "frame.gene_id")]
     gostats_frame <- GOFrame(gostats_go, organism=organism)
     gostats_all <- GOAllFrame(gostats_frame)
-    require.auto("GSEABase", verbose=FALSE)
+    ## require.auto("GSEABase", verbose=FALSE)
     message("simple_gostats(): Creating the gene set collection.")
-    gsc <- GeneSetCollection(gostats_all, setType=GOCollection())
+    gsc <- Category::GeneSetCollection(gostats_all, setType=GOCollection())
 
     mf_over <- bp_over <- cc_over <- NULL
     mf_under <- bp_under <- cc_under <- NULL
     message("simple_gostats(): Performing MF GSEA.")
-    mf_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
-                                    geneIds=degenes_ids, universeGeneIds=universe_ids,
-                                    ontology="MF", pvalueCutoff=pcutoff,
-                                    conditional=conditional, testDirection="over")
-    mf_over <- hyperGTest(mf_params)
+    mf_params <- Category::GSEAGOHyperGParams(
+        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        geneIds=degenes_ids, universeGeneIds=universe_ids,
+        ontology="MF", pvalueCutoff=pcutoff,
+        conditional=conditional, testDirection="over")
+    mf_over <- Category::hyperGTest(mf_params)
     message(paste0("Found ", nrow(GOstats::summary(mf_over)), " over MF categories."))
     message("simple_gostats(): Performing BP GSEA.")
-    bp_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
-                                    geneIds=degenes_ids, universeGeneIds=universe_ids,
-                                    ontology="BP", pvalueCutoff=pcutoff,
-                                    conditional=FALSE, testDirection="over")
-    bp_over <- hyperGTest(bp_params)
+    bp_params <- Category::GSEAGOHyperGParams(
+        name=paste("GSEA of ", organism, sep=""),
+        geneSetCollection=gsc, geneIds=degenes_ids, universeGeneIds=universe_ids,
+        ontology="BP", pvalueCutoff=pcutoff,
+        conditional=FALSE, testDirection="over")
+    bp_over <- Category::hyperGTest(bp_params)
     message(paste0("Found ", nrow(GOstats::summary(bp_over)), " over BP categories."))
     message("simple_gostats(): Performing CC GSEA.")
-    cc_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
-                                    geneIds=degenes_ids, universeGeneIds=universe_ids,
-                                    ontology="CC", pvalueCutoff=pcutoff,
-                                    conditional=FALSE, testDirection="over")
-    cc_over <- hyperGTest(cc_params)
+    cc_params <- Category::GSEAGOHyperGParams(
+        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        geneIds=degenes_ids, universeGeneIds=universe_ids,
+        ontology="CC", pvalueCutoff=pcutoff,
+        conditional=FALSE, testDirection="over")
+    cc_over <- Category::hyperGTest(cc_params)
     message(paste0("Found ", nrow(GOstats::summary(cc_over)), " over CC categories."))
     message("simple_gostats(): Performing under MF GSEA.")
-    mf_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
-                                    geneIds=degenes_ids, universeGeneIds=universe_ids,
-                                    ontology="MF", pvalueCutoff=pcutoff,
-                                    conditional=conditional, testDirection="under")
-    mf_under <- hyperGTest(mf_params)
+    mf_params <- Category::GSEAGOHyperGParams(
+        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        geneIds=degenes_ids, universeGeneIds=universe_ids,
+        ontology="MF", pvalueCutoff=pcutoff,
+        conditional=conditional, testDirection="under")
+    mf_under <- Category::hyperGTest(mf_params)
     message(paste0("Found ", nrow(GOstats::summary(mf_under)), " under MF categories."))
     message("simple_gostats(): Performing under BP GSEA.")
-    bp_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
-                                    geneIds=degenes_ids, universeGeneIds=universe_ids,
-                                    ontology="BP", pvalueCutoff=pcutoff,
-                                    conditional=FALSE, testDirection="under")
+    bp_params <- Category::GSEAGOHyperGParams(
+        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        geneIds=degenes_ids, universeGeneIds=universe_ids,
+        ontology="BP", pvalueCutoff=pcutoff,
+        conditional=FALSE, testDirection="under")
     bp_under <- hyperGTest(bp_params)
     message(paste0("Found ", nrow(GOstats::summary(bp_under)), " under BP categories."))
     message("simple_gostats(): Performing under CC GSEA.")
-    cc_params <- GSEAGOHyperGParams(name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
-                                    geneIds=degenes_ids, universeGeneIds=universe_ids,
-                                    ontology="CC", pvalueCutoff=pcutoff,
-                                    conditional=FALSE, testDirection="under")
-    cc_under <- hyperGTest(cc_params)
+    cc_params <- Category::GSEAGOHyperGParams(
+        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        geneIds=degenes_ids, universeGeneIds=universe_ids,
+        ontology="CC", pvalueCutoff=pcutoff,
+        conditional=FALSE, testDirection="under")
+    cc_under <- Category::hyperGTest(cc_params)
     message(paste0("Found ", nrow(GOstats::summary(cc_under)), " under CC categories."))
     mf_over_table <- bp_over_table <- cc_over_table <- NULL
     mf_under_table <- bp_under_table <- cc_under_table <- NULL
@@ -125,22 +131,22 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     bp_under_table <- GOstats::summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
     cc_under_table <- GOstats::summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
     if (!is.null(dim(mf_over_table))) {
-        mf_over_table$qvalue <- qvalue(mf_over_table$Pvalue)$qvalues
+        mf_over_table$qvalue <- qvalue::qvalue(mf_over_table$Pvalue)$qvalues
     }
     if (!is.null(dim(bp_over_table))) {
-        bp_over_table$qvalue <- qvalue(bp_over_table$Pvalue)$qvalues
+        bp_over_table$qvalue <- qvalue::qvalue(bp_over_table$Pvalue)$qvalues
     }
     if (!is.null(dim(cc_over_table))) {
-        cc_over_table$qvalue <- qvalue(cc_over_table$Pvalue)$qvalues
+        cc_over_table$qvalue <- qvalue::qvalue(cc_over_table$Pvalue)$qvalues
     }
     if (!is.null(dim(mf_under_table))) {
-        mf_under_table$qvalue <- qvalue(mf_under_table$Pvalue)$qvalues
+        mf_under_table$qvalue <- qvalue::qvalue(mf_under_table$Pvalue)$qvalues
     }
     if (!is.null(dim(bp_under_table))) {
-        bp_under_table$qvalue <- qvalue(bp_under_table$Pvalue)$qvalues
+        bp_under_table$qvalue <- qvalue::qvalue(bp_under_table$Pvalue)$qvalues
     }
     if (!is.null(dim(cc_under_table))) {
-        cc_under_table$qvalue <- qvalue(cc_under_table$Pvalue)$qvalues
+        cc_under_table$qvalue <- qvalue::qvalue(cc_under_table$Pvalue)$qvalues
     }
 
     if (is.null(categorysize)) {
@@ -203,14 +209,17 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     ## bp_under_table = as.data.frame(bp_under_table)
     ## cc_under_table = as.data.frame(cc_under_table)
 
-    ret_list <- list(mf_over_all=mf_over_table, bp_over_all=bp_over_table, cc_over_all=cc_over_table,
-                     mf_under_all=mf_under_table, bp_under_all=bp_under_table, cc_under_all=cc_under_table,
-                     mf_over_enriched=mf_over_sig, bp_over_enriched=bp_over_sig, cc_over_enriched=cc_over_sig,
-                     mf_under_enriched=mf_under_sig, bp_under_enriched=bp_under_sig, cc_under_enriched=cc_under_sig,
-                     gostats_mfp_over=gostats_p_mf_over, gostats_bpp_over=gostats_p_bp_over, gostats_ccp_over=gostats_p_cc_over,
-                     gostats_mfp_under=gostats_p_mf_under, gostats_bpp_under=gostats_p_bp_under, gostats_ccp_under=gostats_p_cc_under)
+    ret_list <- list(mf_over_all=mf_over_table, bp_over_all=bp_over_table,
+                     cc_over_all=cc_over_table, mf_under_all=mf_under_table,
+                     bp_under_all=bp_under_table, cc_under_all=cc_under_table,
+                     mf_over_enriched=mf_over_sig, bp_over_enriched=bp_over_sig,
+                     cc_over_enriched=cc_over_sig, mf_under_enriched=mf_under_sig,
+                     bp_under_enriched=bp_under_sig, cc_under_enriched=cc_under_sig,
+                     gostats_mfp_over=gostats_p_mf_over, gostats_bpp_over=gostats_p_bp_over,
+                     gostats_ccp_over=gostats_p_cc_over, gostats_mfp_under=gostats_p_mf_under,
+                     gostats_bpp_under=gostats_p_bp_under, gostats_ccp_under=gostats_p_cc_under)
 
-    pvalue_plots <- try(hpgltools:::gostats_pval_plots(ret_list))
+    pvalue_plots <- try(gostats_pval_plots(ret_list))
     ret_list$pvalue_plots <- pvalue_plots
     return(ret_list)
 }
@@ -243,9 +252,15 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
     interesting_genes <- factor(annotated_genes %in% de_genes$ID)
     names(interesting_genes) <- annotated_genes
     if (is.null(de_genes[[pval_column]])) {
-        mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFun.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFun.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFun.gene2GO, gene2GO=geneID2GO)
+        mf_GOdata <- new("topGOdata", ontology="MF",
+                         allGenes=interesting_genes, annot=annFun.gene2GO,
+                         gene2GO=geneID2GO)
+        bp_GOdata <- new("topGOdata", ontology="BP",
+                         allGenes=interesting_genes, annot=annFun.gene2GO,
+                         gene2GO=geneID2GO)
+        cc_GOdata <- new("topGOdata", ontology="CC",
+                         allGenes=interesting_genes, annot=annFun.gene2GO,
+                         gene2GO=geneID2GO)
     } else {
         pvals <- as.vector(de_genes[[pval_column]])
         names(pvals) <- rownames(de_genes)
@@ -281,23 +296,25 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
     mf_under_nodes <- mf_under_enriched_scores[names(mf_under_enriched_scores) %in% names(mf_avail_nodes)]
     mf_over_included <- length(which(mf_over_nodes <= score_limit))
     mf_under_included <- length(which(mf_under_nodes <= score_limit))
-    mf_over_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_over_nodes, useInfo="all",
-                                                                    sigForAll=TRUE, firstSigNodes=mf_over_included,
-                                                                    useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    mf_under_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_under_nodes, useInfo="all",
-                                                                     sigForAll=TRUE, firstSigNodes=mf_under_included,
-                                                                     useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    mf_over_tree_data <- try(suppressWarnings(
+        topGO::showSigOfNodes(mf_GOdata, mf_over_nodes, useInfo="all",
+                              sigForAll=TRUE, firstSigNodes=mf_over_included,
+                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    mf_under_tree_data <- try(suppressWarnings(
+        topGO::showSigOfNodes(mf_GOdata, mf_under_nodes, useInfo="all",
+                              sigForAll=TRUE, firstSigNodes=mf_under_included,
+                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(mf_over_tree_data) == 'try-error') {
         message("There was an error generating the over MF tree.")
         mf_over_tree <- NULL
     } else {
-        mf_over_tree <- recordPlot()
+        mf_over_tree <- grDevices::recordPlot()
     }
     if (class(mf_under_tree_data) == 'try-error') {
         message("There was an error generating the under MF tree.")
         mf_under_tree <- NULL
     } else {
-        mf_under_tree <- recordPlot()
+        mf_under_tree <- grDevices::recordPlot()
     }
 
     bp_avail_nodes <- as.list(bp_GOdata@graph@nodes)
@@ -306,23 +323,25 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
     bp_under_nodes <- bp_under_enriched_scores[names(bp_under_enriched_scores) %in% names(bp_avail_nodes)]
     bp_over_included <- length(which(bp_over_nodes <= score_limit))
     bp_under_included <- length(which(bp_under_nodes <= score_limit))
-    bp_over_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_over_nodes, useInfo="all",
-                                                                    sigForAll=TRUE, firstSigNodes=bp_over_included,
-                                                                    useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    bp_under_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_under_nodes, useInfo="all",
-                                                                     sigForAll=TRUE, firstSigNodes=bp_under_included,
-                                                                     useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    bp_over_tree_data <- try(suppressWarnings(
+        topGO::showSigOfNodes(bp_GOdata, bp_over_nodes, useInfo="all",
+                              sigForAll=TRUE, firstSigNodes=bp_over_included,
+                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    bp_under_tree_data <- try(suppressWarnings(
+        topGO::showSigOfNodes(bp_GOdata, bp_under_nodes, useInfo="all",
+                              sigForAll=TRUE, firstSigNodes=bp_under_included,
+                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(bp_over_tree_data) == 'try-error') {
         message("There was an error generating the over BP tree.")
         bp_over_tree <- NULL
     } else {
-        bp_over_tree <- recordPlot()
+        bp_over_tree <- grDevices::recordPlot()
     }
     if (class(bp_under_tree_data) == 'try-error') {
         message("There was an error generating the under BP tree.")
         bp_under_tree <- NULL
     } else {
-        bp_under_tree <- recordPlot()
+        bp_under_tree <- grDevices::recordPlot()
     }
 
     cc_avail_nodes <- as.list(cc_GOdata@graph@nodes)
@@ -331,31 +350,34 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
     cc_under_nodes <- cc_under_enriched_scores[names(cc_under_enriched_scores) %in% names(cc_avail_nodes)]
     cc_over_included <- length(which(cc_over_nodes <= score_limit))
     cc_under_included <- length(which(cc_under_nodes <= score_limit))
-    cc_over_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_over_nodes, useInfo="all",
-                                                                    sigForAll=TRUE, firstSigNodes=cc_over_included,
-                                                                    useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    cc_under_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_under_nodes, useInfo="all",
-                                                                     sigForAll=TRUE, firstSigNodes=cc_under_included,
-                                                                     useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    cc_over_tree_data <- try(suppressWarnings(
+        topGO::showSigOfNodes(cc_GOdata, cc_over_nodes, useInfo="all",
+                              sigForAll=TRUE, firstSigNodes=cc_over_included,
+                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    cc_under_tree_data <- try(suppressWarnings(
+        topGO::showSigOfNodes(cc_GOdata, cc_under_nodes, useInfo="all",
+                              sigForAll=TRUE, firstSigNodes=cc_under_included,
+                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(cc_over_tree_data) == 'try-error') {
         message("There was an error generating the over CC tree.")
         cc_over_tree <- NULL
     } else {
-        cc_over_tree <- recordPlot()
+        cc_over_tree <- grDevices::recordPlot()
     }
     if (class(cc_under_tree_data) == 'try-error') {
         message("There was an error generating the under CC tree.")
         cc_under_tree <- NULL
     } else {
-        cc_under_tree <- recordPlot()
+        cc_under_tree <- grDevices::recordPlot()
     }
 
     trees <- list(
-        MF_over=mf_over_tree, BP_over=bp_over_tree, CC_over=cc_over_tree,
-        MF_overdata=mf_over_tree_data, BP_overdata=bp_over_tree_data, CC_overdata=cc_over_tree_data,
-        MF_under=mf_under_tree, BP_under=bp_under_tree, CC_under=cc_under_tree,
-        MF_underdata=mf_under_tree_data, BP_underdata=bp_under_tree_data, CC_underdata=cc_under_tree_data
-    )
+        MF_over=mf_over_tree, BP_over=bp_over_tree,
+        CC_over=cc_over_tree, MF_overdata=mf_over_tree_data,
+        BP_overdata=bp_over_tree_data, CC_overdata=cc_over_tree_data,
+        MF_under=mf_under_tree, BP_under=bp_under_tree,
+        CC_under=cc_under_tree, MF_underdata=mf_under_tree_data,
+        BP_underdata=bp_under_tree_data, CC_underdata=cc_under_tree_data)
     return(trees)
 }
 
@@ -491,10 +513,13 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         cc_pval_plot_under <- pval_plot(plotting_cc_under, ontology="CC")
     }
 
-    pval_plots <- list(mfp_plot_over=mf_pval_plot_over, bpp_plot_over=bp_pval_plot_over, ccp_plot_over=cc_pval_plot_over,
-                       mf_subset_over=plotting_mf_over, bp_subset_over=plotting_bp_over, cc_subset_over=plotting_cc_over,
-                       mfp_plot_under=mf_pval_plot_under, bpp_plot_under=bp_pval_plot_under, ccp_plot_under=cc_pval_plot_under,
-                       mf_subset_under=plotting_mf_under, bp_subset_under=plotting_bp_under, cc_subset_under=plotting_cc_under)
+    pval_plots <- list(
+        mfp_plot_over=mf_pval_plot_over, bpp_plot_over=bp_pval_plot_over,
+        ccp_plot_over=cc_pval_plot_over, mf_subset_over=plotting_mf_over,
+        bp_subset_over=plotting_bp_over, cc_subset_over=plotting_cc_over,
+        mfp_plot_under=mf_pval_plot_under, bpp_plot_under=bp_pval_plot_under,
+        ccp_plot_under=cc_pval_plot_under, mf_subset_under=plotting_mf_under,
+        bp_subset_under=plotting_bp_under, cc_subset_under=plotting_cc_under)
     return(pval_plots)
 }
 

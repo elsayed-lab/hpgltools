@@ -1,4 +1,4 @@
-# Time-stamp: <Fri Jan 29 23:42:36 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Mon Feb  1 11:56:45 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
 #'
@@ -31,9 +31,9 @@ hpgl_pca <- function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, si
         design <- data$design
         colors <- data$colors
         names <- data$names
-        data <- exprs(data$expressionset)
+        data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- exprs(data)
+        data <- Biobase::exprs(data)
     } else if (data_class == 'list') {
         data <- data$count_table
         if (is.null(data)) {

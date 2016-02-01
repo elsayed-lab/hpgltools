@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Jan 30 09:55:09 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  1 13:07:36 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -44,11 +44,11 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
 
     num_low <- sum(count_table < 1 & count_table > 0)
     if (num_low > 0) {
-        message(paste0("Before batch correction, ", num_low, " entries 0<x<1."))
+        message(paste0("batch_counts: Before batch correction, ", num_low, " entries 0<x<1."))
     }
     num_zero <- sum(count_table <= 0)
     if (num_zero > 0) {
-        message(paste0("Before batch correction, ", num_zero, " entries are >= 0."))
+        message(paste0("batch_counts: Before batch correction, ", num_zero, " entries are >= 0."))
     }
     if (isTRUE(batch)) {
         batch <- "limma"
@@ -57,22 +57,24 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         if (is.null(batch2)) {
             ## A reminder of removeBatchEffect usage
             ## adjusted_batchdonor = removeBatchEffect(data, batch=as.factor(as.character(des$donor)), batch2=as.factor(as.character(des$batch)))
-            message("Using limma's removeBatchEffect to remove batch effect.")
+            message("batch_counts: Using limma's removeBatchEffect to remove batch effect.")
             count_table <- limma::removeBatchEffect(count_table, batch=batches)
         } else {
             batches2 <- as.factor(design[, batch2])
             count_table <- limma::removeBatchEffect(count_table, batch=batches, batch2=batches2)
         }
     } else if (batch == 'limmaresid') {
+        message("batch_counts: Using residuals of limma's lmfit to remove batch effect.")
         batch_model <- model.matrix(~batches)
         batch_voom <- limma::voom(data.frame(count_table), batch_model, normalize.method="quantile", plot=FALSE)
         batch_fit <- limma::lmFit(batch_voom, design=batch_model)
         count_table <- residuals(batch_fit, batch_voom$E)
     } else if (batch == "combatmod") {
-        ## message("Using a modified cbcbSeq combatMod for batch correction.")
         ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches, mod=conditions, noScale=noscale, ...)
+        message("batch_counts: Using a modified cbcbSeq combatMod for batch correction.")
         count_table <- hpgl_combatMod(dat=data.frame(count_table), batch=batches, mod=conditions, noScale=noscale, ...)
     } else if (batch == "sva") {
+        message("batch_counts: Using sva::fsva for batch correction.")
         df <- data.frame(count_table)
         mtrx <- as.matrix(df)
         conditional_model <- model.matrix(~conditions, data=df)
@@ -96,10 +98,13 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         ## new_expt$fsva_result = fsva_result
         count_table <- fsva_result$db
     } else if (batch == 'combat_noprior') {
+        message("batch_counts: Using sva::combat without a prior for batch correction.")
         count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=FALSE)
     } else if (batch == 'combat') {
+        message("batch_counts: Using sva::combat with a prior for batch correction.")
         count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE)
     } else if (batch == "svaseq") {
+        message("batch_counts: Using sva::svaseq for batch correction.")
         df <- data.frame(count_table)
         mtrx <- as.matrix(df)
         conditional_model <- model.matrix(~conditions, data=df)
@@ -114,6 +119,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         P <- ncol(conditional_model)
         count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
     } else if (batch == "ruvg") {
+        message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.")
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
         ##require.auto("RUVSeq")
         conditional_model <- model.matrix(~conditions, data=df)
@@ -132,7 +138,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
     } else {
         message("Did not recognize the batch correction, leaving the table alone.")
-        message("Recognized batch corrections include: 'limma', 'combatmod', 'sva'")
+        message("Recognized batch corrections include: 'limma', 'combatmod', 'sva',")
+        message("limmaresid, combat_noprior, combat, svaseq, and ruvg.")
     }
     num_low <- sum(count_table < 0)
     if (num_low > 0) {
@@ -165,7 +172,7 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {
-        keep <- rowSums(exprs(count_table) > threshold) >= min_samples
+        keep <- rowSums(Biobase::exprs(count_table) > threshold) >= min_samples
     } else {
         keep <- rowSums(count_table > threshold) >= min_samples
     }
@@ -712,16 +719,16 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
 #' it not fail when on corner-cases.  I sent him a diff, but haven't
 #' checked to see if it was useful yet.
 #'
-hpgl_qshrink <- function(exprs=NULL, groups=NULL, refType="mean",
+hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
                         groupLoc="mean", window=99, verbose=FALSE,
                         groupCol=NULL, plot=TRUE, ...) {
-    exprs <- as.matrix(exprs)
+    data <- as.matrix(data)
     if (is.null(groups)) {
         message("Groups were not provided.  Performing a simple quantile")
         message("normalization. This is probably not what you actually want!")
-        count_rownames <- rownames(exprs)
-        count_colnames <- colnames(exprs)
-        normExprs <- preprocessCore::normalize.quantiles(as.matrix(exprs), copy=TRUE)
+        count_rownames <- rownames(data)
+        count_colnames <- colnames(data)
+        normExprs <- preprocessCore::normalize.quantiles(as.matrix(data), copy=TRUE)
         rownames(normExprs) <- count_rownames
         colnames(normExprs) <- count_colnames
         return(normExprs)
@@ -789,7 +796,7 @@ lowfilter_counts <- function(count_table, type='cbcb', p=0.01, A=1, k=1,
         lowfiltered_counts <- genefilter_cv_counts(count_table, cv_min=cv_min,
                                                    cv_max=cv_max)
     } else {
-        cat("Did not recognize the filtering argument, defaulting to cbcb's.
+        message("Did not recognize the filtering argument, defaulting to cbcb's.
  Recognized filters are: 'cv', 'kofa', 'pofa', 'cbcb'
 ")
         lowfiltered_counts <- cbcb_filter_counts(count_table, thresh=thresh,
@@ -881,9 +888,10 @@ hpgl_rpkm <- function(df, annotations=gene_annotations) {
     }
     df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
     if (dim(df_in)[1] == 0) {
-        message("When the annotations and df were checked against each other")
-        message("the result was null.  Perhaps your annotation or df's rownames")
-        message("aren't set? Going to attempt to use the column 'ID'.")
+        message("When the annotations and df were checked against each other
+  the result was null.  Perhaps your annotation or df's rownames are not set?
+  Going to attempt to use the column 'ID'.
+")
         rownames(annotations) = make.names(annotations$ID, unique=TRUE)
         df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
         if (dim(df_in)[1] == 0) {
@@ -1047,9 +1055,10 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         count_table <- as.matrix(tmm_counts)
         norm_performed <- "rle"
     } else {
-        message("Did not recognize the normalization, leaving the table alone.")
-        message("Recognized normalizations include: 'qsmooth', 'sf', 'quant', ")
-        message("'tmm', 'upperquartile', and 'rle'")
+        message("Did not recognize the normalization, leaving the table alone.
+  Recognized normalizations include: 'qsmooth', 'sf', 'sf2', 'vsd', 'quant',
+  'tmm', 'qsmooth_median', 'upperquartile', and 'rle.'
+")
         count_table <- as.matrix(count_table)
     }
     norm_libsize <- colSums(count_table)
@@ -1081,9 +1090,40 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     if (is.null(new_expt$original_expressionset)) {
         new_expt$original_expressionset = new_expt$expressionset
     } else {
-        message(paste0("This function will replace the expt$expressionset slot with
- the ", transform, "(", norm, "(", convert, "))'d data.
-"))
+        message("This function will replace the expt$expressionset slot with:")
+        type <- ""
+        if (transform != "raw") {
+            type <- paste0(type, transform, '(')
+        }
+        if (norm != "raw") {
+            type <- paste0(type, norm, '(')
+        }
+        if (convert != "raw") {
+            type <- paste0(type, convert, '(')
+        }
+        if (filter_low != FALSE) {
+            type <- paste0(type, 'low-filter(')
+        }
+        if (batch != "raw") {
+            type <- paste0(type, 'batch-correct(')
+        }
+        type <- paste0(type, 'data')
+        if (transform != 'raw') {
+            type <- paste0(type, ')')
+        }
+        if (norm != "raw") {
+            type <- paste0(type, ')')
+        }
+        if (convert != "raw") {
+            type <- paste0(type, ')')
+        }
+        if (filter_low != FALSE) {
+            type <- paste0(type, ')')
+        }
+        if (batch != "raw") {
+            type <- paste0(type, ')')
+        }
+        message(type)
         message("It saves the current data into a slot named:
  expt$backup_expressionset. It will also save copies of each step along the way
  in expt$normalized with the corresponding libsizes. Keep the libsizes in mind
@@ -1097,7 +1137,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
         message("Filter low is false, this should likely be set to something, good
  choices include cbcb, kofa, pofa (anything but FALSE).  If you want this to
  stay FALSE, keep in mind that if other normalizations are performed, then the
- resulting libsizes are likely to be odd (potentially negative!)
+ resulting libsizes are likely to be strange (potentially negative!)
 ")
     }
     if (transform == "raw") {
@@ -1138,7 +1178,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     final_normalized <- normalized$final_counts
     libsizes <- final_normalized$libsize
     normalized_data <- as.matrix(final_normalized$count_table)
-    exprs(current) <- normalized_data
+    Biobase::exprs(current) <- normalized_data
     new_expt$normalized <- normalized
     new_expt$norm_libsize <- libsizes
     new_expt$expressionset <- current
@@ -1178,10 +1218,10 @@ transform_counts <- function(count_table, transform="raw", converted="raw",
     num_zero <- sum(count_table == 0)
     num_low <- sum(count_table < 0)
     if (num_low > 0) {
-        message(paste0("Found ", num_low, " values less than 0."))
+        message(paste0("transform_counts: Found ", num_low, " values less than 0."))
     }
     if (num_zero > 0) {
-        message(paste0("Found ", num_zero, " values equal to 0, adding ", add, "
+        message(paste0("transform_counts: Found ", num_zero, " values equal to 0, adding ", add, "
  to the matrix.
 "))
         count_table <- count_table + add

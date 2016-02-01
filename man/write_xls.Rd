@@ -4,13 +4,11 @@
 \alias{write_xls}
 \title{write_xls()  Write a dataframe to an excel spreadsheet sheet.}
 \usage{
-write_xls(data, sheet = "first", file = "excel/workbook",
+write_xls(data, sheet = "first", file = "excel/workbook.xlsx",
   overwrite_file = TRUE, newsheet = FALSE, overwrite_sheet = TRUE,
-  dated = TRUE, suffix = ".xlsx", type = "openxlsx", ...)
+  dated = TRUE, first_two_widths = c("30", "60"), ...)
 }
 \arguments{
-\item{type}{default='xlsx'  whether to use the xlsx or XLConnect package.}
-
 \item{tripledots}{the set of arguments given to either xlsx or XLConnect}
 }
 \value{

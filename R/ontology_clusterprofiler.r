@@ -1,11 +1,11 @@
-## Time-stamp: <Sat Jan 23 00:30:03 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Jan 31 13:03:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 check_clusterprofiler <- function(gff='test.gff') {
     genetable_test <- try(load("geneTable.rda"))
     if (class(genetable_test) == 'try-error') {
         if (!is.null(gff)) {
             message("simple_clus(): Generating the geneTable.rda")
-            hpgltools:::hpgl_Gff2GeneTable(gff)
+            hpgl_Gff2GeneTable(gff)
             ##clusterProfiler:::Gff2GeneTable(gff)
         } else {
             stop("simple_clus(): requires geneTable.rda, thus a gff file.")
@@ -81,87 +81,112 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
 ##    print(ego2)
     message("simple_clus(): Starting MF(molecular function) analysis")
     mf_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
-    mf_all <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF",
-                                       pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    all_mf_phist <- try(hpgltools::hpgl_histogram(mf_all@result$pvalue, bins=20))
+    mf_all <- hpgl_enrichGO(gene_list, organism=organism, ont="MF",
+                            pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
+    all_mf_phist <- try(hpgl_histogram(mf_all@result$pvalue, bins=20))
     if (class(all_mf_phist)[1] != 'try-error') {
         y_limit <- (sort(unique(table(all_mf_phist$data)), decreasing=TRUE)[2]) * 2
-        all_mf_phist <- all_mf_phist + scale_y_continuous(limits=c(0, y_limit))
+        all_mf_phist <- all_mf_phist +
+            ggplot2::scale_y_continuous(limits=c(0, y_limit))
     }
-    enriched_mf <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="MF",
-                                            pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    enriched_mf <- hpgl_enrichGO(gene_list, organism=organism, ont="MF",
+                                 pvalueCutoff=pcutoff, qvalueCutoff=qcutoff,
+                                 pAdjustMethod=padjust)
 
     message("simple_clus(): Starting BP(biological process) analysis")
-    bp_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="BP", level=golevel, readable=TRUE)
-    bp_all <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0,
-                                       qvalueCutoff=1.0, pAdjustMethod="none")
-    all_bp_phist <- try(hpgltools::hpgl_histogram(bp_all@result$pvalue, bins=20))
+    bp_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="BP",
+                                         level=golevel, readable=TRUE)
+    bp_all <- hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0,
+                            qvalueCutoff=1.0, pAdjustMethod="none")
+    all_bp_phist <- try(hpgl_histogram(bp_all@result$pvalue, bins=20))
     if (class(all_bp_phist)[1] != 'try-error') {
         y_limit <- (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
-        all_bp_phist <- all_bp_phist + scale_y_continuous(limits=c(0, y_limit))
+        all_bp_phist <- all_bp_phist +
+            ggplot2::scale_y_continuous(limits=c(0, y_limit))
     }
-
-    enriched_bp <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="BP",
-                                            pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, pAdjustMethod=padjust)
-
+    enriched_bp <- hpgl_enrichGO(gene_list, organism=organism, ont="BP",
+                                 pvalueCutoff=pcutoff, qvalueCutoff=qcutoff,
+                                 pAdjustMethod=padjust)
     message("simple_clus(): Starting CC(cellular component) analysis")
-    cc_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="CC", level=golevel, readable=TRUE)
-    cc_all <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0,
-                                       qvalueCutoff=1.0, pAdjustMethod="none")
-    enriched_cc <- hpgltools::hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff,
-                                            qvalueCutoff=qcutoff, pAdjustMethod=padjust)
-    all_cc_phist <- try(hpgltools::hpgl_histogram(cc_all@result$pvalue, bins=20))
+    cc_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="CC",
+                                         level=golevel, readable=TRUE)
+    cc_all <- hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0,
+                            qvalueCutoff=1.0, pAdjustMethod="none")
+    enriched_cc <- hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff,
+                                 qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+    all_cc_phist <- try(hpgl_histogram(cc_all@result$pvalue, bins=20))
     ## Try and catch if there are no significant hits.
     if (class(all_cc_phist)[1] != 'try-error') {
         y_limit <- (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
-        all_cc_phist <- all_cc_phist + scale_y_continuous(limits=c(0, y_limit))
+        all_cc_phist <- all_cc_phist +
+            ggplot2::scale_y_continuous(limits=c(0, y_limit))
     }
 
     mf_group_barplot <- try(barplot(mf_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(mf_group_barplot)[1] != 'try-error') {
-        mf_group_barplot$data$Description <- as.character(lapply(strwrap(mf_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        mf_group_barplot$data$Description <- as.character(
+            BiocGenerics::lapply(strwrap(mf_group_barplot$data$Description,
+                                         wrapped_width, simplify=FALSE),paste,collapse="\n"))
     }
-
     bp_group_barplot <- try(barplot(bp_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(bp_group_barplot)[1] != 'try-error') {
-        bp_group_barplot$data$Description <- as.character(lapply(strwrap(bp_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        bp_group_barplot$data$Description <- as.character(
+            BiocGenerics::lapply(strwrap(bp_group_barplot$data$Description,
+                                         wrapped_width, simplify=FALSE),paste,collapse="\n"))
     }
-
     cc_group_barplot <- try(barplot(cc_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(cc_group_barplot)[1] != 'try-error') {
-        cc_group_barplot$data$Description <- as.character(lapply(strwrap(cc_group_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        cc_group_barplot$data$Description <- as.character(
+            BiocGenerics::lapply(strwrap(cc_group_barplot$data$Description,
+                                         wrapped_width, simplify=FALSE),paste,collapse="\n"))
     }
-
     all_mf_barplot <- try(barplot(mf_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
-    enriched_mf_barplot <- try(barplot(enriched_mf, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    enriched_mf_barplot <- try(barplot(enriched_mf, categorySize="pvalue",
+                                       showCategory=showcategory), silent=TRUE)
     if (class(enriched_mf_barplot)[1] == 'try-error') {
         message("simple_clus(): No enriched MF groups were observed.")
     } else {
-        enriched_mf_barplot$data$Description <- as.character(lapply(strwrap(enriched_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        enriched_mf_barplot$data$Description <- as.character(
+            BiocGenerics::lapply(strwrap(enriched_mf_barplot$data$Description,
+                                         wrapped_width, simplify=FALSE), paste,collapse="\n"))
     }
     if (class(all_mf_barplot)[1] != 'try-error') {
-        all_mf_barplot$data$Description <- as.character(lapply(strwrap(all_mf_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        all_mf_barplot$data$Description <- as.character(
+            BiocGenerics::lapply(strwrap(all_mf_barplot$data$Description,
+                                         wrapped_width, simplify=FALSE), paste,collapse="\n"))
     }
-    all_bp_barplot <- try(barplot(bp_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
-    enriched_bp_barplot <- try(barplot(enriched_bp, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    all_bp_barplot <- try(barplot(bp_all, categorySize="pvalue",
+                                  showCategory=showcategory), silent=TRUE)
+    enriched_bp_barplot <- try(barplot(enriched_bp, categorySize="pvalue",
+                                       showCategory=showcategory), silent=TRUE)
     if (class(enriched_bp_barplot)[1] == 'try-error') {
         message("simple_clus(): No enriched BP groups observed.")
     } else {
-        enriched_bp_barplot$data$Description <- as.character(lapply(strwrap(enriched_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        enriched_bp_barplot$data$Description <- as.character(
+            BiocGenerics::lapply(strwrap(enriched_bp_barplot$data$Description,
+                                         wrapped_width, simplify=FALSE), paste,collapse="\n"))
     }
     if (class(all_bp_barplot)[1] != 'try-error') {
-        all_bp_barplot$data$Description <- as.character(lapply(strwrap(all_bp_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        all_bp_barplot$data$Description <- as.character(
+            BiocGenerics::lapply(strwrap(all_bp_barplot$data$Description,
+                                         wrapped_width, simplify=FALSE), paste,collapse="\n"))
     }
 
-    all_cc_barplot <- try(barplot(cc_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
-    enriched_cc_barplot <- try(barplot(enriched_cc, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
+    all_cc_barplot <- try(barplot(cc_all, categorySize="pvalue",
+                                  showCategory=showcategory), silent=TRUE)
+    enriched_cc_barplot <- try(barplot(enriched_cc, categorySize="pvalue",
+                                       showCategory=showcategory), silent=TRUE)
     if (class(enriched_cc_barplot)[1] == 'try-error') {
         message("simple_clus(): No enriched CC groups observed.")
     } else {
-        enriched_cc_barplot$data$Description <- as.character(lapply(strwrap(enriched_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        enriched_cc_barplot$data$Description <- as.character(
+            BiocGenerics::lapply(strwrap(enriched_cc_barplot$data$Description,
+                                         wrapped_width, simplify=FALSE), paste,collapse="\n"))
     }
     if (class(all_cc_barplot)[1] != 'try-error') {
-        all_cc_barplot$data$Description <- as.character(lapply(strwrap(all_cc_barplot$data$Description, wrapped_width, simplify=F),paste,collapse="\n"))
+        all_cc_barplot$data$Description <- as.character(
+            BiocGenerics::lapply(strwrap(all_cc_barplot$data$Description,
+                                         wrapped_width, simplify=FALSE), paste,collapse="\n"))
     }
 
     cnetplot_mf <- cnetplot_bp <- cnetplot_cc <- NULL
@@ -169,35 +194,41 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     if (include_cnetplots == TRUE) {
         message("simple_clus(): Attempting to include the cnetplots.")
         message("simple_clus(): If they fail, set include_cnetplots to FALSE")
-        cnetplot_mf <- try(clusterProfiler::cnetplot(enriched_mf, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_mf <- try(clusterProfiler::cnetplot(enriched_mf, categorySize="pvalue",
+                                                     foldChange=fold_changes))
         if (class(cnetplot_mf)[1] != 'try-error') {
-            cnetplot_mf <- recordPlot()
+            cnetplot_mf <- grDevices::recordPlot()
         } else {
             message("simple_clus(): cnetplot failed for MF, no worries.")
         }
-        cnetplot_bp <- try(clusterProfiler::cnetplot(enriched_bp, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_bp <- try(clusterProfiler::cnetplot(enriched_bp, categorySize="pvalue",
+                                                     foldChange=fold_changes))
         if (class(cnetplot_bp)[1] != 'try-error') {
-            cnetplot_bp <- recordPlot()
+            cnetplot_bp <- grDevices::recordPlot()
         } else {
             message("simple_clus(): cnetplot failed for BP, no worries.")
         }
-        cnetplot_cc <- try(clusterProfiler::cnetplot(enriched_cc, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_cc <- try(clusterProfiler::cnetplot(enriched_cc, categorySize="pvalue",
+                                                     foldChange=fold_changes))
         if (class(cnetplot_cc)[1] != 'try-error') {
-            cnetplot_cc <- recordPlot()
+            cnetplot_cc <- grDevices::recordPlot()
         } else {
             message("simple_clus(): cnetplot failed for CC, no worries.")
         }
-        cnetplot_mfall <- try(clusterProfiler::cnetplot(mf_all, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_mfall <- try(clusterProfiler::cnetplot(mf_all, categorySize="pvalue",
+                                                        foldChange=fold_changes))
         if (class(cnetplot_mfall)[1] != 'try-error') {
-            cnetplot_mfall <- recordPlot()
+            cnetplot_mfall <- grDevices::recordPlot()
         }
-        cnetplot_bpall <- try(clusterProfiler::cnetplot(bp_all, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_bpall <- try(clusterProfiler::cnetplot(bp_all, categorySize="pvalue",
+                                                        foldChange=fold_changes))
         if (class(cnetplot_bpall)[1] != 'try-error') {
-            cnetplot_bpall <- recordPlot()
+            cnetplot_bpall <- grDevices::recordPlot()
         }
-        cnetplot_ccall <- try(clusterProfiler::cnetplot(cc_all, categorySize="pvalue", foldChange=fold_changes))
+        cnetplot_ccall <- try(clusterProfiler::cnetplot(cc_all, categorySize="pvalue",
+                                                        foldChange=fold_changes))
         if (class(cnetplot_ccall)[1] != 'try-error') {
-            cnetplot_ccall <- recordPlot()
+            cnetplot_ccall <- grDevices::recordPlot()
         }
     }
 
@@ -274,9 +305,12 @@ cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", g
 
     message(paste0("Checking the de_table for a p-value column:", pval_column))
     if (is.null(de_genes[[pval_column]])) {
-        mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes,
+                         annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes,
+                         annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes,
+                         annot=annFUN.gene2GO, gene2GO=geneID2GO)
     } else {
         pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
         names(pvals) <- rownames(de_genes)
@@ -305,33 +339,37 @@ cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", g
     names(cc_all_scores) <- cc_all_ids
     mf_included <- length(which(mf_all_scores <= score_limit))
     ## mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    mf_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all",
-                                                               sigForAll=TRUE, firstSigNodes=floor(mf_included * 1.5),
-                                                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    mf_tree_data <- try(suppressWarnings(
+        topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all",
+                              sigForAll=TRUE, firstSigNodes=floor(mf_included * 1.5),
+                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(mf_tree_data)[1] == 'try-error') {
         mf_tree <- NULL
     } else {
-        mf_tree <- recordPlot()
+        mf_tree <- grDevices::recordPlot()
     }
     bp_included <- length(which(bp_all_scores <= score_limit))
-    bp_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_all_scores, useInfo="all",
-                                                              sigForAll=TRUE, firstSigNodes=bp_included,
-                                                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    bp_tree_data <- try(suppressWarnings(
+        topGO::showSigOfNodes(bp_GOdata, bp_all_scores, useInfo="all",
+                              sigForAll=TRUE, firstSigNodes=bp_included,
+                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(bp_tree_data)[1] == 'try-error') {
         bp_tree <- NULL
     } else {
-        bp_tree <- recordPlot()
+        bp_tree <- grDevices::recordPlot()
     }
     cc_included <- length(which(cc_all_scores <= score_limit))
-    cc_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_all_scores, useInfo="all",
-                                                               sigForAll=TRUE, firstSigNodes=cc_included,
-                                                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    cc_tree_data <- try(suppressWarnings(
+        topGO::showSigOfNodes(cc_GOdata, cc_all_scores, useInfo="all",
+                              sigForAll=TRUE, firstSigNodes=cc_included,
+                              useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(cc_tree_data)[1] == 'try-error') {
         cc_tree <- NULL
     } else {
-        cc_tree <- recordPlot()
+        cc_tree <- grDevices::recordPlot()
     }
-    trees <- list(MF=mf_tree, BP=bp_tree, CC=cc_tree, MFdata=mf_tree_data, BPdata=bp_tree_data, CCdata=cc_tree_data)
+    trees <- list(MF=mf_tree, BP=bp_tree, CC=cc_tree,
+                  MFdata=mf_tree_data, BPdata=bp_tree_data, CCdata=cc_tree_data)
     return(trees)
 }
 
@@ -367,6 +405,7 @@ hpgl_enrichGO <- function(gene, organism="human", ont="MF",
 #' @export
 hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="BH",
                                  ont, minGSSize=2, qvalueCutoff=0.2, readable=FALSE, universe=NULL) {
+    require.auto("plyr")  ## dlply and the . function are too obnoxious without pulling them in.
     gene <- as.character(gene)
     class(gene) <- ont
     qExtID2TermID <- DOSE::EXTID2TERMID(gene, organism)
@@ -380,8 +419,8 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
                                    termID=qTermID)
     qExtID2TermID.df <- unique(qExtID2TermID.df)
     termID <- NULL ## to satisfy code tools
-    qTermID2ExtID <- dlply(qExtID2TermID.df, .(termID),
-                           .fun=function(i) as.character(i$extID))
+    qTermID2ExtID <- plyr::dlply(qExtID2TermID.df, .(termID),
+                                 .fun=function(i) as.character(i$extID))
     class(organism) <- ont
     extID <- DOSE::ALLEXTID(organism)
     if(!missing(universe)) {
@@ -420,15 +459,12 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
                           numDrawn=n)    ## balls drawn
     ## calcute pvalues based on hypergeometric model
     pvalues <- apply(args.df, 1, function(n)
-                     phyper(n[1], n[2], n[3], n[4], lower.tail=FALSE)
-                     )
+                     phyper(n[1], n[2], n[3], n[4], lower.tail=FALSE))
     ## gene ratio and background ratio
     GeneRatio <- apply(data.frame(a=k, b=n), 1, function(x)
-                       paste(x[1], "/", x[2], sep="", collapse="")
-                       )
+                       paste(x[1], "/", x[2], sep="", collapse=""))
     BgRatio <- apply(data.frame(a=M, b=N), 1, function(x)
-                     paste(x[1], "/", x[2], sep="", collapse="")
-                     )
+                     paste(x[1], "/", x[2], sep="", collapse=""))
     Over <- data.frame(ID=as.character(qTermID),
                        GeneRatio=GeneRatio,
                        BgRatio=BgRatio,
