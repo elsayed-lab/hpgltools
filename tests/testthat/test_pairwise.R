@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
 context("Test usability of EdgeR")
-autoloads_all()
 require.auto("pasilla")
 require.auto("edgeR")
 
@@ -25,24 +24,36 @@ exact_test = exactTest(tagdispnorm)
 exact_result = as.data.frame(topTags(exact_test, n=nrow(raw)))
 
 
-## this depends on stuff from test_vs_cbcbseq.R which is dumb...
-##exact_vs_cbcb = merge(cbcb_top, exact_result, by.x="row.names", by.y="row.names")
-##cor.test(exact_vs_cbcb$logFC.x, exact_vs_cbcb$logFC.y)
+## Load the pasilla data set
+message("Loading pasilla, setting up count tables.")
+datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
+## Load the counts and drop super-low counts genes
+counts = read.table(datafile, header=TRUE, row.names=1)
+counts = counts[rowSums(counts) > ncol(counts),]
+## Set up a quick design to be used by cbcbSEQ and hpgltools
+design = data.frame(row.names=colnames(counts),
+    condition=c("untreated","untreated","untreated",
+        "untreated","treated","treated","treated"),
+    libType=c("single-end","single-end","paired-end",
+        "paired-end","single-end","paired-end","paired-end"))
+metadata = design
+colnames(metadata) = c("condition", "batch")
+metadata$Sample.id = rownames(metadata)
 
-##condition = design$condition
-##edger_design = model.matrix(~0 + condition)
+## Make sure it is still possible to create an expt
+message("Setting up an expt class to contain the pasilla data and metadata.")
+pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
+cbcb_data = counts
+pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
+hpgl_data = exprs(pasilla_expt$expressionset)
+test_that("Does data from an expt equal a raw dataframe?", {
+    expect_equal(cbcb_data, hpgl_data)
+})
 
-##glm_norm = estimateGLMCommonDisp(tagdispnorm, edger_design)
-##glm_trended = estimateGLMTrendedDisp(glm_norm, edger_design)
-##glm_tagged = estimateGLMTagwiseDisp(glm_trended, edger_design)
-##edger_fit = glmFit(glm_tagged, design=edger_design)
-##lrt = glmLRT(edger_fit, coef=2)
-##glm_result = as.data.frame(topTags(lrt, n=nrow(raw)))
-
-##glm_vs_exact = merge(exact_result, glm_result, by.x="row.names", by.y="row.names")
-##cor.test(glm_vs_exact$logFC.x, glm_vs_exact$logFC.y)
-
-##hpgl_edger = edger_pairwise(expt=pasilla_expt)
-##hpglglm_result = hpgl_edger$results$untreated_minus_treated
-##hpgl_vs_exact = merge(exact_result, hpglglm_result, by.x="row.names", by.y="row.names")
-##cor.test(hpgl_vs_exact$logFC.x, glm_vs_exact$logFC.y)
+hpgl_edger = edger_pairwise(pasilla_expt)
+hpgl_result = hpgl_edger$all_tables$untreated_vs_treated
+hpgl_vs_edger = merge(exact_result, hpgl_result, by.x="row.names", by.y="row.names")
+similarity <- as.numeric(cor.test(hpgl_vs_edger$logFC.x, hpgl_vs_edger$logFC.y)[[4]])
+test_that("Is the hpgl pairwise similar to edgeR's default method?", {
+    expect_gt(similarity, 0.999)
+})

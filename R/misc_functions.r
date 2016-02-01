@@ -1,24 +1,4 @@
-## Time-stamp: <Mon Feb  1 15:31:04 2016 Ashton Trey Belew (abelew@gmail.com)>
-
-#' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
-#' It just does fast.svd of a matrix against its rowMeans().
-#'
-#' @param data A data frame to decompose
-#'
-#' @return a list containing the s,v,u from fast.svd
-#' @seealso \code{\link{fast.svd}}
-#'
-#' @export
-#' @examples
-#' ## svd = makeSVD(data)
-makeSVD <- function (x) {
-    x <- as.matrix(x)
-    s <- corpcor::fast.svd(x - rowMeans(x))
-    v <- s$v
-    rownames(v) <- colnames(x)
-    s <- list(v=v, u=s$u, d=s$d)
-    return(s)
-}
+## Time-stamp: <Mon Feb  1 17:58:36 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.

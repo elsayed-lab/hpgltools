@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Jan 31 12:22:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  1 16:49:32 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -768,7 +768,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA
             result$qvalue <- tryCatch(
             {
-                format(signif(qvalue::qvalue(result$P.Value, robust=TRUE)$qvalues, 4), scientific=TRUE)
+                format(signif(qvalue::qvalue(as.numeric(result$P.Value), robust=TRUE)$qvalues, 4), scientific=TRUE)
             },
             error=function(cond) {
                 message(paste0("The qvalue estimation failed for ", comparison, "."))
@@ -941,8 +941,9 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         res <- as.data.frame(res)
         res$qvalue <- tryCatch(
         {
-            as.numeric(format(signif(qvalue::qvalue(res$PValue, robust=TRUE)$qvalues, 4),
-                              scientific=TRUE))
+            as.numeric(format(signif(
+                qvalue::qvalue(as.numeric(res$PValue), robust=TRUE)$qvalues, 4),
+                scientific=TRUE))
         },
         error=function(cond) {
             message(paste0("The qvalue estimation failed for ", name, "."))
@@ -1848,7 +1849,7 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
         data_table$qvalue <- tryCatch(
         {
             as.numeric(format(signif(
-                qvalue::qvalue(data_table$P.Value, robust=TRUE)$qvalues, 4),
+                qvalue::qvalue(as.numeric(data_table$P.Value), robust=TRUE)$qvalues, 4),
                 scientific=TRUE))
         },
         error=function(cond) {

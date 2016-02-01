@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jan 29 20:19:04 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  1 16:53:40 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -200,8 +200,9 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
         sample_definitions$counts <- paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
         found_counts <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix), silent=TRUE)
         if (class(found_counts) == 'try-error') {
-            message("Attempted reading count tables by sample name in processed_data/ and did not find them, now trying by sample type.")
-            message("If you just got an error reading the files, but this still completes, that is why.")
+            message("Attempted reading count tables by sample name in processed_data/
+  and did not find them, now trying by sample type.  If you just got an error
+  reading the files, but this still completes, that is why.")
             ## Then try by-type
             sample_definitions$counts <- paste("processed_data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, suffix, sep="")
             found_counts <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
@@ -323,7 +324,7 @@ expt_subset <- function(expt, subset=NULL) {
         stop("expt is neither an expt nor ExpressionSet")
     }
     if (is.null(expt$definitions)) {
-        warning("There is no expt$definitions, using the expressionset.")
+        ## warning("There is no expt$definitions, using the expressionset.")
         initial_metadata <- Biobase::pData(expressionset)
     } else {
         initial_metadata <- expt$definitions

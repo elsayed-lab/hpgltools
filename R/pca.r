@@ -1,13 +1,33 @@
-# Time-stamp: <Mon Feb  1 11:56:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Mon Feb  1 18:06:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+
+#' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
+#' It just does fast.svd of a matrix against its rowMeans().
+#'
+#' @param data A data frame to decompose
+#'
+#' @return a list containing the s,v,u from fast.svd
+#' @seealso \code{\link{fast.svd}}
+#'
+#' @export
+#' @examples
+#' ## svd = makeSVD(data)
+makeSVD <- function (x) {
+    x <- as.matrix(x)
+    s <- corpcor::fast.svd(x - rowMeans(x))
+    v <- s$v
+    rownames(v) <- colnames(x)
+    s <- list(v=v, u=s$u, d=s$d)
+    return(s)
+}
 
 #' hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
 #'
 #' @param data  an expt set of samples.
 #' @param design default=NULL  a design matrix and.
-#' @param colors default=NULL  a color scheme.
-#' @param title default=NULL  a title for the plot.
-#' @param size default=5  size for the glyphs on the plot.
-#' @param labels default=NULL  add labels?  Also, what type?  FALSE, "default", or "fancy".
+#' @param plot_colors default=NULL  a color scheme.
+#' @param plot_title default=NULL  a title for the plot.
+#' @param plot_size default=5  size for the glyphs on the plot.
+#' @param plot_labels default=NULL  add labels?  Also, what type?  FALSE, "default", or "fancy".
 #'
 #' @return a list containing the following:
 #'   pca = the result of fast.svd()
@@ -23,14 +43,21 @@
 #' @examples
 #' ## pca_plot = hpgl_pca(expt=expt)
 #' ## pca_plot
-hpgl_pca <- function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, size=5, ...) {
-    ## hpgl_env = environment()
+hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
+                     plot_title=NULL, plot_size=5, ...) {
+    hpgl_env = environment()
+    arglist <- list(...)
+    design <- get0("design")
+    plot_colors <- get("plot_colors")
+    plot_labels <- get0("plot_labels")
+    plot_title <- get0("plot_title")
+    plot_size <- get0("plot_size")
     data_class <- class(data)[1]
     names <- NULL
     if (data_class == 'expt') {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
+        design <- data$definitions
+        plot_colors <- data$colors
+        plot_names <- data$names
         data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         data <- Biobase::exprs(data)
@@ -45,23 +72,23 @@ hpgl_pca <- function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, si
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
-    if (is.null(labels)) {
-        if (is.null(names)) {
-            labels <- colnames(data)
+    if (is.null(plot_labels)) {
+        if (is.null(plot_names)) {
+            plot_labels <- colnames(data)
         } else {
-            labels <- names
+            plot_labels <- plot_names
         }
-    } else if (labels[1] == 'boring') {
-        if (is.null(names)) {
-            labels <- colnames(data)
+    } else if (plot_labels[1] == 'boring') {
+        if (is.null(plot_names)) {
+            plot_labels <- colnames(data)
         } else {
-            labels <- names
+            plot_labels <- plot_names
         }
     }
 
     if (is.null(design)) {
-        print("No design was provided.  Making one with 1 condition, 1 batch.")
-        design <- cbind(labels, 1)
+        message("No design was provided.  Making one with 1 condition, 1 batch.")
+        design <- cbind(plot_labels, 1)
         design <- as.data.frame(design)
         design$condition <- as.numeric(design$labels)
         colnames(design) <- c("name","batch","condition")
@@ -86,40 +113,44 @@ hpgl_pca <- function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, si
     if (is.null(colors)) {
         colors <- as.numeric(levels(as.factor(design$condition)))
     }
-
-    pca_data <- data.frame(SampleID=labels, condition=as.character(design$condition),
-                           batch=as.character(design$batch), batch_int = as.integer(design$batch),
-                           PC1=pca$v[,1], PC2=pca$v[,2], colors=colors, labels=as.character(labels))
-
+    pca_data <- data.frame(SampleID=as.character(design$sample),
+                           condition=as.character(design$condition),
+                           batch=as.character(design$batch),
+                           batch_int=as.integer(design$batch),
+                           PC1=pca$v[,1],
+                           PC2=pca$v[,2],
+                           colors=plot_colors,
+                           labels=as.character(plot_labels))
     num_batches <- length(levels(included_batches))
     pca_plot <- NULL
     if (num_batches <= 5) {
-        pca_plot <- pca_plot_smallbatch(pca_data, size=size, first='PC1', second='PC2')
+        pca_plot <- pca_plot_smallbatch(pca_data, size=plot_size, first='PC1', second='PC2')
     } else {
-        pca_plot <- pca_plot_largebatch(pca_data, size=size, first='PC1', second='PC2')
+        pca_plot <- pca_plot_largebatch(pca_data, size=plot_size, first='PC1', second='PC2')
     }
     pca_plot <- pca_plot +
         ggplot2::xlab(xl) +
         ggplot2::ylab(yl) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.key.size=ggplot2::unit(0.5, "cm"))
-    if (!is.null(labels)) {
-        if (labels[[1]] == "fancy") {
-            pca_plot <- pca_plot + directlabels::geom_dl(aes(label=SampleID), method="smart.grid")
-        } else if (labels[[1]] == "normal") {
+    if (!is.null(plot_labels)) {
+        if (plot_labels[[1]] == "fancy") {
+            pca_plot <- pca_plot + directlabels::geom_dl(ggplot2::aes(label=SampleID), method="smart.grid")
+        } else if (plot_labels[[1]] == "normal") {
             pca_plot <- pca_plot +
                 ggplot2::geom_text(ggplot2::aes(x=PC1, y=PC2,
                                                 label=paste(design$condition, design$batch, sep="_")),
                                    angle=45, size=4, vjust=2)
         } else {
             pca_plot <- pca_plot +
+                ## remember labels at this point is in the df made on line 96
                 ggplot2::geom_text(ggplot2::aes(x=PC1, y=PC2, label=labels),
                                    angle=45, size=4, vjust=2)
         }
     }
 
-    if (!is.null(title)) {
-        pca_plot <- pca_plot + ggplot2::ggtitle(title)
+    if (!is.null(plot_title)) {
+        pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
     }
     pca_return <- list(
         pca=pca, plot=pca_plot, table=pca_data, res=pca_res, variance=pca_variance)
@@ -132,6 +163,7 @@ hpgl_pca <- function(data, colors=NULL, design=NULL, title=NULL, labels=NULL, si
 #' @param df  A dataframe of PC1/PC2 and other arbitrary data.
 #' @param size default=5  The size of glyphs in the plot.
 #'
+#' @export
 #' @return a ggplot2 plot of principle components 1 and 2.
 pca_plot_largebatch <- function(df, size=5, first="PC1", second="PC2") {
     hpgl_env <- environment()
@@ -170,6 +202,7 @@ pca_plot_largebatch <- function(df, size=5, first="PC1", second="PC2") {
 #' @param df  A dataframe of PC1/PC2 and other arbitrary data.
 #' @param size default=5  The size of glyphs in the plot.
 #'
+#' @export
 #' @return a ggplot2 plot of principle components 1 and 2.
 pca_plot_smallbatch <- function(df, size=5, first='PC1', second='PC2') {
     hpgl_env <- environment()
@@ -193,6 +226,7 @@ pca_plot_smallbatch <- function(df, size=5, first='PC1', second='PC2') {
 #'
 #' @return The r^2 values of the linear model as a percentage.
 #'
+#' @export
 #' @seealso \code{\link{fast.svd}}
 factor_rsquared <- function(svd_v, factor) {
     svd_lm <- try(stats::lm(svd_v ~ factor), silent=TRUE)
@@ -213,8 +247,8 @@ factor_rsquared <- function(svd_v, factor) {
 #' @param second default='PC2'  principle component PCy to put on the y axis.
 #' @param variances default=NULL  a list of the percent variance explained by each component.
 #' @param design default=NULL  the experimental design with condition batch factors.
-#' @param title default=NULL  a title for the plot.
-#' @param labels default=NULL  a parameter for the labels on the plot.
+#' @param plot_title default=NULL  a title for the plot.
+#' @param plot_labels default=NULL  a parameter for the labels on the plot.
 #'
 #' @return a ggplot2 PCA plot
 #'
@@ -224,12 +258,12 @@ factor_rsquared <- function(svd_v, factor) {
 #' @examples
 #' ## pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
 plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
-                     design=NULL, title=NULL, labels=NULL) {
+                     design=NULL, plot_title=NULL, plot_labels=NULL) {
     hpgl_env <- environment()
     batches <- design$batch
     point_labels <- factor(design$condition)
-    if (is.null(title)) {
-        title <- paste(first, " vs. ", second, sep="")
+    if (is.null(plot_title)) {
+        plot_title <- paste(first, " vs. ", second, sep="")
     }
     ## colors = levels(as.factor(unlist(design$color)))
     ## num_batches = length(levels(factor(design$batch)))
@@ -238,7 +272,7 @@ plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
         ggplot2::geom_point(ggplot2::aes(x=get(first), y=get(second), shape=batches, colour=data$colors), stat="identity", size=3) +
         ggplot2::scale_color_manual(values=levels(factor(data$colors)), name="Condition", labels=levels(as.factor(design$condition))) +
         ggplot2::scale_shape_manual(values=batches, name="Batch", guide=ggplot2::guide_legend(override.aes=ggplot2::aes(size=1))) +
-        ggplot2::ggtitle(title) +
+        ggplot2::ggtitle(plot_title) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.key.size=ggplot2::unit(0.5, "cm"))
 
@@ -250,8 +284,8 @@ plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
         pca_plot <- pca_plot + ggplot2::xlab(x_label) + ggplot2::ylab(y_label)
     }
 
-    if (!is.null(labels)) {
-        if (labels[[1]] == "fancy") {
+    if (!is.null(plot_labels)) {
+        if (plot_labels[[1]] == "fancy") {
             pca_plot <- pca_plot +
                 directlabels::geom_dl(ggplot2::aes(x=get(first), y=get(second), label=point_labels),
                                       list("top.bumpup", cex=0.5))
@@ -274,6 +308,7 @@ plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
 #'
 #' @param plotted_us  a list of svd$u elements
 #'
+#' @export
 #' @return a recordPlot() plot showing the first 3 PCs by rank-order svd$u.
 u_plot <- function(plotted_us) {
     plotted_us <- abs(plotted_us[,c(1,2,3)])
@@ -356,23 +391,28 @@ u_plot <- function(plotted_us) {
 #' @examples
 #' ## pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
 #' ## pca_info
-pca_information <- function(data, design=NULL, factors=c("condition","batch"),
-                            num_components=NULL, plot_pcas=FALSE, labels="fancy") {
+pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("condition","batch"),
+                            num_components=NULL, plot_pcas=FALSE, plot_labels="fancy") {
     ## hpgl_env = environment()
-    data_class <- class(data)[1]
+    expt_design <- get0("expt_design")
+    expt_factors <- get0("expt_factors")
+    num_components <- get0("num_components")
+    plot_labels <- get0("plot_labels")
+    plot_pcas <- get0("plot_pcas")
+    data_class <- class(expt_data)[1]
     if (data_class == 'expt') {
-        design <- data$design
-        data <- Biobase::exprs(data$expressionset)
+        expt_design <- expt_data$definitions
+        expt_data <- Biobase::exprs(expt_data$expressionset)
     } else if (data_class == 'ExpressionSet') {
-        data <- Biobase::exprs(data)
+        expt_data <- Biobase::exprs(expt_data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
-        data <- as.matrix(data)
+        expt_data <- as.matrix(expt_data)
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    data <- as.matrix(data)
-    means <- rowMeans(data)
-    decomposed <- corpcor::fast.svd(data - means)
+    expt_data <- as.matrix(expt_data)
+    expt_means <- rowMeans(expt_data)
+    decomposed <- corpcor::fast.svd(expt_data - expt_means)
     positives <- decomposed$d
     u <- decomposed$u
     v <- decomposed$v
@@ -382,8 +422,8 @@ pca_information <- function(data, design=NULL, factors=c("condition","batch"),
     ## decrease if many genes are contributing to the given component
     ## Conversely, that line should drop suddenly if dominated by one/few genes.
 
-    rownames(u) <- rownames(data)
-    rownames(v) <- colnames(data)
+    rownames(u) <- rownames(expt_data)
+    rownames(v) <- colnames(expt_data)
     u_plot <- u_plot(u)
     component_variance <- round((positives^2) / sum(positives^2) * 100, 3)
     cumulative_pc_variance <- cumsum(component_variance)
@@ -393,14 +433,14 @@ pca_information <- function(data, design=NULL, factors=c("condition","batch"),
         prop_var=component_variance,
         cumulative_prop_var=cumulative_pc_variance)
 
-    if (is.null(factors)) {
-        factors <- colnames(design)
-    } else if (factors[1] == "all") {
-        factors <- colnames(design)
+    if (is.null(expt_factors)) {
+        expt_factors <- colnames(expt_design)
+    } else if (expt_factors[1] == "all") {
+        expt_factors <- colnames(expt_design)
     }
 
-    for (component in factors) {
-        comp <- factor(as.character(design[,component]), exclude=FALSE)
+    for (component in expt_factors) {
+        comp <- factor(as.character(expt_design[, component]), exclude=FALSE)
         column <- apply(v, 2, factor_rsquared, factor=comp)
         component_rsquared_table[component] <- column
     }
@@ -409,15 +449,18 @@ pca_information <- function(data, design=NULL, factors=c("condition","batch"),
     print(xl)
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
     print(yl)
-    labels <- rownames(design)
+    plot_labels <- rownames(expt_design)
 
-    pca_data <- data.frame(SampleID=labels, condition=design$condition, batch=design$batch,
-                           batch_int=as.integer(design$batch), colors=design$color)
-    pc_df <- data.frame(SampleID=labels)
-    rownames(pc_df) <- make.names(labels)
+    pca_data <- data.frame(SampleID=plot_labels,
+                           condition=expt_design$condition,
+                           batch=expt_design$batch,
+                           batch_int=as.integer(expt_design$batch),
+                           colors=expt_design$color)
+    pc_df <- data.frame(SampleID=plot_labels)
+    rownames(pc_df) <- make.names(plot_labels)
 
     if (is.null(num_components)) {
-        num_components <- length(factors)
+        num_components <- length(expt_factors)
     }
     for (pc in 1:num_components) {
         name <- paste("PC", pc, sep="")
@@ -437,18 +480,22 @@ pca_information <- function(data, design=NULL, factors=c("condition","batch"),
                     second_name <- paste("PC", second_pc, sep="")
                     list_name <- paste(name, "_", second_name, sep="")
                     ## Sometimes these plots fail because too many grid operations are happening.
-                    tmp_plot <- try(print(plot_pcs(pca_data, design=design, variances=pca_variance,
-                                                   first=name, second=second_name, labels=labels)))
+                    tmp_plot <- try(print(plot_pcs(pca_data,
+                                                   design=expt_design,
+                                                   variances=pca_variance,
+                                                   first=name,
+                                                   second=second_name,
+                                                   plot_labels=plot_labels)))
                     pca_plots[[list_name]] <- tmp_plot
                 }
             }
         }
     }
 
-    factor_df <- data.frame(SampleID=labels)
-    rownames(factor_df) <- make.names(labels)
-    for (factor in factors) {
-        factor_df[factor] <- as.numeric(as.factor(as.character(design[,factor])))
+    factor_df <- data.frame(SampleID=plot_labels)
+    rownames(factor_df) <- make.names(plot_labels)
+    for (fact in expt_factors) {
+        factor_df[fact] <- as.numeric(as.factor(as.character(expt_design[, fact])))
     }
     factor_df <- factor_df[-1]
 
@@ -461,9 +508,9 @@ pca_information <- function(data, design=NULL, factors=c("condition","batch"),
     anova_p <- data.frame()
     anova_rss <- data.frame()
     anova_fstats <- data.frame()
-    for (factor in factors) {
+    for (fact in expt_factors) {
         for (pc in 1:num_components) {
-            factor_name <- names(factor_df[factor])
+            factor_name <- names(factor_df[fact])
             pc_name <- names(pc_df[pc])
             tmp_df <- merge(factor_df, pc_df, by="row.names")
             rownames(tmp_df) <- tmp_df[,1]
@@ -482,22 +529,22 @@ pca_information <- function(data, design=NULL, factors=c("condition","batch"),
             ##5.  Look at anova.test() to see if this provides similar/identical information
             another_fstat <- try(stats::anova(lmwithfactor_test, lmwithoutfactor_test), silent=TRUE)
             if (class(another_fstat)[1] == 'try-error') {
-                anova_sums[factor,pc] <- 0
-                anova_f[factor,pc] <- 0
-                anova_p[factor,pc] <- 0
-                anova_rss[factor,pc] <- 0
+                anova_sums[fact, pc] <- 0
+                anova_f[fact, pc] <- 0
+                anova_p[fact, pc] <- 0
+                anova_rss[fact, pc] <- 0
             } else {
-                anova_sums[factor,pc] <- another_fstat$S[2]
-                anova_f[factor,pc] <- another_fstat$F[2]
-                anova_p[factor,pc] <- another_fstat$P[2]
-                anova_rss[factor,pc] <- another_fstat$RSS[1]
+                anova_sums[fact, pc] <- another_fstat$S[2]
+                anova_f[fact, pc] <- another_fstat$F[2]
+                anova_p[fact, pc] <- another_fstat$P[2]
+                anova_rss[fact, pc] <- another_fstat$RSS[1]
             }
-            anova_fstats[factor,pc] <- fstat
+            anova_fstats[fact, pc] <- fstat
 
             cor_test <- NULL
             tryCatch(
                 {
-                    cor_test <- cor.test(tmp_df[,factor_name], tmp_df[,pc_name], na.rm=TRUE)
+                    cor_test <- cor.test(tmp_df[, factor_name], tmp_df[, pc_name], na.rm=TRUE)
                 },
                 error=function(cond) {
                     message(paste("The correlation failed for ", factor_name, " and ", pc_name, ".", sep=""))
@@ -510,9 +557,9 @@ pca_information <- function(data, design=NULL, factors=c("condition","batch"),
                 }
             ) ## End of the tryCatch
             if (class(cor_test) == 'try-error') {
-                cor_df[factor,pc] <- 0
+                cor_df[fact, pc] <- 0
             } else {
-                cor_df[factor,pc] <- cor_test$estimate
+                cor_df[fact, pc] <- cor_test$estimate
             }
         }
     }
