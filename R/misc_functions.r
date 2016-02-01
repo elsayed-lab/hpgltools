@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  1 17:58:36 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  1 18:32:44 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -413,6 +413,7 @@ write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite
                       overwrite_sheet=TRUE, dated=TRUE, first_two_widths=c("30","60"), ...) {
     arglist <- list(...)
     excel_dir <- dirname(file)
+    suffix <- ".xlsx"
     if (!file.exists(excel_dir)) {
         dir.create(excel_dir, recursive=TRUE)
     }

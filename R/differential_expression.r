@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  1 18:28:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  1 18:34:48 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -291,6 +291,9 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
 #' @export
 extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=0.05, z=NULL,
                                       n=NULL, sig_table="excel/significant_genes.xlsx") {
+    if (!is.null(combined$plots)) {
+        combined <- combined$data
+    }
     trimmed_up <- list()
     trimmed_down <- list()
     change_counts_up <- list()
@@ -340,7 +343,12 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
     ##                        overwrite_file=TRUE, newsheet=TRUE)
     ret <- list(ups=trimmed_up, downs=trimmed_down, counts=change_counts,
                 up_titles=up_titles, down_titles=down_titles, counts_title=summary_title)
-    xlsx_ret <- print_ups_downs(ret, sig_table=sig_table)
+    if (is.null(sig_table)) {
+        message("Not printing excel sheets for the significant genes.")
+    } else {
+        message(paste0("Printing significant genes to the file: ", sig_table))
+        xlsx_ret <- print_ups_downs(ret, sig_table=sig_table)
+    }
     return(ret)
 }
 

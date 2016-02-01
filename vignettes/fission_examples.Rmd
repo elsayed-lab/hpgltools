@@ -131,21 +131,21 @@ We have some tools which provide visualizations of the distribution of the data:
 
 ```{r distributions}
 
-hpgl_boxplot(norm_expt, scale="log2")
+hpgl_boxplot(fission_expt)
 sf_expt = normalize_expt(fission_expt, norm="sf")
-hpgl_boxplot(sf_expt, scale="log2")
+hpgl_boxplot(sf_expt)
 tm_expt = normalize_expt(fission_expt, norm="tmm")
-hpgl_boxplot(tm_expt, scale="log2")
+hpgl_boxplot(tm_expt)
 rle_expt = normalize_expt(fission_expt, norm="rle")
-hpgl_boxplot(rle_expt, scale="log2")
+hpgl_boxplot(rle_expt)
 up_expt = normalize_expt(fission_expt, norm="upperquartile")
-hpgl_boxplot(up_expt, scale="log2")
+hpgl_boxplot(up_expt)
 
-hpgl_density(norm_expt, log=TRUE)
-hpgl_density(sf_expt, log=TRUE)
-hpgl_density(tm_expt, log=TRUE)
+hpgl_density(norm_expt)
+hpgl_density(sf_expt)
+hpgl_density(tm_expt)
 
-compare_12 = hpgl_qq_plot(exprs(norm_expt$expressionset), x=1, y=2)
+compare_12 = hpgl_qq_plot(norm_expt, x=1, y=2)
 compare_12$log
 
 ```
@@ -185,7 +185,7 @@ all_pairwise = limma_pairwise(normbatch_expt, conditions=norm_expt$conditions, b
 ### limma_result         :  a list of toptable()s corresponding to each pairwise comparison
 
 names(all_pairwise$all_tables)
-summary(all_pairwise$all_tables$wt.120_minus_mut.120)
+summary(all_pairwise$all_tables$wt.120_vs_mut.120)
 wt_120 = all_pairwise$all_tables$wt.120
 mut_120 = all_pairwise$all_tables$mut.120
 
@@ -199,7 +199,9 @@ scatter_wt_mut$both_histogram
 
 ```{r de_comparisons}
 
-all_comparison = all_pairwise(normbatch_expt)
+all_comparison = suppressMessages(all_pairwise(normbatch_expt))
+all_combined <- combine_de_tables(all_comparison)
+sig_genes <- extract_significant_genes(all_combined)
 
 ```
 
