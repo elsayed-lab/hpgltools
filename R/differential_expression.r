@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  1 16:49:32 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  1 18:28:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -768,7 +768,10 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA
             result$qvalue <- tryCatch(
             {
-                format(signif(qvalue::qvalue(as.numeric(result$P.Value), robust=TRUE)$qvalues, 4), scientific=TRUE)
+                as.numeric(format(signif(
+                    qvalue::qvalue(as.numeric(result$P.Value), robust=TRUE)$qvalues, 4),
+                    scientific=TRUE))
+                ## as.numeric(format(signif(qvalue::qvalue(as.numeric(result$P.Value), robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
             error=function(cond) {
                 message(paste0("The qvalue estimation failed for ", comparison, "."))
@@ -930,7 +933,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     end <- length(apc$names)
     for (con in 1:length(apc$names)) {
         name <- apc$names[[con]]
-        message(paste0("EdgeR step 9/9:", con, "/", end, ": Printing table: ", name, ".")) ## correct
+        message(paste0("EdgeR step 9/9: ", con, "/", end, ": Printing table: ", name, ".")) ## correct
         sc[[name]] <- gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
         tt <- parse(text=sc[[name]])
         ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=fun_model)")

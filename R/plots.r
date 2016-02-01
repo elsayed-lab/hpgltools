@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  1 12:51:07 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Feb  1 18:12:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -1165,7 +1165,7 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
         ggplot2::scale_y_continuous(limits=c(0,2))
     if (isTRUE(labels)) {
         ratio_plot <- ratio_plot +
-            ggplots::xlab("Sorted gene") +
+            ggplot2::xlab("Sorted gene") +
             ggplot2::ylab(y_string) +
             ggplot2::theme(legend.position="none")
     } else if (labels == "short") {
