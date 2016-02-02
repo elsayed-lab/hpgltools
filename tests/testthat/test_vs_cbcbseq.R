@@ -6,10 +6,8 @@ context("Test hpgltools and cbcbSEQ")
 test_that("Is it possible to load/start cbcbSEQ/hpgltools?", {
     library(cbcbSEQ)
     library(hpgltools)
-    autoloads_all()
     require.auto("pasilla")
 })
-
 
 ## Load the pasilla data set
 message("Loading pasilla, setting up count tables.")
@@ -26,7 +24,6 @@ design = data.frame(row.names=colnames(counts),
 metadata = design
 colnames(metadata) = c("condition", "batch")
 metadata$Sample.id = rownames(metadata)
-
 
 ## Make sure it is still possible to create an expt
 message("Setting up an expt class to contain the pasilla data and metadata.")
@@ -145,4 +142,3 @@ hpgl_top = hpgl_toptables$all_tables
 test_that("Limma results.", {
     expect_equal(cbcb_top, hpgl_top)
 })
-

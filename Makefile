@@ -1,4 +1,4 @@
-VERSION=0.1
+VERSION=2016.02
 install: document
 	cd ../ && R CMD INSTALL hpgltools
 
