@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Jan 31 10:18:17 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 15:08:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -193,16 +193,22 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     godata_interesting <- goseq_table(godata_interesting)
     message("simple_goseq(): Making pvalue plots for the ontologies.")
     pvalue_plots <- goseq_pval_plots(godata)
-    mf_subset <- subset(godata, ontology == "MF")
-    bp_subset <- subset(godata, ontology == "BP")
-    cc_subset <- subset(godata, ontology == "CC")
-    mf_interesting <- subset(godata_interesting, ontology == "MF")
+    ## mf_subset <- subset(godata, ontology == "MF")
+    mf_subset <- godata[godata$ontology == "MF", ]
+    ##bp_subset <- subset(godata, ontology == "BP")
+    bp_subset <- godata[godata$ontology == "BP", ]
+    ## cc_subset <- subset(godata, ontology == "CC")
+    cc_subset <- godata[godata$ontology == "CC", ]
+    ## mf_interesting <- subset(godata_interesting, ontology == "MF")
+    mf_interesting <- godata_interesting[godata_interesting$ontology == "MF", ]
     rownames(mf_interesting) <- mf_interesting$category
     mf_interesting <- mf_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
-    bp_interesting <- subset(godata_interesting, ontology == "BP")
+    ##bp_interesting <- subset(godata_interesting, ontology == "BP")
+    bp_interesting <- godata_interesting[godata_interesting$ontology == "BP", ]
     rownames(bp_interesting) <- bp_interesting$category
     bp_interesting <- bp_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
-    cc_interesting <- subset(godata_interesting, ontology == "CC")
+    ##cc_interesting <- subset(godata_interesting, ontology == "CC")
+    cc_interesting <- godata_interesting[godata_interesting$ontology == "CC", ]
     cc_interesting <- cc_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
     return_list <- list(input=de_genes, pwf=pwf, pwf_plot=pwf_plot,
                         alldata=godata, pvalue_histogram=goseq_p,
@@ -259,10 +265,14 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
     ## TODO: Replace the subset calls with the less noxious which calls.
     plotting_mf <- subset(goterms, complete.cases(goterms))
     plotting_mf$score <- plotting_mf$numDEInCat / plotting_mf$numInCat
-    plotting_mf <- subset(plotting_mf, ontology == "MF")
-    plotting_mf <- subset(plotting_mf, term != "NULL")
-    plotting_mf <- subset(plotting_mf, over_represented_pvalue <= cutoff)
-    plotting_mf <- subset(plotting_mf, numInCat > mincat)
+    ## plotting_mf <- subset(plotting_mf, ontology == "MF")
+    plotting_mf <- plotting_mf[ plotting_mf$ontology == "MF", ]
+    ## plotting_mf <- subset(plotting_mf, term != "NULL")
+    plotting_mf <- plotting_mf[ plotting_mf$term != "NULL", ]
+    ## plotting_mf <- subset(plotting_mf, over_represented_pvalue <= cutoff)
+    plotting_mf <- plotting_mf[ plotting_mf$over_represented_pvalue <= cutoff, ]
+    ## plotting_mf <- subset(plotting_mf, numInCat > mincat)
+    plotting_mf <- plotting_mf[ plotting_mf$numInCat > mincat, ]
     plotting_mf <- plotting_mf[order(plotting_mf$over_represented_pvalue),]
     plotting_mf <- head(plotting_mf, n=n)
     plotting_mf <- plotting_mf[,c("term","over_represented_pvalue","score")]
@@ -272,10 +282,14 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
 
     plotting_bp <- subset(goterms, complete.cases(goterms))
     plotting_bp$score <- plotting_bp$numDEInCat / plotting_bp$numInCat
-    plotting_bp <- subset(plotting_bp, ontology == "BP")
-    plotting_bp <- subset(plotting_bp, term != "NULL")
-    plotting_bp <- subset(plotting_bp, over_represented_pvalue <= cutoff)
-    plotting_bp <- subset(plotting_bp, numInCat > mincat)
+    ## plotting_bp <- subset(plotting_bp, ontology == "BP")
+    plotting_bp <- plotting_bp[ plotting_bp$ontology == "BP", ]
+    ## plotting_bp <- subset(plotting_bp, term != "NULL")
+    plotting_bp <- plotting_bp[ plotting_bp$term != "NULL", ]
+    ## plotting_bp <- subset(plotting_bp, over_represented_pvalue <= cutoff)
+    plotting_bp <- plotting_bp[ plotting_bp$over_represented_pvalue <= cutoff, ]
+    ## plotting_bp <- subset(plotting_bp, numInCat > mincat)
+    plotting_bp <- plotting_bp[ plotting_bp$numInCat > mincat, ]
     plotting_bp <- plotting_bp[order(plotting_bp$over_represented_pvalue),]
     plotting_bp <- head(plotting_bp, n=n)
     plotting_bp <- plotting_bp[,c("term","over_represented_pvalue","score")]
@@ -285,10 +299,14 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
 
     plotting_cc <- subset(goterms, complete.cases(goterms))
     plotting_cc$score <- plotting_cc$numDEInCat / plotting_cc$numInCat
-    plotting_cc <- subset(plotting_cc, ontology == "CC")
-    plotting_cc <- subset(plotting_cc, term != "NULL")
-    plotting_cc <- subset(plotting_cc, over_represented_pvalue <= cutoff)
-    plotting_cc <- subset(plotting_cc, numInCat > mincat)
+    ## plotting_cc <- subset(plotting_cc, ontology == "CC")
+    plotting_cc <- plotting_cc[ plotting_cc$ontology == "CC", ]
+    ## plotting_cc <- subset(plotting_cc, term != "NULL")
+    plotting_cc <- plotting_cc[ plotting_cc$term != "NULL", ]
+    ## plotting_cc <- subset(plotting_cc, over_represented_pvalue <= cutoff)
+    plotting_cc <- plotting_cc[ plotting_cc$over_represented_pvalue <= cutoff, ]
+    ## plotting_cc <- subset(plotting_cc, numInCat > mincat)
+    plotting_cc <- plotting_cc[ plotting_cc$numInCat > mincat, ]
     plotting_cc <- plotting_cc[order(plotting_cc$over_represented_pvalue),]
     plotting_cc <- head(plotting_cc, n=n)
     plotting_cc <- plotting_cc[,c("term","over_represented_pvalue","score")]
@@ -324,18 +342,18 @@ goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
     names(interesting_genes) <- annotated_genes
 
     if (is.null(de_genes[[pval_column]])) {
-        mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=annFUN.gene2GO, gene2GO=geneID2GO)
+        mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+        bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+        cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     } else {
         pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
         names(pvals) <- rownames(de_genes)
         mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
-                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata <- new("topGOdata", description="BP", ontology="BP", allGenes=pvals,
-                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=pvals,
-                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     }
 
     enriched_ids <- godata$alldata$category

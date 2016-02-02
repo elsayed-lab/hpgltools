@@ -1,4 +1,4 @@
-# Time-stamp: <Mon Feb  1 18:06:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Tue Feb  2 13:20:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -113,14 +113,14 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     if (is.null(colors)) {
         colors <- as.numeric(levels(as.factor(design$condition)))
     }
-    pca_data <- data.frame(SampleID=as.character(design$sample),
-                           condition=as.character(design$condition),
-                           batch=as.character(design$batch),
-                           batch_int=as.integer(design$batch),
-                           PC1=pca$v[,1],
-                           PC2=pca$v[,2],
-                           colors=plot_colors,
-                           labels=as.character(plot_labels))
+    pca_data <- data.frame("SampleID"=as.character(design$sample),
+                           "condition"=as.character(design$condition),
+                           "batch"=as.character(design$batch),
+                           "batch_int"=as.integer(design$batch),
+                           "PC1"=pca$v[,1],
+                           "PC2"=pca$v[,2],
+                           "colors"=plot_colors,
+                           "labels"=as.character(plot_labels))
     num_batches <- length(levels(included_batches))
     pca_plot <- NULL
     if (num_batches <= 5) {
@@ -135,16 +135,17 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         ggplot2::theme(legend.key.size=ggplot2::unit(0.5, "cm"))
     if (!is.null(plot_labels)) {
         if (plot_labels[[1]] == "fancy") {
-            pca_plot <- pca_plot + directlabels::geom_dl(ggplot2::aes(label=SampleID), method="smart.grid")
+            pca_plot <- pca_plot + directlabels::geom_dl(ggplot2::aes_string(label="SampleID"), method="smart.grid")
         } else if (plot_labels[[1]] == "normal") {
             pca_plot <- pca_plot +
-                ggplot2::geom_text(ggplot2::aes(x=PC1, y=PC2,
-                                                label=paste(design$condition, design$batch, sep="_")),
+                ggplot2::geom_text(ggplot2::aes_string(x="PC1",
+                                                       y="PC2",
+                                                       label='paste(design$condition, design$batch, sep="_")'),
                                    angle=45, size=4, vjust=2)
         } else {
             pca_plot <- pca_plot +
                 ## remember labels at this point is in the df made on line 96
-                ggplot2::geom_text(ggplot2::aes(x=PC1, y=PC2, label=labels),
+                ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2", label="labels"),
                                    angle=45, size=4, vjust=2)
         }
     }
@@ -180,9 +181,9 @@ pca_plot_largebatch <- function(df, size=5, first="PC1", second="PC2") {
         second <- 'PC2'
     }
     num_batches <- length(levels(factor(df$batch)))
-    plot <- ggplot2::ggplot(df, ggplot2::aes(x=get(first), y=get(second)), environment=hpgl_env) +
+    plot <- ggplot2::ggplot(df, ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
         ## geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
-        ggplot2::geom_point(size=size, ggplot2::aes(shape=batch, fill=condition, colour=colors)) +
+        ggplot2::geom_point(size=size, ggplot2::aes_string(shape="batch", fill="condition", colour="colors")) +
         ggplot2::scale_fill_manual(name="Condition", guide="legend",
                                    labels=levels(as.factor(df$condition)),
                                    values=levels(as.factor(df$colors))) +
@@ -206,8 +207,8 @@ pca_plot_largebatch <- function(df, size=5, first="PC1", second="PC2") {
 #' @return a ggplot2 plot of principle components 1 and 2.
 pca_plot_smallbatch <- function(df, size=5, first='PC1', second='PC2') {
     hpgl_env <- environment()
-    plot <- ggplot2::ggplot(df, ggplot2::aes(x=get(first), y=get(second)), environment=hpgl_env) +
-        ggplot2::geom_point(size=size, ggplot2::aes(shape=factor(batch), fill=condition), colour='black') +
+    plot <- ggplot2::ggplot(df, ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
+        ggplot2::geom_point(size=size, ggplot2::aes_string(shape="factor(batch)", fill="condition"), colour='black') +
         ggplot2::scale_fill_manual(name="Condition", guide="legend",
                                    labels=levels(as.factor(df$condition)),
                                    values=levels(as.factor(df$colors))) +
@@ -269,9 +270,12 @@ plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
     ## num_batches = length(levels(factor(design$batch)))
 
     pca_plot <- ggplot2::ggplot(data=as.data.frame(data), environment=hpgl_env, fill=factor(design$condititon)) +
-        ggplot2::geom_point(ggplot2::aes(x=get(first), y=get(second), shape=batches, colour=data$colors), stat="identity", size=3) +
+        ggplot2::geom_point(ggplot2::aes_string(x="get(first)", y="get(second)", shape="batches", colour="data$colors"),
+                            stat="identity", size=3) +
         ggplot2::scale_color_manual(values=levels(factor(data$colors)), name="Condition", labels=levels(as.factor(design$condition))) +
-        ggplot2::scale_shape_manual(values=batches, name="Batch", guide=ggplot2::guide_legend(override.aes=ggplot2::aes(size=1))) +
+        ggplot2::scale_shape_manual(values=batches,
+                                    name="Batch",
+                                    guide=ggplot2::guide_legend(override.aes=ggplot2::aes_string(size="1"))) +
         ggplot2::ggtitle(plot_title) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.key.size=ggplot2::unit(0.5, "cm"))
@@ -287,11 +291,11 @@ plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
     if (!is.null(plot_labels)) {
         if (plot_labels[[1]] == "fancy") {
             pca_plot <- pca_plot +
-                directlabels::geom_dl(ggplot2::aes(x=get(first), y=get(second), label=point_labels),
+                directlabels::geom_dl(ggplot2::aes_string(x="get(first)", y="get(second)", label="point_labels"),
                                       list("top.bumpup", cex=0.5))
         } else {
             pca_plot <- pca_plot +
-                ggplot2::geom_text(ggplot2::aes(x=get(first), y=get(second), label=point_labels),
+                ggplot2::geom_text(ggplot2::aes_string(x="get(first)", y="get(second)", label="point_labels"),
                                    angle=45, size=4, vjust=2)
         }
     }
@@ -430,8 +434,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
 
     ## Include in this table the fstatistic and pvalue described in rnaseq_bma.rmd
     component_rsquared_table <- data.frame(
-        prop_var=component_variance,
-        cumulative_prop_var=cumulative_pc_variance)
+        "prop_var"=component_variance,
+        "cumulative_prop_var"=cumulative_pc_variance)
 
     if (is.null(expt_factors)) {
         expt_factors <- colnames(expt_design)
@@ -451,12 +455,12 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     print(yl)
     plot_labels <- rownames(expt_design)
 
-    pca_data <- data.frame(SampleID=plot_labels,
-                           condition=expt_design$condition,
-                           batch=expt_design$batch,
-                           batch_int=as.integer(expt_design$batch),
-                           colors=expt_design$color)
-    pc_df <- data.frame(SampleID=plot_labels)
+    pca_data <- data.frame("SampleID"=plot_labels,
+                           "condition"=expt_design$condition,
+                           "batch"=expt_design$batch,
+                           "batch_int"=as.integer(expt_design$batch),
+                           "colors"=expt_design$color)
+    pc_df <- data.frame("SampleID"=plot_labels)
     rownames(pc_df) <- make.names(plot_labels)
 
     if (is.null(num_components)) {
@@ -492,7 +496,7 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         }
     }
 
-    factor_df <- data.frame(SampleID=plot_labels)
+    factor_df <- data.frame("SampleID"=plot_labels)
     rownames(factor_df) <- make.names(plot_labels)
     for (fact in expt_factors) {
         factor_df[fact] <- as.numeric(as.factor(as.character(expt_design[, fact])))

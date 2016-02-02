@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{divide_seq}
 \alias{divide_seq}
-\title{Express a data frame of counts as reads per pattern per
+\title{\code{divide_seq()}  Express a data frame of counts as reads per pattern per
 million(library).}
 \usage{
 divide_seq(counts, pattern = "TA", fasta = "testme.fasta",
@@ -23,7 +23,15 @@ divide_seq(counts, pattern = "TA", fasta = "testme.fasta",
 The 'RPseqM' counts
 }
 \description{
-Express a data frame of counts as reads per pattern per
+\code{divide_seq()}  Express a data frame of counts as reads per pattern per
 million(library).
+}
+\examples{
+\dontrun{
+cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
+}
+}
+\seealso{
+\code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
 }
 

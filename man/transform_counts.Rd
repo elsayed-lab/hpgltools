@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{transform_counts}
 \alias{transform_counts}
-\title{transform_counts(): Perform a simple transformation of a count table (log2)}
+\title{\code{transform_counts()}  Perform a simple transformation of a count table (log2)}
 \usage{
 transform_counts(count_table, transform = "raw", converted = "raw",
   base = NULL, add = 0.5)
@@ -10,9 +10,13 @@ transform_counts(count_table, transform = "raw", converted = "raw",
 \arguments{
 \item{count_table}{A matrix of count data}
 
-\item{transform='raw'}{A type of transformation to perform: log2/log10/log}
+\item{transform}{default='raw'  A type of transformation to perform: log2/log10/log}
 
-\item{converted='raw'}{Whether or not the data has been converted.
+\item{converted}{default='raw'  Whether or not the data has been converted.}
+
+\item{base}{default=NULL  for other log scales}
+
+\item{add}{default=0.5  to avoid attempting a log(0)
 Only important if the data was previously cpm'd because that does a +1, thus
 this will avoid a double+1 on the data.}
 }
@@ -20,9 +24,11 @@ this will avoid a double+1 on the data.}
 dataframe of logx(counts)
 }
 \description{
-transform_counts(): Perform a simple transformation of a count table (log2)
+\code{transform_counts()}  Perform a simple transformation of a count table (log2)
 }
 \examples{
-## filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
+\dontrun{
+filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
+}
 }
 

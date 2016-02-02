@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{batch_counts}
 \alias{batch_counts}
-\title{batch_counts()  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.}
+\title{\code{batch_counts()}  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.}
 \usage{
 batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
   batch2 = NULL, noscale = TRUE, ...)
@@ -25,6 +25,15 @@ The 'batch corrected' count table and new library size.  Please remember that th
 may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
 }
 \description{
-batch_counts()  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
+\code{batch_counts()}  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
+}
+\examples{
+\dontrun{
+limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
+sva_batch <- batch_counts(table, design, batch='sva')
+}
+}
+\seealso{
+\pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
 }
 

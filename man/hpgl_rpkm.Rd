@@ -2,9 +2,9 @@
 % Please edit documentation in R/normalization.r
 \name{hpgl_rpkm}
 \alias{hpgl_rpkm}
-\title{hpgl_rpkm(): Reads/(kilobase(gene) * million reads)}
+\title{\code{hpgl_rpkm()}  Reads/(kilobase(gene) * million reads)}
 \usage{
-hpgl_rpkm(df, annotations = gene_annotations)
+hpgl_rpkm(df, annotations = get0("gene_annotations"))
 }
 \arguments{
 \item{df}{a data frame of counts, alternately an edgeR DGEList}
@@ -24,9 +24,11 @@ This function wraps EdgeR's rpkm in an attempt to make sure that
 the required gene lengths get sent along.
 }
 \examples{
-## rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
+\dontrun{
+rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
+}
 }
 \seealso{
-\code{\link{edgeR}} and \code{\link{cpm}}
+\pkg{edgeR} and \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 }
 

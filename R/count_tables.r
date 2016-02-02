@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  1 16:53:40 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 13:41:25 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -62,7 +62,11 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
     }
     colnames(tmp_definitions) <- tolower(colnames(tmp_definitions))
     ## "no visible binding for global variable 'sample.id'"  ## hmm sample.id is a column from the csv file.
-    tmp_definitions <- subset(tmp_definitions, sample.id != "")
+    ## tmp_definitions <- subset(tmp_definitions, sample.id != "")
+    empty_samples <- which(tmp_definitions$sample.id == "")
+    if (length(empty_samples) > 0) {
+        tmp_definitions <- tmp_definitions[-empty_samples, ]
+    }
     condition_names <- unique(tmp_definitions$condition)
     if (is.null(condition_names)) {
         warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
@@ -102,7 +106,7 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
         tooltip_data <- tooltip_data[-1]
         tooltip_data <- tooltip_data[-1]
         colnames(tooltip_data) <- c("name.tooltip")
-        new_expt$genes <- genes
+        new_expt$genes <- tmp_genes
         new_expt$tooltip <- tooltip_data
     }
     ## These entries in new_expt are intended to maintain a record of
@@ -114,7 +118,7 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
     new_expt$transform <- "raw"
     new_expt$norm <- "raw"
     new_expt$convert <- "raw"
-    new_expt$original_libsize <- colSums(exprs(new_expt$expressionset))
+    new_expt$original_libsize <- colSums(Biobase::exprs(new_expt$expressionset))
     if (!is.null(savefile)) {
         save(list = c("new_expt"), file=paste(savefile, ".Rdata", sep=""))
     }
@@ -287,9 +291,9 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
     require.auto("Biobase")
     metadata <- new("AnnotatedDataFrame", meta_frame)
 
-    sampleNames(metadata) <- colnames(all_count_matrix)
+    Biobase::sampleNames(metadata) <- colnames(all_count_matrix)
     feature_data <- new("AnnotatedDataFrame", gene_info)
-    featureNames(feature_data) <- rownames(all_count_matrix)
+    Biobase::featureNames(feature_data) <- rownames(all_count_matrix)
     experiment <- new("ExpressionSet", exprs=all_count_matrix,
                       phenoData=metadata, featureData=feature_data)
     ret <- list(expt=experiment, def=sample_definitions, annotation=annotation)
@@ -351,9 +355,9 @@ expt_subset <- function(expt, subset=NULL) {
     names <- paste(conditions, batches, sep="-")
     subset_definitions <- expt$definitions[rownames(expt$definitions) %in% samplenames, ]
     subset_libsize <- expt$original_libsize[names(expt$original_libsize) %in% samplenames]
-    expressionset <- expressionset[, sampleNames(expressionset) %in% samplenames]
-    columns <- data.frame(sample=colnames(exprs(expressionset)))
-    rownames(columns) <- colnames(exprs(expressionset))
+    expressionset <- expressionset[, Biobase::sampleNames(expressionset) %in% samplenames]
+    columns <- data.frame(sample=colnames(Biobase::exprs(expressionset)))
+    rownames(columns) <- colnames(Biobase::exprs(expressionset))
     metadata <- list(initial_metadata=initial_metadata,
                      original_expressionset=expressionset,
                      expressionset=expressionset,
@@ -488,7 +492,7 @@ concatenate_runs <- function(expt, column='replicate') {
     for (rep in replicates) {
         expression <- paste0(column, "=='", rep, "'")
         tmp_expt <- expt_subset(expt, expression)
-        tmp_data <- rowSums(exprs(tmp_expt$expressionset))
+        tmp_data <- rowSums(Biobase::exprs(tmp_expt$expressionset))
         tmp_design <- tmp_expt$design[1,]
         final_data <- cbind(final_data, tmp_data)
         final_design <- rbind(final_design, tmp_design)
@@ -501,9 +505,9 @@ concatenate_runs <- function(expt, column='replicate') {
     }
     final_expt$design <- final_design
     metadata <- new("AnnotatedDataFrame", final_design)
-    sampleNames(metadata) <- colnames(final_data)
-    feature_data <- new("AnnotatedDataFrame", fData(expt$expressionset))
-    featureNames(feature_data) <- rownames(final_data)
+    Biobase::sampleNames(metadata) <- colnames(final_data)
+    feature_data <- new("AnnotatedDataFrame", Biobase::fData(expt$expressionset))
+    Biobase::featureNames(feature_data) <- rownames(final_data)
     experiment <- new("ExpressionSet", exprs=final_data,
                       phenoData=metadata, featureData=feature_data)
     final_expt$expressionset <- experiment
@@ -530,11 +534,11 @@ concatenate_runs <- function(expt, column='replicate') {
 #' @examples
 #' ## compressed = hpgltools:::median_by_factor(data, experiment$condition)
 median_by_factor <- function(data, fact) {
-    medians <- data.frame(ID=rownames(data))
+    medians <- data.frame("ID"=rownames(data))
     rownames(medians) = rownames(data)
     for (type in levels(fact)) {
         columns <- grep(pattern=type, fact)
-        med <- rowMedians(data[, columns])
+        med <- matrixStats::rowMedians(data[, columns])
         medians <- cbind(medians, med)
     }
     medians <- medians[-1]

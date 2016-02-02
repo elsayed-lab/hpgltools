@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Jan 23 15:30:27 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 15:04:14 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' simple_topgo()  Perform a simplified topgo analysis
 #'
@@ -46,7 +46,8 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
     ##    interesting_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
     fisher_interesting_genes <- as.factor(as.integer(annotated_genes %in% de_genes$ID))
     names(fisher_interesting_genes) <- annotated_genes
-    ks_interesting_genes <- as.integer(annotated_genes %nin% de_genes$ID)
+    require.auto("Hmisc")
+    ks_interesting_genes <- as.integer(annotated_genes %nin% de_genes$ID) ## %nin% is from Hmisc
     if (!is.null(de_genes$P.Value)) {
         ## I think this needs to include the entire gene universe, not only the set of x differentially expressed genes
         ## Making this an explicit as.vector(as.numeric()) because it turns out the values from DESeq are characters.
@@ -61,31 +62,31 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
     names(ks_interesting_genes) <- annotated_genes
 
     fisher_mf_GOdata <- new("topGOdata", ontology="MF", allGenes=fisher_interesting_genes,
-                            annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                            annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     fisher_bp_GOdata <- new("topGOdata", ontology="BP", allGenes=fisher_interesting_genes,
-                            annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                            annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     fisher_cc_GOdata <- new("topGOdata", ontology="CC", allGenes=fisher_interesting_genes,
-                            annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                            annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     ks_mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=ks_interesting_genes,
-                        geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                        geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     ks_bp_GOdata <- new("topGOdata", description="BP", ontology="BP", allGenes=ks_interesting_genes,
-                        geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                        geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     ks_cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=ks_interesting_genes,
-                        geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                        geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
 
-    test_stat <- new("classicCount", testStatistic=GOFisherTest, name="Fisher test")
+    test_stat <- new("classicCount", testStatistic=topGO::GOFisherTest, name="Fisher test")
     mf_fisher_result <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
     bp_fisher_result <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
     cc_fisher_result <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
-    test_stat <- new("classicScore", testStatistic=GOKSTest, name="KS tests")
+    test_stat <- new("classicScore", testStatistic=topGO::GOKSTest, name="KS tests")
     mf_ks_result <- topGO::getSigGroups(ks_mf_GOdata, test_stat)
     bp_ks_result <- topGO::getSigGroups(ks_bp_GOdata, test_stat)
     cc_ks_result <- topGO::getSigGroups(ks_cc_GOdata, test_stat)
-    test_stat <- new("elimScore", testStatistic=GOKSTest, name="Fisher test", cutOff=0.01)
+    test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="Fisher test", cutOff=0.01)
     mf_el_result <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
     bp_el_result <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
     cc_el_result <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
-    test_stat <- new("weightCount", testStatistic=GOFisherTest, name="Fisher test", sigRatio="ratio")
+    test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest, name="Fisher test", sigRatio="ratio")
     mf_weight_result <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
     bp_weight_result <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
     cc_weight_result <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
@@ -125,9 +126,9 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
 
     mf_densities <- bp_densities <- cc_densities <- list()
     if (isTRUE(densities)) {
-        mf_densities <- hpgltools:::plot_topgo_densities(fisher_mf_GOdata, tables$mf)
-        bp_densities <- hpgltools:::plot_topgo_densities(fisher_bp_GOdata, tables$bp)
-        cc_densities <- hpgltools:::plot_topgo_densities(fisher_cc_GOdata, tables$cc)
+        mf_densities <- plot_topgo_densities(fisher_mf_GOdata, tables$mf)
+        bp_densities <- plot_topgo_densities(fisher_bp_GOdata, tables$bp)
+        cc_densities <- plot_topgo_densities(fisher_cc_GOdata, tables$cc)
     } else {
         message("simple_topgo(): Set densities=TRUE for ontology densitya plots.")
     }
@@ -154,7 +155,7 @@ plot_topgo_densities <- function(godata, table) {
     ret <- list()
     for (id in table$GO.ID) {
         message(id)
-        print(hpgltools:::hpgl_GroupDensity(godata, id, ranks=TRUE))
+        print(hpgl_GroupDensity(godata, id, ranks=TRUE))
         added_plot <- recordPlot()
         ret[[id]] <- added_plot
     }
@@ -283,7 +284,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
     bp_fisher_nodes <- bp_fisher_tree <- NULL
     if (isTRUE(do_bp_fisher_tree)) {
         included <- length(which(topGO::score(tg$results$bp_fisher) <= score_limit))
-        bp_fisher_nodes <- try(suppressWarnings(showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_fisher),
+        bp_fisher_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg$bp_godata, topGO::score(tg$results$bp_fisher),
                                                                useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_fisher_nodes)[1] != 'try-error') {
@@ -424,7 +425,7 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
             stop("There is neither a id2go file nor a data frame of goids.")
         } else {
             message("Attempting to generate a id2go file in the format expected by topGO.")
-            new_go <- plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
+            new_go <- plyr::ddply(goids_df, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
             write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
             rm(id2go_test)
         }
@@ -434,7 +435,7 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
                 stop("There is neither a id2go file nor a data frame of goids.")
             } else {
                 message("Attempting to generate a id2go file in the format expected by topGO.")
-                new_go <- plyr::ddply(goids_df, .(ID), summarise, GO=paste(unique(GO), collapse=','))
+                new_go <- plyr::ddply(goids_df, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
                 write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
                 id2go_test <- file.info(goid_map)
             }
@@ -446,7 +447,7 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
     return(new_go)
 }
 
-hpgl_topdiffgenes <- function(scores, df=de_genes, direction="up") {
+hpgl_topdiffgenes <- function(scores, df=get0("de_genes"), direction="up") {
     ## Testing parameters
     ##scores = pvals
     ##df = epi_cl14clbr_high
@@ -511,37 +512,51 @@ topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
 }
 
 
-## this function will plot the GO DAG or parts of it
-## sigNodes:     a named vector of terms p-values, the names are the GO terms
-## wantedNodes:  the nodes that we want to find, we will plot this nodes with
-##               a different color. The vector contains the names pf the nodes
-## oldSigNodes:  used to plot the (new) sigNodes in the same collor range
-##               as the old ones
-## export.to.dot.file: is a global variable given the name of the output .dot file
-
+#' getEdgeWeights() Plot the ontology DAG
+#'
+#' @param graph  A graph from topGO
+#'
+#' This function was stolen from topgo in order to figure out where it was failing
+#' @return weights
 #' @export
 getEdgeWeights <- function(graph) {
     weightsList <- graph::edgeWeights(graph)
     to <- lapply(weightsList, names)
-    from <- nodes(graph)
+    from <- graph::nodes(graph)
 
     if (any(is.na(unlist(to))) || any(is.na(from))) {
         stop("Edge names do not match node names.")
     }
 
-    edge.names <- paste(rep(from, listLen(to)), unlist(to), sep = "~")
+    edge.names <- paste(rep(from, Biobase::listLen(to)), unlist(to), sep = "~")
     edge.weights <- unlist(weightsList)
     names(edge.weights) <- edge.names
     return(edge.weights)
 }
 
-#' A minor hack in the topGO GOplot function
+#' hpgl_GOplot() A minor hack of the topGO GOplot function
+#' This allows me to change the line widths from the default.
 #'
+#' @param dag  The DAG tree of ontologies
+#' @param sigNodes  The set of significant ontologies (with p-values)
+#' @param dag.name default='GO terms'  A name for the graph
+#' @param edgeTypes default=TRUE  Set the types of the edges for graphviz
+#' @param nodeShape.type default=c(box, circle, ellipse, plaintext)  The shapes on the tree
+#' @param genNodes default=NULL  Generate the nodes?
+#' @param wantedNodes default=NULL  A subset of the ontologies to plot
+#' @param showEdges default=TRUE  Show the arrows?
+#' @param useFullNames default=TRUE  Full names of the ontologies (they can get long)
+#' @param oldSigNodes default=NULL  I dunno
+#' @param nodeInfo default=nodeInfo   Hmm
+#' @param maxchars default=30  Maximum characters per line inside the shapes
+#'
+#' @return a topgo plot
 #' @export
 hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
                         nodeShape.type=c('box','circle','ellipse','plaintext')[3],
                         genNodes=NULL, wantedNodes=NULL, showEdges=TRUE, useFullNames=TRUE,
-                        oldSigNodes=NULL, nodeInfo=nodeInfo, maxchars=30) {
+                        oldSigNodes=NULL, nodeInfo=NULL, maxchars=30) {
+    ## Original function definition had nodeInfo=nodeInfo
     if(!missing(sigNodes)) {
         sigNodeInd = TRUE
     } else {
@@ -581,8 +596,8 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
     ##nodeAttrs$fixedsize[nodes(dag)] <- rep(FALSE, numNodes(dag))
 
     if(is.null(nodeInfo)) {
-        nodeInfo <- character(numNodes(dag))
-        names(nodeInfo) <- nodes(dag)
+        nodeInfo <- character(graph::numNodes(dag))
+        names(nodeInfo) <- graph::nodes(dag)
     } else {
 ##        print(class(nodeInfo))
 ##        nodeInfo <- paste('\\\n', nodeInfo, sep = '')
@@ -593,7 +608,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
     ##print(teststring)
 
   ## a good idea is to use xxxxxxx instead of GO:xxxxxxx as node labes
-    node.names <- nodes(dag)
+    node.names <- graph::nodes(dag)
     if(!useFullNames) {
         nodeAttrs$label <- sapply(node.names,
                                   function(x) {
@@ -627,7 +642,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
     ## we will use different fillcolors for the nodes
     if(sigNodeInd) {
         if(!is.null(oldSigNodes)) {
-            old.logSigNodes <- log10(sort(oldSigNodes[nodes(dag)]))
+            old.logSigNodes <- log10(sort(oldSigNodes[graph::nodes(dag)]))
             old.range <- range(old.logSigNodes)
             logSigNodes <- log10(sort(sigNodes))
             logSigNodes[logSigNodes < old.range[1]] <- old.range[1]
@@ -664,122 +679,10 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
         ## plot(dag, attrs = graphAttrs, nodeAttrs = nodeAttrs, edgeAttrs = edgeAttrs)
     }
 
-    return(agopen(graph = dag, name = dag.name, attrs = graphAttrs,
-                  nodeAttrs = nodeAttrs,  edgeAttrs = edgeAttrs))
+    final_dag <- Rgraphviz::agopen(graph=dag, name=dag.name, attrs=graphAttrs,
+                                   nodeAttrs=nodeAttrs, edgeAttrs=edgeAttrs)
+    return(final_dag)
 }
-
-
-GOplot.orig <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
-                   nodeShape.type=c('box', 'circle', 'ellipse', 'plaintext')[3],
-                   genNodes=NULL, wantedNodes=NULL, showEdges=TRUE, useFullNames=FALSE,
-                   oldSigNodes=NULL, nodeInfo=NULL) {
-
-    if(!missing(sigNodes))
-        sigNodeInd = TRUE
-    else
-        sigNodeInd = FALSE
-
-    ## we set the global Graphviz attributes
-    graphAttrs <- Rgraphviz::getDefaultAttrs(layoutType = 'dot')
-    graphAttrs$cluster <- NULL
-
-    ## graphAttrs$graph$splines <- FALSE
-    ## set the node shape
-    graphAttrs$node$shape <- nodeShape.type
-
-    ## set the fontsize for the nodes labels
-    graphAttrs$node$fontsize <- '14'
-    ## graphAttrs$node$height <- '1.0'
-    ## graphAttrs$node$width <- '1.5'
-
-    ## set the local attributes lists
-    nodeAttrs <- list()
-    edgeAttrs <- list()
-
-    ## try to use adaptive node size
-    ## nodeAttrs$fixedsize[nodes(dag)] <- rep(FALSE, numNodes(dag))
-
-    if (is.null(nodeInfo)) {
-        nodeInfo <- character(numNodes(dag))
-        names(nodeInfo) <- nodes(dag)
-    } else {
-        nodeInfo <- paste('\\\n', nodeInfo, sep = '')
-    }
-    ## a good idea is to use xxxxxxx instead of GO:xxxxxxx as node labes
-    node.names <- nodes(dag)
-    if (!useFullNames)
-        nodeAttrs$label <- sapply(node.names,
-                                  function(x) {
-                                      return(paste(substr(x, 4, nchar(node.names[1])),
-                                                   nodeInfo[x], sep = ''))
-                                  })
-    else {
-        nodeAttrs$label <- paste(node.names, nodeInfo, sep = '')
-        names(nodeAttrs$label) <- node.names
-    }
-
-  ## we will change the shape and the color of the nodes that generated the dag
-  if (!is.null(wantedNodes)) {
-      diffNodes <- setdiff(wantedNodes, genNodes)
-      if(length(diffNodes) > 0) {
-          nodeAttrs$color[diffNodes] <- rep('lightblue', .ln <- length(diffNodes))
-          nodeAttrs$shape[diffNodes] <- rep('circle', .ln)
-          nodeAttrs$height[diffNodes] <- rep('0.45', .ln)
-          ##nodeAttrs$width[diffNodes] <- rep('0.6', .ln)
-          ##nodeAttrs$fixedsize[wantedNodes] <- rep(TRUE, .ln)
-      }
-  }
-
-    ## we will change the shape and the color of the nodes we want back
-    if(!is.null(genNodes)) {
-        nodeAttrs$color[genNodes] <- rep('lightblue', .ln <- length(genNodes))
-        nodeAttrs$shape[genNodes] <- rep('box', .ln)
-        ## nodeAttrs$fixedsize[genNodes] <- rep(FALSE, .ln)
-    }
-
-    ## we will use different fillcolors for the nodes
-    if(sigNodeInd) {
-        if(!is.null(oldSigNodes)) {
-            old.logSigNodes <- log10(sort(oldSigNodes[nodes(dag)]))
-            old.range <- range(old.logSigNodes)
-            logSigNodes <- log10(sort(sigNodes))
-            logSigNodes[logSigNodes < old.range[1]] <- old.range[1]
-            logSigNodes[logSigNodes > old.range[2]] <- old.range[2]
-
-            ## debug:  old.range == range(logSigNodes)
-            ## if(!identical(all.equal(old.range, range(logSigNodes)), TRUE)){
-            ##  print(old.range)
-            ##  print(range(logSigNodes))
-            ##  stop('some stupid error here :)')
-            ## }
-        }
-    else
-        old.logSigNodes <- logSigNodes <- log10(sort(sigNodes))
-
-        sigColor <- round(logSigNodes - range(logSigNodes)[1] + 1)
-        old.sigColor <- round(old.logSigNodes - range(old.logSigNodes)[1] + 1)
-
-        mm <- max(sigColor, old.sigColor)
-        sigColor <- sigColor + (mm - max(sigColor))
-
-        colorMap <- heat.colors(mm)
-        nodeAttrs$fillcolor <- unlist(lapply(sigColor, function(x) return(colorMap[x])))
-    }
-
-    if(!showEdges)
-        graphAttrs$edge$color <- 'white'
-    else
-        ## if we want to differentiate between 'part-of' and 'is-a' edges
-        if(edgeTypes)
-            ##    0 for a is_a relation,  1 for a part_of relation
-            ## edgeAttrs$color <- ifelse(getEdgeWeights(dag) == 0, 'black', 'red')
-            edgeAttrs$color <- ifelse(hpgltools::getEdgeWeights(dag) == 0, 'black', 'black')
-    ## plot(dag, attrs = graphAttrs, nodeAttrs = nodeAttrs, edgeAttrs = edgeAttrs)
-
-    return(agopen(graph = dag, name = dag.name, attrs = graphAttrs,
-                  nodeAttrs = nodeAttrs,  edgeAttrs = edgeAttrs))
-}
-
 
 #' hpgl_GroupDensity()  A hack of topGO's groupDensity()
 #'

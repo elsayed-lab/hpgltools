@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  1 18:32:44 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 15:47:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -22,7 +22,7 @@ Beta.NA <- function(y,X) {
 #' @seealso \code{\link{import.gff3}}, \code{\link{import.gff}}, \code{\link{import.gff2}}
 #'
 #' @examples
-#' ## tt = hpgltools:::get_genelengths('reference/fun.gff.gz')
+#' ## tt = get_genelengths('reference/fun.gff.gz')
 #' ## head(tt)
 #' ##          ID width
 #' ##1   YAL069W   312
@@ -36,7 +36,7 @@ get_genelengths <- function(gff, type="gene", key='ID') {
     ret <- ret[ret$type == type,]
     ret <- ret[,c(key,"width")]
     colnames(ret) <- c("ID","width")
-    if (dim(genelengths)[1] == 0) {
+    if (dim(ret)[1] == 0) {
         stop(paste0("No genelengths were found.  Perhaps you are using the wrong 'type' or 'key' arguments, type is: ", type, ", key is: ", key))
     }
     return(ret)
@@ -95,9 +95,8 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent='Parent', child='row.
 #'
 #' @return a dated report file
 make_report <- function(name="report", type='pdf') {
-    opts_knit$set(progress=FALSE, verbose=FALSE, error=FALSE, fig.width=7, fig.height=7)
-    theme_set(theme_bw(base_size=10))
-    options(java.parameters="-Xmx8g")
+    knitr::opts_knit$set(progress=FALSE, verbose=FALSE, error=FALSE, fig.width=7, fig.height=7)
+    ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
     set.seed(1)
     output_date <- format(Sys.time(), "%Y%m%d-%H%M")
     input_filename <- name
@@ -107,7 +106,7 @@ make_report <- function(name="report", type='pdf') {
     if (type == 'html') {
         output_filename <- paste0(name, "-", output_date, ".html")
         output_format <- 'html_document'
-        render(output_filename, output_format)
+        rmarkdown::render(output_filename, output_format)
     } else if (type == 'pdf') {
         output_filename <- paste0(name, "-", output_date, ".pdf")
         output_format <- 'pdf_document'
@@ -116,7 +115,10 @@ make_report <- function(name="report", type='pdf') {
         output_format <- 'knitrBootstrap::bootstrap_document'
     }
     message(paste0("About to run: render(input=", input_filename, ", output_file=", output_filename, " and output_format=", output_format))
-    result <- try(render(input=input_filename, output_file=output_filename, output_format=output_format), silent=TRUE)
+    result <- try(rmarkdown::render(
+        input=input_filename,
+        output_file=output_filename,
+        output_format=output_format), silent=TRUE)
     return(result)
 }
 
@@ -147,12 +149,12 @@ hpgl_arescore <- function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
     ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
     ## However, the repository I want for it is 'seqtools'
     ## Ergo my stupid require.auto() will be confused by definition because it assumes equivalent names
-    if (isTRUE('SeqTools' %in% .packages(all.available=TRUE))) {
-        library('SeqTools')
-    } else {
-        require.auto("lianos/seqtools/R/pkg")
-        library('SeqTools')
-    }
+    ##if (isTRUE('SeqTools' %in% .packages(all.available=TRUE))) {
+    ##    library('SeqTools')
+    ##} else {
+    ##    require.auto("lianos/seqtools/R/pkg")
+    ##    library('SeqTools')
+    ##}
     xtype <- match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
     if (xtype == "DNA") {
         pentamer <- "ATTTA"
@@ -162,27 +164,30 @@ hpgl_arescore <- function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
         overmer <- "AUUUAUUUA"
     }
     x <- as(x, "DNAStringSet")
-    pmatches <- vmatchPattern(pentamer, x)
-    omatches <- vmatchPattern(overmer, x)
-    basal.score <- elementLengths(pmatches) * basal
-    over.score <- elementLengths(omatches) * overlapping
+    pmatches <- Biostrings::vmatchPattern(pentamer, x)
+    omatches <- Biostrings::vmatchPattern(overmer, x)
+    basal.score <- S4Vectors::elementLengths(pmatches) * basal
+    over.score <- S4Vectors::elementLengths(omatches) * overlapping
     no.cluster <- data.frame(d1.3 = 0, d4.6 = 0, d7.9 = 0)
     clust <- lapply(pmatches, function(m) {
         if (length(m) < 2) {
             return(no.cluster)
         }
-        wg <- width(gaps(m))
+        wg <- BiocGenerics::width(IRanges::gaps(m))
         data.frame(d1.3=sum(wg <= 3), d4.6=sum(wg >= 4 & wg <= 6), d7.9=sum(wg >= 7 & wg <= 9))
     })
     clust <- do.call(rbind, clust)
     dscores <- clust$d1.3 * d1.3 + clust$d4.6 * d4.6 + clust$d7.9 *  d7.9
-    require.auto("Biostrings")
-    au.blocks <- hpgltools:::my_identifyAUBlocks(x, aub.min.length, aub.p.to.start, aub.p.to.end)
-    aub.score <- sum(countOverlaps(pmatches, au.blocks) * within.AU)
+    ## require.auto("Biostrings")
+    au.blocks <- my_identifyAUBlocks(x, aub.min.length, aub.p.to.start, aub.p.to.end)
+    aub.score <- sum(IRanges::countOverlaps(pmatches, au.blocks) * within.AU)
     score <- basal.score + over.score + dscores + aub.score
-    ans <- DataFrame(score=score, n.pentamer=elementLengths(pmatches), n.overmer=elementLengths(omatches),
-                     au.blocks=au.blocks, n.au.blocks=elementLengths(au.blocks))
-    cbind(ans, DataFrame(clust))
+    ans <- S4Vectors::DataFrame(score=score,
+                                n.pentamer=S4Vectors::elementLengths(pmatches),
+                                n.overmer=S4Vectors::elementLengths(omatches),
+                                au.blocks=au.blocks,
+                                n.au.blocks=S4Vectors::elementLengths(au.blocks))
+    cbind(ans, S4Vectors::DataFrame(clust))
 }
 
 #' my_identifyAUBlocks()  copy/paste the function from SeqTools
@@ -198,9 +203,9 @@ hpgl_arescore <- function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
 #' @return a list of IRanges which contain a bunch of As and Us.
 my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
     xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
-    stopifnot(isSingleNumber(min.length) && min.length >= 5 &&  min.length <= 50)
-    stopifnot(isSingleNumber(p.to.start) && p.to.start >= 0.5 && p.to.start <= 0.95)
-    stopifnot(isSingleNumber(p.to.end) && p.to.end >= 0.2 && p.to.end <= 0.7)
+    stopifnot(S4Vectors::isSingleNumber(min.length) && min.length >= 5 &&  min.length <= 50)
+    stopifnot(S4Vectors::isSingleNumber(p.to.start) && p.to.start >= 0.5 && p.to.start <= 0.95)
+    stopifnot(S4Vectors::isSingleNumber(p.to.end) && p.to.end >= 0.2 && p.to.end <= 0.7)
     stopifnot(p.to.start > p.to.end)
     if (xtype == "DNA") {
         AU <- "AT"
@@ -209,23 +214,24 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
     }
     y <- as(x, sprintf("%sStringSet", xtype))
 
-    widths <- width(x)
+    widths <- BiocGenerics::width(x)
     fun <- function(i) {
         one_seq <- x[[i]]
         au <- Biostrings::letterFrequencyInSlidingView(one_seq, min.length, AU, as.prob=TRUE)
         if (is.null(au) | nrow(au) == 0) {
-                return(IRanges())
+                return(IRanges::IRanges())
             }
         au <- as.numeric(au)
         can.start <- au >= p.to.start
         can.end <- au <= p.to.end
-        posts <- .Call("find_au_start_end", au, p.to.start, p.to.end, PACKAGE = "SeqTools")
-        blocks <- IRanges(posts$start, posts$end + min.length -  1L)
-        end(blocks) <- ifelse(end(blocks) > widths[i], widths[i], end(blocks))
+        posts <- .Call("find_au_start_end", au, p.to.start, p.to.end, PACKAGE="SeqTools")
+        blocks <- IRanges::IRanges(posts$start, posts$end + min.length -  1L)
+        stats::end(blocks) <- ifelse(stats::end(blocks) > widths[i], widths[i], stats::end(blocks))
         IRanges::reduce(blocks)
     }
     au.blocks = lapply(1:length(x), fun)
-    IRangesList(au.blocks)
+    ret <- IRanges::IRangesList(au.blocks)
+    return(ret)
 }
 
 #' gff2df()  Try to make import.gff a little more robust
@@ -239,8 +245,8 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #' @return  a df!
 gff2df <- function(gff, type=NULL) {
     ret <- NULL
-    gff_test <- grepl("\\.gff", gff_file)
-    gtf_test <- grepl("\\.gtf", gff_file)
+    gff_test <- grepl("\\.gff", gff)
+    gtf_test <- grepl("\\.gtf", gff)
     annotations <- NULL
     if (isTRUE(gtf_test)) {  ## Start with an attempted import of gtf files.
         ret <- try(rtracklayer::import.gff(gff, format="gtf"), silent=TRUE)
@@ -278,9 +284,9 @@ gff2df <- function(gff, type=NULL) {
 #' @return  an iranges! (useful for getSeq())
 gff2irange <- function(gff) {
     ret <- NULL
-    annotations <- try(import.gff3(gff), silent=TRUE)
+    annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
     if (class(annotations) == 'try-error') {
-        annotations <- try(import.gff2(gff), silent=TRUE)
+        annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
         if (class(annotations) == 'try-error') {
             stop("Could not extract the widths from the gff file.")
         } else {
@@ -362,19 +368,21 @@ make_tooltips <- function(annotations, desc_col='description') {
 #' @examples
 #' ## num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
 pattern_count_genome <- function(fasta, gff=NULL, pattern='TA', type='gene', key='locus_tag') {
-    rawseq <- FaFile(fasta)
+    rawseq <- Rsamtools::FaFile(fasta)
     if (is.null(gff)) {
         entry_sequences <- rawseq
     } else {
-        entries <- import.gff3(gff, asRangedData=FALSE)
-        type_entries <- subset(entries, type==type)
+        entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
+        ## type_entries <- subset(entries, type==type)
+        type_entries <- entries[entries$type == type, ]
         names(type_entries) <- rownames(type_entries)
-        entry_sequences <- getSeq(rawseq, type_entries)
-        names(entry_sequences) <- entry_sequences[[,key]]
+        entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
+        names(entry_sequences) <- entry_sequences[[, key]]
     }
-    dict <- PDict(pattern, max.mismatch=0)
-    result <- vcountPDict(dict, entry_sequences)
-    num_pattern <- data.frame(name=names(entry_sequences), num=as.data.frame(t(result)))
+    dict <- Biostrings::PDict(pattern, max.mismatch=0)
+    result <- Biostrings::vcountPDict(dict, entry_sequences)
+    num_pattern <- data.frame("name"=names(entry_sequences),
+                              "num"=as.data.frame(t(result)))
     return(num_pattern)
 }
 
@@ -492,116 +500,6 @@ openxlsx_add_plot <- function(wb, plot) {
     ## if it is there, place the plot intelligently
     ## if not, create the worksheet and place the plot
     ## then make sure the workbook is saveable
-}
-
-my_writeDataTable <- function(wb, sheet, x, startCol=1, startRow=1, xy=NULL,
-                              colNames=TRUE, rowNames=FALSE, tableStyle="TableStyleLight9",
-                              tableName=NULL, headerStyle=NULL, withFilter=TRUE,
-                              keepNA=FALSE) {
-    if (!is.null(xy)) {
-        if (length(xy) != 2) {
-            stop("xy parameter must have length 2")
-        }
-        startCol <- xy[[1]]
-        startRow <- xy[[2]]
-    }
-    if (!"Workbook" %in% class(wb))
-        stop("First argument must be a Workbook.")
-    if (!"data.frame" %in% class(x))
-        stop("x must be a data.frame.")
-    if (!is.logical(colNames))
-        stop("colNames must be a logical.")
-    if (!is.logical(rowNames))
-        stop("rowNames must be a logical.")
-    if (!is.null(headerStyle) & !"Style" %in% class(headerStyle))
-        stop("headerStyle must be a style object or NULL.")
-    if (!is.logical(withFilter))
-        stop("withFilter must be a logical.")
-    if (is.null(tableName)) {
-        tableName <- paste0("Table", as.character(length(wb$tables) + 3L))
-    } else if (tableName %in% attr(wb$tables, "tableName")) {
-        stop(sprintf("Table with name '%s' already exists!", tableName))
-    } else if (grepl("[^A-Z0-9_]", tableName[[1]], ignore.case = TRUE)) {
-        stop("Invalid characters in tableName.")
-    } else if (grepl("^[A-Z]{1,3}[0-9]+$", tableName)) {
-        stop("tableName cannot look like a cell reference.")
-    } else {
-        tableName <- tableName
-    }
-    exSciPen <- getOption("scipen")
-    options(scipen=10000)
-    on.exit(options(scipen=exSciPen), add=TRUE)
-    if (!is.numeric(startCol)) {
-        startCol <- convertFromExcelRef(startCol)
-    }
-    startRow <- as.integer(startRow)
-    if (rowNames) {
-        x <- cbind(data.frame(`row names` = rownames(x)), x)
-    }
-    validNames <- c("none", paste0("TableStyleLight", 1:21),
-                    paste0("TableStyleMedium", 1:28), paste0("TableStyleDark", 1:11))
-    if (!tolower(tableStyle) %in% tolower(validNames)) {
-        stop("Invalid table style.")
-    } else {
-        tableStyle <- validNames[grepl(paste0("^", tableStyle, "$"),
-                                       validNames, ignore.case = TRUE)]
-    }
-    tableStyle <- na.omit(tableStyle)
-    if (length(tableStyle) == 0) {
-        stop("Unknown table style.")
-    }
-    if ("Style" %in% class(headerStyle)) {
-        addStyle(wb = wb, sheet = sheet, style = headerStyle, rows = startRow,
-                 cols = 0:(ncol(x) - 1L) + startCol, gridExpand = TRUE)
-    }
-    showColNames <- colNames
-    if (colNames) {
-        colNames <- colnames(x)
-        if (any(duplicated(tolower(colNames)))) {
-            stop("Column names of x must be case-insensitive unique.")
-        }
-        char0 <- nchar(colNames) == 0
-        if (any(char0)) {
-            colNames[char0] <- colnames(x)[char0] <- paste0("Column", which(char0))
-        }
-    } else {
-        colNames <- paste0("Column", 1:ncol(x))
-        names(x) <- colNames
-    }
-    if (nrow(x) == 0) {
-        x <- rbind(x, matrix("", nrow = 1, ncol = ncol(x)))
-        names(x) <- colNames
-    }
-    ref1 <- paste0(.Call("openxlsx_convert2ExcelRef", startCol,
-                         LETTERS, PACKAGE = "openxlsx"), startRow)
-    ref2 <- paste0(.Call("openxlsx_convert2ExcelRef", startCol + ncol(x) - 1,
-                         LETTERS, PACKAGE = "openxlsx"), startRow + nrow(x))
-    ref <- paste(ref1, ref2, sep = ":")
-    if (length(wb$tables) > 0) {
-        tableSheets <- attr(wb$tables, "sheet")
-        if (sheet %in% tableSheets) {
-            exTable <- wb$tables[tableSheets %in% sheet]
-            newRows <- c(startRow, startRow + nrow(x) - 1L + 1)
-            newCols <- c(startCol, startCol + ncol(x) - 1L)
-            rows <- lapply(names(exTable), function(rectCoords) as.numeric(unlist(regmatches(rectCoords, gregexpr("[0-9]+", rectCoords)))))
-            cols <- lapply(names(exTable), function(rectCoords) convertFromExcelRef(unlist(regmatches(rectCoords, gregexpr("[A-Z]+", rectCoords)))))
-            for (i in 1:length(exTable)) {
-                exCols <- cols[[i]]
-                exRows <- rows[[i]]
-                if (exCols[1] < newCols[2] & exCols[2] > newCols[1] &
-                    exRows[1] < newRows[2] & exRows[2] > newRows[1]) {
-                    stop("Cannot overwrite existing table.")
-                }
-            }
-        }
-    }
-    colClasses <- lapply(x, function(x) tolower(class(x)))
-    openxlsx:::classStyles(wb, sheet = sheet, startRow = startRow, startCol = startCol, colNames = TRUE, nRow = nrow(x), colClasses = colClasses)
-    wb$writeData(df=x, colNames=TRUE, sheet=sheet, startRow=startRow,
-                 startCol=startCol, colClasses=colClasses,
-                 hlinkNames=NULL, keepNA = keepNA)
-    colNames <- replaceIllegalCharacters(colNames)
-    wb$buildTable(sheet, colNames, ref, showColNames, tableStyle, tableName, withFilter[1])
 }
 
 #' backup_file()  Make a backup of an existing file with n revisions, like VMS!

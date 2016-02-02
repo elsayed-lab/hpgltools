@@ -2,14 +2,33 @@
 % Please edit documentation in R/normalization.r
 \name{hpgl_qstats}
 \alias{hpgl_qstats}
-\title{hpgl_qstats(): A hacked copy of Kwame's qsmooth/qstats code}
+\title{\code{hpgl_qstats()}  A hacked copy of Kwame's qsmooth/qstats code}
 \usage{
-hpgl_qstats(exprs, groups, refType = "mean", groupLoc = "mean",
+hpgl_qstats(data, groups, refType = "mean", groupLoc = "mean",
   window = 99)
+}
+\arguments{
+\item{data}{the initial count data}
+
+\item{groups}{the experimental conditions as a factor}
+
+\item{refType}{default="mean" (or median) the method to separate groups}
+
+\item{groupLoc}{default="mean"  I don't remember}
+
+\item{window}{default=99}
+}
+\value{
+new data
 }
 \description{
 I made a couple small changes to Kwame's qstats() function to make
 it not fail when on corner-cases.  I sent him a diff, but haven't
 checked to see if it was useful yet.
+}
+\examples{
+\dontrun{
+qstatted <- hpgl_qstats(data, conditions)
+}
 }
 

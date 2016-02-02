@@ -13,6 +13,6 @@ NULL currently
 Automatic loading of stuff I use, I am deprecating this now.
 }
 \seealso{
-\code{\link{biocLite}} and \code{\link{install.packages}}
+\code{\link[BiocInstaller]{biocLite}} and \code{\link{install.packages}}
 }
 

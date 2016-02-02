@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Jan 31 12:21:44 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 14:32:07 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
@@ -59,7 +59,7 @@ deparse_go_value <- function(value) {
 goterm <- function(go="GO:0032559") {
     go <- as.character(go)
     term <- function(id) {
-        value <- try(as.character(Term(GO.db::GOTERM[id])), silent=TRUE)
+        value <- try(as.character(AnnotationDbi::Term(GO.db::GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value <- "not found"
         }
@@ -195,7 +195,7 @@ golev <- function(go, verbose=FALSE) {
         if(isTRUE(verbose)) {
             print(paste("Restarting while loop, level: ", level, go, sep=" "))
         }
-        ontology <- as.character(Ontology(GO.db::GOTERM[[go]]))
+        ontology <- as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]]))
         if (ontology == "MF") {
             ancestors <- GO.db::GOMFANCESTOR[[go]]
         } else if (ontology == "BP") {
@@ -204,7 +204,7 @@ golev <- function(go, verbose=FALSE) {
             ancestors <- GO.db::GOCCANCESTOR[[go]]
         } else {
             ## There was an error
-            message(paste("There was an error getting the ontology: ", as.character(id), sep=""))
+            message(paste("There was an error getting the ontology: ", as.character(go), sep=""))
             ancestors <- "error"
         }
         if(isTRUE(verbose)) {
@@ -294,10 +294,12 @@ gather_genes <- function(goseq_data, ontology='MF', pval=0.05, include_all=FALSE
         categories <- goseq_data$mf_subset
     }
     input <- goseq_data$input
-    categories <- subset(categories, over_represented_pvalue <= pval)
+    ##categories <- subset(categories, over_represented_pvalue <= pval)
+    categories <- categories[categories$over_represented_pvalue <= pval, ]
     cats <- categories$category
 
     load("GO2ALLEG.rda")
+    GO2ALLEG <- get0("GO2ALLEG")
     genes_per_ont <- function(cat) {
         all_entries <- GO2ALLEG[[cat]]
         entries_in_input <- input[rownames(input) %in% all_entries,]
@@ -329,11 +331,11 @@ gather_genes <- function(goseq_data, ontology='MF', pval=0.05, include_all=FALSE
 #' @export
 pval_plot <- function(df, ontology="MF") {
     y_name <- paste("Enriched ", ontology, " categories.", sep="")
-    pvalue_plot <- ggplot2::ggplot(df, ggplot2::aes(term, score)) +
+    pvalue_plot <- ggplot2::ggplot(df, ggplot2::aes_string(x="term", y="score", fill="pvalue")) +
         ggplot2::geom_bar(stat="identity") +
         ggplot2::coord_flip() +
         ggplot2::scale_x_discrete(name=y_name) +
-        ggplot2::aes(fill=pvalue) +
+##        ggplot2::aes_string(fill="pvalue") +
         ggplot2::scale_fill_continuous(low="red", high="blue") +
         ggplot2::theme(text=ggplot2::element_text(size=10)) +
         ggplot2::theme_bw()
@@ -688,12 +690,12 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, file="excel/merged_go",
     gostats_mf <- head(gostats$mf_over_all, n=n)
     gostats_bp <- head(gostats$bp_over_all, n=n)
     gostats_cc <- head(gostats$cc_over_all, n=n)
-    gostats_mf$t <- gsub(gostats_mf$Term, pattern=".*\">(.*)</a>", replace="\\1")
-    gostats_bp$t <- gsub(gostats_bp$Term, pattern=".*\">(.*)</a>", replace="\\1")
-    gostats_cc$t <- gsub(gostats_cc$Term, pattern=".*\">(.*)</a>", replace="\\1")
-    gostats_mf$Term <- gsub(gostats_mf$Term, pattern="<a href=\"(.*)\">.*", replace="\\1")
-    gostats_bp$Term <- gsub(gostats_bp$Term, pattern="<a href=\"(.*)\">.*", replace="\\1")
-    gostats_cc$Term <- gsub(gostats_cc$Term, pattern="<a href=\"(.*)\">.*", replace="\\1")
+    gostats_mf$t <- gsub(gostats_mf$Term, pattern=".*\">(.*)</a>", replacement="\\1")
+    gostats_bp$t <- gsub(gostats_bp$Term, pattern=".*\">(.*)</a>", replacement="\\1")
+    gostats_cc$t <- gsub(gostats_cc$Term, pattern=".*\">(.*)</a>", replacement="\\1")
+    gostats_mf$Term <- gsub(gostats_mf$Term, pattern="<a href=\"(.*)\">.*", replacement="\\1")
+    gostats_bp$Term <- gsub(gostats_bp$Term, pattern="<a href=\"(.*)\">.*", replacement="\\1")
+    gostats_cc$Term <- gsub(gostats_cc$Term, pattern="<a href=\"(.*)\">.*", replacement="\\1")
     gostats_mf$ont <- "MF"
     gostats_bp$ont <- "BP"
     gostats_cc$ont <- "CC"
@@ -712,98 +714,8 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, file="excel/merged_go",
                 topgo_mf=topgo_mf, topgo_bp=topgo_bp, topgo_cc=topgo_cc,
                 gostats_mf=gostats_mf, gostats_bp=gostats_bp, gostats_cc=gostats_cc)
 
-    if (writer == "xlsx") {
-        write_go_xlsx(lst, filename)
-    } else {
-        write_go_openxlsx(lst, filename)
-    }
-}
-
-#' write_go_xlsx()  Write gene ontology tables for excel using xlsx
-#'
-#' I have found a few tools which purportedly read/write excel files.
-#' This implementation uses xlsx.
-#'
-#' @param goseq  The goseq result from simple_goseq()
-#' @param cluster The result from simple_clusterprofiler()
-#' @param topgo  Guess
-#' @param gostats  Yep, ditto
-#' @param go_file default='excel/merged_go'  the file to save the results.
-#' @param n default=30  the number of ontology categories to include in each table.
-write_go_xlsx <- function(lst, file) {
-    ## require.auto("kassambara/r2excel")
-    wb <- xlsx::createWorkbook(type="xlsx")
-    sheet <- xlsx::createSheet(wb, sheetName="goseq")
-
-    r2excel::xlsx.addHeader(wb, sheet, value="BP Results from goseq.", color="darkblue")
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addTable(wb, sheet, lst$goseq_bp,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addHeader(wb, sheet, value="MF Results from goseq.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, lst$goseq_mf,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addHeader(wb, sheet, value="CC Results from goseq.", color="darkblue")
-    xlsx.addTable(wb, sheet, lst$goseq_cc,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-
-    sheet <- xlsx::createSheet(wb, sheetName="clusterProfiler")
-    r2excel::xlsx.addHeader(wb, sheet, value="BP Results from clusterProfiler.", color="darkblue")
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addTable(wb, sheet, lst$cluster_bp,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addHeader(wb, sheet, value="MF Results from clusterProfiler.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, lst$cluster_mf,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addHeader(wb, sheet, value="CC Results from clusterProfiler.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, lst$cluster_cc,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-
-    sheet <- xlsx::createSheet(wb, sheetName="topGO")
-    r2excel::xlsx.addHeader(wb, sheet, value="BP Results from topGO.", color="darkblue")
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addTable(wb, sheet, lst$topgo_bp,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addHeader(wb, sheet, value="MF Results from topGO.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, lst$topgo_mf,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addHeader(wb, sheet, value="CC Results from topGO.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, lst$topgo_cc,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-
-    sheet <- xlsx::createSheet(wb, sheetName="GOStats")
-    r2excel::xlsx.addHeader(wb, sheet, value="BP Results from GOStats.", color="darkblue")
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addTable(wb, sheet, lst$gostats_bp,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addHeader(wb, sheet, value="MF Results from GOStats.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, lst$gostats_mf,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-    r2excel::xlsx.addLineBreak(sheet, 1)
-    r2excel::xlsx.addHeader(wb, sheet, value="CC Results from GOStats.", color="darkblue")
-    r2excel::xlsx.addTable(wb, sheet, lst$gostats_cc,
-                           col.names=TRUE, row.names=FALSE, fontColor="black",
-                           fontSize=12, rowFill=c("white","lightgrey"))
-
-    res <- saveWorkbook(wb, paste0(file, ".xlsx"))
-    return(res)
+    write_go_openxlsx(lst, filename)
+    return(lst)
 }
 
 #' write_go_openxlsx()  Write gene ontology tables for excel using openxlsx
@@ -817,6 +729,9 @@ write_go_xlsx <- function(lst, file) {
 #' @param gostats  Yep, ditto
 #' @param go_file default='excel/merged_go'  the file to save the results.
 #' @param n default=30  the number of ontology categories to include in each table.
+#'
+#' @return a set of excel sheet/coordinates
+#' @export
 write_go_openxlsx <- function(lst, file) {
     ## require.auto("awalker89/openxlsx")
     wb <- openxlsx::createWorkbook(creator="atb")
@@ -915,8 +830,31 @@ write_go_openxlsx <- function(lst, file) {
     return(res)
 }
 
+
+#' write_subset_ontologies()  Write gene ontology tables for data subsets
+#'
+#' Given a set of ontology results, this attempts to write them to an excel
+#' workbook in a consistent and relatively easy-to-read fashion.
+#'
+#' @param kept_ontology  A result from subset_ontology_search()
+#' @param outfile default='excel/subset_go.xlsx'  Workbook to which to write.
+#' @param dated  default=TRUE  Append the year-month-day-hour to the workbook.
+#' @param n default=50  How many ontology categories to write for each search
+#' @param overwritefile default=TRUE  Overwrite an existing workbook?
+#' @param add_plots default=TRUE  Add the various p-value plots to the end of each sheet?
+#' @param table_style default='TableStyleMedium9'  The chosen table style for excel
+#'
+#' @return a set of excel sheet/coordinates
+#' @export
+#' @examples
+#' ## all_contrasts <- all_pairwise(expt, model_batch=TRUE)
+#' ## keepers <- list(bob = ('numerator','denominator'))
+#' ## kept <- combine_de_tables(all_contrasts, keepers=keepers)
+#' ## changed <- extract_significant_genes(kept)
+#' ## kept_ontologies <- subset_ontology_search(changed, lengths=gene_lengths, goids=goids, gff=gff, gff_type='gene')
+#' ## go_writer <- write_subset_ontologies(kept_ontologies)
 write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", dated=TRUE,
-                                    n=50, writer="openxlsx", overwritefile=TRUE,
+                                    n=50, overwritefile=TRUE,
                                     add_plots=TRUE, table_style="TableStyleMedium9", ...) {
     arglist <- list(...)
     table_style <- get0('table_style')
@@ -1027,16 +965,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             varname <- paste0(ont, "_over_all")
             gostats_up <- kept_ontology$up_gostats[[count]]
             gostats_up_ont <- head(gostats_up[[varname]], n=n)
-            gostats_up_ont$t <- gsub(gostats_up_ont$Term, pattern=".*\">(.*)</a>", replace="\\1")
-            gostats_up_ont$Term <- gsub(gostats_up_ont$Term, pattern="<a href=\"(.*)\">.*", replace="\\1")
+            gostats_up_ont$t <- gsub(gostats_up_ont$Term, pattern=".*\">(.*)</a>", replacement="\\1")
+            gostats_up_ont$Term <- gsub(gostats_up_ont$Term, pattern="<a href=\"(.*)\">.*", replacement="\\1")
             gostats_up_ont$ont <- ONT
             gostats_up_ont <- gostats_up_ont[,c(10,1,9,2,5,6,3,4,8,7)]
             colnames(gostats_up_ont) <- c("Ontology","Category","Term","Fisher p-value","Num. DE",
                                           "Num. in cat.","Odds ratio","Exp. in cat.","Q-value","Link")
             gostats_down <- kept_ontology$down_gostats[[count]]
             gostats_down_ont <- head(gostats_down[[varname]], n=n)
-            gostats_down_ont$t <- gsub(gostats_down_ont$Term, pattern=".*\">(.*)</a>", replace="\\1")
-            gostats_down_ont$Term <- gsub(gostats_down_ont$Term, pattern="<a href=\"(.*)\">.*", replace="\\1")
+            gostats_down_ont$t <- gsub(gostats_down_ont$Term, pattern=".*\">(.*)</a>", replacement="\\1")
+            gostats_down_ont$Term <- gsub(gostats_down_ont$Term, pattern="<a href=\"(.*)\">.*", replacement="\\1")
             gostats_down_ont$ont <- ONT
             gostats_down_ont <- gostats_down_ont[,c(10,1,9,2,5,6,3,4,8,7)]
             colnames(gostats_down_ont) <- c("Ontology","Category","Term","Fisher p-value","Num. DE",
@@ -1347,8 +1285,6 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         res <- openxlsx::saveWorkbook(wb, down_filename, overwrite=TRUE)
     }  ## End of name_list
 }
-
-
 
 #' compare_go_searches()  Compare the results from different ontology tools
 #'

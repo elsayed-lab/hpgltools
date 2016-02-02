@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 15:38:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 13:12:00 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' hpgl_gvis_ma_plot()  Make an html version of an MA plot.
 #'
@@ -159,7 +159,7 @@ hpgl_gvis_scatter <- function(df, tooltip_data=NULL, filename="html/gvis_scatter
                              trendlines=trendline_string,
                              axisTitlesPosition="out")
     }
-    hpgl_gvis_scatterchart <- gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
+    hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
     print(hpgl_gvis_scatterchart, file=filename)
 }
 

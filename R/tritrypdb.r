@@ -12,9 +12,8 @@
 #' http://tritrypdb.org/common/downloads/Current_Release/TbruceiLister427/txt/data/TriTrypDB-5.0_TbruceiLister427Gene.txt
 #'
 parse_gene_info_table <- function(filepath, verbose=FALSE) {
-    require(tools)
 
-    if (file_ext(filepath) == 'gz') {
+    if (tools::file_ext(filepath) == 'gz') {
         fp <- gzfile(filepath, open='rb')
     } else {
         fp <- file(filepath, open='r')
@@ -23,12 +22,16 @@ parse_gene_info_table <- function(filepath, verbose=FALSE) {
     # Create empty vector to store dataframe rows
     N <- 2e4
     gene_ids <- c()
-    genes <- data.frame(chromosome=rep(NA, N),
-                        start=rep(NA, N), stop=rep(NA, N),
-                        strand=rep("", N), type=rep("", N),
-                        transcript_length=rep(NA, N),
-                        cds_length=rep(NA, N), pseudogene=rep(NA, N),
-                        description=rep("", N), stringsAsFactors=FALSE)
+    genes <- data.frame("chromosome"=rep(NA, N),
+                        "start"=rep(NA, N),
+                        "stop"=rep(NA, N),
+                        "strand"=rep("", N),
+                        "type"=rep("", N),
+                        "transcript_length"=rep(NA, N),
+                        "cds_length"=rep(NA, N),
+                        "pseudogene"=rep(NA, N),
+                        "description"=rep("", N),
+                        stringsAsFactors=FALSE)
 
     # Regular expression to extract location info
     location_regex <- '([0-9,]*) - ([0-9,]*) \\(([-+])\\)'
@@ -132,9 +135,8 @@ parse_gene_info_table <- function(filepath, verbose=FALSE) {
 #'         appear on multiple lines.
 #'
 parse_gene_go_terms <- function (filepath, verbose=FALSE) {
-    require(tools)
-
-    if (file_ext(filepath) == 'gz') {
+    ##require(tools)
+    if (tools::file_ext(filepath) == 'gz') {
         fp <- gzfile(filepath, open='rb')
     } else {
         fp <- file(filepath, open='r')
@@ -143,9 +145,9 @@ parse_gene_go_terms <- function (filepath, verbose=FALSE) {
     # Create empty vector to store dataframe rows
     N <- 1e5
     gene_ids <- c()
-    go_rows <- data.frame(GO=rep("", N),
-                          ONTOLOGY=rep("", N), TERM=rep("", N),
-                          SOURCE=rep("", N), EVIDENCE=rep("", N),
+    go_rows <- data.frame("GO"=rep("", N),
+                          "ONTOLOGY"=rep("", N), TERM=rep("", N),
+                          "SOURCE"=rep("", N), EVIDENCE=rep("", N),
                           stringsAsFactors=FALSE)
     # Counter to keep track of row number
     i <- j <- 1

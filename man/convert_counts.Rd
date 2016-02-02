@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{convert_counts}
 \alias{convert_counts}
-\title{convert_counts(): Perform a cpm/rpkm/whatever transformation of a count table.}
+\title{\code{convert_counts()} Perform a cpm/rpkm/whatever transformation of a count table.}
 \usage{
 convert_counts(data, convert = "raw", annotations = NULL, fasta = NULL,
   pattern = "TA", entry_type = "gene", ...)
@@ -26,9 +26,14 @@ of methionines, for example -- if one wanted to do such a thing.}
 dataframe of cpm/rpkm/whatever(counts)
 }
 \description{
-convert_counts(): Perform a cpm/rpkm/whatever transformation of a count table.
+\code{convert_counts()} Perform a cpm/rpkm/whatever transformation of a count table.
 }
 \examples{
-## converted_table = convert_counts(count_table, convert='edgecpm')
+\dontrun{
+ converted_table = convert_counts(count_table, convert='edgecpm')
+}
+}
+\seealso{
+\pkg{edgeR} \pkg{Biobase} \code{\link[edgeR]{cpm}}
 }
 

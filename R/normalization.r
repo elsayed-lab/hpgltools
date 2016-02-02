@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  1 13:07:36 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 17:02:37 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -15,18 +15,31 @@
 ### More well understood and conservative.
 ##  Why have we nonetheless done #2 in a few instances?  (not only because we learned that first)
 
-## Some code to more strongly remove batch effects
-remove_batch_effect <- function(normalized_counts, model) {
+#' \code{cbcb_batch_effect()}  A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
+#'
+#' During a lab meeting, the following function was suggested as a quick and dirty batch removal tool
+#'
+#' @param normalized_counts  a data frame of log2cpm counts
+#' @param model  a balanced experimental model containing condition and batch factors
+#'
+#' @return a dataframe of residuals after subtracting batch from the model
+#' @seealso \code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
+#' @export
+#' @examples
+#' \dontrun{
+#' newdata <- cbcb_batch_effect(counts, expt_model)
+#' }
+cbcb_batch_effect <- function(normalized_counts, model) {
     ## model = model.matrix(~ condition + batch)
     voomed <- hpgl_voom(normalized_counts, model)
     voomed_fit <- limma::lmFit(voomed)
     modified_model <- model
-    modified_model <- modified_model[,grep("batch", colnames(modified_model))] = 0 ## Drop batch from the model
+    modified_model <- modified_model[, grep("batch", colnames(modified_model))] <- 0 ## Drop batch from the model
     new_data <- tcrossprod(voomed_fit$coefficient, modified_model) + residuals(voomed_fit, normalized_counts)
     return(new_data)
 }
 
-#' batch_counts()  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
+#' \code{batch_counts()}  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
 #'
 #' @param count_table  a matrix of (pseudo)counts.
 #' @param design  a model matrix defining the experimental conditions/batches/etc
@@ -37,7 +50,13 @@ remove_batch_effect <- function(normalized_counts, model) {
 #'
 #' @return The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this
 #' may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
+#' @seealso \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
 #' @export
+#' @examples
+#' \dontrun{
+#' limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
+#' sva_batch <- batch_counts(table, design, batch='sva')
+#' }
 batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2=NULL , noscale=TRUE, ...) {
     batches <- as.factor(design[, batch1])
     conditions <- as.factor(design[, "condition"])
@@ -71,7 +90,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         count_table <- residuals(batch_fit, batch_voom$E)
     } else if (batch == "combatmod") {
         ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches, mod=conditions, noScale=noscale, ...)
-        message("batch_counts: Using a modified cbcbSeq combatMod for batch correction.")
+        message("batch_counts: Using a modified cbcbSEQ combatMod for batch correction.")
         count_table <- hpgl_combatMod(dat=data.frame(count_table), batch=batches, mod=conditions, noScale=noscale, ...)
     } else if (batch == "sva") {
         message("batch_counts: Using sva::fsva for batch correction.")
@@ -151,7 +170,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     return(counts)
 }
 
-#' cbcb_filter_counts()  Filter low-count genes from a data set.
+#' \code{cbcb_filter_counts()}  Filter low-count genes from a data set.
 #'
 #' This was a function written by Kwame Okrah and perhaps also Laura Dillon to remove low-count genes.  It drops genes based on a threshold and number of samples.
 #'
@@ -161,10 +180,12 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
 #' @param verbose default=FALSE  if set to true, prints number of genes removed and remaining.
 #'
 #' @return dataframe of counts without the low-count genes
-#' @seealso \code{\link{log2CPM}} which this uses to decide what to keep
+#' @seealso \code{\link[cbcbSEQ]{log2CPM}} which this uses to decide what to keep
 #' @export
 #' @examples
-#' ## filtered_table = filter_counts(count_table)
+#' \dontrun{
+#' filtered_table <- cbcb_filter_counts(count_table)
+#' }
 cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=FALSE) {
     ## I think having a log2cpm here is kind of weird, because the next step in processing is to cpm the data.
     ##cpms = 2^log2CPM(counts, lib.size=lib.size)$y
@@ -189,7 +210,7 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=
     return(counts)
 }
 
-#' convert_counts(): Perform a cpm/rpkm/whatever transformation of a count table.
+#' \code{convert_counts()} Perform a cpm/rpkm/whatever transformation of a count table.
 #'
 #' @param count_table A matrix of count data
 #' @param convert='raw' A type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m
@@ -202,10 +223,14 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=
 #' should be normalized by the number of possible transposition sites
 #' by mariner.  It could, however, be used to normalize by the number
 #' of methionines, for example -- if one wanted to do such a thing.
+#'
 #' @return dataframe of cpm/rpkm/whatever(counts)
+#' @seealso \pkg{edgeR} \pkg{Biobase} \code{\link[edgeR]{cpm}}
 #' @export
 #' @examples
-#' ## converted_table = convert_counts(count_table, convert='edgecpm')
+#' \dontrun{
+#'  converted_table = convert_counts(count_table, convert='edgecpm')
+#' }
 convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pattern='TA', entry_type='gene', ...) {
     data_class <- class(data)[1]
     if (data_class == 'expt') {
@@ -241,7 +266,7 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
     return(counts)
 }
 
-#' Express a data frame of counts as reads per pattern per
+#' \code{divide_seq()}  Express a data frame of counts as reads per pattern per
 #' million(library).
 #'
 #' @param counts read count matrix
@@ -251,13 +276,18 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
 #' @param entry_type which type of gff entry to search against.  Defaults to 'gene'.
 #'
 #' @return The 'RPseqM' counts
+#' @seealso \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
 #' @export
+#' @examples
+#' \dontrun{
+#' cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
+#' }
 divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff", entry_type="gene") {
     if (!file.exists(fasta)) {
         compressed_fasta <- paste0(fasta, '.xz')
         system(paste0("xz -d ", compressed_fasta))
     }
-    raw_seq <- try(FaFile(fasta))
+    raw_seq <- try(Rsamtools::FaFile(fasta))
     if (class(raw_seq)[1] == 'try-error') {
         stop(paste0("There was a problem reading: ", fasta))
     }
@@ -294,13 +324,13 @@ divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.g
     merged_tas <- merge(counts, num_tas, by="row.names", all.x=TRUE)
     rownames(merged_tas) <- merged_tas$Row.names
     merged_tas <- merged_tas[-1]
-    merged_tas <- subset(merged_tas, select=-c(name))  ## Two different ways of removing columns...
+    merged_tas <- subset(merged_tas, select=-c("name"))  ## Two different ways of removing columns...
     merged_tas <- merged_tas / merged_tas$TAs
     merged_tas <- merged_tas[, !(colnames(merged_tas) %in% c("TAs"))]  ## Here is another!
     return(merged_tas)
 }
 
-#' Filter low-count genes from a data set using genefilter's pOverA()
+#' \code{genefilter_pofa_counts()}  Filter low-count genes from a data set using genefilter's pOverA()
 #'
 #' I keep thinking this function is pofa... oh well.
 #'
@@ -309,10 +339,12 @@ divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.g
 #' @param A the minimum number of counts in the above proportion
 #' @param verbose If set to true, prints number of genes removed / remaining
 #' @return dataframe of counts without the low-count genes
-#' @seealso \code{\link{genefilter}} \code{\link{pOverA}} which this uses to decide what to keep
+#' @seealso \pkg{genefilter} \code{\link[genefilter]{pOverA}} which this uses to decide what to keep
 #' @export
 #' @examples
-#' ## filtered_table = genefilter_pofa_counts(count_table)
+#' \dontrun{
+#'  filtered_table = genefilter_pofa_counts(count_table)
+#' }
 genefilter_pofa_counts <- function(count_table, p=0.01, A=100, verbose=TRUE) {
     ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
     num_before <- nrow(count_table)
@@ -334,17 +366,20 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100, verbose=TRUE) {
     return(counts)
 }
 
-#' Filter genes from a dataset outside a range of variance
+#' \code{genefilter_cv_counts()}  Filter genes from a dataset outside a range of variance
 #'
 #' @param counts input data frame of counts by sample
 #' @param cv_min a minimum coefficient of variance
 #' @param cv_max guess
 #' @param verbose If set to true, prints number of genes removed / remaining
+#'
 #' @return dataframe of counts without the low-count genes
-#' @seealso \code{\link{genefilter}} \code{\link{kOverA}} which this uses to decide what to keep
+#' @seealso \pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep
 #' @export
 #' @examples
-#' ## filtered_table = genefilter_kofa_counts(count_table)
+#' \dontrun{
+#' filtered_table = genefilter_kofa_counts(count_table)
+#' }
 genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000, verbose=FALSE) {
     ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
     num_before <- nrow(count_table)
@@ -366,23 +401,26 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000, verbose=
     return(counts)
 }
 
-#' Filter low-count genes from a data set using genefilter's kOverA()
+#' \code{genefilter_kofa_counts()}  Filter low-count genes from a data set using genefilter's kOverA()
 #'
 #' @param counts input data frame of counts by sample
 #' @param k a minimum number of samples to have >A counts
 #' @param A the minimum number of counts for each gene's sample in kOverA()
 #' @param verbose If set to true, prints number of genes removed / remaining
+#'
 #' @return dataframe of counts without the low-count genes
-#' @seealso \code{\link{genefilter}} \code{\link{kOverA}} which this uses to decide what to keep
+#' @seealso \pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep
 #' @export
 #' @examples
-#' ## filtered_table = genefilter_kofa_counts(count_table)
+#' \dontrun{
+#'  filtered_table = genefilter_kofa_counts(count_table)
+#' }
 genefilter_kofa_counts <- function(count_table, k=1, A=1, verbose=FALSE) {
     ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {
-        counts <- Bioase::exprs(count_table)
+        counts <- Biobase::exprs(count_table)
     }
     test <- genefilter::kOverA(k=k, A=A)
     filter_list <- genefilter::filterfun(test)
@@ -398,7 +436,7 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1, verbose=FALSE) {
     return(counts)
 }
 
-#' Use a modified version of combat on some data
+#' \code{hpgl_combatMod()}  Use a modified version of combat on some data
 #' This is a hack of Kwame's combatMod to make it not fail on corner-cases.
 #'
 #' @param dat a df to modify
@@ -408,11 +446,12 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1, verbose=FALSE) {
 #' @param prior.plots print out prior plots? FALSE
 #'
 #' @return a df of batch corrected data
-#' @seealso \code{\link{sva}}, \code{\link{combat}},
-#'
+#' @seealso \pkg{sva}}, \code{\link[sva]{combat}},
 #' @export
 #' @examples
-#' ## df_new = hpgl_combatMod(df, batches, model)
+#' \dontrun{
+#' df_new = hpgl_combatMod(df, batches, model)
+#' }
 hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
     par.prior <- TRUE
     numCovs <- NULL
@@ -426,7 +465,7 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
     ##    design <- sva:::design.mat(mod, numCov = numCovs)
     ## require.auto("survJamda")
     design <- survJamda::design.mat(mod)
-    batches <- list.batch(mod)
+    batches <- survJamda::list.batch(mod)
     n.batch <- length(batches)
     n.batches <- sapply(batches, length)
     n.array <- sum(n.batches)
@@ -539,7 +578,7 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
     }
 }
 
-#' Converts count matrix to log2 counts-per-million reads.
+#' \code{hpgl_log2cpm()}  Converts count matrix to log2 counts-per-million reads.
 #'
 #' Based on the method used by limma as described in the Law et al. (2014) voom
 #' paper.
@@ -548,6 +587,11 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
 #'
 #' @return log2-CPM read count matrix
 #' @export
+#' @seealso \pkg{cbcbSEQ} \pkg{edgeR}
+#' @examples
+#' \dontrun{
+#' l2cpm <- hpgl_log2cpm(counts)
+#' }
 hpgl_log2cpm <- function(counts, lib.size=NULL) {
     if (is.null(lib.size)) {
         lib.size <- colSums(counts)
@@ -558,7 +602,7 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
     return(l2cpm)
 }
 
-#' hpgl_norm(): Normalize a dataframe/expt, express it, and/or transform it
+#' \code{hpgl_norm()} Normalize a dataframe/expt, express it, and/or transform it
 #'
 #' @param expt=expt an expt class containing all the necessary
 #' metadata
@@ -579,18 +623,19 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #'
 #' @return edgeR's DGEList expression of a count table.  This seems to
 #' me to be the easiest to deal with.
-#' @seealso \code{\link{cpm}}, \code{\link{rpkm}},
-#' \code{\link{hpgl_rpkm}}, \code{\link{filterCounts}},
-#' \code{\link{DESeqDataSetFromMatrix}},
-#' \code{\link{estimateSizeFactors}}, \code{\link{DGEList}},
-#' \code{\link{qNorm}}, \code{\link{calcNormFactors}}
-#'
+#' @seealso \code{\link[edgeR]{cpm}}, \code{\link[edgeR]{rpkm}},
+#' \code{\link{hpgl_rpkm}}, \code{\link[cbcbSEQ]{filterCounts}},
+#' \code{\link[DESeq]{DESeqDataSetFromMatrix}},
+#' \code{\link[DESeq]{estimateSizeFactors}}, \code{\link[DESeq]{DGEList}},
+#' \code{\link[edgeR]{calcNormFactors}}
 #' @export
 #' @examples
-#' ## df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
-#' ## df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-#' ## df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
-#' ## count_table = df_ql2rpkm$counts
+#' \dontrun{
+#' df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
+#' df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
+#' df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
+#' count_table = df_ql2rpkm$counts
+#' }
 ###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm|cbcbcpm
 hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
                       convert="raw", batch="raw", batch1="batch", batch2=NULL,
@@ -713,12 +758,28 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     return(ret_list)
 }
 
-#' hpgl_qstats(): A hacked copy of Kwame's qsmooth/qstats code
+#' \code{hpgl_qstats()} A hacked copy of Kwame's qsmooth/qstats code
 #'
 #' I made a couple small changes to Kwame's qstats() function to make
 #' it not fail when on corner-cases.  I sent him a diff, but haven't
 #' checked to see if it was useful yet.
 #'
+#' @param data default=NULL
+#' @param groups default=NULL
+#' @param refType default="mean"
+#' @param groupLoc default="mean"
+#' @param window default=99
+#' @param verbose default=FALSE
+#' @param groupCol default=NULL
+#' @param plot default=TRUE
+#'
+#' @return data a new data frame of normalized counts
+#' @seealso \pkg{qsmooth}
+#' @export
+#' @examples
+#' \dontrun{
+#' df <- hpgl_qshrink(data)
+#' }
 hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
                         groupLoc="mean", window=99, verbose=FALSE,
                         groupCol=NULL, plot=TRUE, ...) {
@@ -733,7 +794,7 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
         colnames(normExprs) <- count_colnames
         return(normExprs)
     }
-    res <- hpgl_qstats(exprs, groups, refType=refType,
+    res <- hpgl_qstats(Biobase::exprs, groups, refType=refType,
                        groupLoc=groupLoc, window=window)
     QBETAS <- res$QBETAS
     Qref <- res$Qref
@@ -744,14 +805,28 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
     wQref <- Qref * w
     wQref <- matrix(rep(1, nrow(X)), ncol=1) %*% t(wQref)
     normExprs <- t(wQBETAS + wQref)
-    RANKS <- t(matrixStats::colRanks(exprs, ties.method="average"))
+    RANKS <- t(matrixStats::colRanks(data, ties.method="average"))
     for (k in 1:ncol(normExprs)) {
         x <- normExprs[, k]
         normExprs[, k] <- x[RANKS[, k]]
     }
-    normExprs <- qlasso:::aveTies(RANKS, normExprs)
-    rownames(normExprs) <- rownames(exprs)
-    colnames(normExprs) <- colnames(exprs)
+
+    aveTies = function (ranks, y) {
+        tab = table(ranks)
+        sel = tab > 1
+        if (sum(sel) != 0) {
+            ties = as.numeric(names(tab[sel]))
+            for (k in ties) {
+                sel = ranks==k
+                y[sel] = mean(y[sel])
+            }
+        }
+        y
+    }
+    normExprs <- aveTies(RANKS, normExprs)
+
+    rownames(normExprs) <- rownames(data)
+    colnames(normExprs) <- colnames(data)
     if (plot) {
         oldpar <- par(mar=c(4, 4, 1.5, 0.5))
         lq <- length(Qref)
@@ -774,9 +849,25 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
     return(normExprs)
 }
 
-#' lowfilter_counts(): A caller for different low-count filters
+#' \code{lowfilter_counts()}  A caller for different low-count filters
 #'
+#' @param count_table  some counts to filter
+#' @param type default='cbcb'  Filtering method to apply (cbcb, pofa, kofa, cv right now)
+#' @param p default=0.01 For pofa()
+#' @param A default=1  For pofa()
+#' @param k default=1  For kofa()
+#' @param cv_min default=0.01  For cv()
+#' @param cv_max default=1000  For cv()
+#' @param thresh default=2  Minimum threshold across samples for cbcb
+#' @param min_samples default=2  Minimum number of samples for cbcb
 #'
+#' @return a data frame of lowfiltered counts
+#' @seealso \pkg{genefilter}
+#' @export
+#' @examples
+#' \dontrun{
+#' new <- lowfilter_counts(old)
+#' }
 lowfilter_counts <- function(count_table, type='cbcb', p=0.01, A=1, k=1,
                              cv_min=0.01, cv_max=1000, thresh=2, min_samples=2) {
     if (tolower(type) == 'povera') {
@@ -786,7 +877,7 @@ lowfilter_counts <- function(count_table, type='cbcb', p=0.01, A=1, k=1,
     }
     lowfiltered_counts <- NULL
     if (type == 'cbcb') {
-        lowfiltered_counts <- cbcb_filter_counts(count_table, thresh=thresh,
+        lowfiltered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
                                                  min_samples=min_samples)
     } else if (type == 'pofa') {
         lowfiltered_counts <- genefilter_pofa_counts(count_table, p=p, A=A)
@@ -799,23 +890,35 @@ lowfilter_counts <- function(count_table, type='cbcb', p=0.01, A=1, k=1,
         message("Did not recognize the filtering argument, defaulting to cbcb's.
  Recognized filters are: 'cv', 'kofa', 'pofa', 'cbcb'
 ")
-        lowfiltered_counts <- cbcb_filter_counts(count_table, thresh=thresh,
+        lowfiltered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
                                                  min_samples=min_samples)
     }
     count_table <- lowfiltered_counts$count_table
     return(count_table)
 }
 
-#' hpgl_qstats(): A hacked copy of Kwame's qsmooth/qstats code
+#' \code{hpgl_qstats()}  A hacked copy of Kwame's qsmooth/qstats code
 #'
 #' I made a couple small changes to Kwame's qstats() function to make
 #' it not fail when on corner-cases.  I sent him a diff, but haven't
 #' checked to see if it was useful yet.
 #'
-hpgl_qstats <- function (exprs, groups, refType="mean",
+#' @param data the initial count data
+#' @param groups the experimental conditions as a factor
+#' @param refType default="mean" (or median) the method to separate groups
+#' @param groupLoc default="mean"  I don't remember
+#' @param window default=99
+#'
+#' @return new data
+#' @export
+#' @examples
+#' \dontrun{
+#' qstatted <- hpgl_qstats(data, conditions)
+#' }
+hpgl_qstats <- function (data, groups, refType="mean",
                          groupLoc="mean", window=99) {
     ## require.auto("matrixStats")
-    Q <- apply(exprs, 2, sort)
+    Q <- apply(data, 2, sort)
     if (refType == "median") {
         Qref <- matrixStats::rowMedians(Q)
     }
@@ -865,7 +968,7 @@ hpgl_qstats <- function (exprs, groups, refType="mean",
     return(qstats_result)
 }
 
-#' hpgl_rpkm(): Reads/(kilobase(gene) * million reads)
+#' \code{hpgl_rpkm()}  Reads/(kilobase(gene) * million reads)
 #'
 #' Express a data frame of counts as reads per kilobase(gene) per
 #' million(library).
@@ -878,11 +981,13 @@ hpgl_qstats <- function (exprs, groups, refType="mean",
 #' 'gene_annotations'
 #'
 #' @return rpkm_df a data frame of counts expressed as rpkm
-#' @seealso \code{\link{edgeR}} and \code{\link{cpm}}
+#' @seealso \pkg{edgeR} and \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 #' @export
 #' @examples
-#' ## rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
-hpgl_rpkm <- function(df, annotations=gene_annotations) {
+#' \dontrun{
+#' rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
+#' }
+hpgl_rpkm <- function(df, annotations=get0('gene_annotations')) {
     if (class(df) == "edgeR") {
         df <- df$counts
     }
@@ -915,21 +1020,24 @@ hpgl_rpkm <- function(df, annotations=gene_annotations) {
     return(rpkm_df)
 }
 
-#' Filter low-count genes from a data set using filterCounts()
+#' \code{cbcb_lowfilter_counts()} Filter low-count genes from a data set using cbcbSEQ::filterCounts()
 #'
 #' @param df input data frame of counts by sample
 #' @param threshold lower threshold of counts (default: 4)
 #' @param min_samples minimum number of samples (default: 2)
 #' @param verbose If set to true, prints number of genes removed / remaining
+#'
 #' @return dataframe of counts without the low-count genes
-#' @seealso \code{\link{log2CPM}} which this uses to decide what to keep
+#' @seealso \code{\link[cbcbSEQ]{log2CPM}} which this uses to decide what to keep
 #' @export
 #' @examples
-#' ## filtered_table = lowfilter_counts(count_table)
-qlasso_lowfilter_counts <- function(count_table, thresh=2,
-                                    min_samples=2, verbose=FALSE) {
+#' \dontrun{
+#'  filtered_table = cbcb_lowfilter_counts(count_table)
+#' }
+cbcb_lowfilter_counts <- function(count_table, thresh=2,
+                                  min_samples=2, verbose=FALSE) {
     original_dim <- dim(count_table)
-    count_table <- as.matrix(cbcbSeq::filterCounts(count_table, thresh=thresh,
+    count_table <- as.matrix(cbcbSEQ::filterCounts(count_table, thresh=thresh,
                                                    min_samples=min_samples))
     if (verbose) {
         following_dim <- dim(count_table)
@@ -941,7 +1049,7 @@ qlasso_lowfilter_counts <- function(count_table, thresh=2,
     return(counts)
 }
 
-#' normalize_counts(): Perform a simple normalization of a count table
+#' \code{normalize_counts()}  Perform a simple normalization of a count table
 #'
 #' @param count_table A matrix of count data
 #' @param design A dataframe describing the experimental design
@@ -951,9 +1059,12 @@ qlasso_lowfilter_counts <- function(count_table, thresh=2,
 #' I keep wishy-washing on whether design is a required argument.
 #'
 #' @return dataframe of normalized(counts)
+#' @seealso \pkg{edgeR} \pkg{limma} \pkg{DESeq2}
 #' @export
 #' @examples
-#' ## norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
+#' \dontrun{
+#' norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
+#' }
 normalize_counts <- function(data, design=NULL, norm="raw") {
     ## Note that checkUsage flagged my 'libsize = ' calls
     ## I set norm_libsize at the bottom of the function
@@ -1015,14 +1126,17 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         colnames(count_table) <- count_colnames
         norm_performed <- 'quant'
     } else if (norm == "qsmooth") {
+        count_table <- qsmooth::qsmooth(count_table, groups=design$condition, plot=TRUE)
+        norm_performed <- "qsmooth"
+    } else if (norm == "qshrink") {
         count_table <- hpgl_qshrink(exprs=count_table, groups=design$condition,
                                     verbose=TRUE, plot=TRUE)
-        norm_performed <- 'qsmooth'
-    } else if (norm == "qsmooth_median") {
+        norm_performed <- 'qshrink'
+    } else if (norm == "qshrink_median") {
         count_table <- hpgl_qshrink(exprs=count_table, groups=design$condition,
                                     verbose=TRUE, plot=TRUE, refType="median",
                                     groupLoc="median", window=50)
-        norm_performed <- 'qsmooth_median'
+        norm_performed <- 'qshrink_median'
     } else if (norm == "tmm") {
         ## TMM normalization is documented in edgeR
         ## Set up the edgeR data structure
@@ -1066,17 +1180,37 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
     return(norm_counts)
 }
 
-#' Replace the data of an expt with normalized data
+#' \code{normalize_expt()}  Replace the data of an expt with normalized data.
 #'
-#' @param expt=expt The original expt
-#' @param transform="raw" The transformation desired (raw, log2, log, log10)
-#' @param norm="raw" How to normalize the data (raw, quant, sf, upperquartile, tmm, rle)
-#' @param convert="raw" Conversion to perform (raw, cpm, rpkm, cp_seq_m)
-#' @param filter_low=FALSE Filter out low sequences (cbcb, pofa, kofa, others?)
-#' @param annotations=NULL used for rpkm, a df
+#' @param expt default=expt  The original expt
+#' @param transform default="raw"  The transformation desired (raw, log2, log, log10)
+#' @param norm default="raw"  How to normalize the data (raw, quant, sf, upperquartile, tmm, rle)
+#' @param convert default="raw"  Conversion to perform (raw, cpm, rpkm, cp_seq_m)
+#' @param batch default="raw"  Batch effect removal tool to use (limma sva fsva ruv etc)
+#' @param filter_low default=FALSE  Filter out low sequences (cbcb, pofa, kofa, others?)
+#' @param annotations default=NULL used for rpkm, a df
+#' @param fasta default=NULL fasta file for cp_seq_m counting of oligos
+#' @param entry_type default='gene'  for getting genelengths by feature type (rpkm or cp_seq_m)
+#' @param verbose default=FALSE  talk?
+#' @param use_original default=FALSE  whether to use the backup data in the expt class
+#' @param batch1 default="batch"  experimental factor to extract first
+#' @param batch2 default=NULL  a second factor to remove (only with limma's removebatcheffect())
+#' @param thresh default=2  for cbcb_lowfilter
+#' @param min_samples default=2  for cbcb_lowfilter
+#' @param p default=0.01  for genefilter's pofa
+#' @param A default=1  for genefilter's pofa
+#' @param k default=1  for genefilter's kofa
+#' @param cv_min default=0.01  for genefilter's cv()
+#' @param cv_max default=1000 for genefilter's cv()
 #'
 #' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
+#' @seealso \pkg{genefilter} \pkg{cbcbSEQ} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
 #' @export
+#' @examples
+#' \dontrun{
+#' normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm', batch='raw', filter_low='pofa')
+#' normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm', batch='sva', filter_low='pofa')
+#' }
 normalize_expt <- function(expt, ## The expt class passed to the normalizer
     ## choose the normalization strategy
     transform="raw", norm="raw", convert="raw", batch="raw", filter_low=FALSE,
@@ -1198,18 +1332,22 @@ replace_data <- function(expt, data) {
     return(expt)
 }
 
-#' transform_counts(): Perform a simple transformation of a count table (log2)
+#' \code{transform_counts()}  Perform a simple transformation of a count table (log2)
 #'
-#' @param count_table A matrix of count data
-#' @param transform='raw' A type of transformation to perform: log2/log10/log
-#' @param converted='raw' Whether or not the data has been converted.
+#' @param count_table  A matrix of count data
+#' @param transform default='raw'  A type of transformation to perform: log2/log10/log
+#' @param converted default='raw'  Whether or not the data has been converted.
+#' @param base default=NULL  for other log scales
+#' @param add default=0.5  to avoid attempting a log(0)
 #' Only important if the data was previously cpm'd because that does a +1, thus
 #' this will avoid a double+1 on the data.
 #'
 #' @return dataframe of logx(counts)
 #' @export
 #' @examples
-#' ## filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
+#' \dontrun{
+#' filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
+#' }
 transform_counts <- function(count_table, transform="raw", converted="raw",
                              base=NULL, add=0.5) {
     ## if (converted != "cpm") {

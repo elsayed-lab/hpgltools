@@ -2,15 +2,43 @@
 % Please edit documentation in R/normalization.r
 \name{hpgl_qshrink}
 \alias{hpgl_qshrink}
-\title{hpgl_qstats(): A hacked copy of Kwame's qsmooth/qstats code}
+\title{\code{hpgl_qstats()} A hacked copy of Kwame's qsmooth/qstats code}
 \usage{
 hpgl_qshrink(data = NULL, groups = NULL, refType = "mean",
   groupLoc = "mean", window = 99, verbose = FALSE, groupCol = NULL,
   plot = TRUE, ...)
 }
+\arguments{
+\item{data}{default=NULL}
+
+\item{groups}{default=NULL}
+
+\item{refType}{default="mean"}
+
+\item{groupLoc}{default="mean"}
+
+\item{window}{default=99}
+
+\item{verbose}{default=FALSE}
+
+\item{groupCol}{default=NULL}
+
+\item{plot}{default=TRUE}
+}
+\value{
+data a new data frame of normalized counts
+}
 \description{
 I made a couple small changes to Kwame's qstats() function to make
 it not fail when on corner-cases.  I sent him a diff, but haven't
 checked to see if it was useful yet.
+}
+\examples{
+\dontrun{
+df <- hpgl_qshrink(data)
+}
+}
+\seealso{
+\pkg{qsmooth}
 }
 

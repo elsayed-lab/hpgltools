@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Jan 14 16:35:13 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 14:37:34 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' require.auto()  Automatic loading and/or installing of packages.
 #'
@@ -41,8 +41,7 @@ require.auto <- function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
             eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
             ## eval(parse(text=paste("install.packages('", lib, "')", sep="")))
         } else {
-            library(devtools)
-            install_github(github_path)
+            devtools::install_github(github_path)
         }
     }
 }
@@ -119,7 +118,6 @@ autoloads_helpers <- function() {
     require.auto("matrixStats")
     require.auto("devtools")
     require.auto("BiocParallel")
-    register(MulticoreParam(4))
     require.auto("data.table")
     require.auto("gtools")
     require.auto("hash")
@@ -135,9 +133,6 @@ autoloads_helpers <- function() {
     require.auto("roxygen2")
     require.auto("testthat")
     require.auto("tools")
-    require.auto("xlsx")
-    options(java.parameters = "-Xmx4g")  ## used for xlconnect
-    ##require.auto("XLConnect")
     require.auto("openxlsx")
     require.auto("xtable")
 }
@@ -158,7 +153,7 @@ autoloads_misc <- function() {
 #' Automatic loading of stuff I use, I am deprecating this now.
 #'
 #' @return NULL currently
-#' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}
+#' @seealso \code{\link[BiocInstaller]{biocLite}} and \code{\link{install.packages}}
 #' @export
 autoloads_all <- function(update=FALSE) {
     autoloads_helpers()
@@ -173,10 +168,10 @@ autoloads_all <- function(update=FALSE) {
     options(gvis.plot.tag="chart")
     mainfont = "Helvetica"
     ##Cairo()
-    CairoFonts(regular = paste(mainfont, "style=Regular", sep = ":"),
-               bold = paste(mainfont, "style=Bold", sep = ":"),
-               italic = paste("SimSun", "style=Regular", sep = ":"),
-               bolditalic = paste(mainfont, "style=Bold Italic,BoldItalic", sep = ":"))
+    ##CairoFonts(regular = paste(mainfont, "style=Regular", sep = ":"),
+    ##           bold = paste(mainfont, "style=Bold", sep = ":"),
+    ##           italic = paste("SimSun", "style=Regular", sep = ":"),
+    ##           bolditalic = paste(mainfont, "style=Bold Italic,BoldItalic", sep = ":"))
     ##pdf = CairoPDF
     ##png = CairoPNG
     ##x11 = CairoX11

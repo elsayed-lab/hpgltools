@@ -33,8 +33,10 @@ plots!
 clusterprofiler provides beautiful plots describing significantly overrepresented categories.
 This function attempts to expand the repetoire of data available to them to include data from gostats.
 }
-\section{warning hey, the pval_plot function upon which this is based now has a bunch of new helpers now that I understand how the ontology trees work better, this should take advantage of that, but currently does not.}{
-
+\details{
+The pval_plot function upon which this is based now has a bunch of new helpers now
+that I understand how the ontology trees work better, this should take advantage of that, but
+currently does not.
 }
 \seealso{
 \code{\link{clusterProfiler}} \code{\link{pval_plot}}

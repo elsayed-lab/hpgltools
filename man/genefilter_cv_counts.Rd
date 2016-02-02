@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{genefilter_cv_counts}
 \alias{genefilter_cv_counts}
-\title{Filter genes from a dataset outside a range of variance}
+\title{\code{genefilter_cv_counts()}  Filter genes from a dataset outside a range of variance}
 \usage{
 genefilter_cv_counts(count_table, cv_min = 0.01, cv_max = 1000,
   verbose = FALSE)
@@ -20,12 +20,14 @@ genefilter_cv_counts(count_table, cv_min = 0.01, cv_max = 1000,
 dataframe of counts without the low-count genes
 }
 \description{
-Filter genes from a dataset outside a range of variance
+\code{genefilter_cv_counts()}  Filter genes from a dataset outside a range of variance
 }
 \examples{
-## filtered_table = genefilter_kofa_counts(count_table)
+\dontrun{
+filtered_table = genefilter_kofa_counts(count_table)
+}
 }
 \seealso{
-\code{\link{genefilter}} \code{\link{kOverA}} which this uses to decide what to keep
+\pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep
 }
 

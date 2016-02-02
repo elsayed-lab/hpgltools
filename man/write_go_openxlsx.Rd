@@ -19,6 +19,9 @@ write_go_openxlsx(lst, file)
 
 \item{n}{default=30  the number of ontology categories to include in each table.}
 }
+\value{
+a set of excel sheet/coordinates
+}
 \description{
 I have found a few tools which purportedly read/write excel files.
 This implementation uses openxlsx.

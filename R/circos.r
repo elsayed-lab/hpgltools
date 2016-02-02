@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Jan 29 12:35:31 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 14:57:18 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## The karyotype file is circos/data/5005_5448_karyotype.txt
 ## The 5005 genome is 1838562 nt. long (looking at reference/genbank/mgas_5005.gb)
@@ -682,7 +682,7 @@ circos_heatmap <- function(df, cfgout="circos/conf/default.conf", colname="datum
     if (is.null(colors)) {
         conditions <- levels(as.factor(df[[colname]]))
         num_colors <- length(conditions)
-        colors <- suppressWarnings(RColorBrewer::colorRampPalette(grDevices::brewer.pal(num_colors, "Dark2"))(num_colors))
+        colors <- suppressWarnings(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
         names(colors) <- conditions
     }
 

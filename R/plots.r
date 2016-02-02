@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Feb  1 18:12:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 15:43:24 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -140,7 +140,7 @@ hpgl_bcv_plot <- function(data) {
     edisp <- edgeR::estimateDisp(data)
     avg_log_cpm <- edisp$AveLogCPM
     if (is.null(avg_log_cpm)) {
-        avg_log_cpm <- edgeR::aveLogCPM(edisp$counts, offset=getOffset(edisp))
+        avg_log_cpm <- edgeR::aveLogCPM(edisp$counts, offset=edgeR::getOffset(edisp))
     }
     disper <- edgeR::getDispersion(edisp)
     if (is.null(disper)) {
@@ -149,15 +149,18 @@ hpgl_bcv_plot <- function(data) {
     if (attr(disper, "type") == "common") {
         disper <- rep(disper, length=length(avg_log_cpm))
     }
-    disp_df <- data.frame(A=avg_log_cpm, disp=sqrt(disper))
+    disp_df <- data.frame("A"=avg_log_cpm,
+                          "disp"=sqrt(disper))
     fitted_disp <- gplots::lowess(disp_df$A, disp_df$disp, f=0.5)
     f <- stats::approxfun(fitted_disp, rule=2)
-    disp_plot <- ggplot2::ggplot(disp_df, ggplot2::aes(x=A, y=disp)) +
+    disp_plot <- ggplot2::ggplot(disp_df, ggplot2::aes_string(x="A", y="disp")) +
         ggplot2::geom_point() +
         ggplot2::xlab("Average log(CPM)") +
         ggplot2::ylab("Dispersion of Biological Variance") +
         ##ggplot2::stat_density2d(geom="tile", ggplot2::aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
-        ggplot2::stat_density2d(geom="tile", ggplot2::aes(fill=..density..^0.25), contour=FALSE, show.legend=FALSE) +
+        ## ..density.. leads to no visible binding for global variable, but I don't fully understand that notation
+        ## I remember looking at it a while ago and being confused
+        ggplot2::stat_density2d(geom="tile", ggplot2::aes_string(fill="..density..^0.25"), contour=FALSE, show.legend=FALSE) +
         ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white","black"))(256)) +
         ggplot2::geom_smooth(method="loess") +
         ggplot2::stat_function(fun=f, colour="red") +
@@ -212,8 +215,10 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     data$id <- rownames(data)
     dataframe <- reshape2::melt(data, id=c("id"))
     colnames(dataframe) <- c("gene","variable","value")
-    boxplot <- ggplot2::ggplot(data=dataframe, ggplot2::aes(x=variable, y=value)) +
-        suppressWarnings(ggplot2::geom_boxplot(ggplot2::aes(fill=variable),
+    ## The use of data= and aes() leads to no visible binding for global variable warnings
+    ## I am not sure what to do about them in this context.
+    boxplot <- ggplot2::ggplot(data=dataframe, ggplot2::aes_string(x="variable", y="value")) +
+        suppressWarnings(ggplot2::geom_boxplot(ggplot2::aes_string(fill="variable"),
                                                fill=colors,
                                                size=0.5,
                                                outlier.size=1.5,
@@ -304,13 +309,13 @@ hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
     }
     densityplot <- NULL
     if (is.null(fill)) {
-        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes(x=counts, colour=sample), environment=hpgl_env)
+        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes_string(x="counts", colour="sample"), environment=hpgl_env)
     } else {
         fill <- "sample"
-        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes(x=counts, colour=sample, fill=fill), environment=hpgl_env)
+        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes_string(x="counts", colour="sample", fill="fill"), environment=hpgl_env)
     }
     densityplot <- densityplot +
-        ggplot2::geom_density(ggplot2::aes(x=counts, y=..count..), position=position) +
+        ggplot2::geom_density(ggplot2::aes_string(x="counts", y="..count.."), position=position) +
         ggplot2::ylab("Number of genes.") +
         ggplot2::xlab("Number of hits/gene.") +
         ggplot2::theme_bw() +
@@ -378,7 +383,7 @@ hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
     mydist$dist <- mydist$x * mydist$y
     mydist$dist <- mydist$dist / max(mydist$dist)
     line_size <- size / 2
-    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes(x=first, y=second), environment=hpgl_env) +
+    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +
         ggplot2::ylab(paste("Expression of", df_y_axis)) +
         ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
@@ -550,11 +555,11 @@ hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE
             message(paste("No binwidth provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
         }
     }
-    a_histogram <- ggplot2::ggplot(df, ggplot2::aes(x=values), environment=hpgl_env) +
-        ggplot2::geom_histogram(ggplot2::aes(y=..density..), stat="bin", binwidth=binwidth,
+    a_histogram <- ggplot2::ggplot(df, ggplot2::aes_string(x="values"), environment=hpgl_env) +
+        ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), stat="bin", binwidth=binwidth,
                                 colour=color, fill=fillcolor, position="identity") +
         ggplot2::geom_density(alpha=0.4, fill=fillcolor) +
-        ggplot2::geom_vline(ggplot2::aes(xintercept=mean(values, na.rm=T)), color=color, linetype="dashed", size=1) +
+        ggplot2::geom_vline(ggplot2::aes_string(xintercept="mean(values, na.rm=T)"), color=color, linetype="dashed", size=1) +
         ggplot2::theme_bw()
     if (log) {
         log_histogram <- try(a_histogram + ggplot2::scale_x_log10())
@@ -616,9 +621,9 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
                       sum=colSums(data),
                       colors=factor(colors))
     tmp$order <- factor(tmp$id, as.character(tmp$id))
-    libsize_plot <- ggplot2::ggplot(data=tmp, ggplot2::aes(x=order, y=sum),
+    libsize_plot <- ggplot2::ggplot(data=tmp, ggplot2::aes_string(x="order", y="sum"),
                                     environment=hpgl_env, colour=colors) +
-        ggplot2::geom_bar(ggplot2::aes(x=order), stat="identity", colour="black", fill=tmp$colors) +
+        ggplot2::geom_bar(ggplot2::aes_string(x="order"), stat="identity", colour="black", fill=tmp$colors) +
         ggplot2::xlab("Sample ID") +
         ggplot2::ylab("Library size in (pseudo)counts.") +
         ggplot2::theme_bw() +
@@ -627,8 +632,9 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
         ## ggplot2::geom_text(ggplot2::aes(data=tmp, label=prettyNum(sum, big.mark=",")),
         ##                                 angle=90, size=3, color="white", hjust=1.2)
         tmp$sum <- sprintf("%.2f", round(tmp$sum, 2))
-        libsize_plot <- libsize_plot + ggplot2::geom_text(ggplot2::aes(x=order, label=prettyNum(as.character(tmp$sum), big.mark=",")),
-                                            angle=90, size=3, color="white", hjust=1.2)
+        libsize_plot <- libsize_plot + ggplot2::geom_text(
+                                           ggplot2::aes_string(x="order", label='prettyNum(as.character(tmp$sum), big.mark=",")'),
+                                           angle=90, size=3, color="white", hjust=1.2)
     }
     if (!is.null(title)) {
         libsize_plot <- libsize_plot + ggplot2::ggtitle(title)
@@ -710,7 +716,7 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     first_mad <- stats::mad(df$first, na.rm=TRUE)
     second_mad <- stats::mad(df$second, na.rm=TRUE)
     line_size <- size / 2
-    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes(x=first, y=second), environment=hpgl_env) +
+    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +
         ggplot2::ylab(paste("Expression of", df_y_axis)) +
         ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
@@ -812,10 +818,12 @@ hpgl_ma_plot <- function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6,
     df <- data.frame(AvgExp=rowMeans(counts[rownames(de_genes),]),
                      ## LogFC=de_genes$logFC, AdjPVal=de_genes$adj.P.Val)
                      LogFC=de_genes$logFC, AdjPVal=de_genes$P.Value)
-    plt <- ggplot2::ggplot(df, ggplot2::aes(AvgExp, LogFC, color=(AdjPVal < adjpval_cutoff)), environment=hpgl_env) +
+    plt <- ggplot2::ggplot(df,
+                           ggplot2::aes_string(x="AvgExp", y="LogFC", color="(AdjPVal < adjpval_cutoff)"),
+                           environment=hpgl_env) +
         ggplot2::geom_hline(yintercept=c(-1,1), color="Red", size=size) +
         ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
-        ggplot2::theme(axis.text.x=element_text(angle=-90)) +
+        ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
         ggplot2::xlab("Average Count (Millions of Reads)") +
         ggplot2::ylab("log fold change") +
         ggplot2::theme_bw()
@@ -883,12 +891,12 @@ hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, verbo
     } else {
         message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
     }
-    hpgl_multi <- ggplot2::ggplot(play_all, ggplot2::aes(x=expression, fill=cond)) +
-        ggplot2::geom_histogram(ggplot2::aes(y=..density..), binwidth=binwidth, alpha=0.4, position="identity") +
+    hpgl_multi <- ggplot2::ggplot(play_all, ggplot2::aes_string(x="expression", fill="cond")) +
+        ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), binwidth=binwidth, alpha=0.4, position="identity") +
         ggplot2::xlab("Expression") +
         ggplot2::ylab("Observation likelihood") +
         ggplot2::geom_density(alpha=0.5) +
-        ggplot2::geom_vline(data=play_cdf, ggplot2::aes(xintercept=rating.mean,  colour=cond), linetype="dashed", size=0.75) +
+        ggplot2::geom_vline(data=play_cdf, ggplot2::aes_string(xintercept="rating.mean",  colour="cond"), linetype="dashed", size=0.75) +
         ggplot2::theme_bw()
     if (log) {
         logged <- try(hpgl_multi + ggplot2::scale_x_log10())
@@ -963,14 +971,14 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     }
 
     shapes <- as.integer(design$batch)
-    non_zero <- data.frame(id=colnames(data),
-                           nonzero_genes=colSums(data >= 1),
-                           cpm=colSums(data) * 1e-6,
-                           condition=design$condition,
-                           batch=design$batch)
-    non_zero_plot <- ggplot2::ggplot(data=non_zero, ggplot2::aes(x=cpm, y=nonzero_genes), environment=hpgl_env, fill=colors, shape=shapes) +
+    non_zero <- data.frame("id"=colnames(data),
+                           "nonzero_genes"=colSums(data >= 1),
+                           "cpm"=colSums(data) * 1e-6,
+                           "condition"=design$condition,
+                           "batch"=design$batch)
+    non_zero_plot <- ggplot2::ggplot(data=non_zero, ggplot2::aes_string(x="cpm", y="nonzero_genes"), environment=hpgl_env, fill=colors, shape=shapes) +
         ## geom_point(stat="identity", size=3, colour=hpgl_colors, pch=21) +
-        ggplot2::geom_point(ggplot2::aes(fill=colors), colour="black", pch=21, stat="identity", size=3) +
+        ggplot2::geom_point(ggplot2::aes_string(fill="colors"), colour="black", pch=21, stat="identity", size=3) +
         ggplot2::scale_fill_manual(name="Condition", values=levels(as.factor(colors)), labels=levels(as.factor(design$condition))) +
         ggplot2::ylab("Number of non-zero genes observed.") +
         ggplot2::xlab("Observed CPM") +
@@ -978,11 +986,11 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     if (!is.null(labels)) {
         if (labels[[1]] == "fancy") {
             non_zero_plot <- non_zero_plot +
-                directlabels::geom_dl(ggplot2::aes(label=labels),
+                directlabels::geom_dl(ggplot2::aes_string(label="labels"),
                                       method="smart.grid", colour=colors)
         } else {
             non_zero_plot <- non_zero_plot +
-                ggplot2::geom_text(ggplot2::aes(x=cpm, y=nonzero_genes, label=labels),
+                ggplot2::geom_text(ggplot2::aes_string(x="cpm", y="nonzero_genes", label="labels"),
                                    angle=45, size=4, vjust=2)
         }
     }
@@ -1051,7 +1059,7 @@ hpgl_pairwise_ma <- function(data, log=NULL, ...) {
             }
             m <- first - second
             a <- (first + second) / 2
-            affy:::ma.plot(A=a, M=m, plot.method="smoothScatter", show.statistics=TRUE, add.loess=TRUE)
+            affy::ma.plot(A=a, M=m, plot.method="smoothScatter", show.statistics=TRUE, add.loess=TRUE)
             title(paste0("MA of ", firstname, " vs ", secondname))
             plot_list[[name]] = grDevices::recordPlot()
         }
@@ -1105,7 +1113,8 @@ hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
         if (verbose) {
             message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
         }
-        tmpdf <- data.frame(ith=data[,i], mean=sample_data$mean)
+        tmpdf <- data.frame("ith"=data[,i],
+                            "mean"=sample_data$mean)
         colnames(tmpdf) <- c(ith, "mean")
         tmpqq <- hpgl_qq_plot(tmpdf, x=1, y=2, labels=labels)
         logs[[count]] <- tmpqq$log
@@ -1160,7 +1169,7 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     } else {
         y_string <- paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
     }
-    ratio_plot <- ggplot2::ggplot(ratio_df, ggplot2::aes(x=increment, y=vector_ratio), environment=hpgl_env) +
+    ratio_plot <- ggplot2::ggplot(ratio_df, ggplot2::aes_string(x="increment", y="vector_ratio"), environment=hpgl_env) +
         ggplot2::geom_point(colour=suppressWarnings(grDevices::densCols(vector_ratio)), stat="identity", size=1, alpha=0.2, na.rm=TRUE) +
         ggplot2::scale_y_continuous(limits=c(0,2))
     if (isTRUE(labels)) {
@@ -1202,7 +1211,7 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     gg_max <- max(log_df)
     colnames(log_df) <- c(xlabel, ylabel)
     log_df$sub <- log_df[,1] - log_df[,2]
-    log_ratio_plot <- ggplot2::ggplot(log_df, ggplot2::aes(x=get(xlabel), y=get(ylabel)), environment=hpgl_env) +
+    log_ratio_plot <- ggplot2::ggplot(log_df, ggplot2::aes_string(x="get(xlabel)", y="get(ylabel)"), environment=hpgl_env) +
         ggplot2::geom_point(colour=suppressWarnings(grDevices::densCols(sorted_x, sorted_y)), na.rm=TRUE) +
         ggplot2::scale_y_continuous(limits=c(0, gg_max)) +
         ggplot2::scale_x_continuous(limits=c(0, gg_max))
@@ -1292,9 +1301,9 @@ hpgl_qq_all_pairwise <- function(df=NULL, expt=NULL, verbose=FALSE) {
             count <- count + 1
         }
     }
-    multiplot(logs)
+    hpgl_multiplot(logs)
     log_plots <- grDevices::recordPlot()
-    multiplot(ratios)
+    hpgl_multiplot(ratios)
     ratio_plots <- grDevices::recordPlot()
     heatmap.3(means, trace="none")
     means_heatmap <- grDevices::recordPlot()
@@ -1365,7 +1374,7 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]
     colnames(df) <- c("first","second")
-    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes(x=first, y=second), environment=hpgl_env) +
+    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +
         ggplot2::ylab(paste("Expression of", df_y_axis)) +
         ggplot2::geom_point(colour=color, alpha=0.6, size=size) +
@@ -1539,7 +1548,9 @@ hpgl_volcano_plot <- function(toptable_data, tooltip_data=NULL, gvis_filename=NU
     low_vert_line <- 0.0 - fc_cutoff
     horiz_line <- -1 * log10(p_cutoff)
     toptable_data$modified_p <- -1 * log10(toptable_data$P.Value)
-    plt <- ggplot2::ggplot(toptable_data, ggplot2::aes(x=logFC, y=modified_p, color=(P.Value <= p_cutoff)), environment=hpgl_env) +
+    plt <- ggplot2::ggplot(toptable_data,
+                           ggplot2::aes_string(x="logFC", y="modified_p", color="(P.Value <= p_cutoff)"),
+                           environment=hpgl_env) +
         ggplot2::geom_hline(yintercept=horiz_line, color="black", size=size) +
         ggplot2::geom_vline(xintercept=fc_cutoff, color="black", size=size) +
         ggplot2::geom_vline(xintercept=low_vert_line, color="black", size=size) +
@@ -1588,8 +1599,8 @@ spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
     point_c$y <- center_b$y + opposite
     points <- data.frame(point_c)
     points$counter <- seq(1, nrow(points))
-    spiro <- ggplot2::ggplot(data=points, ggplot2::aes(x=x, y=y)) +
-        ggplot2::geom_point(ggplot2::aes(colour=counter), size=0.5) +
+    spiro <- ggplot2::ggplot(data=points, ggplot2::aes_string(x="x", y="y")) +
+        ggplot2::geom_point(ggplot2::aes_string(colour="counter"), size=0.5) +
         ggplot2::theme_bw() +
         ggplot2::scale_colour_gradientn(colours=grDevices::rainbow(4)) +
         ggplot2::theme(axis.line=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),
@@ -1620,7 +1631,7 @@ hypotrochoid <- function(radius_a=7, radius_b=1, dist_b=5, revolutions=7, increm
     positions <- as.data.frame(positions)
     petals <- dist_b / radius_b
     message(paste0("The spirograph will have ", petals, " petals."))
-    image <- ggplot2::ggplot(data=positions, ggplot2::aes(x=x_points, y=y_points)) +
+    image <- ggplot2::ggplot(data=positions, ggplot2::aes_string(x="x_points", y="y_points")) +
         ggplot2::geom_point(size=1) + ggplot2::theme_bw() +
         ggplot2::theme(axis.line=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),
                        axis.text.y=ggplot2::element_blank(), axis.ticks=ggplot2::element_blank(),
@@ -1647,7 +1658,7 @@ epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6, revolutions=7, increme
     positions <- cbind(points, x_points)
     positions <- cbind(positions, y_points)
     positions <- as.data.frame(positions)
-   image <- ggplot2::ggplot(data=positions, ggplot2::aes(x=x_points, y=y_points)) +
+   image <- ggplot2::ggplot(data=positions, ggplot2::aes_string(x="x_points", y="y_points")) +
        ggplot2::geom_point(size=1) + ggplot2::theme_bw() +
        ggplot2::theme(axis.line=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),
                       axis.text.y=ggplot2::element_blank(), axis.ticks=ggplot2::element_blank(),

@@ -1,6 +1,17 @@
-## Time-stamp: <Sun Jan 31 13:03:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 13:47:00 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-check_clusterprofiler <- function(gff='test.gff') {
+
+#' check_clusterprofiler() Make sure that clusterProfiler is ready to run
+#'
+#' @param gff default='test.gff'  The gff file containing annotation data (gene lengths)
+#' @param gomap default=NULL  a data frame of gene IDs and GO ontologies 1:1, other columns are ignored.
+#'
+#' @return the GO2EG data structure created, probably don't save this, its big
+#' @export
+#' @examples
+#' ## go2eg <- check_clusterprofiler(gff, goids)
+#' ## rm(go2eg)
+check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
     genetable_test <- try(load("geneTable.rda"))
     if (class(genetable_test) == 'try-error') {
         if (!is.null(gff)) {
@@ -16,7 +27,6 @@ check_clusterprofiler <- function(gff='test.gff') {
     gomapping_test <- try(load("GO2EG.rda"), silent=TRUE)
     if (class(gomapping_test) == 'try-error') {
         message("simple_clus(): Generating GO mapping data.")
-        gomap <- goids
         gomap <- gomap[,c(1,2)]
         colnames(gomap) <- c("entrezgene", "go_accession")
         ## It turns out that the author of clusterprofiler reversed these fields...
@@ -26,6 +36,9 @@ check_clusterprofiler <- function(gff='test.gff') {
     } else {
         message("Using GO mapping data located in GO2EG.rda")
     }
+    gomapping_test <- try(load("GO2EG.rda"), silent=TRUE)
+    go2eg <- get0("GO2EG")
+    return(go2eg)
 }
 
 #' Perform a simplified clusterProfiler analysis
@@ -70,7 +83,10 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
                                    showcategory=12, universe=NULL, organism="lm", gff=NULL,
                                    wrapped_width=20, method="Walllenius", padjust="BH", ...) {
 
-    check_clusterprofiler(gff)
+    go2eg <- check_clusterprofiler(gff, goids)
+    if (length(go2eg) == 0) {
+        stop("The GO2EG data structure is empty.")
+    }
     if (is.null(de_genes$ID)) {
         gene_list <- as.character(rownames(de_genes))
     } else {
@@ -306,20 +322,20 @@ cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", g
     message(paste0("Checking the de_table for a p-value column:", pval_column))
     if (is.null(de_genes[[pval_column]])) {
         mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes,
-                         annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes,
-                         annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes,
-                         annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     } else {
         pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
         names(pvals) <- rownames(de_genes)
         mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
-                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata <- new("topGOdata", description="BP", ontology="BP", allGenes=pvals,
-                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=pvals,
-                        geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                        geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     }
 
     mf_all <- cpdata$mf_all
@@ -405,7 +421,7 @@ hpgl_enrichGO <- function(gene, organism="human", ont="MF",
 #' @export
 hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="BH",
                                  ont, minGSSize=2, qvalueCutoff=0.2, readable=FALSE, universe=NULL) {
-    require.auto("plyr")  ## dlply and the . function are too obnoxious without pulling them in.
+    ##require.auto("plyr")  ## dlply and the . function are too obnoxious without pulling them in.
     gene <- as.character(gene)
     class(gene) <- ont
     qExtID2TermID <- DOSE::EXTID2TERMID(gene, organism)
@@ -419,7 +435,7 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
                                    termID=qTermID)
     qExtID2TermID.df <- unique(qExtID2TermID.df)
     termID <- NULL ## to satisfy code tools
-    qTermID2ExtID <- plyr::dlply(qExtID2TermID.df, .(termID),
+    qTermID2ExtID <- plyr::dlply(qExtID2TermID.df, plyr::.(termID),
                                  .fun=function(i) as.character(i$extID))
     class(organism) <- ont
     extID <- DOSE::ALLEXTID(organism)
@@ -472,7 +488,7 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
     original_over = Over
     p.adj <- p.adjust(Over$pvalue, method=pAdjustMethod)
     cat(sprintf("The minimum observed pvalue is: %f\n", min(pvalues)))
-    qobj = try(qvalue(p=Over$pvalue, lambda=0.05, pi0.method="bootstrap"), silent=TRUE)
+    qobj = try(qvalue::qvalue(p=Over$pvalue, lambda=0.05, pi0.method="bootstrap"), silent=TRUE)
     if (class(qobj) == "qvalue") {
         qvalues <- qobj$qvalues
     } else {
@@ -489,7 +505,7 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
     Description <- DOSE::TERM2NAME(qTermID, organism)
 
     if (length(qTermID) != length(Description)) {
-        idx <- qTermID %in% names(tt)
+        idx <- qTermID %in% names(Description)
         Over <- Over[idx,]
     }
     Over$Description <- Description
@@ -516,7 +532,7 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
              geneInCategory=qTermID2ExtID[category]
              )
     if(readable) {
-        x <- setReadable(x)
+        x <- DOSE::setReadable(x)
     }
     return (x)
 }
@@ -616,25 +632,6 @@ hpgl_getGffAttribution <- function(x, field, attrsep=";", split='=') {
         }
         return(rv)
     })
-}
-
-mygroupgo <- function(gene, organism="human", ont="CC", level=2, readable=FALSE) {
-    GOLevel <- clusterProfiler:::getGOLevel(ont, level)
-    class(GOLevel) <- ont
-    GO2ExtID <- TERMID2EXTID.GO(GOLevel, organism)
-    geneID.list <- lapply(GO2ExtID, function(x) gene[gene %in% x])
-    geneID <- sapply(geneID.list, function(i) paste(i, collapse = "/"))
-    Count <- unlist(lapply(geneID.list, length))
-    GeneRatio <- paste(Count, length(unique(unlist(gene))), sep = "/")
-    Descriptions <- TERM2NAME(GOLevel)
-    result = data.frame(ID=as.character(GOLevel), Description=Descriptions, Count=Count,
-                        GeneRatio=GeneRatio, geneID=geneID)
-    x <- new("groupGOResult", result=result, ontology=ont, level=level,
-             organism=organism, gene=gene, geneInCategory=geneID.list)
-    if (readable == TRUE) {
-        x <- setReadable(x)
-    }
-    return(x)
 }
 
 # EOF

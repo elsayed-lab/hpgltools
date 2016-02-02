@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Jan 31 13:02:55 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 15:42:47 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -66,11 +66,11 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     gostats_go$frame.Evidence <- "TAS"
     colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "frame.Evidence")
     gostats_go <- gostats_go[,c("frame.go_id", "frame.Evidence", "frame.gene_id")]
-    gostats_frame <- GOFrame(gostats_go, organism=organism)
-    gostats_all <- GOAllFrame(gostats_frame)
+    gostats_frame <- AnnotationDbi::GOFrame(gostats_go, organism=organism)
+    gostats_all <- AnnotationDbi::GOAllFrame(gostats_frame)
     ## require.auto("GSEABase", verbose=FALSE)
     message("simple_gostats(): Creating the gene set collection.")
-    gsc <- Category::GeneSetCollection(gostats_all, setType=GOCollection())
+    gsc <- GSEABase::GeneSetCollection(gostats_all, setType=GSEABase::GOCollection())
 
     mf_over <- bp_over <- cc_over <- NULL
     mf_under <- bp_under <- cc_under <- NULL
@@ -112,7 +112,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="BP", pvalueCutoff=pcutoff,
         conditional=FALSE, testDirection="under")
-    bp_under <- hyperGTest(bp_params)
+    bp_under <- Category::hyperGTest(bp_params)
     message(paste0("Found ", nrow(GOstats::summary(bp_under)), " under BP categories."))
     message("simple_gostats(): Performing under CC GSEA.")
     cc_params <- Category::GSEAGOHyperGParams(
@@ -253,23 +253,23 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
     names(interesting_genes) <- annotated_genes
     if (is.null(de_genes[[pval_column]])) {
         mf_GOdata <- new("topGOdata", ontology="MF",
-                         allGenes=interesting_genes, annot=annFun.gene2GO,
+                         allGenes=interesting_genes, annot=topGO::annFUN.gene2GO,
                          gene2GO=geneID2GO)
         bp_GOdata <- new("topGOdata", ontology="BP",
-                         allGenes=interesting_genes, annot=annFun.gene2GO,
+                         allGenes=interesting_genes, annot=topGO::annFUN.gene2GO,
                          gene2GO=geneID2GO)
         cc_GOdata <- new("topGOdata", ontology="CC",
-                         allGenes=interesting_genes, annot=annFun.gene2GO,
+                         allGenes=interesting_genes, annot=topGO::annFUN.gene2GO,
                          gene2GO=geneID2GO)
     } else {
         pvals <- as.vector(de_genes[[pval_column]])
         names(pvals) <- rownames(de_genes)
         mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
-                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata <- new("topGOdata", description="BP", ontology="BP", allGenes=pvals,
-                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=pvals,
-                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     }
     mf_over_enriched_ids <- mf_over$GOMFID
     bp_over_enriched_ids <- bp_over$GOBPID
@@ -386,6 +386,10 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
 #' clusterprofiler provides beautiful plots describing significantly overrepresented categories.
 #' This function attempts to expand the repetoire of data available to them to include data from gostats.
 #'
+#' The pval_plot function upon which this is based now has a bunch of new helpers now
+#' that I understand how the ontology trees work better, this should take advantage of that, but
+#' currently does not.
+#'
 #' @param mf_over molecular function data overrepresented
 #' @param bp_over biological process data overrepresented
 #' @param cc_over cellular component data overrepresented
@@ -395,8 +399,6 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
 #' @param cutoff 0.1 what is the maximum pvalue allowed
 #' @param wrapped_width how big to make the text so that it is legible
 #' @param n 10 how many groups to include in the plot
-#' @section
-#' warning hey, the pval_plot function upon which this is based now has a bunch of new helpers now that I understand how the ontology trees work better, this should take advantage of that, but currently does not.
 #'
 #' @return plots!
 #' @seealso \code{\link{clusterProfiler}} \code{\link{pval_plot}}
@@ -416,12 +418,15 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_mf_over <- NULL
     } else {
         plotting_mf_over$score <- plotting_mf_over$ExpCount
-        plotting_mf_over <- subset(plotting_mf_over, Term != "NULL")
-        plotting_mf_over <- subset(plotting_mf_over, Pvalue <= cutoff)
-        plotting_mf_over <- subset(plotting_mf_over, Size >= group_minsize)
-        plotting_mf_over <- plotting_mf_over[order(plotting_mf_over$Pvalue),]
+        ## plotting_mf_over <- subset(plotting_mf_over, Term != "NULL")
+        plotting_mf_over <- plotting_mf_over[plotting_mf_over$Term != "NULL", ]
+        ## plotting_mf_over <- subset(plotting_mf_over, Pvalue <= cutoff)
+        plotting_mf_over <- plotting_mf_over[plotting_mf_over$Pvalue <= cutoff, ]
+        ## plotting_mf_over <- subset(plotting_mf_over, Size >= group_minsize)
+        plotting_mf_over <- plotting_mf_over[plotting_mf_over$Size >= group_minsize, ]
+        plotting_mf_over <- plotting_mf_over[order(plotting_mf_over$Pvalue), ]
         plotting_mf_over <- head(plotting_mf_over, n=n)
-        plotting_mf_over <- plotting_mf_over[,c("Term","Pvalue","score")]
+        plotting_mf_over <- plotting_mf_over[, c("Term","Pvalue","score")]
         colnames(plotting_mf_over) <- c("term","pvalue","score")
     }
     if (nrow(plotting_mf_over) > 0) {
@@ -433,12 +438,15 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_mf_under <- NULL
     } else {
         plotting_mf_under$score <- plotting_mf_under$ExpCount
-        plotting_mf_under <- subset(plotting_mf_under, Term != "NULL")
-        plotting_mf_under <- subset(plotting_mf_under, Pvalue <= cutoff)
-        plotting_mf_under <- subset(plotting_mf_under, Size >= group_minsize)
-        plotting_mf_under <- plotting_mf_under[order(plotting_mf_under$Pvalue),]
+        ## plotting_mf_under <- subset(plotting_mf_under, Term != "NULL")
+        plotting_mf_under <- plotting_mf_under[plotting_mf_under$Term != "NULL", ]
+        ## plotting_mf_under <- subset(plotting_mf_under, Pvalue <= cutoff)
+        plotting_mf_under <- plotting_mf_under[plotting_mf_under$Pvalue <= cutoff, ]
+        ## plotting_mf_under <- subset(plotting_mf_under, Size >= group_minsize)
+        plotting_mf_under <- plotting_mf_under[plotting_mf_under$Size >= group_minsize, ]
+        plotting_mf_under <- plotting_mf_under[order(plotting_mf_under$Pvalue), ]
         plotting_mf_under <- head(plotting_mf_under, n=n)
-        plotting_mf_under <- plotting_mf_under[,c("Term","Pvalue","score")]
+        plotting_mf_under <- plotting_mf_under[, c("Term","Pvalue","score")]
         colnames(plotting_mf_under) <- c("term","pvalue","score")
     }
     if (nrow(plotting_mf_under) > 0) {
@@ -450,12 +458,15 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_bp_over <- NULL
     } else {
         plotting_bp_over$score <- plotting_bp_over$ExpCount
-        plotting_bp_over <- subset(plotting_bp_over, Term != "NULL")
-        plotting_bp_over <- subset(plotting_bp_over, Pvalue <= 0.1)
-        plotting_bp_over <- subset(plotting_bp_over, Size > 10)
-        plotting_bp_over <- plotting_bp_over[order(plotting_bp_over$Pvalue),]
+        ## plotting_bp_over <- subset(plotting_bp_over, Term != "NULL")
+        plotting_bp_over <- plotting_bp_over[plotting_bp_over$Term != "NULL", ]
+        ## plotting_bp_over <- subset(plotting_bp_over, Pvalue <= 0.1)
+        plotting_bp_over <- plotting_bp_over[plotting_bp_over$Pvalue <= cutoff, ]
+        ## plotting_bp_over <- subset(plotting_bp_over, Size > 10)
+        plotting_bp_over <- plotting_bp_over[plotting_bp_over$Size >= group_minsize, ]
+        plotting_bp_over <- plotting_bp_over[order(plotting_bp_over$Pvalue), ]
         plotting_bp_over <- head(plotting_bp_over, n=n)
-        plotting_bp_over <- plotting_bp_over[,c("Term","Pvalue","score")]
+        plotting_bp_over <- plotting_bp_over[, c("Term","Pvalue","score")]
         colnames(plotting_bp_over) <- c("term","pvalue","score")
     }
     if (nrow(plotting_bp_over) > 0) {
@@ -467,12 +478,15 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_bp_under <- NULL
     } else {
         plotting_bp_under$score <- plotting_bp_under$ExpCount
-        plotting_bp_under <- subset(plotting_bp_under, Term != "NULL")
-        plotting_bp_under <- subset(plotting_bp_under, Pvalue <= 0.1)
-        plotting_bp_under <- subset(plotting_bp_under, Size > 10)
-        plotting_bp_under <- plotting_bp_under[order(plotting_bp_under$Pvalue),]
+        ## plotting_bp_under <- subset(plotting_bp_under, Term != "NULL")
+        plotting_bp_under <- plotting_bp_under[plotting_bp_under$Term != "NULL", ]
+        ## plotting_bp_under <- subset(plotting_bp_under, Pvalue <= 0.1)
+        plotting_bp_under <- plotting_bp_under[plotting_bp_under$Pvalue <= cutoff, ]
+        ## plotting_bp_under <- subset(plotting_bp_under, Size > 10)
+        plotting_bp_under <- plotting_bp_under[plotting_bp_under$Size >= group_minsize, ]
+        plotting_bp_under <- plotting_bp_under[order(plotting_bp_under$Pvalue), ]
         plotting_bp_under <- head(plotting_bp_under, n=n)
-        plotting_bp_under <- plotting_bp_under[,c("Term","Pvalue","score")]
+        plotting_bp_under <- plotting_bp_under[, c("Term","Pvalue","score")]
         colnames(plotting_bp_under) <- c("term","pvalue","score")
     }
     if (nrow(plotting_bp_under) > 0) {
@@ -484,12 +498,15 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_cc_over <- NULL
     } else {
         plotting_cc_over$score <- plotting_cc_over$ExpCount
-        plotting_cc_over <- subset(plotting_cc_over, Term != "NULL")
-        plotting_cc_over <- subset(plotting_cc_over, Pvalue <= 0.1)
-        plotting_cc_over <- subset(plotting_cc_over, Size > 10)
-        plotting_cc_over <- plotting_cc_over[order(plotting_cc_over$Pvalue),]
+        ## plotting_cc_over <- subset(plotting_cc_over, Term != "NULL")
+        plotting_cc_over <- plotting_cc_over[plotting_cc_over$Term != "NULL", ]
+        ## plotting_cc_over <- subset(plotting_cc_over, Pvalue <= 0.1)
+        plotting_cc_over <- plotting_cc_over[plotting_cc_over$Pvalue <= cutoff, ]
+        ## plotting_cc_over <- subset(plotting_cc_over, Size > 10)
+        plotting_cc_over <- plotting_cc_over[plotting_cc_over$Size >= group_minsize, ]
+        plotting_cc_over <- plotting_cc_over[order(plotting_cc_over$Pvalue), ]
         plotting_cc_over <- head(plotting_cc_over, n=n)
-        plotting_cc_over <- plotting_cc_over[,c("Term","Pvalue","score")]
+        plotting_cc_over <- plotting_cc_over[, c("Term","Pvalue","score")]
         colnames(plotting_cc_over) <- c("term","pvalue","score")
     }
     if (nrow(plotting_cc_over) > 0) {
@@ -501,12 +518,15 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_cc_under <- NULL
     } else {
         plotting_cc_under$score <- plotting_cc_under$ExpCount
-        plotting_cc_under <- subset(plotting_cc_under, Term != "NULL")
-        plotting_cc_under <- subset(plotting_cc_under, Pvalue <= 0.1)
-        plotting_cc_under <- subset(plotting_cc_under, Size > 10)
-        plotting_cc_under <- plotting_cc_under[order(plotting_cc_under$Pvalue),]
+        ## plotting_cc_under <- subset(plotting_cc_under, Term != "NULL")
+        plotting_cc_under <- plotting_cc_under[plotting_cc_under$Term != "NULL", ]
+        ## plotting_cc_under <- subset(plotting_cc_under, Pvalue <= 0.1)
+        plotting_cc_under <- plotting_cc_under[plotting_cc_under$Pvalue <= cutoff, ]
+        ## plotting_cc_under <- subset(plotting_cc_under, Size > 10)
+        plotting_cc_under <- plotting_cc_under[plotting_cc_under$Size >= group_minsize, ]
+        plotting_cc_under <- plotting_cc_under[order(plotting_cc_under$Pvalue), ]
         plotting_cc_under <- head(plotting_cc_under, n=n)
-        plotting_cc_under <- plotting_cc_under[,c("Term","Pvalue","score")]
+        plotting_cc_under <- plotting_cc_under[, c("Term","Pvalue","score")]
         colnames(plotting_cc_under) <- c("term","pvalue","score")
     }
     if (nrow(plotting_cc_under) > 0) {

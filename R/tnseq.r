@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Jan 13 23:45:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 15:49:25 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' tnseq_saturation()  Make a plot and some simple numbers about tnseq saturation
 #'
@@ -24,7 +24,8 @@ tnseq_saturation <- function(file) {
     max_reads <- max(data_list, na.rm=TRUE)
     log2_data_list <- as.numeric(log2(table$reads + 1))
     data_plot <- hpgl_histogram(log2_data_list, bins=500)
-    data_plot <- data_plot + scale_x_continuous(limits=c(0,6)) + scale_y_continuous(limits=c(0,2))
+    data_plot <- data_plot + ggplot2::scale_x_continuous(limits=c(0,6)) +
+        ggplot2::scale_y_continuous(limits=c(0,2))
     print(sprintf("The maximum value is: %s ", max_reads))
     print(summary(data_list))
     raw <- table(unlist(data_list))
@@ -68,17 +69,18 @@ tnseq_saturation <- function(file) {
 plot_essentiality <- function(file) {
     ess <- read.csv(file=file, comment.char="#", sep="\t", header=FALSE)
     colnames(ess) <- c("gene","orf_hits","orf_tas","max_run","max_run_span","posterior_zbar","call")
-    ess <- ess[with(ess, order(posterior_zbar)), ]
-    ess <- subset(ess, posterior_zbar > -1)
-    ess <- transform(ess, rank=ave(posterior_zbar, FUN=function(x) order(x,decreasing=FALSE)))
-    zbar_plot <- ggplot(data=ess, aes(x=rank, y=posterior_zbar)) +
-        geom_point(stat="identity", size=2) +
-        geom_hline(color="grey", yintercept=0.0371) +
-        geom_hline(color="grey", yintercept=0.9902) +
-        theme_bw()
+    ess <- ess[with(ess, order("posterior_zbar")), ]
+    ##ess <- subset(ess, posterior_zbar > -1)
+    ess <- ess[ess$posterior_zbar >= -1, ]
+    ess <- transform(ess, rank=ave("posterior_zbar", FUN=function(x) order(x, decreasing=FALSE)))
+    zbar_plot <- ggplot2::ggplot(data=ess, ggplot2::aes_string(x="rank", y="posterior_zbar")) +
+        ggplot2::geom_point(stat="identity", size=2) +
+        ggplot2::geom_hline(color="grey", yintercept=0.0371) +
+        ggplot2::geom_hline(color="grey", yintercept=0.9902) +
+        ggplot2::theme_bw()
     span_df <- ess[,c("max_run","max_run_span")]
-    span_plot <- my_linear_scatter(span_df)
-    returns <- list(zbar=zbar_plot, scatter=span_plot$scatter)
+    span_plot <- hpgl_linear_scatter(span_df)
+    returns <- list("zbar" = zbar_plot, "scatter" = span_plot$scatter)
     return(returns)
 }
 

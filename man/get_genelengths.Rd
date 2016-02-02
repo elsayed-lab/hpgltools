@@ -22,7 +22,7 @@ a data frame of gene IDs and widths.
 get_genelengths()  Grab gene lengths from a gff file.
 }
 \examples{
-## tt = hpgltools:::get_genelengths('reference/fun.gff.gz')
+## tt = get_genelengths('reference/fun.gff.gz')
 ## head(tt)
 ##          ID width
 ##1   YAL069W   312
