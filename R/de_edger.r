@@ -1,7 +1,6 @@
-## Time-stamp: <Tue Feb  2 15:59:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 19:53:31 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-
-#' edger_pairwise()  Set up a model matrix and set of contrasts to do
+#' \code{edger_pairwise()}  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using EdgeR.
 #'
 #' @param input  a dataframe/vector or expt class containing data, normalization state, etc.
@@ -9,25 +8,33 @@
 #' @param batches default=NULL  a factor of batches in the experiment
 #' @param model_cond default=TRUE  Include condition in the experimental model?  This is pretty much always true.
 #' @param model_batch default=FALSE  Include batch in the model?  In most cases this is a good thing(tm).
-#' @param model_intercept default=FALSE Use cell means or intercept? (I default to the former, but they work out the same)
+#' @param model_intercept default=FALSE  Use cell means or intercept? (I default to the former,
+#'   but they work out the same)
+#' @param alt_model default=NULL  An alternate experimental model to use
 #' @param extra_contrasts default=NULL  some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
+#' @param annot_df default=NULL  Add some annotation information to the data tables?
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #'
 #' @return A list including the following information:
-#'   results = A list of tables returned by 'topTags', one for each contrast.
 #'   contrasts = The string representation of the contrasts performed.
 #'   lrt = A list of the results from calling glmLRT(), one for each contrast.
 #'   contrast_list = The list of each call to makeContrasts()
 #'     I do this to avoid running into the limit on # of contrasts addressable by topTags()
-#'
-#' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
+#'   all_tables = a list of tables for the contrasts performed.
+#' @seealso \pkg{edgeR} \code{\link[edgeR]{topTags}} \code{\link[edgeR]{glmLRT}}
+#'   \code{\link{make_pairwise_contrasts}} \code{\link[edgeR]{DGEList}}
+#'   \code{\link[edgeR]{calcNormFactors}} \code{\link[edgeR]{estimateTagwiseDisp}}
+#'   \code{\link[edgeR]{estimateCommonDisp}} \code{\link[edgeR]{estimateGLMCommonDisp}}
+#'   \code{\link[edgeR]{estimateGLMTrendedDisp}} \code{\link[edgeR]{glmFit}}
 #' @export
 #' @examples
-#' ## pretend = edger_pairwise(data, conditions, batches)
+#' \dontrun{
+#'  pretend = edger_pairwise(data, conditions, batches)
+#' }
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                           model_batch=FALSE, model_intercept=FALSE, alt_model=NULL,
                           extra_contrasts=NULL, annot_df=NULL, ...) {

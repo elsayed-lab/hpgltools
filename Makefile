@@ -2,7 +2,7 @@ VERSION=2016.02
 install: document
 	cd ../ && R CMD INSTALL hpgltools
 
-build:
+build:	clean
 	cd ../ && R CMD build hpgltools --no-build-vignettes
 	mv ../hpgltools_${VERSION}.tar.gz .
 	tar xavf hpgltools_${VERSION}.tar.gz
@@ -40,6 +40,8 @@ prereq:
 	Rscript -e "source('http://bioconductor.org/biocLite.R');\
 pasilla = try(library('pasilla'));\
 if (class(pasilla) == 'try-error') { biocLite('pasilla'); library('pasilla') };\
+seqt = try(lirary('SeqTools'));\
+if (class(SeqTools)) == 'try-error') { install_github('lianos/seqtools/R/pkg'); library('SeqTools') };\
 prep = try(library('preprocessCore'));\
 if (class(prep) == 'try-error') { biocLite('preprocessCore'); library('preprocessCore') };\
 devtools = try(library('devtools'));\

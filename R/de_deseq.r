@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 15:52:36 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 21:43:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' deseq_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
 #'
@@ -87,20 +87,28 @@ deseq_pairwise <- function(...) {
 #' deseq2_pairwise()  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using DESeq2.
 #'
-#' @param input  a dataframe/vector or  expt class containing data, normalization state, etc.
-#' @param conditions default=NULL  a factor of conditions in the experiment
-#' @param batches default=NULL a factor of batches in the experiment
+#' @param input  A dataframe/vector or expt class containing data, normalization state, etc.
+#' @param conditions default=NULL  A factor of conditions in the experiment
+#' @param batches default=NULL A factor of batches in the experiment
+#' @param model_cond default=TRUE  Have condition in the experimental model?
+#' @param model_batch default=FALSE  Have batch in the experimental model?
+#' @param annot_df default=NULL  Include some annotation information in the results?
+#' @param ... triple dots!
 #'
 #' @return A list including the following information:
 #'   run = the return from calling DESeq()
-#'   result = the return from calling results()
-#'   result_mle = the return from calling results() with the MLE parameter.
-#'   results = the return when a deseq result class is cast as a dataframe.
-#'
-#' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
+#'   denominators = list of denominators in the contrasts
+#'   numerators = list of the numerators in the contrasts
+#'   conditions = the list of conditions in the experiment
+#'   coefficients = list of coefficients making the contrasts
+#'   all_tables = list of DE tables
+#' @seealso \pkg{DESeq2} \code{\link[DESeq2]{results}} \code{\link[DESeq2]{estimateSizeFactors}}
+#'          \code{\link[DESeq2]{estimateDispersions}} \code{\link[DESeq2]{nbinomWaldTest}}
 #' @export
 #' @examples
-#' ## pretend = deseq2_pairwise(data, conditions, batches)
+#' \dontrun{
+#' pretend = deseq2_pairwise(data, conditions, batches)
+#' }
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                             model_batch=FALSE, annot_df=NULL, ...) {
     arglist <- list(...)

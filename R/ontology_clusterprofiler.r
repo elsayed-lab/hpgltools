@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 13:47:00 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 20:14:31 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 
 #' check_clusterprofiler() Make sure that clusterProfiler is ready to run
@@ -297,16 +297,26 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     return(return_information)
 }
 
-## Take clusterprofile group data and print it on a tree as topGO does
+#' \code{cluster_trees()}  Take clusterprofile group data and print it on a tree as topGO does
 #' Make fun trees a la topgo from goseq data.
 #'
-#' @param godata data from cluster Profiler
-#' @param goids a mapping of IDs to GO in the Ramigo expected format
-#' @param sigforall Print significance on all nodes?
+#' @param de_genes  A list of genes deemed 'interesting'
+#' @param cpdata  data from simple_clusterprofiler()
+#' @param goid_map default='reference/go/id2go.map'  A mapping file of IDs to GO ontologies
+#' @param goids_df default=NULL  A dataframe of mappings used to build goid_map
+#' @param score_limit default=0.2  A scoring limit above which to ignore genes
+#' @param overwrite default=FALSE  Overwrite an existing goid mapping file?
+#' @param selector default='topDiffGenes'  The name of a function for applying scores to the trees
+#' @param pval_column default='adj.P.Val'  The name of the column in the table from which to extract scores
 #'
 #' @return plots! Trees! oh my!
-#' @seealso \code{\link{Ramigo}}
+#' @seealso \pkg{Ramigo} \code{\link[topGO]{showSigOfNodes}}
 #' @export
+#' @examples
+#' \dontrun{
+#' cluster_data <- simple_clusterprofiler(genes, stuff)
+#' ctrees <- cluster_trees(genes, cluster_data)
+#' }
 cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", goids_df=NULL,
                           score_limit=0.2, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Val") {
     de_genes <- cpdata$de_genes

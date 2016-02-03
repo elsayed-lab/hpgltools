@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 17:02:37 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Feb  3 18:37:00 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -23,12 +23,12 @@
 #' @param model  a balanced experimental model containing condition and batch factors
 #'
 #' @return a dataframe of residuals after subtracting batch from the model
-#' @seealso \code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
-#' @export
+#' @seealso \link[limma]{voom} \link[limma]{lmFit}
 #' @examples
 #' \dontrun{
 #' newdata <- cbcb_batch_effect(counts, expt_model)
 #' }
+#' @export
 cbcb_batch_effect <- function(normalized_counts, model) {
     ## model = model.matrix(~ condition + batch)
     voomed <- hpgl_voom(normalized_counts, model)
@@ -51,12 +51,12 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #' @return The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this
 #' may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
 #' @seealso \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
-#' @export
 #' @examples
 #' \dontrun{
 #' limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
 #' sva_batch <- batch_counts(table, design, batch='sva')
 #' }
+#' @export
 batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2=NULL , noscale=TRUE, ...) {
     batches <- as.factor(design[, batch1])
     conditions <- as.factor(design[, "condition"])
@@ -180,12 +180,12 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
 #' @param verbose default=FALSE  if set to true, prints number of genes removed and remaining.
 #'
 #' @return dataframe of counts without the low-count genes
-#' @seealso \code{\link[cbcbSEQ]{log2CPM}} which this uses to decide what to keep
-#' @export
+#' @seealso \link[cbcbSEQ]{log2CPM} which this uses to decide what to keep
 #' @examples
 #' \dontrun{
 #' filtered_table <- cbcb_filter_counts(count_table)
 #' }
+#' @export
 cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=FALSE) {
     ## I think having a log2cpm here is kind of weird, because the next step in processing is to cpm the data.
     ##cpms = 2^log2CPM(counts, lib.size=lib.size)$y
@@ -446,7 +446,7 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1, verbose=FALSE) {
 #' @param prior.plots print out prior plots? FALSE
 #'
 #' @return a df of batch corrected data
-#' @seealso \pkg{sva}}, \code{\link[sva]{combat}},
+#' @seealso \pkg{sva} \code{\link[sva]{combat}}
 #' @export
 #' @examples
 #' \dontrun{

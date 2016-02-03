@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 15:47:59 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Feb  3 13:13:18 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -9,7 +9,7 @@ Beta.NA <- function(y,X) {
     return(B)
 }
 
-#' get_genelengths()  Grab gene lengths from a gff file.
+#' \code{get_genelengths()}  Grab gene lengths from a gff file.
 #'
 #' @param gff  a gff file with (hopefully) IDs and widths
 #' @param type default='gene'  the annotation type to use.
@@ -18,19 +18,20 @@ Beta.NA <- function(y,X) {
 #' This function attempts to be robust to the differences in output from importing gff2/gff3 files.  But it certainly isn't perfect.
 #'
 #' @return  a data frame of gene IDs and widths.
-#' @export
-#' @seealso \code{\link{import.gff3}}, \code{\link{import.gff}}, \code{\link{import.gff2}}
-#'
+#' @seealso \pkg{rtracklayer} \link[rtracklayer]{import.gff}
 #' @examples
-#' ## tt = get_genelengths('reference/fun.gff.gz')
-#' ## head(tt)
-#' ##          ID width
-#' ##1   YAL069W   312
-#' ##2   YAL069W   315
-#' ##3   YAL069W     3
-#' ##4 YAL068W-A   252
-#' ##5 YAL068W-A   255
-#' ##6 YAL068W-A     3
+#' \dontrun{
+#'  tt = get_genelengths('reference/fun.gff.gz')
+#'  head(tt)
+#' #          ID width
+#' #1   YAL069W   312
+#' #2   YAL069W   315
+#' #3   YAL069W     3
+#' #4 YAL068W-A   252
+#' #5 YAL068W-A   255
+#' #6 YAL068W-A     3
+#' }
+#' @export
 get_genelengths <- function(gff, type="gene", key='ID') {
     ret <- gff2df(gff)
     ret <- ret[ret$type == type,]
@@ -42,8 +43,7 @@ get_genelengths <- function(gff, type="gene", key='ID') {
     return(ret)
 }
 
-
-#' sum_exons()  Given a data frame of exon counts and annotation information, sum the exons.
+#' \code{sum_exons()}  Given a data frame of exon counts and annotation information, sum the exons.
 #'
 #' @param data  a count table by exon
 #' @param gff default=NULL  a gff filename
@@ -55,7 +55,12 @@ get_genelengths <- function(gff, type="gene", key='ID') {
 #' It will then sum all rows of exons by parent gene and sum the widths of the exons.
 #' Finally it will return a list containing a df of gene lengths and summed counts.
 #'
-#' @return  a list of 2 data frames.
+#' @return  a list of 2 data frames, counts and lengths by summed exons
+#' @seealso \pkg{rtracklayer}
+#' @examples
+#' \dontrun{
+#' summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
+#' }
 #' @export
 sum_exons <- function(data, gff=NULL, annotdf=NULL, parent='Parent', child='row.names') {
     if (is.null(annotdf) & is.null(gff)) {
@@ -89,11 +94,14 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent='Parent', child='row.
     return(ret)
 }
 
-#' make_report()  Make a knitr report with some defaults set
+#' \code{make_report()}  Make a knitr report with some defaults set
 #'
+#' @param name default='report'  Name the document!
 #' @param type default='pdf'  html/pdf/fancy html reports?
 #'
 #' @return a dated report file
+#' @seealso \pkg{knitr} \pkg{rmarkdown} \pkg{knitrBootstrap}
+#' @export
 make_report <- function(name="report", type='pdf') {
     knitr::opts_knit$set(progress=FALSE, verbose=FALSE, error=FALSE, fig.width=7, fig.height=7)
     ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
@@ -122,7 +130,7 @@ make_report <- function(name="report", type='pdf') {
     return(result)
 }
 
-#' hpgl_arescore()  Implement the arescan function in R
+#' \code{hpgl_arescore()}  Implement the arescan function in R
 #'
 #' This function was taken almost verbatim from AREScore() in SeqTools
 #' Available at: https://github.com/lianos/seqtools.git
@@ -130,6 +138,8 @@ make_report <- function(name="report", type='pdf') {
 #' So I rewrapped its apply() calls and am now hoping to extend its logic
 #' a little to make it more sensitive and get rid of some of the spurious
 #' parameters or at least make them more transparent.
+#'
+#' Note that I did this two months ago and haven't touched it since...
 #'
 #' @param stringset  A DNA/RNA StringSet containing the UTR sequences of interest
 #' @param basal default=1  I dunno.
@@ -143,6 +153,24 @@ make_report <- function(name="report", type='pdf') {
 #' @param aub.p.to.end default=0.55
 #'
 #' @return a DataFrame of scores
+#' @seealso \pkg{IRanges} \pkg{Biostrings}
+#' @examples
+#' \dontrun{
+#' ## Extract all the genes from my genome, pull a static region 120nt following the stop
+#' ## and test them for potential ARE sequences.
+#' ## FIXME: There may be an error in this example, another version I have handles the +/- strand
+#' ## genes separately, I need to return to this and check if it is providing the 5' UTR for 1/2
+#' ## the genome, which would be unfortunate -- but the logic for testing remains the same.
+#' are_candidates <- hpgl_arescore(genome)
+#' utr_genes <- subset(lmajor_annotations, type == 'gene')
+#' threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
+#'                                ranges=IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)), strand=Rle(utr_genes[,5]),
+#'                                name=Rle(utr_genes[,10]))
+#' threep_seqstrings <- Biostrings::getSeq(lm, threep)
+#' are_test <- hpgltools:::hpgl_arescore(x=threep_seqstrings)
+#' are_genes <- rownames(are_test[ which(are_test$score > 0), ])
+#' }
+#' @export
 hpgl_arescore <- function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
                            d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
                            aub.p.to.end=0.55) {
@@ -235,14 +263,28 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 }
 
 #' gff2df()  Try to make import.gff a little more robust
+#' I acquire (hopefully) valid gff3 files from various sources:
+#' yeastgenome.org, microbesonline, tritrypdb, ucsc, ncbi.
+#' To my eyes, they all look like reasonably good gff3 files, but
+#' some of them must be loaded with import.gff2, import.gff3, etc.
+#' That is super annoying.
+#' Also, I pretty much always just do as.data.frame() when I get something
+#' valid from rtracklayer, so this does that for me, I have another function
+#' which returns the iranges etc.
 #'
 #' @param gff  a gff filename
+#' @param type default=NULL  subset the gff file for entries of a specific type
 #'
 #' This function wraps import.gff/import.gff3/import.gff2 calls in try()
 #' Because sometimes those functions fail in unpredictable ways.
 #'
-#' @export
 #' @return  a df!
+#' @seealso \pkg{rtracklayer} \link[rtracklayer]{import.gff} \link[rtracklayer]{import.gff2} \link[rtracklayer]{import.gff3}
+#' @examples
+#' \dontrun{
+#' funkytown <- gff2df('reference/gff/saccharomyces_cerevsiae.gff.xz')
+#' }
+#' @export
 gff2df <- function(gff, type=NULL) {
     ret <- NULL
     gff_test <- grepl("\\.gff", gff)
@@ -276,13 +318,21 @@ gff2df <- function(gff, type=NULL) {
 #' gff2irange()  Try to make import.gff a little more robust
 #'
 #' @param gff  a gff filename
+#' @param type default=NULL  a subset to extract
 #'
-#' This function wraps import.gff/import.gff3/import.gff2 calls in try()
-#' Because sometimes those functions fail in unpredictable ways.
+#' Essentially gff2df() above, but returns data suitable for getSet()
 #'
-#' @export
 #' @return  an iranges! (useful for getSeq())
-gff2irange <- function(gff) {
+#' @seealso \pkg{rtracklayer} \link{gff2df} \link[Biostrings]{getSeq}
+#' @examples
+#' \dontrun{
+#' library(BSgenome.Tcruzi.clbrener.all)
+#' tc_clb_all <- BSgenome.Tcruzi.clbrener.all
+#' cds_ranges <- gff2irange('reference/gff/tcruzi_clbrener.gff.xz', type='CDS')
+#' cds_sequences <- Biostrings::getSeq(tc_clb_all, cds_ranges)
+#' }
+#' @export
+gff2irange <- function(gff, type=NULL) {
     ret <- NULL
     annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
     if (class(annotations) == 'try-error') {
@@ -297,7 +347,11 @@ gff2irange <- function(gff) {
     }
     ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
     ## no method to coerce an S4 class to a vector.
-     return(ret)
+    if (!is.null(type)) {
+        index <- ret[, "type"] == type
+        ret <- ret[index, ]
+    }
+    return(ret)
 }
 
 #' hpgl_cor()  Wrap cor() to include robust correlations.
@@ -307,12 +361,13 @@ gff2irange <- function(gff) {
 #' @param ...  other options to pass to stats::cor()
 #'
 #' @return  correlation some fun correlation statistics
-#' @seealso \code{\link{cor}}, \code{\link{cov}}, \code{\link{covRob}}
-#'
-#' @export
+#' @seealso \pkg{robust} \link{cor} \link{cov} \link[robust]{covRob}
 #' @examples
-#' ## hpgl_cor(df=df)
-#' ## hpgl_cor(df=df, method="robust")
+#' \dontrun{
+#' hpgl_cor(df=df)
+#' hpgl_cor(df=df, method="robust")
+#' }
+#' @export
 hpgl_cor <- function(df, method="pearson", ...) {
     if (method == "robust") {
         robust_cov <- robust::covRob(df, corr=TRUE)
@@ -323,12 +378,19 @@ hpgl_cor <- function(df, method="pearson", ...) {
     return(correlation)
 }
 
-#' make_tooltips()  Create a simple df from gff which contains tooltip usable information for gVis graphs.
+#' \code{make_tooltips()}  Create a simple df from gff which contains tooltip usable
+#' information for gVis graphs. The tooltip column is also a handy proxy for
+#' anontations information when it would otherwise be too troublesome.
 #'
 #' @param gff or annotations: Either a gff file or annotation data frame (which likely came from a gff file.)
 #'
+#' @return a df of tooltip information or name of a gff file
 #' @export
-#' @return a df of tooltip information
+#' @seealso \pkg{googleVis} \link{gff2df}
+#' @examples
+#' \dontrun{
+#' tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
+#' }
 make_tooltips <- function(annotations, desc_col='description') {
     tooltip_data <- NULL
     if (class(annotations) == 'character') {
@@ -355,7 +417,7 @@ make_tooltips <- function(annotations, desc_col='description') {
     return(tooltip_data)
 }
 
-#' pattern_count_genome()  Find how many times a given pattern occurs in every gene of a genome.
+#' \code{pattern_count_genome()}  Find how many times a given pattern occurs in every gene of a genome.
 #'
 #' @param fasta  a fasta genome
 #' @param gff default=NULL  an optional gff of annotations (if not provided it will just ask the whole genome.
@@ -363,10 +425,12 @@ make_tooltips <- function(annotations, desc_col='description') {
 #' @param key default='locus_tag'  what type of entry of the gff file to key from?
 #'
 #' @return num_pattern a data frame of names and numbers.
-#' @export
-#' @seealso \code{\link{PDict}} \code{\link{FaFile}}
+#' @seealso \pkg{Biostrings} \pkg{Rsamtools} \link[Biostrings]{PDict} \link[Rsamtools]{FaFile}
 #' @examples
-#' ## num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
+#' \dontrun{
+#' num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
+#' }
+#' @export
 pattern_count_genome <- function(fasta, gff=NULL, pattern='TA', type='gene', key='locus_tag') {
     rawseq <- Rsamtools::FaFile(fasta)
     if (is.null(gff)) {
@@ -386,16 +450,36 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern='TA', type='gene', key
     return(num_pattern)
 }
 
-#' sillydist()  A stupid distance function of a point against two axes.
+#' \code{sillydist()}  A stupid distance function of a point against two axes.
 #'
 #' @param firstterm  the x-values of the points.
 #' @param secondterm  the y-values of the points.
-#' @param firstaxis  the x-value of the vertical axis.
-#' @param secondaxis  the y-value of the second axis.
+#' @param firstaxis default=0  the x-value of the vertical axis.
+#' @param secondaxis default=0  the y-value of the second axis.
 #'
 #' @return dataframe of the distances
+#' This just takes the abs(distances) of each point to the axes,
+#' normalizes them against the largest point on the axes, multiplies
+#' the result, and normalizes against the max of all points.
+#' @seealso
+#' \dontrun{
+#' mydist <- sillydist(df[,1], df[,2], first_median, second_median)
+#' first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"), environment=hpgl_env) +
+#'   ggplot2::xlab(paste("Expression of", df_x_axis)) +
+#'   ggplot2::ylab(paste("Expression of", df_y_axis)) +
+#'   ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
+#'   ggplot2::geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
+#'   ggplot2::geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
+#'   ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
+#'   ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
+#'   ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
+#'   ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist), alpha=0.6, size=size) +
+#'   ggplot2::theme(legend.position="none")
+#' first_vs_second  ## dots get colored according to how far they are from the medians
+#' ## replace first_median, second_median with 0,0 for the axes
+#' }
 #' @export
-sillydist <- function(firstterm, secondterm, firstaxis, secondaxis) {
+sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
     dataframe <- data.frame(firstterm, secondterm)
     dataframe$x <- (abs(dataframe[,1]) - abs(firstaxis)) / abs(firstaxis)
     dataframe$y <- abs((dataframe[,2] - secondaxis) / secondaxis)
@@ -406,19 +490,37 @@ sillydist <- function(firstterm, secondterm, firstaxis, secondaxis) {
     return(dataframe)
 }
 
-#' write_xls()  Write a dataframe to an excel spreadsheet sheet.
+#' \code{write_xls()}  Write a dataframe to an excel spreadsheet sheet.
+#' I like to give folks data in any format they prefer, even though I sort
+#' of hate excel.  Most people I work with use it, so therefore I do too.
+#' This function has been through many iterations, first using XLConnect,
+#' then xlsx, and now openxlsx.  Hopefully this will not change again.
 #'
-#' @param tripledots  the set of arguments given to either xlsx or XLConnect
+#' @param data  A data frame to print
+#' @param sheet default='first'  Name of the sheet to write
+#' @param file default='excel/workbook.xlsx'  The filename for the workbook.
+#' @param overwrite_file default=TRUE  required for XLConnect, still used but perhaps not needed.
+#' @param newsheet default=FALSE same, but makes sure we don't overwrite an existing sheet
+#' @param overwrite_sheet default=TRUE yeah, I need to prune these options
+#' @param dated default=TRUE  Append a date to the excel filename?
+#' @param first_two_widths default=c(30,60)  I add long titles to the tops of the sheets
+#'   setting this makes sure that those columns are not too wide
+#' @param start_row default=1  The first row of the sheet to write
+#' @param start_col default=1  The first column to write
+#' @param tripledots  the set of arguments given to for openxlsx
 #'
-#' @return an excel workbook
-#'
-#' @seealso \code{\link{XLConnect}}, \code{\link{xlsx}},
-#'
-#' @export
+#' @return a list containing the sheet and workbook written as well as the bottom-right coordinates of the last
+#'   row/column written of the table.
+#' @seealso \pkg{openxlsx} \link[openxlsx]{writeDataTable}
 #' @examples
-#' ## write_xls(dataframe, "hpgl_data")
+#' \dontrun{
+#'  xls_coords <- write_xls(dataframe, sheet="hpgl_data")
+#'  xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
+#' }
+#' @export
 write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite_file=TRUE, newsheet=FALSE,
-                      overwrite_sheet=TRUE, dated=TRUE, first_two_widths=c("30","60"), ...) {
+                      overwrite_sheet=TRUE, dated=TRUE, first_two_widths=c("30","60"),
+                      start_row=1, start_col=1, ...) {
     arglist <- list(...)
     excel_dir <- dirname(file)
     suffix <- ".xlsx"
@@ -462,7 +564,8 @@ write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite
         }
     }
     hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
-    new_row <- 1
+    new_row <- start_row
+    new_col <- start_col
     ##print(paste0("GOT HERE openxlswrite, title? ", arglist$title))
     if (!is.null(arglist$title)) {
         openxlsx::writeData(wb, sheet, x=arglist$title, startRow=new_row)
@@ -475,25 +578,25 @@ write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite
     ## I hacked the writeDataTable() function in openxlsx and sent a bug report.
     ## Another way to trip this up is for a column in the table to be of class 'list'
     for (col in colnames(data)) {
-        if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector') {
+        ## data[[col]] <- as.character(data[[col]])
+        ## print(paste0("TESTME: ", class(data[[col]])))
+        if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' | class(data[[col]]) == 'factor' | class(data[[col]]) == 'AsIs') {
+            message(paste0("Converted ", col, " to characters."))
             data[[col]] <- as.character(data[[col]])
         }
     }
     openxlsx::writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9",
-                             startRow=new_row, rowNames=TRUE)
+                             startRow=new_row, rowNames=TRUE, startCol=new_col)
     new_row <- new_row + nrow(data) + 2
-
     ## Going to make an assumption about columns 1,2
     ## Maybe make this a parameter? nah for now at least
     openxlsx::setColWidths(wb, sheet=sheet, widths=first_two_widths, cols=c(1,2))
     openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=3:ncol(data))
     openxlsx::saveWorkbook(wb, file, overwrite=overwrite_sheet)
-
     end_col <- ncol(data) + 1
     ret <- list(workbook=wb, end_row=new_row, end_col=end_col, file=file)
     return(ret)
 }
-
 
 openxlsx_add_plot <- function(wb, plot) {
     ## Not implemented yet, my thought was to do a test for the worksheet
@@ -526,13 +629,22 @@ backup_file <- function(backup_file, backups=10) {
     }
 }
 
-#' saveme()  Load a backup rdata file
+#' \code{loadme()}  Load a backup rdata file
 #'
 #' @param dir default='savefiles'  the directory containing the RData.rda.xz file.
 #'
 #' I often use R over a sshfs connection, sometimes with significant latency, and
 #' I want to be able to save/load my R sessions relatively quickly.
 #' Thus this function uses my backup directory to load its R environment.
+#'
+#' @return a bigger global environment
+#' @seealso \link{load} \link{save}
+#' @examples
+#' \dontrun{
+#' loadme()
+#' saveme()
+#' }
+#' @export
 loadme <- function(dir="savefiles") {
     savefile <- paste0(getwd(), "/", dir, "/RData.rda.xz")
     message(paste0("Loading the savefile: ", savefile))
@@ -541,7 +653,7 @@ loadme <- function(dir="savefiles") {
     eval(parse(text=load_string))
 }
 
-#' saveme()  Make a backup rdata file for future reference
+#' \code{saveme()}  Make a backup rdata file for future reference
 #'
 #' @param dir  the directory to save the Rdata file.
 #' @param backups default=10  how many revisions?
@@ -549,6 +661,15 @@ loadme <- function(dir="savefiles") {
 #' I often use R over a sshfs connection, sometimes with significant latency, and
 #' I want to be able to save/load my R sessions relatively quickly.
 #' Thus this function uses pxz to compress the R session maximally and relatively fast.
+#' This assumes you have pxz installed and >= 4 CPUs.
+#'
+#' @return the command used to save the global environment
+#' @seealso \link{save} \link{pipe}
+#' @examples
+#' \dontrun{
+#' saveme()
+#' }
+#' @export
 saveme <- function(directory="savefiles", backups=4) {
     environment()
     if (!file.exists(directory)) {

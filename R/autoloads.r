@@ -1,8 +1,8 @@
-## Time-stamp: <Tue Feb  2 14:37:34 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Feb  2 18:55:43 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' require.auto()  Automatic loading and/or installing of packages.
+#' \code{require.auto()}  Automatic loading and/or installing of packages.
 #'
-#' \code{require.auto} loads a library, and installs it first if necessary.
+#' Load a library, install it first if necessary.
 #'
 #' This was taken from:
 #' http://sbamin.com/2012/11/05/tips-for-working-in-r-automatically-install-missing-package/
@@ -13,10 +13,12 @@
 #' @param update default=FALSE  update packages?
 #'
 #' @return NULL currently
-#' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}
+#' @seealso \code{\link[BiocInstaller]{biocLite}} and \code{\link{install.packages}}
 #' @export
 #' @examples
-#' ## require.auto("ggplot2")
+#' \donotrun{
+#' require.auto("ggplot2")
+#'}
 require.auto <- function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
     local({r <- getOption("repos")
            r["CRAN"] <- "http://cran.r-project.org"
@@ -148,6 +150,7 @@ autoloads_misc <- function() {
     require.auto("Rsamtools")
     require.auto("scales")
     require.auto("seqinr")
+    require.auto("lianos/seqtools/R/pkg")
 }
 
 #' Automatic loading of stuff I use, I am deprecating this now.

@@ -143,7 +143,9 @@ deprint <- function(f){
 #' @seealso \code{\link{all_pairwise}}
 #' @export
 #' @examples
-#' ## pretty = combine_de_tables(big_result, table='t12_vs_t0')
+#' \dontrun{
+#' pretty = combine_de_tables(big_result, table='t12_vs_t0')
+#' }
 combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
                               excel_sheet="combined_DE", keepers="all", add_plots=FALSE) {

@@ -1,26 +1,27 @@
-# Time-stamp: <Tue Feb  2 13:20:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Tue Feb  2 20:15:03 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
+#' \code{make_SVD()} is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
 #'
 #' @param data A data frame to decompose
 #'
 #' @return a list containing the s,v,u from fast.svd
-#' @seealso \code{\link{fast.svd}}
-#'
+#' @seealso \pkg{corpcor} \code{\link[corpcor]{fast.svd}}
 #' @export
 #' @examples
-#' ## svd = makeSVD(data)
-makeSVD <- function (x) {
-    x <- as.matrix(x)
-    s <- corpcor::fast.svd(x - rowMeans(x))
+#' \dontrun{
+#'  svd = makeSVD(data)
+#' }
+makeSVD <- function (data) {
+    data <- as.matrix(data)
+    s <- corpcor::fast.svd(data - rowMeans(data))
     v <- s$v
-    rownames(v) <- colnames(x)
+    rownames(v) <- colnames(data)
     s <- list(v=v, u=s$u, d=s$d)
     return(s)
 }
 
-#' hpgl_pca()  Make a ggplot PCA plot describing the samples' clustering.
+#' \code{hpgl_pca()}  Make a ggplot PCA plot describing the samples' clustering.
 #'
 #' @param data  an expt set of samples.
 #' @param design default=NULL  a design matrix and.
@@ -28,6 +29,7 @@ makeSVD <- function (x) {
 #' @param plot_title default=NULL  a title for the plot.
 #' @param plot_size default=5  size for the glyphs on the plot.
 #' @param plot_labels default=NULL  add labels?  Also, what type?  FALSE, "default", or "fancy".
+#' @param ...  arglist from elipsis!
 #'
 #' @return a list containing the following:
 #'   pca = the result of fast.svd()
@@ -36,13 +38,15 @@ makeSVD <- function (x) {
 #'   res = a table of the PCA res data
 #'   variance = a table of the PCA plot variance
 #' This makes use of cbcbSEQ and prints the table of variance by component.
-#' @seealso \code{\link{makeSVD}}, \code{\link{pcRes}},
-#' \code{\link{geom_dl}}
-#'
+#' @seealso \code{\link{makeSVD}}, \code{\link[cbcbSEQ]{pcRes}},
+#' \code{\link[directlabels]{geom_dl}} \code{\link{pca_plot_smallbatch}}
+#' \code{\link{pca_plot_largebatch}}
 #' @export
 #' @examples
-#' ## pca_plot = hpgl_pca(expt=expt)
-#' ## pca_plot
+#' \dontrun{
+#'  pca_plot = hpgl_pca(expt=expt)
+#'  pca_plot
+#' }
 hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
                      plot_title=NULL, plot_size=5, ...) {
     hpgl_env = environment()
@@ -113,14 +117,14 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     if (is.null(colors)) {
         colors <- as.numeric(levels(as.factor(design$condition)))
     }
-    pca_data <- data.frame("SampleID"=as.character(design$sample),
-                           "condition"=as.character(design$condition),
-                           "batch"=as.character(design$batch),
-                           "batch_int"=as.integer(design$batch),
-                           "PC1"=pca$v[,1],
-                           "PC2"=pca$v[,2],
-                           "colors"=plot_colors,
-                           "labels"=as.character(plot_labels))
+    pca_data <- data.frame("SampleID" = as.character(design$sample),
+                           "condition" = as.character(design$condition),
+                           "batch" = as.character(design$batch),
+                           "batch_int" = as.integer(design$batch),
+                           "PC1" = pca$v[,1],
+                           "PC2" = pca$v[,2],
+                           "colors" = plot_colors,
+                           "labels" = as.character(plot_labels))
     num_batches <- length(levels(included_batches))
     pca_plot <- NULL
     if (num_batches <= 5) {
@@ -159,19 +163,29 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
 }
 
 
-#' pca_plot_largebatch()  ggplot2 plots of PCA data with >= 6 batches.
+#' \code{pca_plot_largebatch()}  ggplot2 plots of PCA data with >= 6 batches.
 #'
 #' @param df  A dataframe of PC1/PC2 and other arbitrary data.
 #' @param size default=5  The size of glyphs in the plot.
+#' @param first default='PC1'  The first principle component to plot against
+#' @param second default='PC2'  The second PC to plot against
 #'
 #' @export
 #' @return a ggplot2 plot of principle components 1 and 2.
+#' @seealso
+#' \pkg{ggplot2}
+#' @examples
+#' \dontrun{
+#'  plots <- pca_plot_largebatch(svd_stuff)
+#' }
 pca_plot_largebatch <- function(df, size=5, first="PC1", second="PC2") {
     hpgl_env <- environment()
-    ## The following 8 lines were written when I forgot to add environment= to ggplot() and it started throwing errors
-    ## because it could not find the variable 'first', so I made it explicitly impossible for them to be nonexistent.
-    ## get0 will set the value to null if the object does not exist, I then check for null and set the default value.
-    ## This is entirely too verbose, but kind of nice if I will find myself debugging a bunch of code in the future.
+    ## The following 8 lines were written when I forgot to add environment= to ggplot()
+    ## and it started throwing errors because it could not find the variable 'first', so
+    ## I made it explicitly impossible for them to be nonexistent. get0 will set the
+    ## value to null if the object does not exist, I then check for null and set the
+    ## default value. This is entirely too verbose, but kind of nice if I will find
+    ## myself debugging a bunch of code in the future.
     first <- get0('first')
     second <- get0('second')
     if (is.null(first)) {
@@ -197,14 +211,22 @@ pca_plot_largebatch <- function(df, size=5, first="PC1", second="PC2") {
     return(plot)
 }
 
-#' pca_plot_smallbatch()  ggplot2 plots of PCA data with <= 5 batches.
+#' \code{pca_plot_smallbatch()}  ggplot2 plots of PCA data with <= 5 batches.
 #'
 #' This uses hard-coded scale_shape_manual values 21-25 to have solid shapes in the plot.
 #' @param df  A dataframe of PC1/PC2 and other arbitrary data.
 #' @param size default=5  The size of glyphs in the plot.
+#' @param first default='PC1'  The first component
+#' @param second default='PC2'  The second component
 #'
 #' @export
 #' @return a ggplot2 plot of principle components 1 and 2.
+#' @seealso
+#' \pkg{ggplot2}
+#' @examples
+#' \dontrun{
+#'  plots <- pca_plot_smallbatch(svd_stuff)
+#' }
 pca_plot_smallbatch <- function(df, size=5, first='PC1', second='PC2') {
     hpgl_env <- environment()
     plot <- ggplot2::ggplot(df, ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
@@ -219,7 +241,7 @@ pca_plot_smallbatch <- function(df, size=5, first='PC1', second='PC2') {
     return(plot)
 }
 
-#' factor_rsquared()  Collect the r^2 values from a linear model fitting between a singular
+#' \code{factor_rsquared()}  Collect the r^2 values from a linear model fitting between a singular
 #' value decomposition and factor.
 #'
 #' @param svd_v  the V' V = I portion of a fast.svd call.
@@ -228,7 +250,7 @@ pca_plot_smallbatch <- function(df, size=5, first='PC1', second='PC2') {
 #' @return The r^2 values of the linear model as a percentage.
 #'
 #' @export
-#' @seealso \code{\link{fast.svd}}
+#' @seealso \code{\link[corpcor]{fast.svd}}
 factor_rsquared <- function(svd_v, factor) {
     svd_lm <- try(stats::lm(svd_v ~ factor), silent=TRUE)
     if (class(svd_lm) == 'try-error') {
@@ -241,7 +263,7 @@ factor_rsquared <- function(svd_v, factor) {
     return(result)
 }
 
-#' plot_pcs()  A quick and dirty PCA plotter of arbitrary components against one another.
+#' \code{plot_pcs()}  A quick and dirty PCA plotter of arbitrary components against one another.
 #'
 #' @param data  a dataframe of principle components PC1 .. PCN with any other arbitrary information.
 #' @param first default='PC1'  principle component PCx to put on the x axis.
@@ -250,14 +272,14 @@ factor_rsquared <- function(svd_v, factor) {
 #' @param design default=NULL  the experimental design with condition batch factors.
 #' @param plot_title default=NULL  a title for the plot.
 #' @param plot_labels default=NULL  a parameter for the labels on the plot.
-#'
 #' @return a ggplot2 PCA plot
 #'
-#' @seealso \code{\link{ggplot2}}, \code{\link{geom_dl}}
-#'
+#' @seealso \pkg{ggplot2} \code{\link[directlabels]{geom_dl}}
 #' @export
 #' @examples
-#' ## pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
+#' \dontrun{
+#'  pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
+#' }
 plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
                      design=NULL, plot_title=NULL, plot_labels=NULL) {
     hpgl_env <- environment()
@@ -308,7 +330,8 @@ plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
 ## z(i) = cumulative sum of $u squared
 ## z = cumsum((svd$u ^ 2))
 
-#' u_plot()  Plot the rank order svd$u elements to get a view of how much the first genes contribute to the total variance by PC.
+#' \code{u_plot()}  Plot the rank order svd$u elements to get a view of how much
+#' the first genes contribute to the total variance by PC.
 #'
 #' @param plotted_us  a list of svd$u elements
 #'
@@ -351,7 +374,7 @@ u_plot <- function(plotted_us) {
     return(u_plot)
 }
 
-#' pca_information()  Gather information about principle components.
+#' \code{pca_information()}  Gather information about principle components.
 #'
 #' Calculate some information useful for generating PCA plots.
 #'
@@ -389,12 +412,14 @@ u_plot <- function(plotted_us) {
 #'   anova_p: The p-value calculated from the anova() call
 #'   anova_sums: The RSS value from the above anova() call
 #'   cor_heatmap: A heatmap from recordPlot() describing pca_cor.
-#' @seealso \code{\link{fast.svd}}, \code{\link{lm}}
+#' @seealso \code{\link[corpcor]{fast.svd}}, \code{\link[stats]{lm}}
 #'
 #' @export
 #' @examples
-#' ## pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
-#' ## pca_info
+#' \dontrun{
+#'  pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
+#'  pca_info
+#' }
 pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("condition","batch"),
                             num_components=NULL, plot_pcas=FALSE, plot_labels="fancy") {
     ## hpgl_env = environment()
@@ -425,24 +450,20 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     ## The idea being: the resulting decreasing line should be either a slow even
     ## decrease if many genes are contributing to the given component
     ## Conversely, that line should drop suddenly if dominated by one/few genes.
-
     rownames(u) <- rownames(expt_data)
     rownames(v) <- colnames(expt_data)
     u_plot <- u_plot(u)
     component_variance <- round((positives^2) / sum(positives^2) * 100, 3)
     cumulative_pc_variance <- cumsum(component_variance)
-
     ## Include in this table the fstatistic and pvalue described in rnaseq_bma.rmd
     component_rsquared_table <- data.frame(
         "prop_var"=component_variance,
         "cumulative_prop_var"=cumulative_pc_variance)
-
     if (is.null(expt_factors)) {
         expt_factors <- colnames(expt_design)
     } else if (expt_factors[1] == "all") {
         expt_factors <- colnames(expt_design)
     }
-
     for (component in expt_factors) {
         comp <- factor(as.character(expt_design[, component]), exclude=FALSE)
         column <- apply(v, 2, factor_rsquared, factor=comp)
@@ -454,13 +475,12 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
     print(yl)
     plot_labels <- rownames(expt_design)
-
-    pca_data <- data.frame("SampleID"=plot_labels,
-                           "condition"=expt_design$condition,
-                           "batch"=expt_design$batch,
-                           "batch_int"=as.integer(expt_design$batch),
-                           "colors"=expt_design$color)
-    pc_df <- data.frame("SampleID"=plot_labels)
+    pca_data <- data.frame("SampleID" = plot_labels,
+                           "condition" = expt_design$condition,
+                           "batch" = expt_design$batch,
+                           "batch_int" = as.integer(expt_design$batch),
+                           "colors" = expt_design$color)
+    pc_df <- data.frame("SampleID" = plot_labels)
     rownames(pc_df) <- make.names(plot_labels)
 
     if (is.null(num_components)) {
@@ -473,7 +493,6 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
 
     }
     pc_df <- pc_df[-1]
-
     pca_plots <- list()
     if (isTRUE(plot_pcas)) {
         for (pc in 1:num_components) {
@@ -495,14 +514,12 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
             }
         }
     }
-
-    factor_df <- data.frame("SampleID"=plot_labels)
+    factor_df <- data.frame("SampleID" = plot_labels)
     rownames(factor_df) <- make.names(plot_labels)
     for (fact in expt_factors) {
         factor_df[fact] <- as.numeric(as.factor(as.character(expt_design[, fact])))
     }
     factor_df <- factor_df[-1]
-
     ## fit_one = data.frame()
     ## fit_two = data.frame()
     cor_df <- data.frame()
@@ -519,7 +536,6 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
             tmp_df <- merge(factor_df, pc_df, by="row.names")
             rownames(tmp_df) <- tmp_df[,1]
             tmp_df <- tmp_df[-1]
-
             lmwithfactor_test <- try(stats::lm(formula=get(pc_name) ~ 1 + get(factor_name), data=tmp_df))
             lmwithoutfactor_test <- try(stats::lm(formula=get(pc_name) ~ 1, data=tmp_df))
             ## This fstat provides a metric of how much variance is removed by including this specific factor
@@ -544,7 +560,6 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
                 anova_rss[fact, pc] <- another_fstat$RSS[1]
             }
             anova_fstats[fact, pc] <- fstat
-
             cor_test <- NULL
             tryCatch(
                 {
@@ -574,7 +589,6 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     colnames(anova_p) <- colnames(pc_df)
     colnames(anova_rss) <- colnames(pc_df)
     colnames(anova_fstats) <- colnames(pc_df)
-
     cor_df <- as.matrix(cor_df)
     ## silly_colors = grDevices::colorRampPalette(brewer.pal(9, "Purples"))(100)
     silly_colors <- grDevices::colorRampPalette(c("purple","black","yellow"))(100)
@@ -584,20 +598,17 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
                                    dendrogram="none", Rowv=FALSE, Colv=FALSE,
                                    main="cor(factor, PC)")
     pc_factor_corheat <- grDevices::recordPlot()
-
     anova_f_colors <- grDevices::colorRampPalette(c("blue","black","red"))(100)
     anova_f_heat <- heatmap.3(as.matrix(anova_f), scale="none", trace="none",
                               linewidth=0.5, keysize=2, margins=c(8,8), col=anova_f_colors,
                               dendrogram = "none", Rowv=FALSE, Colv=FALSE,
                               main="anova fstats for (factor, PC)")
     anova_f_heat <- grDevices::recordPlot()
-
     anova_fstat_colors <- grDevices::colorRampPalette(c("blue","white","red"))(100)
     anova_fstat_heat <- heatmap.3(as.matrix(anova_fstats), scale="none", trace="none", linewidth=0.5,
                                   keysize=2, margins=c(8,8), col=anova_fstat_colors, dendrogram="none",
                                   Rowv=FALSE, Colv=FALSE, main="anova fstats for (factor, PC)")
     anova_fstat_heat <- grDevices::recordPlot()
-
     neglog_p <- -1 * log(as.matrix(anova_p) + 1)
     anova_neglogp_colors <- grDevices::colorRampPalette(c("blue","white","red"))(100)
     anova_neglogp_heat <- heatmap.3(as.matrix(neglog_p), scale="none", trace="none", linewidth=0.5,
@@ -617,7 +628,7 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     return(pca_list)
 }
 
-#' pca_highscores()  Get the highest/lowest scoring genes for every principle component.
+#' \code{pca_highscores()}  Get the highest/lowest scoring genes for every principle component.
 #'
 #' This function uses princomp to acquire a principle component biplot
 #' for some data and extracts a dataframe of the top n genes for each
@@ -630,11 +641,13 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
 #'
 #' @return a list including the princomp biplot, histogram, and tables
 #' of top/bottom n scored genes with their scores by component.
-#' @seealso \code{\link{princomp}}
+#' @seealso \code{\link[stats]{princomp}}
 #' @export
 #' @examples
-#' ## information = pca_highscores(df=df, conditions=cond, batches=bat)
-#' ## information$pca_bitplot  ## oo pretty
+#' \dontrun{
+#'  information = pca_highscores(df=df, conditions=cond, batches=bat)
+#'  information$pca_bitplot  ## oo pretty
+#' }
 pca_highscores <- function(df=NULL, conditions=NULL, batches=NULL, n=20) {
     ## Another method of using PCA
     ## cond = as.factor(as.numeric(conditions))

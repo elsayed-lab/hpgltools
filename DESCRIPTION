@@ -84,7 +84,7 @@ Suggests:
     scales,
     seqinr,
     seqLogo,
-    seqTools,
+    SeqTools,
     stringi,
     stringr,
     survJamda,

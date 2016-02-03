@@ -1,6 +1,6 @@
-## Time-stamp: <Tue Feb  2 13:41:25 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Feb  3 15:33:32 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' create_expt()  Wrap bioconductor's expressionset to include some other extraneous
+#' \code{create_expt()}  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
 #' expt_subset for everything
 #'
@@ -33,14 +33,14 @@
 #' a full pathname or local to the cwd of the project.
 #'
 #' @return  experiment an expressionset
-#' @seealso \code{\link{pData}}, \code{\link{fData}},
-#' \code{\link{exprs}}, \code{\link{hpgl_read_files}},
-#' \code{\link{as.list.hash}}
-#'
-#' @export
+#' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData} \link[Biobase]{exprs}
+#' \link{hpgl_read_files} \link[hash]{as.list.hash}
 #' @examples
-#' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
+#' \dontrun{
+#' new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' ## Remember that this depends on an existing data structure of gene annotations.
+#' }
+#' @export
 create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE,
                        gene_info=NULL, by_type=FALSE, by_sample=FALSE, sep=",",
                        include_type="all", include_gff=NULL, count_dataframe=NULL,
@@ -125,7 +125,7 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
     return(new_expt)
 }
 
-#' create_experiment()  Wrap bioconductor's expressionset to include some other extraneous
+#' \code{create_experiment()}  Wrap bioconductor's expressionset to include some other extraneous
 #' information.
 #'
 #' @param file default=NULL  a comma separated file describing the samples with
@@ -147,13 +147,13 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
 #' @param meta_dataframe default=NULL  an optional dataframe containing the metadata rather than a file
 #'
 #' @return  experiment an expressionset
-#' @seealso \code{\link{pData}}, \code{\link{fData}},
-#' \code{\link{exprs}}, \code{\link{hpgl_read_files}},
-#' \code{\link{as.list.hash}}
-#'
-#' @export
+#' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData}
+#' \link[Biobase]{exprs} \link{hpgl_read_files} \link[hash]{as.list.hash}
 #' @examples
-#' ## new_experiment = create_experiment("some_csv_file.csv", color_hash)
+#' \dontrun{
+#' new_experiment = create_experiment("some_csv_file.csv", color_hash)
+#' }
+#' @export
 create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=FALSE,
                               gene_info=NULL, by_type=FALSE, by_sample=FALSE, include_type="all",
                               include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
@@ -238,11 +238,9 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
         gene_info <- gene_info[gene_info$ID %in% rownames(all_count_matrix),]
         all_count_matrix <- all_count_matrix[rownames(all_count_matrix) %in% gene_info$ID,]
     }
-
     ## Make sure that all columns have been filled in for every gene.
     complete_index <- complete.cases(all_count_matrix)
     all_count_matrix <- all_count_matrix[complete_index,]
-
     annotation <- NULL
     if (!is.null(include_gff)) {
         message("create_experiment(): Reading annotation gff, this is slow.")
@@ -257,7 +255,6 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
             gene_info <- gene_info[index,]
         }
     }
-
     if (is.null(sample_definitions$stage)) {
         sample_definitions$stage <- "unknown"
     }
@@ -290,7 +287,6 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
         intercounts=sample_definitions$intercounts)
     require.auto("Biobase")
     metadata <- new("AnnotatedDataFrame", meta_frame)
-
     Biobase::sampleNames(metadata) <- colnames(all_count_matrix)
     feature_data <- new("AnnotatedDataFrame", gene_info)
     Biobase::featureNames(feature_data) <- rownames(all_count_matrix)
@@ -300,25 +296,24 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
     return(ret)
 }
 
-#' expt_subset()  Extract a subset of samples following some rule(s) from an
+#' \code{expt_subset()}  Extract a subset of samples following some rule(s) from an
 #' experiment class
 #'
 #' @param expt  an expt which is a home-grown class containing an
 #' expressionSet, design, colors, etc.
 #' @param subset  a valid R expression which defines a subset of the
 #' design to keep.
-#' @param by_definitions default=TRUE  whether to use the definitions dataframe or design from pData(expressionset).
-#' The definitions dataframe often has much more information.
 #'
 #' @return  metadata an expt class which contains the smaller set of
 #' data
-#' @seealso \code{\link{ExpressionSet}}, \code{\link{pData}},
-#' \code{\link{exprs}}, and \code{\link{fData}}
-#'
-#' @export
+#' @seealso \pkg{Biobase} \link[Biobase]{pData}
+#' \link[Biobase]{exprs} \link[Biobase]{fData}
 #' @examples
-#' ## smaller_expt = expt_subset(big_expt, "condition=='control'")
-#' ## all_expt = expt_subset(expressionset, "")  ## extracts everything
+#' \dontrun{
+#'  smaller_expt = expt_subset(big_expt, "condition=='control'")
+#'  all_expt = expt_subset(expressionset, "")  ## extracts everything
+#' }
+#' @export
 expt_subset <- function(expt, subset=NULL) {
     if (class(expt) == "ExpressionSet") {
         expressionset <- expt
@@ -381,7 +376,7 @@ expt_subset <- function(expt, subset=NULL) {
     return(metadata)
 }
 
-#' hpgl_read_files()  Read a bunch of count tables and create a usable data frame from
+#' \code{hpgl_read_files()}  Read a bunch of count tables and create a usable data frame from
 #' them.
 #'
 #' @param ids  a list of experimental ids
@@ -394,11 +389,12 @@ expt_subset <- function(expt, subset=NULL) {
 #' It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.
 #'
 #' @return  count_table a data frame of count tables
-#' @seealso \code{\link{create_experiment}}
-#'
-#' @export
+#' @seealso \link{create_experiment}
 #' @examples
-#' ## count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
+#' \dontrun{
+#'  count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
+#' }
+#' @export
 hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE, suffix=NULL, ...) {
     ## load first sample
     lower_filenames <- files
@@ -469,15 +465,19 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
     return(count_table)
 }
 
-#' concatenate_runs()  Sum the reads/gene for multiple sequencing runs of a single condition/batch
+#' \code{concatenate_runs()}  Sum the reads/gene for multiple sequencing runs of a single condition/batch
 #'
 #' @param expt  an experiment class containing the requisite metadata and count tables
 #' @param column default='replicate'  a column of the design matrix used to specify which samples are replicates
 #'
 #' @return the input expt with the new design matrix, batches, conditions, colors, and count tables.
-#' @export
+#' @seealso
+#' \pkg{Biobase}
 #' @examples
-#' ## compressed = concatenate_runs(expt)
+#' \dontrun{
+#'  compressed = concatenate_runs(expt)
+#' }
+#' @export
 concatenate_runs <- function(expt, column='replicate') {
     design <- expt$definitions
     replicates <- levels(as.factor(design[,column]))
@@ -520,7 +520,7 @@ concatenate_runs <- function(expt, column='replicate') {
     return(final_expt)
 }
 
-#' median_by_factor()  Create a data frame of the medians of rows by a given factor in the data
+#' \code{median_by_factor()}  Create a data frame of the medians of rows by a given factor in the data
 #'
 #' This assumes of course that (like expressionsets) there are separate columns for each replicate
 #' of the conditions.  This will just iterate through the levels of a factor describing the columns,
@@ -530,9 +530,11 @@ concatenate_runs <- function(expt, column='replicate') {
 #' @param fact  a factor describing the columns in the data.
 #'
 #' @return a data frame of the medians
-#' @export
 #' @examples
-#' ## compressed = hpgltools:::median_by_factor(data, experiment$condition)
+#' \dontrun{
+#'  compressed = hpgltools:::median_by_factor(data, experiment$condition)
+#' }
+#' @export
 median_by_factor <- function(data, fact) {
     medians <- data.frame("ID"=rownames(data))
     rownames(medians) = rownames(data)

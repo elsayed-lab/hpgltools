@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 15:43:24 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Feb  3 12:42:44 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -6,7 +6,7 @@
 ## where this is a danger, it is a likely good idea to cast it as a
 ## data frame.
 
-#' graph_metrics()  Make lots of graphs!
+#' \code{graph_metrics()}  Make lots of graphs!
 #'
 #' Plot out a set of metrics describing the state of an experiment
 #' including library sizes, # non-zero genes, heatmaps, boxplots,
@@ -36,25 +36,22 @@
 #'   qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
 #'   density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
 #'
-#' @seealso \code{\link{exprs}}, \code{\link{hpgl_norm}},
-#' \code{\link{graph_nonzero}}, \code{\link{hpgl_libsize}},
-#' \code{\link{hpgl_boxplot}}, \code{\link{hpgl_corheat}},
-#' \code{\link{hpgl_smc}}, \code{\link{hpgl_disheat}},
-#' \code{\link{hpgl_smd}}, \code{\link{hpgl_pca}},
-#' \code{\link{replayPlot}}, \code{\link{recordPlot}}
-#'
-#' @export
+#' @seealso \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
+#' \link[Biobase]{exprs} \link{hpgl_norm} \link{graph_nonzero} \link{hpgl_libsize}
+#' \link{hpgl_boxplot} \link{hpgl_corheat} \link{hpgl_smc} \link{hpgl_disheat}
+#' \link{hpgl_smd} \link{hpgl_pca} \link{hpgl_qq_all} \link{hpgl_pairwise_ma}
 #' @examples
-#' ## toomany_plots = graph_metrics(expt)
-#' ## testnorm = graph_metrics(expt, norm_type="tmm", filter="log2", out_type="rpkm", cormethod="robust")
-#' ## haha sucker, you are going to be waiting a while!
+#' \dontrun{
+#' toomany_plots <- graph_metrics(expt)
+#' toomany_plots$pcaplot
+#' norm <- normalize_expt(expt, convert="cpm", batch=TRUE, filter_low=TRUE, transform="log2", norm="rle")
+#' holy_asscrackers <- graph_metrics(norm, qq=TRUE, ma=TRUE)
+#' ## good luck, you are going to be waiting a while for the ma plots to print!
+#' }
+#' @export
 graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL, qq=NULL, ma=NULL, ...) {
     ## First gather the necessary data for the various plots.
     options(scipen=999)
-    ## expt_design = expt$design
-    ## expt_colors = expt$colors
-    ## expt_names = expt$names
-    ## expt_raw_data = Biobase::exprs(expt$expressionset)
     nonzero_title <- "Non zero genes"
     libsize_title <- "Library sizes"
     boxplot_title <- "Boxplot"
@@ -115,18 +112,23 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     return(ret_data)
 }
 
-#' Steal EdgeR's plotBCV()
+#' \code{hpgl_bcv_plot()} Steal edgeR's plotBCV() and make it a ggplot2
+#' This was written primarily to understand what that function is doing in edgeR.
 #'
-#' @param expt
+#' @param data  A dataframe/expt/exprs with count data
 #'
 #' @return a plot! of the BCV a la ggplot2.
+#' @seealso \pkg{edgeR} \link[edgeR]{bcv_plot}
+#' @examples
+#' \dontrun{
+#' bcv <- hpgl_bcv_plot(expt)
+#' summary(bcv$data)
+#' bcv$plot
+#' }
 #' @export
 hpgl_bcv_plot <- function(data) {
     data_class <- class(data)[1]
     if (data_class == 'expt') {
-        ## design = data$design
-        ## colors = data$colors
-        ## names = data$names
         data <- Biobase::exprs(data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         data <- Biobase::exprs(data)
@@ -135,7 +137,6 @@ hpgl_bcv_plot <- function(data) {
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-
     data <- edgeR::DGEList(counts=data)
     edisp <- edgeR::estimateDisp(data)
     avg_log_cpm <- edisp$AveLogCPM
@@ -149,8 +150,8 @@ hpgl_bcv_plot <- function(data) {
     if (attr(disper, "type") == "common") {
         disper <- rep(disper, length=length(avg_log_cpm))
     }
-    disp_df <- data.frame("A"=avg_log_cpm,
-                          "disp"=sqrt(disper))
+    disp_df <- data.frame("A" = avg_log_cpm,
+                          "disp" = sqrt(disper))
     fitted_disp <- gplots::lowess(disp_df$A, disp_df$disp, f=0.5)
     f <- stats::approxfun(fitted_disp, rule=2)
     disp_plot <- ggplot2::ggplot(disp_df, ggplot2::aes_string(x="A", y="disp")) +
@@ -165,10 +166,12 @@ hpgl_bcv_plot <- function(data) {
         ggplot2::geom_smooth(method="loess") +
         ggplot2::stat_function(fun=f, colour="red") +
         ggplot2::theme(legend.position="none")
-    return(disp_plot)
+    ret <- list("data" = disp_df,
+                "plot" = disp_plot)
+    return(ret)
 }
 
-#' hpgl_boxplot()  Make a ggplot boxplot of a set of samples.
+#' \code{hpgl_boxplot()}  Make a ggplot boxplot of a set of samples.
 #'
 #' @param data  an expt or data frame set of samples.
 #' @param colors default=NULL  a color scheme, if not provided will make its own.
@@ -183,13 +186,14 @@ hpgl_bcv_plot <- function(data) {
 #' box which shows 1.5x the inner quartile range (a common metric of
 #' the non-outliers), and single dots for each gene which is outside
 #' that range.  A single dot is transparent.
-#' @seealso \code{\link{geom_boxplot}}, \code{\link{melt}},
-#' \code{\link{scale_x_discrete}}
-#'
-#' @export
+#' @seealso \pkg{ggplot2} \pkg{reshape2} \link[ggplot2]{geom_boxplot}
+#' \link[reshape2]{melt} \link[ggplot2]{scale_x_discrete}
 #' @examples
-#' ## a_boxplot = hpgl_boxplot(expt=expt)
-#' ## a_boxplot  ## ooo pretty boxplot look at the lines
+#' \dontrun{
+#'  a_boxplot <- hpgl_boxplot(expt)
+#'  a_boxplot  ## ooo pretty boxplot look at the lines
+#' }
+#' @export
 hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, ...) {
     hpgl_env <- environment()
     data_class <- class(data)[1]
@@ -251,7 +255,7 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     return(boxplot)
 }
 
-#' hpgl_density()  Density plots!
+#' \code{hpgl_density()}  Density plots!
 #'
 #' @param data  an expt, expressionset, or data frame.
 #' @param colors default=NULL  a color scheme to use.
@@ -262,6 +266,11 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' @param log default=FALSE  plot on the log scale?
 #'
 #' @return a density plot!
+#' @seealso \pkg{ggplot2} \link[ggplot2]{geom_density}
+#' @examples
+#' \dontrun{
+#' funkytown <- hpgl_density(data)
+#' }
 #' @export
 hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
                          fill=NULL, title=NULL, scale=NULL) {  ## also position='stack'
@@ -1321,7 +1330,7 @@ hpgl_qq_all_pairwise <- function(df=NULL, expt=NULL, verbose=FALSE) {
 #'
 #' @return a recordPlot() heatmap describing the samples.
 #' @seealso \code{\link{brewer.pal}},
-#' \code{\link{heatmap.3}}, \code{\link{recordPlot}}
+#' \link[gplots]{heatmap.3} \link[grDevices]{recordPlot}
 #'
 #' @export
 hpgl_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=FALSE, ...) {
@@ -1714,16 +1723,22 @@ hpgl_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
   }
 }
 
-#' heatmap.3()  slight modification of heatmap.2.
+#' \code{heatmap.3()}  slight modification of heatmap.2.
 #'
 #' I think I found the suggestion to do this here:
 #' https://gist.github.com/nachocab/3853004
+#' The only difference to heatmap.2 is the ability to control line widths on the clusters.
 #'
 #' @param holy crap so many parameters, same as heatmap.2
 #'
 #' @return a heatmap!
-#' @seealso \code{\link{heatmap.2}}
-#'
+#' @seealso \pkg{gplots} \link[gplots]{heatmap.2}
+#' @examples
+#' \dontrun{
+#' heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, labCol=names,
+#'   margins=c(12,8), trace="none", linewidth=0.5, main=title, Rowv=Rowv)
+#' keeper <- grDevices::recordPlot()
+#' }
 #' @export
 heatmap.3 <- function (x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
                        distfun=dist, hclustfun=hclust, dendrogram=c("both","row","column","none"),
