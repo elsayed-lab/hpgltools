@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 20:14:31 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Feb  3 23:03:34 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 
 #' check_clusterprofiler() Make sure that clusterProfiler is ready to run
@@ -44,14 +44,20 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' Perform a simplified clusterProfiler analysis
 #'
 #' @param de_genes a data frame of differentially expressed genes, containing IDs and whatever other columns
-#' @param goids a file containing mappings of genes to goids in the format expected by topgo
-#' @param golevel a relative level in the tree for printing p-value plots, higher is more specific
-#' @param pcutoff a p-value cutoff
-#' @param qcutoff a q-value cutoff
-#' @param padjust a method for adjusting the p-values
-#' @param fold_changes a df of fold changes for the DE genes
-#' @param include_cnetplots the cnetplots are often stupid and can be left behind
-#' @param showcategory how many categories to show in p-value plots
+#' @param goids default=NULL  a file containing mappings of genes to goids in the format expected by topgo
+#' @param golevel default=4  a relative level in the tree for printing p-value plots, higher is more specific
+#' @param pcutoff default=0.1  a p-value cutoff
+#' @param qcutoff default=1.0  a q-value cutoff
+#' @param fold_changes default=NULL  a df of fold changes for the DE genes
+#' @param include_cnetplots default=FALSE  the cnetplots are often stupid and can be left behind
+#' @param showcategory default=12  how many categories to show in p-value plots
+#' @param universe default=NULL  universe to use
+#' @param organism default='lm'  name of the species to use
+#' @param gff default=NULL  gff file to generate the universe
+#' @param wrapped_width default=20 width of ontology names in the pvalue plots
+#' @param method default='Wallenius'  pvalue calculation method
+#' @param padjust default='BH'  a method for adjusting the p-values
+#' @param ...  more options!
 #'
 #' @return a big list including the following:
 #'   mf_interesting: A table of the interesting molecular function groups
@@ -67,7 +73,6 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #'   mfp_plot/bpp_plot/ccp_plot: ggplot2 p-value bar plots describing the over represented groups
 #'   mf_cnetplot/bp_cnetplot/cc_cnetplot: clusterProfiler cnetplots
 #'   mf_group_barplot/bp_group_barplot/cc_group_barplot: The group barplots from clusterProfiler
-#' @export
 #' @examples
 #' ## up_cluster = simple_clusterprofiler(mga2_ll_thy_top, goids=goids, gff="reference/genome/gas.gff")
 #' ## > Some chattery while it runs
@@ -78,10 +83,11 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' ## >   10 M5005_Spy1632/M5005_Spy1637/M5005_Spy1635/M5005_Spy1636/M5005_Spy1638     5
 #' ## >   Description
 #' ## >   10 oligosaccharide metabolic process
+#' @export
 simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
-                                   qcutoff=1.0, fold_changes=NULL, include_cnetplots=TRUE,
+                                   qcutoff=1.0, fold_changes=NULL, include_cnetplots=FALSE,
                                    showcategory=12, universe=NULL, organism="lm", gff=NULL,
-                                   wrapped_width=20, method="Walllenius", padjust="BH", ...) {
+                                   wrapped_width=20, method="Wallenius", padjust="BH", ...) {
 
     go2eg <- check_clusterprofiler(gff, goids)
     if (length(go2eg) == 0) {
@@ -403,11 +409,16 @@ cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", g
 #' A minor hack in the clusterProfiler function 'enrichGO'
 #'
 #' @param gene some differentially expressed genes
-#' @param organism by default 'human'
-#' @param ont by default 'MF'
-#'
+#' @param organism default='human'
+#' @param ont default='MF'
+#' @param pvalueCutoff default=0.05 pvalue cutoff
+#' @param pAdjustMethod default='BH'  p-value adjustment
+#' @param universe  the gene universe
+#' @param qvalueCutoff default=0.2  maximum qvalue before adding
+#' @param minGSSize default=2  smallest group size
+#' @param readable default=FALSE readable tag on the object
 #' @return some clusterProfiler data
-#' @seealso \code{\link{clusterProfiler}}
+#' @seealso \pkg{clusterProfiler}
 #' @export
 hpgl_enrichGO <- function(gene, organism="human", ont="MF",
                           pvalueCutoff=0.05, pAdjustMethod="BH", universe,
@@ -424,10 +435,16 @@ hpgl_enrichGO <- function(gene, organism="human", ont="MF",
 #'
 #' @param gene some differentially expressed genes
 #' @param organism by default 'human'
+#' @param pvalueCutoff default=1  a pvalue cutoff
+#' @param pAdjustMethod default='BH' p adjust method
 #' @param ont by default 'MF'
+#' @param minGSSize default=2  a minimum gs size
+#' @param qvalueCutoff default=0.2  maximum q value
+#' @param readable default=FALSE  set the readable flag for dose
+#' @param universe default=NULL a universe to use
 #'
 #' @return some clusterProfiler data
-#' @seealso \code{\link{clusterProfiler}}
+#' @seealso \pkg{clusterProfiler}
 #' @export
 hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="BH",
                                  ont, minGSSize=2, qvalueCutoff=0.2, readable=FALSE, universe=NULL) {
@@ -547,8 +564,6 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
     return (x)
 }
 
-#' A copy and paste of clusterProfiler's readGff
-#' @export
 ##readGff <- function(gffFile, nrows = -1) {
 ##    cat("Reading ", gffFile, ": ", sep="")
 ##    gff <- read.table(gffFile, sep="\t", as.is=TRUE, quote="\"", fill=TRUE,
@@ -564,8 +579,12 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
 ##}
 ##
 
-## I had to hack getGffAttribution for gff files with bad encoding (yeast)
-## Functions in this are not exported by clusterProfiler/topGO
+#' A copy and paste of clusterProfiler's readGff
+#'
+#' @param gffFile a gff file
+#' @param compress default=TRUE compress them
+#' @param split default='='  the splitter when reading gff files
+#' @export
 hpgl_Gff2GeneTable <- function(gffFile, compress=TRUE, split="=") {
     ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"
     if (is.data.frame(gffFile)) {

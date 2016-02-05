@@ -32,8 +32,8 @@ disjunct_tab <- function(contrast_fit, coef1, coef2, ...) {
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param alt_model default=NULL an optional alternate model to use rather than just condition/batch
 #' @param libsize default=NULL the library size of the original data to help voom()
+#' @param annot_df default=NULL annotations to add to the tables
 #' @param ... The elipsis parameter is fed to write_limma() at the end.
-#'
 #' @return A list of limma, deseq, edger results.
 #' @export
 #' @examples
@@ -88,7 +88,14 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
 #' @param li  a limma output
 #' @param ed  a edger output
 #' @param de  a deseq output
-combine_de_table <- function(li, ed, de, table, annot_df=NULL, inverse=FALSE) {
+#' @param ba  a basic output
+#' @param table name of the table to merge
+#' @param annot_df default=NULL add some annotation information
+#' @param inverse default=FALSE  invert the fold changes
+#' @param include_basic default=TRUE  include the basic table?
+#' @export
+combine_de_table <- function(li, ed, de, ba, table,
+                             annot_df=NULL, inverse=FALSE, include_basic=TRUE) {
     li <- li$all_tables[[table]]
     colnames(li) <- c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
     li <- li[,c("limma_logfc","limma_ave","limma_t","limma_b","limma_p","limma_adjp","limma_q")]
@@ -97,16 +104,39 @@ combine_de_table <- function(li, ed, de, table, annot_df=NULL, inverse=FALSE) {
     de <- de[,c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
     ed <- ed$all_tables[[table]]
     colnames(ed) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
+    ba <- ba$all_tables[[table]]
+    ba <- ba[, c("numerator_median","denominator_median","numerator_var","denominator_var", "logFC", "t", "p")]
+    colnames(ba) <- c("basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p")
+
     comb <- merge(li, de, by="row.names")
     comb <- merge(comb, ed, by.x="Row.names", by.y="row.names")
+    if (isTRUE(include_basic)) {
+        comb <- merge(comb, ba, by.x="Row.names", by.y="row.names")
+    }
     rownames(comb) <- comb$Row.names
     comb <- comb[-1]
     comb[is.na(comb)] <- 0
+    if (isTRUE(include_basic)) {
+        comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q","basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p")]
+    } else {
+        comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q")]
+    }
     if (isTRUE(inverse)) {
         comb$limma_logfc <- comb$limma_logfc * -1
         comb$deseq_logfc <- comb$deseq_logfc * -1
         comb$edger_logfc <- comb$edger_logfc * -1
+        if (isTRUE(include_basic)) {
+            comb$basic_logfc <- comb$basic_logfc * -1
+        }
     }
+    ## I made an odd choice in a moment to normalize.quantils the combined fold changes
+    ## This should be reevaluated
+    ## But in the mean time, take a moment and format the numbers returned by limma/edger/deseq
+    ## columns which can stand to be rounded down:
+    ## limma_logfc, limma_ave, limma_t, limma_b, limma_p, limma_adjp, limma_q
+    ## deseq_logfc, deseq_basemean, deseq_lfcse, deseq_stat,
+    ## edger_logfc, edger_logcpm edger_lr edger_q fc_meta fc_var fc_varbymed p_meta p_var
+    ## ok
     temp_fc <- cbind(as.numeric(comb$limma_logfc),
                      as.numeric(comb$edger_logfc),
                      as.numeric(comb$deseq_logfc))
@@ -119,12 +149,127 @@ combine_de_table <- function(li, ed, de, table, annot_df=NULL, inverse=FALSE) {
                     as.numeric(comb$deseq_p))
     comb$p_meta <- rowMeans(temp_p, na.rm=TRUE)
     comb$p_var <- genefilter::rowVars(temp_p, na.rm=TRUE)
+    comb$fc_meta <- signif(x=comb$fc_meta, digits=4)
+    comb$fc_var <- format(x=comb$fc_var, digits=4, scientific=TRUE)
+    comb$fc_varbymed <- format(x=comb$fc_varbymed, digits=4, scientific=TRUE)
+    comb$p_meta <- format(x=comb$p_meta, digits=4, scientific=TRUE)
     if (!is.null(annot_df)) {
         comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
         rownames(comb) <- comb$Row.names
         comb <- comb[-1]
     }
     return(comb)
+}
+
+#' compare_tables()  See how similar are results from limma/deseq/edger.
+#'
+#' limma, DEseq2, and EdgeR all make somewhat different assumptions
+#' and choices about what makes a meaningful set of differentially
+#' expressed genes.  This seeks to provide a quick and dirty metric
+#' describing the degree to which they (dis)agree.
+#'
+#' @param limma default=NULL  limma data from limma_pairwise()
+#' @param deseq default=NULL  deseq data from deseq2_pairwise()
+#' @param edger default=NULL  edger data from edger_pairwise()
+#' @param basic default=NULL  basic data from basic_pairwise()
+#' @param include_basic default=TRUE  include the basic data?
+#' @param annot_df default=NULL include annotation data
+#' @param ... more options!
+#' @return a heatmap showing how similar they are along with some
+#' correlations betwee the three players.
+#' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
+#' @examples
+#' ## l = limma_pairwise(expt)
+#' ## d = deseq_pairwise(expt)
+#' ## e = edger_pairwise(expt)
+#' ## fun = compare_tables(limma=l, deseq=d, edger=e)
+#' @export
+compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
+                           include_basic=TRUE, annot_df=NULL, ...) {
+    arglist <- list(...)
+    ## Fill each column/row of these with the correlation between tools for one contrast performed
+    if (class(limma) == "list") {
+        ## Then this was fed the raw output from limma_pairwise,
+        ## lets assume the same is true for deseq/edger too and pull out the result tables.
+        limma <- limma$all_tables
+        deseq <- deseq$all_tables
+        edger <- edger$all_tables
+        basic <- basic$all_tables
+    }
+    len <- length(names(deseq))
+    limma_vs_edger <- list()
+    limma_vs_deseq <- list()
+    limma_vs_basic <- list()
+    edger_vs_deseq <- list()
+    edger_vs_basic <- list()
+    deseq_vs_basic <- list()
+    cc <- 0
+    for (comp in names(deseq)) {
+        ## assume all three have the same names() -- note that limma has more than the other two though
+        cc <- cc + 1
+        message(paste0(cc, "/", len, ": Comparing analyses: ", comp))
+        l <- data.frame(limma[[comp]])
+        e <- data.frame(edger[[comp]])
+        d <- data.frame(deseq[[comp]])
+        b <- data.frame(basic[[comp]])
+        le <- merge(l, e, by.x="row.names", by.y="row.names")
+        le <- le[,c("logFC.x","logFC.y")]
+        lec <- stats::cor.test(x=le[,1], y=le[,2])$estimate
+        ld <- merge(l, d, by.x="row.names", by.y="row.names")
+        ld <- ld[,c("logFC.x","logFC.y")]
+        ldc <- stats::cor.test(ld[,1], ld[,2])$estimate
+        lb <- merge(l, b, by.x="row.names", by.y="row.names")
+        lb <- lb[,c("logFC.x","logFC.y")]
+        lbc <- stats::cor.test(lb[,1], lb[,2])$estimate
+        ed <- merge(e, d, by.x="row.names", by.y="row.names")
+        ed <- ed[,c("logFC.x","logFC.y")]
+        edc <- stats::cor.test(ed[,1], ed[,2])$estimate
+        eb <- merge(e, b, by.x="row.names", by.y="row.names")
+        eb <- eb[,c("logFC.x","logFC.y")]
+        ebc <- stats::cor.test(eb[,1], eb[,2])$estimate
+        db <- merge(d, b, by.x="row.names", by.y="row.names")
+        db <- db[,c("logFC.x","logFC.y")]
+        dbc <- stats::cor.test(db[,1], db[,2])$estimate
+        limma_vs_edger[[comp]] <- lec
+        limma_vs_deseq[[comp]] <- ldc
+        edger_vs_deseq[[comp]] <- edc
+        limma_vs_basic[[comp]] <- lbc
+        edger_vs_basic[[comp]] <- ebc
+        deseq_vs_basic[[comp]] <- dbc
+    } ## End loop
+    names(limma_vs_edger) <- names(deseq)
+    names(limma_vs_deseq) <- names(deseq)
+    names(edger_vs_deseq) <- names(deseq)
+    names(limma_vs_basic) <- names(deseq)
+    names(edger_vs_basic) <- names(deseq)
+    names(deseq_vs_basic) <- names(deseq)
+
+    comparison_df <- rbind(as.numeric(limma_vs_edger), as.numeric(limma_vs_deseq))
+    comparison_df <- rbind(comparison_df, as.numeric(edger_vs_deseq))
+    if (isTRUE(include_basic)) {
+        comparison_df <- rbind(comparison_df, as.numeric(limma_vs_basic))
+        comparison_df <- rbind(comparison_df, as.numeric(edger_vs_basic))
+        comparison_df <- rbind(comparison_df, as.numeric(deseq_vs_basic))
+        rownames(comparison_df) <- c("le", "ld", "ed", "lb", "eb", "db")
+    } else {
+        rownames(comparison_df) <- c("le", "ld", "ed")
+    }
+    comparison_df <- as.matrix(comparison_df)
+    colnames(comparison_df) <- names(deseq)
+    heat_colors <- grDevices::colorRampPalette(c("white","black"))
+    comparison_heatmap <- try(heatmap.3(comparison_df, scale="none", trace="none",
+                                        linewidth=0.5, keysize=2, margins=c(8,8),
+                                        col=heat_colors, dendrogram="none", Rowv=FALSE,
+                                        Colv=FALSE, main="Compare DE tools"), silent=TRUE)
+    heat <- NULL
+    if (class(comparison_heatmap) != 'try-error') {
+        heat <- recordPlot()
+    }
+    ret <- list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq,
+                limma_vs_basic=limma_vs_basic, edger_vs_deseq=edger_vs_deseq,
+                edger_vs_basic=edger_vs_basic, deseq_vs_basic=deseq_vs_basic,
+                comp=comparison_df, heat=heat)
+    return(ret)
 }
 
 deprint <- function(f){
@@ -136,9 +281,15 @@ deprint <- function(f){
 #' This hopefully makes it easy to compare the outputs from limma/DESeq2/EdgeR on a table-by-table basis.
 #'
 #' @param all_pairwise_result  the output from all_pairwise()
-#' @param table default='wt_vs_mut'  the name of a table comparison performed by deseq/limma/edger.
-#' @param keepers default NULL  a list of reformatted table names to explicitly keep certain contrasts in specific orders
-#'
+#' @param annot_df default=NULL  add some annotation information
+#' @param excel default=NULL  print the excel workbook
+#' @param excel_title default='Table SXXX: Combined Differential Expression of YYY' a title
+#' @param excel_sheet default='combined_DE'  name the sheet
+#' @param keepers default='all'  a list of reformatted table names to explicitly keep
+#' certain contrasts in specific orders
+#' @param include_basic default=TRUE  Include my stupid basic logFC tables
+#' @param add_plots default=FALSE  add plots to the end of the sheets
+#' @param plot_dim default=4  number of inches squared for the plot if added
 #' @return a table combinine limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
 #' @export
@@ -148,10 +299,12 @@ deprint <- function(f){
 #' }
 combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
-                              excel_sheet="combined_DE", keepers="all", add_plots=FALSE) {
+                              excel_sheet="combined_DE", keepers="all",
+                              include_basic=TRUE, add_plots=TRUE, plot_dim=3) {
     limma <- all_pairwise_result$limma
     deseq <- all_pairwise_result$deseq
     edger <- all_pairwise_result$edger
+    basic <- all_pairwise_result$basic
 
     combo <- list()
     plots <- list()
@@ -171,11 +324,13 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             for (tab in names(edger$contrast_list)) {
                 if (tab == same_string) {
                     found <- found + 1
-                    dat <- combine_de_table(limma, edger, deseq, tab, annot_df=annot_df)
+                    dat <- combine_de_table(limma, edger, deseq, basic,
+                                            tab, annot_df=annot_df, include_basic=include_basic)
                     plt <- suppressMessages(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL))$scatter
                 } else if (tab == inverse_string) {
                     found <- found + 1
-                    dat <- combine_de_table(limma, edger, deseq, tab, annot_df=annot_df, inverse=TRUE)
+                    dat <- combine_de_table(limma, edger, deseq, basic,
+                                            tab, annot_df=annot_df, include_basic=include_basic, inverse=TRUE)
                     plt <- suppressMessages(limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL))$scatter
                 }
             }
@@ -186,10 +341,14 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             plots[[name]] <- plt
         }
     } else if (class(keepers) == 'character' & keepers == 'all') {
+        a <- 0
+        names_length <- length(names(edger$contrast_list))
         for (tab in names(edger$contrast_list)) {
-            message(paste0("Working on table: ", tab))
+            a <- a + 1
+            message(paste0("Working on table ", a, "/", names_length, ": ", tab))
             sheet_count <- sheet_count + 1
-            dat <- combine_de_table(limma, edger, deseq, tab, annot_df=annot_df)
+            dat <- combine_de_table(limma, edger, deseq, basic,
+                                    tab, annot_df=annot_df, include_basic=include_basic)
             combo[[tab]] <- dat
             splitted <- strsplit(x=tab, split="_vs_")
             xname <- splitted[[1]][1]
@@ -207,7 +366,8 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             table <- names(edger$contrast_list)[[1]]
             message(paste0("Choosing the first table: ", table))
         }
-        combo[[table]] <- combine_de_table(limma, edger, deseq, table, annot_df=annot_df)
+        combo[[table]] <- combine_de_table(limma, edger, deseq, basic,
+                                           table, annot_df=annot_df, include_basic=include_basic)
         splitted <- strsplit(x=tab, split="_vs_")
         xname <- splitted[[1]][1]
         yname <- splitted[[1]][2]
@@ -230,7 +390,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
                 message(paste0("Attempting to add a coefficient plot for ", names(combo)[[count]], " at column ", plot_column))
                 a_plot <- plots[[count]]
                 print(a_plot)
-                openxlsx::insertPlot(xls_result$workbook, tab, width=6, height=6,
+                openxlsx::insertPlot(xls_result$workbook, tab, width=plot_dim, height=plot_dim,
                                      startCol=plot_column, startRow=2, fileType="png", units="in")
                 ## Maybe this saveWorkbook() call is not needed given the one that follows shortly.
                 openxlsx::saveWorkbook(xls_result$workbook, xls_result$file, overwrite=TRUE)
@@ -345,8 +505,7 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
 #' This shortcuts that process for me.
 #'
 #' @param upsdowns  the output from extract_significant_genes()
-#' @param excel_file default='excel/significant_genes_reprint.xlsx'  The excel file to write.
-#'
+#' @param sig_table default='excel/significant_genes.xlsx'  table to write to
 #' @return the return from write_xls
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
@@ -381,125 +540,16 @@ print_ups_downs <- function(upsdowns, sig_table="excel/significant_genes.xlsx") 
     return(xls_result)
 }
 
-#' compare_tables()  See how similar are results from limma/deseq/edger.
-#'
-#' limma, DEseq2, and EdgeR all make somewhat different assumptions
-#' and choices about what makes a meaningful set of differentially
-#' expressed genes.  This seeks to provide a quick and dirty metric
-#' describing the degree to which they (dis)agree.
-#'
-#' @param limma default=NULL  limma data from limma_pairwise()
-#' @param deseq default=NULL  deseq data from deseq2_pairwise()
-#' @param edger default=NULL  edger data from edger_pairwise()
-#'
-#' @return a heatmap showing how similar they are along with some
-#' correlations betwee the three players.
-#' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
-#' @export
-#' @examples
-#' ## l = limma_pairwise(expt)
-#' ## d = deseq_pairwise(expt)
-#' ## e = edger_pairwise(expt)
-#' ## fun = compare_tables(limma=l, deseq=d, edger=e)
-compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
-                           include_basic=TRUE, annot_df=annot_df, ...) {
-    arglist <- list(...)
-    ## Fill each column/row of these with the correlation between tools for one contrast performed
-    if (class(limma) == "list") {
-        ## Then this was fed the raw output from limma_pairwise,
-        ## lets assume the same is true for deseq/edger too and pull out the result tables.
-        limma <- limma$all_tables
-        deseq <- deseq$all_tables
-        edger <- edger$all_tables
-        basic <- basic$all_tables
-    }
-    len <- length(names(deseq))
-    limma_vs_edger <- list()
-    limma_vs_deseq <- list()
-    limma_vs_basic <- list()
-    edger_vs_deseq <- list()
-    edger_vs_basic <- list()
-    deseq_vs_basic <- list()
-    cc <- 0
-    for (comp in names(deseq)) {
-        ## assume all three have the same names() -- note that limma has more than the other two though
-        cc <- cc + 1
-        message(paste0(cc, "/", len, ": Comparing analyses: ", comp))
-        l <- data.frame(limma[[comp]])
-        e <- data.frame(edger[[comp]])
-        d <- data.frame(deseq[[comp]])
-        b <- data.frame(basic[[comp]])
-        le <- merge(l, e, by.x="row.names", by.y="row.names")
-        le <- le[,c("logFC.x","logFC.y")]
-        lec <- stats::cor.test(le[,1], le[,2])$estimate
-        ld <- merge(l, d, by.x="row.names", by.y="row.names")
-        ld <- ld[,c("logFC.x","logFC.y")]
-        ldc <- stats::cor.test(ld[,1], ld[,2])$estimate
-        lb <- merge(l, b, by.x="row.names", by.y="row.names")
-        lb <- lb[,c("logFC.x","logFC.y")]
-        lbc <- stats::cor.test(lb[,1], lb[,2])$estimate
-        ed <- merge(e, d, by.x="row.names", by.y="row.names")
-        ed <- ed[,c("logFC.x","logFC.y")]
-        edc <- stats::cor.test(ed[,1], ed[,2])$estimate
-        eb <- merge(e, b, by.x="row.names", by.y="row.names")
-        eb <- eb[,c("logFC.x","logFC.y")]
-        ebc <- stats::cor.test(eb[,1], eb[,2])$estimate
-        db <- merge(d, b, by.x="row.names", by.y="row.names")
-        db <- db[,c("logFC.x","logFC.y")]
-        dbc <- stats::cor.test(db[,1], db[,2])$estimate
-        limma_vs_edger[[comp]] <- lec
-        limma_vs_deseq[[comp]] <- ldc
-        edger_vs_deseq[[comp]] <- edc
-        limma_vs_basic[[comp]] <- lbc
-        edger_vs_basic[[comp]] <- ebc
-        deseq_vs_basic[[comp]] <- dbc
-    } ## End loop
-    names(limma_vs_edger) <- names(deseq)
-    names(limma_vs_deseq) <- names(deseq)
-    names(edger_vs_deseq) <- names(deseq)
-    names(limma_vs_basic) <- names(deseq)
-    names(edger_vs_basic) <- names(deseq)
-    names(deseq_vs_basic) <- names(deseq)
-
-    comparison_df <- rbind(as.numeric(limma_vs_edger), as.numeric(limma_vs_deseq))
-    comparison_df <- rbind(comparison_df, as.numeric(edger_vs_deseq))
-    if (isTRUE(include_basic)) {
-        comparison_df <- rbind(comparison_df, as.numeric(limma_vs_basic))
-        comparison_df <- rbind(comparison_df, as.numeric(edger_vs_basic))
-        comparison_df <- rbind(comparison_df, as.numeric(deseq_vs_basic))
-        rownames(comparison_df) <- c("le", "ld", "ed", "lb", "eb", "db")
-    } else {
-        rownames(comparison_df) <- c("le", "ld", "ed")
-    }
-    comparison_df <- as.matrix(comparison_df)
-    colnames(comparison_df) <- names(deseq)
-    heat_colors <- grDevices::colorRampPalette(c("white","black"))
-    comparison_heatmap <- try(heatmap.3(comparison_df, scale="none", trace="none",
-                                        linewidth=0.5, keysize=2, margins=c(8,8),
-                                        col=heat_colors, dendrogram="none", Rowv=FALSE,
-                                        Colv=FALSE, main="Compare DE tools"), silent=TRUE)
-    heat <- NULL
-    if (class(comparison_heatmap) != 'try-error') {
-        heat <- recordPlot()
-    }
-    ret <- list(limma_vs_edger=limma_vs_edger, limma_vs_deseq=limma_vs_deseq,
-                limma_vs_basic=limma_vs_basic, edger_vs_deseq=edger_vs_deseq,
-                edger_vs_basic=edger_vs_basic, deseq_vs_basic=deseq_vs_basic,
-                comp=comparison_df, heat=heat)
-    return(ret)
-}
-
 #' make_exampledata()  A small hack of limma's exampleData()
 #' function to allow for arbitrary data set sizes.
 #'
 #' @param ngenes default=1000  how many genes in the fictional data set.
 #' @param columns default=5  how many samples in this data set.
-#'
 #' @return a matrix of pretend counts
-#' @seealso \code{\link{makeExampleData}}
-#' @export
+#' @seealso \pkg{limma}
 #' @examples
 #' ## pretend = make_exampledata()
+#' @export
 make_exampledata <- function (ngenes=1000, columns=5) {
     q0 <- stats::rexp(ngenes, rate = 1/250)
     is_DE <- stats::runif(ngenes) < 0.3
@@ -537,10 +587,10 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 #'   contrast_string = the string passed to R to call makeContrasts(...)
 #'   names = the names given to the identities/contrasts
 #'
-#' @seealso \code{\link{makeContrasts}}
-#' @export
+#' @seealso \link[limma]{makeContrasts}
 #' @examples
 #' ## pretend = make_pairwise_contrasts(model, conditions)
+#' @export
 make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
                                     do_pairwise=TRUE, extra_contrasts=NULL) {
     tmpnames <- colnames(model)
@@ -725,6 +775,60 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
     down_genes <- down_genes[order(down_genes[, column], decreasing=FALSE), ]
     ret = list(up_genes=up_genes, down_genes=down_genes)
     return(ret)
+}
+
+#' \code{semantic_copynumber_filter()}  Remove multicopy genes from up/down gene expression lists
+#'
+#' @param de_list  a list of sets of genes deemed significantly up/down with a column expressing approximate count numbers
+#' @param max_copies default=2  Keep only those genes with <= n putative copies
+#' @param semantic default=c(mucin, sialidase, rhs, masp, dgf)  a set of strings to exclude
+#' @param semantic_column default='1.tooltip'  a column to use to find the above mentioned strings
+#' @return a smaller list of up/down genes
+#' @export
+semantic_copynumber_filter <- function(de_list, max_copies=2, semantic=c('mucin','sialidase','RHS','MASP','DGF'), semantic_column='1.tooltip') {
+    count <- 0
+    for (table in de_list$ups) {
+        count <- count + 1
+        tab <- de_list$ups[[count]]
+        table_name <- names(de_list$ups)[[count]]
+        message(paste0("Working on ", table_name))
+        file <- paste0("singletons/gene_counts/up_", table_name, ".fasta.out.count")
+        tmpdf <- try(read.table(file), silent=TRUE)
+        if (class(tmpdf) == 'data.frame') {
+            colnames(tmpdf) = c("ID","members")
+            tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
+            rownames(tab) <- tab$Row.names
+            tab <- tab[-1]
+            tab <- tab[count <= max_copies, ]
+            for (string in semantic) {
+                idx <- grep(pattern=string, x=tab[[, semantic_column]])
+                tab <- tab[-idx]
+            }
+            de_list$ups[[count]] <- tab
+        }
+    }
+    count <- 0
+    for (table in de_list$downs) {
+        count <- count + 1
+        tab <- de_list$downs[[count]]
+        table_name <- names(de_list$downs)[[count]]
+        message(paste0("Working on ", table_name))
+        file <- paste0("singletons/gene_counts/down_", table_name, ".fasta.out.count")
+        tmpdf <- try(read.table(file), silent=TRUE)
+        if (class(tmpdf) == 'data.frame') {
+            colnames(tmpdf) = c("ID","members")
+            tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
+            rownames(tab) <- tab$Row.names
+            tab <- tab[-1]
+            tab <- tab[count <= max_copies, ]
+            for (string in semantic) {
+                idx <- grep(pattern=string, x=tab[[, semantic_column]])
+                tab <- tab[-idx]
+            }
+            de_list$downs[[count]] <- tab
+        }
+    }
+    return(de_list)
 }
 
 ## EOF

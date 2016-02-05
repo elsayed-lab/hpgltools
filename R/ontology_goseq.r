@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 15:08:59 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 10:25:07 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -8,8 +8,7 @@
 #' @param file a csv file to which to write the table
 #'
 #' @return the ontology table with annotation information included
-#' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#'
+#' @seealso \pkg{goseq}
 #' @export
 #' @examples
 #' ## annotated_go = goseq_table(go_ids)
@@ -65,12 +64,16 @@ goseq_table <- function(df, file=NULL) {
 #' @param all_genes the universe of possible genes
 #' @param lengths the length of each gene with an ID in de_genes
 #' @param goids a list of ontology accessions to gene accessions
-#' @param adjust minimum adjusted pvalue
-#' @param pvalue minimum pvalue
-#' @param goseq_method wallenius statistical test used by goseq
-#' @param padjust_method BH which method to adjust the pvalues
-#' @param species NULL optionally choose a species from supportedOrganisms()
-#' @param length_db If species is chosen (or if not, really), ensGene may be used to automagically pull the gene lengths.
+#' @param doplot default=TRUE  include pwf plots
+#' @param adjust default=0.1  minimum adjusted pvalue
+#' @param pvalue default=0.1  minimum pvalue
+#' @param qvalue default=0.1  minimum qvalue
+#' @param goseq_method default='Wallenius'  testing used by goseq
+#' @param padjust_method default='BH'  which method to adjust the pvalues
+#' @param species default=NULL  optionally choose a species from supportedOrganisms()
+#' @param length_db default='ensGene'  Source of gene lengths
+#' @param gff default=NULL  gff file source of gene lengths
+#' @param ... extra parameters which I do not recall
 #'
 #' @return a big list including:
 #'   the pwd:pwf function,
@@ -84,7 +87,7 @@ goseq_table <- function(df, file=NULL) {
 #'   bpp_plot,
 #'   cc_subset,
 #'   and ccp_plot
-#' @seealso \code{\link{goseq}} \code{\link{clusterProfiler}}
+#' @seealso \pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
 #' @export
 simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius",
@@ -225,12 +228,13 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
 #' Make a pvalue plot from goseq data
 #'
 #' @param goterms some data from goseq!
-#' @param wrapped_width 20 the number of characters before wrapping to help legibility
-#' @param cutoff pvalue cutoff for the plot
-#' @param n 10 how many groups to include
-#'
+#' @param wrapped_width default=20 the number of characters before wrapping to help legibility
+#' @param cutoff default=0.1  pvalue cutoff for the plot
+#' @param n default=10   how many groups to include
+#' @param mincat default=10  minimum size of the category
+#' @param level default=NULL  levels of the ontology tree to use
 #' @return plots!
-#' @seealso \code{\link{goseq}} \code{\link{clusterProfiler}} \code{\link{pval_plot}}
+#' @seealso \link[goseq]{goseq} \pkg{clusterProfiler} \code{\link{pval_plot}}
 #' @export
 goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat=10, level=NULL) {
     ## The following supports stuff like level='level > 3 & level < 6'
@@ -323,11 +327,14 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
 #'
 #' @param de_genes some differentially expressed genes
 #' @param godata data from goseq
-#' @param goids a mapping of IDs to GO in the Ramigo expected format
-#' @param sigforall Print significance on all nodes?
-#'
+#' @param goid_map default='reference/go/id2go.map'  file to save go id mapping
+#' @param score_limit default=0.01  score limit for the coloring
+#' @param goids_df default=NULL  a mapping of IDs to GO in the Ramigo expected format
+#' @param overwrite default=FALSE  overwrite the trees
+#' @param selector default='topDiffGenes'  a function for choosing genes
+#' @param pval_column default='adj.P.Val' column to acquire pvalues
 #' @return a plot!
-#' @seealso \code{\link{Ramigo}}
+#' @seealso \pkg{Ramigo}
 #' @export
 goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
                         score_limit=0.01, goids_df=NULL, overwrite=FALSE,

@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 14:57:18 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Feb  3 21:09:49 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## The karyotype file is circos/data/5005_5448_karyotype.txt
 ## The 5005 genome is 1838562 nt. long (looking at reference/genbank/mgas_5005.gb)
@@ -19,15 +19,16 @@
 #' likely be fixed when I am asked to write out a L.major karyotype.
 #'
 #' These defaults were chosen because I have a chromosome of this length that is correct.
-#' @param outfile default='circos/conf/karyotypes/default.txt'  a file to write
+#' @param name default='default'  the name of the chromosome (This currently assumes a bacterial chromosome)
+#' @param conf_dir default='circos/conf' where to put the circos configuration
 #' @param length default=1838554  the default length of the chromosome (That is mgas5005)
-#' @param name default='chr1'  the name of the chromosome (This currently assumes a bacterial chromosome)
+#' @param chr_name default='chf1'  the name of the chromosome
 #' @param segments default=6  how many segments to cut it into
 #' @param color default='white'  how to colors the chromosomal arc. (circos images are cluttered enough)
 #' @param chr_num default=1  the number to record (This and name above should change for multi-chromosomal species)
-#'
-#' @export
+#' @param fasta default=NULL  fasta file to use to create the karyotype
 #' @return undef
+#' @export
 circos_karyotype <- function(name='default', conf_dir='circos/conf', length=NULL,
                             chr_name='chr1', segments=6, color='white',
                             chr_num=1, fasta=NULL) {
@@ -68,9 +69,8 @@ circos_karyotype <- function(name='default', conf_dir='circos/conf', length=NULL
 #' @param name default='default'  the name of the configuration
 #' @param conf_dir default='circos/conf'  where does the configuration live?
 #' @param band_url default=NULL  provide a url for making these imagemaps.
-#'
-#' @export
 #' @return undef
+#' @export
 circos_ideogram <- function(name='default', conf_dir='circos/conf', band_url=NULL) {
     ideogram_outfile <- paste0(conf_dir, '/ideograms/', name, ".conf")
     out <- file(ideogram_outfile, open='w+')
@@ -143,9 +143,8 @@ circos_ideogram <- function(name='default', conf_dir='circos/conf', band_url=NUL
 #' @param width default=0.08  the radial width of each tile
 #' @param spacing default=0.0  the radial distance between outer,inner
 #'     and inner,whatever follows.
-#'
-#' @export
 #' @return the radius after adding the plus/minus information and the spacing between them.
+#' @export
 circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr='chr1',
                              outer=1.0, width=0.08, spacing=0.0) {
     plus_cfg_file <- cfgout
@@ -530,16 +529,14 @@ circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr='
 #'     data of interest.
 #' @param chr default='chr1'  the name of the chromosome (This
 #'     currently assumes a bacterial chromosome)
-#' @param color default='blue'  the color of the histogram
-#' @param fill_color default='blue'  guess
+#' @param colors default='blue'  the color of the histogram
 #' @param outer default=1.0  the floating point radius of the circle
 #'     into which to place the plus-strand data
 #' @param width default=0.08  the radial width of each tile
 #' @param spacing default=0.0  the radial distance between outer,inner
 #'     and inner,whatever follows.
-#'
-#' @export
 #' @return the radius after adding the histogram and the spacing.
+#' @export
 circos_tile <- function(df, cfgout="circos/conf/default.conf", colname="datum",
                        chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
@@ -647,16 +644,14 @@ circos_tile <- function(df, cfgout="circos/conf/default.conf", colname="datum",
 #'     data of interest.
 #' @param chr default='chr1'  the name of the chromosome (This
 #'     currently assumes a bacterial chromosome)
-#' @param color default='blue'  the color of the histogram
-#' @param fill_color default='blue'  guess
-#' @param outer default=1.0  the floating point radius of the circle
+#' @param colors default='blue'  the color of the histogram
+#' @param outer default=0.9  the floating point radius of the circle
 #'     into which to place the plus-strand data
 #' @param width default=0.08  the radial width of each tile
 #' @param spacing default=0.0  the radial distance between outer,inner
 #'     and inner,whatever follows.
-#'
-#' @export
 #' @return the radius after adding the histogram and the spacing.
+#' @export
 circos_heatmap <- function(df, cfgout="circos/conf/default.conf", colname="datum",
                           chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
@@ -755,9 +750,8 @@ circos_heatmap <- function(df, cfgout="circos/conf/default.conf", colname="datum
 #' @param width default=0.08  the radial width of each tile
 #' @param spacing default=0.0  the radial distance between outer,inner
 #'     and inner,whatever follows.
-#'
-#' @export
 #' @return the radius after adding the histogram and the spacing.
+#' @export
 circos_hist <- function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1',
                        color="blue", fill_color="blue", outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
@@ -830,12 +824,12 @@ circos_hist <- function(df, cfgout="circos/conf/default.conf", colname="datum", 
 #' I regenerate all my circos pictures with make(1).  This is my
 #' makefile.
 #'
+#' @param target default=''  the make target
 #' @param output default='circos/Makefile' the makefile
 #' @param circos default='/usr/bin/circos'  the location of circos. (I
 #'     have a copy in home/bin/circos and use that sometimes.
-#'
-#' @export
 #' @return a kitten
+#' @export
 circos_make <- function(target="", output="circos/Makefile", circos="/usr/bin/circos") {
     circos_dir <- dirname(output)
     if (!file.exists(circos_dir)) {
@@ -891,9 +885,8 @@ CIRCOS=\"%s\"
 #' @param color default='blue'  the color of the histogram
 #' @param radius default=0.75  the radius at which to add the arcs
 #' @param thickness default=3  integer thickness of the arcs
-#'
-#' @export
 #' @return undef
+#' @export
 circos_arc <- function(df, cfgout="circos/conf/default.conf", first_col='chr1', second_col='chr2',
                       color="blue", radius=0.75, thickness=3) {
     if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) |
@@ -970,11 +963,11 @@ circos_arc <- function(df, cfgout="circos/conf/default.conf", first_col='chr1', 
 #' address these weaknesses.
 #'
 #' @param name default='default'  The name of the map, called with 'make name'
-#' @param circos_dir default='circos/conf'  The directory containing the circos configuration data.
+#' @param conf_dir default='circos/conf'  The directory containing the circos configuration data.
 #' @param radius default=1800  The size of the image.
-#'
-#' @export
+#' @param band_url default=NULL  a place to imagemap link
 #' @return undef
+#' @export
 circos_prefix <- function(name="default", conf_dir="circos/conf", radius=1800, band_url=NULL) {
     message("This assumes you have a colors.conf in circos/colors/ and fonts.conf in circos/fonts/")
     message("It also assumes you have conf/ideogram.conf, conf/ticks.conf, and conf/housekeeping.conf")
@@ -1063,9 +1056,8 @@ chromosomes_display_default = yes
 #'
 #' @param cfgout default='circos/conf/default.conf'  The master
 #'     configuration file to write.
-#'
-#' @export
 #' @return undef
+#' @export
 circos_suffix <- function(cfgout="circos/conf/default.conf") {
     out <- file(cfgout, open='a+')
     suffix_string <- "</plots>"

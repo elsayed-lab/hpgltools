@@ -1,22 +1,28 @@
-## Time-stamp: <Tue Feb  2 15:55:58 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 17:18:17 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' limma_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
 #' This hopefully makes that easy.
 #'
-#' @param limma_output the set of pairwise comparisons provided by limma_pairwise()
-#' @param x default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot
-#' @param y default=2  the name or number of the second coefficient column to extract, this will be the y-axis of the plot
-#' @param gvis_filename default='limma_scatter.html'  A filename for plotting gvis interactive graphs of the data.
+#' @param output the set of pairwise comparisons provided by limma_pairwise()
+#' @param toptable default=NULL use this to get up/downs and color them on the scatter plot
+#' @param x default=1  the name or number of the first coefficient column to extract
+#' @param y default=2  the name or number of the second coefficient column to extract
+#' @param gvis_filename default=NULL  A filename for plotting gvis interactive graphs of the data.
 #' @param gvis_trendline default=TRUE  add a trendline to the gvis plot?
+#' @param z default=1.5  how far from the median to color the plot red and green
 #' @param tooltip_data default=NULL  a dataframe of gene annotations to be used in the gvis plot
-#'
+#' @param flip default=FALSE flip the axes?
+#' @param base_url default=NULL  a basename for gvis plots
+#' @param up_color default=hexgreen  color for the ups
+#' @param down_color default=hexred  color for the downs
+#' @param ...  more parameters to make you happy
 #' @return a ggplot2 plot showing the relationship between the two coefficients
-#' @seealso \code{\link{hpgl_linear_scatter}} \code{\link{limma_pairwise}}
-#' @export
+#' @seealso \link{hpgl_linear_scatter} \link{limma_pairwise}
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' @export
 limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_filename="limma_scatter.html",
                                       gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
                                       tooltip_data=NULL, flip=FALSE, base_url=NULL,
@@ -91,8 +97,6 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
     return(plot)
 }
 
-
-
 #' hpgl_voom()  A slight modification of limma's voom() function.
 #' Estimate mean-variance relationship between samples and generate
 #' 'observational-level weights' in preparation for linear modelling
@@ -111,19 +115,16 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
 #' @param stupid default=FALSE  whether or not to cheat when the resulting matrix is not solvable.
 #' @param logged default=FALSE  whether the input data is known to be logged.
 #' @param converted default=FALSE  whether the input data is known to be cpm converted.
-#'
 #' @return an EList containing the following information:
 #'   E = The normalized data
 #'   weights = The weights of said data
 #'   design = The resulting design
 #'   lib.size = The size in pseudocounts of the library
 #'   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
-#'
-#' @seealso \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{lmFit}}
-#'
-#' @export
+#' @seealso \link[limma]{voom} \link[cbcbSEQ]{voomMod} \link[limma]{lmFit}
 #' @examples
 #' ## funkytown = hpgl_voom(samples, model)
+#' @export
 hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=FALSE, converted=FALSE) {
     out <- list()
     if (is.null(libsize)) {
@@ -228,18 +229,19 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
 #' @param input  a dataframe/vector or expt class containing count tables, normalization state, etc.
 #' @param conditions default=NULL  a factor of conditions in the experiment
 #' @param batches default=NULL  a factor of batches in the experiment
+#' @param model_cond default=TRUE  include condition in the model?
+#' @param model_batch default=FALSE  include batch in the model? This is hopefully TRUE.
+#' @param model_intercept default=FALSE  perform a cell-means or intercept model?
+#' A little more difficult for me to understand.  I have tested and get the same answer either way.
 #' @param extra_contrasts default=NULL  some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
-#' @param model_cond default=TRUE  include condition in the model?
-#' @param model_batch default=FALSE  include batch in the model? This is hopefully TRUE.
-#' @param model_intercept default=FALSE  perform a cell-means or intercept model?  A little more difficult for me to understand.  I have tested and get the same answer either way.
 #' @param alt_model default=NULL  a separate model matrix instead of the normal condition/batch.
 #' @param libsize default=NULL  I've recently figured out that libsize is far more important than I previously realized.  Play with it here.
+#' @param annot_df default=NULL  data frame for annotations
 #' @param ... The elipsis parameter is fed to write_limma() at the end.
-#'
 #' @return A list including the following information:
 #'   macb = the mashing together of condition/batch so you can look at it
 #'   macb_model = The result of calling model.matrix(~0 + macb)
@@ -255,11 +257,10 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
 #'   pairwise_fits = The result from calling contrasts.fit()
 #'   pairwise_comparisons = The result from eBayes()
 #'   limma_result = The result from calling write_limma()
-#'
-#' @seealso \code{\link{write_limma}}
-#' @export
+#' @seealso \link{write_limma}
 #' @examples
 #' ## pretend = balanced_pairwise(data, conditions, batches)
+#' @export
 limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                            model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL,
                            alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
@@ -329,7 +330,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     tmpnames <- gsub("conditions", "", tmpnames)
     colnames(fun_model) <- tmpnames
     fun_voom <- NULL
-    message("Limma 1/6: choosing model.")
+    message("Limma step 1/6: choosing model.")
     ## voom() it, taking into account whether the data has been log2 transformed.
     logged <- input$transform
     if (is.null(logged)) {
@@ -360,7 +361,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ##fun_voom = voom(data, fun_model)
     ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
     ##fun_voom = voomMod(data, fun_model, lib.size=libsize)
-    message("Limma 2/6: running voom")
+    message("Limma step 2/6: running voom")
     fun_voom <- hpgl_voom(data, fun_model, libsize=libsize, logged=logged, converted=converted)
     one_replicate <- FALSE
     if (is.null(fun_voom)) {
@@ -377,11 +378,11 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
     ## This will be important in 17 lines from now.
     ## Do the lmFit() using this model
-    message(" 3/6: running lmFit")
+    message("limma step 3/6: running lmFit")
     fun_fit <- limma::lmFit(fun_voom, fun_model)
     ##fun_fit = lmFit(fun_voom)
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
-    message("Limma 4/6: making and fitting contrasts.")
+    message("Limma step 4/6: making and fitting contrasts.")
     if (isTRUE(model_intercept)) {
         contrasts <- "intercept"
         identities <- NULL
@@ -400,26 +401,37 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         all_pairwise_fits <- limma::contrasts.fit(fun_fit, all_pairwise_contrasts)
     }
     all_tables <- NULL
-    message("Limma 5/6: Running eBayes and topTable.")
+    message("Limma step 5/6: Running eBayes and topTable.")
     if (isTRUE(one_replicate)) {
         all_pairwise_comparisons <- all_pairwise_fits$coefficients
     } else {
         all_pairwise_comparisons <- limma::eBayes(all_pairwise_fits)
         all_tables <- try(limma::topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
     }
-    message("Limma 6/6: Writing limma outputs.")
+    message("Limma step 6/6: Writing limma outputs.")
     if (isTRUE(model_intercept)) {
         limma_result <- all_tables
     } else {
         limma_result <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
     }
     result <- list(
-        input_data=data, conditions_table=condition_table, batches_table=batch_table,
-        conditions=conditions, batches=batches, model=fun_model, fit=fun_fit,
-        voom_result=fun_voom, voom_design=fun_design, identities=identities,
-        all_pairwise=all_pairwise, contrast_string=contrast_string,
-        pairwise_fits=all_pairwise_fits, pairwise_comparisons=all_pairwise_comparisons,
-        single_table=all_tables, all_tables=limma_result)
+        all_pairwise=all_pairwise,
+        all_tables=limma_result,
+        batches=batches,
+        batches_table=batch_table,
+        conditions=conditions,
+        conditions_table=condition_table,
+        contrast_string=contrast_string,
+        fit=fun_fit,
+        identities=identities,
+        input_data=data,
+        model=fun_model,
+        pairwise_fits=all_pairwise_fits,
+        pairwise_comparisons=all_pairwise_comparisons,
+        single_table=all_tables,
+        voom_design=fun_design,
+        voom_result=fun_voom
+    )
     return(result)
 }
 
@@ -432,15 +444,13 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
 #' @param second_column  a column to compare against
 #' @param type A type of scatter plot (linear model, distance, vanilla)
 #' @param ... so that you may feed it the gvis/tooltip information to make clicky graphs if so desired.
-#'
 #' @return a hpgl_linear_scatter() set of plots comparing the chosen columns
 #' If you forget to specify tables to compare, it will try the first vs the second.
-#' @seealso \code{\link{hpgl_linear_scatter}}, \code{\link{topTable}},
-#'
-#' @export
+#' @seealso \link{hpgl_linear_scatter} \link[limma]{topTable}
 #' @examples
 #' ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
 #' ## compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+#' @export
 limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logFC",
                          second_table=2, second_column="logFC", type="linear_scatter", ...) {
     tables <- all_pairwise_result$all_tables
@@ -478,20 +488,17 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 
 #' limma_subset()  A quick and dirty way to pull the top/bottom genes from toptable()
 #'
+#' If neither n nor z is provided, it assumes you want 1.5 z-scores from the median.
+#'
 #' @param table  the original data from limma
 #' @param n default=NULL  a number of genes to keep
 #' @param z default=NULL  a number of z-scores from the mean
-#'
-#' If neither n nor z is provided, it assumes you want 1.5 z-scores from the median.
-#'
 #' @return a dataframe subset from toptable
-#'
-#' @seealso \code{\link{limma}}
-#'
-#' @export
+#' @seealso \pkg{limma}
 #' @examples
 #' ## subset = limma_subset(df, n=400)
 #' ## subset = limma_subset(df, z=1.5)
+#' @export
 limma_subset <- function(table, n=NULL, z=NULL) {
     if (is.null(n) & is.null(z)) {
         z <- 1.5
@@ -529,7 +536,7 @@ limma_subset <- function(table, n=NULL, z=NULL) {
 #'
 #' @param subset  an experimental subset with two conditions to compare.
 #' @param workbook default='simple_comparison.xls'  an excel workbook to which to write.
-#' @param worksheet default='simple_comparison'  an excel worksheet to which to write.
+#' @param sheet default='simple_comparison'  an excel worksheet to which to write.
 #' @param basename default=NA  a url to which to send click evens in clicky volcano/ma plots.
 #' @param batch default=TRUE  whether or not to include batch in limma's model.
 #' @param combat default=FALSE  whether or not to use combatMod().
@@ -538,7 +545,7 @@ limma_subset <- function(table, n=NULL, z=NULL) {
 #' @param logfc_cutoff default=0.6  fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.
 #' @param tooltip_data default=NULL  text descriptions of genes if one wants google graphs.
 #' @param verbose default=FALSE  be verbose?
-#'
+#' @param ... more parameters!
 #' @return A list containing the following pieces:
 #'   amean_histogram = a histogram of the mean values between the two conditions
 #'   coef_amean_cor = a correlation test between the mean values and coefficients (this should be a p-value of 1)
@@ -562,19 +569,16 @@ limma_subset <- function(table, n=NULL, z=NULL) {
 #'   volcano_plot = a volcano plot of x/y
 #'   voom_data = the result from calling voom()
 #'   voom_plot = a plot from voom(), redunant with voom_data
-#'
-#' @seealso \code{\link{hpgl_gvis_ma_plot}}, \code{\link{toptable}},
-#' \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{hpgl_voom}},
-#' \code{\link{lmFit}}, \code{\link{makeContrasts}},
-#' \code{\link{contrasts.fit}}
-#'
-#' @export
+#' @seealso \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
+#' \link[limma]{voom} \link[cbcbSEQ]{voomMod} \link{hpgl_voom}
+#' \link[limma]{lmFit} \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
 #' @examples
 #' ## model = model.matrix(~ 0 + subset$conditions)
 #' ## simple_comparison(subset, model)
 #' ## Currently this assumes that a variant of toptable was used which
 #' ## gives adjusted p-values.  This is not always the case and I should
 #' ## check for that, but I have not yet.
+#' @export
 simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="simple_comparison",
                               basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE,
                               pvalue_cutoff=0.05, logfc_cutoff=0.6, tooltip_data=NULL,
@@ -703,20 +707,17 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
 #' @param adjust default='fdr'  the pvalue adjustment chosen.
 #' @param n default=0  the number of entries to report, 0 says do them all.
 #' @param coef default=NULL  which coefficients/contrasts to report, NULL says do them all.
-#' @param workbook default='excel/limma.xls'  an excel filename into which to write the data, used for csv files too.
+#' @param workbook default='excel/limma.xls'  an excel filename into which to write the data
 #' @param excel default=FALSE  write an excel workbook?
 #' @param csv default=TRUE  write out csv files of the tables?
 #' @param annot_df default=NULL  an optional data frame including annotation information to include with the tables.
-#'
 #' @return a list of data frames comprising the toptable output for each coefficient,
 #'    I also added a qvalue entry to these toptable() outputs.
-#'
-#' @seealso \code{\link{toptable}}. \code{\link{write_xls}}
-#'
-#' @export
+#' @seealso \link[limma]{toptable} \link{write_xls}
 #' @examples
 #' ## finished_comparison = eBayes(limma_output)
 #' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+#' @export
 write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
                        excel=FALSE, csv=FALSE, annot_df=NULL) {
     testdir <- dirname(workbook)
@@ -732,9 +733,21 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
     end <- length(coef)
     for (c in 1:end) {
         comparison <- coef[c]
-        message(paste0("limma:", c, "/", end, ": Printing table: ", comparison, "."))
+        message(paste0("limma step 6/6: ", c, "/", end, ": Printing table: ", comparison, "."))
         data_table <- limma::topTable(data, adjust=adjust, n=n, coef=comparison)
-
+        ## Reformat the numbers so they are not so obnoxious
+##        data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
+##        data_table$AveExpr <- refnum(data_table$AveExpr, sci=FALSE)
+##        data_table$t <- refnum(data_table$t, sci=FALSE)
+##        data_table$P.Value <- refnum(data_table$P.Value)
+##        data_table$adj.P.Val <- refnum(data_table$adj.P.Val)
+##        data_table$B <- refnum(data_table$B, sci=FALSE)
+        data_table$logFC <- signif(x=as.numeric(data_table$logFC), digits=4)
+        data_table$AveExpr <- signif(x=as.numeric(data_table$AveExpr), digits=4)
+        data_table$t <- signif(x=as.numeric(data_table$t), digits=4)
+        data_table$P.Value <- format(x=as.numeric(data_table$P.Value), digits=4, scientific=TRUE)
+        data_table$adj.P.Val <- format(x=as.numeric(data_table$adj.P.Val), digits=4, scientific=TRUE)
+        data_table$B <- signif(x=as.numeric(data_table$B), digits=4)
         data_table$qvalue <- tryCatch(
         {
             ##as.numeric(format(signif(
@@ -743,9 +756,10 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
             ##    scientific=TRUE))
             ttmp <- as.numeric(data_table$P.Value)
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
-            ttmp <- signif(ttmp, 4)
-            ttmp <- format(ttmp, scientific=TRUE)
-            as.numeric(ttmp)
+            format(x=ttmp, digits=4, scientific=TRUE)
+##            ttmp <- signif(ttmp, 4)
+##            ttmp <- format(ttmp, scientific=TRUE)
+##            ttmp
         },
         error=function(cond) {
             message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
@@ -758,8 +772,6 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
         ##},
         finally={
         })
-        data_table$P.Value <- as.numeric(format(signif(data_table$P.Value, 4), scientific=TRUE))
-        data_table$adj.P.Val <- as.numeric(format(signif(data_table$adj.P.Val, 4), scientific=TRUE))
         if (!is.null(annot_df)) {
             data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
             ###data_table = data_table[-1]

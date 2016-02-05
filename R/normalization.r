@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Feb  3 18:37:00 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Feb  3 23:21:17 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -47,7 +47,7 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #' @param batch1 default='batch'  the column in the design table describing the presumed covariant to remove.
 #' @param batch2 default=NULL  the column in the design table describing the second covariant to remove (only used by limma at the moment).
 #' @param noscale default=TRUE  used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.
-#'
+#' @param ... more options for you!
 #' @return The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this
 #' may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
 #' @seealso \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
@@ -212,11 +212,7 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=
 
 #' \code{convert_counts()} Perform a cpm/rpkm/whatever transformation of a count table.
 #'
-#' @param count_table A matrix of count data
-#' @param convert='raw' A type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m
-#' @param annotations=NULL a set of gff annotations are needed if using rpkm so we can get gene lengths.
 #' I should probably tell it to also handle a simple df/vector/list of gene lengths, but I haven't.
-#'
 #' cp_seq_m is a cpm conversion of the data followed by a rp-ish
 #' conversion which normalizes by the number of the given oligo.  By
 #' default this oligo is 'TA' because it was used for tnseq which
@@ -224,13 +220,20 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=
 #' by mariner.  It could, however, be used to normalize by the number
 #' of methionines, for example -- if one wanted to do such a thing.
 #'
+#' @param data A matrix of count data
+#' @param convert default='raw'  A type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m
+#' @param annotations default=NULL  a set of gff annotations are needed if using rpkm so we can get gene lengths.
+#' @param fasta default=NULL  a fasta for rpkmish
+#' @param pattern default='TA'  for cp_seq_m counts
+#' @param entry_type default='gene' used to acquire gene lengths
+#' @param ... more options
 #' @return dataframe of cpm/rpkm/whatever(counts)
 #' @seealso \pkg{edgeR} \pkg{Biobase} \code{\link[edgeR]{cpm}}
-#' @export
 #' @examples
 #' \dontrun{
 #'  converted_table = convert_counts(count_table, convert='edgecpm')
 #' }
+#' @export
 convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pattern='TA', entry_type='gene', ...) {
     data_class <- class(data)[1]
     if (data_class == 'expt') {
@@ -334,10 +337,10 @@ divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.g
 #'
 #' I keep thinking this function is pofa... oh well.
 #'
-#' @param counts input data frame of counts by sample
-#' @param p a minimum proportion of each gene's counts/sample to be greater than a minimum(A) (defaults to 0.01)
-#' @param A the minimum number of counts in the above proportion
-#' @param verbose If set to true, prints number of genes removed / remaining
+#' @param count_table  input data frame of counts by sample
+#' @param p default=0.01  a minimum proportion of each gene's counts/sample to be greater than a minimum(A)
+#' @param A default=100  the minimum number of counts in the above proportion
+#' @param verbose default=FALSE  If set to true, prints number of genes removed / remaining
 #' @return dataframe of counts without the low-count genes
 #' @seealso \pkg{genefilter} \code{\link[genefilter]{pOverA}} which this uses to decide what to keep
 #' @export
@@ -368,18 +371,17 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100, verbose=TRUE) {
 
 #' \code{genefilter_cv_counts()}  Filter genes from a dataset outside a range of variance
 #'
-#' @param counts input data frame of counts by sample
-#' @param cv_min a minimum coefficient of variance
-#' @param cv_max guess
-#' @param verbose If set to true, prints number of genes removed / remaining
-#'
+#' @param count_table  input data frame of counts by sample
+#' @param cv_min default=0.01  a minimum coefficient of variance
+#' @param cv_max default=1000  guess
+#' @param verbose default=FALSE  If set to true, prints number of genes removed / remaining
 #' @return dataframe of counts without the low-count genes
 #' @seealso \pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep
-#' @export
 #' @examples
 #' \dontrun{
 #' filtered_table = genefilter_kofa_counts(count_table)
 #' }
+#' @export
 genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000, verbose=FALSE) {
     ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
     num_before <- nrow(count_table)
@@ -403,18 +405,17 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000, verbose=
 
 #' \code{genefilter_kofa_counts()}  Filter low-count genes from a data set using genefilter's kOverA()
 #'
-#' @param counts input data frame of counts by sample
-#' @param k a minimum number of samples to have >A counts
-#' @param A the minimum number of counts for each gene's sample in kOverA()
-#' @param verbose If set to true, prints number of genes removed / remaining
-#'
+#' @param count_table input data frame of counts by sample
+#' @param k default=1  a minimum number of samples to have >A counts
+#' @param A default=1  the minimum number of counts for each gene's sample in kOverA()
+#' @param verbose default=FALSE  If set to true, prints number of genes removed / remaining
 #' @return dataframe of counts without the low-count genes
 #' @seealso \pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep
-#' @export
 #' @examples
 #' \dontrun{
 #'  filtered_table = genefilter_kofa_counts(count_table)
 #' }
+#' @export
 genefilter_kofa_counts <- function(count_table, k=1, A=1, verbose=FALSE) {
     ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
     num_before <- nrow(count_table)
@@ -446,7 +447,7 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1, verbose=FALSE) {
 #' @param prior.plots print out prior plots? FALSE
 #'
 #' @return a df of batch corrected data
-#' @seealso \pkg{sva} \code{\link[sva]{combat}}
+#' @seealso \pkg{sva} \code{\link[sva]{ComBat}}
 #' @export
 #' @examples
 #' \dontrun{
@@ -584,14 +585,14 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
 #' paper.
 #'
 #' @param counts read count matrix
-#'
+#' @param lib.size default=NULL library size
 #' @return log2-CPM read count matrix
-#' @export
 #' @seealso \pkg{cbcbSEQ} \pkg{edgeR}
 #' @examples
 #' \dontrun{
 #' l2cpm <- hpgl_log2cpm(counts)
 #' }
+#' @export
 hpgl_log2cpm <- function(counts, lib.size=NULL) {
     if (is.null(lib.size)) {
         lib.size <- colSums(counts)
@@ -604,30 +605,39 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 
 #' \code{hpgl_norm()} Normalize a dataframe/expt, express it, and/or transform it
 #'
-#' @param expt=expt an expt class containing all the necessary
-#' metadata
-#' @param df=df alternately a dataframe of counts may be used
-#' @param design=design but a design dataframe must come with it
-#' @param convert defines the output type which may be raw, cpm,
-#' rpkm, or cp_seq_m.  Defaults to raw.
-#' @param transform defines whether to log(2|10) transform the
+#' @param data some data
+#' @param design default=NULL  design dataframe must come with it
+#' @param transform default='raw;  defines whether to log(2|10) transform the
 #' data. Defaults to raw.
-#' @param norm specify the normalization strategy.  Defaults to
+#' @param norm default='raw'  specify the normalization strategy.  Defaults to
 #' raw.  This makes use of DESeq/EdgeR to provide: RLE, upperquartile,
 #' size-factor, or tmm normalization.  I tend to like quantile, but there are
 #' definitely corner-case scenarios for all strategies.
-#' @param filter_low choose whether to low-count filter the data.
-#' Defaults to true.
-#' @param annotations is used for rpkm or sequence normalizations to
+#' @param convert default='raw'  defines the output type which may be raw, cpm,
+#' rpkm, or cp_seq_m.  Defaults to raw.
+#' @param batch default='raw'  batch correction method to try out
+#' @param batch1 default='batch' column from design to get batch info
+#' @param batch2 default=NULL  a second covariate to try
+#' @param filter_low default=FALSE  choose whether to low-count filter the data.
+#' @param annotations default=NULL  is used for rpkm or sequence normalizations to
 #' extract the lengths of sequences for normalization
-#'
+#' @param entry_type default='gene'  default gff entry to cull from
+#' @param fasta default=NULL  fasta genome for rpkm
+#' @param verbose default=FALSE talk
+#' @param thresh default=2  threshold for low count filtering
+#' @param min_samples default=2  minimum samples for low count filtering
+#' @param noscale default=TRUE  used by combatmod
+#' @param p default=0.01  for povera genefilter
+#' @param A default=1  for povera genefilter
+#' @param k default=1  for kovera genefilter
+#' @param cv_min default=0.01  for genefilter cv
+#' @param cv_max default=1000  for genefilter cv
+#' @param ... I should put all those other options here
 #' @return edgeR's DGEList expression of a count table.  This seems to
 #' me to be the easiest to deal with.
-#' @seealso \code{\link[edgeR]{cpm}}, \code{\link[edgeR]{rpkm}},
-#' \code{\link{hpgl_rpkm}}, \code{\link[cbcbSEQ]{filterCounts}},
-#' \code{\link[DESeq]{DESeqDataSetFromMatrix}},
-#' \code{\link[DESeq]{estimateSizeFactors}}, \code{\link[DESeq]{DGEList}},
-#' \code{\link[edgeR]{calcNormFactors}}
+#' @seealso \link[edgeR]{cpm} \link[edgeR]{rpkm}
+#' \link{hpgl_rpkm} \link[cbcbSEQ]{filterCounts} \link[DESeq2]{DESeqDataSetFromMatrix}
+#' \link[DESeq]{estimateSizeFactors} \link[edgeR]{DGEList} \link[edgeR]{calcNormFactors}
 #' @export
 #' @examples
 #' \dontrun{
@@ -636,7 +646,6 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #' df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
 #' count_table = df_ql2rpkm$counts
 #' }
-###                                                 raw|log2|log10   sf|quant|etc  cpm|rpkm|cbcbcpm
 hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
                       convert="raw", batch="raw", batch1="batch", batch2=NULL,
                       filter_low=FALSE, annotations=NULL, entry_type="gene",
@@ -772,7 +781,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
 #' @param verbose default=FALSE
 #' @param groupCol default=NULL
 #' @param plot default=TRUE
-#'
+#' @param ... more options
 #' @return data a new data frame of normalized counts
 #' @seealso \pkg{qsmooth}
 #' @export
@@ -1022,13 +1031,12 @@ hpgl_rpkm <- function(df, annotations=get0('gene_annotations')) {
 
 #' \code{cbcb_lowfilter_counts()} Filter low-count genes from a data set using cbcbSEQ::filterCounts()
 #'
-#' @param df input data frame of counts by sample
-#' @param threshold lower threshold of counts (default: 4)
-#' @param min_samples minimum number of samples (default: 2)
-#' @param verbose If set to true, prints number of genes removed / remaining
-#'
+#' @param count_table  input data frame of counts by sample
+#' @param thresh default=2  lower threshold of counts (default: 4)
+#' @param min_samples default=2  minimum number of samples (default: 2)
+#' @param verbose default=FALSE  If set to true, prints number of genes removed / remaining
 #' @return dataframe of counts without the low-count genes
-#' @seealso \code{\link[cbcbSEQ]{log2CPM}} which this uses to decide what to keep
+#' @seealso \link[cbcbSEQ]{log2CPM} which this uses to decide what to keep
 #' @export
 #' @examples
 #' \dontrun{
@@ -1051,13 +1059,12 @@ cbcb_lowfilter_counts <- function(count_table, thresh=2,
 
 #' \code{normalize_counts()}  Perform a simple normalization of a count table
 #'
-#' @param count_table A matrix of count data
-#' @param design A dataframe describing the experimental design
+#' @param data A matrix of count data
+#' @param design default=NULL A dataframe describing the experimental design
 #' (conditions/batches/etc)
-#' @param norm='raw' A normalization to perform:
+#' @param norm default='raw' A normalization to perform:
 #' 'sf|quant|qsmooth|tmm|upperquartile|tmm|rle'
 #' I keep wishy-washing on whether design is a required argument.
-#'
 #' @return dataframe of normalized(counts)
 #' @seealso \pkg{edgeR} \pkg{limma} \pkg{DESeq2}
 #' @export
@@ -1202,7 +1209,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
 #' @param k default=1  for genefilter's kofa
 #' @param cv_min default=0.01  for genefilter's cv()
 #' @param cv_max default=1000 for genefilter's cv()
-#'
+#' @param ... more options
 #' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
 #' @seealso \pkg{genefilter} \pkg{cbcbSEQ} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
 #' @export

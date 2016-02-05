@@ -1,19 +1,20 @@
-## Time-stamp: <Tue Feb  2 21:43:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 17:18:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' deseq_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
 #' This hopefully makes that easy.
 #'
-#' @param limma_output the set of pairwise comparisons provided by limma_pairwise()
+#' @param output the set of pairwise comparisons provided by limma_pairwise()
 #' @param x default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot
 #' @param y default=2  the name or number of the second coefficient column to extract, this will be the y-axis of the plot
 #' @param gvis_filename default='limma_scatter.html'  A filename for plotting gvis interactive graphs of the data.
 #' @param gvis_trendline default=TRUE  add a trendline to the gvis plot?
 #' @param tooltip_data default=NULL  a dataframe of gene annotations to be used in the gvis plot
-#'
+#' @param flip default=FALSE  flip the axes
+#' @param base_url default=NULL  for gvis plots
 #' @return a ggplot2 plot showing the relationship between the two coefficients
-#' @seealso \code{\link{hpgl_linear_scatter}} \code{\link{limma_pairwise}}
+#' @seealso \link{hpgl_linear_scatter} \link{limma_pairwise}
 #' @export
 #' @examples
 #' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
@@ -74,10 +75,10 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
 #' deseq_pairwise()  Because I can't be trusted to remember '2'
 #'
 #' This calls deseq2_pairwise(...) because I am determined to forget typing deseq2
-#' @param look at deseq2_pairwise
 #'
+#' @param ... I like cats
 #' @return stuff from deseq2_pairwise
-#'
+#' @seealso \link{deseq2_pairwise}
 #' @export
 deseq_pairwise <- function(...) {
     message("Hey you, use deseq2 pairwise.")
@@ -199,14 +200,19 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             ## From here on everything is the same.
             result[is.na(result$P.Value), "P.Value"] = 1 ## Some p-values come out as NA
             result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA
+            result$baseMean <- signif(x=as.numeric(result$baseMean), digits=4)
+            result$logFC <- signif(x=as.numeric(result$logFC), digits=4)
+            result$lfcSE <- signif(x=as.numeric(result$lfcSE), digits=4)
+            result$stat <- signif(x=as.numeric(result$stat), digits=4)
+            result$P.Value <- format(x=as.numeric(result$P.Value), digits=4, scientific=TRUE)
+            result$adj.P.Val <- format(x=as.numeric(result$adj.P.Val), digits=4, scientific=TRUE)
+
             result$qvalue <- tryCatch(
             {
                 ## Nested expressions are way too confusing for me
                 ttmp <- as.numeric(result$P.Value)
                 ttmp <- qvalue::qvalue(ttmp)$qvalues
-                ttmp <- signif(ttmp, 4)
-                ttmp <- format(ttmp, scientific=TRUE)
-                as.numeric(ttmp)
+                format(x=ttmp, digits=4, scientific=TRUE)
                 ## as.numeric(format(signif(qvalue::qvalue(as.numeric(result$P.Value), robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
             error=function(cond) {
@@ -220,8 +226,6 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             ##},
             finally={
             })
-            result$P.Value <- format(signif(result$P.Value, 4), scientific=TRUE)
-            result$adj.P.Val <- format(signif(result$adj.P.Val, 4), scientific=TRUE)
             result_name <- paste0(numerator, "_vs_", denominator)
             denominators[[result_name]] <- denominator
             numerators[[result_name]] <- numerator
@@ -252,6 +256,5 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     )
     return(ret_list)
 }
-
 
 ## EOF

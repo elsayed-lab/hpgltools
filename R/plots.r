@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Feb  3 12:42:44 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 10:26:09 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -17,10 +17,9 @@
 #' @param cormethod default='pearson'  the correlation test for heatmaps.
 #' @param distmethod default='euclidean'  define the distance metric for heatmaps.
 #' @param title_suffix default=NULL  text to add to the titles of the plots.
-#' @param scale default='raw'  scale for the axes, sometimes useful to set as log2.
-#' @param sink default=FALSE  add in the kitchen sink?  This includes all pairwise ma plots and qq plots and takes potentially forever.
+#' @param qq default=NULL  include qq plots
+#' @param ma default=NULL  include pairwise ma plots
 #' @param ... extra parameters optionally fed to the various plots
-#'
 #' @return a loooong list of plots including the following:
 #'   nonzero = a ggplot2 plot of the non-zero genes vs library size
 #'   libsize = a ggplot2 bar plot of the library sizes
@@ -37,7 +36,7 @@
 #'   density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
 #'
 #' @seealso \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
-#' \link[Biobase]{exprs} \link{hpgl_norm} \link{graph_nonzero} \link{hpgl_libsize}
+#' \link[Biobase]{exprs} \link{hpgl_norm} \link{hpgl_nonzero} \link{hpgl_libsize}
 #' \link{hpgl_boxplot} \link{hpgl_corheat} \link{hpgl_smc} \link{hpgl_disheat}
 #' \link{hpgl_smd} \link{hpgl_pca} \link{hpgl_qq_all} \link{hpgl_pairwise_ma}
 #' @examples
@@ -118,7 +117,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
 #' @param data  A dataframe/expt/exprs with count data
 #'
 #' @return a plot! of the BCV a la ggplot2.
-#' @seealso \pkg{edgeR} \link[edgeR]{bcv_plot}
+#' @seealso \pkg{edgeR} \link[edgeR]{plotBCV}
 #' @examples
 #' \dontrun{
 #' bcv <- hpgl_bcv_plot(expt)
@@ -177,7 +176,8 @@ hpgl_bcv_plot <- function(data) {
 #' @param colors default=NULL  a color scheme, if not provided will make its own.
 #' @param names default=NULL  a nicer version of the sample names.
 #' @param scale default='raw'  whether to log scale the y-axis.
-#'
+#' @param title default=NULL  A title!
+#' @param ... more parameters are fun
 #' @return a ggplot2 boxplot of the samples.  Each boxplot
 #' contains the following information: a centered line describing the
 #' median value of counts of all genes in the sample, a box around the
@@ -263,8 +263,7 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' @param position default='identity'  how to place the lines, either let them overlap (identity), or stack them.
 #' @param fill default=NULL  fill the distributions?  This might make the plot unreasonably colorful.
 #' @param title default=NULL  a title for the plot.
-#' @param log default=FALSE  plot on the log scale?
-#'
+#' @param scale default=NULL  plot on the log scale?
 #' @return a density plot!
 #' @seealso \pkg{ggplot2} \link[ggplot2]{geom_density}
 #' @examples
@@ -346,12 +345,17 @@ hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
 #' hpgl_dist_scatter()  Make a pretty scatter plot between two sets of numbers with a
 #' cheesy distance metric and some statistics of the two sets.
 #'
+#' The distance metric should be codified and made more intelligent.
+#' Currently it creates a dataframe of distances which are absolute
+#' distances from each axis, multiplied by each other, summed by axis,
+#' then normalized against the maximum.
+#'
 #' @param df  a dataframe likely containing two columns
-#' @param gvis_filename default=NULL  a filename to write a fancy html graph.
-#' Defaults to NULL in which case the following parameter isn't needed.
 #' @param tooltip_data default=NULL  a df of tooltip information for gvis
 #' graphs.
-#'
+#' @param gvis_filename default=NULL  a filename to write a fancy html graph.
+#' Defaults to NULL in which case the following parameter isn't needed.
+#' @param size default=2 size of the dots
 #' @return a ggplot2 scatter plot.  This plot provides a "bird's eye"
 #' view of two data sets.  This plot assumes the two data structures
 #' are not correlated, and so it calculates the median/mad of each
@@ -360,18 +364,11 @@ hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
 #' color dots which are presumed the therefore be interesting because
 #' they are far from 'normal.'  This will make a fun clicky googleVis
 #' graph if requested.
-#'
-#' The distance metric should be codified and made more intelligent.
-#' Currently it creates a dataframe of distances which are absolute
-#' distances from each axis, multiplied by each other, summed by axis,
-#' then normalized against the maximum.
-#'
-#' @seealso \code{\link{hpgl_gvis_scatter}}, \code{\link{geom_scatter}},
-#' \code{\link{hsv}}, \code{\link{hpgl_linear_scatter}}
-#'
-#' @export
+#' @seealso \pkg{ggplot2} \link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}
+#' \link{hpgl_linear_scatter}
 #' @examples
 #' ## hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+#' @export
 hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2) {
     hpgl_env <- environment()
     df <- data.frame(df[,c(1,2)])
@@ -418,16 +415,15 @@ hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #' @param names default=NULL  alternate names to use.
 #' @param row default='batch'  what to place on the row of the map, batches or conditions?
 #' @param title default=NULL  a title for the plot.
-#'
+#' @param ... more options are wonderful
 #' @return  corheat_plot a gplots heatmap describing how the samples
 #' pairwise correlate with one another.
-#' @seealso \code{\link{hpgl_cor}}, \code{\link{brewer.pal}},
-#' \code{\link{heatmap.2}}, \code{\link{recordPlot}}
-#'
-#' @export
+#' @seealso \link{hpgl_cor} \link[RColorBrewer]{brewer.pal}
+#' \link[grDevices]{recordPlot}
 #' @examples
 #' ## corheat_plot = hpgl_corheat(expt=expt, method="robust")
 #' ## corheat_plot
+#' @export
 hpgl_corheat <- function(data, colors=NULL, design=NULL, method="pearson",
                          names=NULL, row="batch", title=NULL, ...) {
     hpgl_heatmap(data, colors=colors, design=design, method=method,
@@ -437,21 +433,20 @@ hpgl_corheat <- function(data, colors=NULL, design=NULL, method="pearson",
 #' hpgl_disheat()  Make a heatmap.3 description of the similarity (euclildean distance) between samples.
 #'
 #' @param data  a dataframe, expt, or expressionset to work with.
-#' @param design default=NULL  a design matrix.
 #' @param colors default=NULL  a color scheme.
+#' @param design default=NULL  a design matrix.
 #' @param method default='euclidean'   distance metric to use.
 #' @param names default=NULL  alternate names to use.
 #' @param row default='batch'  what to place on the row of the map, batches or conditions?
 #' @param title default=NULL  a title for the plot.
+#' @param ... more parameters
 #'
 #' @return a recordPlot() heatmap describing the distance between samples.
-#' @seealso \code{\link{brewer.pal}},
-#' \code{\link{heatmap.2}}, \code{\link{recordPlot}}
-#'
-#' @export
+#' @seealso \link[RColorBrewer]{brewer.pal} \link[gplots]{heatmap.2} \link[grDevices]{recordPlot}
 #' @examples
 #' ## disheat_plot = hpgl_disheat(expt=expt, method="euclidean")
 #' ## disheat_plot
+#' @export
 hpgl_disheat <- function(data, colors=NULL, design=NULL, method="euclidean",
                          names=NULL, row="batch", title=NULL, ...) {
     hpgl_heatmap(data, colors=colors, design=design, method=method,
@@ -462,16 +457,16 @@ hpgl_disheat <- function(data, colors=NULL, design=NULL, method="euclidean",
 #' hpgl_heatmap()  Make a heatmap.3 plots, does the work for hpgl_disheat and hpgl_corheat.
 #'
 #' @param data  a dataframe, expt, or expressionset to work with.
-#' @param design default=NULL  a design matrix.
 #' @param colors default=NULL  a color scheme.
+#' @param design default=NULL  a design matrix.
 #' @param method default='pearson'   distance or correlation metric to use.
 #' @param names default=NULL  alternate names to use.
+#' @param type default="correlation"
 #' @param row default='batch'  what to place on the row of the map, batches or conditions?
 #' @param title default=NULL  a title for the plot.
-#'
+#' @param ... I like elipses
 #' @return a recordPlot() heatmap describing the distance between samples.
-#' @seealso \code{\link{brewer.pal}},
-#' \code{\link{heatmap.2}}, \code{\link{recordPlot}}
+#' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
 hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names=NULL,
                          type="correlation", row="batch", title=NULL, ...) {
     hpgl_env <- environment()
@@ -488,7 +483,6 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-
     if (is.null(colors)) {
         tt <- ncol(data)
         colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(tt,"Dark2"))(tt)
@@ -496,7 +490,6 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
     if (is.null(names)) {
         names <- colnames(data)
     }
-
     if (type == "correlation") {
         heatmap_data <- hpgl_cor(data, method=method)
         heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
@@ -505,7 +498,6 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
         heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "GnBu"))(100)
     }
     colors <- as.character(colors)
-
     if (is.null(design)) {
         row_colors <- rep("white", length(colors))
     } else if (length(as.integer(as.factor(as.data.frame(design[row])[,1]))) >= 2) {
@@ -514,7 +506,6 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
     } else {
         row_colors <- rep("green", length(design[row]))
     }
-
     if (type == "correlation") {
         heatmap.3(heatmap_data, keysize=2, labRow=names,
                   ##col=heatmap_colors,  ## OrRd is slightly different than what we have now
@@ -534,16 +525,15 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
 #' @param df  a dataframe of lots of pretty numbers.
 #' @param binwidth default=NULL  width of the bins for the histogram.
 #' @param log default=FALSE  replot on the log scale?
+#' @param bins default=500 bins for the histogram
 #' @param verbose default=FALSE  be verbose?
 #' @param fillcolor default='darkgrey'  change the fill colors of the plotted elements.
 #' @param color default='black'  change the color of the lines of the plotted elements.
-#'
 #' @return a ggplot histogram
-#' @seealso \code{\link{geom_histogram}}, \code{\link{geom_density}},
-#'
-#' @export
+#' @seealso \link[ggplot2]{geom_histogram} \link[ggplot2]{geom_density}
 #' @examples
 #' ## kittytime = hpgl_histogram(df)
+#' @export
 hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE,
                            fillcolor="darkgrey", color="black") {
     hpgl_env <- environment()
@@ -582,21 +572,19 @@ hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE
 #' hpgl_libsize()  Make a ggplot graph of library sizes.
 #'
 #' @param data  an expt, dataframe, or expressionset of samples.
-#' @param design default=NULL  a design matrix.
 #' @param colors default=NULL  a color scheme.
-#' @param scale default=TRUE   whether or not to log10 the y-axis.
 #' @param names default=NULL  alternate names for the x-axis.
-#' @param title default=NULL  a title for the plot.
 #' @param text default=TRUE  add the numeric values inside the top of the bars of the plot?
-#'
+#' @param title default=NULL  a title for the plot.
+#' @param yscale default=TRUE   whether or not to log10 the y-axis.
+#' @param ... more parameters for your good time
 #' @return a ggplot2 bar plot of every sample's size
-#' @seealso \code{\link{geom_bar}}, \code{\link{geom_text}},
-#' \code{\link{prettyNum}}, \code{\link{scale_y_log10}}
-#'
-#' @export
+#' @seealso \link[ggplot2]{geom_bar} \link[ggplot2]{geom_text}
+#' \link{prettyNum} \link[ggplot2]{scale_y_log10}
 #' @examples
 #' ## libsize_plot = hpgl_libsize(expt=expt)
 #' ## libsize_plot  ## ooo pretty bargraph
+#' @export
 hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  yscale=NULL, ...) {
     hpgl_env <- environment()
     arglist <- list(...)
@@ -673,16 +661,19 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
 #' linear model superimposed and some supporting statistics.
 #'
 #' @param df  a dataframe likely containing two columns
-#' @param gvis_filename default=NULL  a filename to write a fancy html graph.
 #' @param tooltip_data default=NULL  a df of tooltip information for gvis
 #' graphs.
+#' @param gvis_filename default=NULL  a filename to write a fancy html graph.
 #' @param cormethod default='pearson'  what type of correlation to check?
 #' @param size default=2  size of the dots on the plot.
 #' @param verbose default=FALSE  be verbose?
-#' @param loess default=FALSE  add a loess estimation?
 #' @param identity default=FALSE  add the identity line?
+#' @param loess default=FALSE  add a loess estimation?
 #' @param gvis_trendline default=NULL add a trendline to the gvis plot?  There are a couple possible types, I think linear is the most common.
-#'
+#' @param first default=NULL first column to plot
+#' @param second default=NULL second column to plot
+#' @param base_url default=NULL a base url to add to the plot
+#' @param pretty_colors default=TRUE colors
 #' @return a list including a ggplot2 scatter plot and some
 #' histograms.  This plot provides a "bird's eye"
 #' view of two data sets.  This plot assumes a (potential) linear
@@ -696,13 +687,10 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
 #' together under a single cdf to allow tests of distribution
 #' similarity.  This will make a fun clicky googleVis graph if
 #' requested.
-#'
-#' @seealso \code{\link{lmrob}}, \code{\link{weights}},
-#' \code{\link{hsv}}, \code{\link{mad}}, \code{\link{hpgl_histogram}}
-#'
-#' @export
+#' @seealso \link[robust]{lmRob} \link[stats]{weights} \link{hpgl_histogram}
 #' @examples
 #' ## hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+#' @export
 hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson",
                                 size=2, verbose=FALSE, loess=FALSE, identity=FALSE, gvis_trendline=NULL,
                                 first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE) {
@@ -803,24 +791,22 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' @param gvis_filename default=NULL  a filename to write a fancy html graph.
 #' @param tooltip_data default=NULL  a df of tooltip information for gvis
 #' graphs.
-#'
+#' @param ... more poptions por pou
 #' @return a ggplot2 MA scatter plot.  This is defined as the rowmeans
 #' of the normalized counts by type across all sample types on the
 #' x-axis, and the log fold change between conditions on the y-axis.
 #' Dots are colored depending on if they are 'significant.'  This will
 #' make a fun clicky googleVis graph if requested.
-#'
-#' @seealso \code{\link{hpgl_gvis_ma_plot}}, \code{\link{toptable}},
-#' \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{hpgl_voom}},
-#' \code{\link{lmFit}}, \code{\link{makeContrasts}},
-#' \code{\link{contrasts.fit}}
-#'
-#' @export
+#' @seealso \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
+#' \link[limma]{voom} \link[cbcbSEQ]{voomMod} \link{hpgl_voom}
+#' \link[limma]{lmFit} \link[limma]{makeContrasts}
+#' \link[limma]{contrasts.fit}
 #' @examples
 #' ## hpgl_ma_plot(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
 #' ## Currently this assumes that a variant of toptable was used which
 #' ## gives adjusted p-values.  This is not always the case and I should
 #' ## check for that, but I have not yet.
+#' @export
 hpgl_ma_plot <- function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6,
                          size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
     hpgl_env <- environment()
@@ -853,17 +839,13 @@ hpgl_ma_plot <- function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6,
 #' @param bins default=NULL  set a static # of bins of an unknown width?
 #' @param binwidth default=NULL  set a static bin width with an unknown # of bins?  If neither of these are provided, then bins is set to 500, if both are provided, then bins wins.
 #' @param verbose default=FALSE  be verbose?
-#'
 #' @return a ggplot histogram comparing multiple data sets
 #' Along the way this generates pairwise t tests of the columns of
 #' data.
-#'
-#' @seealso \code{\link{pairwise.t.test}}, \code{\link{ddply}},
-#' \code{\link{rbind}}
-#'
-#' @export
+#' @seealso \link[stats]{pairwise.t.test} \link[plyr]{ddply}
 #' @examples
 #' ## kittytime = hpgl_multihistogram(df)
+#' @export
 hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=FALSE) {
     if (is.data.frame(data)) {
         df <- data
@@ -940,14 +922,13 @@ hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, verbo
 #'   'fancy' will use directlabels() to try to match the labels with the positions without overlapping
 #'   anything else will just stick them on a 45' offset next to the graphed point
 #' @param title default=NULL  add a title?
-#'
+#' @param ... rawr
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each library's CPM
-#' @seealso \code{\link{geom_point}}, \code{\link{geom_dl}}
-#'
-#' @export
+#' @seealso \link[ggplot2]{geom_point} \link[directlabels]{geom_dl}
 #' @examples
 #' ## nonzero_plot = hpgl_nonzero(expt=expt)
 #' ## nonzero_plot  ## ooo pretty
+#' @export
 hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL, ...) {
     hpgl_env <- environment()
     names <- NULL
@@ -1018,9 +999,9 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
 #'
 #' @param data an expt expressionset or data frame
 #' @param log default=NULL  is the data in log format?
-#'
+#' @param ... more options are good
 #' @return a list of affy::maplots
-#' @seealso \code{\link{ma.plot}}
+#' @seealso \link[affy]{ma.plot}
 #' @export
 #' @examples
 #' ## ma_plots = hpgl_pairwise_ma(expt=some_expt)
@@ -1269,13 +1250,11 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
 #' hpgl_qq_all_pairwise()  Perform qq plots of every column against every other column of a dataset.
 #' This function is stupid, don't use it.
 #'
-#' @param df the data
-#' @param expt or an expt class
-#'
+#' @param data the data
+#' @param verbose default=FALSE talky talky
 #' @return a list containing the recordPlot() output of the ratios, logs, and means among samples
-#'
 #' @export
-hpgl_qq_all_pairwise <- function(df=NULL, expt=NULL, verbose=FALSE) {
+hpgl_qq_all_pairwise <- function(data, verbose=FALSE) {
     data_class <- class(data)[1]
     names <- NULL
     if (data_class == 'expt') {
@@ -1323,15 +1302,14 @@ hpgl_qq_all_pairwise <- function(df=NULL, expt=NULL, verbose=FALSE) {
 #' hpgl_sample_heatmap()  Make a heatmap.3 description of the similarity of the genes among samples.
 #'
 #' @param data  an expt/expressionset/dataframe set of samples
-#' @param design default=NULL  a design matrix
 #' @param colors default=NULL  a color scheme
+#' @param design default=NULL  a design matrix
 #' @param names default=NULL  add names?
 #' @param title default=NULL  title of the plot.
-#'
+#' @param Rowv default=FALSE  include the row names
+#' @param ... more parameters for a good time
 #' @return a recordPlot() heatmap describing the samples.
-#' @seealso \code{\link{brewer.pal}},
-#' \link[gplots]{heatmap.3} \link[grDevices]{recordPlot}
-#'
+#' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
 #' @export
 hpgl_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=FALSE, ...) {
     hpgl_env <- environment()
@@ -1368,13 +1346,11 @@ hpgl_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
 #' @param color default='black'  color of the dots on the graph.
 #'
 #' @return a ggplot2 scatter plot.
-#'
-#' @seealso \code{\link{hpgl_gvis_scatter}}, \code{\link{geom_scatter}},
-#' \code{\link{hpgl_linear_scatter}}
-#'
-#' @export
+#' @seealso \link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}
+#' \link{hpgl_linear_scatter}
 #' @examples
 #' ## hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+#' @export
 hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=2) {
     hpgl_env <- environment()
     df <- data.frame(df[,c(1,2)])
@@ -1404,7 +1380,7 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' @param method default='pearson'  a correlation method to use.
 #' @param names default=NULL  use pretty names for the samples?
 #' @param title default=NULL  title for the graph.
-#'
+#' @param ... more parameters to make you happy
 #' @return a recordPlot() of the standard median pairwise correlation
 #' among the samples.  This will also write to an
 #' open device.  The resulting plot measures the median correlation of
@@ -1412,13 +1388,11 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' among the samples and makes a horizontal line at that correlation
 #' coefficient.  Any sample which falls below this line is considered
 #' for removal because it is much less similar to all of its peers.
-#'
-#' @seealso \code{\link{hpgl_cor}}, \code{\link{matrixStats::rowMedians}},
-#' \code{\link{quantile}}, \code{\link{diff}}, \code{\link{recordPlot}}
-#'
-#' @export
+#' @seealso \link{hpgl_cor} \link[matrixStats]{rowMedians}
+#' \link[stats]{quantile} \link{diff} \link[grDevices]{recordPlot}
 #' @examples
 #' ## smc_plot = hpgl_smc(expt=expt)
+#' @export
 hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL, ...) {
     data_class <- class(data)[1]
     if (data_class == 'expt') {
@@ -1467,6 +1441,7 @@ hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL
 #' @param method defaul='euclidean'  a distance metric to use.
 #' @param names default=NULL  use pretty names for the samples?
 #' @param title default=NULL  title for the graph.
+#' @param ... parameters make me happy
 #'
 #' @return smd_plot a recordPlot of plot.  This will also write to an
 #' open device.  This plot takes the median distance of each sample
@@ -1533,24 +1508,21 @@ hpgl_smd <- function(data, colors=NULL, names=NULL, method="euclidean", title=NU
 #' @param size default=2  how big are the dots?
 #' @param gvis_filename default=NULL a filename to write a fancy html graph.
 #' @param tooltip_data default=NULL  a df of tooltip information for gvis.
-#'
+#' @param ...  I love parameters!
 #' @return a ggplot2 MA scatter plot.  This is defined as the
 #' -log10(p-value) with respect to log(fold change).  The cutoff
 #' values are delineated with lines and mark the boundaries between
 #' 'significant' and not.  This will make a fun clicky googleVis graph
 #' if requested.
-#'
-#' @seealso \code{\link{hpgl_gvis_ma_plot}}, \code{\link{toptable}},
-#' \code{\link{voom}}, \code{\link{voomMod}}, \code{\link{hpgl_voom}},
-#' \code{\link{lmFit}}, \code{\link{makeContrasts}},
-#' \code{\link{contrasts.fit}}
-#'
-#' @export
+#' @seealso \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
+#' \link[limma]{voom} \link{hpgl_voom} \link[limma]{lmFit}
+#' \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
 #' @examples
 #' ## hpgl_volcano_plot(toptable_data, gvis_filename="html/fun_ma_plot.html")
 #' ## Currently this assumes that a variant of toptable was used which
 #' ## gives adjusted p-values.  This is not always the case and I should
 #' ## check for that, but I have not yet.
+#' @export
 hpgl_volcano_plot <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
                               fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6, ...) {
     hpgl_env <- environment()
@@ -1576,16 +1548,16 @@ hpgl_volcano_plot <- function(toptable_data, tooltip_data=NULL, gvis_filename=NU
 
 #' spirograph()  Make spirographs!  Taken (with modifications) from: http://menugget.blogspot.com/2012/12/spirograph-with-r.html#more
 #'
-#' @param rad_a default=1  The radius of the primary circle.
-#' @param rad_b default=2  The radius of the circle travelling around a.
-#' @param c  a point relative to the center of 'b' which rotates with the turning of 'b'.
-#' @param bc the distance from the center of 'b' to 'c'.
-#' @param rev_a default=4  The number of revolutions for 'b' to travel about 'a'.
-#' @param increments default=360  The number of radial increments to be calculated per revolution
-#' @param cen_a default=list(x=0,y=0)  The position of the center of 'a'.
+#' @param radius_a default=1  The radius of the primary circle.
+#' @param radius_b default=-4  The radius of the circle travelling around a.
+#' @param dist_bc default=-2  A point relative to the center of 'b' which rotates with the turning of 'b'.
+#' @param revolutions default=158  How many revolutions to perform in the plot
+#' @param increments default=3160  The number of radial increments to be calculated per revolution
+#' @param center_a default=list(x=0,y=0)  The position of the center of 'a'.
 #'
 #' A positive value for 'B' will result in a epitrochoid, while a negative value will result in a hypotrochoid.
-#' @return somethign which I don't yet know.
+#' @return something which I don't yet know.
+#' @export
 spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
                        revolutions=158, increments=3160, center_a=list(x=0, y=0)) {
     center_b_start <- list(x=0, y=center_a$y + radius_a + radius_b)
@@ -1723,23 +1695,6 @@ hpgl_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
   }
 }
 
-#' \code{heatmap.3()}  slight modification of heatmap.2.
-#'
-#' I think I found the suggestion to do this here:
-#' https://gist.github.com/nachocab/3853004
-#' The only difference to heatmap.2 is the ability to control line widths on the clusters.
-#'
-#' @param holy crap so many parameters, same as heatmap.2
-#'
-#' @return a heatmap!
-#' @seealso \pkg{gplots} \link[gplots]{heatmap.2}
-#' @examples
-#' \dontrun{
-#' heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, labCol=names,
-#'   margins=c(12,8), trace="none", linewidth=0.5, main=title, Rowv=Rowv)
-#' keeper <- grDevices::recordPlot()
-#' }
-#' @export
 heatmap.3 <- function (x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
                        distfun=dist, hclustfun=hclust, dendrogram=c("both","row","column","none"),
                        reorderfun = function(d, w) reorder(d,w), symm = FALSE, scale = c("none", "row", "column"),

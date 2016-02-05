@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 16:27:12 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 18:58:24 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' \code{basic_pairwise()}  Perform a pairwise comparison among conditions which takes
 #' nothing into account.  It _only_ takes the conditions, a mean value/variance among
@@ -8,8 +8,7 @@
 #' all do better than this, always.
 #'
 #' @param input a count table by sample
-#' @param conditions a data frame of samples and conditions
-#'
+#' @param design default=NULL  a data frame of samples and conditions
 #' @return I am not sure yet
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @export
@@ -36,6 +35,7 @@ basic_pairwise <- function(input, design=NULL) {
         data <- as.data.frame(input)
         conditions <- as.factor(design$condition)
     }
+    data <- convert_counts(data, convert="cpm")$count_table
     types <- levels(conditions)
     num_conds <- length(types)
     ## These will be filled with num_conds columns and numRows(input) rows.
@@ -53,7 +53,7 @@ basic_pairwise <- function(input, design=NULL) {
             med_input <- data[,columns]
             med <- data.frame(Biobase::rowMedians(as.matrix(med_input)))
             colnames(med) <- c(condition_name)
-            var <- as.data.frame(matrixStats::rowVars(as.matrix(med_input)))
+            var <- as.data.frame(genefilter::rowVars(as.matrix(med_input)))
             colnames(var) <- c(condition_name)
         }
         if (c == 1) {
@@ -85,8 +85,11 @@ basic_pairwise <- function(input, design=NULL) {
             ## Actually, all the other tools do a log2 subtraction
             ## so I think I will too
             message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons, ": Performing log2 subtraction: ", d_name, "_vs_", c_name))
+##            division <- data.frame(
+##                log2(median_table[, d] + 1) - log2(median_table[, c] + 1))
             division <- data.frame(
-                log2(median_table[, d] + 0.5) - log2(median_table[, c] + 0.5))
+                median_table[, d] / median_table[, c])
+            division <- log2(division)
             comparison_name <- paste0(d_name, "_vs_", c_name)
             column_list <- append(column_list, comparison_name)
             colnames(division) <- comparison_name
@@ -144,6 +147,13 @@ basic_pairwise <- function(input, design=NULL) {
                                t=t(as.data.frame(t_column)),
                                p=t(as.data.frame(p_column)),
                                logFC=fc_column)
+        fc_table$numerator_median <-signif(x=fc_table$numerator_median, digits=4)
+        fc_table$denominator_median <-signif(x=fc_table$denominator_median, digits=4)
+        fc_table$numerator_var <- format(x=fc_table$numerator_var, digits=4, scientific=TRUE)
+        fc_table$denominator_var <- format(x=fc_table$denominator_var, digits=4, scientific=TRUE)
+        fc_table$t <- signif(x=fc_table$t, digits=4)
+        fc_table$p <- format(x=fc_table$p, digits=4, scientific=TRUE)
+        fc_table$logFC <- signif(x=fc_table$logFC, digits=4)
         all_tables[[e]] <- fc_table
     }
     message("Basic: Returning tables.")

@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 18:55:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 10:14:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' \code{require.auto()}  Automatic loading and/or installing of packages.
 #'
@@ -11,12 +11,11 @@
 #' @param github_path default=NULL  an optional github username/path.
 #' @param verbose default=FALSE  print some information while loading.
 #' @param update default=FALSE  update packages?
-#'
 #' @return NULL currently
-#' @seealso \code{\link[BiocInstaller]{biocLite}} and \code{\link{install.packages}}
+#' @seealso \link[BiocInstaller]{biocLite} \link{install.packages}
 #' @export
 #' @examples
-#' \donotrun{
+#' \dontrun{
 #' require.auto("ggplot2")
 #'}
 require.auto <- function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
@@ -89,15 +88,19 @@ autoloads_elsayedlab <- function() {
 }
 
 autoloads_deseq <- function() {
+    require.auto("affy")
     require.auto("preprocessCore")
     require.auto("DESeq2")
     require.auto("DESeq")
     require.auto("edgeR")
     require.auto("limma")
+    require.auto("RUVSeq")
     require.auto("sva")
+    require.auto("survJamda")
     require.auto("pasilla")  ## for cbcbSEQ
     require.auto("preprocessCore") ## for cbcbSEQ
-    require.auto("cbcbSEQ", "kokrah/cbcbSEQ")  ## cbcbSeq has to be loaded last because its DESCRIPTION file is missing a couple of dependencies
+    require.auto("kokrah/qsmooth")
+    require.auto("kokrah/cbcbSEQ")  ## cbcbSeq has to be loaded last because its DESCRIPTION file is missing a couple of dependencies
 ##    require.auto("qlasso", "kokrah/qsmooth")
 }
 
@@ -146,17 +149,25 @@ autoloads_stats <- function() {
 }
 
 autoloads_misc <- function() {
-    require.auto("motifRG")
     require.auto("Rsamtools")
     require.auto("scales")
     require.auto("seqinr")
-    require.auto("lianos/seqtools/R/pkg")
+##    require.auto("SeqTools", "lianos/seqtools/R/pkg")
+    require.auto("ReactomePA")
+}
+
+autoloads_motif <- function() {
+    require.auto("rGADEM")
+    require.auto("MotIV")
+    require.auto("motifRG")
+    require.auto("motifStack")
 }
 
 #' Automatic loading of stuff I use, I am deprecating this now.
 #'
+#' @param update default=FALSE  update packages?
 #' @return NULL currently
-#' @seealso \code{\link[BiocInstaller]{biocLite}} and \code{\link{install.packages}}
+#' @seealso \link[BiocInstaller]{biocLite} \link{install.packages}
 #' @export
 autoloads_all <- function(update=FALSE) {
     autoloads_helpers()
@@ -166,6 +177,7 @@ autoloads_all <- function(update=FALSE) {
     autoloads_stats()
     autoloads_deseq()
     autoloads_ontology()
+    autoloads_motif()
     ##cite_options(tooltip=TRUE)
     ##cleanbib()
     options(gvis.plot.tag="chart")

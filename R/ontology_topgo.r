@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 15:04:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 10:27:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' simple_topgo()  Perform a simplified topgo analysis
 #'
@@ -17,6 +17,8 @@
 #' @param overwrite default=FALSE  yeah I do not remember this one either
 #' @param densities default=FALSE  the densities, yeah, the densities
 #' @param pval_plots default=TRUE  include pvalue plots of the results a la clusterprofiler
+#' @param pval_column default='adj.P.Val'  column from which to acquire scores
+#' @param ... other options which I do not remember right now
 #'
 #' @return a big list including the various outputs from topgo
 #' @export
@@ -151,6 +153,8 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
 #' This can make a large number of plots
 #'
 #' @param godata  the result from topgo
+#' @param table  a table of genes
+#' @export
 plot_topgo_densities <- function(godata, table) {
     ret <- list()
     for (id in table$GO.ID) {
@@ -261,9 +265,21 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, order
 
 #' Print trees from topGO
 #'
-#' @param de_genes a data frame of differentially expressed genes, containing IDs and whatever other columns
-#' @param goid_map a file containing mappings of genes to goids in the format expected by topgo
-#'
+#' @param tg  data from simple_topgo()
+#' @param score_limit default=0.01  score limit to decide whether to add to the tree
+#' @param sigforall default=TRUE  add scores to the tree?
+#' @param do_mf_fisher_tree default=TRUE  Add the fisher score molecular function tree?
+#' @param do_bp_fisher_tree default=TRUE  Add the fisher biological process tree?
+#' @param do_cc_fisher_tree default=TRUE  Add the fisher cellular component tree?
+#' @param do_mf_ks_tree default=FALSE  Add the ks molecular function tree?
+#' @param do_bp_ks_tree default=FALSE  Add the ks biological process tree?
+#' @param do_cc_ks_tree default=FALSE  Add the ks cellular component tree?
+#' @param do_mf_el_tree default=FALSE  Add the el molecular function tree?
+#' @param do_bp_el_tree default=FALSE  Add the el biological process tree?
+#' @param do_cc_el_tree default=FALSE  Add the el cellular component tree?
+#' @param do_mf_weight_tree default=FALSE Add the weight mf tree?
+#' @param do_bp_weight_tree default=FALSE Add the bp weighted tree?
+#' @param do_cc_weight_tree default=FALSE Add the guess
 #' @return a big list including the various outputs from topgo
 #' @export
 topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=TRUE,
@@ -474,10 +490,13 @@ topDiffGenes <- function(allScore) { return(allScore < 0.01) }
 
 #' Make a pvalue plot from topgo data
 #'
-#' @param topgo_data some data from topgo!
-#'
-#' @return a plot!
-#' @seealso \code{\link{goseq}}
+#' @param topgo some data from topgo!
+#' @param wrapped_width default=20  maximum width of the text names
+#' @param cutoff default=0.1  p-value cutoff for the plots
+#' @param n default=12  maximum number of ontologies to include
+#' @param type default='fisher'  type of score to use
+#' @return a list of MF/BP/CC pvalue plots
+#' @seealso \pkg{topgo} \code{goseq}
 #' @export
 topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
     mf_newdf <- topgo$tables$mf[,c("GO.ID", "Term", "Annotated","Significant", type)]

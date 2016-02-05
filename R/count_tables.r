@@ -1,17 +1,25 @@
-## Time-stamp: <Wed Feb  3 15:33:32 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Feb  3 21:15:11 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' \code{create_expt()}  Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
 #' expt_subset for everything
 #'
-#' @param file  a comma separated file describing the samples with
+#' this is relevant because the ceph object storage by default lowercases filenames.
+#'
+#' It is worth noting that this function has a lot of logic used to
+#' find the count tables in the local filesystem.  This logic has been
+#' superceded by simply adding a field to the .csv file called
+#' 'file'.  create_expt() will then just read that filename, it may be
+#' a full pathname or local to the cwd of the project.
+#'
+#' @param file default=NULL  a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc
 #' @param color_hash default=NULL  a hash which describes how to color the samples,
 #' it will generate its own colors using colorBrewer
 #' @param suffix default='.count.gz'  when looking for the count tables in processed_data
 #' look for this suffix on the end of the files.
 #' @param header default=FALSE  Does the csv metadata file have a header?
-#' @param genes default=NULL  annotation information describing the rows of the data set, usually
+#' @param gene_info default=NULL  annotation information describing the rows of the data set, usually
 #' this comes from a call to import.gff()
 #' @param by_type default=FALSE  when looking for count tables, are they organized by type?
 #' @param by_sample default=FALSE  or by sample?  I do all mine by sample, but others do by type...
@@ -24,13 +32,7 @@
 #' @param meta_dataframe default=NULL  an optional dataframe containing the metadata rather than a file
 #' @param savefile default='expt'  an Rdata filename prefix for saving the data of the resulting expt.
 #' @param low_files default=FALSE  whether or not to explicitly lowercase the filenames when searching in processed_data/
-#' this is relevant because the ceph object storage by default lowercases filenames.
-#'
-#' It is worth noting that this function has a lot of logic used to
-#' find the count tables in the local filesystem.  This logic has been
-#' superceded by simply adding a field to the .csv file called
-#' 'file'.  create_expt() will then just read that filename, it may be
-#' a full pathname or local to the cwd of the project.
+#' @param ... more parameters are fun
 #'
 #' @return  experiment an expressionset
 #' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData} \link[Biobase]{exprs}
@@ -134,17 +136,18 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
 #' @param suffix default='.count.gz'  when looking for the count tables in processed_data
 #' look for this suffix on the end of the files.
 #' @param header default=FALSE  Does the csv metadata file have a header?
-#' @param genes default=NULL  annotation information describing the rows of the data set, usually
+#' @param gene_info default=NULL  annotation information describing the rows of the data set, usually
 #' this comes from a call to import.gff()
 #' @param by_type default=FALSE  when looking for count tables, are they organized by type?
 #' @param by_sample default=FALSE  or by sample?  I do all mine by sample, but others do by type...
-#' @param sep default=','  some people prefer their csv files as tab or semicolon separated.
 #' @param include_type default='all'  I have usually assumed that all gff annotations should be used,
 #' but that is not always true, this allows one to limit.
 #' @param include_gff default=NULL  A gff file to help in sorting which features to keep
 #' @param count_dataframe default=NULL  If one does not wish to read the count tables from processed_data/
 #' they may instead be fed here
 #' @param meta_dataframe default=NULL  an optional dataframe containing the metadata rather than a file
+#' @param sep default=','  some people prefer their csv files as tab or semicolon separated.
+#' @param ... more parameters
 #'
 #' @return  experiment an expressionset
 #' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData}
@@ -378,15 +381,15 @@ expt_subset <- function(expt, subset=NULL) {
 
 #' \code{hpgl_read_files()}  Read a bunch of count tables and create a usable data frame from
 #' them.
+#' It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
+#' It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.
 #'
 #' @param ids  a list of experimental ids
 #' @param files  a list of files to read
 #' @param header default=FALSE  whether or not the count tables include a header row.
 #' @param include_summary_rows default=FALSE  whether HTSeq summary rows should be included.
 #' @param suffix default=NULL  an optional suffix to add to the filenames when reading them.
-#'
-#' It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
-#' It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.
+#' @param ... more options for happy time
 #'
 #' @return  count_table a data frame of count tables
 #' @seealso \link{create_experiment}

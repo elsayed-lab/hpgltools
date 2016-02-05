@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 19:53:31 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 17:19:23 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' \code{edger_pairwise()}  Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using EdgeR.
@@ -18,7 +18,6 @@
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param annot_df default=NULL  Add some annotation information to the data tables?
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
-#'
 #' @return A list including the following information:
 #'   contrasts = The string representation of the contrasts performed.
 #'   lrt = A list of the results from calling glmLRT(), one for each contrast.
@@ -30,11 +29,11 @@
 #'   \code{\link[edgeR]{calcNormFactors}} \code{\link[edgeR]{estimateTagwiseDisp}}
 #'   \code{\link[edgeR]{estimateCommonDisp}} \code{\link[edgeR]{estimateGLMCommonDisp}}
 #'   \code{\link[edgeR]{estimateGLMTrendedDisp}} \code{\link[edgeR]{glmFit}}
-#' @export
 #' @examples
 #' \dontrun{
 #'  pretend = edger_pairwise(data, conditions, batches)
 #' }
+#' @export
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                           model_batch=FALSE, model_intercept=FALSE, alt_model=NULL,
                           extra_contrasts=NULL, annot_df=NULL, ...) {
@@ -99,7 +98,6 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     ##tmpnames = gsub("conditions", "", tmpnames)
     ##colnames(cond_model) = tmpnames
-
     raw <- edgeR::DGEList(counts=data, group=conditions)
     message("EdgeR step 1/9: normalizing data.")
     norm <- edgeR::calcNormFactors(raw)
@@ -134,6 +132,11 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         lrt_list[[name]] <- edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
         res <- edgeR::topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")
         res <- as.data.frame(res)
+        res$logFC <- signif(x=as.numeric(res$logFC), digits=4)
+        res$logCPM <- signif(x=as.numeric(res$logCPM), digits=4)
+        res$LR <- signif(x=as.numeric(res$LR), digits=4)
+        res$PValue <- format(x=as.numeric(res$PValue), digits=4, scientific=TRUE)
+        res$FDR <- format(x=as.numeric(res$FDR), digits=4, scientific=TRUE)
         res$qvalue <- tryCatch(
         {
             ##as.numeric(format(signif(
@@ -143,9 +146,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             ## ok I admit it, I am not smart enough for nested expressions
             ttmp <- as.numeric(res$PValue)
             ttmp <- qvalue::qvalue(ttmp)$qvalues
-            ttmp <- signif(ttmp, 4)
-            ttmp <- format(ttmp, scientific=TRUE)
-            as.numeric(ttmp)
+            format(x=ttmp, digits=4, scientific=TRUE)
         },
         error=function(cond) {
             message(paste0("The qvalue estimation failed for ", name, "."))
@@ -158,8 +159,6 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         ##},
         finally={
         })
-        res$PValue <- as.numeric(format(signif(res$PValue, 4), scientific=TRUE))
-        res$FDR <- as.numeric(format(signif(res$FDR, 4), scientific=TRUE))
         result_list[[name]] <- res
     } ## End for loop
     final <- list(

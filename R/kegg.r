@@ -1,23 +1,28 @@
-## Time-stamp: <Tue Feb  2 16:04:21 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Feb  3 23:19:43 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways
 #'
-#' @param de_genes some differentially expressed genes
-#' @param indir A directory into which the unmodified kegg images will be downloaded (or already exist).  Defaults to 'pathview_in'
-#' @param outdir A directory which will contain the colored images.
-#' @param pathway Perform the coloring for a specific pathway?  Defaults to 'all'
-#' @param species The kegg identifier for the species of interest.
-#' @param filenames Whether to give filenames as the kegg ID or pathway name.  Defaults to 'id'.
-#'
+#' @param path_data some differentially expressed genes
+#' @param indir default='pathview_in'  A directory into which the unmodified kegg images will be downloaded (or already exist).
+#' @param outdir default='pathview'  A directory which will contain the colored images.
+#' @param pathway default='all'  Perform the coloring for a specific pathway?
+#' @param species default='lma'  The kegg identifier for the species of interest.
+#' @param string_from default='LmjF'  for renaming kegg categories
+#' @param string_to default="LMJF' for renaming kegg categories
+#' @param suffix default="_colored" for renaming finished files
+#' @param second_from default=NULL sometimes jsut one regex isnt enough
+#' @param second_to default=NULL sometimes just one regex isnt enough
+#' @param verbose default=FALSE talk more
+#' @param filenames default='id'  name the final files by id or name?
 #' @return A list of some information for every KEGG pathway downloaded/examined.  This information includes:
 #'   a. The filename of the final image for each pathway.
 #'   b. The number of genes which were found in each pathway image.
 #'   c. The number of genes in the 'up' category
 #'   d. The number of genes in the 'down' category
-#' @seealso \code{\link{Ramigo}}
-#' @export
+#' @seealso \pkg{Ramigo} \pkg{pathview}
 #' @examples
 #' ## thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in", outdir="kegg_thy_el_comp2", string_from="_Spy", string_to="_Spy_", filenames="pathname")
+#' @export
 hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, verbose=FALSE, filenames="id") {
     ## Please note that the KGML parser fails if other XML parsers are loaded into R
     ## eh = new.env(hash=TRUE, size=NA)
@@ -181,15 +186,16 @@ gostats_kegg <- function() {
 
 #' Search the kegg identifier for a given species
 #'
-#' @param species A search string (Something like 'Homo sapiens')
-#'
-#' @return a data frame of possible KEGG identifier codes, genome ID numbers, species, and phylogenetic classifications.
-#' @seealso \code{\link{RCurl}}
-#' @export
+#' @param species default='Leishmania'  A search string (Something like 'Homo sapiens')
+#' @param short default=TRUE  only pull the orgid
+#' @return a data frame of possible KEGG identifier codes,
+#' genome ID numbers, species, and phylogenetic classifications.
+#' @seealso \pkg{RCurl}
 #' @examples
 #' ## fun = kegg_get_orgn('Canis')
 #' ## >     Tid     orgid      species                   phylogeny
 #' ## >  17 T01007   cfa Canis familiaris (dog) Eukaryotes;Animals;Vertebrates;Mammals
+#' @export
 kegg_get_orgn <- function(species="Leishmania", short=TRUE) {
     all_organisms <- RCurl::getURL("http://rest.kegg.jp/list/organism")
     org_tsv <- textConnection(all_organisms)

@@ -1,7 +1,10 @@
-## Time-stamp: <Wed Feb  3 13:13:18 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 18:12:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
+#'
+#' @param y  a y
+#' @param X  a x
 Beta.NA <- function(y,X) {
     des <- X[!is.na(y),]
     y1 <- y[!is.na(y)]
@@ -141,7 +144,7 @@ make_report <- function(name="report", type='pdf') {
 #'
 #' Note that I did this two months ago and haven't touched it since...
 #'
-#' @param stringset  A DNA/RNA StringSet containing the UTR sequences of interest
+#' @param x  A DNA/RNA StringSet containing the UTR sequences of interest
 #' @param basal default=1  I dunno.
 #' @param overlapping default=1.5
 #' @param d1.3 default=0.75  These parameter names are so stupid, lets be realistic
@@ -382,8 +385,8 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' information for gVis graphs. The tooltip column is also a handy proxy for
 #' anontations information when it would otherwise be too troublesome.
 #'
-#' @param gff or annotations: Either a gff file or annotation data frame (which likely came from a gff file.)
-#'
+#' @param annotations  Either a gff file or annotation data frame (which likely came from a gff file.)
+#' @param desc_col default='description'  a column from a gff file to grab the data from
 #' @return a df of tooltip information or name of a gff file
 #' @export
 #' @seealso \pkg{googleVis} \link{gff2df}
@@ -422,8 +425,8 @@ make_tooltips <- function(annotations, desc_col='description') {
 #' @param fasta  a fasta genome
 #' @param gff default=NULL  an optional gff of annotations (if not provided it will just ask the whole genome.
 #' @param pattern default='TA'  what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.
+#' @param type default='gene' the column to get frmo the gff file
 #' @param key default='locus_tag'  what type of entry of the gff file to key from?
-#'
 #' @return num_pattern a data frame of names and numbers.
 #' @seealso \pkg{Biostrings} \pkg{Rsamtools} \link[Biostrings]{PDict} \link[Rsamtools]{FaFile}
 #' @examples
@@ -461,7 +464,8 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern='TA', type='gene', key
 #' This just takes the abs(distances) of each point to the axes,
 #' normalizes them against the largest point on the axes, multiplies
 #' the result, and normalizes against the max of all points.
-#' @seealso
+#' @seealso \pkg{ggplot2}
+#' @examples
 #' \dontrun{
 #' mydist <- sillydist(df[,1], df[,2], first_median, second_median)
 #' first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"), environment=hpgl_env) +
@@ -507,7 +511,7 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #'   setting this makes sure that those columns are not too wide
 #' @param start_row default=1  The first row of the sheet to write
 #' @param start_col default=1  The first column to write
-#' @param tripledots  the set of arguments given to for openxlsx
+#' @param ...  the set of arguments given to for openxlsx
 #'
 #' @return a list containing the sheet and workbook written as well as the bottom-right coordinates of the last
 #'   row/column written of the table.
@@ -523,7 +527,6 @@ write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite
                       start_row=1, start_col=1, ...) {
     arglist <- list(...)
     excel_dir <- dirname(file)
-    suffix <- ".xlsx"
     if (!file.exists(excel_dir)) {
         dir.create(excel_dir, recursive=TRUE)
     }
@@ -533,11 +536,10 @@ write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite
     filename <- NULL
     if (isTRUE(dated)) {
         timestamp <- format(Sys.time(), "%Y%m%d%H")
-        filename <- paste0(file, "-", timestamp, suffix)
+        filename <- paste0(file, "-", timestamp, ".xlsx")
     } else {
-        filename <- paste0(file, suffix)
+        filename <- paste0(file, ".xlsx")
     }
-
     if (file.exists(filename)) {
         if (!isTRUE(newsheet) | !isTRUE(overwrite_file)) {
             backup_file(filename)
@@ -547,9 +549,8 @@ write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite
     if (class(data) == 'matrix') {
         data <- as.data.frame(data)
     }
-
-    if (file.exists(file)) {
-        wb <- openxlsx::loadWorkbook(file)
+    if (file.exists(filename)) {
+        wb <- openxlsx::loadWorkbook(filename)
     } else {
         wb <- openxlsx::createWorkbook(creator="atb")
     }
@@ -592,9 +593,9 @@ write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite
     ## Maybe make this a parameter? nah for now at least
     openxlsx::setColWidths(wb, sheet=sheet, widths=first_two_widths, cols=c(1,2))
     openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=3:ncol(data))
-    openxlsx::saveWorkbook(wb, file, overwrite=overwrite_sheet)
+    openxlsx::saveWorkbook(wb, filename, overwrite=overwrite_sheet)
     end_col <- ncol(data) + 1
-    ret <- list(workbook=wb, end_row=new_row, end_col=end_col, file=file)
+    ret <- list(workbook=wb, file=filename, end_row=new_row, end_col=end_col)
     return(ret)
 }
 
@@ -607,7 +608,7 @@ openxlsx_add_plot <- function(wb, plot) {
 
 #' backup_file()  Make a backup of an existing file with n revisions, like VMS!
 #'
-#' @param file  the file to backup.
+#' @param backup_file  the file to backup.
 #' @param backups default=10  how many revisions?
 backup_file <- function(backup_file, backups=10) {
     if (file.exists(backup_file)) {
@@ -655,8 +656,8 @@ loadme <- function(dir="savefiles") {
 
 #' \code{saveme()}  Make a backup rdata file for future reference
 #'
-#' @param dir  the directory to save the Rdata file.
-#' @param backups default=10  how many revisions?
+#' @param directory default='savefiles' the directory to save the Rdata file.
+#' @param backups default=4  how many revisions?
 #'
 #' I often use R over a sshfs connection, sometimes with significant latency, and
 #' I want to be able to save/load my R sessions relatively quickly.

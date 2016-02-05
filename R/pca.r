@@ -1,4 +1,4 @@
-# Time-stamp: <Tue Feb  2 20:15:03 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Thu Feb  4 10:28:24 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' \code{make_SVD()} is a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -136,7 +136,7 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         ggplot2::xlab(xl) +
         ggplot2::ylab(yl) +
         ggplot2::theme_bw() +
-        ggplot2::theme(legend.key.size=ggplot2::unit(0.5, "cm"))
+        ggplot2::theme(legend.key.size=grid::unit(0.5, "cm"))
     if (!is.null(plot_labels)) {
         if (plot_labels[[1]] == "fancy") {
             pca_plot <- pca_plot + directlabels::geom_dl(ggplot2::aes_string(label="SampleID"), method="smart.grid")
@@ -300,7 +300,7 @@ plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
                                     guide=ggplot2::guide_legend(override.aes=ggplot2::aes_string(size="1"))) +
         ggplot2::ggtitle(plot_title) +
         ggplot2::theme_bw() +
-        ggplot2::theme(legend.key.size=ggplot2::unit(0.5, "cm"))
+        ggplot2::theme(legend.key.size=grid::unit(0.5, "cm"))
 
     if (!is.null(variances)) {
         x_var_num <- as.numeric(gsub("PC", "", first))
@@ -391,15 +391,15 @@ u_plot <- function(plotted_us) {
 #' @section Warning:
 #'  This function has gotten too damn big and needs to be split up.
 #'
-#' @param data  the data to analyze (usually exprs(somedataset)).
-#' @param design default=NULL  a dataframe describing the experimental design, containing columns with
+#' @param expt_data  the data to analyze (usually exprs(somedataset)).
+#' @param expt_design default=NULL  a dataframe describing the experimental design, containing columns with
 #'   useful information like the conditions, batches, number of cells, whatever...
-#' @param factors default=c("condition","batch")  a character list of experimental conditions to query
+#' @param expt_factors default=c("condition","batch")  a character list of experimental conditions to query
 #'   for R^2 against the fast.svd of the data.
-#' @param components default=NULL  a number of principle components to compare the design factors against.
+#' @param num_components default=NULL  a number of principle components to compare the design factors against.
 #'   If left null, it will query the same number of components as factors asked for.
 #' @param plot_pcas default=FALSE  plot the set of PCA plots for every pair of PCs queried.
-#' @param labels default="fancy"  how to label the glyphs on the plot.
+#' @param plot_labels default="fancy"  how to label the glyphs on the plot.
 #'
 #' @return a list of fun pca information:
 #'   svd_u/d/v: The u/d/v parameters from fast.svd
