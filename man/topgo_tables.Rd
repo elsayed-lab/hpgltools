@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_topgo.r
 \name{topgo_tables}
 \alias{topgo_tables}
-\title{topgo_tables() Make pretty tables out of topGO data}
+\title{Make pretty tables out of topGO data}
 \usage{
 topgo_tables(result, limit = 0.1, limitby = "fisher", numchar = 300,
   orderby = "classic", ranksof = "classic")
@@ -12,13 +12,13 @@ topgo_tables(result, limit = 0.1, limitby = "fisher", numchar = 300,
 
 \item{limit}{a pvalue limit defining 'significant'}
 
-\item{limitby}{fisher - what type of test to perform}
+\item{limitby}{what type of test to perform}
 
-\item{numchar}{300 how many characters to allow in the description}
+\item{numchar}{how many characters to allow in the description}
 
-\item{orderby}{classic which of the available columns to order the table by?}
+\item{orderby}{which of the available columns to order the table by?}
 
-\item{ranksof}{classic which of the available columns are used to rank the data?}
+\item{ranksof}{which of the available columns are used to rank the data?}
 }
 \description{
 The topgo function GenTable is neat, but it needs some simplification to not be obnoxious

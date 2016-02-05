@@ -1,22 +1,22 @@
-## Time-stamp: <Thu Feb  4 17:19:23 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 22:15:56 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' \code{edger_pairwise()}  Set up a model matrix and set of contrasts to do
+#' Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using EdgeR.
 #'
 #' @param input  a dataframe/vector or expt class containing data, normalization state, etc.
-#' @param conditions default=NULL  a factor of conditions in the experiment
-#' @param batches default=NULL  a factor of batches in the experiment
-#' @param model_cond default=TRUE  Include condition in the experimental model?  This is pretty much always true.
-#' @param model_batch default=FALSE  Include batch in the model?  In most cases this is a good thing(tm).
-#' @param model_intercept default=FALSE  Use cell means or intercept? (I default to the former,
+#' @param conditions   a factor of conditions in the experiment
+#' @param batches   a factor of batches in the experiment
+#' @param model_cond   Include condition in the experimental model?  This is pretty much always true.
+#' @param model_batch   Include batch in the model?  In most cases this is a good thing(tm).
+#' @param model_intercept   Use cell means or intercept? (I default to the former,
 #'   but they work out the same)
-#' @param alt_model default=NULL  An alternate experimental model to use
-#' @param extra_contrasts default=NULL  some extra contrasts to add to the list
+#' @param alt_model   An alternate experimental model to use
+#' @param extra_contrasts   some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
-#' @param annot_df default=NULL  Add some annotation information to the data tables?
+#' @param annot_df   Add some annotation information to the data tables?
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #' @return A list including the following information:
 #'   contrasts = The string representation of the contrasts performed.

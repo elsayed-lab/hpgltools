@@ -14,33 +14,33 @@ topgo_trees(tg, score_limit = 0.01, sigforall = TRUE,
 \arguments{
 \item{tg}{data from simple_topgo()}
 
-\item{score_limit}{default=0.01  score limit to decide whether to add to the tree}
+\item{score_limit}{score limit to decide whether to add to the tree}
 
-\item{sigforall}{default=TRUE  add scores to the tree?}
+\item{sigforall}{add scores to the tree?}
 
-\item{do_mf_fisher_tree}{default=TRUE  Add the fisher score molecular function tree?}
+\item{do_mf_fisher_tree}{Add the fisher score molecular function tree?}
 
-\item{do_bp_fisher_tree}{default=TRUE  Add the fisher biological process tree?}
+\item{do_bp_fisher_tree}{Add the fisher biological process tree?}
 
-\item{do_cc_fisher_tree}{default=TRUE  Add the fisher cellular component tree?}
+\item{do_cc_fisher_tree}{Add the fisher cellular component tree?}
 
-\item{do_mf_ks_tree}{default=FALSE  Add the ks molecular function tree?}
+\item{do_mf_ks_tree}{Add the ks molecular function tree?}
 
-\item{do_bp_ks_tree}{default=FALSE  Add the ks biological process tree?}
+\item{do_bp_ks_tree}{Add the ks biological process tree?}
 
-\item{do_cc_ks_tree}{default=FALSE  Add the ks cellular component tree?}
+\item{do_cc_ks_tree}{Add the ks cellular component tree?}
 
-\item{do_mf_el_tree}{default=FALSE  Add the el molecular function tree?}
+\item{do_mf_el_tree}{Add the el molecular function tree?}
 
-\item{do_bp_el_tree}{default=FALSE  Add the el biological process tree?}
+\item{do_bp_el_tree}{Add the el biological process tree?}
 
-\item{do_cc_el_tree}{default=FALSE  Add the el cellular component tree?}
+\item{do_cc_el_tree}{Add the el cellular component tree?}
 
-\item{do_mf_weight_tree}{default=FALSE Add the weight mf tree?}
+\item{do_mf_weight_tree}{Add the weight mf tree?}
 
-\item{do_bp_weight_tree}{default=FALSE Add the bp weighted tree?}
+\item{do_bp_weight_tree}{Add the bp weighted tree?}
 
-\item{do_cc_weight_tree}{default=FALSE Add the guess}
+\item{do_cc_weight_tree}{Add the guess}
 }
 \value{
 a big list including the various outputs from topgo

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{gotest}
 \alias{gotest}
-\title{gotest()  Test GO ids to see if they are useful.
+\title{Test GO ids to see if they are useful.
 This just wraps gotst in mapply.}
 \usage{
 gotest(go)
@@ -14,14 +14,16 @@ gotest(go)
 Some text
 }
 \description{
-gotest()  Test GO ids to see if they are useful.
+Test GO ids to see if they are useful.
 This just wraps gotst in mapply.
 }
 \examples{
-## gotest("GO:0032559")
+\dontrun{
+ gotest("GO:0032559")
 ## > 1
-## gotest("GO:0923429034823904")
+ gotest("GO:0923429034823904")
 ## > 0
+}
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}

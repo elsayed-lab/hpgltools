@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{genefilter_cv_counts}
 \alias{genefilter_cv_counts}
-\title{\code{genefilter_cv_counts()}  Filter genes from a dataset outside a range of variance}
+\title{Filter genes from a dataset outside a range of variance}
 \usage{
 genefilter_cv_counts(count_table, cv_min = 0.01, cv_max = 1000,
   verbose = FALSE)
@@ -10,17 +10,17 @@ genefilter_cv_counts(count_table, cv_min = 0.01, cv_max = 1000,
 \arguments{
 \item{count_table}{input data frame of counts by sample}
 
-\item{cv_min}{default=0.01  a minimum coefficient of variance}
+\item{cv_min}{a minimum coefficient of variance}
 
-\item{cv_max}{default=1000  guess}
+\item{cv_max}{guess}
 
-\item{verbose}{default=FALSE  If set to true, prints number of genes removed / remaining}
+\item{verbose}{If set to true, prints number of genes removed / remaining}
 }
 \value{
 dataframe of counts without the low-count genes
 }
 \description{
-\code{genefilter_cv_counts()}  Filter genes from a dataset outside a range of variance
+Filter genes from a dataset outside a range of variance
 }
 \examples{
 \dontrun{

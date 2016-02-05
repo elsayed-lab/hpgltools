@@ -2,7 +2,7 @@
 % Please edit documentation in R/pca.r
 \name{pca_information}
 \alias{pca_information}
-\title{\code{pca_information()}  Gather information about principle components.}
+\title{Gather information about principle components.}
 \usage{
 pca_information(expt_data, expt_design = NULL, expt_factors = c("condition",
   "batch"), num_components = NULL, plot_pcas = FALSE,
@@ -11,18 +11,18 @@ pca_information(expt_data, expt_design = NULL, expt_factors = c("condition",
 \arguments{
 \item{expt_data}{the data to analyze (usually exprs(somedataset)).}
 
-\item{expt_design}{default=NULL  a dataframe describing the experimental design, containing columns with
+\item{expt_design}{a dataframe describing the experimental design, containing columns with
 useful information like the conditions, batches, number of cells, whatever...}
 
-\item{expt_factors}{default=c("condition","batch")  a character list of experimental conditions to query
+\item{expt_factors}{a character list of experimental conditions to query
 for R^2 against the fast.svd of the data.}
 
-\item{num_components}{default=NULL  a number of principle components to compare the design factors against.
+\item{num_components}{a number of principle components to compare the design factors against.
 If left null, it will query the same number of components as factors asked for.}
 
-\item{plot_pcas}{default=FALSE  plot the set of PCA plots for every pair of PCs queried.}
+\item{plot_pcas}{plot the set of PCA plots for every pair of PCs queried.}
 
-\item{plot_labels}{default="fancy"  how to label the glyphs on the plot.}
+\item{plot_labels}{how to label the glyphs on the plot.}
 }
 \value{
 a list of fun pca information:

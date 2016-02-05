@@ -9,7 +9,7 @@ concatenate_runs(expt, column = "replicate")
 \arguments{
 \item{expt}{an experiment class containing the requisite metadata and count tables}
 
-\item{column}{default='replicate'  a column of the design matrix used to specify which samples are replicates}
+\item{column}{a column of the design matrix used to specify which samples are replicates}
 }
 \value{
 the input expt with the new design matrix, batches, conditions, colors, and count tables.

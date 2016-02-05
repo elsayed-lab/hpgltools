@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_sample_heatmap}
 \alias{hpgl_sample_heatmap}
-\title{hpgl_sample_heatmap()  Make a heatmap.3 description of the similarity of the genes among samples.}
+\title{Make a heatmap.3 description of the similarity of the genes among samples.}
 \usage{
 hpgl_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
   title = NULL, Rowv = FALSE, ...)
@@ -10,15 +10,15 @@ hpgl_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
 \arguments{
 \item{data}{an expt/expressionset/dataframe set of samples}
 
-\item{colors}{default=NULL  a color scheme}
+\item{colors}{a color scheme}
 
-\item{design}{default=NULL  a design matrix}
+\item{design}{a design matrix}
 
-\item{names}{default=NULL  add names?}
+\item{names}{add names?}
 
-\item{title}{default=NULL  title of the plot.}
+\item{title}{title of the plot.}
 
-\item{Rowv}{default=FALSE  include the row names}
+\item{Rowv}{include the row names}
 
 \item{...}{more parameters for a good time}
 }
@@ -26,7 +26,7 @@ hpgl_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
 a recordPlot() heatmap describing the samples.
 }
 \description{
-hpgl_sample_heatmap()  Make a heatmap.3 description of the similarity of the genes among samples.
+Make a heatmap.3 description of the similarity of the genes among samples.
 }
 \seealso{
 \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}

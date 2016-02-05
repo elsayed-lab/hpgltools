@@ -2,18 +2,18 @@
 % Please edit documentation in R/pca.r
 \name{pca_plot_smallbatch}
 \alias{pca_plot_smallbatch}
-\title{\code{pca_plot_smallbatch()}  ggplot2 plots of PCA data with <= 5 batches.}
+\title{ggplot2 plots of PCA data with <= 5 batches.}
 \usage{
 pca_plot_smallbatch(df, size = 5, first = "PC1", second = "PC2")
 }
 \arguments{
 \item{df}{A dataframe of PC1/PC2 and other arbitrary data.}
 
-\item{size}{default=5  The size of glyphs in the plot.}
+\item{size}{The size of glyphs in the plot.}
 
-\item{first}{default='PC1'  The first component}
+\item{first}{The first component}
 
-\item{second}{default='PC2'  The second component}
+\item{second}{The second component}
 }
 \value{
 a ggplot2 plot of principle components 1 and 2.

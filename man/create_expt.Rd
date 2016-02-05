@@ -2,7 +2,7 @@
 % Please edit documentation in R/count_tables.r
 \name{create_expt}
 \alias{create_expt}
-\title{\code{create_expt()}  Wrap bioconductor's expressionset to include some other extraneous
+\title{Wrap bioconductor's expressionset to include some other extraneous
 information.  This simply calls create_experiment and then does
 expt_subset for everything}
 \usage{
@@ -13,39 +13,39 @@ create_expt(file = NULL, color_hash = NULL, suffix = ".count.gz",
   low_files = FALSE, ...)
 }
 \arguments{
-\item{file}{default=NULL  a comma separated file describing the samples with
+\item{file}{a comma separated file describing the samples with
 information like condition,batch,count_filename,etc}
 
-\item{color_hash}{default=NULL  a hash which describes how to color the samples,
+\item{color_hash}{a hash which describes how to color the samples,
 it will generate its own colors using colorBrewer}
 
-\item{suffix}{default='.count.gz'  when looking for the count tables in processed_data
+\item{suffix}{when looking for the count tables in processed_data
 look for this suffix on the end of the files.}
 
-\item{header}{default=FALSE  Does the csv metadata file have a header?}
+\item{header}{Does the csv metadata file have a header?}
 
-\item{gene_info}{default=NULL  annotation information describing the rows of the data set, usually
+\item{gene_info}{annotation information describing the rows of the data set, usually
 this comes from a call to import.gff()}
 
-\item{by_type}{default=FALSE  when looking for count tables, are they organized by type?}
+\item{by_type}{when looking for count tables, are they organized by type?}
 
-\item{by_sample}{default=FALSE  or by sample?  I do all mine by sample, but others do by type...}
+\item{by_sample}{or by sample?  I do all mine by sample, but others do by type...}
 
-\item{sep}{default=','  some people prefer their csv files as tab or semicolon separated.}
+\item{sep}{some people prefer their csv files as tab or semicolon separated.}
 
-\item{include_type}{default='all'  I have usually assumed that all gff annotations should be used,
+\item{include_type}{I have usually assumed that all gff annotations should be used,
 but that is not always true, this allows one to limit.}
 
-\item{include_gff}{default=NULL  A gff file to help in sorting which features to keep}
+\item{include_gff}{A gff file to help in sorting which features to keep}
 
-\item{count_dataframe}{default=NULL  If one does not wish to read the count tables from processed_data/
+\item{count_dataframe}{If one does not wish to read the count tables from processed_data/
 they may instead be fed here}
 
-\item{meta_dataframe}{default=NULL  an optional dataframe containing the metadata rather than a file}
+\item{meta_dataframe}{an optional dataframe containing the metadata rather than a file}
 
-\item{savefile}{default='expt'  an Rdata filename prefix for saving the data of the resulting expt.}
+\item{savefile}{an Rdata filename prefix for saving the data of the resulting expt.}
 
-\item{low_files}{default=FALSE  whether or not to explicitly lowercase the filenames when searching in processed_data/}
+\item{low_files}{whether or not to explicitly lowercase the filenames when searching in processed_data/}
 
 \item{...}{more parameters are fun}
 }

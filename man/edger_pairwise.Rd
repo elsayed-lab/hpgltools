@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_edger.r
 \name{edger_pairwise}
 \alias{edger_pairwise}
-\title{\code{edger_pairwise()}  Set up a model matrix and set of contrasts to do
+\title{Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using EdgeR.}
 \usage{
 edger_pairwise(input, conditions = NULL, batches = NULL,
@@ -12,26 +12,26 @@ edger_pairwise(input, conditions = NULL, batches = NULL,
 \arguments{
 \item{input}{a dataframe/vector or expt class containing data, normalization state, etc.}
 
-\item{conditions}{default=NULL  a factor of conditions in the experiment}
+\item{conditions}{a factor of conditions in the experiment}
 
-\item{batches}{default=NULL  a factor of batches in the experiment}
+\item{batches}{a factor of batches in the experiment}
 
-\item{model_cond}{default=TRUE  Include condition in the experimental model?  This is pretty much always true.}
+\item{model_cond}{Include condition in the experimental model?  This is pretty much always true.}
 
-\item{model_batch}{default=FALSE  Include batch in the model?  In most cases this is a good thing(tm).}
+\item{model_batch}{Include batch in the model?  In most cases this is a good thing(tm).}
 
-\item{model_intercept}{default=FALSE  Use cell means or intercept? (I default to the former,
+\item{model_intercept}{Use cell means or intercept? (I default to the former,
 but they work out the same)}
 
-\item{alt_model}{default=NULL  An alternate experimental model to use}
+\item{alt_model}{An alternate experimental model to use}
 
-\item{extra_contrasts}{default=NULL  some extra contrasts to add to the list
+\item{extra_contrasts}{some extra contrasts to add to the list
 This can be pretty neat, lets say one has conditions A,B,C,D,E
 and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 de_vs_cb = (E-D)-(C-B),"}
 
-\item{annot_df}{default=NULL  Add some annotation information to the data tables?}
+\item{annot_df}{Add some annotation information to the data tables?}
 
 \item{...}{The elipsis parameter is fed to write_edger() at the end.}
 }
@@ -44,7 +44,7 @@ A list including the following information:
   all_tables = a list of tables for the contrasts performed.
 }
 \description{
-\code{edger_pairwise()}  Set up a model matrix and set of contrasts to do
+Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using EdgeR.
 }
 \examples{

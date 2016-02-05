@@ -2,14 +2,14 @@
 % Please edit documentation in R/ontology_shared.r
 \name{subset_ontology_search}
 \alias{subset_ontology_search}
-\title{subset_ontology_search()  Perform ontology searches on data subsets.}
+\title{Perform ontology searches on data subsets.}
 \usage{
 subset_ontology_search(changed_counts, doplot = FALSE, ...)
 }
 \arguments{
 \item{changed_counts}{the list of changed counts as ups and downs}
 
-\item{doplot}{default=FALSE  include plots in the results}
+\item{doplot}{include plots in the results}
 
 \item{...}{extra arguments which I don't realize}
 }
@@ -17,6 +17,6 @@ subset_ontology_search(changed_counts, doplot = FALSE, ...)
 a list of ontology search results, up and down for each contrast
 }
 \description{
-subset_ontology_search()  Perform ontology searches on data subsets.
+Perform ontology searches on data subsets.
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/gvis_plots.r
 \name{hpgl_gvis_ma_plot}
 \alias{hpgl_gvis_ma_plot}
-\title{hpgl_gvis_ma_plot()  Make an html version of an MA plot.}
+\title{Make an html version of an MA plot.}
 \usage{
 hpgl_gvis_ma_plot(counts, degenes, tooltip_data = NULL,
   filename = "html/gvis_ma_plot.html", base_url = "", ...)
@@ -13,11 +13,11 @@ which is to say the output from voom/voomMod/hpgl_voom().}
 
 \item{degenes}{df from toptable or its friends containing p-values.}
 
-\item{tooltip_data}{default=NULL  a df of tooltip information.}
+\item{tooltip_data}{a df of tooltip information.}
 
-\item{filename}{default='html/gvis_ma_plot.html'  a filename to write a fancy html graph.}
+\item{filename}{a filename to write a fancy html graph.}
 
-\item{base_url}{default=''  a string with a basename used for generating URLs for clicking dots on the graph.}
+\item{base_url}{a string with a basename used for generating URLs for clicking dots on the graph.}
 
 \item{...}{more options are more options}
 }
@@ -26,10 +26,12 @@ NULL, but along the way an html file is generated which
 contains a googleVis MA plot.  See hpgl_ma_plot() for details.
 }
 \description{
-hpgl_gvis_ma_plot()  Make an html version of an MA plot.
+Make an html version of an MA plot.
 }
 \examples{
-## hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+\dontrun{
+ hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+}
 }
 \seealso{
 \link{hpgl_ma_plot}

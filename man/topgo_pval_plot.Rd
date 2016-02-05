@@ -10,13 +10,13 @@ topgo_pval_plot(topgo, wrapped_width = 20, cutoff = 0.1, n = 12,
 \arguments{
 \item{topgo}{some data from topgo!}
 
-\item{wrapped_width}{default=20  maximum width of the text names}
+\item{wrapped_width}{maximum width of the text names}
 
-\item{cutoff}{default=0.1  p-value cutoff for the plots}
+\item{cutoff}{p-value cutoff for the plots}
 
-\item{n}{default=12  maximum number of ontologies to include}
+\item{n}{maximum number of ontologies to include}
 
-\item{type}{default='fisher'  type of score to use}
+\item{type}{type of score to use}
 }
 \value{
 a list of MF/BP/CC pvalue plots

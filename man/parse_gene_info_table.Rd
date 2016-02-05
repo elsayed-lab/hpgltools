@@ -13,13 +13,11 @@ parse_gene_info_table(filepath, verbose = FALSE)
 }
 \value{
 Returns a dataframe of gene info.
-
+}
+\description{
 An example input file is the T. brucei Lister427 gene information table
 available at:
 http://tritrypdb.org/common/downloads/Current_Release/TbruceiLister427/txt/data/TriTrypDB-5.0_TbruceiLister427Gene.txt
-}
-\description{
-TriTrypDB gene information table parser
 }
 \author{
 Keith Hughitt

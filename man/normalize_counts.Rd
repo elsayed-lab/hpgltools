@@ -2,17 +2,17 @@
 % Please edit documentation in R/normalization.r
 \name{normalize_counts}
 \alias{normalize_counts}
-\title{\code{normalize_counts()}  Perform a simple normalization of a count table}
+\title{Perform a simple normalization of a count table}
 \usage{
 normalize_counts(data, design = NULL, norm = "raw")
 }
 \arguments{
 \item{data}{A matrix of count data}
 
-\item{design}{default=NULL A dataframe describing the experimental design
+\item{design}{A dataframe describing the experimental design
 (conditions/batches/etc)}
 
-\item{norm}{default='raw' A normalization to perform:
+\item{norm}{A normalization to perform:
 'sf|quant|qsmooth|tmm|upperquartile|tmm|rle'
 I keep wishy-washing on whether design is a required argument.}
 }
@@ -20,7 +20,7 @@ I keep wishy-washing on whether design is a required argument.}
 dataframe of normalized(counts)
 }
 \description{
-\code{normalize_counts()}  Perform a simple normalization of a count table
+Perform a simple normalization of a count table
 }
 \examples{
 \dontrun{

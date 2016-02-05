@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{golevel}
 \alias{golevel}
-\title{golevel()  Get a go level approximation from a set of IDs.
+\title{Get a go level approximation from a set of IDs.
 This just wraps golev() in mapply.}
 \usage{
 golevel(go)
@@ -14,12 +14,14 @@ golevel(go)
 Some text
 }
 \description{
-golevel()  Get a go level approximation from a set of IDs.
+Get a go level approximation from a set of IDs.
 This just wraps golev() in mapply.
 }
 \examples{
-## golevel(c("GO:0032559", "GO:0000001")
+\dontrun{
+ golevel(c("GO:0032559", "GO:0000001")
 ## > 3 4
+}
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}

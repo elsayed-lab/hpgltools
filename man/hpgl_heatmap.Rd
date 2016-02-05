@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_heatmap}
 \alias{hpgl_heatmap}
-\title{hpgl_heatmap()  Make a heatmap.3 plots, does the work for hpgl_disheat and hpgl_corheat.}
+\title{Make a heatmap.3 plots, does the work for hpgl_disheat and hpgl_corheat.}
 \usage{
 hpgl_heatmap(data, colors = NULL, design = NULL, method = "pearson",
   names = NULL, type = "correlation", row = "batch", title = NULL, ...)
@@ -10,19 +10,19 @@ hpgl_heatmap(data, colors = NULL, design = NULL, method = "pearson",
 \arguments{
 \item{data}{a dataframe, expt, or expressionset to work with.}
 
-\item{colors}{default=NULL  a color scheme.}
+\item{colors}{a color scheme.}
 
-\item{design}{default=NULL  a design matrix.}
+\item{design}{a design matrix.}
 
-\item{method}{default='pearson'   distance or correlation metric to use.}
+\item{method}{distance or correlation metric to use.}
 
-\item{names}{default=NULL  alternate names to use.}
+\item{names}{alternate names to use.}
 
-\item{type}{default="correlation"}
+\item{type}{correlation or distance or sample}
 
-\item{row}{default='batch'  what to place on the row of the map, batches or conditions?}
+\item{row}{what to place on the row of the map, batches or conditions?}
 
-\item{title}{default=NULL  a title for the plot.}
+\item{title}{a title for the plot.}
 
 \item{...}{I like elipses}
 }
@@ -30,7 +30,7 @@ hpgl_heatmap(data, colors = NULL, design = NULL, method = "pearson",
 a recordPlot() heatmap describing the distance between samples.
 }
 \description{
-hpgl_heatmap()  Make a heatmap.3 plots, does the work for hpgl_disheat and hpgl_corheat.
+Make a heatmap.3 plots, does the work for hpgl_disheat and hpgl_corheat.
 }
 \seealso{
 \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}

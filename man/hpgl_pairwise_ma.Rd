@@ -2,14 +2,14 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_pairwise_ma}
 \alias{hpgl_pairwise_ma}
-\title{hpgl_pairwise_ma()  Plot all pairwise MA plots in an experiment.}
+\title{Plot all pairwise MA plots in an experiment.}
 \usage{
 hpgl_pairwise_ma(data, log = NULL, ...)
 }
 \arguments{
 \item{data}{an expt expressionset or data frame}
 
-\item{log}{default=NULL  is the data in log format?}
+\item{log}{is the data in log format?}
 
 \item{...}{more options are good}
 }
@@ -21,7 +21,9 @@ Use affy's ma.plot() on every pair of columns in a data set to help
 diagnose problematic samples.
 }
 \examples{
-## ma_plots = hpgl_pairwise_ma(expt=some_expt)
+\dontrun{
+ ma_plots = hpgl_pairwise_ma(expt=some_expt)
+}
 }
 \seealso{
 \link[affy]{ma.plot}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_shared.r
 \name{combine_de_table}
 \alias{combine_de_table}
-\title{combine_de_table()  Given a limma, edger, and deseq table, combine them}
+\title{Given a limma, edger, and deseq table, combine them}
 \usage{
 combine_de_table(li, ed, de, ba, table, annot_df = NULL, inverse = FALSE,
   include_basic = TRUE)
@@ -18,13 +18,13 @@ combine_de_table(li, ed, de, ba, table, annot_df = NULL, inverse = FALSE,
 
 \item{table}{name of the table to merge}
 
-\item{annot_df}{default=NULL add some annotation information}
+\item{annot_df}{add some annotation information}
 
-\item{inverse}{default=FALSE  invert the fold changes}
+\item{inverse}{invert the fold changes}
 
-\item{include_basic}{default=TRUE  include the basic table?}
+\item{include_basic}{include the basic table?}
 }
 \description{
-combine_de_table()  Given a limma, edger, and deseq table, combine them
+Given a limma, edger, and deseq table, combine them
 }
 

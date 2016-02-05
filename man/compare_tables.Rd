@@ -2,23 +2,23 @@
 % Please edit documentation in R/de_shared.r
 \name{compare_tables}
 \alias{compare_tables}
-\title{compare_tables()  See how similar are results from limma/deseq/edger.}
+\title{See how similar are results from limma/deseq/edger.}
 \usage{
 compare_tables(limma = NULL, deseq = NULL, edger = NULL, basic = NULL,
   include_basic = TRUE, annot_df = NULL, ...)
 }
 \arguments{
-\item{limma}{default=NULL  limma data from limma_pairwise()}
+\item{limma}{limma data from limma_pairwise()}
 
-\item{deseq}{default=NULL  deseq data from deseq2_pairwise()}
+\item{deseq}{deseq data from deseq2_pairwise()}
 
-\item{edger}{default=NULL  edger data from edger_pairwise()}
+\item{edger}{edger data from edger_pairwise()}
 
-\item{basic}{default=NULL  basic data from basic_pairwise()}
+\item{basic}{basic data from basic_pairwise()}
 
-\item{include_basic}{default=TRUE  include the basic data?}
+\item{include_basic}{include the basic data?}
 
-\item{annot_df}{default=NULL include annotation data}
+\item{annot_df}{include annotation data}
 
 \item{...}{more options!}
 }
@@ -33,10 +33,12 @@ expressed genes.  This seeks to provide a quick and dirty metric
 describing the degree to which they (dis)agree.
 }
 \examples{
-## l = limma_pairwise(expt)
-## d = deseq_pairwise(expt)
-## e = edger_pairwise(expt)
-## fun = compare_tables(limma=l, deseq=d, edger=e)
+\dontrun{
+ l = limma_pairwise(expt)
+ d = deseq_pairwise(expt)
+ e = edger_pairwise(expt)
+ fun = compare_tables(limma=l, deseq=d, edger=e)
+}
 }
 \seealso{
 \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}

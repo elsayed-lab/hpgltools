@@ -2,14 +2,14 @@
 % Please edit documentation in R/misc_functions.r
 \name{gff2irange}
 \alias{gff2irange}
-\title{gff2irange()  Try to make import.gff a little more robust}
+\title{Try to make import.gff a little more robust}
 \usage{
 gff2irange(gff, type = NULL)
 }
 \arguments{
 \item{gff}{a gff filename}
 
-\item{type}{default=NULL  a subset to extract
+\item{type}{a subset to extract
 
 Essentially gff2df() above, but returns data suitable for getSet()}
 }
@@ -17,7 +17,7 @@ Essentially gff2df() above, but returns data suitable for getSet()}
 an iranges! (useful for getSeq())
 }
 \description{
-gff2irange()  Try to make import.gff a little more robust
+Try to make import.gff a little more robust
 }
 \examples{
 \dontrun{

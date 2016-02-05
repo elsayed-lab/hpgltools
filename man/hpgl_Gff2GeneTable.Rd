@@ -9,9 +9,9 @@ hpgl_Gff2GeneTable(gffFile, compress = TRUE, split = "=")
 \arguments{
 \item{gffFile}{a gff file}
 
-\item{compress}{default=TRUE compress them}
+\item{compress}{compress them}
 
-\item{split}{default='='  the splitter when reading gff files}
+\item{split}{the splitter when reading gff files}
 }
 \description{
 A copy and paste of clusterProfiler's readGff

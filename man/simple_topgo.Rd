@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_topgo.r
 \name{simple_topgo}
 \alias{simple_topgo}
-\title{simple_topgo()  Perform a simplified topgo analysis}
+\title{Perform a simplified topgo analysis}
 \usage{
 simple_topgo(de_genes, goid_map = "reference/go/id2go.map", goids_df = NULL,
   pvals = NULL, limitby = "fisher", limit = 0.1, signodes = 100,
@@ -13,31 +13,31 @@ simple_topgo(de_genes, goid_map = "reference/go/id2go.map", goids_df = NULL,
 \arguments{
 \item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}
 
-\item{goid_map}{default='reference/go/id2go.map'  a file containing mappings of genes to goids in the format expected by topgo}
+\item{goid_map}{a file containing mappings of genes to goids in the format expected by topgo}
 
-\item{goids_df}{default=NULL  a data frame of the goids which may be used to make the goid_map}
+\item{goids_df}{a data frame of the goids which may be used to make the goid_map}
 
-\item{pvals}{default=NULL  a set of pvalues in the DE data which may be used to improve the topgo results}
+\item{pvals}{a set of pvalues in the DE data which may be used to improve the topgo results}
 
-\item{limitby}{default='fisher'  test to index the results by}
+\item{limitby}{test to index the results by}
 
-\item{limit}{default=0.1  ontology pvalue to use as the lower limit}
+\item{limit}{ontology pvalue to use as the lower limit}
 
-\item{signodes}{default=100  I don't remember right now}
+\item{signodes}{I don't remember right now}
 
-\item{sigforall}{default=TRUE  provide the significance for all nodes?}
+\item{sigforall}{provide the significance for all nodes?}
 
-\item{numchar}{default=300  character limit for the table of results}
+\item{numchar}{character limit for the table of results}
 
-\item{selector}{default='topDiffGenes'  a function name for choosing genes to include}
+\item{selector}{a function name for choosing genes to include}
 
-\item{pval_column}{default='adj.P.Val'  column from which to acquire scores}
+\item{pval_column}{column from which to acquire scores}
 
-\item{overwrite}{default=FALSE  yeah I do not remember this one either}
+\item{overwrite}{yeah I do not remember this one either}
 
-\item{densities}{default=FALSE  the densities, yeah, the densities}
+\item{densities}{the densities, yeah, the densities}
 
-\item{pval_plots}{default=TRUE  include pvalue plots of the results a la clusterprofiler}
+\item{pval_plots}{include pvalue plots of the results a la clusterprofiler}
 
 \item{...}{other options which I do not remember right now}
 }

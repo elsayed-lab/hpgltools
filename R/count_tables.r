@@ -1,6 +1,6 @@
-## Time-stamp: <Wed Feb  3 21:15:11 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 22:10:03 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' \code{create_expt()}  Wrap bioconductor's expressionset to include some other extraneous
+#' Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
 #' expt_subset for everything
 #'
@@ -12,28 +12,27 @@
 #' 'file'.  create_expt() will then just read that filename, it may be
 #' a full pathname or local to the cwd of the project.
 #'
-#' @param file default=NULL  a comma separated file describing the samples with
+#' @param file   a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc
-#' @param color_hash default=NULL  a hash which describes how to color the samples,
+#' @param color_hash   a hash which describes how to color the samples,
 #' it will generate its own colors using colorBrewer
-#' @param suffix default='.count.gz'  when looking for the count tables in processed_data
+#' @param suffix   when looking for the count tables in processed_data
 #' look for this suffix on the end of the files.
-#' @param header default=FALSE  Does the csv metadata file have a header?
-#' @param gene_info default=NULL  annotation information describing the rows of the data set, usually
+#' @param header   Does the csv metadata file have a header?
+#' @param gene_info   annotation information describing the rows of the data set, usually
 #' this comes from a call to import.gff()
-#' @param by_type default=FALSE  when looking for count tables, are they organized by type?
-#' @param by_sample default=FALSE  or by sample?  I do all mine by sample, but others do by type...
-#' @param sep default=','  some people prefer their csv files as tab or semicolon separated.
-#' @param include_type default='all'  I have usually assumed that all gff annotations should be used,
+#' @param by_type   when looking for count tables, are they organized by type?
+#' @param by_sample   or by sample?  I do all mine by sample, but others do by type...
+#' @param sep   some people prefer their csv files as tab or semicolon separated.
+#' @param include_type   I have usually assumed that all gff annotations should be used,
 #' but that is not always true, this allows one to limit.
-#' @param include_gff default=NULL  A gff file to help in sorting which features to keep
-#' @param count_dataframe default=NULL  If one does not wish to read the count tables from processed_data/
+#' @param include_gff   A gff file to help in sorting which features to keep
+#' @param count_dataframe   If one does not wish to read the count tables from processed_data/
 #' they may instead be fed here
-#' @param meta_dataframe default=NULL  an optional dataframe containing the metadata rather than a file
-#' @param savefile default='expt'  an Rdata filename prefix for saving the data of the resulting expt.
-#' @param low_files default=FALSE  whether or not to explicitly lowercase the filenames when searching in processed_data/
+#' @param meta_dataframe   an optional dataframe containing the metadata rather than a file
+#' @param savefile   an Rdata filename prefix for saving the data of the resulting expt.
+#' @param low_files   whether or not to explicitly lowercase the filenames when searching in processed_data/
 #' @param ... more parameters are fun
-#'
 #' @return  experiment an expressionset
 #' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData} \link[Biobase]{exprs}
 #' \link{hpgl_read_files} \link[hash]{as.list.hash}
@@ -127,28 +126,27 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
     return(new_expt)
 }
 
-#' \code{create_experiment()}  Wrap bioconductor's expressionset to include some other extraneous
+#' Wrap bioconductor's expressionset to include some other extraneous
 #' information.
 #'
-#' @param file default=NULL  a comma separated file describing the samples with
+#' @param file   a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc.
 #' @param color_hash  a hash which describes how to color the samples
-#' @param suffix default='.count.gz'  when looking for the count tables in processed_data
+#' @param suffix   when looking for the count tables in processed_data
 #' look for this suffix on the end of the files.
-#' @param header default=FALSE  Does the csv metadata file have a header?
-#' @param gene_info default=NULL  annotation information describing the rows of the data set, usually
+#' @param header   Does the csv metadata file have a header?
+#' @param gene_info   annotation information describing the rows of the data set, usually
 #' this comes from a call to import.gff()
-#' @param by_type default=FALSE  when looking for count tables, are they organized by type?
-#' @param by_sample default=FALSE  or by sample?  I do all mine by sample, but others do by type...
-#' @param include_type default='all'  I have usually assumed that all gff annotations should be used,
+#' @param by_type   when looking for count tables, are they organized by type?
+#' @param by_sample   or by sample?  I do all mine by sample, but others do by type...
+#' @param include_type   I have usually assumed that all gff annotations should be used,
 #' but that is not always true, this allows one to limit.
-#' @param include_gff default=NULL  A gff file to help in sorting which features to keep
-#' @param count_dataframe default=NULL  If one does not wish to read the count tables from processed_data/
+#' @param include_gff   A gff file to help in sorting which features to keep
+#' @param count_dataframe   If one does not wish to read the count tables from processed_data/
 #' they may instead be fed here
-#' @param meta_dataframe default=NULL  an optional dataframe containing the metadata rather than a file
-#' @param sep default=','  some people prefer their csv files as tab or semicolon separated.
+#' @param meta_dataframe   an optional dataframe containing the metadata rather than a file
+#' @param sep   some people prefer their csv files as tab or semicolon separated.
 #' @param ... more parameters
-#'
 #' @return  experiment an expressionset
 #' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData}
 #' \link[Biobase]{exprs} \link{hpgl_read_files} \link[hash]{as.list.hash}
@@ -299,14 +297,13 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
     return(ret)
 }
 
-#' \code{expt_subset()}  Extract a subset of samples following some rule(s) from an
+#'  Extract a subset of samples following some rule(s) from an
 #' experiment class
 #'
 #' @param expt  an expt which is a home-grown class containing an
 #' expressionSet, design, colors, etc.
 #' @param subset  a valid R expression which defines a subset of the
 #' design to keep.
-#'
 #' @return  metadata an expt class which contains the smaller set of
 #' data
 #' @seealso \pkg{Biobase} \link[Biobase]{pData}
@@ -379,18 +376,17 @@ expt_subset <- function(expt, subset=NULL) {
     return(metadata)
 }
 
-#' \code{hpgl_read_files()}  Read a bunch of count tables and create a usable data frame from
+#'  Read a bunch of count tables and create a usable data frame from
 #' them.
 #' It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
 #' It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.
 #'
 #' @param ids  a list of experimental ids
 #' @param files  a list of files to read
-#' @param header default=FALSE  whether or not the count tables include a header row.
-#' @param include_summary_rows default=FALSE  whether HTSeq summary rows should be included.
-#' @param suffix default=NULL  an optional suffix to add to the filenames when reading them.
+#' @param header   whether or not the count tables include a header row.
+#' @param include_summary_rows   whether HTSeq summary rows should be included.
+#' @param suffix  an optional suffix to add to the filenames when reading them.
 #' @param ... more options for happy time
-#'
 #' @return  count_table a data frame of count tables
 #' @seealso \link{create_experiment}
 #' @examples
@@ -471,8 +467,7 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
 #' \code{concatenate_runs()}  Sum the reads/gene for multiple sequencing runs of a single condition/batch
 #'
 #' @param expt  an experiment class containing the requisite metadata and count tables
-#' @param column default='replicate'  a column of the design matrix used to specify which samples are replicates
-#'
+#' @param column  a column of the design matrix used to specify which samples are replicates
 #' @return the input expt with the new design matrix, batches, conditions, colors, and count tables.
 #' @seealso
 #' \pkg{Biobase}
@@ -523,7 +518,7 @@ concatenate_runs <- function(expt, column='replicate') {
     return(final_expt)
 }
 
-#' \code{median_by_factor()}  Create a data frame of the medians of rows by a given factor in the data
+#' Create a data frame of the medians of rows by a given factor in the data
 #'
 #' This assumes of course that (like expressionsets) there are separate columns for each replicate
 #' of the conditions.  This will just iterate through the levels of a factor describing the columns,
@@ -531,7 +526,6 @@ concatenate_runs <- function(expt, column='replicate') {
 #'
 #' @param data  a data frame, presumably of counts.
 #' @param fact  a factor describing the columns in the data.
-#'
 #' @return a data frame of the medians
 #' @examples
 #' \dontrun{

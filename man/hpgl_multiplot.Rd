@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_multiplot}
 \alias{hpgl_multiplot}
-\title{multiplot()  Make a grid of plots.}
+\title{Make a grid of plots.}
 \usage{
 hpgl_multiplot(plots, file, cols = NULL, layout = NULL)
 }
@@ -11,14 +11,14 @@ hpgl_multiplot(plots, file, cols = NULL, layout = NULL)
 
 \item{file}{a file to write to}
 
-\item{cols}{default=NULL  the number of columns in the grid}
+\item{cols}{the number of columns in the grid}
 
-\item{layout}{default=NULL set the layout specifically}
+\item{layout}{set the layout specifically}
 }
 \value{
 a multiplot!
 }
 \description{
-multiplot()  Make a grid of plots.
+Make a grid of plots.
 }
 

@@ -1,23 +1,25 @@
-## Time-stamp: <Thu Feb  4 17:18:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 22:16:25 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' deseq_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
+#'   Plot out 2 coefficients with respect to one another from limma
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
 #' This hopefully makes that easy.
 #'
 #' @param output the set of pairwise comparisons provided by limma_pairwise()
-#' @param x default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot
-#' @param y default=2  the name or number of the second coefficient column to extract, this will be the y-axis of the plot
-#' @param gvis_filename default='limma_scatter.html'  A filename for plotting gvis interactive graphs of the data.
-#' @param gvis_trendline default=TRUE  add a trendline to the gvis plot?
-#' @param tooltip_data default=NULL  a dataframe of gene annotations to be used in the gvis plot
-#' @param flip default=FALSE  flip the axes
-#' @param base_url default=NULL  for gvis plots
+#' @param x   the name or number of the first coefficient column to extract, this will be the x-axis of the plot
+#' @param y   the name or number of the second coefficient column to extract, this will be the y-axis of the plot
+#' @param gvis_filename   A filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline   add a trendline to the gvis plot?
+#' @param tooltip_data   a dataframe of gene annotations to be used in the gvis plot
+#' @param flip   flip the axes
+#' @param base_url   for gvis plots
 #' @return a ggplot2 plot showing the relationship between the two coefficients
 #' @seealso \link{hpgl_linear_scatter} \link{limma_pairwise}
-#' @export
 #' @examples
-#' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' \dontrun{
+#'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' }
+#' @export
 deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_scatter.html",
                                       gvis_filename=NULL,
                                       gvis_trendline=TRUE, tooltip_data=NULL,
@@ -85,17 +87,16 @@ deseq_pairwise <- function(...) {
     deseq2_pairwise(...)
 }
 
-#' deseq2_pairwise()  Set up a model matrix and set of contrasts to do
+#' Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using DESeq2.
 #'
 #' @param input  A dataframe/vector or expt class containing data, normalization state, etc.
-#' @param conditions default=NULL  A factor of conditions in the experiment
-#' @param batches default=NULL A factor of batches in the experiment
-#' @param model_cond default=TRUE  Have condition in the experimental model?
-#' @param model_batch default=FALSE  Have batch in the experimental model?
-#' @param annot_df default=NULL  Include some annotation information in the results?
+#' @param conditions   A factor of conditions in the experiment
+#' @param batches  A factor of batches in the experiment
+#' @param model_cond   Have condition in the experimental model?
+#' @param model_batch   Have batch in the experimental model?
+#' @param annot_df   Include some annotation information in the results?
 #' @param ... triple dots!
-#'
 #' @return A list including the following information:
 #'   run = the return from calling DESeq()
 #'   denominators = list of denominators in the contrasts
@@ -105,11 +106,11 @@ deseq_pairwise <- function(...) {
 #'   all_tables = list of DE tables
 #' @seealso \pkg{DESeq2} \code{\link[DESeq2]{results}} \code{\link[DESeq2]{estimateSizeFactors}}
 #'          \code{\link[DESeq2]{estimateDispersions}} \code{\link[DESeq2]{nbinomWaldTest}}
-#' @export
 #' @examples
 #' \dontrun{
 #' pretend = deseq2_pairwise(data, conditions, batches)
 #' }
+#' @export
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                             model_batch=FALSE, annot_df=NULL, ...) {
     arglist <- list(...)

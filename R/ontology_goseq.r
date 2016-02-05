@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 10:25:07 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 22:55:19 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -6,13 +6,12 @@
 #' be the output from goseq including information like
 #' numbers/category, GOids, etc.  It requires a column 'category' which contains: GO:000001 and such.
 #' @param file a csv file to which to write the table
-#'
 #' @return the ontology table with annotation information included
 #' @seealso \pkg{goseq}
-#' @export
 #' @examples
-#' ## annotated_go = goseq_table(go_ids)
-#' ## head(annotated_go, n=1)
+#' \dontrun{
+#'  annotated_go = goseq_table(go_ids)
+#'  head(annotated_go, n=1)
 #' ## >        category numDEInCat numInCat over_represented_pvalue
 #' ## > 571  GO:0006364          9       26            4.655108e-08
 #' ## >      under_represented_pvalue       qvalue ontology
@@ -23,6 +22,8 @@
 #' ## > 571        "35S primary transcript processing, GO:0006365"
 #' ## >        secondary    definition
 #' ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal RNA (rRNA) transcript into one or more mature rRNA molecules.
+#' }
+#' @export
 goseq_table <- function(df, file=NULL) {
     if (is.null(df$term)) {
         df$term <- goterm(df$category)
@@ -64,17 +65,16 @@ goseq_table <- function(df, file=NULL) {
 #' @param all_genes the universe of possible genes
 #' @param lengths the length of each gene with an ID in de_genes
 #' @param goids a list of ontology accessions to gene accessions
-#' @param doplot default=TRUE  include pwf plots
-#' @param adjust default=0.1  minimum adjusted pvalue
-#' @param pvalue default=0.1  minimum pvalue
-#' @param qvalue default=0.1  minimum qvalue
-#' @param goseq_method default='Wallenius'  testing used by goseq
-#' @param padjust_method default='BH'  which method to adjust the pvalues
-#' @param species default=NULL  optionally choose a species from supportedOrganisms()
-#' @param length_db default='ensGene'  Source of gene lengths
-#' @param gff default=NULL  gff file source of gene lengths
+#' @param doplot   include pwf plots
+#' @param adjust   minimum adjusted pvalue
+#' @param pvalue   minimum pvalue
+#' @param qvalue   minimum qvalue
+#' @param goseq_method   testing used by goseq
+#' @param padjust_method   which method to adjust the pvalues
+#' @param species   optionally choose a species from supportedOrganisms()
+#' @param length_db   Source of gene lengths
+#' @param gff   gff file source of gene lengths
 #' @param ... extra parameters which I do not recall
-#'
 #' @return a big list including:
 #'   the pwd:pwf function,
 #'   alldata:the godata dataframe,
@@ -228,11 +228,11 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
 #' Make a pvalue plot from goseq data
 #'
 #' @param goterms some data from goseq!
-#' @param wrapped_width default=20 the number of characters before wrapping to help legibility
-#' @param cutoff default=0.1  pvalue cutoff for the plot
-#' @param n default=10   how many groups to include
-#' @param mincat default=10  minimum size of the category
-#' @param level default=NULL  levels of the ontology tree to use
+#' @param wrapped_width the number of characters before wrapping to help legibility
+#' @param cutoff   pvalue cutoff for the plot
+#' @param n    how many groups to include
+#' @param mincat   minimum size of the category
+#' @param level   levels of the ontology tree to use
 #' @return plots!
 #' @seealso \link[goseq]{goseq} \pkg{clusterProfiler} \code{\link{pval_plot}}
 #' @export
@@ -327,12 +327,12 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
 #'
 #' @param de_genes some differentially expressed genes
 #' @param godata data from goseq
-#' @param goid_map default='reference/go/id2go.map'  file to save go id mapping
-#' @param score_limit default=0.01  score limit for the coloring
-#' @param goids_df default=NULL  a mapping of IDs to GO in the Ramigo expected format
-#' @param overwrite default=FALSE  overwrite the trees
-#' @param selector default='topDiffGenes'  a function for choosing genes
-#' @param pval_column default='adj.P.Val' column to acquire pvalues
+#' @param goid_map   file to save go id mapping
+#' @param score_limit   score limit for the coloring
+#' @param goids_df   a mapping of IDs to GO in the Ramigo expected format
+#' @param overwrite   overwrite the trees
+#' @param selector   a function for choosing genes
+#' @param pval_column  column to acquire pvalues
 #' @return a plot!
 #' @seealso \pkg{Ramigo}
 #' @export

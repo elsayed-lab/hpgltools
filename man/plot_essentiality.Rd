@@ -2,7 +2,7 @@
 % Please edit documentation in R/tnseq.r
 \name{plot_essentiality}
 \alias{plot_essentiality}
-\title{plot_essentiality()  Plot the essentiality of a library as per DeJesus et al.}
+\title{Plot the essentiality of a library as per DeJesus et al.}
 \usage{
 plot_essentiality(file)
 }
@@ -13,6 +13,6 @@ plot_essentiality(file)
 A couple of plots
 }
 \description{
-plot_essentiality()  Plot the essentiality of a library as per DeJesus et al.
+Plot the essentiality of a library as per DeJesus et al.
 }
 

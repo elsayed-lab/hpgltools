@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_density}
 \alias{hpgl_density}
-\title{\code{hpgl_density()}  Density plots!}
+\title{Density plots!}
 \usage{
 hpgl_density(data, colors = NULL, names = NULL, position = "identity",
   fill = NULL, title = NULL, scale = NULL)
@@ -10,23 +10,23 @@ hpgl_density(data, colors = NULL, names = NULL, position = "identity",
 \arguments{
 \item{data}{an expt, expressionset, or data frame.}
 
-\item{colors}{default=NULL  a color scheme to use.}
+\item{colors}{a color scheme to use.}
 
-\item{names}{default=NULL  names of the samples.}
+\item{names}{names of the samples.}
 
-\item{position}{default='identity'  how to place the lines, either let them overlap (identity), or stack them.}
+\item{position}{how to place the lines, either let them overlap (identity), or stack them.}
 
-\item{fill}{default=NULL  fill the distributions?  This might make the plot unreasonably colorful.}
+\item{fill}{fill the distributions?  This might make the plot unreasonably colorful.}
 
-\item{title}{default=NULL  a title for the plot.}
+\item{title}{a title for the plot.}
 
-\item{scale}{default=NULL  plot on the log scale?}
+\item{scale}{plot on the log scale?}
 }
 \value{
 a density plot!
 }
 \description{
-\code{hpgl_density()}  Density plots!
+Density plots!
 }
 \examples{
 \dontrun{

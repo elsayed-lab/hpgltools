@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 10:25:33 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 22:56:52 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -9,14 +9,14 @@
 #' @param de_genes  input list of differentially expressed genes
 #' @param gff The annotation information for this genome
 #' @param goids The set of GOids, as before in the format ID/GO
-#' @param universe_merge default='ID'  column from which to create the universe of genes
-#' @param second_merge_try default='locus_tag'  if the first universe merge fails, try this
-#' @param organism default='fun'  genbank organism to use
-#' @param pcutoff default=0.1  pvalue cutoff for deciding significant
-#' @param direction default='over'  under or over represented categories
-#' @param conditional default=FALSE  perform a conditional search?
-#' @param categorysize default=NULL  category size below which to not include groups
-#' @param gff_type default='CDS'  gff column to use for creating the universe
+#' @param universe_merge   column from which to create the universe of genes
+#' @param second_merge_try   if the first universe merge fails, try this
+#' @param organism   genbank organism to use
+#' @param pcutoff   pvalue cutoff for deciding significant
+#' @param direction   under or over represented categories
+#' @param conditional   perform a conditional search?
+#' @param categorysize   category size below which to not include groups
+#' @param gff_type   gff column to use for creating the universe
 #' @param ... more parameters!
 #' @return dunno yet
 #' @seealso \pkg{GSEABase} \pkg{Category}
@@ -242,12 +242,12 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
 #' @param mf_under mfunder data
 #' @param bp_under bpunder data
 #' @param cc_under ccunder expression data
-#' @param goid_map default='reference/go/id2go.map'  a mapping of IDs to GO in the Ramigo expected format
-#' @param score_limit default=0.01   maximum score to include as 'significant'
-#' @param goids_df default=NULL  a dataframe of available goids (used to generate goid_map)
-#' @param overwrite default=FALSE  overwrite the goid_map?
-#' @param selector default='topDiffGenes'   a function to choose differentially expressed genes in the data
-#' @param pval_column default='adj.P.Val'   a column in the data to be used to extract pvalue scores
+#' @param goid_map   a mapping of IDs to GO in the Ramigo expected format
+#' @param score_limit    maximum score to include as 'significant'
+#' @param goids_df   a dataframe of available goids (used to generate goid_map)
+#' @param overwrite   overwrite the goid_map?
+#' @param selector    a function to choose differentially expressed genes in the data
+#' @param pval_column    a column in the data to be used to extract pvalue scores
 #' @return plots! Trees! oh my!
 #' @seealso \pkg{topGO}
 #' @export
@@ -403,9 +403,9 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
 #' currently does not.
 #'
 #' @param gs_result ontology search results
-#' @param wrapped_width default=20  how big to make the text so that it is legible
-#' @param cutoff default=0.1  what is the maximum pvalue allowed
-#' @param n default=12  how many groups to include in the plot
+#' @param wrapped_width   how big to make the text so that it is legible
+#' @param cutoff   what is the maximum pvalue allowed
+#' @param n   how many groups to include in the plot
 #' @param group_minsize default=5  minimum group size before inclusion
 #' @return plots!
 #' @seealso \pkg{clusterProfiler} \link{pval_plot}

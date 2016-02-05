@@ -16,21 +16,21 @@ simple_gostats(de_genes, gff, goids, universe_merge = "ID",
 
 \item{goids}{The set of GOids, as before in the format ID/GO}
 
-\item{universe_merge}{default='ID'  column from which to create the universe of genes}
+\item{universe_merge}{column from which to create the universe of genes}
 
-\item{second_merge_try}{default='locus_tag'  if the first universe merge fails, try this}
+\item{second_merge_try}{if the first universe merge fails, try this}
 
-\item{organism}{default='fun'  genbank organism to use}
+\item{organism}{genbank organism to use}
 
-\item{pcutoff}{default=0.1  pvalue cutoff for deciding significant}
+\item{pcutoff}{pvalue cutoff for deciding significant}
 
-\item{direction}{default='over'  under or over represented categories}
+\item{direction}{under or over represented categories}
 
-\item{conditional}{default=FALSE  perform a conditional search?}
+\item{conditional}{perform a conditional search?}
 
-\item{categorysize}{default=NULL  category size below which to not include groups}
+\item{categorysize}{category size below which to not include groups}
 
-\item{gff_type}{default='CDS'  gff column to use for creating the universe}
+\item{gff_type}{gff column to use for creating the universe}
 
 \item{...}{more parameters!}
 }

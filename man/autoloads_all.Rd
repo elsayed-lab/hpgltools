@@ -7,7 +7,7 @@
 autoloads_all(update = FALSE)
 }
 \arguments{
-\item{update}{default=FALSE  update packages?}
+\item{update}{packages?}
 }
 \value{
 NULL currently

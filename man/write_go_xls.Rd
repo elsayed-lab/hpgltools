@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{write_go_xls}
 \alias{write_go_xls}
-\title{write_go_xls()  Write gene ontology tables for excel}
+\title{Write gene ontology tables for excel}
 \usage{
 write_go_xls(goseq, cluster, topgo, gostats, file = "excel/merged_go",
   dated = TRUE, n = 30, overwritefile = TRUE)
@@ -16,13 +16,13 @@ write_go_xls(goseq, cluster, topgo, gostats, file = "excel/merged_go",
 
 \item{gostats}{Yep, ditto}
 
-\item{file}{default='excel/merged_go'  the file to save the results.}
+\item{file}{the file to save the results.}
 
-\item{dated}{default=TRUE  date the excel file}
+\item{dated}{date the excel file}
 
-\item{n}{default=30  the number of ontology categories to include in each table.}
+\item{n}{the number of ontology categories to include in each table.}
 
-\item{overwritefile}{default=TRUE  overwrite an existing excel file}
+\item{overwritefile}{overwrite an existing excel file}
 }
 \value{
 the list of ontology information

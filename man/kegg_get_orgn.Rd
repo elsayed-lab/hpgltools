@@ -7,9 +7,9 @@
 kegg_get_orgn(species = "Leishmania", short = TRUE)
 }
 \arguments{
-\item{species}{default='Leishmania'  A search string (Something like 'Homo sapiens')}
+\item{species}{A search string (Something like 'Homo sapiens')}
 
-\item{short}{default=TRUE  only pull the orgid}
+\item{short}{only pull the orgid}
 }
 \value{
 a data frame of possible KEGG identifier codes,
@@ -19,9 +19,11 @@ genome ID numbers, species, and phylogenetic classifications.
 Search the kegg identifier for a given species
 }
 \examples{
-## fun = kegg_get_orgn('Canis')
+\dontrun{
+ fun = kegg_get_orgn('Canis')
 ## >     Tid     orgid      species                   phylogeny
 ## >  17 T01007   cfa Canis familiaris (dog) Eukaryotes;Animals;Vertebrates;Mammals
+}
 }
 \seealso{
 \pkg{RCurl}

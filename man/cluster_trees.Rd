@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_clusterprofiler.r
 \name{cluster_trees}
 \alias{cluster_trees}
-\title{\code{cluster_trees()}  Take clusterprofile group data and print it on a tree as topGO does
+\title{Take clusterprofile group data and print it on a tree as topGO does
 Make fun trees a la topgo from goseq data.}
 \usage{
 cluster_trees(de_genes, cpdata, goid_map = "reference/go/id2go.map",
@@ -14,23 +14,23 @@ cluster_trees(de_genes, cpdata, goid_map = "reference/go/id2go.map",
 
 \item{cpdata}{data from simple_clusterprofiler()}
 
-\item{goid_map}{default='reference/go/id2go.map'  A mapping file of IDs to GO ontologies}
+\item{goid_map}{A mapping file of IDs to GO ontologies}
 
-\item{goids_df}{default=NULL  A dataframe of mappings used to build goid_map}
+\item{goids_df}{A dataframe of mappings used to build goid_map}
 
-\item{score_limit}{default=0.2  A scoring limit above which to ignore genes}
+\item{score_limit}{A scoring limit above which to ignore genes}
 
-\item{overwrite}{default=FALSE  Overwrite an existing goid mapping file?}
+\item{overwrite}{Overwrite an existing goid mapping file?}
 
-\item{selector}{default='topDiffGenes'  The name of a function for applying scores to the trees}
+\item{selector}{The name of a function for applying scores to the trees}
 
-\item{pval_column}{default='adj.P.Val'  The name of the column in the table from which to extract scores}
+\item{pval_column}{The name of the column in the table from which to extract scores}
 }
 \value{
 plots! Trees! oh my!
 }
 \description{
-\code{cluster_trees()}  Take clusterprofile group data and print it on a tree as topGO does
+Take clusterprofile group data and print it on a tree as topGO does
 Make fun trees a la topgo from goseq data.
 }
 \examples{

@@ -2,30 +2,29 @@
 % Please edit documentation in R/plots.r
 \name{spirograph}
 \alias{spirograph}
-\title{spirograph()  Make spirographs!  Taken (with modifications) from: http://menugget.blogspot.com/2012/12/spirograph-with-r.html#more}
+\title{Make spirographs!}
 \usage{
 spirograph(radius_a = 1, radius_b = -4, dist_bc = -2, revolutions = 158,
   increments = 3160, center_a = list(x = 0, y = 0))
 }
 \arguments{
-\item{radius_a}{default=1  The radius of the primary circle.}
+\item{radius_a}{The radius of the primary circle.}
 
-\item{radius_b}{default=-4  The radius of the circle travelling around a.}
+\item{radius_b}{The radius of the circle travelling around a.}
 
-\item{dist_bc}{default=-2  A point relative to the center of 'b' which rotates with the turning of 'b'.}
+\item{dist_bc}{A point relative to the center of 'b' which rotates with the turning of 'b'.}
 
-\item{revolutions}{default=158  How many revolutions to perform in the plot}
+\item{revolutions}{How many revolutions to perform in the plot}
 
-\item{increments}{default=3160  The number of radial increments to be calculated per revolution}
+\item{increments}{The number of radial increments to be calculated per revolution}
 
-\item{center_a}{default=list(x=0,y=0)  The position of the center of 'a'.
-
-A positive value for 'B' will result in a epitrochoid, while a negative value will result in a hypotrochoid.}
+\item{center_a}{The position of the center of 'a'.}
 }
 \value{
 something which I don't yet know.
 }
 \description{
-spirograph()  Make spirographs!  Taken (with modifications) from: http://menugget.blogspot.com/2012/12/spirograph-with-r.html#more
+Taken (with modifications) from: http://menugget.blogspot.com/2012/12/spirograph-with-r.html#more
+A positive value for 'B' will result in a epitrochoid, while a negative value will result in a hypotrochoid.
 }
 

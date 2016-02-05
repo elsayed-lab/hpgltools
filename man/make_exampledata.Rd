@@ -2,25 +2,27 @@
 % Please edit documentation in R/de_shared.r
 \name{make_exampledata}
 \alias{make_exampledata}
-\title{make_exampledata()  A small hack of limma's exampleData()
+\title{A small hack of limma's exampleData()
 function to allow for arbitrary data set sizes.}
 \usage{
 make_exampledata(ngenes = 1000, columns = 5)
 }
 \arguments{
-\item{ngenes}{default=1000  how many genes in the fictional data set.}
+\item{ngenes}{how many genes in the fictional data set.}
 
-\item{columns}{default=5  how many samples in this data set.}
+\item{columns}{how many samples in this data set.}
 }
 \value{
 a matrix of pretend counts
 }
 \description{
-make_exampledata()  A small hack of limma's exampleData()
+A small hack of limma's exampleData()
 function to allow for arbitrary data set sizes.
 }
 \examples{
-## pretend = make_exampledata()
+\dontrun{
+ pretend = make_exampledata()
+}
 }
 \seealso{
 \pkg{limma}

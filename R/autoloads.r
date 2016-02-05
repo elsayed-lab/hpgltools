@@ -1,6 +1,6 @@
-## Time-stamp: <Thu Feb  4 10:14:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 22:00:31 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' \code{require.auto()}  Automatic loading and/or installing of packages.
+#' Automatic loading and/or installing of packages.
 #'
 #' Load a library, install it first if necessary.
 #'
@@ -8,9 +8,9 @@
 #' http://sbamin.com/2012/11/05/tips-for-working-in-r-automatically-install-missing-package/
 #'
 #' @param lib  string name of a library
-#' @param github_path default=NULL  an optional github username/path.
-#' @param verbose default=FALSE  print some information while loading.
-#' @param update default=FALSE  update packages?
+#' @param github_path   an optional github username/path.
+#' @param verbose   print some information while loading.
+#' @param update   update packages?
 #' @return NULL currently
 #' @seealso \link[BiocInstaller]{biocLite} \link{install.packages}
 #' @export
@@ -165,7 +165,7 @@ autoloads_motif <- function() {
 
 #' Automatic loading of stuff I use, I am deprecating this now.
 #'
-#' @param update default=FALSE  update packages?
+#' @param  update packages?
 #' @return NULL currently
 #' @seealso \link[BiocInstaller]{biocLite} \link{install.packages}
 #' @export

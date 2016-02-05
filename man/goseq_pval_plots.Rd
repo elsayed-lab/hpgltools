@@ -10,15 +10,15 @@ goseq_pval_plots(goterms, wrapped_width = 20, cutoff = 0.1, n = 10,
 \arguments{
 \item{goterms}{some data from goseq!}
 
-\item{wrapped_width}{default=20 the number of characters before wrapping to help legibility}
+\item{wrapped_width}{the number of characters before wrapping to help legibility}
 
-\item{cutoff}{default=0.1  pvalue cutoff for the plot}
+\item{cutoff}{pvalue cutoff for the plot}
 
-\item{n}{default=10   how many groups to include}
+\item{n}{how many groups to include}
 
-\item{mincat}{default=10  minimum size of the category}
+\item{mincat}{minimum size of the category}
 
-\item{level}{default=NULL  levels of the ontology tree to use}
+\item{level}{levels of the ontology tree to use}
 }
 \value{
 plots!

@@ -17,9 +17,11 @@ Unfortunately, GOTERM's returns for secondary IDs are not consistent, so this fu
 has to have a whole bunch of logic to handle the various outputs.
 }
 \examples{
-## gosec("GO:0032432")
+\dontrun{
+ gosec("GO:0032432")
 ## > GO:0032432
 ## > "GO:0000141" "GO:0030482"
+}
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}

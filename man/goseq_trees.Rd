@@ -13,17 +13,17 @@ goseq_trees(de_genes, godata, goid_map = "reference/go/id2go.map",
 
 \item{godata}{data from goseq}
 
-\item{goid_map}{default='reference/go/id2go.map'  file to save go id mapping}
+\item{goid_map}{file to save go id mapping}
 
-\item{score_limit}{default=0.01  score limit for the coloring}
+\item{score_limit}{score limit for the coloring}
 
-\item{goids_df}{default=NULL  a mapping of IDs to GO in the Ramigo expected format}
+\item{goids_df}{a mapping of IDs to GO in the Ramigo expected format}
 
-\item{overwrite}{default=FALSE  overwrite the trees}
+\item{overwrite}{overwrite the trees}
 
-\item{selector}{default='topDiffGenes'  a function for choosing genes}
+\item{selector}{a function for choosing genes}
 
-\item{pval_column}{default='adj.P.Val' column to acquire pvalues}
+\item{pval_column}{column to acquire pvalues}
 }
 \value{
 a plot!

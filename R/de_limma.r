@@ -1,27 +1,29 @@
-## Time-stamp: <Thu Feb  4 17:18:17 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 22:21:58 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' limma_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
+#'   Plot out 2 coefficients with respect to one another from limma
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
 #' This hopefully makes that easy.
 #'
 #' @param output the set of pairwise comparisons provided by limma_pairwise()
-#' @param toptable default=NULL use this to get up/downs and color them on the scatter plot
-#' @param x default=1  the name or number of the first coefficient column to extract
-#' @param y default=2  the name or number of the second coefficient column to extract
-#' @param gvis_filename default=NULL  A filename for plotting gvis interactive graphs of the data.
-#' @param gvis_trendline default=TRUE  add a trendline to the gvis plot?
-#' @param z default=1.5  how far from the median to color the plot red and green
-#' @param tooltip_data default=NULL  a dataframe of gene annotations to be used in the gvis plot
-#' @param flip default=FALSE flip the axes?
-#' @param base_url default=NULL  a basename for gvis plots
-#' @param up_color default=hexgreen  color for the ups
-#' @param down_color default=hexred  color for the downs
+#' @param toptable  use this to get up/downs and color them on the scatter plot
+#' @param x   the name or number of the first coefficient column to extract
+#' @param y   the name or number of the second coefficient column to extract
+#' @param gvis_filename   A filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline   add a trendline to the gvis plot?
+#' @param z   how far from the median to color the plot red and green
+#' @param tooltip_data   a dataframe of gene annotations to be used in the gvis plot
+#' @param flip  flip the axes?
+#' @param base_url   a basename for gvis plots
+#' @param up_color   color for the ups
+#' @param down_color   color for the downs
 #' @param ...  more parameters to make you happy
 #' @return a ggplot2 plot showing the relationship between the two coefficients
 #' @seealso \link{hpgl_linear_scatter} \link{limma_pairwise}
 #' @examples
-#' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' \dontrun{
+#'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' }
 #' @export
 limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_filename="limma_scatter.html",
                                       gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
@@ -97,7 +99,7 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
     return(plot)
 }
 
-#' hpgl_voom()  A slight modification of limma's voom() function.
+#'   A slight modification of limma's voom() function.
 #' Estimate mean-variance relationship between samples and generate
 #' 'observational-level weights' in preparation for linear modelling
 #' RNAseq data.  This particular implementation was primarily scabbed
@@ -109,12 +111,12 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
 #'
 #' @param dataframe a dataframe of sample counts which have been
 #' normalized and log transformed
-#' @param model default=NULL  an experimental model defining batches/conditions/etc
-#' @param libsize default=NULL  the size of the libraries (usually provided by
+#' @param model   an experimental model defining batches/conditions/etc
+#' @param libsize   the size of the libraries (usually provided by
 #' edgeR).
-#' @param stupid default=FALSE  whether or not to cheat when the resulting matrix is not solvable.
-#' @param logged default=FALSE  whether the input data is known to be logged.
-#' @param converted default=FALSE  whether the input data is known to be cpm converted.
+#' @param stupid   whether or not to cheat when the resulting matrix is not solvable.
+#' @param logged   whether the input data is known to be logged.
+#' @param converted   whether the input data is known to be cpm converted.
 #' @return an EList containing the following information:
 #'   E = The normalized data
 #'   weights = The weights of said data
@@ -123,7 +125,9 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
 #'   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
 #' @seealso \link[limma]{voom} \link[cbcbSEQ]{voomMod} \link[limma]{lmFit}
 #' @examples
-#' ## funkytown = hpgl_voom(samples, model)
+#' \dontrun{
+#'  funkytown = hpgl_voom(samples, model)
+#' }
 #' @export
 hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=FALSE, converted=FALSE) {
     out <- list()
@@ -223,24 +227,24 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
     new("EList", out)
 }
 
-#' limma_pairwise()  Set up a model matrix and set of contrasts to do
+#' Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using voom/limma.
 #'
 #' @param input  a dataframe/vector or expt class containing count tables, normalization state, etc.
-#' @param conditions default=NULL  a factor of conditions in the experiment
-#' @param batches default=NULL  a factor of batches in the experiment
-#' @param model_cond default=TRUE  include condition in the model?
-#' @param model_batch default=FALSE  include batch in the model? This is hopefully TRUE.
-#' @param model_intercept default=FALSE  perform a cell-means or intercept model?
+#' @param conditions   a factor of conditions in the experiment
+#' @param batches   a factor of batches in the experiment
+#' @param model_cond   include condition in the model?
+#' @param model_batch   include batch in the model? This is hopefully TRUE.
+#' @param model_intercept   perform a cell-means or intercept model?
 #' A little more difficult for me to understand.  I have tested and get the same answer either way.
-#' @param extra_contrasts default=NULL  some extra contrasts to add to the list
+#' @param extra_contrasts   some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
-#' @param alt_model default=NULL  a separate model matrix instead of the normal condition/batch.
-#' @param libsize default=NULL  I've recently figured out that libsize is far more important than I previously realized.  Play with it here.
-#' @param annot_df default=NULL  data frame for annotations
+#' @param alt_model   a separate model matrix instead of the normal condition/batch.
+#' @param libsize   I've recently figured out that libsize is far more important than I previously realized.  Play with it here.
+#' @param annot_df   data frame for annotations
 #' @param ... The elipsis parameter is fed to write_limma() at the end.
 #' @return A list including the following information:
 #'   macb = the mashing together of condition/batch so you can look at it
@@ -259,7 +263,9 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
 #'   limma_result = The result from calling write_limma()
 #' @seealso \link{write_limma}
 #' @examples
-#' ## pretend = balanced_pairwise(data, conditions, batches)
+#' \dontrun{
+#' pretend = balanced_pairwise(data, conditions, batches)
+#' }
 #' @export
 limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                            model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL,
@@ -435,12 +441,12 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     return(result)
 }
 
-#' limma_scatter()  Plot arbitrary data from limma
+#' Plot arbitrary data from limma
 #'
 #' @param all_pairwise_result  the result from calling balanced_pairwise()
-#' @param first_table default=1  the first table from all_pairwise_result$limma_result to look at (may be a name or number)
-#' @param first_column default='logFC'  the name of the column to plot from the first table
-#' @param second_table default=2  the second table inside all_pairwise_result$limma_result (name or number)
+#' @param first_table   the first table from all_pairwise_result$limma_result to look at (may be a name or number)
+#' @param first_column   the name of the column to plot from the first table
+#' @param second_table   the second table inside all_pairwise_result$limma_result (name or number)
 #' @param second_column  a column to compare against
 #' @param type A type of scatter plot (linear model, distance, vanilla)
 #' @param ... so that you may feed it the gvis/tooltip information to make clicky graphs if so desired.
@@ -448,8 +454,10 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
 #' If you forget to specify tables to compare, it will try the first vs the second.
 #' @seealso \link{hpgl_linear_scatter} \link[limma]{topTable}
 #' @examples
-#' ## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
-#' ## compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+#' \dontrun{
+#' compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
+#' compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+#' }
 #' @export
 limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logFC",
                          second_table=2, second_column="logFC", type="linear_scatter", ...) {
@@ -486,18 +494,20 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
     return(plots)
 }
 
-#' limma_subset()  A quick and dirty way to pull the top/bottom genes from toptable()
+#'  A quick and dirty way to pull the top/bottom genes from toptable()
 #'
 #' If neither n nor z is provided, it assumes you want 1.5 z-scores from the median.
 #'
 #' @param table  the original data from limma
-#' @param n default=NULL  a number of genes to keep
-#' @param z default=NULL  a number of z-scores from the mean
+#' @param n   a number of genes to keep
+#' @param z   a number of z-scores from the mean
 #' @return a dataframe subset from toptable
 #' @seealso \pkg{limma}
 #' @examples
-#' ## subset = limma_subset(df, n=400)
-#' ## subset = limma_subset(df, z=1.5)
+#' \dontrun{
+#'  subset = limma_subset(df, n=400)
+#'  subset = limma_subset(df, z=1.5)
+#' }
 #' @export
 limma_subset <- function(table, n=NULL, z=NULL) {
     if (is.null(n) & is.null(z)) {
@@ -522,8 +532,7 @@ limma_subset <- function(table, n=NULL, z=NULL) {
     return(ret_list)
 }
 
-
-#' simple_comparison()  Perform a simple experimental/control comparison
+#'  Perform a simple experimental/control comparison
 #' This is a function written primarily to provide examples for how to use limma.
 #' It does the following:  1.  Makes a model matrix using condition/batch
 #' 2.  Optionally uses sva's combat (from cbcbSEQ)  3.  Runs voom/lmfit
@@ -534,17 +543,21 @@ limma_subset <- function(table, n=NULL, z=NULL) {
 #' an excel sheet, pulls the up/down significant and p-value significant (maybe this should be
 #' replaced with write_limma()? 8.  And returns a list containining these data and plots.
 #'
+#'  Currently this assumes that a variant of toptable was used which
+#'  gives adjusted p-values.  This is not always the case and I should
+#'  check for that, but I have not yet.
+#'
 #' @param subset  an experimental subset with two conditions to compare.
-#' @param workbook default='simple_comparison.xls'  an excel workbook to which to write.
-#' @param sheet default='simple_comparison'  an excel worksheet to which to write.
-#' @param basename default=NA  a url to which to send click evens in clicky volcano/ma plots.
-#' @param batch default=TRUE  whether or not to include batch in limma's model.
-#' @param combat default=FALSE  whether or not to use combatMod().
-#' @param combat_noscale default=TRUE  whether or not to include combat_noscale (makes combat a little less heavy-handed).
-#' @param pvalue_cutoff default=0.05  p-value definition of 'significant.'
-#' @param logfc_cutoff default=0.6  fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.
-#' @param tooltip_data default=NULL  text descriptions of genes if one wants google graphs.
-#' @param verbose default=FALSE  be verbose?
+#' @param workbook   an excel workbook to which to write.
+#' @param sheet   an excel worksheet to which to write.
+#' @param basename   a url to which to send click evens in clicky volcano/ma plots.
+#' @param batch   whether or not to include batch in limma's model.
+#' @param combat   whether or not to use combatMod().
+#' @param combat_noscale   whether or not to include combat_noscale (makes combat a little less heavy-handed).
+#' @param pvalue_cutoff   p-value definition of 'significant.'
+#' @param logfc_cutoff   fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.
+#' @param tooltip_data   text descriptions of genes if one wants google graphs.
+#' @param verbose   be verbose?
 #' @param ... more parameters!
 #' @return A list containing the following pieces:
 #'   amean_histogram = a histogram of the mean values between the two conditions
@@ -573,11 +586,10 @@ limma_subset <- function(table, n=NULL, z=NULL) {
 #' \link[limma]{voom} \link[cbcbSEQ]{voomMod} \link{hpgl_voom}
 #' \link[limma]{lmFit} \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
 #' @examples
-#' ## model = model.matrix(~ 0 + subset$conditions)
-#' ## simple_comparison(subset, model)
-#' ## Currently this assumes that a variant of toptable was used which
-#' ## gives adjusted p-values.  This is not always the case and I should
-#' ## check for that, but I have not yet.
+#' \dontrun{
+#'  model = model.matrix(~ 0 + subset$conditions)
+#'  simple_comparison(subset, model)
+#' }
 #' @export
 simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="simple_comparison",
                               basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE,
@@ -697,26 +709,28 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
     return(return_info)
 }
 
-#' write_limma()  Writes out the results of a limma search using toptable()
+#' Writes out the results of a limma search using toptable()
 #' However, this will do a couple of things to make one's life easier:
 #' 1.  Make a list of the output, one element for each comparison of the contrast matrix
 #' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
 #' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
 #'
 #' @param data  the output from eBayes()
-#' @param adjust default='fdr'  the pvalue adjustment chosen.
-#' @param n default=0  the number of entries to report, 0 says do them all.
-#' @param coef default=NULL  which coefficients/contrasts to report, NULL says do them all.
-#' @param workbook default='excel/limma.xls'  an excel filename into which to write the data
-#' @param excel default=FALSE  write an excel workbook?
-#' @param csv default=TRUE  write out csv files of the tables?
-#' @param annot_df default=NULL  an optional data frame including annotation information to include with the tables.
+#' @param adjust   the pvalue adjustment chosen.
+#' @param n   the number of entries to report, 0 says do them all.
+#' @param coef   which coefficients/contrasts to report, NULL says do them all.
+#' @param workbook   an excel filename into which to write the data
+#' @param excel   write an excel workbook?
+#' @param csv   write out csv files of the tables?
+#' @param annot_df   an optional data frame including annotation information to include with the tables.
 #' @return a list of data frames comprising the toptable output for each coefficient,
 #'    I also added a qvalue entry to these toptable() outputs.
 #' @seealso \link[limma]{toptable} \link{write_xls}
 #' @examples
-#' ## finished_comparison = eBayes(limma_output)
-#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+#' \dontrun{
+#'  finished_comparison = eBayes(limma_output)
+#'  data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+#' }
 #' @export
 write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
                        excel=FALSE, csv=FALSE, annot_df=NULL) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{all_ontology_searches}
 \alias{all_ontology_searches}
-\title{all_ontology_searches()  Perform ontology searches of the output from limma.}
+\title{Perform ontology searches of the output from limma.}
 \usage{
 all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
   z = NULL, fc = NULL, p = NULL, overwrite = FALSE,
@@ -13,37 +13,37 @@ all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
 \arguments{
 \item{de_out}{a list of topTables comprising limma/deseq/edger outputs.}
 
-\item{gene_lengths}{default=NULL  a data frame of gene lengths for goseq.}
+\item{gene_lengths}{a data frame of gene lengths for goseq.}
 
-\item{goids}{default=NULL  a data frame of goids and genes.}
+\item{goids}{a data frame of goids and genes.}
 
-\item{n}{default=NULL  a number of genes at the top/bottom to search.}
+\item{n}{a number of genes at the top/bottom to search.}
 
-\item{z}{default=NULL  a number of standard deviations to search. (if this and n are null, it assumes 1z)}
+\item{z}{a number of standard deviations to search. (if this and n are null, it assumes 1z)}
 
-\item{fc}{default=NULL  a number of standard deviations to search. (if this and n are null, it assumes 1z)}
+\item{fc}{a number of standard deviations to search. (if this and n are null, it assumes 1z)}
 
-\item{p}{default=NULL  a maximum pvalue}
+\item{p}{a maximum pvalue}
 
-\item{overwrite}{default=FALSE overwrite the excel file}
+\item{overwrite}{overwrite the excel file}
 
-\item{goid_map}{default='reference/go/id2go.map'  a map file used by topGO, if it does not exist then provide goids_df to make it.}
+\item{goid_map}{a map file used by topGO, if it does not exist then provide goids_df to make it.}
 
-\item{gff_file}{default=NULL  a gff file containing the annotations used by gff2genetable from clusterprofiler, which I hacked to make faster.}
+\item{gff_file}{a gff file containing the annotations used by gff2genetable from clusterprofiler, which I hacked to make faster.}
 
-\item{gff_type}{default='gene'  column to use from the gff file}
+\item{gff_type}{column to use from the gff file}
 
-\item{goids_df}{default=NULL  FIXME! a dataframe of genes and goids which I am relatively certain is no longer needed and superseded by goids.}
+\item{goids_df}{FIXME! a dataframe of genes and goids which I am relatively certain is no longer needed and superseded by goids.}
 
-\item{do_goseq}{default=TRUE  perform simple_goseq()?}
+\item{do_goseq}{perform simple_goseq()?}
 
-\item{do_cluster}{default=TRUE  perform simple_clusterprofiler()?}
+\item{do_cluster}{perform simple_clusterprofiler()?}
 
-\item{do_topgo}{default=TRUE  perform simple_topgo()?}
+\item{do_topgo}{perform simple_topgo()?}
 
-\item{do_gostats}{default=TRUE  perform simple_gostats()?}
+\item{do_gostats}{perform simple_gostats()?}
 
-\item{do_trees}{default=FALSE  make topGO trees from the data?}
+\item{do_trees}{make topGO trees from the data?}
 }
 \value{
 a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and associated trees, all optionally.
@@ -54,8 +54,10 @@ collects the outputs, and provides them as a list.  This function needs a specie
 as I recently made the simple_() functions able to automatically use the various supported organisms.
 }
 \examples{
-## many_comparisons = limma_pairwise(expt=an_expt)
-## tables = many_comparisons$limma
-## this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
+\dontrun{
+ many_comparisons = limma_pairwise(expt=an_expt)
+ tables = many_comparisons$limma
+ this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
+}
 }
 

@@ -17,28 +17,30 @@ disjunct_tab <- function(contrast_fit, coef1, coef2, ...) {
 ##    adj.pval = p.adjust(^^pval^^, method='BH')
 ## ReportingTools hwriter
 
-#' all_pairwise()  Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
+#' Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
 #'
 #' @param input  a dataframe/vector or expt class containing count tables, normalization state, etc.
-#' @param conditions default=NULL  a factor of conditions in the experiment
-#' @param batches default=NULL  a factor of batches in the experiment
-#' @param model_cond default=TRUE  include condition in the model?  This is likely always true.
-#' @param model_batch default=FALSE  include batch in the model?
-#' @param model_intercept default=FALSE  use an intercept model instead of cell means?
-#' @param extra_contrasts default=NULL some extra contrasts to add to the list
+#' @param conditions   a factor of conditions in the experiment
+#' @param batches   a factor of batches in the experiment
+#' @param model_cond   include condition in the model?  This is likely always true.
+#' @param model_batch   include batch in the model?
+#' @param model_intercept   use an intercept model instead of cell means?
+#' @param extra_contrasts  some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
-#' @param alt_model default=NULL an optional alternate model to use rather than just condition/batch
-#' @param libsize default=NULL the library size of the original data to help voom()
-#' @param annot_df default=NULL annotations to add to the tables
+#' @param alt_model  an optional alternate model to use rather than just condition/batch
+#' @param libsize  the library size of the original data to help voom()
+#' @param annot_df  annotations to add to the tables
 #' @param ... The elipsis parameter is fed to write_limma() at the end.
 #' @return A list of limma, deseq, edger results.
 #' @export
 #' @examples
-#' ## finished_comparison = eBayes(limma_output)
-#' ## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+#' \dontrun{
+#'  finished_comparison = eBayes(limma_output)
+#'  data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+#' }
 all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                          model_batch=TRUE, model_intercept=FALSE, extra_contrasts=NULL,
                          alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
@@ -83,16 +85,16 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     return(ret)
 }
 
-#' combine_de_table()  Given a limma, edger, and deseq table, combine them
+#' Given a limma, edger, and deseq table, combine them
 #'
 #' @param li  a limma output
 #' @param ed  a edger output
 #' @param de  a deseq output
 #' @param ba  a basic output
 #' @param table name of the table to merge
-#' @param annot_df default=NULL add some annotation information
-#' @param inverse default=FALSE  invert the fold changes
-#' @param include_basic default=TRUE  include the basic table?
+#' @param annot_df  add some annotation information
+#' @param inverse   invert the fold changes
+#' @param include_basic   include the basic table?
 #' @export
 combine_de_table <- function(li, ed, de, ba, table,
                              annot_df=NULL, inverse=FALSE, include_basic=TRUE) {
@@ -161,28 +163,30 @@ combine_de_table <- function(li, ed, de, ba, table,
     return(comb)
 }
 
-#' compare_tables()  See how similar are results from limma/deseq/edger.
+#' See how similar are results from limma/deseq/edger.
 #'
 #' limma, DEseq2, and EdgeR all make somewhat different assumptions
 #' and choices about what makes a meaningful set of differentially
 #' expressed genes.  This seeks to provide a quick and dirty metric
 #' describing the degree to which they (dis)agree.
 #'
-#' @param limma default=NULL  limma data from limma_pairwise()
-#' @param deseq default=NULL  deseq data from deseq2_pairwise()
-#' @param edger default=NULL  edger data from edger_pairwise()
-#' @param basic default=NULL  basic data from basic_pairwise()
-#' @param include_basic default=TRUE  include the basic data?
-#' @param annot_df default=NULL include annotation data
+#' @param limma   limma data from limma_pairwise()
+#' @param deseq   deseq data from deseq2_pairwise()
+#' @param edger   edger data from edger_pairwise()
+#' @param basic   basic data from basic_pairwise()
+#' @param include_basic   include the basic data?
+#' @param annot_df  include annotation data
 #' @param ... more options!
 #' @return a heatmap showing how similar they are along with some
 #' correlations betwee the three players.
 #' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
 #' @examples
-#' ## l = limma_pairwise(expt)
-#' ## d = deseq_pairwise(expt)
-#' ## e = edger_pairwise(expt)
-#' ## fun = compare_tables(limma=l, deseq=d, edger=e)
+#' \dontrun{
+#'  l = limma_pairwise(expt)
+#'  d = deseq_pairwise(expt)
+#'  e = edger_pairwise(expt)
+#'  fun = compare_tables(limma=l, deseq=d, edger=e)
+#' }
 #' @export
 compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
                            include_basic=TRUE, annot_df=NULL, ...) {
@@ -276,27 +280,27 @@ deprint <- function(f){
     return(function(...) { capture.output(w<-f(...)); return(w); })
 }
 
-#' combine_de_tables()  Combine portions of deseq/limma/edger table output
+#' Combine portions of deseq/limma/edger table output
 #'
 #' This hopefully makes it easy to compare the outputs from limma/DESeq2/EdgeR on a table-by-table basis.
 #'
 #' @param all_pairwise_result  the output from all_pairwise()
-#' @param annot_df default=NULL  add some annotation information
-#' @param excel default=NULL  print the excel workbook
-#' @param excel_title default='Table SXXX: Combined Differential Expression of YYY' a title
-#' @param excel_sheet default='combined_DE'  name the sheet
-#' @param keepers default='all'  a list of reformatted table names to explicitly keep
+#' @param annot_df   add some annotation information
+#' @param excel   print the excel workbook
+#' @param excel_title  a title, if it has YYY in it, that will be replaced by the contrast name
+#' @param excel_sheet   name the sheet
+#' @param keepers   a list of reformatted table names to explicitly keep
 #' certain contrasts in specific orders
-#' @param include_basic default=TRUE  Include my stupid basic logFC tables
-#' @param add_plots default=FALSE  add plots to the end of the sheets
-#' @param plot_dim default=4  number of inches squared for the plot if added
+#' @param include_basic   Include my stupid basic logFC tables
+#' @param add_plots   add plots to the end of the sheets
+#' @param plot_dim   number of inches squared for the plot if added
 #' @return a table combinine limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
-#' @export
 #' @examples
 #' \dontrun{
 #' pretty = combine_de_tables(big_result, table='t12_vs_t0')
 #' }
+#' @export
 combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
                               excel_sheet="combined_DE", keepers="all",
@@ -421,18 +425,17 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
     return(ret)
 }
 
-#' extract_significant_genes()  Pull the highly up/down genes in combined tables
+#'   Pull the highly up/down genes in combined tables
 #'
 #' Given the output from combine_de_tables(), extract the fun genes.
 #'
 #' @param combined  the output from combine_de_tables()
-#' @param according_to default='limma'  one may use the deseq, edger, limma, or meta data.
-#' @param fc default=1.0  a log fold change to define 'significant'
-#' @param p default=0.05  a (adjusted)p-value to define 'significant'
-#' @param z default=NULL  a z-score to define 'significant'
-#' @param n default=NULL  a set of top/bottom-n genes
-#' @param sig_table default="excel/significant_genes.xlsx"  an excel file to write
-#'
+#' @param according_to   one may use the deseq, edger, limma, or meta data.
+#' @param fc   a log fold change to define 'significant'
+#' @param p   a (adjusted)p-value to define 'significant'
+#' @param z   a z-score to define 'significant'
+#' @param n   a set of top/bottom-n genes
+#' @param sig_table   an excel file to write
 #' @return a set of up-genes, down-genes, and numbers therein
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
@@ -499,13 +502,13 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
     return(ret)
 }
 
-#' print_ups_downs()  Reprint the output from extract_significant_genes()
+#'   Reprint the output from extract_significant_genes()
 #'
 #' I found myself needing to reprint these excel sheets because I added some new information.
 #' This shortcuts that process for me.
 #'
 #' @param upsdowns  the output from extract_significant_genes()
-#' @param sig_table default='excel/significant_genes.xlsx'  table to write to
+#' @param sig_table   table to write to
 #' @return the return from write_xls
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
@@ -540,15 +543,17 @@ print_ups_downs <- function(upsdowns, sig_table="excel/significant_genes.xlsx") 
     return(xls_result)
 }
 
-#' make_exampledata()  A small hack of limma's exampleData()
+#'   A small hack of limma's exampleData()
 #' function to allow for arbitrary data set sizes.
 #'
-#' @param ngenes default=1000  how many genes in the fictional data set.
-#' @param columns default=5  how many samples in this data set.
+#' @param ngenes   how many genes in the fictional data set.
+#' @param columns   how many samples in this data set.
 #' @return a matrix of pretend counts
 #' @seealso \pkg{limma}
 #' @examples
-#' ## pretend = make_exampledata()
+#' \dontrun{
+#'  pretend = make_exampledata()
+#' }
 #' @export
 make_exampledata <- function (ngenes=1000, columns=5) {
     q0 <- stats::rexp(ngenes, rate = 1/250)
@@ -570,26 +575,26 @@ make_exampledata <- function (ngenes=1000, columns=5) {
     return(example)
 }
 
-#' make_pairwise_contrasts()  Run makeContrasts() with all pairwise comparisons.
+#'   Run makeContrasts() with all pairwise comparisons.
 #'
 #' @param model  a model describing the conditions/batches/etc in the experiment
 #' @param conditions  a factor of conditions in the experiment
-#' @param do_identities default=TRUE  whether or not to include all the identity strings.
+#' @param do_identities   whether or not to include all the identity strings.
 #' Limma can handle this, edgeR cannot.
-#' @param do_pairwise default=TRUE  whether or not to include all the pairwise strings.
+#' @param do_pairwise   whether or not to include all the pairwise strings.
 #' This shouldn't need to be set to FALSE, but just in case.
-#' @param extra_contrasts default=NULL  an optional string of extra contrasts to include.
-#'
+#' @param extra_contrasts   an optional string of extra contrasts to include.
 #' @return A list including the following information:
 #'   all_pairwise_contrasts = the result from makeContrasts(...)
 #'   identities = the string identifying each condition alone
 #'   all_pairwise = the string identifying each pairwise comparison alone
 #'   contrast_string = the string passed to R to call makeContrasts(...)
 #'   names = the names given to the identities/contrasts
-#'
 #' @seealso \link[limma]{makeContrasts}
 #' @examples
-#' ## pretend = make_pairwise_contrasts(model, conditions)
+#' \dontrun{
+#'  pretend = make_pairwise_contrasts(model, conditions)
+#' }
 #' @export
 make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
                                     do_pairwise=TRUE, extra_contrasts=NULL) {
@@ -679,17 +684,16 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
     return(result)
 }
 
-#' get_sig_genes()  Get a set of up/down genes using the top/bottom n or >/< z scores away from the median.
+#'   Get a set of up/down genes using the top/bottom n or >/< z scores away from the median.
 #'
 #' @param table  a table from limma/edger/deseq.
-#' @param n default=NULL  a rank-order top/bottom number of genes to take.
-#' @param z default=NULL  a number of z-scores >/< the median to take.
-#' @param fc default=NULL  a number of fold-changes to take
-#' @param p default=NULL  a p-value cutoff
-#' @param fold default='plusminus'  an identifier reminding how to get the bottom portion of a fold-change (plusminus says to get the negative of the positive, otherwise 1/positive is taken).
-#' @param column default='logFC'  a column to use to distinguish top/bottom
-#' @param p_column default='adj.P.Val'  a column containing (adjusted or not)p-values
-#'
+#' @param n   a rank-order top/bottom number of genes to take.
+#' @param z   a number of z-scores >/< the median to take.
+#' @param fc   a number of fold-changes to take
+#' @param p   a p-value cutoff
+#' @param fold an identifier reminding how to get the bottom portion of a fold-change (plusminus says to get the negative of the positive, otherwise 1/positive is taken).
+#' @param column   a column to use to distinguish top/bottom
+#' @param p_column   a column containing (adjusted or not)p-values
 #' @return a list of up/down genes
 #' @export
 get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
@@ -777,12 +781,12 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
     return(ret)
 }
 
-#' \code{semantic_copynumber_filter()}  Remove multicopy genes from up/down gene expression lists
+#' Remove multicopy genes from up/down gene expression lists
 #'
 #' @param de_list  a list of sets of genes deemed significantly up/down with a column expressing approximate count numbers
-#' @param max_copies default=2  Keep only those genes with <= n putative copies
-#' @param semantic default=c(mucin, sialidase, rhs, masp, dgf)  a set of strings to exclude
-#' @param semantic_column default='1.tooltip'  a column to use to find the above mentioned strings
+#' @param max_copies   Keep only those genes with <= n putative copies
+#' @param semantic   a set of strings to exclude
+#' @param semantic_column   a column to use to find the above mentioned strings
 #' @return a smaller list of up/down genes
 #' @export
 semantic_copynumber_filter <- function(de_list, max_copies=2, semantic=c('mucin','sialidase','RHS','MASP','DGF'), semantic_column='1.tooltip') {

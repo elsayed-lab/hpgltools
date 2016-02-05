@@ -2,18 +2,18 @@
 % Please edit documentation in R/pca.r
 \name{pca_highscores}
 \alias{pca_highscores}
-\title{\code{pca_highscores()}  Get the highest/lowest scoring genes for every principle component.}
+\title{Get the highest/lowest scoring genes for every principle component.}
 \usage{
 pca_highscores(df = NULL, conditions = NULL, batches = NULL, n = 20)
 }
 \arguments{
-\item{df}{default=NULL  a dataframe of (pseudo)counts}
+\item{df}{a dataframe of (pseudo)counts}
 
-\item{conditions}{default=NULL  a factor or character of conditions in the experiment.}
+\item{conditions}{a factor or character of conditions in the experiment.}
 
-\item{batches}{default=NULL  a factor or character of batches in the experiment.}
+\item{batches}{a factor or character of batches in the experiment.}
 
-\item{n}{default=20  the number of genes to extract.}
+\item{n}{the number of genes to extract.}
 }
 \value{
 a list including the princomp biplot, histogram, and tables

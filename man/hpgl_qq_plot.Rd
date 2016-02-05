@@ -2,23 +2,23 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_qq_plot}
 \alias{hpgl_qq_plot}
-\title{hpgl_qq_plot()  Perform a qqplot between two columns of a matrix.}
+\title{Perform a qqplot between two columns of a matrix.}
 \usage{
 hpgl_qq_plot(data, x = 1, y = 2, labels = TRUE)
 }
 \arguments{
 \item{data}{data frame/expt/expressionset.}
 
-\item{x}{default=1  the first column.}
+\item{x}{the first column.}
 
-\item{y}{default=2  the second column.}
+\item{y}{the second column.}
 
-\item{labels}{default=TRUE  include the lables?}
+\item{labels}{include the lables?}
 }
 \value{
 a list of the logs, ratios, and mean between the plots as ggplots.
 }
 \description{
-hpgl_qq_plot()  Perform a qqplot between two columns of a matrix.
+Perform a qqplot between two columns of a matrix.
 }
 

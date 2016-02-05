@@ -11,21 +11,21 @@ hpgl_enrich.internal(gene, organism, pvalueCutoff = 1, pAdjustMethod = "BH",
 \arguments{
 \item{gene}{some differentially expressed genes}
 
-\item{organism}{by default 'human'}
+\item{organism}{again will cause this to pull ensG if recognized by clusteprofiler}
 
-\item{pvalueCutoff}{default=1  a pvalue cutoff}
+\item{pvalueCutoff}{a pvalue cutoff}
 
-\item{pAdjustMethod}{default='BH' p adjust method}
+\item{pAdjustMethod}{p adjust method}
 
-\item{ont}{by default 'MF'}
+\item{ont}{mf bp or cc}
 
-\item{minGSSize}{default=2  a minimum gs size}
+\item{minGSSize}{a minimum gs size}
 
-\item{qvalueCutoff}{default=0.2  maximum q value}
+\item{qvalueCutoff}{maximum q value}
 
-\item{readable}{default=FALSE  set the readable flag for dose}
+\item{readable}{set the readable flag for dose}
 
-\item{universe}{default=NULL a universe to use}
+\item{universe}{a universe to use}
 }
 \value{
 some clusterProfiler data

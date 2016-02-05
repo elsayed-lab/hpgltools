@@ -2,19 +2,19 @@
 % Please edit documentation in R/ontology_shared.r
 \name{compare_go_searches}
 \alias{compare_go_searches}
-\title{compare_go_searches()  Compare the results from different ontology tools}
+\title{Compare the results from different ontology tools}
 \usage{
 compare_go_searches(goseq = NULL, cluster = NULL, topgo = NULL,
   gostats = NULL)
 }
 \arguments{
-\item{goseq}{default=NULL  The goseq result from simple_goseq()}
+\item{goseq}{The goseq result from simple_goseq()}
 
-\item{cluster}{default=NULL  The result from simple_clusterprofiler()}
+\item{cluster}{The result from simple_clusterprofiler()}
 
-\item{topgo}{default=NULL  Guess}
+\item{topgo}{Guess}
 
-\item{gostats}{default=NULL  Yep, ditto}
+\item{gostats}{Yep, ditto}
 }
 \value{
 a summary of the similarities of ontology searches

@@ -2,7 +2,7 @@
 % Please edit documentation in R/count_tables.r
 \name{median_by_factor}
 \alias{median_by_factor}
-\title{\code{median_by_factor()}  Create a data frame of the medians of rows by a given factor in the data}
+\title{Create a data frame of the medians of rows by a given factor in the data}
 \usage{
 median_by_factor(data, fact)
 }

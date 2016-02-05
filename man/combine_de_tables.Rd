@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_shared.r
 \name{combine_de_tables}
 \alias{combine_de_tables}
-\title{combine_de_tables()  Combine portions of deseq/limma/edger table output}
+\title{Combine portions of deseq/limma/edger table output}
 \usage{
 combine_de_tables(all_pairwise_result, annot_df = NULL, excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
@@ -12,22 +12,22 @@ combine_de_tables(all_pairwise_result, annot_df = NULL, excel = NULL,
 \arguments{
 \item{all_pairwise_result}{the output from all_pairwise()}
 
-\item{annot_df}{default=NULL  add some annotation information}
+\item{annot_df}{add some annotation information}
 
-\item{excel}{default=NULL  print the excel workbook}
+\item{excel}{print the excel workbook}
 
-\item{excel_title}{default='Table SXXX: Combined Differential Expression of YYY' a title}
+\item{excel_title}{a title, if it has YYY in it, that will be replaced by the contrast name}
 
-\item{excel_sheet}{default='combined_DE'  name the sheet}
+\item{excel_sheet}{name the sheet}
 
-\item{keepers}{default='all'  a list of reformatted table names to explicitly keep
+\item{keepers}{a list of reformatted table names to explicitly keep
 certain contrasts in specific orders}
 
-\item{include_basic}{default=TRUE  Include my stupid basic logFC tables}
+\item{include_basic}{Include my stupid basic logFC tables}
 
-\item{add_plots}{default=FALSE  add plots to the end of the sheets}
+\item{add_plots}{add plots to the end of the sheets}
 
-\item{plot_dim}{default=4  number of inches squared for the plot if added}
+\item{plot_dim}{number of inches squared for the plot if added}
 }
 \value{
 a table combinine limma/edger/deseq outputs.

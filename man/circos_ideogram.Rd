@@ -2,17 +2,17 @@
 % Please edit documentation in R/circos.r
 \name{circos_ideogram}
 \alias{circos_ideogram}
-\title{circos_ideogram()  Create the description of chromosome markings}
+\title{Create the description of chromosome markings}
 \usage{
 circos_ideogram(name = "default", conf_dir = "circos/conf",
   band_url = NULL)
 }
 \arguments{
-\item{name}{default='default'  the name of the configuration}
+\item{name}{the name of the configuration}
 
-\item{conf_dir}{default='circos/conf'  where does the configuration live?}
+\item{conf_dir}{where does the configuration live?}
 
-\item{band_url}{default=NULL  provide a url for making these imagemaps.}
+\item{band_url}{provide a url for making these imagemaps.}
 }
 \value{
 undef

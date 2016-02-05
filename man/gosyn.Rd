@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{gosyn}
 \alias{gosyn}
-\title{gosyn()  Get a go synonym from an ID.}
+\title{Get a go synonym from an ID.}
 \usage{
 gosyn(go)
 }
@@ -21,10 +21,12 @@ versus "some other text"  versus NULL versus NA
 This function just goes a mapply(gosn, go).
 }
 \examples{
-## text =  gosyn("GO:0000001")
-## text
+\dontrun{
+ text =  gosyn("GO:0000001")
+ text
 ## > GO:000001
 ## > "mitochondrial inheritance"
+}
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}

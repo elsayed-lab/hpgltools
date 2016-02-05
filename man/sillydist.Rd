@@ -2,7 +2,7 @@
 % Please edit documentation in R/misc_functions.r
 \name{sillydist}
 \alias{sillydist}
-\title{\code{sillydist()}  A stupid distance function of a point against two axes.}
+\title{A stupid distance function of a point against two axes.}
 \usage{
 sillydist(firstterm, secondterm, firstaxis = 0, secondaxis = 0)
 }
@@ -11,9 +11,9 @@ sillydist(firstterm, secondterm, firstaxis = 0, secondaxis = 0)
 
 \item{secondterm}{the y-values of the points.}
 
-\item{firstaxis}{default=0  the x-value of the vertical axis.}
+\item{firstaxis}{the x-value of the vertical axis.}
 
-\item{secondaxis}{default=0  the y-value of the second axis.}
+\item{secondaxis}{the y-value of the second axis.}
 }
 \value{
 dataframe of the distances
@@ -22,7 +22,7 @@ normalizes them against the largest point on the axes, multiplies
 the result, and normalizes against the max of all points.
 }
 \description{
-\code{sillydist()}  A stupid distance function of a point against two axes.
+A stupid distance function of a point against two axes.
 }
 \examples{
 \dontrun{

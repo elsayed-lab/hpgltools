@@ -2,7 +2,7 @@
 % Please edit documentation in R/count_tables.r
 \name{expt_subset}
 \alias{expt_subset}
-\title{\code{expt_subset()}  Extract a subset of samples following some rule(s) from an
+\title{Extract a subset of samples following some rule(s) from an
 experiment class}
 \usage{
 expt_subset(expt, subset = NULL)
@@ -19,7 +19,7 @@ metadata an expt class which contains the smaller set of
 data
 }
 \description{
-\code{expt_subset()}  Extract a subset of samples following some rule(s) from an
+Extract a subset of samples following some rule(s) from an
 experiment class
 }
 \examples{

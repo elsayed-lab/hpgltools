@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{graph_metrics}
 \alias{graph_metrics}
-\title{\code{graph_metrics()}  Make lots of graphs!}
+\title{Make lots of graphs!}
 \usage{
 graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
   title_suffix = NULL, qq = NULL, ma = NULL, ...)
@@ -10,15 +10,15 @@ graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
 \arguments{
 \item{expt}{an expt to process}
 
-\item{cormethod}{default='pearson'  the correlation test for heatmaps.}
+\item{cormethod}{the correlation test for heatmaps.}
 
-\item{distmethod}{default='euclidean'  define the distance metric for heatmaps.}
+\item{distmethod}{define the distance metric for heatmaps.}
 
-\item{title_suffix}{default=NULL  text to add to the titles of the plots.}
+\item{title_suffix}{text to add to the titles of the plots.}
 
-\item{qq}{default=NULL  include qq plots}
+\item{qq}{include qq plots}
 
-\item{ma}{default=NULL  include pairwise ma plots}
+\item{ma}{include pairwise ma plots}
 
 \item{...}{extra parameters optionally fed to the various plots}
 }

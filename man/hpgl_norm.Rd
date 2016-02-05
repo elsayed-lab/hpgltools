@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{hpgl_norm}
 \alias{hpgl_norm}
-\title{\code{hpgl_norm()} Normalize a dataframe/expt, express it, and/or transform it}
+\title{Normalize a dataframe/expt, express it, and/or transform it}
 \usage{
 hpgl_norm(data, design = NULL, transform = "raw", norm = "raw",
   convert = "raw", batch = "raw", batch1 = "batch", batch2 = NULL,
@@ -14,51 +14,51 @@ hpgl_norm(data, design = NULL, transform = "raw", norm = "raw",
 \arguments{
 \item{data}{some data}
 
-\item{design}{default=NULL  design dataframe must come with it}
+\item{design}{design dataframe must come with it}
 
-\item{transform}{default='raw;  defines whether to log(2|10) transform the
+\item{transform}{defines whether to log(2|10) transform the
 data. Defaults to raw.}
 
-\item{norm}{default='raw'  specify the normalization strategy.  Defaults to
+\item{norm}{specify the normalization strategy.  Defaults to
 raw.  This makes use of DESeq/EdgeR to provide: RLE, upperquartile,
 size-factor, or tmm normalization.  I tend to like quantile, but there are
 definitely corner-case scenarios for all strategies.}
 
-\item{convert}{default='raw'  defines the output type which may be raw, cpm,
+\item{convert}{defines the output type which may be raw, cpm,
 rpkm, or cp_seq_m.  Defaults to raw.}
 
-\item{batch}{default='raw'  batch correction method to try out}
+\item{batch}{batch correction method to try out}
 
-\item{batch1}{default='batch' column from design to get batch info}
+\item{batch1}{column from design to get batch info}
 
-\item{batch2}{default=NULL  a second covariate to try}
+\item{batch2}{a second covariate to try}
 
-\item{filter_low}{default=FALSE  choose whether to low-count filter the data.}
+\item{filter_low}{choose whether to low-count filter the data.}
 
-\item{annotations}{default=NULL  is used for rpkm or sequence normalizations to
+\item{annotations}{is used for rpkm or sequence normalizations to
 extract the lengths of sequences for normalization}
 
-\item{entry_type}{default='gene'  default gff entry to cull from}
+\item{entry_type}{default gff entry to cull from}
 
-\item{fasta}{default=NULL  fasta genome for rpkm}
+\item{fasta}{fasta genome for rpkm}
 
-\item{verbose}{default=FALSE talk}
+\item{verbose}{talk}
 
-\item{thresh}{default=2  threshold for low count filtering}
+\item{thresh}{threshold for low count filtering}
 
-\item{min_samples}{default=2  minimum samples for low count filtering}
+\item{min_samples}{minimum samples for low count filtering}
 
-\item{noscale}{default=TRUE  used by combatmod}
+\item{noscale}{used by combatmod}
 
-\item{p}{default=0.01  for povera genefilter}
+\item{p}{for povera genefilter}
 
-\item{A}{default=1  for povera genefilter}
+\item{A}{for povera genefilter}
 
-\item{k}{default=1  for kovera genefilter}
+\item{k}{for kovera genefilter}
 
-\item{cv_min}{default=0.01  for genefilter cv}
+\item{cv_min}{for genefilter cv}
 
-\item{cv_max}{default=1000  for genefilter cv}
+\item{cv_max}{for genefilter cv}
 
 \item{...}{I should put all those other options here}
 }
@@ -67,7 +67,7 @@ edgeR's DGEList expression of a count table.  This seems to
 me to be the easiest to deal with.
 }
 \description{
-\code{hpgl_norm()} Normalize a dataframe/expt, express it, and/or transform it
+Sometime soon I am going to elipsis all these variables
 }
 \examples{
 \dontrun{

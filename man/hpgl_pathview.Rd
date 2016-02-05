@@ -12,27 +12,27 @@ hpgl_pathview(path_data, indir = "pathview_in", outdir = "pathview",
 \arguments{
 \item{path_data}{some differentially expressed genes}
 
-\item{indir}{default='pathview_in'  A directory into which the unmodified kegg images will be downloaded (or already exist).}
+\item{indir}{A directory into which the unmodified kegg images will be downloaded (or already exist).}
 
-\item{outdir}{default='pathview'  A directory which will contain the colored images.}
+\item{outdir}{A directory which will contain the colored images.}
 
-\item{pathway}{default='all'  Perform the coloring for a specific pathway?}
+\item{pathway}{Perform the coloring for a specific pathway?}
 
-\item{species}{default='lma'  The kegg identifier for the species of interest.}
+\item{species}{The kegg identifier for the species of interest.}
 
-\item{string_from}{default='LmjF'  for renaming kegg categories}
+\item{string_from}{for renaming kegg categories}
 
-\item{string_to}{default="LMJF' for renaming kegg categories}
+\item{string_to}{for renaming kegg categories}
 
-\item{suffix}{default="_colored" for renaming finished files}
+\item{suffix}{for renaming finished files}
 
-\item{second_from}{default=NULL sometimes jsut one regex isnt enough}
+\item{second_from}{sometimes jsut one regex isnt enough}
 
-\item{second_to}{default=NULL sometimes just one regex isnt enough}
+\item{second_to}{sometimes just one regex isnt enough}
 
-\item{verbose}{default=FALSE talk more}
+\item{verbose}{talk more}
 
-\item{filenames}{default='id'  name the final files by id or name?}
+\item{filenames}{name the final files by id or name?}
 }
 \value{
 A list of some information for every KEGG pathway downloaded/examined.  This information includes:
@@ -45,7 +45,9 @@ A list of some information for every KEGG pathway downloaded/examined.  This inf
 Print some data onto KEGG pathways
 }
 \examples{
-## thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in", outdir="kegg_thy_el_comp2", string_from="_Spy", string_to="_Spy_", filenames="pathname")
+\dontrun{
+ thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in", outdir="kegg_thy_el_comp2", string_from="_Spy", string_to="_Spy_", filenames="pathname")
+}
 }
 \seealso{
 \pkg{Ramigo} \pkg{pathview}

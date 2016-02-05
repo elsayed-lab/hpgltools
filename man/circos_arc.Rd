@@ -2,7 +2,7 @@
 % Please edit documentation in R/circos.r
 \name{circos_arc}
 \alias{circos_arc}
-\title{circos_arc()  Write arcs between chromosomes in circos.}
+\title{Write arcs between chromosomes in circos.}
 \usage{
 circos_arc(df, cfgout = "circos/conf/default.conf", first_col = "chr1",
   second_col = "chr2", color = "blue", radius = 0.75, thickness = 3)
@@ -10,18 +10,17 @@ circos_arc(df, cfgout = "circos/conf/default.conf", first_col = "chr1",
 \arguments{
 \item{df}{a dataframe with starts/ends and the floating point information}
 
-\item{cfgout}{default='circos/conf/default.conf'  The master
-configuration file to write.}
+\item{cfgout}{The master configuration file to write.}
 
-\item{first_col}{default='chr1'  The name of the first chromosome}
+\item{first_col}{The name of the first chromosome}
 
-\item{second_col}{default='chr2'  The name of the second chromosome}
+\item{second_col}{The name of the second chromosome}
 
-\item{color}{default='blue'  the color of the histogram}
+\item{color}{the color of the histogram}
 
-\item{radius}{default=0.75  the radius at which to add the arcs}
+\item{radius}{the radius at which to add the arcs}
 
-\item{thickness}{default=3  integer thickness of the arcs}
+\item{thickness}{integer thickness of the arcs}
 }
 \value{
 undef

@@ -2,7 +2,7 @@
 % Please edit documentation in R/misc_functions.r
 \name{make_tooltips}
 \alias{make_tooltips}
-\title{\code{make_tooltips()}  Create a simple df from gff which contains tooltip usable
+\title{Create a simple df from gff which contains tooltip usable
 information for gVis graphs. The tooltip column is also a handy proxy for
 anontations information when it would otherwise be too troublesome.}
 \usage{
@@ -11,13 +11,13 @@ make_tooltips(annotations, desc_col = "description")
 \arguments{
 \item{annotations}{Either a gff file or annotation data frame (which likely came from a gff file.)}
 
-\item{desc_col}{default='description'  a column from a gff file to grab the data from}
+\item{desc_col}{a column from a gff file to grab the data from}
 }
 \value{
 a df of tooltip information or name of a gff file
 }
 \description{
-\code{make_tooltips()}  Create a simple df from gff which contains tooltip usable
+Create a simple df from gff which contains tooltip usable
 information for gVis graphs. The tooltip column is also a handy proxy for
 anontations information when it would otherwise be too troublesome.
 }

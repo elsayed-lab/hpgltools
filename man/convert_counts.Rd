@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{convert_counts}
 \alias{convert_counts}
-\title{\code{convert_counts()} Perform a cpm/rpkm/whatever transformation of a count table.}
+\title{Perform a cpm/rpkm/whatever transformation of a count table.}
 \usage{
 convert_counts(data, convert = "raw", annotations = NULL, fasta = NULL,
   pattern = "TA", entry_type = "gene", ...)
@@ -10,15 +10,15 @@ convert_counts(data, convert = "raw", annotations = NULL, fasta = NULL,
 \arguments{
 \item{data}{A matrix of count data}
 
-\item{convert}{default='raw'  A type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m}
+\item{convert}{A type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m}
 
-\item{annotations}{default=NULL  a set of gff annotations are needed if using rpkm so we can get gene lengths.}
+\item{annotations}{a set of gff annotations are needed if using rpkm so we can get gene lengths.}
 
-\item{fasta}{default=NULL  a fasta for rpkmish}
+\item{fasta}{a fasta for rpkmish}
 
-\item{pattern}{default='TA'  for cp_seq_m counts}
+\item{pattern}{for cp_seq_m counts}
 
-\item{entry_type}{default='gene' used to acquire gene lengths}
+\item{entry_type}{used to acquire gene lengths}
 
 \item{...}{more options}
 }

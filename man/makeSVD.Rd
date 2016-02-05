@@ -2,7 +2,7 @@
 % Please edit documentation in R/pca.r
 \name{makeSVD}
 \alias{makeSVD}
-\title{\code{make_SVD()} is a function scabbed from Hector and Kwame's cbcbSEQ
+\title{this a function scabbed from Hector and Kwame's cbcbSEQ
 It just does fast.svd of a matrix against its rowMeans().}
 \usage{
 makeSVD(data)
@@ -14,7 +14,7 @@ makeSVD(data)
 a list containing the s,v,u from fast.svd
 }
 \description{
-\code{make_SVD()} is a function scabbed from Hector and Kwame's cbcbSEQ
+this a function scabbed from Hector and Kwame's cbcbSEQ
 It just does fast.svd of a matrix against its rowMeans().
 }
 \examples{

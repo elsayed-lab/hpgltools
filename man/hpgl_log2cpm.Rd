@@ -2,14 +2,14 @@
 % Please edit documentation in R/normalization.r
 \name{hpgl_log2cpm}
 \alias{hpgl_log2cpm}
-\title{\code{hpgl_log2cpm()}  Converts count matrix to log2 counts-per-million reads.}
+\title{Converts count matrix to log2 counts-per-million reads.}
 \usage{
 hpgl_log2cpm(counts, lib.size = NULL)
 }
 \arguments{
 \item{counts}{read count matrix}
 
-\item{lib.size}{default=NULL library size}
+\item{lib.size}{library size}
 }
 \value{
 log2-CPM read count matrix

@@ -2,18 +2,18 @@
 % Please edit documentation in R/autoloads.r
 \name{require.auto}
 \alias{require.auto}
-\title{\code{require.auto()}  Automatic loading and/or installing of packages.}
+\title{Automatic loading and/or installing of packages.}
 \usage{
 require.auto(lib, github_path = NULL, verbose = FALSE, update = FALSE)
 }
 \arguments{
 \item{lib}{string name of a library}
 
-\item{github_path}{default=NULL  an optional github username/path.}
+\item{github_path}{an optional github username/path.}
 
-\item{verbose}{default=FALSE  print some information while loading.}
+\item{verbose}{print some information while loading.}
 
-\item{update}{default=FALSE  update packages?}
+\item{update}{update packages?}
 }
 \value{
 NULL currently

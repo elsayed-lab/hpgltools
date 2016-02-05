@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_topgo.r
 \name{plot_topgo_densities}
 \alias{plot_topgo_densities}
-\title{plot_topgo_densities()  Plot the density of categories vs. the possibilities}
+\title{Plot the density of categories vs. the possibilities}
 \usage{
 plot_topgo_densities(godata, table)
 }

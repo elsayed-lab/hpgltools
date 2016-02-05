@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_limma.r
 \name{simple_comparison}
 \alias{simple_comparison}
-\title{simple_comparison()  Perform a simple experimental/control comparison
+\title{Perform a simple experimental/control comparison
 This is a function written primarily to provide examples for how to use limma.
 It does the following:  1.  Makes a model matrix using condition/batch
 2.  Optionally uses sva's combat (from cbcbSEQ)  3.  Runs voom/lmfit
@@ -21,25 +21,25 @@ simple_comparison(subset, workbook = "simple_comparison.xls",
 \arguments{
 \item{subset}{an experimental subset with two conditions to compare.}
 
-\item{workbook}{default='simple_comparison.xls'  an excel workbook to which to write.}
+\item{workbook}{an excel workbook to which to write.}
 
-\item{sheet}{default='simple_comparison'  an excel worksheet to which to write.}
+\item{sheet}{an excel worksheet to which to write.}
 
-\item{basename}{default=NA  a url to which to send click evens in clicky volcano/ma plots.}
+\item{basename}{a url to which to send click evens in clicky volcano/ma plots.}
 
-\item{batch}{default=TRUE  whether or not to include batch in limma's model.}
+\item{batch}{whether or not to include batch in limma's model.}
 
-\item{combat}{default=FALSE  whether or not to use combatMod().}
+\item{combat}{whether or not to use combatMod().}
 
-\item{combat_noscale}{default=TRUE  whether or not to include combat_noscale (makes combat a little less heavy-handed).}
+\item{combat_noscale}{whether or not to include combat_noscale (makes combat a little less heavy-handed).}
 
-\item{pvalue_cutoff}{default=0.05  p-value definition of 'significant.'}
+\item{pvalue_cutoff}{p-value definition of 'significant.'}
 
-\item{logfc_cutoff}{default=0.6  fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.}
+\item{logfc_cutoff}{fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.}
 
-\item{tooltip_data}{default=NULL  text descriptions of genes if one wants google graphs.}
+\item{tooltip_data}{text descriptions of genes if one wants google graphs.}
 
-\item{verbose}{default=FALSE  be verbose?}
+\item{verbose}{be verbose?}
 
 \item{...}{more parameters!}
 }
@@ -69,23 +69,15 @@ A list containing the following pieces:
   voom_plot = a plot from voom(), redunant with voom_data
 }
 \description{
-simple_comparison()  Perform a simple experimental/control comparison
-This is a function written primarily to provide examples for how to use limma.
-It does the following:  1.  Makes a model matrix using condition/batch
-2.  Optionally uses sva's combat (from cbcbSEQ)  3.  Runs voom/lmfit
-4.  Sets the first element of the design to "changed" and the second to "control".
-5.  Performs a makeContrasts() of changed - control.  6.  Fits them
-7.  Makes histograms of the two elements of the contrast, cor.tests() them,
-makes a histogram of the p-values, ma-plot, volcano-plot, writes out the results in
-an excel sheet, pulls the up/down significant and p-value significant (maybe this should be
-replaced with write_limma()? 8.  And returns a list containining these data and plots.
+Currently this assumes that a variant of toptable was used which
+ gives adjusted p-values.  This is not always the case and I should
+ check for that, but I have not yet.
 }
 \examples{
-## model = model.matrix(~ 0 + subset$conditions)
-## simple_comparison(subset, model)
-## Currently this assumes that a variant of toptable was used which
-## gives adjusted p-values.  This is not always the case and I should
-## check for that, but I have not yet.
+\dontrun{
+ model = model.matrix(~ 0 + subset$conditions)
+ simple_comparison(subset, model)
+}
 }
 \seealso{
 \link{hpgl_gvis_ma_plot} \link[limma]{toptable}

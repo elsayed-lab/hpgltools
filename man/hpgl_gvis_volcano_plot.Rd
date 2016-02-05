@@ -2,7 +2,7 @@
 % Please edit documentation in R/gvis_plots.r
 \name{hpgl_gvis_volcano_plot}
 \alias{hpgl_gvis_volcano_plot}
-\title{hpgl_gvis_volcano_plot()  Make an html version of an volcano plot.}
+\title{Make an html version of an volcano plot.}
 \usage{
 hpgl_gvis_volcano_plot(toptable_data, fc_cutoff = 0.8, p_cutoff = 0.05,
   tooltip_data = NULL, filename = "html/gvis_vol_plot.html",
@@ -11,15 +11,15 @@ hpgl_gvis_volcano_plot(toptable_data, fc_cutoff = 0.8, p_cutoff = 0.05,
 \arguments{
 \item{toptable_data}{df of toptable() data}
 
-\item{fc_cutoff}{default=0.8  fold change cutoff.}
+\item{fc_cutoff}{fold change cutoff.}
 
-\item{p_cutoff}{default=0.05  maximum p value to allow.}
+\item{p_cutoff}{maximum p value to allow.}
 
-\item{tooltip_data}{default=NULL  a df of tooltip information.}
+\item{tooltip_data}{a df of tooltip information.}
 
-\item{filename}{default='html/gvis_vol_plot.html'  a filename to write a fancy html graph.}
+\item{filename}{a filename to write a fancy html graph.}
 
-\item{base_url}{default=''  a string with a basename used for generating URLs for clicking dots on the graph.}
+\item{base_url}{a string with a basename used for generating URLs for clicking dots on the graph.}
 
 \item{...}{more options}
 }
@@ -28,10 +28,12 @@ NULL, but along the way an html file is generated which
 contains a googleVis MA plot.  See hpgl_ma_plot() for details.
 }
 \description{
-hpgl_gvis_volcano_plot()  Make an html version of an volcano plot.
+Make an html version of an volcano plot.
 }
 \examples{
-## hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+\dontrun{
+ hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+}
 }
 \seealso{
 \link{hpgl_volcano_plot}

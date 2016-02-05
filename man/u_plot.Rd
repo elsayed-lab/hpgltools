@@ -2,7 +2,7 @@
 % Please edit documentation in R/pca.r
 \name{u_plot}
 \alias{u_plot}
-\title{\code{u_plot()}  Plot the rank order svd$u elements to get a view of how much
+\title{Plot the rank order svd$u elements to get a view of how much
 the first genes contribute to the total variance by PC.}
 \usage{
 u_plot(plotted_us)
@@ -14,7 +14,7 @@ u_plot(plotted_us)
 a recordPlot() plot showing the first 3 PCs by rank-order svd$u.
 }
 \description{
-\code{u_plot()}  Plot the rank order svd$u elements to get a view of how much
+Plot the rank order svd$u elements to get a view of how much
 the first genes contribute to the total variance by PC.
 }
 

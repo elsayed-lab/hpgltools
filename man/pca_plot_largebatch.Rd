@@ -2,24 +2,24 @@
 % Please edit documentation in R/pca.r
 \name{pca_plot_largebatch}
 \alias{pca_plot_largebatch}
-\title{\code{pca_plot_largebatch()}  ggplot2 plots of PCA data with >= 6 batches.}
+\title{ggplot2 plots of PCA data with >= 6 batches.}
 \usage{
 pca_plot_largebatch(df, size = 5, first = "PC1", second = "PC2")
 }
 \arguments{
 \item{df}{A dataframe of PC1/PC2 and other arbitrary data.}
 
-\item{size}{default=5  The size of glyphs in the plot.}
+\item{size}{The size of glyphs in the plot.}
 
-\item{first}{default='PC1'  The first principle component to plot against}
+\item{first}{The first principle component to plot against}
 
-\item{second}{default='PC2'  The second PC to plot against}
+\item{second}{The second PC to plot against}
 }
 \value{
 a ggplot2 plot of principle components 1 and 2.
 }
 \description{
-\code{pca_plot_largebatch()}  ggplot2 plots of PCA data with >= 6 batches.
+ggplot2 plots of PCA data with >= 6 batches.
 }
 \examples{
 \dontrun{

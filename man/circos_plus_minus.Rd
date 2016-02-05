@@ -2,7 +2,7 @@
 % Please edit documentation in R/circos.r
 \name{circos_plus_minus}
 \alias{circos_plus_minus}
-\title{circos_plus_minus()  Write tiles of bacterial ontology groups using the categories from microbesonline.org}
+\title{Write tiles of bacterial ontology groups using the categories from microbesonline.org}
 \usage{
 circos_plus_minus(go_table, cfgout = "circos/conf/default.conf",
   chr = "chr1", outer = 1, width = 0.08, spacing = 0)
@@ -10,17 +10,16 @@ circos_plus_minus(go_table, cfgout = "circos/conf/default.conf",
 \arguments{
 \item{go_table}{a dataframe with starts/ends and categories}
 
-\item{cfgout}{default='circos/conf/default.conf'  The master
-configuration file to write.}
+\item{cfgout}{The master configuration file to write.}
 
-\item{chr}{default='chr1'  the name of the chromosome (This currently assumes a bacterial chromosome)}
+\item{chr}{The name of the chromosome (This currently assumes a bacterial chromosome)}
 
-\item{outer}{default=1.0  the floating point radius of the circle
+\item{outer}{the floating point radius of the circle
 into which to place the plus-strand data}
 
-\item{width}{default=0.08  the radial width of each tile}
+\item{width}{the radial width of each tile}
 
-\item{spacing}{default=0.0  the radial distance between outer,inner
+\item{spacing}{the radial distance between outer,inner
 and inner,whatever follows.}
 }
 \value{

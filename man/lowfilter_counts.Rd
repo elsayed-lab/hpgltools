@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{lowfilter_counts}
 \alias{lowfilter_counts}
-\title{\code{lowfilter_counts()}  A caller for different low-count filters}
+\title{A caller for different low-count filters}
 \usage{
 lowfilter_counts(count_table, type = "cbcb", p = 0.01, A = 1, k = 1,
   cv_min = 0.01, cv_max = 1000, thresh = 2, min_samples = 2)
@@ -10,27 +10,27 @@ lowfilter_counts(count_table, type = "cbcb", p = 0.01, A = 1, k = 1,
 \arguments{
 \item{count_table}{some counts to filter}
 
-\item{type}{default='cbcb'  Filtering method to apply (cbcb, pofa, kofa, cv right now)}
+\item{type}{Filtering method to apply (cbcb, pofa, kofa, cv right now)}
 
-\item{p}{default=0.01 For pofa()}
+\item{p}{For pofa()}
 
-\item{A}{default=1  For pofa()}
+\item{A}{For pofa()}
 
-\item{k}{default=1  For kofa()}
+\item{k}{For kofa()}
 
-\item{cv_min}{default=0.01  For cv()}
+\item{cv_min}{For cv()}
 
-\item{cv_max}{default=1000  For cv()}
+\item{cv_max}{For cv()}
 
-\item{thresh}{default=2  Minimum threshold across samples for cbcb}
+\item{thresh}{Minimum threshold across samples for cbcb}
 
-\item{min_samples}{default=2  Minimum number of samples for cbcb}
+\item{min_samples}{Minimum number of samples for cbcb}
 }
 \value{
 a data frame of lowfiltered counts
 }
 \description{
-\code{lowfilter_counts()}  A caller for different low-count filters
+A caller for different low-count filters
 }
 \examples{
 \dontrun{

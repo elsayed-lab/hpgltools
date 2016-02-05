@@ -2,7 +2,7 @@
 % Please edit documentation in R/pca.r
 \name{hpgl_pca}
 \alias{hpgl_pca}
-\title{\code{hpgl_pca()}  Make a ggplot PCA plot describing the samples' clustering.}
+\title{Make a ggplot PCA plot describing the samples' clustering.}
 \usage{
 hpgl_pca(data, design = NULL, plot_colors = NULL, plot_labels = NULL,
   plot_title = NULL, plot_size = 5, ...)
@@ -10,15 +10,15 @@ hpgl_pca(data, design = NULL, plot_colors = NULL, plot_labels = NULL,
 \arguments{
 \item{data}{an expt set of samples.}
 
-\item{design}{default=NULL  a design matrix and.}
+\item{design}{a design matrix and.}
 
-\item{plot_colors}{default=NULL  a color scheme.}
+\item{plot_colors}{a color scheme.}
 
-\item{plot_labels}{default=NULL  add labels?  Also, what type?  FALSE, "default", or "fancy".}
+\item{plot_labels}{add labels?  Also, what type?  FALSE, "default", or "fancy".}
 
-\item{plot_title}{default=NULL  a title for the plot.}
+\item{plot_title}{a title for the plot.}
 
-\item{plot_size}{default=5  size for the glyphs on the plot.}
+\item{plot_size}{size for the glyphs on the plot.}
 
 \item{...}{arglist from elipsis!}
 }
@@ -32,7 +32,7 @@ a list containing the following:
 This makes use of cbcbSEQ and prints the table of variance by component.
 }
 \description{
-\code{hpgl_pca()}  Make a ggplot PCA plot describing the samples' clustering.
+Make a ggplot PCA plot describing the samples' clustering.
 }
 \examples{
 \dontrun{

@@ -1,6 +1,6 @@
-## Time-stamp: <Thu Feb  4 18:58:24 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 22:13:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' \code{basic_pairwise()}  Perform a pairwise comparison among conditions which takes
+#' Perform a pairwise comparison among conditions which takes
 #' nothing into account.  It _only_ takes the conditions, a mean value/variance among
 #' them, divides by condition, and returns the result.  No fancy nomalizations, no
 #' statistical models, no nothing.  It should be the very worst method possible.
@@ -8,7 +8,7 @@
 #' all do better than this, always.
 #'
 #' @param input a count table by sample
-#' @param design default=NULL  a data frame of samples and conditions
+#' @param design   a data frame of samples and conditions
 #' @return I am not sure yet
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @export

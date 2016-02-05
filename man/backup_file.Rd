@@ -2,16 +2,16 @@
 % Please edit documentation in R/misc_functions.r
 \name{backup_file}
 \alias{backup_file}
-\title{backup_file()  Make a backup of an existing file with n revisions, like VMS!}
+\title{Make a backup of an existing file with n revisions, like VMS!}
 \usage{
-backup_file(backup_file, backups = 10)
+backup_file(backup_file, backups = 4)
 }
 \arguments{
 \item{backup_file}{the file to backup.}
 
-\item{backups}{default=10  how many revisions?}
+\item{backups}{how many revisions?}
 }
 \description{
-backup_file()  Make a backup of an existing file with n revisions, like VMS!
+Make a backup of an existing file with n revisions, like VMS!
 }
 

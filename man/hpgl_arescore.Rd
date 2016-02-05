@@ -2,7 +2,7 @@
 % Please edit documentation in R/misc_functions.r
 \name{hpgl_arescore}
 \alias{hpgl_arescore}
-\title{\code{hpgl_arescore()}  Implement the arescan function in R}
+\title{Implement the arescan function in R}
 \usage{
 hpgl_arescore(x, basal = 1, overlapping = 1.5, d1.3 = 0.75, d4.6 = 0.4,
   d7.9 = 0.2, within.AU = 0.3, aub.min.length = 10,
@@ -11,7 +11,7 @@ hpgl_arescore(x, basal = 1, overlapping = 1.5, d1.3 = 0.75, d4.6 = 0.4,
 \arguments{
 \item{x}{A DNA/RNA StringSet containing the UTR sequences of interest}
 
-\item{basal}{default=1  I dunno.}
+\item{basal}{I dunno.}
 
 \item{overlapping}{default=1.5}
 

@@ -12,31 +12,31 @@ simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
 \arguments{
 \item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}
 
-\item{goids}{default=NULL  a file containing mappings of genes to goids in the format expected by topgo}
+\item{goids}{a file containing mappings of genes to goids in the format expected by topgo}
 
-\item{golevel}{default=4  a relative level in the tree for printing p-value plots, higher is more specific}
+\item{golevel}{a relative level in the tree for printing p-value plots, higher is more specific}
 
-\item{pcutoff}{default=0.1  a p-value cutoff}
+\item{pcutoff}{a p-value cutoff}
 
-\item{qcutoff}{default=1.0  a q-value cutoff}
+\item{qcutoff}{a q-value cutoff}
 
-\item{fold_changes}{default=NULL  a df of fold changes for the DE genes}
+\item{fold_changes}{a df of fold changes for the DE genes}
 
-\item{include_cnetplots}{default=FALSE  the cnetplots are often stupid and can be left behind}
+\item{include_cnetplots}{the cnetplots are often stupid and can be left behind}
 
-\item{showcategory}{default=12  how many categories to show in p-value plots}
+\item{showcategory}{how many categories to show in p-value plots}
 
-\item{universe}{default=NULL  universe to use}
+\item{universe}{universe to use}
 
-\item{organism}{default='lm'  name of the species to use}
+\item{organism}{name of the species to use}
 
-\item{gff}{default=NULL  gff file to generate the universe}
+\item{gff}{gff file to generate the universe}
 
-\item{wrapped_width}{default=20 width of ontology names in the pvalue plots}
+\item{wrapped_width}{width of ontology names in the pvalue plots}
 
-\item{method}{default='Wallenius'  pvalue calculation method}
+\item{method}{pvalue calculation method}
 
-\item{padjust}{default='BH'  a method for adjusting the p-values}
+\item{padjust}{a method for adjusting the p-values}
 
 \item{...}{more options!}
 }
@@ -60,7 +60,8 @@ a big list including the following:
 Perform a simplified clusterProfiler analysis
 }
 \examples{
-## up_cluster = simple_clusterprofiler(mga2_ll_thy_top, goids=goids, gff="reference/genome/gas.gff")
+\dontrun{
+ up_cluster = simple_clusterprofiler(mga2_ll_thy_top, goids=goids, gff="reference/genome/gas.gff")
 ## > Some chattery while it runs
 ## tail(head(up_cluster$bp_interesting, n=10), n=1)
 ## > ID ont GeneRatio BgRatio     pvalue   p.adjust    qvalue
@@ -69,5 +70,6 @@ Perform a simplified clusterProfiler analysis
 ## >   10 M5005_Spy1632/M5005_Spy1637/M5005_Spy1635/M5005_Spy1636/M5005_Spy1638     5
 ## >   Description
 ## >   10 oligosaccharide metabolic process
+}
 }
 

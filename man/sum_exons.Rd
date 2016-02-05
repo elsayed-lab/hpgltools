@@ -2,7 +2,7 @@
 % Please edit documentation in R/misc_functions.r
 \name{sum_exons}
 \alias{sum_exons}
-\title{\code{sum_exons()}  Given a data frame of exon counts and annotation information, sum the exons.}
+\title{Given a data frame of exon counts and annotation information, sum the exons.}
 \usage{
 sum_exons(data, gff = NULL, annotdf = NULL, parent = "Parent",
   child = "row.names")
@@ -10,23 +10,21 @@ sum_exons(data, gff = NULL, annotdf = NULL, parent = "Parent",
 \arguments{
 \item{data}{a count table by exon}
 
-\item{gff}{default=NULL  a gff filename}
+\item{gff}{a gff filename}
 
-\item{annotdf}{default=NULL  a dataframe of annotations (probably from gff2df)}
+\item{annotdf}{a dataframe of annotations (probably from gff2df)}
 
-\item{parent}{default='Parent'  a column from the annotations with the gene names}
+\item{parent}{a column from the annotations with the gene names}
 
-\item{child}{default='row.names'  a column from the annotations with the exon names
-
-This function will merge a count table to an annotation table by the child column.
-It will then sum all rows of exons by parent gene and sum the widths of the exons.
-Finally it will return a list containing a df of gene lengths and summed counts.}
+\item{child}{a column from the annotations with the exon names}
 }
 \value{
 a list of 2 data frames, counts and lengths by summed exons
 }
 \description{
-\code{sum_exons()}  Given a data frame of exon counts and annotation information, sum the exons.
+This function will merge a count table to an annotation table by the child column.
+It will then sum all rows of exons by parent gene and sum the widths of the exons.
+Finally it will return a list containing a df of gene lengths and summed counts.
 }
 \examples{
 \dontrun{

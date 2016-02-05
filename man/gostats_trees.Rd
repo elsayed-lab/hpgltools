@@ -24,17 +24,17 @@ gostats_trees(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under, cc_under,
 
 \item{cc_under}{ccunder expression data}
 
-\item{goid_map}{default='reference/go/id2go.map'  a mapping of IDs to GO in the Ramigo expected format}
+\item{goid_map}{a mapping of IDs to GO in the Ramigo expected format}
 
-\item{score_limit}{default=0.01   maximum score to include as 'significant'}
+\item{score_limit}{maximum score to include as 'significant'}
 
-\item{goids_df}{default=NULL  a dataframe of available goids (used to generate goid_map)}
+\item{goids_df}{a dataframe of available goids (used to generate goid_map)}
 
-\item{overwrite}{default=FALSE  overwrite the goid_map?}
+\item{overwrite}{overwrite the goid_map?}
 
-\item{selector}{default='topDiffGenes'   a function to choose differentially expressed genes in the data}
+\item{selector}{a function to choose differentially expressed genes in the data}
 
-\item{pval_column}{default='adj.P.Val'   a column in the data to be used to extract pvalue scores}
+\item{pval_column}{a column in the data to be used to extract pvalue scores}
 }
 \value{
 plots! Trees! oh my!

@@ -2,11 +2,12 @@
 % Please edit documentation in R/kegg.r
 \name{gostats_kegg}
 \alias{gostats_kegg}
-\title{gostats_kegg()  Use gostats() against kegg pathways}
+\title{Use gostats() against kegg pathways}
 \usage{
 gostats_kegg()
 }
 \description{
 Does this even work?  I don't think I have ever tested it yet.
+oh, it sort of does, maybe if I export it I will rembmer it
 }
 

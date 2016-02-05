@@ -2,8 +2,7 @@
 % Please edit documentation in R/circos.r
 \name{circos_hist}
 \alias{circos_hist}
-\title{circos_hist()  Write histograms of arbitrary floating point data in
-circos.}
+\title{Write histograms of arbitrary floating point data in circos.}
 \usage{
 circos_hist(df, cfgout = "circos/conf/default.conf", colname = "datum",
   chr = "chr1", color = "blue", fill_color = "blue", outer = 0.9,
@@ -12,25 +11,23 @@ circos_hist(df, cfgout = "circos/conf/default.conf", colname = "datum",
 \arguments{
 \item{df}{a dataframe with starts/ends and the floating point information}
 
-\item{cfgout}{default='circos/conf/default.conf'  The master
-configuration file to write.}
+\item{cfgout}{The master configuration file to write.}
 
-\item{colname}{default='datum'  The name of the column with the
-data of interest.}
+\item{colname}{The name of the column with the data of interest.}
 
-\item{chr}{default='chr1'  the name of the chromosome (This
+\item{chr}{The name of the chromosome (This
 currently assumes a bacterial chromosome)}
 
-\item{color}{default='blue'  the color of the histogram}
+\item{color}{the color of the histogram}
 
-\item{fill_color}{default='blue'  guess}
+\item{fill_color}{guess}
 
-\item{outer}{default=1.0  the floating point radius of the circle
+\item{outer}{the floating point radius of the circle
 into which to place the plus-strand data}
 
-\item{width}{default=0.08  the radial width of each tile}
+\item{width}{the radial width of each tile}
 
-\item{spacing}{default=0.0  the radial distance between outer,inner
+\item{spacing}{the radial distance between outer,inner
 and inner,whatever follows.}
 }
 \value{

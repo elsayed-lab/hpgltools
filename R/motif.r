@@ -1,4 +1,10 @@
 
+#' run the rGADEM suite
+#'
+#' This is another function I started but never had cause to finish
+#' for the test sequences it works though
+#'
+#' @export
 simple_gadem <- function() {
     ##    require.auto('rGADEM')
     Hsapiens <- NULL

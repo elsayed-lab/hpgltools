@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_boxplot}
 \alias{hpgl_boxplot}
-\title{\code{hpgl_boxplot()}  Make a ggplot boxplot of a set of samples.}
+\title{Make a ggplot boxplot of a set of samples.}
 \usage{
 hpgl_boxplot(data, colors = NULL, names = NULL, title = NULL,
   scale = NULL, ...)
@@ -10,13 +10,13 @@ hpgl_boxplot(data, colors = NULL, names = NULL, title = NULL,
 \arguments{
 \item{data}{an expt or data frame set of samples.}
 
-\item{colors}{default=NULL  a color scheme, if not provided will make its own.}
+\item{colors}{a color scheme, if not provided will make its own.}
 
-\item{names}{default=NULL  a nicer version of the sample names.}
+\item{names}{a nicer version of the sample names.}
 
-\item{title}{default=NULL  A title!}
+\item{title}{A title!}
 
-\item{scale}{default='raw'  whether to log scale the y-axis.}
+\item{scale}{whether to log scale the y-axis.}
 
 \item{...}{more parameters are fun}
 }
@@ -31,7 +31,7 @@ the non-outliers), and single dots for each gene which is outside
 that range.  A single dot is transparent.
 }
 \description{
-\code{hpgl_boxplot()}  Make a ggplot boxplot of a set of samples.
+Make a ggplot boxplot of a set of samples.
 }
 \examples{
 \dontrun{

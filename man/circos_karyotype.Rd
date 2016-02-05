@@ -2,28 +2,28 @@
 % Please edit documentation in R/circos.r
 \name{circos_karyotype}
 \alias{circos_karyotype}
-\title{circos_karyotype()  Create the description of (a)chromosome(s) for circos.}
+\title{Create the description of (a)chromosome(s) for circos.}
 \usage{
 circos_karyotype(name = "default", conf_dir = "circos/conf",
   length = NULL, chr_name = "chr1", segments = 6, color = "white",
   chr_num = 1, fasta = NULL)
 }
 \arguments{
-\item{name}{default='default'  the name of the chromosome (This currently assumes a bacterial chromosome)}
+\item{name}{the name of the chromosome (This currently assumes a bacterial chromosome)}
 
-\item{conf_dir}{default='circos/conf' where to put the circos configuration}
+\item{conf_dir}{where to put the circos configuration}
 
-\item{length}{default=1838554  the default length of the chromosome (That is mgas5005)}
+\item{length}{the default length of the chromosome (That is mgas5005)}
 
-\item{chr_name}{default='chf1'  the name of the chromosome}
+\item{chr_name}{the name of the chromosome}
 
-\item{segments}{default=6  how many segments to cut it into}
+\item{segments}{how many segments to cut it into}
 
-\item{color}{default='white'  how to colors the chromosomal arc. (circos images are cluttered enough)}
+\item{color}{how to colors the chromosomal arc. (circos images are cluttered enough)}
 
-\item{chr_num}{default=1  the number to record (This and name above should change for multi-chromosomal species)}
+\item{chr_num}{the number to record (This and name above should change for multi-chromosomal species)}
 
-\item{fasta}{default=NULL  fasta file to use to create the karyotype}
+\item{fasta}{fasta file to use to create the karyotype}
 }
 \value{
 undef

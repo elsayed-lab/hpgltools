@@ -2,7 +2,7 @@
 % Please edit documentation in R/misc_functions.r
 \name{write_xls}
 \alias{write_xls}
-\title{\code{write_xls()}  Write a dataframe to an excel spreadsheet sheet.
+\title{Write a dataframe to an excel spreadsheet sheet.
 I like to give folks data in any format they prefer, even though I sort
 of hate excel.  Most people I work with use it, so therefore I do too.
 This function has been through many iterations, first using XLConnect,
@@ -16,24 +16,24 @@ write_xls(data, sheet = "first", file = "excel/workbook.xlsx",
 \arguments{
 \item{data}{A data frame to print}
 
-\item{sheet}{default='first'  Name of the sheet to write}
+\item{sheet}{Name of the sheet to write}
 
-\item{file}{default='excel/workbook.xlsx'  The filename for the workbook.}
+\item{file}{The filename for the workbook.}
 
-\item{overwrite_file}{default=TRUE  required for XLConnect, still used but perhaps not needed.}
+\item{overwrite_file}{required for XLConnect, still used but perhaps not needed.}
 
-\item{newsheet}{default=FALSE same, but makes sure we don't overwrite an existing sheet}
+\item{newsheet}{same, but makes sure we don't overwrite an existing sheet}
 
-\item{overwrite_sheet}{default=TRUE yeah, I need to prune these options}
+\item{overwrite_sheet}{yeah, I need to prune these options}
 
-\item{dated}{default=TRUE  Append a date to the excel filename?}
+\item{dated}{Append a date to the excel filename?}
 
-\item{first_two_widths}{default=c(30,60)  I add long titles to the tops of the sheets
+\item{first_two_widths}{I add long titles to the tops of the sheets
 setting this makes sure that those columns are not too wide}
 
-\item{start_row}{default=1  The first row of the sheet to write}
+\item{start_row}{The first row of the sheet to write}
 
-\item{start_col}{default=1  The first column to write}
+\item{start_col}{The first column to write}
 
 \item{...}{the set of arguments given to for openxlsx}
 }
@@ -42,7 +42,7 @@ a list containing the sheet and workbook written as well as the bottom-right coo
   row/column written of the table.
 }
 \description{
-\code{write_xls()}  Write a dataframe to an excel spreadsheet sheet.
+Write a dataframe to an excel spreadsheet sheet.
 I like to give folks data in any format they prefer, even though I sort
 of hate excel.  Most people I work with use it, so therefore I do too.
 This function has been through many iterations, first using XLConnect,

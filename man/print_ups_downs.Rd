@@ -2,14 +2,14 @@
 % Please edit documentation in R/de_shared.r
 \name{print_ups_downs}
 \alias{print_ups_downs}
-\title{print_ups_downs()  Reprint the output from extract_significant_genes()}
+\title{Reprint the output from extract_significant_genes()}
 \usage{
 print_ups_downs(upsdowns, sig_table = "excel/significant_genes.xlsx")
 }
 \arguments{
 \item{upsdowns}{the output from extract_significant_genes()}
 
-\item{sig_table}{default='excel/significant_genes.xlsx'  table to write to}
+\item{sig_table}{table to write to}
 }
 \value{
 the return from write_xls

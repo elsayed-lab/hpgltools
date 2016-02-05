@@ -18,23 +18,23 @@ simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids = NULL,
 
 \item{goids}{a list of ontology accessions to gene accessions}
 
-\item{doplot}{default=TRUE  include pwf plots}
+\item{doplot}{include pwf plots}
 
-\item{adjust}{default=0.1  minimum adjusted pvalue}
+\item{adjust}{minimum adjusted pvalue}
 
-\item{pvalue}{default=0.1  minimum pvalue}
+\item{pvalue}{minimum pvalue}
 
-\item{qvalue}{default=0.1  minimum qvalue}
+\item{qvalue}{minimum qvalue}
 
-\item{goseq_method}{default='Wallenius'  testing used by goseq}
+\item{goseq_method}{testing used by goseq}
 
-\item{padjust_method}{default='BH'  which method to adjust the pvalues}
+\item{padjust_method}{which method to adjust the pvalues}
 
-\item{species}{default=NULL  optionally choose a species from supportedOrganisms()}
+\item{species}{optionally choose a species from supportedOrganisms()}
 
-\item{length_db}{default='ensGene'  Source of gene lengths}
+\item{length_db}{Source of gene lengths}
 
-\item{gff}{default=NULL  gff file source of gene lengths}
+\item{gff}{gff file source of gene lengths}
 
 \item{...}{extra parameters which I do not recall}
 }

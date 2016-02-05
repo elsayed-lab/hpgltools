@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_multihistogram}
 \alias{hpgl_multihistogram}
-\title{hpgl_multihistogram()  Make a pretty histogram of multiple datasets.}
+\title{Make a pretty histogram of multiple datasets.}
 \usage{
 hpgl_multihistogram(data, log = FALSE, binwidth = NULL, bins = NULL,
   verbose = FALSE)
@@ -10,13 +10,13 @@ hpgl_multihistogram(data, log = FALSE, binwidth = NULL, bins = NULL,
 \arguments{
 \item{data}{a dataframe of lots of pretty numbers, this also accepts lists.}
 
-\item{log}{default=FALSE  plot the data on the log scale?}
+\item{log}{plot the data on the log scale?}
 
-\item{binwidth}{default=NULL  set a static bin width with an unknown # of bins?  If neither of these are provided, then bins is set to 500, if both are provided, then bins wins.}
+\item{binwidth}{set a static bin width with an unknown # of bins?  If neither of these are provided, then bins is set to 500, if both are provided, then bins wins.}
 
-\item{bins}{default=NULL  set a static # of bins of an unknown width?}
+\item{bins}{set a static # of bins of an unknown width?}
 
-\item{verbose}{default=FALSE  be verbose?}
+\item{verbose}{be verbose?}
 }
 \value{
 a ggplot histogram comparing multiple data sets
@@ -24,10 +24,12 @@ Along the way this generates pairwise t tests of the columns of
 data.
 }
 \description{
-hpgl_multihistogram()  Make a pretty histogram of multiple datasets.
+Make a pretty histogram of multiple datasets.
 }
 \examples{
-## kittytime = hpgl_multihistogram(df)
+\dontrun{
+ kittytime = hpgl_multihistogram(df)
+}
 }
 \seealso{
 \link[stats]{pairwise.t.test} \link[plyr]{ddply}

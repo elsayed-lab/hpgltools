@@ -1,16 +1,16 @@
-## Time-stamp: <Wed Feb  3 23:03:34 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 22:53:19 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-
-#' check_clusterprofiler() Make sure that clusterProfiler is ready to run
+#' Make sure that clusterProfiler is ready to run
 #'
-#' @param gff default='test.gff'  The gff file containing annotation data (gene lengths)
-#' @param gomap default=NULL  a data frame of gene IDs and GO ontologies 1:1, other columns are ignored.
-#'
+#' @param gff   The gff file containing annotation data (gene lengths)
+#' @param gomap   a data frame of gene IDs and GO ontologies 1:1, other columns are ignored.
 #' @return the GO2EG data structure created, probably don't save this, its big
-#' @export
 #' @examples
-#' ## go2eg <- check_clusterprofiler(gff, goids)
-#' ## rm(go2eg)
+#' \dontrun{
+#'  go2eg <- check_clusterprofiler(gff, goids)
+#'  rm(go2eg)
+#' }
+#' @export
 check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
     genetable_test <- try(load("geneTable.rda"))
     if (class(genetable_test) == 'try-error') {
@@ -44,21 +44,20 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' Perform a simplified clusterProfiler analysis
 #'
 #' @param de_genes a data frame of differentially expressed genes, containing IDs and whatever other columns
-#' @param goids default=NULL  a file containing mappings of genes to goids in the format expected by topgo
-#' @param golevel default=4  a relative level in the tree for printing p-value plots, higher is more specific
-#' @param pcutoff default=0.1  a p-value cutoff
-#' @param qcutoff default=1.0  a q-value cutoff
-#' @param fold_changes default=NULL  a df of fold changes for the DE genes
-#' @param include_cnetplots default=FALSE  the cnetplots are often stupid and can be left behind
-#' @param showcategory default=12  how many categories to show in p-value plots
-#' @param universe default=NULL  universe to use
-#' @param organism default='lm'  name of the species to use
-#' @param gff default=NULL  gff file to generate the universe
-#' @param wrapped_width default=20 width of ontology names in the pvalue plots
-#' @param method default='Wallenius'  pvalue calculation method
-#' @param padjust default='BH'  a method for adjusting the p-values
+#' @param goids   a file containing mappings of genes to goids in the format expected by topgo
+#' @param golevel   a relative level in the tree for printing p-value plots, higher is more specific
+#' @param pcutoff   a p-value cutoff
+#' @param qcutoff   a q-value cutoff
+#' @param fold_changes   a df of fold changes for the DE genes
+#' @param include_cnetplots   the cnetplots are often stupid and can be left behind
+#' @param showcategory   how many categories to show in p-value plots
+#' @param universe   universe to use
+#' @param organism   name of the species to use
+#' @param gff   gff file to generate the universe
+#' @param wrapped_width  width of ontology names in the pvalue plots
+#' @param method   pvalue calculation method
+#' @param padjust   a method for adjusting the p-values
 #' @param ...  more options!
-#'
 #' @return a big list including the following:
 #'   mf_interesting: A table of the interesting molecular function groups
 #'   bp_interesting: A table of the interesting biological process groups
@@ -74,7 +73,8 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #'   mf_cnetplot/bp_cnetplot/cc_cnetplot: clusterProfiler cnetplots
 #'   mf_group_barplot/bp_group_barplot/cc_group_barplot: The group barplots from clusterProfiler
 #' @examples
-#' ## up_cluster = simple_clusterprofiler(mga2_ll_thy_top, goids=goids, gff="reference/genome/gas.gff")
+#' \dontrun{
+#'  up_cluster = simple_clusterprofiler(mga2_ll_thy_top, goids=goids, gff="reference/genome/gas.gff")
 #' ## > Some chattery while it runs
 #' ## tail(head(up_cluster$bp_interesting, n=10), n=1)
 #' ## > ID ont GeneRatio BgRatio     pvalue   p.adjust    qvalue
@@ -83,6 +83,7 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' ## >   10 M5005_Spy1632/M5005_Spy1637/M5005_Spy1635/M5005_Spy1636/M5005_Spy1638     5
 #' ## >   Description
 #' ## >   10 oligosaccharide metabolic process
+#' }
 #' @export
 simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
                                    qcutoff=1.0, fold_changes=NULL, include_cnetplots=FALSE,
@@ -303,26 +304,25 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     return(return_information)
 }
 
-#' \code{cluster_trees()}  Take clusterprofile group data and print it on a tree as topGO does
+#'   Take clusterprofile group data and print it on a tree as topGO does
 #' Make fun trees a la topgo from goseq data.
 #'
 #' @param de_genes  A list of genes deemed 'interesting'
 #' @param cpdata  data from simple_clusterprofiler()
-#' @param goid_map default='reference/go/id2go.map'  A mapping file of IDs to GO ontologies
-#' @param goids_df default=NULL  A dataframe of mappings used to build goid_map
-#' @param score_limit default=0.2  A scoring limit above which to ignore genes
-#' @param overwrite default=FALSE  Overwrite an existing goid mapping file?
-#' @param selector default='topDiffGenes'  The name of a function for applying scores to the trees
-#' @param pval_column default='adj.P.Val'  The name of the column in the table from which to extract scores
-#'
+#' @param goid_map   A mapping file of IDs to GO ontologies
+#' @param goids_df   A dataframe of mappings used to build goid_map
+#' @param score_limit   A scoring limit above which to ignore genes
+#' @param overwrite   Overwrite an existing goid mapping file?
+#' @param selector   The name of a function for applying scores to the trees
+#' @param pval_column   The name of the column in the table from which to extract scores
 #' @return plots! Trees! oh my!
 #' @seealso \pkg{Ramigo} \code{\link[topGO]{showSigOfNodes}}
-#' @export
 #' @examples
 #' \dontrun{
 #' cluster_data <- simple_clusterprofiler(genes, stuff)
 #' ctrees <- cluster_trees(genes, cluster_data)
 #' }
+#' @export
 cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", goids_df=NULL,
                           score_limit=0.2, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Val") {
     de_genes <- cpdata$de_genes
@@ -409,14 +409,14 @@ cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", g
 #' A minor hack in the clusterProfiler function 'enrichGO'
 #'
 #' @param gene some differentially expressed genes
-#' @param organism default='human'
-#' @param ont default='MF'
-#' @param pvalueCutoff default=0.05 pvalue cutoff
-#' @param pAdjustMethod default='BH'  p-value adjustment
+#' @param organism if used will cause this to pull the ensG annotations
+#' @param ont mf bp or cc
+#' @param pvalueCutoff  pvalue cutoff
+#' @param pAdjustMethod   p-value adjustment
 #' @param universe  the gene universe
-#' @param qvalueCutoff default=0.2  maximum qvalue before adding
-#' @param minGSSize default=2  smallest group size
-#' @param readable default=FALSE readable tag on the object
+#' @param qvalueCutoff   maximum qvalue before adding
+#' @param minGSSize   smallest group size
+#' @param readable  readable tag on the object
 #' @return some clusterProfiler data
 #' @seealso \pkg{clusterProfiler}
 #' @export
@@ -434,15 +434,14 @@ hpgl_enrichGO <- function(gene, organism="human", ont="MF",
 #' A minor hack in the clusterProfiler function 'enrich.internal'
 #'
 #' @param gene some differentially expressed genes
-#' @param organism by default 'human'
-#' @param pvalueCutoff default=1  a pvalue cutoff
-#' @param pAdjustMethod default='BH' p adjust method
-#' @param ont by default 'MF'
-#' @param minGSSize default=2  a minimum gs size
-#' @param qvalueCutoff default=0.2  maximum q value
-#' @param readable default=FALSE  set the readable flag for dose
-#' @param universe default=NULL a universe to use
-#'
+#' @param organism again will cause this to pull ensG if recognized by clusteprofiler
+#' @param pvalueCutoff a pvalue cutoff
+#' @param pAdjustMethod  p adjust method
+#' @param ont mf bp or cc
+#' @param minGSSize   a minimum gs size
+#' @param qvalueCutoff   maximum q value
+#' @param readable   set the readable flag for dose
+#' @param universe  a universe to use
 #' @return some clusterProfiler data
 #' @seealso \pkg{clusterProfiler}
 #' @export
@@ -582,8 +581,8 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
 #' A copy and paste of clusterProfiler's readGff
 #'
 #' @param gffFile a gff file
-#' @param compress default=TRUE compress them
-#' @param split default='='  the splitter when reading gff files
+#' @param compress  compress them
+#' @param split   the splitter when reading gff files
 #' @export
 hpgl_Gff2GeneTable <- function(gffFile, compress=TRUE, split="=") {
     ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"

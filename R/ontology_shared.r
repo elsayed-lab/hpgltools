@@ -1,7 +1,7 @@
-## Time-stamp: <Wed Feb  3 22:45:39 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 23:04:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
-#' deparse_go_value()  Extract more easily readable information from a GOTERM datum.
+#'   Extract more easily readable information from a GOTERM datum.
 #'
 #' The output from the GOTERM/GO.db functions is inconsistent, to put it nicely.
 #' This attempts to extract from that heterogeneous datatype something easily readable.
@@ -12,10 +12,12 @@
 #' @param value  the result of try(as.character(somefunction(GOTERM[id])), silent=TRUE)
 #'   somefunction would be 'Synonym' 'Secondary' 'Ontology', etc...
 #' @return something more sane (hopefully)
-#' @export
 #' @examples
-#' ## goterms = GOTERM[ids]
-#' ## sane_goterms = deparse_go_value(goterms)
+#' \dontrun{
+#'  goterms = GOTERM[ids]
+#'  sane_goterms = deparse_go_value(goterms)
+#' }
+#' @export
 deparse_go_value <- function(value) {
     result <- ""
     if (class(value) == "try-error") {
@@ -42,18 +44,19 @@ deparse_go_value <- function(value) {
     return(result)
 }
 
-#' goterm()  Get a go term from ID.
+#' Get a go term from ID.
 #'
-#' @param go default='GO:0032559'  a go ID or list thereof
+#' @param go   a go ID or list thereof
 #' this may be a character or list(assuming the elements, not names, are goids)
-#'
 #' @return Some text
 #' @seealso \pkg{GOTermsAnnDbBimap}
-#' @export
 #' @examples
-#' ## goterm("GO:0032559")
+#' \dontrun{
+#'  goterm("GO:0032559")
 #' ## > GO:0032559
 #' ## > "adenyl ribonucleotide binding"
+#' }
+#' @export
 goterm <- function(go="GO:0032559") {
     go <- as.character(go)
     term <- function(id) {
@@ -67,7 +70,7 @@ goterm <- function(go="GO:0032559") {
     return(go)
 }
 
-#' gosyn()  Get a go synonym from an ID.
+#' Get a go synonym from an ID.
 #'
 #' I think I will need to do similar parsing of the output for this function as per gosec()
 #' In some cases this also returns stuff like c("some text", "GO:someID")
@@ -76,15 +79,16 @@ goterm <- function(go="GO:0032559") {
 #' This function just goes a mapply(gosn, go).
 #'
 #' @param go  a go ID, this may be a character or list(assuming the elements are goids).
-#'
 #' @return Some text
 #' @seealso \pkg{GOTermsAnnDbBimap}
-#' @export
 #' @examples
-#' ## text =  gosyn("GO:0000001")
-#' ## text
+#' \dontrun{
+#'  text =  gosyn("GO:0000001")
+#'  text
 #' ## > GO:000001
 #' ## > "mitochondrial inheritance"
+#' }
+#' @export
 gosyn <- function(go) {
     go <- as.character(go)
     gosn <- function(go) {
@@ -105,11 +109,13 @@ gosyn <- function(go) {
 #' @param go A go ID -- this may be a character or list(assuming the elements, not names, are goids)
 #' @return Some text
 #' @seealso \pkg{GOTermsAnnDbBimap}
-#' @export
 #' @examples
-#' ## gosec("GO:0032432")
+#' \dontrun{
+#'  gosec("GO:0032432")
 #' ## > GO:0032432
 #' ## > "GO:0000141" "GO:0030482"
+#' }
+#' @export
 gosec <- function(go) {
     gosc <- function(go) {
         go <- as.character(go)
@@ -122,17 +128,18 @@ gosec <- function(go) {
     return(go)
 }
 
-#' godef()  Get a go long-form definition from an id.
+#' Get a go long-form definition from an id.
 #'
 #' @param go  a go ID, this may be a character or list (assuming the elements are goids).
-#'
 #' @return Some text
 #' @seealso \pkg{GOTermsAnnDbBimap}
-#' @export
 #' @examples
-#' ## godef("GO:0032432")
+#' \dontrun{
+#'  godef("GO:0032432")
 #' ## > GO:0032432
 #' ## > "An assembly of actin filaments that are on the same axis but may be oriented with the same or opposite polarities and may be packed with different levels of tightness."
+#' }
+#' @export
 godef <- function(go) {
     go <- as.character(go)
     def <- function(id) {
@@ -146,17 +153,18 @@ godef <- function(go) {
     return(go)
 }
 
-#' goont()  Get a go ontology name from an ID.
+#'  Get a go ontology name from an ID.
 #'
 #' @param go  a go ID, this may be a character or list (assuming the elements are goids).
-#'
 #' @return Some text
 #' @seealso \pkg{GOTermsAnnDbBimap}
-#' @export
 #' @examples
-#' ## goont(c("GO:0032432", "GO:0032433"))
+#' \dontrun{
+#'  goont(c("GO:0032432", "GO:0032433"))
 #' ## > GO:0032432 GO:0032433
 #' ## > "CC" "CC"
+#' }
+#' @export
 goont <- function(go) {
     go <- as.character(go)
     ont <- function(id) {
@@ -170,16 +178,18 @@ goont <- function(go) {
     return(go)
 }
 
-#' golev()  Get a go level approximation from an ID.
+#'   Get a go level approximation from an ID.
 #'
 #' @param go  a go ID, this may be a character or list (assuming the elements are goids).
-#' @param verbose default=FALSE  print some information as it recurses.
-#'
+#' @param verbose print some information as it recurses.
 #' @return Some text
 #' @seealso \pkg{GOTermsAnnDbBimap}
 #' @examples
-#' ## golev("GO:0032559")
-#' ## > 3
+#' \dontrun{
+#'  golev("GO:0032559")
+#'  ## > 3
+#' }
+#' @export
 golev <- function(go, verbose=FALSE) {
     go <- as.character(go)
     level <- 0
@@ -210,33 +220,35 @@ golev <- function(go, verbose=FALSE) {
     }  ## End while
     return(level)
 }
-#' golevel()  Get a go level approximation from a set of IDs.
+#' Get a go level approximation from a set of IDs.
 #' This just wraps golev() in mapply.
 #' @param go  a character list of IDs.
-#'
 #' @return Some text
 #' @seealso \pkg{GOTermsAnnDbBimap}
-#' @export
 #' @examples
-#' ## golevel(c("GO:0032559", "GO:0000001")
+#' \dontrun{
+#'  golevel(c("GO:0032559", "GO:0000001")
 #' ## > 3 4
+#' }
+#' @export
 golevel <- function(go) {
     mapply(golev, go)
 }
 
-#' gotest()  Test GO ids to see if they are useful.
+#' Test GO ids to see if they are useful.
 #' This just wraps gotst in mapply.
 #'
 #' @param go  go IDs as characters.
-#'
 #' @return Some text
 #' @seealso \pkg{GOTermsAnnDbBimap}
-#' @export
 #' @examples
-#' ## gotest("GO:0032559")
+#' \dontrun{
+#'  gotest("GO:0032559")
 #' ## > 1
-#' ## gotest("GO:0923429034823904")
+#'  gotest("GO:0923429034823904")
 #' ## > 0
+#' }
+#' @export
 gotest <- function(go) {
     gotst <- function(go) {
         go <- as.character(go)
@@ -253,7 +265,7 @@ gotest <- function(go) {
     mapply(gotst, go)
 }
 
-#' \code{gather_genes()}  Given a set of goseq data from simple_goseq(),
+#' Given a set of goseq data from simple_goseq(),
 #' make a list of genes represented in each ontology.
 #'
 #' This function uses the GO2ALLEG data structure to reverse map ontology
@@ -264,14 +276,16 @@ gotest <- function(go) {
 #' With little work this can be made much more generic, and it probably should.
 #'
 #' @param goseq_data  a list of goseq specific results as generated by simple_goseq()
-#' @param ontology default='MF'  an ontology to search
-#' @param pval default=0.05  a maximum accepted pvalue to include in the list of categories to cross reference.
-#' @param include_all default=FALSE  include all genes in the ontology search
+#' @param ontology   an ontology to search
+#' @param pval   a maximum accepted pvalue to include in the list of categories to cross reference.
+#' @param include_all   include all genes in the ontology search
 #' @return a data frame of categories/genes.
 #' @seealso \link{simple_goseq} \code{\link[clusterProfiler]{buildGOmap}},
 #' @examples
-#' ## data = simple_goseq(de_genes=limma_output, lengths=annotation_df, goids=goids_df)
-#' ## genes_in_cats = gather_genes(data, ont='BP')
+#' \dontrun{
+#'  data = simple_goseq(de_genes=limma_output, lengths=annotation_df, goids=goids_df)
+#'  genes_in_cats = gather_genes(data, ont='BP')
+#' }
 #' @export
 gather_genes <- function(goseq_data, ontology='MF', pval=0.05, include_all=FALSE) {
     categories <- NULL
@@ -311,12 +325,12 @@ gather_genes <- function(goseq_data, ontology='MF', pval=0.05, include_all=FALSE
     return(categories)
 }
 
-#' pval_plot()  Make a pvalue plot from a df of IDs, scores, and p-values.
+#' Make a pvalue plot from a df of IDs, scores, and p-values.
 #'
 #' This function seeks to make generating pretty pvalue plots as shown by clusterprofiler easier.
-#' @param df  some data from topgo/goseq/clusterprofiler.
-#' @param ontology default='MF'  an ontology to plot (MF,BP,CC).
 #'
+#' @param df  some data from topgo/goseq/clusterprofiler.
+#' @param ontology   an ontology to plot (MF,BP,CC).
 #' @return a plot!
 #' @seealso \link[goseq]{goseq} \pkg{ggplot2}
 #' @export
@@ -333,35 +347,36 @@ pval_plot <- function(df, ontology="MF") {
     return(pvalue_plot)
 }
 
-#' all_ontology_searches()  Perform ontology searches of the output from limma.
+#' Perform ontology searches of the output from limma.
 #'
 #' This passes a set of limma results to (optionally) goseq, clusterprofiler, topgo, and gostats,
 #' collects the outputs, and provides them as a list.  This function needs a species argument,
 #' as I recently made the simple_() functions able to automatically use the various supported organisms.
 #'
 #' @param de_out  a list of topTables comprising limma/deseq/edger outputs.
-#' @param gene_lengths default=NULL  a data frame of gene lengths for goseq.
-#' @param goids default=NULL  a data frame of goids and genes.
-#' @param n default=NULL  a number of genes at the top/bottom to search.
-#' @param z default=NULL  a number of standard deviations to search. (if this and n are null, it assumes 1z)
-#' @param fc default=NULL  a number of standard deviations to search. (if this and n are null, it assumes 1z)
-#' @param p default=NULL  a maximum pvalue
-#' @param overwrite default=FALSE overwrite the excel file
-#' @param goid_map default='reference/go/id2go.map'  a map file used by topGO, if it does not exist then provide goids_df to make it.
-#' @param gff_file default=NULL  a gff file containing the annotations used by gff2genetable from clusterprofiler, which I hacked to make faster.
-#' @param gff_type default='gene'  column to use from the gff file
-#' @param goids_df default=NULL  FIXME! a dataframe of genes and goids which I am relatively certain is no longer needed and superseded by goids.
-#' @param do_goseq default=TRUE  perform simple_goseq()?
-#' @param do_cluster default=TRUE  perform simple_clusterprofiler()?
-#' @param do_topgo default=TRUE  perform simple_topgo()?
-#' @param do_gostats default=TRUE  perform simple_gostats()?
-#' @param do_trees default=FALSE  make topGO trees from the data?
-#'
+#' @param gene_lengths   a data frame of gene lengths for goseq.
+#' @param goids   a data frame of goids and genes.
+#' @param n   a number of genes at the top/bottom to search.
+#' @param z   a number of standard deviations to search. (if this and n are null, it assumes 1z)
+#' @param fc   a number of standard deviations to search. (if this and n are null, it assumes 1z)
+#' @param p   a maximum pvalue
+#' @param overwrite  overwrite the excel file
+#' @param goid_map   a map file used by topGO, if it does not exist then provide goids_df to make it.
+#' @param gff_file   a gff file containing the annotations used by gff2genetable from clusterprofiler, which I hacked to make faster.
+#' @param gff_type   column to use from the gff file
+#' @param goids_df   FIXME! a dataframe of genes and goids which I am relatively certain is no longer needed and superseded by goids.
+#' @param do_goseq   perform simple_goseq()?
+#' @param do_cluster   perform simple_clusterprofiler()?
+#' @param do_topgo   perform simple_topgo()?
+#' @param do_gostats   perform simple_gostats()?
+#' @param do_trees   make topGO trees from the data?
 #' @return a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and associated trees, all optionally.
 #' @examples
-#' ## many_comparisons = limma_pairwise(expt=an_expt)
-#' ## tables = many_comparisons$limma
-#' ## this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
+#' \dontrun{
+#'  many_comparisons = limma_pairwise(expt=an_expt)
+#'  tables = many_comparisons$limma
+#'  this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
+#' }
 #' @export
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                                   z=NULL, fc=NULL, p=NULL, overwrite=FALSE,
@@ -464,12 +479,11 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
     return(output)
 }
 
-#' subset_ontology_search()  Perform ontology searches on data subsets.
+#'   Perform ontology searches on data subsets.
 #'
 #' @param changed_counts  the list of changed counts as ups and downs
-#' @param doplot default=FALSE  include plots in the results
+#' @param doplot   include plots in the results
 #' @param ...  extra arguments which I don't realize
-#'
 #' @return a list of ontology search results, up and down for each contrast
 #' @export
 subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
@@ -557,13 +571,13 @@ subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
     return(ret)
 }
 
-#' golevel_df()  Extract a dataframe of golevels using getGOLevel() from clusterProfiler.
+#'   Extract a dataframe of golevels using getGOLevel() from clusterProfiler.
 #'
 #' This function is way faster than my previous iterative golevel function.
 #' That is not to say it is very fast, so it saves the result to ontlevel.rda for future lookups.
 #'
-#' @param ont default='MF'  the ontology to recurse.
-#' @param savefile default='ontlevel.rda'  a file to save the results for future lookups.
+#' @param ont   the ontology to recurse.
+#' @param savefile   a file to save the results for future lookups.
 #' @return golevels  a dataframe of goids<->highest level
 #' @export
 golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
@@ -593,7 +607,7 @@ golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
     return(golevels)
 }
 
-#' write_go_xls()  Write gene ontology tables for excel
+#' Write gene ontology tables for excel
 #'
 #' Combine the results from goseq, cluster profiler, topgo, and gostats and drop them into excel
 #' Hopefully with a relatively consistent look.
@@ -602,11 +616,10 @@ golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
 #' @param cluster The result from simple_clusterprofiler()
 #' @param topgo  Guess
 #' @param gostats  Yep, ditto
-#' @param file default='excel/merged_go'  the file to save the results.
-#' @param dated default=TRUE  date the excel file
-#' @param n default=30  the number of ontology categories to include in each table.
-#' @param overwritefile default=TRUE  overwrite an existing excel file
-#'
+#' @param file   the file to save the results.
+#' @param dated   date the excel file
+#' @param n   the number of ontology categories to include in each table.
+#' @param overwritefile   overwrite an existing excel file
 #' @return the list of ontology information
 #' @export
 write_go_xls <- function(goseq, cluster, topgo, gostats, file="excel/merged_go",
@@ -810,30 +823,30 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, file="excel/merged_go",
     return(res)
 }
 
-
-#' write_subset_ontologies()  Write gene ontology tables for data subsets
+#'   Write gene ontology tables for data subsets
 #'
 #' Given a set of ontology results, this attempts to write them to an excel
 #' workbook in a consistent and relatively easy-to-read fashion.
 #'
 #' @param kept_ontology  A result from subset_ontology_search()
-#' @param outfile default='excel/subset_go.xlsx'  Workbook to which to write.
-#' @param dated  default=TRUE  Append the year-month-day-hour to the workbook.
-#' @param n default=50  How many ontology categories to write for each search
-#' @param overwritefile default=TRUE  Overwrite an existing workbook?
-#' @param add_plots default=TRUE  Add the various p-value plots to the end of each sheet?
-#' @param table_style default='TableStyleMedium9'  The chosen table style for excel
+#' @param outfile   Workbook to which to write.
+#' @param dated    Append the year-month-day-hour to the workbook.
+#' @param n   How many ontology categories to write for each search
+#' @param overwritefile   Overwrite an existing workbook?
+#' @param add_plots   Add the various p-value plots to the end of each sheet?
+#' @param table_style   The chosen table style for excel
 #' @param ...  some extra parameters
-#'
 #' @return a set of excel sheet/coordinates
-#' @export
 #' @examples
-#' ## all_contrasts <- all_pairwise(expt, model_batch=TRUE)
-#' ## keepers <- list(bob = ('numerator','denominator'))
-#' ## kept <- combine_de_tables(all_contrasts, keepers=keepers)
-#' ## changed <- extract_significant_genes(kept)
-#' ## kept_ontologies <- subset_ontology_search(changed, lengths=gene_lengths, goids=goids, gff=gff, gff_type='gene')
-#' ## go_writer <- write_subset_ontologies(kept_ontologies)
+#' \dontrun{
+#'  all_contrasts <- all_pairwise(expt, model_batch=TRUE)
+#'  keepers <- list(bob = ('numerator','denominator'))
+#'  kept <- combine_de_tables(all_contrasts, keepers=keepers)
+#'  changed <- extract_significant_genes(kept)
+#'  kept_ontologies <- subset_ontology_search(changed, lengths=gene_lengths, goids=goids, gff=gff, gff_type='gene')
+#'  go_writer <- write_subset_ontologies(kept_ontologies)
+#' }
+#' @export
 write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", dated=TRUE,
                                     n=50, overwritefile=TRUE,
                                     add_plots=TRUE, table_style="TableStyleMedium9", ...) {
@@ -1267,7 +1280,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
     }  ## End of name_list
 }
 
-#' compare_go_searches()  Compare the results from different ontology tools
+#' Compare the results from different ontology tools
 #'
 #' Combine the results from goseq, cluster profiler, topgo, and gostats; poke at them
 #' with a stick and see what happens.
@@ -1278,10 +1291,10 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 #' for all the tools.  Since topgo has 4 tools, the total possible is 7 if everything
 #' has a p-value equal to 0.
 #'
-#' @param goseq default=NULL  The goseq result from simple_goseq()
-#' @param cluster default=NULL  The result from simple_clusterprofiler()
-#' @param topgo default=NULL  Guess
-#' @param gostats default=NULL  Yep, ditto
+#' @param goseq   The goseq result from simple_goseq()
+#' @param cluster   The result from simple_clusterprofiler()
+#' @param topgo   Guess
+#' @param gostats   Yep, ditto
 #' @return a summary of the similarities of ontology searches
 #' @export
 compare_go_searches <- function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NULL) {

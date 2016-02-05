@@ -2,24 +2,24 @@
 % Please edit documentation in R/normalization.r
 \name{genefilter_kofa_counts}
 \alias{genefilter_kofa_counts}
-\title{\code{genefilter_kofa_counts()}  Filter low-count genes from a data set using genefilter's kOverA()}
+\title{Filter low-count genes from a data set using genefilter's kOverA()}
 \usage{
 genefilter_kofa_counts(count_table, k = 1, A = 1, verbose = FALSE)
 }
 \arguments{
 \item{count_table}{input data frame of counts by sample}
 
-\item{k}{default=1  a minimum number of samples to have >A counts}
+\item{k}{a minimum number of samples to have >A counts}
 
-\item{A}{default=1  the minimum number of counts for each gene's sample in kOverA()}
+\item{A}{the minimum number of counts for each gene's sample in kOverA()}
 
-\item{verbose}{default=FALSE  If set to true, prints number of genes removed / remaining}
+\item{verbose}{If set to true, prints number of genes removed / remaining}
 }
 \value{
 dataframe of counts without the low-count genes
 }
 \description{
-\code{genefilter_kofa_counts()}  Filter low-count genes from a data set using genefilter's kOverA()
+Filter low-count genes from a data set using genefilter's kOverA()
 }
 \examples{
 \dontrun{

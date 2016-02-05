@@ -10,11 +10,11 @@ gostats_pval_plots(gs_result, wrapped_width = 20, cutoff = 0.1, n = 12,
 \arguments{
 \item{gs_result}{ontology search results}
 
-\item{wrapped_width}{default=20  how big to make the text so that it is legible}
+\item{wrapped_width}{how big to make the text so that it is legible}
 
-\item{cutoff}{default=0.1  what is the maximum pvalue allowed}
+\item{cutoff}{what is the maximum pvalue allowed}
 
-\item{n}{default=12  how many groups to include in the plot}
+\item{n}{how many groups to include in the plot}
 
 \item{group_minsize}{default=5  minimum group size before inclusion}
 }

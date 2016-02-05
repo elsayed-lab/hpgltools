@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_limma.r
 \name{limma_coefficient_scatter}
 \alias{limma_coefficient_scatter}
-\title{limma_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma}
+\title{Plot out 2 coefficients with respect to one another from limma}
 \usage{
 limma_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
   gvis_filename = NULL, gvis_trendline = TRUE, z = 1.5,
@@ -12,27 +12,27 @@ limma_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
 \arguments{
 \item{output}{the set of pairwise comparisons provided by limma_pairwise()}
 
-\item{toptable}{default=NULL use this to get up/downs and color them on the scatter plot}
+\item{toptable}{use this to get up/downs and color them on the scatter plot}
 
-\item{x}{default=1  the name or number of the first coefficient column to extract}
+\item{x}{the name or number of the first coefficient column to extract}
 
-\item{y}{default=2  the name or number of the second coefficient column to extract}
+\item{y}{the name or number of the second coefficient column to extract}
 
-\item{gvis_filename}{default=NULL  A filename for plotting gvis interactive graphs of the data.}
+\item{gvis_filename}{A filename for plotting gvis interactive graphs of the data.}
 
-\item{gvis_trendline}{default=TRUE  add a trendline to the gvis plot?}
+\item{gvis_trendline}{add a trendline to the gvis plot?}
 
-\item{z}{default=1.5  how far from the median to color the plot red and green}
+\item{z}{how far from the median to color the plot red and green}
 
-\item{tooltip_data}{default=NULL  a dataframe of gene annotations to be used in the gvis plot}
+\item{tooltip_data}{a dataframe of gene annotations to be used in the gvis plot}
 
-\item{flip}{default=FALSE flip the axes?}
+\item{flip}{flip the axes?}
 
-\item{base_url}{default=NULL  a basename for gvis plots}
+\item{base_url}{a basename for gvis plots}
 
-\item{up_color}{default=hexgreen  color for the ups}
+\item{up_color}{color for the ups}
 
-\item{down_color}{default=hexred  color for the downs}
+\item{down_color}{color for the downs}
 
 \item{...}{more parameters to make you happy}
 }
@@ -44,7 +44,9 @@ It can be nice to see a plot of two coefficients from a limma comparison with re
 This hopefully makes that easy.
 }
 \examples{
-## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+\dontrun{
+ pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+}
 }
 \seealso{
 \link{hpgl_linear_scatter} \link{limma_pairwise}

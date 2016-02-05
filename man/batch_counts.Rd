@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{batch_counts}
 \alias{batch_counts}
-\title{\code{batch_counts()}  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.}
+\title{Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.}
 \usage{
 batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
   batch2 = NULL, noscale = TRUE, ...)
@@ -12,13 +12,13 @@ batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
 
 \item{design}{a model matrix defining the experimental conditions/batches/etc}
 
-\item{batch}{default=TRUE  a string describing the method to try to remove the batch effect (or FALSE to leave it alone, TRUE uses limma)}
+\item{batch}{a string describing the method to try to remove the batch effect (or FALSE to leave it alone, TRUE uses limma)}
 
-\item{batch1}{default='batch'  the column in the design table describing the presumed covariant to remove.}
+\item{batch1}{the column in the design table describing the presumed covariant to remove.}
 
-\item{batch2}{default=NULL  the column in the design table describing the second covariant to remove (only used by limma at the moment).}
+\item{batch2}{the column in the design table describing the second covariant to remove (only used by limma at the moment).}
 
-\item{noscale}{default=TRUE  used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.}
+\item{noscale}{used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.}
 
 \item{...}{more options for you!}
 }
@@ -27,7 +27,7 @@ The 'batch corrected' count table and new library size.  Please remember that th
 may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
 }
 \description{
-\code{batch_counts()}  Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
+Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
 }
 \examples{
 \dontrun{

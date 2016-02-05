@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_limma.r
 \name{write_limma}
 \alias{write_limma}
-\title{write_limma()  Writes out the results of a limma search using toptable()
+\title{Writes out the results of a limma search using toptable()
 However, this will do a couple of things to make one's life easier:
 1.  Make a list of the output, one element for each comparison of the contrast matrix
 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
@@ -15,34 +15,36 @@ write_limma(data, adjust = "fdr", n = 0, coef = NULL,
 \arguments{
 \item{data}{the output from eBayes()}
 
-\item{adjust}{default='fdr'  the pvalue adjustment chosen.}
+\item{adjust}{the pvalue adjustment chosen.}
 
-\item{n}{default=0  the number of entries to report, 0 says do them all.}
+\item{n}{the number of entries to report, 0 says do them all.}
 
-\item{coef}{default=NULL  which coefficients/contrasts to report, NULL says do them all.}
+\item{coef}{which coefficients/contrasts to report, NULL says do them all.}
 
-\item{workbook}{default='excel/limma.xls'  an excel filename into which to write the data}
+\item{workbook}{an excel filename into which to write the data}
 
-\item{excel}{default=FALSE  write an excel workbook?}
+\item{excel}{write an excel workbook?}
 
-\item{csv}{default=TRUE  write out csv files of the tables?}
+\item{csv}{write out csv files of the tables?}
 
-\item{annot_df}{default=NULL  an optional data frame including annotation information to include with the tables.}
+\item{annot_df}{an optional data frame including annotation information to include with the tables.}
 }
 \value{
 a list of data frames comprising the toptable output for each coefficient,
    I also added a qvalue entry to these toptable() outputs.
 }
 \description{
-write_limma()  Writes out the results of a limma search using toptable()
+Writes out the results of a limma search using toptable()
 However, this will do a couple of things to make one's life easier:
 1.  Make a list of the output, one element for each comparison of the contrast matrix
 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
 }
 \examples{
-## finished_comparison = eBayes(limma_output)
-## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+\dontrun{
+ finished_comparison = eBayes(limma_output)
+ data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+}
 }
 \seealso{
 \link[limma]{toptable} \link{write_xls}

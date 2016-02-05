@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_limma.r
 \name{hpgl_voom}
 \alias{hpgl_voom}
-\title{hpgl_voom()  A slight modification of limma's voom() function.
+\title{A slight modification of limma's voom() function.
 Estimate mean-variance relationship between samples and generate
 'observational-level weights' in preparation for linear modelling
 RNAseq data.  This particular implementation was primarily scabbed
@@ -19,16 +19,16 @@ hpgl_voom(dataframe, model = NULL, libsize = NULL, stupid = FALSE,
 \item{dataframe}{a dataframe of sample counts which have been
 normalized and log transformed}
 
-\item{model}{default=NULL  an experimental model defining batches/conditions/etc}
+\item{model}{an experimental model defining batches/conditions/etc}
 
-\item{libsize}{default=NULL  the size of the libraries (usually provided by
+\item{libsize}{the size of the libraries (usually provided by
 edgeR).}
 
-\item{stupid}{default=FALSE  whether or not to cheat when the resulting matrix is not solvable.}
+\item{stupid}{whether or not to cheat when the resulting matrix is not solvable.}
 
-\item{logged}{default=FALSE  whether the input data is known to be logged.}
+\item{logged}{whether the input data is known to be logged.}
 
-\item{converted}{default=FALSE  whether the input data is known to be cpm converted.}
+\item{converted}{whether the input data is known to be cpm converted.}
 }
 \value{
 an EList containing the following information:
@@ -39,7 +39,7 @@ an EList containing the following information:
   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
 }
 \description{
-hpgl_voom()  A slight modification of limma's voom() function.
+A slight modification of limma's voom() function.
 Estimate mean-variance relationship between samples and generate
 'observational-level weights' in preparation for linear modelling
 RNAseq data.  This particular implementation was primarily scabbed
@@ -50,7 +50,9 @@ than throwing an unhelpful error.  Also, the Elist output gets a
 'plot' slot which contains the plot rather than just printing it.
 }
 \examples{
-## funkytown = hpgl_voom(samples, model)
+\dontrun{
+ funkytown = hpgl_voom(samples, model)
+}
 }
 \seealso{
 \link[limma]{voom} \link[cbcbSEQ]{voomMod} \link[limma]{lmFit}

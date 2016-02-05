@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_deseq.r
 \name{deseq2_pairwise}
 \alias{deseq2_pairwise}
-\title{deseq2_pairwise()  Set up a model matrix and set of contrasts to do
+\title{Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using DESeq2.}
 \usage{
 deseq2_pairwise(input, conditions = NULL, batches = NULL,
@@ -11,15 +11,15 @@ deseq2_pairwise(input, conditions = NULL, batches = NULL,
 \arguments{
 \item{input}{A dataframe/vector or expt class containing data, normalization state, etc.}
 
-\item{conditions}{default=NULL  A factor of conditions in the experiment}
+\item{conditions}{A factor of conditions in the experiment}
 
-\item{batches}{default=NULL A factor of batches in the experiment}
+\item{batches}{A factor of batches in the experiment}
 
-\item{model_cond}{default=TRUE  Have condition in the experimental model?}
+\item{model_cond}{Have condition in the experimental model?}
 
-\item{model_batch}{default=FALSE  Have batch in the experimental model?}
+\item{model_batch}{Have batch in the experimental model?}
 
-\item{annot_df}{default=NULL  Include some annotation information in the results?}
+\item{annot_df}{Include some annotation information in the results?}
 
 \item{...}{triple dots!}
 }
@@ -33,7 +33,7 @@ A list including the following information:
   all_tables = list of DE tables
 }
 \description{
-deseq2_pairwise()  Set up a model matrix and set of contrasts to do
+Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using DESeq2.
 }
 \examples{

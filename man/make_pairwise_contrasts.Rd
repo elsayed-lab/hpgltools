@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_shared.r
 \name{make_pairwise_contrasts}
 \alias{make_pairwise_contrasts}
-\title{make_pairwise_contrasts()  Run makeContrasts() with all pairwise comparisons.}
+\title{Run makeContrasts() with all pairwise comparisons.}
 \usage{
 make_pairwise_contrasts(model, conditions, do_identities = TRUE,
   do_pairwise = TRUE, extra_contrasts = NULL)
@@ -12,13 +12,13 @@ make_pairwise_contrasts(model, conditions, do_identities = TRUE,
 
 \item{conditions}{a factor of conditions in the experiment}
 
-\item{do_identities}{default=TRUE  whether or not to include all the identity strings.
+\item{do_identities}{whether or not to include all the identity strings.
 Limma can handle this, edgeR cannot.}
 
-\item{do_pairwise}{default=TRUE  whether or not to include all the pairwise strings.
+\item{do_pairwise}{whether or not to include all the pairwise strings.
 This shouldn't need to be set to FALSE, but just in case.}
 
-\item{extra_contrasts}{default=NULL  an optional string of extra contrasts to include.}
+\item{extra_contrasts}{an optional string of extra contrasts to include.}
 }
 \value{
 A list including the following information:
@@ -29,10 +29,12 @@ A list including the following information:
   names = the names given to the identities/contrasts
 }
 \description{
-make_pairwise_contrasts()  Run makeContrasts() with all pairwise comparisons.
+Run makeContrasts() with all pairwise comparisons.
 }
 \examples{
-## pretend = make_pairwise_contrasts(model, conditions)
+\dontrun{
+ pretend = make_pairwise_contrasts(model, conditions)
+}
 }
 \seealso{
 \link[limma]{makeContrasts}

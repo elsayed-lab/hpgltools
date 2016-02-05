@@ -1,6 +1,6 @@
-## Time-stamp: <Tue Feb  2 15:49:25 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 23:25:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' tnseq_saturation()  Make a plot and some simple numbers about tnseq saturation
+#' Make a plot and some simple numbers about tnseq saturation
 #'
 #' This function takes as input a tab separated file from essentiality_tas.pl
 #' This is a perl script written to read a bam alignment of tnseq reads against a genome
@@ -8,8 +8,8 @@
 #' It furthermore has some logic to tell the difference between reads which were
 #' observed on the forward vs. reverse strand as well as reads which appear to be on both strands
 #' (eg. they start and end with 'TA').
-#' @param file  a file created using the perl script 'essentiality_tas.pl'
 #'
+#' @param file  a file created using the perl script 'essentiality_tas.pl'
 #' @return A plot and some numbers
 #' @export
 tnseq_saturation <- function(file) {
@@ -61,11 +61,11 @@ tnseq_saturation <- function(file) {
     return(data_plot)
 }
 
-#' plot_essentiality()  Plot the essentiality of a library as per DeJesus et al.
+#'   Plot the essentiality of a library as per DeJesus et al.
 #'
 #' @param file  a file created using the perl script 'essentiality_tas.pl'
-#'
 #' @return A couple of plots
+#' @export
 plot_essentiality <- function(file) {
     ess <- read.csv(file=file, comment.char="#", sep="\t", header=FALSE)
     colnames(ess) <- c("gene","orf_hits","orf_tas","max_run","max_run_span","posterior_zbar","call")

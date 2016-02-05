@@ -2,7 +2,7 @@
 % Please edit documentation in R/pca.r
 \name{plot_pcs}
 \alias{plot_pcs}
-\title{\code{plot_pcs()}  A quick and dirty PCA plotter of arbitrary components against one another.}
+\title{A quick and dirty PCA plotter of arbitrary components against one another.}
 \usage{
 plot_pcs(data, first = "PC1", second = "PC2", variances = NULL,
   design = NULL, plot_title = NULL, plot_labels = NULL)
@@ -10,23 +10,23 @@ plot_pcs(data, first = "PC1", second = "PC2", variances = NULL,
 \arguments{
 \item{data}{a dataframe of principle components PC1 .. PCN with any other arbitrary information.}
 
-\item{first}{default='PC1'  principle component PCx to put on the x axis.}
+\item{first}{principle component PCx to put on the x axis.}
 
-\item{second}{default='PC2'  principle component PCy to put on the y axis.}
+\item{second}{principle component PCy to put on the y axis.}
 
-\item{variances}{default=NULL  a list of the percent variance explained by each component.}
+\item{variances}{a list of the percent variance explained by each component.}
 
-\item{design}{default=NULL  the experimental design with condition batch factors.}
+\item{design}{the experimental design with condition batch factors.}
 
-\item{plot_title}{default=NULL  a title for the plot.}
+\item{plot_title}{a title for the plot.}
 
-\item{plot_labels}{default=NULL  a parameter for the labels on the plot.}
+\item{plot_labels}{a parameter for the labels on the plot.}
 }
 \value{
 a ggplot2 PCA plot
 }
 \description{
-\code{plot_pcs()}  A quick and dirty PCA plotter of arbitrary components against one another.
+A quick and dirty PCA plotter of arbitrary components against one another.
 }
 \examples{
 \dontrun{
