@@ -7,20 +7,20 @@ build:	clean
 	mv ../hpgltools_${VERSION}.tar.gz .
 	tar xavf hpgltools_${VERSION}.tar.gz
 	R CMD check hpgltools --no-build-vignettes
-	R CMD Rd2pdf hpgltools && mv hpgltools.pdf hpgltools/inst/doc/reference.pdf && cp hpgltools/vignettes/hpgltools.pdf  hpgltools/inst/doc/
+	R CMD Rd2pdf hpgltools && cp hpgltools.pdf hpgltools/inst/doc/reference.pdf 
 	R CMD INSTALL hpgltools
 
 test:
 	./run_tests.R
 
 roxygen:
-	rm -f NAMESPACE && Rscript -e "library('roxygen2'); roxygenize()"
+	rm -f NAMESPACE && Rscript -e "roxygen2::roxygenize()"
 
 document:
-	rm -f NAMESPACE && Rscript -e "library('devtools'); devtools::document()"
+	rm -f NAMESPACE && Rscript -e "devtools::document()"
 
 vignette:
-	Rscript -e "library('devtools'); devtools::build_vignettes()"
+	Rscript -e "devtools::build_vignettes()"
 
 clean_vignette:
 	rm -f inst/doc/*
