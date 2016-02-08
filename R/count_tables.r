@@ -462,8 +462,8 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
 
     ## remove summary fields added by HTSeq
     if (!include_summary_rows) {
-        htseq_meta_rows <- c('__no_feature', '__ambiguous', '__too_low_aQual',
-                            '__not_aligned', '__alignment_not_unique')
+        htseq_meta_rows <- c('X__no_feature', 'X__ambiguous', 'X__too_low_aQual',
+                            'X__not_aligned', 'X__alignment_not_unique')
         count_table <- count_table[!rownames(count_table) %in% htseq_meta_rows,]
     }
     return(count_table)
