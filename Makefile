@@ -2,7 +2,7 @@ VERSION=2016.02
 install: clean document
 	cd ../ && R CMD INSTALL hpgltools
 
-all: clean document vignette test reference check build install
+all: clean test reference check build install
 
 reference:
 	rm -f inst/doc/reference.pdf

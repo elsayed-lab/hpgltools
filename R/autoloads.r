@@ -28,9 +28,9 @@ require.auto <- function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
     }
     if (isTRUE(lib %in% .packages(all.available=TRUE))) {
         if (verbose) {
-            message(sprintf("Loading %s", lib))
+            message(sprintf("Able to load %s", lib))
         }
-        eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
+        ##eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
     } else {
         if (is.null(github_path)) {
             source("http://bioconductor.org/biocLite.R")
@@ -39,7 +39,7 @@ require.auto <- function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
             if (verbose) {
                 message(sprintf("Loading %s", lib))
             }
-            eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
+            ##eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
             ## eval(parse(text=paste("install.packages('", lib, "')", sep="")))
         } else {
             devtools::install_github(github_path)
