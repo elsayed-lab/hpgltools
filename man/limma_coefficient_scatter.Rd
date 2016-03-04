@@ -6,8 +6,8 @@
 \usage{
 limma_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
   gvis_filename = NULL, gvis_trendline = TRUE, z = 1.5,
-  tooltip_data = NULL, flip = FALSE, base_url = NULL,
-  up_color = "#7B9F35", down_color = "#DD0000", ...)
+  tooltip_data = NULL, base_url = NULL, up_color = "#7B9F35",
+  down_color = "#DD0000", ...)
 }
 \arguments{
 \item{output}{the set of pairwise comparisons provided by limma_pairwise()}
@@ -25,8 +25,6 @@ limma_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
 \item{z}{how far from the median to color the plot red and green}
 
 \item{tooltip_data}{a dataframe of gene annotations to be used in the gvis plot}
-
-\item{flip}{flip the axes?}
 
 \item{base_url}{a basename for gvis plots}
 

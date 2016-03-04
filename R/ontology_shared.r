@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 23:04:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Mar  1 13:50:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -60,7 +60,7 @@ deparse_go_value <- function(value) {
 goterm <- function(go="GO:0032559") {
     go <- as.character(go)
     term <- function(id) {
-        value <- try(as.character(GOTermsAnnDbBimap::Term(GO.db::GOTERM[id])), silent=TRUE)
+        value <- try(as.character(Term(GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value <- "not found"
         }
@@ -94,7 +94,7 @@ gosyn <- function(go) {
     gosn <- function(go) {
         go <- as.character(go)
         result <- ""
-        value <- try(as.character(GOTermsAnnDbBimap::Synonym(GO.db::GOTERM[go])), silent=TRUE)
+        value <- try(as.character(Synonym(GOTERM[go])), silent=TRUE)
         result <- paste(deparse_go_value(value), collapse="; ")
         return(result)
     }
@@ -120,7 +120,7 @@ gosec <- function(go) {
     gosc <- function(go) {
         go <- as.character(go)
         result <- ""
-        value <- try(as.character(GOTermsAnnDbBimap::Secondary(GO.db::GOTERM[go])), silent=TRUE)
+        value <- try(as.character(Secondary(GOTERM[go])), silent=TRUE)
         result <- deparse_go_value(value)
         return(result)
     }
@@ -143,7 +143,7 @@ gosec <- function(go) {
 godef <- function(go) {
     go <- as.character(go)
     def <- function(id) {
-        value <- try(as.character(GOTermsAnnDbBimap::Definition(GO.db::GOTERM[id])), silent=TRUE)
+        value <- try(as.character(Definition(GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value <- "not found"
         }
@@ -168,7 +168,7 @@ godef <- function(go) {
 goont <- function(go) {
     go <- as.character(go)
     ont <- function(id) {
-        value <- try(as.character(GOTermsAnnDbBimap::Ontology(GO.db::GOTERM[id])), silent=TRUE)
+        value <- try(as.character(Ontology(GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value <- "not found"
         }
@@ -193,17 +193,17 @@ goont <- function(go) {
 golev <- function(go, verbose=FALSE) {
     go <- as.character(go)
     level <- 0
-    while(class(try(as.character(GOTermsAnnDbBimap::Ontology(GO.db::GOTERM[[go]])), silent=FALSE)) != 'try-error') {
+    while(class(try(as.character(Ontology(GOTERM[[go]])), silent=FALSE)) != 'try-error') {
         if(isTRUE(verbose)) {
             print(paste("Restarting while loop, level: ", level, go, sep=" "))
         }
-        ontology <- as.character(GOTermsAnnDbBimap::Ontology(GO.db::GOTERM[[go]]))
+        ontology <- as.character(Ontology(GOTERM[[go]]))
         if (ontology == "MF") {
-            ancestors <- GO.db::GOMFANCESTOR[[go]]
+            ancestors <- GOMFANCESTOR[[go]]
         } else if (ontology == "BP") {
-            ancestors <- GO.db::GOBPANCESTOR[[go]]
+            ancestors <- GOBPANCESTOR[[go]]
         } else if (ontology == "CC") {
-            ancestors <- GO.db::GOCCANCESTOR[[go]]
+            ancestors <- GOCCANCESTOR[[go]]
         } else {
             ## There was an error
             message(paste("There was an error getting the ontology: ", as.character(go), sep=""))
@@ -252,7 +252,7 @@ golevel <- function(go) {
 gotest <- function(go) {
     gotst <- function(go) {
         go <- as.character(go)
-        value <- try(GO.db::GOTERM[[go]])
+        value <- try(GOTERM[[go]])
         if (class(value) == 'try-error') {
             return(0)
         }
@@ -510,7 +510,7 @@ subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
     ## (which is exactly what happened the first time I tried this.
     ## Therefore I think I will split off the functions for checking those things and call them here
     ## This only affects clusterprofiler I think.
-    check_clusterprofiler(gff)
+    go2eg <- check_clusterprofiler(gff)
     ## clusterprofiler's sqlite database gets corrupted every time I try to parallel it
 
 ##    if (is.null(num_cpus)) {
@@ -567,7 +567,10 @@ subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
     ret <- list(
         up_goseq=up_goseq, down_goseq=down_goseq, up_cluster=up_cluster, down_cluster=down_cluster,
         up_topgo=up_topgo, down_topgo=down_topgo, up_gostats=up_gostats, down_gostats=down_gostats)
-    save(list=c("ret"), file="savefiles/subset_ontology_search_result.rda")
+    if (!file.exists("savefiles")) {
+        dir.create("savefiles")
+    }
+    try(save(list=c("ret"), file="savefiles/subset_ontology_search_result.rda"))
     return(ret)
 }
 

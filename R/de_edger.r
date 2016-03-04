@@ -1,4 +1,66 @@
-## Time-stamp: <Thu Feb  4 22:15:56 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Feb  5 12:31:16 2016 Ashton Trey Belew (abelew@gmail.com)>
+
+#'   Plot out 2 coefficients with respect to one another from edger
+#'
+#' It can be nice to see a plot of two coefficients from a edger comparison with respect to one another
+#' This hopefully makes that easy.
+#'
+#' @param output the set of pairwise comparisons provided by edger_pairwise()
+#' @param x   the name or number of the first coefficient column to extract, this will be the x-axis of the plot
+#' @param y   the name or number of the second coefficient column to extract, this will be the y-axis of the plot
+#' @param gvis_filename   A filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline   add a trendline to the gvis plot?
+#' @param tooltip_data   a dataframe of gene annotations to be used in the gvis plot
+#' @param base_url   for gvis plots
+#' @return a ggplot2 plot showing the relationship between the two coefficients
+#' @seealso \link{hpgl_linear_scatter} \link{edger_pairwise}
+#' @examples
+#' \dontrun{
+#'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' }
+#' @export
+edger_coefficient_scatter <- function(output, x=1, y=2,
+                                      gvis_filename=NULL,
+                                      gvis_trendline=TRUE, tooltip_data=NULL,
+                                      base_url=NULL) {
+    ##  If taking a limma_pairwise output, then this lives in
+    ##  output$pairwise_comparisons$coefficients
+    message("This can do comparisons among the following columns in the edger result:")
+    thenames <- names(output$contrasts$identities)
+    cat(thenames)
+    xname <- ""
+    yname <- ""
+    if (is.numeric(x)) {
+        xname <- thenames[[x]]
+    } else {
+        xname <- x
+    }
+    if (is.numeric(y)) {
+        yname <- thenames[[y]]
+    } else {
+        yname <- y
+    }
+
+    message(paste0("Actually comparing ", xname, " and ", yname, "."))
+    ## It looks like the lrt data structure is redundant, so I will test that by looking at the apparent
+    ## coefficients from lrt[[1]] and then repeating with lrt[[2]]
+    coefficient_df <- output$lrt[[1]]$coefficients
+    coefficient_df <- coefficient_df[, c(xname, yname)]
+    if (max(coefficient_df) < 0) {
+        coefficient_df <- coefficient_df * -1.0
+    }
+
+    plot <- hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+                                gvis_trendline=gvis_trendline, first=xname, second=yname,
+                                tooltip_data=tooltip_data, base_url=base_url)
+    maxvalue <- as.numeric(max(coefficient_df) + 1)
+    print(maxvalue)
+    plot$scatter <- plot$scatter +
+        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
+        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
+    plot$df <- coefficient_df
+    return(plot)
+}
 
 #' Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using EdgeR.

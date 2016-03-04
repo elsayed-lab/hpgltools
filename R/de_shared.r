@@ -154,6 +154,7 @@ combine_de_table <- function(li, ed, de, ba, table,
     comb$fc_meta <- signif(x=comb$fc_meta, digits=4)
     comb$fc_var <- format(x=comb$fc_var, digits=4, scientific=TRUE)
     comb$fc_varbymed <- format(x=comb$fc_varbymed, digits=4, scientific=TRUE)
+    comb$p_var <- format(x=comb$p_var, digits=4, scientific=TRUE)
     comb$p_meta <- format(x=comb$p_meta, digits=4, scientific=TRUE)
     if (!is.null(annot_df)) {
         comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
@@ -304,7 +305,7 @@ deprint <- function(f){
 combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
                               excel_sheet="combined_DE", keepers="all",
-                              include_basic=TRUE, add_plots=TRUE, plot_dim=3) {
+                              include_basic=TRUE, add_plots=TRUE, plot_dim=6) {
     limma <- all_pairwise_result$limma
     deseq <- all_pairwise_result$deseq
     edger <- all_pairwise_result$edger
@@ -315,8 +316,11 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
     sheet_count <- 0
     if (class(keepers) == 'list') {
         ## Then keep specific tables in specific orientations.
+        a <- 0
+        keeper_len <- length(names(keepers))
         for (name in names(keepers)) {
-            message(paste0("Working on ", name))
+            a <- a + 1
+            message(paste0("Working on ", a, "/", keeper_len, ": ",  name))
             sheet_count <- sheet_count + 1
             numerator <- keepers[[name]][[1]]
             denominator <- keepers[[name]][[2]]
@@ -452,7 +456,7 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
     down_titles <- list()
     title_append <- ""
     if (!is.null(fc)) {
-        title_append <- paste0(title_append, " fc><", fc)
+        title_append <- paste0(title_append, " log2fc><", fc)
     }
     if (!is.null(p)) {
         title_append <- paste0(title_append, " p<", p)
@@ -706,24 +710,26 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
     down_genes <- table
 
     if (!is.null(p)) {
-        up_idx <- up_genes[, p_column] <= p
+        up_idx <- as.numeric(up_genes[, p_column]) <= p
+        ## Remember we have these reformatted as scientific
         up_genes <- up_genes[up_idx, ]
-        down_idx <- down_genes[, p_column] <= p
+        down_idx <- as.numeric(down_genes[, p_column]) <= p
         down_genes <- down_genes[down_idx, ]
         ## Going to add logic in case one does not ask for fold change
         ## In that case, a p-value assertion should still know the difference between up and down
         ## But it should also still know the difference between ratio and log changes
         if (fold == 'plusminus' | fold == 'log') {
             message(paste0("Assuming the fold changes are on the log scale and so taking >< 0"))
-            up_idx <- up_genes[, column] > 0.0
+            ##up_idx <- up_genes[, column] > 0.0
+            up_idx <- as.numeric(up_genes[, column]) > 0.0
             up_genes <- up_genes[up_idx, ]
-            down_idx <- down_genes[, column] < 0.0
+            down_idx <- as.numeric(down_genes[, column]) < 0.0
             down_genes <- down_genes[down_idx, ]
         } else {
             ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
-            up_idx <- up_genes[, column] > 1.0
+            up_idx <- as.numeric(up_genes[, column]) > 1.0
             up_genes <- up_genes[up_idx, ]
-            down_idx <- down_genes[, column] < 1.0
+            down_idx <- as.numeric(down_genes[, column]) < 1.0
             down_genes <- down_genes[down_idx, ]
         }
         message(paste0("After (adj)p filter, the up genes table has ", dim(up_genes)[1], " genes."))
@@ -731,17 +737,17 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
     }
 
     if (!is.null(fc)) {
-        up_idx <- up_genes[, column] >= fc
+        up_idx <- as.numeric(up_genes[, column]) >= fc
         up_genes <- up_genes[up_idx, ]
         if (fold == 'plusminus' | fold == 'log') {
             message(paste0("Assuming the fold changes are on the log scale and so taking -1 * fc"))
             ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
-            down_idx <- down_genes[, column] <= (fc * -1)
+            down_idx <- as.numeric(down_genes[, column]) <= (fc * -1)
             down_genes <- down_genes[down_idx, ]
         } else {
             message(paste0("Assuming the fold changes are on a ratio scale and so taking 1/fc"))
             ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
-            down_idx <- down_genes[, column] <= (1 / fc)
+            down_idx <- as.numeric(down_genes[, column]) <= (1 / fc)
             down_genes <- down_genes[down_idx, ]
         }
         message(paste0("After fold change filter, the up genes table has ", dim(up_genes)[1], " genes."))
@@ -752,14 +758,14 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
         ## Take an arbitrary number which are >= and <= a value which is z zscores from the median.
         message(paste0("Getting the genes >= ", z, " z scores away from the median of all."))
         ## Use the entire table for the summary
-        out_summary <- summary(table[,column])
-        out_mad <- stats::mad(table[,column], na.rm=TRUE)
+        out_summary <- summary(as.numeric(table[, column]))
+        out_mad <- stats::mad(as.numeric(table[, column]), na.rm=TRUE)
         up_median_dist <- out_summary["Median"] + (out_mad * z)
         down_median_dist <- out_summary["Median"] - (out_mad * z)
         ## But use the (potentially already trimmed) up/down tables for indexing
-        up_idx <- up_genes[, column] >= up_median_dist
+        up_idx <- as.numeric(up_genes[, column]) >= up_median_dist
         up_genes <- up_genes[up_idx, ]
-        down_idx <- down_genes[, column] <= down_median_dist
+        down_idx <- as.numeric(down_genes[, column]) <= down_median_dist
         down_genes <- down_genes[down_idx, ]
         message(paste0("After z filter, the up genes table has ", dim(up_genes)[1], " genes."))
         message(paste0("After z filter, the down genes table has ", dim(down_genes)[1], " genes."))
@@ -768,15 +774,15 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
     if (!is.null(n)) {
         ## Take a specific number of genes at the top/bottom of the rank ordered list.
         message(paste0("Getting the top and bottom ", n, " genes."))
-        upranked <- up_genes[order(up_genes[, column], decreasing=TRUE), ]
+        upranked <- up_genes[order(as.numeric(up_genes[, column]), decreasing=TRUE), ]
         up_genes <- head(upranked, n=n)
-        downranked <- down_genes[order(down_genes[, column]), ]
+        downranked <- down_genes[order(as.numeric(down_genes[, column])), ]
         down_genes <- head(downranked, n=n)
         message(paste0("After top-n filter, the up genes table has ", dim(up_genes)[1], " genes."))
         message(paste0("After bottom-n filter, the down genes table has ", dim(down_genes)[1], " genes."))
     }
-    up_genes <- up_genes[order(up_genes[, column], decreasing=TRUE), ]
-    down_genes <- down_genes[order(down_genes[, column], decreasing=FALSE), ]
+    up_genes <- up_genes[order(as.numeric(up_genes[, column]), decreasing=TRUE), ]
+    down_genes <- down_genes[order(as.numeric(down_genes[, column]), decreasing=FALSE), ]
     ret = list(up_genes=up_genes, down_genes=down_genes)
     return(ret)
 }

@@ -7,7 +7,7 @@
 combine_de_tables(all_pairwise_result, annot_df = NULL, excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
   excel_sheet = "combined_DE", keepers = "all", include_basic = TRUE,
-  add_plots = TRUE, plot_dim = 3)
+  add_plots = TRUE, plot_dim = 6)
 }
 \arguments{
 \item{all_pairwise_result}{the output from all_pairwise()}

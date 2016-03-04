@@ -1,29 +1,28 @@
-## Time-stamp: <Thu Feb  4 22:16:25 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Feb  5 12:31:49 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#'   Plot out 2 coefficients with respect to one another from limma
+#'   Plot out 2 coefficients with respect to one another from deseq2
 #'
-#' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
+#' It can be nice to see a plot of two coefficients from a deseq2 comparison with respect to one another
 #' This hopefully makes that easy.
 #'
-#' @param output the set of pairwise comparisons provided by limma_pairwise()
+#' @param output the set of pairwise comparisons provided by deseq_pairwise()
 #' @param x   the name or number of the first coefficient column to extract, this will be the x-axis of the plot
 #' @param y   the name or number of the second coefficient column to extract, this will be the y-axis of the plot
 #' @param gvis_filename   A filename for plotting gvis interactive graphs of the data.
 #' @param gvis_trendline   add a trendline to the gvis plot?
 #' @param tooltip_data   a dataframe of gene annotations to be used in the gvis plot
-#' @param flip   flip the axes
 #' @param base_url   for gvis plots
 #' @return a ggplot2 plot showing the relationship between the two coefficients
-#' @seealso \link{hpgl_linear_scatter} \link{limma_pairwise}
+#' @seealso \link{hpgl_linear_scatter} \link{deseq2_pairwise}
 #' @examples
 #' \dontrun{
-#'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#'  pretty = coefficient_scatter(deseq_data, x="wt", y="mut")
 #' }
 #' @export
 deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_scatter.html",
                                       gvis_filename=NULL,
                                       gvis_trendline=TRUE, tooltip_data=NULL,
-                                      flip=FALSE, base_url=NULL) {
+                                      base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     message("This can do comparisons among the following columns in the deseq2 result:")
@@ -41,17 +40,6 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     } else {
         yname <- y
     }
-    ## This is just a shortcut in case I want to flip axes without thinking.
-    if (isTRUE(flip)) {
-        tmp <- x
-        tmpname <- xname
-        x <- y
-        xname <- yname
-        y <- tmp
-        yname <- tmpname
-        rm(tmp)
-        rm(tmpname)
-    }
     message(paste0("Actually comparing ", xname, " and ", yname, "."))
     first_df <- output$coefficients[[xname]]
     first_df$delta <- log2(first_df$baseMean) + first_df$log2FoldChange
@@ -66,10 +54,13 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     coefficient_df <- coefficient_df[-1]
     coefficient_df <- coefficient_df[,c(xname, yname, "mean.1", "mean.2")]
     coefficient_df[is.na(coefficient_df)] <- 0
-
+    maxvalue <- max(coefficient_df) + 1.0
     plot <- hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
                                 tooltip_data=tooltip_data, base_url=base_url)
+    plot$scatter <- plot$scatter +
+        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
+        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
     plot$df <- coefficient_df
     return(plot)
 }

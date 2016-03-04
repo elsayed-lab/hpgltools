@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 23:26:30 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb 25 14:31:11 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -448,6 +448,42 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern='TA', type='gene', key
     return(num_pattern)
 }
 
+#' Gather some simple sequence attributes
+#'
+#' @param fasta  a fasta genome
+#' @param gff   an optional gff of annotations (if not provided it will just ask the whole genome.
+#' @param pattern   what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.
+#' @param type  the column to get frmo the gff file
+#' @param key   what type of entry of the gff file to key from?
+#' @return num_pattern a data frame of names and numbers.
+#' @seealso \pkg{Biostrings} \pkg{Rsamtools} \link[Biostrings]{letterFrequency} \link[Rsamtools]{FaFile}
+#' @examples
+#' \dontrun{
+#' num_pattern = sequence_attributes('mgas_5005.fasta', 'mgas_5005.gff')
+#' }
+#' @export
+sequence_attributes <- function(fasta, gff=NULL, type='gene', key='locus_tag') {
+    rawseq <- Rsamtools::FaFile(fasta)
+    if (is.null(gff)) {
+        entry_sequences <- rawseq
+    } else {
+        entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
+        ## type_entries <- subset(entries, type==type)
+        type_entries <- entries[entries$type == type, ]
+        ##names(type_entries) <- rownames(type_entries)
+        entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
+        names(entry_sequences) <- type_entries$Name
+    }
+    attribs <- data.frame(
+        gc = Biostrings::letterFrequency(entry_sequences, "CG", as.prob=TRUE),
+        at = Biostrings::letterFrequency(entry_sequences, "AT", as.prob=TRUE),
+        gt = Biostrings::letterFrequency(entry_sequences, "GT", as.prob=TRUE),
+        ac = Biostrings::letterFrequency(entry_sequences, "AC", as.prob=TRUE))
+    rownames(attribs) <- type_entries$locus_tag
+    colnames(attribs) <- c("gc","at","gt","ac")
+    return(attribs)
+}
+
 #'   A stupid distance function of a point against two axes.
 #'
 #' @param firstterm  the x-values of the points.
@@ -677,5 +713,16 @@ saveme <- function(directory="savefiles", backups=4) {
     message(paste0("The save string is: ", save_string))
     eval(parse(text=save_string))
 }
+
+#' Print a model as y = mx + b just like in grade school!
+ymxb_print <- function(model) {
+    intercept <- round(coefficients(model)[1], 2)
+    x_name <- names(coefficients(model)[-1])
+    slope <- round(coefficients(model)[-1], 2)
+    ret <- paste0("y = ", slope, "*", x_name, " + ", intercept)
+    message(ret)
+    return(ret)
+}
+
 
 ## EOF

@@ -1,4 +1,29 @@
-## Time-stamp: <Thu Feb  4 22:10:03 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Mar  2 13:00:29 2016 Ashton Trey Belew (abelew@gmail.com)>
+
+read_metadata <- function(file, header=FALSE, sep=",") {
+    if (tools::file_ext(file) == 'csv') {
+        definitions <- read.csv(file=file, comment.char="#", sep=sep)
+    } else if (tools::file_ext(file) == 'xlsx') {
+        ## xls = loadWorkbook(file, create=FALSE)
+        ## tmp_definitions = readWorksheet(xls, 1)
+        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1)
+    } else if (tools::file_ext(file) == 'xls') {
+        ## This is not correct, but it is a start
+        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1)
+    } else {
+        definitions <- read.table(file=file)
+    }
+
+    colnames(definitions) <- tolower(colnames(definitions))
+    ## "no visible binding for global variable 'sample.id'"  ## hmm sample.id is a column from the csv file.
+    ## tmp_definitions <- subset(tmp_definitions, sample.id != "")
+    empty_samples <- which(definitions$sample.id == "" | is.na(definitions$sample.id) | grepl(pattern="^#", x=definitions$sample.id))
+    if (length(empty_samples) > 0) {
+        definitions <- definitions[-empty_samples, ]
+    }
+    return(definitions)
+}
+
 
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.  This simply calls create_experiment and then does
@@ -12,9 +37,11 @@
 #' 'file'.  create_expt() will then just read that filename, it may be
 #' a full pathname or local to the cwd of the project.
 #'
+#' Also, the logic of this and create_experiment are a bit of a mess and should be redone!
+#'
 #' @param file   a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc
-#' @param color_hash   a hash which describes how to color the samples,
+#' @param colors   a list of colors by condition, if not provided
 #' it will generate its own colors using colorBrewer
 #' @param suffix   when looking for the count tables in processed_data
 #' look for this suffix on the end of the files.
@@ -42,7 +69,7 @@
 #' ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
-create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE,
+create_expt <- function(file=NULL, sample_colors=NULL, suffix=".count.gz", header=FALSE,
                        gene_info=NULL, by_type=FALSE, by_sample=FALSE, sep=",",
                        include_type="all", include_gff=NULL, count_dataframe=NULL,
                        meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
@@ -51,40 +78,29 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
     } else if (is.null(file)) {
         tmp_definitions <- meta_dataframe
     }  else {
-        if (tools::file_ext(file) == 'csv') {
-            tmp_definitions <- read.csv(file=file, comment.char="#", sep=sep)
-        } else if (tools::file_ext(file) == 'xls' | tools::file_ext(file) == 'xlsx') {
-            ## xls = loadWorkbook(file, create=FALSE)
-            ## tmp_definitions = readWorksheet(xls, 1)
-            tmp_definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1)
-        } else {
-            tmp_definitions <- read.table(file=file)
-        }
+        tmp_definitions <- read_metadata(file, header=header, sep=sep)
     }
-    colnames(tmp_definitions) <- tolower(colnames(tmp_definitions))
-    ## "no visible binding for global variable 'sample.id'"  ## hmm sample.id is a column from the csv file.
-    ## tmp_definitions <- subset(tmp_definitions, sample.id != "")
-    empty_samples <- which(tmp_definitions$sample.id == "")
-    if (length(empty_samples) > 0) {
-        tmp_definitions <- tmp_definitions[-empty_samples, ]
-    }
+
     condition_names <- unique(tmp_definitions$condition)
     if (is.null(condition_names)) {
         warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
     }
-    if (is.null(color_hash)) {
-        if (is.null(tmp_definitions$color)) {
+    if (is.null(sample_colors)) {
+        if (is.null(tmp_definitions$colors)) {
             num_colors <- length(condition_names)
-            colors <- suppressWarnings(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_colors,"Dark2"))(num_colors))
-            color_hash <- hash::hash(keys=as.character(condition_names), values=colors)
+            sample_colors <- suppressWarnings(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_colors,"Dark2"))(num_colors))
+            color_hash <- hash::hash(keys=as.character(condition_names), values=sample_colors)
         } else {
-            color_hash <- hash::hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$color)
+            sample_colors <- tmp_definitions$colors
+            color_hash <- hash::hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$colors)
         }
+    } else {  ## colors was provided
+        color_hash <- hash::hash(keys=names(sample_colors), values=sample_colors)
     }
     ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
     ## Thus the next line
     message("create_expt(): This needs columns with conditions and batches in the sample sheet.")
-    expt_list <- create_experiment(file=file, color_hash, suffix=suffix, header=header,
+    expt_list <- create_experiment(file=file, color_hash=color_hash, suffix=suffix, header=header,
                                    gene_info=gene_info, by_type=by_type, by_sample=by_sample,
                                    count_dataframe=count_dataframe, meta_dataframe=meta_dataframe,
                                    sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
@@ -155,7 +171,7 @@ create_expt <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=F
 #' new_experiment = create_experiment("some_csv_file.csv", color_hash)
 #' }
 #' @export
-create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=FALSE,
+create_experiment <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE,
                               gene_info=NULL, by_type=FALSE, by_sample=FALSE, include_type="all",
                               include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
     message("create_experiment():  This function assumes some columns in the sample sheet:")
@@ -165,41 +181,40 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
     } else if (is.null(file)) {
         sample_definitions <- meta_dataframe
     } else {
-        if (tools::file_ext(file) == 'csv') {
-            sample_definitions <- read.csv(file=file, comment.char="#", sep=sep)
-        } else if (tools::file_ext(file) == 'xls' | tools::file_ext(file) == 'xlsx') {
-            ## xls = loadWorkbook(file, create=FALSE)
-            ## sample_definitions = readWorksheet(xls, 1)
-            sample_definitions <- openxlsx::read.xlsx(file, sheet=1)
-        } else {
-            sample_definitions <- read.table(file=file)
-        }
+        sample_definitions <- read_metadata(file, header=header, sep=sep)
     }
-    colnames(sample_definitions) <- tolower(colnames(sample_definitions))
+
     ##sample_definitions = sample_definitions[grepl('(^HPGL|^hpgl)', sample_definitions$sample.id, perl=TRUE),]
     if (is.null(sample_definitions$condition)) {
         sample_definitions$condition <- tolower(paste(sample_definitions$type, sample_definitions$stage, sep="_"))
         sample_definitions$batch <- gsub("\\s+|\\d+|\\*", "", sample_definitions$batch, perl=TRUE)
     }
-    design_colors_list <- hash::as.list.hash(color_hash)
-    sample_definitions$colors <- as.list(design_colors_list[as.character(sample_definitions$condition)])
+    if (is.null(sample_definitions$colors)) {
+        design_colors_list <- hash::as.list.hash(color_hash)
+        condition_list <- sample_definitions$condition
+        names(condition_list) <- rownames(sample_definitions)
+        sample_definitions$colors <- as.list(design_colors_list[condition_list])
+        if (is.null(sample_definitions$colors)) {
+            sample_definitions$colors <- as.list(design_colors_list[names(condition_list)])
+        }
+    }
     sample_definitions <- as.data.frame(sample_definitions)
     rownames(sample_definitions) <- make.names(sample_definitions$sample.id, unique=TRUE)
-
     ## The logic here is that I want by_type to be the default, but only
     ## if no one chooses either.
     filenames <- NULL
     found_counts <- NULL
     ## This stanza allows one to have a field 'file' in the csv with filenames for the count tables.
-    if (!is.null(sample_definitions$file)) {
+
+    if (!is.null(count_dataframe)) {
+        all_count_tables <- count_dataframe
+        colnames(all_count_tables) <- rownames(sample_definitions)
+        ## If neither of these cases is true, start looking for the files in the processed_data/ directory
+    } else if (!is.null(sample_definitions$file)) {
         filenames <- sample_definitions$file
         all_count_tables <- hpgl_read_files(as.character(sample_definitions$sample.id),
                                             as.character(filenames), header=header, suffix=NULL)
         ## This stanza allows one to fill in the count tables with an external data frame.
-    } else if (!is.null(count_dataframe)) {
-        all_count_tables <- count_dataframe
-        colnames(all_count_tables) <- rownames(sample_definitions)
-        ## If neither of these cases is true, start looking for the files in the processed_data/ directory
     } else if (!isTRUE(by_type) & !isTRUE(by_sample) & is.null(filenames)) {
         ## If neither by_type or by_sample is set, look first by sample
         sample_definitions$counts <- paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
@@ -283,7 +298,7 @@ create_experiment <- function(file=NULL, color_hash, suffix=".count.gz", header=
         type=as.character(sample_definitions$type),
         condition=as.character(sample_definitions$condition),
         batch=as.character(sample_definitions$batch),
-        color=as.character(sample_definitions$colors),
+        colors=as.character(sample_definitions$colors),
         counts=sample_definitions$counts,
         intercounts=sample_definitions$intercounts)
     require.auto("Biobase")
@@ -346,7 +361,7 @@ expt_subset <- function(expt, subset=NULL) {
     } else {
         samplenames <- as.character(samples$sample.id)
     }
-    colors <- as.character(samples$color)
+    colors <- as.character(samples$colors)
     names <- paste(conditions, batches, sep="-")
     subset_definitions <- expt$definitions[rownames(expt$definitions) %in% samplenames, ]
     subset_libsize <- expt$original_libsize[names(expt$original_libsize) %in% samplenames]

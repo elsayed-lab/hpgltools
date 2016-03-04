@@ -1,4 +1,4 @@
-# Time-stamp: <Thu Feb  4 23:14:06 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Tue Mar  1 10:58:05 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -125,11 +125,14 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
                            "labels" = as.character(plot_labels))
     num_batches <- length(levels(included_batches))
     pca_plot <- NULL
-    if (num_batches <= 5) {
-        pca_plot <- pca_plot_smallbatch(pca_data, size=plot_size, first='PC1', second='PC2')
-    } else {
-        pca_plot <- pca_plot_largebatch(pca_data, size=plot_size, first='PC1', second='PC2')
-    }
+    ## I think these smallbatch/largebatch functions are no longer needed
+    ## Lets see what happens if I replace this with a single call...
+    ##if (num_batches <= 5) {
+    ##    pca_plot <- pca_plot_smallbatch(pca_data, size=plot_size, first='PC1', second='PC2')
+    ##} else {
+    ##    pca_plot <- pca_plot_largebatch(pca_data, size=plot_size, first='PC1', second='PC2')
+    ##}
+    pca_plot <- plot_pcs(pca_data, size=plot_size, first='PC1', second='PC2', design=design)
     pca_plot <- pca_plot +
         ggplot2::xlab(xl) +
         ggplot2::ylab(yl) +
@@ -275,7 +278,7 @@ factor_rsquared <- function(svd_v, factor) {
 #' }
 #' @export
 plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
-                     design=NULL, plot_title=NULL, plot_labels=NULL) {
+                     design=NULL, plot_title=NULL, plot_labels=NULL, size=5) {
     hpgl_env <- environment()
     batches <- design$batch
     point_labels <- factor(design$condition)
@@ -285,16 +288,45 @@ plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
     ## colors = levels(as.factor(unlist(design$color)))
     ## num_batches = length(levels(factor(design$batch)))
 
-    pca_plot <- ggplot2::ggplot(data=as.data.frame(data), environment=hpgl_env, fill=factor(design$condititon)) +
-        ggplot2::geom_point(ggplot2::aes_string(x="get(first)", y="get(second)", shape="batches", colour="data$colors"),
-                            stat="identity", size=3) +
-        ggplot2::scale_color_manual(values=levels(factor(data$colors)), name="Condition", labels=levels(as.factor(design$condition))) +
-        ggplot2::scale_shape_manual(values=batches,
-                                    name="Batch",
-                                    guide=ggplot2::guide_legend(override.aes=ggplot2::aes_string(size="1"))) +
-        ggplot2::ggtitle(plot_title) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(legend.key.size=grid::unit(0.5, "cm"))
+    ## I really need to switch this to a call to the other plotters (small/largebatch)
+    num_batches <- length(levels(data$batch))
+    pca_plot <- NULL
+    size <- 5
+    if (num_batches <= 5) {
+        pca_plot <- ggplot2::ggplot(data=as.data.frame(data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
+            ggplot2::geom_point(size=size, ggplot2::aes_string(shape="as.factor(batches)", fill="condition"), colour='black') +
+            ggplot2::scale_fill_manual(name="Condition", guide="legend",
+                                       labels=levels(as.factor(data$condition)),
+                                       values=levels(as.factor(data$colors))) +
+            ggplot2::scale_shape_manual(name="Batch", labels=levels(as.factor(data$batch)), values=21:25) +
+            ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(data$colors)))),
+                            colour=ggplot2::guide_legend(override.aes="black"))
+    } else {
+            plot <- ggplot2::ggplot(data, ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
+                ## geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
+                ggplot2::geom_point(size=size, ggplot2::aes_string(shape="batch", fill="condition", colour="colors")) +
+                ggplot2::scale_fill_manual(name="Condition", guide="legend",
+                                           labels=levels(as.factor(data$condition)),
+                                           values=levels(as.factor(data$colors))) +
+                ggplot2::scale_color_manual(name="Condition", guide="legend",
+                                            labels=levels(as.factor(data$condition)),
+                                            values=levels(as.factor(data$colors))) +
+                ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(data$colors)))),
+                                colour=ggplot2::guide_legend(override.aes="black")) +
+                ggplot2::scale_shape_manual(values=c(1:num_batches), name="Batch") +
+                ggplot2::theme_bw()
+    }
+
+    ##pca_plot <- ggplot2::ggplot(data=as.data.frame(data), environment=hpgl_env, fill=factor(design$condititon)) +
+    ##    ggplot2::geom_point(mapping=ggplot2::aes_string(x="get(first)", y="get(second)", fill="colors", colour="colors", shape=as.factor(batches)),
+    ##                        stat="identity", size=3) +
+    ##    ggplot2::scale_color_manual(values=levels(factor(data$colors)), name="Condition", labels=levels(as.factor(design$condition))) +
+    ##    ggplot2::scale_shape_manual(values=batches,
+    ##                                name="Batch",
+    ##                                guide=ggplot2::guide_legend(override.aes=ggplot2::aes_string(size="1"))) +
+    ##    ggplot2::ggtitle(plot_title) +
+    ##    ggplot2::theme_bw() +
+    ##    ggplot2::theme(legend.key.size=grid::unit(0.5, "cm"))
 
     if (!is.null(variances)) {
         x_var_num <- as.numeric(gsub("PC", "", first))
@@ -448,8 +480,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     cumulative_pc_variance <- cumsum(component_variance)
     ## Include in this table the fstatistic and pvalue described in rnaseq_bma.rmd
     component_rsquared_table <- data.frame(
-        "prop_var"=component_variance,
-        "cumulative_prop_var"=cumulative_pc_variance)
+        "prop_var" = component_variance,
+        "cumulative_prop_var" = cumulative_pc_variance)
     if (is.null(expt_factors)) {
         expt_factors <- colnames(expt_design)
     } else if (expt_factors[1] == "all") {
@@ -470,7 +502,7 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
                            "condition" = expt_design$condition,
                            "batch" = expt_design$batch,
                            "batch_int" = as.integer(expt_design$batch),
-                           "colors" = expt_design$color)
+                           "colors" = as.factor(as.character(expt_design$color)))
     pc_df <- data.frame("SampleID" = plot_labels)
     rownames(pc_df) <- make.names(plot_labels)
 
@@ -481,7 +513,6 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         name <- paste("PC", pc, sep="")
         pca_data[name] <- v[,pc]
         pc_df[name] <- v[,pc]
-
     }
     pc_df <- pc_df[-1]
     pca_plots <- list()
@@ -566,7 +597,7 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
                 finally={
                 }
             ) ## End of the tryCatch
-            if (class(cor_test) == 'try-error') {
+            if (class(cor_test) == 'try-error' | is.null(cor_test)) {
                 cor_df[fact, pc] <- 0
             } else {
                 cor_df[fact, pc] <- cor_test$estimate

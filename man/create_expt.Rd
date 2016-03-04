@@ -6,7 +6,7 @@
 information.  This simply calls create_experiment and then does
 expt_subset for everything}
 \usage{
-create_expt(file = NULL, color_hash = NULL, suffix = ".count.gz",
+create_expt(file = NULL, colors = NULL, suffix = ".count.gz",
   header = FALSE, gene_info = NULL, by_type = FALSE, by_sample = FALSE,
   sep = ",", include_type = "all", include_gff = NULL,
   count_dataframe = NULL, meta_dataframe = NULL, savefile = "expt",
@@ -16,7 +16,7 @@ create_expt(file = NULL, color_hash = NULL, suffix = ".count.gz",
 \item{file}{a comma separated file describing the samples with
 information like condition,batch,count_filename,etc}
 
-\item{color_hash}{a hash which describes how to color the samples,
+\item{colors}{a list of colors by condition, if not provided
 it will generate its own colors using colorBrewer}
 
 \item{suffix}{when looking for the count tables in processed_data
@@ -61,6 +61,8 @@ find the count tables in the local filesystem.  This logic has been
 superceded by simply adding a field to the .csv file called
 'file'.  create_expt() will then just read that filename, it may be
 a full pathname or local to the cwd of the project.
+
+Also, the logic of this and create_experiment are a bit of a mess and should be redone!
 }
 \examples{
 \dontrun{

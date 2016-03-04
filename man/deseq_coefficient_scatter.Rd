@@ -2,14 +2,13 @@
 % Please edit documentation in R/de_deseq.r
 \name{deseq_coefficient_scatter}
 \alias{deseq_coefficient_scatter}
-\title{Plot out 2 coefficients with respect to one another from limma}
+\title{Plot out 2 coefficients with respect to one another from deseq2}
 \usage{
 deseq_coefficient_scatter(output, x = 1, y = 2, gvis_filename = NULL,
-  gvis_trendline = TRUE, tooltip_data = NULL, flip = FALSE,
-  base_url = NULL)
+  gvis_trendline = TRUE, tooltip_data = NULL, base_url = NULL)
 }
 \arguments{
-\item{output}{the set of pairwise comparisons provided by limma_pairwise()}
+\item{output}{the set of pairwise comparisons provided by deseq_pairwise()}
 
 \item{x}{the name or number of the first coefficient column to extract, this will be the x-axis of the plot}
 
@@ -21,23 +20,21 @@ deseq_coefficient_scatter(output, x = 1, y = 2, gvis_filename = NULL,
 
 \item{tooltip_data}{a dataframe of gene annotations to be used in the gvis plot}
 
-\item{flip}{flip the axes}
-
 \item{base_url}{for gvis plots}
 }
 \value{
 a ggplot2 plot showing the relationship between the two coefficients
 }
 \description{
-It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
+It can be nice to see a plot of two coefficients from a deseq2 comparison with respect to one another
 This hopefully makes that easy.
 }
 \examples{
 \dontrun{
- pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+ pretty = coefficient_scatter(deseq_data, x="wt", y="mut")
 }
 }
 \seealso{
-\link{hpgl_linear_scatter} \link{limma_pairwise}
+\link{hpgl_linear_scatter} \link{deseq2_pairwise}
 }
 

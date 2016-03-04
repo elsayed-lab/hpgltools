@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 22:55:19 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Mar  3 15:29:29 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -136,7 +136,9 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     } else { ## If both lengths and all_genes are defined, use all_genes.
         message("simple_goseq(): Using all genes to fill in the de vector.")
         de_table <- merge(de_table, all_genes, by.x="ID", by.y="row.names", all.y=TRUE)
-        de_table[is.na(de_table)] <- 0  ## Set the new entries DE status to 0
+        ##de_table[is.na(de_table)] <- 0  ## Set the new entries DE status to 0
+        de_table <- merge(de_table, lengths, by.x="ID", by.y="ID", all.x=TRUE)
+        de_table$DE[is.na(de_table$DE)] <- 0  ## Set the new entries DE status to 0
         rownames(de_table) <- make.names(de_table$ID, unique=TRUE)
         de_vector <- as.vector(de_table$DE)
         names(de_vector) <- rownames(de_table)
@@ -149,7 +151,8 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
         if (is.null(goids)) {
             stop("simple_goseq(): The goids are not defined.")
         }
-        colnames(goids) <- c("ID", "GO")
+        goids <- goids[, c("ID","GO")]
+        ##colnames(goids) <- c("ID", "GO")
         pwf <- goseq::nullp(DEgenes=de_vector, bias.data=width_vector, plot.fit=doplot)
     } else {
         pwf <- goseq::nullp(de_vector, species, length_db, plot.fit=doplot) ## Taken from the goseq() reference manual

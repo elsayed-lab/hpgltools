@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 22:21:58 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Feb  5 12:32:08 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from limma
 #'
@@ -13,7 +13,6 @@
 #' @param gvis_trendline   add a trendline to the gvis plot?
 #' @param z   how far from the median to color the plot red and green
 #' @param tooltip_data   a dataframe of gene annotations to be used in the gvis plot
-#' @param flip  flip the axes?
 #' @param base_url   a basename for gvis plots
 #' @param up_color   color for the ups
 #' @param down_color   color for the downs
@@ -27,7 +26,7 @@
 #' @export
 limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_filename="limma_scatter.html",
                                       gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
-                                      tooltip_data=NULL, flip=FALSE, base_url=NULL,
+                                      tooltip_data=NULL, base_url=NULL,
                                       up_color="#7B9F35", down_color="#DD0000", ...) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
@@ -51,24 +50,16 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
     } else {
         yname <- y
     }
-    ## This is just a shortcut in case I want to flip axes without thinking.
-    if (isTRUE(flip)) {
-        tmp <- x
-        tmpname <- xname
-        x <- y
-        xname <- yname
-        y <- tmp
-        yname <- tmpname
-        rm(tmp)
-        rm(tmpname)
-    }
     message(paste0("Actually comparing ", xname, " and ", yname, "."))
     coefficients <- output$pairwise_comparisons$coefficients
-    coefficients <- coefficients[,c(x,y)]
+    coefficients <- coefficients[, c(x,y)]
+    maxvalue <- max(coefficients) + 1
     plot <- hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
                                 tooltip_data=tooltip_data, base_url=base_url, pretty_colors=FALSE)
-
+    plot$scatter <- plot$scatter +
+        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
+        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
     if (!is.null(toptable)) {
         theplot <- plot$scatter + ggplot2::theme_bw()
         sig <- limma_subset(toptable, z=z)
@@ -78,12 +69,6 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
         sigup <- sigup[sigup$qvalue <= qlimit, ]
         ## sigdown <- subset(sigdown, qvalue < 0.1)
         sigdown <- sigdown[sigdown$qvalue <= qlimit, ]
-        if (isTRUE(flip)) {
-            tmp <- sigup
-            sigup <- sigdown
-            sigdown <- tmp
-            rm(tmp)
-        }
         up_index <- rownames(coefficients) %in% rownames(sigup)
         down_index <- rownames(coefficients) %in% rownames(sigdown)
         up_df <- as.data.frame(coefficients[up_index, ])

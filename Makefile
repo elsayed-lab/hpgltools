@@ -1,14 +1,18 @@
 VERSION=2016.02
-install: document
+install: clean document
 	cd ../ && R CMD INSTALL hpgltools
 
-build:	clean
-	cd ../ && R CMD build hpgltools --no-build-vignettes
-	mv ../hpgltools_${VERSION}.tar.gz .
-	tar xavf hpgltools_${VERSION}.tar.gz
-	R CMD check hpgltools --no-build-vignettes
-	R CMD Rd2pdf hpgltools && cp hpgltools.pdf hpgltools/inst/doc/reference.pdf 
-	R CMD INSTALL hpgltools
+all: clean document vignette test reference check build install
+
+reference:
+	rm -f inst/doc/reference.pdf
+	R CMD Rd2pdf . -o inst/doc/reference.pdf
+
+check:
+	cd ../ && R CMD check hpgltools --no-build-vignettes
+
+build:
+	cd ../ && R CMD BUILD hpgltools
 
 test:
 	./run_tests.R
@@ -31,8 +35,8 @@ clean:
 	rm -rf hpgltools/
 	rm -rf hpgltools.Rcheck/
 	rm -rf hpgltools_${VERSION}.tar.gz
+	rm -rf $(find . -type f -name '*.rda' | grep -v 'hpgltools.rda')
 	find . -type f -name '*.Rdata' -exec rm -rf {} ';' 2>/dev/null
-	find . -type f -name '*.rda' -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name excel -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
 
