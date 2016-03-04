@@ -12,8 +12,6 @@ Description: This is a set of functions I have been using in my various
     graphs easier to create, some data normalizations easier,
     and as reminders about what to (not) do.
 License: GPL-2 | file LICENSE
-## The first row of suggests are things which cannot be built
-## for one reason or another
 Suggests:
     cbcbSEQ, SeqTools, motifStack, qsmooth,
     affy, AnnotationDbi, Biobase, BiocGenerics, Biostrings,
