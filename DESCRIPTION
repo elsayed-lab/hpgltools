@@ -13,19 +13,21 @@ Description: This is a set of functions I have been using in my various
     and as reminders about what to (not) do.
 License: GPL-2 | file LICENSE
 Suggests:
+    cbcbSEQ, SeqTools
+Imports:
     affy, AnnotationDbi, Biobase, BiocGenerics, Biostrings,
-    biomaRt, Category, cbcbSEQ, clusterProfiler, corpcor,
+    biomaRt, Category, clusterProfiler, corpcor,
     data.table, DESeq2, DESeq, devtools, directlabels,
-    DOSE, edgeR, genefilter, genomeIntervals, GenomicRanges,
-    ggplot2, GO.db, googleVis, goseq, GOstats, gplots, graph,
-    GSEABase, gtools, gridExtra, hash, Hmisc, igraph, IRanges,
-    KEGGREST, knitcitations, knitr, knitrBootstrap, lattice,
-    limma, matrixStats, methods, motifRG, motifStack, multtest,
-    openxlsx, pathview, plyr, preprocessCore, qsmooth, qvalue,
-    RamiGO, RColorBrewer, ReactomePA, reshape2, RCurl, rGADEM,
-    Rgraphviz, robustbase, RUVSeq, reshape, rjson, rmarkdown,
-    robust, roxygen2, Rsamtools, rtracklayer, S4Vectors, scales,
-    seqinr, seqLogo, SeqTools, stringi, stringr, survJamda, sva,
+    DOSE, edgeR, fission, genefilter, genomeIntervals,
+    GenomicRanges, ggplot2, GO.db, googleVis, goseq, GOstats,
+    gplots, graph, GSEABase, gtools, gridExtra, hash, Hmisc,
+    igraph, IRanges, KEGGREST, knitcitations, knitr, knitrBootstrap,
+    lattice,limma, matrixStats, methods, motifRG, motifStack,
+    multtest, openxlsx, pasilla, pathview, plyr, preprocessCore,
+    qsmooth, qvalue, RamiGO, RColorBrewer, ReactomePA, reshape2,
+    RCurl, rGADEM, Rgraphviz, robustbase, RUVSeq, reshape, rjson,
+    rmarkdown, robust, roxygen2, Rsamtools, rtracklayer, S4Vectors,
+    scales, seqinr, seqLogo, stringi, stringr, survJamda, sva,
     testthat, topGO, xtable, XVector
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

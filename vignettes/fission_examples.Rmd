@@ -93,6 +93,7 @@ again.
 
 ```{r pca}
 
+require.auto("kokrah/cbcbSEQ")  ## Install Kwame's cbcbSEQ
 ## Unsurprisingly, the raw data doesn't cluster well at all...
 fis_rawpca <- hpgl_pca(fission_expt, expt_labels=fission_expt$condition)
 fis_rawpca$plot
