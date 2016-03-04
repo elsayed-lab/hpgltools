@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Mar  2 13:00:29 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar  4 11:09:25 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 read_metadata <- function(file, header=FALSE, sep=",") {
     if (tools::file_ext(file) == 'csv') {
@@ -302,12 +302,13 @@ create_experiment <- function(file=NULL, color_hash=NULL, suffix=".count.gz", he
         counts=sample_definitions$counts,
         intercounts=sample_definitions$intercounts)
     require.auto("Biobase")
-    metadata <- new("AnnotatedDataFrame", meta_frame)
+    library("Biobase") ## I don't know how to make a new instance of an object without calling library() first.
+    metadata <- methods::new("AnnotatedDataFrame", meta_frame)  ## AnnotatedDataFrame is from Biobase
     Biobase::sampleNames(metadata) <- colnames(all_count_matrix)
-    feature_data <- new("AnnotatedDataFrame", gene_info)
+    feature_data <- methods::new("AnnotatedDataFrame", gene_info)
     Biobase::featureNames(feature_data) <- rownames(all_count_matrix)
-    experiment <- new("ExpressionSet", exprs=all_count_matrix,
-                      phenoData=metadata, featureData=feature_data)
+    experiment <- methods::new("ExpressionSet", exprs=all_count_matrix,
+                               phenoData=metadata, featureData=feature_data)
     ret <- list(expt=experiment, def=sample_definitions, annotation=annotation)
     return(ret)
 }

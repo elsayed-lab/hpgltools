@@ -29,6 +29,6 @@ Suggests:
     scales, seqinr, seqLogo, stringi, stringr, survJamda, sva,
     topGO, xtable, XVector
 Imports:
-    devtools, knitr, rmarkdown, roxygen2, testthat
+    devtools, knitr, rmarkdown, roxygen2, testthat, Biobase
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
