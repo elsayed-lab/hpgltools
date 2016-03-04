@@ -44,7 +44,9 @@ function and the genome annotations were loaded with gff2df().
 ```{r loading_data}
 
 library(hpgltools)
-data(hpgltools)
+data_file <- system.file("hpgltools.rda", package="hpgltools")
+load(data_file, envir=globalenv())
+
 ls()
 ## The gff information is in 'annotations'
 ## The experiment is in most_v0M1
@@ -168,4 +170,3 @@ norm_graphs$disheat  ## svaseq's batch correction seems to draw out the signal q
 ## It is worth noting that the wt, early log, thy, replicate c samples are still a bit weird.
 
 ```
-
