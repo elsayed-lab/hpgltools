@@ -1,3 +1,9 @@
 language: r
 cache: packages
 bioc_required: true
+
+script:
+  - make install && make test
+
+notifications:
+  email: false

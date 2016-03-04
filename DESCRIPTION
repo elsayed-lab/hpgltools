@@ -25,9 +25,9 @@ Imports:
     lattice,limma, matrixStats, methods, motifRG, multtest,
     openxlsx, pasilla, pathview, plyr, preprocessCore, qvalue,
     RamiGO, RColorBrewer, ReactomePA, reshape2, RCurl, rGADEM,
-    Rgraphviz, robustbase, RUVSeq, reshape, rjson, rmarkdown,
-    robust, roxygen2, Rsamtools, rtracklayer, S4Vectors, scales,
-    seqinr, seqLogo, stringi, stringr, survJamda, sva, testthat,
+    Rgraphviz, robustbase, roxygen2, RUVSeq, reshape, rjson,
+    rmarkdown, robust, roxygen2, Rsamtools, rtracklayer, S4Vectors,
+    scales, seqinr, seqLogo, stringi, stringr, survJamda, sva, testthat,
     topGO, xtable, XVector
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
