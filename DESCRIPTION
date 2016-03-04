@@ -12,22 +12,25 @@ Description: This is a set of functions I have been using in my various
     graphs easier to create, some data normalizations easier,
     and as reminders about what to (not) do.
 License: GPL-2 | file LICENSE
+## The first row of suggests are things which cannot be built
+## for one reason or another
 Suggests:
-    cbcbSEQ, SeqTools, motifStack, qsmooth
-Imports:
+    cbcbSEQ, SeqTools, motifStack, qsmooth,
     affy, AnnotationDbi, Biobase, BiocGenerics, Biostrings,
     biomaRt, Category, clusterProfiler, corpcor,
     data.table, DESeq2, DESeq, devtools, directlabels,
     DOSE, edgeR, fission, genefilter, genomeIntervals,
     GenomicRanges, ggplot2, GO.db, googleVis, goseq, GOstats,
     gplots, graph, GSEABase, gtools, gridExtra, hash, Hmisc,
-    igraph, IRanges, KEGGREST, knitcitations, knitr, knitrBootstrap,
+    igraph, IRanges, KEGGREST, knitcitations, knitrBootstrap,
     lattice,limma, matrixStats, methods, motifRG, multtest,
     openxlsx, pasilla, pathview, plyr, preprocessCore, qvalue,
     RamiGO, RColorBrewer, ReactomePA, reshape2, RCurl, rGADEM,
-    Rgraphviz, robustbase, roxygen2, RUVSeq, reshape, rjson,
-    rmarkdown, robust, roxygen2, Rsamtools, rtracklayer, S4Vectors,
-    scales, seqinr, seqLogo, stringi, stringr, survJamda, sva, testthat,
+    Rgraphviz, robustbase, RUVSeq, reshape, rjson,
+    robust, roxygen2, Rsamtools, rtracklayer, S4Vectors,
+    scales, seqinr, seqLogo, stringi, stringr, survJamda, sva,
     topGO, xtable, XVector
+Imports:
+    knitr, rmarkdown, roxygen2, testthat
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

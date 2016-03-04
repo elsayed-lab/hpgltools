@@ -40,6 +40,9 @@ clean:
 	find . -type d -name excel -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
 
+autoloads:
+	Rscript -e "library(devtools); devtools::load_all('.'); autoloads_all()"
+
 prereq:
 	Rscript -e "source('http://bioconductor.org/biocLite.R');\
 pasilla = try(library('pasilla'));\
