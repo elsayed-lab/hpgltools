@@ -18,7 +18,7 @@ Suggests:
     cbcbSEQ, SeqTools, motifStack, qsmooth,
     affy, AnnotationDbi, Biobase, BiocGenerics, Biostrings,
     biomaRt, Category, clusterProfiler, corpcor,
-    data.table, DESeq2, DESeq, devtools, directlabels,
+    data.table, DESeq2, DESeq, directlabels,
     DOSE, edgeR, fission, genefilter, genomeIntervals,
     GenomicRanges, ggplot2, GO.db, googleVis, goseq, GOstats,
     gplots, graph, GSEABase, gtools, gridExtra, hash, Hmisc,
@@ -31,6 +31,6 @@ Suggests:
     scales, seqinr, seqLogo, stringi, stringr, survJamda, sva,
     topGO, xtable, XVector
 Imports:
-    knitr, rmarkdown, roxygen2, testthat
+    devtools, knitr, rmarkdown, roxygen2, testthat
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
