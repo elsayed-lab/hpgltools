@@ -1,4 +1,4 @@
-# Time-stamp: <Tue Mar  1 10:58:05 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Fri Mar  4 12:57:49 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -18,6 +18,50 @@ makeSVD <- function (data) {
     rownames(v) <- colnames(data)
     s <- list(v=v, u=s$u, d=s$d)
     return(s)
+}
+
+#' Compute variance of each principal component and how they correlate with batch and cond
+#' This was copy/pasted from cbcbSEQ
+#' https://github.com/kokrah/cbcbSEQ/blob/master/R/explore.R
+#'
+#' @param v from makeSVD
+#' @param d from makeSVD
+#' @param condition factor describing experiment
+#' @param batch factor describing batch
+#' @return A dataframe containig variance, cum. variance, cond.R-sqrd, batch.R-sqrd
+#' @export
+pcRes <- function(v, d, condition=NULL, batch=NULL){
+  pcVar <- round((d^2)/sum(d^2)*100,2)
+  cumPcVar <- cumsum(pcVar)
+  if(!is.null(condition)){
+    cond.R2 <- function(y) round(summary(lm(y~condition))$r.squared*100,2)
+    cond.R2 <- apply(v, 2, cond.R2)
+  }
+  if(!is.null(batch)){
+    batch.R2 <- function(y) round(summary(lm(y~batch))$r.squared*100,2)
+    batch.R2 <- apply(v, 2, batch.R2)
+  }
+  if(is.null(condition) & is.null(batch)){
+     res <- data.frame(propVar=pcVar,
+                      cumPropVar=cumPcVar)
+  }
+  if(!is.null(batch) & is.null(condition)){
+    res <- data.frame(propVar=pcVar,
+                      cumPropVar=cumPcVar,
+                      batch.R2=batch.R2)
+  }
+  if(!is.null(condition) & is.null(batch)){
+    res <- data.frame(propVar=pcVar,
+                      cumPropVar=cumPcVar,
+                      cond.R2=cond.R2)
+  }
+  if(!is.null(condition) & !is.null(batch)){
+    res <- data.frame(propVar=pcVar,
+                      cumPropVar=cumPcVar,
+                      cond.R2=cond.R2,
+                      batch.R2=batch.R2)
+  }
+  return(res)
 }
 
 #'   Make a ggplot PCA plot describing the samples' clustering.
@@ -102,12 +146,12 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
     } else if (length(levels(included_conditions)) == 1) {
         warning("There is only one condition, but more than one batch.   Going to run pcRes with the batch information.")
-        pca_res <- cbcbSEQ::pcRes(pca$v, pca$d, design$batch)
+        pca_res <- pcRes(pca$v, pca$d, design$batch)
     } else if (length(levels(included_batches)) == 1) {
         print("There is just one batch in this data.")
-        pca_res <- cbcbSEQ::pcRes(pca$v, pca$d, design$condition)
+        pca_res <- pcRes(pca$v, pca$d, design$condition)
     } else {
-        pca_res <- cbcbSEQ::pcRes(pca$v, pca$d, design$condition, design$batch)
+        pca_res <- pcRes(pca$v, pca$d, design$condition, design$batch)
     }
     pca_variance <- round((pca$d ^ 2) / sum(pca$d ^ 2) * 100, 2)
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
