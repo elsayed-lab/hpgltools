@@ -1,14 +1,14 @@
+require.auto("kokrah/cbcbSEQ")
+library(cbcbSEQ)
 library(testthat)
 library(hpgltools)
 context("Test hpgltools and cbcbSEQ")
-
-## Make sure I didn't introduce any stupid syntax errors.
-test_that("Is it possible to load/start cbcbSEQ/hpgltools?", {
-    require.auto("kokrah/cbcbSEQ")
-    library(cbcbSEQ)
-    library(hpgltools)
-    require.auto("pasilla")
-})
+require.auto("pasilla")
+library(pasilla)
+data(pasilla)
+## WTF why does travis give me this:
+## Error in loadNamespace(name) : there is no package called 'cbcbSEQ'
+## The damn library call is just above!
 
 ## Load the pasilla data set
 message("Loading pasilla, setting up count tables.")
