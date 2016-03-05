@@ -122,7 +122,7 @@ condition = design$condition
 test_model = model.matrix(~condition)
 cbcb_voom = cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize, plot=TRUE)
 hpgl_voom = cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize, plot=TRUE)
-hpgl_voom2 = hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
+hpgl_voom2 = hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
 hpgl_voom3 = hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE)
 
 message("I can't test cbcb_voom vs. hpgl_voom3 because I set the row/colnames.")
