@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar  1 13:36:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 02:15:06 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -39,6 +39,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     try(detach("package:GOstats", unload=TRUE))
     try(detach("package:Category", unload=TRUE))
     require.auto("GOstats")
+    requireNameSpace("GOstats")
 
     message(paste0("simple_gostats(): gff_type is: ", gff_type, ". Change that if there are bad merges."))
     types <- c("CDS","gene","exon")
