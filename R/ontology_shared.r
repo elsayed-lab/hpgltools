@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar  1 13:50:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar  4 22:19:32 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -137,7 +137,8 @@ gosec <- function(go) {
 #' \dontrun{
 #'  godef("GO:0032432")
 #' ## > GO:0032432
-#' ## > "An assembly of actin filaments that are on the same axis but may be oriented with the same or opposite polarities and may be packed with different levels of tightness."
+#' ## > "An assembly of actin filaments that are on the same axis but may be oriented with the
+#' ## > same or opposite polarities and may be packed with different levels of tightness."
 #' }
 #' @export
 godef <- function(go) {
@@ -375,7 +376,8 @@ pval_plot <- function(df, ontology="MF") {
 #' \dontrun{
 #'  many_comparisons = limma_pairwise(expt=an_expt)
 #'  tables = many_comparisons$limma
-#'  this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb, goids=goids_df, z=1.5, gff_file='length_db.gff')
+#'  this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb,
+#'                                      goids=goids_df, z=1.5, gff_file='length_db.gff')
 #' }
 #' @export
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
@@ -846,7 +848,8 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, file="excel/merged_go",
 #'  keepers <- list(bob = ('numerator','denominator'))
 #'  kept <- combine_de_tables(all_contrasts, keepers=keepers)
 #'  changed <- extract_significant_genes(kept)
-#'  kept_ontologies <- subset_ontology_search(changed, lengths=gene_lengths, goids=goids, gff=gff, gff_type='gene')
+#'  kept_ontologies <- subset_ontology_search(changed, lengths=gene_lengths,
+#'                                            goids=goids, gff=gff, gff_type='gene')
 #'  go_writer <- write_subset_ontologies(kept_ontologies)
 #' }
 #' @export

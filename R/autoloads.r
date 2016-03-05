@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 22:00:31 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar  4 22:20:08 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
@@ -158,9 +158,9 @@ autoloads_misc <- function() {
 
 autoloads_motif <- function() {
     require.auto("rGADEM")
-    require.auto("MotIV")
-    require.auto("motifRG")
-    require.auto("motifStack")
+###    require.auto("MotIV")
+###    require.auto("motifRG")
+###    require.auto("motifStack")
 }
 
 #' Automatic loading of stuff I use, I am deprecating this now.

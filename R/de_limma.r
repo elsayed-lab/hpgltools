@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Feb  5 12:32:08 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar  4 22:24:16 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from limma
 #'
@@ -440,7 +440,8 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
 #' @seealso \link{hpgl_linear_scatter} \link[limma]{topTable}
 #' @examples
 #' \dontrun{
-#' compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
+#' compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
+#'                               first_table="AveExpr", second_column="AveExpr")
 #' compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
 #' }
 #' @export

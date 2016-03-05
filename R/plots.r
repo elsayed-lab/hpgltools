@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 23:24:07 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar  4 22:26:50 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -42,7 +42,8 @@
 #' \dontrun{
 #' toomany_plots <- graph_metrics(expt)
 #' toomany_plots$pcaplot
-#' norm <- normalize_expt(expt, convert="cpm", batch=TRUE, filter_low=TRUE, transform="log2", norm="rle")
+#' norm <- normalize_expt(expt, convert="cpm", batch=TRUE, filter_low=TRUE,
+#'                        transform="log2", norm="rle")
 #' holy_asscrackers <- graph_metrics(norm, qq=TRUE, ma=TRUE)
 #' ## good luck, you are going to be waiting a while for the ma plots to print!
 #' }
@@ -365,7 +366,8 @@ hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
 #' @seealso \pkg{ggplot2} \link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}
 #' \link{hpgl_linear_scatter}
 #' @examples
-#' ## hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+#' ## hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+#'                      gvis_filename="html/fun_scatterplot.html")
 #' @export
 hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2) {
     hpgl_env <- environment()
@@ -693,7 +695,8 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
 #' @seealso \link[robust]{lmRob} \link[stats]{weights} \link{hpgl_histogram}
 #' @examples
 #' \dontrun{
-#'  hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+#'  hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+#'                      gvis_filename="html/fun_scatterplot.html")
 #' }
 #' @export
 hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson",

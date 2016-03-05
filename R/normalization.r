@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 22:48:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar  4 22:28:37 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -641,7 +641,8 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #' \dontrun{
 #' df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
 #' df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-#' df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
+#' df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2',
+#'                        convert='rpkm')  ## Quantile, log2, rpkm
 #' count_table = df_ql2rpkm$counts
 #' }
 hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
@@ -1209,8 +1210,10 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
 #' @seealso \pkg{genefilter} \pkg{cbcbSEQ} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
 #' @examples
 #' \dontrun{
-#' normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm', batch='raw', filter_low='pofa')
-#' normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm', batch='sva', filter_low='pofa')
+#' normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
+#'                          batch='raw', filter_low='pofa')
+#' normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
+#'                                batch='sva', filter_low='pofa')
 #' }
 #' @export
 normalize_expt <- function(expt, ## The expt class passed to the normalizer

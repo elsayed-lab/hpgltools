@@ -16,13 +16,12 @@ metadata = design
 colnames(metadata) = c("condition", "batch")
 metadata$Sample.id = rownames(metadata)
 
-raw = DGEList(counts=counts, group=metadata$condition)
-norm = calcNormFactors(raw)
-disp_norm = estimateCommonDisp(norm)
-tagdispnorm = estimateTagwiseDisp(disp_norm)
-exact_test = exactTest(tagdispnorm)
-exact_result = as.data.frame(topTags(exact_test, n=nrow(raw)))
-
+raw = edgeR::DGEList(counts=counts, group=metadata$condition)
+norm = edgeR::calcNormFactors(raw)
+disp_norm = edgeR::estimateCommonDisp(norm)
+tagdispnorm = edgeR::estimateTagwiseDisp(disp_norm)
+exact_test = edgeR::exactTest(tagdispnorm)
+exact_result = as.data.frame(edgeR::topTags(exact_test, n=nrow(raw)))
 
 ## Load the pasilla data set
 message("Loading pasilla, setting up count tables.")

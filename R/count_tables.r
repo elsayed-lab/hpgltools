@@ -1,5 +1,12 @@
-## Time-stamp: <Fri Mar  4 11:09:25 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar  4 22:22:00 2016 Ashton Trey Belew (abelew@gmail.com)>
 
+
+#' Given a table of meta data, read it in for use by create_expt()
+#'
+#' @param file a csv/xls file to read
+#' @param header does the table have a header (usually for csv)
+#' @param sep separator for csv files
+#' @return a df of metadata
 read_metadata <- function(file, header=FALSE, sep=",") {
     if (tools::file_ext(file) == 'csv') {
         definitions <- read.csv(file=file, comment.char="#", sep=sep)
