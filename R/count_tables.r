@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar  4 23:39:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 00:48:09 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 
 #' Given a table of meta data, read it in for use by create_expt()
@@ -48,7 +48,7 @@ read_metadata <- function(file, header=FALSE, sep=",") {
 #'
 #' @param file   a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc
-#' @param colors   a list of colors by condition, if not provided
+#' @param sample_colors   a list of colors by condition, if not provided
 #' it will generate its own colors using colorBrewer
 #' @param suffix   when looking for the count tables in processed_data
 #' look for this suffix on the end of the files.
@@ -310,8 +310,9 @@ create_experiment <- function(file=NULL, color_hash=NULL, suffix=".count.gz", he
         colors=as.character(sample_definitions$colors),
         counts=sample_definitions$counts,
         intercounts=sample_definitions$intercounts)
-    require.auto("Biobase")
-    library("Biobase") ## I don't know how to make a new instance of an object without calling library() first.
+    ##require.auto("Biobase")
+    ##library("Biobase") ## I don't know how to make a new instance of an object without calling library() first.
+    requireNamespace("Biobase")
     metadata <- methods::new("AnnotatedDataFrame", meta_frame)  ## AnnotatedDataFrame is from Biobase
     Biobase::sampleNames(metadata) <- colnames(all_count_matrix)
     feature_data <- methods::new("AnnotatedDataFrame", gene_info)

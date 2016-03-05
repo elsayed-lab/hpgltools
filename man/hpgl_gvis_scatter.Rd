@@ -27,7 +27,8 @@ Make an html version of a scatter plot.
 }
 \examples{
 \dontrun{
- hpgl_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html", base_url="http://yeastgenome.org/accession?")
+ hpgl_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html",
+                   base_url="http://yeastgenome.org/accession?")
 }
 }
 \seealso{

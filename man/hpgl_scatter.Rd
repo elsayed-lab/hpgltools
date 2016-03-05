@@ -25,7 +25,8 @@ a ggplot2 scatter plot.
 Make a pretty scatter plot between two sets of numbers.
 }
 \examples{
-## hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+## hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+                gvis_filename="html/fun_scatterplot.html")
 }
 \seealso{
 \link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}

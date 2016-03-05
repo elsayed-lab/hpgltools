@@ -50,6 +50,8 @@ test_that("Are the quantile normalizations identical?", {
 ## Check that quant+cpm are the same
 message("Testing quantile(cpm()) normalization using edgeR's cpm().")
 cbcb_qcpm = qNorm(cbcb_data)
+library(edgeR)
+## I don't know how to call cpm without using a library call first.
 cbcb_qcpm = edgeR::cpm(cbcb_qcpm)
 
 cbcb_quantile = cbcbSEQ::qNorm(cbcb_data)

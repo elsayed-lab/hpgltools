@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 22:28:47 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 00:22:30 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Make an html version of an MA plot.
 #'
@@ -14,7 +14,8 @@
 #' @seealso \link{hpgl_ma_plot}
 #' @examples
 #' \dontrun{
-#'  hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+#'  hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
+#'                    base_url="http://yeastgenome.org/accession?")
 #' }
 #' @export
 hpgl_gvis_ma_plot <- function(counts, degenes, tooltip_data=NULL, filename="html/gvis_ma_plot.html", base_url="", ...) {
@@ -72,7 +73,8 @@ hpgl_gvis_ma_plot <- function(counts, degenes, tooltip_data=NULL, filename="html
 #' @seealso \link{hpgl_volcano_plot}
 #' @examples
 #' \dontrun{
-#'  hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+#'  hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
+#'                    base_url="http://yeastgenome.org/accession?")
 #' }
 #' @export
 hpgl_gvis_volcano_plot <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
@@ -128,7 +130,8 @@ hpgl_gvis_volcano_plot <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
 #' @seealso \link[googleVis]{gvisScatterChart}
 #' @examples
 #' \dontrun{
-#'  hpgl_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html", base_url="http://yeastgenome.org/accession?")
+#'  hpgl_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html",
+#'                    base_url="http://yeastgenome.org/accession?")
 #' }
 #' @export
 hpgl_gvis_scatter <- function(df, tooltip_data=NULL, filename="html/gvis_scatter.html", base_url="", trendline=NULL) {

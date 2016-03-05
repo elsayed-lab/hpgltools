@@ -30,7 +30,8 @@ Make an html version of an MA plot.
 }
 \examples{
 \dontrun{
- hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+ hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
+                   base_url="http://yeastgenome.org/accession?")
 }
 }
 \seealso{

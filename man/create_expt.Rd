@@ -16,6 +16,9 @@ create_expt(file = NULL, sample_colors = NULL, suffix = ".count.gz",
 \item{file}{a comma separated file describing the samples with
 information like condition,batch,count_filename,etc}
 
+\item{sample_colors}{a list of colors by condition, if not provided
+it will generate its own colors using colorBrewer}
+
 \item{suffix}{when looking for the count tables in processed_data
 look for this suffix on the end of the files.}
 
@@ -45,9 +48,6 @@ they may instead be fed here}
 \item{low_files}{whether or not to explicitly lowercase the filenames when searching in processed_data/}
 
 \item{...}{more parameters are fun}
-
-\item{colors}{a list of colors by condition, if not provided
-it will generate its own colors using colorBrewer}
 }
 \value{
 experiment an expressionset

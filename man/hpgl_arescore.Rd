@@ -53,7 +53,8 @@ Note that I did this two months ago and haven't touched it since...
 are_candidates <- hpgl_arescore(genome)
 utr_genes <- subset(lmajor_annotations, type == 'gene')
 threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
-                               ranges=IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)), strand=Rle(utr_genes[,5]),
+                               ranges=IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)),
+                               strand=Rle(utr_genes[,5]),
                                name=Rle(utr_genes[,10]))
 threep_seqstrings <- Biostrings::getSeq(lm, threep)
 are_test <- hpgltools:::hpgl_arescore(x=threep_seqstrings)

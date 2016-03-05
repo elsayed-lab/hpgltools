@@ -1,4 +1,4 @@
-# Time-stamp: <Fri Mar  4 12:57:49 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Sat Mar  5 00:26:44 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -314,6 +314,7 @@ factor_rsquared <- function(svd_v, factor) {
 #' @param design   the experimental design with condition batch factors.
 #' @param plot_title   a title for the plot.
 #' @param plot_labels   a parameter for the labels on the plot.
+#' @param size  The size of the dots on the plot
 #' @return a ggplot2 PCA plot
 #' @seealso \pkg{ggplot2} \code{\link[directlabels]{geom_dl}}
 #' @examples

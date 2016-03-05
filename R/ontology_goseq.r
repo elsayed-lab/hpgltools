@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Mar  3 15:29:29 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 00:50:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -21,7 +21,8 @@
 #' ## >                               synonym
 #' ## > 571        "35S primary transcript processing, GO:0006365"
 #' ## >        secondary    definition
-#' ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal RNA (rRNA) transcript into one or more mature rRNA molecules.
+#' ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal
+#' ##          RNA (rRNA) transcript into one or more mature rRNA molecules.
 #' }
 #' @export
 goseq_table <- function(df, file=NULL) {

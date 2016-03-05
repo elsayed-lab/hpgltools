@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar  4 22:28:37 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 00:47:23 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -244,6 +244,7 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
     if (convert == "edgecpm") {
+        requireNamespace("edgeR")
         count_table <- edgeR::cpm(count_table)
     } else if (convert == "cpm") {
         lib_size <- colSums(count_table)
@@ -1020,6 +1021,7 @@ hpgl_rpkm <- function(df, annotations=get0('gene_annotations')) {
         lenvec <- as.vector(merged_annotations$width)
     }
     names(lenvec) <- rownames(merged_annotations)
+    requireNamespace("edgeR")
     rpkm_df <- edgeR::rpkm(df_in, gene.length=lenvec)
     colnames(rpkm_df) <- colnames(df)
     return(rpkm_df)

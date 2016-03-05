@@ -6,6 +6,9 @@
 \usage{
 ymxb_print(model)
 }
+\arguments{
+\item{model}{a model to print from glm/lm/robustbase}
+}
 \description{
 Print a model as y = mx + b just like in grade school!
 }

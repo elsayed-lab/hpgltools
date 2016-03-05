@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 22:31:23 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 00:23:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways
 #'
@@ -22,7 +22,9 @@
 #' @seealso \pkg{Ramigo} \pkg{pathview}
 #' @examples
 #' \dontrun{
-#'  thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in", outdir="kegg_thy_el_comp2", string_from="_Spy", string_to="_Spy_", filenames="pathname")
+#'  thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in",
+#'                                    outdir="kegg_thy_el_comp2", string_from="_Spy",
+#'                                    string_to="_Spy_", filenames="pathname")
 #' }
 #' @export
 hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, verbose=FALSE, filenames="id") {

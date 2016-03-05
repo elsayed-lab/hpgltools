@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb 25 14:31:11 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 00:51:27 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -131,7 +131,7 @@ make_report <- function(name="report", type='pdf') {
     return(result)
 }
 
-#'  Implement the arescan function in R
+#' Implement the arescan function in R
 #'
 #' This function was taken almost verbatim from AREScore() in SeqTools
 #' Available at: https://github.com/lianos/seqtools.git
@@ -164,7 +164,8 @@ make_report <- function(name="report", type='pdf') {
 #' are_candidates <- hpgl_arescore(genome)
 #' utr_genes <- subset(lmajor_annotations, type == 'gene')
 #' threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
-#'                                ranges=IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)), strand=Rle(utr_genes[,5]),
+#'                                ranges=IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)),
+#'                                strand=Rle(utr_genes[,5]),
 #'                                name=Rle(utr_genes[,10]))
 #' threep_seqstrings <- Biostrings::getSeq(lm, threep)
 #' are_test <- hpgltools:::hpgl_arescore(x=threep_seqstrings)
@@ -452,7 +453,6 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern='TA', type='gene', key
 #'
 #' @param fasta  a fasta genome
 #' @param gff   an optional gff of annotations (if not provided it will just ask the whole genome.
-#' @param pattern   what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.
 #' @param type  the column to get frmo the gff file
 #' @param key   what type of entry of the gff file to key from?
 #' @return num_pattern a data frame of names and numbers.
@@ -498,7 +498,8 @@ sequence_attributes <- function(fasta, gff=NULL, type='gene', key='locus_tag') {
 #' @examples
 #' \dontrun{
 #' mydist <- sillydist(df[,1], df[,2], first_median, second_median)
-#' first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"), environment=hpgl_env) +
+#' first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"),
+#'                                    environment=hpgl_env) +
 #'   ggplot2::xlab(paste("Expression of", df_x_axis)) +
 #'   ggplot2::ylab(paste("Expression of", df_y_axis)) +
 #'   ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
@@ -507,7 +508,8 @@ sequence_attributes <- function(fasta, gff=NULL, type='gene', key='locus_tag') {
 #'   ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
 #'   ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
 #'   ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
-#'   ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist), alpha=0.6, size=size) +
+#'   ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist),
+#'                       alpha=0.6, size=size) +
 #'   ggplot2::theme(legend.position="none")
 #' first_vs_second  ## dots get colored according to how far they are from the medians
 #' ## replace first_median, second_median with 0,0 for the axes
@@ -715,6 +717,8 @@ saveme <- function(directory="savefiles", backups=4) {
 }
 
 #' Print a model as y = mx + b just like in grade school!
+#'
+#' @param model a model to print from glm/lm/robustbase
 ymxb_print <- function(model) {
     intercept <- round(coefficients(model)[1], 2)
     x_name <- names(coefficients(model)[-1])

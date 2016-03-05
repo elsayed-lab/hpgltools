@@ -21,6 +21,8 @@ plot_pcs(data, first = "PC1", second = "PC2", variances = NULL,
 \item{plot_title}{a title for the plot.}
 
 \item{plot_labels}{a parameter for the labels on the plot.}
+
+\item{size}{The size of the dots on the plot}
 }
 \value{
 a ggplot2 PCA plot

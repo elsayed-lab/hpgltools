@@ -14,8 +14,6 @@ sequence_attributes(fasta, gff = NULL, type = "gene", key = "locus_tag")
 \item{type}{the column to get frmo the gff file}
 
 \item{key}{what type of entry of the gff file to key from?}
-
-\item{pattern}{what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.}
 }
 \value{
 num_pattern a data frame of names and numbers.

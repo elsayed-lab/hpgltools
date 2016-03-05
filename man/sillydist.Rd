@@ -27,7 +27,8 @@ A stupid distance function of a point against two axes.
 \examples{
 \dontrun{
 mydist <- sillydist(df[,1], df[,2], first_median, second_median)
-first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"), environment=hpgl_env) +
+first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"),
+                                   environment=hpgl_env) +
   ggplot2::xlab(paste("Expression of", df_x_axis)) +
   ggplot2::ylab(paste("Expression of", df_y_axis)) +
   ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
@@ -36,7 +37,8 @@ first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"
   ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
   ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
   ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
-  ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist), alpha=0.6, size=size) +
+  ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist),
+                      alpha=0.6, size=size) +
   ggplot2::theme(legend.position="none")
 first_vs_second  ## dots get colored according to how far they are from the medians
 ## replace first_median, second_median with 0,0 for the axes

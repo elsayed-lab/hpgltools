@@ -13,7 +13,7 @@ Description: This is a set of functions I have been using in my various
     and as reminders about what to (not) do.
 License: GPL-2 | file LICENSE
 Suggests:
-    affy, AnnotationDbi, Biobase, BiocGenerics, Biostrings,
+    affy, AnnotationDbi, BiocGenerics, Biostrings,
     biomaRt, Category, clusterProfiler, corpcor,
     data.table, DESeq2, DESeq, directlabels,
     DOSE, edgeR, fission, genefilter, genomeIntervals,
@@ -24,7 +24,7 @@ Suggests:
     openxlsx, pasilla, pathview, plyr, preprocessCore, qvalue,
     RamiGO, RColorBrewer, ReactomePA, reshape2, RCurl, rGADEM,
     Rgraphviz, robustbase, RUVSeq, reshape, rjson,
-    robust, roxygen2, Rsamtools, rtracklayer, S4Vectors,
+    robust, Rsamtools, rtracklayer, S4Vectors,
     scales, seqinr, seqLogo, stringi, stringr, survJamda, sva,
     topGO, xtable, XVector
 Imports:
