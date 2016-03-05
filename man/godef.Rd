@@ -19,7 +19,8 @@ Get a go long-form definition from an id.
 \dontrun{
  godef("GO:0032432")
 ## > GO:0032432
-## > "An assembly of actin filaments that are on the same axis but may be oriented with the same or opposite polarities and may be packed with different levels of tightness."
+## > "An assembly of actin filaments that are on the same axis but may be oriented with the
+## > same or opposite polarities and may be packed with different levels of tightness."
 }
 }
 \seealso{

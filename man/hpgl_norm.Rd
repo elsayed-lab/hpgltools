@@ -73,7 +73,8 @@ Sometime soon I am going to elipsis all these variables
 \dontrun{
 df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
 df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
+df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2',
+                       convert='rpkm')  ## Quantile, log2, rpkm
 count_table = df_ql2rpkm$counts
 }
 }

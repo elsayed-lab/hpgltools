@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar  4 22:22:00 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar  4 23:39:45 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 
 #' Given a table of meta data, read it in for use by create_expt()
@@ -205,7 +205,9 @@ create_experiment <- function(file=NULL, color_hash=NULL, suffix=".count.gz", he
             sample_definitions$colors <- as.list(design_colors_list[names(condition_list)])
         }
     }
+
     sample_definitions <- as.data.frame(sample_definitions)
+    colnames(sample_definitions) <- tolower(colnames(sample_definitions))
     rownames(sample_definitions) <- make.names(sample_definitions$sample.id, unique=TRUE)
     ## The logic here is that I want by_type to be the default, but only
     ## if no one chooses either.

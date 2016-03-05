@@ -31,7 +31,8 @@ Plot arbitrary data from limma
 }
 \examples{
 \dontrun{
-compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
+compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
+                              first_table="AveExpr", second_column="AveExpr")
 compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
 }
 }

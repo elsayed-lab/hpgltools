@@ -61,8 +61,10 @@ Replace the data of an expt with normalized data.
 }
 \examples{
 \dontrun{
-normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm', batch='raw', filter_low='pofa')
-normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm', batch='sva', filter_low='pofa')
+normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
+                         batch='raw', filter_low='pofa')
+normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
+                               batch='sva', filter_low='pofa')
 }
 }
 \seealso{

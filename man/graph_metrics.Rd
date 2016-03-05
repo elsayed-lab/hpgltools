@@ -48,7 +48,8 @@ qq plots.
 \dontrun{
 toomany_plots <- graph_metrics(expt)
 toomany_plots$pcaplot
-norm <- normalize_expt(expt, convert="cpm", batch=TRUE, filter_low=TRUE, transform="log2", norm="rle")
+norm <- normalize_expt(expt, convert="cpm", batch=TRUE, filter_low=TRUE,
+                       transform="log2", norm="rle")
 holy_asscrackers <- graph_metrics(norm, qq=TRUE, ma=TRUE)
 ## good luck, you are going to be waiting a while for the ma plots to print!
 }

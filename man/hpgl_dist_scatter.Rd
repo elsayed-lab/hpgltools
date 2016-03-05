@@ -35,7 +35,8 @@ distances from each axis, multiplied by each other, summed by axis,
 then normalized against the maximum.
 }
 \examples{
-## hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+## hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+                     gvis_filename="html/fun_scatterplot.html")
 }
 \seealso{
 \pkg{ggplot2} \link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}

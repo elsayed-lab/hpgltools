@@ -59,7 +59,8 @@ linear model superimposed and some supporting statistics.
 }
 \examples{
 \dontrun{
- hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+ hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+                     gvis_filename="html/fun_scatterplot.html")
 }
 }
 \seealso{
