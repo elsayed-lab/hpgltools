@@ -1,6 +1,7 @@
 language: r
 cache: packages
 bioc_required: true
+warnings_are_errors: false
 
 ##script:
 ##  - make install && make test
