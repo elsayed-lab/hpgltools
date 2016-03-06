@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Mar  5 00:34:50 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 21:57:28 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -1363,8 +1363,10 @@ hpgl_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
 #' @seealso \link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}
 #' \link{hpgl_linear_scatter}
 #' @examples
-#' ## hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
-#'                 gvis_filename="html/fun_scatterplot.html")
+#' \dontrun{
+#' hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+#'              gvis_filename="html/fun_scatterplot.html")
+#' }
 #' @export
 hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=2) {
     hpgl_env <- environment()
