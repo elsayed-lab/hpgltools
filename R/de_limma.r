@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar  4 22:24:16 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 19:35:02 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from limma
 #'
@@ -145,10 +145,10 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
     }
     dataframe <- as.matrix(dataframe)
 
-    if (is.null(design)) {
-        design <- matrix(1, ncol(dataframe), 1)
-        rownames(design) <- colnames(dataframe)
-        colnames(design) <- "GrandMean"
+    if (is.null(model)) {
+        model <- matrix(1, ncol(dataframe), 1)
+        rownames(model) <- colnames(dataframe)
+        colnames(model) <- "GrandMean"
     }
     linear_fit <- limma::lmFit(dataframe, model, method="ls")
     if (is.null(linear_fit$Amean)) {

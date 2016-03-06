@@ -5,7 +5,8 @@ library(hpgltools)
 context("Test hpgltools and cbcbSEQ")
 require.auto("pasilla")
 library(pasilla)
-data(pasilla)
+data(pasillaGenes)
+
 ## WTF why does travis give me this:
 ## Error in loadNamespace(name) : there is no package called 'cbcbSEQ'
 ## The damn library call is just above!
