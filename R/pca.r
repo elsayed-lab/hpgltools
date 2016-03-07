@@ -1,4 +1,4 @@
-# Time-stamp: <Sat Mar  5 00:26:44 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Mon Mar  7 11:15:39 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -81,8 +81,7 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #'   variance = a table of the PCA plot variance
 #' This makes use of cbcbSEQ and prints the table of variance by component.
 #' @seealso \code{\link{makeSVD}}, \code{\link[cbcbSEQ]{pcRes}},
-#' \code{\link[directlabels]{geom_dl}} \code{\link{pca_plot_smallbatch}}
-#' \code{\link{pca_plot_largebatch}}
+#' \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 #' @examples
 #' \dontrun{
 #'  pca_plot = hpgl_pca(expt=expt)
@@ -162,12 +161,11 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     pca_data <- data.frame("SampleID" = as.character(design$sample),
                            "condition" = as.character(design$condition),
                            "batch" = as.character(design$batch),
-                           "batch_int" = as.integer(design$batch),
+                           "batch_int" = as.integer(as.factor(design$batch)),
                            "PC1" = pca$v[,1],
                            "PC2" = pca$v[,2],
                            "colors" = plot_colors,
                            "labels" = as.character(plot_labels))
-    num_batches <- length(levels(included_batches))
     pca_plot <- NULL
     ## I think these smallbatch/largebatch functions are no longer needed
     ## Lets see what happens if I replace this with a single call...
@@ -207,84 +205,6 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     return(pca_return)
 }
 
-
-#' ggplot2 plots of PCA data with >= 6 batches.
-#'
-#' @param df  A dataframe of PC1/PC2 and other arbitrary data.
-#' @param size   The size of glyphs in the plot.
-#' @param first   The first principle component to plot against
-#' @param second   The second PC to plot against
-#' @return a ggplot2 plot of principle components 1 and 2.
-#' @seealso
-#' \pkg{ggplot2}
-#' @examples
-#' \dontrun{
-#'  plots <- pca_plot_largebatch(svd_stuff)
-#' }
-#' @export
-pca_plot_largebatch <- function(df, size=5, first="PC1", second="PC2") {
-    hpgl_env <- environment()
-    ## The following 8 lines were written when I forgot to add environment= to ggplot()
-    ## and it started throwing errors because it could not find the variable 'first', so
-    ## I made it explicitly impossible for them to be nonexistent. get0 will set the
-    ## value to null if the object does not exist, I then check for null and set the
-    ## default value. This is entirely too verbose, but kind of nice if I will find
-    ## myself debugging a bunch of code in the future.
-    first <- get0('first')
-    second <- get0('second')
-    if (is.null(first)) {
-        first <- 'PC1'
-    }
-    if (is.null(second)) {
-        second <- 'PC2'
-    }
-    num_batches <- length(levels(factor(df$batch)))
-    plot <- ggplot2::ggplot(df, ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
-        ## geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
-        ggplot2::geom_point(size=size, ggplot2::aes_string(shape="batch", fill="condition", colour="colors")) +
-        ggplot2::scale_fill_manual(name="Condition", guide="legend",
-                                   labels=levels(as.factor(df$condition)),
-                                   values=levels(as.factor(df$colors))) +
-        ggplot2::scale_color_manual(name="Condition", guide="legend",
-                                    labels=levels(as.factor(df$condition)),
-                                    values=levels(as.factor(df$colors))) +
-        ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(df$colors)))),
-                        colour=ggplot2::guide_legend(override.aes="black")) +
-        ggplot2::scale_shape_manual(values=c(1:num_batches), name="Batch") +
-        ggplot2::theme_bw()
-    return(plot)
-}
-
-#' ggplot2 plots of PCA data with <= 5 batches.
-#'
-#' This uses hard-coded scale_shape_manual values 21-25 to have solid shapes in the plot.
-#'
-#' @param df  A dataframe of PC1/PC2 and other arbitrary data.
-#' @param size   The size of glyphs in the plot.
-#' @param first   The first component
-#' @param second   The second component
-#' @return a ggplot2 plot of principle components 1 and 2.
-#' @seealso
-#' \pkg{ggplot2}
-#' @examples
-#' \dontrun{
-#'  plots <- pca_plot_smallbatch(svd_stuff)
-#' }
-#' @export
-pca_plot_smallbatch <- function(df, size=5, first='PC1', second='PC2') {
-    hpgl_env <- environment()
-    plot <- ggplot2::ggplot(df, ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
-        ggplot2::geom_point(size=size, ggplot2::aes_string(shape="factor(batch)", fill="condition"), colour='black') +
-        ggplot2::scale_fill_manual(name="Condition", guide="legend",
-                                   labels=levels(as.factor(df$condition)),
-                                   values=levels(as.factor(df$colors))) +
-        ##scale_fill_manual(name="Condition", guide="legend", labels=condition, values=colors) +
-        ggplot2::scale_shape_manual(name="Batch", labels=levels(as.factor(df$batch)), values=21:25) +
-        ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(df$colors)))),
-                        colour=ggplot2::guide_legend(override.aes="black"))
-    return(plot)
-}
-
 #' Collect the r^2 values from a linear model fitting between a singular
 #' value decomposition and factor.
 #'
@@ -322,7 +242,7 @@ factor_rsquared <- function(svd_v, factor) {
 #'  pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
 #' }
 #' @export
-plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
+plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                      design=NULL, plot_title=NULL, plot_labels=NULL, size=5) {
     hpgl_env <- environment()
     batches <- design$batch
@@ -334,44 +254,32 @@ plot_pcs <- function(data, first="PC1", second="PC2", variances=NULL,
     ## num_batches = length(levels(factor(design$batch)))
 
     ## I really need to switch this to a call to the other plotters (small/largebatch)
-    num_batches <- length(levels(data$batch))
+    num_batches <- length(unique(batches))
     pca_plot <- NULL
-    size <- 5
     if (num_batches <= 5) {
-        pca_plot <- ggplot2::ggplot(data=as.data.frame(data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
+        pca_plot <- ggplot2::ggplot(data=as.data.frame(pca_data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
             ggplot2::geom_point(size=size, ggplot2::aes_string(shape="as.factor(batches)", fill="condition"), colour='black') +
             ggplot2::scale_fill_manual(name="Condition", guide="legend",
-                                       labels=levels(as.factor(data$condition)),
-                                       values=levels(as.factor(data$colors))) +
-            ggplot2::scale_shape_manual(name="Batch", labels=levels(as.factor(data$batch)), values=21:25) +
-            ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(data$colors)))),
+                                       labels=levels(as.factor(pca_data$condition)),
+                                       values=levels(as.factor(pca_data$colors))) +
+            ggplot2::scale_shape_manual(name="Batch", labels=levels(as.factor(pca_data$batch)), values=21:25) +
+            ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(pca_data$colors)))),
                             colour=ggplot2::guide_legend(override.aes="black"))
     } else {
-            plot <- ggplot2::ggplot(data, ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
-                ## geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
-                ggplot2::geom_point(size=size, ggplot2::aes_string(shape="batch", fill="condition", colour="colors")) +
-                ggplot2::scale_fill_manual(name="Condition", guide="legend",
-                                           labels=levels(as.factor(data$condition)),
-                                           values=levels(as.factor(data$colors))) +
-                ggplot2::scale_color_manual(name="Condition", guide="legend",
-                                            labels=levels(as.factor(data$condition)),
-                                            values=levels(as.factor(data$colors))) +
-                ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(data$colors)))),
-                                colour=ggplot2::guide_legend(override.aes="black")) +
-                ggplot2::scale_shape_manual(values=c(1:num_batches), name="Batch") +
-                ggplot2::theme_bw()
+        pca_plot <- ggplot2::ggplot(pca_data, ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
+            ## geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
+            ggplot2::geom_point(size=size, ggplot2::aes_string(shape="batch", fill="condition", colour="colors")) +
+            ggplot2::scale_fill_manual(name="Condition", guide="legend",
+                                       labels=levels(as.factor(pca_data$condition)),
+                                       values=levels(as.factor(pca_data$colors))) +
+            ggplot2::scale_color_manual(name="Condition", guide="legend",
+                                        labels=levels(as.factor(pca_data$condition)),
+                                        values=levels(as.factor(pca_data$colors))) +
+            ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(pca_data$colors)))),
+                            colour=ggplot2::guide_legend(override.aes="black")) +
+            ggplot2::scale_shape_manual(values=c(1:num_batches), name="Batch") +
+            ggplot2::theme_bw()
     }
-
-    ##pca_plot <- ggplot2::ggplot(data=as.data.frame(data), environment=hpgl_env, fill=factor(design$condititon)) +
-    ##    ggplot2::geom_point(mapping=ggplot2::aes_string(x="get(first)", y="get(second)", fill="colors", colour="colors", shape=as.factor(batches)),
-    ##                        stat="identity", size=3) +
-    ##    ggplot2::scale_color_manual(values=levels(factor(data$colors)), name="Condition", labels=levels(as.factor(design$condition))) +
-    ##    ggplot2::scale_shape_manual(values=batches,
-    ##                                name="Batch",
-    ##                                guide=ggplot2::guide_legend(override.aes=ggplot2::aes_string(size="1"))) +
-    ##    ggplot2::ggtitle(plot_title) +
-    ##    ggplot2::theme_bw() +
-    ##    ggplot2::theme(legend.key.size=grid::unit(0.5, "cm"))
 
     if (!is.null(variances)) {
         x_var_num <- as.numeric(gsub("PC", "", first))

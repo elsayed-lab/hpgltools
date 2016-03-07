@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Mar  5 21:57:28 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Mar  7 16:45:04 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -712,7 +712,23 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]
     colnames(df) <- c("first","second")
-    linear_model <- robustbase::lmrob(formula=second ~ first, data=df, method="SMDM")
+    model_test <- try(robustbase::lmrob(formula=second ~ first, data=df, method="SMDM"), silent=TRUE)
+    if (class(model_test) == 'try-error') {
+        model_test <- try(lm(formula=second ~ first, data=df), silent=TRUE)
+    }
+    if (class(model_test) == 'try-error') {
+        model_test <- try(glm(formula=second ~ first, data=df), silent=TRUE)
+    }
+    if (class(model_test) == 'try-error') {
+        message("Could not perform a linear modelling of the data.")
+        message("Going to perform a scatter plot without linear model.")
+        plot <- hpgl_scatter(df)
+        ret <- list(data=df, scatter=plot)
+        return(ret)
+    } else {
+        linear_model <- model_test
+    }
+    linear_model <- try(robustbase::lmrob(formula=second ~ first, data=df, method="SMDM"))
     linear_model_summary <- summary(linear_model)
     linear_model_rsq <- linear_model_summary$r.squared
     linear_model_weights <- stats::weights(linear_model, type="robustness", na.action=NULL)

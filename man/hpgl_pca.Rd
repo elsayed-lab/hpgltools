@@ -42,7 +42,6 @@ Make a ggplot PCA plot describing the samples' clustering.
 }
 \seealso{
 \code{\link{makeSVD}}, \code{\link[cbcbSEQ]{pcRes}},
-\code{\link[directlabels]{geom_dl}} \code{\link{pca_plot_smallbatch}}
-\code{\link{pca_plot_largebatch}}
+\code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 }
 

@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Mar  5 00:51:27 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Mar  7 18:38:18 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Beta.NA: Perform a quick solve to gather residuals etc
 #' This was provided by Kwame for something which I don't remember a loong time ago.
@@ -43,6 +43,33 @@ get_genelengths <- function(gff, type="gene", key='ID') {
         stop(paste0("No genelengths were found.  Perhaps you are using the wrong 'type' or 'key' arguments, type is: ", type, ", key is: ", key))
     }
     return(ret)
+}
+
+#' Extract annotation information from biomart without having to remember the stupid biomart parameters
+#'
+#' @param species currently only hsapiens
+#' @examples
+#' \dontrun{
+#'  tt = get_biomarg_annotations()
+#' }
+#' @export
+get_biomart_annotations <- function(species="hsapiens") {
+    dataset <- paste0(species, "_gene_ensembl")
+    ##mart <- biomaRt::useMart(biomart="ensembl", dataset=dataset)
+    mart <- NULL
+    if (species == 'hsapiens') {
+        mart <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL", host="useast.ensembl.org")
+        ensembl <- biomaRt::useDataset("hsapiens_gene_ensembl", mart=mart)
+        ## The following was stolen from Laura's logs for human annotations.
+        ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
+        desc <- biomaRt::getBM(attributes = c("ensembl_gene_id", "hgnc_symbol", "description", "gene_biotype"), mart=ensembl)
+        colnames(desc) <- c("ID", "hgnc_symbol", "Description", "Type")
+        ## Remove commas from description
+        desc$Description <- gsub(",", "", desc$Description)
+    }
+    ## In order for the return from this function to work with other functions in this, the rownames must be set.
+    rownames(desc) <- make.names(desc$ID, unique=TRUE)
+    return(desc)
 }
 
 #' Given a data frame of exon counts and annotation information, sum the exons.
@@ -532,13 +559,9 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #' This function has been through many iterations, first using XLConnect,
 #' then xlsx, and now openxlsx.  Hopefully this will not change again.
 #'
+#' @param wb the workbook to which to write
 #' @param data  A data frame to print
 #' @param sheet   Name of the sheet to write
-#' @param file   The filename for the workbook.
-#' @param overwrite_file   required for XLConnect, still used but perhaps not needed.
-#' @param newsheet  same, but makes sure we don't overwrite an existing sheet
-#' @param overwrite_sheet  yeah, I need to prune these options
-#' @param dated   Append a date to the excel filename?
 #' @param first_two_widths   I add long titles to the tops of the sheets
 #'   setting this makes sure that those columns are not too wide
 #' @param start_row   The first row of the sheet to write
@@ -553,47 +576,15 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #'  xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
 #' }
 #' @export
-write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite_file=TRUE, newsheet=FALSE,
-                      overwrite_sheet=TRUE, dated=TRUE, first_two_widths=c("30","60"),
+write_xls <- function(wb, data, sheet="first", first_two_widths=c("30","60"),
                       start_row=1, start_col=1, ...) {
     arglist <- list(...)
-    excel_dir <- dirname(file)
-    if (!file.exists(excel_dir)) {
-        dir.create(excel_dir, recursive=TRUE)
-    }
-
-    file <- gsub(pattern="\\.xlsx", replacement="", file, perl=TRUE)
-    file <- gsub(pattern="\\.xls", replacement="", file, perl=TRUE)
-    filename <- NULL
-    if (isTRUE(dated)) {
-        timestamp <- format(Sys.time(), "%Y%m%d%H")
-        filename <- paste0(file, "-", timestamp, ".xlsx")
-    } else {
-        filename <- paste0(file, ".xlsx")
-    }
-    if (file.exists(filename)) {
-        if (!isTRUE(newsheet) | !isTRUE(overwrite_file)) {
-            backup_file(filename)
-        }
-    }
-
     if (class(data) == 'matrix') {
         data <- as.data.frame(data)
     }
-    if (file.exists(filename)) {
-        wb <- openxlsx::loadWorkbook(filename)
-    } else {
-        wb <- openxlsx::createWorkbook(creator="atb")
-    }
     newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
     if (class(newsheet) == 'try-error') {
-        ## assume for the moment that this is because it already exists.
-        ## For the moment, leave it alone though and see what happens
-        replace_sheet <- FALSE
-        if (isTRUE(replace_sheet)) {
-            openxlsx::removeWorksheet(wb=wb, sheet=sheet)
-            try(openxlsx::addWorksheet(wb, sheetName=sheet))
-        }
+        message(paste0("The sheet ", sheet, " already exists."))
     }
     hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
     new_row <- start_row
@@ -624,9 +615,8 @@ write_xls <- function(data, sheet="first", file="excel/workbook.xlsx", overwrite
     ## Maybe make this a parameter? nah for now at least
     openxlsx::setColWidths(wb, sheet=sheet, widths=first_two_widths, cols=c(1,2))
     openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=3:ncol(data))
-    openxlsx::saveWorkbook(wb, filename, overwrite=overwrite_sheet)
     end_col <- ncol(data) + 1
-    ret <- list(workbook=wb, file=filename, end_row=new_row, end_col=end_col)
+    ret <- list(workbook=wb, end_row=new_row, end_col=end_col)
     return(ret)
 }
 

@@ -14,7 +14,7 @@ combine_de_tables(all_pairwise_result, annot_df = NULL, excel = NULL,
 
 \item{annot_df}{add some annotation information}
 
-\item{excel}{print the excel workbook}
+\item{excel}{filename for the excel workbook, or null if not printed.}
 
 \item{excel_title}{a title, if it has YYY in it, that will be replaced by the contrast name}
 

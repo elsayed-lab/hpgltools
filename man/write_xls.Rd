@@ -8,25 +8,15 @@ of hate excel.  Most people I work with use it, so therefore I do too.
 This function has been through many iterations, first using XLConnect,
 then xlsx, and now openxlsx.  Hopefully this will not change again.}
 \usage{
-write_xls(data, sheet = "first", file = "excel/workbook.xlsx",
-  overwrite_file = TRUE, newsheet = FALSE, overwrite_sheet = TRUE,
-  dated = TRUE, first_two_widths = c("30", "60"), start_row = 1,
-  start_col = 1, ...)
+write_xls(wb, data, sheet = "first", first_two_widths = c("30", "60"),
+  start_row = 1, start_col = 1, ...)
 }
 \arguments{
+\item{wb}{the workbook to which to write}
+
 \item{data}{A data frame to print}
 
 \item{sheet}{Name of the sheet to write}
-
-\item{file}{The filename for the workbook.}
-
-\item{overwrite_file}{required for XLConnect, still used but perhaps not needed.}
-
-\item{newsheet}{same, but makes sure we don't overwrite an existing sheet}
-
-\item{overwrite_sheet}{yeah, I need to prune these options}
-
-\item{dated}{Append a date to the excel filename?}
 
 \item{first_two_widths}{I add long titles to the tops of the sheets
 setting this makes sure that those columns are not too wide}

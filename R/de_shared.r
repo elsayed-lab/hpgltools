@@ -85,85 +85,6 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     return(ret)
 }
 
-#' Given a limma, edger, and deseq table, combine them
-#'
-#' @param li  a limma output
-#' @param ed  a edger output
-#' @param de  a deseq output
-#' @param ba  a basic output
-#' @param table name of the table to merge
-#' @param annot_df  add some annotation information
-#' @param inverse   invert the fold changes
-#' @param include_basic   include the basic table?
-#' @export
-combine_de_table <- function(li, ed, de, ba, table,
-                             annot_df=NULL, inverse=FALSE, include_basic=TRUE) {
-    li <- li$all_tables[[table]]
-    colnames(li) <- c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
-    li <- li[,c("limma_logfc","limma_ave","limma_t","limma_b","limma_p","limma_adjp","limma_q")]
-    de <- de$all_tables[[table]]
-    colnames(de) <- c("deseq_basemean","deseq_logfc","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")
-    de <- de[,c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
-    ed <- ed$all_tables[[table]]
-    colnames(ed) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
-    ba <- ba$all_tables[[table]]
-    ba <- ba[, c("numerator_median","denominator_median","numerator_var","denominator_var", "logFC", "t", "p")]
-    colnames(ba) <- c("basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p")
-
-    comb <- merge(li, de, by="row.names")
-    comb <- merge(comb, ed, by.x="Row.names", by.y="row.names")
-    if (isTRUE(include_basic)) {
-        comb <- merge(comb, ba, by.x="Row.names", by.y="row.names")
-    }
-    rownames(comb) <- comb$Row.names
-    comb <- comb[-1]
-    comb[is.na(comb)] <- 0
-    if (isTRUE(include_basic)) {
-        comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q","basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p")]
-    } else {
-        comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q")]
-    }
-    if (isTRUE(inverse)) {
-        comb$limma_logfc <- comb$limma_logfc * -1
-        comb$deseq_logfc <- comb$deseq_logfc * -1
-        comb$edger_logfc <- comb$edger_logfc * -1
-        if (isTRUE(include_basic)) {
-            comb$basic_logfc <- comb$basic_logfc * -1
-        }
-    }
-    ## I made an odd choice in a moment to normalize.quantils the combined fold changes
-    ## This should be reevaluated
-    ## But in the mean time, take a moment and format the numbers returned by limma/edger/deseq
-    ## columns which can stand to be rounded down:
-    ## limma_logfc, limma_ave, limma_t, limma_b, limma_p, limma_adjp, limma_q
-    ## deseq_logfc, deseq_basemean, deseq_lfcse, deseq_stat,
-    ## edger_logfc, edger_logcpm edger_lr edger_q fc_meta fc_var fc_varbymed p_meta p_var
-    ## ok
-    temp_fc <- cbind(as.numeric(comb$limma_logfc),
-                     as.numeric(comb$edger_logfc),
-                     as.numeric(comb$deseq_logfc))
-    temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
-    comb$fc_meta <- rowMeans(temp_fc, na.rm=TRUE)
-    comb$fc_var <- genefilter::rowVars(temp_fc, na.rm=TRUE)
-    comb$fc_varbymed <- comb$fc_var / comb$fc_meta
-    temp_p <- cbind(as.numeric(comb$limma_p),
-                    as.numeric(comb$edger_p),
-                    as.numeric(comb$deseq_p))
-    comb$p_meta <- rowMeans(temp_p, na.rm=TRUE)
-    comb$p_var <- genefilter::rowVars(temp_p, na.rm=TRUE)
-    comb$fc_meta <- signif(x=comb$fc_meta, digits=4)
-    comb$fc_var <- format(x=comb$fc_var, digits=4, scientific=TRUE)
-    comb$fc_varbymed <- format(x=comb$fc_varbymed, digits=4, scientific=TRUE)
-    comb$p_var <- format(x=comb$p_var, digits=4, scientific=TRUE)
-    comb$p_meta <- format(x=comb$p_meta, digits=4, scientific=TRUE)
-    if (!is.null(annot_df)) {
-        comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
-        rownames(comb) <- comb$Row.names
-        comb <- comb[-1]
-    }
-    return(comb)
-}
-
 #' See how similar are results from limma/deseq/edger.
 #'
 #' limma, DEseq2, and EdgeR all make somewhat different assumptions
@@ -287,7 +208,7 @@ deprint <- function(f){
 #'
 #' @param all_pairwise_result  the output from all_pairwise()
 #' @param annot_df   add some annotation information
-#' @param excel   print the excel workbook
+#' @param excel   filename for the excel workbook, or null if not printed.
 #' @param excel_title  a title, if it has YYY in it, that will be replaced by the contrast name
 #' @param excel_sheet   name the sheet
 #' @param keepers   a list of reformatted table names to explicitly keep
@@ -306,18 +227,31 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
                               excel_sheet="combined_DE", keepers="all",
                               include_basic=TRUE, add_plots=TRUE, plot_dim=6) {
+    ## The ontology_shared function which creates multiple sheets works a bit differently
+    ## It creates all the tables, then does a createWorkbook()
+    ## Does a createWorkbook() / addWorksheet()
+    ## Then a writeData() / writeDataTable() / print(plot) / insertPlot() / saveWorkbook()
+    ## Lets try that here.
     limma <- all_pairwise_result$limma
     deseq <- all_pairwise_result$deseq
     edger <- all_pairwise_result$edger
     basic <- all_pairwise_result$basic
 
+    wb <- NULL
+    if (!is.null(excel) & file.exists(excel)) {
+        message(paste0("Deleting the file ", excel, " before writing the tables."))
+        file.remove(excel)
+    }
+    wb <- openxlsx::createWorkbook(creator="hpgltools")
     combo <- list()
     plots <- list()
     sheet_count <- 0
+    de_summaries <- data.frame()
     if (class(keepers) == 'list') {
         ## Then keep specific tables in specific orientations.
         a <- 0
         keeper_len <- length(names(keepers))
+        table_names <- list()
         for (name in names(keepers)) {
             a <- a + 1
             message(paste0("Working on ", a, "/", keeper_len, ": ",  name))
@@ -328,26 +262,43 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             inverse_string <- paste0(denominator, "_vs_", numerator)
             dat <- NULL
             plt <- NULL
+            summary <- NULL
             found <- 0
+            found_table <- NULL
             for (tab in names(edger$contrast_list)) {
+                do_inverse <- FALSE
                 if (tab == same_string) {
                     found <- found + 1
-                    dat <- combine_de_table(limma, edger, deseq, basic,
-                                            tab, annot_df=annot_df, include_basic=include_basic)
-                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL))$scatter
+                    found_table <- same_string
                 } else if (tab == inverse_string) {
+                    do_inverse <- TRUE
                     found <- found + 1
-                    dat <- combine_de_table(limma, edger, deseq, basic,
-                                            tab, annot_df=annot_df, include_basic=include_basic, inverse=TRUE)
-                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL))$scatter
+                    found_table <- inverse_string
                 }
             }
-            if (found == 0) {
+            if (found > 0) {
+                combined <- create_combined_table(limma, edger, deseq, basic, found_table, inverse=do_inverse,
+                                                  annot_df=annot_df, include_basic=include_basic)
+                dat <- combined$data
+                summary <- combined$summary
+                plt <- NULL
+                if (isTRUE(do_inverse)) {
+                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL))$scatter
+                } else {
+                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL))$scatter
+                }
+            } ## End checking that we found the numerator/denominator
+            else {
                 stop(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
             }
             combo[[name]] <- dat
             plots[[name]] <- plt
+            de_summaries <- rbind(de_summaries, summary)
+            table_names[[a]] <- summary$table
+            print(de_summaries)
         }
+
+        ## If you want all the tables in a dump
     } else if (class(keepers) == 'character' & keepers == 'all') {
         a <- 0
         names_length <- length(names(edger$contrast_list))
@@ -355,14 +306,17 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             a <- a + 1
             message(paste0("Working on table ", a, "/", names_length, ": ", tab))
             sheet_count <- sheet_count + 1
-            dat <- combine_de_table(limma, edger, deseq, basic,
-                                    tab, annot_df=annot_df, include_basic=include_basic)
-            combo[[tab]] <- dat
+            combined <- create_combined_table(limma, edger, deseq, basic,
+                                         tab, annot_df=annot_df, include_basic=include_basic)
+            de_summaries <- rbind(de_summaries, combined$summary)
+            combo[[tab]] <- combined$data
             splitted <- strsplit(x=tab, split="_vs_")
             xname <- splitted[[1]][1]
             yname <- splitted[[1]][2]
             plots[[tab]] <- suppressMessages(hpgltools::limma_coefficient_scatter(limma, x=xname, y=yname, gvis_filename=NULL))$scatter
         }
+
+        ## Or a single specific table
     } else if (class(keepers) == 'character') {
         table <- keepers
         sheet_count <- sheet_count + 1
@@ -374,9 +328,12 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             table <- names(edger$contrast_list)[[1]]
             message(paste0("Choosing the first table: ", table))
         }
-        combo[[table]] <- combine_de_table(limma, edger, deseq, basic,
-                                           table, annot_df=annot_df, include_basic=include_basic)
+        combined <- create_combined_table(limma, edger, deseq, basic,
+                                          table, annot_df=annot_df, include_basic=include_basic)
+        combo[[table]] <- combined$data
         splitted <- strsplit(x=tab, split="_vs_")
+        de_summaries <- rbind(de_summaries, combined$summary)
+        table_names[[a]] <- combined$summary$table
         xname <- splitted[[1]][1]
         yname <- splitted[[1]][2]
         plots[[name]] <- suppressMessages(limma_coefficient_scatter(limma, x=xname, y=yname))$scatter
@@ -392,40 +349,150 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             ddd <- combo[[count]]
             oddness = summary(ddd) ## until I did this I was getting errors I am guessing devtools::load_all() isn't clearing everything
             final_excel_title <- gsub(pattern='YYY', replacement=tab, x=excel_title)
-            xls_result <- write_xls(data=ddd, sheet=tab, file=excel, title=final_excel_title, newsheet=TRUE)
+            xls_result <- write_xls(wb, data=ddd, sheet=tab, title=final_excel_title)
             if (isTRUE(add_plots)) {
                 plot_column <- xls_result$end_col + 2
                 message(paste0("Attempting to add a coefficient plot for ", names(combo)[[count]], " at column ", plot_column))
                 a_plot <- plots[[count]]
                 print(a_plot)
-                openxlsx::insertPlot(xls_result$workbook, tab, width=plot_dim, height=plot_dim,
+                openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
                                      startCol=plot_column, startRow=2, fileType="png", units="in")
-                ## Maybe this saveWorkbook() call is not needed given the one that follows shortly.
-                openxlsx::saveWorkbook(xls_result$workbook, xls_result$file, overwrite=TRUE)
             }
         }  ## End for loop
         count <- count + 1
+
+        message("Writing summary information.")
         ## Add a graph on the final sheet of how similar the result types were
-        summary <- all_pairwise_result$comparison$comp
-        summary_plot <- all_pairwise_result$comparison$heat
-        openxlsx::addWorksheet(xls_result$workbook, sheetName="pairwise_summary")
-        openxlsx::writeData(xls_result$workbook, count,
-                            x="Pairwise correlation coefficients among differential expression tools.",
-                            startRow=1, startCol=1)
-        hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT",
-                                     textDecoration="bold", border="Bottom", fontSize="30")
-        openxlsx::addStyle(xls_result$workbook, count, hs1, 1, 1)
-        openxlsx::writeDataTable(xls_result$workbook, count, x=as.data.frame(summary),
-                                 tableStyle="TableStyleMedium9", startRow=2, startCol=1, rowNames=TRUE)
-        openxlsx::setColWidths(xls_result$workbook, sheet=count, widths="auto", cols=2:ncol(summary))
-        openxlsx::setColWidths(xls_result$workbook, sheet=count, widths=10, cols=c(1))
-        new_row <- 2 + nrow(summary)
-        print(summary_plot)
-        openxlsx::insertPlot(xls_result$workbook, count, width=6, height=6,
-                             startCol=1, startRow=new_row, fileType="png", units="in")
-        openxlsx::saveWorkbook(xls_result$workbook, xls_result$file, overwrite=TRUE)
+        comp_summary <- all_pairwise_result$comparison$comp
+        comp_plot <- all_pairwise_result$comparison$heat
+        de_summaries <- as.data.frame(de_summaries)
+        rownames(de_summaries) <- table_names
+        xls_result <- write_xls(wb, data=de_summaries, sheet="pairwise_summary",
+                                title="Summary of contrasts.")
+        new_row <- xls_result$end_row + 2
+        xls_result <- write_xls(wb, data=comp_summary, sheet="pairwise_summary",
+                                title="Pairwise correlation coefficients among differential expression tools.",
+                                start_row=new_row)
+        new_row <- xls_result$end_row + 2
+        message(paste0("Attempting to add the comparison plot to pairwise_summary at row: ", new_row + 1, " and column: ", 1))
+        print(comp_plot)
+        comp <- recordPlot()
+        openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                             startRow=new_row + 1, startCol=1, fileType="png", units="in")
+        message("Performing final save of the workbook.")
+        openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     }
-    ret <- list(data=combo, plots=plots)
+    ret <- list(data=combo, plots=plots, comp_plot=comp, de_summay=de_summaries)
+    return(ret)
+}
+
+#' Given a limma, edger, and deseq table, combine them
+#'
+#' @param li  a limma output
+#' @param ed  a edger output
+#' @param de  a deseq output
+#' @param ba  a basic output
+#' @param table name of the table to merge
+#' @param annot_df  add some annotation information
+#' @param inverse   invert the fold changes
+#' @param include_basic   include the basic table?
+#' @export
+create_combined_table <- function(li, ed, de, ba, table,
+                                 annot_df=NULL, inverse=FALSE, include_basic=TRUE) {
+    li <- li$all_tables[[table]]
+    colnames(li) <- c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
+    li <- li[, c("limma_logfc","limma_ave","limma_t","limma_b","limma_p","limma_adjp","limma_q")]
+    de <- de$all_tables[[table]]
+    colnames(de) <- c("deseq_basemean","deseq_logfc","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")
+    de <- de[, c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
+    ed <- ed$all_tables[[table]]
+    colnames(ed) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
+    ba <- ba$all_tables[[table]]
+    ba <- ba[, c("numerator_median","denominator_median","numerator_var","denominator_var", "logFC", "t", "p")]
+    colnames(ba) <- c("basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p")
+
+    comb <- merge(li, de, by="row.names")
+    comb <- merge(comb, ed, by.x="Row.names", by.y="row.names")
+    if (isTRUE(include_basic)) {
+        comb <- merge(comb, ba, by.x="Row.names", by.y="row.names")
+    }
+    rownames(comb) <- comb$Row.names
+    comb <- comb[-1]
+    comb[is.na(comb)] <- 0
+    if (isTRUE(include_basic)) {
+        comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q","basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p")]
+    } else {
+        comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q")]
+    }
+    if (isTRUE(inverse)) {
+        comb$limma_logfc <- comb$limma_logfc * -1
+        comb$deseq_logfc <- comb$deseq_logfc * -1
+        comb$edger_logfc <- comb$edger_logfc * -1
+        if (isTRUE(include_basic)) {
+            comb$basic_logfc <- comb$basic_logfc * -1
+        }
+    }
+    ## I made an odd choice in a moment to normalize.quantils the combined fold changes
+    ## This should be reevaluated
+    ## But in the mean time, take a moment and format the numbers returned by limma/edger/deseq
+    ## columns which can stand to be rounded down:
+    ## limma_logfc, limma_ave, limma_t, limma_b, limma_p, limma_adjp, limma_q
+    ## deseq_logfc, deseq_basemean, deseq_lfcse, deseq_stat,
+    ## edger_logfc, edger_logcpm edger_lr edger_q fc_meta fc_var fc_varbymed p_meta p_var
+    ## ok
+    temp_fc <- cbind(as.numeric(comb$limma_logfc),
+                     as.numeric(comb$edger_logfc),
+                     as.numeric(comb$deseq_logfc))
+    temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
+    comb$fc_meta <- rowMeans(temp_fc, na.rm=TRUE)
+    comb$fc_var <- genefilter::rowVars(temp_fc, na.rm=TRUE)
+    comb$fc_varbymed <- comb$fc_var / comb$fc_meta
+    temp_p <- cbind(as.numeric(comb$limma_p),
+                    as.numeric(comb$edger_p),
+                    as.numeric(comb$deseq_p))
+    comb$p_meta <- rowMeans(temp_p, na.rm=TRUE)
+    comb$p_var <- genefilter::rowVars(temp_p, na.rm=TRUE)
+    comb$fc_meta <- signif(x=comb$fc_meta, digits=4)
+    comb$fc_var <- format(x=comb$fc_var, digits=4, scientific=TRUE)
+    comb$fc_varbymed <- format(x=comb$fc_varbymed, digits=4, scientific=TRUE)
+    comb$p_var <- format(x=comb$p_var, digits=4, scientific=TRUE)
+    comb$p_meta <- format(x=comb$p_meta, digits=4, scientific=TRUE)
+    if (!is.null(annot_df)) {
+        comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
+        rownames(comb) <- comb$Row.names
+        comb <- comb[-1]
+        comb <- comb[-1]
+    }
+
+    message(paste0("The table is: ", table))
+    summary_lst <- list(
+        "table" = table,
+        "total" = nrow(comb),
+        "limma_up" = sum(comb$limma_logfc >= 1),
+        "limma_sigup" = sum(comb$limma_logfc >= 1 & as.numeric(comb$limma_adjp) <= 0.05),
+        "deseq_up" = sum(comb$deseq_logfc >= 1),
+        "deseq_sigup" = sum(comb$deseq_logfc >= 1 & as.numeric(comb$deseq_adjp) <= 0.05),
+        "edger_up" = sum(comb$edger_logfc >= 1),
+        "edger_sigup" = sum(comb$edger_logfc >= 1 & as.numeric(comb$edger_adjp) <= 0.05),
+        "basic_up" = sum(comb$basic_logfc >= 1),
+        "basic_sigup" = sum(comb$basic_logfc >= 1 & as.numeric(comb$basic_p) <= 0.05),
+        "limma_down" = sum(comb$limma_logfc <= -1),
+        "limma_sigdown" = sum(comb$limma_logfc <= -1 & as.numeric(comb$limma_adjp) <= 0.05),
+        "deseq_down" = sum(comb$deseq_logfc <= -1),
+        "deseq_sigdown" = sum(comb$deseq_logfc <= -1 & as.numeric(comb$deseq_adjp) <= 0.05),
+        "edger_down" = sum(comb$edger_logfc <= -1),
+        "edger_sigdown" = sum(comb$edger_logfc <= -1 & as.numeric(comb$edger_adjp) <= 0.05),
+        "basic_down" = sum(comb$basic_logfc <= -1),
+        "basic_sigdown" = sum(comb$basic_logfc <= -1 & as.numeric(comb$basic_p) <= 0.05),
+        "meta_up" = sum(comb$fc_meta >= 1),
+        "meta_sigup" = sum(comb$fc_meta >= 1 & as.numeric(comb$p_meta) <= 0.05),
+        "meta_down" = sum(comb$fc_meta <= -1),
+        "meta_sigdown" = sum(comb$fc_meta <= -1 & as.numeric(comb$p_meta) <= 0.05)
+        )
+
+    ret <- list(
+        "data" = comb,
+        "summary" = summary_lst)
     return(ret)
 }
 
@@ -485,10 +552,6 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
         up_titles[[table_name]] <- up_title
         down_title <- paste0("Table SXXX: Genes deemed significantly down in ", table_name, " with", title_append)
         down_titles[[table_name]] <- down_title
-        ##xls_result <- write_xls(data=trimmed_up[[table_name]], sheet=paste0("up_",table_name), file=sig_table,
-        ##                        title=up_title, overwrite_file=TRUE, newsheet=TRUE)
-        ##xls_result <- write_xls(data=trimmed_down[[table_name]], sheet=paste0("down_",table_name), file=sig_table,
-        ##                        title=down_title, overwrite_file=TRUE, newsheet=TRUE)
     } ## End extracting significant genes for loop
     change_counts <- cbind(change_counts_up, change_counts_down)
     summary_title <- paste0("Counting the number of changed genes by contrast with ", title_append)
@@ -517,6 +580,12 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
 print_ups_downs <- function(upsdowns, sig_table="excel/significant_genes.xlsx") {
+    wb <- NULL
+    if (file.exists(sig_table)) {
+        file.remove(sig_table)
+        message(paste0("Deleting the file ", sig_table, " before writing the tables."))
+    }
+    wb <- openxlsx::createWorkbook(creator="hpgltools")
     ups <- upsdowns$ups
     downs <- upsdowns$downs
     up_titles <- upsdowns$up_titles
@@ -534,16 +603,13 @@ print_ups_downs <- function(upsdowns, sig_table="excel/significant_genes.xlsx") 
         up_title <- up_titles[[table_count]]
         down_title <- down_titles[[table_count]]
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", up_name))
-        xls_result <- write_xls(data=up_table, sheet=up_name, file=sig_table,
-                                title=up_title, overwrite_file=TRUE, newsheet=TRUE)
+        xls_result <- write_xls(wb, data=up_table, sheet=up_name, title=up_title)
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", down_name))
-        xls_result <- write_xls(data=down_table, sheet=down_name, file=sig_table,
-                                title=down_title, overwrite_file=TRUE, newsheet=TRUE)
+        xls_result <- write_xls(wb, data=down_table, sheet=down_name, title=down_title)
     }
     message("Writing changed genes summary on last sheet.")
-    xls_result <- write_xls(data=summary, sheet="number_changed_genes", file=sig_table,
-                            title=summary_title,
-                            overwrite_file=TRUE, newsheet=TRUE)
+    xls_result <- write_xls(wb, data=summary, sheet="number_changed_genes", title=summary_title)
+    openxlsx::saveWorkbook(wb, sig_table, overwrite=TRUE)
     return(xls_result)
 }
 
