@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Feb  5 12:31:49 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Mar  8 13:19:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from deseq2
 #'
@@ -115,7 +115,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
             ## and expects data as floating point counts,
             ## not a log2 transformation.
-            if (input$normalized != "raw") {
+            if (input$normalized[[1]] != "raw") {
                 message("DESeq2 demands raw data as input, reverting to the original expressionset.")
                 data <- Biobase::exprs(input$original_expressionset)
             } else if (!is.null(input$transform)) {
@@ -156,12 +156,12 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     }
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     ## dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
-    message("DESeq2 step 2/5")
+    message("DESeq2 step 2/5: Estimate size factors.")
     deseq_sf <- DESeq2::estimateSizeFactors(dataset)
-    message("DESeq2 step 3/5")
+    message("DESeq2 step 3/5: estimate Dispersions.")
     deseq_disp <- DESeq2::estimateDispersions(deseq_sf, quiet=TRUE)
     ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
-    message("DESeq2 step 4/5")
+    message("DESeq2 step 4/5: nbinomWaldTest.")
     ## deseq_run <- DESeq2::DESeq(deseq_disp)
     deseq_run = DESeq2::nbinomWaldTest(deseq_disp, quiet=TRUE)
     ## possible options:  betaPrior=TRUE, betaPriorVar, modelMatrix=NULL

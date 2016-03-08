@@ -238,9 +238,15 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
     basic <- all_pairwise_result$basic
 
     wb <- NULL
-    if (!is.null(excel) & file.exists(excel)) {
-        message(paste0("Deleting the file ", excel, " before writing the tables."))
-        file.remove(excel)
+    if (!is.null(excel)) {
+        excel_dir <- dirname(excel)
+        if (!file.exists(excel_dir)) {
+            dir.create(excel_dir, recursive=TRUE)
+        }
+        if (file.exists(excel)) {
+            message(paste0("Deleting the file ", excel, " before writing the tables."))
+            file.remove(excel)
+        }
     }
     wb <- openxlsx::createWorkbook(creator="hpgltools")
     combo <- list()
@@ -302,6 +308,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
     } else if (class(keepers) == 'character' & keepers == 'all') {
         a <- 0
         names_length <- length(names(edger$contrast_list))
+        table_names <- names(edger$contrast_list)
         for (tab in names(edger$contrast_list)) {
             a <- a + 1
             message(paste0("Working on table ", a, "/", names_length, ": ", tab))
@@ -341,6 +348,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
         stop("I don't know what to do with your specification of tables to keep.")
     }
 
+    comp <- NULL
     if (!is.null(excel)) {
         ## Starting a new counter of sheets.
         count <- 0
