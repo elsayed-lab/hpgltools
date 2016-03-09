@@ -1,4 +1,4 @@
-# Time-stamp: <Mon Mar  7 11:15:39 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Wed Mar  9 15:02:56 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -33,8 +33,11 @@ makeSVD <- function (data) {
 pcRes <- function(v, d, condition=NULL, batch=NULL){
   pcVar <- round((d^2)/sum(d^2)*100,2)
   cumPcVar <- cumsum(pcVar)
+  calculate_rsquared_condition <- function(data) {
+      lm_result <- lm(data ~ condition)
+  }
   if(!is.null(condition)){
-    cond.R2 <- function(y) round(summary(lm(y~condition))$r.squared*100,2)
+    cond.R2 <- function(y) round(summary(lm(y ~ condition))$r.squared * 100, 2)
     cond.R2 <- apply(v, 2, cond.R2)
   }
   if(!is.null(batch)){
@@ -145,12 +148,12 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
     } else if (length(levels(included_conditions)) == 1) {
         warning("There is only one condition, but more than one batch.   Going to run pcRes with the batch information.")
-        pca_res <- pcRes(pca$v, pca$d, design$batch)
+        pca_res <- pcRes(v=pca$v, d=pca$d, batch=design$batch)
     } else if (length(levels(included_batches)) == 1) {
         print("There is just one batch in this data.")
-        pca_res <- pcRes(pca$v, pca$d, design$condition)
+        pca_res <- pcRes(v=pca$v, d=pca$d, condition=design$condition)
     } else {
-        pca_res <- pcRes(pca$v, pca$d, design$condition, design$batch)
+        pca_res <- pcRes(v=pca$v, d=pca$d, condition=design$condition, batch=design$batch)
     }
     pca_variance <- round((pca$d ^ 2) / sum(pca$d ^ 2) * 100, 2)
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])

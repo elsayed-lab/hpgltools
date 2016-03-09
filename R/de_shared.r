@@ -514,12 +514,12 @@ create_combined_table <- function(li, ed, de, ba, table,
 #' @param p   a (adjusted)p-value to define 'significant'
 #' @param z   a z-score to define 'significant'
 #' @param n   a set of top/bottom-n genes
-#' @param sig_table   an excel file to write
+#' @param excel   an excel file to write
 #' @return a set of up-genes, down-genes, and numbers therein
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
 extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=0.05, z=NULL,
-                                      n=NULL, sig_table="excel/significant_genes.xlsx") {
+                                      n=NULL, excel="excel/significant_genes.xlsx") {
     if (!is.null(combined$plots)) {
         combined <- combined$data
     }
@@ -568,11 +568,11 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
     ##                        overwrite_file=TRUE, newsheet=TRUE)
     ret <- list(ups=trimmed_up, downs=trimmed_down, counts=change_counts,
                 up_titles=up_titles, down_titles=down_titles, counts_title=summary_title)
-    if (is.null(sig_table)) {
+    if (is.null(excel)) {
         message("Not printing excel sheets for the significant genes.")
     } else {
-        message(paste0("Printing significant genes to the file: ", sig_table))
-        xlsx_ret <- print_ups_downs(ret, sig_table=sig_table)
+        message(paste0("Printing significant genes to the file: ", excel))
+        xlsx_ret <- print_ups_downs(ret, excel=excel)
     }
     return(ret)
 }
@@ -583,15 +583,15 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
 #' This shortcuts that process for me.
 #'
 #' @param upsdowns  the output from extract_significant_genes()
-#' @param sig_table   table to write to
+#' @param excel   table to write to
 #' @return the return from write_xls
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-print_ups_downs <- function(upsdowns, sig_table="excel/significant_genes.xlsx") {
+print_ups_downs <- function(upsdowns, excel="excel/significant_genes.xlsx") {
     wb <- NULL
-    if (file.exists(sig_table)) {
-        file.remove(sig_table)
-        message(paste0("Deleting the file ", sig_table, " before writing the tables."))
+    if (file.exists(excel)) {
+        file.remove(excel)
+        message(paste0("Deleting the file ", excel, " before writing the tables."))
     }
     wb <- openxlsx::createWorkbook(creator="hpgltools")
     ups <- upsdowns$ups
@@ -617,7 +617,7 @@ print_ups_downs <- function(upsdowns, sig_table="excel/significant_genes.xlsx") 
     }
     message("Writing changed genes summary on last sheet.")
     xls_result <- write_xls(wb, data=summary, sheet="number_changed_genes", title=summary_title)
-    openxlsx::saveWorkbook(wb, sig_table, overwrite=TRUE)
+    openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     return(xls_result)
 }
 

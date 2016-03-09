@@ -5,8 +5,7 @@
 \title{Pull the highly up/down genes in combined tables}
 \usage{
 extract_significant_genes(combined, according_to = "limma", fc = 1,
-  p = 0.05, z = NULL, n = NULL,
-  sig_table = "excel/significant_genes.xlsx")
+  p = 0.05, z = NULL, n = NULL, excel = "excel/significant_genes.xlsx")
 }
 \arguments{
 \item{combined}{the output from combine_de_tables()}
@@ -21,7 +20,7 @@ extract_significant_genes(combined, according_to = "limma", fc = 1,
 
 \item{n}{a set of top/bottom-n genes}
 
-\item{sig_table}{an excel file to write}
+\item{excel}{an excel file to write}
 }
 \value{
 a set of up-genes, down-genes, and numbers therein

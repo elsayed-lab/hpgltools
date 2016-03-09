@@ -1,16 +1,4 @@
-## Time-stamp: <Mon Mar  7 18:38:18 2016 Ashton Trey Belew (abelew@gmail.com)>
-
-#' Beta.NA: Perform a quick solve to gather residuals etc
-#' This was provided by Kwame for something which I don't remember a loong time ago.
-#'
-#' @param y  a y
-#' @param X  a x
-Beta.NA <- function(y,X) {
-    des <- X[!is.na(y),]
-    y1 <- y[!is.na(y)]
-    B <- solve(t(des)%*%des)%*%t(des)%*%y1
-    return(B)
-}
+## Time-stamp: <Wed Mar  9 11:41:11 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Grab gene lengths from a gff file.
 #'
@@ -57,16 +45,14 @@ get_biomart_annotations <- function(species="hsapiens") {
     dataset <- paste0(species, "_gene_ensembl")
     ##mart <- biomaRt::useMart(biomart="ensembl", dataset=dataset)
     mart <- NULL
-    if (species == 'hsapiens') {
-        mart <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL", host="useast.ensembl.org")
-        ensembl <- biomaRt::useDataset("hsapiens_gene_ensembl", mart=mart)
-        ## The following was stolen from Laura's logs for human annotations.
-        ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
-        desc <- biomaRt::getBM(attributes = c("ensembl_gene_id", "hgnc_symbol", "description", "gene_biotype"), mart=ensembl)
-        colnames(desc) <- c("ID", "hgnc_symbol", "Description", "Type")
-        ## Remove commas from description
-        desc$Description <- gsub(",", "", desc$Description)
-    }
+    mart <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL", host="useast.ensembl.org")
+    ensembl <- biomaRt::useDataset(dataset, mart=mart)
+    ## The following was stolen from Laura's logs for human annotations.
+    ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
+    desc <- biomaRt::getBM(attributes = c("ensembl_gene_id", "hgnc_symbol", "description", "gene_biotype"), mart=ensembl)
+    colnames(desc) <- c("ID", "hgnc_symbol", "Description", "Type")
+    ## Remove commas from description
+    desc$Description <- gsub(",", "", desc$Description)
     ## In order for the return from this function to work with other functions in this, the rownames must be set.
     rownames(desc) <- make.names(desc$ID, unique=TRUE)
     return(desc)
@@ -417,21 +403,25 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
 #' }
 #' @export
-make_tooltips <- function(annotations, desc_col='description') {
+make_tooltips <- function(annotations, desc_col='description', type="gene") {
     tooltip_data <- NULL
     if (class(annotations) == 'character') {
-        tooltip_data <- gff2df(annotations)
+        tooltip_data <- gff2df(gff=annotations, type=type)
     } else if (class(annotations) == 'data.frame') {
         tooltip_data <- annotations
     } else {
         stop("This requires either a filename or data frame.")
     }
     tooltip_data <- tooltip_data[,c("ID", desc_col)]
-    tooltip_data$tooltip <- ""
-    if (is.null(tooltip_data[[desc_col]])) {
-        stop("I need a name!")
-    } else {
-        tooltip_data$tooltip <- paste0(tooltip_data$ID, ': ', tooltip_data[[desc_col]])
+
+    ## Attempt to use multiple columns if a c() was given
+    tooltip_data$tooltip <- tooltip_data$ID
+    for (col in desc_col) {
+        if (is.null(tooltip_data[[col]])) {
+            message(paste0("The column ", col, " is null, not using it."))
+        } else {
+            tooltip_data$tooltip <- paste0(tooltip_data$tooltip, ": ", tooltip_data[[desc_col]])
+        }
     }
     tooltip_data$tooltip <- gsub("\\+", " ", tooltip_data$tooltip)
     tooltip_data$tooltip <- gsub(": $", "", tooltip_data$tooltip)

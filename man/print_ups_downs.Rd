@@ -4,12 +4,12 @@
 \alias{print_ups_downs}
 \title{Reprint the output from extract_significant_genes()}
 \usage{
-print_ups_downs(upsdowns, sig_table = "excel/significant_genes.xlsx")
+print_ups_downs(upsdowns, excel = "excel/significant_genes.xlsx")
 }
 \arguments{
 \item{upsdowns}{the output from extract_significant_genes()}
 
-\item{sig_table}{table to write to}
+\item{excel}{table to write to}
 }
 \value{
 the return from write_xls

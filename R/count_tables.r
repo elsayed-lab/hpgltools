@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Mar  5 00:48:09 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Mar  9 11:57:08 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 
 #' Given a table of meta data, read it in for use by create_expt()
@@ -508,6 +508,7 @@ concatenate_runs <- function(expt, column='replicate') {
     final_expt <- expt
     final_data <- NULL
     final_design <- NULL
+    final_definitions <- NULL
     column_names <- list()
     colors <- list()
     conditions <- list()
@@ -517,9 +518,11 @@ concatenate_runs <- function(expt, column='replicate') {
         expression <- paste0(column, "=='", rep, "'")
         tmp_expt <- expt_subset(expt, expression)
         tmp_data <- rowSums(Biobase::exprs(tmp_expt$expressionset))
-        tmp_design <- tmp_expt$design[1,]
+        tmp_design <- tmp_expt$design[1, ]
+        tmp_definitions <- tmp_expt$definitions[1, ]
         final_data <- cbind(final_data, tmp_data)
         final_design <- rbind(final_design, tmp_design)
+        final_definitions <- rbind(final_definitions, tmp_definitions)
         column_names[[rep]] <- as.character(tmp_design$sample.id)
         colors[[rep]] <- as.character(tmp_design$color)
         batches[[rep]] <- as.character(tmp_design$batch)
@@ -528,6 +531,7 @@ concatenate_runs <- function(expt, column='replicate') {
         colnames(final_data) <- column_names
     }
     final_expt$design <- final_design
+    final_expt$definitions <- final_definitions
     metadata <- new("AnnotatedDataFrame", final_design)
     Biobase::sampleNames(metadata) <- colnames(final_data)
     feature_data <- new("AnnotatedDataFrame", Biobase::fData(expt$expressionset))
