@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Mar  9 11:41:11 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Mar  9 16:33:24 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Grab gene lengths from a gff file.
 #'
@@ -571,6 +571,9 @@ write_xls <- function(wb, data, sheet="first", first_two_widths=c("30","60"),
     arglist <- list(...)
     if (class(data) == 'matrix') {
         data <- as.data.frame(data)
+    }
+    if (is.null(wb)) {
+        wb <- openxlsx::createWorkbook(creator="hpgltools")
     }
     newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
     if (class(newsheet) == 'try-error') {
