@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Mar  7 16:45:04 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Mar  9 17:32:50 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -472,6 +472,7 @@ hpgl_disheat <- function(data, colors=NULL, design=NULL, method="euclidean",
 #' @export
 hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names=NULL,
                          type="correlation", row="batch", title=NULL, ...) {
+    arglist <- list(...)
     hpgl_env <- environment()
     data_class <- class(data)[1]
     if (data_class == 'expt') {
@@ -486,9 +487,14 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
+    chosen_palette <- "Dark"
+    if (!is.null(arglist$palette)) {
+        chosen_palette <- arglist$palette
+    }
+
     if (is.null(colors)) {
         tt <- ncol(data)
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(tt,"Dark2"))(tt)
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(tt, chosen_palette))(tt)
     }
     if (is.null(names)) {
         names <- colnames(data)
@@ -603,6 +609,13 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
     if (is.null(text)) {
         text <- TRUE
     }
+
+    ## In response to Keith's recent comment when there are more than 8 factors
+    chosen_palette <- "Dark"
+    if (!is.null(arglist$palette)) {
+        chosen_palette <- arglist$palette
+    }
+
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         design <- data$design
@@ -618,7 +631,7 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
     }
 
     if (is.null(colors)) {
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data),"Dark2"))(ncol(data))
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
     }
     colors <- as.character(colors)
     tmp <- data.frame(id=colnames(data),
@@ -1443,12 +1456,17 @@ hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
+    chosen_palette <- "Dark"
+    if (!is.null(arglist$palette)) {
+        chosen_palette <- arglist$palette
+    }
+
     if (is.null(names)) {
         names <- colnames(data)
     }
 
     if (is.null(colors)) {
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data),"Dark2"))(ncol(data))
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
     }
     colors <- as.character(colors)
     correlations <- hpgl_cor(data, method=method)
@@ -1504,11 +1522,16 @@ hpgl_smd <- function(data, colors=NULL, names=NULL, method="euclidean", title=NU
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
+    chosen_palette <- "Dark"
+    if (!is.null(arglist$palette)) {
+        chosen_palette <- arglist$palette
+    }
+
     if (is.null(names)) {
         names <- colnames(data)
     }
     if (is.null(colors)) {
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data),"Dark2"))(ncol(data))
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
     }
     colors <- as.character(colors)
     dists <- as.matrix(dist(t(data)), method=method)
