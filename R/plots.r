@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Mar  9 17:32:50 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Mar  9 17:35:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -487,7 +487,7 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    chosen_palette <- "Dark"
+    chosen_palette <- "Dark2"
     if (!is.null(arglist$palette)) {
         chosen_palette <- arglist$palette
     }
@@ -611,7 +611,7 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
     }
 
     ## In response to Keith's recent comment when there are more than 8 factors
-    chosen_palette <- "Dark"
+    chosen_palette <- "Dark2"
     if (!is.null(arglist$palette)) {
         chosen_palette <- arglist$palette
     }
@@ -1443,6 +1443,7 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' @export
 hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL, ...) {
     data_class <- class(data)[1]
+    arglist <- list(...)
     if (data_class == 'expt') {
         design <- data$design
         colors <- data$colors
@@ -1456,7 +1457,7 @@ hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
-    chosen_palette <- "Dark"
+    chosen_palette <- "Dark2"
     if (!is.null(arglist$palette)) {
         chosen_palette <- arglist$palette
     }
@@ -1508,6 +1509,7 @@ hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL
 #' }
 #' @export
 hpgl_smd <- function(data, colors=NULL, names=NULL, method="euclidean", title=NULL, ...) {
+    arglist <- list(...)
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         design <- data$design
@@ -1522,7 +1524,7 @@ hpgl_smd <- function(data, colors=NULL, names=NULL, method="euclidean", title=NU
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
-    chosen_palette <- "Dark"
+    chosen_palette <- "Dark2"
     if (!is.null(arglist$palette)) {
         chosen_palette <- arglist$palette
     }
