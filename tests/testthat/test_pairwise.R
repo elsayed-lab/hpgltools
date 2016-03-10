@@ -16,13 +16,12 @@ metadata = design
 colnames(metadata) = c("condition", "batch")
 metadata$Sample.id = rownames(metadata)
 
-raw = DGEList(counts=counts, group=metadata$condition)
-norm = calcNormFactors(raw)
-disp_norm = estimateCommonDisp(norm)
-tagdispnorm = estimateTagwiseDisp(disp_norm)
-exact_test = exactTest(tagdispnorm)
-exact_result = as.data.frame(topTags(exact_test, n=nrow(raw)))
-
+raw = edgeR::DGEList(counts=counts, group=metadata$condition)
+norm = edgeR::calcNormFactors(raw)
+disp_norm = edgeR::estimateCommonDisp(norm)
+tagdispnorm = edgeR::estimateTagwiseDisp(disp_norm)
+exact_test = edgeR::exactTest(tagdispnorm)
+exact_result = as.data.frame(edgeR::topTags(exact_test, n=nrow(raw)))
 
 ## Load the pasilla data set
 message("Loading pasilla, setting up count tables.")
@@ -45,7 +44,7 @@ message("Setting up an expt class to contain the pasilla data and metadata.")
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
 cbcb_data = counts
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
-hpgl_data = exprs(pasilla_expt$expressionset)
+hpgl_data = Biobase::exprs(pasilla_expt$expressionset)
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(cbcb_data, hpgl_data)
 })

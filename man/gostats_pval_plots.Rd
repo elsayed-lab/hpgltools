@@ -8,23 +8,15 @@ gostats_pval_plots(gs_result, wrapped_width = 20, cutoff = 0.1, n = 12,
   group_minsize = 5)
 }
 \arguments{
+\item{gs_result}{ontology search results}
+
 \item{wrapped_width}{how big to make the text so that it is legible}
 
-\item{cutoff}{0.1 what is the maximum pvalue allowed}
+\item{cutoff}{what is the maximum pvalue allowed}
 
-\item{n}{10 how many groups to include in the plot}
+\item{n}{how many groups to include in the plot}
 
-\item{mf_over}{molecular function data overrepresented}
-
-\item{bp_over}{biological process data overrepresented}
-
-\item{cc_over}{cellular component data overrepresented}
-
-\item{mf_under}{molecular function data underrepresented}
-
-\item{bp_under}{biological process data underrepresented}
-
-\item{cc_under}{cellular component data underrepresented}
+\item{group_minsize}{default=5  minimum group size before inclusion}
 }
 \value{
 plots!
@@ -39,6 +31,6 @@ that I understand how the ontology trees work better, this should take advantage
 currently does not.
 }
 \seealso{
-\code{\link{clusterProfiler}} \code{\link{pval_plot}}
+\pkg{clusterProfiler} \link{pval_plot}
 }
 

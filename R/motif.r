@@ -1,4 +1,10 @@
 
+#' run the rGADEM suite
+#'
+#' This is another function I started but never had cause to finish
+#' for the test sequences it works though
+#'
+#' @export
 simple_gadem <- function() {
     ##    require.auto('rGADEM')
     Hsapiens <- NULL
@@ -49,6 +55,7 @@ simple_motifRG <- function() {
                                          system.file("extdata", "MD.control.fa", package="motifRG"),
                                          max.motif=3,enriched=T)
     motifRG::motifLatexTable(main="MyoD motifs", MD.motifs, prefix="myoD")
+    requireNamespace("motifRG")
     YY1.peak <- NULL
     YY1.control <- NULL
     data(YY1.peak)

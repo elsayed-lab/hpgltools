@@ -1,16 +1,15 @@
-#'
+## Time-stamp: <Thu Feb  4 23:26:15 2016 Ashton Trey Belew (abelew@gmail.com)>
+
 #' TriTrypDB gene information table parser
-#'
-#' @author Keith Hughitt
-#'
-#' @param filepath Location of TriTrypDB gene information table.
-#' @param verbose  Whether or not to enable verbose output.
-#' @return Returns a dataframe of gene info.
 #'
 #' An example input file is the T. brucei Lister427 gene information table
 #' available at:
 #' http://tritrypdb.org/common/downloads/Current_Release/TbruceiLister427/txt/data/TriTrypDB-5.0_TbruceiLister427Gene.txt
 #'
+#' @author Keith Hughitt
+#' @param filepath Location of TriTrypDB gene information table.
+#' @param verbose  Whether or not to enable verbose output.
+#' @return Returns a dataframe of gene info.
 parse_gene_info_table <- function(filepath, verbose=FALSE) {
 
     if (tools::file_ext(filepath) == 'gz') {
@@ -122,18 +121,16 @@ parse_gene_info_table <- function(filepath, verbose=FALSE) {
     return(genes)
 }
 
-#'
 #' TriTrypDB gene information table GO term parser
 #'
 #' @author Keith Hughitt
-#'
 #' @param filepath Location of TriTrypDB gene information table.
 #' @param verbose  Whether or not to enable verbose output.
 #' @return Returns a dataframe where each line includes a gene/GO terms pair
 #'         along with some addition information about the GO term. Note that
 #'         because each gene may have multiple GO terms, a single gene ID may
 #'         appear on multiple lines.
-#'
+#' @export
 parse_gene_go_terms <- function (filepath, verbose=FALSE) {
     ##require(tools)
     if (tools::file_ext(filepath) == 'gz') {

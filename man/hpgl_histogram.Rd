@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_histogram}
 \alias{hpgl_histogram}
-\title{hpgl_histogram()  Make a pretty histogram of something.}
+\title{Make a pretty histogram of something.}
 \usage{
 hpgl_histogram(df, binwidth = NULL, log = FALSE, bins = 500,
   verbose = FALSE, fillcolor = "darkgrey", color = "black")
@@ -10,26 +10,30 @@ hpgl_histogram(df, binwidth = NULL, log = FALSE, bins = 500,
 \arguments{
 \item{df}{a dataframe of lots of pretty numbers.}
 
-\item{binwidth}{default=NULL  width of the bins for the histogram.}
+\item{binwidth}{width of the bins for the histogram.}
 
-\item{log}{default=FALSE  replot on the log scale?}
+\item{log}{replot on the log scale?}
 
-\item{verbose}{default=FALSE  be verbose?}
+\item{bins}{bins for the histogram}
 
-\item{fillcolor}{default='darkgrey'  change the fill colors of the plotted elements.}
+\item{verbose}{be verbose?}
 
-\item{color}{default='black'  change the color of the lines of the plotted elements.}
+\item{fillcolor}{change the fill colors of the plotted elements.}
+
+\item{color}{change the color of the lines of the plotted elements.}
 }
 \value{
 a ggplot histogram
 }
 \description{
-hpgl_histogram()  Make a pretty histogram of something.
+Make a pretty histogram of something.
 }
 \examples{
-## kittytime = hpgl_histogram(df)
+\dontrun{
+ kittytime = hpgl_histogram(df)
+}
 }
 \seealso{
-\code{\link{geom_histogram}}, \code{\link{geom_density}},
+\link[ggplot2]{geom_histogram} \link[ggplot2]{geom_density}
 }
 

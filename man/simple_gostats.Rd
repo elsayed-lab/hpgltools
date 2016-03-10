@@ -10,11 +10,29 @@ simple_gostats(de_genes, gff, goids, universe_merge = "ID",
   gff_type = "CDS", ...)
 }
 \arguments{
-\item{de_genes}{The set of differentially expressed genes in the limma format as before}
+\item{de_genes}{input list of differentially expressed genes}
 
 \item{gff}{The annotation information for this genome}
 
 \item{goids}{The set of GOids, as before in the format ID/GO}
+
+\item{universe_merge}{column from which to create the universe of genes}
+
+\item{second_merge_try}{if the first universe merge fails, try this}
+
+\item{organism}{genbank organism to use}
+
+\item{pcutoff}{pvalue cutoff for deciding significant}
+
+\item{direction}{under or over represented categories}
+
+\item{conditional}{perform a conditional search?}
+
+\item{categorysize}{category size below which to not include groups}
+
+\item{gff_type}{gff column to use for creating the universe}
+
+\item{...}{more parameters!}
 }
 \value{
 dunno yet
@@ -25,6 +43,6 @@ As a result, I am going to have this function take a gff file in order to get th
 gene ids on the same page.
 }
 \seealso{
-\code{\link{GOstats}}
+\pkg{GSEABase} \pkg{Category}
 }
 

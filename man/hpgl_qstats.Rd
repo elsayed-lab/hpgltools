@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{hpgl_qstats}
 \alias{hpgl_qstats}
-\title{\code{hpgl_qstats()}  A hacked copy of Kwame's qsmooth/qstats code}
+\title{A hacked copy of Kwame's qsmooth/qstats code}
 \usage{
 hpgl_qstats(data, groups, refType = "mean", groupLoc = "mean",
   window = 99)
@@ -12,11 +12,11 @@ hpgl_qstats(data, groups, refType = "mean", groupLoc = "mean",
 
 \item{groups}{the experimental conditions as a factor}
 
-\item{refType}{default="mean" (or median) the method to separate groups}
+\item{refType}{(or median) the method to separate groups}
 
-\item{groupLoc}{default="mean"  I don't remember}
+\item{groupLoc}{I don't remember}
 
-\item{window}{default=99}
+\item{window}{window for basking}
 }
 \value{
 new data

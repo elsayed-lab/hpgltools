@@ -2,7 +2,7 @@
 % Please edit documentation in R/misc_functions.r
 \name{my_identifyAUBlocks}
 \alias{my_identifyAUBlocks}
-\title{my_identifyAUBlocks()  copy/paste the function from SeqTools
+\title{copy/paste the function from SeqTools
 and find where it falls on its ass.}
 \usage{
 my_identifyAUBlocks(x, min.length = 20, p.to.start = 0.8, p.to.end = 0.55)
@@ -10,11 +10,11 @@ my_identifyAUBlocks(x, min.length = 20, p.to.start = 0.8, p.to.end = 0.55)
 \arguments{
 \item{x}{A sequence object}
 
-\item{min.length}{default=20  I dunno.}
+\item{min.length}{I dunno.}
 
-\item{p.to.start}{default=0.8  the p to start of course}
+\item{p.to.start}{the p to start of course}
 
-\item{p.to.end}{default=0.8  and the p to end}
+\item{p.to.end}{and the p to end}
 }
 \value{
 a list of IRanges which contain a bunch of As and Us.

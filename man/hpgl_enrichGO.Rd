@@ -11,9 +11,21 @@ hpgl_enrichGO(gene, organism = "human", ont = "MF", pvalueCutoff = 0.05,
 \arguments{
 \item{gene}{some differentially expressed genes}
 
-\item{organism}{by default 'human'}
+\item{organism}{if used will cause this to pull the ensG annotations}
 
-\item{ont}{by default 'MF'}
+\item{ont}{mf bp or cc}
+
+\item{pvalueCutoff}{pvalue cutoff}
+
+\item{pAdjustMethod}{p-value adjustment}
+
+\item{universe}{the gene universe}
+
+\item{qvalueCutoff}{maximum qvalue before adding}
+
+\item{minGSSize}{smallest group size}
+
+\item{readable}{readable tag on the object}
 }
 \value{
 some clusterProfiler data
@@ -22,6 +34,6 @@ some clusterProfiler data
 A minor hack in the clusterProfiler function 'enrichGO'
 }
 \seealso{
-\code{\link{clusterProfiler}}
+\pkg{clusterProfiler}
 }
 

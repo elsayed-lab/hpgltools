@@ -1,6 +1,6 @@
-## Time-stamp: <Tue Feb  2 16:27:12 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Mar  1 11:20:14 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' \code{basic_pairwise()}  Perform a pairwise comparison among conditions which takes
+#' Perform a pairwise comparison among conditions which takes
 #' nothing into account.  It _only_ takes the conditions, a mean value/variance among
 #' them, divides by condition, and returns the result.  No fancy nomalizations, no
 #' statistical models, no nothing.  It should be the very worst method possible.
@@ -8,8 +8,7 @@
 #' all do better than this, always.
 #'
 #' @param input a count table by sample
-#' @param conditions a data frame of samples and conditions
-#'
+#' @param design   a data frame of samples and conditions
 #' @return I am not sure yet
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @export
@@ -36,6 +35,7 @@ basic_pairwise <- function(input, design=NULL) {
         data <- as.data.frame(input)
         conditions <- as.factor(design$condition)
     }
+    data <- convert_counts(data, convert="cpm")$count_table
     types <- levels(conditions)
     num_conds <- length(types)
     ## These will be filled with num_conds columns and numRows(input) rows.
@@ -53,7 +53,7 @@ basic_pairwise <- function(input, design=NULL) {
             med_input <- data[,columns]
             med <- data.frame(Biobase::rowMedians(as.matrix(med_input)))
             colnames(med) <- c(condition_name)
-            var <- as.data.frame(matrixStats::rowVars(as.matrix(med_input)))
+            var <- as.data.frame(genefilter::rowVars(as.matrix(med_input)))
             colnames(var) <- c(condition_name)
         }
         if (c == 1) {
@@ -85,8 +85,11 @@ basic_pairwise <- function(input, design=NULL) {
             ## Actually, all the other tools do a log2 subtraction
             ## so I think I will too
             message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons, ": Performing log2 subtraction: ", d_name, "_vs_", c_name))
+##            division <- data.frame(
+##                log2(median_table[, d] + 1) - log2(median_table[, c] + 1))
             division <- data.frame(
-                log2(median_table[, d] + 0.5) - log2(median_table[, c] + 0.5))
+                median_table[, d] / median_table[, c])
+            division <- log2(division)
             comparison_name <- paste0(d_name, "_vs_", c_name)
             column_list <- append(column_list, comparison_name)
             colnames(division) <- comparison_name
@@ -95,6 +98,15 @@ basic_pairwise <- function(input, design=NULL) {
             ycols <- which(conditions == d_name)
             xdata <- as.data.frame(data[, xcols])
             ydata <- as.data.frame(data[, ycols])
+            ##t_p <- matrix(nrow=nrow(xdata), ncol=2)
+            ## I have read many many times how one should not do things as a for loop in R
+            ## This is a very simple task and yet it remains to me much clearer as a loop
+            ## than as an application of (m|l|v)apply and takes the same amount of time
+            ##get_p <- function(co) {
+            ##    res <- t.test(xdata[co, ], ydata[co, ])
+            ##    c(tstat=res[[1]], pval=res[[3]])
+            ##}
+            ##t_p = as.data.frame(do.call(rbind, lapply(1:nrow(xdata), get_p)))
             t_data <- vector("list", nrow(xdata))
             p_data <- vector("list", nrow(xdata))
             for (j in 1:nrow(xdata)) {
@@ -112,13 +124,29 @@ basic_pairwise <- function(input, design=NULL) {
             if (num_done == 1) {
                 comparisons <- division
                 tvalues <- t_data
+                ##tvalues <- t_p$tstat.t
                 pvalues <- p_data
+                ##pvalues <- t_p$pval
             } else {
                 comparisons <- cbind(comparisons, division)
                 tvalues <- cbind(tvalues, t_data)
+                ##tvalues <- cbind(tvalues, t_p$tstat.t)
                 pvalues <- cbind(pvalues, p_data)
+                ##pvalues <- cbind(pvalues, t_p$pval)
             }
         } ## End for each d
+    }
+    ## Because of the way I made tvalues/pvalues into a list
+    ## If only 1 comparison was performed, the resulting data structure never gets coerced into a data frame
+    ## therefore I am performing this check which, if a single comparison was done, adds a second column,
+    ## performs the coercion, then strips it away.  This is probably a stupid way of doing what I want.
+    if (num_done == 1) {
+        tvalues <- cbind(tvalues, t_data)
+        pvalues <- cbind(pvalues, p_data)
+        tvalues <- as.data.frame(tvalues)
+        pvalues <- as.data.frame(pvalues)
+        tvalues <- tvalues[-1]
+        pvalues <- pvalues[-1]
     }
     comparisons[is.na(comparisons)] <- 0
     tvalues[is.na(tvalues)] <- 0
@@ -131,8 +159,8 @@ basic_pairwise <- function(input, design=NULL) {
     for (e in 1:length(colnames(comparisons))) {
         colname <- colnames(comparisons)[[e]]
         fc_column <- comparisons[,e]
-        t_column <- tvalues[,e]
-        p_column <- pvalues[,e]
+        t_column <- as.numeric(tvalues[,e])
+        p_column <- as.numeric(pvalues[,e])
         fc_column[mapply(is.infinite, fc_column)] <- 0
         numer_denom <- strsplit(x=colname, split="_vs_")[[1]]
         numerator <- numer_denom[1]
@@ -141,9 +169,19 @@ basic_pairwise <- function(input, design=NULL) {
                                denominator_median=median_table[[denominator]],
                                numerator_var=variance_table[[numerator]],
                                denominator_var=variance_table[[denominator]],
-                               t=t(as.data.frame(t_column)),
-                               p=t(as.data.frame(p_column)),
+                               ##t=t(as.data.frame(t_column)),
+                               t=t_column,
+                               ##p=t(as.data.frame(p_column)),
+                               p=p_column,
                                logFC=fc_column)
+        fc_table$numerator_median <- signif(x=fc_table$numerator_median, digits=4)
+        fc_table$denominator_median <- signif(x=fc_table$denominator_median, digits=4)
+        fc_table$numerator_var <- format(x=fc_table$numerator_var, digits=4, scientific=TRUE)
+        fc_table$denominator_var <- format(x=fc_table$denominator_var, digits=4, scientific=TRUE)
+        fc_table$t <- signif(x=fc_table$t, digits=4)
+        fc_table$p <- format(x=fc_table$p, digits=4, scientific=TRUE)
+        fc_table$logFC <- signif(x=fc_table$logFC, digits=4)
+        rownames(fc_table) <- rownames(data)
         all_tables[[e]] <- fc_table
     }
     message("Basic: Returning tables.")

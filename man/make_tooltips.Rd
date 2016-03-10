@@ -2,17 +2,31 @@
 % Please edit documentation in R/misc_functions.r
 \name{make_tooltips}
 \alias{make_tooltips}
-\title{make_tooltips()  Create a simple df from gff which contains tooltip usable information for gVis graphs.}
+\title{Create a simple df from gff which contains tooltip usable
+information for gVis graphs. The tooltip column is also a handy proxy for
+anontations information when it would otherwise be too troublesome.}
 \usage{
-make_tooltips(annotations, desc_col = "description")
+make_tooltips(annotations, desc_col = "description", type = "gene")
 }
 \arguments{
-\item{gff}{or annotations: Either a gff file or annotation data frame (which likely came from a gff file.)}
+\item{annotations}{Either a gff file or annotation data frame (which likely came from a gff file.)}
+
+\item{desc_col}{a column from a gff file to grab the data from}
 }
 \value{
-a df of tooltip information
+a df of tooltip information or name of a gff file
 }
 \description{
-make_tooltips()  Create a simple df from gff which contains tooltip usable information for gVis graphs.
+Create a simple df from gff which contains tooltip usable
+information for gVis graphs. The tooltip column is also a handy proxy for
+anontations information when it would otherwise be too troublesome.
+}
+\examples{
+\dontrun{
+tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
+}
+}
+\seealso{
+\pkg{googleVis} \link{gff2df}
 }
 

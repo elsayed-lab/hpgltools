@@ -2,14 +2,16 @@
 % Please edit documentation in R/misc_functions.r
 \name{hpgl_arescore}
 \alias{hpgl_arescore}
-\title{hpgl_arescore()  Implement the arescan function in R}
+\title{Implement the arescan function in R}
 \usage{
 hpgl_arescore(x, basal = 1, overlapping = 1.5, d1.3 = 0.75, d4.6 = 0.4,
   d7.9 = 0.2, within.AU = 0.3, aub.min.length = 10,
   aub.p.to.start = 0.8, aub.p.to.end = 0.55)
 }
 \arguments{
-\item{basal}{default=1  I dunno.}
+\item{x}{A DNA/RNA StringSet containing the UTR sequences of interest}
+
+\item{basal}{I dunno.}
 
 \item{overlapping}{default=1.5}
 
@@ -26,8 +28,6 @@ hpgl_arescore(x, basal = 1, overlapping = 1.5, d1.3 = 0.75, d4.6 = 0.4,
 \item{aub.p.to.start}{default=0.8}
 
 \item{aub.p.to.end}{default=0.55}
-
-\item{stringset}{A DNA/RNA StringSet containing the UTR sequences of interest}
 }
 \value{
 a DataFrame of scores
@@ -39,5 +39,29 @@ At least on my computer I could not make that implementation work
 So I rewrapped its apply() calls and am now hoping to extend its logic
 a little to make it more sensitive and get rid of some of the spurious
 parameters or at least make them more transparent.
+}
+\details{
+Note that I did this two months ago and haven't touched it since...
+}
+\examples{
+\dontrun{
+## Extract all the genes from my genome, pull a static region 120nt following the stop
+## and test them for potential ARE sequences.
+## FIXME: There may be an error in this example, another version I have handles the +/- strand
+## genes separately, I need to return to this and check if it is providing the 5' UTR for 1/2
+## the genome, which would be unfortunate -- but the logic for testing remains the same.
+are_candidates <- hpgl_arescore(genome)
+utr_genes <- subset(lmajor_annotations, type == 'gene')
+threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
+                               ranges=IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)),
+                               strand=Rle(utr_genes[,5]),
+                               name=Rle(utr_genes[,10]))
+threep_seqstrings <- Biostrings::getSeq(lm, threep)
+are_test <- hpgltools:::hpgl_arescore(x=threep_seqstrings)
+are_genes <- rownames(are_test[ which(are_test$score > 0), ])
+}
+}
+\seealso{
+\pkg{IRanges} \pkg{Biostrings}
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/gvis_plots.r
 \name{hpgl_gvis_scatter}
 \alias{hpgl_gvis_scatter}
-\title{hpgl_gvis_scatter()  Make an html version of a scatter plot.}
+\title{Make an html version of a scatter plot.}
 \usage{
 hpgl_gvis_scatter(df, tooltip_data = NULL,
   filename = "html/gvis_scatter.html", base_url = "", trendline = NULL)
@@ -10,25 +10,28 @@ hpgl_gvis_scatter(df, tooltip_data = NULL,
 \arguments{
 \item{df}{df of two columns to compare}
 
-\item{tooltip_data}{default=NULL  a df of tooltip information for gvis graphs.}
+\item{tooltip_data}{a df of tooltip information for gvis graphs.}
 
-\item{filename}{default='html/gvis_scatter.html'  a filename to write a fancy html graph.}
+\item{filename}{a filename to write a fancy html graph.}
 
-\item{base_url}{default=''  a url to send click events which will be suffixed with the gene name}
+\item{base_url}{a url to send click events which will be suffixed with the gene name}
 
-\item{trendline}{default=NULL  add a trendline?}
+\item{trendline}{add a trendline?}
 }
 \value{
 NULL, but along the way an html file is generated which
 contains a googleVis scatter plot.  See hpgl_scatter_plot() for details.
 }
 \description{
-hpgl_gvis_scatter()  Make an html version of a scatter plot.
+Make an html version of a scatter plot.
 }
 \examples{
-## hpgl_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html", base_url="http://yeastgenome.org/accession?")
+\dontrun{
+ hpgl_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html",
+                   base_url="http://yeastgenome.org/accession?")
+}
 }
 \seealso{
-\code{\link{gvisScatterChart}}
+\link[googleVis]{gvisScatterChart}
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/misc_functions.r
 \name{pattern_count_genome}
 \alias{pattern_count_genome}
-\title{pattern_count_genome()  Find how many times a given pattern occurs in every gene of a genome.}
+\title{Find how many times a given pattern occurs in every gene of a genome.}
 \usage{
 pattern_count_genome(fasta, gff = NULL, pattern = "TA", type = "gene",
   key = "locus_tag")
@@ -10,22 +10,26 @@ pattern_count_genome(fasta, gff = NULL, pattern = "TA", type = "gene",
 \arguments{
 \item{fasta}{a fasta genome}
 
-\item{gff}{default=NULL  an optional gff of annotations (if not provided it will just ask the whole genome.}
+\item{gff}{an optional gff of annotations (if not provided it will just ask the whole genome.}
 
-\item{pattern}{default='TA'  what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.}
+\item{pattern}{what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.}
 
-\item{key}{default='locus_tag'  what type of entry of the gff file to key from?}
+\item{type}{the column to get frmo the gff file}
+
+\item{key}{what type of entry of the gff file to key from?}
 }
 \value{
 num_pattern a data frame of names and numbers.
 }
 \description{
-pattern_count_genome()  Find how many times a given pattern occurs in every gene of a genome.
+Find how many times a given pattern occurs in every gene of a genome.
 }
 \examples{
-## num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
+\dontrun{
+num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
+}
 }
 \seealso{
-\code{\link{PDict}} \code{\link{FaFile}}
+\pkg{Biostrings} \pkg{Rsamtools} \link[Biostrings]{PDict} \link[Rsamtools]{FaFile}
 }
 

@@ -2,14 +2,14 @@
 % Please edit documentation in R/ontology_shared.r
 \name{pval_plot}
 \alias{pval_plot}
-\title{pval_plot()  Make a pvalue plot from a df of IDs, scores, and p-values.}
+\title{Make a pvalue plot from a df of IDs, scores, and p-values.}
 \usage{
 pval_plot(df, ontology = "MF")
 }
 \arguments{
 \item{df}{some data from topgo/goseq/clusterprofiler.}
 
-\item{ontology}{default='MF'  an ontology to plot (MF,BP,CC).}
+\item{ontology}{an ontology to plot (MF,BP,CC).}
 }
 \value{
 a plot!
@@ -18,6 +18,6 @@ a plot!
 This function seeks to make generating pretty pvalue plots as shown by clusterprofiler easier.
 }
 \seealso{
-\code{\link{goseq}}
+\link[goseq]{goseq} \pkg{ggplot2}
 }
 

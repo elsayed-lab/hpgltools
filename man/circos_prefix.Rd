@@ -2,17 +2,19 @@
 % Please edit documentation in R/circos.r
 \name{circos_prefix}
 \alias{circos_prefix}
-\title{circos_prefix()  Write the beginning of a circos configuration file.}
+\title{Write the beginning of a circos configuration file.}
 \usage{
-circos_prefix(name = "default", conf_dir = "circos/conf", radius = 1800,
+circos_prefix(name = "mgas", conf_dir = "circos/conf", radius = 1800,
   band_url = NULL)
 }
 \arguments{
-\item{name}{default='default'  The name of the map, called with 'make name'}
+\item{name}{The name of the map, called with 'make name'}
 
-\item{radius}{default=1800  The size of the image.}
+\item{conf_dir}{The directory containing the circos configuration data.}
 
-\item{circos_dir}{default='circos/conf'  The directory containing the circos configuration data.}
+\item{radius}{The size of the image.}
+
+\item{band_url}{a place to imagemap link}
 }
 \value{
 undef

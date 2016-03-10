@@ -2,18 +2,32 @@
 % Please edit documentation in R/de_shared.r
 \name{combine_de_tables}
 \alias{combine_de_tables}
-\title{combine_de_tables()  Combine portions of deseq/limma/edger table output}
+\title{Combine portions of deseq/limma/edger table output}
 \usage{
 combine_de_tables(all_pairwise_result, annot_df = NULL, excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
-  excel_sheet = "combined_DE", keepers = "all", add_plots = FALSE)
+  excel_sheet = "combined_DE", keepers = "all", include_basic = TRUE,
+  add_plots = TRUE, plot_dim = 6)
 }
 \arguments{
 \item{all_pairwise_result}{the output from all_pairwise()}
 
-\item{keepers}{default NULL  a list of reformatted table names to explicitly keep certain contrasts in specific orders}
+\item{annot_df}{add some annotation information}
 
-\item{table}{default='wt_vs_mut'  the name of a table comparison performed by deseq/limma/edger.}
+\item{excel}{filename for the excel workbook, or null if not printed.}
+
+\item{excel_title}{a title, if it has YYY in it, that will be replaced by the contrast name}
+
+\item{excel_sheet}{name the sheet}
+
+\item{keepers}{a list of reformatted table names to explicitly keep
+certain contrasts in specific orders}
+
+\item{include_basic}{Include my stupid basic logFC tables}
+
+\item{add_plots}{add plots to the end of the sheets}
+
+\item{plot_dim}{number of inches squared for the plot if added}
 }
 \value{
 a table combinine limma/edger/deseq outputs.
@@ -22,7 +36,9 @@ a table combinine limma/edger/deseq outputs.
 This hopefully makes it easy to compare the outputs from limma/DESeq2/EdgeR on a table-by-table basis.
 }
 \examples{
-## pretty = combine_de_tables(big_result, table='t12_vs_t0')
+\dontrun{
+pretty = combine_de_tables(big_result, table='t12_vs_t0')
+}
 }
 \seealso{
 \code{\link{all_pairwise}}

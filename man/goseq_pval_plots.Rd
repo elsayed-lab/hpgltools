@@ -10,11 +10,15 @@ goseq_pval_plots(goterms, wrapped_width = 20, cutoff = 0.1, n = 10,
 \arguments{
 \item{goterms}{some data from goseq!}
 
-\item{wrapped_width}{20 the number of characters before wrapping to help legibility}
+\item{wrapped_width}{the number of characters before wrapping to help legibility}
 
 \item{cutoff}{pvalue cutoff for the plot}
 
-\item{n}{10 how many groups to include}
+\item{n}{how many groups to include}
+
+\item{mincat}{minimum size of the category}
+
+\item{level}{levels of the ontology tree to use}
 }
 \value{
 plots!
@@ -23,6 +27,6 @@ plots!
 Make a pvalue plot from goseq data
 }
 \seealso{
-\code{\link{goseq}} \code{\link{clusterProfiler}} \code{\link{pval_plot}}
+\link[goseq]{goseq} \pkg{clusterProfiler} \code{\link{pval_plot}}
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_nonzero}
 \alias{hpgl_nonzero}
-\title{hpgl_nonzero()  Make a ggplot graph of the number of non-zero genes by sample.
+\title{Make a ggplot graph of the number of non-zero genes by sample.
 Made by Ramzi Temanni <temanni at umd dot edu>}
 \usage{
 hpgl_nonzero(data, design = NULL, colors = NULL, labels = NULL,
@@ -11,28 +11,32 @@ hpgl_nonzero(data, design = NULL, colors = NULL, labels = NULL,
 \arguments{
 \item{data}{an expt, expressionset, or dataframe.}
 
-\item{design}{default=NULL  a design matrix.}
+\item{design}{a design matrix.}
 
-\item{colors}{default=NULL  a color scheme.}
+\item{colors}{a color scheme.}
 
-\item{labels}{default=NULL  how do you want to label the graph?
+\item{labels}{how do you want to label the graph?
 'fancy' will use directlabels() to try to match the labels with the positions without overlapping
 anything else will just stick them on a 45' offset next to the graphed point}
 
-\item{title}{default=NULL  add a title?}
+\item{title}{add a title?}
+
+\item{...}{rawr}
 }
 \value{
 a ggplot2 plot of the number of non-zero genes with respect to each library's CPM
 }
 \description{
-hpgl_nonzero()  Make a ggplot graph of the number of non-zero genes by sample.
+Make a ggplot graph of the number of non-zero genes by sample.
 Made by Ramzi Temanni <temanni at umd dot edu>
 }
 \examples{
-## nonzero_plot = hpgl_nonzero(expt=expt)
-## nonzero_plot  ## ooo pretty
+\dontrun{
+ nonzero_plot = hpgl_nonzero(expt=expt)
+ nonzero_plot  ## ooo pretty
+}
 }
 \seealso{
-\code{\link{geom_point}}, \code{\link{geom_dl}}
+\link[ggplot2]{geom_point} \link[directlabels]{geom_dl}
 }
 

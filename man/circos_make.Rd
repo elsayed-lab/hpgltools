@@ -2,16 +2,17 @@
 % Please edit documentation in R/circos.r
 \name{circos_make}
 \alias{circos_make}
-\title{circos_make()  Write a simple makefile for circos.}
+\title{Write a simple makefile for circos.}
 \usage{
 circos_make(target = "", output = "circos/Makefile",
   circos = "/usr/bin/circos")
 }
 \arguments{
-\item{output}{default='circos/Makefile' the makefile}
+\item{target}{the make target}
 
-\item{circos}{default='/usr/bin/circos'  the location of circos. (I
-have a copy in home/bin/circos and use that sometimes.}
+\item{output}{the makefile}
+
+\item{circos}{the location of circos.  I have a copy in home/bin/circos and use that sometimes.}
 }
 \value{
 a kitten

@@ -2,10 +2,10 @@
 % Please edit documentation in R/pca.r
 \name{makeSVD}
 \alias{makeSVD}
-\title{make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
+\title{this a function scabbed from Hector and Kwame's cbcbSEQ
 It just does fast.svd of a matrix against its rowMeans().}
 \usage{
-makeSVD(x)
+makeSVD(data)
 }
 \arguments{
 \item{data}{A data frame to decompose}
@@ -14,13 +14,15 @@ makeSVD(x)
 a list containing the s,v,u from fast.svd
 }
 \description{
-make_SVD() is a function scabbed from Hector and Kwame's cbcbSEQ
+this a function scabbed from Hector and Kwame's cbcbSEQ
 It just does fast.svd of a matrix against its rowMeans().
 }
 \examples{
-## svd = makeSVD(data)
+\dontrun{
+ svd = makeSVD(data)
+}
 }
 \seealso{
-\code{\link{fast.svd}}
+\pkg{corpcor} \code{\link[corpcor]{fast.svd}}
 }
 

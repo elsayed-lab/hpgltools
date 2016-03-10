@@ -2,30 +2,30 @@
 % Please edit documentation in R/de_limma.r
 \name{limma_subset}
 \alias{limma_subset}
-\title{limma_subset()  A quick and dirty way to pull the top/bottom genes from toptable()}
+\title{A quick and dirty way to pull the top/bottom genes from toptable()}
 \usage{
 limma_subset(table, n = NULL, z = NULL)
 }
 \arguments{
 \item{table}{the original data from limma}
 
-\item{n}{default=NULL  a number of genes to keep}
+\item{n}{a number of genes to keep}
 
-\item{z}{default=NULL  a number of z-scores from the mean
-
-If neither n nor z is provided, it assumes you want 1.5 z-scores from the median.}
+\item{z}{a number of z-scores from the mean}
 }
 \value{
 a dataframe subset from toptable
 }
 \description{
-limma_subset()  A quick and dirty way to pull the top/bottom genes from toptable()
+If neither n nor z is provided, it assumes you want 1.5 z-scores from the median.
 }
 \examples{
-## subset = limma_subset(df, n=400)
-## subset = limma_subset(df, z=1.5)
+\dontrun{
+ subset = limma_subset(df, n=400)
+ subset = limma_subset(df, z=1.5)
+}
 }
 \seealso{
-\code{\link{limma}}
+\pkg{limma}
 }
 

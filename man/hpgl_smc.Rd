@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_smc}
 \alias{hpgl_smc}
-\title{hpgl_smc()  Make an R plot of the standard median correlation among samples.}
+\title{Make an R plot of the standard median correlation among samples.}
 \usage{
 hpgl_smc(data, colors = NULL, method = "pearson", names = NULL,
   title = NULL, ...)
@@ -10,13 +10,15 @@ hpgl_smc(data, colors = NULL, method = "pearson", names = NULL,
 \arguments{
 \item{data}{an expt, expressionset, or data frame.}
 
-\item{colors}{default=NULL  a color scheme}
+\item{colors}{a color scheme}
 
-\item{method}{default='pearson'  a correlation method to use.}
+\item{method}{a correlation method to use.}
 
-\item{names}{default=NULL  use pretty names for the samples?}
+\item{names}{use pretty names for the samples?}
 
-\item{title}{default=NULL  title for the graph.}
+\item{title}{title for the graph.}
+
+\item{...}{more parameters to make you happy}
 }
 \value{
 a recordPlot() of the standard median pairwise correlation
@@ -32,10 +34,12 @@ This was written by a mix of Kwame Okrah <kokrah at gmail dot com>, Laura
 Dillon <dillonl at umd dot edu>, and Hector Corrada Bravo <hcorrada at umd dot edu>
 }
 \examples{
-## smc_plot = hpgl_smc(expt=expt)
+\dontrun{
+ smc_plot = hpgl_smc(expt=expt)
+}
 }
 \seealso{
-\code{\link{hpgl_cor}}, \code{\link{matrixStats::rowMedians}},
-\code{\link{quantile}}, \code{\link{diff}}, \code{\link{recordPlot}}
+\link{hpgl_cor} \link[matrixStats]{rowMedians}
+\link[stats]{quantile} \link{diff} \link[grDevices]{recordPlot}
 }
 

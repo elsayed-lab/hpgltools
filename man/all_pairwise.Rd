@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_shared.r
 \name{all_pairwise}
 \alias{all_pairwise}
-\title{all_pairwise()  Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.}
+\title{Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.}
 \usage{
 all_pairwise(input, conditions = NULL, batches = NULL, model_cond = TRUE,
   model_batch = TRUE, model_intercept = FALSE, extra_contrasts = NULL,
@@ -11,25 +11,27 @@ all_pairwise(input, conditions = NULL, batches = NULL, model_cond = TRUE,
 \arguments{
 \item{input}{a dataframe/vector or expt class containing count tables, normalization state, etc.}
 
-\item{conditions}{default=NULL  a factor of conditions in the experiment}
+\item{conditions}{a factor of conditions in the experiment}
 
-\item{batches}{default=NULL  a factor of batches in the experiment}
+\item{batches}{a factor of batches in the experiment}
 
-\item{model_cond}{default=TRUE  include condition in the model?  This is likely always true.}
+\item{model_cond}{include condition in the model?  This is likely always true.}
 
-\item{model_batch}{default=FALSE  include batch in the model?}
+\item{model_batch}{include batch in the model?}
 
-\item{model_intercept}{default=FALSE  use an intercept model instead of cell means?}
+\item{model_intercept}{use an intercept model instead of cell means?}
 
-\item{extra_contrasts}{default=NULL some extra contrasts to add to the list
+\item{extra_contrasts}{some extra contrasts to add to the list
 This can be pretty neat, lets say one has conditions A,B,C,D,E
 and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 de_vs_cb = (E-D)-(C-B),"}
 
-\item{alt_model}{default=NULL an optional alternate model to use rather than just condition/batch}
+\item{alt_model}{an optional alternate model to use rather than just condition/batch}
 
-\item{libsize}{default=NULL the library size of the original data to help voom()}
+\item{libsize}{the library size of the original data to help voom()}
+
+\item{annot_df}{annotations to add to the tables}
 
 \item{...}{The elipsis parameter is fed to write_limma() at the end.}
 }
@@ -37,10 +39,12 @@ de_vs_cb = (E-D)-(C-B),"}
 A list of limma, deseq, edger results.
 }
 \description{
-all_pairwise()  Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
+Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
 }
 \examples{
-## finished_comparison = eBayes(limma_output)
-## data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+\dontrun{
+ finished_comparison = eBayes(limma_output)
+ data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+}
 }
 

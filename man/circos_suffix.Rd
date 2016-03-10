@@ -2,13 +2,12 @@
 % Please edit documentation in R/circos.r
 \name{circos_suffix}
 \alias{circos_suffix}
-\title{circos_suffix()  Write the end of a circos master configuration.}
+\title{Write the end of a circos master configuration.}
 \usage{
 circos_suffix(cfgout = "circos/conf/default.conf")
 }
 \arguments{
-\item{cfgout}{default='circos/conf/default.conf'  The master
-configuration file to write.}
+\item{cfgout}{The master configuration file to write.}
 }
 \value{
 undef

@@ -16,25 +16,25 @@ hpgl_GOplot(dag, sigNodes, dag.name = "GO terms", edgeTypes = TRUE,
 
 \item{sigNodes}{The set of significant ontologies (with p-values)}
 
-\item{dag.name}{default='GO terms'  A name for the graph}
+\item{dag.name}{A name for the graph}
 
-\item{edgeTypes}{default=TRUE  Set the types of the edges for graphviz}
+\item{edgeTypes}{Set the types of the edges for graphviz}
 
-\item{nodeShape.type}{default=c(box, circle, ellipse, plaintext)  The shapes on the tree}
+\item{nodeShape.type}{The shapes on the tree}
 
-\item{genNodes}{default=NULL  Generate the nodes?}
+\item{genNodes}{Generate the nodes?}
 
-\item{wantedNodes}{default=NULL  A subset of the ontologies to plot}
+\item{wantedNodes}{A subset of the ontologies to plot}
 
-\item{showEdges}{default=TRUE  Show the arrows?}
+\item{showEdges}{Show the arrows?}
 
-\item{useFullNames}{default=TRUE  Full names of the ontologies (they can get long)}
+\item{useFullNames}{Full names of the ontologies (they can get long)}
 
-\item{oldSigNodes}{default=NULL  I dunno}
+\item{oldSigNodes}{I dunno}
 
-\item{nodeInfo}{default=nodeInfo   Hmm}
+\item{nodeInfo}{Hmm}
 
-\item{maxchars}{default=30  Maximum characters per line inside the shapes}
+\item{maxchars}{Maximum characters per line inside the shapes}
 }
 \value{
 a topgo plot

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_dist_scatter}
 \alias{hpgl_dist_scatter}
-\title{hpgl_dist_scatter()  Make a pretty scatter plot between two sets of numbers with a
+\title{Make a pretty scatter plot between two sets of numbers with a
 cheesy distance metric and some statistics of the two sets.}
 \usage{
 hpgl_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL, size = 2)
@@ -10,11 +10,13 @@ hpgl_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL, size = 2)
 \arguments{
 \item{df}{a dataframe likely containing two columns}
 
-\item{tooltip_data}{default=NULL  a df of tooltip information for gvis
+\item{tooltip_data}{a df of tooltip information for gvis
 graphs.}
 
-\item{gvis_filename}{default=NULL  a filename to write a fancy html graph.
+\item{gvis_filename}{a filename to write a fancy html graph.
 Defaults to NULL in which case the following parameter isn't needed.}
+
+\item{size}{size of the dots}
 }
 \value{
 a ggplot2 scatter plot.  This plot provides a "bird's eye"
@@ -25,21 +27,21 @@ metric away from both medians.  This distance metric is used to
 color dots which are presumed the therefore be interesting because
 they are far from 'normal.'  This will make a fun clicky googleVis
 graph if requested.
-
+}
+\description{
 The distance metric should be codified and made more intelligent.
 Currently it creates a dataframe of distances which are absolute
 distances from each axis, multiplied by each other, summed by axis,
 then normalized against the maximum.
 }
-\description{
-hpgl_dist_scatter()  Make a pretty scatter plot between two sets of numbers with a
-cheesy distance metric and some statistics of the two sets.
-}
 \examples{
-## hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+\dontrun{
+ hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+                   gvis_filename="html/fun_scatterplot.html")
+}
 }
 \seealso{
-\code{\link{hpgl_gvis_scatter}}, \code{\link{geom_scatter}},
-\code{\link{hsv}}, \code{\link{hpgl_linear_scatter}}
+\pkg{ggplot2} \link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}
+\link{hpgl_linear_scatter}
 }
 

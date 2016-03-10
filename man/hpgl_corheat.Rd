@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_corheat}
 \alias{hpgl_corheat}
-\title{hpgl_corheat()  Make a heatmap.3 description of the correlation between samples.}
+\title{Make a heatmap.3 description of the correlation between samples.}
 \usage{
 hpgl_corheat(data, colors = NULL, design = NULL, method = "pearson",
   names = NULL, row = "batch", title = NULL, ...)
@@ -10,31 +10,33 @@ hpgl_corheat(data, colors = NULL, design = NULL, method = "pearson",
 \arguments{
 \item{data}{a dataframe, expt, or expressionset to work with.}
 
-\item{colors}{default=NULL  a color scheme.}
+\item{colors}{a color scheme.}
 
-\item{design}{default=NULL  a design matrix.}
+\item{design}{a design matrix.}
 
-\item{method}{default='pearson'   correlation statistic to use.}
+\item{method}{correlation statistic to use.}
 
-\item{names}{default=NULL  alternate names to use.}
+\item{names}{alternate names to use.}
 
-\item{row}{default='batch'  what to place on the row of the map, batches or conditions?}
+\item{row}{what to place on the row of the map, batches or conditions?}
 
-\item{title}{default=NULL  a title for the plot.}
+\item{title}{a title for the plot.}
+
+\item{...}{more options are wonderful}
 }
 \value{
 corheat_plot a gplots heatmap describing how the samples
 pairwise correlate with one another.
 }
 \description{
-hpgl_corheat()  Make a heatmap.3 description of the correlation between samples.
+Make a heatmap.3 description of the correlation between samples.
 }
 \examples{
 ## corheat_plot = hpgl_corheat(expt=expt, method="robust")
 ## corheat_plot
 }
 \seealso{
-\code{\link{hpgl_cor}}, \code{\link{brewer.pal}},
-\code{\link{heatmap.2}}, \code{\link{recordPlot}}
+\link{hpgl_cor} \link[RColorBrewer]{brewer.pal}
+\link[grDevices]{recordPlot}
 }
 

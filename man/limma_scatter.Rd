@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_limma.r
 \name{limma_scatter}
 \alias{limma_scatter}
-\title{limma_scatter()  Plot arbitrary data from limma}
+\title{Plot arbitrary data from limma}
 \usage{
 limma_scatter(all_pairwise_result, first_table = 1, first_column = "logFC",
   second_table = 2, second_column = "logFC", type = "linear_scatter", ...)
@@ -10,11 +10,11 @@ limma_scatter(all_pairwise_result, first_table = 1, first_column = "logFC",
 \arguments{
 \item{all_pairwise_result}{the result from calling balanced_pairwise()}
 
-\item{first_table}{default=1  the first table from all_pairwise_result$limma_result to look at (may be a name or number)}
+\item{first_table}{the first table from all_pairwise_result$limma_result to look at (may be a name or number)}
 
-\item{first_column}{default='logFC'  the name of the column to plot from the first table}
+\item{first_column}{the name of the column to plot from the first table}
 
-\item{second_table}{default=2  the second table inside all_pairwise_result$limma_result (name or number)}
+\item{second_table}{the second table inside all_pairwise_result$limma_result (name or number)}
 
 \item{second_column}{a column to compare against}
 
@@ -27,13 +27,16 @@ a hpgl_linear_scatter() set of plots comparing the chosen columns
 If you forget to specify tables to compare, it will try the first vs the second.
 }
 \description{
-limma_scatter()  Plot arbitrary data from limma
+Plot arbitrary data from limma
 }
 \examples{
-## compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant", first_table="AveExpr", second_column="AveExpr")
-## compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+\dontrun{
+compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
+                              first_table="AveExpr", second_column="AveExpr")
+compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+}
 }
 \seealso{
-\code{\link{hpgl_linear_scatter}}, \code{\link{topTable}},
+\link{hpgl_linear_scatter} \link[limma]{topTable}
 }
 

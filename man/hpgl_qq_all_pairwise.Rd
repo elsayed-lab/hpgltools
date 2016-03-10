@@ -2,21 +2,21 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_qq_all_pairwise}
 \alias{hpgl_qq_all_pairwise}
-\title{hpgl_qq_all_pairwise()  Perform qq plots of every column against every other column of a dataset.
+\title{Perform qq plots of every column against every other column of a dataset.
 This function is stupid, don't use it.}
 \usage{
-hpgl_qq_all_pairwise(df = NULL, expt = NULL, verbose = FALSE)
+hpgl_qq_all_pairwise(data, verbose = FALSE)
 }
 \arguments{
-\item{df}{the data}
+\item{data}{the data}
 
-\item{expt}{or an expt class}
+\item{verbose}{talky talky}
 }
 \value{
 a list containing the recordPlot() output of the ratios, logs, and means among samples
 }
 \description{
-hpgl_qq_all_pairwise()  Perform qq plots of every column against every other column of a dataset.
+Perform qq plots of every column against every other column of a dataset.
 This function is stupid, don't use it.
 }
 

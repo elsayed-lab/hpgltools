@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{write_subset_ontologies}
 \alias{write_subset_ontologies}
-\title{write_subset_ontologies()  Write gene ontology tables for data subsets}
+\title{Write gene ontology tables for data subsets}
 \usage{
 write_subset_ontologies(kept_ontology, outfile = "excel/subset_go",
   dated = TRUE, n = 50, overwritefile = TRUE, add_plots = TRUE,
@@ -11,17 +11,19 @@ write_subset_ontologies(kept_ontology, outfile = "excel/subset_go",
 \arguments{
 \item{kept_ontology}{A result from subset_ontology_search()}
 
-\item{outfile}{default='excel/subset_go.xlsx'  Workbook to which to write.}
+\item{outfile}{Workbook to which to write.}
 
-\item{dated}{default=TRUE  Append the year-month-day-hour to the workbook.}
+\item{dated}{Append the year-month-day-hour to the workbook.}
 
-\item{n}{default=50  How many ontology categories to write for each search}
+\item{n}{How many ontology categories to write for each search}
 
-\item{overwritefile}{default=TRUE  Overwrite an existing workbook?}
+\item{overwritefile}{Overwrite an existing workbook?}
 
-\item{add_plots}{default=TRUE  Add the various p-value plots to the end of each sheet?}
+\item{add_plots}{Add the various p-value plots to the end of each sheet?}
 
-\item{table_style}{default='TableStyleMedium9'  The chosen table style for excel}
+\item{table_style}{The chosen table style for excel}
+
+\item{...}{some extra parameters}
 }
 \value{
 a set of excel sheet/coordinates
@@ -31,11 +33,14 @@ Given a set of ontology results, this attempts to write them to an excel
 workbook in a consistent and relatively easy-to-read fashion.
 }
 \examples{
-## all_contrasts <- all_pairwise(expt, model_batch=TRUE)
-## keepers <- list(bob = ('numerator','denominator'))
-## kept <- combine_de_tables(all_contrasts, keepers=keepers)
-## changed <- extract_significant_genes(kept)
-## kept_ontologies <- subset_ontology_search(changed, lengths=gene_lengths, goids=goids, gff=gff, gff_type='gene')
-## go_writer <- write_subset_ontologies(kept_ontologies)
+\dontrun{
+ all_contrasts <- all_pairwise(expt, model_batch=TRUE)
+ keepers <- list(bob = ('numerator','denominator'))
+ kept <- combine_de_tables(all_contrasts, keepers=keepers)
+ changed <- extract_significant_genes(kept)
+ kept_ontologies <- subset_ontology_search(changed, lengths=gene_lengths,
+                                           goids=goids, gff=gff, gff_type='gene')
+ go_writer <- write_subset_ontologies(kept_ontologies)
+}
 }
 

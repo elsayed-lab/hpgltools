@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 15:42:47 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 02:15:06 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -6,12 +6,20 @@
 #' As a result, I am going to have this function take a gff file in order to get the go ids and
 #' gene ids on the same page.
 #'
+#' @param de_genes  input list of differentially expressed genes
 #' @param gff The annotation information for this genome
-#' @param de_genes The set of differentially expressed genes in the limma format as before
 #' @param goids The set of GOids, as before in the format ID/GO
-#'
+#' @param universe_merge   column from which to create the universe of genes
+#' @param second_merge_try   if the first universe merge fails, try this
+#' @param organism   genbank organism to use
+#' @param pcutoff   pvalue cutoff for deciding significant
+#' @param direction   under or over represented categories
+#' @param conditional   perform a conditional search?
+#' @param categorysize   category size below which to not include groups
+#' @param gff_type   gff column to use for creating the universe
+#' @param ... more parameters!
 #' @return dunno yet
-#' @seealso \code{\link{GOstats}}
+#' @seealso \pkg{GSEABase} \pkg{Category}
 #' @export
 simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_merge_try="locus_tag",
                            organism="fun", pcutoff=0.10, direction="over", conditional=FALSE,
@@ -22,6 +30,17 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     ## This is similar to logic in ontology_goseq and is similarly problematic.
     ## Some gff files I use have all the annotation data in the type called 'gene', others use 'CDS', others use 'exon'
     ## I need a robust method of finding the correct feature type to call upon.
+
+    ## I think there might be a weird environment collision occuring which is causing
+    ## some gostats functionality to fail when functions are called using Category:: explicitly.
+    ## Therefore I am loading these environments here and calling the functions without ::
+    ## For a further discussion of what is happening:
+    ## https://stat.ethz.ch/pipermail/bioconductor/2009-November/030348.html
+    try(detach("package:GOstats", unload=TRUE))
+    try(detach("package:Category", unload=TRUE))
+    require.auto("GOstats")
+    requireNameSpace("GOstats")
+
     message(paste0("simple_gostats(): gff_type is: ", gff_type, ". Change that if there are bad merges."))
     types <- c("CDS","gene","exon")
     for (type in types) {
@@ -66,21 +85,21 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     gostats_go$frame.Evidence <- "TAS"
     colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "frame.Evidence")
     gostats_go <- gostats_go[,c("frame.go_id", "frame.Evidence", "frame.gene_id")]
-    gostats_frame <- AnnotationDbi::GOFrame(gostats_go, organism=organism)
-    gostats_all <- AnnotationDbi::GOAllFrame(gostats_frame)
-    ## require.auto("GSEABase", verbose=FALSE)
+    gostats_frame <- GOFrame(gostats_go, organism=organism)
+    gostats_all <- GOAllFrame(gostats_frame)
     message("simple_gostats(): Creating the gene set collection.")
-    gsc <- GSEABase::GeneSetCollection(gostats_all, setType=GSEABase::GOCollection())
+    gsc <- GeneSetCollection(gostats_all, setType=GOCollection())
 
     mf_over <- bp_over <- cc_over <- NULL
     mf_under <- bp_under <- cc_under <- NULL
     message("simple_gostats(): Performing MF GSEA.")
-    mf_params <- Category::GSEAGOHyperGParams(
+    mf_params <- GSEAGOHyperGParams(
         name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="MF", pvalueCutoff=pcutoff,
         conditional=conditional, testDirection="over")
-    mf_over <- Category::hyperGTest(mf_params)
+    ## This is where it fell over
+    mf_over <- hyperGTest(mf_params)
     message(paste0("Found ", nrow(GOstats::summary(mf_over)), " over MF categories."))
     message("simple_gostats(): Performing BP GSEA.")
     bp_params <- Category::GSEAGOHyperGParams(
@@ -228,16 +247,20 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
 #' Make fun trees a la topgo from goseq data.
 #'
 #' @param de_genes some differentially expressed genes
-#' @param mf_over/bp_over/cc_over/mf_under/bp_under/cc_under over/under expression data
-#' @param goid_map a mapping of IDs to GO in the Ramigo expected format
-#' @param score_limit maximum score to include as 'significant'
-#' @param goids_df a dataframe of available goids (used to generate goid_map)
-#' @param overwrite overwrite the goid_map?
-#' @param selector a function to choose differentially expressed genes in the data
-#' @param pval_column a column in the data to be used to extract pvalue scores
-#'
+#' @param mf_over mfover data
+#' @param bp_over bpover data
+#' @param cc_over ccover data
+#' @param mf_under mfunder data
+#' @param bp_under bpunder data
+#' @param cc_under ccunder expression data
+#' @param goid_map   a mapping of IDs to GO in the Ramigo expected format
+#' @param score_limit    maximum score to include as 'significant'
+#' @param goids_df   a dataframe of available goids (used to generate goid_map)
+#' @param overwrite   overwrite the goid_map?
+#' @param selector    a function to choose differentially expressed genes in the data
+#' @param pval_column    a column in the data to be used to extract pvalue scores
 #' @return plots! Trees! oh my!
-#' @seealso \code{\link{topGO}}
+#' @seealso \pkg{topGO}
 #' @export
 gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under,
                           cc_under, goid_map="reference/go/id2go.map", score_limit=0.01,
@@ -390,18 +413,13 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
 #' that I understand how the ontology trees work better, this should take advantage of that, but
 #' currently does not.
 #'
-#' @param mf_over molecular function data overrepresented
-#' @param bp_over biological process data overrepresented
-#' @param cc_over cellular component data overrepresented
-#' @param mf_under molecular function data underrepresented
-#' @param bp_under biological process data underrepresented
-#' @param cc_under cellular component data underrepresented
-#' @param cutoff 0.1 what is the maximum pvalue allowed
-#' @param wrapped_width how big to make the text so that it is legible
-#' @param n 10 how many groups to include in the plot
-#'
+#' @param gs_result ontology search results
+#' @param wrapped_width   how big to make the text so that it is legible
+#' @param cutoff   what is the maximum pvalue allowed
+#' @param n   how many groups to include in the plot
+#' @param group_minsize default=5  minimum group size before inclusion
 #' @return plots!
-#' @seealso \code{\link{clusterProfiler}} \code{\link{pval_plot}}
+#' @seealso \pkg{clusterProfiler} \link{pval_plot}
 #' @export
 gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5) {
     ## TODO: replace the subset calls

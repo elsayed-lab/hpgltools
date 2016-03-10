@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{cbcb_filter_counts}
 \alias{cbcb_filter_counts}
-\title{\code{cbcb_filter_counts()}  Filter low-count genes from a data set.}
+\title{Filter low-count genes from a data set.}
 \usage{
 cbcb_filter_counts(count_table, threshold = 2, min_samples = 2,
   verbose = FALSE)
@@ -10,11 +10,11 @@ cbcb_filter_counts(count_table, threshold = 2, min_samples = 2,
 \arguments{
 \item{count_table}{a data frame of (pseudo)counts by sample.}
 
-\item{threshold}{default=2  lower threshold of counts for each gene.}
+\item{threshold}{lower threshold of counts for each gene.}
 
-\item{min_samples}{default=2   minimum number of samples}
+\item{min_samples}{minimum number of samples}
 
-\item{verbose}{default=FALSE  if set to true, prints number of genes removed and remaining.}
+\item{verbose}{if set to true, prints number of genes removed and remaining.}
 }
 \value{
 dataframe of counts without the low-count genes
@@ -28,6 +28,6 @@ filtered_table <- cbcb_filter_counts(count_table)
 }
 }
 \seealso{
-\code{\link[cbcbSEQ]{log2CPM}} which this uses to decide what to keep
+\link[cbcbSEQ]{log2CPM} which this uses to decide what to keep
 }
 

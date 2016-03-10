@@ -18,17 +18,25 @@ simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids = NULL,
 
 \item{goids}{a list of ontology accessions to gene accessions}
 
+\item{doplot}{include pwf plots}
+
 \item{adjust}{minimum adjusted pvalue}
 
 \item{pvalue}{minimum pvalue}
 
-\item{goseq_method}{wallenius statistical test used by goseq}
+\item{qvalue}{minimum qvalue}
 
-\item{padjust_method}{BH which method to adjust the pvalues}
+\item{goseq_method}{testing used by goseq}
 
-\item{species}{NULL optionally choose a species from supportedOrganisms()}
+\item{padjust_method}{which method to adjust the pvalues}
 
-\item{length_db}{If species is chosen (or if not, really), ensGene may be used to automagically pull the gene lengths.}
+\item{species}{optionally choose a species from supportedOrganisms()}
+
+\item{length_db}{Source of gene lengths}
+
+\item{gff}{gff file source of gene lengths}
+
+\item{...}{extra parameters which I do not recall}
 }
 \value{
 a big list including:
@@ -48,6 +56,6 @@ a big list including:
 simple_goseq() Perform a simplified goseq analysis
 }
 \seealso{
-\code{\link{goseq}} \code{\link{clusterProfiler}}
+\pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
 }
 

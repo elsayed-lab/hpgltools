@@ -93,6 +93,10 @@ again.
 
 ```{r pca}
 
+## Something in this is causing a build loop on travis...
+
+## I am no longer certain that code is maintained, what remains from it I might pull in to my own.
+## require.auto("kokrah/cbcbSEQ")  ## Install Kwame's cbcbSEQ
 ## Unsurprisingly, the raw data doesn't cluster well at all...
 fis_rawpca <- hpgl_pca(fission_expt, expt_labels=fission_expt$condition)
 fis_rawpca$plot
@@ -172,9 +176,22 @@ hpgl_disheat(batchnorm_expt)
 
 # Some simple differential expression analyses
 
-```{r simple_de}
+Travis wisely imposes a limit on the amount of time for building vignettes.
+My tools by default will attempt all possible pairwise comparisons, which takes a long time.
+Therefore I am going to take a subset of the data and limit these comparisons to that.
 
-limma_comparison <- limma_pairwise(normbatch_expt)
+```{r simple_subset}
+
+fun_data <- expt_subset(fission_expt, subset="condition=='wt.120'|condition=='mut.120'")
+fun_norm <- normalize_expt(fun_data, batch="limma", norm="quant", transform="log2", convert="cpm")
+
+```
+
+## Try using limma first
+
+```{r simple_limma}
+
+limma_comparison <- limma_pairwise(fun_norm)
 names(limma_comparison$all_tables)
 summary(limma_comparison$all_tables$wt.120_vs_mut.120)
 wt_120 <- limma_comparison$all_tables$wt.120
@@ -183,16 +200,40 @@ scatter_wt_mut <- limma_coefficient_scatter(limma_comparison, x="wt.120", y="mut
 scatter_wt_mut$scatter
 scatter_wt_mut$both_histogram
 
-deseq_comparison <- deseq2_pairwise(fission_expt, model_batch=TRUE)
+```
+
+## Then DESeq2
+
+```{r simple_deseq2}
+
+deseq_comparison <- deseq2_pairwise(fun_data, model_batch=TRUE)
 summary(deseq_comparison$all_tables$wt.120_vs_mut.120)
 
-edger_comparison <- edger_pairwise(fission_expt, model_batch=TRUE)
+```
+
+## And EdgeR
+
+```{r simple_edger}
+
+edger_comparison <- edger_pairwise(fun_data, model_batch=TRUE)
 summary(edger_comparison$all_tables$wt.120_vs_mut.120)
 
-basic_comparison <- basic_pairwise(fission_expt)
+```
+
+## My stupid basic comparison
+
+```{r simple_basic}
+
+basic_comparison <- basic_pairwise(fun_data)
 summary(basic_comparison$all_tables$wt.120_vs_mut.120)
 
-all_comparisons <- all_pairwise(fission_expt, model_batch=TRUE)
+```
+
+## Combine them all
+
+```{r simple_all}
+
+all_comparisons <- all_pairwise(fun_data, model_batch=TRUE)
 all_combined <- combine_de_tables(all_comparisons)
 sig_genes <- extract_significant_genes(all_combined, sig_table=NULL)
 
@@ -200,7 +241,7 @@ sig_genes <- extract_significant_genes(all_combined, sig_table=NULL)
 
 ## Ontology searches
 
-```{r ontology}
+```{r ontology, eval=FALSE}
 
 limma_results <- limma_comparison$all_tables
 ## The set of comparisons performed

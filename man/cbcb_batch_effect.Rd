@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{cbcb_batch_effect}
 \alias{cbcb_batch_effect}
-\title{\code{cbcb_batch_effect()}  A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal}
+\title{A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal}
 \usage{
 cbcb_batch_effect(normalized_counts, model)
 }
@@ -23,6 +23,6 @@ newdata <- cbcb_batch_effect(counts, expt_model)
 }
 }
 \seealso{
-\code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
+\link[limma]{voom} \link[limma]{lmFit}
 }
 

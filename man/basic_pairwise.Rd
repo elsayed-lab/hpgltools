@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_basic.r
 \name{basic_pairwise}
 \alias{basic_pairwise}
-\title{\code{basic_pairwise()}  Perform a pairwise comparison among conditions which takes
+\title{Perform a pairwise comparison among conditions which takes
 nothing into account.  It _only_ takes the conditions, a mean value/variance among
 them, divides by condition, and returns the result.  No fancy nomalizations, no
 statistical models, no nothing.  It should be the very worst method possible.
@@ -14,13 +14,13 @@ basic_pairwise(input, design = NULL)
 \arguments{
 \item{input}{a count table by sample}
 
-\item{conditions}{a data frame of samples and conditions}
+\item{design}{a data frame of samples and conditions}
 }
 \value{
 I am not sure yet
 }
 \description{
-\code{basic_pairwise()}  Perform a pairwise comparison among conditions which takes
+Perform a pairwise comparison among conditions which takes
 nothing into account.  It _only_ takes the conditions, a mean value/variance among
 them, divides by condition, and returns the result.  No fancy nomalizations, no
 statistical models, no nothing.  It should be the very worst method possible.

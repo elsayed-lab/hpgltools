@@ -2,36 +2,40 @@
 % Please edit documentation in R/pca.r
 \name{plot_pcs}
 \alias{plot_pcs}
-\title{plot_pcs()  A quick and dirty PCA plotter of arbitrary components against one another.}
+\title{A quick and dirty PCA plotter of arbitrary components against one another.}
 \usage{
-plot_pcs(data, first = "PC1", second = "PC2", variances = NULL,
-  design = NULL, plot_title = NULL, plot_labels = NULL)
+plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
+  design = NULL, plot_title = NULL, plot_labels = NULL, size = 5)
 }
 \arguments{
+\item{first}{principle component PCx to put on the x axis.}
+
+\item{second}{principle component PCy to put on the y axis.}
+
+\item{variances}{a list of the percent variance explained by each component.}
+
+\item{design}{the experimental design with condition batch factors.}
+
+\item{plot_title}{a title for the plot.}
+
+\item{plot_labels}{a parameter for the labels on the plot.}
+
+\item{size}{The size of the dots on the plot}
+
 \item{data}{a dataframe of principle components PC1 .. PCN with any other arbitrary information.}
-
-\item{first}{default='PC1'  principle component PCx to put on the x axis.}
-
-\item{second}{default='PC2'  principle component PCy to put on the y axis.}
-
-\item{variances}{default=NULL  a list of the percent variance explained by each component.}
-
-\item{design}{default=NULL  the experimental design with condition batch factors.}
-
-\item{plot_title}{default=NULL  a title for the plot.}
-
-\item{plot_labels}{default=NULL  a parameter for the labels on the plot.}
 }
 \value{
 a ggplot2 PCA plot
 }
 \description{
-plot_pcs()  A quick and dirty PCA plotter of arbitrary components against one another.
+A quick and dirty PCA plotter of arbitrary components against one another.
 }
 \examples{
-## pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
+\dontrun{
+ pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
+}
 }
 \seealso{
-\code{\link{ggplot2}}, \code{\link{geom_dl}}
+\pkg{ggplot2} \code{\link[directlabels]{geom_dl}}
 }
 

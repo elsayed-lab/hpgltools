@@ -2,8 +2,10 @@
 % Please edit documentation in R/count_tables.r
 \name{hpgl_read_files}
 \alias{hpgl_read_files}
-\title{hpgl_read_files()  Read a bunch of count tables and create a usable data frame from
-them.}
+\title{Read a bunch of count tables and create a usable data frame from
+them.
+It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
+It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.}
 \usage{
 hpgl_read_files(ids, files, header = FALSE, include_summary_rows = FALSE,
   suffix = NULL, ...)
@@ -13,26 +15,29 @@ hpgl_read_files(ids, files, header = FALSE, include_summary_rows = FALSE,
 
 \item{files}{a list of files to read}
 
-\item{header}{default=FALSE  whether or not the count tables include a header row.}
+\item{header}{whether or not the count tables include a header row.}
 
-\item{include_summary_rows}{default=FALSE  whether HTSeq summary rows should be included.}
+\item{include_summary_rows}{whether HTSeq summary rows should be included.}
 
-\item{suffix}{default=NULL  an optional suffix to add to the filenames when reading them.
+\item{suffix}{an optional suffix to add to the filenames when reading them.}
 
-It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
-It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.}
+\item{...}{more options for happy time}
 }
 \value{
 count_table a data frame of count tables
 }
 \description{
-hpgl_read_files()  Read a bunch of count tables and create a usable data frame from
+Read a bunch of count tables and create a usable data frame from
 them.
+It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
+It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.
 }
 \examples{
-## count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
+\dontrun{
+ count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
+}
 }
 \seealso{
-\code{\link{create_experiment}}
+\link{create_experiment}
 }
 

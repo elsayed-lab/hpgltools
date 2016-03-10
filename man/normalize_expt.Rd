@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{normalize_expt}
 \alias{normalize_expt}
-\title{\code{normalize_expt()}  Replace the data of an expt with normalized data.}
+\title{Replace the data of an expt with normalized data.}
 \usage{
 normalize_expt(expt, transform = "raw", norm = "raw", convert = "raw",
   batch = "raw", filter_low = FALSE, annotations = NULL, fasta = NULL,
@@ -11,56 +11,60 @@ normalize_expt(expt, transform = "raw", norm = "raw", convert = "raw",
   p = 0.01, A = 1, k = 1, cv_min = 0.01, cv_max = 1000, ...)
 }
 \arguments{
-\item{expt}{default=expt  The original expt}
+\item{expt}{The original expt}
 
-\item{transform}{default="raw"  The transformation desired (raw, log2, log, log10)}
+\item{transform}{The transformation desired (raw, log2, log, log10)}
 
-\item{norm}{default="raw"  How to normalize the data (raw, quant, sf, upperquartile, tmm, rle)}
+\item{norm}{How to normalize the data (raw, quant, sf, upperquartile, tmm, rle)}
 
-\item{convert}{default="raw"  Conversion to perform (raw, cpm, rpkm, cp_seq_m)}
+\item{convert}{Conversion to perform (raw, cpm, rpkm, cp_seq_m)}
 
-\item{batch}{default="raw"  Batch effect removal tool to use (limma sva fsva ruv etc)}
+\item{batch}{Batch effect removal tool to use (limma sva fsva ruv etc)}
 
-\item{filter_low}{default=FALSE  Filter out low sequences (cbcb, pofa, kofa, others?)}
+\item{filter_low}{Filter out low sequences (cbcb, pofa, kofa, others?)}
 
-\item{annotations}{default=NULL used for rpkm, a df}
+\item{annotations}{used for rpkm, a df}
 
-\item{fasta}{default=NULL fasta file for cp_seq_m counting of oligos}
+\item{fasta}{fasta file for cp_seq_m counting of oligos}
 
-\item{entry_type}{default='gene'  for getting genelengths by feature type (rpkm or cp_seq_m)}
+\item{entry_type}{for getting genelengths by feature type (rpkm or cp_seq_m)}
 
-\item{verbose}{default=FALSE  talk?}
+\item{verbose}{talk?}
 
-\item{use_original}{default=FALSE  whether to use the backup data in the expt class}
+\item{use_original}{whether to use the backup data in the expt class}
 
-\item{batch1}{default="batch"  experimental factor to extract first}
+\item{batch1}{experimental factor to extract first}
 
-\item{batch2}{default=NULL  a second factor to remove (only with limma's removebatcheffect())}
+\item{batch2}{a second factor to remove (only with limma's removebatcheffect())}
 
-\item{thresh}{default=2  for cbcb_lowfilter}
+\item{thresh}{for cbcb_lowfilter}
 
-\item{min_samples}{default=2  for cbcb_lowfilter}
+\item{min_samples}{for cbcb_lowfilter}
 
-\item{p}{default=0.01  for genefilter's pofa}
+\item{p}{for genefilter's pofa}
 
-\item{A}{default=1  for genefilter's pofa}
+\item{A}{for genefilter's pofa}
 
-\item{k}{default=1  for genefilter's kofa}
+\item{k}{for genefilter's kofa}
 
-\item{cv_min}{default=0.01  for genefilter's cv()}
+\item{cv_min}{for genefilter's cv()}
 
-\item{cv_max}{default=1000 for genefilter's cv()}
+\item{cv_max}{for genefilter's cv()}
+
+\item{...}{more options}
 }
 \value{
 a new expt object with normalized data and the original data saved as 'original_expressionset'
 }
 \description{
-\code{normalize_expt()}  Replace the data of an expt with normalized data.
+Replace the data of an expt with normalized data.
 }
 \examples{
 \dontrun{
-normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm', batch='raw', filter_low='pofa')
-normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm', batch='sva', filter_low='pofa')
+normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
+                         batch='raw', filter_low='pofa')
+normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
+                               batch='sva', filter_low='pofa')
 }
 }
 \seealso{

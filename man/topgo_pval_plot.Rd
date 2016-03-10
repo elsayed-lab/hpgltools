@@ -8,15 +8,23 @@ topgo_pval_plot(topgo, wrapped_width = 20, cutoff = 0.1, n = 12,
   type = "fisher")
 }
 \arguments{
-\item{topgo_data}{some data from topgo!}
+\item{topgo}{some data from topgo!}
+
+\item{wrapped_width}{maximum width of the text names}
+
+\item{cutoff}{p-value cutoff for the plots}
+
+\item{n}{maximum number of ontologies to include}
+
+\item{type}{type of score to use}
 }
 \value{
-a plot!
+a list of MF/BP/CC pvalue plots
 }
 \description{
 Make a pvalue plot from topgo data
 }
 \seealso{
-\code{\link{goseq}}
+\pkg{topgo} \code{goseq}
 }
 

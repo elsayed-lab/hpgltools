@@ -2,36 +2,39 @@
 % Please edit documentation in R/de_deseq.r
 \name{deseq_coefficient_scatter}
 \alias{deseq_coefficient_scatter}
-\title{deseq_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma}
+\title{Plot out 2 coefficients with respect to one another from deseq2}
 \usage{
 deseq_coefficient_scatter(output, x = 1, y = 2, gvis_filename = NULL,
-  gvis_trendline = TRUE, tooltip_data = NULL, flip = FALSE,
-  base_url = NULL)
+  gvis_trendline = TRUE, tooltip_data = NULL, base_url = NULL)
 }
 \arguments{
-\item{x}{default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot}
+\item{output}{the set of pairwise comparisons provided by deseq_pairwise()}
 
-\item{y}{default=2  the name or number of the second coefficient column to extract, this will be the y-axis of the plot}
+\item{x}{the name or number of the first coefficient column to extract, this will be the x-axis of the plot}
 
-\item{gvis_filename}{default='limma_scatter.html'  A filename for plotting gvis interactive graphs of the data.}
+\item{y}{the name or number of the second coefficient column to extract, this will be the y-axis of the plot}
 
-\item{gvis_trendline}{default=TRUE  add a trendline to the gvis plot?}
+\item{gvis_filename}{A filename for plotting gvis interactive graphs of the data.}
 
-\item{tooltip_data}{default=NULL  a dataframe of gene annotations to be used in the gvis plot}
+\item{gvis_trendline}{add a trendline to the gvis plot?}
 
-\item{limma_output}{the set of pairwise comparisons provided by limma_pairwise()}
+\item{tooltip_data}{a dataframe of gene annotations to be used in the gvis plot}
+
+\item{base_url}{for gvis plots}
 }
 \value{
 a ggplot2 plot showing the relationship between the two coefficients
 }
 \description{
-It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
+It can be nice to see a plot of two coefficients from a deseq2 comparison with respect to one another
 This hopefully makes that easy.
 }
 \examples{
-## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+\dontrun{
+ pretty = coefficient_scatter(deseq_data, x="wt", y="mut")
+}
 }
 \seealso{
-\code{\link{hpgl_linear_scatter}} \code{\link{limma_pairwise}}
+\link{hpgl_linear_scatter} \link{deseq2_pairwise}
 }
 

@@ -1,13 +1,15 @@
+require.auto("kokrah/cbcbSEQ")
+library(cbcbSEQ)
 library(testthat)
 library(hpgltools)
 context("Test hpgltools and cbcbSEQ")
+require.auto("pasilla")
+library(pasilla)
+data(pasillaGenes)
 
-## Make sure I didn't introduce any stupid syntax errors.
-test_that("Is it possible to load/start cbcbSEQ/hpgltools?", {
-    library(cbcbSEQ)
-    library(hpgltools)
-    require.auto("pasilla")
-})
+## WTF why does travis give me this:
+## Error in loadNamespace(name) : there is no package called 'cbcbSEQ'
+## The damn library call is just above!
 
 ## Load the pasilla data set
 message("Loading pasilla, setting up count tables.")
@@ -30,7 +32,7 @@ message("Setting up an expt class to contain the pasilla data and metadata.")
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
 cbcb_data = counts
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
-hpgl_data = exprs(pasilla_expt$expressionset)
+hpgl_data = Biobase::exprs(pasilla_expt$expressionset)
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(cbcb_data, hpgl_data)
 })
@@ -48,10 +50,12 @@ test_that("Are the quantile normalizations identical?", {
 
 ## Check that quant+cpm are the same
 message("Testing quantile(cpm()) normalization using edgeR's cpm().")
-cbcb_qcpm = qNorm(cbcb_data)
+cbcb_qcpm = cbcbSEQ::qNorm(cbcb_data)
+library(edgeR)
+## I don't know how to call cpm without using a library call first.
 cbcb_qcpm = edgeR::cpm(cbcb_qcpm)
 
-cbcb_quantile = qNorm(cbcb_data)
+cbcb_quantile = cbcbSEQ::qNorm(cbcb_data)
 hpgl_quantile = hpgl_norm(pasilla_expt, norm="quant")
 hpgl_quantile = hpgl_quantile$count_table
 test_that("Are quantiles identical?", {
@@ -67,12 +71,12 @@ test_that("Are cpm conversions identical?", {
 
 ## log2/cpm that
 message("Testing log2(quantile(cpm())) normalization using the cpm from voom()")
-cbcb_l2qcpm_data = log2CPM(cbcb_quantile)
+cbcb_l2qcpm_data = cbcbSEQ::log2CPM(cbcb_quantile)
 cbcb_l2qcpm = cbcb_l2qcpm_data$y
 hpgl_l2qcpm_data = hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE, verbose=TRUE)
 hpgl_l2qcpm = hpgl_l2qcpm_data$final_counts$count_table
 hpgl_l2qcpm_expt = normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE)
-hpgl_l2qcpm2 = exprs(hpgl_l2qcpm_expt$expressionset)
+hpgl_l2qcpm2 = Biobase::exprs(hpgl_l2qcpm_expt$expressionset)
 test_that("Are l2qcpm conversions/transformations identical using two codepaths?", {
     expect_equal(cbcb_l2qcpm, hpgl_l2qcpm)
     expect_equal(cbcb_l2qcpm, hpgl_l2qcpm2)
@@ -117,9 +121,9 @@ test_that("In preparing for voom(), are the library sizes the same?", {
 message("Testing different methods of invoking voom, with/without cpm/log2 converted/transformed data.")
 condition = design$condition
 test_model = model.matrix(~condition)
-cbcb_voom = voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize, plot=TRUE)
-hpgl_voom = voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize, plot=TRUE)
-hpgl_voom2 = hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
+cbcb_voom = cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize, plot=TRUE)
+hpgl_voom = cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize, plot=TRUE)
+hpgl_voom2 = hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
 hpgl_voom3 = hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE)
 
 message("I can't test cbcb_voom vs. hpgl_voom3 because I set the row/colnames.")
@@ -134,10 +138,10 @@ test_that("Do different voom() invocations end with the same data?", {
 ## expect_equal(cbcb_voom$weights, hpgl_voom$weights)
 
 message("Test the final results from limma by invoking it through different codepaths.")
-cbcb_fit = lmFit(cbcb_voom)
-cbcb_eb = eBayes(cbcb_fit)
-cbcb_top = topTable(cbcb_eb, number=nrow(cbcb_eb))
-hpgl_toptables = limma_pairwise(hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize)
+cbcb_fit = limma::lmFit(cbcb_voom)
+cbcb_eb = limma::eBayes(cbcb_fit)
+cbcb_top = limma::topTable(cbcb_eb, number=nrow(cbcb_eb))
+hpgl_toptables = hpgltools::limma_pairwise(hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize)
 hpgl_top = hpgl_toptables$all_tables
 test_that("Limma results.", {
     expect_equal(cbcb_top, hpgl_top)

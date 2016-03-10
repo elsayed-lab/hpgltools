@@ -2,20 +2,30 @@
 % Please edit documentation in R/misc_functions.r
 \name{saveme}
 \alias{saveme}
-\title{saveme()  Make a backup rdata file for future reference}
+\title{Make a backup rdata file for future reference}
 \usage{
 saveme(directory = "savefiles", backups = 4)
 }
 \arguments{
-\item{backups}{default=10  how many revisions?
+\item{directory}{the directory to save the Rdata file.}
 
-I often use R over a sshfs connection, sometimes with significant latency, and
-I want to be able to save/load my R sessions relatively quickly.
-Thus this function uses pxz to compress the R session maximally and relatively fast.}
-
-\item{dir}{the directory to save the Rdata file.}
+\item{backups}{how many revisions?}
+}
+\value{
+the command used to save the global environment
 }
 \description{
-saveme()  Make a backup rdata file for future reference
+I often use R over a sshfs connection, sometimes with significant latency, and
+I want to be able to save/load my R sessions relatively quickly.
+Thus this function uses pxz to compress the R session maximally and relatively fast.
+This assumes you have pxz installed and >= 4 CPUs.
+}
+\examples{
+\dontrun{
+saveme()
+}
+}
+\seealso{
+\link{save} \link{pipe}
 }
 

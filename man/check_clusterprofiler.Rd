@@ -2,23 +2,25 @@
 % Please edit documentation in R/ontology_clusterprofiler.r
 \name{check_clusterprofiler}
 \alias{check_clusterprofiler}
-\title{check_clusterprofiler() Make sure that clusterProfiler is ready to run}
+\title{Make sure that clusterProfiler is ready to run}
 \usage{
 check_clusterprofiler(gff = "test.gff", gomap = NULL)
 }
 \arguments{
-\item{gff}{default='test.gff'  The gff file containing annotation data (gene lengths)}
+\item{gff}{The gff file containing annotation data (gene lengths)}
 
-\item{gomap}{default=NULL  a data frame of gene IDs and GO ontologies 1:1, other columns are ignored.}
+\item{gomap}{a data frame of gene IDs and GO ontologies 1:1, other columns are ignored.}
 }
 \value{
 the GO2EG data structure created, probably don't save this, its big
 }
 \description{
-check_clusterprofiler() Make sure that clusterProfiler is ready to run
+Make sure that clusterProfiler is ready to run
 }
 \examples{
-## go2eg <- check_clusterprofiler(gff, goids)
-## rm(go2eg)
+\dontrun{
+ go2eg <- check_clusterprofiler(gff, goids)
+ rm(go2eg)
+}
 }
 

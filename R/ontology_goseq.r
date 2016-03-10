@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Feb  2 15:08:59 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 00:50:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -6,14 +6,12 @@
 #' be the output from goseq including information like
 #' numbers/category, GOids, etc.  It requires a column 'category' which contains: GO:000001 and such.
 #' @param file a csv file to which to write the table
-#'
 #' @return the ontology table with annotation information included
-#' @seealso \code{\link{GOTERM}}, \code{\link{GO.db}},
-#'
-#' @export
+#' @seealso \pkg{goseq}
 #' @examples
-#' ## annotated_go = goseq_table(go_ids)
-#' ## head(annotated_go, n=1)
+#' \dontrun{
+#'  annotated_go = goseq_table(go_ids)
+#'  head(annotated_go, n=1)
 #' ## >        category numDEInCat numInCat over_represented_pvalue
 #' ## > 571  GO:0006364          9       26            4.655108e-08
 #' ## >      under_represented_pvalue       qvalue ontology
@@ -23,7 +21,10 @@
 #' ## >                               synonym
 #' ## > 571        "35S primary transcript processing, GO:0006365"
 #' ## >        secondary    definition
-#' ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal RNA (rRNA) transcript into one or more mature rRNA molecules.
+#' ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal
+#' ##          RNA (rRNA) transcript into one or more mature rRNA molecules.
+#' }
+#' @export
 goseq_table <- function(df, file=NULL) {
     if (is.null(df$term)) {
         df$term <- goterm(df$category)
@@ -65,13 +66,16 @@ goseq_table <- function(df, file=NULL) {
 #' @param all_genes the universe of possible genes
 #' @param lengths the length of each gene with an ID in de_genes
 #' @param goids a list of ontology accessions to gene accessions
-#' @param adjust minimum adjusted pvalue
-#' @param pvalue minimum pvalue
-#' @param goseq_method wallenius statistical test used by goseq
-#' @param padjust_method BH which method to adjust the pvalues
-#' @param species NULL optionally choose a species from supportedOrganisms()
-#' @param length_db If species is chosen (or if not, really), ensGene may be used to automagically pull the gene lengths.
-#'
+#' @param doplot   include pwf plots
+#' @param adjust   minimum adjusted pvalue
+#' @param pvalue   minimum pvalue
+#' @param qvalue   minimum qvalue
+#' @param goseq_method   testing used by goseq
+#' @param padjust_method   which method to adjust the pvalues
+#' @param species   optionally choose a species from supportedOrganisms()
+#' @param length_db   Source of gene lengths
+#' @param gff   gff file source of gene lengths
+#' @param ... extra parameters which I do not recall
 #' @return a big list including:
 #'   the pwd:pwf function,
 #'   alldata:the godata dataframe,
@@ -84,7 +88,7 @@ goseq_table <- function(df, file=NULL) {
 #'   bpp_plot,
 #'   cc_subset,
 #'   and ccp_plot
-#' @seealso \code{\link{goseq}} \code{\link{clusterProfiler}}
+#' @seealso \pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
 #' @export
 simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius",
@@ -133,7 +137,9 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     } else { ## If both lengths and all_genes are defined, use all_genes.
         message("simple_goseq(): Using all genes to fill in the de vector.")
         de_table <- merge(de_table, all_genes, by.x="ID", by.y="row.names", all.y=TRUE)
-        de_table[is.na(de_table)] <- 0  ## Set the new entries DE status to 0
+        ##de_table[is.na(de_table)] <- 0  ## Set the new entries DE status to 0
+        de_table <- merge(de_table, lengths, by.x="ID", by.y="ID", all.x=TRUE)
+        de_table$DE[is.na(de_table$DE)] <- 0  ## Set the new entries DE status to 0
         rownames(de_table) <- make.names(de_table$ID, unique=TRUE)
         de_vector <- as.vector(de_table$DE)
         names(de_vector) <- rownames(de_table)
@@ -146,7 +152,8 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
         if (is.null(goids)) {
             stop("simple_goseq(): The goids are not defined.")
         }
-        colnames(goids) <- c("ID", "GO")
+        goids <- goids[, c("ID","GO")]
+        ##colnames(goids) <- c("ID", "GO")
         pwf <- goseq::nullp(DEgenes=de_vector, bias.data=width_vector, plot.fit=doplot)
     } else {
         pwf <- goseq::nullp(de_vector, species, length_db, plot.fit=doplot) ## Taken from the goseq() reference manual
@@ -225,12 +232,13 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
 #' Make a pvalue plot from goseq data
 #'
 #' @param goterms some data from goseq!
-#' @param wrapped_width 20 the number of characters before wrapping to help legibility
-#' @param cutoff pvalue cutoff for the plot
-#' @param n 10 how many groups to include
-#'
+#' @param wrapped_width the number of characters before wrapping to help legibility
+#' @param cutoff   pvalue cutoff for the plot
+#' @param n    how many groups to include
+#' @param mincat   minimum size of the category
+#' @param level   levels of the ontology tree to use
 #' @return plots!
-#' @seealso \code{\link{goseq}} \code{\link{clusterProfiler}} \code{\link{pval_plot}}
+#' @seealso \link[goseq]{goseq} \pkg{clusterProfiler} \code{\link{pval_plot}}
 #' @export
 goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat=10, level=NULL) {
     ## The following supports stuff like level='level > 3 & level < 6'
@@ -323,11 +331,14 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
 #'
 #' @param de_genes some differentially expressed genes
 #' @param godata data from goseq
-#' @param goids a mapping of IDs to GO in the Ramigo expected format
-#' @param sigforall Print significance on all nodes?
-#'
+#' @param goid_map   file to save go id mapping
+#' @param score_limit   score limit for the coloring
+#' @param goids_df   a mapping of IDs to GO in the Ramigo expected format
+#' @param overwrite   overwrite the trees
+#' @param selector   a function for choosing genes
+#' @param pval_column  column to acquire pvalues
 #' @return a plot!
-#' @seealso \code{\link{Ramigo}}
+#' @seealso \pkg{Ramigo}
 #' @export
 goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
                         score_limit=0.01, goids_df=NULL, overwrite=FALSE,

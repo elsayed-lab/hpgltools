@@ -2,26 +2,28 @@
 % Please edit documentation in R/ontology_shared.r
 \name{goterm}
 \alias{goterm}
-\title{goterm()  Get a go term from ID.}
+\title{Get a go term from ID.}
 \usage{
 goterm(go = "GO:0032559")
 }
 \arguments{
-\item{go}{default='GO:0032559'  a go ID or list thereof
+\item{go}{a go ID or list thereof
 this may be a character or list(assuming the elements, not names, are goids)}
 }
 \value{
 Some text
 }
 \description{
-goterm()  Get a go term from ID.
+Get a go term from ID.
 }
 \examples{
-## goterm("GO:0032559")
+\dontrun{
+ goterm("GO:0032559")
 ## > GO:0032559
 ## > "adenyl ribonucleotide binding"
 }
+}
 \seealso{
-\code{\link{GOTERM}}, \code{\link{GO.db}},
+\pkg{GOTermsAnnDbBimap}
 }
 

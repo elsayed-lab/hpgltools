@@ -2,37 +2,37 @@
 % Please edit documentation in R/misc_functions.r
 \name{get_genelengths}
 \alias{get_genelengths}
-\title{get_genelengths()  Grab gene lengths from a gff file.}
+\title{Grab gene lengths from a gff file.}
 \usage{
 get_genelengths(gff, type = "gene", key = "ID")
 }
 \arguments{
 \item{gff}{a gff file with (hopefully) IDs and widths}
 
-\item{type}{default='gene'  the annotation type to use.}
+\item{type}{the annotation type to use.}
 
-\item{key}{default='ID'  the identifier in the 10th column of the gff file to use.
-
-This function attempts to be robust to the differences in output from importing gff2/gff3 files.  But it certainly isn't perfect.}
+\item{key}{the identifier in the 10th column of the gff file to use.}
 }
 \value{
 a data frame of gene IDs and widths.
 }
 \description{
-get_genelengths()  Grab gene lengths from a gff file.
+This function attempts to be robust to the differences in output from importing gff2/gff3 files.  But it certainly isn't perfect.
 }
 \examples{
-## tt = get_genelengths('reference/fun.gff.gz')
-## head(tt)
-##          ID width
-##1   YAL069W   312
-##2   YAL069W   315
-##3   YAL069W     3
-##4 YAL068W-A   252
-##5 YAL068W-A   255
-##6 YAL068W-A     3
+\dontrun{
+ tt = get_genelengths('reference/fun.gff.gz')
+ head(tt)
+#          ID width
+#1   YAL069W   312
+#2   YAL069W   315
+#3   YAL069W     3
+#4 YAL068W-A   252
+#5 YAL068W-A   255
+#6 YAL068W-A     3
+}
 }
 \seealso{
-\code{\link{import.gff3}}, \code{\link{import.gff}}, \code{\link{import.gff2}}
+\pkg{rtracklayer} \link[rtracklayer]{import.gff}
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{goont}
 \alias{goont}
-\title{goont()  Get a go ontology name from an ID.}
+\title{Get a go ontology name from an ID.}
 \usage{
 goont(go)
 }
@@ -13,14 +13,16 @@ goont(go)
 Some text
 }
 \description{
-goont()  Get a go ontology name from an ID.
+Get a go ontology name from an ID.
 }
 \examples{
-## goont(c("GO:0032432", "GO:0032433"))
+\dontrun{
+ goont(c("GO:0032432", "GO:0032433"))
 ## > GO:0032432 GO:0032433
 ## > "CC" "CC"
 }
+}
 \seealso{
-\code{\link{GOTERM}}, \code{\link{GO.db}},
+\pkg{GOTermsAnnDbBimap}
 }
 

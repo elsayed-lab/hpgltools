@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{hpgl_norm}
 \alias{hpgl_norm}
-\title{\code{hpgl_norm()} Normalize a dataframe/expt, express it, and/or transform it}
+\title{Normalize a dataframe/expt, express it, and/or transform it}
 \usage{
 hpgl_norm(data, design = NULL, transform = "raw", norm = "raw",
   convert = "raw", batch = "raw", batch1 = "batch", batch2 = NULL,
@@ -12,6 +12,10 @@ hpgl_norm(data, design = NULL, transform = "raw", norm = "raw",
   cv_max = 1000, ...)
 }
 \arguments{
+\item{data}{some data}
+
+\item{design}{design dataframe must come with it}
+
 \item{transform}{defines whether to log(2|10) transform the
 data. Defaults to raw.}
 
@@ -23,39 +27,60 @@ definitely corner-case scenarios for all strategies.}
 \item{convert}{defines the output type which may be raw, cpm,
 rpkm, or cp_seq_m.  Defaults to raw.}
 
-\item{filter_low}{choose whether to low-count filter the data.
-Defaults to true.}
+\item{batch}{batch correction method to try out}
+
+\item{batch1}{column from design to get batch info}
+
+\item{batch2}{a second covariate to try}
+
+\item{filter_low}{choose whether to low-count filter the data.}
 
 \item{annotations}{is used for rpkm or sequence normalizations to
 extract the lengths of sequences for normalization}
 
-\item{expt=expt}{an expt class containing all the necessary
-metadata}
+\item{entry_type}{default gff entry to cull from}
 
-\item{df=df}{alternately a dataframe of counts may be used}
+\item{fasta}{fasta genome for rpkm}
 
-\item{design=design}{but a design dataframe must come with it}
+\item{verbose}{talk}
+
+\item{thresh}{threshold for low count filtering}
+
+\item{min_samples}{minimum samples for low count filtering}
+
+\item{noscale}{used by combatmod}
+
+\item{p}{for povera genefilter}
+
+\item{A}{for povera genefilter}
+
+\item{k}{for kovera genefilter}
+
+\item{cv_min}{for genefilter cv}
+
+\item{cv_max}{for genefilter cv}
+
+\item{...}{I should put all those other options here}
 }
 \value{
 edgeR's DGEList expression of a count table.  This seems to
 me to be the easiest to deal with.
 }
 \description{
-\code{hpgl_norm()} Normalize a dataframe/expt, express it, and/or transform it
+Sometime soon I am going to elipsis all these variables
 }
 \examples{
 \dontrun{
 df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
 df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2', convert='rpkm')  ## Quantile, log2, rpkm
+df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2',
+                       convert='rpkm')  ## Quantile, log2, rpkm
 count_table = df_ql2rpkm$counts
 }
 }
 \seealso{
-\code{\link[edgeR]{cpm}}, \code{\link[edgeR]{rpkm}},
-\code{\link{hpgl_rpkm}}, \code{\link[cbcbSEQ]{filterCounts}},
-\code{\link[DESeq]{DESeqDataSetFromMatrix}},
-\code{\link[DESeq]{estimateSizeFactors}}, \code{\link[DESeq]{DGEList}},
-\code{\link[edgeR]{calcNormFactors}}
+\link[edgeR]{cpm} \link[edgeR]{rpkm}
+\link{hpgl_rpkm} \link[cbcbSEQ]{filterCounts} \link[DESeq2]{DESeqDataSetFromMatrix}
+\link[DESeq]{estimateSizeFactors} \link[edgeR]{DGEList} \link[edgeR]{calcNormFactors}
 }
 

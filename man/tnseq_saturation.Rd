@@ -2,7 +2,7 @@
 % Please edit documentation in R/tnseq.r
 \name{tnseq_saturation}
 \alias{tnseq_saturation}
-\title{tnseq_saturation()  Make a plot and some simple numbers about tnseq saturation}
+\title{Make a plot and some simple numbers about tnseq saturation}
 \usage{
 tnseq_saturation(file)
 }

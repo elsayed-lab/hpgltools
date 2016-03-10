@@ -1,22 +1,23 @@
-## Time-stamp: <Tue Feb  2 14:37:34 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar  4 22:20:08 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' require.auto()  Automatic loading and/or installing of packages.
+#' Automatic loading and/or installing of packages.
 #'
-#' \code{require.auto} loads a library, and installs it first if necessary.
+#' Load a library, install it first if necessary.
 #'
 #' This was taken from:
 #' http://sbamin.com/2012/11/05/tips-for-working-in-r-automatically-install-missing-package/
 #'
 #' @param lib  string name of a library
-#' @param github_path default=NULL  an optional github username/path.
-#' @param verbose default=FALSE  print some information while loading.
-#' @param update default=FALSE  update packages?
-#'
+#' @param github_path   an optional github username/path.
+#' @param verbose   print some information while loading.
+#' @param update   update packages?
 #' @return NULL currently
-#' @seealso \code{\link{biocLite}} and \code{\link{install.packages}}
+#' @seealso \link[BiocInstaller]{biocLite} \link{install.packages}
 #' @export
 #' @examples
-#' ## require.auto("ggplot2")
+#' \dontrun{
+#' require.auto("ggplot2")
+#'}
 require.auto <- function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
     local({r <- getOption("repos")
            r["CRAN"] <- "http://cran.r-project.org"
@@ -27,9 +28,9 @@ require.auto <- function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
     }
     if (isTRUE(lib %in% .packages(all.available=TRUE))) {
         if (verbose) {
-            message(sprintf("Loading %s", lib))
+            message(sprintf("Able to load %s", lib))
         }
-        eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
+        ##eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
     } else {
         if (is.null(github_path)) {
             source("http://bioconductor.org/biocLite.R")
@@ -38,7 +39,7 @@ require.auto <- function(lib, github_path=NULL, verbose=FALSE, update=FALSE) {
             if (verbose) {
                 message(sprintf("Loading %s", lib))
             }
-            eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
+            ##eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
             ## eval(parse(text=paste("install.packages('", lib, "')", sep="")))
         } else {
             devtools::install_github(github_path)
@@ -87,15 +88,19 @@ autoloads_elsayedlab <- function() {
 }
 
 autoloads_deseq <- function() {
+    require.auto("affy")
     require.auto("preprocessCore")
     require.auto("DESeq2")
     require.auto("DESeq")
     require.auto("edgeR")
     require.auto("limma")
+    require.auto("RUVSeq")
     require.auto("sva")
+    require.auto("survJamda")
     require.auto("pasilla")  ## for cbcbSEQ
     require.auto("preprocessCore") ## for cbcbSEQ
-    require.auto("cbcbSEQ", "kokrah/cbcbSEQ")  ## cbcbSeq has to be loaded last because its DESCRIPTION file is missing a couple of dependencies
+    require.auto("kokrah/qsmooth")
+    require.auto("kokrah/cbcbSEQ")  ## cbcbSeq has to be loaded last because its DESCRIPTION file is missing a couple of dependencies
 ##    require.auto("qlasso", "kokrah/qsmooth")
 }
 
@@ -144,16 +149,25 @@ autoloads_stats <- function() {
 }
 
 autoloads_misc <- function() {
-    require.auto("motifRG")
     require.auto("Rsamtools")
     require.auto("scales")
     require.auto("seqinr")
+##    require.auto("SeqTools", "lianos/seqtools/R/pkg")
+    require.auto("ReactomePA")
+}
+
+autoloads_motif <- function() {
+    require.auto("rGADEM")
+###    require.auto("MotIV")
+###    require.auto("motifRG")
+###    require.auto("motifStack")
 }
 
 #' Automatic loading of stuff I use, I am deprecating this now.
 #'
+#' @param  update packages?
 #' @return NULL currently
-#' @seealso \code{\link[BiocInstaller]{biocLite}} and \code{\link{install.packages}}
+#' @seealso \link[BiocInstaller]{biocLite} \link{install.packages}
 #' @export
 autoloads_all <- function(update=FALSE) {
     autoloads_helpers()
@@ -163,6 +177,7 @@ autoloads_all <- function(update=FALSE) {
     autoloads_stats()
     autoloads_deseq()
     autoloads_ontology()
+    autoloads_motif()
     ##cite_options(tooltip=TRUE)
     ##cleanbib()
     options(gvis.plot.tag="chart")

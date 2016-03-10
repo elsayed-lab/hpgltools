@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{deparse_go_value}
 \alias{deparse_go_value}
-\title{deparse_go_value()  Extract more easily readable information from a GOTERM datum.}
+\title{Extract more easily readable information from a GOTERM datum.}
 \usage{
 deparse_go_value(value)
 }
@@ -21,7 +21,9 @@ NA, NULL, "NA", "NULL", c("NA",NA,"GO:00001"), "GO:00002", c("Some text",NA, NUL
 This function will boil that down to 'not found', '', 'GO:00004', or "GO:0001,  some text, GO:00004"
 }
 \examples{
-## goterms = GOTERM[ids]
-## sane_goterms = deparse_go_value(goterms)
+\dontrun{
+ goterms = GOTERM[ids]
+ sane_goterms = deparse_go_value(goterms)
+}
 }
 

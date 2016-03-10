@@ -2,14 +2,14 @@
 % Please edit documentation in R/ontology_shared.r
 \name{golevel_df}
 \alias{golevel_df}
-\title{golevel_df()  Extract a dataframe of golevels using getGOLevel() from clusterProfiler.}
+\title{Extract a dataframe of golevels using getGOLevel() from clusterProfiler.}
 \usage{
 golevel_df(ont = "MF", savefile = "ontlevel.rda")
 }
 \arguments{
-\item{ont}{default='MF'  the ontology to recurse.}
+\item{ont}{the ontology to recurse.}
 
-\item{savefile}{default='ontlevel.rda'  a file to save the results for future lookups.}
+\item{savefile}{a file to save the results for future lookups.}
 }
 \value{
 golevels  a dataframe of goids<->highest level

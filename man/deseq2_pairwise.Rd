@@ -2,34 +2,47 @@
 % Please edit documentation in R/de_deseq.r
 \name{deseq2_pairwise}
 \alias{deseq2_pairwise}
-\title{deseq2_pairwise()  Set up a model matrix and set of contrasts to do
+\title{Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using DESeq2.}
 \usage{
 deseq2_pairwise(input, conditions = NULL, batches = NULL,
   model_cond = TRUE, model_batch = FALSE, annot_df = NULL, ...)
 }
 \arguments{
-\item{input}{a dataframe/vector or  expt class containing data, normalization state, etc.}
+\item{input}{A dataframe/vector or expt class containing data, normalization state, etc.}
 
-\item{conditions}{default=NULL  a factor of conditions in the experiment}
+\item{conditions}{A factor of conditions in the experiment}
 
-\item{batches}{default=NULL a factor of batches in the experiment}
+\item{batches}{A factor of batches in the experiment}
+
+\item{model_cond}{Have condition in the experimental model?}
+
+\item{model_batch}{Have batch in the experimental model?}
+
+\item{annot_df}{Include some annotation information in the results?}
+
+\item{...}{triple dots!}
 }
 \value{
 A list including the following information:
   run = the return from calling DESeq()
-  result = the return from calling results()
-  result_mle = the return from calling results() with the MLE parameter.
-  results = the return when a deseq result class is cast as a dataframe.
+  denominators = list of denominators in the contrasts
+  numerators = list of the numerators in the contrasts
+  conditions = the list of conditions in the experiment
+  coefficients = list of coefficients making the contrasts
+  all_tables = list of DE tables
 }
 \description{
-deseq2_pairwise()  Set up a model matrix and set of contrasts to do
+Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using DESeq2.
 }
 \examples{
-## pretend = deseq2_pairwise(data, conditions, batches)
+\dontrun{
+pretend = deseq2_pairwise(data, conditions, batches)
+}
 }
 \seealso{
-\code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
+\pkg{DESeq2} \code{\link[DESeq2]{results}} \code{\link[DESeq2]{estimateSizeFactors}}
+         \code{\link[DESeq2]{estimateDispersions}} \code{\link[DESeq2]{nbinomWaldTest}}
 }
 

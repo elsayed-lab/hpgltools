@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{graph_metrics}
 \alias{graph_metrics}
-\title{graph_metrics()  Make lots of graphs!}
+\title{Make lots of graphs!}
 \usage{
 graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
   title_suffix = NULL, qq = NULL, ma = NULL, ...)
@@ -10,17 +10,17 @@ graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
 \arguments{
 \item{expt}{an expt to process}
 
-\item{cormethod}{default='pearson'  the correlation test for heatmaps.}
+\item{cormethod}{the correlation test for heatmaps.}
 
-\item{distmethod}{default='euclidean'  define the distance metric for heatmaps.}
+\item{distmethod}{define the distance metric for heatmaps.}
 
-\item{title_suffix}{default=NULL  text to add to the titles of the plots.}
+\item{title_suffix}{text to add to the titles of the plots.}
+
+\item{qq}{include qq plots}
+
+\item{ma}{include pairwise ma plots}
 
 \item{...}{extra parameters optionally fed to the various plots}
-
-\item{scale}{default='raw'  scale for the axes, sometimes useful to set as log2.}
-
-\item{sink}{default=FALSE  add in the kitchen sink?  This includes all pairwise ma plots and qq plots and takes potentially forever.}
 }
 \value{
 a loooong list of plots including the following:
@@ -45,16 +45,19 @@ density plots, pca plots, standard median distance/correlation, and
 qq plots.
 }
 \examples{
-## toomany_plots = graph_metrics(expt)
-## testnorm = graph_metrics(expt, norm_type="tmm", filter="log2", out_type="rpkm", cormethod="robust")
-## haha sucker, you are going to be waiting a while!
+\dontrun{
+toomany_plots <- graph_metrics(expt)
+toomany_plots$pcaplot
+norm <- normalize_expt(expt, convert="cpm", batch=TRUE, filter_low=TRUE,
+                       transform="log2", norm="rle")
+holy_asscrackers <- graph_metrics(norm, qq=TRUE, ma=TRUE)
+## good luck, you are going to be waiting a while for the ma plots to print!
+}
 }
 \seealso{
-\code{\link{exprs}}, \code{\link{hpgl_norm}},
-\code{\link{graph_nonzero}}, \code{\link{hpgl_libsize}},
-\code{\link{hpgl_boxplot}}, \code{\link{hpgl_corheat}},
-\code{\link{hpgl_smc}}, \code{\link{hpgl_disheat}},
-\code{\link{hpgl_smd}}, \code{\link{hpgl_pca}},
-\code{\link{replayPlot}}, \code{\link{recordPlot}}
+\pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
+\link[Biobase]{exprs} \link{hpgl_norm} \link{hpgl_nonzero} \link{hpgl_libsize}
+\link{hpgl_boxplot} \link{hpgl_corheat} \link{hpgl_smc} \link{hpgl_disheat}
+\link{hpgl_smd} \link{hpgl_pca} \link{hpgl_qq_all} \link{hpgl_pairwise_ma}
 }
 

@@ -11,9 +11,21 @@ hpgl_enrich.internal(gene, organism, pvalueCutoff = 1, pAdjustMethod = "BH",
 \arguments{
 \item{gene}{some differentially expressed genes}
 
-\item{organism}{by default 'human'}
+\item{organism}{again will cause this to pull ensG if recognized by clusteprofiler}
 
-\item{ont}{by default 'MF'}
+\item{pvalueCutoff}{a pvalue cutoff}
+
+\item{pAdjustMethod}{p adjust method}
+
+\item{ont}{mf bp or cc}
+
+\item{minGSSize}{a minimum gs size}
+
+\item{qvalueCutoff}{maximum q value}
+
+\item{readable}{set the readable flag for dose}
+
+\item{universe}{a universe to use}
 }
 \value{
 some clusterProfiler data
@@ -22,6 +34,6 @@ some clusterProfiler data
 A minor hack in the clusterProfiler function 'enrich.internal'
 }
 \seealso{
-\code{\link{clusterProfiler}}
+\pkg{clusterProfiler}
 }
 

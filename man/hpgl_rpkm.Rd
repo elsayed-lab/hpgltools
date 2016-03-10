@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.r
 \name{hpgl_rpkm}
 \alias{hpgl_rpkm}
-\title{\code{hpgl_rpkm()}  Reads/(kilobase(gene) * million reads)}
+\title{Reads/(kilobase(gene) * million reads)}
 \usage{
 hpgl_rpkm(df, annotations = get0("gene_annotations"))
 }

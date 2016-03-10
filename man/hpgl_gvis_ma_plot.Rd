@@ -2,7 +2,7 @@
 % Please edit documentation in R/gvis_plots.r
 \name{hpgl_gvis_ma_plot}
 \alias{hpgl_gvis_ma_plot}
-\title{hpgl_gvis_ma_plot()  Make an html version of an MA plot.}
+\title{Make an html version of an MA plot.}
 \usage{
 hpgl_gvis_ma_plot(counts, degenes, tooltip_data = NULL,
   filename = "html/gvis_ma_plot.html", base_url = "", ...)
@@ -11,27 +11,30 @@ hpgl_gvis_ma_plot(counts, degenes, tooltip_data = NULL,
 \item{counts}{df of linear-modelling, normalized counts by sample-type,
 which is to say the output from voom/voomMod/hpgl_voom().}
 
-\item{tooltip_data}{default=NULL  a df of tooltip information.}
+\item{degenes}{df from toptable or its friends containing p-values.}
 
-\item{filename}{default='html/gvis_ma_plot.html'  a filename to write a fancy html graph.}
+\item{tooltip_data}{a df of tooltip information.}
 
-\item{base_url}{default=''  a string with a basename used for generating URLs for clicking dots on the graph.}
+\item{filename}{a filename to write a fancy html graph.}
 
-\item{de_genes}{df from toptable or its friends containing p-values.}
+\item{base_url}{a string with a basename used for generating URLs for clicking dots on the graph.}
 
-\item{adjpval_cutoff}{default=0.05  a cutoff defining significant from not.}
+\item{...}{more options are more options}
 }
 \value{
 NULL, but along the way an html file is generated which
 contains a googleVis MA plot.  See hpgl_ma_plot() for details.
 }
 \description{
-hpgl_gvis_ma_plot()  Make an html version of an MA plot.
+Make an html version of an MA plot.
 }
 \examples{
-## hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+\dontrun{
+ hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
+                   base_url="http://yeastgenome.org/accession?")
+}
 }
 \seealso{
-\code{\link{hpgl_ma_plot}}
+\link{hpgl_ma_plot}
 }
 

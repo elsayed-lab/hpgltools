@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_topgo.r
 \name{hpgl_GroupDensity}
 \alias{hpgl_GroupDensity}
-\title{hpgl_GroupDensity()  A hack of topGO's groupDensity()}
+\title{A hack of topGO's groupDensity()}
 \usage{
 hpgl_GroupDensity(object, whichGO, ranks = TRUE, rm.one = FALSE)
 }
@@ -11,9 +11,9 @@ hpgl_GroupDensity(object, whichGO, ranks = TRUE, rm.one = FALSE)
 
 \item{whichGO}{an individual ontology group to compare with}
 
-\item{ranks}{default=TRUE  rank order the set of ontologies}
+\item{ranks}{rank order the set of ontologies}
 
-\item{rm.one}{default=FALSE  remove pvalue=1 groups}
+\item{rm.one}{remove pvalue=1 groups}
 }
 \description{
 This just adds a couple wrappers to avoid errors in groupDensity.

@@ -7,7 +7,7 @@
 gosec(go)
 }
 \arguments{
-\item{id}{A go ID -- this may be a character or list(assuming the elements, not names, are goids)}
+\item{go}{A go ID -- this may be a character or list(assuming the elements, not names, are goids)}
 }
 \value{
 Some text
@@ -17,11 +17,13 @@ Unfortunately, GOTERM's returns for secondary IDs are not consistent, so this fu
 has to have a whole bunch of logic to handle the various outputs.
 }
 \examples{
-## gosec("GO:0032432")
+\dontrun{
+ gosec("GO:0032432")
 ## > GO:0032432
 ## > "GO:0000141" "GO:0030482"
 }
+}
 \seealso{
-\code{\link{GOTERM}}, \code{\link{GO.db}},
+\pkg{GOTermsAnnDbBimap}
 }
 

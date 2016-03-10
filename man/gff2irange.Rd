@@ -2,20 +2,32 @@
 % Please edit documentation in R/misc_functions.r
 \name{gff2irange}
 \alias{gff2irange}
-\title{gff2irange()  Try to make import.gff a little more robust}
+\title{Try to make import.gff a little more robust}
 \usage{
-gff2irange(gff)
+gff2irange(gff, type = NULL)
 }
 \arguments{
-\item{gff}{a gff filename
+\item{gff}{a gff filename}
 
-This function wraps import.gff/import.gff3/import.gff2 calls in try()
-Because sometimes those functions fail in unpredictable ways.}
+\item{type}{a subset to extract
+
+Essentially gff2df() above, but returns data suitable for getSet()}
 }
 \value{
 an iranges! (useful for getSeq())
 }
 \description{
-gff2irange()  Try to make import.gff a little more robust
+Try to make import.gff a little more robust
+}
+\examples{
+\dontrun{
+library(BSgenome.Tcruzi.clbrener.all)
+tc_clb_all <- BSgenome.Tcruzi.clbrener.all
+cds_ranges <- gff2irange('reference/gff/tcruzi_clbrener.gff.xz', type='CDS')
+cds_sequences <- Biostrings::getSeq(tc_clb_all, cds_ranges)
+}
+}
+\seealso{
+\pkg{rtracklayer} \link{gff2df} \link[Biostrings]{getSeq}
 }
 

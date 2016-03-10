@@ -2,7 +2,7 @@
 % Please edit documentation in R/pca.r
 \name{factor_rsquared}
 \alias{factor_rsquared}
-\title{factor_rsquared()  Collect the r^2 values from a linear model fitting between a singular
+\title{Collect the r^2 values from a linear model fitting between a singular
 value decomposition and factor.}
 \usage{
 factor_rsquared(svd_v, factor)
@@ -16,10 +16,10 @@ factor_rsquared(svd_v, factor)
 The r^2 values of the linear model as a percentage.
 }
 \description{
-factor_rsquared()  Collect the r^2 values from a linear model fitting between a singular
+Collect the r^2 values from a linear model fitting between a singular
 value decomposition and factor.
 }
 \seealso{
-\code{\link{fast.svd}}
+\code{\link[corpcor]{fast.svd}}
 }
 

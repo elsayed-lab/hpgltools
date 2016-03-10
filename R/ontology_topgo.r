@@ -1,23 +1,24 @@
-## Time-stamp: <Tue Feb  2 15:04:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Feb  4 23:27:47 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' simple_topgo()  Perform a simplified topgo analysis
+#' Perform a simplified topgo analysis
 #'
 #' This will attempt to make it easier to run topgo on a set of genes.
 #'
 #' @param de_genes  a data frame of differentially expressed genes, containing IDs and whatever other columns
-#' @param goid_map default='reference/go/id2go.map'  a file containing mappings of genes to goids in the format expected by topgo
-#' @param goids_df default=NULL  a data frame of the goids which may be used to make the goid_map
-#' @param pvals default=NULL  a set of pvalues in the DE data which may be used to improve the topgo results
-#' @param limitby default='fisher'  test to index the results by
-#' @param limit default=0.1  ontology pvalue to use as the lower limit
-#' @param signodes default=100  I don't remember right now
-#' @param sigforall default=TRUE  provide the significance for all nodes?
-#' @param numchar default=300  character limit for the table of results
-#' @param selector default='topDiffGenes'  a function name for choosing genes to include
-#' @param overwrite default=FALSE  yeah I do not remember this one either
-#' @param densities default=FALSE  the densities, yeah, the densities
-#' @param pval_plots default=TRUE  include pvalue plots of the results a la clusterprofiler
-#'
+#' @param goid_map   a file containing mappings of genes to goids in the format expected by topgo
+#' @param goids_df   a data frame of the goids which may be used to make the goid_map
+#' @param pvals   a set of pvalues in the DE data which may be used to improve the topgo results
+#' @param limitby   test to index the results by
+#' @param limit   ontology pvalue to use as the lower limit
+#' @param signodes   I don't remember right now
+#' @param sigforall   provide the significance for all nodes?
+#' @param numchar   character limit for the table of results
+#' @param selector   a function name for choosing genes to include
+#' @param overwrite   yeah I do not remember this one either
+#' @param densities   the densities, yeah, the densities
+#' @param pval_plots   include pvalue plots of the results a la clusterprofiler
+#' @param pval_column   column from which to acquire scores
+#' @param ... other options which I do not remember right now
 #' @return a big list including the various outputs from topgo
 #' @export
 simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL,
@@ -47,7 +48,8 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
     fisher_interesting_genes <- as.factor(as.integer(annotated_genes %in% de_genes$ID))
     names(fisher_interesting_genes) <- annotated_genes
     require.auto("Hmisc")
-    ks_interesting_genes <- as.integer(annotated_genes %nin% de_genes$ID) ## %nin% is from Hmisc
+    ##    ks_interesting_genes <- as.integer(annotated_genes %nin% de_genes$ID) ## %nin% is from Hmisc
+    ks_interesting_genes <- as.integer(!annotated_genes %in% de_genes$ID) ## %nin% is from Hmisc
     if (!is.null(de_genes$P.Value)) {
         ## I think this needs to include the entire gene universe, not only the set of x differentially expressed genes
         ## Making this an explicit as.vector(as.numeric()) because it turns out the values from DESeq are characters.
@@ -146,11 +148,13 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
     return(information)
 }
 
-#' plot_topgo_densities()  Plot the density of categories vs. the possibilities
+#' Plot the density of categories vs. the possibilities
 #'
 #' This can make a large number of plots
 #'
 #' @param godata  the result from topgo
+#' @param table  a table of genes
+#' @export
 plot_topgo_densities <- function(godata, table) {
     ret <- list()
     for (id in table$GO.ID) {
@@ -162,16 +166,16 @@ plot_topgo_densities <- function(godata, table) {
     return(ret)
 }
 
-#' topgo_tables() Make pretty tables out of topGO data
+#' Make pretty tables out of topGO data
 #'
 #' The topgo function GenTable is neat, but it needs some simplification to not be obnoxious
 #'
 #' @param result a topgo result
 #' @param limit a pvalue limit defining 'significant'
-#' @param limitby fisher - what type of test to perform
-#' @param numchar 300 how many characters to allow in the description
-#' @param orderby classic which of the available columns to order the table by?
-#' @param ranksof classic which of the available columns are used to rank the data?
+#' @param limitby  what type of test to perform
+#' @param numchar  how many characters to allow in the description
+#' @param orderby  which of the available columns to order the table by?
+#' @param ranksof  which of the available columns are used to rank the data?
 #' @export
 topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, orderby="classic", ranksof="classic") {
     ## The following if statement could be replaced by get(limitby)
@@ -261,9 +265,21 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, order
 
 #' Print trees from topGO
 #'
-#' @param de_genes a data frame of differentially expressed genes, containing IDs and whatever other columns
-#' @param goid_map a file containing mappings of genes to goids in the format expected by topgo
-#'
+#' @param tg  data from simple_topgo()
+#' @param score_limit   score limit to decide whether to add to the tree
+#' @param sigforall   add scores to the tree?
+#' @param do_mf_fisher_tree   Add the fisher score molecular function tree?
+#' @param do_bp_fisher_tree   Add the fisher biological process tree?
+#' @param do_cc_fisher_tree   Add the fisher cellular component tree?
+#' @param do_mf_ks_tree   Add the ks molecular function tree?
+#' @param do_bp_ks_tree   Add the ks biological process tree?
+#' @param do_cc_ks_tree   Add the ks cellular component tree?
+#' @param do_mf_el_tree   Add the el molecular function tree?
+#' @param do_bp_el_tree   Add the el biological process tree?
+#' @param do_cc_el_tree   Add the el cellular component tree?
+#' @param do_mf_weight_tree  Add the weight mf tree?
+#' @param do_bp_weight_tree  Add the bp weighted tree?
+#' @param do_cc_weight_tree  Add the guess
 #' @return a big list including the various outputs from topgo
 #' @export
 topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=TRUE,
@@ -278,7 +294,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                       useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                       useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_fisher_nodes)[1] != 'try-error') {
-            mf_fisher_tree <- try(recordPlot())
+            mf_fisher_tree <- try(grDevices::recordPlot())
         }
     }
     bp_fisher_nodes <- bp_fisher_tree <- NULL
@@ -288,7 +304,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_fisher_nodes)[1] != 'try-error') {
-            bp_fisher_tree <- try(recordPlot())
+            bp_fisher_tree <- try(grDevices::recordPlot())
         }
     }
     cc_fisher_nodes <- cc_fisher_tree <- NULL
@@ -298,7 +314,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                       useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                       useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_fisher_nodes)[1] != 'try-error') {
-            cc_fisher_tree <- try(recordPlot())
+            cc_fisher_tree <- try(grDevices::recordPlot())
         }
     }
     mf_ks_nodes <- mf_ks_tree <- NULL
@@ -308,7 +324,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                   useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_ks_nodes)[1] != 'try-error') {
-            mf_ks_tree <- try(recordPlot())
+            mf_ks_tree <- try(grDevices::recordPlot())
         }
     }
     bp_ks_nodes <- bp_ks_tree <- NULL
@@ -318,7 +334,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                   useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_ks_nodes)[1] != 'try-error') {
-            bp_ks_tree <- try(recordPlot())
+            bp_ks_tree <- try(grDevices::recordPlot())
         }
     }
     cc_ks_nodes <- cc_ks_tree <- NULL
@@ -328,7 +344,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                   useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_ks_nodes)[1] != 'try-error') {
-            cc_ks_tree <- try(recordPlot())
+            cc_ks_tree <- try(grDevices::recordPlot())
         }
     }
     mf_el_nodes <- mf_el_tree <- NULL
@@ -338,7 +354,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                   useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_el_nodes)[1] != 'try-error') {
-            mf_el_tree <- try(recordPlot())
+            mf_el_tree <- try(grDevices::recordPlot())
         }
     }
     bp_el_nodes <- bp_el_tree <- NULL
@@ -348,7 +364,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                   useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_el_nodes)[1] != 'try-error') {
-            bp_el_tree <- try(recordPlot())
+            bp_el_tree <- try(grDevices::recordPlot())
         }
     }
     cc_el_nodes <- cc_el_tree <- NULL
@@ -358,7 +374,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                   useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                   useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_el_nodes)[1] != 'try-error') {
-            cc_el_tree <- try(recordPlot())
+            cc_el_tree <- try(grDevices::recordPlot())
         }
     }
     mf_weight_nodes <- mf_weight_tree <- NULL
@@ -368,7 +384,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                       useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                       useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(mf_weight_nodes)[1] != 'try-error') {
-            mf_weight_tree <- try(recordPlot())
+            mf_weight_tree <- try(grDevices::recordPlot())
         }
     }
     bp_weight_nodes <- bp_weight_tree <- NULL
@@ -378,7 +394,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                       useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                       useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(bp_weight_nodes)[1] != 'try-error') {
-            bp_weight_tree <- try(recordPlot())
+            bp_weight_tree <- try(grDevices::recordPlot())
         }
     }
     cc_weight_nodes <- cc_weight_tree <- NULL
@@ -388,19 +404,35 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                       useInfo="all", sigForAll=sigforall, firstSigNodes=included,
                                                                       useFullNames=TRUE, plotFunction=hpgl_GOplot)))
         if (class(cc_weight_nodes)[1] != 'try-error') {
-            cc_weight_tree <- try(recordPlot())
+            cc_weight_tree <- try(grDevices::recordPlot())
         }
     }
 
     trees <- list(
-        mf_fisher_nodes=mf_fisher_nodes, bp_fisher_nodes=bp_fisher_nodes, cc_fisher_nodes=cc_fisher_nodes,
-        mf_ks_nodes=mf_ks_nodes, bp_ks_nodes=bp_ks_nodes, cc_ks_nodes=cc_ks_nodes,
-        mf_el_nodes=mf_el_nodes, bp_el_nodes=bp_el_nodes, cc_el_nodes=cc_el_nodes,
-        mf_weight_nodes=mf_weight_nodes, bp_weight_nodes=bp_weight_nodes, cc_weight_nodes=cc_weight_nodes,
-        mf_fisher_tree=mf_fisher_tree, bp_fisher_tree=bp_fisher_tree, cc_fisher_tree=cc_fisher_tree,
-        mf_ks_tree=mf_ks_tree, bp_ks_tree=bp_ks_tree, cc_ks_tree=cc_ks_tree,
-        mf_el_tree=mf_el_tree, bp_el_tree=bp_el_tree, cc_el_tree=cc_el_tree,
-        mf_weight_tree=mf_weight_tree, bp_weight_tree=bp_weight_tree, cc_weight_tree=cc_weight_tree)
+        mf_fisher_nodes=mf_fisher_nodes,
+        bp_fisher_nodes=bp_fisher_nodes,
+        cc_fisher_nodes=cc_fisher_nodes,
+        mf_ks_nodes=mf_ks_nodes,
+        bp_ks_nodes=bp_ks_nodes,
+        cc_ks_nodes=cc_ks_nodes,
+        mf_el_nodes=mf_el_nodes,
+        bp_el_nodes=bp_el_nodes,
+        cc_el_nodes=cc_el_nodes,
+        mf_weight_nodes=mf_weight_nodes,
+        bp_weight_nodes=bp_weight_nodes,
+        cc_weight_nodes=cc_weight_nodes,
+        mf_fisher_tree=mf_fisher_tree,
+        bp_fisher_tree=bp_fisher_tree,
+        cc_fisher_tree=cc_fisher_tree,
+        mf_ks_tree=mf_ks_tree,
+        bp_ks_tree=bp_ks_tree,
+        cc_ks_tree=cc_ks_tree,
+        mf_el_tree=mf_el_tree,
+        bp_el_tree=bp_el_tree,
+        cc_el_tree=cc_el_tree,
+        mf_weight_tree=mf_weight_tree,
+        bp_weight_tree=bp_weight_tree,
+        cc_weight_tree=cc_weight_tree)
     return(trees)
 }
 
@@ -409,9 +441,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
 #' @param goid_map A topGO mapping file
 #' @param goids_df If there is no goid_map, create it with this
 #' @param overwrite A boolean, if it already exists, rewrite the mapping file?
-#'
 #' @return a summary of the new goid table
-#'
 #' @export
 make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, overwrite=FALSE) {
     id2go_test <- file.info(goid_map)
@@ -474,10 +504,13 @@ topDiffGenes <- function(allScore) { return(allScore < 0.01) }
 
 #' Make a pvalue plot from topgo data
 #'
-#' @param topgo_data some data from topgo!
-#'
-#' @return a plot!
-#' @seealso \code{\link{goseq}}
+#' @param topgo some data from topgo!
+#' @param wrapped_width  maximum width of the text names
+#' @param cutoff   p-value cutoff for the plots
+#' @param n   maximum number of ontologies to include
+#' @param type   type of score to use
+#' @return a list of MF/BP/CC pvalue plots
+#' @seealso \pkg{topgo} \code{goseq}
 #' @export
 topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
     mf_newdf <- topgo$tables$mf[,c("GO.ID", "Term", "Annotated","Significant", type)]
@@ -512,11 +545,11 @@ topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
 }
 
 
-#' getEdgeWeights() Plot the ontology DAG
-#'
-#' @param graph  A graph from topGO
+#' Plot the ontology DAG
 #'
 #' This function was stolen from topgo in order to figure out where it was failing
+#'
+#' @param graph  A graph from topGO
 #' @return weights
 #' @export
 getEdgeWeights <- function(graph) {
@@ -539,17 +572,16 @@ getEdgeWeights <- function(graph) {
 #'
 #' @param dag  The DAG tree of ontologies
 #' @param sigNodes  The set of significant ontologies (with p-values)
-#' @param dag.name default='GO terms'  A name for the graph
-#' @param edgeTypes default=TRUE  Set the types of the edges for graphviz
-#' @param nodeShape.type default=c(box, circle, ellipse, plaintext)  The shapes on the tree
-#' @param genNodes default=NULL  Generate the nodes?
-#' @param wantedNodes default=NULL  A subset of the ontologies to plot
-#' @param showEdges default=TRUE  Show the arrows?
-#' @param useFullNames default=TRUE  Full names of the ontologies (they can get long)
-#' @param oldSigNodes default=NULL  I dunno
-#' @param nodeInfo default=nodeInfo   Hmm
-#' @param maxchars default=30  Maximum characters per line inside the shapes
-#'
+#' @param dag.name   A name for the graph
+#' @param edgeTypes   Set the types of the edges for graphviz
+#' @param nodeShape.type   The shapes on the tree
+#' @param genNodes   Generate the nodes?
+#' @param wantedNodes   A subset of the ontologies to plot
+#' @param showEdges   Show the arrows?
+#' @param useFullNames   Full names of the ontologies (they can get long)
+#' @param oldSigNodes   I dunno
+#' @param nodeInfo    Hmm
+#' @param maxchars   Maximum characters per line inside the shapes
 #' @return a topgo plot
 #' @export
 hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
@@ -684,14 +716,14 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
     return(final_dag)
 }
 
-#' hpgl_GroupDensity()  A hack of topGO's groupDensity()
+#'   A hack of topGO's groupDensity()
 #'
 #' This just adds a couple wrappers to avoid errors in groupDensity.
 #'
 #' @param object  a topGO enrichment object
 #' @param whichGO  an individual ontology group to compare with
-#' @param ranks default=TRUE  rank order the set of ontologies
-#' @param rm.one default=FALSE  remove pvalue=1 groups
+#' @param ranks   rank order the set of ontologies
+#' @param rm.one   remove pvalue=1 groups
 hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     groupMembers <- try(topGO::genesInTerm(object, whichGO)[[1]])
     if (class(groupMembers)[1] == 'try-error') {

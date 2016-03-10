@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_limma.r
 \name{limma_pairwise}
 \alias{limma_pairwise}
-\title{limma_pairwise()  Set up a model matrix and set of contrasts to do
+\title{Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using voom/limma.}
 \usage{
 limma_pairwise(input, conditions = NULL, batches = NULL,
@@ -13,25 +13,28 @@ limma_pairwise(input, conditions = NULL, batches = NULL,
 \arguments{
 \item{input}{a dataframe/vector or expt class containing count tables, normalization state, etc.}
 
-\item{conditions}{default=NULL  a factor of conditions in the experiment}
+\item{conditions}{a factor of conditions in the experiment}
 
-\item{batches}{default=NULL  a factor of batches in the experiment}
+\item{batches}{a factor of batches in the experiment}
 
-\item{model_cond}{default=TRUE  include condition in the model?}
+\item{model_cond}{include condition in the model?}
 
-\item{model_batch}{default=FALSE  include batch in the model? This is hopefully TRUE.}
+\item{model_batch}{include batch in the model? This is hopefully TRUE.}
 
-\item{model_intercept}{default=FALSE  perform a cell-means or intercept model?  A little more difficult for me to understand.  I have tested and get the same answer either way.}
+\item{model_intercept}{perform a cell-means or intercept model?
+A little more difficult for me to understand.  I have tested and get the same answer either way.}
 
-\item{extra_contrasts}{default=NULL  some extra contrasts to add to the list
+\item{extra_contrasts}{some extra contrasts to add to the list
 This can be pretty neat, lets say one has conditions A,B,C,D,E
 and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 de_vs_cb = (E-D)-(C-B),"}
 
-\item{alt_model}{default=NULL  a separate model matrix instead of the normal condition/batch.}
+\item{alt_model}{a separate model matrix instead of the normal condition/batch.}
 
-\item{libsize}{default=NULL  I've recently figured out that libsize is far more important than I previously realized.  Play with it here.}
+\item{libsize}{I've recently figured out that libsize is far more important than I previously realized.  Play with it here.}
+
+\item{annot_df}{data frame for annotations}
 
 \item{...}{The elipsis parameter is fed to write_limma() at the end.}
 }
@@ -53,13 +56,15 @@ A list including the following information:
   limma_result = The result from calling write_limma()
 }
 \description{
-limma_pairwise()  Set up a model matrix and set of contrasts to do
+Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using voom/limma.
 }
 \examples{
-## pretend = balanced_pairwise(data, conditions, batches)
+\dontrun{
+pretend = balanced_pairwise(data, conditions, batches)
+}
 }
 \seealso{
-\code{\link{write_limma}}
+\link{write_limma}
 }
 

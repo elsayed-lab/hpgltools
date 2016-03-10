@@ -12,9 +12,35 @@ topgo_trees(tg, score_limit = 0.01, sigforall = TRUE,
   do_bp_weight_tree = FALSE, do_cc_weight_tree = FALSE)
 }
 \arguments{
-\item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}
+\item{tg}{data from simple_topgo()}
 
-\item{goid_map}{a file containing mappings of genes to goids in the format expected by topgo}
+\item{score_limit}{score limit to decide whether to add to the tree}
+
+\item{sigforall}{add scores to the tree?}
+
+\item{do_mf_fisher_tree}{Add the fisher score molecular function tree?}
+
+\item{do_bp_fisher_tree}{Add the fisher biological process tree?}
+
+\item{do_cc_fisher_tree}{Add the fisher cellular component tree?}
+
+\item{do_mf_ks_tree}{Add the ks molecular function tree?}
+
+\item{do_bp_ks_tree}{Add the ks biological process tree?}
+
+\item{do_cc_ks_tree}{Add the ks cellular component tree?}
+
+\item{do_mf_el_tree}{Add the el molecular function tree?}
+
+\item{do_bp_el_tree}{Add the el biological process tree?}
+
+\item{do_cc_el_tree}{Add the el cellular component tree?}
+
+\item{do_mf_weight_tree}{Add the weight mf tree?}
+
+\item{do_bp_weight_tree}{Add the bp weighted tree?}
+
+\item{do_cc_weight_tree}{Add the guess}
 }
 \value{
 a big list including the various outputs from topgo

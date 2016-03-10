@@ -10,17 +10,29 @@ hpgl_pathview(path_data, indir = "pathview_in", outdir = "pathview",
   second_to = NULL, verbose = FALSE, filenames = "id")
 }
 \arguments{
-\item{indir}{A directory into which the unmodified kegg images will be downloaded (or already exist).  Defaults to 'pathview_in'}
+\item{path_data}{some differentially expressed genes}
+
+\item{indir}{A directory into which the unmodified kegg images will be downloaded (or already exist).}
 
 \item{outdir}{A directory which will contain the colored images.}
 
-\item{pathway}{Perform the coloring for a specific pathway?  Defaults to 'all'}
+\item{pathway}{Perform the coloring for a specific pathway?}
 
 \item{species}{The kegg identifier for the species of interest.}
 
-\item{filenames}{Whether to give filenames as the kegg ID or pathway name.  Defaults to 'id'.}
+\item{string_from}{for renaming kegg categories}
 
-\item{de_genes}{some differentially expressed genes}
+\item{string_to}{for renaming kegg categories}
+
+\item{suffix}{for renaming finished files}
+
+\item{second_from}{sometimes jsut one regex isnt enough}
+
+\item{second_to}{sometimes just one regex isnt enough}
+
+\item{verbose}{talk more}
+
+\item{filenames}{name the final files by id or name?}
 }
 \value{
 A list of some information for every KEGG pathway downloaded/examined.  This information includes:
@@ -33,9 +45,13 @@ A list of some information for every KEGG pathway downloaded/examined.  This inf
 Print some data onto KEGG pathways
 }
 \examples{
-## thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in", outdir="kegg_thy_el_comp2", string_from="_Spy", string_to="_Spy_", filenames="pathname")
+\dontrun{
+ thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in",
+                                   outdir="kegg_thy_el_comp2", string_from="_Spy",
+                                   string_to="_Spy_", filenames="pathname")
+}
 }
 \seealso{
-\code{\link{Ramigo}}
+\pkg{Ramigo} \pkg{pathview}
 }
 

@@ -6,6 +6,13 @@
 \usage{
 hpgl_Gff2GeneTable(gffFile, compress = TRUE, split = "=")
 }
+\arguments{
+\item{gffFile}{a gff file}
+
+\item{compress}{compress them}
+
+\item{split}{the splitter when reading gff files}
+}
 \description{
 A copy and paste of clusterProfiler's readGff
 }

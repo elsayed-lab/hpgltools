@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_ma_plot}
 \alias{hpgl_ma_plot}
-\title{hpgl_ma_plot()  Make a pretty MA plot from the output of voom/limma/eBayes/toptable.}
+\title{Make a pretty MA plot from the output of voom/limma/eBayes/toptable.}
 \usage{
 hpgl_ma_plot(counts, de_genes, adjpval_cutoff = 0.05, alpha = 0.6,
   size = 2, tooltip_data = NULL, gvis_filename = NULL, ...)
@@ -13,16 +13,18 @@ which is to say the output from voom/voomMod/hpgl_voom().}
 
 \item{de_genes}{df from toptable or its friends containing p-values.}
 
-\item{adjpval_cutoff}{default=0.05  a cutoff defining significant from not.}
+\item{adjpval_cutoff}{a cutoff defining significant from not.}
 
-\item{alpha}{default=0.6  how transparent to make the dots.}
+\item{alpha}{how transparent to make the dots.}
 
-\item{size}{default=2  how big are the dots?}
+\item{size}{how big are the dots?}
 
-\item{tooltip_data}{default=NULL  a df of tooltip information for gvis
+\item{tooltip_data}{a df of tooltip information for gvis
 graphs.}
 
-\item{gvis_filename}{default=NULL  a filename to write a fancy html graph.}
+\item{gvis_filename}{a filename to write a fancy html graph.}
+
+\item{...}{more poptions por pou}
 }
 \value{
 a ggplot2 MA scatter plot.  This is defined as the rowmeans
@@ -32,18 +34,20 @@ Dots are colored depending on if they are 'significant.'  This will
 make a fun clicky googleVis graph if requested.
 }
 \description{
-hpgl_ma_plot()  Make a pretty MA plot from the output of voom/limma/eBayes/toptable.
+Make a pretty MA plot from the output of voom/limma/eBayes/toptable.
 }
 \examples{
-## hpgl_ma_plot(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
+\dontrun{
+hpgl_ma_plot(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
 ## Currently this assumes that a variant of toptable was used which
 ## gives adjusted p-values.  This is not always the case and I should
 ## check for that, but I have not yet.
 }
+}
 \seealso{
-\code{\link{hpgl_gvis_ma_plot}}, \code{\link{toptable}},
-\code{\link{voom}}, \code{\link{voomMod}}, \code{\link{hpgl_voom}},
-\code{\link{lmFit}}, \code{\link{makeContrasts}},
-\code{\link{contrasts.fit}}
+\link{hpgl_gvis_ma_plot} \link[limma]{toptable}
+\link[limma]{voom} \link[cbcbSEQ]{voomMod} \link{hpgl_voom}
+\link[limma]{lmFit} \link[limma]{makeContrasts}
+\link[limma]{contrasts.fit}
 }
 

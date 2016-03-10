@@ -1,33 +1,101 @@
-## Time-stamp: <Tue Feb  2 15:59:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Feb  5 12:31:16 2016 Ashton Trey Belew (abelew@gmail.com)>
 
+#'   Plot out 2 coefficients with respect to one another from edger
+#'
+#' It can be nice to see a plot of two coefficients from a edger comparison with respect to one another
+#' This hopefully makes that easy.
+#'
+#' @param output the set of pairwise comparisons provided by edger_pairwise()
+#' @param x   the name or number of the first coefficient column to extract, this will be the x-axis of the plot
+#' @param y   the name or number of the second coefficient column to extract, this will be the y-axis of the plot
+#' @param gvis_filename   A filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline   add a trendline to the gvis plot?
+#' @param tooltip_data   a dataframe of gene annotations to be used in the gvis plot
+#' @param base_url   for gvis plots
+#' @return a ggplot2 plot showing the relationship between the two coefficients
+#' @seealso \link{hpgl_linear_scatter} \link{edger_pairwise}
+#' @examples
+#' \dontrun{
+#'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' }
+#' @export
+edger_coefficient_scatter <- function(output, x=1, y=2,
+                                      gvis_filename=NULL,
+                                      gvis_trendline=TRUE, tooltip_data=NULL,
+                                      base_url=NULL) {
+    ##  If taking a limma_pairwise output, then this lives in
+    ##  output$pairwise_comparisons$coefficients
+    message("This can do comparisons among the following columns in the edger result:")
+    thenames <- names(output$contrasts$identities)
+    cat(thenames)
+    xname <- ""
+    yname <- ""
+    if (is.numeric(x)) {
+        xname <- thenames[[x]]
+    } else {
+        xname <- x
+    }
+    if (is.numeric(y)) {
+        yname <- thenames[[y]]
+    } else {
+        yname <- y
+    }
 
-#' edger_pairwise()  Set up a model matrix and set of contrasts to do
+    message(paste0("Actually comparing ", xname, " and ", yname, "."))
+    ## It looks like the lrt data structure is redundant, so I will test that by looking at the apparent
+    ## coefficients from lrt[[1]] and then repeating with lrt[[2]]
+    coefficient_df <- output$lrt[[1]]$coefficients
+    coefficient_df <- coefficient_df[, c(xname, yname)]
+    if (max(coefficient_df) < 0) {
+        coefficient_df <- coefficient_df * -1.0
+    }
+
+    plot <- hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+                                gvis_trendline=gvis_trendline, first=xname, second=yname,
+                                tooltip_data=tooltip_data, base_url=base_url)
+    maxvalue <- as.numeric(max(coefficient_df) + 1)
+    print(maxvalue)
+    plot$scatter <- plot$scatter +
+        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
+        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
+    plot$df <- coefficient_df
+    return(plot)
+}
+
+#' Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using EdgeR.
 #'
 #' @param input  a dataframe/vector or expt class containing data, normalization state, etc.
-#' @param conditions default=NULL  a factor of conditions in the experiment
-#' @param batches default=NULL  a factor of batches in the experiment
-#' @param model_cond default=TRUE  Include condition in the experimental model?  This is pretty much always true.
-#' @param model_batch default=FALSE  Include batch in the model?  In most cases this is a good thing(tm).
-#' @param model_intercept default=FALSE Use cell means or intercept? (I default to the former, but they work out the same)
-#' @param extra_contrasts default=NULL  some extra contrasts to add to the list
+#' @param conditions   a factor of conditions in the experiment
+#' @param batches   a factor of batches in the experiment
+#' @param model_cond   Include condition in the experimental model?  This is pretty much always true.
+#' @param model_batch   Include batch in the model?  In most cases this is a good thing(tm).
+#' @param model_intercept   Use cell means or intercept? (I default to the former,
+#'   but they work out the same)
+#' @param alt_model   An alternate experimental model to use
+#' @param extra_contrasts   some extra contrasts to add to the list
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
+#' @param annot_df   Add some annotation information to the data tables?
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
-#'
 #' @return A list including the following information:
-#'   results = A list of tables returned by 'topTags', one for each contrast.
 #'   contrasts = The string representation of the contrasts performed.
 #'   lrt = A list of the results from calling glmLRT(), one for each contrast.
 #'   contrast_list = The list of each call to makeContrasts()
 #'     I do this to avoid running into the limit on # of contrasts addressable by topTags()
-#'
-#' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
-#' @export
+#'   all_tables = a list of tables for the contrasts performed.
+#' @seealso \pkg{edgeR} \code{\link[edgeR]{topTags}} \code{\link[edgeR]{glmLRT}}
+#'   \code{\link{make_pairwise_contrasts}} \code{\link[edgeR]{DGEList}}
+#'   \code{\link[edgeR]{calcNormFactors}} \code{\link[edgeR]{estimateTagwiseDisp}}
+#'   \code{\link[edgeR]{estimateCommonDisp}} \code{\link[edgeR]{estimateGLMCommonDisp}}
+#'   \code{\link[edgeR]{estimateGLMTrendedDisp}} \code{\link[edgeR]{glmFit}}
 #' @examples
-#' ## pretend = edger_pairwise(data, conditions, batches)
+#' \dontrun{
+#'  pretend = edger_pairwise(data, conditions, batches)
+#' }
+#' @export
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                           model_batch=FALSE, model_intercept=FALSE, alt_model=NULL,
                           extra_contrasts=NULL, annot_df=NULL, ...) {
@@ -92,7 +160,6 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
     ##tmpnames = gsub("conditions", "", tmpnames)
     ##colnames(cond_model) = tmpnames
-
     raw <- edgeR::DGEList(counts=data, group=conditions)
     message("EdgeR step 1/9: normalizing data.")
     norm <- edgeR::calcNormFactors(raw)
@@ -127,6 +194,11 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         lrt_list[[name]] <- edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
         res <- edgeR::topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")
         res <- as.data.frame(res)
+        res$logFC <- signif(x=as.numeric(res$logFC), digits=4)
+        res$logCPM <- signif(x=as.numeric(res$logCPM), digits=4)
+        res$LR <- signif(x=as.numeric(res$LR), digits=4)
+        res$PValue <- format(x=as.numeric(res$PValue), digits=4, scientific=TRUE)
+        res$FDR <- format(x=as.numeric(res$FDR), digits=4, scientific=TRUE)
         res$qvalue <- tryCatch(
         {
             ##as.numeric(format(signif(
@@ -136,9 +208,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             ## ok I admit it, I am not smart enough for nested expressions
             ttmp <- as.numeric(res$PValue)
             ttmp <- qvalue::qvalue(ttmp)$qvalues
-            ttmp <- signif(ttmp, 4)
-            ttmp <- format(ttmp, scientific=TRUE)
-            as.numeric(ttmp)
+            format(x=ttmp, digits=4, scientific=TRUE)
         },
         error=function(cond) {
             message(paste0("The qvalue estimation failed for ", name, "."))
@@ -151,8 +221,6 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         ##},
         finally={
         })
-        res$PValue <- as.numeric(format(signif(res$PValue, 4), scientific=TRUE))
-        res$FDR <- as.numeric(format(signif(res$FDR, 4), scientific=TRUE))
         result_list[[name]] <- res
     } ## End for loop
     final <- list(

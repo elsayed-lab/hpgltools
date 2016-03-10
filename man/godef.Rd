@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{godef}
 \alias{godef}
-\title{godef()  Get a go long-form definition from an id.}
+\title{Get a go long-form definition from an id.}
 \usage{
 godef(go)
 }
@@ -13,14 +13,17 @@ godef(go)
 Some text
 }
 \description{
-godef()  Get a go long-form definition from an id.
+Get a go long-form definition from an id.
 }
 \examples{
-## godef("GO:0032432")
+\dontrun{
+ godef("GO:0032432")
 ## > GO:0032432
-## > "An assembly of actin filaments that are on the same axis but may be oriented with the same or opposite polarities and may be packed with different levels of tightness."
+## > "An assembly of actin filaments that are on the same axis but may be oriented with the
+## > same or opposite polarities and may be packed with different levels of tightness."
+}
 }
 \seealso{
-\code{\link{GOTERM}}, \code{\link{GO.db}},
+\pkg{GOTermsAnnDbBimap}
 }
 

@@ -5,9 +5,9 @@
 \title{Perform a simplified clusterProfiler analysis}
 \usage{
 simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
-  qcutoff = 1, fold_changes = NULL, include_cnetplots = TRUE,
+  qcutoff = 1, fold_changes = NULL, include_cnetplots = FALSE,
   showcategory = 12, universe = NULL, organism = "lm", gff = NULL,
-  wrapped_width = 20, method = "Walllenius", padjust = "BH", ...)
+  wrapped_width = 20, method = "Wallenius", padjust = "BH", ...)
 }
 \arguments{
 \item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}
@@ -26,7 +26,19 @@ simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
 
 \item{showcategory}{how many categories to show in p-value plots}
 
+\item{universe}{universe to use}
+
+\item{organism}{name of the species to use}
+
+\item{gff}{gff file to generate the universe}
+
+\item{wrapped_width}{width of ontology names in the pvalue plots}
+
+\item{method}{pvalue calculation method}
+
 \item{padjust}{a method for adjusting the p-values}
+
+\item{...}{more options!}
 }
 \value{
 a big list including the following:
@@ -48,7 +60,8 @@ a big list including the following:
 Perform a simplified clusterProfiler analysis
 }
 \examples{
-## up_cluster = simple_clusterprofiler(mga2_ll_thy_top, goids=goids, gff="reference/genome/gas.gff")
+\dontrun{
+ up_cluster = simple_clusterprofiler(mga2_ll_thy_top, goids=goids, gff="reference/genome/gas.gff")
 ## > Some chattery while it runs
 ## tail(head(up_cluster$bp_interesting, n=10), n=1)
 ## > ID ont GeneRatio BgRatio     pvalue   p.adjust    qvalue
@@ -57,5 +70,6 @@ Perform a simplified clusterProfiler analysis
 ## >   10 M5005_Spy1632/M5005_Spy1637/M5005_Spy1635/M5005_Spy1636/M5005_Spy1638     5
 ## >   Description
 ## >   10 oligosaccharide metabolic process
+}
 }
 

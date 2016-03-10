@@ -12,6 +12,18 @@ gostats_trees(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under, cc_under,
 \arguments{
 \item{de_genes}{some differentially expressed genes}
 
+\item{mf_over}{mfover data}
+
+\item{bp_over}{bpover data}
+
+\item{cc_over}{ccover data}
+
+\item{mf_under}{mfunder data}
+
+\item{bp_under}{bpunder data}
+
+\item{cc_under}{ccunder expression data}
+
 \item{goid_map}{a mapping of IDs to GO in the Ramigo expected format}
 
 \item{score_limit}{maximum score to include as 'significant'}
@@ -23,8 +35,6 @@ gostats_trees(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under, cc_under,
 \item{selector}{a function to choose differentially expressed genes in the data}
 
 \item{pval_column}{a column in the data to be used to extract pvalue scores}
-
-\item{mf_over/bp_over/cc_over/mf_under/bp_under/cc_under}{over/under expression data}
 }
 \value{
 plots! Trees! oh my!
@@ -33,6 +43,6 @@ plots! Trees! oh my!
 Make fun trees a la topgo from goseq data.
 }
 \seealso{
-\code{\link{topGO}}
+\pkg{topGO}
 }
 

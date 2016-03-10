@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_edger.r
 \name{edger_pairwise}
 \alias{edger_pairwise}
-\title{edger_pairwise()  Set up a model matrix and set of contrasts to do
+\title{Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using EdgeR.}
 \usage{
 edger_pairwise(input, conditions = NULL, batches = NULL,
@@ -12,40 +12,51 @@ edger_pairwise(input, conditions = NULL, batches = NULL,
 \arguments{
 \item{input}{a dataframe/vector or expt class containing data, normalization state, etc.}
 
-\item{conditions}{default=NULL  a factor of conditions in the experiment}
+\item{conditions}{a factor of conditions in the experiment}
 
-\item{batches}{default=NULL  a factor of batches in the experiment}
+\item{batches}{a factor of batches in the experiment}
 
-\item{model_cond}{default=TRUE  Include condition in the experimental model?  This is pretty much always true.}
+\item{model_cond}{Include condition in the experimental model?  This is pretty much always true.}
 
-\item{model_batch}{default=FALSE  Include batch in the model?  In most cases this is a good thing(tm).}
+\item{model_batch}{Include batch in the model?  In most cases this is a good thing(tm).}
 
-\item{model_intercept}{default=FALSE Use cell means or intercept? (I default to the former, but they work out the same)}
+\item{model_intercept}{Use cell means or intercept? (I default to the former,
+but they work out the same)}
 
-\item{extra_contrasts}{default=NULL  some extra contrasts to add to the list
+\item{alt_model}{An alternate experimental model to use}
+
+\item{extra_contrasts}{some extra contrasts to add to the list
 This can be pretty neat, lets say one has conditions A,B,C,D,E
 and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 de_vs_cb = (E-D)-(C-B),"}
 
+\item{annot_df}{Add some annotation information to the data tables?}
+
 \item{...}{The elipsis parameter is fed to write_edger() at the end.}
 }
 \value{
 A list including the following information:
-  results = A list of tables returned by 'topTags', one for each contrast.
   contrasts = The string representation of the contrasts performed.
   lrt = A list of the results from calling glmLRT(), one for each contrast.
   contrast_list = The list of each call to makeContrasts()
     I do this to avoid running into the limit on # of contrasts addressable by topTags()
+  all_tables = a list of tables for the contrasts performed.
 }
 \description{
-edger_pairwise()  Set up a model matrix and set of contrasts to do
+Set up a model matrix and set of contrasts to do
 a pairwise comparison of all conditions using EdgeR.
 }
 \examples{
-## pretend = edger_pairwise(data, conditions, batches)
+\dontrun{
+ pretend = edger_pairwise(data, conditions, batches)
+}
 }
 \seealso{
-\code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
+\pkg{edgeR} \code{\link[edgeR]{topTags}} \code{\link[edgeR]{glmLRT}}
+  \code{\link{make_pairwise_contrasts}} \code{\link[edgeR]{DGEList}}
+  \code{\link[edgeR]{calcNormFactors}} \code{\link[edgeR]{estimateTagwiseDisp}}
+  \code{\link[edgeR]{estimateCommonDisp}} \code{\link[edgeR]{estimateGLMCommonDisp}}
+  \code{\link[edgeR]{estimateGLMTrendedDisp}} \code{\link[edgeR]{glmFit}}
 }
 

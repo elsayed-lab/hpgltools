@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{compare_go_searches}
 \alias{compare_go_searches}
-\title{compare_go_searches()  Compare the results from different ontology tools}
+\title{Compare the results from different ontology tools}
 \usage{
 compare_go_searches(goseq = NULL, cluster = NULL, topgo = NULL,
   gostats = NULL)
@@ -15,10 +15,9 @@ compare_go_searches(goseq = NULL, cluster = NULL, topgo = NULL,
 \item{topgo}{Guess}
 
 \item{gostats}{Yep, ditto}
-
-\item{go_file}{default='excel/merged_go'  the file to save the results.}
-
-\item{n}{default=30  the number of ontology categories to include in each table.}
+}
+\value{
+a summary of the similarities of ontology searches
 }
 \description{
 Combine the results from goseq, cluster profiler, topgo, and gostats; poke at them

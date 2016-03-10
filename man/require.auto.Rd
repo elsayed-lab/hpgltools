@@ -2,33 +2,35 @@
 % Please edit documentation in R/autoloads.r
 \name{require.auto}
 \alias{require.auto}
-\title{require.auto()  Automatic loading and/or installing of packages.}
+\title{Automatic loading and/or installing of packages.}
 \usage{
 require.auto(lib, github_path = NULL, verbose = FALSE, update = FALSE)
 }
 \arguments{
 \item{lib}{string name of a library}
 
-\item{github_path}{default=NULL  an optional github username/path.}
+\item{github_path}{an optional github username/path.}
 
-\item{verbose}{default=FALSE  print some information while loading.}
+\item{verbose}{print some information while loading.}
 
-\item{update}{default=FALSE  update packages?}
+\item{update}{update packages?}
 }
 \value{
 NULL currently
 }
 \description{
-\code{require.auto} loads a library, and installs it first if necessary.
+Load a library, install it first if necessary.
 }
 \details{
 This was taken from:
 http://sbamin.com/2012/11/05/tips-for-working-in-r-automatically-install-missing-package/
 }
 \examples{
-## require.auto("ggplot2")
+\dontrun{
+require.auto("ggplot2")
+}
 }
 \seealso{
-\code{\link{biocLite}} and \code{\link{install.packages}}
+\link[BiocInstaller]{biocLite} \link{install.packages}
 }
 

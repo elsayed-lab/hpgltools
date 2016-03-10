@@ -2,25 +2,37 @@
 % Please edit documentation in R/de_limma.r
 \name{limma_coefficient_scatter}
 \alias{limma_coefficient_scatter}
-\title{limma_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma}
+\title{Plot out 2 coefficients with respect to one another from limma}
 \usage{
 limma_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
   gvis_filename = NULL, gvis_trendline = TRUE, z = 1.5,
-  tooltip_data = NULL, flip = FALSE, base_url = NULL,
-  up_color = "#7B9F35", down_color = "#DD0000", ...)
+  tooltip_data = NULL, base_url = NULL, up_color = "#7B9F35",
+  down_color = "#DD0000", ...)
 }
 \arguments{
-\item{x}{default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot}
+\item{output}{the set of pairwise comparisons provided by limma_pairwise()}
 
-\item{y}{default=2  the name or number of the second coefficient column to extract, this will be the y-axis of the plot}
+\item{toptable}{use this to get up/downs and color them on the scatter plot}
 
-\item{gvis_filename}{default='limma_scatter.html'  A filename for plotting gvis interactive graphs of the data.}
+\item{x}{the name or number of the first coefficient column to extract}
 
-\item{gvis_trendline}{default=TRUE  add a trendline to the gvis plot?}
+\item{y}{the name or number of the second coefficient column to extract}
 
-\item{tooltip_data}{default=NULL  a dataframe of gene annotations to be used in the gvis plot}
+\item{gvis_filename}{A filename for plotting gvis interactive graphs of the data.}
 
-\item{limma_output}{the set of pairwise comparisons provided by limma_pairwise()}
+\item{gvis_trendline}{add a trendline to the gvis plot?}
+
+\item{z}{how far from the median to color the plot red and green}
+
+\item{tooltip_data}{a dataframe of gene annotations to be used in the gvis plot}
+
+\item{base_url}{a basename for gvis plots}
+
+\item{up_color}{color for the ups}
+
+\item{down_color}{color for the downs}
+
+\item{...}{more parameters to make you happy}
 }
 \value{
 a ggplot2 plot showing the relationship between the two coefficients
@@ -30,9 +42,11 @@ It can be nice to see a plot of two coefficients from a limma comparison with re
 This hopefully makes that easy.
 }
 \examples{
-## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+\dontrun{
+ pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+}
 }
 \seealso{
-\code{\link{hpgl_linear_scatter}} \code{\link{limma_pairwise}}
+\link{hpgl_linear_scatter} \link{limma_pairwise}
 }
 

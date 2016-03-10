@@ -1,23 +1,23 @@
-## Time-stamp: <Tue Feb  2 13:12:00 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Mar  5 00:22:30 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' hpgl_gvis_ma_plot()  Make an html version of an MA plot.
+#'   Make an html version of an MA plot.
 #'
 #' @param counts  df of linear-modelling, normalized counts by sample-type,
 #' which is to say the output from voom/voomMod/hpgl_voom().
-#' @param de_genes  df from toptable or its friends containing p-values.
-#' @param adjpval_cutoff default=0.05  a cutoff defining significant from not.
-#' @param filename default='html/gvis_ma_plot.html'  a filename to write a fancy html graph.
-#' @param tooltip_data default=NULL  a df of tooltip information.
-#' @param base_url default=''  a string with a basename used for generating URLs for clicking dots on the graph.
-#'
+#' @param degenes  df from toptable or its friends containing p-values.
+#' @param tooltip_data   a df of tooltip information.
+#' @param filename   a filename to write a fancy html graph.
+#' @param base_url   a string with a basename used for generating URLs for clicking dots on the graph.
+#' @param ... more options are more options
 #' @return NULL, but along the way an html file is generated which
 #' contains a googleVis MA plot.  See hpgl_ma_plot() for details.
-#'
-#' @seealso \code{\link{hpgl_ma_plot}}
-#'
-#' @export
+#' @seealso \link{hpgl_ma_plot}
 #' @examples
-#' ## hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+#' \dontrun{
+#'  hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
+#'                    base_url="http://yeastgenome.org/accession?")
+#' }
+#' @export
 hpgl_gvis_ma_plot <- function(counts, degenes, tooltip_data=NULL, filename="html/gvis_ma_plot.html", base_url="", ...) {
     gvis_chartid <- gsub("\\.html$", "", basename(filename))
     gvis_df <- data.frame(AvgExp=rowMeans(counts[rownames(degenes),]), LogFC=degenes$logFC, AdjPVal=degenes$adj.P.Val)
@@ -59,23 +59,24 @@ hpgl_gvis_ma_plot <- function(counts, degenes, tooltip_data=NULL, filename="html
     print(hpgl_gvis_scatterchart, file=filename)
 }
 
-#' hpgl_gvis_volcano_plot()  Make an html version of an volcano plot.
+#'   Make an html version of an volcano plot.
 #'
 #' @param toptable_data  df of toptable() data
-#' @param fc_cutoff default=0.8  fold change cutoff.
-#' @param p_cutoff default=0.05  maximum p value to allow.
-#' @param filename default='html/gvis_vol_plot.html'  a filename to write a fancy html graph.
-#' @param tooltip_data default=NULL  a df of tooltip information.
-#' @param base_url default=''  a string with a basename used for generating URLs for clicking dots on the graph.
-#'
+#' @param fc_cutoff   fold change cutoff.
+#' @param p_cutoff   maximum p value to allow.
+#' @param filename   a filename to write a fancy html graph.
+#' @param tooltip_data   a df of tooltip information.
+#' @param base_url   a string with a basename used for generating URLs for clicking dots on the graph.
+#' @param ... more options
 #' @return NULL, but along the way an html file is generated which
 #' contains a googleVis MA plot.  See hpgl_ma_plot() for details.
-#'
-#' @seealso \code{\link{hpgl_volcano_plot}}
-#'
-#' @export
+#' @seealso \link{hpgl_volcano_plot}
 #' @examples
-#' ## hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html", base_url="http://yeastgenome.org/accession?")
+#' \dontrun{
+#'  hpgl_gvis_ma_plot(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
+#'                    base_url="http://yeastgenome.org/accession?")
+#' }
+#' @export
 hpgl_gvis_volcano_plot <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
                                   tooltip_data=NULL, filename="html/gvis_vol_plot.html", base_url="", ...) {
     gvis_raw_df <- toptable_data[,c("logFC", "modified_p", "P.Value")]
@@ -117,22 +118,22 @@ hpgl_gvis_volcano_plot <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
     print(hpgl_gvis_scatterchart, file=filename)
 }
 
-#' hpgl_gvis_scatter()  Make an html version of a scatter plot.
+#'   Make an html version of a scatter plot.
 #'
 #' @param df  df of two columns to compare
-#' @param filename default='html/gvis_scatter.html'  a filename to write a fancy html graph.
-#' @param tooltip_data default=NULL  a df of tooltip information for gvis graphs.
-#' @param base_url default=''  a url to send click events which will be suffixed with the gene name
-#' @param trendline default=NULL  add a trendline?
-#'
+#' @param filename   a filename to write a fancy html graph.
+#' @param tooltip_data   a df of tooltip information for gvis graphs.
+#' @param base_url   a url to send click events which will be suffixed with the gene name
+#' @param trendline   add a trendline?
 #' @return NULL, but along the way an html file is generated which
 #' contains a googleVis scatter plot.  See hpgl_scatter_plot() for details.
-#'
-#' @seealso \code{\link{gvisScatterChart}}
-#'
-#' @export
+#' @seealso \link[googleVis]{gvisScatterChart}
 #' @examples
-#' ## hpgl_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html", base_url="http://yeastgenome.org/accession?")
+#' \dontrun{
+#'  hpgl_gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html",
+#'                    base_url="http://yeastgenome.org/accession?")
+#' }
+#' @export
 hpgl_gvis_scatter <- function(df, tooltip_data=NULL, filename="html/gvis_scatter.html", base_url="", trendline=NULL) {
     gvis_df <- df
     gvis_df <- merge(gvis_df, tooltip_data, by="row.names", all.x=TRUE)

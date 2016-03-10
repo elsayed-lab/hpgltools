@@ -6,6 +6,9 @@
 \usage{
 autoloads_all(update = FALSE)
 }
+\arguments{
+\item{update}{packages?}
+}
 \value{
 NULL currently
 }
@@ -13,6 +16,6 @@ NULL currently
 Automatic loading of stuff I use, I am deprecating this now.
 }
 \seealso{
-\code{\link[BiocInstaller]{biocLite}} and \code{\link{install.packages}}
+\link[BiocInstaller]{biocLite} \link{install.packages}
 }
 

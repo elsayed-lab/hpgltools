@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_shared.r
 \name{get_sig_genes}
 \alias{get_sig_genes}
-\title{get_sig_genes()  Get a set of up/down genes using the top/bottom n or >/< z scores away from the median.}
+\title{Get a set of up/down genes using the top/bottom n or >/< z scores away from the median.}
 \usage{
 get_sig_genes(table, n = NULL, z = NULL, fc = NULL, p = NULL,
   column = "logFC", fold = "plusminus", p_column = "adj.P.Val")
@@ -10,24 +10,24 @@ get_sig_genes(table, n = NULL, z = NULL, fc = NULL, p = NULL,
 \arguments{
 \item{table}{a table from limma/edger/deseq.}
 
-\item{n}{default=NULL  a rank-order top/bottom number of genes to take.}
+\item{n}{a rank-order top/bottom number of genes to take.}
 
-\item{z}{default=NULL  a number of z-scores >/< the median to take.}
+\item{z}{a number of z-scores >/< the median to take.}
 
-\item{fc}{default=NULL  a number of fold-changes to take}
+\item{fc}{a number of fold-changes to take}
 
-\item{p}{default=NULL  a p-value cutoff}
+\item{p}{a p-value cutoff}
 
-\item{column}{default='logFC'  a column to use to distinguish top/bottom}
+\item{column}{a column to use to distinguish top/bottom}
 
-\item{fold}{default='plusminus'  an identifier reminding how to get the bottom portion of a fold-change (plusminus says to get the negative of the positive, otherwise 1/positive is taken).}
+\item{fold}{an identifier reminding how to get the bottom portion of a fold-change (plusminus says to get the negative of the positive, otherwise 1/positive is taken).}
 
-\item{p_column}{default='adj.P.Val'  a column containing (adjusted or not)p-values}
+\item{p_column}{a column containing (adjusted or not)p-values}
 }
 \value{
 a list of up/down genes
 }
 \description{
-get_sig_genes()  Get a set of up/down genes using the top/bottom n or >/< z scores away from the median.
+Get a set of up/down genes using the top/bottom n or >/< z scores away from the median.
 }
 

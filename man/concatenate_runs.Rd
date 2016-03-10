@@ -2,22 +2,27 @@
 % Please edit documentation in R/count_tables.r
 \name{concatenate_runs}
 \alias{concatenate_runs}
-\title{concatenate_runs()  Sum the reads/gene for multiple sequencing runs of a single condition/batch}
+\title{\code{concatenate_runs()}  Sum the reads/gene for multiple sequencing runs of a single condition/batch}
 \usage{
 concatenate_runs(expt, column = "replicate")
 }
 \arguments{
 \item{expt}{an experiment class containing the requisite metadata and count tables}
 
-\item{column}{default='replicate'  a column of the design matrix used to specify which samples are replicates}
+\item{column}{a column of the design matrix used to specify which samples are replicates}
 }
 \value{
 the input expt with the new design matrix, batches, conditions, colors, and count tables.
 }
 \description{
-concatenate_runs()  Sum the reads/gene for multiple sequencing runs of a single condition/batch
+\code{concatenate_runs()}  Sum the reads/gene for multiple sequencing runs of a single condition/batch
 }
 \examples{
-## compressed = concatenate_runs(expt)
+\dontrun{
+ compressed = concatenate_runs(expt)
+}
+}
+\seealso{
+\pkg{Biobase}
 }
 

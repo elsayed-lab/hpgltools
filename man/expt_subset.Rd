@@ -2,7 +2,7 @@
 % Please edit documentation in R/count_tables.r
 \name{expt_subset}
 \alias{expt_subset}
-\title{expt_subset()  Extract a subset of samples following some rule(s) from an
+\title{Extract a subset of samples following some rule(s) from an
 experiment class}
 \usage{
 expt_subset(expt, subset = NULL)
@@ -13,24 +13,23 @@ expressionSet, design, colors, etc.}
 
 \item{subset}{a valid R expression which defines a subset of the
 design to keep.}
-
-\item{by_definitions}{default=TRUE  whether to use the definitions dataframe or design from pData(expressionset).
-The definitions dataframe often has much more information.}
 }
 \value{
 metadata an expt class which contains the smaller set of
 data
 }
 \description{
-expt_subset()  Extract a subset of samples following some rule(s) from an
+Extract a subset of samples following some rule(s) from an
 experiment class
 }
 \examples{
-## smaller_expt = expt_subset(big_expt, "condition=='control'")
-## all_expt = expt_subset(expressionset, "")  ## extracts everything
+\dontrun{
+ smaller_expt = expt_subset(big_expt, "condition=='control'")
+ all_expt = expt_subset(expressionset, "")  ## extracts everything
+}
 }
 \seealso{
-\code{\link{ExpressionSet}}, \code{\link{pData}},
-\code{\link{exprs}}, and \code{\link{fData}}
+\pkg{Biobase} \link[Biobase]{pData}
+\link[Biobase]{exprs} \link[Biobase]{fData}
 }
 

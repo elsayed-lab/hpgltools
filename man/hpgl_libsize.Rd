@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_libsize}
 \alias{hpgl_libsize}
-\title{hpgl_libsize()  Make a ggplot graph of library sizes.}
+\title{Make a ggplot graph of library sizes.}
 \usage{
 hpgl_libsize(data, colors = NULL, names = NULL, text = TRUE,
   title = NULL, yscale = NULL, ...)
@@ -10,30 +10,32 @@ hpgl_libsize(data, colors = NULL, names = NULL, text = TRUE,
 \arguments{
 \item{data}{an expt, dataframe, or expressionset of samples.}
 
-\item{colors}{default=NULL  a color scheme.}
+\item{colors}{a color scheme.}
 
-\item{names}{default=NULL  alternate names for the x-axis.}
+\item{names}{alternate names for the x-axis.}
 
-\item{text}{default=TRUE  add the numeric values inside the top of the bars of the plot?}
+\item{text}{add the numeric values inside the top of the bars of the plot?}
 
-\item{title}{default=NULL  a title for the plot.}
+\item{title}{a title for the plot.}
 
-\item{design}{default=NULL  a design matrix.}
+\item{yscale}{whether or not to log10 the y-axis.}
 
-\item{scale}{default=TRUE   whether or not to log10 the y-axis.}
+\item{...}{more parameters for your good time}
 }
 \value{
 a ggplot2 bar plot of every sample's size
 }
 \description{
-hpgl_libsize()  Make a ggplot graph of library sizes.
+Make a ggplot graph of library sizes.
 }
 \examples{
-## libsize_plot = hpgl_libsize(expt=expt)
-## libsize_plot  ## ooo pretty bargraph
+\dontrun{
+ libsize_plot = hpgl_libsize(expt=expt)
+ libsize_plot  ## ooo pretty bargraph
+}
 }
 \seealso{
-\code{\link{geom_bar}}, \code{\link{geom_text}},
-\code{\link{prettyNum}}, \code{\link{scale_y_log10}}
+\link[ggplot2]{geom_bar} \link[ggplot2]{geom_text}
+\link{prettyNum} \link[ggplot2]{scale_y_log10}
 }
 

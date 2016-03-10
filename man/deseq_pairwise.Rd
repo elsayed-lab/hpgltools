@@ -7,12 +7,15 @@
 deseq_pairwise(...)
 }
 \arguments{
-\item{look}{at deseq2_pairwise}
+\item{...}{I like cats}
 }
 \value{
 stuff from deseq2_pairwise
 }
 \description{
 This calls deseq2_pairwise(...) because I am determined to forget typing deseq2
+}
+\seealso{
+\link{deseq2_pairwise}
 }
 

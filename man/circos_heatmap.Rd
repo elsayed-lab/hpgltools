@@ -2,7 +2,7 @@
 % Please edit documentation in R/circos.r
 \name{circos_heatmap}
 \alias{circos_heatmap}
-\title{circos_heatmap()  Write tiles of arbitrary heat-mappable data in
+\title{Write tiles of arbitrary heat-mappable data in
 circos.}
 \usage{
 circos_heatmap(df, cfgout = "circos/conf/default.conf", colname = "datum",
@@ -11,26 +11,23 @@ circos_heatmap(df, cfgout = "circos/conf/default.conf", colname = "datum",
 \arguments{
 \item{df}{a dataframe with starts/ends and the floating point information}
 
-\item{cfgout}{default='circos/conf/default.conf'  The master
-configuration file to write.}
+\item{cfgout}{The master configuration file to write.}
 
-\item{colname}{default='datum'  The name of the column with the
+\item{colname}{The name of the column with the
 data of interest.}
 
-\item{chr}{default='chr1'  the name of the chromosome (This
+\item{chr}{the name of the chromosome (This
 currently assumes a bacterial chromosome)}
 
-\item{outer}{default=1.0  the floating point radius of the circle
+\item{colors}{the color of the histogram}
+
+\item{outer}{the floating point radius of the circle
 into which to place the plus-strand data}
 
-\item{width}{default=0.08  the radial width of each tile}
+\item{width}{the radial width of each tile}
 
-\item{spacing}{default=0.0  the radial distance between outer,inner
+\item{spacing}{the radial distance between outer,inner
 and inner,whatever follows.}
-
-\item{color}{default='blue'  the color of the histogram}
-
-\item{fill_color}{default='blue'  guess}
 }
 \value{
 the radius after adding the histogram and the spacing.

@@ -2,26 +2,44 @@
 % Please edit documentation in R/ontology_clusterprofiler.r
 \name{cluster_trees}
 \alias{cluster_trees}
-\title{Make fun trees a la topgo from goseq data.}
+\title{Take clusterprofile group data and print it on a tree as topGO does
+Make fun trees a la topgo from goseq data.}
 \usage{
 cluster_trees(de_genes, cpdata, goid_map = "reference/go/id2go.map",
   goids_df = NULL, score_limit = 0.2, overwrite = FALSE,
   selector = "topDiffGenes", pval_column = "adj.P.Val")
 }
 \arguments{
-\item{godata}{data from cluster Profiler}
+\item{de_genes}{A list of genes deemed 'interesting'}
 
-\item{goids}{a mapping of IDs to GO in the Ramigo expected format}
+\item{cpdata}{data from simple_clusterprofiler()}
 
-\item{sigforall}{Print significance on all nodes?}
+\item{goid_map}{A mapping file of IDs to GO ontologies}
+
+\item{goids_df}{A dataframe of mappings used to build goid_map}
+
+\item{score_limit}{A scoring limit above which to ignore genes}
+
+\item{overwrite}{Overwrite an existing goid mapping file?}
+
+\item{selector}{The name of a function for applying scores to the trees}
+
+\item{pval_column}{The name of the column in the table from which to extract scores}
 }
 \value{
 plots! Trees! oh my!
 }
 \description{
+Take clusterprofile group data and print it on a tree as topGO does
 Make fun trees a la topgo from goseq data.
 }
+\examples{
+\dontrun{
+cluster_data <- simple_clusterprofiler(genes, stuff)
+ctrees <- cluster_trees(genes, cluster_data)
+}
+}
 \seealso{
-\code{\link{Ramigo}}
+\pkg{Ramigo} \code{\link[topGO]{showSigOfNodes}}
 }
 

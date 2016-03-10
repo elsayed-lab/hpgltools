@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_boxplot}
 \alias{hpgl_boxplot}
-\title{hpgl_boxplot()  Make a ggplot boxplot of a set of samples.}
+\title{Make a ggplot boxplot of a set of samples.}
 \usage{
 hpgl_boxplot(data, colors = NULL, names = NULL, title = NULL,
   scale = NULL, ...)
@@ -10,11 +10,15 @@ hpgl_boxplot(data, colors = NULL, names = NULL, title = NULL,
 \arguments{
 \item{data}{an expt or data frame set of samples.}
 
-\item{colors}{default=NULL  a color scheme, if not provided will make its own.}
+\item{colors}{a color scheme, if not provided will make its own.}
 
-\item{names}{default=NULL  a nicer version of the sample names.}
+\item{names}{a nicer version of the sample names.}
 
-\item{scale}{default='raw'  whether to log scale the y-axis.}
+\item{title}{A title!}
+
+\item{scale}{whether to log scale the y-axis.}
+
+\item{...}{more parameters are fun}
 }
 \value{
 a ggplot2 boxplot of the samples.  Each boxplot
@@ -27,14 +31,16 @@ the non-outliers), and single dots for each gene which is outside
 that range.  A single dot is transparent.
 }
 \description{
-hpgl_boxplot()  Make a ggplot boxplot of a set of samples.
+Make a ggplot boxplot of a set of samples.
 }
 \examples{
-## a_boxplot = hpgl_boxplot(expt=expt)
-## a_boxplot  ## ooo pretty boxplot look at the lines
+\dontrun{
+ a_boxplot <- hpgl_boxplot(expt)
+ a_boxplot  ## ooo pretty boxplot look at the lines
+}
 }
 \seealso{
-\code{\link{geom_boxplot}}, \code{\link{melt}},
-\code{\link{scale_x_discrete}}
+\pkg{ggplot2} \pkg{reshape2} \link[ggplot2]{geom_boxplot}
+\link[reshape2]{melt} \link[ggplot2]{scale_x_discrete}
 }
 

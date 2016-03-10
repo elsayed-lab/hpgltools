@@ -2,17 +2,29 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_bcv_plot}
 \alias{hpgl_bcv_plot}
-\title{Steal EdgeR's plotBCV()}
+\title{Steal edgeR's plotBCV() and make it a ggplot2
+This was written primarily to understand what that function is doing in edgeR.}
 \usage{
 hpgl_bcv_plot(data)
 }
 \arguments{
-\item{expt}{}
+\item{data}{A dataframe/expt/exprs with count data}
 }
 \value{
 a plot! of the BCV a la ggplot2.
 }
 \description{
-Steal EdgeR's plotBCV()
+Steal edgeR's plotBCV() and make it a ggplot2
+This was written primarily to understand what that function is doing in edgeR.
+}
+\examples{
+\dontrun{
+bcv <- hpgl_bcv_plot(expt)
+summary(bcv$data)
+bcv$plot
+}
+}
+\seealso{
+\pkg{edgeR} \link[edgeR]{plotBCV}
 }
 

@@ -1,26 +1,28 @@
-## Time-stamp: <Tue Feb  2 15:52:36 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Mar  8 13:19:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' deseq_coefficient_scatter()  Plot out 2 coefficients with respect to one another from limma
+#'   Plot out 2 coefficients with respect to one another from deseq2
 #'
-#' It can be nice to see a plot of two coefficients from a limma comparison with respect to one another
+#' It can be nice to see a plot of two coefficients from a deseq2 comparison with respect to one another
 #' This hopefully makes that easy.
 #'
-#' @param limma_output the set of pairwise comparisons provided by limma_pairwise()
-#' @param x default=1  the name or number of the first coefficient column to extract, this will be the x-axis of the plot
-#' @param y default=2  the name or number of the second coefficient column to extract, this will be the y-axis of the plot
-#' @param gvis_filename default='limma_scatter.html'  A filename for plotting gvis interactive graphs of the data.
-#' @param gvis_trendline default=TRUE  add a trendline to the gvis plot?
-#' @param tooltip_data default=NULL  a dataframe of gene annotations to be used in the gvis plot
-#'
+#' @param output the set of pairwise comparisons provided by deseq_pairwise()
+#' @param x   the name or number of the first coefficient column to extract, this will be the x-axis of the plot
+#' @param y   the name or number of the second coefficient column to extract, this will be the y-axis of the plot
+#' @param gvis_filename   A filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline   add a trendline to the gvis plot?
+#' @param tooltip_data   a dataframe of gene annotations to be used in the gvis plot
+#' @param base_url   for gvis plots
 #' @return a ggplot2 plot showing the relationship between the two coefficients
-#' @seealso \code{\link{hpgl_linear_scatter}} \code{\link{limma_pairwise}}
-#' @export
+#' @seealso \link{hpgl_linear_scatter} \link{deseq2_pairwise}
 #' @examples
-#' ## pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' \dontrun{
+#'  pretty = coefficient_scatter(deseq_data, x="wt", y="mut")
+#' }
+#' @export
 deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_scatter.html",
                                       gvis_filename=NULL,
                                       gvis_trendline=TRUE, tooltip_data=NULL,
-                                      flip=FALSE, base_url=NULL) {
+                                      base_url=NULL) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     message("This can do comparisons among the following columns in the deseq2 result:")
@@ -38,17 +40,6 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     } else {
         yname <- y
     }
-    ## This is just a shortcut in case I want to flip axes without thinking.
-    if (isTRUE(flip)) {
-        tmp <- x
-        tmpname <- xname
-        x <- y
-        xname <- yname
-        y <- tmp
-        yname <- tmpname
-        rm(tmp)
-        rm(tmpname)
-    }
     message(paste0("Actually comparing ", xname, " and ", yname, "."))
     first_df <- output$coefficients[[xname]]
     first_df$delta <- log2(first_df$baseMean) + first_df$log2FoldChange
@@ -63,10 +54,13 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     coefficient_df <- coefficient_df[-1]
     coefficient_df <- coefficient_df[,c(xname, yname, "mean.1", "mean.2")]
     coefficient_df[is.na(coefficient_df)] <- 0
-
+    maxvalue <- max(coefficient_df) + 1.0
     plot <- hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
                                 tooltip_data=tooltip_data, base_url=base_url)
+    plot$scatter <- plot$scatter +
+        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
+        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
     plot$df <- coefficient_df
     return(plot)
 }
@@ -74,33 +68,40 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
 #' deseq_pairwise()  Because I can't be trusted to remember '2'
 #'
 #' This calls deseq2_pairwise(...) because I am determined to forget typing deseq2
-#' @param look at deseq2_pairwise
 #'
+#' @param ... I like cats
 #' @return stuff from deseq2_pairwise
-#'
+#' @seealso \link{deseq2_pairwise}
 #' @export
 deseq_pairwise <- function(...) {
     message("Hey you, use deseq2 pairwise.")
     deseq2_pairwise(...)
 }
 
-#' deseq2_pairwise()  Set up a model matrix and set of contrasts to do
+#' Set up a model matrix and set of contrasts to do
 #' a pairwise comparison of all conditions using DESeq2.
 #'
-#' @param input  a dataframe/vector or  expt class containing data, normalization state, etc.
-#' @param conditions default=NULL  a factor of conditions in the experiment
-#' @param batches default=NULL a factor of batches in the experiment
-#'
+#' @param input  A dataframe/vector or expt class containing data, normalization state, etc.
+#' @param conditions   A factor of conditions in the experiment
+#' @param batches  A factor of batches in the experiment
+#' @param model_cond   Have condition in the experimental model?
+#' @param model_batch   Have batch in the experimental model?
+#' @param annot_df   Include some annotation information in the results?
+#' @param ... triple dots!
 #' @return A list including the following information:
 #'   run = the return from calling DESeq()
-#'   result = the return from calling results()
-#'   result_mle = the return from calling results() with the MLE parameter.
-#'   results = the return when a deseq result class is cast as a dataframe.
-#'
-#' @seealso \code{\link{topTags}} \code{\link{glmLRT}} \code{\link{makeContrasts}}
-#' @export
+#'   denominators = list of denominators in the contrasts
+#'   numerators = list of the numerators in the contrasts
+#'   conditions = the list of conditions in the experiment
+#'   coefficients = list of coefficients making the contrasts
+#'   all_tables = list of DE tables
+#' @seealso \pkg{DESeq2} \code{\link[DESeq2]{results}} \code{\link[DESeq2]{estimateSizeFactors}}
+#'          \code{\link[DESeq2]{estimateDispersions}} \code{\link[DESeq2]{nbinomWaldTest}}
 #' @examples
-#' ## pretend = deseq2_pairwise(data, conditions, batches)
+#' \dontrun{
+#' pretend = deseq2_pairwise(data, conditions, batches)
+#' }
+#' @export
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                             model_batch=FALSE, annot_df=NULL, ...) {
     arglist <- list(...)
@@ -114,7 +115,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
             ## and expects data as floating point counts,
             ## not a log2 transformation.
-            if (input$normalized != "raw") {
+            if (input$normalized[[1]] != "raw") {
                 message("DESeq2 demands raw data as input, reverting to the original expressionset.")
                 data <- Biobase::exprs(input$original_expressionset)
             } else if (!is.null(input$transform)) {
@@ -155,12 +156,12 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     }
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     ## dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
-    message("DESeq2 step 2/5")
+    message("DESeq2 step 2/5: Estimate size factors.")
     deseq_sf <- DESeq2::estimateSizeFactors(dataset)
-    message("DESeq2 step 3/5")
+    message("DESeq2 step 3/5: estimate Dispersions.")
     deseq_disp <- DESeq2::estimateDispersions(deseq_sf, quiet=TRUE)
     ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
-    message("DESeq2 step 4/5")
+    message("DESeq2 step 4/5: nbinomWaldTest.")
     ## deseq_run <- DESeq2::DESeq(deseq_disp)
     deseq_run = DESeq2::nbinomWaldTest(deseq_disp, quiet=TRUE)
     ## possible options:  betaPrior=TRUE, betaPriorVar, modelMatrix=NULL
@@ -191,14 +192,19 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             ## From here on everything is the same.
             result[is.na(result$P.Value), "P.Value"] = 1 ## Some p-values come out as NA
             result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA
+            result$baseMean <- signif(x=as.numeric(result$baseMean), digits=4)
+            result$logFC <- signif(x=as.numeric(result$logFC), digits=4)
+            result$lfcSE <- signif(x=as.numeric(result$lfcSE), digits=4)
+            result$stat <- signif(x=as.numeric(result$stat), digits=4)
+            result$P.Value <- format(x=as.numeric(result$P.Value), digits=4, scientific=TRUE)
+            result$adj.P.Val <- format(x=as.numeric(result$adj.P.Val), digits=4, scientific=TRUE)
+
             result$qvalue <- tryCatch(
             {
                 ## Nested expressions are way too confusing for me
                 ttmp <- as.numeric(result$P.Value)
                 ttmp <- qvalue::qvalue(ttmp)$qvalues
-                ttmp <- signif(ttmp, 4)
-                ttmp <- format(ttmp, scientific=TRUE)
-                as.numeric(ttmp)
+                format(x=ttmp, digits=4, scientific=TRUE)
                 ## as.numeric(format(signif(qvalue::qvalue(as.numeric(result$P.Value), robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
             error=function(cond) {
@@ -212,8 +218,6 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             ##},
             finally={
             })
-            result$P.Value <- format(signif(result$P.Value, 4), scientific=TRUE)
-            result$adj.P.Val <- format(signif(result$adj.P.Val, 4), scientific=TRUE)
             result_name <- paste0(numerator, "_vs_", denominator)
             denominators[[result_name]] <- denominator
             numerators[[result_name]] <- numerator
@@ -244,6 +248,5 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     )
     return(ret_list)
 }
-
 
 ## EOF

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.r
 \name{hpgl_linear_scatter}
 \alias{hpgl_linear_scatter}
-\title{hpgl_linear_scatter()  Make a pretty scatter plot between two sets of numbers with a
+\title{Make a pretty scatter plot between two sets of numbers with a
 linear model superimposed and some supporting statistics.}
 \usage{
 hpgl_linear_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
@@ -13,22 +13,30 @@ hpgl_linear_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
 \arguments{
 \item{df}{a dataframe likely containing two columns}
 
-\item{tooltip_data}{default=NULL  a df of tooltip information for gvis
+\item{tooltip_data}{a df of tooltip information for gvis
 graphs.}
 
-\item{gvis_filename}{default=NULL  a filename to write a fancy html graph.}
+\item{gvis_filename}{a filename to write a fancy html graph.}
 
-\item{cormethod}{default='pearson'  what type of correlation to check?}
+\item{cormethod}{what type of correlation to check?}
 
-\item{size}{default=2  size of the dots on the plot.}
+\item{size}{size of the dots on the plot.}
 
-\item{verbose}{default=FALSE  be verbose?}
+\item{verbose}{be verbose?}
 
-\item{loess}{default=FALSE  add a loess estimation?}
+\item{loess}{add a loess estimation?}
 
-\item{identity}{default=FALSE  add the identity line?}
+\item{identity}{add the identity line?}
 
-\item{gvis_trendline}{default=NULL add a trendline to the gvis plot?  There are a couple possible types, I think linear is the most common.}
+\item{gvis_trendline}{add a trendline to the gvis plot?  There are a couple possible types, I think linear is the most common.}
+
+\item{first}{first column to plot}
+
+\item{second}{second column to plot}
+
+\item{base_url}{a base url to add to the plot}
+
+\item{pretty_colors}{colors!}
 }
 \value{
 a list including a ggplot2 scatter plot and some
@@ -46,14 +54,16 @@ similarity.  This will make a fun clicky googleVis graph if
 requested.
 }
 \description{
-hpgl_linear_scatter()  Make a pretty scatter plot between two sets of numbers with a
+Make a pretty scatter plot between two sets of numbers with a
 linear model superimposed and some supporting statistics.
 }
 \examples{
-## hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe, gvis_filename="html/fun_scatterplot.html")
+\dontrun{
+ hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+                     gvis_filename="html/fun_scatterplot.html")
+}
 }
 \seealso{
-\code{\link{lmrob}}, \code{\link{weights}},
-\code{\link{hsv}}, \code{\link{mad}}, \code{\link{hpgl_histogram}}
+\link[robust]{lmRob} \link[stats]{weights} \link{hpgl_histogram}
 }
 

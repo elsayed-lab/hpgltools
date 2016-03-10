@@ -2,26 +2,25 @@
 % Please edit documentation in R/de_shared.r
 \name{extract_significant_genes}
 \alias{extract_significant_genes}
-\title{extract_significant_genes()  Pull the highly up/down genes in combined tables}
+\title{Pull the highly up/down genes in combined tables}
 \usage{
 extract_significant_genes(combined, according_to = "limma", fc = 1,
-  p = 0.05, z = NULL, n = NULL,
-  sig_table = "excel/significant_genes.xlsx")
+  p = 0.05, z = NULL, n = NULL, excel = "excel/significant_genes.xlsx")
 }
 \arguments{
 \item{combined}{the output from combine_de_tables()}
 
-\item{according_to}{default='limma'  one may use the deseq, edger, limma, or meta data.}
+\item{according_to}{one may use the deseq, edger, limma, or meta data.}
 
-\item{fc}{default=1.0  a log fold change to define 'significant'}
+\item{fc}{a log fold change to define 'significant'}
 
-\item{p}{default=0.05  a (adjusted)p-value to define 'significant'}
+\item{p}{a (adjusted)p-value to define 'significant'}
 
-\item{z}{default=NULL  a z-score to define 'significant'}
+\item{z}{a z-score to define 'significant'}
 
-\item{n}{default=NULL  a set of top/bottom-n genes}
+\item{n}{a set of top/bottom-n genes}
 
-\item{sig_table}{default="excel/significant_genes.xlsx"  an excel file to write}
+\item{excel}{an excel file to write}
 }
 \value{
 a set of up-genes, down-genes, and numbers therein
