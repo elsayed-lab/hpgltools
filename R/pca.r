@@ -1,4 +1,4 @@
-# Time-stamp: <Wed Mar  9 15:02:56 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Thu Mar 10 10:57:12 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -124,7 +124,7 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         if (is.null(plot_names)) {
             plot_labels <- colnames(data)
         } else {
-            plot_labels <- plot_names
+            plot_labels <- paste0(colnames(data), ":", plot_names)
         }
     } else if (plot_labels[1] == 'boring') {
         if (is.null(plot_names)) {

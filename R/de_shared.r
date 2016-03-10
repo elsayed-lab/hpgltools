@@ -1,5 +1,4 @@
 
-
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
 ## The null hypothesis is (H0): (infected == uninfected) || (infected == beads)

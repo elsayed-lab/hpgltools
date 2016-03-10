@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar  8 13:19:01 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Mar 10 12:47:34 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from deseq2
 #'
@@ -103,7 +103,7 @@ deseq_pairwise <- function(...) {
 #' }
 #' @export
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                            model_batch=FALSE, annot_df=NULL, ...) {
+                            model_batch=NULL, annot_df=NULL, ...) {
     arglist <- list(...)
     message("Starting DESeq2 pairwise comparisons.")
     input_class <- class(input)[1]
@@ -129,8 +129,8 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         data <- as.data.frame(input)
     }
     condition_table <- table(conditions)
-    conditions <- levels(as.factor(conditions))
-    batches <- levels(as.factor(batches))
+    condition_levels <- levels(as.factor(conditions))
+    batch_levels <- levels(as.factor(batches))
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
     summarized <- NULL
@@ -139,26 +139,48 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=Biobase::pData(input$expressionset),
-                                                     design=~ batch + condition)
-        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ batch + condition)
+                                                     design=~ batch_levels + condition_levels)
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ batch_levels + condition_levels)
     } else if (isTRUE(model_batch)) {
         message("DESeq2 step 1/5: Including only batch in the deseq model.")
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=Biobase::pData(input$expressionset),
-                                                     design=~ batch)
-        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ batch)
+                                                     design=~ batch_levels)
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ batch_levels)
     } else {
         message("DESeq2 step 1/5: Including only condition in the deseq model.")
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=Biobase::pData(input$expressionset),
-                                                     design=~ condition)
-        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ condition)
+                                                     design=~ condition_levels)
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ condition_levels)
     }
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     ## dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
     message("DESeq2 step 2/5: Estimate size factors.")
     deseq_sf <- DESeq2::estimateSizeFactors(dataset)
     message("DESeq2 step 3/5: estimate Dispersions.")
+    ## After estimating size-factors I think is when we can apply sva
+    if (model_batch <- 'sva') {
+        data <- exprs(start$expressionset)
+        normdata <- exprs(norm$expressionset)
+        summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data, colData=Biobase::pData(input$expressionset), design=~ condition)
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ condition)
+        counts <- as.data.frame(DESeq2::counts(dataset))
+        idx <- rowMeans(counts) > 1
+        counts <- counts[ idx, ]
+        ##        conditional_model <- model.matrix(~ conditions, data=conditions)
+        conditional_model <- model.matrix(~ condition, data=input$design)
+        null_model <- model.matrix(~ 1, data=input$design)
+##        null_model <- model.matrix(~ 1, data=conditions)
+        sva_surrogates <- sva::num.sv(normdata, null_model)
+        message(paste0("Found ", sva_surrogates, " surrogate variables."))
+        sva_result <- sva::svaseq(dat=normdata, conditional_model, null_model, n.sv=sva_surrogates)
+        dds <- estimateSizeFactors(dataset)
+        dds$sva_first <- sva_result$sv[, 1]
+        dds$sva_second <- sva_result$sv[, 2]
+        design(dds) <- ~ condition + sva_first + sva_second
+
+    }
     deseq_disp <- DESeq2::estimateDispersions(deseq_sf, quiet=TRUE)
     ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
     message("DESeq2 step 4/5: nbinomWaldTest.")
