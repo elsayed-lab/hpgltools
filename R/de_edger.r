@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Feb  5 12:31:16 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 11 11:46:49 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from edger
 #'
@@ -97,7 +97,7 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
 #' }
 #' @export
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                          model_batch=FALSE, model_intercept=FALSE, alt_model=NULL,
+                          model_batch=NULL, model_intercept=FALSE, alt_model=NULL,
                           extra_contrasts=NULL, annot_df=NULL, ...) {
     message("Starting edgeR pairwise comparisons.")
     input_class <- class(input)[1]
@@ -131,6 +131,10 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     condbatch_int_model <- try(stats::model.matrix(~ conditions + batches), silent=TRUE)
     fun_model <- NULL
     fun_int_model <- NULL
+    if (is.null(model_batch)) {
+        fun_model <- cond_model
+        fun_int_model <- cond_int_model
+    }
     if (isTRUE(model_cond) & isTRUE(model_batch)) {
         fun_model <- condbatch_model
         fun_int_model <- condbatch_int_model
