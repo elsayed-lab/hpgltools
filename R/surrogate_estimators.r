@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 11 13:11:15 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 11 16:54:06 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -34,8 +34,13 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
     batches <- as.factor(design[, "batch"])
     conditional_model <- model.matrix(~ conditions, data=data)
     null_model <- conditional_model[, 1]
-    be_surrogate_estimate <- sva::num.sv(dat=mtrx, mod=conditional_model, method="be")
-    leek_surrogate_estimate <- sva::num.sv(dat=mtrx, mod=conditional_model, method="leek")
+
+    be_surrogate_estimate <- 0
+    leek_surrogate_estimate <- 0
+    if (estimate_type == 'sva_supervised' | estimate_type == 'ruv_supervised') {
+        be_surrogate_estimate <- suppressMessages(sva::num.sv(dat=mtrx, mod=conditional_model, method="be"))
+        leek_surrogate_estimate <- suppressMessages(sva::num.sv(dat=mtrx, mod=conditional_model, method="leek"))
+    }
     chosen_estimate <- 1
     if (is.null(chosen_surrogates)) {
         if (as.numeric(be_surrogate_estimate) > 0 & as.numeric(leek_surrogate_estimate) > 0) {
@@ -68,47 +73,51 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
     adjusted_counts <- NULL
     type_color <- NULL
     if (estimate_type == "sva_supervised") {
+        message("Attempting sva supervised surrogate estimation.")
         type_color <- "red"
         supervised_sva <- sva::svaseq(mtrx, conditional_model, null_model, controls=control_likelihoods)
         model_adjust <- supervised_sva$sv
     } else if (estimate_type == "sva_unsupervised") {
+        message("Attempting sva unsupervised surrogate estimation.")
         type_color <- "blue"
         unsupervised_sva_batch <- sva::svaseq(mtrx, conditional_model, null_model)
         model_adjust <- unsupervised_sva_batch$sv
     } else if (estimate_type == "pca") {
+        message("Attempting pca surrogate estimation.")
         type_color <- "green"
         model_adjust <- corpcor::fast.svd(l2_data - rowMeans(l2_data))$v[, 1]
     } else if (estimate_type == "ruv_supervised") {
+        message("Attempting ruvseq supervised surrogate estimation.")
         type_color <- "black"
         surrogate_estimate <- sva::num.sv(dat=mtrx, mod=conditional_model)
         control_likelihoods <- sva::empirical.controls(dat=mtrx, mod=conditional_model, mod0=null_model, n.sv=surrogate_estimate)
         model_adjust <- RUVSeq::RUVg(mtrx, cIdx=as.logical(control_likelihoods), k=1)$W
     } else if (estimate_type == "ruv_residuals") {
+        message("Attempting ruvseq residual surrogate estimation.")
         type_color <- "purple"
         ## Use RUVSeq and residuals
-        conditional_model <- model.matrix(~ conditions)
         ruv_input <- edgeR::DGEList(counts=data, group=conditions)
         ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
-        ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, ruv_design)
-        ruv_input_tag <- edgeR::estimateGLMTagwiseDisp(ruv_input_glm, ruv_design)
-        ruv_fit <- edgeR::glmFit(ruv_input_tag, ruv_design)
+        ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, conditional_model)
+        ruv_input_tag <- edgeR::estimateGLMTagwiseDisp(ruv_input_glm, conditional_model)
+        ruv_fit <- edgeR::glmFit(ruv_input_tag, conditional_model)
         ruv_res <- residuals(ruv_fit, type="deviance")
-        ruv_normalized <- betweenLaneNormalization(mtrx, which="upper")  ## This also gets mad if you pass it a df and not matrix
+        ruv_normalized <- EDASeq::betweenLaneNormalization(mtrx, which="upper")  ## This also gets mad if you pass it a df and not matrix
         controls <- rep(TRUE, dim(data)[1])
         model_adjust <- RUVSeq::RUVr(ruv_normalized, controls, k=1, ruv_res)$W
     } else if (estimate_type == "ruv_empirical") {
+        message("Attempting ruvseq empirical surrogate estimation.")
         type_color <- "orange"
-        conditional_model <- model.matrix(~ conditions)
         ruv_input <- edgeR::DGEList(counts=data, group=conditions)
         ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
-        ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, ruv_design)
-        ruv_input_tag <- edgeR::estimateGLMTagwiseDisp(ruv_input_glm, ruv_design)
-        ruv_fit <- edgeR::glmFit(ruv_input_tag, ruv_design)
+        ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, conditional_model)
+        ruv_input_tag <- edgeR::estimateGLMTagwiseDisp(ruv_input_glm, conditional_model)
+        ruv_fit <- edgeR::glmFit(ruv_input_tag, conditional_model)
         ## Use RUVSeq with empirical controls
         ## The previous instance of ruv_input should work here, and the ruv_input_norm
         ## Ditto for _glm and _tag, and indeed ruv_fit
         ## Thus repeat the first 7 lines of the previous RUVSeq before anything changes.
-        ruv_lrt <- glmLRT(ruv_fit, coef=2)
+        ruv_lrt <- edgeR::glmLRT(ruv_fit, coef=2)
         ruv_controls = rank(ruv_lrt$table$LR) <= 400  ## what is going on here?!
         model_adjust <- RUVSeq::RUVg(mtrx, ruv_controls, k=1)$W
     } else {
@@ -162,18 +171,20 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
 #' @export
 compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     design <- expt$design
-    message("1/6: Attempting pca surrogate estimation.")
-    pca_adjust <- get_model_adjust(expt, type="pca")
-    message("2/6: Attempting sva supervised surrogate estimation.")
-    sva_supervised <- get_model_adjust(expt, type="supervised_sva")
-    message("3/6: Attempting sva unsupervised surrogate estimation.")
-    sva_unsupervised <- get_model_adjust(expt, type="unsupervised_sva")
-    message("4/6: Attempting ruv supervised surrogate estimation.")
-    ruv_supervised <- get_model_adjust(expt, type="ruv_supervised")
-    message("5/6: Attempting ruv residual surrogate estimation.")
-    ruv_residuals <- get_model_adjust(expt, type="ruv_residuals")
-    message("6/6: Attempting ruv empirical surrogate estimation.")
-    ruv_empirical <- get_model_adjust(expt, type="ruv_empirical")
+    pca_plots <- list()
+    pca_plots$null <- hpgl_pca(start)$plot
+    pca_adjust <- get_model_adjust(expt, estimate_type="pca")
+##    pca_plots$pca <- hpgl_pca(pca_adjust$new_counts, design=design)$plot
+    sva_supervised <- get_model_adjust(expt, estimate_type="sva_supervised")
+##    pca_plots$svasup <- hpgl_pca(sva_supervised$new_counts, design=design)$plot
+    sva_unsupervised <- get_model_adjust(expt, estimate_type="sva_unsupervised")
+##    pca_plots$svaunsup <- hpgl_pca(sva_unsupervised$new_counts, design=design)$plot
+    ruv_supervised <- get_model_adjust(expt, estimate_type="ruv_supervised")
+##    pca_plots$ruvsup <- hpgl_pca(ruv_supervised$new_counts, design=design)$plot
+    ruv_residuals <- get_model_adjust(expt, estimate_type="ruv_residuals")
+##    pca_plots$ruvresid <- hpgl_pca(ruv_residuals$new_counts, design=design)$plot
+    ruv_empirical <- get_model_adjust(expt, estimate_type="ruv_empirical")
+##    pca_plots$ruvemp <- hpgl_pca(ruv_empirical$new_counts, design=design)$plot
 
     batch_adjustments <- cbind(as.factor(expt$conditions),
                                as.factor(expt$batches),
@@ -211,6 +222,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     ## This needs to be redone to take into account how I organized the adjustments!!!
     counter <- 0
     num_adjust <- length(adjustments)
+    pca_plots <- list()
     for (adjust in adjustments) {
         counter <- counter + 1
         message(paste0(counter, "/", num_adjust, ": Performing limma modelling of the data after adjustment with ", adjust))
