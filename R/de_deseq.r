@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Mar 10 12:47:34 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 11 11:25:31 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from deseq2
 #'
@@ -108,6 +108,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     message("Starting DESeq2 pairwise comparisons.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
+        design <- input$design
         conditions <- input$conditions
         batches <- input$batches
         data <- as.data.frame(Biobase::exprs(input$expressionset))
@@ -134,53 +135,46 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
     summarized <- NULL
+    ## Moving the size-factor estimation into this if(){} block in order to accomodate sva-ish batch estimation in the model
+    deseq_sf <- NULL
+    model_string <- "~ batch + condition"
     if (isTRUE(model_batch) & isTRUE(model_cond)) {
         message("DESeq2 step 1/5: Including batch and condition in the deseq model.")
         ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
+        ## conditions and batch in this context is information taken from pData()
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=Biobase::pData(input$expressionset),
-                                                     design=~ batch_levels + condition_levels)
-        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ batch_levels + condition_levels)
+                                                     ##design=~ batch_levels + condition_levels)
+                                                     design=as.formula(model_string))
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     } else if (isTRUE(model_batch)) {
         message("DESeq2 step 1/5: Including only batch in the deseq model.")
+        model_string = "~ batch"
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=Biobase::pData(input$expressionset),
-                                                     design=~ batch_levels)
-        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ batch_levels)
+                                                     design=as.formula(model_string))
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
+    } else if (model_batch <- 'sva') {
+        non_condition_estimate <- get_model_adjust(input)
+        model_modifier <- non_condition_estimate$model_adjust
+        model_string <- "~ condition + model_modifier"
+        summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
+                                                     colData=Biobase::pData(input$expressionset),
+                                                     design=as.formula(model_string))
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     } else {
         message("DESeq2 step 1/5: Including only condition in the deseq model.")
+        model_string <- "~ condition"
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=Biobase::pData(input$expressionset),
-                                                     design=~ condition_levels)
-        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ condition_levels)
+                                                     design=as.formula(model_string))
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     }
     ## If making a model ~0 + condition -- then must set betaPrior=FALSE
     ## dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
     message("DESeq2 step 2/5: Estimate size factors.")
     deseq_sf <- DESeq2::estimateSizeFactors(dataset)
     message("DESeq2 step 3/5: estimate Dispersions.")
-    ## After estimating size-factors I think is when we can apply sva
-    if (model_batch <- 'sva') {
-        data <- exprs(start$expressionset)
-        normdata <- exprs(norm$expressionset)
-        summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data, colData=Biobase::pData(input$expressionset), design=~ condition)
-        dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ condition)
-        counts <- as.data.frame(DESeq2::counts(dataset))
-        idx <- rowMeans(counts) > 1
-        counts <- counts[ idx, ]
-        ##        conditional_model <- model.matrix(~ conditions, data=conditions)
-        conditional_model <- model.matrix(~ condition, data=input$design)
-        null_model <- model.matrix(~ 1, data=input$design)
-##        null_model <- model.matrix(~ 1, data=conditions)
-        sva_surrogates <- sva::num.sv(normdata, null_model)
-        message(paste0("Found ", sva_surrogates, " surrogate variables."))
-        sva_result <- sva::svaseq(dat=normdata, conditional_model, null_model, n.sv=sva_surrogates)
-        dds <- estimateSizeFactors(dataset)
-        dds$sva_first <- sva_result$sv[, 1]
-        dds$sva_second <- sva_result$sv[, 2]
-        design(dds) <- ~ condition + sva_first + sva_second
-
-    }
     deseq_disp <- DESeq2::estimateDispersions(deseq_sf, quiet=TRUE)
     ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
     message("DESeq2 step 4/5: nbinomWaldTest.")
@@ -195,14 +189,14 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     result_list <- list()
     coefficient_list <- list()
     ## The following is an attempted simplification of the contrast formulae
-    number_comparisons <- sum(1:(length(conditions) - 1))
+    number_comparisons <- sum(1:(length(condition_levels) - 1))
     inner_count <- 0
-    for (c in 1:(length(conditions) - 1)) {
-        denominator <- conditions[c]
+    for (c in 1:(length(condition_levels) - 1)) {
+        denominator <- condition_levels[c]
         nextc <- c + 1
-        for (d in nextc:length(conditions)) {
+        for (d in nextc:length(condition_levels)) {
             inner_count <- inner_count + 1
-            numerator <- conditions[d]
+            numerator <- condition_levels[d]
             comparison <- paste0(numerator, "_vs_", denominator)
             message(paste0("DESeq2 step 5/5: ", inner_count, "/",
                            number_comparisons, ": Printing table: ", comparison))
@@ -218,15 +212,15 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             result$logFC <- signif(x=as.numeric(result$logFC), digits=4)
             result$lfcSE <- signif(x=as.numeric(result$lfcSE), digits=4)
             result$stat <- signif(x=as.numeric(result$stat), digits=4)
-            result$P.Value <- format(x=as.numeric(result$P.Value), digits=4, scientific=TRUE)
-            result$adj.P.Val <- format(x=as.numeric(result$adj.P.Val), digits=4, scientific=TRUE)
+            result$P.Value <- signif(x=as.numeric(result$P.Value), digits=4)
+            result$adj.P.Val <- signif(x=as.numeric(result$adj.P.Val), digits=4)
 
             result$qvalue <- tryCatch(
             {
                 ## Nested expressions are way too confusing for me
                 ttmp <- as.numeric(result$P.Value)
                 ttmp <- qvalue::qvalue(ttmp)$qvalues
-                format(x=ttmp, digits=4, scientific=TRUE)
+                signif(x=ttmp, digits=4)
                 ## as.numeric(format(signif(qvalue::qvalue(as.numeric(result$P.Value), robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
             error=function(cond) {
@@ -253,8 +247,8 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         ## denominator_name = paste0("condition", denominator)  ## maybe needed in 6 lines
     }  ## End for each c
     ## Now that we finished the contrasts, fill in the coefficient list with each set of values
-    for (c in 1:(length(conditions))) {
-        coef <- conditions[c]
+    for (c in 1:(length(condition_levels))) {
+        coef <- condition_levels[c]
         coef_name <- paste0("condition", coef)
         coefficient_list[[coef]] <- as.data.frame(DESeq2::results(deseq_run, contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
         message(paste0("Collected coefficients for: ", coef))
