@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 11 12:38:35 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 11 13:11:15 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -161,6 +161,7 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
 #' @return a list of toys
 #' @export
 compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
+    design <- expt$design
     message("1/6: Attempting pca surrogate estimation.")
     pca_adjust <- get_model_adjust(expt, type="pca")
     message("2/6: Attempting sva supervised surrogate estimation.")
@@ -174,7 +175,6 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     message("6/6: Attempting ruv empirical surrogate estimation.")
     ruv_empirical <- get_model_adjust(expt, type="ruv_empirical")
 
-    batch_names <- c("condition","batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
     batch_adjustments <- cbind(as.factor(expt$conditions),
                                as.factor(expt$batches),
                                pca_adjust$model_adjust,
@@ -183,6 +183,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
                                ruv_supervised$model_adjust,
                                ruv_residuals$model_adjust,
                                ruv_empirical$model_adjust)
+    batch_adjustments <- as.data.frame(batch_adjustments)
     if (!is.null(extra_factors)) {
         for (fact in extra_factors) {
             if (!is.null(expt$design[, fact])) {
@@ -191,38 +192,45 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
             }
         }
     }
+    batch_names <- c("condition","batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
     colnames(batch_adjustments) <- batch_names
     correlations <- cor(batch_adjustments)
     par(mar=c(5,5,5,5))
     corrplot::corrplot(correlations, method="ellipse", type="lower", tl.pos="d")
     ret_plot <- grDevices::recordPlot()
 
-
-    adjustments <- c("", "+ batch", "+ pca_adjust", "+ sva_supervised", "+ sva_unsupervised",
-                     "+ ruv_supervised", "+ ruv_residuals", "+ ruv_empirival")
+    adjustments <- c("", "+ batch_adjustments$batch", "+ batch_adjustments$pca",
+                     "+ batch_adjustments$sva_sup", "+ batch_adjustments$sva_unsup",
+                     "+ batch_adjustments$ruv_sup", "+ batch_adjustments$ruv_resid",
+                     "+ batch_adjustments$ruv_emp")
     starter <- edgeR::DGEList(counts=data)
     norm_start <- edgeR::calcNormFactors(starter)
     catplots <- vector("list", length(adjustments))
     tstats <- vector("list", length(adjustments))
+
+    ## This needs to be redone to take into account how I organized the adjustments!!!
     counter <- 0
+    num_adjust <- length(adjustments)
     for (adjust in adjustments) {
         counter <- counter + 1
-        design <- model.matrix(as.formula(paste0("~ condition", adjust)))
-        voom_result <- limma::voom(norm_start, design, plot=FALSE)
-        fit <- limma::lmFit(voom_result, design)
-        fit <- eBayes(fit)
-        tstats[[counter]] <- abs(fit$t[, 2])
+        message(paste0(counter, "/", num_adjust, ": Performing limma modelling of the data after adjustment with ", adjust))
+        modified_formula <- as.formula(paste0("~ condition ", adjust))
+        limma_design <- model.matrix(modified_formula, data=design)
+        voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
+        limma_fit <- limma::lmFit(voom_result, limma_design)
+        modified_fit <- limma::eBayes(limma_fit)
+        tstats[[counter]] <- abs(modified_fit$t[, 2])
         names(tstats[[counter]]) <- as.character(1:dim(data)[1])
-        catplots[[counter]] <- CATplot(-rank(tstats[[counter]]), -rank(tstats[[1]]), maxrank=1000, make.plot=FALSE)
+        ## catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[counter]]), -rank(tstats[[2]]), maxrank=1000, make.plot=TRUE)
     }
 
-    plot(catplots[[1]], ylim=c(0, 1), col="black", lwd=3, type="l", ylab="Concordance between study and different methods.", xlab="Rank")
-    lines(catplots[[2]], col="red", lwd=3, lty=2)
-    lines(catplots[[3]], col="blue", lwd=3)
-    lines(catplots[[4]], col="green", lwd=3, lty=3)
-    lines(catplots[[5]], col="orange", lwd=3)
-    legend(200, 0.5, legend=c("some stuff about methods used."), col="colors", lty=c(1,2,1,3,1), lwd=3)
-    catplot_together <- grDevices::recordPlot()
+##    plot(catplots[[1]], ylim=c(0, 1), col="black", lwd=3, type="l", ylab="Concordance between study and different methods.", xlab="Rank")
+##    lines(catplots[[2]], col="red", lwd=3, lty=2)
+##    lines(catplots[[3]], col="blue", lwd=3)
+##    lines(catplots[[4]], col="green", lwd=3, lty=3)
+##    lines(catplots[[5]], col="orange", lwd=3)
+##    legend(200, 0.5, legend=c("some stuff about methods used."), col="colors", lty=c(1,2,1,3,1), lwd=3)
+##    catplot_together <- grDevices::recordPlot()
 
     ret <- list(
         "pca_adjust" = pca_adjust,
@@ -233,7 +241,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
         "ruv_empirical_adjust" = ruv_empirical,
         "adjustments" = batch_adjustments,
         "correlations" = correlations,
-        "plot" = ret_plot,
-        "catplots" = catplot_together)
+        "plot" = ret_plot)
+##        "catplots" = catplot_together)
     return(ret)
 }
