@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 11 11:45:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 11 12:38:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -31,12 +31,14 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
     mtrx <- as.matrix(data)
     l2_data <- Biobase::exprs(suppressMessages(normalize_expt(start_low, transform="log2")$expressionset))
     conditions <- as.factor(design[, "condition"])
+    batches <- as.factor(design[, "batch"])
     conditional_model <- model.matrix(~ conditions, data=data)
     null_model <- conditional_model[, 1]
     be_surrogate_estimate <- sva::num.sv(dat=mtrx, mod=conditional_model, method="be")
     leek_surrogate_estimate <- sva::num.sv(dat=mtrx, mod=conditional_model, method="leek")
+    chosen_estimate <- 1
     if (is.null(chosen_surrogates)) {
-        if (be_surrogate_estimate > 0 & leek_surrogate_estimate > 0) {
+        if (as.numeric(be_surrogate_estimate) > 0 & as.numeric(leek_surrogate_estimate) > 0) {
             chosen_estimate <- be_surrogate_estimate
         } else if (be_surrogate_estimate > 0) {
             chosen_estimate <- be_surrogate_estimate
@@ -44,11 +46,14 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
             chosen_estimate <- leek_surrogate_estimate
         }
     }
-    if (chosen_surrogates > 3 | chosen_surrogates < 1) {
-        chosen_surrogates = 1
+    if (chosen_estimate <= 4 | chosen_estimate >= 1) {
+        chosen_surrogates = chosen_estimate
     }
 
-    control_likelihoods <- sva::empirical.controls(dat=mtrx, mod=conditional_model, mod0=null_model, n.sv=chosen_surrogates)
+    control_likelihoods <- try(sva::empirical.controls(dat=mtrx, mod=conditional_model, mod0=null_model, n.sv=chosen_surrogates), silent=TRUE)
+    if (class(control_likelihoods) == 'try-error') {
+        control_likelihoods = 0
+    }
     if (sum(control_likelihoods) == 0) {
         if (estimate_type == "sva_supervised") {
             message("Unable to perform supervised estimations, changing to unsupervised_sva.")
@@ -155,12 +160,18 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
 #' @param a character list of extra factors which may be included in the final plot of the data
 #' @return a list of toys
 #' @export
-compare_batch_estimates <- function(expt, extra_factors=NULL) {
+compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
+    message("1/6: Attempting pca surrogate estimation.")
     pca_adjust <- get_model_adjust(expt, type="pca")
+    message("2/6: Attempting sva supervised surrogate estimation.")
     sva_supervised <- get_model_adjust(expt, type="supervised_sva")
+    message("3/6: Attempting sva unsupervised surrogate estimation.")
     sva_unsupervised <- get_model_adjust(expt, type="unsupervised_sva")
+    message("4/6: Attempting ruv supervised surrogate estimation.")
     ruv_supervised <- get_model_adjust(expt, type="ruv_supervised")
+    message("5/6: Attempting ruv residual surrogate estimation.")
     ruv_residuals <- get_model_adjust(expt, type="ruv_residuals")
+    message("6/6: Attempting ruv empirical surrogate estimation.")
     ruv_empirical <- get_model_adjust(expt, type="ruv_empirical")
 
     batch_names <- c("condition","batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
@@ -180,7 +191,7 @@ compare_batch_estimates <- function(expt, extra_factors=NULL) {
             }
         }
     }
-    colnames(correlations) <- batch_names
+    colnames(batch_adjustments) <- batch_names
     correlations <- cor(batch_adjustments)
     par(mar=c(5,5,5,5))
     corrplot::corrplot(correlations, method="ellipse", type="lower", tl.pos="d")
