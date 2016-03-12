@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Mar  5 00:47:23 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Mar 10 16:56:21 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -39,6 +39,21 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 }
 
 #'   Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
+#'   I found this note which is the clearest explanation of what happens with batch effect data:
+#'   https://support.bioconductor.org/p/76099/
+#'   Just to be clear, there's an important difference between removing a batch effect and modelling a
+#'   batch effect. Including the batch in your design formula will model the batch effect in the
+#'   regression step, which means that the raw data are not modified (so the batch effect is not
+#'   removed), but instead the regression will estimate the size of the batch effect and subtract it
+#'   out when performing all other tests. In addition, the model's residual degrees of freedom will
+#'   be reduced appropriately to reflect the fact that some degrees of freedom were "spent"
+#'   modelling the batch effects. This is the preferred approach for any method that is capable of
+#'   using it (this includes DESeq2). You would only remove the batch effect (e.g. using limma's
+#'   removeBatchEffect function) if you were going to do some kind of downstream analysis that can't
+#'   model the batch effects, such as training a classifier.
+#'   I don't have experience with ComBat, but I would expect that you run it on log-transformed CPM
+#'   values, while DESeq2 expects raw counts as input. I couldn't tell you how to properly use the
+#'   two methods together.
 #'
 #' @param count_table  a matrix of (pseudo)counts.
 #' @param design  a model matrix defining the experimental conditions/batches/etc
@@ -123,6 +138,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE)
     } else if (batch == "svaseq") {
         message("batch_counts: Using sva::svaseq for batch correction.")
+        message("Note to self:  If you feed svaseq a data frame you will get an error like:")
+        message("data %*% (Id - mod %*% blah blah requires numeric/complex arguments.")
         df <- data.frame(count_table)
         mtrx <- as.matrix(df)
         conditional_model <- model.matrix(~conditions, data=df)
@@ -139,6 +156,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     } else if (batch == "ruvg") {
         message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.")
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
+        ## As it stands I do not think this does anything useful
         ##require.auto("RUVSeq")
         conditional_model <- model.matrix(~conditions, data=df)
         y <- edgeR::DGEList(counts=count_table, group=conditions)

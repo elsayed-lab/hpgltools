@@ -6,7 +6,7 @@
 a pairwise comparison of all conditions using EdgeR.}
 \usage{
 edger_pairwise(input, conditions = NULL, batches = NULL,
-  model_cond = TRUE, model_batch = FALSE, model_intercept = FALSE,
+  model_cond = TRUE, model_batch = NULL, model_intercept = FALSE,
   alt_model = NULL, extra_contrasts = NULL, annot_df = NULL, ...)
 }
 \arguments{

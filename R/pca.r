@@ -1,4 +1,4 @@
-# Time-stamp: <Wed Mar  9 15:02:56 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Fri Mar 11 15:13:28 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -95,6 +95,7 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
                      plot_title=NULL, plot_size=5, ...) {
     hpgl_env = environment()
     arglist <- list(...)
+    plot_names <- arglist$plot_names
     design <- get0("design")
     plot_colors <- get("plot_colors")
     plot_labels <- get0("plot_labels")
@@ -124,7 +125,7 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         if (is.null(plot_names)) {
             plot_labels <- colnames(data)
         } else {
-            plot_labels <- plot_names
+            plot_labels <- paste0(colnames(data), ":", plot_names)
         }
     } else if (plot_labels[1] == 'boring') {
         if (is.null(plot_names)) {
@@ -159,7 +160,7 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
     if (is.null(colors)) {
-        colors <- as.numeric(levels(as.factor(design$condition)))
+        plot_colors <- as.numeric(as.factor(design$condition))
     }
     pca_data <- data.frame("SampleID" = as.character(design$sample),
                            "condition" = as.character(design$condition),
