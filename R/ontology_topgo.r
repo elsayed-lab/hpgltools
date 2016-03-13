@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 23:27:47 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 13 14:50:12 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -21,7 +21,7 @@
 #' @param ... other options which I do not remember right now
 #' @return a big list including the various outputs from topgo
 #' @export
-simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=NULL,
+simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
                          pvals=NULL, limitby="fisher", limit=0.1, signodes=100,
                          sigforall=TRUE, numchar=300, selector="topDiffGenes",
                          pval_column="adj.P.Val", overwrite=FALSE, densities=FALSE,
@@ -36,7 +36,10 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
 ### mf_GOdata = new("topGOdata", description="something", ontology="BP", allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO, gene2GO=geneID2GO, nodeSize=2)
     ## The following library invocation is in case it was unloaded for pathview
     require.auto("topGO")
+    requireNamespace("topGO")
+    library("topGO")
     require.auto("Hmisc")
+    requireNamespace("Hmisc")
     gomap_info <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     message(paste0("simple_topgo(): Found ID->GO map: ", gomap_info))
     geneID2GO <- topGO::readMappings(file=goid_map)
@@ -44,11 +47,10 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
     if (is.null(de_genes$ID)) {
         de_genes$ID <- make.names(rownames(de_genes), unique=TRUE)
     }
-    ##    interesting_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
+    ## interesting_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
     fisher_interesting_genes <- as.factor(as.integer(annotated_genes %in% de_genes$ID))
     names(fisher_interesting_genes) <- annotated_genes
-    require.auto("Hmisc")
-    ##    ks_interesting_genes <- as.integer(annotated_genes %nin% de_genes$ID) ## %nin% is from Hmisc
+    ## ks_interesting_genes <- as.integer(annotated_genes %nin% de_genes$ID) ## %nin% is from Hmisc
     ks_interesting_genes <- as.integer(!annotated_genes %in% de_genes$ID) ## %nin% is from Hmisc
     if (!is.null(de_genes$P.Value)) {
         ## I think this needs to include the entire gene universe, not only the set of x differentially expressed genes
@@ -63,6 +65,7 @@ simple_topgo <- function(de_genes, goid_map="reference/go/id2go.map", goids_df=N
     ks_interesting_genes <- as.vector(ks_interesting_genes)
     names(ks_interesting_genes) <- annotated_genes
 
+    requireNamespace("topGO")
     fisher_mf_GOdata <- new("topGOdata", ontology="MF", allGenes=fisher_interesting_genes,
                             annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     fisher_bp_GOdata <- new("topGOdata", ontology="BP", allGenes=fisher_interesting_genes,
@@ -455,7 +458,11 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
             stop("There is neither a id2go file nor a data frame of goids.")
         } else {
             message("Attempting to generate a id2go file in the format expected by topGO.")
-            new_go <- plyr::ddply(goids_df, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
+
+            new_go = reshape2::dcast(goids_df, ID~., value.var="GO",
+                            fun.aggregate=paste, collapse = ",")
+
+            ##new_go <- dplyr::ddply(goids_df, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
             write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
             rm(id2go_test)
         }
@@ -465,7 +472,9 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
                 stop("There is neither a id2go file nor a data frame of goids.")
             } else {
                 message("Attempting to generate a id2go file in the format expected by topGO.")
-                new_go <- plyr::ddply(goids_df, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
+                new_go = reshape2::dcast(goids_df, ID~., value.var="GO",
+                                         fun.aggregate=paste, collapse = ",")
+                ##new_go <- plyr::ddply(goids_df, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
                 write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
                 id2go_test <- file.info(goid_map)
             }

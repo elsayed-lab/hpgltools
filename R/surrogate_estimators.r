@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 00:48:58 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 13 17:15:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -16,6 +16,7 @@
 #'
 #' @param raw_expt a raw experiment object
 #' @param estimate_type one of sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised, ruv_residuals, or pca
+#' @param ... parameters fed to arglist
 #' @return a list including the adjustments for a model matrix, a modified count table, and 3 plots of the known batch, surrogates, and batch/surrogate.
 #' @export
 get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
@@ -186,7 +187,7 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
 #' whole pile of information as a list.
 #'
 #' @param expt an experiment containing a design and other information
-#' @param a character list of extra factors which may be included in the final plot of the data
+#' @param extra_factors character list of extra factors which may be included in the final plot of the data
 #' @return a list of toys
 #' @export
 compare_surrogate_estimates <- function(expt, extra_factors=NULL) {

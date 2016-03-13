@@ -235,18 +235,18 @@ summary(basic_comparison$all_tables$wt.120_vs_mut.120)
 
 all_comparisons <- all_pairwise(fun_data, model_batch=TRUE)
 all_combined <- combine_de_tables(all_comparisons)
-sig_genes <- extract_significant_genes(all_combined, sig_table=NULL)
+sig_genes <- extract_significant_genes(all_combined, excel=NULL)
 
 ```
 
 ## Ontology searches
 
-```{r ontology, eval=FALSE}
+```{r ontology}
 
 limma_results <- limma_comparison$all_tables
 ## The set of comparisons performed
 names(limma_results)
-table <- limma_results$wt.180_vs_wt.0
+table <- limma_results$wt.120_vs_mut.120
 dim(table)
 gene_names <- rownames(table)
 
@@ -262,24 +262,35 @@ updown_genes <- get_sig_genes(table)
 
 require.auto("GenomicFeatures")
 require.auto("biomaRt")
-ensembl_pombe = biomaRt::useMart("fungal_mart", dataset="spombe_eg_gene", host="fungi.ensembl.org")
-pombe_filters = biomaRt::listFilters(ensembl_pombe)
+ensembl_pombe <- biomaRt::useMart("fungal_mart", dataset="spombe_eg_gene", host="fungi.ensembl.org")
+pombe_filters <- biomaRt::listFilters(ensembl_pombe)
 head(pombe_filters, n=20) ## 11 looks to be my guy
 
 ## getBM(attributes=c('hgnc_symbol', 'chromosome_name', 'start_position', 'end_position'), filters='with_ontology_go', values="", mart=ensemble_pombe)
-pombe_goids = getBM(attributes=c('pombase_gene_name', 'go_accession'), values=gene_names, mart=ensembl_pombe)
-colnames(pombe_goids) = c("ID","GO")
-pombe = makeTxDbFromBiomart(biomart ="fungal_mart", dataset = "spombe_eg_gene", host="fungi.ensembl.org")
-pombe_transcripts = as.data.frame(transcriptsBy(pombe))
-lengths = pombe_transcripts[,c("group_name","width")]
-colnames(lengths) = c("ID","width")
+pombe_goids <- biomaRt::getBM(attributes=c('pombase_gene_name', 'go_accession'), values=gene_names, mart=ensembl_pombe)
+colnames(pombe_goids) <- c("ID","GO")
+pombe <- GenomicFeatures::makeTxDbFromBiomart(biomart ="fungal_mart", dataset = "spombe_eg_gene", host="fungi.ensembl.org")
+pombe_transcripts <- as.data.frame(GenomicFeatures::transcriptsBy(pombe))
+lengths <- pombe_transcripts[,c("group_name","width")]
+colnames(lengths) <- c("ID","width")
 ## Something useful I didn't notice before:
 ## makeTranscriptDbFromGFF()  ## From GenomicFeatures, much like my own gff2df()
 
-goseq_search = simple_goseq(de_genes=updown_genes$up_genes, lengths=lengths, goids=pombe_goids)
-##spombe_gff = download.file(url="http://www.broadinstitute.org/ftp/pub/annotation/fungi/schizosaccharomyces/genomes/schizosaccharomyces_pombe/schizosaccharomyces_pombe_972h-_2_transcripts.gtf", destfile="pombe.gff")
+goseq_search <- simple_goseq(de_genes=updown_genes$up_genes, lengths=lengths, goids=pombe_goids)
+goseq_search$mfp_plot
+
 ##cluster_search = simple_clusterprofiler(de_genes=updown_genes$up_genes, goids=pombe_goids, gff="pombe.gff")
-##topgo_search = simple_topgo(de_genes=updown_genes$up_genes, goids_df=pombe_goids)
-##gostats_search = simple_gostats(de_genes=updown_genes$up_genes, gff="pombe.gff", goids=pombe_goids, universe_merge="gene_id")
+topgo_search = simple_topgo(de_genes=updown_genes$up_genes, goids_df=pombe_goids)
+topgo_search$pvalue_plots$BP
+
+gff_from_txdb <- GenomicFeatures::asGFF(pombe)
+## why is GeneID: getting prefixed to the IDs!?
+gff_from_txdb$ID <- gsub(x=gff_from_txdb$ID, pattern="GeneID:", replacement="")
+written_gff <- rtracklayer::export.gff3(gff_from_txdb, con="pombe.gff")
+gostats_search = simple_gostats(updown_genes$up_genes, "pombe.gff", pombe_goids, gff_type="gene")
+## Oops I forgot to add my 25 character wrapper for these plots, whatever
+## that is weird I thought I did!
+gostats_search$pvalue_plots$mfp_plot_over
+head(gostats_search$mf_over_all)
 
 ```

@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Mar  5 02:15:06 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 13 16:02:43 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -36,11 +36,21 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     ## Therefore I am loading these environments here and calling the functions without ::
     ## For a further discussion of what is happening:
     ## https://stat.ethz.ch/pipermail/bioconductor/2009-November/030348.html
-    try(detach("package:GOstats", unload=TRUE))
-    try(detach("package:Category", unload=TRUE))
+    try(detach("package:GOstats", unload=TRUE), silent=TRUE)
+    try(detach("package:Category", unload=TRUE), silent=TRUE)
     require.auto("GOstats")
-    requireNameSpace("GOstats")
-
+    ## In theory, requireNamespace is sufficient, but that is not true.
+    requireNamespace("GOstats")
+    requireNamespace("GSEABase")
+    requireNamespace("AnnotationDbi")
+    requireNamespace("Category")
+    message("The namespaces/environments uses by GOstats are entirely too complex.")
+    message("If I try to call functions with Category:: or GOstats:: then they collide")
+    message("And things fail without error, but if I try library() then R CMD check")
+    message("gets pissed, well I tried both ways and I am calling library().")
+    library("Category")
+    library("GSEABase")
+    library("GOstats")
     message(paste0("simple_gostats(): gff_type is: ", gff_type, ". Change that if there are bad merges."))
     types <- c("CDS","gene","exon")
     for (type in types) {
@@ -88,7 +98,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     gostats_frame <- GOFrame(gostats_go, organism=organism)
     gostats_all <- GOAllFrame(gostats_frame)
     message("simple_gostats(): Creating the gene set collection.")
-    gsc <- GeneSetCollection(gostats_all, setType=GOCollection())
+    gsc <- GSEABase::GeneSetCollection(gostats_all, setType=GOCollection())
 
     mf_over <- bp_over <- cc_over <- NULL
     mf_under <- bp_under <- cc_under <- NULL

@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar  4 22:19:32 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 13 14:22:09 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -60,7 +60,7 @@ deparse_go_value <- function(value) {
 goterm <- function(go="GO:0032559") {
     go <- as.character(go)
     term <- function(id) {
-        value <- try(as.character(Term(GOTERM[id])), silent=TRUE)
+        value <- try(as.character(Term(GO.db::GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value <- "not found"
         }
@@ -94,7 +94,7 @@ gosyn <- function(go) {
     gosn <- function(go) {
         go <- as.character(go)
         result <- ""
-        value <- try(as.character(Synonym(GOTERM[go])), silent=TRUE)
+        value <- try(as.character(Synonym(GO.db::GOTERM[go])), silent=TRUE)
         result <- paste(deparse_go_value(value), collapse="; ")
         return(result)
     }
@@ -120,7 +120,7 @@ gosec <- function(go) {
     gosc <- function(go) {
         go <- as.character(go)
         result <- ""
-        value <- try(as.character(Secondary(GOTERM[go])), silent=TRUE)
+        value <- try(as.character(Secondary(GO.db::GOTERM[go])), silent=TRUE)
         result <- deparse_go_value(value)
         return(result)
     }
@@ -144,7 +144,7 @@ gosec <- function(go) {
 godef <- function(go) {
     go <- as.character(go)
     def <- function(id) {
-        value <- try(as.character(Definition(GOTERM[id])), silent=TRUE)
+        value <- try(as.character(Definition(GO.db::GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value <- "not found"
         }
@@ -169,7 +169,8 @@ godef <- function(go) {
 goont <- function(go) {
     go <- as.character(go)
     ont <- function(id) {
-        value <- try(as.character(Ontology(GOTERM[id])), silent=TRUE)
+        value <- try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[id])),
+                     silent=TRUE)
         if (class(value) == "try-error") {
             value <- "not found"
         }
@@ -194,11 +195,12 @@ goont <- function(go) {
 golev <- function(go, verbose=FALSE) {
     go <- as.character(go)
     level <- 0
-    while(class(try(as.character(Ontology(GOTERM[[go]])), silent=FALSE)) != 'try-error') {
+    while(class(try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]])),
+                    silent=FALSE)) != 'try-error') {
         if(isTRUE(verbose)) {
             print(paste("Restarting while loop, level: ", level, go, sep=" "))
         }
-        ontology <- as.character(Ontology(GOTERM[[go]]))
+        ontology <- as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]]))
         if (ontology == "MF") {
             ancestors <- GOMFANCESTOR[[go]]
         } else if (ontology == "BP") {
@@ -253,7 +255,7 @@ golevel <- function(go) {
 gotest <- function(go) {
     gotst <- function(go) {
         go <- as.character(go)
-        value <- try(GOTERM[[go]])
+        value <- try(GO.db::GOTERM[[go]])
         if (class(value) == 'try-error') {
             return(0)
         }

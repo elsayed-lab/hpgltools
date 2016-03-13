@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Mar  9 16:33:24 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 13 17:16:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Grab gene lengths from a gff file.
 #'
@@ -309,15 +309,17 @@ gff2df <- function(gff, type=NULL) {
         annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
         if (class(annotations) == 'try-error') {
             annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
-            if (class(annotations) == 'try-error') {
-                stop("Could not extract the widths from the gff file.")
-            } else {
-                ret <- annotations
-            }
-        } else {
-            ret <- annotations
         }
-    } ## End else this is not a gtf file
+        if (class(annotations) == 'try-error') {
+            annotations <- try(rtracklayer::import.gff(gff), silent=TRUE)
+        }
+    }
+    if (class(annotations) == 'try-error') {
+        stop("Could not extract the widths from the gff file.")
+    } else {
+        ret <- annotations
+    }
+
     ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
     ## no method to coerce an S4 class to a vector.
     ret <- GenomicRanges::as.data.frame(ret)
@@ -394,9 +396,10 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' information for gVis graphs. The tooltip column is also a handy proxy for
 #' anontations information when it would otherwise be too troublesome.
 #'
-#' @param annotations  Either a gff file or annotation data frame (which likely came from a gff file.)
-#' @param desc_col   a column from a gff file to grab the data from
-#' @return a df of tooltip information or name of a gff file
+#' @param annotations Either a gff file or annotation data frame (which likely came from a gff file.)
+#' @param desc_col A column from a gff file to grab the data from
+#' @param type A gff type to key from
+#' @return A df of tooltip information or name of a gff file
 #' @seealso \pkg{googleVis} \link{gff2df}
 #' @examples
 #' \dontrun{
