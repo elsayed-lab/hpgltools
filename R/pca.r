@@ -1,4 +1,4 @@
-# Time-stamp: <Fri Mar 11 15:13:28 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Sat Mar 12 23:37:48 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -159,7 +159,7 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     pca_variance <- round((pca$d ^ 2) / sum(pca$d ^ 2) * 100, 2)
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
-    if (is.null(colors)) {
+    if (is.null(plot_colors)) {
         plot_colors <- as.numeric(as.factor(design$condition))
     }
     pca_data <- data.frame("SampleID" = as.character(design$sample),
