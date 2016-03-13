@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Mar  9 17:35:35 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 13 00:11:23 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -527,6 +527,14 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
     }
     hpgl_heatmap_plot <- grDevices::recordPlot()
     return(hpgl_heatmap_plot)
+}
+
+hpgl_heatplus <- function(fundata) {
+    heatmap_data <- hpgl_cor(fundata)
+    heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
+    funkytown <- Heatplus::annHeatmap2(heatmap_data)
+    plot(funkytown)
+    ret <- grDevices::recordPlot()
 }
 
 #'   Make a pretty histogram of something.

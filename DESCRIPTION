@@ -14,9 +14,9 @@ Description: This is a set of functions I have been using in my various
 License: GPL-2 | file LICENSE
 Suggests:
     affy, AnnotationDbi, BiocGenerics, Biostrings,
-    biomaRt, Category, clusterProfiler, corpcor,
+    biomaRt, Category, clusterProfiler, corpcor, corrplot,
     data.table, DESeq2, DESeq, directlabels,
-    DOSE, edgeR, fission, genefilter, genomeIntervals,
+    DOSE, edgeR, ffpe, fission, genefilter, genomeIntervals,
     GenomicRanges, ggplot2, GO.db, googleVis, goseq, GOstats,
     gplots, graph, GSEABase, gtools, gridExtra, hash, Hmisc,
     igraph, IRanges, KEGGREST, knitcitations, knitrBootstrap,
