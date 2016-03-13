@@ -1,4 +1,4 @@
-# Time-stamp: <Sat Mar 12 23:37:48 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Sun Mar 13 19:56:24 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -231,7 +231,7 @@ factor_rsquared <- function(svd_v, factor) {
 
 #' A quick and dirty PCA plotter of arbitrary components against one another.
 #'
-#' @param data  a dataframe of principle components PC1 .. PCN with any other arbitrary information.
+#' @param pca_data  a dataframe of principle components PC1 .. PCN with any other arbitrary information.
 #' @param first   principle component PCx to put on the x axis.
 #' @param second   principle component PCy to put on the y axis.
 #' @param variances   a list of the percent variance explained by each component.

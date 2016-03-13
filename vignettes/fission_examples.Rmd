@@ -241,7 +241,11 @@ sig_genes <- extract_significant_genes(all_combined, excel=NULL)
 
 ## Ontology searches
 
-```{r ontology}
+The following works, but on travis to causes the vignette build
+time to exceed the maximum allowed, which is weird because on my computer
+it only takes like 4 minutes.
+
+```{r ontology, eval=FALSE}
 
 limma_results <- limma_comparison$all_tables
 ## The set of comparisons performed
