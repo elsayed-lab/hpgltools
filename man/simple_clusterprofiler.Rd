@@ -5,9 +5,9 @@
 \title{Perform a simplified clusterProfiler analysis}
 \usage{
 simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
-  qcutoff = 1, fold_changes = NULL, include_cnetplots = FALSE,
-  showcategory = 12, universe = NULL, organism = "lm", gff = NULL,
-  wrapped_width = 20, method = "Wallenius", padjust = "BH", ...)
+  fold_changes = NULL, include_cnetplots = FALSE, showcategory = 12,
+  universe = NULL, organism = "lm", gff = NULL, wrapped_width = 20,
+  method = "Wallenius", padjust = "BH", ...)
 }
 \arguments{
 \item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}
@@ -17,8 +17,6 @@ simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
 \item{golevel}{a relative level in the tree for printing p-value plots, higher is more specific}
 
 \item{pcutoff}{a p-value cutoff}
-
-\item{qcutoff}{a q-value cutoff}
 
 \item{fold_changes}{a df of fold changes for the DE genes}
 

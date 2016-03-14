@@ -83,7 +83,7 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #'   res = a table of the PCA res data
 #'   variance = a table of the PCA plot variance
 #' This makes use of cbcbSEQ and prints the table of variance by component.
-#' @seealso \code{\link{makeSVD}}, \code{\link[cbcbSEQ]{pcRes}},
+#' @seealso \code{\link{makeSVD}},
 #' \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 #' @examples
 #' \dontrun{
