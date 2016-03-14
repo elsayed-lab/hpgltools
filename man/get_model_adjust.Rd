@@ -10,6 +10,8 @@ get_model_adjust(raw_expt, estimate_type = "sva_supervised", ...)
 \item{raw_expt}{a raw experiment object}
 
 \item{estimate_type}{one of sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised, ruv_residuals, or pca}
+
+\item{...}{parameters fed to arglist}
 }
 \value{
 a list including the adjustments for a model matrix, a modified count table, and 3 plots of the known batch, surrogates, and batch/surrogate.

@@ -8,6 +8,8 @@ plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
   design = NULL, plot_title = NULL, plot_labels = NULL, size = 5)
 }
 \arguments{
+\item{pca_data}{a dataframe of principle components PC1 .. PCN with any other arbitrary information.}
+
 \item{first}{principle component PCx to put on the x axis.}
 
 \item{second}{principle component PCy to put on the y axis.}
@@ -21,8 +23,6 @@ plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
 \item{plot_labels}{a parameter for the labels on the plot.}
 
 \item{size}{The size of the dots on the plot}
-
-\item{data}{a dataframe of principle components PC1 .. PCN with any other arbitrary information.}
 }
 \value{
 a ggplot2 PCA plot
