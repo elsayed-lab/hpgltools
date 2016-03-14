@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 17:15:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Mar 14 10:37:34 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -140,37 +140,43 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
     x_marks <- 1:length(colnames(data))
 
     ##original_plot_params <- par(mfrow=c(2, 2))  ## this is weird to set the old ones by calling new options
-    four_split <- rbind(c(0.1, 0.55, 0.55, 1),
-                        c(0.55, 1, 0.55, 1),
-                        c(0.1, 0.55, 0.1, 0.55),
-                        c(0.55, 1, 0.1, 0.55))
-    split.screen(four_split)
-    screen(1)
+    ## GRRR split.screen is giving me stupid errors on a different computer
+    ## four_split <- rbind(c(0.1, 0.55, 0.55, 1),
+    ##                    c(0.55, 1, 0.55, 1),
+    ##                    c(0.1, 0.55, 0.1, 0.55),
+    ##                    c(0.55, 1, 0.1, 0.55))
+    ## split.screen(four_split)
+    ## screen(1)
     plot(plotbatch, type="p", pch=19, col="black", main=paste0("Known batches by sample"), xaxt="n", yaxt="n", xlab="Sample", ylab="Known batch")
     axis(1, at=x_marks, cex.axis=0.75, las=2, labels=as.character(colnames(data)))
     axis(2, at=plotbatch, cex.axis=0.75, las=2, labels=as.character(batches))
-    screen(2)
+    batch_by_sample_plot <- grDevices::recordPlot()
+    ##screen(2)
     plot(as.numeric(model_adjust), type="p", pch=19, col=type_color,
          xaxt="n", xlab="Sample", ylab="Surrogate estimate", main=paste0("Surrogates estimated by ", estimate_type))
     axis(1, at=x_marks, cex.axis=0.75, las=2, labels=as.character(colnames(data)))
-    screen(3)
+    surrogate_by_sample_plot <- grDevices::recordPlot()
+    ## screen(3)
     plot(model_adjust ~ plotbatch, pch=19, col=type_color, main=paste0(estimate_type, " vs. known batches."))
-    screen(4)
-    boxplot(log2(new_counts + 1))
+    estimate_vs_sample_plot <- grDevices::recordPlot()
+    ## screen(4)
+    ## boxplot(log2(new_counts + 1))
     ## tmpdata <- cbind(data, as.data.frame(new_counts))
     ## colnames(tmpdata) <- make.names(colnames(tmpdata), unique=TRUE)
     ## tmpdesign <- rbind(design, design)
     ## rownames(tmpdesign) <- make.names(rownames(tmpdesign), unique=TRUE)
     ## hpgl_corheat(tmpdata)
     ## batch_vs_adjust_plot <- grDevices::recordPlot()
-    close.screen(all.screen=TRUE)
-    fun_plots <- grDevices::recordPlot()
+    ## close.screen(all.screen=TRUE)
+    ## fun_plots <- grDevices::recordPlot()
     ## dev.off()
     ## new_plot_params <- par(original_plot_params)
 
     ret <- list("model_adjust" = model_adjust,
                 "new_counts" = new_counts,
-                "plots" = fun_plots)
+                "batch_by_sample" = batch_by_sample_plot,
+                "surrogate_by_sample" = surrogate_by_sample_plot,
+                "estimate_by_sample" = estimate_vs_sample_plot)
     return(ret)
 }
 
@@ -246,6 +252,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     ## First do a null adjust
     adjust <- ""
     counter <- 1
+    num_adjust <- length(adjustments)
     message(paste0(counter, "/", num_adjust, ": Performing lmFit(data) etc. with null in the model."))
     modified_formula <- as.formula(paste0("~ condition ", adjust))
     limma_design <- model.matrix(modified_formula, data=design)
@@ -253,7 +260,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     limma_fit <- limma::lmFit(voom_result, limma_design)
     modified_fit <- limma::eBayes(limma_fit)
     tstats[["null"]] <- abs(modified_fit$t[, 2])
-    names(tstats[["null"]]) <- as.character(1:dim(data)[1])
+    ##names(tstats[["null"]]) <- as.character(1:dim(data)[1])
     ## This needs to be redone to take into account how I organized the adjustments!!!
     num_adjust <- length(adjustments)
     for (adjust in adjustments) {
@@ -265,7 +272,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
         limma_fit <- limma::lmFit(voom_result, limma_design)
         modified_fit <- limma::eBayes(limma_fit)
         tstats[[counter]] <- abs(modified_fit$t[, 2])
-        names(tstats[[counter]]) <- as.character(1:dim(data)[1])
+        ##names(tstats[[counter]]) <- as.character(1:dim(data)[1])
         catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[counter]]), -rank(tstats[["null"]]), maxrank=1000, make.plot=TRUE)
     }
 
