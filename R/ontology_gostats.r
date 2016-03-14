@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 16:02:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 13 23:17:30 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -456,6 +456,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_mf_over <- head(plotting_mf_over, n=n)
         plotting_mf_over <- plotting_mf_over[, c("Term","Pvalue","score")]
         colnames(plotting_mf_over) <- c("term","pvalue","score")
+        plotting_mf_over$term <- as.character(lapply(strwrap(plotting_mf_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_mf_over) > 0) {
         mf_pval_plot_over <- pval_plot(plotting_mf_over, ontology="MF")
@@ -476,6 +477,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_mf_under <- head(plotting_mf_under, n=n)
         plotting_mf_under <- plotting_mf_under[, c("Term","Pvalue","score")]
         colnames(plotting_mf_under) <- c("term","pvalue","score")
+        plotting_mf_under$term <- as.character(lapply(strwrap(plotting_mf_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_mf_under) > 0) {
         mf_pval_plot_under <- pval_plot(plotting_mf_under, ontology="MF")
@@ -496,6 +498,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_bp_over <- head(plotting_bp_over, n=n)
         plotting_bp_over <- plotting_bp_over[, c("Term","Pvalue","score")]
         colnames(plotting_bp_over) <- c("term","pvalue","score")
+        plotting_bp_over$term <- as.character(lapply(strwrap(plotting_bp_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_bp_over) > 0) {
         bp_pval_plot_over <- pval_plot(plotting_bp_over, ontology="BP")
@@ -516,6 +519,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_bp_under <- head(plotting_bp_under, n=n)
         plotting_bp_under <- plotting_bp_under[, c("Term","Pvalue","score")]
         colnames(plotting_bp_under) <- c("term","pvalue","score")
+        plotting_bp_under$term <- as.character(lapply(strwrap(plotting_bp_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_bp_under) > 0) {
         bp_pval_plot_under <- pval_plot(plotting_bp_under, ontology="BP")
@@ -536,6 +540,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_cc_over <- head(plotting_cc_over, n=n)
         plotting_cc_over <- plotting_cc_over[, c("Term","Pvalue","score")]
         colnames(plotting_cc_over) <- c("term","pvalue","score")
+        plotting_cc_over$term <- as.character(lapply(strwrap(plotting_cc_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_cc_over) > 0) {
         cc_pval_plot_over <- pval_plot(plotting_cc_over, ontology="CC")
@@ -556,6 +561,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_cc_under <- head(plotting_cc_under, n=n)
         plotting_cc_under <- plotting_cc_under[, c("Term","Pvalue","score")]
         colnames(plotting_cc_under) <- c("term","pvalue","score")
+        plotting_cc_under$term <- as.character(lapply(strwrap(plotting_cc_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_cc_under) > 0) {
         cc_pval_plot_under <- pval_plot(plotting_cc_under, ontology="CC")

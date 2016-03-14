@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 14:25:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 13 22:32:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -97,6 +97,10 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     message("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
     message("The other table is of gene lengths with columns (gene)ID and (gene)width.")
     message("Other columns are fine, but ignored.")
+    arglist <- list(...)
+    if (is.null(arglist$minimum_interesting)) {
+        arglist$minimum_interesting = 10
+    }
     if (is.null(lengths) & is.null(gff)) {
         stop("simple_goseq(): Need a length dataframe or gff file for gene lengths.")
     } else if (!is.null(lengths)) {
@@ -189,7 +193,7 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
         padjust_method <- "none"
     } else {  ## There is a requested pvalue adjustment
         godata_interesting <- subset(godata, p.adjust(godata$over_represented_pvalue, method=padjust_method) <= adjust)
-        if (dim(godata_interesting)[1] == 0) {
+        if (dim(godata_interesting)[1] < arglist$minimum_interesting) {
             message(paste("simple_goseq(): There are no genes with an adj.p<", adjust, " using: ", padjust_method, ".", sep=""))
             message(sprintf("simple_goseq(): Providing genes with raw pvalue<%s", pvalue))
             godata_interesting <- subset(godata, godata$over_represented_pvalue <= pvalue)

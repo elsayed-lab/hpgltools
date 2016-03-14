@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 14:50:12 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 13 23:02:10 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -41,7 +41,7 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
     require.auto("Hmisc")
     requireNamespace("Hmisc")
     gomap_info <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
-    message(paste0("simple_topgo(): Found ID->GO map: ", gomap_info))
+    ##message(paste0("simple_topgo(): Found ID->GO map: ", gomap_info))
     geneID2GO <- topGO::readMappings(file=goid_map)
     annotated_genes <- names(geneID2GO)
     if (is.null(de_genes$ID)) {

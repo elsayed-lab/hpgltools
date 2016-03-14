@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 22:53:19 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 13 23:03:08 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make sure that clusterProfiler is ready to run
 #'
@@ -47,7 +47,6 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' @param goids   a file containing mappings of genes to goids in the format expected by topgo
 #' @param golevel   a relative level in the tree for printing p-value plots, higher is more specific
 #' @param pcutoff   a p-value cutoff
-#' @param qcutoff   a q-value cutoff
 #' @param fold_changes   a df of fold changes for the DE genes
 #' @param include_cnetplots   the cnetplots are often stupid and can be left behind
 #' @param showcategory   how many categories to show in p-value plots
@@ -86,7 +85,7 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' }
 #' @export
 simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
-                                   qcutoff=1.0, fold_changes=NULL, include_cnetplots=FALSE,
+                                   fold_changes=NULL, include_cnetplots=FALSE,
                                    showcategory=12, universe=NULL, organism="lm", gff=NULL,
                                    wrapped_width=20, method="Wallenius", padjust="BH", ...) {
 
@@ -99,9 +98,9 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     } else {
         gene_list <- as.character(de_genes$ID)
     }
-##    message("Testing gseGO")
-##    ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
-##    print(ego2)
+    ##message("Testing gseGO")
+    ##ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
+    ##message(paste0("Has ego desided to work? ", ego2)
     message("simple_clus(): Starting MF(molecular function) analysis")
     mf_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
     mf_all <- hpgl_enrichGO(gene_list, organism=organism, ont="MF",
@@ -113,7 +112,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
             ggplot2::scale_y_continuous(limits=c(0, y_limit))
     }
     enriched_mf <- hpgl_enrichGO(gene_list, organism=organism, ont="MF",
-                                 pvalueCutoff=pcutoff, qvalueCutoff=qcutoff,
+                                 pvalueCutoff=pcutoff, qvalueCutoff=1.0,
                                  pAdjustMethod=padjust)
 
     message("simple_clus(): Starting BP(biological process) analysis")
@@ -128,7 +127,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
             ggplot2::scale_y_continuous(limits=c(0, y_limit))
     }
     enriched_bp <- hpgl_enrichGO(gene_list, organism=organism, ont="BP",
-                                 pvalueCutoff=pcutoff, qvalueCutoff=qcutoff,
+                                 pvalueCutoff=pcutoff, qvalueCutoff=1.0,
                                  pAdjustMethod=padjust)
     message("simple_clus(): Starting CC(cellular component) analysis")
     cc_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="CC",
@@ -136,7 +135,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     cc_all <- hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0,
                             qvalueCutoff=1.0, pAdjustMethod="none")
     enriched_cc <- hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff,
-                                 qvalueCutoff=qcutoff, pAdjustMethod=padjust)
+                                 qvalueCutoff=1.0, pAdjustMethod=padjust)
     all_cc_phist <- try(hpgl_histogram(cc_all@result$pvalue, bins=20))
     ## Try and catch if there are no significant hits.
     if (class(all_cc_phist)[1] != 'try-error') {
