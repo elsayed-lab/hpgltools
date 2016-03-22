@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 14:22:09 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Mar 21 23:30:44 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -514,7 +514,9 @@ subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
     ## (which is exactly what happened the first time I tried this.
     ## Therefore I think I will split off the functions for checking those things and call them here
     ## This only affects clusterprofiler I think.
-    go2eg <- check_clusterprofiler(gff)
+    if (!is.null(gff)) {
+        go2eg <- check_clusterprofiler(gff, gomap=goids)
+    }
     ## clusterprofiler's sqlite database gets corrupted every time I try to parallel it
 
 ##    if (is.null(num_cpus)) {
@@ -544,17 +546,17 @@ subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
         uppers <- up_list[[cluster_count]]
         downers <- down_list[[cluster_count]]
         message(paste0(cluster_count, "/", names_length, ": Starting goseq"))
-        up_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=uppers, lengths=lengths, goids=goids, doplot=FALSE))
-        down_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=downers, lengths=lengths, goids=goids, doplot=FALSE))
+        up_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=uppers, lengths=lengths, goids=goids, doplot=FALSE, species=arglist$species))
+        down_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=downers, lengths=lengths, goids=goids, doplot=FALSE, species=arglist$species))
         message(paste0(cluster_count, "/", names_length, ": Starting clusterprofiler"))
-        up_cluster[[name]] <- suppressMessages(simple_clusterprofiler(de_genes=uppers, goids=goids, include_cnetplots=FALSE))
-        down_cluster[[name]] <- suppressMessages(simple_clusterprofiler(de_genes=downers, goids=goids, include_cnetplots=FALSE))
+        up_cluster[[name]] <- suppressMessages(simple_clusterprofiler(uppers, goids=goids, include_cnetplots=FALSE, organism=arglist$species, gff=gff))
+        down_cluster[[name]] <- suppressMessages(simple_clusterprofiler(downers, goids=goids, include_cnetplots=FALSE, organism=arglist$species, gff=gff))
         message(paste0(cluster_count, "/", names_length, ": Starting topgo"))
-        up_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=uppers, goids_df=goids))
-        down_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=downers, goids_df=goids))
+        up_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=uppers, goids_df=goids, species=arglist$species))
+        down_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=downers, goids_df=goids, species=arglist$species))
         message(paste0(cluster_count, "/", names_length, ": Starting gostats"))
-        up_gostats[[name]] <- suppressMessages(simple_gostats(de_genes=uppers, gff=gff, goids=goids, gff_type=gff_type))
-        down_gostats[[name]] <- suppressMessages(simple_gostats(de_genes=downers, gff=gff, goids=goids, gff_type=gff_type))
+        up_gostats[[name]] <- suppressMessages(simple_gostats(de_genes=uppers, gff=gff, goids=goids, gff_type=gff_type, species=arglist$species))
+        down_gostats[[name]] <- suppressMessages(simple_gostats(de_genes=downers, gff=gff, goids=goids, gff_type=gff_type, species=arglist$species))
     }
 ##    up_topgo <- foreach (count=1:names_length, .errorhandling="pass") %dopar% {
 ##        suppressMessages(simple_topgo(de_genes=up_list[[count]], goids_df=goids))
@@ -856,7 +858,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, file="excel/merged_go",
 #' }
 #' @export
 write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", dated=TRUE,
-                                    n=50, overwritefile=TRUE,
+                                    n=NULL, overwritefile=TRUE,
                                     add_plots=TRUE, table_style="TableStyleMedium9", ...) {
     arglist <- list(...)
     table_style <- get0('table_style')
@@ -864,9 +866,6 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         table_style <- "TableStyleMedium9"
     }
     n <- get0('n')
-    if (is.null(n)) {
-        n <- 50
-    }
     outfile <- get0('outfile')
     if (is.null(outfile)) {
         outfile <- "excel/subset_go"
@@ -917,12 +916,18 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             ## The goseq columns are probably wrong because I dropped one, remember that.
             varname <- paste0(ont, "_subset")
             goseq_up <- kept_ontology$up_goseq[[count]]
-            goseq_up_ont <- head(goseq_up[[varname]], n=n)
+            goseq_up_ont <- goseq_up[[varname]]
+            if (!is.null(n)) {
+                goseq_up_ont <- head(goseq_up_ont, n=n)
+            }
             goseq_up_ont <- goseq_up_ont[,c(7,1,6,2,4,5,8)]
             colnames(goseq_up_ont) <- c("Ontology","Category","Term","Over p-value",
                                         "Num. DE", "Num. in cat.", "Q-value")
             goseq_down <- kept_ontology$down_goseq[[count]]
-            goseq_down_ont <- head(goseq_down[[varname]], n=n)
+            goseq_down_ont <- goseq_down[[varname]]
+            if (!is.null(n)) {
+                goseq_down_ont <- head(goseq_down_ont, n=n)
+            }
             goseq_down_ont <- goseq_down_ont[,c(7,1,6,2,4,5,8)]
             colnames(goseq_down_ont) <- c("Ontology","Category","Term","Over p-value",
                                           "Num. DE", "Num. in cat.", "Q-value")
@@ -932,14 +937,20 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
             varname <- paste0(ont, "_all")
             cluster_up <- kept_ontology$up_cluster[[count]]
-            cluster_up_ont <- head(as.data.frame(cluster_up[[varname]]@result), n=n)
+            cluster_up_ont <- as.data.frame(cluster_up[[varname]]@result)
+            if (!is.null(n)) {
+                cluster_up_ont <- head(cluster_up_ont, n=n)
+            }
             cluster_up_ont$geneID <- gsub(cluster_up_ont$geneID, pattern="/", replacement=" ")
             cluster_up_ont$ontology <- ONT
             cluster_up_ont <- cluster_up_ont[,c(10,1,2,5,3,4,6,7,9,8)]
             colnames(cluster_up_ont) <- c("Ontology","Category","Term","Over p-value","Gene ratio",
                                          "BG ratio","Adj. p-value","Q-value","Count","Genes")
             cluster_down <- kept_ontology$down_cluster[[count]]
-            cluster_down_ont <- head(as.data.frame(cluster_down[[varname]]@result), n=n)
+            cluster_down_ont <- as.data.frame(cluster_down[[varname]]@result)
+            if (!is.null(n)) {
+                cluster_down_ont <- head(cluster_down_ont, n=n)
+            }
             cluster_down_ont$geneID <- gsub(cluster_down_ont$geneID, pattern="/", replacement=" ")
             cluster_down_ont$ontology <- ONT
             cluster_down_ont <- cluster_down_ont[,c(10,1,2,5,3,4,6,7,9,8)]
@@ -951,12 +962,19 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
             varname <- paste0(ont, "_interesting")
             topgo_up <- kept_ontology$up_topgo[[count]]
+            topgo_up_ont <- topgo_up$tables[[varname]]
+            if (!is.null(n)) {
+                topgo_up_ont <- head(topgo_up_ont, n=n)
+            }
             topgo_up_ont <- head(topgo_up$tables[[varname]], n=n)
             topgo_up_ont <- topgo_up_ont[,c(2,1,11,6,7,8,9,10,4,3,5)]
             colnames(topgo_up_ont) <- c("Ontology","Category","Term","Fisher p-value","Q-value","KS score",
                                         "EL score","Weight score","Num. DE","Num. in cat.","Exp. in cat.")
             topgo_down <- kept_ontology$down_topgo[[count]]
-            topgo_down_ont <- head(topgo_down$tables[[varname]], n=n)
+            topgo_down_ont <- topgo_down$tables[[varname]]
+            if (!is.null(n)) {
+                topgo_down_ont <- head(topgo_down_ont, n=n)
+            }
             topgo_down_ont <- topgo_down_ont[,c(2,1,11,6,7,8,9,10,4,3,5)]
             colnames(topgo_down_ont) <- c("Ontology","Category","Term","Fisher p-value","Q-value","KS score",
                                           "EL score","Weight score","Num. DE","Num. in cat.","Exp. in cat.")
@@ -966,7 +984,10 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
             varname <- paste0(ont, "_over_all")
             gostats_up <- kept_ontology$up_gostats[[count]]
-            gostats_up_ont <- head(gostats_up[[varname]], n=n)
+            gostats_up_ont <- gostats_up[[varname]]
+            if (!is.null(n)) {
+                gostats_up_ont <- head(gostats_up_ont, n=n)
+            }
             gostats_up_ont$t <- gsub(gostats_up_ont$Term, pattern=".*\">(.*)</a>", replacement="\\1")
             gostats_up_ont$Term <- gsub(gostats_up_ont$Term, pattern="<a href=\"(.*)\">.*", replacement="\\1")
             gostats_up_ont$ont <- ONT
@@ -974,7 +995,10 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             colnames(gostats_up_ont) <- c("Ontology","Category","Term","Fisher p-value","Num. DE",
                                           "Num. in cat.","Odds ratio","Exp. in cat.","Q-value","Link")
             gostats_down <- kept_ontology$down_gostats[[count]]
-            gostats_down_ont <- head(gostats_down[[varname]], n=n)
+            gostats_down_ont <- gostats_down[[varname]]
+            if (!is.null(n)) {
+                gostats_down_ont <- head(gostats_down_ont, n=n)
+            }
             gostats_down_ont$t <- gsub(gostats_down_ont$Term, pattern=".*\">(.*)</a>", replacement="\\1")
             gostats_down_ont$Term <- gsub(gostats_down_ont$Term, pattern="<a href=\"(.*)\">.*", replacement="\\1")
             gostats_down_ont$ont <- ONT

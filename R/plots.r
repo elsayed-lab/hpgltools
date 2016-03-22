@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 00:11:23 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 20 20:49:16 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -838,7 +838,7 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' @param gvis_filename   a filename to write a fancy html graph.
 #' @param tooltip_data   a df of tooltip information for gvis
 #' graphs.
-#' @param ... more poptions por pou
+#' @param ... more options for you
 #' @return a ggplot2 MA scatter plot.  This is defined as the rowmeans
 #' of the normalized counts by type across all sample types on the
 #' x-axis, and the log fold change between conditions on the y-axis.
@@ -861,12 +861,15 @@ hpgl_ma_plot <- function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6,
     hpgl_env <- environment()
     df <- data.frame(AvgExp=rowMeans(counts[rownames(de_genes),]),
                      ## LogFC=de_genes$logFC, AdjPVal=de_genes$adj.P.Val)
-                     LogFC=de_genes$logFC, AdjPVal=de_genes$P.Value)
+                     LogFC=de_genes$logFC, PVal=de_genes$P.Value, AdjPVal=de_genes$adj.P.Val)
+    df$AdjPVal <- as.numeric(format(df$AdjPVal, scientific=FALSE))
+    df$PVal <- as.numeric(format(df$PVal, scientific=FALSE))
     plt <- ggplot2::ggplot(df,
-                           ggplot2::aes_string(x="AvgExp", y="LogFC", color="(AdjPVal < adjpval_cutoff)"),
+                           ggplot2::aes_string(x="AvgExp", y="LogFC", color="(PVal < adjpval_cutoff)"),
                            environment=hpgl_env) +
         ggplot2::geom_hline(yintercept=c(-1,1), color="Red", size=size) +
         ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
+        ggplot2::scale_color_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
         ggplot2::xlab("Average Count (Millions of Reads)") +
         ggplot2::ylab("log fold change") +

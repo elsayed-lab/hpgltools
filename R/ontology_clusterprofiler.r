@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 23:03:08 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Mar 21 23:23:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make sure that clusterProfiler is ready to run
 #'
@@ -22,9 +22,10 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
             stop("simple_clus(): requires geneTable.rda, thus a gff file.")
         }
     } else {
+        message("Successfully found geneTable.rda.")
         rm(genetable_test)
     }
-    gomapping_test <- try(load("GO2EG.rda"), silent=TRUE)
+    gomapping_test <- suppressWarnings(try(load("GO2EG.rda"), silent=TRUE))
     if (class(gomapping_test) == 'try-error') {
         message("simple_clus(): Generating GO mapping data.")
         gomap <- gomap[,c(1,2)]
@@ -89,9 +90,14 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
                                    showcategory=12, universe=NULL, organism="lm", gff=NULL,
                                    wrapped_width=20, method="Wallenius", padjust="BH", ...) {
 
-    go2eg <- check_clusterprofiler(gff, goids)
-    if (length(go2eg) == 0) {
-        stop("The GO2EG data structure is empty.")
+    if (!is.null(gff)) {
+        go2eg <- check_clusterprofiler(gff=gff, gomap=goids)
+        if (length(go2eg) == 0) {
+            stop("The GO2EG data structure is empty.")
+        }
+    }
+    if (organism == 'hsapiens') {
+        organism <- 'human'
     }
     if (is.null(de_genes$ID)) {
         gene_list <- as.character(rownames(de_genes))

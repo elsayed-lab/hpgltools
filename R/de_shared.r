@@ -61,6 +61,10 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     if (is.null(model_intercept)) {
         model_intercept <- FALSE
     }
+    if (class(model_batch) == 'character') {
+        params <- get_model_adjust(input, estimate_type=model_batch, surrogates=1)
+        model_batch <- params$model_adjust
+    }
 
     limma_result <- limma_pairwise(input, conditions=conditions, batches=batches,
                                    model_cond=model_cond, model_batch=model_batch,
@@ -319,7 +323,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             splitted <- strsplit(x=tab, split="_vs_")
             xname <- splitted[[1]][1]
             yname <- splitted[[1]][2]
-            plots[[tab]] <- suppressMessages(hpgltools::limma_coefficient_scatter(limma, x=xname, y=yname, gvis_filename=NULL))$scatter
+            plots[[tab]] <- suppressMessages(limma_coefficient_scatter(limma, x=xname, y=yname, gvis_filename=NULL))$scatter
         }
 
         ## Or a single specific table
@@ -549,7 +553,7 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
         table <- combined[[table_name]]
         fc_column <- paste0(according_to, "_logfc")
         p_column <- paste0(according_to, "_adjp")
-        trimming <- hpgltools::get_sig_genes(table, fc=fc, p=p, z=z, n=n,
+        trimming <- get_sig_genes(table, fc=fc, p=p, z=z, n=n,
                                              column=fc_column, p_column=p_column)
         trimmed_up[[table_name]] <- trimming$up_genes
         change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])

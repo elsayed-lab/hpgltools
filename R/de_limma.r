@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar  8 10:58:03 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Mar 21 12:21:02 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from limma
 #'
@@ -304,6 +304,10 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             fun_model <- condbatch_model
             fun_int_model <- condbatch_int_model
         }
+    } else if (class(model_batch) == 'numeric') {
+        message("Limma: Including batch estimates from sva/ruv/pca in the limma model.")
+        fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
+        fun_int_model <- stats::model.matrix(~ conditions + model_batch)
     } else if (isTRUE(model_cond)) {
         fun_model <- cond_model
         fun_int_model <- cond_int_model
@@ -752,8 +756,8 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
         data_table$logFC <- signif(x=as.numeric(data_table$logFC), digits=4)
         data_table$AveExpr <- signif(x=as.numeric(data_table$AveExpr), digits=4)
         data_table$t <- signif(x=as.numeric(data_table$t), digits=4)
-        data_table$P.Value <- format(x=as.numeric(data_table$P.Value), digits=4, scientific=TRUE)
-        data_table$adj.P.Val <- format(x=as.numeric(data_table$adj.P.Val), digits=4, scientific=TRUE)
+        data_table$P.Value <- signif(x=as.numeric(data_table$P.Value), digits=4)
+        data_table$adj.P.Val <- signif(x=as.numeric(data_table$adj.P.Val), digits=4)
         data_table$B <- signif(x=as.numeric(data_table$B), digits=4)
         data_table$qvalue <- tryCatch(
         {

@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 22:32:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Mar 21 14:53:03 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -101,10 +101,12 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     if (is.null(arglist$minimum_interesting)) {
         arglist$minimum_interesting = 10
     }
-    if (is.null(lengths) & is.null(gff)) {
-        stop("simple_goseq(): Need a length dataframe or gff file for gene lengths.")
+    if (is.null(lengths) & is.null(gff) & is.null(species)) {
+        stop("simple_goseq() requires either a length dataframe or gff file for gene lengths; or a supported species.")
     } else if (!is.null(lengths)) {
         message("simple_goseq(): Using the explicit lengths df for gene lengths.")
+    } else if (!is.null(species)) {
+        message(paste0("simple_goseq(): Hopefully ", species, " is supported by goseq."))
     } else {
         ## This is probably hopelessly fragile and requires further thought
         length_df <- gff2df(gff)
@@ -131,6 +133,14 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
         names(de_vector) <- rownames(de_table)
     } else if (!is.null(species)) {
         message("simple_goseq(): Using species and length_db to get metadata.")
+        if (species == 'hsapiens') {
+            message("Replacing hsapiens with hg19.")
+            species <- "hg19"
+        }
+        db_name <- paste0(species, ".", length_db, ".LENGTH")
+        db_invocation <- paste0("data(", db_name, ", package='geneLenDataBase')")
+        eval(parse(text=db_invocation))
+
         gene_names <- as.data.frame(get(paste(species, length_db, "LENGTH", sep = "."))$Gene)
         colnames(gene_names) <- c("ID")
         de_table <- merge(de_table, gene_names, by.x="ID", by.y="ID", all.y=TRUE)

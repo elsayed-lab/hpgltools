@@ -1,4 +1,4 @@
-# Time-stamp: <Sun Mar 13 19:56:24 2016 Ashton Trey Belew (abelew@gmail.com)>
+# Time-stamp: <Thu Mar 17 16:50:04 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -93,7 +93,7 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' @export
 hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
                      plot_title=NULL, plot_size=5, ...) {
-    hpgl_env = environment()
+    hpgl_env <- environment()
     arglist <- list(...)
     plot_names <- arglist$plot_names
     design <- get0("design")
@@ -160,8 +160,13 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
     if (is.null(plot_colors)) {
-        plot_colors <- as.numeric(as.factor(design$condition))
+        if (is.null(design$colors)) {
+            plot_colors <- as.numeric(as.factor(design$condition))
+        } else {
+            plot_colors <- as.character(design$colors)
+        }
     }
+    colnames(design)[colnames(design) == 'sample.id'] <- 'sample'
     pca_data <- data.frame("SampleID" = as.character(design$sample),
                            "condition" = as.character(design$condition),
                            "batch" = as.character(design$batch),
@@ -268,21 +273,19 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                                        values=levels(as.factor(pca_data$colors))) +
             ggplot2::scale_shape_manual(name="Batch", labels=levels(as.factor(pca_data$batch)), values=21:25) +
             ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(pca_data$colors)))),
-                            colour=ggplot2::guide_legend(override.aes="black"))
+                            colour=ggplot2::guide_legend(override.aes=list("black")))
     } else {
-        pca_plot <- ggplot2::ggplot(pca_data, ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
-            ## geom_point(size=3, aes(shape=factor(df$batch), fill=condition, colour=colors)) +
-            ggplot2::geom_point(size=size, ggplot2::aes_string(shape="batch", fill="condition", colour="colors")) +
+        pca_plot <- ggplot2::ggplot(data=as.data.frame(pca_data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
+            ggplot2::geom_point(size=size, ggplot2::aes_string(shape="as.factor(batches)", fill="condition", colour="pca_data$colors")) +
             ggplot2::scale_fill_manual(name="Condition", guide="legend",
                                        labels=levels(as.factor(pca_data$condition)),
                                        values=levels(as.factor(pca_data$colors))) +
             ggplot2::scale_color_manual(name="Condition", guide="legend",
-                                        labels=levels(as.factor(pca_data$condition)),
-                                        values=levels(as.factor(pca_data$colors))) +
+                                       labels=levels(as.factor(pca_data$condition)),
+                                       values=levels(as.factor(pca_data$colors))) +
+            ggplot2::scale_shape_manual(name="Batch", labels=levels(as.factor(pca_data$batch)), values=1:25) +
             ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(pca_data$colors)))),
-                            colour=ggplot2::guide_legend(override.aes="black")) +
-            ggplot2::scale_shape_manual(values=c(1:num_batches), name="Batch") +
-            ggplot2::theme_bw()
+                            colour=ggplot2::guide_legend(override.aes=list("black")))
     }
 
     if (!is.null(variances)) {
@@ -466,10 +469,16 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     if (is.null(num_components)) {
         num_components <- length(expt_factors)
     }
+    max_components <- ncol(v)
+    if (max_components < num_components) {
+        message(paste0("The u and v components of SVD have only ", max_components, " columns, but the list of factors is ", num_components, " long."))
+        message(paste0("Therefore, only searching for ", max_components, " PCs."))
+        num_components <- max_components
+    }
     for (pc in 1:num_components) {
         name <- paste("PC", pc, sep="")
-        pca_data[name] <- v[,pc]
-        pc_df[name] <- v[,pc]
+        pca_data[, name] <- v[, pc]
+        pc_df[, name] <- v[, pc]
     }
     pc_df <- pc_df[-1]
     pca_plots <- list()

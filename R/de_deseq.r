@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 11 11:25:31 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun Mar 20 14:31:16 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from deseq2
 #'
@@ -154,14 +154,15 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                                                      colData=Biobase::pData(input$expressionset),
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
-    } else if (model_batch <- 'sva') {
-        non_condition_estimate <- get_model_adjust(input)
-        model_modifier <- non_condition_estimate$model_adjust
-        model_string <- "~ condition + model_modifier"
+    } else if (class(model_batch) == 'numeric') {
+        message("DESeq2 step 1/5: Including batch estimates from sva/ruv/pca in the deseq model.")
+        model_string <- "~ condition"
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=Biobase::pData(input$expressionset),
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
+        dataset$SV1 <- model_batch
+        DESeq2::design(dataset) <- as.formula(~ SV1 + condition)
     } else {
         message("DESeq2 step 1/5: Including only condition in the deseq model.")
         model_string <- "~ condition"

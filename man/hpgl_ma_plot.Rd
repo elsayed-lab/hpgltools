@@ -24,7 +24,7 @@ graphs.}
 
 \item{gvis_filename}{a filename to write a fancy html graph.}
 
-\item{...}{more poptions por pou}
+\item{...}{more options for you}
 }
 \value{
 a ggplot2 MA scatter plot.  This is defined as the rowmeans

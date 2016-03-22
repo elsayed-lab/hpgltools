@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 17:16:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Mar 21 23:57:04 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Grab gene lengths from a gff file.
 #'
@@ -49,8 +49,8 @@ get_biomart_annotations <- function(species="hsapiens") {
     ensembl <- biomaRt::useDataset(dataset, mart=mart)
     ## The following was stolen from Laura's logs for human annotations.
     ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
-    desc <- biomaRt::getBM(attributes = c("ensembl_gene_id", "hgnc_symbol", "description", "gene_biotype"), mart=ensembl)
-    colnames(desc) <- c("ID", "hgnc_symbol", "Description", "Type")
+    desc <- biomaRt::getBM(attributes = c("ensembl_gene_id", "hgnc_symbol", "description", "gene_biotype", "go_id"), mart=ensembl)
+    colnames(desc) <- c("ID", "hgnc_symbol", "Description", "Type", "GO")
     ## Remove commas from description
     desc$Description <- gsub(",", "", desc$Description)
     ## In order for the return from this function to work with other functions in this, the rownames must be set.
@@ -406,7 +406,7 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
 #' }
 #' @export
-make_tooltips <- function(annotations, desc_col='description', type="gene") {
+make_tooltips <- function(annotations, desc_col='description', type="gene", id_col="ID") {
     tooltip_data <- NULL
     if (class(annotations) == 'character') {
         tooltip_data <- gff2df(gff=annotations, type=type)
@@ -415,22 +415,27 @@ make_tooltips <- function(annotations, desc_col='description', type="gene") {
     } else {
         stop("This requires either a filename or data frame.")
     }
-    tooltip_data <- tooltip_data[,c("ID", desc_col)]
+    if (is.null(tooltip_data$ID)) {
+        tooltip_data$ID <- rownames(tooltip_data)
+    }
+    tooltip_data <- tooltip_data[,c(id_col, desc_col)]
+    tooltip_data[is.na(tooltip_data)] <- ""
 
     ## Attempt to use multiple columns if a c() was given
-    tooltip_data$tooltip <- tooltip_data$ID
+    tooltip_data$tooltip <- tooltip_data[[id_col]]
     for (col in desc_col) {
         if (is.null(tooltip_data[[col]])) {
             message(paste0("The column ", col, " is null, not using it."))
         } else {
-            tooltip_data$tooltip <- paste0(tooltip_data$tooltip, ": ", tooltip_data[[desc_col]])
+            tooltip_data$tooltip <- paste0(tooltip_data$tooltip, ": ", tooltip_data[[col]])
         }
     }
     tooltip_data$tooltip <- gsub("\\+", " ", tooltip_data$tooltip)
     tooltip_data$tooltip <- gsub(": $", "", tooltip_data$tooltip)
     tooltip_data$tooltip <- gsub("^: ", "", tooltip_data$tooltip)
-    rownames(tooltip_data) <- make.names(tooltip_data$ID, unique=TRUE)
-    tooltip_data <- tooltip_data[-1]
+    rownames(tooltip_data) <- make.names(tooltip_data[[id_col]], unique=TRUE)
+    ## Now remove extraneous columns
+    tooltip_data <- tooltip_data[, !(colnames(tooltip_data) %in% desc_col)]
     colnames(tooltip_data) <- c("short", "1.tooltip")
     tooltip_data <- tooltip_data[-1]
     return(tooltip_data)
@@ -552,8 +557,8 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #' This function has been through many iterations, first using XLConnect,
 #' then xlsx, and now openxlsx.  Hopefully this will not change again.
 #'
-#' @param wb the workbook to which to write
 #' @param data  A data frame to print
+#' @param wb the workbook to which to write
 #' @param sheet   Name of the sheet to write
 #' @param first_two_widths   I add long titles to the tops of the sheets
 #'   setting this makes sure that those columns are not too wide
@@ -569,7 +574,7 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #'  xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
 #' }
 #' @export
-write_xls <- function(wb, data, sheet="first", first_two_widths=c("30","60"),
+write_xls <- function(data, wb=NULL, sheet="first", first_two_widths=c("30","60"),
                       start_row=1, start_col=1, ...) {
     arglist <- list(...)
     if (class(data) == 'matrix') {
