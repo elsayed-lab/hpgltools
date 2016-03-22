@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Mar 21 12:21:02 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Mar 22 16:46:00 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from limma
 #'
@@ -767,7 +767,7 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
             ##    scientific=TRUE))
             ttmp <- as.numeric(data_table$P.Value)
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
-            format(x=ttmp, digits=4, scientific=TRUE)
+            signif(x=ttmp, digits=4)
 ##            ttmp <- signif(ttmp, 4)
 ##            ttmp <- format(ttmp, scientific=TRUE)
 ##            ttmp

@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 23:17:30 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Mar 22 15:57:28 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -67,7 +67,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     } else if ("transcript_name" %in% names(annotation)) {
         universe <- annotation[, c("transcript_name", "width")]
     } else {
-        stop("simple_gostats(): Unable to cross reference annotations into universe.")
+        stop("simple_gostats(): Unable to cross reference annotations into universe, perhaps change gff_type to make the merge work.")
     }
     ## This section is a little odd
     ## The goal is to collect a consistent set of numeric gene IDs
@@ -160,22 +160,82 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     bp_under_table <- GOstats::summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
     cc_under_table <- GOstats::summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
     if (!is.null(dim(mf_over_table))) {
-        mf_over_table$qvalue <- qvalue::qvalue(mf_over_table$Pvalue)$qvalues
+        mf_over_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(mf_over_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
     if (!is.null(dim(bp_over_table))) {
-        bp_over_table$qvalue <- qvalue::qvalue(bp_over_table$Pvalue)$qvalues
+        bp_over_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(bp_over_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
     if (!is.null(dim(cc_over_table))) {
-        cc_over_table$qvalue <- qvalue::qvalue(cc_over_table$Pvalue)$qvalues
+        cc_over_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(cc_over_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
     if (!is.null(dim(mf_under_table))) {
-        mf_under_table$qvalue <- qvalue::qvalue(mf_under_table$Pvalue)$qvalues
+        mf_under_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(mf_under_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
     if (!is.null(dim(bp_under_table))) {
-        bp_under_table$qvalue <- qvalue::qvalue(bp_under_table$Pvalue)$qvalues
+        bp_under_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(bp_under_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
     if (!is.null(dim(cc_under_table))) {
-        cc_under_table$qvalue <- qvalue::qvalue(cc_under_table$Pvalue)$qvalues
+        cc_under_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(cc_under_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
 
     if (is.null(categorysize)) {

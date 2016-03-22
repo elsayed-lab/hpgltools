@@ -4,7 +4,7 @@
 \alias{get_biomart_annotations}
 \title{Extract annotation information from biomart without having to remember the stupid biomart parameters}
 \usage{
-get_biomart_annotations(species = "hsapiens")
+get_biomart_annotations(species = "hsapiens", overwrite = FALSE)
 }
 \arguments{
 \item{species}{currently only hsapiens}

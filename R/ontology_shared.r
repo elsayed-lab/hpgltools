@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Mar 21 23:30:44 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Mar 22 16:46:19 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -519,24 +519,6 @@ subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
     }
     ## clusterprofiler's sqlite database gets corrupted every time I try to parallel it
 
-##    if (is.null(num_cpus)) {
-##        num_cpus <- (detectCores() / 2) + 1
-##    }
-##    registerDoMC(num_cpus)
-##    names_length <- length(names(up_list))
-##    up_goseq <- foreach (count=1:names_length, .errorhandling="pass") %dopar% {
-##        simple_goseq(de_genes=up_list[[count]], lengths=lengths, goids=goids, doplot=FALSE)
-##    }
-##    down_goseq <- foreach (count=1:names_length, .errorhandling="pass") %dopar% {
-##        suppressMessages(simple_goseq(de_genes=down_list[[count]], lengths=lengths, goids=goids, doplot=FALSE))
-##    }
-    ## up_cluster <- foreach (count=1:names_length, .errorhandling="pass") %dopar% {
-    ##     suppressMessages(simple_clusterprofiler(de_genes=up_list[[count]], goids=goids, include_cnetplots=FALSE))
-    ## }
-    ## down_cluster <- foreach (count=1:names_length, .errorhandling="pass") %dopar% {
-    ##     suppressMessages(simple_clusterprofiler(de_genes=down_list[[count]], goids=goids, include_cnetplots=FALSE))
-    ## }
-    ##for (c in 1:length(de_out)) {
     types_list <- c("up_goseq","down_goseq","up_cluster","down_cluster",
                     "up_topgo","down_topgo","up_gostats","down_gostats")
     names_list <- names(up_list)
@@ -552,24 +534,13 @@ subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
         up_cluster[[name]] <- suppressMessages(simple_clusterprofiler(uppers, goids=goids, include_cnetplots=FALSE, organism=arglist$species, gff=gff))
         down_cluster[[name]] <- suppressMessages(simple_clusterprofiler(downers, goids=goids, include_cnetplots=FALSE, organism=arglist$species, gff=gff))
         message(paste0(cluster_count, "/", names_length, ": Starting topgo"))
-        up_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=uppers, goids_df=goids, species=arglist$species))
-        down_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=downers, goids_df=goids, species=arglist$species))
+        up_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=uppers, goids_df=goids))
+        down_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=downers, goids_df=goids))
         message(paste0(cluster_count, "/", names_length, ": Starting gostats"))
-        up_gostats[[name]] <- suppressMessages(simple_gostats(de_genes=uppers, gff=gff, goids=goids, gff_type=gff_type, species=arglist$species))
-        down_gostats[[name]] <- suppressMessages(simple_gostats(de_genes=downers, gff=gff, goids=goids, gff_type=gff_type, species=arglist$species))
+        up_gostats[[name]] <- suppressMessages(simple_gostats(uppers, gff, goids, gff_type=gff_type, species=arglist$species))
+        down_gostats[[name]] <- suppressMessages(simple_gostats(downers, gff, goids, gff_type=gff_type, species=arglist$species))
     }
-##    up_topgo <- foreach (count=1:names_length, .errorhandling="pass") %dopar% {
-##        suppressMessages(simple_topgo(de_genes=up_list[[count]], goids_df=goids))
-##    }
-##    down_topgo <- foreach (count=1:names_length, .errorhandling="pass") %dopar% {
-##        suppressMessages(simple_topgo(de_genes=down_list[[count]], goids_df=goids))
-##    }
-##    up_gostats <- foreach (count=1:names_length, .errorhandling="pass") %dopar% {
-##        suppressMessages(simple_gostats(de_genes=up_list[[count]], gff=gff, goids=goids, gff_type=gff_type))
-##    }
-##    down_gostats <- foreach (count=1:names_length, .errorhandling="pass") %dopar% {
-##        suppressMessages(simple_gostats(de_genes=down_list[[count]], gff=gff, goids=goids, gff_type=gff_type))
-##    }
+
     ret <- list(
         up_goseq=up_goseq, down_goseq=down_goseq, up_cluster=up_cluster, down_cluster=down_cluster,
         up_topgo=up_topgo, down_topgo=down_topgo, up_gostats=up_gostats, down_gostats=down_gostats)

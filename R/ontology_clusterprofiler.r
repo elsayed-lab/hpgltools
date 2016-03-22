@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Mar 21 23:23:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Mar 22 14:15:15 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make sure that clusterProfiler is ready to run
 #'
@@ -95,9 +95,6 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         if (length(go2eg) == 0) {
             stop("The GO2EG data structure is empty.")
         }
-    }
-    if (organism == 'hsapiens') {
-        organism <- 'human'
     }
     if (is.null(de_genes$ID)) {
         gene_list <- as.character(rownames(de_genes))
