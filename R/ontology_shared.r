@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar 22 16:46:19 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Mar 22 18:58:29 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -937,7 +937,6 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             if (!is.null(n)) {
                 topgo_up_ont <- head(topgo_up_ont, n=n)
             }
-            topgo_up_ont <- head(topgo_up$tables[[varname]], n=n)
             topgo_up_ont <- topgo_up_ont[,c(2,1,11,6,7,8,9,10,4,3,5)]
             colnames(topgo_up_ont) <- c("Ontology","Category","Term","Fisher p-value","Q-value","KS score",
                                         "EL score","Weight score","Num. DE","Num. in cat.","Exp. in cat.")
