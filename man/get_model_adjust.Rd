@@ -4,14 +4,15 @@
 \alias{get_model_adjust}
 \title{Extract some surrogate estimations from a raw data set using sva, ruv, and/or pca.}
 \usage{
-get_model_adjust(raw_expt, estimate_type = "sva_supervised", ...)
+get_model_adjust(expt, estimate_type = "sva_supervised", surrogates = NULL,
+  ...)
 }
 \arguments{
-\item{raw_expt}{a raw experiment object}
-
 \item{estimate_type}{one of sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised, ruv_residuals, or pca}
 
 \item{...}{parameters fed to arglist}
+
+\item{raw_expt}{a raw experiment object}
 }
 \value{
 a list including the adjustments for a model matrix, a modified count table, and 3 plots of the known batch, surrogates, and batch/surrogate.

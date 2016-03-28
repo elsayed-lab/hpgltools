@@ -4,15 +4,12 @@
 \alias{transform_counts}
 \title{Perform a simple transformation of a count table (log2)}
 \usage{
-transform_counts(count_table, transform = "raw", converted = "raw",
-  base = NULL, add = 0.5)
+transform_counts(count_table, transform = "raw", base = NULL, add = 0.5)
 }
 \arguments{
 \item{count_table}{A matrix of count data}
 
 \item{transform}{A type of transformation to perform: log2/log10/log}
-
-\item{converted}{Whether or not the data has been converted.}
 
 \item{base}{for other log scales}
 

@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Mar 21 12:19:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 25 17:28:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from edger
 #'
@@ -138,7 +138,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     if (isTRUE(model_cond) & isTRUE(model_batch)) {
         fun_model <- condbatch_model
         fun_int_model <- condbatch_int_model
-    } else if (class(model_batch) == 'numeric') {
+    } else if (class(model_batch) == 'numeric' | class(model_batch) == 'matrix') {
         message("EdgeR: Including batch estimates from sva/ruv/pca in the EdgeR model.")
         fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
         fun_int_model <- stats::model.matrix(~ conditions + model_batch)

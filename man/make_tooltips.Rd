@@ -7,7 +7,7 @@ information for gVis graphs. The tooltip column is also a handy proxy for
 anontations information when it would otherwise be too troublesome.}
 \usage{
 make_tooltips(annotations, desc_col = "description", type = "gene",
-  id_col = "ID")
+  id_col = "ID", ...)
 }
 \arguments{
 \item{annotations}{Either a gff file or annotation data frame (which likely came from a gff file.)}

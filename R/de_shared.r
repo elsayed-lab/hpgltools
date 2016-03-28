@@ -44,6 +44,10 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                          model_batch=TRUE, model_intercept=FALSE, extra_contrasts=NULL,
                          alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
     arglist <- list(...)
+    surrogates <- 1
+    if (!is.null(arglist$surrogates)) {
+        surrogates <- arglist$surrogates
+    }
     conditions <- get0('conditions')
     batches <- get0('batches')
     model_cond <- get0('model_cond')
@@ -62,7 +66,7 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         model_intercept <- FALSE
     }
     if (class(model_batch) == 'character') {
-        params <- get_model_adjust(input, estimate_type=model_batch, surrogates=1)
+        params <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
         model_batch <- params$model_adjust
     }
 

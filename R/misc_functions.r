@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar 22 11:30:53 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 25 13:07:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Grab gene lengths from a gff file.
 #'
@@ -418,7 +418,8 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
 #' }
 #' @export
-make_tooltips <- function(annotations, desc_col='description', type="gene", id_col="ID") {
+make_tooltips <- function(annotations, desc_col='description', type="gene", id_col="ID", ...) {
+    arglist <- list(...)
     tooltip_data <- NULL
     if (class(annotations) == 'character') {
         tooltip_data <- gff2df(gff=annotations, type=type)

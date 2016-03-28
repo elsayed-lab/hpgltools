@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar 22 16:46:00 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 25 17:28:34 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from limma
 #'
@@ -304,8 +304,8 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             fun_model <- condbatch_model
             fun_int_model <- condbatch_int_model
         }
-    } else if (class(model_batch) == 'numeric') {
-        message("Limma: Including batch estimates from sva/ruv/pca in the limma model.")
+    } else if (class(model_batch) == 'matrix' | class(model_batch) == 'numeric') {
+        message("Limma: Including multiple sv batch estimates from sva/ruv/pca in the limma model.")
         fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
         fun_int_model <- stats::model.matrix(~ conditions + model_batch)
     } else if (isTRUE(model_cond)) {

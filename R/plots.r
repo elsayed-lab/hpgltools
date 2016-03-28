@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 20 20:49:16 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 25 14:49:33 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -50,7 +50,7 @@
 #' @export
 graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL, qq=NULL, ma=NULL, ...) {
     ## First gather the necessary data for the various plots.
-    options(scipen=999)
+    old_options <- options(scipen=999)
     nonzero_title <- "Non zero genes"
     libsize_title <- "Library sizes"
     boxplot_title <- "Boxplot"

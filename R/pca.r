@@ -1,4 +1,4 @@
-# Time-stamp: <Thu Mar 17 16:50:04 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 25 13:42:04 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix against its rowMeans().
@@ -104,7 +104,7 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     data_class <- class(data)[1]
     names <- NULL
     if (data_class == 'expt') {
-        design <- data$definitions
+        design <- data$design
         plot_colors <- data$colors
         plot_names <- data$names
         data <- Biobase::exprs(data$expressionset)
@@ -411,9 +411,10 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     num_components <- get0("num_components")
     plot_labels <- get0("plot_labels")
     plot_pcas <- get0("plot_pcas")
+    colors_chosen <- expt_data$colors
     data_class <- class(expt_data)[1]
     if (data_class == 'expt') {
-        expt_design <- expt_data$definitions
+        expt_design <- expt_data$design
         expt_data <- Biobase::exprs(expt_data$expressionset)
     } else if (data_class == 'ExpressionSet') {
         expt_data <- Biobase::exprs(expt_data)
@@ -459,10 +460,10 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     print(yl)
     plot_labels <- rownames(expt_design)
     pca_data <- data.frame("SampleID" = plot_labels,
-                           "condition" = expt_design$condition,
-                           "batch" = expt_design$batch,
+                           "condition" = as.character(expt_design$condition),
+                           "batch" = as.character(expt_design$batch),
                            "batch_int" = as.integer(expt_design$batch),
-                           "colors" = as.factor(as.character(expt_design$color)))
+                           "colors" = colors_chosen)
     pc_df <- data.frame("SampleID" = plot_labels)
     rownames(pc_df) <- make.names(plot_labels)
 

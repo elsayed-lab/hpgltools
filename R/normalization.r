@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Mar 21 16:09:10 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 25 17:54:22 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -706,7 +706,8 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
         if (verbose) {
             message(paste0("Performing low-count filter with: ", filter_low))
         }
-        count_table <- lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2)
+        lowfiltered_counts <- lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2)
+        count_table <- lowfiltered_counts
         ##count_table = lowfilter_counts(count_table, type=filter_low)
         lowfilter_performed <- filter_low
     }
@@ -749,7 +750,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
             message(paste0("Applying: ", batch, " batch correction(raw means nothing)."))
         }
         ## batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
-        tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design), silent=TRUE)
+        tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design))
         batched_counts <- list(count_table=count_table)
         if (class(tmp_counts) == 'try-error') {
             warning("The batch_counts called failed.  Returning non-batch reduced data.")
@@ -767,7 +768,8 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
         if (verbose) {
             message(paste0("Applying: ", transform, " transformation."))
         }
-        transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed, ...)
+        transformed_counts <- transform_counts(count_table, transform=transform, ...)
+        ##transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
         count_table <- transformed_counts$count_table
         transform_performed <- transform
     }
@@ -1325,9 +1327,9 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 ")
     }
     new_expt$backup_expressionset <- new_expt$expressionset
-    old_data <- Biobase::exprs(expt$original_expressionset)
+    original_data <- Biobase::exprs(expt$original_expressionset)
     design <- expt$design
-    normalized <- hpgl_norm(old_data, design=design, transform=transform,
+    normalized <- hpgl_norm(original_data, design=design, transform=transform,
                             norm=norm, convert=convert, batch=batch,
                             batch1=batch1, batch2=batch2,
                             filter_low=filter_low, annotations=annotations,
@@ -1357,7 +1359,6 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 #'
 #' @param count_table  A matrix of count data
 #' @param transform   A type of transformation to perform: log2/log10/log
-#' @param converted   Whether or not the data has been converted.
 #' @param base   for other log scales
 #' @param add   to avoid attempting a log(0)
 #' @return dataframe of logx(counts)
@@ -1366,11 +1367,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 #' filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
 #' }
 #' @export
-transform_counts <- function(count_table, transform="raw", converted="raw",
+transform_counts <- function(count_table, transform="raw",
                              base=NULL, add=0.5) {
-    ## if (converted != "cpm") {
-    ##     count_table = count_table + 1
-    ## }
     num_zero <- sum(count_table == 0)
     num_low <- sum(count_table < 0)
     if (num_low > 0) {

@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 20 19:32:22 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 25 17:54:17 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -19,28 +19,39 @@
 #' @param ... parameters fed to arglist
 #' @return a list including the adjustments for a model matrix, a modified count table, and 3 plots of the known batch, surrogates, and batch/surrogate.
 #' @export
-get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
+get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NULL, ...) {
     arglist <- list(...)
     ## Gather all the likely pieces we can use
-    start_low <- suppressMessages(normalize_expt(raw_expt, filter_low=TRUE))
-    design <- start_low$design
-    data <- as.data.frame(Biobase::exprs(start_low$expressionset))
+    design <- expt$design
+    data <- as.data.frame(Biobase::exprs(expt$expressionset))
     mtrx <- as.matrix(data)
-    l2_data <- Biobase::exprs(suppressMessages(normalize_expt(start_low, transform="log2")$expressionset))
+    l2_data <- NULL
+    if (expt$transform == 'raw') {
+        l2_data <- transform_counts(count_table=data, transform="log2")
+    } else {
+        l2_data <- data
+    }
     conditions <- as.factor(design[, "condition"])
     batches <- as.factor(design[, "batch"])
     conditional_model <- model.matrix(~ conditions, data=data)
     null_model <- conditional_model[, 1]
     chosen_surrogates <- 1
-    if (is.null(arglist$surrogates)) {
-        be_surrogate_estimate <- suppressMessages(sva::num.sv(dat=mtrx, mod=conditional_model, method="be"))
-        leek_surrogate_estimate <- suppressMessages(sva::num.sv(dat=mtrx, mod=conditional_model, method="leek"))
-        chosen_surrogates <- max(be_surrogate_estimate, leek_surrogate_estimate)
-        chosen_surrogates <- min(4, chosen_surrogates)
+    if (is.null(surrogates)) {
+        message("No estimate nor method to find surrogates was provided. Assuming you want 1 surrogate variable.")
     } else {
-        chosen_surrogates <- arglist$surrogates
+        if (class(surrogates) == 'character') {
+            if (surrogates != 'be' & surrogates != 'leek') {
+                message("A string was provided, but it was neither 'be' nor 'leek', assuming 'be'.")
+                chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model)
+            } else {
+                chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model, method=surrogates)
+            }
+            message(paste0("The ", surrogates, " method chose ", chosen_surrogates, " surrogate variables."))
+        } else if (class(surrogates) == 'numeric') {
+            message(paste0("A specific number of surrogate variables was chosen: ", surrogates, "."))
+            chosen_surrogates = surrogates
+        }
     }
-    message(paste0("The chosen number of surrogates is: ", chosen_surrogates))
 
     control_likelihoods <- try(sva::empirical.controls(dat=mtrx, mod=conditional_model, mod0=null_model, n.sv=chosen_surrogates), silent=TRUE)
     if (class(control_likelihoods) == 'try-error') {
@@ -64,6 +75,12 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
         type_color <- "red"
         supervised_sva <- sva::svaseq(mtrx, conditional_model, null_model, controls=control_likelihoods, n.sv=chosen_surrogates)
         model_adjust <- supervised_sva$sv
+    } else if (estimate_type == "svaseq") {
+        found_surrogates <- sva::num.sv(mtrx, conditional_model)
+        message("This ignores the surrogates parameter and uses the be method to estimate surrogates.")
+        type_color <- "dodgerblue"
+        svaseq_result <- sva::svaseq(mtrx, conditional_model, null_model, n.sv=found_surrogates)
+        model_adjust <- svaseq_result$sv
     } else if (estimate_type == "sva_unsupervised") {
         message("Attempting sva unsupervised surrogate estimation.")
         type_color <- "blue"
@@ -120,43 +137,22 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
     transformation <- (data_modifier %*% t(mtrx))
     conds <- ncol(conditional_model)
     new_counts <- mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*% transformation[-c(1:conds), ])
+    ## This matches the return I get from batch_counts()
 
     plotbatch <- as.integer(batches)
     plotcond <- as.numeric(conditions)
     x_marks <- 1:length(colnames(data))
 
-    ##original_plot_params <- par(mfrow=c(2, 2))  ## this is weird to set the old ones by calling new options
-    ## GRRR split.screen is giving me stupid errors on a different computer
-    ## four_split <- rbind(c(0.1, 0.55, 0.55, 1),
-    ##                    c(0.55, 1, 0.55, 1),
-    ##                    c(0.1, 0.55, 0.1, 0.55),
-    ##                    c(0.55, 1, 0.1, 0.55))
-    ## split.screen(four_split)
-    ## screen(1)
     plot(plotbatch, type="p", pch=19, col="black", main=paste0("Known batches by sample"), xaxt="n", yaxt="n", xlab="Sample", ylab="Known batch")
     axis(1, at=x_marks, cex.axis=0.75, las=2, labels=as.character(colnames(data)))
     axis(2, at=plotbatch, cex.axis=0.75, las=2, labels=as.character(batches))
     batch_by_sample_plot <- grDevices::recordPlot()
-    ##screen(2)
     plot(as.numeric(model_adjust), type="p", pch=19, col=type_color,
          xaxt="n", xlab="Sample", ylab="Surrogate estimate", main=paste0("Surrogates estimated by ", estimate_type))
     axis(1, at=x_marks, cex.axis=0.75, las=2, labels=as.character(colnames(data)))
     surrogate_by_sample_plot <- grDevices::recordPlot()
-    ## screen(3)
-    plot(model_adjust ~ plotbatch, pch=19, col=type_color, main=paste0(estimate_type, " vs. known batches."))
+    plot(model_adjust[, 1] ~ plotbatch, pch=19, col=type_color, main=paste0(estimate_type, " vs. known batches."))
     estimate_vs_sample_plot <- grDevices::recordPlot()
-    ## screen(4)
-    ## boxplot(log2(new_counts + 1))
-    ## tmpdata <- cbind(data, as.data.frame(new_counts))
-    ## colnames(tmpdata) <- make.names(colnames(tmpdata), unique=TRUE)
-    ## tmpdesign <- rbind(design, design)
-    ## rownames(tmpdesign) <- make.names(rownames(tmpdesign), unique=TRUE)
-    ## hpgl_corheat(tmpdata)
-    ## batch_vs_adjust_plot <- grDevices::recordPlot()
-    ## close.screen(all.screen=TRUE)
-    ## fun_plots <- grDevices::recordPlot()
-    ## dev.off()
-    ## new_plot_params <- par(original_plot_params)
 
     ret <- list("model_adjust" = model_adjust,
                 "new_counts" = new_counts,
@@ -183,7 +179,7 @@ get_model_adjust <- function(raw_expt, estimate_type="sva_supervised", ...) {
 #' @return a list of toys
 #' @export
 compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
-    design <- expt$definitions
+    design <- expt$design
     pca_plots <- list()
     pca_plots$null <- hpgl_pca(expt)$plot
     pca_adjust <- get_model_adjust(expt, estimate_type="pca", surrogates=1)
@@ -213,7 +209,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
         for (fact in extra_factors) {
             if (!is.null(design[, fact])) {
                 batch_names <- append(x=batch_names, values=fact)
-                batch_adjustments <- cbind(batch_adjustments, as.numeric(design[, fact]))
+                batch_adjustments <- cbind(batch_adjustments, as.numeric(as.factor(design[, fact])))
             }
         }
     }

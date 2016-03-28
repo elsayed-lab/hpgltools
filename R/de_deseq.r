@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 20 14:31:16 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Mar 25 17:35:20 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from deseq2
 #'
@@ -163,6 +163,22 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
         dataset$SV1 <- model_batch
         DESeq2::design(dataset) <- as.formula(~ SV1 + condition)
+    } else if (class(model_batch) == 'matrix') {
+        message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
+        model_string <- "~ condition"
+        summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
+                                                     colData=Biobase::pData(input$expressionset),
+                                                     design=as.formula(model_string))
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
+        formula_string <- "as.formula(~ "
+        for (count in 1:ncol(model_adjust)) {
+            colname <- paste0("SV", count)
+            dataset[, colname] <- model_batch[, count]
+            formula_string <- paste0(formula_string, " colname + ")
+        }
+        formula_string <- paste0(formula_string, "condition)")
+        new_formula <- eval(parse(text=formula_string))
+        DESeq2::design(dataset) <- new_formula
     } else {
         message("DESeq2 step 1/5: Including only condition in the deseq model.")
         model_string <- "~ condition"
