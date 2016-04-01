@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 25 17:54:17 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Mar 30 12:16:48 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -22,11 +22,11 @@
 get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NULL, ...) {
     arglist <- list(...)
     ## Gather all the likely pieces we can use
-    design <- expt$design
+    design <- expt["design"]
     data <- as.data.frame(Biobase::exprs(expt$expressionset))
     mtrx <- as.matrix(data)
     l2_data <- NULL
-    if (expt$transform == 'raw') {
+    if (expt$transform == "raw") {
         l2_data <- transform_counts(count_table=data, transform="log2")
     } else {
         l2_data <- data
@@ -39,22 +39,22 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NU
     if (is.null(surrogates)) {
         message("No estimate nor method to find surrogates was provided. Assuming you want 1 surrogate variable.")
     } else {
-        if (class(surrogates) == 'character') {
-            if (surrogates != 'be' & surrogates != 'leek') {
+        if (class(surrogates) == "character") {
+            if (surrogates != "be" & surrogates != "leek") {
                 message("A string was provided, but it was neither 'be' nor 'leek', assuming 'be'.")
                 chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model)
             } else {
                 chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model, method=surrogates)
             }
             message(paste0("The ", surrogates, " method chose ", chosen_surrogates, " surrogate variables."))
-        } else if (class(surrogates) == 'numeric') {
+        } else if (class(surrogates) == "numeric") {
             message(paste0("A specific number of surrogate variables was chosen: ", surrogates, "."))
             chosen_surrogates = surrogates
         }
     }
 
     control_likelihoods <- try(sva::empirical.controls(dat=mtrx, mod=conditional_model, mod0=null_model, n.sv=chosen_surrogates), silent=TRUE)
-    if (class(control_likelihoods) == 'try-error') {
+    if (class(control_likelihoods) == "try-error") {
         control_likelihoods = 0
     }
     if (sum(control_likelihoods) == 0) {
@@ -154,11 +154,11 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NU
     plot(model_adjust[, 1] ~ plotbatch, pch=19, col=type_color, main=paste0(estimate_type, " vs. known batches."))
     estimate_vs_sample_plot <- grDevices::recordPlot()
 
-    ret <- list("model_adjust" = model_adjust,
-                "new_counts" = new_counts,
-                "batch_by_sample" = batch_by_sample_plot,
-                "surrogate_by_sample" = surrogate_by_sample_plot,
-                "estimate_by_sample" = estimate_vs_sample_plot)
+    ret <- list("model_adjust"=model_adjust,
+                "new_counts"=new_counts,
+                "batch_by_sample"=batch_by_sample_plot,
+                "surrogate_by_sample"=surrogate_by_sample_plot,
+                "estimate_by_sample"=estimate_vs_sample_plot)
     return(ret)
 }
 
@@ -195,14 +195,14 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     ruv_empirical <- get_model_adjust(expt, estimate_type="ruv_empirical", surrogates=1)
     pca_plots$ruvemp <- hpgl_pca(ruv_empirical$new_counts, design=design, plot_colors=expt$colors)$plot
 
-    batch_adjustments <- cbind(as.factor(expt$conditions),
-                               as.factor(expt$batches),
-                               pca_adjust$model_adjust,
-                               sva_supervised$model_adjust,
-                               sva_unsupervised$model_adjust,
-                               ruv_supervised$model_adjust,
-                               ruv_residuals$model_adjust,
-                               ruv_empirical$model_adjust)
+    batch_adjustments <- cbind(as.factor(expt["conditions"]),
+                               as.factor(expt["batches"]),
+                               pca_adjust["model_adjust"],
+                               sva_supervised["model_adjust"],
+                               sva_unsupervised["model_adjust"],
+                               ruv_supervised["model_adjust"],
+                               ruv_residuals["model_adjust"],
+                               ruv_empirical["model_adjust"])
     batch_adjustments <- as.data.frame(batch_adjustments)
     batch_names <- c("condition","batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
     if (!is.null(extra_factors)) {
@@ -224,7 +224,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
                      "+ batch_adjustments$ruv_sup", "+ batch_adjustments$ruv_resid",
                      "+ batch_adjustments$ruv_emp")
     adjust_names <- c("null", "batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
-    starter <- edgeR::DGEList(counts=Biobase::exprs(expt$expressionset))
+    starter <- edgeR::DGEList(counts=Biobase::exprs(expt["expressionset"]))
     norm_start <- edgeR::calcNormFactors(starter)
     catplots <- vector("list", length(adjustments) + 1)  ## add 1 for a null adjustment
     names(catplots) <- adjust_names
@@ -241,7 +241,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
     limma_fit <- limma::lmFit(voom_result, limma_design)
     modified_fit <- limma::eBayes(limma_fit)
-    tstats[["null"]] <- abs(modified_fit$t[, 2])
+    tstats["null"] <- abs(modified_fit$t[, 2])
     ##names(tstats[["null"]]) <- as.character(1:dim(data)[1])
     ## This needs to be redone to take into account how I organized the adjustments!!!
     num_adjust <- length(adjustments)
@@ -268,16 +268,18 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     catplot_together <- grDevices::recordPlot()
 
     ret <- list(
-        "pca_adjust" = pca_adjust,
-        "sva_supervised_adjust" = sva_supervised,
-        "sva_unsupervised_adjust" = sva_unsupervised,
-        "ruv_supervised_adjust" = ruv_supervised,
-        "ruv_residual_adjust" = ruv_residuals,
-        "ruv_empirical_adjust" = ruv_empirical,
-        "adjustments" = batch_adjustments,
-        "correlations" = correlations,
-        "plot" = ret_plot,
-        "pca_plots" = pca_plots,
-        "catplots" = catplot_together)
+        "pca_adjust"=pca_adjust,
+        "sva_supervised_adjust"=sva_supervised,
+        "sva_unsupervised_adjust"=sva_unsupervised,
+        "ruv_supervised_adjust"=ruv_supervised,
+        "ruv_residual_adjust"=ruv_residuals,
+        "ruv_empirical_adjust"=ruv_empirical,
+        "adjustments"=batch_adjustments,
+        "correlations"=correlations,
+        "plot"=ret_plot,
+        "pca_plots"=pca_plots,
+        "catplots"=catplot_together)
     return(ret)
 }
+
+## EOF

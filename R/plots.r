@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 25 14:49:33 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Mar 31 19:44:44 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -108,6 +108,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
         nonzero=nonzero_plot, libsize=libsize_plot, boxplot=boxplot, corheat=corheat, smc=smc,
         disheat=disheat, smd=smd, pcaplot=pca$plot, pcatable=pca$table, pcares=pca$res,
         pcavar=pca$variance, density=density, qqlog=qq_logs, qqrat=qq_ratios, ma=ma)
+    new_options <- options(old_options)
     return(ret_data)
 }
 
@@ -126,11 +127,11 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
 #' @export
 hpgl_bcv_plot <- function(data) {
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         data <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -164,8 +165,7 @@ hpgl_bcv_plot <- function(data) {
         ggplot2::geom_smooth(method="loess") +
         ggplot2::stat_function(fun=f, colour="red") +
         ggplot2::theme(legend.position="none")
-    ret <- list("data" = disp_df,
-                "plot" = disp_plot)
+    ret <- list("data"=disp_df, "plot"=disp_plot)
     return(ret)
 }
 
@@ -197,20 +197,20 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     hpgl_env <- environment()
     data_class <- class(data)[1]
     if (data_class == 'expt') {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
-        data <- as.data.frame(Biobase::exprs(data$expressionset))
-    } else if (data_class == 'ExpressionSet') {
+        design <- data[["design"]]
+        colors <- data[["colors"]]
+        names <- data[["names"]]
+        data <- as.data.frame(Biobase::exprs(data[["expressionset"]]))
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
     if (is.null(colors)) {
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9,"Blues"))(dim(df)[2])
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(df)[2])
     }
     data_matrix <- as.matrix(data)
     data[data < 0] <- 0 ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
@@ -222,14 +222,11 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     ## I am not sure what to do about them in this context.
     boxplot <- ggplot2::ggplot(data=dataframe, ggplot2::aes_string(x="variable", y="value")) +
         suppressWarnings(ggplot2::geom_boxplot(ggplot2::aes_string(fill="variable"),
-                                               fill=colors,
-                                               size=0.5,
+                                               fill=colors, size=0.5,
                                                outlier.size=1.5,
                                                outlier.colour=ggplot2::alpha("black", 0.2))) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
-        ggplot2::xlab("Sample") +
-        ggplot2::ylab("Per-gene log(counts)")
+        ggplot2::theme_bw() + ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
+        ggplot2::xlab("Sample") + ggplot2::ylab("Per-gene (pseudo)count distribution")
     if (!is.null(title)) {
         boxplot <- boxplot + ggplot2::ggtitle(title)
     }
@@ -245,9 +242,9 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
             boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
         }
     } else {
-        if (scale == 'log') {
+        if (scale == "log") {
             boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
-        } else if (scale == 'logdim') {
+        } else if (scale == "logdim") {
             boxplot <- boxplot + ggplot2::coord_trans(y="log2")
         }
     }
@@ -270,18 +267,18 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' funkytown <- hpgl_density(data)
 #' }
 #' @export
-hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
+hpgl_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
                          fill=NULL, title=NULL, scale=NULL) {  ## also position='stack'
     hpgl_env <- environment()
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
-        data <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+    if (data_class == "expt") {
+        design <- data[["design"]]
+        colors <- data[["colors"]]
+        names <- data[["names"]]
+        data <- Biobase::exprs(data[["expressionset"]])
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -291,14 +288,14 @@ hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
         if (max(data) > 10000) {
             message("This data will benefit from being displayed on the log scale.")
             message("If this is not desired, set scale='raw'")
-            scale <- 'log'
+            scale <- "log"
         } else {
-            scale <- 'raw'
+            scale <- "raw"
         }
     }
 
-    if (!is.null(names)) {
-        colnames(data) <- make.names(names, unique=TRUE)
+    if (!is.null(sample_names)) {
+        colnames(data) <- make.names(sample_names, unique=TRUE)
     }
     ## If the columns lose the connectivity between the sample and values, then
     ## the ggplot below will fail with env missing.
@@ -323,17 +320,16 @@ hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
     }
     densityplot <- densityplot +
         ggplot2::geom_density(ggplot2::aes_string(x="counts", y="..count.."), position=position) +
-        ggplot2::ylab("Number of genes.") +
-        ggplot2::xlab("Number of hits/gene.") +
+        ggplot2::ylab("Number of genes.") + ggplot2::xlab("Number of hits/gene.") +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.key.size=ggplot2::unit(0.3, "cm"))
     if (!is.null(title)) {
         densityplot <- densityplot + ggplot2::ggtitle(title)
     }
 
-    if (scale == 'log') {
+    if (scale == "log") {
         densityplot <- densityplot + ggplot2::scale_x_continuous(trans=scales::log2_trans())
-    } else if (scale == 'logdim') {
+    } else if (scale == "logdim") {
         densityplot <- densityplot + ggplot2::coord_trans(x="log2")
     } else if (isTRUE(scale)) {
         densityplot <- densityplot + ggplot2::scale_x_log10()
@@ -373,19 +369,19 @@ hpgl_density <- function(data, colors=NULL, names=NULL, position="identity",
 #' @export
 hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2) {
     hpgl_env <- environment()
-    df <- data.frame(df[,c(1,2)])
-    df <- df[complete.cases(df),]
+    df <- data.frame(df[, c(1,2)])
+    df <- df[complete.cases(df) ,]
     df_columns <- colnames(df)
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]
     colnames(df) <- c("first","second")
-    first_median <- summary(df[,1])["Median"]
-    second_median <- summary(df[,2])["Median"]
-    first_mad <- stats::mad(df[,1])
-    second_mad <- stats::mad(df[,2])
-    mydist <- sillydist(df[,1], df[,2], first_median, second_median)
-    mydist$x <- abs((mydist[,1] - first_median) / abs(first_median))
-    mydist$y <- abs((mydist[,2] - second_median) / abs(second_median))
+    first_median <- summary(df[, 1])["Median"]
+    second_median <- summary(df[, 2])["Median"]
+    first_mad <- stats::mad(df[, 1])
+    second_mad <- stats::mad(df[, 2])
+    mydist <- sillydist(df[, 1], df[, 2], first_median, second_median)
+    mydist$x <- abs((mydist[, 1] - first_median) / abs(first_median))
+    mydist$y <- abs((mydist[, 2] - second_median) / abs(second_median))
     mydist$x <- mydist$x / max(mydist$x)
     mydist$y <- mydist$y / max(mydist$y)
     mydist$dist <- mydist$x * mydist$y
@@ -475,14 +471,14 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
     arglist <- list(...)
     hpgl_env <- environment()
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
-        data <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+    if (data_class == "expt") {
+        design <- data[["design"]]
+        colors <- data[["colors"]]
+        names <- data[["names"]]
+        data <- Biobase::exprs(data[["expressionset"]])
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -509,9 +505,9 @@ hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names
     colors <- as.character(colors)
     if (is.null(design)) {
         row_colors <- rep("white", length(colors))
-    } else if (length(as.integer(as.factor(as.data.frame(design[row])[,1]))) >= 2) {
+    } else if (length(as.integer(as.factor(as.data.frame(design[row])[, 1]))) >= 2) {
         ## row_colors = brewer.pal(12, "Set3")[as.integer(as.list(hpgl_design[ row ]))]
-        row_colors <- RColorBrewer::brewer.pal(12, "Set3")[as.integer(as.factor(as.data.frame(design[ row ])[,1]))]
+        row_colors <- RColorBrewer::brewer.pal(12, "Set3")[as.integer(as.factor(as.data.frame(design[ row ])[, 1]))]
     } else {
         row_colors <- rep("green", length(design[row]))
     }
@@ -581,7 +577,7 @@ hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE
         ggplot2::theme_bw()
     if (log) {
         log_histogram <- try(a_histogram + ggplot2::scale_x_log10())
-        if (log_histogram != 'try-error') {
+        if (log_histogram != "try-error") {
             a_histogram <- log_histogram
         }
     }
@@ -609,11 +605,6 @@ hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE
 hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  yscale=NULL, ...) {
     hpgl_env <- environment()
     arglist <- list(...)
-    colors <- get0('colors')
-    names <- get0('names')
-    text <- get0('text')
-    title <- get0('title')
-    yscale <- get0('yscale')
     if (is.null(text)) {
         text <- TRUE
     }
@@ -625,14 +616,16 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
     }
 
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
-        data <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+    if (data_class == "expt") {
+        design <- data[["design"]]
+        colors <- data[["colors"]]
+        names <- data[["names"]]
+        data <- Biobase::exprs(data[["expressionset"]])  ## Why does this need the simplifying
+        ## method of extracting an element? (eg. data['expressionset'] does not work)
+        ## that is _really_ weird!
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -641,10 +634,9 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
     if (is.null(colors)) {
         colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
     }
-    colors <- as.character(colors)
     tmp <- data.frame(id=colnames(data),
                       sum=colSums(data),
-                      colors=factor(colors))
+                      colors=colors)
     tmp$order <- factor(tmp$id, as.character(tmp$id))
     libsize_plot <- ggplot2::ggplot(data=tmp, ggplot2::aes_string(x="order", y="sum"),
                                     environment=hpgl_env, colour=colors) +
@@ -659,7 +651,7 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
         tmp$sum <- sprintf("%.2f", round(tmp$sum, 2))
         libsize_plot <- libsize_plot + ggplot2::geom_text(
                                            ggplot2::aes_string(x="order", label='prettyNum(as.character(tmp$sum), big.mark=",")'),
-                                           angle=90, size=3, color="white", hjust=1.2)
+                                           angle=90, size=4, color="white", hjust=1.2)
     }
     if (!is.null(title)) {
         libsize_plot <- libsize_plot + ggplot2::ggtitle(title)
@@ -685,7 +677,7 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
     return(libsize_plot)
 }
 
-#'   Make a pretty scatter plot between two sets of numbers with a
+#' Make a pretty scatter plot between two sets of numbers with a
 #' linear model superimposed and some supporting statistics.
 #'
 #' @param df  a dataframe likely containing two columns
@@ -734,13 +726,13 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     df_y_axis <- df_columns[2]
     colnames(df) <- c("first","second")
     model_test <- try(robustbase::lmrob(formula=second ~ first, data=df, method="SMDM"), silent=TRUE)
-    if (class(model_test) == 'try-error') {
+    if (class(model_test) == "try-error") {
         model_test <- try(lm(formula=second ~ first, data=df), silent=TRUE)
     }
-    if (class(model_test) == 'try-error') {
+    if (class(model_test) == "try-error") {
         model_test <- try(glm(formula=second ~ first, data=df), silent=TRUE)
     }
-    if (class(model_test) == 'try-error') {
+    if (class(model_test) == "try-error") {
         message("Could not perform a linear modelling of the data.")
         message("Going to perform a scatter plot without linear model.")
         plot <- hpgl_scatter(df)
@@ -802,12 +794,12 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     if (!is.null(first) & !is.null(second)) {
         colnames(df) <- c(first, second)
     } else if (!is.null(first)) {
-        colnames(df) <- c(first, 'second')
+        colnames(df) <- c(first, "second")
     } else if (!is.null(second)) {
-        colnames(df) <- c('first', second)
+        colnames(df) <- c("first", second)
     }
-    x_histogram <- hpgl_histogram(data.frame(df[,1]), verbose=verbose, fillcolor="lightblue", color="blue")
-    y_histogram <- hpgl_histogram(data.frame(df[,2]), verbose=verbose, fillcolor="pink", color="red")
+    x_histogram <- hpgl_histogram(data.frame(df[, 1]), verbose=verbose, fillcolor="lightblue", color="blue")
+    y_histogram <- hpgl_histogram(data.frame(df[, 2]), verbose=verbose, fillcolor="pink", color="red")
     both_histogram <- hpgl_multihistogram(df, verbose=verbose)
     plots <- list(data=df, scatter=first_vs_second, x_histogram=x_histogram,
                   y_histogram=y_histogram, both_histogram=both_histogram,
@@ -945,7 +937,7 @@ hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, verbo
         ggplot2::theme_bw()
     if (log) {
         logged <- try(hpgl_multi + ggplot2::scale_x_log10())
-        if (class(logged) != 'try-error') {
+        if (class(logged) != "try-error") {
             hpgl_multi <- logged
         }
     }
@@ -954,7 +946,7 @@ hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, verbo
         message(summary_df)
         message("Uncorrected t test(s) between columns:")
         message(uncor_t)
-        if (class(bon_t) == 'try-error') {
+        if (class(bon_t) == "try-error") {
             message("Unable to perform corrected test.")
         } else {
             message("Bon Ferroni corrected t test(s) between columns:")
@@ -989,14 +981,14 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     hpgl_env <- environment()
     names <- NULL
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         design <- data$design
         colors <- data$colors
-        names <- data$names
+        names <- data$samplenames
         data <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -1008,7 +1000,7 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
         } else {
             labels <- names
         }
-    } else if (labels[1] == 'boring') {
+    } else if (labels[1] == "boring") {
         if (is.null(names)) {
             labels <- colnames(data)
         } else {
@@ -1016,7 +1008,7 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
         }
     }
 
-    shapes <- as.integer(design$batch)
+    shapes <- as.integer(as.factor(design$batch))
     non_zero <- data.frame("id"=colnames(data),
                            "nonzero_genes"=colSums(data >= 1),
                            "cpm"=colSums(data) * 1e-6,
@@ -1066,7 +1058,7 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
 hpgl_pairwise_ma <- function(data, log=NULL, ...) {
     ##require.auto('affy')
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         design <- data$design
         colors <- data$colors
         data <- Biobase::exprs(data$expressionset)
@@ -1127,7 +1119,7 @@ hpgl_pairwise_ma <- function(data, log=NULL, ...) {
 #' @export
 hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         design <- data$design
         colors <- data$colors
         names <- data$names
@@ -1187,7 +1179,7 @@ hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
 hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     hpgl_env <- environment()
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         design <- data$design
         colors <- data$colors
         names <- data$names
@@ -1312,7 +1304,7 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
 hpgl_qq_all_pairwise <- function(data, verbose=FALSE) {
     data_class <- class(data)[1]
     names <- NULL
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         design <- data$design
         colors <- data$colors
         names <- data$names
@@ -1369,7 +1361,7 @@ hpgl_qq_all_pairwise <- function(data, verbose=FALSE) {
 hpgl_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=FALSE, ...) {
     hpgl_env <- environment()
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         design <- data$design
         colors <- data$colors
         names <- data$names
@@ -1455,7 +1447,7 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL, ...) {
     data_class <- class(data)[1]
     arglist <- list(...)
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         design <- data$design
         colors <- data$colors
         names <- data$names
@@ -1522,14 +1514,14 @@ hpgl_smc <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL
 hpgl_smd <- function(data, colors=NULL, names=NULL, method="euclidean", title=NULL, ...) {
     arglist <- list(...)
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         design <- data$design
         colors <- data$colors
         names <- data$names
         data <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")

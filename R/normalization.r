@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 25 17:54:22 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Mar 31 17:01:28 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -1247,7 +1247,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     thresh=2, min_samples=2, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
     ...) {
     new_expt <- expt
-    current <- expt$expressionset
+    current_exprs <- expt$expressionset
     if (is.null(new_expt$original_expressionset)) {
         new_expt$original_expressionset = new_expt$expressionset
     } else {
@@ -1327,9 +1327,9 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 ")
     }
     new_expt$backup_expressionset <- new_expt$expressionset
-    original_data <- Biobase::exprs(expt$original_expressionset)
+    current_data <- Biobase::exprs(current_exprs)
     design <- expt$design
-    normalized <- hpgl_norm(original_data, design=design, transform=transform,
+    normalized <- hpgl_norm(current_data, design=design, transform=transform,
                             norm=norm, convert=convert, batch=batch,
                             batch1=batch1, batch2=batch2,
                             filter_low=filter_low, annotations=annotations,
@@ -1339,10 +1339,10 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     final_normalized <- normalized$final_counts
     libsizes <- final_normalized$libsize
     normalized_data <- as.matrix(final_normalized$count_table)
-    Biobase::exprs(current) <- normalized_data
+    Biobase::exprs(current_exprs) <- normalized_data
     new_expt$normalized <- normalized
     new_expt$norm_libsize <- libsizes
-    new_expt$expressionset <- current
+    new_expt$expressionset <- current_exprs
     new_expt$filtered <- filter_low
     new_expt$transform <- transform
     new_expt$best_libsize <- new_expt$normalized$normalized_counts$libsize

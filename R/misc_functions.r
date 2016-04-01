@@ -1,4 +1,14 @@
-## Time-stamp: <Fri Mar 25 13:07:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Mar 31 16:53:00 2016 Ashton Trey Belew (abelew@gmail.com)>
+
+#' png() shortcut
+#'
+#' I hate remembering my options for png()
+#' @param a filename to write
+#' @return a png with height=width=9 inches and a high resolution
+#' @export
+pp <- function(file) {
+    png(file=file, width=9, height=9, units="in", res=180)
+}
 
 #' Grab gene lengths from a gff file.
 #'
@@ -41,7 +51,7 @@ get_genelengths <- function(gff, type="gene", key='ID') {
 #'  tt = get_biomarg_annotations()
 #' }
 #' @export
-get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE) {
+get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=FALSE) {
     savefile <- "biomart_annotations.rda"
     if (file.exists(savefile) & overwrite == FALSE) {
         message("The biomart annotations file already exists, loading from it.")
@@ -57,18 +67,42 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE) {
     ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
     biomart_annotations <- biomaRt::getBM(attributes = c("ensembl_gene_id", "hgnc_symbol", "description", "gene_biotype"), mart=ensembl)
     colnames(biomart_annotations) <- c("ID", "hgnc_symbol", "Description", "Type")
-    ## Remove commas from description
-    biomart_annotations$Description <- gsub(",", "", biomart_annotations$Description)
     ## In order for the return from this function to work with other functions in this, the rownames must be set.
-    rownames(biomart_annotations) <- make.names(biomart_annotations$ID, unique=TRUE)
+    rownames(biomart_annotations) <- make.names(biomart_annotations[, "ID"], unique=TRUE)
     message("Finished downloading ensembl annotations.")
-    ##go_annotations <- biomaRt::getBM(attributes = c("ensembl_gene_id","go_id"), mart=ensembl)
-    go_annotations <- NULL
-    message("Finished downloading ensembl go annotations.")
-    save(list=ls(c("biomart_annotations", "go_annotations"), envir=globalenv()), envir=globalenv(), file=savefile)
-    lst <- list(biomart=biomart_annotations, go=go_annotations)
-    return(lst)
+    if (isTRUE(do_save)) {
+        message(paste0("Saving annotations to ", savefile, "."))
+        save(list=ls(c("biomart_annotations", "go_annotations"), envir=globalenv()), envir=globalenv(), file=savefile)
+        message("Finished save().")
+    }
+    return(biomart_annotations)
 }
+
+
+get_biomart_ontology <- function(species="hsapiens", overwrite=FALSE, do_save=FALSE) {
+    savefile <- "biomart_ontology.rda"
+    if (file.exists(savefile) & overwrite == FALSE) {
+        message("The biomart annotations file already exists, loading from it.")
+        load_string <- paste0("load('", savefile, "', envir=globalenv())")
+        eval(parse(text=load_string))
+    }
+    dataset <- paste0(species, "_gene_ensembl")
+    ##mart <- biomaRt::useMart(biomart="ensembl", dataset=dataset)
+    mart <- NULL
+    mart <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL", host="useast.ensembl.org")
+    ensembl <- biomaRt::useDataset(dataset, mart=mart)
+    ## The following was stolen from Laura's logs for human annotations.
+    ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
+    go_annotations <- biomaRt::getBM(attributes = c("ensembl_gene_id","go_id"), mart=ensembl)
+    message(paste0("Finished downloading ensembl go annotations, saving to ", savefile, "."))
+    if (isTRUE(do_save)) {
+        save(list=ls(c("biomart_annotations", "go_annotations"), envir=globalenv()), envir=globalenv(), file=savefile)
+    }
+    colnames(go_annotations) <- c("ID","GO")
+    return(go_annotations)
+}
+
+
 
 #' Given a data frame of exon counts and annotation information, sum the exons.
 #'

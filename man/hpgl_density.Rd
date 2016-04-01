@@ -4,15 +4,13 @@
 \alias{hpgl_density}
 \title{Density plots!}
 \usage{
-hpgl_density(data, colors = NULL, names = NULL, position = "identity",
-  fill = NULL, title = NULL, scale = NULL)
+hpgl_density(data, colors = NULL, sample_names = NULL,
+  position = "identity", fill = NULL, title = NULL, scale = NULL)
 }
 \arguments{
 \item{data}{an expt, expressionset, or data frame.}
 
 \item{colors}{a color scheme to use.}
-
-\item{names}{names of the samples.}
 
 \item{position}{how to place the lines, either let them overlap (identity), or stack them.}
 
@@ -21,6 +19,8 @@ hpgl_density(data, colors = NULL, names = NULL, position = "identity",
 \item{title}{a title for the plot.}
 
 \item{scale}{plot on the log scale?}
+
+\item{names}{names of the samples.}
 }
 \value{
 a density plot!

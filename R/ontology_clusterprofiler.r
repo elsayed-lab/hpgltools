@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar 22 14:15:15 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr  1 17:08:09 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make sure that clusterProfiler is ready to run
 #'
@@ -87,9 +87,12 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' @export
 simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
                                    fold_changes=NULL, include_cnetplots=FALSE,
-                                   showcategory=12, universe=NULL, organism="lm", gff=NULL,
+                                   showcategory=12, universe=NULL, organism="undef", gff=NULL,
                                    wrapped_width=20, method="Wallenius", padjust="BH", ...) {
 
+    if (is.null(organism)) {
+        organism <- "unknown"
+    }
     if (!is.null(gff)) {
         go2eg <- check_clusterprofiler(gff=gff, gomap=goids)
         if (length(go2eg) == 0) {

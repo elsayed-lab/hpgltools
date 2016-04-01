@@ -4,7 +4,7 @@
 \alias{read_metadata}
 \title{Given a table of meta data, read it in for use by create_expt()}
 \usage{
-read_metadata(file, header = FALSE, sep = ",")
+read_metadata(file, header = FALSE, sep = ",", ...)
 }
 \arguments{
 \item{file}{a csv/xls file to read}
