@@ -6,7 +6,7 @@
 \usage{
 simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
   fold_changes = NULL, include_cnetplots = FALSE, showcategory = 12,
-  universe = NULL, organism = "lm", gff = NULL, wrapped_width = 20,
+  universe = NULL, organism = "undef", gff = NULL, wrapped_width = 20,
   method = "Wallenius", padjust = "BH", ...)
 }
 \arguments{

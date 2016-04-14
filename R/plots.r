@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Mar 31 19:44:44 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Apr 12 15:22:14 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -268,7 +268,7 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' }
 #' @export
 hpgl_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
-                         fill=NULL, title=NULL, scale=NULL) {  ## also position='stack'
+                         fill=NULL, title=NULL, scale=NULL, colors_by="condition") {  ## also position='stack'
     hpgl_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
@@ -307,10 +307,6 @@ hpgl_density <- function(data, colors=NULL, sample_names=NULL, position="identit
     } else {
         stop("Could not properly melt the data.")
     }
-    colors <- factor(colors)
-    if (is.null(colors) | length(levels(colors)) != ncol(data)) {
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(ncol(data))
-    }
     densityplot <- NULL
     if (is.null(fill)) {
         densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes_string(x="counts", colour="sample"), environment=hpgl_env)
@@ -318,8 +314,9 @@ hpgl_density <- function(data, colors=NULL, sample_names=NULL, position="identit
         fill <- "sample"
         densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes_string(x="counts", colour="sample", fill="fill"), environment=hpgl_env)
     }
+
     densityplot <- densityplot +
-        ggplot2::geom_density(ggplot2::aes_string(x="counts", y="..count.."), position=position) +
+        ggplot2::geom_density(ggplot2::aes_string(x="counts", y="..count..", fill="sample"), position=position, na.rm=TRUE) +
         ggplot2::ylab("Number of genes.") + ggplot2::xlab("Number of hits/gene.") +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.key.size=ggplot2::unit(0.3, "cm"))
@@ -333,6 +330,11 @@ hpgl_density <- function(data, colors=NULL, sample_names=NULL, position="identit
         densityplot <- densityplot + ggplot2::coord_trans(x="log2")
     } else if (isTRUE(scale)) {
         densityplot <- densityplot + ggplot2::scale_x_log10()
+    }
+
+    if (!is.null(colors_by)) {
+        densityplot <- densityplot + ggplot2::scale_colour_manual(values=as.character(colors)) +
+            ggplot2::scale_fill_manual(values=ggplot2::alpha(as.character(colors), 0.1))
     }
     return(densityplot)
 }
@@ -848,20 +850,43 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' ## check for that, but I have not yet.
 #' }
 #' @export
-hpgl_ma_plot <- function(counts, de_genes, adjpval_cutoff=0.05, alpha=0.6,
+hpgl_ma_plot <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.5, logfc_cutoff=1, pval="adjpval",
                          size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
     hpgl_env <- environment()
-    df <- data.frame(AvgExp=rowMeans(counts[rownames(de_genes),]),
-                     ## LogFC=de_genes$logFC, AdjPVal=de_genes$adj.P.Val)
-                     LogFC=de_genes$logFC, PVal=de_genes$P.Value, AdjPVal=de_genes$adj.P.Val)
-    df$AdjPVal <- as.numeric(format(df$AdjPVal, scientific=FALSE))
-    df$PVal <- as.numeric(format(df$PVal, scientific=FALSE))
-    plt <- ggplot2::ggplot(df,
-                           ggplot2::aes_string(x="AvgExp", y="LogFC", color="(PVal < adjpval_cutoff)"),
+    if (pval == "adjpval") {
+        pval_column <- "adj.P.Val"
+        aes_color <- "(adjpval <= pval_cutoff)"
+    } else {
+        pval_column <- "P.Value"
+        aes_color <- "(pval <= pval_cutoff)"
+    }
+    df <- data.frame("avg" = rowMeans(counts[rownames(de_genes),]),
+                     "logfc" = de_genes[["logFC"]],
+                     "pval" = de_genes[["P.Value"]],
+                     "adjpval" = de_genes[[pval_column]])
+    df[["adjpval"]] <- as.numeric(format(df[["adjpval"]], scientific=FALSE))
+    df[["pval"]] <- as.numeric(format(df[["pval"]], scientific=FALSE))
+    df$state <- ifelse(df[["adjpval"]] > adjpval_cutoff, "pinsig",
+                ifelse(df[["adjpval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
+                ifelse(df[["adjpval"]] <= pval_cutoff & df[["logfc"]] <= (-1 * logfc_cutoff), "downsig", "fcinsig")))
+    num_pinsig <- sum(df[["state"]] == "pinsig")
+    num_upsig <- sum(df[["state"]] == "upsig")
+    num_downsig <- sum(df[["state"]] == "downsig")
+    num_fcinsig <- sum(df[["state"]] == "fcinsig")
+    plt <- ggplot2::ggplot(df, ggplot2::aes_string(x="avg", y="logfc", color=aes_color),
                            environment=hpgl_env) +
-        ggplot2::geom_hline(yintercept=c(-1,1), color="Red", size=size) +
-        ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
+        ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1), logfc_cutoff), color="red", size=(size / 2)) +
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha, ggplot2::aes_string(shape="as.factor(state)", fill=aes_color)) +
+        ggplot2::scale_shape_manual(name="state", values=c(21,22,23,24),
+                                    labels=c(
+                                        paste0("Down Sig.: ", num_downsig),
+                                        paste0("FC Insig.: ", num_fcinsig),
+                                        paste0("P Insig.: ", num_pinsig),
+                                        paste0("Up Sig.: ", num_upsig)),
+                                    guide=ggplot2::guide_legend(override.aes=ggplot2::aes(size=3, fill="grey"))) +
         ggplot2::scale_color_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
+        ggplot2::scale_fill_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
+        ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=3))) +
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
         ggplot2::xlab("Average Count (Millions of Reads)") +
         ggplot2::ylab("log fold change") +

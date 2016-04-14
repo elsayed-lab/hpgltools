@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Mar 31 16:50:40 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 14 01:12:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 
 #' Given a table of meta data, read it in for use by create_expt()
@@ -103,6 +103,8 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
         sample_definitions <- meta_dataframe
+        colnames(sample_definitions) <- tolower(colnames(sample_definitions))
+        colnames(sample_definitions) <- gsub("[[:punct:]]", "", colnames(sample_definitions))
     }  else {
         sample_definitions <- read_metadata(file, ...)
     }
@@ -242,6 +244,9 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
     if (is.null(sample_definitions[["intercounts"]])) {
         sample_definitions[, "intercounts"] <- "unknown"
     }
+    if (is.null(sample_definitions[["file"]])) {
+        sample_definitions[, "file"] <- "null"
+    }
 
     meta_frame <- data.frame(
         sample=as.character(sample_definitions[, "sampleid"]),
@@ -304,7 +309,7 @@ expt_subset <- function(expt, subset=NULL) {
     if (class(expt) == "ExpressionSet") {
         original_expressionset <- expt
     } else if (class(expt) == "expt") {
-        original_expressionset <- expt["expressionset"]
+        original_expressionset <- expt[["expressionset"]]
     } else {
         stop("expt is neither an expt nor ExpressionSet")
     }
@@ -312,7 +317,7 @@ expt_subset <- function(expt, subset=NULL) {
         ## warning("There is no expt$definitions, using the expressionset.")
         original_metadata <- Biobase::pData(original_expressionset)
     } else {
-        original_metadata <- expt["design"]
+        original_metadata <- expt[["design"]]
     }
 
     if (is.null(subset)) {
@@ -330,37 +335,32 @@ expt_subset <- function(expt, subset=NULL) {
     original_ids <- rownames(original_metadata)
     subset_ids <- rownames(subset_design)
     subset_positions <- original_ids %in% subset_ids
-    original_colors <- expt$colors
+    original_colors <- expt[["colors"]]
     subset_colors <- original_colors[subset_positions]
-    original_conditions <- expt$conditions
+    original_conditions <- expt[["conditions"]]
     subset_conditions <- original_conditions[subset_positions, drop=TRUE]
-    original_batches <- expt$batches
+    original_batches <- expt[["batches"]]
     subset_batches <- original_batches[subset_positions, drop=TRUE]
-    original_stages <- expt$stages
-    subset_stages <- original_stages[subset_positions, drop=TRUE]
-    original_types <- expt$types
-    subset_types <- original_types[subset_positions, drop=TRUE]
 
-    original_libsize <- expt$original_libsize
+    original_libsize <- expt[["original_libsize"]]
     subset_libsize <- original_libsize[subset_positions, drop=TRUE]
     subset_expressionset <- original_expressionset[, subset_positions]
 
-    metadata <- list(initial_metadata=original_metadata,
-                     original_expressionset=original_expressionset,
-                     expressionset=subset_expressionset,
-                     design=subset_design,
-                     stages=subset_stages,
-                     types=subset_types,
-                     conditions=subset_conditions,
-                     batches=subset_batches,
-                     samplenames=subset_ids,
-                     colors=subset_colors,
-                     filtered=expt$filtered,
-                     transform=expt$transform,
-                     norm=expt$norm,
-                     convert=expt$convert,
-                     original_libsize=original_libsize,
-                     libsize <- subset_libsize)
+    metadata <- list(
+        "initial_metadata" = subset_design,
+        "original_expressionset" = subset_expressionset,
+        "expressionset" = subset_expressionset,
+        "design" = subset_design,
+        "conditions" = subset_conditions,
+        "batches" = subset_batches,
+        "samplenames" = subset_ids,
+        "colors" = subset_colors,
+        "filtered" = expt$filtered,
+        "transform" = expt$transform,
+        "norm" = expt$norm,
+        "convert" = expt$convert,
+        "original_libsize" = original_libsize,
+        "libsize" = subset_libsize)
     class(metadata) <- "expt"
     return(metadata)
 }
@@ -466,7 +466,7 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
 #' }
 #' @export
 concatenate_runs <- function(expt, column='replicate') {
-    design <- expt$definitions
+    design <- expt[["design"]]
     replicates <- levels(as.factor(design[, column]))
     final_expt <- expt
     final_data <- NULL
@@ -476,35 +476,35 @@ concatenate_runs <- function(expt, column='replicate') {
     colors <- list()
     conditions <- list()
     batches <- list()
-    names <- list()
+    samplenames <- list()
     for (rep in replicates) {
         expression <- paste0(column, "=='", rep, "'")
         tmp_expt <- expt_subset(expt, expression)
-        tmp_data <- rowSums(Biobase::exprs(tmp_expt["expressionset"]))
-        tmp_design <- tmp_expt["design"][1, ]
+        tmp_data <- rowSums(Biobase::exprs(tmp_expt[["expressionset"]]))
+        tmp_design <- tmp_expt[["design"]][1, ]
         final_data <- cbind(final_data, tmp_data)
         final_design <- rbind(final_design, tmp_design)
-        column_names[rep] <- as.character(tmp_design[, "sampleid"])
-        colors[rep] <- as.character(tmp_design[, "color"])
-        batches[rep] <- as.character(tmp_design[, "batch"])
-        conditions[rep] <- as.character(tmp_design[, "condition"])
-        names[rep] <- paste(conditions[[rep]], batches[[rep]], sep="-")
+        column_names[[rep]] <- as.character(tmp_design[, "sampleid"])
+        colors[[rep]] <- as.character(tmp_expt[["colors"]][1])
+        batches[[rep]] <- as.character(tmp_expt[["batches"]][1])
+        conditions[[rep]] <- as.character(tmp_expt[["conditions"]][1])
+        samplenames[[rep]] <- paste(conditions[[rep]], batches[[rep]], sep="-")
         colnames(final_data) <- column_names
     }
-    final_expt["design"] <- final_design
+    final_expt[["design"]] <- final_design
     metadata <- new("AnnotatedDataFrame", final_design)
     Biobase::sampleNames(metadata) <- colnames(final_data)
-    feature_data <- new("AnnotatedDataFrame", Biobase::fData(expt$expressionset))
+    feature_data <- new("AnnotatedDataFrame", Biobase::fData(expt[["expressionset"]]))
     Biobase::featureNames(feature_data) <- rownames(final_data)
     experiment <- new("ExpressionSet", exprs=final_data,
                       phenoData=metadata, featureData=feature_data)
-    final_expt["expressionset"] <- experiment
-    final_expt["original_expressionset"] <- experiment
-    final_expt["samples"] <- final_design
-    final_expt["colors"] <- as.character(colors)
-    final_expt["batches"] <- as.character(batches)
-    final_expt["conditions"] <- as.character(conditions)
-    final_expt["names"] <- as.character(names)
+    final_expt[["expressionset"]] <- experiment
+    final_expt[["original_expressionset"]] <- experiment
+    final_expt[["samples"]] <- final_design
+    final_expt[["colors"]] <- as.character(colors)
+    final_expt[["batches"]] <- as.character(batches)
+    final_expt[["conditions"]] <- as.character(conditions)
+    final_expt[["samplenames"]] <- as.character(samplenames)
     return(final_expt)
 }
 

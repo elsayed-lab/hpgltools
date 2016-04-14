@@ -5,8 +5,7 @@
 \title{A hacked copy of Kwame's qsmooth/qstats code}
 \usage{
 hpgl_qshrink(data = NULL, groups = NULL, refType = "mean",
-  groupLoc = "mean", window = 99, verbose = FALSE, groupCol = NULL,
-  plot = TRUE, ...)
+  groupLoc = "mean", window = 99, groupCol = NULL, plot = TRUE, ...)
 }
 \arguments{
 \item{data}{count table to modify}
@@ -18,8 +17,6 @@ hpgl_qshrink(data = NULL, groups = NULL, refType = "mean",
 \item{groupLoc}{method for grouping groups}
 
 \item{window}{a window, for looking!}
-
-\item{verbose}{talky talky}
 
 \item{groupCol}{column to define conditions}
 

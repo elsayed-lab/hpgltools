@@ -5,7 +5,8 @@
 \title{Density plots!}
 \usage{
 hpgl_density(data, colors = NULL, sample_names = NULL,
-  position = "identity", fill = NULL, title = NULL, scale = NULL)
+  position = "identity", fill = NULL, title = NULL, scale = NULL,
+  colors_by = "condition")
 }
 \arguments{
 \item{data}{an expt, expressionset, or data frame.}

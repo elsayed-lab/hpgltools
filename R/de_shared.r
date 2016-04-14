@@ -48,14 +48,6 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     if (!is.null(arglist$surrogates)) {
         surrogates <- arglist$surrogates
     }
-    conditions <- get0('conditions')
-    batches <- get0('batches')
-    model_cond <- get0('model_cond')
-    model_batch <- get0('model_batch')
-    model_intercept <- get0('model_intercept')
-    extra_contrasts <- get0('model_contrasts')
-    alt_model <- get0('alt_model')
-    libsize <- get0('libsize')
     if (is.null(model_cond)) {
         model_cond <- TRUE
     }
@@ -412,17 +404,17 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
 #' @param inverse   invert the fold changes
 #' @param include_basic   include the basic table?
 #' @export
-create_combined_table <- function(li, ed, de, ba, table,
+create_combined_table <- function(li, ed, de, ba, table_name,
                                  annot_df=NULL, inverse=FALSE, include_basic=TRUE) {
-    li <- li$all_tables[[table]]
+    li <- li$all_tables[[table_name]]
     colnames(li) <- c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
     li <- li[, c("limma_logfc","limma_ave","limma_t","limma_b","limma_p","limma_adjp","limma_q")]
-    de <- de$all_tables[[table]]
+    de <- de$all_tables[[table_name]]
     colnames(de) <- c("deseq_basemean","deseq_logfc","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")
     de <- de[, c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
-    ed <- ed$all_tables[[table]]
+    ed <- ed$all_tables[[table_name]]
     colnames(ed) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
-    ba <- ba$all_tables[[table]]
+    ba <- ba$all_tables[[table_name]]
     ba <- ba[, c("numerator_median","denominator_median","numerator_var","denominator_var", "logFC", "t", "p")]
     colnames(ba) <- c("basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p")
 
@@ -473,15 +465,16 @@ create_combined_table <- function(li, ed, de, ba, table,
     comb$p_var <- format(x=comb$p_var, digits=4, scientific=TRUE)
     comb$p_meta <- format(x=comb$p_meta, digits=4, scientific=TRUE)
     if (!is.null(annot_df)) {
+        colnames(annot_df) <- gsub("[[:digit:]]", "", colnames(annot_df))
+        colnames(annot_df) <- gsub("[[:punct:]]", "", colnames(annot_df))
         comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
         rownames(comb) <- comb$Row.names
         comb <- comb[-1]
-        comb <- comb[-1]
     }
 
-    message(paste0("The table is: ", table))
+    message(paste0("The table is: ", table_name))
     summary_lst <- list(
-        "table" = table,
+        "table" = table_name,
         "total" = nrow(comb),
         "limma_up" = sum(comb$limma_logfc >= 1),
         "limma_sigup" = sum(comb$limma_logfc >= 1 & as.numeric(comb$limma_adjp) <= 0.05),
@@ -527,13 +520,11 @@ create_combined_table <- function(li, ed, de, ba, table,
 #' @export
 extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=0.05, z=NULL,
                                       n=NULL, excel="excel/significant_genes.xlsx") {
-    if (!is.null(combined$plots)) {
+    if (!is.null(combined[["plots"]])) {
         combined <- combined$data
     }
     trimmed_up <- list()
     trimmed_down <- list()
-    change_counts_up <- list()
-    change_counts_down <- list()
     up_titles <- list()
     down_titles <- list()
     title_append <- ""
@@ -551,36 +542,51 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
     }
     num_tables <- length(names(combined))
     table_count <- 0
-    for (table_name in names(combined)) {
-        table_count <- table_count + 1
-        message(paste0("Writing excel data sheet ", table_count, "/", num_tables))
-        table <- combined[[table_name]]
-        fc_column <- paste0(according_to, "_logfc")
-        p_column <- paste0(according_to, "_adjp")
-        trimming <- get_sig_genes(table, fc=fc, p=p, z=z, n=n,
-                                             column=fc_column, p_column=p_column)
-        trimmed_up[[table_name]] <- trimming$up_genes
-        change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
-        trimmed_down[[table_name]] <- trimming$down_genes
-        change_counts_down[[table_name]] <- nrow(trimmed_down[[table_name]])
-        up_title <- paste0("Table SXXX: Genes deemed significantly up in ", table_name, " with", title_append)
-        up_titles[[table_name]] <- up_title
-        down_title <- paste0("Table SXXX: Genes deemed significantly down in ", table_name, " with", title_append)
-        down_titles[[table_name]] <- down_title
-    } ## End extracting significant genes for loop
-    change_counts <- cbind(change_counts_up, change_counts_down)
-    summary_title <- paste0("Counting the number of changed genes by contrast with ", title_append)
+    if (according_to == "all") {
+        according_to <- c("limma","edger","deseq")
+    }
+    wb <- openxlsx::createWorkbook(creator="hpgltools")
+    ret <- list()
+    summary_count <- 0
+    for (according in according_to) {
+        summary_count <- summary_count + 1
+        ret[[according]] <- list()
+        change_counts_up <- list()
+        change_counts_down <- list()
+        for (table_name in names(combined)) {
+            table_count <- table_count + 1
+            message(paste0("Writing excel data sheet ", table_count, "/", num_tables))
+            table <- combined[[table_name]]
+            fc_column <- paste0(according, "_logfc")
+            p_column <- paste0(according, "_adjp")
+            trimming <- get_sig_genes(table, fc=fc, p=p, z=z, n=n,
+                                      column=fc_column, p_column=p_column)
+            trimmed_up[[table_name]] <- trimming[["up_genes"]]
+            change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
+            trimmed_down[[table_name]] <- trimming[["down_genes"]]
+            change_counts_down[[table_name]] <- nrow(trimmed_down[[table_name]])
+            up_title <- paste0("Table SXXX: Genes deemed significantly up in ", table_name, " with", title_append, " according to ", according)
+            up_titles[[table_name]] <- up_title
+            down_title <- paste0("Table SXXX: Genes deemed significantly down in ", table_name, " with", title_append, " according to ", according)
+            down_titles[[table_name]] <- down_title
+        } ## End extracting significant genes for loop
+
+        change_counts <- cbind(change_counts_up, change_counts_down)
+        summary_title <- paste0("Counting the number of changed genes by contrast according to ", according, " with ", title_append)
     ##xls_result <- write_xls(data=change_counts, sheet="number_changed_genes", file=sig_table,
     ##                        title=summary_title,
     ##                        overwrite_file=TRUE, newsheet=TRUE)
-    ret <- list(ups=trimmed_up, downs=trimmed_down, counts=change_counts,
-                up_titles=up_titles, down_titles=down_titles, counts_title=summary_title)
-    if (is.null(excel)) {
-        message("Not printing excel sheets for the significant genes.")
-    } else {
-        message(paste0("Printing significant genes to the file: ", excel))
-        xlsx_ret <- print_ups_downs(ret, excel=excel)
-    }
+        ret[[according]] <- list(ups=trimmed_up, downs=trimmed_down, counts=change_counts,
+                                 up_titles=up_titles, down_titles=down_titles, counts_title=summary_title)
+        if (is.null(excel)) {
+            message("Not printing excel sheets for the significant genes.")
+        } else {
+            message(paste0("Printing significant genes to the file: ", excel))
+            xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according, summary_count=summary_count)
+            wb <- xlsx_ret[["workbook"]]
+        }
+    } ## End list of according_to's
+    openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     return(ret)
 }
 
@@ -594,13 +600,10 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
 #' @return the return from write_xls
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-print_ups_downs <- function(upsdowns, excel="excel/significant_genes.xlsx") {
-    wb <- NULL
-    if (file.exists(excel)) {
-        file.remove(excel)
-        message(paste0("Deleting the file ", excel, " before writing the tables."))
+print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx", according="limma", summary_count=1) {
+    if (is.null(wb)) {
+        wb <- openxlsx::createWorkbook(creator="hpgltools")
     }
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
     ups <- upsdowns$ups
     downs <- upsdowns$downs
     up_titles <- upsdowns$up_titles
@@ -608,23 +611,24 @@ print_ups_downs <- function(upsdowns, excel="excel/significant_genes.xlsx") {
     summary <- upsdowns$counts
     summary_title <- upsdowns$counts_title
     table_count <- 0
+    summary_count <- summary_count - 1
     num_tables <- length(names(ups))
+    summary_start <- ((num_tables + 2) * summary_count) + 1
+    xls_summary_result <- write_xls(wb, data=summary, start_col=2, start_row=summary_start, sheet="number_changed_genes", title=summary_title)
     for (base_name in names(ups)) {
         table_count <- table_count + 1
-        up_name <- paste0("up_", base_name)
-        down_name <- paste0("down_", base_name)
+        up_name <- paste0("up_", according, "_", base_name)
+        down_name <- paste0("down_", according, "_", base_name)
         up_table <- ups[[table_count]]
         down_table <- downs[[table_count]]
         up_title <- up_titles[[table_count]]
         down_title <- down_titles[[table_count]]
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", up_name))
-        xls_result <- write_xls(wb, data=up_table, sheet=up_name, title=up_title)
+        xls_result <- write_xls(data=up_table, wb=wb, sheet=up_name, title=up_title)
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", down_name))
-        xls_result <- write_xls(wb, data=down_table, sheet=down_name, title=down_title)
+        xls_result <- write_xls(data=down_table, wb=wb, sheet=down_name, title=down_title)
     }
     message("Writing changed genes summary on last sheet.")
-    xls_result <- write_xls(wb, data=summary, sheet="number_changed_genes", title=summary_title)
-    openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     return(xls_result)
 }
 

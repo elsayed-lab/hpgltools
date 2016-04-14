@@ -4,16 +4,15 @@
 \alias{hpgl_ma_plot}
 \title{Make a pretty MA plot from the output of voom/limma/eBayes/toptable.}
 \usage{
-hpgl_ma_plot(counts, de_genes, adjpval_cutoff = 0.05, alpha = 0.6,
-  size = 2, tooltip_data = NULL, gvis_filename = NULL, ...)
+hpgl_ma_plot(counts, de_genes, pval_cutoff = 0.05, alpha = 0.5,
+  logfc_cutoff = 1, pval = "adjpval", size = 2, tooltip_data = NULL,
+  gvis_filename = NULL, ...)
 }
 \arguments{
 \item{counts}{df of linear-modelling, normalized counts by sample-type,
 which is to say the output from voom/voomMod/hpgl_voom().}
 
 \item{de_genes}{df from toptable or its friends containing p-values.}
-
-\item{adjpval_cutoff}{a cutoff defining significant from not.}
 
 \item{alpha}{how transparent to make the dots.}
 
@@ -25,6 +24,8 @@ graphs.}
 \item{gvis_filename}{a filename to write a fancy html graph.}
 
 \item{...}{more options for you}
+
+\item{adjpval_cutoff}{a cutoff defining significant from not.}
 }
 \value{
 a ggplot2 MA scatter plot.  This is defined as the rowmeans

@@ -7,9 +7,8 @@
 hpgl_norm(data, design = NULL, transform = "raw", norm = "raw",
   convert = "raw", batch = "raw", batch1 = "batch", batch2 = NULL,
   filter_low = FALSE, annotations = NULL, entry_type = "gene",
-  fasta = NULL, verbose = FALSE, thresh = 2, min_samples = 2,
-  noscale = TRUE, p = 0.01, A = 1, k = 1, cv_min = 0.01,
-  cv_max = 1000, ...)
+  fasta = NULL, thresh = 2, min_samples = 2, noscale = TRUE, p = 0.01,
+  A = 1, k = 1, cv_min = 0.01, cv_max = 1000, ...)
 }
 \arguments{
 \item{data}{some data}
@@ -41,8 +40,6 @@ extract the lengths of sequences for normalization}
 \item{entry_type}{default gff entry to cull from}
 
 \item{fasta}{fasta genome for rpkm}
-
-\item{verbose}{talk}
 
 \item{thresh}{threshold for low count filtering}
 

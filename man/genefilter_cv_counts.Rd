@@ -4,8 +4,7 @@
 \alias{genefilter_cv_counts}
 \title{Filter genes from a dataset outside a range of variance}
 \usage{
-genefilter_cv_counts(count_table, cv_min = 0.01, cv_max = 1000,
-  verbose = FALSE)
+genefilter_cv_counts(count_table, cv_min = 0.01, cv_max = 1000)
 }
 \arguments{
 \item{count_table}{input data frame of counts by sample}
@@ -13,8 +12,6 @@ genefilter_cv_counts(count_table, cv_min = 0.01, cv_max = 1000,
 \item{cv_min}{a minimum coefficient of variance}
 
 \item{cv_max}{guess}
-
-\item{verbose}{If set to true, prints number of genes removed / remaining}
 }
 \value{
 dataframe of counts without the low-count genes

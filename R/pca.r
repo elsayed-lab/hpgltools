@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Mar 31 20:18:34 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Apr 11 18:52:21 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix comprised of the matrix - rowMeans(matrix)
@@ -96,21 +96,35 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' }
 #' @export
 hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
-                     plot_title=NULL, plot_size=5, ...) {
+                     plot_title=NULL, plot_size=5, size_column=NULL, ...) {
     hpgl_env <- environment()
     arglist <- list(...)
-    plot_names <- arglist$plot_names
+    plot_names <- arglist[["plot_names"]]
+    cond_column <- "condition"
+    batch_column <- "batch"
+    if (!is.null(arglist[["cond_column"]])) {
+        cond_column <- arglist[["cond_column"]]
+        message(paste0("Using ", cond_column, " as the condition column in the experimental design."))
+    }
+    if (!is.null(arglist[["batch_column"]])) {
+        batch_column <- arglist[["batch_column"]]
+        message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
+    }
     data_class <- class(data)[1]
     names <- NULL
     if (data_class == "expt") {
         design <- data[["design"]]
-        plot_colors <- data[["colors"]]
+        if (cond_column == "condition") {
+            plot_colors <- data[["colors"]]
+        } else {
+            plot_colors <- NULL
+        }
         plot_names <- data[["samplenames"]]
         data <- Biobase::exprs(data[["expressionset"]])
     } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
     } else if (data_class == "list") {
-        data <- data["count_table"]
+        data <- data[["count_table"]]
         if (is.null(data)) {
             stop("The list provided contains no count_table element.")
         }
@@ -118,6 +132,11 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    }
+
+    if (is.null(plot_colors)) {
+        plot_colors <- as.numeric(as.factor(design[, cond_column]))
+        plot_colors <- RColorBrewer::brewer.pal(12, "Dark2")[plot_colors]
     }
 
     if (is.null(plot_labels)) {
@@ -143,34 +162,35 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         design <- design[, c("name","condition","batch")]
     }
     pca <- makeSVD(data)  ## This is a part of cbcbSEQ
-    included_batches <- as.factor(as.character(design[, "batch"]))
-    included_conditions <- as.factor(as.character(design[, "condition"]))
+    included_batches <- as.factor(as.character(design[, batch_column]))
+    included_conditions <- as.factor(as.character(design[, cond_column]))
     if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
         warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
     } else if (length(levels(included_conditions)) == 1) {
         warning("There is only one condition, but more than one batch.   Going to run pcRes with the batch information.")
-        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], batch=design[, "batch"])
+        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], batch=design[, batch_column])
     } else if (length(levels(included_batches)) == 1) {
         print("There is just one batch in this data.")
-        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, "condition"])
+        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, cond_column])
     } else {
-        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, "condition"], batch=design[, "batch"])
+        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, cond_column], batch=design[, batch_column])
     }
     pca_variance <- round((pca[["d"]] ^ 2) / sum(pca[["d"]] ^ 2) * 100, 2)
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
-    if (is.null(plot_colors)) {
-        plot_colors <- as.numeric(as.factor(design[, "condition"]))
-    }
     colnames(design)[colnames(design) == "sampleid"] <- 'sample'
     pca_data <- data.frame("sampleid"=as.character(design[, "sample"]),
-                           "condition"=as.character(design[, "condition"]),
-                           "batch"=as.character(design[, "batch"]),
-                           "batch_int"=as.integer(as.factor(design[, "batch"])),
+                           "condition"=as.character(design[, cond_column]),
+                           "batch"=as.character(design[, batch_column]),
+                           "batch_int"=as.integer(as.factor(design[, batch_column])),
                            "PC1"=pca[["v"]][, 1],
                            "PC2"=pca[["v"]][, 2],
                            "colors"=plot_colors,
                            "labels"=as.character(plot_labels))
+    if (!is.null(size_column)) {
+        pca_data[[size_column]] <- as.integer(as.factor(design[, size_column]))
+        pca_data[[size_column]] <- pca_data[[size_column]] + 1
+    }
     pca_plot <- NULL
     ## I think these smallbatch/largebatch functions are no longer needed
     ## Lets see what happens if I replace this with a single call...
@@ -179,7 +199,8 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     ##} else {
     ##    pca_plot <- pca_plot_largebatch(pca_data, size=plot_size, first='PC1', second='PC2')
     ##}
-    pca_plot <- plot_pcs(pca_data, size=plot_size, first="PC1", second="PC2", design=design)
+    ## pca_plot <- plot_pcs(pca_data, size=plot_size, first="PC1", second="PC2", design=design, ...)
+    pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2", design=design, plot_size=plot_size, size_column=size_column)
     pca_plot <- pca_plot +
         ggplot2::xlab(xl) +
         ggplot2::ylab(yl) +
@@ -189,9 +210,13 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         if (plot_labels[[1]] == "fancy") {
             pca_plot <- pca_plot + directlabels::geom_dl(ggplot2::aes_string(label="sampleid"), method="smart.grid")
         } else if (plot_labels[[1]] == "normal") {
+            pca_labels <- paste(design[[cond_column]], design[[batch_column]], sep="_")
+            pca_plot <- pca_plot +
+                ggrepel::geom_text_repel(aes(label=pca_labels), size=3)
+        } else if (plot_labels[[1]] == "text") {
             pca_plot <- pca_plot +
                 ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2",
-                                                       label='paste(design[, "condition"], design[, "batch"], sep="_")'),
+                                                       label='paste(design[, cond_column], design[, batch_column], sep="_")'),
                                    angle=45, size=4, vjust=2)
         } else {
             pca_plot <- pca_plot +
@@ -238,7 +263,7 @@ factor_rsquared <- function(svd_v, factor) {
 #' @param design   the experimental design with condition batch factors.
 #' @param plot_title   a title for the plot.
 #' @param plot_labels   a parameter for the labels on the plot.
-#' @param size  The size of the dots on the plot
+#' @param plot_size  The size of the dots on the plot
 #' @return a ggplot2 PCA plot
 #' @seealso \pkg{ggplot2} \code{\link[directlabels]{geom_dl}}
 #' @examples
@@ -247,7 +272,8 @@ factor_rsquared <- function(svd_v, factor) {
 #' }
 #' @export
 plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
-                     design=NULL, plot_title=NULL, plot_labels=NULL, size=5) {
+                     design=NULL, plot_title=NULL, plot_labels=NULL, plot_size=5, size_column=NULL, ...) {
+    arglist <- list(...)
     hpgl_env <- environment()
     batches <- pca_data[, "batch"]
     point_labels <- factor(pca_data[, "condition"])
@@ -257,24 +283,44 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     num_batches <- length(unique(batches))
     pca_plot <- NULL
     if (num_batches <= 5) {
-        pca_plot <- ggplot2::ggplot(data=as.data.frame(pca_data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
-            ggplot2::geom_point(size=size, ggplot2::aes_string(shape="as.factor(batches)", fill="condition"), colour="black") +
-            ggplot2::scale_fill_manual(name="Condition", guide="legend",
-                                       labels=levels(as.factor(pca_data[, "condition"])),
+        pca_plot <- ggplot2::ggplot(data=as.data.frame(pca_data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
+            ## ggplot2::geom_point(size=plot_size, ggplot2::aes_string(shape="as.factor(batches)", fill="condition"), colour="black", size="plot_size") +
+        if (!is.null(size_column)) {
+            pca_plot <- pca_plot +
+                ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
+                                                        fill="condition", size=size_column),
+                                    colour="black")
+            maxsize <- max(pca_data[[size_column]])
+            pca_plot <- pca_plot + ggplot2::scale_size(range=c(2,7))
+        } else {
+            pca_plot <- pca_plot + ggplot2::geom_point(size=plot_size,
+                                                      ggplot2::aes_string(shape="as.factor(batches)", fill="condition"),
+                                                      colour="black")
+        }
+        pca_plot <- pca_plot +
+            ggplot2::scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(pca_data[, "condition"])),
                                        values=levels(as.factor(pca_data[, "colors"]))) +
-            ggplot2::scale_shape_manual(name="Batch", labels=levels(as.factor(pca_data[, "batch"])), values=21:25) +
-            ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(pca_data[, "colors"])))),
+            ggplot2::scale_shape_manual(name="Batch", labels=levels(as.factor(pca_data[, "batch"])),
+                                        guide=ggplot2::guide_legend(override.aes=ggplot2::aes(size=6, fill="grey")), values=21:25) +
+            ## This changes only the size of the condition legend
+            ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=6, colour=levels(factor(pca_data[, "colors"])))),
                             colour=ggplot2::guide_legend(override.aes=list("black")))
     } else {
-        pca_plot <- ggplot2::ggplot(data=as.data.frame(pca_data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env) +
-            ggplot2::geom_point(size=size, ggplot2::aes_string(shape="as.factor(batches)", fill="as.factor(condition)", colour="pca_data[, 'colors']")) +
-            ggplot2::scale_fill_manual(name="Condition", guide="legend",
-                                       labels=levels(as.factor(pca_data[, "condition"])),
-                                       values=levels(as.factor(pca_data[, "colors"]))) +
+        pca_plot <- ggplot2::ggplot(data=as.data.frame(pca_data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
+        if (!is.null(size_column)) {
+            pca_plot <- pca_plot + ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)", fill="condition", size=size_column), colour="black")
+            maxsize <- max(pca_data[[size_column]])
+            pca_plot <- pca_plot + ggplot2::scale_size_continuous(range=c(2, maxsize + 1))
+        } else {
+            pca_plot <- pca_plot + ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
+                                                                           fill="as.factor(condition)",
+                                                                           colour="pca_data[, 'colors']"))
+        }
+        pca_plot <- pca_plot +
             ggplot2::scale_color_manual(name="Condition", guide="legend",
-                                       labels=levels(as.factor(pca_data[, "condition"])),
+                                       labels=as.factor(pca_data[, "condition"]),
                                        values=levels(as.factor(pca_data[, "colors"]))) +
-            ggplot2::scale_shape_manual(name="Batch", labels=levels(as.factor(pca_data[, "batch"])), values=1:25) +
+            ggplot2::scale_shape_manual(name="Batch", labels=as.factor(pca_data[, "batch"]), values=1:25) +
             ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(pca_data[, "colors"])))),
                             colour=ggplot2::guide_legend(override.aes=list("black")))
     }

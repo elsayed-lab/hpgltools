@@ -42,8 +42,7 @@ metadata$Sample.id = rownames(metadata)
 ## Make sure it is still possible to create an expt
 message("Setting up an expt class to contain the pasilla data and metadata.")
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
-cbcb_data = counts
-pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
+cbcb_data = as.matrix(counts)
 hpgl_data = Biobase::exprs(pasilla_expt$expressionset)
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(cbcb_data, hpgl_data)

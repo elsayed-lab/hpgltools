@@ -4,7 +4,7 @@
 \alias{create_combined_table}
 \title{Given a limma, edger, and deseq table, combine them}
 \usage{
-create_combined_table(li, ed, de, ba, table, annot_df = NULL,
+create_combined_table(li, ed, de, ba, table_name, annot_df = NULL,
   inverse = FALSE, include_basic = TRUE)
 }
 \arguments{
@@ -16,13 +16,13 @@ create_combined_table(li, ed, de, ba, table, annot_df = NULL,
 
 \item{ba}{a basic output}
 
-\item{table}{name of the table to merge}
-
 \item{annot_df}{add some annotation information}
 
 \item{inverse}{invert the fold changes}
 
 \item{include_basic}{include the basic table?}
+
+\item{table}{name of the table to merge}
 }
 \description{
 Given a limma, edger, and deseq table, combine them

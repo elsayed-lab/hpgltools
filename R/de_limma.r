@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 25 17:28:34 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 13 17:53:58 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from limma
 #'
@@ -253,24 +253,26 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
 #' }
 #' @export
 limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                           model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL,
+                           model_batch=TRUE, model_intercept=FALSE, extra_contrasts=NULL,
                            alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
     arglist <- list(...)
     message("Starting limma pairwise comparison.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
-        conditions <- input$conditions
-        batches <- input$batches
-        data <- Biobase::exprs(input$expressionset)
+        conditions <- input[["conditions"]]
+        batches <- input[["batches"]]
+        data <- Biobase::exprs(input[["expressionset"]])
         if (is.null(libsize)) {
             message("libsize was not specified, this parameter has profound effects on limma's result.")
-            if (!is.null(input$best_libsize)) {
+            if (!is.null(input[["best_libsize"]])) {
                 message("Using the libsize from expt$best_libsize.")
                 ## libsize = expt$norm_libsize
-                libsize <- input$best_libsize
+                libsize <- input[["best_libsize"]]
+            } else if (!is.null(input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
+                libsize <- colSums(data)
             } else {
-                message("Using the libsize from expt$normalized$normalized_counts.")
-                libsize <- input$normalized$normalized_counts$libsize
+                message("Using the libsize from expt$normalized$intermediate_counts$normalization$libsize")
+                libsize <- input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]]
             }
         } else {
             message("libsize was specified.  This parameter has profound effects on limma's result.")
@@ -334,7 +336,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     fun_voom <- NULL
     message("Limma step 1/6: choosing model.")
     ## voom() it, taking into account whether the data has been log2 transformed.
-    logged <- input$transform
+    logged <- input[["state"]][["transform"]]
     if (is.null(logged)) {
         message("I don't know if this data is logged, testing if it is integer.")
         if (is.integer(data)) {
@@ -349,7 +351,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             logged <- TRUE
         }
     }
-    converted = input$convert
+    converted = input[["state"]][["conversion"]]
     if (is.null(converted)) {
         message("I cannot determine if this data has been converted, assuming no.")
         converted <- FALSE
@@ -372,7 +374,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         fun_voom <- data
         fun_design <- NULL
     } else {
-        fun_design <- fun_voom$design
+        fun_design <- fun_voom[["design"]]
     }
 
     ## Extract the design created by voom()
@@ -393,10 +395,10 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         all_pairwise_fits <- fun_fit
     } else {
         contrasts <- make_pairwise_contrasts(fun_model, conditions, extra_contrasts=extra_contrasts)
-        all_pairwise_contrasts <- contrasts$all_pairwise_contrasts
-        identities <- contrasts$identities
-        contrast_string <- contrasts$contrast_string
-        all_pairwise <- contrasts$all_pairwise
+        all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]
+        identities <- contrasts[["identities"]]
+        contrast_string <- contrasts[["contrast_string"]]
+        all_pairwise <- contrasts[["all_pairwise"]]
         ## Once all that is done, perform the fit
         ## This will first provide the relative abundances of each condition
         ## followed by the set of all pairwise comparisons.
@@ -405,7 +407,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     all_tables <- NULL
     message("Limma step 5/6: Running eBayes and topTable.")
     if (isTRUE(one_replicate)) {
-        all_pairwise_comparisons <- all_pairwise_fits$coefficients
+        all_pairwise_comparisons <- all_pairwise_fits[["coefficients"]]
     } else {
         all_pairwise_comparisons <- limma::eBayes(all_pairwise_fits)
         all_tables <- try(limma::topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
@@ -417,23 +419,22 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         limma_result <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
     }
     result <- list(
-        all_pairwise=all_pairwise,
-        all_tables=limma_result,
-        batches=batches,
-        batches_table=batch_table,
-        conditions=conditions,
-        conditions_table=condition_table,
-        contrast_string=contrast_string,
-        fit=fun_fit,
-        identities=identities,
-        input_data=data,
-        model=fun_model,
-        pairwise_fits=all_pairwise_fits,
-        pairwise_comparisons=all_pairwise_comparisons,
-        single_table=all_tables,
-        voom_design=fun_design,
-        voom_result=fun_voom
-    )
+        "all_pairwise" = all_pairwise,
+        "all_tables" = limma_result,
+        "batches" = batches,
+        "batches_table" = batch_table,
+        "conditions" = conditions,
+        "conditions_table" = condition_table,
+        "contrast_string" = contrast_string,
+        "fit" = fun_fit,
+        "identities" = identities,
+        "input_data" = data,
+        "model" = fun_model,
+        "pairwise_fits" = all_pairwise_fits,
+        "pairwise_comparisons" = all_pairwise_comparisons,
+        "single_table" = all_tables,
+        "voom_design" = fun_design,
+        "voom_result" = fun_voom)
     return(result)
 }
 

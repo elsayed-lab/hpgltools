@@ -4,7 +4,7 @@
 \alias{genefilter_kofa_counts}
 \title{Filter low-count genes from a data set using genefilter's kOverA()}
 \usage{
-genefilter_kofa_counts(count_table, k = 1, A = 1, verbose = FALSE)
+genefilter_kofa_counts(count_table, k = 1, A = 1)
 }
 \arguments{
 \item{count_table}{input data frame of counts by sample}
@@ -12,8 +12,6 @@ genefilter_kofa_counts(count_table, k = 1, A = 1, verbose = FALSE)
 \item{k}{a minimum number of samples to have >A counts}
 
 \item{A}{the minimum number of counts for each gene's sample in kOverA()}
-
-\item{verbose}{If set to true, prints number of genes removed / remaining}
 }
 \value{
 dataframe of counts without the low-count genes

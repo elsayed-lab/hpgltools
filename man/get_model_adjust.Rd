@@ -4,7 +4,7 @@
 \alias{get_model_adjust}
 \title{Extract some surrogate estimations from a raw data set using sva, ruv, and/or pca.}
 \usage{
-get_model_adjust(expt, estimate_type = "sva_supervised", surrogates = NULL,
+get_model_adjust(expt, estimate_type = "sva_supervised", surrogates = "be",
   ...)
 }
 \arguments{

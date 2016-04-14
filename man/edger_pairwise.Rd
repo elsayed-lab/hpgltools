@@ -7,7 +7,8 @@ a pairwise comparison of all conditions using EdgeR.}
 \usage{
 edger_pairwise(input, conditions = NULL, batches = NULL,
   model_cond = TRUE, model_batch = NULL, model_intercept = FALSE,
-  alt_model = NULL, extra_contrasts = NULL, annot_df = NULL, ...)
+  alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
+  force = FALSE, ...)
 }
 \arguments{
 \item{input}{a dataframe/vector or expt class containing data, normalization state, etc.}

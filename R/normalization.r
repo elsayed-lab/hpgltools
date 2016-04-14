@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Mar 31 17:01:28 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 13 17:42:08 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -194,7 +194,6 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
 #' @param count_table  a data frame of (pseudo)counts by sample.
 #' @param threshold    lower threshold of counts for each gene.
 #' @param min_samples    minimum number of samples
-#' @param verbose   if set to true, prints number of genes removed and remaining.
 #' @return dataframe of counts without the low-count genes
 #' @seealso \link[cbcbSEQ]{log2CPM} which this uses to decide what to keep
 #' @examples
@@ -202,7 +201,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
 #' filtered_table <- cbcb_filter_counts(count_table)
 #' }
 #' @export
-cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=FALSE) {
+cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2) {
     ## I think having a log2cpm here is kind of weird, because the next step in processing is to cpm the data.
     ##cpms = 2^log2CPM(counts, lib.size=lib.size)$y
     ## cpms = 2^hpgl_log2cpm(counts)
@@ -216,10 +215,8 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2, verbose=
 
     count_table <- count_table[keep,]
 
-    if (verbose) {
-        message(sprintf("Removing %d low-count genes (%d remaining).",
-                      num_before - nrow(count_table), nrow(count_table)))
-    }
+    message(sprintf("Removing %d low-count genes (%d remaining).",
+                    num_before - nrow(count_table), nrow(count_table)))
 
     libsize <- colSums(count_table)
     counts <- list(count_table=count_table, libsize=libsize)
@@ -262,7 +259,6 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
     if (convert == "edgecpm") {
-        requireNamespace("edgeR")
         count_table <- edgeR::cpm(count_table)
     } else if (convert == "cpm") {
         lib_size <- colSums(count_table)
@@ -328,7 +324,7 @@ divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.g
         }
     }
     ##cds_entries = subset(gff_entries, type==entry_type)
-    cds_entries <- gff_entries[found_entries,]
+    cds_entries <- gff_entries[found_entries, ]
     names(cds_entries) <- make.names(cds_entries$locus_tag, unique=TRUE)
     cds_seq <- Biostrings::getSeq(raw_seq, cds_entries)
     names(cds_seq) <- cds_entries$locus_tag
@@ -343,7 +339,8 @@ divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.g
     merged_tas <- merge(counts, num_tas, by="row.names", all.x=TRUE)
     rownames(merged_tas) <- merged_tas$Row.names
     merged_tas <- merged_tas[-1]
-    merged_tas <- subset(merged_tas, select=-c("name"))  ## Two different ways of removing columns...
+    ##merged_tas <- subset(merged_tas, select=-c("name"))  ## Two different ways of removing columns...
+    merged_tas <- merged_tas[, -which(colnames(merged_tas) %in% c("name"))]
     merged_tas <- merged_tas / merged_tas$TAs
     merged_tas <- merged_tas[, !(colnames(merged_tas) %in% c("TAs"))]  ## Here is another!
     return(merged_tas)
@@ -356,7 +353,6 @@ divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.g
 #' @param count_table  input data frame of counts by sample
 #' @param p   a minimum proportion of each gene's counts/sample to be greater than a minimum(A)
 #' @param A   the minimum number of counts in the above proportion
-#' @param verbose   If set to true, prints number of genes removed / remaining
 #' @return dataframe of counts without the low-count genes
 #' @seealso \pkg{genefilter} \code{\link[genefilter]{pOverA}} which this uses to decide what to keep
 #' @examples
@@ -364,7 +360,7 @@ divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.g
 #'  filtered_table = genefilter_pofa_counts(count_table)
 #' }
 #' @export
-genefilter_pofa_counts <- function(count_table, p=0.01, A=100, verbose=TRUE) {
+genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
     ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
     num_before <- nrow(count_table)
 
@@ -376,10 +372,9 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100, verbose=TRUE) {
     answer <- genefilter::genefilter(count_table, filter_list)
     count_table <- count_table[answer,]
 
-    if (isTRUE(verbose)) {
-        removed <- num_before - nrow(count_table)
-        message(paste0("Removing ", removed, " low-count genes (", nrow(count_table), " remaining)."))
-    }
+    removed <- num_before - nrow(count_table)
+    message(paste0("Removing ", removed, " low-count genes (", nrow(count_table), " remaining)."))
+
     libsize <- colSums(count_table)
     counts <- list(count_table=count_table, libsize=libsize)
     return(counts)
@@ -390,7 +385,6 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100, verbose=TRUE) {
 #' @param count_table  input data frame of counts by sample
 #' @param cv_min   a minimum coefficient of variance
 #' @param cv_max   guess
-#' @param verbose   If set to true, prints number of genes removed / remaining
 #' @return dataframe of counts without the low-count genes
 #' @seealso \pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep
 #' @examples
@@ -398,7 +392,7 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100, verbose=TRUE) {
 #' filtered_table = genefilter_kofa_counts(count_table)
 #' }
 #' @export
-genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000, verbose=FALSE) {
+genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
     ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
     num_before <- nrow(count_table)
 
@@ -410,10 +404,8 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000, verbose=
     answer <- genefilter::genefilter(count_table, filter_list)
     count_table <- count_table[answer,]
 
-    if (verbose) {
-        message(sprintf("Removing %d low-count genes (%d remaining).",
-                      num_before - nrow(count_table), nrow(count_table)))
-    }
+    message(sprintf("Removing %d low-count genes (%d remaining).",
+                    num_before - nrow(count_table), nrow(count_table)))
     libsize <- colSums(count_table)
     counts <- list(count_table=count_table, libsize=libsize)
     return(counts)
@@ -424,7 +416,6 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000, verbose=
 #' @param count_table input data frame of counts by sample
 #' @param k   a minimum number of samples to have >A counts
 #' @param A   the minimum number of counts for each gene's sample in kOverA()
-#' @param verbose   If set to true, prints number of genes removed / remaining
 #' @return dataframe of counts without the low-count genes
 #' @seealso \pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep
 #' @examples
@@ -432,7 +423,7 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000, verbose=
 #'  filtered_table = genefilter_kofa_counts(count_table)
 #' }
 #' @export
-genefilter_kofa_counts <- function(count_table, k=1, A=1, verbose=FALSE) {
+genefilter_kofa_counts <- function(count_table, k=1, A=1) {
     ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
     num_before <- nrow(count_table)
 
@@ -444,10 +435,8 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1, verbose=FALSE) {
     answer <- genefilter::genefilter(count_table, filter_list)
     count_table <- count_table[answer,]
 
-    if (verbose) {
-        message(sprintf("Removing %d low-count genes (%d remaining).",
-                      num_before - nrow(count_table), nrow(count_table)))
-    }
+    message(sprintf("Removing %d low-count genes (%d remaining).",
+                    num_before - nrow(count_table), nrow(count_table)))
     libsize <- colSums(count_table)
     counts <- list(count_table=count_table, libsize=libsize)
     return(counts)
@@ -640,7 +629,6 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #' extract the lengths of sequences for normalization
 #' @param entry_type   default gff entry to cull from
 #' @param fasta   fasta genome for rpkm
-#' @param verbose  talk
 #' @param thresh   threshold for low count filtering
 #' @param min_samples   minimum samples for low count filtering
 #' @param noscale   used by combatmod
@@ -667,7 +655,7 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
                       convert="raw", batch="raw", batch1="batch", batch2=NULL,
                       filter_low=FALSE, annotations=NULL, entry_type="gene",
-                      fasta=NULL, verbose=FALSE, thresh=2, min_samples=2,
+                      fasta=NULL, thresh=2, min_samples=2,
                       noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
     lowfilter_performed <- FALSE
     norm_performed <- "raw"
@@ -675,9 +663,13 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     transform_performed <- "raw"
     batch_performed <- "raw"
     data_class <- class(data)[1]
+    original_counts <- NULL
+    original_libsize <- NULL
     if (data_class == 'expt') {
-        design <- data$design
-        data <- Biobase::exprs(data$expressionset)
+        design <- data[["design"]]
+        data <- Biobase::exprs(data[["expressionset"]])
+        original_counts <- data[["original_counts"]]
+        original_libsizes <- data[["original_libsize"]]
     } else if (data_class == 'ExpressionSet') {
         data <- Biobase::exprs(data)
     } else if (data_class == 'list') {
@@ -692,23 +684,20 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     }
     count_table <- as.matrix(data)
     expt_design <- design
-    raw_libsize <- colSums(count_table)
-    original_counts <- list(libsize=raw_libsize, counts=count_table)
-
-    if (verbose) {
-        message("This function performs normalization in a static order: low-count filter, normalization, batch, conversion, transform")
-        message("These steps may be mixed/matched with the following functions: lowfilter_counts, normalize_counts, batch_counts, convert_counts, transform_counts")
+    if (is.null(original_counts)) {
+        original_counts <- data
+    }
+    if (is.null(original_libsize)) {
+        original_libsize <- colSums(count_table)
     }
 
     ## Step 1: Low-count filtering
     lowfiltered_counts <- NULL
     if (filter_low != FALSE) {
-        if (verbose) {
-            message(paste0("Performing low-count filter with: ", filter_low))
-        }
+        message(paste0("Performing low-count filter with: ", filter_low))
+        ## All the other intermediates have a libsize slot, perhaps this should too
         lowfiltered_counts <- lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2)
-        count_table <- lowfiltered_counts
-        ##count_table = lowfilter_counts(count_table, type=filter_low)
+        count_table <- lowfiltered_counts[["count_table"]]
         lowfilter_performed <- filter_low
     }
 
@@ -717,15 +706,12 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     ## If nothing is chosen, then the filtering is considered sufficient
     normalized_counts <- NULL
     if (norm != "raw") {
-        if (verbose) {
-            message(paste0("Applying normalization: ", norm))
-        }
         if (is.null(expt_design)) {
             message("The experimental design is null.  Some normalizations will therefore fail.")
             message("If you receive an error about an object with no dimensions, that is likely why.")
         }
         normalized_counts <- normalize_counts(count_table, expt_design, norm=norm)
-        count_table <- normalized_counts$count_table
+        count_table <- normalized_counts[["count_table"]]
         norm_performed <- norm
     }
 
@@ -735,9 +721,6 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     ## They have nice ways of handling the log2 which I should consider
     converted_counts <- NULL
     if (convert != "raw") {
-        if (verbose) {
-            message(paste0("Setting output type as: ", convert))
-        }
         converted_counts <- convert_counts(count_table, convert=convert, annotations=annotations, fasta=fasta, entry_type=entry_type)
         count_table <- converted_counts$count_table
         convert_performed <- convert
@@ -746,43 +729,54 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     ## Step 4: Batch correction
     batched_counts <- NULL
     if (batch != "raw") {
-        if (verbose) {
-            message(paste0("Applying: ", batch, " batch correction(raw means nothing)."))
-        }
         ## batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
         tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design))
-        batched_counts <- list(count_table=count_table)
         if (class(tmp_counts) == 'try-error') {
             warning("The batch_counts called failed.  Returning non-batch reduced data.")
+            batched_counts <- NULL
+            batch_performed <- "raw"
         } else {
             batched_counts <- tmp_counts
+            batch_performed <- batch
+            count_table <- batched_counts[["count_table"]]
         }
-        count_table <- batched_counts$count_table
-        batch_performed <- batch
     }
 
     ## Step 5: Transformation
     ## Finally, this considers whether to log2 the data or no
     transformed_counts <- NULL
     if (transform != "raw") {
-        if (verbose) {
-            message(paste0("Applying: ", transform, " transformation."))
-        }
+        message(paste0("Applying: ", transform, " transformation."))
         transformed_counts <- transform_counts(count_table, transform=transform, ...)
         ##transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
-        count_table <- transformed_counts$count_table
+        count_table <- transformed_counts[["count_table"]]
         transform_performed <- transform
     }
 
-    final_counts <- list(count_table=count_table, libsize=colSums(count_table))
+    ## This list provides the list of operations performed on the data in order they were done.
+    actions <- list(
+        "lowfilter" = lowfilter_performed,
+        "normalization" = norm_performed,
+        "conversion" = convert_performed,
+        "batch" = batch_performed,
+        "transform" = transform_performed)
+    ## This list contains the intermediate count tables generated at each step
+    ## This may be useful if there is a problem in this process.
+    ## Each of them also contains the libsize at that point in the process.
+    intermediate_counts <- list(
+        "original" = original_counts, ## The original count table, should never change from iteration to iteration
+        "input" = as.matrix(data),  ## The input provided to this function, this may diverge from original
+        "lowfilter" = lowfiltered_counts,  ## After lowfiltering
+        "normalization" = normalized_counts,  ## and normalization
+        "conversion" = converted_counts,  ## and conversion
+        "batch" = batched_counts,  ## and batch correction
+        "transform" = transformed_counts)  ## and finally, transformation.
+
     ret_list <- list(
-        lowfilter_performed=lowfilter_performed, norm_performed=norm_performed, convert_performed=convert_performed,
-        transform_performed=transform_performed, batch_performed=batch_performed,
-        original_counts=original_counts, lowfiltered_counts=lowfiltered_counts,
-        normalized_counts=normalized_counts, converted_counts=converted_counts,
-        transformed_counts=transformed_counts, batched_counts=batched_counts,
-        final_counts=final_counts, count_table=final_counts$count_table,
-        libsize=final_counts$libsize
+        "actions" = actions,
+        "intermediate_counts" = intermediate_counts,
+        "count_table" = count_table,  ## The final count table
+        "libsize" = colSums(count_table)  ## The final libsizes
     )
     return(ret_list)
 }
@@ -798,7 +792,6 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
 #' @param refType method for grouping conditions
 #' @param groupLoc method for grouping groups
 #' @param window a window, for looking!
-#' @param verbose talky talky
 #' @param groupCol column to define conditions
 #' @param plot plot the quantiles?
 #' @param ... more options
@@ -810,7 +803,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
 #' }
 #' @export
 hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
-                        groupLoc="mean", window=99, verbose=FALSE,
+                        groupLoc="mean", window=99,
                         groupCol=NULL, plot=TRUE, ...) {
     data <- as.matrix(data)
     if (is.null(groups)) {
@@ -915,14 +908,10 @@ lowfilter_counts <- function(count_table, type='cbcb', p=0.01, A=1, k=1,
         lowfiltered_counts <- genefilter_cv_counts(count_table, cv_min=cv_min,
                                                    cv_max=cv_max)
     } else {
-        message("Did not recognize the filtering argument, defaulting to cbcb's.
- Recognized filters are: 'cv', 'kofa', 'pofa', 'cbcb'
-")
         lowfiltered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
                                                  min_samples=min_samples)
     }
-    count_table <- lowfiltered_counts$count_table
-    return(count_table)
+    return(lowfiltered_counts)
 }
 
 #' A hacked copy of Kwame's qsmooth/qstats code
@@ -1052,7 +1041,6 @@ hpgl_rpkm <- function(df, annotations=get0('gene_annotations')) {
 #' @param count_table  input data frame of counts by sample
 #' @param thresh   lower threshold of counts (default: 4)
 #' @param min_samples   minimum number of samples (default: 2)
-#' @param verbose   If set to true, prints number of genes removed / remaining
 #' @return dataframe of counts without the low-count genes
 #' @seealso \link[cbcbSEQ]{log2CPM} which this uses to decide what to keep
 #' @examples
@@ -1061,15 +1049,13 @@ hpgl_rpkm <- function(df, annotations=get0('gene_annotations')) {
 #' }
 #' @export
 cbcb_lowfilter_counts <- function(count_table, thresh=2,
-                                  min_samples=2, verbose=FALSE) {
+                                  min_samples=2) {
     original_dim <- dim(count_table)
     count_table <- as.matrix(cbcbSEQ::filterCounts(count_table, thresh=thresh,
                                                    min_samples=min_samples))
-    if (verbose) {
-        following_dim <- dim(count_table)
-        lost_rows <- original_dim[1] - following_dim[1]
-        message(paste0("Low count filtering cost: ", lost_rows, " gene(s)."))
-    }
+    following_dim <- dim(count_table)
+    lost_rows <- original_dim[1] - following_dim[1]
+    message(paste0("Low count filtering cost: ", lost_rows, " gene(s)."))
     libsize <- colSums(count_table)
     counts <- list(count_table=count_table, libsize=libsize)
     return(counts)
@@ -1155,11 +1141,11 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         norm_performed <- "qsmooth"
     } else if (norm == "qshrink") {
         count_table <- hpgl_qshrink(exprs=count_table, groups=design$condition,
-                                    verbose=TRUE, plot=TRUE)
+                                    plot=TRUE)
         norm_performed <- 'qshrink'
     } else if (norm == "qshrink_median") {
         count_table <- hpgl_qshrink(exprs=count_table, groups=design$condition,
-                                    verbose=TRUE, plot=TRUE, refType="median",
+                                    plot=TRUE, refType="median",
                                     groupLoc="median", window=50)
         norm_performed <- 'qshrink_median'
     } else if (norm == "tmm") {
@@ -1216,7 +1202,6 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
 #' @param annotations  used for rpkm, a df
 #' @param fasta  fasta file for cp_seq_m counting of oligos
 #' @param entry_type   for getting genelengths by feature type (rpkm or cp_seq_m)
-#' @param verbose   talk?
 #' @param use_original   whether to use the backup data in the expt class
 #' @param batch1   experimental factor to extract first
 #' @param batch2   a second factor to remove (only with limma's removebatcheffect())
@@ -1242,14 +1227,14 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     ## choose the normalization strategy
     transform="raw", norm="raw", convert="raw", batch="raw", filter_low=FALSE,
     ## annotations used for rpkm/cpseqm, original may be used to ensure double-normalization isn't performed.
-    annotations=NULL, fasta=NULL, entry_type="gene", verbose=FALSE, use_original=FALSE,
+    annotations=NULL, fasta=NULL, entry_type="gene", use_original=FALSE,
     batch1="batch", batch2=NULL, ## extra parameters for batch correction
     thresh=2, min_samples=2, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
     ...) {
     new_expt <- expt
-    current_exprs <- expt$expressionset
-    if (is.null(new_expt$original_expressionset)) {
-        new_expt$original_expressionset = new_expt$expressionset
+    current_exprs <- expt[["expressionset"]]
+    if (is.null(new_expt[["original_expressionset"]])) {
+        new_expt[["original_expressionset"]] = new_expt[["expressionset"]]
     } else {
         message("This function will replace the expt$expressionset slot with:")
         type <- ""
@@ -1285,12 +1270,13 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
             type <- paste0(type, ')')
         }
         message(type)
-        message("It saves the current data into a slot named:
+        message("It backs up the current data into a slot named:
  expt$backup_expressionset. It will also save copies of each step along the way
  in expt$normalized with the corresponding libsizes. Keep the libsizes in mind
  when invoking limma.  The appropriate libsize is the non-log(cpm(normalized)).
- This is most likely kept in the slot called:
- 'new_expt$normalized$normalized_counts$libsize' which is copied into
+ This is most likely kept at:
+ 'new_expt$normalized$intermediate_counts$normalization$libsizes'
+ A copy of this may also be found at:
  new_expt$best_libsize
 ")
     }
@@ -1326,29 +1312,62 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
  batch effects this is a good parameter to play with.
 ")
     }
-    new_expt$backup_expressionset <- new_expt$expressionset
+    new_expt[["backup_expressionset"]] <- new_expt[["expressionset"]]
     current_data <- Biobase::exprs(current_exprs)
-    design <- expt$design
+    design <- expt[["design"]]
     normalized <- hpgl_norm(current_data, design=design, transform=transform,
                             norm=norm, convert=convert, batch=batch,
                             batch1=batch1, batch2=batch2,
                             filter_low=filter_low, annotations=annotations,
-                            fasta=fasta, verbose=verbose, thresh=thresh,
+                            fasta=fasta, thresh=thresh,
                             min_samples=min_samples, p=p, A=A, k=k,
                             cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
-    final_normalized <- normalized$final_counts
-    libsizes <- final_normalized$libsize
-    normalized_data <- as.matrix(final_normalized$count_table)
-    Biobase::exprs(current_exprs) <- normalized_data
-    new_expt$normalized <- normalized
-    new_expt$norm_libsize <- libsizes
-    new_expt$expressionset <- current_exprs
-    new_expt$filtered <- filter_low
-    new_expt$transform <- transform
-    new_expt$best_libsize <- new_expt$normalized$normalized_counts$libsize
-    new_expt$norm <- norm
-    new_expt$convert <- convert
-    new_expt$batch <- batch
+    final_libsize <- normalized[["libsize"]]
+    final_data <- as.matrix(normalized[["count_table"]])
+    Biobase::exprs(current_exprs) <- final_data
+
+    ## The original data structure contains the following slots:
+    ## colors, batches, convert, conditions, design, expressionset,
+    ## filtered, initial_metadata, norm, original_expressionset,
+    ## original_libsize, samplenames, stages, types, transform
+    ## batches, convert, transform, filtered, normalization are being
+    ## replaced with 'state' containing all of them.
+    ## Similarly, the multiple libsizes maintained are going to be put into
+    ## libsizes = list(original, norm, best, etc)
+    ## Finally, I want to remove 'stages' and 'types' those are data in design.
+
+    ## The structure of the 'normalized' data is fairly complex and includes the following:
+    ## actions_performed -- a list of the actions done by hpgl_norm()
+    ## intermediate_counts -- counts after each step in the hpgl_norm() process
+    ## count_table -- a dataframe count table from hpgl_norm()
+    ## libsize -- a final libsize from hpgl_norm()
+    new_expt[["normalized"]] <- normalized
+
+    ## This state slot should match the information available in
+    ## new_expt$normalized$actions
+    ## I am hoping this will prove a more direct place to access it and provide a chance to double-check that things match
+    new_state <- list(
+        "lowfilter" = normalized[["actions"]][["lowfilter"]],
+        "normalization" = normalized[["actions"]][["normalization"]],
+        "conversion" = normalized[["actions"]][["conversion"]],
+        "batch" = normalized[["actions"]][["batch"]],
+        "transform" = normalized[["actions"]][["transform"]])
+    new_expt[["state"]] <- new_state
+
+    ## My concept of the 'best library size' comes from Kwame's work where the libsize was kept after performing
+    ## quantile normalization, but before doing a log2(cpm())
+    ## The problem with this is that, if one does a normalize() then another normalize() then the assumptions used
+    ## may get violated.
+    if (!is.null(normalized[["intermediate_counts"]][["normalization"]][["libsize"]])) {
+        new_expt[["best_libsize"]] <- normalized[["intermediate_counts"]][["normalization"]][["libsize"]]
+    } else if (!is.null(normalized[["intermediate_counts"]][["lowfilter"]][["libsize"]])) {
+        new_expt[["best_libsize"]] <- normalized[["intermediate_counts"]][["lowfilter"]][["libsize"]]
+    } else {
+        new_expt[["best_libsize"]] <- NULL
+    }
+    ## limma should probably use this
+    new_expt[["norm_result"]] <- normalized
+    new_expt[["expressionset"]] <- current_exprs
     return(new_expt)
 }
 
@@ -1368,18 +1387,26 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 #' }
 #' @export
 transform_counts <- function(count_table, transform="raw",
-                             base=NULL, add=0.5) {
+                             base=NULL) {
+    ## Short circuit this if we are going with raw data.
+    if (transform == "raw") {
+        libsize <- colSums(count_table)
+        counts <- list(count_table=count_table, libsize=libsize)
+        return(counts)
+    }
+
+    ## If we are performing a transformation, then the minimum value I want is 1 before performing the logn
+    less_zero <- sum(count_table < 0)
+    if (less_zero > 0) {
+        message(paste0("transform_counts: Found ", less_zero, " values less than 0."))
+    }
+
     num_zero <- sum(count_table == 0)
-    num_low <- sum(count_table < 0)
-    if (num_low > 0) {
-        message(paste0("transform_counts: Found ", num_low, " values less than 0."))
-    }
     if (num_zero > 0) {
-        message(paste0("transform_counts: Found ", num_zero, " values equal to 0, adding ", add, "
- to the matrix.
-"))
-        count_table <- count_table + add
+        message(paste0("transform_counts: Found ", num_zero, " values equal to 0, adding 1 to the matrix."))
+        count_table <- count_table + 1
     }
+
     if (!is.null(base)) {
         count_table <- (log(count_table) / log(base))
     } else if (transform == "log2") {

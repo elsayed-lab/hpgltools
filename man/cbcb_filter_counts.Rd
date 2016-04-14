@@ -4,8 +4,7 @@
 \alias{cbcb_filter_counts}
 \title{Filter low-count genes from a data set.}
 \usage{
-cbcb_filter_counts(count_table, threshold = 2, min_samples = 2,
-  verbose = FALSE)
+cbcb_filter_counts(count_table, threshold = 2, min_samples = 2)
 }
 \arguments{
 \item{count_table}{a data frame of (pseudo)counts by sample.}
@@ -13,8 +12,6 @@ cbcb_filter_counts(count_table, threshold = 2, min_samples = 2,
 \item{threshold}{lower threshold of counts for each gene.}
 
 \item{min_samples}{minimum number of samples}
-
-\item{verbose}{if set to true, prints number of genes removed and remaining.}
 }
 \value{
 dataframe of counts without the low-count genes

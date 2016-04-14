@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Mar 30 12:16:48 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 14 01:00:33 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -19,20 +19,24 @@
 #' @param ... parameters fed to arglist
 #' @return a list including the adjustments for a model matrix, a modified count table, and 3 plots of the known batch, surrogates, and batch/surrogate.
 #' @export
-get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NULL, ...) {
+get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="be", ...) {
     arglist <- list(...)
     ## Gather all the likely pieces we can use
-    design <- expt["design"]
+    design <- expt[["design"]]
     data <- as.data.frame(Biobase::exprs(expt$expressionset))
     mtrx <- as.matrix(data)
     l2_data <- NULL
+
+    ## control type is to help empirical.controls
+    control_type <- "norm"
     if (expt$transform == "raw") {
-        l2_data <- transform_counts(count_table=data, transform="log2")
+        l2_data <- transform_counts(count_table=data, transform="log2")[["count_table"]]
+        control_type <- "counts"
     } else {
         l2_data <- data
     }
-    conditions <- as.factor(design[, "condition"])
-    batches <- as.factor(design[, "batch"])
+    conditions <- as.factor(design[["condition"]])
+    batches <- as.factor(design[["batch"]])
     conditional_model <- model.matrix(~ conditions, data=data)
     null_model <- conditional_model[, 1]
     chosen_surrogates <- 1
@@ -46,14 +50,16 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NU
             } else {
                 chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model, method=surrogates)
             }
-            message(paste0("The ", surrogates, " method chose ", chosen_surrogates, " surrogate variables."))
+            message(paste0("The ", surrogates, " method chose ", chosen_surrogates, " surrogate variable(s)."))
         } else if (class(surrogates) == "numeric") {
             message(paste0("A specific number of surrogate variables was chosen: ", surrogates, "."))
             chosen_surrogates = surrogates
         }
     }
 
-    control_likelihoods <- try(sva::empirical.controls(dat=mtrx, mod=conditional_model, mod0=null_model, n.sv=chosen_surrogates), silent=TRUE)
+    modified_mtrx <- mtrx + 0.5
+    ## Despite setting control_type to 'counts', it still gives stupid errors sometimes
+    control_likelihoods <- try(sva::empirical.controls(dat=modified_mtrx, mod=conditional_model, mod0=null_model, n.sv=chosen_surrogates, type=control_type))
     if (class(control_likelihoods) == "try-error") {
         control_likelihoods = 0
     }
@@ -61,7 +67,7 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NU
         if (estimate_type == "sva_supervised") {
             message("Unable to perform supervised estimations, changing to unsupervised_sva.")
             estimate_type <- "sva_supervised"
-        } else if (type == "ruv_supervised") {
+        } else if (estimate_type == "ruv_supervised") {
             message("Unable to perform supervised estimations, changing to empirical_ruv.")
             estimate_type <- "ruv_empirical"
         }
@@ -70,32 +76,50 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NU
     model_adjust <- NULL
     adjusted_counts <- NULL
     type_color <- NULL
+    returned_counts <- NULL
     if (estimate_type == "sva_supervised") {
         message("Attempting sva supervised surrogate estimation.")
         type_color <- "red"
         supervised_sva <- sva::svaseq(mtrx, conditional_model, null_model, controls=control_likelihoods, n.sv=chosen_surrogates)
-        model_adjust <- supervised_sva$sv
+        model_adjust <- as.matrix(supervised_sva$sv)
+        ## If only 1 surrogate is requested, this turns into a numeric list
     } else if (estimate_type == "svaseq") {
         found_surrogates <- sva::num.sv(mtrx, conditional_model)
         message("This ignores the surrogates parameter and uses the be method to estimate surrogates.")
         type_color <- "dodgerblue"
-        svaseq_result <- sva::svaseq(mtrx, conditional_model, null_model, n.sv=found_surrogates)
-        model_adjust <- svaseq_result$sv
+        if (min(rowSums(mtrx)) == 0) {
+            svaseq_result <- sva::svaseq(modified_mtrx, conditional_model, null_model, n.sv=found_surrogates)
+        } else {
+            svaseq_result <- sva::svaseq(mtrx, conditional_model, null_model, n.sv=found_surrogates)
+        }
+        model_adjust <- as.matrix(svaseq_result$sv)
     } else if (estimate_type == "sva_unsupervised") {
         message("Attempting sva unsupervised surrogate estimation.")
         type_color <- "blue"
-        unsupervised_sva_batch <- sva::svaseq(mtrx, conditional_model, null_model, n.sv=chosen_surrogates)
-        model_adjust <- unsupervised_sva_batch$sv
+        if (min(rowSums(mtrx)) == 0) {
+            unsupervised_sva_batch <- sva::svaseq(modified_mtrx, conditional_model, null_model, n.sv=chosen_surrogates)
+        } else {
+            unsupervised_sva_batch <- sva::svaseq(mtrx, conditional_model, null_model, n.sv=chosen_surrogates)
+        }
+        model_adjust <- as.matrix(unsupervised_sva_batch$sv)
     } else if (estimate_type == "pca") {
         message("Attempting pca surrogate estimation.")
         type_color <- "green"
-        model_adjust <- corpcor::fast.svd(l2_data - rowMeans(l2_data))$v[, 1]
+        data_vs_means <- as.matrix(l2_data - rowMeans(l2_data))
+        svd_result <- corpcor::fast.svd(data_vs_means)
+        model_adjust <- as.matrix(svd_result$v[, 1:chosen_surrogates])
     } else if (estimate_type == "ruv_supervised") {
         message("Attempting ruvseq supervised surrogate estimation.")
         type_color <- "black"
         surrogate_estimate <- sva::num.sv(dat=mtrx, mod=conditional_model)
-        control_likelihoods <- sva::empirical.controls(dat=mtrx, mod=conditional_model, mod0=null_model, n.sv=surrogate_estimate)
-        model_adjust <- RUVSeq::RUVg(mtrx, cIdx=as.logical(control_likelihoods), k=1)$W
+        if (min(rowSums(mtrx)) == 0) {
+            control_likelihoods <- sva::empirical.controls(dat=modified_mtrx, mod=conditional_model, mod0=null_model, n.sv=surrogate_estimate)
+        } else {
+            control_likelihoods <- sva::empirical.controls(dat=mtrx, mod=conditional_model, mod0=null_model, n.sv=surrogate_estimate)
+        }
+        ruv_result <- RUVSeq::RUVg(mtrx, cIdx=as.logical(control_likelihoods), k=chosen_surrogates)
+        returned_counts <- ruv_result$normalizedCounts
+        model_adjust <- as.matrix(ruv_result$W)
     } else if (estimate_type == "ruv_residuals") {
         message("Attempting ruvseq residual surrogate estimation.")
         type_color <- "purple"
@@ -108,7 +132,8 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NU
         ruv_res <- residuals(ruv_fit, type="deviance")
         ruv_normalized <- EDASeq::betweenLaneNormalization(mtrx, which="upper")  ## This also gets mad if you pass it a df and not matrix
         controls <- rep(TRUE, dim(data)[1])
-        model_adjust <- RUVSeq::RUVr(ruv_normalized, controls, k=1, ruv_res)$W
+        ruv_result <- RUVSeq::RUVr(ruv_normalized, controls, k=chosen_surrogates, ruv_res)
+        model_adjust <- as.matrix(ruv_result$W)
     } else if (estimate_type == "ruv_empirical") {
         message("Attempting ruvseq empirical surrogate estimation.")
         type_color <- "orange"
@@ -122,14 +147,23 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NU
         ## Ditto for _glm and _tag, and indeed ruv_fit
         ## Thus repeat the first 7 lines of the previous RUVSeq before anything changes.
         ruv_lrt <- edgeR::glmLRT(ruv_fit, coef=2)
-        ruv_controls = rank(ruv_lrt$table$LR) <= 400  ## what is going on here?!
-        model_adjust <- RUVSeq::RUVg(mtrx, ruv_controls, k=1)$W
+        ruv_control_table <- ruv_lrt$table
+        ranked <- as.numeric(rank(ruv_control_table[["LR"]]))
+        bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
+        ruv_controls <- ranked <= bottom_third  ## what is going on here?!
+        ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets fail with 400 hard-set
+        ruv_result <- RUVSeq::RUVg(mtrx, ruv_controls, k=chosen_surrogates)
+        model_adjust <- as.matrix(ruv_result$W)
     } else {
         type_color <- "black"
         ## If given nothing to work with, use supervised sva
         message(paste0("Did not understand ", estimate_type, ", assuming supervised sva."))
-        supervised_sva <- sva::svaseq(mtrx, conditional_model, null_model, controls=control_likelihoods, n.sv=chosen_surrogates)
-        model_adjust <- supervised_sva$sv
+        if (min(rowSums(mtrx)) == 0) {
+            supervised_sva <- sva::svaseq(mtrx, conditional_model, null_model, controls=control_likelihoods, n.sv=chosen_surrogates)
+        } else {
+            supervised_sva <- sva::svaseq(modified_mtrx, conditional_model, null_model, controls=control_likelihoods, n.sv=chosen_surrogates)
+        }
+        model_adjust <- as.matrix(supervised_sva$sv)
     }
 
     new_model <- cbind(conditional_model, model_adjust)
@@ -138,6 +172,10 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NU
     conds <- ncol(conditional_model)
     new_counts <- mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*% transformation[-c(1:conds), ])
     ## This matches the return I get from batch_counts()
+    ##if (!is.null(returned_counts)) {
+    ##    ## Some methods return batch adjusted counts, do these methods agree with the above method of acquiring them?
+    ##    all.equal(new_counts, returned_counts) ## no, very much no.
+    ##}
 
     plotbatch <- as.integer(batches)
     plotcond <- as.numeric(conditions)
@@ -162,6 +200,36 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NU
     return(ret)
 }
 
+#' make a dotplot of some categorised factors and a set of SVs (for other factors)
+#'
+#' This should make a quick df of the factors and surrogates and plot them.
+#' @param factors some portion of the experimental design
+#' @param sv a set of surrogate variable estimations from sva/svg or batch estimates
+#'
+#' @examples
+#' \dontrun{
+#' estimate_vs_snps <- plot_svfactor(start, surrogate_estimate, "snpcategory")
+#' }
+plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type="factor") {
+    chosen <- expt[["design"]][[chosen_factor]]
+    sv_df <- data.frame(
+        "adjust" = svest$model_adjust[, 1],  ## Take a single estimate from compare_estimates()
+        "factors" = chosen,
+        "samplenames" = rownames(expt[["design"]])
+    )
+    samplenames <- rownames(expt[["design"]])
+    my_colors <- expt[["colors"]]
+
+    sv_melted <- reshape2::melt(sv_df, idvars="factors")
+    sv_plot <- ggplot2::ggplot(sv_factor, ggplot2::aes_string(x="factors", y="value")) +
+        ggplot2::geom_dotplot(binaxis="y", stackdir="center", binpositions="all", colour="black", fill=my_colors) +
+        ggplot2::xlab(paste0("Experimental factor: ", chosen_factor)) +
+        ggplot2::ylab(paste0("1st surrogate variable estimation")) +
+        ggplot2::theme_bw()
+
+    return(sv_plot)
+}
+
 #' Perform a comparison of the surrogate estimators demonstrated by Jeff Leek.
 #' Once again this is entirely derivative, but seeks to provide similar estimates for one's own actual data
 #' and catch corner cases not taken into account in that document (for example if the estimators
@@ -179,42 +247,50 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates=NU
 #' @return a list of toys
 #' @export
 compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
-    design <- expt$design
+    design <- expt[["design"]]
     pca_plots <- list()
     pca_plots$null <- hpgl_pca(expt)$plot
-    pca_adjust <- get_model_adjust(expt, estimate_type="pca", surrogates=1)
+    pca_adjust <- get_model_adjust(expt, estimate_type="pca")
     pca_plots$pca <- hpgl_pca(pca_adjust$new_counts, design=design, plot_colors=expt$colors)$plot
-    sva_supervised <- get_model_adjust(expt, estimate_type="sva_supervised", surrogates=1)
+    sva_supervised <- get_model_adjust(expt, estimate_type="sva_supervised")
     pca_plots$svasup <- hpgl_pca(sva_supervised$new_counts, design=design, plot_colors=expt$colors)$plot
-    sva_unsupervised <- get_model_adjust(expt, estimate_type="sva_unsupervised", surrogates=1)
+    sva_unsupervised <- get_model_adjust(expt, estimate_type="sva_unsupervised")
     pca_plots$svaunsup <- hpgl_pca(sva_unsupervised$new_counts, design=design, plot_colors=expt$colors)$plot
-    ruv_supervised <- get_model_adjust(expt, estimate_type="ruv_supervised", surrogates=1)
+    ruv_supervised <- get_model_adjust(expt, estimate_type="ruv_supervised")
     pca_plots$ruvsup <- hpgl_pca(ruv_supervised$new_counts, design=design, plot_colors=expt$colors)$plot
-    ruv_residuals <- get_model_adjust(expt, estimate_type="ruv_residuals", surrogates=1)
+    ruv_residuals <- get_model_adjust(expt, estimate_type="ruv_residuals")
     pca_plots$ruvresid <- hpgl_pca(ruv_residuals$new_counts, design=design, plot_colors=expt$colors)$plot
-    ruv_empirical <- get_model_adjust(expt, estimate_type="ruv_empirical", surrogates=1)
+    ruv_empirical <- get_model_adjust(expt, estimate_type="ruv_empirical")
     pca_plots$ruvemp <- hpgl_pca(ruv_empirical$new_counts, design=design, plot_colors=expt$colors)$plot
 
-    batch_adjustments <- cbind(as.factor(expt["conditions"]),
-                               as.factor(expt["batches"]),
-                               pca_adjust["model_adjust"],
-                               sva_supervised["model_adjust"],
-                               sva_unsupervised["model_adjust"],
-                               ruv_supervised["model_adjust"],
-                               ruv_residuals["model_adjust"],
-                               ruv_empirical["model_adjust"])
-    batch_adjustments <- as.data.frame(batch_adjustments)
+    first_svs <- data.frame("condition" = as.numeric(as.factor(expt[["conditions"]])),
+                            "batch" = as.numeric(as.factor(expt[["batches"]])),
+                            "pca_adjust" = pca_adjust[["model_adjust"]][, 1],
+                            "sva_supervised" = sva_supervised[["model_adjust"]][, 1],
+                            "sva_unsupervised" = sva_unsupervised[["model_adjust"]][, 1],
+                            "ruv_supervised" = ruv_supervised[["model_adjust"]][, 1],
+                            "ruv_residuals" = ruv_residuals[["model_adjust"]][,1],
+                            "ruv_empirical" = ruv_empirical[["model_adjust"]][,1])
+    batch_adjustments <- list(
+        "condition" = as.factor(expt[["conditions"]]),
+        "batch" = as.factor(expt[["batches"]]),
+        "pca_adjust" = pca_adjust[["model_adjust"]],
+        "sva_supervised" = sva_supervised[["model_adjust"]],
+        "sva_unsupervised" = sva_unsupervised[["model_adjust"]],
+        "ruv_supervised" = ruv_supervised[["model_adjust"]],
+        "ruv_residuals" = ruv_residuals[["model_adjust"]],
+        "ruv_empirical" = ruv_empirical[["model_adjust"]])
     batch_names <- c("condition","batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
     if (!is.null(extra_factors)) {
         for (fact in extra_factors) {
             if (!is.null(design[, fact])) {
                 batch_names <- append(x=batch_names, values=fact)
-                batch_adjustments <- cbind(batch_adjustments, as.numeric(as.factor(design[, fact])))
+                first_svs[[fact]] <- as.numeric(as.factor(design[, fact]))
+                batch_adjustments[[fact]] <- as.numeric(as.factor(design[, fact]))
             }
         }
     }
-    colnames(batch_adjustments) <- batch_names
-    correlations <- cor(batch_adjustments)
+    correlations <- cor(first_svs)
     par(mar=c(5,5,5,5))
     corrplot::corrplot(correlations, method="ellipse", type="lower", tl.pos="d")
     ret_plot <- grDevices::recordPlot()
@@ -224,12 +300,11 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
                      "+ batch_adjustments$ruv_sup", "+ batch_adjustments$ruv_resid",
                      "+ batch_adjustments$ruv_emp")
     adjust_names <- c("null", "batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
-    starter <- edgeR::DGEList(counts=Biobase::exprs(expt["expressionset"]))
+    starter <- edgeR::DGEList(counts=Biobase::exprs(expt[["expressionset"]]))
     norm_start <- edgeR::calcNormFactors(starter)
     catplots <- vector("list", length(adjustments) + 1)  ## add 1 for a null adjustment
     names(catplots) <- adjust_names
-    tstats <- vector("list", length(adjustments) + 1)  ## ditto
-    names(tstats) <- adjust_names
+    tstats <- list()
 
     ## First do a null adjust
     adjust <- ""
@@ -241,7 +316,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
     limma_fit <- limma::lmFit(voom_result, limma_design)
     modified_fit <- limma::eBayes(limma_fit)
-    tstats["null"] <- abs(modified_fit$t[, 2])
+    tstats[["null"]] <- abs(modified_fit$t[, 2])
     ##names(tstats[["null"]]) <- as.character(1:dim(data)[1])
     ## This needs to be redone to take into account how I organized the adjustments!!!
     num_adjust <- length(adjustments)
@@ -253,9 +328,9 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
         voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
         limma_fit <- limma::lmFit(voom_result, limma_design)
         modified_fit <- limma::eBayes(limma_fit)
-        tstats[[counter]] <- abs(modified_fit$t[, 2])
+        tstats[[adjust]] <- abs(modified_fit$t[, 2])
         ##names(tstats[[counter]]) <- as.character(1:dim(data)[1])
-        catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[counter]]), -rank(tstats[["null"]]), maxrank=1000, make.plot=TRUE)
+        catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[adjust]]), -rank(tstats[["null"]]), maxrank=1000, make.plot=TRUE)
     }
 
     plot(catplots[["pca"]], ylim=c(0, 1), col="black", lwd=3, type="l", ylab="Concordance between study and different methods.", xlab="Rank")
@@ -268,17 +343,17 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     catplot_together <- grDevices::recordPlot()
 
     ret <- list(
-        "pca_adjust"=pca_adjust,
-        "sva_supervised_adjust"=sva_supervised,
-        "sva_unsupervised_adjust"=sva_unsupervised,
-        "ruv_supervised_adjust"=ruv_supervised,
-        "ruv_residual_adjust"=ruv_residuals,
-        "ruv_empirical_adjust"=ruv_empirical,
-        "adjustments"=batch_adjustments,
-        "correlations"=correlations,
-        "plot"=ret_plot,
-        "pca_plots"=pca_plots,
-        "catplots"=catplot_together)
+        "pca_adjust" = pca_adjust,
+        "sva_supervised_adjust" = sva_supervised,
+        "sva_unsupervised_adjust" = sva_unsupervised,
+        "ruv_supervised_adjust" = ruv_supervised,
+        "ruv_residual_adjust" = ruv_residuals,
+        "ruv_empirical_adjust" = ruv_empirical,
+        "adjustments" = batch_adjustments,
+        "correlations" = correlations,
+        "plot" = ret_plot,
+        "pca_plots" = pca_plots,
+        "catplots" = catplot_together)
     return(ret)
 }
 

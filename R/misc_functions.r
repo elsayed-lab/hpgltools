@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Mar 31 16:53:00 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 13 13:06:45 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' png() shortcut
 #'
@@ -462,29 +462,26 @@ make_tooltips <- function(annotations, desc_col='description', type="gene", id_c
     } else {
         stop("This requires either a filename or data frame.")
     }
-    if (is.null(tooltip_data$ID)) {
-        tooltip_data$ID <- rownames(tooltip_data)
+    if (is.null(tooltip_data[[id_col]])) {
+        tooltip_data[["ID"]] <- rownames(tooltip_data)
     }
-    tooltip_data <- tooltip_data[,c(id_col, desc_col)]
-    tooltip_data[is.na(tooltip_data)] <- ""
 
     ## Attempt to use multiple columns if a c() was given
-    tooltip_data$tooltip <- tooltip_data[[id_col]]
+    tooltip_data[["tooltip"]] <- tooltip_data[[id_col]]
     for (col in desc_col) {
         if (is.null(tooltip_data[[col]])) {
             message(paste0("The column ", col, " is null, not using it."))
         } else {
-            tooltip_data$tooltip <- paste0(tooltip_data$tooltip, ": ", tooltip_data[[col]])
+            tooltip_data[["tooltip"]] <- paste0(tooltip_data[["tooltip"]], ": ", tooltip_data[[col]])
         }
     }
-    tooltip_data$tooltip <- gsub("\\+", " ", tooltip_data$tooltip)
-    tooltip_data$tooltip <- gsub(": $", "", tooltip_data$tooltip)
-    tooltip_data$tooltip <- gsub("^: ", "", tooltip_data$tooltip)
+    tooltip_data[["tooltip"]] <- gsub("\\+", " ", tooltip_data[["tooltip"]])
+    tooltip_data[["tooltip"]] <- gsub(": $", "", tooltip_data[["tooltip"]])
+    tooltip_data[["tooltip"]] <- gsub("^: ", "", tooltip_data[["tooltip"]])
     rownames(tooltip_data) <- make.names(tooltip_data[[id_col]], unique=TRUE)
     ## Now remove extraneous columns
-    tooltip_data <- tooltip_data[, !(colnames(tooltip_data) %in% desc_col)]
-    colnames(tooltip_data) <- c("short", "1.tooltip")
-    tooltip_data <- tooltip_data[-1]
+    tooltip_data <- tooltip_data[, c("tooltip"), drop=FALSE]
+    colnames(tooltip_data) <- c("1.tooltip")
     return(tooltip_data)
 }
 
@@ -629,10 +626,26 @@ write_xls <- function(data, wb=NULL, sheet="first", first_two_widths=c("30","60"
     }
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
+    } else if (class(wb)[[1]] == "list") { ## In case the return from write_xls() was passed to write_xls()
+        wb <- wb[["workbook"]]
+    } else if (class(wb)[[1]] != "Workbook") {
+        stop("A workbook was passed to this, but the format is not understood.")
     }
+
     newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
     if (class(newsheet) == 'try-error') {
-        message(paste0("The sheet ", sheet, " already exists."))
+        if (grepl(pattern="too long", x=newsheet[1])) {
+            message("The sheet name was too long for Excel, truncating it by removing vowels.")
+            sheet <- gsub(pattern="a|e|i|o|u", replacement="", x=sheet)
+            newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
+            if (class(newsheet) == 'try-error') {
+                message("hmph, still too long, truncating to 30 characters.")
+                sheet <- substr(sheet, start=1, stop=30)
+                newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
+            }
+        } else {
+            message(paste0("The sheet ", sheet, " already exists, it will get overwritten"))
+        }
     }
     hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
     new_row <- start_row

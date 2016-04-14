@@ -5,7 +5,8 @@
 \title{A quick and dirty PCA plotter of arbitrary components against one another.}
 \usage{
 plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
-  design = NULL, plot_title = NULL, plot_labels = NULL, size = 5)
+  design = NULL, plot_title = NULL, plot_labels = NULL, plot_size = 5,
+  size_column = NULL, ...)
 }
 \arguments{
 \item{pca_data}{a dataframe of principle components PC1 .. PCN with any other arbitrary information.}
@@ -22,7 +23,7 @@ plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
 
 \item{plot_labels}{a parameter for the labels on the plot.}
 
-\item{size}{The size of the dots on the plot}
+\item{plot_size}{The size of the dots on the plot}
 }
 \value{
 a ggplot2 PCA plot

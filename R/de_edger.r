@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 25 17:28:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 13 11:57:10 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from edger
 #'
@@ -98,25 +98,41 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
 #' @export
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                           model_batch=NULL, model_intercept=FALSE, alt_model=NULL,
-                          extra_contrasts=NULL, annot_df=NULL, ...) {
+                          extra_contrasts=NULL, annot_df=NULL, force=FALSE, ...) {
     message("Starting edgeR pairwise comparisons.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
         conditions <- input$conditions
         batches <- input$batches
         data <- as.data.frame(Biobase::exprs(input$expressionset))
+
         ## As I understand it, edgeR fits a binomial distribution
-        ## and expects data as floating point counts,
-        ## not a log2 transformation.
-        if (!is.null(input$transform)) {
-            if (input$transform == "log2") {
-                ##data = (2^data) - 1
-                data <- input$normalized$normalized_counts$count_table
-            } ## End checking for log2 normalized data
-        } ## End checking for transformed data
-    } else { ## End checking if this is an expt
+        ## and expects data as integer counts, not floating point or transformed
+        if (!is.null(input[["norm"]])) {
+            if (isTRUE(force)) {
+                warning("About to round the data, this is a pretty terrible thing to do")
+                warning("But if you, like me, want to see what happens when you put")
+                warning("non-standard data into deseq, then here you go.")
+                data <- round(data)
+            } else if (input[["norm"]][[1]] != "raw") {
+                message("DESeq2 demands raw data as input, reverting to the original expressionset.")
+                data <- Biobase::exprs(input[["original_expressionset"]])
+            } else if (!is.null(input[["transform"]]) & input[["transform"]] != "raw") {
+                if (input[["transform"]] == "log2") {
+                    ##data = (2^data) - 1
+                    data <- input[["normalized"]][["lowfiltered_counts"]]
+                } else {
+                    data <- input[["normalized"]][["original_counts"]][["counts"]]
+                }
+            } else {
+                message("The data should be suitable for deseq2.")
+                message("If deseq freaks out, check the state of the count table and ensure that it is in integer counts.")
+            }
+        } ## End testing if normalization has been performed
+    } else {
         data <- as.data.frame(input)
     }
+
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
     ## Make a model matrix which will have one entry for

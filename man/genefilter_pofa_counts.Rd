@@ -4,7 +4,7 @@
 \alias{genefilter_pofa_counts}
 \title{Filter low-count genes from a data set using genefilter's pOverA()}
 \usage{
-genefilter_pofa_counts(count_table, p = 0.01, A = 100, verbose = TRUE)
+genefilter_pofa_counts(count_table, p = 0.01, A = 100)
 }
 \arguments{
 \item{count_table}{input data frame of counts by sample}
@@ -12,8 +12,6 @@ genefilter_pofa_counts(count_table, p = 0.01, A = 100, verbose = TRUE)
 \item{p}{a minimum proportion of each gene's counts/sample to be greater than a minimum(A)}
 
 \item{A}{the minimum number of counts in the above proportion}
-
-\item{verbose}{If set to true, prints number of genes removed / remaining}
 }
 \value{
 dataframe of counts without the low-count genes

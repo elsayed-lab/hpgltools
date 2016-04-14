@@ -5,7 +5,7 @@
 \title{Make a ggplot PCA plot describing the samples' clustering.}
 \usage{
 hpgl_pca(data, design = NULL, plot_colors = NULL, plot_labels = NULL,
-  plot_title = NULL, plot_size = 5, ...)
+  plot_title = NULL, plot_size = 5, size_column = NULL, ...)
 }
 \arguments{
 \item{data}{an expt set of samples.}
