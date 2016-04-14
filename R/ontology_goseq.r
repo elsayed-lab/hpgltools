@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Mar 21 14:53:03 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 14 17:12:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -192,10 +192,20 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     message("simple_goseq(): Calculating q-values")
     qdata <- godata$over_represented_pvalue
     qdata[qdata > 1] <- 1 ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.0000000000000001
-    qdata <- qvalue::qvalue(qdata)
-    godata$term <- goterm(godata$category)
-    godata$ontology <- goont(godata$category)
-    godata <- cbind(godata, qdata$qvalues)
+    qvalues <- tryCatch(
+    {
+        ttmp <- as.numeric(qdata)
+        ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
+    },
+    error=function(cond) {
+        message(paste0("The qvalue estimate failed."))
+        return(1)
+    },
+    finally={
+    })
+    godata[["term"]] <- goterm(godata[["category"]])
+    godata[["ontology"]] <- goont(godata[["category"]])
+    godata <- cbind(godata, qvalues)
     colnames(godata) <- c("category","over_represented_pvalue","under_represented_pvalue",
                           "numDEInCat","numInCat","term","ontology","qvalue")
     if (is.null(adjust)) {
@@ -203,10 +213,10 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
         padjust_method <- "none"
     } else {  ## There is a requested pvalue adjustment
         godata_interesting <- subset(godata, p.adjust(godata$over_represented_pvalue, method=padjust_method) <= adjust)
-        if (dim(godata_interesting)[1] < arglist$minimum_interesting) {
+        if (dim(godata_interesting)[1] < arglist[["minimum_interesting"]]) {
             message(paste("simple_goseq(): There are no genes with an adj.p<", adjust, " using: ", padjust_method, ".", sep=""))
             message(sprintf("simple_goseq(): Providing genes with raw pvalue<%s", pvalue))
-            godata_interesting <- subset(godata, godata$over_represented_pvalue <= pvalue)
+            godata_interesting <- subset(godata, godata[["over_represented_pvalue"]] <= pvalue)
             padjust_method <- "none"
         }
     }

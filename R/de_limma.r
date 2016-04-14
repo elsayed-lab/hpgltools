@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Apr 13 17:53:58 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 14 10:27:00 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from limma
 #'
@@ -336,37 +336,37 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     fun_voom <- NULL
     message("Limma step 1/6: choosing model.")
     ## voom() it, taking into account whether the data has been log2 transformed.
-    logged <- input[["state"]][["transform"]]
-    if (is.null(logged)) {
+    loggedp <- input[["state"]][["transform"]]
+    if (is.null(loggedp)) {
         message("I don't know if this data is logged, testing if it is integer.")
         if (is.integer(data)) {
-            logged <- FALSE
+            loggedp <- FALSE
         } else {
-            logged <- TRUE
+            loggedp <- TRUE
         }
     } else {
-        if (logged == "raw") {
-            logged <- FALSE
+        if (loggedp == "raw") {
+            loggedp <- FALSE
         } else {
-            logged <- TRUE
+            loggedp <- TRUE
         }
     }
-    converted = input[["state"]][["conversion"]]
-    if (is.null(converted)) {
+    convertedp = input[["state"]][["conversion"]]
+    if (is.null(convertedp)) {
         message("I cannot determine if this data has been converted, assuming no.")
-        converted <- FALSE
+        convertedp <- FALSE
     } else {
-        if (converted == "raw") {
-            converted <- FALSE
+        if (convertedp == "raw") {
+            convertedp <- FALSE
         } else {
-            converted <- TRUE
+            convertedp <- TRUE
         }
     }
     ##fun_voom = voom(data, fun_model)
     ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
     ##fun_voom = voomMod(data, fun_model, lib.size=libsize)
     message("Limma step 2/6: running voom")
-    fun_voom <- hpgl_voom(data, fun_model, libsize=libsize, logged=logged, converted=converted)
+    fun_voom <- hpgl_voom(data, fun_model, libsize=libsize, logged=loggedp, converted=convertedp)
     one_replicate <- FALSE
     if (is.null(fun_voom)) {
         message("voom returned null, I am not sure what will happen.")

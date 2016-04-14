@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Apr 13 11:57:10 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 14 11:04:09 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from edger
 #'
@@ -102,33 +102,43 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     message("Starting edgeR pairwise comparisons.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
-        conditions <- input$conditions
-        batches <- input$batches
-        data <- as.data.frame(Biobase::exprs(input$expressionset))
+        conditions <- input[["conditions"]]
+        batches <- input[["batches"]]
+        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
 
-        ## As I understand it, edgeR fits a binomial distribution
-        ## and expects data as integer counts, not floating point or transformed
-        if (!is.null(input[["norm"]])) {
+        ## As I understand it, EdgeR fits a binomial distribution
+        ## and expects data as integer counts, not floating point nor a log2 transformation
+        ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
+        ## violation of its stated preferred/demanded input.  There are of course ways around this
+        ## but one should not take them lightly, perhaps never.
+        if (!is.null(input[["state"]][["normalization"]])) {
+            ## These if statements may be insufficient to check for the appropriate input for deseq.
             if (isTRUE(force)) {
+                ## Setting force to TRUE allows one to round the data to fool edger into accepting it
+                ## This is a pretty terrible thing to do
                 warning("About to round the data, this is a pretty terrible thing to do")
                 warning("But if you, like me, want to see what happens when you put")
                 warning("non-standard data into deseq, then here you go.")
                 data <- round(data)
-            } else if (input[["norm"]][[1]] != "raw") {
-                message("DESeq2 demands raw data as input, reverting to the original expressionset.")
-                data <- Biobase::exprs(input[["original_expressionset"]])
-            } else if (!is.null(input[["transform"]]) & input[["transform"]] != "raw") {
-                if (input[["transform"]] == "log2") {
-                    ##data = (2^data) - 1
-                    data <- input[["normalized"]][["lowfiltered_counts"]]
+            } else if (input[["state"]][["normalization"]] != "raw" |
+                       (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
+                ## This makes use of the fact that the order of operations in the normalization function is static.
+                ## lowfilter->normalization->convert->batch->transform.
+                ## Thus, if the normalized state is not raw, we can look back either to the lowfiltered or original data
+                ## The same is true for the transformation state.
+                if (input[["state"]][["lowfilter"]] == "raw") {
+                    message("EdgeR expects raw data as input, reverting to the low-count filtered data.")
+                    data <- input[["normalized"]][["intermediate_counts"]][["lowfilter"]][["count_table"]]
                 } else {
-                    data <- input[["normalized"]][["original_counts"]][["counts"]]
+                    message("EdgeR expects raw data as input, reverting to the original expressionset.")
+                    data <- Biobase::exprs(input[["original_expressionset"]])
                 }
             } else {
-                message("The data should be suitable for deseq2.")
-                message("If deseq freaks out, check the state of the count table and ensure that it is in integer counts.")
+                message("The data should be suitable for EdgeR.")
+                message("If EdgeR freaks out, check the state of the count table and ensure that it is in integer counts.")
             }
-        } ## End testing if normalization has been performed
+            ## End testing if normalization has been performed
+        }
     } else {
         data <- as.data.frame(input)
     }

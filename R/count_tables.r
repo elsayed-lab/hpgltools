@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 14 01:12:59 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 14 16:44:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 
 #' Given a table of meta data, read it in for use by create_expt()
@@ -118,13 +118,13 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
     if (is.null(sample_definitions[, "condition"])) {
         sample_definitions[, "condition"] <- tolower(paste(sample_definitions[, "type"], sample_definitions[, "stage"], sep="_"))
     }
-    condition_names <- unique(sample_definitions[, "condition"])
+    condition_names <- unique(sample_definitions[["condition"]])
     if (is.null(condition_names)) {
         warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
     }
 
     ## Make sure we have a viable set of colors for plots
-    chosen_colors <- as.character(sample_definitions[, "condition"])
+    chosen_colors <- as.character(sample_definitions[["condition"]])
     num_conditions <- length(condition_names)
     num_samples <- nrow(sample_definitions)
     if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
@@ -214,14 +214,14 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
     annotation <- NULL
     tooltip_data <- NULL
     if (is.null(gene_info)) {
-        if (!is.null(include_gff)) {
+        if (is.null(include_gff)) {
+            gene_info <- as.data.frame(all_count_tables)
+            gene_info[["ID"]] <- rownames(gene_info)
+        } else {
             message("create_experiment(): Reading annotation gff, this is slow.")
             annotation <- gff2df(gff=include_gff, type=gff_type)
             tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
             gene_info <- annotation
-        } else {
-            gene_info <- all_count_tables
-            gene_info[, "ID"] <- rownames(gene_info)
         }
     }
 
@@ -229,33 +229,26 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
     ## Given a data frame with columns bob, jane, alice -- but not foo
     ## I can do df[["bob"]]) or df[, "bob"] to get the column bob
     ## however df[["foo"]] gives me null while df[, "foo"] gives an error.
-    if (is.null(sample_definitions[["stage"]])) {
-        sample_definitions[, "stage"] <- "unknown"
-    }
-    if (is.null(sample_definitions[["type"]])) {
-        sample_definitions[, "type"] <- "unknown"
-    }
     if (is.null(sample_definitions[["condition"]])) {
-        sample_definitions[, "condition"] <- "unknown"
+        sample_definitions[["condition"]] <- "unknown"
     }
     if (is.null(sample_definitions[["batch"]])) {
-        sample_definitions[, "batch"] <- "unknown"
+        sample_definitions[["batch"]] <- "unknown"
     }
     if (is.null(sample_definitions[["intercounts"]])) {
-        sample_definitions[, "intercounts"] <- "unknown"
+        sample_definitions[["intercounts"]] <- "unknown"
     }
     if (is.null(sample_definitions[["file"]])) {
-        sample_definitions[, "file"] <- "null"
+        sample_definitions[["file"]] <- "null"
     }
 
     meta_frame <- data.frame(
-        sample=as.character(sample_definitions[, "sampleid"]),
-        stage=as.character(sample_definitions[, "stage"]),
-        type=as.character(sample_definitions[, "type"]),
-        condition=as.character(sample_definitions[, "condition"]),
-        batch=as.character(sample_definitions[, "batch"]),
-        counts=sample_definitions[, "file"],
-        intercounts=sample_definitions[, "intercounts"])
+        "sample" = as.character(sample_definitions[, "sampleid"]),
+        "condition" = as.character(sample_definitions[, "condition"]),
+        "batch" = as.character(sample_definitions[, "batch"]),
+        "counts" = sample_definitions[, "file"],
+        "intercounts" = sample_definitions[, "intercounts"])
+
     requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
     metadata <- methods::new("AnnotatedDataFrame", meta_frame)
     Biobase::sampleNames(metadata) <- colnames(all_count_matrix)
@@ -274,10 +267,13 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
     expt[["annotation"]] <- annotation
     expt[["gff_file"]] <- include_gff
     expt[["tooltip"]] <- tooltip_data
-    expt[["filtered"]] <- FALSE
-    expt[["transform"]] <- "raw"
-    expt[["norm"]] <- "raw"
-    expt[["convert"]] <- "raw"
+    starting_state <- list(
+        "lowfilter" = "raw",
+        "normalization" = "raw",
+        "conversion" = "raw",
+        "batch" = "raw",
+        "transform" = "raw")
+    expt[["state"]] <- starting_state
     expt[["conditions"]] <- as.factor(sample_definitions[, "condition"])
     expt[["batches"]] <- as.factor(sample_definitions[, "batch"])
     expt[["original_libsize"]] <- colSums(Biobase::exprs(experiment))
@@ -355,10 +351,7 @@ expt_subset <- function(expt, subset=NULL) {
         "batches" = subset_batches,
         "samplenames" = subset_ids,
         "colors" = subset_colors,
-        "filtered" = expt$filtered,
-        "transform" = expt$transform,
-        "norm" = expt$norm,
-        "convert" = expt$convert,
+        "state" = expt[["state"]],
         "original_libsize" = original_libsize,
         "libsize" = subset_libsize)
     class(metadata) <- "expt"
@@ -446,8 +439,13 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
 
     ## remove summary fields added by HTSeq
     if (!include_summary_rows) {
+        ## Depending on what happens when the data is read in, these rows may get prefixed with 'X'
+        ## In theory, only 1 of these two cases should ever be true.
         htseq_meta_rows <- c("__no_feature", "__ambiguous", "__too_low_aQual",
-                            "__not_aligned", "__alignment_not_unique")
+                             "__not_aligned", "__alignment_not_unique",
+                             "X__no_feature", "X__ambiguous", "X__too_low_aQual",
+                             "X__not_aligned", "X__alignment_not_unique")
+
         count_table <- count_table[!rownames(count_table) %in% htseq_meta_rows, ]
     }
     return(count_table)

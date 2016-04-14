@@ -156,7 +156,9 @@ ensembl_pombe <- biomaRt::useMart("fungal_mart", dataset="spombe_eg_gene", host=
 pombe_filters <- biomaRt::listFilters(ensembl_pombe)
 head(pombe_filters, n=20) ## 11 looks to be my guy
 
-pombe_goids <- biomaRt::getBM(attributes=c('pombase_gene_name', 'go_accession'), values=gene_names, mart=ensembl_pombe)
+possible_pombe_attributes <- biomaRt::listAttributes(ensembl_pombe)
+##pombe_goids <- biomaRt::getBM(attributes=c('pombase_gene_name', 'go_accession'), filters="biotype", values=gene_names, mart=ensembl_pombe)
+pombe_goids <- biomaRt::getBM(attributes=c('pombase_transcript', 'go_accession'), values=gene_names, mart=ensembl_pombe)
 colnames(pombe_goids) <- c("ID","GO")
 
 pombe <- GenomicFeatures::makeTxDbFromBiomart(biomart ="fungal_mart", dataset = "spombe_eg_gene", host="fungi.ensembl.org")

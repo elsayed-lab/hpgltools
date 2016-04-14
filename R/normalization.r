@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Apr 13 17:42:08 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 14 09:59:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -694,7 +694,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     ## Step 1: Low-count filtering
     lowfiltered_counts <- NULL
     if (filter_low != FALSE) {
-        message(paste0("Performing low-count filter with: ", filter_low))
+        message(paste0("Performing low-count filter with option: ", filter_low))
         ## All the other intermediates have a libsize slot, perhaps this should too
         lowfiltered_counts <- lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2)
         count_table <- lowfiltered_counts[["count_table"]]
