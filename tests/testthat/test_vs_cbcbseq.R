@@ -25,12 +25,12 @@ design = data.frame(row.names=colnames(counts),
         "paired-end","single-end","paired-end","paired-end"))
 metadata = design
 colnames(metadata) = c("condition", "batch")
-metadata$Sample.id = rownames(metadata)
+metadata$sampleid = rownames(metadata)
 
 ## Make sure it is still possible to create an expt
 message("Setting up an expt class to contain the pasilla data and metadata.")
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
-cbcb_data = counts
+cbcb_data = as.matrix(counts)
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
 hpgl_data = Biobase::exprs(pasilla_expt$expressionset)
 test_that("Does data from an expt equal a raw dataframe?", {
@@ -41,10 +41,8 @@ test_that("Does data from an expt equal a raw dataframe?", {
 message("Testing quantile raw normalization.")
 cbcb_quantile = cbcbSEQ::qNorm(cbcb_data)
 hpgl_quantile_data = hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE, verbose=TRUE)
-hpgl_quantile = hpgl_quantile_data$final_counts$count_table
-tt = hpgl_quantile_data$count_table
+hpgl_quantile = hpgl_quantile_data[["count_table"]]
 test_that("Are the quantile normalizations identical?", {
-    expect_equal(hpgl_quantile, tt)
     expect_equal(cbcb_quantile, hpgl_quantile)
 })
 
@@ -73,8 +71,8 @@ test_that("Are cpm conversions identical?", {
 message("Testing log2(quantile(cpm())) normalization using the cpm from voom()")
 cbcb_l2qcpm_data = cbcbSEQ::log2CPM(cbcb_quantile)
 cbcb_l2qcpm = cbcb_l2qcpm_data$y
-hpgl_l2qcpm_data = hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE, verbose=TRUE)
-hpgl_l2qcpm = hpgl_l2qcpm_data$final_counts$count_table
+hpgl_l2qcpm_data = hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE)
+hpgl_l2qcpm = hpgl_l2qcpm_data[["count_table"]]
 hpgl_l2qcpm_expt = normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE)
 hpgl_l2qcpm2 = Biobase::exprs(hpgl_l2qcpm_expt$expressionset)
 test_that("Are l2qcpm conversions/transformations identical using two codepaths?", {
@@ -112,7 +110,7 @@ message("Testing batch correction results using modified combat.")
 ## to ensure that this is still accessible when required.\
 message("Testing that the libsize input to voom is identical.")
 cbcb_libsize = cbcb_l2qcpm_data$lib.size
-hpgl_libsize = hpgl_l2qcpm_data$normalized_counts$libsize
+hpgl_libsize = hpgl_l2qcpm_data[["intermediate_counts"]][["normalization"]][["libsize"]]
 test_that("In preparing for voom(), are the library sizes the same?", {
     expect_equal(cbcb_libsize, hpgl_libsize)
 })

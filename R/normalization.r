@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 14 09:59:55 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 14 22:01:38 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -667,9 +667,9 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     original_libsize <- NULL
     if (data_class == 'expt') {
         design <- data[["design"]]
-        data <- Biobase::exprs(data[["expressionset"]])
         original_counts <- data[["original_counts"]]
         original_libsizes <- data[["original_libsize"]]
+        data <- Biobase::exprs(data[["expressionset"]])
     } else if (data_class == 'ExpressionSet') {
         data <- Biobase::exprs(data)
     } else if (data_class == 'list') {
