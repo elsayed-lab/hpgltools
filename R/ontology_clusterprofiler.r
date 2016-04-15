@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr  1 17:08:09 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr 15 15:25:34 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make sure that clusterProfiler is ready to run
 #'
@@ -52,7 +52,7 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' @param include_cnetplots   the cnetplots are often stupid and can be left behind
 #' @param showcategory   how many categories to show in p-value plots
 #' @param universe   universe to use
-#' @param organism   name of the species to use
+#' @param species   name of the species to use
 #' @param gff   gff file to generate the universe
 #' @param wrapped_width  width of ontology names in the pvalue plots
 #' @param method   pvalue calculation method
@@ -87,11 +87,11 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' @export
 simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
                                    fold_changes=NULL, include_cnetplots=FALSE,
-                                   showcategory=12, universe=NULL, organism="undef", gff=NULL,
+                                   showcategory=12, universe=NULL, species="undef", gff=NULL,
                                    wrapped_width=20, method="Wallenius", padjust="BH", ...) {
 
-    if (is.null(organism)) {
-        organism <- "unknown"
+    if (is.null(species)) {
+        species <- "unknown"
     }
     if (!is.null(gff)) {
         go2eg <- check_clusterprofiler(gff=gff, gomap=goids)
@@ -99,17 +99,18 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
             stop("The GO2EG data structure is empty.")
         }
     }
-    if (is.null(de_genes$ID)) {
+    if (is.null(de_genes[["ID"]])) {
         gene_list <- as.character(rownames(de_genes))
     } else {
-        gene_list <- as.character(de_genes$ID)
+        gene_list <- as.character(de_genes[["ID"]])
+        gene_list <- gene_list[!is.na(gene_list)]
     }
     ##message("Testing gseGO")
     ##ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
     ##message(paste0("Has ego desided to work? ", ego2)
     message("simple_clus(): Starting MF(molecular function) analysis")
-    mf_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="MF", level=golevel, readable=TRUE)
-    mf_all <- hpgl_enrichGO(gene_list, organism=organism, ont="MF",
+    mf_group <- clusterProfiler::groupGO(gene_list, organism=species, ont="MF", level=golevel, readable=TRUE)
+    mf_all <- hpgl_enrichGO(gene_list, organism=species, ont="MF",
                             pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     all_mf_phist <- try(hpgl_histogram(mf_all@result$pvalue, bins=20))
     if (class(all_mf_phist)[1] != 'try-error') {
@@ -117,14 +118,14 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         all_mf_phist <- all_mf_phist +
             ggplot2::scale_y_continuous(limits=c(0, y_limit))
     }
-    enriched_mf <- hpgl_enrichGO(gene_list, organism=organism, ont="MF",
+    enriched_mf <- hpgl_enrichGO(gene_list, organism=species, ont="MF",
                                  pvalueCutoff=pcutoff, qvalueCutoff=1.0,
                                  pAdjustMethod=padjust)
 
     message("simple_clus(): Starting BP(biological process) analysis")
-    bp_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="BP",
+    bp_group <- clusterProfiler::groupGO(gene_list, organism=species, ont="BP",
                                          level=golevel, readable=TRUE)
-    bp_all <- hpgl_enrichGO(gene_list, organism=organism, ont="BP", pvalueCutoff=1.0,
+    bp_all <- hpgl_enrichGO(gene_list, organism=species, ont="BP", pvalueCutoff=1.0,
                             qvalueCutoff=1.0, pAdjustMethod="none")
     all_bp_phist <- try(hpgl_histogram(bp_all@result$pvalue, bins=20))
     if (class(all_bp_phist)[1] != 'try-error') {
@@ -132,15 +133,15 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         all_bp_phist <- all_bp_phist +
             ggplot2::scale_y_continuous(limits=c(0, y_limit))
     }
-    enriched_bp <- hpgl_enrichGO(gene_list, organism=organism, ont="BP",
+    enriched_bp <- hpgl_enrichGO(gene_list, organism=species, ont="BP",
                                  pvalueCutoff=pcutoff, qvalueCutoff=1.0,
                                  pAdjustMethod=padjust)
     message("simple_clus(): Starting CC(cellular component) analysis")
-    cc_group <- clusterProfiler::groupGO(gene_list, organism=organism, ont="CC",
+    cc_group <- clusterProfiler::groupGO(gene_list, organism=species, ont="CC",
                                          level=golevel, readable=TRUE)
-    cc_all <- hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=1.0,
+    cc_all <- hpgl_enrichGO(gene_list, organism=species, ont="CC", pvalueCutoff=1.0,
                             qvalueCutoff=1.0, pAdjustMethod="none")
-    enriched_cc <- hpgl_enrichGO(gene_list, organism=organism, ont="CC", pvalueCutoff=pcutoff,
+    enriched_cc <- hpgl_enrichGO(gene_list, organism=species, ont="CC", pvalueCutoff=pcutoff,
                                  qvalueCutoff=1.0, pAdjustMethod=padjust)
     all_cc_phist <- try(hpgl_histogram(cc_all@result$pvalue, bins=20))
     ## Try and catch if there are no significant hits.
@@ -295,17 +296,37 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     }
 
     return_information <- list(
-        de_genes=de_genes,
-        mf_interesting=mf_interesting, bp_interesting=bp_interesting, cc_interesting=cc_interesting,
-        mf_pvals=all_mf_phist, bp_pvals=all_bp_phist, cc_pvals=all_cc_phist,
-        mf_enriched=enriched_mf, bp_enriched=enriched_bp, cc_enriched=enriched_cc,
-        mf_all=mf_all, bp_all=bp_all, cc_all=cc_all,
-        mf_all_barplot=all_mf_barplot, bp_all_barplot=all_bp_barplot, cc_all_barplot=all_cc_barplot,
-        mfp_plot=enriched_mf_barplot, bpp_plot=enriched_bp_barplot, ccp_plot=enriched_cc_barplot,
-        mf_cnetplot=cnetplot_mf, bp_cnetplot=cnetplot_bp, cc_cnetplot=cnetplot_cc,
-        mfall_cnetplot=cnetplot_mfall, bpall_cnetplot=cnetplot_bpall, ccall_cnetplot=cnetplot_ccall,
-        mf_group=mf_group, bp_group=bp_group, cc_group=cc_group,
-        mf_group_barplot=mf_group_barplot, bp_group_barplot=bp_group_barplot, cc_group_barplot=cc_group_barplot)
+        "de_genes" = de_genes,
+        "mf_interesting" = mf_interesting,
+        "bp_interesting" = bp_interesting,
+        "cc_interesting" = cc_interesting,
+        "mf_pvals" = all_mf_phist,
+        "bp_pvals" = all_bp_phist,
+        "cc_pvals" = all_cc_phist,
+        "mf_enriched" = enriched_mf,
+        "bp_enriched" = enriched_bp,
+        "cc_enriched" = enriched_cc,
+        "mf_all" = mf_all,
+        "bp_all" = bp_all,
+        "cc_all" = cc_all,
+        "mf_all_barplot" = all_mf_barplot,
+        "bp_all_barplot" = all_bp_barplot,
+        "cc_all_barplot" = all_cc_barplot,
+        "mfp_plot" = enriched_mf_barplot,
+        "bpp_plot" = enriched_bp_barplot,
+        "ccp_plot" = enriched_cc_barplot,
+        "mf_cnetplot" = cnetplot_mf,
+        "bp_cnetplot" = cnetplot_bp,
+        "cc_cnetplot" = cnetplot_cc,
+        "mfall_cnetplot" = cnetplot_mfall,
+        "bpall_cnetplot" = cnetplot_bpall,
+        "ccall_cnetplot" = cnetplot_ccall,
+        "mf_group" = mf_group,
+        "bp_group" = bp_group,
+        "cc_group" = cc_group,
+        "mf_group_barplot" = mf_group_barplot,
+        "bp_group_barplot" = bp_group_barplot,
+        "cc_group_barplot" = cc_group_barplot)
     return(return_information)
 }
 

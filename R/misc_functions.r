@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Apr 13 13:06:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr 15 15:32:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' png() shortcut
 #'
@@ -618,7 +618,7 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #'  xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
 #' }
 #' @export
-write_xls <- function(data, wb=NULL, sheet="first", first_two_widths=c("30","60"),
+write_xls <- function(data, wb=NULL, sheet="first",
                       start_row=1, start_col=1, ...) {
     arglist <- list(...)
     if (class(data) == 'matrix') {
@@ -672,10 +672,7 @@ write_xls <- function(data, wb=NULL, sheet="first", first_two_widths=c("30","60"
     openxlsx::writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9",
                              startRow=new_row, rowNames=TRUE, startCol=new_col)
     new_row <- new_row + nrow(data) + 2
-    ## Going to make an assumption about columns 1,2
-    ## Maybe make this a parameter? nah for now at least
-    openxlsx::setColWidths(wb, sheet=sheet, widths=first_two_widths, cols=c(1,2))
-    openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=3:ncol(data))
+    openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=1:ncol(data))
     end_col <- ncol(data) + 1
     ret <- list(workbook=wb, end_row=new_row, end_col=end_col)
     return(ret)

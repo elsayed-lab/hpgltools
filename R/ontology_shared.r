@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr  1 17:08:11 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr 15 12:56:05 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -531,8 +531,8 @@ subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
         up_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=uppers, lengths=lengths, goids=goids, doplot=FALSE, species=arglist[["species"]]))
         down_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=downers, lengths=lengths, goids=goids, doplot=FALSE, species=arglist[["species"]]))
         message(paste0(cluster_count, "/", names_length, ": Starting clusterprofiler"))
-        up_cluster[[name]] <- suppressMessages(simple_clusterprofiler(uppers, goids=goids, include_cnetplots=FALSE, organism=arglist[["species"]], gff=gff))
-        down_cluster[[name]] <- suppressMessages(simple_clusterprofiler(downers, goids=goids, include_cnetplots=FALSE, organism=arglist[["species"]], gff=gff))
+        up_cluster[[name]] <- suppressMessages(simple_clusterprofiler(uppers, goids=goids, include_cnetplots=FALSE, species=arglist[["species"]], gff=gff))
+        down_cluster[[name]] <- suppressMessages(simple_clusterprofiler(downers, goids=goids, include_cnetplots=FALSE, species=arglist[["species"]], gff=gff))
         message(paste0(cluster_count, "/", names_length, ": Starting topgo"))
         up_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=uppers, goids_df=goids))
         down_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=downers, goids_df=goids))
