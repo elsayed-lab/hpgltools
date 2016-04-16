@@ -7,7 +7,7 @@
 pp(file)
 }
 \arguments{
-\item{a}{filename to write}
+\item{file}{a filename to write}
 }
 \value{
 a png with height=width=9 inches and a high resolution

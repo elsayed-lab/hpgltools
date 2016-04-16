@@ -13,6 +13,8 @@ hpgl_density(data, colors = NULL, sample_names = NULL,
 
 \item{colors}{a color scheme to use.}
 
+\item{sample_names}{names of the samples.}
+
 \item{position}{how to place the lines, either let them overlap (identity), or stack them.}
 
 \item{fill}{fill the distributions?  This might make the plot unreasonably colorful.}
@@ -21,7 +23,7 @@ hpgl_density(data, colors = NULL, sample_names = NULL,
 
 \item{scale}{plot on the log scale?}
 
-\item{names}{names of the samples.}
+\item{colors_by}{a factor for coloring the lines}
 }
 \value{
 a density plot!

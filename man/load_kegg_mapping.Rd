@@ -10,6 +10,11 @@ load_kegg_mapping(orgdb, gene_ids, keytype = "ENSEMBL")
 \item{orgdb}{An OrganismDb instance}
 
 \item{gene_ids}{Identifiers of the genes to retrieve annotations for}
+
+\item{keytype}{the keytype, damn I really need to read this code}
+}
+\value{
+a df of kegg mappings
 }
 \description{
 Creates a gene/KEGG mapping dataframe

@@ -12,6 +12,11 @@ e.g. "path:mmu05134"}
 
 \item{org_abbreviation}{KEGG identifier for the species of interest (e.g.
 "hsa" for Homo sapiens)}
+
+\item{verbose}{talky talky?}
+}
+\value{
+a df mapping kegg and gene IDs
 }
 \description{
 Generate GENE/KEGG mapping

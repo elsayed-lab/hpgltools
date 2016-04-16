@@ -10,6 +10,8 @@ load_go_terms(orgdb, gene_ids, keytype = "ENSEMBL")
 \item{orgdb}{An OrganismDb instance}
 
 \item{gene_ids}{Identifiers of the genes to retrieve annotations for}
+
+\item{keytype}{the mysterious keytype returns yet again to haunt my dreams}
 }
 \value{
 a data frame of gene IDs, go terms, and names.

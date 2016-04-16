@@ -20,6 +20,8 @@ hpgl_pca(data, design = NULL, plot_colors = NULL, plot_labels = NULL,
 
 \item{plot_size}{size for the glyphs on the plot.}
 
+\item{size_column}{use an experimental factor to size the glyphs of the plot}
+
 \item{...}{arglist from elipsis!}
 }
 \value{

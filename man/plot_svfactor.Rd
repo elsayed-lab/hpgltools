@@ -8,9 +8,17 @@ plot_svfactor(expt, svest, chosen_factor = "snpcategory",
   factor_type = "factor")
 }
 \arguments{
-\item{factors}{some portion of the experimental design}
+\item{expt}{an experiment from which to acquire the design, counts, etc}
 
-\item{sv}{a set of surrogate variable estimations from sva/svg or batch estimates}
+\item{svest}{a set of surrogate variable estimations from sva/svg
+or batch estimates}
+
+\item{chosen_factor}{a factor to compare against}
+
+\item{factor_type}{this may be a factor or range, it is intended to plot
+a scatterplot if it is a range, a dotplot if a factor}
+
+\item{factors}{some portion of the experimental design}
 }
 \description{
 This should make a quick df of the factors and surrogates and plot them.

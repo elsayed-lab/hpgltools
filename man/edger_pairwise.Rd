@@ -34,6 +34,8 @@ de_vs_cb = (E-D)-(C-B),"}
 
 \item{annot_df}{Add some annotation information to the data tables?}
 
+\item{force}{Force edgeR to accept inputs which it should not have to deal with}
+
 \item{...}{The elipsis parameter is fed to write_edger() at the end.}
 }
 \value{

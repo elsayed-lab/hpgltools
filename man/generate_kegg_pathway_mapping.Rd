@@ -8,6 +8,11 @@ generate_kegg_pathway_mapping(pathways, verbose = FALSE)
 }
 \arguments{
 \item{pathways}{Vector of KEGG pathway identifiers}
+
+\item{verbose}{talk talk?}
+}
+\value{
+a data frame describing some kegg pathways
 }
 \description{
 Generate a KEGG PATHWAY / description mapping

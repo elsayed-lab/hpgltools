@@ -15,6 +15,8 @@ make_tooltips(annotations, desc_col = "description", type = "gene",
 \item{desc_col}{A column from a gff file to grab the data from}
 
 \item{type}{A gff type to key from}
+
+\item{id_col}{which annotation column to cross reference against}
 }
 \value{
 A df of tooltip information or name of a gff file

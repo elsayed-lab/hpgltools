@@ -13,9 +13,14 @@ load_host_annotations(orgdb, gene_ids, keytype = "ENSEMBL",
 
 \item{gene_ids}{Identifiers of the genes to retrieve annotations for}
 
+\item{keytype}{a, umm keytype? I need to properly read this code.}
+
 \item{fields}{Columns to include in the output}
 
 \item{biomart_dataset}{Name of the biomaRt dataset to query for gene type}
+}
+\value{
+a table of gene information
 }
 \description{
 Creates a dataframe gene and transcript information for a given set of gene

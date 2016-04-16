@@ -10,7 +10,13 @@ print_ups_downs(upsdowns, wb = NULL, excel = "excel/significant_genes.xlsx",
 \arguments{
 \item{upsdowns}{the output from extract_significant_genes()}
 
-\item{excel}{table to write to}
+\item{wb}{a workbook object to use for writing, or start a new one}
+
+\item{excel}{filename to write to, this should be removed I think}
+
+\item{according}{use limma, deseq, or edger for defining 'significant'}
+
+\item{summary_count}{I don't remember, but this helps space sequential tables}
 }
 \value{
 the return from write_xls

@@ -8,11 +8,13 @@ get_model_adjust(expt, estimate_type = "sva_supervised", surrogates = "be",
   ...)
 }
 \arguments{
+\item{expt}{a raw experiment object}
+
 \item{estimate_type}{one of sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised, ruv_residuals, or pca}
 
-\item{...}{parameters fed to arglist}
+\item{surrogates}{choose a method for getting the number of surrogates, be or leek}
 
-\item{raw_expt}{a raw experiment object}
+\item{...}{parameters fed to arglist}
 }
 \value{
 a list including the adjustments for a model matrix, a modified count table, and 3 plots of the known batch, surrogates, and batch/surrogate.

@@ -14,18 +14,22 @@ which is to say the output from voom/voomMod/hpgl_voom().}
 
 \item{de_genes}{df from toptable or its friends containing p-values.}
 
+\item{pval_cutoff}{a cutoff defining significant from not.}
+
 \item{alpha}{how transparent to make the dots.}
+
+\item{logfc_cutoff}{a fold change cutoff}
+
+\item{pval}{the name of the pvalue column to use for cutoffs}
 
 \item{size}{how big are the dots?}
 
-\item{tooltip_data}{a df of tooltip information for gvis
+\item{tooltip_data}{a df of tooltip information for gvis}
+
+\item{gvis_filename}{a filename to write a fancy html graph.
 graphs.}
 
-\item{gvis_filename}{a filename to write a fancy html graph.}
-
 \item{...}{more options for you}
-
-\item{adjpval_cutoff}{a cutoff defining significant from not.}
 }
 \value{
 a ggplot2 MA scatter plot.  This is defined as the rowmeans

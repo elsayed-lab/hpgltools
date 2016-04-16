@@ -12,7 +12,12 @@ load_parasite_annotations(orgdb, gene_ids, keytype = "ENSEMBL",
 
 \item{gene_ids}{Identifiers of the genes to retrieve annotations for}
 
+\item{keytype}{mmm the key type used}
+
 \item{fields}{Columns to include in the output}
+}
+\value{
+a table of geneids, chromosomes, descriptions, strands, types, and lengths
 }
 \description{
 Creates a dataframe gene and transcript information for a given set of gene

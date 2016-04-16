@@ -10,6 +10,11 @@ load_kegg_pathways(orgdb, gene_ids, keytype = "ENSEMBL")
 \item{orgdb}{An OrganismDb instance}
 
 \item{gene_ids}{Identifiers of the genes to retrieve annotations for}
+
+\item{keytype}{as per the previous functions, I don't know what this does yet}
+}
+\value{
+a character list of pathways
 }
 \description{
 Creates a KEGG pathway/description mapping dataframe

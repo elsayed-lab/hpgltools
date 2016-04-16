@@ -9,6 +9,9 @@ kegg_to_ensembl(kegg_ids)
 \arguments{
 \item{kegg_ids}{List of KEGG identifiers to be mapped}
 }
+\value{
+some ensembl IDs
+}
 \description{
 Takes a list of KEGG gene identifiers and returns a list of ENSEMBL
 ids corresponding to those genes.
