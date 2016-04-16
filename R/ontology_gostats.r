@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar 22 15:57:28 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Apr 16 00:30:53 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -48,9 +48,10 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message("If I try to call functions with Category:: or GOstats:: then they collide")
     message("And things fail without error, but if I try library() then R CMD check")
     message("gets pissed, well I tried both ways and I am calling library().")
-    library("Category")
-    library("GSEABase")
-    library("GOstats")
+    ## library("Category")
+    ## library("GSEABase")
+    ## library("GOstats")
+    ## library("AnnotationDbi")
     message(paste0("simple_gostats(): gff_type is: ", gff_type, ". Change that if there are bad merges."))
     types <- c("CDS","gene","exon")
     for (type in types) {
@@ -95,21 +96,22 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     gostats_go$frame.Evidence <- "TAS"
     colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "frame.Evidence")
     gostats_go <- gostats_go[,c("frame.go_id", "frame.Evidence", "frame.gene_id")]
-    gostats_frame <- GOFrame(gostats_go, organism=organism)
-    gostats_all <- GOAllFrame(gostats_frame)
+    gostats_frame <- AnnotationDbi::GOFrame(gostats_go, organism=organism)
+    gostats_all <- AnnotationDbi::GOAllFrame(gostats_frame)
     message("simple_gostats(): Creating the gene set collection.")
-    gsc <- GSEABase::GeneSetCollection(gostats_all, setType=GOCollection())
+    gsc <- GSEABase::GeneSetCollection(gostats_all,
+                                       setType=AnnotationDbi::GOCollection())
 
     mf_over <- bp_over <- cc_over <- NULL
     mf_under <- bp_under <- cc_under <- NULL
     message("simple_gostats(): Performing MF GSEA.")
-    mf_params <- GSEAGOHyperGParams(
+    mf_params <- Category::GSEAGOHyperGParams(
         name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="MF", pvalueCutoff=pcutoff,
         conditional=conditional, testDirection="over")
     ## This is where it fell over
-    mf_over <- hyperGTest(mf_params)
+    mf_over <- Category::hyperGTest(mf_params)
     message(paste0("Found ", nrow(GOstats::summary(mf_over)), " over MF categories."))
     message("simple_gostats(): Performing BP GSEA.")
     bp_params <- Category::GSEAGOHyperGParams(

@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 14 16:44:35 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Apr 16 00:54:12 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 
 #' Given a table of meta data, read it in for use by create_expt()
@@ -6,6 +6,7 @@
 #' @param file a csv/xls file to read
 #' @param header does the table have a header (usually for csv)
 #' @param sep separator for csv files
+#' @param ... not currently used, but saved for arglist options
 #' @return a df of metadata
 read_metadata <- function(file, header=FALSE, sep=",", ...) {
     arglist <- list(...)

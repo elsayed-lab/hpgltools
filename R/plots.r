@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Apr 12 15:22:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Apr 16 00:42:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -255,11 +255,12 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #'
 #' @param data  an expt, expressionset, or data frame.
 #' @param colors   a color scheme to use.
-#' @param names   names of the samples.
+#' @param sample_names   names of the samples.
 #' @param position   how to place the lines, either let them overlap (identity), or stack them.
 #' @param fill   fill the distributions?  This might make the plot unreasonably colorful.
-#' @param title   a title for the plot.
 #' @param scale   plot on the log scale?
+#' @param title   a title for the plot.
+#' @param colors_by a factor for coloring the lines
 #' @return a density plot!
 #' @seealso \pkg{ggplot2} \link[ggplot2]{geom_density}
 #' @examples
@@ -821,17 +822,19 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     return(plots)
 }
 
-#'   Make a pretty MA plot from the output of voom/limma/eBayes/toptable.
+#' Make a pretty MA plot from the output of voom/limma/eBayes/toptable.
 #'
 #' @param counts  df of linear-modelling, normalized counts by sample-type,
-#' which is to say the output from voom/voomMod/hpgl_voom().
+#'        which is to say the output from voom/voomMod/hpgl_voom().
 #' @param de_genes  df from toptable or its friends containing p-values.
-#' @param adjpval_cutoff   a cutoff defining significant from not.
+#' @param pval_cutoff   a cutoff defining significant from not.
 #' @param alpha   how transparent to make the dots.
+#' @param logfc_cutoff a fold change cutoff
+#' @param pval the name of the pvalue column to use for cutoffs
 #' @param size   how big are the dots?
-#' @param gvis_filename   a filename to write a fancy html graph.
 #' @param tooltip_data   a df of tooltip information for gvis
-#' graphs.
+#' @param gvis_filename   a filename to write a fancy html graph.
+#'        graphs.
 #' @param ... more options for you
 #' @return a ggplot2 MA scatter plot.  This is defined as the rowmeans
 #' of the normalized counts by type across all sample types on the
@@ -866,7 +869,7 @@ hpgl_ma_plot <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.5, logfc_cu
                      "adjpval" = de_genes[[pval_column]])
     df[["adjpval"]] <- as.numeric(format(df[["adjpval"]], scientific=FALSE))
     df[["pval"]] <- as.numeric(format(df[["pval"]], scientific=FALSE))
-    df$state <- ifelse(df[["adjpval"]] > adjpval_cutoff, "pinsig",
+    df$state <- ifelse(df[["adjpval"]] > pval_cutoff, "pinsig",
                 ifelse(df[["adjpval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
                 ifelse(df[["adjpval"]] <= pval_cutoff & df[["logfc"]] <= (-1 * logfc_cutoff), "downsig", "fcinsig")))
     num_pinsig <- sum(df[["state"]] == "pinsig")

@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar 29 15:40:41 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Apr 16 00:12:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 model_test <- function(design, goal="condition", factors=NULL, ...) {
     arglist <- list(...)
@@ -10,7 +10,7 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
             matrix_goal <- design[, goal]
             matrix_factor <- design[, factor]
             matrix_all_formula <- as.formula(paste0("~ 0 + ", goal, " + ", factor))
-            matrix_test <- model.matrix(matrix_formula, data=design)
+            matrix_test <- model.matrix(matrix_all_formula, data=design)
             num_columns <- ncol(matrix_test)
             matrix_decomp <- qr(matrix_test)
             message(paste0("The model of ", goal, " and ", factor, " has ", num_columns, " and rank ", matrix_decomp[["rank"]]))
@@ -26,7 +26,7 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
             matrix_goal <- design[, goal]
             matrix_factor <- design[, factor]
             matrix_all_formula <- as.formula(paste0("~ 0 + ", goal, " + ", factor))
-            matrix_test <- model.matrix(matrix_formula, data=design)
+            matrix_test <- model.matrix(matrix_all_formula, data=design)
             num_columns <- ncol(matrix_test)
             matrix_decomp <- qr(matrix_test)
             message(paste0("The model of ", goal, " and ", factor, " has ", num_columns, " and rank ", matrix_decomp[["rank"]]))

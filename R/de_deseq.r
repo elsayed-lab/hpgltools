@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 14 11:04:07 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr 15 22:48:49 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from deseq2
 #'
@@ -194,9 +194,9 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
         formula_string <- "as.formula(~ "
-        for (count in 1:ncol(model_adjust)) {
+        for (count in 1:ncol(model_batch)) {
             colname <- paste0("SV", count)
-            dataset[[colname]] <- model_adjust[, 1]
+            dataset[[colname]] <- model_batch[, 1]
             formula_string <- paste0(formula_string, " ", colname, " + ")
         }
         formula_string <- paste0(formula_string, "condition)")

@@ -1,13 +1,13 @@
-## Time-stamp: <Fri Apr 15 15:32:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Apr 16 00:45:19 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' png() shortcut
 #'
 #' I hate remembering my options for png()
-#' @param a filename to write
+#' @param file a filename to write
 #' @return a png with height=width=9 inches and a high resolution
 #' @export
 pp <- function(file) {
-    png(file=file, width=9, height=9, units="in", res=180)
+    png(filename=file, width=9, height=9, units="in", res=180)
 }
 
 #' Grab gene lengths from a gff file.
@@ -445,6 +445,7 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' @param annotations Either a gff file or annotation data frame (which likely came from a gff file.)
 #' @param desc_col A column from a gff file to grab the data from
 #' @param type A gff type to key from
+#' @param id_col which annotation column to cross reference against
 #' @return A df of tooltip information or name of a gff file
 #' @seealso \pkg{googleVis} \link{gff2df}
 #' @examples
@@ -604,8 +605,6 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #' @param data  A data frame to print
 #' @param wb the workbook to which to write
 #' @param sheet   Name of the sheet to write
-#' @param first_two_widths   I add long titles to the tops of the sheets
-#'   setting this makes sure that those columns are not too wide
 #' @param start_row   The first row of the sheet to write
 #' @param start_col   The first column to write
 #' @param ...  the set of arguments given to for openxlsx

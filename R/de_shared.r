@@ -409,10 +409,12 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
 #' @param ed  a edger output
 #' @param de  a deseq output
 #' @param ba  a basic output
-#' @param table name of the table to merge
+#' @param table_name name of the table to merge
 #' @param annot_df  add some annotation information
 #' @param inverse   invert the fold changes
 #' @param include_basic   include the basic table?
+#' @param fc_cutoff logfoldchange cutoff
+#' @param p_cutoff a pvalue cutoff
 #' @export
 create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inverse=FALSE,
                                   include_basic=TRUE, fc_cutoff=1, p_cutoff=0.05) {
@@ -610,7 +612,10 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
 #' This shortcuts that process for me.
 #'
 #' @param upsdowns  the output from extract_significant_genes()
-#' @param excel   table to write to
+#' @param wb a workbook object to use for writing, or start a new one
+#' @param excel   filename to write to, this should be removed I think
+#' @param according use limma, deseq, or edger for defining 'significant'
+#' @param summary_count I don't remember, but this helps space sequential tables
 #' @return the return from write_xls
 #' @seealso \code{\link{combine_de_tables}}
 #' @export

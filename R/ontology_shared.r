@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr 15 12:56:05 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr 15 23:23:10 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -60,7 +60,8 @@ deparse_go_value <- function(value) {
 goterm <- function(go="GO:0032559") {
     go <- as.character(go)
     term <- function(id) {
-        value <- try(as.character(Term(GO.db::GOTERM[id])), silent=TRUE)
+        value <- try(as.character(
+            AnnotationDbi::Term(GO.db::GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value <- "not found"
         }
@@ -94,7 +95,8 @@ gosyn <- function(go) {
     gosn <- function(go) {
         go <- as.character(go)
         result <- ""
-        value <- try(as.character(Synonym(GO.db::GOTERM[go])), silent=TRUE)
+        value <- try(as.character(
+            AnnotationDbi::Synonym(GO.db::GOTERM[go])), silent=TRUE)
         result <- paste(deparse_go_value(value), collapse="; ")
         return(result)
     }
@@ -120,7 +122,8 @@ gosec <- function(go) {
     gosc <- function(go) {
         go <- as.character(go)
         result <- ""
-        value <- try(as.character(Secondary(GO.db::GOTERM[go])), silent=TRUE)
+        value <- try(as.character(
+            AnnotationDbi::Secondary(GO.db::GOTERM[go])), silent=TRUE)
         result <- deparse_go_value(value)
         return(result)
     }
@@ -144,7 +147,9 @@ gosec <- function(go) {
 godef <- function(go) {
     go <- as.character(go)
     def <- function(id) {
-        value <- try(as.character(Definition(GO.db::GOTERM[id])), silent=TRUE)
+        ## This call to AnnotationDbi might be wrong
+        value <- try(as.character(
+            AnnotationDbi::Definition(GO.db::GOTERM[id])), silent=TRUE)
         if (class(value) == "try-error") {
             value <- "not found"
         }
@@ -195,6 +200,7 @@ goont <- function(go) {
 golev <- function(go, verbose=FALSE) {
     go <- as.character(go)
     level <- 0
+    requireNamespace("GO.db")
     while(class(try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]])),
                     silent=FALSE)) != 'try-error') {
         if(isTRUE(verbose)) {
@@ -202,11 +208,12 @@ golev <- function(go, verbose=FALSE) {
         }
         ontology <- as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]]))
         if (ontology == "MF") {
-            ancestors <- GOMFANCESTOR[[go]]
+            ## I am not certain if GO.db:: will work for this
+            ancestors <- GO.db::GOMFANCESTOR[[go]]
         } else if (ontology == "BP") {
-            ancestors <- GOBPANCESTOR[[go]]
+            ancestors <- GO.db::GOBPANCESTOR[[go]]
         } else if (ontology == "CC") {
-            ancestors <- GOCCANCESTOR[[go]]
+            ancestors <- GO.db::GOCCANCESTOR[[go]]
         } else {
             ## There was an error
             message(paste("There was an error getting the ontology: ", as.character(go), sep=""))

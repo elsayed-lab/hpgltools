@@ -1,6 +1,8 @@
 #' Extract annotation information from biomart without having to remember the stupid biomart parameters
 #'
 #' @param species currently only hsapiens
+#' @param overwrite overwrite a savefile if it exists
+#' @param do_save create a savefile of the annotations
 #' @examples
 #' \dontrun{
 #'  tt = get_biomarg_annotations()

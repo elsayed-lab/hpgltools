@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 14 11:04:09 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Apr 16 00:36:21 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from edger
 #'
@@ -79,6 +79,7 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param annot_df   Add some annotation information to the data tables?
+#' @param force  Force edgeR to accept inputs which it should not have to deal with
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #' @return A list including the following information:
 #'   contrasts = The string representation of the contrasts performed.

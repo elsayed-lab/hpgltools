@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Apr 11 18:52:21 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Apr 16 00:50:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix comprised of the matrix - rowMeans(matrix)
@@ -79,6 +79,7 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' @param plot_title   a title for the plot.
 #' @param plot_size   size for the glyphs on the plot.
 #' @param plot_labels   add labels?  Also, what type?  FALSE, "default", or "fancy".
+#' @param size_column use an experimental factor to size the glyphs of the plot
 #' @param ...  arglist from elipsis!
 #' @return a list containing the following:
 #'   pca = the result of fast.svd()
@@ -212,7 +213,7 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         } else if (plot_labels[[1]] == "normal") {
             pca_labels <- paste(design[[cond_column]], design[[batch_column]], sep="_")
             pca_plot <- pca_plot +
-                ggrepel::geom_text_repel(aes(label=pca_labels), size=3)
+                ggrepel::geom_text_repel(ggplot2::aes_string(label="pca_labels"), size=3)
         } else if (plot_labels[[1]] == "text") {
             pca_plot <- pca_plot +
                 ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2",
@@ -230,7 +231,11 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
     }
     pca_return <- list(
-        pca=pca, plot=pca_plot, table=pca_data, res=pca_res, variance=pca_variance)
+        "pca" = pca,
+        "plot" = pca_plot,
+        "table" = pca_data,
+        "res" = pca_res,
+        "variance" = pca_variance)
     return(pca_return)
 }
 
@@ -264,6 +269,7 @@ factor_rsquared <- function(svd_v, factor) {
 #' @param plot_title   a title for the plot.
 #' @param plot_labels   a parameter for the labels on the plot.
 #' @param plot_size  The size of the dots on the plot
+#' @param size_column an experimental factor to use for sizing the glyphs
 #' @return a ggplot2 PCA plot
 #' @seealso \pkg{ggplot2} \code{\link[directlabels]{geom_dl}}
 #' @examples
@@ -694,30 +700,11 @@ pca_highscores <- function(df=NULL, conditions=NULL, batches=NULL, n=20) {
     colnames(highest) <- colnames(another_pca$scores)
     colnames(lowest) <- colnames(another_pca$scores)
     ret_list <- list(
-        "pca_hist"=pca_hist,
-        "pca_biplot"=pca_biplot,
-        "highest"=highest,
-        "lowest"=lowest)
+        "pca_hist" = pca_hist,
+        "pca_biplot" = pca_biplot,
+        "highest" = highest,
+        "lowest" = lowest)
     return(ret_list)
-}
-
-#' Plot n principle components sequentially vs. factors in the experiment
-#'
-#' The goal of this should be to try to identify principle components which
-#' change with respect to some other known (biological) factor
-#'
-#' @param expt  an experiment
-#' @param n  number of principle components to use
-#' @param factor  name(s) of experimental factor(s) to compare against
-#' @return a bunch of plots and some sort of summary.
-#' @seealso \code{\link[stats]{princomp}}
-#' @examples
-#' \dontrun{
-#'  bob = pc_vs_factor(stuff)
-#' }
-#' @export
-pc_vs_factor <- function() {
-
 }
 
 ## EOF

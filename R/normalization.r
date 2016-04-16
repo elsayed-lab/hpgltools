@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 14 22:01:38 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Apr 16 00:55:47 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -477,13 +477,20 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
     NAs <- any(is.na(dat))
     if (NAs) {
         message(paste0("Found ", sum(is.na(dat)), " missing data values."))
+        message("This might end badly?")
+        B.hat <- apply(dat, 1, NAs, design)
+    } else {
+        B.hat <- solve(t(design) %*% design) %*% t(design) %*% t(as.matrix(dat))
     }
     message("Standardizing data across genes\n")
-    if (!NAs) {
-        B.hat <- solve(t(design) %*% design) %*% t(design) %*% t(as.matrix(dat))
-    } else {
-        B.hat <- apply(dat, 1, Beta.NA, design)
-    }
+    ## I think that the Beta.NA is incorrect but should just be NAs
+    ## either way, it has no definition, so if this section of code gets called
+    ## then it will end in an error
+    ## if (!NAs) {
+    ##     B.hat <- solve(t(design) %*% design) %*% t(design) %*% t(as.matrix(dat))
+    ## } else {
+    ##     B.hat <- apply(dat, 1, Beta.NA, design)
+    ## }
     grand.mean <- t(n.batches/n.array) %*% B.hat[1:n.batch, ]
     if (!NAs) {
         var.pooled <- ((dat - t(design %*% B.hat))^2) %*% rep(1/n.array, n.array)
@@ -1379,7 +1386,6 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 #' @param count_table  A matrix of count data
 #' @param transform   A type of transformation to perform: log2/log10/log
 #' @param base   for other log scales
-#' @param add   to avoid attempting a log(0)
 #' @return dataframe of logx(counts)
 #' @examples
 #' \dontrun{
