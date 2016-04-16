@@ -7,8 +7,8 @@ global:
  - R_CHECK_ARGS="--no-build-vignettes --no-manual --timings"
  - _R_CHECK_TIMINGS_="0"
 
-##script:
-##  - make install && make test
+script:
+ - make install && make test
 
 notifications:
   email: false
