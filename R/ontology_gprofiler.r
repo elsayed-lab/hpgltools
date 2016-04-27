@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Apr 27 17:24:12 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 17:55:05 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Run searches against the web service g:Profiler
 #'
@@ -29,7 +29,7 @@ simple_gprofiler <- function(gene_list, organism="hsapiens", first_col="logFC", 
     go_result <- try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,
                                           ordered_query=TRUE, src_filter="GO"))
     message("Performing g:Profiler KEGG search.")
-    kegg_result <-  try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,
+    kegg_result <- try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,
                                              ordered_query=TRUE, src_filter="KEGG"))
     message("Performing g:Profiler reactome.db search.")
     reactome_result <- try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,

@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Apr 26 10:50:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 17:54:46 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -390,10 +390,10 @@ pval_plot <- function(df, ontology="MF") {
 #' }
 #' @export
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
-                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE,
+                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE, organism="unsupported",
                                   goid_map="reference/go/id2go.map", gff_file=NULL, gff_type="gene",
                                   goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE,
-                                  do_topgo=TRUE, do_gostats=TRUE, do_trees=FALSE) {
+                                  do_topgo=TRUE, do_gostats=TRUE, do_gprofiler=TRUE, do_trees=FALSE) {
     message("This function expects a list of de contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
     if (isTRUE(do_goseq) & is.null(gene_lengths)) {
@@ -442,6 +442,8 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
         cluster_up_ontology <- cluster_up_trees <- cluster_down_ontology <- cluster_down_trees <- NULL
         topgo_up_ontology <- topgo_up_trees <- topgo_down_ontology <- topgo_down_trees <- NULL
         gostats_up_ontology <- gostats_up_trees <- gostats_down_ontology <- gostats_down_trees <- NULL
+        gprofiler_up_ontology <- gprofiler_down_ontology <- NULL
+
         if (isTRUE(do_goseq)) {
             goseq_up_ontology <- try(simple_goseq(up_genes, lengths=gene_lengths, goids=goids))
             goseq_down_ontology <- try(simple_goseq(down_genes, lengths=gene_lengths, goids=goids))
@@ -450,6 +452,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                 goseq_down_trees <- try(goseq_trees(down_genes, goseq_down_ontology, goid_map=goid_map, goids_df=goids))
             }
         }
+
         if (isTRUE(do_cluster)) {
             cluster_up_ontology <- try(simple_clusterprofiler(up_genes, goids=goids, gff=gff_file))
             cluster_down_ontology <- try(simple_clusterprofiler(down_genes, goids=goids, gff=gff_file))
@@ -458,6 +461,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                 cluster_down_trees <- try(cluster_trees(down_genes, cluster_down_ontology, goid_map=goid_map, goids_df=goids))
             }
         }
+
         if (isTRUE(do_topgo)) {
             topgo_up_ontology <- try(simple_topgo(up_genes, goid_map=goid_map, goids_df=goids))
             topgo_down_ontology <- try(simple_topgo(down_genes, goid_map=goid_map, goids_df=goids))
@@ -466,6 +470,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                 topgo_down_trees <- try(topgo_trees(topgo_down_ontology))
             }
         }
+
         if (isTRUE(do_gostats)) {
             gostats_up_ontology <- try(simple_gostats(up_genes, gff_file, goids, gff_type=gff_type))
             gostats_down_ontology <- try(simple_gostats(down_genes, gff_file, goids, gff_type=gff_type))
@@ -475,15 +480,31 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                 ## topgo_down_trees = try(gostats_trees(topgo_down_ontology))
             }
         }
-        c_data <- list(up_table=up_genes, down_table=down_genes,
-                       up_goseq=goseq_up_ontology, down_goseq=goseq_down_ontology,
-                       up_cluster=cluster_up_ontology, down_cluster=cluster_down_ontology,
-                       up_topgo=topgo_up_ontology, down_topgo=topgo_down_ontology,
-                       up_goseqtrees=goseq_up_trees, down_goseqtrees=goseq_down_trees,
-                       up_clustertrees=cluster_up_trees, down_clustertrees=cluster_down_trees,
-                       up_topgotrees=topgo_up_trees, down_topgotrees=topgo_down_trees,
-                       up_gostats=gostats_up_ontology, down_gostats=gostats_down_ontology,
-                       up_gostatstrees=gostats_up_trees, down_gostatstrees=gostats_down_trees)
+
+        if (isTRUE(do_gprofiler)) {
+            gprofiler_up_ontology <- try(simple_gprofiler(up_genes, organism=organism))
+            gprofiler_down_ontology <- try(simple_gprofiler(down_genes, organism=organism))
+        }
+        c_data <- list("up_table" = up_genes,
+                       "down_table" = down_genes,
+                       "up_goseq" = goseq_up_ontology,
+                       "down_goseq" = goseq_down_ontology,
+                       "up_cluster" = cluster_up_ontology,
+                       "down_cluster" = cluster_down_ontology,
+                       "up_topgo" = topgo_up_ontology,
+                       "down_topgo" = topgo_down_ontology,
+                       "up_gostats" = gostats_up_ontology,
+                       "down_gostats" = gostats_down_ontology,
+                       "up_gprofiler" = profiler_up_ontology,
+                       "down_gprofiler" = profiler_down_ontology,
+                       "up_goseqtrees" = goseq_up_trees,
+                       "down_goseqtrees" = goseq_down_trees,
+                       "up_clustertrees" = cluster_up_trees,
+                       "down_clustertrees" = cluster_down_trees,
+                       "up_topgotrees" = topgo_up_trees,
+                       "down_topgotrees" = topgo_down_trees,
+                       "up_gostatstrees" = gostats_up_trees,
+                       "down_gostatstrees" = gostats_down_trees)
         output[[c]] <- c_data
     }
     names(output) <- names(de_out)
