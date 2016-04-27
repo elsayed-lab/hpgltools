@@ -5,7 +5,7 @@
 \title{Make a ggplot PCA plot describing the samples' clustering.}
 \usage{
 hpgl_pca(data, design = NULL, plot_colors = NULL, plot_labels = NULL,
-  plot_title = NULL, plot_size = 5, ...)
+  plot_title = NULL, plot_size = 5, size_column = NULL, ...)
 }
 \arguments{
 \item{data}{an expt set of samples.}
@@ -19,6 +19,8 @@ hpgl_pca(data, design = NULL, plot_colors = NULL, plot_labels = NULL,
 \item{plot_title}{a title for the plot.}
 
 \item{plot_size}{size for the glyphs on the plot.}
+
+\item{size_column}{use an experimental factor to size the glyphs of the plot}
 
 \item{...}{arglist from elipsis!}
 }
@@ -41,7 +43,7 @@ Make a ggplot PCA plot describing the samples' clustering.
 }
 }
 \seealso{
-\code{\link{makeSVD}}, \code{\link[cbcbSEQ]{pcRes}},
+\code{\link{makeSVD}},
 \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 }
 

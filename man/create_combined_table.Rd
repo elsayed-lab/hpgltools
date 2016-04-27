@@ -4,8 +4,8 @@
 \alias{create_combined_table}
 \title{Given a limma, edger, and deseq table, combine them}
 \usage{
-create_combined_table(li, ed, de, ba, table, annot_df = NULL,
-  inverse = FALSE, include_basic = TRUE)
+create_combined_table(li, ed, de, ba, table_name, annot_df = NULL,
+  inverse = FALSE, include_basic = TRUE, fc_cutoff = 1, p_cutoff = 0.05)
 }
 \arguments{
 \item{li}{a limma output}
@@ -16,13 +16,17 @@ create_combined_table(li, ed, de, ba, table, annot_df = NULL,
 
 \item{ba}{a basic output}
 
-\item{table}{name of the table to merge}
+\item{table_name}{name of the table to merge}
 
 \item{annot_df}{add some annotation information}
 
 \item{inverse}{invert the fold changes}
 
 \item{include_basic}{include the basic table?}
+
+\item{fc_cutoff}{logfoldchange cutoff}
+
+\item{p_cutoff}{a pvalue cutoff}
 }
 \description{
 Given a limma, edger, and deseq table, combine them

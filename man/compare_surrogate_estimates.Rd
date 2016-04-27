@@ -12,7 +12,7 @@ compare_surrogate_estimates(expt, extra_factors = NULL)
 \arguments{
 \item{expt}{an experiment containing a design and other information}
 
-\item{a}{character list of extra factors which may be included in the final plot of the data}
+\item{extra_factors}{character list of extra factors which may be included in the final plot of the data}
 }
 \value{
 a list of toys

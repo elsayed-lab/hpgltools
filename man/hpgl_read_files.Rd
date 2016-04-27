@@ -38,6 +38,6 @@ It shouldn't interfere with other usages, but it attempts to take into account d
 }
 }
 \seealso{
-\link{create_experiment}
+\link{create_expt}
 }
 

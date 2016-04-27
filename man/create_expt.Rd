@@ -3,14 +3,11 @@
 \name{create_expt}
 \alias{create_expt}
 \title{Wrap bioconductor's expressionset to include some other extraneous
-information.  This simply calls create_experiment and then does
-expt_subset for everything}
+information.}
 \usage{
-create_expt(file = NULL, sample_colors = NULL, suffix = ".count.gz",
-  header = FALSE, gene_info = NULL, by_type = FALSE, by_sample = FALSE,
-  sep = ",", include_type = "all", include_gff = NULL,
-  count_dataframe = NULL, meta_dataframe = NULL, savefile = "expt",
-  low_files = FALSE, ...)
+create_expt(file = NULL, sample_colors = NULL, gene_info = NULL,
+  include_type = "all", include_gff = NULL, count_dataframe = NULL,
+  meta_dataframe = NULL, savefile = "expt", low_files = FALSE, ...)
 }
 \arguments{
 \item{file}{a comma separated file describing the samples with
@@ -19,19 +16,8 @@ information like condition,batch,count_filename,etc}
 \item{sample_colors}{a list of colors by condition, if not provided
 it will generate its own colors using colorBrewer}
 
-\item{suffix}{when looking for the count tables in processed_data
-look for this suffix on the end of the files.}
-
-\item{header}{Does the csv metadata file have a header?}
-
 \item{gene_info}{annotation information describing the rows of the data set, usually
 this comes from a call to import.gff()}
-
-\item{by_type}{when looking for count tables, are they organized by type?}
-
-\item{by_sample}{or by sample?  I do all mine by sample, but others do by type...}
-
-\item{sep}{some people prefer their csv files as tab or semicolon separated.}
 
 \item{include_type}{I have usually assumed that all gff annotations should be used,
 but that is not always true, this allows one to limit.}
@@ -61,12 +47,10 @@ find the count tables in the local filesystem.  This logic has been
 superceded by simply adding a field to the .csv file called
 'file'.  create_expt() will then just read that filename, it may be
 a full pathname or local to the cwd of the project.
-
-Also, the logic of this and create_experiment are a bit of a mess and should be redone!
 }
 \examples{
 \dontrun{
-new_experiment = create_experiment("some_csv_file.csv", color_hash)
+new_experiment = create_expt("some_csv_file.csv", color_hash)
 ## Remember that this depends on an existing data structure of gene annotations.
 }
 }

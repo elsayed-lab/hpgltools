@@ -4,7 +4,7 @@
 \alias{subset_ontology_search}
 \title{Perform ontology searches on data subsets.}
 \usage{
-subset_ontology_search(changed_counts, doplot = FALSE, ...)
+subset_ontology_search(changed_counts, doplot = TRUE, ...)
 }
 \arguments{
 \item{changed_counts}{the list of changed counts as ups and downs}

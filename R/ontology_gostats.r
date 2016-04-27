@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Mar  5 02:15:06 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 16:58:43 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -36,11 +36,23 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     ## Therefore I am loading these environments here and calling the functions without ::
     ## For a further discussion of what is happening:
     ## https://stat.ethz.ch/pipermail/bioconductor/2009-November/030348.html
-    try(detach("package:GOstats", unload=TRUE))
-    try(detach("package:Category", unload=TRUE))
-    require.auto("GOstats")
-    requireNameSpace("GOstats")
-
+    try(detach("package:GOstats", unload=TRUE), silent=TRUE)
+    try(detach("package:Category", unload=TRUE), silent=TRUE)
+    ## In theory, requireNamespace is sufficient, but that is not true.
+    requireNamespace("GOstats")
+    requireNamespace("GSEABase")
+    requireNamespace("AnnotationDbi")
+    requireNamespace("Category")
+    message("The namespaces/environments uses by GOstats are entirely too complex.")
+    message("If I try to call functions with Category:: or GOstats:: then they collide")
+    message("And things fail without error, but if I try library() then R CMD check")
+    message("gets pissed, well I tried both ways and I am calling library().")
+    message("R CMD check can bit my shiny metal ass.")
+    library("GOstats")
+    ## library("Category")
+    ## library("GSEABase")
+    ## library("GOstats")
+    ## library("AnnotationDbi")
     message(paste0("simple_gostats(): gff_type is: ", gff_type, ". Change that if there are bad merges."))
     types <- c("CDS","gene","exon")
     for (type in types) {
@@ -57,7 +69,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     } else if ("transcript_name" %in% names(annotation)) {
         universe <- annotation[, c("transcript_name", "width")]
     } else {
-        stop("simple_gostats(): Unable to cross reference annotations into universe.")
+        stop("simple_gostats(): Unable to cross reference annotations into universe, perhaps change gff_type to make the merge work.")
     }
     ## This section is a little odd
     ## The goal is to collect a consistent set of numeric gene IDs
@@ -82,24 +94,25 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     if (nrow(gostats_go) == 0) {
         stop("simple_gostats(): The merging of the universe vs. goids failed.")
     }
-    gostats_go$frame.Evidence <- "TAS"
-    colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "frame.Evidence")
-    gostats_go <- gostats_go[,c("frame.go_id", "frame.Evidence", "frame.gene_id")]
-    gostats_frame <- GOFrame(gostats_go, organism=organism)
-    gostats_all <- GOAllFrame(gostats_frame)
-    message("simple_gostats(): Creating the gene set collection.")
-    gsc <- GeneSetCollection(gostats_all, setType=GOCollection())
+    colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "ID")
+    gostats_go[["frame.Evidence"]] <- "TAS"
+    gostats_go <- gostats_go[, c("frame.go_id", "frame.Evidence", "frame.gene_id")]
+    gostats_frame <- AnnotationDbi::GOFrame(gostats_go, organism=organism)
+    gostats_all <- AnnotationDbi::GOAllFrame(gostats_frame)
+    message("simple_gostats(): Creating the gene set collection.  This is slow.")
+    gsc <- GSEABase::GeneSetCollection(gostats_all,
+                                       setType=GSEABase::GOCollection())
 
     mf_over <- bp_over <- cc_over <- NULL
     mf_under <- bp_under <- cc_under <- NULL
     message("simple_gostats(): Performing MF GSEA.")
-    mf_params <- GSEAGOHyperGParams(
+    mf_params <- Category::GSEAGOHyperGParams(
         name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="MF", pvalueCutoff=pcutoff,
         conditional=conditional, testDirection="over")
     ## This is where it fell over
-    mf_over <- hyperGTest(mf_params)
+    mf_over <- Category::hyperGTest(mf_params)
     message(paste0("Found ", nrow(GOstats::summary(mf_over)), " over MF categories."))
     message("simple_gostats(): Performing BP GSEA.")
     bp_params <- Category::GSEAGOHyperGParams(
@@ -150,22 +163,82 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     bp_under_table <- GOstats::summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
     cc_under_table <- GOstats::summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
     if (!is.null(dim(mf_over_table))) {
-        mf_over_table$qvalue <- qvalue::qvalue(mf_over_table$Pvalue)$qvalues
+        mf_over_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(mf_over_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
     if (!is.null(dim(bp_over_table))) {
-        bp_over_table$qvalue <- qvalue::qvalue(bp_over_table$Pvalue)$qvalues
+        bp_over_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(bp_over_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
     if (!is.null(dim(cc_over_table))) {
-        cc_over_table$qvalue <- qvalue::qvalue(cc_over_table$Pvalue)$qvalues
+        cc_over_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(cc_over_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
     if (!is.null(dim(mf_under_table))) {
-        mf_under_table$qvalue <- qvalue::qvalue(mf_under_table$Pvalue)$qvalues
+        mf_under_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(mf_under_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
     if (!is.null(dim(bp_under_table))) {
-        bp_under_table$qvalue <- qvalue::qvalue(bp_under_table$Pvalue)$qvalues
+        bp_under_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(bp_under_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
     if (!is.null(dim(cc_under_table))) {
-        cc_under_table$qvalue <- qvalue::qvalue(cc_under_table$Pvalue)$qvalues
+        cc_under_table$qvalue <- tryCatch(
+        {
+            ttmp <- as.numeric(cc_under_table$Pvalue)
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            signif(x=ttmp, digits=4)
+        },
+        error=function(cond) {
+            return(1)
+        },
+        finally={
+        })
     }
 
     if (is.null(categorysize)) {
@@ -446,6 +519,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_mf_over <- head(plotting_mf_over, n=n)
         plotting_mf_over <- plotting_mf_over[, c("Term","Pvalue","score")]
         colnames(plotting_mf_over) <- c("term","pvalue","score")
+        plotting_mf_over$term <- as.character(lapply(strwrap(plotting_mf_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_mf_over) > 0) {
         mf_pval_plot_over <- pval_plot(plotting_mf_over, ontology="MF")
@@ -466,6 +540,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_mf_under <- head(plotting_mf_under, n=n)
         plotting_mf_under <- plotting_mf_under[, c("Term","Pvalue","score")]
         colnames(plotting_mf_under) <- c("term","pvalue","score")
+        plotting_mf_under$term <- as.character(lapply(strwrap(plotting_mf_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_mf_under) > 0) {
         mf_pval_plot_under <- pval_plot(plotting_mf_under, ontology="MF")
@@ -486,6 +561,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_bp_over <- head(plotting_bp_over, n=n)
         plotting_bp_over <- plotting_bp_over[, c("Term","Pvalue","score")]
         colnames(plotting_bp_over) <- c("term","pvalue","score")
+        plotting_bp_over$term <- as.character(lapply(strwrap(plotting_bp_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_bp_over) > 0) {
         bp_pval_plot_over <- pval_plot(plotting_bp_over, ontology="BP")
@@ -506,6 +582,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_bp_under <- head(plotting_bp_under, n=n)
         plotting_bp_under <- plotting_bp_under[, c("Term","Pvalue","score")]
         colnames(plotting_bp_under) <- c("term","pvalue","score")
+        plotting_bp_under$term <- as.character(lapply(strwrap(plotting_bp_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_bp_under) > 0) {
         bp_pval_plot_under <- pval_plot(plotting_bp_under, ontology="BP")
@@ -526,6 +603,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_cc_over <- head(plotting_cc_over, n=n)
         plotting_cc_over <- plotting_cc_over[, c("Term","Pvalue","score")]
         colnames(plotting_cc_over) <- c("term","pvalue","score")
+        plotting_cc_over$term <- as.character(lapply(strwrap(plotting_cc_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_cc_over) > 0) {
         cc_pval_plot_over <- pval_plot(plotting_cc_over, ontology="CC")
@@ -546,6 +624,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_cc_under <- head(plotting_cc_under, n=n)
         plotting_cc_under <- plotting_cc_under[, c("Term","Pvalue","score")]
         colnames(plotting_cc_under) <- c("term","pvalue","score")
+        plotting_cc_under$term <- as.character(lapply(strwrap(plotting_cc_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_cc_under) > 0) {
         cc_pval_plot_under <- pval_plot(plotting_cc_under, ontology="CC")

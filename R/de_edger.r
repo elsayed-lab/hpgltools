@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 11 11:46:49 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Apr 16 00:36:21 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from edger
 #'
@@ -79,6 +79,7 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param annot_df   Add some annotation information to the data tables?
+#' @param force  Force edgeR to accept inputs which it should not have to deal with
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #' @return A list including the following information:
 #'   contrasts = The string representation of the contrasts performed.
@@ -98,25 +99,51 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
 #' @export
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                           model_batch=NULL, model_intercept=FALSE, alt_model=NULL,
-                          extra_contrasts=NULL, annot_df=NULL, ...) {
+                          extra_contrasts=NULL, annot_df=NULL, force=FALSE, ...) {
     message("Starting edgeR pairwise comparisons.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
-        conditions <- input$conditions
-        batches <- input$batches
-        data <- as.data.frame(Biobase::exprs(input$expressionset))
-        ## As I understand it, edgeR fits a binomial distribution
-        ## and expects data as floating point counts,
-        ## not a log2 transformation.
-        if (!is.null(input$transform)) {
-            if (input$transform == "log2") {
-                ##data = (2^data) - 1
-                data <- input$normalized$normalized_counts$count_table
-            } ## End checking for log2 normalized data
-        } ## End checking for transformed data
-    } else { ## End checking if this is an expt
+        conditions <- input[["conditions"]]
+        batches <- input[["batches"]]
+        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+
+        ## As I understand it, EdgeR fits a binomial distribution
+        ## and expects data as integer counts, not floating point nor a log2 transformation
+        ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
+        ## violation of its stated preferred/demanded input.  There are of course ways around this
+        ## but one should not take them lightly, perhaps never.
+        if (!is.null(input[["state"]][["normalization"]])) {
+            ## These if statements may be insufficient to check for the appropriate input for deseq.
+            if (isTRUE(force)) {
+                ## Setting force to TRUE allows one to round the data to fool edger into accepting it
+                ## This is a pretty terrible thing to do
+                warning("About to round the data, this is a pretty terrible thing to do")
+                warning("But if you, like me, want to see what happens when you put")
+                warning("non-standard data into deseq, then here you go.")
+                data <- round(data)
+            } else if (input[["state"]][["normalization"]] != "raw" |
+                       (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
+                ## This makes use of the fact that the order of operations in the normalization function is static.
+                ## lowfilter->normalization->convert->batch->transform.
+                ## Thus, if the normalized state is not raw, we can look back either to the lowfiltered or original data
+                ## The same is true for the transformation state.
+                if (input[["state"]][["lowfilter"]] == "raw") {
+                    message("EdgeR expects raw data as input, reverting to the low-count filtered data.")
+                    data <- input[["normalized"]][["intermediate_counts"]][["lowfilter"]][["count_table"]]
+                } else {
+                    message("EdgeR expects raw data as input, reverting to the original expressionset.")
+                    data <- Biobase::exprs(input[["original_expressionset"]])
+                }
+            } else {
+                message("The data should be suitable for EdgeR.")
+                message("If EdgeR freaks out, check the state of the count table and ensure that it is in integer counts.")
+            }
+            ## End testing if normalization has been performed
+        }
+    } else {
         data <- as.data.frame(input)
     }
+
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
     ## Make a model matrix which will have one entry for
@@ -138,6 +165,10 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     if (isTRUE(model_cond) & isTRUE(model_batch)) {
         fun_model <- condbatch_model
         fun_int_model <- condbatch_int_model
+    } else if (class(model_batch) == 'numeric' | class(model_batch) == 'matrix') {
+        message("EdgeR: Including batch estimates from sva/ruv/pca in the EdgeR model.")
+        fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
+        fun_int_model <- stats::model.matrix(~ conditions + model_batch)
     } else if (isTRUE(model_cond)) {
         fun_model <- cond_model
         fun_int_model <- cond_int_model
@@ -201,8 +232,8 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         res$logFC <- signif(x=as.numeric(res$logFC), digits=4)
         res$logCPM <- signif(x=as.numeric(res$logCPM), digits=4)
         res$LR <- signif(x=as.numeric(res$LR), digits=4)
-        res$PValue <- format(x=as.numeric(res$PValue), digits=4, scientific=TRUE)
-        res$FDR <- format(x=as.numeric(res$FDR), digits=4, scientific=TRUE)
+        res$PValue <- signif(x=as.numeric(res$PValue), digits=4)
+        res$FDR <- signif(x=as.numeric(res$FDR), digits=4)
         res$qvalue <- tryCatch(
         {
             ##as.numeric(format(signif(

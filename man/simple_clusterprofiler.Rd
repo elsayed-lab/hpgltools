@@ -5,9 +5,9 @@
 \title{Perform a simplified clusterProfiler analysis}
 \usage{
 simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
-  qcutoff = 1, fold_changes = NULL, include_cnetplots = FALSE,
-  showcategory = 12, universe = NULL, organism = "lm", gff = NULL,
-  wrapped_width = 20, method = "Wallenius", padjust = "BH", ...)
+  fold_changes = NULL, include_cnetplots = FALSE, showcategory = 12,
+  universe = NULL, species = "undef", gff = NULL, wrapped_width = 20,
+  method = "Wallenius", padjust = "BH", ...)
 }
 \arguments{
 \item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}
@@ -18,8 +18,6 @@ simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
 
 \item{pcutoff}{a p-value cutoff}
 
-\item{qcutoff}{a q-value cutoff}
-
 \item{fold_changes}{a df of fold changes for the DE genes}
 
 \item{include_cnetplots}{the cnetplots are often stupid and can be left behind}
@@ -28,7 +26,7 @@ simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
 
 \item{universe}{universe to use}
 
-\item{organism}{name of the species to use}
+\item{species}{name of the species to use}
 
 \item{gff}{gff file to generate the universe}
 

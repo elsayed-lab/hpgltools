@@ -6,15 +6,22 @@
 information for gVis graphs. The tooltip column is also a handy proxy for
 anontations information when it would otherwise be too troublesome.}
 \usage{
-make_tooltips(annotations, desc_col = "description", type = "gene")
+make_tooltips(annotations, desc_col = "description", type = "gene",
+  id_col = "ID", ...)
 }
 \arguments{
 \item{annotations}{Either a gff file or annotation data frame (which likely came from a gff file.)}
 
-\item{desc_col}{a column from a gff file to grab the data from}
+\item{desc_col}{A column from a gff file to grab the data from}
+
+\item{type}{A gff type to key from}
+
+\item{id_col}{which annotation column to cross reference against}
+
+\item{...}{extra arguments dropped into arglist}
 }
 \value{
-a df of tooltip information or name of a gff file
+A df of tooltip information or name of a gff file
 }
 \description{
 Create a simple df from gff which contains tooltip usable

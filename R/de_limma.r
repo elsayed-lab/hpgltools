@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar  8 10:58:03 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 14 10:27:00 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from limma
 #'
@@ -108,7 +108,7 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
 #'   design = The resulting design
 #'   lib.size = The size in pseudocounts of the library
 #'   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
-#' @seealso \link[limma]{voom} \link[cbcbSEQ]{voomMod} \link[limma]{lmFit}
+#' @seealso \link[limma]{voom} \link[limma]{lmFit}
 #' @examples
 #' \dontrun{
 #'  funkytown = hpgl_voom(samples, model)
@@ -253,24 +253,26 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
 #' }
 #' @export
 limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                           model_batch=FALSE, model_intercept=FALSE, extra_contrasts=NULL,
+                           model_batch=TRUE, model_intercept=FALSE, extra_contrasts=NULL,
                            alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
     arglist <- list(...)
     message("Starting limma pairwise comparison.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
-        conditions <- input$conditions
-        batches <- input$batches
-        data <- Biobase::exprs(input$expressionset)
+        conditions <- input[["conditions"]]
+        batches <- input[["batches"]]
+        data <- Biobase::exprs(input[["expressionset"]])
         if (is.null(libsize)) {
             message("libsize was not specified, this parameter has profound effects on limma's result.")
-            if (!is.null(input$best_libsize)) {
+            if (!is.null(input[["best_libsize"]])) {
                 message("Using the libsize from expt$best_libsize.")
                 ## libsize = expt$norm_libsize
-                libsize <- input$best_libsize
+                libsize <- input[["best_libsize"]]
+            } else if (!is.null(input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
+                libsize <- colSums(data)
             } else {
-                message("Using the libsize from expt$normalized$normalized_counts.")
-                libsize <- input$normalized$normalized_counts$libsize
+                message("Using the libsize from expt$normalized$intermediate_counts$normalization$libsize")
+                libsize <- input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]]
             }
         } else {
             message("libsize was specified.  This parameter has profound effects on limma's result.")
@@ -304,6 +306,10 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             fun_model <- condbatch_model
             fun_int_model <- condbatch_int_model
         }
+    } else if (class(model_batch) == 'matrix' | class(model_batch) == 'numeric') {
+        message("Limma: Including multiple sv batch estimates from sva/ruv/pca in the limma model.")
+        fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
+        fun_int_model <- stats::model.matrix(~ conditions + model_batch)
     } else if (isTRUE(model_cond)) {
         fun_model <- cond_model
         fun_int_model <- cond_int_model
@@ -330,37 +336,37 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     fun_voom <- NULL
     message("Limma step 1/6: choosing model.")
     ## voom() it, taking into account whether the data has been log2 transformed.
-    logged <- input$transform
-    if (is.null(logged)) {
+    loggedp <- input[["state"]][["transform"]]
+    if (is.null(loggedp)) {
         message("I don't know if this data is logged, testing if it is integer.")
         if (is.integer(data)) {
-            logged <- FALSE
+            loggedp <- FALSE
         } else {
-            logged <- TRUE
+            loggedp <- TRUE
         }
     } else {
-        if (logged == "raw") {
-            logged <- FALSE
+        if (loggedp == "raw") {
+            loggedp <- FALSE
         } else {
-            logged <- TRUE
+            loggedp <- TRUE
         }
     }
-    converted = input$convert
-    if (is.null(converted)) {
+    convertedp = input[["state"]][["conversion"]]
+    if (is.null(convertedp)) {
         message("I cannot determine if this data has been converted, assuming no.")
-        converted <- FALSE
+        convertedp <- FALSE
     } else {
-        if (converted == "raw") {
-            converted <- FALSE
+        if (convertedp == "raw") {
+            convertedp <- FALSE
         } else {
-            converted <- TRUE
+            convertedp <- TRUE
         }
     }
     ##fun_voom = voom(data, fun_model)
     ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
     ##fun_voom = voomMod(data, fun_model, lib.size=libsize)
     message("Limma step 2/6: running voom")
-    fun_voom <- hpgl_voom(data, fun_model, libsize=libsize, logged=logged, converted=converted)
+    fun_voom <- hpgl_voom(data, fun_model, libsize=libsize, logged=loggedp, converted=convertedp)
     one_replicate <- FALSE
     if (is.null(fun_voom)) {
         message("voom returned null, I am not sure what will happen.")
@@ -368,7 +374,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         fun_voom <- data
         fun_design <- NULL
     } else {
-        fun_design <- fun_voom$design
+        fun_design <- fun_voom[["design"]]
     }
 
     ## Extract the design created by voom()
@@ -389,10 +395,10 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         all_pairwise_fits <- fun_fit
     } else {
         contrasts <- make_pairwise_contrasts(fun_model, conditions, extra_contrasts=extra_contrasts)
-        all_pairwise_contrasts <- contrasts$all_pairwise_contrasts
-        identities <- contrasts$identities
-        contrast_string <- contrasts$contrast_string
-        all_pairwise <- contrasts$all_pairwise
+        all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]
+        identities <- contrasts[["identities"]]
+        contrast_string <- contrasts[["contrast_string"]]
+        all_pairwise <- contrasts[["all_pairwise"]]
         ## Once all that is done, perform the fit
         ## This will first provide the relative abundances of each condition
         ## followed by the set of all pairwise comparisons.
@@ -401,7 +407,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     all_tables <- NULL
     message("Limma step 5/6: Running eBayes and topTable.")
     if (isTRUE(one_replicate)) {
-        all_pairwise_comparisons <- all_pairwise_fits$coefficients
+        all_pairwise_comparisons <- all_pairwise_fits[["coefficients"]]
     } else {
         all_pairwise_comparisons <- limma::eBayes(all_pairwise_fits)
         all_tables <- try(limma::topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
@@ -413,23 +419,22 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         limma_result <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
     }
     result <- list(
-        all_pairwise=all_pairwise,
-        all_tables=limma_result,
-        batches=batches,
-        batches_table=batch_table,
-        conditions=conditions,
-        conditions_table=condition_table,
-        contrast_string=contrast_string,
-        fit=fun_fit,
-        identities=identities,
-        input_data=data,
-        model=fun_model,
-        pairwise_fits=all_pairwise_fits,
-        pairwise_comparisons=all_pairwise_comparisons,
-        single_table=all_tables,
-        voom_design=fun_design,
-        voom_result=fun_voom
-    )
+        "all_pairwise" = all_pairwise,
+        "all_tables" = limma_result,
+        "batches" = batches,
+        "batches_table" = batch_table,
+        "conditions" = conditions,
+        "conditions_table" = condition_table,
+        "contrast_string" = contrast_string,
+        "fit" = fun_fit,
+        "identities" = identities,
+        "input_data" = data,
+        "model" = fun_model,
+        "pairwise_fits" = all_pairwise_fits,
+        "pairwise_comparisons" = all_pairwise_comparisons,
+        "single_table" = all_tables,
+        "voom_design" = fun_design,
+        "voom_result" = fun_voom)
     return(result)
 }
 
@@ -576,7 +581,7 @@ limma_subset <- function(table, n=NULL, z=NULL) {
 #'   voom_data = the result from calling voom()
 #'   voom_plot = a plot from voom(), redunant with voom_data
 #' @seealso \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
-#' \link[limma]{voom} \link[cbcbSEQ]{voomMod} \link{hpgl_voom}
+#' \link[limma]{voom} \link{hpgl_voom}
 #' \link[limma]{lmFit} \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
 #' @examples
 #' \dontrun{
@@ -603,7 +608,7 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
     expt_data <- as.data.frame(Biobase::exprs(subset$expressionset))
     if (combat) {
 #        expt_data = ComBat(expt_data, subset$batches, condition_model)
-        expt_data <- cbcbSEQ::combatMod(expt_data, subset$batches, subset$conditions)
+        expt_data <- hpgl_combatMod(expt_data, subset$batches, subset$conditions)
     }
     expt_voom <- hpgltools::hpgl_voom(expt_data, model, libsize=subset$original_libsize,
                                       logged=subset$transform, converted=subset$convert)
@@ -752,8 +757,8 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
         data_table$logFC <- signif(x=as.numeric(data_table$logFC), digits=4)
         data_table$AveExpr <- signif(x=as.numeric(data_table$AveExpr), digits=4)
         data_table$t <- signif(x=as.numeric(data_table$t), digits=4)
-        data_table$P.Value <- format(x=as.numeric(data_table$P.Value), digits=4, scientific=TRUE)
-        data_table$adj.P.Val <- format(x=as.numeric(data_table$adj.P.Val), digits=4, scientific=TRUE)
+        data_table$P.Value <- signif(x=as.numeric(data_table$P.Value), digits=4)
+        data_table$adj.P.Val <- signif(x=as.numeric(data_table$adj.P.Val), digits=4)
         data_table$B <- signif(x=as.numeric(data_table$B), digits=4)
         data_table$qvalue <- tryCatch(
         {
@@ -763,7 +768,7 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
             ##    scientific=TRUE))
             ttmp <- as.numeric(data_table$P.Value)
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
-            format(x=ttmp, digits=4, scientific=TRUE)
+            signif(x=ttmp, digits=4)
 ##            ttmp <- signif(ttmp, 4)
 ##            ttmp <- format(ttmp, scientific=TRUE)
 ##            ttmp

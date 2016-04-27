@@ -6,7 +6,8 @@
 a pairwise comparison of all conditions using DESeq2.}
 \usage{
 deseq2_pairwise(input, conditions = NULL, batches = NULL,
-  model_cond = TRUE, model_batch = NULL, annot_df = NULL, ...)
+  model_cond = TRUE, model_batch = NULL, annot_df = NULL, force = FALSE,
+  ...)
 }
 \arguments{
 \item{input}{A dataframe/vector or expt class containing data, normalization state, etc.}
@@ -20,6 +21,8 @@ deseq2_pairwise(input, conditions = NULL, batches = NULL,
 \item{model_batch}{Have batch in the experimental model?}
 
 \item{annot_df}{Include some annotation information in the results?}
+
+\item{force}{Force deseq to accept data which likely violates its assumptions}
 
 \item{...}{triple dots!}
 }

@@ -5,7 +5,7 @@
 \title{Write gene ontology tables for data subsets}
 \usage{
 write_subset_ontologies(kept_ontology, outfile = "excel/subset_go",
-  dated = TRUE, n = 50, overwritefile = TRUE, add_plots = TRUE,
+  dated = TRUE, n = NULL, overwritefile = TRUE, add_plots = TRUE,
   table_style = "TableStyleMedium9", ...)
 }
 \arguments{

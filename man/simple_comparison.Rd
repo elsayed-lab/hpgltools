@@ -81,7 +81,7 @@ Currently this assumes that a variant of toptable was used which
 }
 \seealso{
 \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
-\link[limma]{voom} \link[cbcbSEQ]{voomMod} \link{hpgl_voom}
+\link[limma]{voom} \link{hpgl_voom}
 \link[limma]{lmFit} \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
 }
 
