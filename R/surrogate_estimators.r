@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Apr 16 00:49:41 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Apr 25 15:20:15 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -199,41 +199,6 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
                 "surrogate_by_sample"=surrogate_by_sample_plot,
                 "estimate_by_sample"=estimate_vs_sample_plot)
     return(ret)
-}
-
-#' make a dotplot of some categorised factors and a set of SVs (for other factors)
-#'
-#' This should make a quick df of the factors and surrogates and plot them.
-#'
-#' @param expt an experiment from which to acquire the design, counts, etc
-#' @param factors some portion of the experimental design
-#' @param svest a set of surrogate variable estimations from sva/svg
-#'        or batch estimates
-#' @param chosen_factor a factor to compare against
-#' @param factor_type this may be a factor or range, it is intended to plot
-#'        a scatterplot if it is a range, a dotplot if a factor
-#' @examples
-#' \dontrun{
-#' estimate_vs_snps <- plot_svfactor(start, surrogate_estimate, "snpcategory")
-#' }
-plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type="factor") {
-    chosen <- expt[["design"]][[chosen_factor]]
-    sv_df <- data.frame(
-        "adjust" = svest$model_adjust[, 1],  ## Take a single estimate from compare_estimates()
-        "factors" = chosen,
-        "samplenames" = rownames(expt[["design"]])
-    )
-    samplenames <- rownames(expt[["design"]])
-    my_colors <- expt[["colors"]]
-
-    sv_melted <- reshape2::melt(sv_df, idvars="factors")
-    sv_plot <- ggplot2::ggplot(sv_df, ggplot2::aes_string(x="factors", y="value")) +
-        ggplot2::geom_dotplot(binaxis="y", stackdir="center", binpositions="all", colour="black", fill=my_colors) +
-        ggplot2::xlab(paste0("Experimental factor: ", chosen_factor)) +
-        ggplot2::ylab(paste0("1st surrogate variable estimation")) +
-        ggplot2::theme_bw()
-
-    return(sv_plot)
 }
 
 #' Perform a comparison of the surrogate estimators demonstrated by Jeff Leek.

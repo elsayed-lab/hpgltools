@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 14 17:12:59 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 16:13:47 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -121,7 +121,7 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
         de_genes$DE <- 1
     }
     de_vector <- NULL
-    de_table <- de_genes[,c("ID","DE")]
+    de_table <- de_genes[, c("ID","DE")]
     if (is.null(lengths) & is.null(all_genes) & is.null(species)) {
         stop("simple_goseq(): Need either a set of all genes or gene lengths")
     } else if (!is.null(lengths)) {
@@ -225,12 +225,14 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     message("simple_goseq(): Making pvalue plots for the ontologies.")
     pvalue_plots <- goseq_pval_plots(godata)
     ## mf_subset <- subset(godata, ontology == "MF")
+
     mf_subset <- godata[godata$ontology == "MF", ]
     ##bp_subset <- subset(godata, ontology == "BP")
     bp_subset <- godata[godata$ontology == "BP", ]
     ## cc_subset <- subset(godata, ontology == "CC")
     cc_subset <- godata[godata$ontology == "CC", ]
     ## mf_interesting <- subset(godata_interesting, ontology == "MF")
+
     mf_interesting <- godata_interesting[godata_interesting$ontology == "MF", ]
     rownames(mf_interesting) <- mf_interesting$category
     mf_interesting <- mf_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
@@ -241,15 +243,28 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     ##cc_interesting <- subset(godata_interesting, ontology == "CC")
     cc_interesting <- godata_interesting[godata_interesting$ontology == "CC", ]
     cc_interesting <- cc_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
-    return_list <- list(input=de_genes, pwf=pwf, pwf_plot=pwf_plot,
-                        alldata=godata, pvalue_histogram=goseq_p,
-                        godata_interesting=godata_interesting,
-                        mf_interesting=mf_interesting, bp_interesting=bp_interesting,
-                        cc_interesting=cc_interesting, goadjust_method=goseq_method,
-                        adjust_method=padjust_method, mf_subset=mf_subset,
-                        mfp_plot=pvalue_plots$mfp_plot, bp_subset=bp_subset,
-                        bpp_plot=pvalue_plots$bpp_plot, cc_subset=cc_subset,
-                        ccp_plot=pvalue_plots$ccp_plot, qdata=qdata)
+
+    pval_plots <- list(
+        "bpp_plot_over" = pvalue_plots$bpp_plot,
+        "mfp_plot_over" = pvalue_plots$mfp_plot,
+        "ccp_plot_over" = pvalue_plots$ccp_plot)
+
+    return_list <- list("input" = de_genes,
+                        "pwf" = pwf,
+                        "pwf_plot" = pwf_plot,
+                        "alldata" = godata,
+                        "pvalue_histogram" = goseq_p,
+                        "godata_interesting" = godata_interesting,
+                        "mf_interesting" = mf_interesting,
+                        "bp_interesting" = bp_interesting,
+                        "cc_interesting" = cc_interesting,
+                        "goadjust_method" = goseq_method,
+                        "adjust_method" = padjust_method,
+                        "mf_subset" = mf_subset,
+                        "pvalue_plots" = pval_plots,
+                        "bp_subset" = bp_subset,
+                        "cc_subset" = cc_subset,
+                        "qdata" = qdata)
     return(return_list)
 }
 

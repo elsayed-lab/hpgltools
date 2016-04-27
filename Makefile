@@ -17,8 +17,8 @@ check:
 	cd ../ && export _R_CHECK_FORCE_SUGGESTS_=FALSE && R CMD check hpgltools --no-build-vignettes
 
 build:
-	echo "Performing build with R CMD BUILD hpgltools"
-	cd ../ && R CMD BUILD hpgltools
+	echo "Performing build with R CMD build hpgltools"
+	cd ../ && R CMD build hpgltools
 
 test:
 	echo "Running run_tests.R"

@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Apr 16 00:45:19 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Apr 26 16:00:12 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' png() shortcut
 #'
@@ -32,77 +32,16 @@ pp <- function(file) {
 #' #6 YAL068W-A     3
 #' }
 #' @export
-get_genelengths <- function(gff, type="gene", key='ID') {
+get_genelengths <- function(gff, type="gene", key="ID") {
     ret <- gff2df(gff)
-    ret <- ret[ret$type == type,]
-    ret <- ret[,c(key,"width")]
-    colnames(ret) <- c("ID","width")
+    ret <- ret[ret$type == type, ]
+    ret <- ret[, c(key, "width")]
+    colnames(ret) <- c("ID", "width")
     if (dim(ret)[1] == 0) {
         stop(paste0("No genelengths were found.  Perhaps you are using the wrong 'type' or 'key' arguments, type is: ", type, ", key is: ", key))
     }
     return(ret)
 }
-
-#' Extract annotation information from biomart without having to remember the stupid biomart parameters
-#'
-#' @param species currently only hsapiens
-#' @examples
-#' \dontrun{
-#'  tt = get_biomarg_annotations()
-#' }
-#' @export
-get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=FALSE) {
-    savefile <- "biomart_annotations.rda"
-    if (file.exists(savefile) & overwrite == FALSE) {
-        message("The biomart annotations file already exists, loading from it.")
-        load_string <- paste0("load('", savefile, "', envir=globalenv())")
-        eval(parse(text=load_string))
-    }
-    dataset <- paste0(species, "_gene_ensembl")
-    ##mart <- biomaRt::useMart(biomart="ensembl", dataset=dataset)
-    mart <- NULL
-    mart <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL", host="useast.ensembl.org")
-    ensembl <- biomaRt::useDataset(dataset, mart=mart)
-    ## The following was stolen from Laura's logs for human annotations.
-    ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
-    biomart_annotations <- biomaRt::getBM(attributes = c("ensembl_gene_id", "hgnc_symbol", "description", "gene_biotype"), mart=ensembl)
-    colnames(biomart_annotations) <- c("ID", "hgnc_symbol", "Description", "Type")
-    ## In order for the return from this function to work with other functions in this, the rownames must be set.
-    rownames(biomart_annotations) <- make.names(biomart_annotations[, "ID"], unique=TRUE)
-    message("Finished downloading ensembl annotations.")
-    if (isTRUE(do_save)) {
-        message(paste0("Saving annotations to ", savefile, "."))
-        save(list=ls(c("biomart_annotations", "go_annotations"), envir=globalenv()), envir=globalenv(), file=savefile)
-        message("Finished save().")
-    }
-    return(biomart_annotations)
-}
-
-
-get_biomart_ontology <- function(species="hsapiens", overwrite=FALSE, do_save=FALSE) {
-    savefile <- "biomart_ontology.rda"
-    if (file.exists(savefile) & overwrite == FALSE) {
-        message("The biomart annotations file already exists, loading from it.")
-        load_string <- paste0("load('", savefile, "', envir=globalenv())")
-        eval(parse(text=load_string))
-    }
-    dataset <- paste0(species, "_gene_ensembl")
-    ##mart <- biomaRt::useMart(biomart="ensembl", dataset=dataset)
-    mart <- NULL
-    mart <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL", host="useast.ensembl.org")
-    ensembl <- biomaRt::useDataset(dataset, mart=mart)
-    ## The following was stolen from Laura's logs for human annotations.
-    ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
-    go_annotations <- biomaRt::getBM(attributes = c("ensembl_gene_id","go_id"), mart=ensembl)
-    message(paste0("Finished downloading ensembl go annotations, saving to ", savefile, "."))
-    if (isTRUE(do_save)) {
-        save(list=ls(c("biomart_annotations", "go_annotations"), envir=globalenv()), envir=globalenv(), file=savefile)
-    }
-    colnames(go_annotations) <- c("ID","GO")
-    return(go_annotations)
-}
-
-
 
 #' Given a data frame of exon counts and annotation information, sum the exons.
 #'
@@ -352,7 +291,7 @@ gff2df <- function(gff, type=NULL) {
     if (isTRUE(gtf_test)) {  ## Start with an attempted import of gtf files.
         ret <- try(rtracklayer::import.gff(gff, format="gtf"), silent=TRUE)
     } else {
-        annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
+        annotations <- try(rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE), silent=TRUE)
         if (class(annotations) == 'try-error') {
             annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
         }
@@ -446,6 +385,7 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' @param desc_col A column from a gff file to grab the data from
 #' @param type A gff type to key from
 #' @param id_col which annotation column to cross reference against
+#' @param ... extra arguments dropped into arglist
 #' @return A df of tooltip information or name of a gff file
 #' @seealso \pkg{googleVis} \link{gff2df}
 #' @examples

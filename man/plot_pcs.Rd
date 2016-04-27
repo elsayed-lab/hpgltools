@@ -26,6 +26,8 @@ plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
 \item{plot_size}{The size of the dots on the plot}
 
 \item{size_column}{an experimental factor to use for sizing the glyphs}
+
+\item{...}{extra arguments dropped into arglist}
 }
 \value{
 a ggplot2 PCA plot

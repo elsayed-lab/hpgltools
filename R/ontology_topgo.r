@@ -1,4 +1,4 @@
-## Time-stamp: <Sun Mar 13 23:02:10 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 16:19:12 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis
 #'
@@ -37,7 +37,7 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
     ## The following library invocation is in case it was unloaded for pathview
     require.auto("topGO")
     requireNamespace("topGO")
-    library("topGO")
+    ## library("topGO")
     require.auto("Hmisc")
     requireNamespace("Hmisc")
     gomap_info <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
@@ -66,6 +66,9 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
     names(ks_interesting_genes) <- annotated_genes
 
     requireNamespace("topGO")
+    library("topGO")
+    ## Unless I do an explicit 'library("topGO")', I get annoying errors like
+    ## "GOMFTerm not found", requireNamespace() is insufficient.
     fisher_mf_GOdata <- new("topGOdata", ontology="MF", allGenes=fisher_interesting_genes,
                             annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     fisher_bp_GOdata <- new("topGOdata", ontology="BP", allGenes=fisher_interesting_genes,
@@ -549,7 +552,10 @@ topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
     cc_newdf$score <- cc_newdf$Significant / cc_newdf$Annotated
     cc_pval_plot <- pval_plot(cc_newdf, ontology="CC")
 
-    pval_plots <- list(MF=mf_pval_plot, BP=bp_pval_plot, CC=cc_pval_plot)
+    pval_plots <- list(
+        "mfp_plot_over" = mf_pval_plot,
+        "bpp_plot_over" = bp_pval_plot,
+        "ccp_plot_over" = cc_pval_plot)
     return(pval_plots)
 }
 

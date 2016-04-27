@@ -108,7 +108,7 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
 #'   design = The resulting design
 #'   lib.size = The size in pseudocounts of the library
 #'   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
-#' @seealso \link[limma]{voom} \link[cbcbSEQ]{voomMod} \link[limma]{lmFit}
+#' @seealso \link[limma]{voom} \link[limma]{lmFit}
 #' @examples
 #' \dontrun{
 #'  funkytown = hpgl_voom(samples, model)
@@ -581,7 +581,7 @@ limma_subset <- function(table, n=NULL, z=NULL) {
 #'   voom_data = the result from calling voom()
 #'   voom_plot = a plot from voom(), redunant with voom_data
 #' @seealso \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
-#' \link[limma]{voom} \link[cbcbSEQ]{voomMod} \link{hpgl_voom}
+#' \link[limma]{voom} \link{hpgl_voom}
 #' \link[limma]{lmFit} \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
 #' @examples
 #' \dontrun{
@@ -608,7 +608,7 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
     expt_data <- as.data.frame(Biobase::exprs(subset$expressionset))
     if (combat) {
 #        expt_data = ComBat(expt_data, subset$batches, condition_model)
-        expt_data <- cbcbSEQ::combatMod(expt_data, subset$batches, subset$conditions)
+        expt_data <- hpgl_combatMod(expt_data, subset$batches, subset$conditions)
     }
     expt_voom <- hpgltools::hpgl_voom(expt_data, model, libsize=subset$original_libsize,
                                       logged=subset$transform, converted=subset$convert)

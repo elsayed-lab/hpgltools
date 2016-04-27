@@ -3,8 +3,9 @@ Type: Package
 Title: A pile of (hopefully) useful R functions
 Version: 2016.02
 Date: 2016-02-01
-Author: Ashton Trey Belew
-Authors@R: person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre"))
+Author: Ashton Trey Belew, Keith Hughitt
+Authors@R: c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre")),
+             person("Keith", "Hughitt", email="khughitt@umd.edu", role=c("aut")))
 Maintainer: Ashton Trey Belew <abelew@gmail.com>
 Description: This is a set of functions I have been using in my various
     analyses in the El-Sayed laboratory.  They are intended to
@@ -13,21 +14,21 @@ Description: This is a set of functions I have been using in my various
     and as reminders about what to (not) do.
 License: GPL-2 | file LICENSE
 Suggests:
-    affy, AnnotationDbi, BiocGenerics, Biostrings,
-    biomaRt, Category, clusterProfiler, corpcor, corrplot,
-    data.table, DESeq2, DESeq, directlabels,
-    DOSE, EDASeq, edgeR, ffpe, fission, genefilter, genomeIntervals,
-    GenomicRanges, ggplot2, GO.db, googleVis, goseq, GOstats,
-    gplots, graph, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc,
+    affy, AnnotationDbi, BiocGenerics, Biostrings, biomaRt, Category,
+    clusterProfiler, corpcor, corrplot, data.table, DESeq2, DESeq,
+    directlabels, dplyr, DOSE, EDASeq, edgeR, ffpe, fission,
+    genefilter, genomeIntervals, GenomicFeatures, GenomicRanges,
+    ggplot2, ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph,
+    gProfileR, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc,
     igraph, IRanges, KEGGREST, knitcitations, knitrBootstrap,
-    lattice,limma, matrixStats, methods, motifRG, multtest,
-    openxlsx, pasilla, pathview, plyr, preprocessCore, qvalue,
-    RamiGO, RColorBrewer, ReactomePA, reshape2, RCurl, rGADEM,
-    Rgraphviz, robustbase, RUVSeq, reshape, rjson,
-    robust, Rsamtools, rtracklayer, S4Vectors,
-    scales, seqinr, seqLogo, stringi, stringr, survJamda, sva,
-    topGO, xtable, XVector
+    lattice,limma, matrixStats, methods, motifStack, motifRG,
+    multtest, mygene, openxlsx, pasilla, pathview, plyr,
+    preprocessCore, qsmooth, qvalue, RamiGO, RColorBrewer, ReactomePA,
+    reshape2, RCurl, rGADEM, Rgraphviz, robustbase, RUVSeq, reshape,
+    rjson, robust, Rsamtools, rtracklayer, S4Vectors, scales, seqinr,
+    seqLogo, stringi, stringr, survJamda, sva, topGO, XLConnect, xtable,
+    XVector
 Imports:
-    devtools, knitr, rmarkdown, roxygen2, testthat, Biobase, magrittr
+    devtools, knitr, rmarkdown, Biobase, magrittr
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

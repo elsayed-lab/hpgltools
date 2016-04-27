@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Apr 16 00:50:55 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Apr 25 16:31:25 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix comprised of the matrix - rowMeans(matrix)
@@ -71,7 +71,7 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
   return(res)
 }
 
-#'   Make a ggplot PCA plot describing the samples' clustering.
+#' Make a ggplot PCA plot describing the samples' clustering.
 #'
 #' @param data  an expt set of samples.
 #' @param design   a design matrix and.
@@ -162,7 +162,7 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         colnames(design) <- c("name","batch","condition")
         design <- design[, c("name","condition","batch")]
     }
-    pca <- makeSVD(data)  ## This is a part of cbcbSEQ
+    pca <- makeSVD(data)
     included_batches <- as.factor(as.character(design[, batch_column]))
     included_conditions <- as.factor(as.character(design[, cond_column]))
     if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
@@ -270,6 +270,7 @@ factor_rsquared <- function(svd_v, factor) {
 #' @param plot_labels   a parameter for the labels on the plot.
 #' @param plot_size  The size of the dots on the plot
 #' @param size_column an experimental factor to use for sizing the glyphs
+#' @param ... extra arguments dropped into arglist
 #' @return a ggplot2 PCA plot
 #' @seealso \pkg{ggplot2} \code{\link[directlabels]{geom_dl}}
 #' @examples

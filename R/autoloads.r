@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar  4 22:20:08 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Apr 26 15:51:23 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
@@ -51,6 +51,7 @@ autoloads_ontology <- function() {
     require.auto("clusterProfiler")
     require.auto("GO.db")
     require.auto("DOSE")
+    require.auto("gProfiler")
     require.auto("goseq")
     require.auto("GOstats")
     require.auto("GSEABase")
@@ -97,8 +98,8 @@ autoloads_deseq <- function() {
     require.auto("RUVSeq")
     require.auto("sva")
     require.auto("survJamda")
-    require.auto("pasilla")  ## for cbcbSEQ
-    require.auto("preprocessCore") ## for cbcbSEQ
+    require.auto("pasilla")
+    require.auto("preprocessCore")
     require.auto("kokrah/qsmooth")
     require.auto("kokrah/cbcbSEQ")  ## cbcbSeq has to be loaded last because its DESCRIPTION file is missing a couple of dependencies
 ##    require.auto("qlasso", "kokrah/qsmooth")
@@ -122,6 +123,7 @@ autoloads_helpers <- function() {
     require.auto("Matrix")
     require.auto("matrixStats")
     require.auto("devtools")
+    require.auto("dplyr")
     require.auto("BiocParallel")
     require.auto("data.table")
     require.auto("gtools")
@@ -154,6 +156,7 @@ autoloads_misc <- function() {
     require.auto("seqinr")
 ##    require.auto("SeqTools", "lianos/seqtools/R/pkg")
     require.auto("ReactomePA")
+    require.auto("queryMany")
 }
 
 autoloads_motif <- function() {
@@ -170,6 +173,7 @@ autoloads_motif <- function() {
 #' @seealso \link[BiocInstaller]{biocLite} \link{install.packages}
 #' @export
 autoloads_all <- function(update=FALSE) {
+    mainfont <- "Helvetica"
     autoloads_helpers()
     autoloads_misc()
     autoloads_genome()
@@ -181,7 +185,6 @@ autoloads_all <- function(update=FALSE) {
     ##cite_options(tooltip=TRUE)
     ##cleanbib()
     options(gvis.plot.tag="chart")
-    mainfont = "Helvetica"
     ##Cairo()
     ##CairoFonts(regular = paste(mainfont, "style=Regular", sep = ":"),
     ##           bold = paste(mainfont, "style=Bold", sep = ":"),

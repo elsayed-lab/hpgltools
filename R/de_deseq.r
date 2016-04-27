@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr 15 22:48:49 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 16:05:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from deseq2
 #'
@@ -144,7 +144,6 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             } else {
                 message("The data should be suitable for deseq2.")
                 message("If deseq freaks out, check the state of the count table and ensure that it is in integer counts.")
-                print(head(data))
             }
             ## End testing if normalization has been performed
         }

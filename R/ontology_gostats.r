@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Apr 16 00:30:53 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 16:58:43 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
 #'
@@ -38,7 +38,6 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     ## https://stat.ethz.ch/pipermail/bioconductor/2009-November/030348.html
     try(detach("package:GOstats", unload=TRUE), silent=TRUE)
     try(detach("package:Category", unload=TRUE), silent=TRUE)
-    require.auto("GOstats")
     ## In theory, requireNamespace is sufficient, but that is not true.
     requireNamespace("GOstats")
     requireNamespace("GSEABase")
@@ -48,6 +47,8 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message("If I try to call functions with Category:: or GOstats:: then they collide")
     message("And things fail without error, but if I try library() then R CMD check")
     message("gets pissed, well I tried both ways and I am calling library().")
+    message("R CMD check can bit my shiny metal ass.")
+    library("GOstats")
     ## library("Category")
     ## library("GSEABase")
     ## library("GOstats")
@@ -93,14 +94,14 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     if (nrow(gostats_go) == 0) {
         stop("simple_gostats(): The merging of the universe vs. goids failed.")
     }
-    gostats_go$frame.Evidence <- "TAS"
-    colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "frame.Evidence")
-    gostats_go <- gostats_go[,c("frame.go_id", "frame.Evidence", "frame.gene_id")]
+    colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "ID")
+    gostats_go[["frame.Evidence"]] <- "TAS"
+    gostats_go <- gostats_go[, c("frame.go_id", "frame.Evidence", "frame.gene_id")]
     gostats_frame <- AnnotationDbi::GOFrame(gostats_go, organism=organism)
     gostats_all <- AnnotationDbi::GOAllFrame(gostats_frame)
-    message("simple_gostats(): Creating the gene set collection.")
+    message("simple_gostats(): Creating the gene set collection.  This is slow.")
     gsc <- GSEABase::GeneSetCollection(gostats_all,
-                                       setType=AnnotationDbi::GOCollection())
+                                       setType=GSEABase::GOCollection())
 
     mf_over <- bp_over <- cc_over <- NULL
     mf_under <- bp_under <- cc_under <- NULL

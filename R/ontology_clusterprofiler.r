@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr 15 15:25:34 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 16:18:27 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make sure that clusterProfiler is ready to run
 #'
@@ -295,6 +295,23 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         cc_interesting <- NULL
     }
 
+    pval_plots <- list(
+        "bpp_plot_over" = enriched_bp_barplot,
+        "mfp_plot_over" = enriched_mf_barplot,
+        "ccp_plot_over" = enriched_cc_barplot)
+    all_barplots <- list(
+        "bpp_plot_over" = all_bp_barplot,
+        "mfp_plot_over" = all_mf_barplot,
+        "ccp_plot_over" = all_cc_barplot)
+    cnetplots <- list(
+        "mfall_cnetplot" = cnetplot_mfall,
+        "bpall_cnetplot" = cnetplot_bpall,
+        "ccall_cnetplot" = cnetplot_ccall)
+    group_barplots <- list(
+        "mf_group_barplot" = mf_group_barplot,
+        "bp_group_barplot" = bp_group_barplot,
+        "cc_group_barplot" = cc_group_barplot)
+
     return_information <- list(
         "de_genes" = de_genes,
         "mf_interesting" = mf_interesting,
@@ -309,24 +326,16 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         "mf_all" = mf_all,
         "bp_all" = bp_all,
         "cc_all" = cc_all,
-        "mf_all_barplot" = all_mf_barplot,
-        "bp_all_barplot" = all_bp_barplot,
-        "cc_all_barplot" = all_cc_barplot,
-        "mfp_plot" = enriched_mf_barplot,
-        "bpp_plot" = enriched_bp_barplot,
-        "ccp_plot" = enriched_cc_barplot,
         "mf_cnetplot" = cnetplot_mf,
         "bp_cnetplot" = cnetplot_bp,
         "cc_cnetplot" = cnetplot_cc,
-        "mfall_cnetplot" = cnetplot_mfall,
-        "bpall_cnetplot" = cnetplot_bpall,
-        "ccall_cnetplot" = cnetplot_ccall,
         "mf_group" = mf_group,
         "bp_group" = bp_group,
         "cc_group" = cc_group,
-        "mf_group_barplot" = mf_group_barplot,
-        "bp_group_barplot" = bp_group_barplot,
-        "cc_group_barplot" = cc_group_barplot)
+        "pvalue_allplots" = all_barplots,
+        "pvalue_plots" = pval_plots,
+        "cnetplots" = cnetplots,
+        "group_plots" = group_barplots)
     return(return_information)
 }
 

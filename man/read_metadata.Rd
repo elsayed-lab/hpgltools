@@ -4,16 +4,12 @@
 \alias{read_metadata}
 \title{Given a table of meta data, read it in for use by create_expt()}
 \usage{
-read_metadata(file, header = FALSE, sep = ",", ...)
+read_metadata(file, ...)
 }
 \arguments{
 \item{file}{a csv/xls file to read}
 
-\item{header}{does the table have a header (usually for csv)}
-
-\item{sep}{separator for csv files}
-
-\item{...}{not currently used, but saved for arglist options}
+\item{...}{for sep, header and similar read.csv/read.table parameters}
 }
 \value{
 a df of metadata

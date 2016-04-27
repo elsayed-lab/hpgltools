@@ -1,4 +1,4 @@
-## Time-stamp: <Sat Apr 16 00:36:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon Apr 25 16:22:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Everything in this was written by Keith, I stole it with his permission and incorporated it here.
 ## I might change a few function declarations in this: tbl_df
 ## for example is not included in any import declarations and so I will likely
@@ -39,14 +39,13 @@ load_parasite_annotations <- function(orgdb, gene_ids, keytype='ENSEMBL',
 
     ## Convert to tbl_df and reorganize
     ret <- dplyr::tbl_df(gene_info) %>%
-        AnnotationDbi::select(
-            gene_id     = get(keytype),
-            chromosome  = CHR,
-            description = GENENAME,
-            strand      = TXSTRAND,
-            type        = TYPE,
-            transcript_length = transcript_length
-        )
+        AnnotationDbi::select_(
+            gene_id=get(keytype),
+            chromosome="CHR",
+            description="GENENAME",
+            strand="TXSTRAND",
+            type="TYPE",
+            transcript_length=transcript_length)
     return(ret)
 }
 
@@ -68,7 +67,7 @@ load_host_annotations <- function(orgdb, gene_ids, keytype='ENSEMBL',
                                  biomart_dataset='hsapiens_gene_ensembl') {
     ## Gene info
     ## Note querying by "GENEID" will exclude noncoding RNAs
-    gene_info <- AnnotationDbi::select(orgdb,
+    gene_info <- AnnotationDbi::select_(orgdb,
                         keys=gene_ids,
                         keytype=keytype,
                         columns=fields)
@@ -78,25 +77,24 @@ load_host_annotations <- function(orgdb, gene_ids, keytype='ENSEMBL',
     transcript_length <- NULL
     ## Convert to tbl_df and reorganize
     gene_info <- dplyr::tbl_df(gene_info) %>%
-        dplyr::mutate(transcript_length=abs(TXEND - TXSTART) + 1) %>%
+        dplyr::mutate_(transcript_length=abs("TXEND" - "TXSTART") + 1) %>%
 
     ## filter(keytype %in% gene_ids) %>%
     ## Are TXSTRAND and friends quotable?
-    AnnotationDbi::select(
-        gene_id     = get(keytype),
-        chromosome  = TXCHROM,
-        description = GENENAME,
-        strand      = TXSTRAND,
-        transcript_length = transcript_length
-    )
+    AnnotationDbi::select_(
+        gene_id=get(keytype),
+        chromosome="TXCHROM",
+        description="GENENAME",
+        strand="TXSTRAND",
+        transcript_length=transcript_length)
 
     ## Get gene biotype
     ## Main server temporarily unavailable (2015/11/09)
     ## ensembl_mart <- useMart(biomart="ensembl")
-    ensembl_mart <- bioMart::useMart(biomart="ENSEMBL_MART_ENSEMBL",
+    ensembl_mart <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL",
                                      host="www.ensembl.org", biomart_dataset)
-    biomart <- bioMart::useDataset(biomart_dataset, mart=ensembl_mart)
-    biomart_genes <- bioMart::getBM(attributes=c("ensembl_gene_id", "gene_biotype"), mart=biomart)
+    biomart <- biomaRt::useDataset(biomart_dataset, mart=ensembl_mart)
+    biomart_genes <- biomaRt::getBM(attributes=c("ensembl_gene_id", "gene_biotype"), mart=biomart)
     gene_info$type <- biomart_genes$gene_biotype[match(gene_info$gene_id,
                                                        biomart_genes$ensembl_gene_id)]
     return(gene_info)
@@ -111,21 +109,19 @@ load_host_annotations <- function(orgdb, gene_ids, keytype='ENSEMBL',
 #' @export
 load_go_terms <- function(orgdb, gene_ids, keytype='ENSEMBL') {
     go_terms <- suppressWarnings(
-        #tbl_df(AnnotationDbi::select(orgdb, keys=gene_ids,
-        #                    keytype=keytype,
-        #                    columns=c('GO', 'TERM', 'ONTOLOGYALL')))
+        ##tbl_df(AnnotationDbi::select(orgdb, keys=gene_ids,
+        ##                    keytype=keytype,
+        ##                    columns=c('GO', 'TERM', 'ONTOLOGYALL')))
         AnnotationDbi::select(orgdb, keys=gene_ids,
                                      keytype=keytype,
-                                     columns=c("GO"))[,c(1,2)]
-    )
-    # Deduplicate
+                                     columns=c("GO"))[,c(1,2)])
+    ## Deduplicate
     go_terms <- go_terms[!duplicated(go_terms),]
     requireNamespace("GO.db")
     requireNamespace("magrittr")
     go_term_names <- suppressWarnings(
         AnnotationDbi::select(GO.db::GO.db, keys=unique(go_terms$GO),
-                              columns=c("TERM", "GOID", "ONTOLOGY"))
-    )
+                              columns=c("TERM", "GOID", "ONTOLOGY")))
     requireNamespace("magrittr")
     #go_terms$TERM <- go_term_names$TERM[match(go_terms$GO, go_term_names$GOID)]
     go_terms <- merge(go_terms, go_term_names, by.x='GO', by.y='GOID')
@@ -173,7 +169,7 @@ load_kegg_pathways <- function(orgdb, gene_ids, keytype='ENSEMBL') {
         na.omit() %>%
         ## AnnotationDbi::select(KEGG_PATH, KEGG_NAME, KEGG_CLASS, KEGG_DESCRIPTION)
         ## I think these should be quoted
-        AnnotationDbi::select("KEGG_PATH", "KEGG_NAME", "KEGG_CLASS", "KEGG_DESCRIPTION")
+        AnnotationDbi::select_("KEGG_PATH", "KEGG_NAME", "KEGG_CLASS", "KEGG_DESCRIPTION")
         #select(-get(keytype))
     colnames(kegg_pathways) <- c('pathway', 'name', 'class', 'description')
     return(kegg_pathways)

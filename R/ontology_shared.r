@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr 15 23:23:10 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Apr 26 10:50:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -497,7 +497,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
 #' @param ...  extra arguments which I don't realize
 #' @return a list of ontology search results, up and down for each contrast
 #' @export
-subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
+subset_ontology_search <- function(changed_counts, doplot=TRUE, ...) {
     up_list <- changed_counts$ups
     down_list <- changed_counts$downs
     arglist <- list(...)
@@ -510,22 +510,13 @@ subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
     up_gostats <- list()
     down_gostats <- list()
     ## goseq() requires minimally gene_lengths and goids
-    lengths <- arglist$lengths
-    goids <- arglist$goids
-    gff <- arglist$gff
-    gff_type <- arglist$gff_type
-    ## library(doMC)
-    ## library(parallel)
-    ## Because this is making use of MC/foreach, it requires that all the ontology data structures
-    ## already be in place, otherwise they are likely to get corrupted
-    ## (which is exactly what happened the first time I tried this.
-    ## Therefore I think I will split off the functions for checking those things and call them here
-    ## This only affects clusterprofiler I think.
+    lengths <- arglist[["lengths"]]
+    goids <- arglist[["goids"]]
+    gff <- arglist[["gff"]]
+    gff_type <- arglist[["gff_type"]]
     if (!is.null(gff)) {
         go2eg <- check_clusterprofiler(gff, gomap=goids)
     }
-    ## clusterprofiler's sqlite database gets corrupted every time I try to parallel it
-
     types_list <- c("up_goseq","down_goseq","up_cluster","down_cluster",
                     "up_topgo","down_topgo","up_gostats","down_gostats")
     names_list <- names(up_list)
@@ -535,8 +526,8 @@ subset_ontology_search <- function(changed_counts, doplot=FALSE, ...) {
         uppers <- up_list[[cluster_count]]
         downers <- down_list[[cluster_count]]
         message(paste0(cluster_count, "/", names_length, ": Starting goseq"))
-        up_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=uppers, lengths=lengths, goids=goids, doplot=FALSE, species=arglist[["species"]]))
-        down_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=downers, lengths=lengths, goids=goids, doplot=FALSE, species=arglist[["species"]]))
+        up_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=uppers, lengths=lengths, goids=goids, doplot=doplot, species=arglist[["species"]]))
+        down_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=downers, lengths=lengths, goids=goids, doplot=doplot, species=arglist[["species"]]))
         message(paste0(cluster_count, "/", names_length, ": Starting clusterprofiler"))
         up_cluster[[name]] <- suppressMessages(simple_clusterprofiler(uppers, goids=goids, include_cnetplots=FALSE, species=arglist[["species"]], gff=gff))
         down_cluster[[name]] <- suppressMessages(simple_clusterprofiler(downers, goids=goids, include_cnetplots=FALSE, species=arglist[["species"]], gff=gff))

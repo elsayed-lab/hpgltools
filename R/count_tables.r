@@ -1,31 +1,35 @@
-## Time-stamp: <Sat Apr 16 00:54:12 2016 Ashton Trey Belew (abelew@gmail.com)>
-
+## Time-stamp: <Mon Apr 25 16:24:52 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Given a table of meta data, read it in for use by create_expt()
 #'
 #' @param file a csv/xls file to read
-#' @param header does the table have a header (usually for csv)
-#' @param sep separator for csv files
-#' @param ... not currently used, but saved for arglist options
+#' @param ... for sep, header and similar read.csv/read.table parameters
 #' @return a df of metadata
-read_metadata <- function(file, header=FALSE, sep=",", ...) {
+read_metadata <- function(file, ...) {
     arglist <- list(...)
+    if (is.null(arglist[["sep"]])) {
+        arglist[["sep"]] <- ","
+    }
+    if (is.null(arglist[["header"]])) {
+        arglist[["header"]] <- TRUE
+    }
     if (tools::file_ext(file) == "csv") {
-        definitions <- read.csv(file=file, comment.char="#", sep=sep)
+        definitions <- read.csv(file=file, comment.char="#",
+                                sep=arglist[["sep"]], header=arglist[["header"]])
     } else if (tools::file_ext(file) == "xlsx") {
         ## xls = loadWorkbook(file, create=FALSE)
         ## tmp_definitions = readWorksheet(xls, 1)
-        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1)
+        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1, ...)
     } else if (tools::file_ext(file) == "xls") {
         ## This is not correct, but it is a start
-        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1)
+        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1, ...)
     } else {
-        definitions <- read.table(file=file)
+        definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
     }
 
     colnames(definitions) <- tolower(colnames(definitions))
     colnames(definitions) <- gsub("[[:punct:]]", "", colnames(definitions))
-    rownames(definitions) <- make.names(definitions[, "sampleid"], unique=TRUE)
+    rownames(definitions) <- make.names(definitions[["sampleid"]], unique=TRUE)
     ## "no visible binding for global variable 'sampleid'"  ## hmm sample.id is a column from the csv file.
     ## tmp_definitions <- subset(tmp_definitions, sampleid != "")
     empty_samples <- which(definitions[, "sampleid"] == "" | is.na(definitions[, "sampleid"]) | grepl(pattern="^#", x=definitions[, "sampleid"]))
@@ -36,8 +40,7 @@ read_metadata <- function(file, header=FALSE, sep=",", ...) {
 }
 
 #' Wrap bioconductor's expressionset to include some other extraneous
-#' information.  This simply calls create_experiment and then does
-#' expt_subset for everything
+#' information.
 #'
 #' this is relevant because the ceph object storage by default lowercases filenames.
 #'
@@ -47,16 +50,12 @@ read_metadata <- function(file, header=FALSE, sep=",", ...) {
 #' 'file'.  create_expt() will then just read that filename, it may be
 #' a full pathname or local to the cwd of the project.
 #'
-#' Also, the logic of this and create_experiment are a bit of a mess and should be redone!
-#'
 #' @param file   a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc
 #' @param sample_colors   a list of colors by condition, if not provided
 #' it will generate its own colors using colorBrewer
 #' @param gene_info   annotation information describing the rows of the data set, usually
 #' this comes from a call to import.gff()
-#' @param by_type   when looking for count tables, are they organized by type?
-#' @param by_sample   or by sample?  I do all mine by sample, but others do by type...
 #' @param include_type   I have usually assumed that all gff annotations should be used,
 #' but that is not always true, this allows one to limit.
 #' @param include_gff   A gff file to help in sorting which features to keep
@@ -71,12 +70,12 @@ read_metadata <- function(file, header=FALSE, sep=",", ...) {
 #' \link{hpgl_read_files} \link[hash]{as.list.hash}
 #' @examples
 #' \dontrun{
-#' new_experiment = create_experiment("some_csv_file.csv", color_hash)
+#' new_experiment = create_expt("some_csv_file.csv", color_hash)
 #' ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
-create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=FALSE,
-                        by_sample=FALSE, include_type="all", include_gff=NULL, count_dataframe=NULL,
+create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
+                        include_type="all", include_gff=NULL, count_dataframe=NULL,
                         meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
     arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
@@ -90,8 +89,12 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
         chosen_palette <- arglist[["palette"]]
     }
     file_suffix <- ".count.gz"
-    if (!is.null(arglist[["suffix"]])) {
-        file_suffix <- arglist[["suffix"]]
+    if (!is.null(arglist[["file_suffix"]])) {
+        file_suffix <- arglist[["file_suffix"]]
+    }
+    file_prefix <- ""
+    if (!is.null(arglist[["file_prefix"]])) {
+        file_prefix <- arglist[["file_prefix"]]
     }
     gff_type <- "all"
     if (!is.null(arglist[["include_type"]])) {
@@ -161,8 +164,11 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
     } else if (is.null(sample_definitions[["file"]])) {
         success <- 0
         ## Look for files organized by sample
-        test_filenames <- paste0("processed_data/count_tables/", as.character(sample_definitions[, 'sampleid']), "/",
-                                 as.character(sample_definitions[, "sampleid"]), file_suffix)
+        test_filenames <- paste0("processed_data/count_tables/",
+                                 as.character(sample_definitions[['sampleid']]), "/",
+                                 file_prefix,
+                                 as.character(sample_definitions[["sampleid"]]),
+                                 file_suffix)
         num_found <- sum(file.exists(test_filenames))
         if (num_found == num_samples) {
             success <- success + 1
@@ -177,9 +183,10 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
         }
         if (success == 0) {
             ## Did not find samples by id, try them by type
-            test_filenames <- paste0("processed_data/count_tables/", tolower(as.character(sample_definitions[, "type"])), "/",
-                                     tolower(as.character(sample_definitions[, "stage"])), "/",
-                                     sample_definitions[, "sampleid"], file_suffix)
+            test_filenames <- paste0("processed_data/count_tables/",
+                                     tolower(as.character(sample_definitions[["type"]])), "/",
+                                     tolower(as.character(sample_definitions[["stage"]])), "/",
+                                     sample_definitions[["sampleid"]], file_suffix)
             num_found <- sum(file.exists(test_filenames))
             if (num_found == num_samples) {
                 success <- success + 1
@@ -200,8 +207,8 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
 
     ## At this point sample_definitions$file should be filled in no matter what
     if (is.null(all_count_tables)) {
-        filenames <- as.character(sample_definitions[, "file"])
-        sample_ids <- as.character(sample_definitions[, "sampleid"])
+        filenames <- as.character(sample_definitions[["file"]])
+        sample_ids <- as.character(sample_definitions[["sampleid"]])
         all_count_tables <- hpgl_read_files(sample_ids, filenames, ...)
     }
 
@@ -219,7 +226,7 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, by_type=F
             gene_info <- as.data.frame(all_count_tables)
             gene_info[["ID"]] <- rownames(gene_info)
         } else {
-            message("create_experiment(): Reading annotation gff, this is slow.")
+            message("create_expt(): Reading annotation gff, this is slow.")
             annotation <- gff2df(gff=include_gff, type=gff_type)
             tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
             gene_info <- annotation
@@ -371,7 +378,7 @@ expt_subset <- function(expt, subset=NULL) {
 #' @param suffix  an optional suffix to add to the filenames when reading them.
 #' @param ... more options for happy time
 #' @return  count_table a data frame of count tables
-#' @seealso \link{create_experiment}
+#' @seealso \link{create_expt}
 #' @examples
 #' \dontrun{
 #'  count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
