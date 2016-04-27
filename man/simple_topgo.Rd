@@ -4,7 +4,7 @@
 \alias{simple_topgo}
 \title{Perform a simplified topgo analysis}
 \usage{
-simple_topgo(de_genes, goid_map = "reference/go/id2go.map", goids_df = NULL,
+simple_topgo(de_genes, goid_map = "id2go.map", goids_df = NULL,
   pvals = NULL, limitby = "fisher", limit = 0.1, signodes = 100,
   sigforall = TRUE, numchar = 300, selector = "topDiffGenes",
   pval_column = "adj.P.Val", overwrite = FALSE, densities = FALSE,

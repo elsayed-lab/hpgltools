@@ -1,40 +1,46 @@
-## Time-stamp: <Wed Mar  9 11:57:08 2016 Ashton Trey Belew (abelew@gmail.com)>
-
+## Time-stamp: <Wed Apr 27 17:45:49 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Given a table of meta data, read it in for use by create_expt()
 #'
 #' @param file a csv/xls file to read
-#' @param header does the table have a header (usually for csv)
-#' @param sep separator for csv files
+#' @param ... for sep, header and similar read.csv/read.table parameters
 #' @return a df of metadata
-read_metadata <- function(file, header=FALSE, sep=",") {
-    if (tools::file_ext(file) == 'csv') {
-        definitions <- read.csv(file=file, comment.char="#", sep=sep)
-    } else if (tools::file_ext(file) == 'xlsx') {
+read_metadata <- function(file, ...) {
+    arglist <- list(...)
+    if (is.null(arglist[["sep"]])) {
+        arglist[["sep"]] <- ","
+    }
+    if (is.null(arglist[["header"]])) {
+        arglist[["header"]] <- TRUE
+    }
+    if (tools::file_ext(file) == "csv") {
+        definitions <- read.csv(file=file, comment.char="#",
+                                sep=arglist[["sep"]], header=arglist[["header"]])
+    } else if (tools::file_ext(file) == "xlsx") {
         ## xls = loadWorkbook(file, create=FALSE)
         ## tmp_definitions = readWorksheet(xls, 1)
-        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1)
-    } else if (tools::file_ext(file) == 'xls') {
+        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1, ...)
+    } else if (tools::file_ext(file) == "xls") {
         ## This is not correct, but it is a start
-        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1)
+        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1, ...)
     } else {
-        definitions <- read.table(file=file)
+        definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
     }
 
     colnames(definitions) <- tolower(colnames(definitions))
-    ## "no visible binding for global variable 'sample.id'"  ## hmm sample.id is a column from the csv file.
-    ## tmp_definitions <- subset(tmp_definitions, sample.id != "")
-    empty_samples <- which(definitions$sample.id == "" | is.na(definitions$sample.id) | grepl(pattern="^#", x=definitions$sample.id))
+    colnames(definitions) <- gsub("[[:punct:]]", "", colnames(definitions))
+    rownames(definitions) <- make.names(definitions[["sampleid"]], unique=TRUE)
+    ## "no visible binding for global variable 'sampleid'"  ## hmm sample.id is a column from the csv file.
+    ## tmp_definitions <- subset(tmp_definitions, sampleid != "")
+    empty_samples <- which(definitions[, "sampleid"] == "" | is.na(definitions[, "sampleid"]) | grepl(pattern="^#", x=definitions[, "sampleid"]))
     if (length(empty_samples) > 0) {
         definitions <- definitions[-empty_samples, ]
     }
     return(definitions)
 }
 
-
 #' Wrap bioconductor's expressionset to include some other extraneous
-#' information.  This simply calls create_experiment and then does
-#' expt_subset for everything
+#' information.
 #'
 #' this is relevant because the ceph object storage by default lowercases filenames.
 #'
@@ -44,20 +50,12 @@ read_metadata <- function(file, header=FALSE, sep=",") {
 #' 'file'.  create_expt() will then just read that filename, it may be
 #' a full pathname or local to the cwd of the project.
 #'
-#' Also, the logic of this and create_experiment are a bit of a mess and should be redone!
-#'
 #' @param file   a comma separated file describing the samples with
 #' information like condition,batch,count_filename,etc
 #' @param sample_colors   a list of colors by condition, if not provided
 #' it will generate its own colors using colorBrewer
-#' @param suffix   when looking for the count tables in processed_data
-#' look for this suffix on the end of the files.
-#' @param header   Does the csv metadata file have a header?
 #' @param gene_info   annotation information describing the rows of the data set, usually
 #' this comes from a call to import.gff()
-#' @param by_type   when looking for count tables, are they organized by type?
-#' @param by_sample   or by sample?  I do all mine by sample, but others do by type...
-#' @param sep   some people prefer their csv files as tab or semicolon separated.
 #' @param include_type   I have usually assumed that all gff annotations should be used,
 #' but that is not always true, this allows one to limit.
 #' @param include_gff   A gff file to help in sorting which features to keep
@@ -72,255 +70,226 @@ read_metadata <- function(file, header=FALSE, sep=",") {
 #' \link{hpgl_read_files} \link[hash]{as.list.hash}
 #' @examples
 #' \dontrun{
-#' new_experiment = create_experiment("some_csv_file.csv", color_hash)
+#' new_experiment = create_expt("some_csv_file.csv", color_hash)
 #' ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
-create_expt <- function(file=NULL, sample_colors=NULL, suffix=".count.gz", header=FALSE,
-                       gene_info=NULL, by_type=FALSE, by_sample=FALSE, sep=",",
-                       include_type="all", include_gff=NULL, count_dataframe=NULL,
-                       meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
-    if (is.null(meta_dataframe) & is.null(file)) {
-        stop("This requires either a csv file or dataframe of metadata describing the samples.")
-    } else if (is.null(file)) {
-        tmp_definitions <- meta_dataframe
-    }  else {
-        tmp_definitions <- read_metadata(file, header=header, sep=sep)
+create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
+                        include_type="all", include_gff=NULL, count_dataframe=NULL,
+                        meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
+    arglist <- list(...)  ## pass stuff like sep=, header=, etc here
+
+    ## Palette for colors when auto-chosen
+    chosen_palette <- "Dark2"
+    ## I am learning about simplifying vs. preserving subsetting
+    ## This is a case of simplifying and I believe one which is good because I just want the string out from my list
+    ## Lets assume that palette is in fact an element in arglist, I really don't care that the name
+    ## of the resturn is 'palette' -- I already knew that by asking for it.
+    if (!is.null(arglist[["palette"]])) {
+        chosen_palette <- arglist[["palette"]]
+    }
+    file_suffix <- ".count.gz"
+    if (!is.null(arglist[["file_suffix"]])) {
+        file_suffix <- arglist[["file_suffix"]]
+    }
+    file_prefix <- ""
+    if (!is.null(arglist[["file_prefix"]])) {
+        file_prefix <- arglist[["file_prefix"]]
+    }
+    gff_type <- "all"
+    if (!is.null(arglist[["include_type"]])) {
+        gff_type <- arglist[["include_type"]]
     }
 
-    condition_names <- unique(tmp_definitions$condition)
-    if (is.null(condition_names)) {
-        warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
-    }
-    if (is.null(sample_colors)) {
-        if (is.null(tmp_definitions$colors)) {
-            num_colors <- length(condition_names)
-            sample_colors <- suppressWarnings(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_colors,"Dark2"))(num_colors))
-            color_hash <- hash::hash(keys=as.character(condition_names), values=sample_colors)
-        } else {
-            sample_colors <- tmp_definitions$colors
-            color_hash <- hash::hash(keys=as.character(tmp_definitions$sample.id), values=tmp_definitions$colors)
-        }
-    } else {  ## colors was provided
-        color_hash <- hash::hash(keys=names(sample_colors), values=sample_colors)
-    }
-    ## Sometimes, R adds extra rows on the bottom of the data frame using this command.
-    ## Thus the next line
-    message("create_expt(): This needs columns with conditions and batches in the sample sheet.")
-    expt_list <- create_experiment(file=file, color_hash=color_hash, suffix=suffix, header=header,
-                                   gene_info=gene_info, by_type=by_type, by_sample=by_sample,
-                                   count_dataframe=count_dataframe, meta_dataframe=meta_dataframe,
-                                   sep=sep, low_files=low_files, include_type=include_type, include_gff=include_gff)
-    expt <- expt_list$expt
-    def <- expt_list$def
-    new_expt <- expt_subset(expt)
-    new_expt$definitions <- def
-
-    if (!is.null(expt_list$annotation)) {
-        new_expt$annotation <- expt_list$annotation
-        new_expt$gff_file <- include_gff
-        tmp_genes <- new_expt$annotation
-        tmp_genes <- tmp_genes[tmp_genes$type == "gene",]
-        rownames(tmp_genes) <- make.names(tmp_genes$Name, unique=TRUE)
-        tooltip_data <- tmp_genes
-        tooltip_data <- tooltip_data[,c(11,12)]
-        tooltip_data$tooltip <- paste(tooltip_data$Name, tooltip_data$description, sep=": ")
-        tooltip_data$tooltip <- gsub("\\+", " ", tooltip_data$tooltip)
-        rownames(tooltip_data) <- tooltip_data$Name
-        tooltip_data <- tooltip_data[-1]
-        tooltip_data <- tooltip_data[-1]
-        colnames(tooltip_data) <- c("name.tooltip")
-        new_expt$genes <- tmp_genes
-        new_expt$tooltip <- tooltip_data
-    }
-    ## These entries in new_expt are intended to maintain a record of
-    ## the transformation status of the data, thus if we now call
-    ## normalize_expt() it should change these.
-    ## Therefore, if we call a function like DESeq() which requires
-    ## non-log2 counts, we can check these values and convert accordingly
-    new_expt$filtered <- FALSE
-    new_expt$transform <- "raw"
-    new_expt$norm <- "raw"
-    new_expt$convert <- "raw"
-    new_expt$original_libsize <- colSums(Biobase::exprs(new_expt$expressionset))
-    if (!is.null(savefile)) {
-        save(list = c("new_expt"), file=paste(savefile, ".Rdata", sep=""))
-    }
-    return(new_expt)
-}
-
-#' Wrap bioconductor's expressionset to include some other extraneous
-#' information.
-#'
-#' @param file   a comma separated file describing the samples with
-#' information like condition,batch,count_filename,etc.
-#' @param color_hash  a hash which describes how to color the samples
-#' @param suffix   when looking for the count tables in processed_data
-#' look for this suffix on the end of the files.
-#' @param header   Does the csv metadata file have a header?
-#' @param gene_info   annotation information describing the rows of the data set, usually
-#' this comes from a call to import.gff()
-#' @param by_type   when looking for count tables, are they organized by type?
-#' @param by_sample   or by sample?  I do all mine by sample, but others do by type...
-#' @param include_type   I have usually assumed that all gff annotations should be used,
-#' but that is not always true, this allows one to limit.
-#' @param include_gff   A gff file to help in sorting which features to keep
-#' @param count_dataframe   If one does not wish to read the count tables from processed_data/
-#' they may instead be fed here
-#' @param meta_dataframe   an optional dataframe containing the metadata rather than a file
-#' @param sep   some people prefer their csv files as tab or semicolon separated.
-#' @param ... more parameters
-#' @return  experiment an expressionset
-#' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData}
-#' \link[Biobase]{exprs} \link{hpgl_read_files} \link[hash]{as.list.hash}
-#' @examples
-#' \dontrun{
-#' new_experiment = create_experiment("some_csv_file.csv", color_hash)
-#' }
-#' @export
-create_experiment <- function(file=NULL, color_hash=NULL, suffix=".count.gz", header=FALSE,
-                              gene_info=NULL, by_type=FALSE, by_sample=FALSE, include_type="all",
-                              include_gff=NULL, count_dataframe=NULL, meta_dataframe=NULL, sep=",", ...) {
-    message("create_experiment():  This function assumes some columns in the sample sheet:")
-    message("Sample.ID, Stage, Type, condition, batch")
+    ## Read in the metadata from the provided data frame, csv, or xlsx.
+    sample_definitions <- data.frame()
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
         sample_definitions <- meta_dataframe
+        colnames(sample_definitions) <- tolower(colnames(sample_definitions))
+        colnames(sample_definitions) <- gsub("[[:punct:]]", "", colnames(sample_definitions))
+    }  else {
+        sample_definitions <- read_metadata(file, ...)
+    }
+
+    ## Double-check that there is a usable condition column
+    ## This is also an instance of simplifying subsetting, identical to
+    ## sample_definitions[["condition"]] I don't think I care one way or the other which I use in
+    ## this case, just so long as I am consistent -- I think because I have trouble remembering the
+    ## difference between the concept of 'row' and 'column' I should probably use the [, column] or
+    ## [row, ] method to reinforce my weak neurons.
+    if (is.null(sample_definitions[, "condition"])) {
+        sample_definitions[, "condition"] <- tolower(paste(sample_definitions[, "type"], sample_definitions[, "stage"], sep="_"))
+    }
+    condition_names <- unique(sample_definitions[["condition"]])
+    if (is.null(condition_names)) {
+        warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
+    }
+
+    ## Make sure we have a viable set of colors for plots
+    chosen_colors <- as.character(sample_definitions[["condition"]])
+    num_conditions <- length(condition_names)
+    num_samples <- nrow(sample_definitions)
+    if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
+        chosen_colors <- sample_colors
+    } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    } else if (is.null(sample_colors)) {
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
     } else {
-        sample_definitions <- read_metadata(file, header=header, sep=sep)
+        warning("The number of colors provided does not match either the number of conditions nor samples.")
+        warning("Unsure of what to do, so choosing colors with RColorBrewer.")
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
     }
+    names(chosen_colors) <- sample_definitions[, "sampleid"]
 
-    ##sample_definitions = sample_definitions[grepl('(^HPGL|^hpgl)', sample_definitions$sample.id, perl=TRUE),]
-    if (is.null(sample_definitions$condition)) {
-        sample_definitions$condition <- tolower(paste(sample_definitions$type, sample_definitions$stage, sep="_"))
-        sample_definitions$batch <- gsub("\\s+|\\d+|\\*", "", sample_definitions$batch, perl=TRUE)
-    }
-    if (is.null(sample_definitions$colors)) {
-        design_colors_list <- hash::as.list.hash(color_hash)
-        condition_list <- sample_definitions$condition
-        names(condition_list) <- rownames(sample_definitions)
-        sample_definitions$colors <- as.list(design_colors_list[condition_list])
-        if (is.null(sample_definitions$colors)) {
-            sample_definitions$colors <- as.list(design_colors_list[names(condition_list)])
-        }
-    }
-
-    sample_definitions <- as.data.frame(sample_definitions)
-    colnames(sample_definitions) <- tolower(colnames(sample_definitions))
-    rownames(sample_definitions) <- make.names(sample_definitions$sample.id, unique=TRUE)
-    ## The logic here is that I want by_type to be the default, but only
-    ## if no one chooses either.
+    ## Create a matrix of counts with columns as samples and rows as genes
+    ## This may come from either a data frame/matrix, a list of files from the metadata
+    ## or it can attempt to figure out the location of the files from the sample names.
     filenames <- NULL
     found_counts <- NULL
-    ## This stanza allows one to have a field 'file' in the csv with filenames for the count tables.
-
+    all_count_tables <- NULL
     if (!is.null(count_dataframe)) {
         all_count_tables <- count_dataframe
         colnames(all_count_tables) <- rownames(sample_definitions)
         ## If neither of these cases is true, start looking for the files in the processed_data/ directory
-    } else if (!is.null(sample_definitions$file)) {
-        filenames <- sample_definitions$file
-        all_count_tables <- hpgl_read_files(as.character(sample_definitions$sample.id),
-                                            as.character(filenames), header=header, suffix=NULL)
-        ## This stanza allows one to fill in the count tables with an external data frame.
-    } else if (!isTRUE(by_type) & !isTRUE(by_sample) & is.null(filenames)) {
-        ## If neither by_type or by_sample is set, look first by sample
-        sample_definitions$counts <- paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
-        found_counts <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix), silent=TRUE)
-        if (class(found_counts) == 'try-error') {
-            message("Attempted reading count tables by sample name in processed_data/
-  and did not find them, now trying by sample type.  If you just got an error
-  reading the files, but this still completes, that is why.")
-            ## Then try by-type
-            sample_definitions$counts <- paste("processed_data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, suffix, sep="")
-            found_counts <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
-            if (class(found_counts) == 'try-error') {
-                stop("Unable to find count tables, neither by sample id nor by type")
-            } else {
-                all_count_tables <- found_counts
-            }
+    } else if (is.null(sample_definitions[["file"]])) {
+        success <- 0
+        ## Look for files organized by sample
+        test_filenames <- paste0("processed_data/count_tables/",
+                                 as.character(sample_definitions[['sampleid']]), "/",
+                                 file_prefix,
+                                 as.character(sample_definitions[["sampleid"]]),
+                                 file_suffix)
+        num_found <- sum(file.exists(test_filenames))
+        if (num_found == num_samples) {
+            success <- success + 1
+            sample_definitions[, "file"] <- test_filenames
         } else {
-            all_count_tables <- found_counts
+            test_filenames <- tolower(test_filenames)
+            num_found <- sum(file.exists(test_filenames))
+            if (num_found == num_samples) {
+                success <- success + 1
+                sample_definitions[, "file"] <- test_filenames
+            }
         }
-    } else if (isTRUE(by_sample)) {
-        sample_definitions$counts <- paste("processed_data/count_tables/", as.character(sample_definitions$sample.id), "/", as.character(sample_definitions$sample.id), suffix, sep="")
-        all_count_tables <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
-    } else if (isTRUE(by_type)) {
-        sample_definitions$counts <- paste("processed_data/count_tables/", tolower(sample_definitions$type), "/", tolower(sample_definitions$stage), "/", sample_definitions$sample.id, suffix, sep="")
-        all_count_tables <- try(hpgl_read_files(as.character(sample_definitions$sample.id), as.character(sample_definitions$counts), header=header, suffix=suffix))
-    } ## End checking by_type/by_samples
-    all_count_matrix <- as.data.frame(all_count_tables)  ## haha sucker
-
-    rownames(all_count_matrix) <- gsub("^exon:","", rownames(all_count_matrix))
-    rownames(all_count_matrix) <- make.names(gsub(":\\d+","", rownames(all_count_matrix)), unique=TRUE)
-    if (is.null(gene_info)) {
-        gene_info <- data.frame(all_count_matrix)
-    } else {
-        if (is.null(gene_info$ID)) {
-            gene_info$ID <- rownames(gene_info)
+        if (success == 0) {
+            ## Did not find samples by id, try them by type
+            test_filenames <- paste0("processed_data/count_tables/",
+                                     tolower(as.character(sample_definitions[["type"]])), "/",
+                                     tolower(as.character(sample_definitions[["stage"]])), "/",
+                                     sample_definitions[["sampleid"]], file_suffix)
+            num_found <- sum(file.exists(test_filenames))
+            if (num_found == num_samples) {
+                success <- success + 1
+                sample_definitions[, "file"] <- test_filenames
+            } else {
+                test_filenames <- tolower(test_filenames)
+                num_found <- sum(file.exists(test_filenames))
+                if (num_found == num_samples) {
+                    success <- success + 1
+                    sample_definitions[, "file"] <- test_filenames
+                }
+            }
+        } ## tried by type
+        if (success == 0) {
+            stop("I could not find your count tables organised either by sample nor by type, uppercase nor lowercase.")
         }
-        gene_info <- gene_info[gene_info$ID %in% rownames(all_count_matrix),]
-        all_count_matrix <- all_count_matrix[rownames(all_count_matrix) %in% gene_info$ID,]
     }
+
+    ## At this point sample_definitions$file should be filled in no matter what
+    if (is.null(all_count_tables)) {
+        filenames <- as.character(sample_definitions[["file"]])
+        sample_ids <- as.character(sample_definitions[["sampleid"]])
+        all_count_tables <- hpgl_read_files(sample_ids, filenames, ...)
+    }
+
+    all_count_matrix <- as.matrix(all_count_tables)
+    rownames(all_count_matrix) <- gsub("^exon:", "", rownames(all_count_matrix))
+    rownames(all_count_matrix) <- make.names(gsub(":\\d+", "", rownames(all_count_matrix)), unique=TRUE)
     ## Make sure that all columns have been filled in for every gene.
     complete_index <- complete.cases(all_count_matrix)
-    all_count_matrix <- all_count_matrix[complete_index,]
+    all_count_matrix <- all_count_matrix[complete_index, ]
+
     annotation <- NULL
-    if (!is.null(include_gff)) {
-        message("create_experiment(): Reading annotation gff, this is slow.")
-        if (include_type == "all") {
-            annotation = BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
+    tooltip_data <- NULL
+    if (is.null(gene_info)) {
+        if (is.null(include_gff)) {
+            gene_info <- as.data.frame(all_count_tables)
+            gene_info[["ID"]] <- rownames(gene_info)
         } else {
-            message(paste0("create_experiment(): Including only entries of type: ", include_type))
-            annotation <- BiocGenerics::as.data.frame(rtracklayer::import(include_gff, asRangedData=FALSE))
-            keepers <- annotation[annotation$type==include_type,]$gene_id
-            index <- row.names(all_count_matrix) %in% keepers
-            all_count_matrix <- all_count_matrix[index,]
-            gene_info <- gene_info[index,]
+            message("create_expt(): Reading annotation gff, this is slow.")
+            annotation <- gff2df(gff=include_gff, type=gff_type)
+            tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
+            gene_info <- annotation
         }
     }
-    if (is.null(sample_definitions$stage)) {
-        sample_definitions$stage <- "unknown"
+
+    ## Perhaps I do not understand something about R's syntactic sugar
+    ## Given a data frame with columns bob, jane, alice -- but not foo
+    ## I can do df[["bob"]]) or df[, "bob"] to get the column bob
+    ## however df[["foo"]] gives me null while df[, "foo"] gives an error.
+    if (is.null(sample_definitions[["condition"]])) {
+        sample_definitions[["condition"]] <- "unknown"
     }
-    if (is.null(sample_definitions$type)) {
-        sample_definitions$type <- "unknown"
+    if (is.null(sample_definitions[["batch"]])) {
+        sample_definitions[["batch"]] <- "unknown"
     }
-    if (is.null(sample_definitions$condition)) {
-        sample_definitions$condition <- "unknown"
+    if (is.null(sample_definitions[["intercounts"]])) {
+        sample_definitions[["intercounts"]] <- "unknown"
     }
-    if (is.null(sample_definitions$batch)) {
-        sample_definitions$batch <- "unknown"
+    if (is.null(sample_definitions[["file"]])) {
+        sample_definitions[["file"]] <- "null"
     }
-    if (is.null(sample_definitions$colors)) {
-        sample_definitions$colors <- "unknown"
-    }
-    if (is.null(sample_definitions$counts)) {
-        sample_definitions$counts <- "unknown"
-    }
-    if (is.null(sample_definitions$intercounts)) {
-        sample_definitions$intercounts <- "unknown"
-    }
+
     meta_frame <- data.frame(
-        sample=as.character(sample_definitions$sample.id),
-        stage=as.character(sample_definitions$stage),
-        type=as.character(sample_definitions$type),
-        condition=as.character(sample_definitions$condition),
-        batch=as.character(sample_definitions$batch),
-        colors=as.character(sample_definitions$colors),
-        counts=sample_definitions$counts,
-        intercounts=sample_definitions$intercounts)
-    ##require.auto("Biobase")
-    ##library("Biobase") ## I don't know how to make a new instance of an object without calling library() first.
-    requireNamespace("Biobase")
-    metadata <- methods::new("AnnotatedDataFrame", meta_frame)  ## AnnotatedDataFrame is from Biobase
+        "sample" = as.character(sample_definitions[, "sampleid"]),
+        "condition" = as.character(sample_definitions[, "condition"]),
+        "batch" = as.character(sample_definitions[, "batch"]),
+        "counts" = sample_definitions[, "file"],
+        "intercounts" = sample_definitions[, "intercounts"])
+
+    requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
+    metadata <- methods::new("AnnotatedDataFrame", meta_frame)
     Biobase::sampleNames(metadata) <- colnames(all_count_matrix)
     feature_data <- methods::new("AnnotatedDataFrame", gene_info)
     Biobase::featureNames(feature_data) <- rownames(all_count_matrix)
     experiment <- methods::new("ExpressionSet", exprs=all_count_matrix,
                                phenoData=metadata, featureData=feature_data)
-    ret <- list(expt=experiment, def=sample_definitions, annotation=annotation)
-    return(ret)
+
+    ## These entries in new_expt are intended to maintain a record of
+    ## the transformation status of the data, thus if we now call
+    ## normalize_expt() it should change these.
+    ## Therefore, if we call a function like DESeq() which requires
+    ## non-log2 counts, we can check these values and convert accordingly
+    expt <- expt_subset(experiment)
+    expt[["design"]] <- sample_definitions
+    expt[["annotation"]] <- annotation
+    expt[["gff_file"]] <- include_gff
+    expt[["tooltip"]] <- tooltip_data
+    starting_state <- list(
+        "lowfilter" = "raw",
+        "normalization" = "raw",
+        "conversion" = "raw",
+        "batch" = "raw",
+        "transform" = "raw")
+    expt[["state"]] <- starting_state
+    expt[["conditions"]] <- as.factor(sample_definitions[, "condition"])
+    expt[["batches"]] <- as.factor(sample_definitions[, "batch"])
+    expt[["original_libsize"]] <- colSums(Biobase::exprs(experiment))
+    expt[["colors"]] <- chosen_colors
+    if (!is.null(savefile)) {
+        save(list = c("expt"), file=paste(savefile, ".Rdata", sep=""))
+    }
+    return(expt)
 }
 
 #'  Extract a subset of samples following some rule(s) from an
@@ -342,62 +311,57 @@ create_experiment <- function(file=NULL, color_hash=NULL, suffix=".count.gz", he
 #' @export
 expt_subset <- function(expt, subset=NULL) {
     if (class(expt) == "ExpressionSet") {
-        expressionset <- expt
+        original_expressionset <- expt
     } else if (class(expt) == "expt") {
-        expressionset <- expt$expressionset
+        original_expressionset <- expt[["expressionset"]]
     } else {
         stop("expt is neither an expt nor ExpressionSet")
     }
-    if (is.null(expt$definitions)) {
+    if (is.null(expt[["design"]])) {
         ## warning("There is no expt$definitions, using the expressionset.")
-        initial_metadata <- Biobase::pData(expressionset)
+        original_metadata <- Biobase::pData(original_expressionset)
     } else {
-        initial_metadata <- expt$definitions
+        original_metadata <- expt[["design"]]
     }
+
     if (is.null(subset)) {
-        samples <- initial_metadata
+        subset_design <- original_metadata
     } else {
-        r_expression <- paste("subset(initial_metadata,", subset, ")")
-        samples <- eval(parse(text=r_expression))
+        r_expression <- paste("subset(original_metadata,", subset, ")")
+        subset_design <- eval(parse(text=r_expression))
         ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
     }
-    design <- as.data.frame(samples)
-    ## This is to get around stupidity with respect to needing all factors to be in a DESeqDataSet
-    conditions <- as.factor(as.character(design$condition))
-    batches <- as.factor(as.character(design$batch))
-    design$condition <- conditions
-    design$batch <- batches
-    if (is.null(samples$sample.id)) {
-        samplenames <- as.character(samples$sample)
-    } else {
-        samplenames <- as.character(samples$sample.id)
+    if (nrow(subset_design) == 0) {
+        stop("When the subset was taken, the resulting design has 0 members, check your expression.")
     }
-    colors <- as.character(samples$colors)
-    names <- paste(conditions, batches, sep="-")
-    subset_definitions <- expt$definitions[rownames(expt$definitions) %in% samplenames, ]
-    subset_libsize <- expt$original_libsize[names(expt$original_libsize) %in% samplenames]
-    expressionset <- expressionset[, Biobase::sampleNames(expressionset) %in% samplenames]
-    columns <- data.frame(sample=colnames(Biobase::exprs(expressionset)))
-    rownames(columns) <- colnames(Biobase::exprs(expressionset))
-    metadata <- list(initial_metadata=initial_metadata,
-                     original_expressionset=expressionset,
-                     expressionset=expressionset,
-                     samples=samples,
-                     design=design,
-                     definitions=subset_definitions,
-                     stages=initial_metadata$stage,
-                     types=initial_metadata$type,
-                     conditions=conditions,
-                     batches=batches,
-                     samplenames=samplenames,
-                     colors=colors,
-                     names=names,
-                     filtered=expt$filtered,
-                     transform=expt$transform,
-                     norm=expt$norm,
-                     convert=expt$convert,
-                     original_libsize=subset_libsize,
-                     columns=columns)
+    subset_design <- as.data.frame(subset_design)
+    ## This is to get around stupidity with respect to needing all factors to be in a DESeqDataSet
+    original_ids <- rownames(original_metadata)
+    subset_ids <- rownames(subset_design)
+    subset_positions <- original_ids %in% subset_ids
+    original_colors <- expt[["colors"]]
+    subset_colors <- original_colors[subset_positions]
+    original_conditions <- expt[["conditions"]]
+    subset_conditions <- original_conditions[subset_positions, drop=TRUE]
+    original_batches <- expt[["batches"]]
+    subset_batches <- original_batches[subset_positions, drop=TRUE]
+
+    original_libsize <- expt[["original_libsize"]]
+    subset_libsize <- original_libsize[subset_positions, drop=TRUE]
+    subset_expressionset <- original_expressionset[, subset_positions]
+
+    metadata <- list(
+        "initial_metadata" = subset_design,
+        "original_expressionset" = subset_expressionset,
+        "expressionset" = subset_expressionset,
+        "design" = subset_design,
+        "conditions" = subset_conditions,
+        "batches" = subset_batches,
+        "samplenames" = subset_ids,
+        "colors" = subset_colors,
+        "state" = expt[["state"]],
+        "original_libsize" = original_libsize,
+        "libsize" = subset_libsize)
     class(metadata) <- "expt"
     return(metadata)
 }
@@ -414,7 +378,7 @@ expt_subset <- function(expt, subset=NULL) {
 #' @param suffix  an optional suffix to add to the filenames when reading them.
 #' @param ... more options for happy time
 #' @return  count_table a data frame of count tables
-#' @seealso \link{create_experiment}
+#' @seealso \link{create_expt}
 #' @examples
 #' \dontrun{
 #'  count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
@@ -443,13 +407,13 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
     }
     ##count_table = read.table(files[1], header=header, ...)
     count_table <- try(read.table(files[1], header=header))
-    if (class(count_table)[1] == 'try-error') {
+    if (class(count_table)[1] == "try-error") {
         stop(paste0("There was an error reading: ", files[1]))
     }
     message(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
     colnames(count_table) <- c("ID", ids[1])
-    rownames(count_table) <- make.names(count_table$ID, unique=TRUE)
-    count_table <- count_table[-1]
+    rownames(count_table) <- make.names(count_table[, "ID"], unique=TRUE)
+    count_table <- count_table[, -1, drop=FALSE]
     ## iterate over and append remaining samples
     for (table in 2:length(files)) {
         if (file.exists(tolower(files[table]))) {
@@ -460,17 +424,17 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
             files[table] <- lower_filenames[table]
         }
         tmp_count = try(read.table(files[table], header=header))
-        if (class(tmp_count)[1] == 'try-error') {
+        if (class(tmp_count)[1] == "try-error") {
             stop(paste0("There was an error reading: ", files[table]))
         }
         colnames(tmp_count) <- c("ID", ids[table])
         ##tmp_count <- tmp_count[, c("ID", ids[table])]
-        rownames(tmp_count) <- make.names(tmp_count$ID, unique=TRUE)
-        tmp_count <- tmp_count[-1]
+        rownames(tmp_count) <- make.names(tmp_count[, "ID"], unique=TRUE)
+        tmp_count <- tmp_count[, -1, drop=FALSE]
         pre_merge <- length(rownames(tmp_count))
         count_table <- merge(count_table, tmp_count, by.x="row.names", by.y="row.names", all.x=TRUE)
-        rownames(count_table) <- count_table$Row.names
-        count_table <- count_table[-1]
+        rownames(count_table) <- count_table[, "Row.names"]
+        count_table <- count_table[, -1, drop=FALSE]
         post_merge <- length(rownames(count_table))
         message(paste0(files[table], " contains ", pre_merge, " rows and merges to ", post_merge, " rows."))
     }
@@ -483,10 +447,14 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
 
     ## remove summary fields added by HTSeq
     if (!include_summary_rows) {
-        htseq_meta_rows <- c('__no_feature', '__ambiguous', '__too_low_aQual',
-                             '__not_aligned', '__alignment_not_unique')
-        htseq_meta_rows <- c(htseq_meta_rows, paste0("X", htseq_meta_rows))
-        count_table <- count_table[!rownames(count_table) %in% htseq_meta_rows,]
+        ## Depending on what happens when the data is read in, these rows may get prefixed with 'X'
+        ## In theory, only 1 of these two cases should ever be true.
+        htseq_meta_rows <- c("__no_feature", "__ambiguous", "__too_low_aQual",
+                             "__not_aligned", "__alignment_not_unique",
+                             "X__no_feature", "X__ambiguous", "X__too_low_aQual",
+                             "X__not_aligned", "X__alignment_not_unique")
+
+        count_table <- count_table[!rownames(count_table) %in% htseq_meta_rows, ]
     }
     return(count_table)
 }
@@ -504,8 +472,8 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
 #' }
 #' @export
 concatenate_runs <- function(expt, column='replicate') {
-    design <- expt$definitions
-    replicates <- levels(as.factor(design[,column]))
+    design <- expt[["design"]]
+    replicates <- levels(as.factor(design[, column]))
     final_expt <- expt
     final_data <- NULL
     final_design <- NULL
@@ -514,38 +482,35 @@ concatenate_runs <- function(expt, column='replicate') {
     colors <- list()
     conditions <- list()
     batches <- list()
-    names <- list()
+    samplenames <- list()
     for (rep in replicates) {
         expression <- paste0(column, "=='", rep, "'")
         tmp_expt <- expt_subset(expt, expression)
-        tmp_data <- rowSums(Biobase::exprs(tmp_expt$expressionset))
-        tmp_design <- tmp_expt$design[1, ]
-        tmp_definitions <- tmp_expt$definitions[1, ]
+        tmp_data <- rowSums(Biobase::exprs(tmp_expt[["expressionset"]]))
+        tmp_design <- tmp_expt[["design"]][1, ]
         final_data <- cbind(final_data, tmp_data)
         final_design <- rbind(final_design, tmp_design)
-        final_definitions <- rbind(final_definitions, tmp_definitions)
-        column_names[[rep]] <- as.character(tmp_design$sample.id)
-        colors[[rep]] <- as.character(tmp_design$color)
-        batches[[rep]] <- as.character(tmp_design$batch)
-        conditions[[rep]] <- as.character(tmp_design$condition)
-        names[[rep]] <- paste(conditions[[rep]], batches[[rep]], sep='-')
+        column_names[[rep]] <- as.character(tmp_design[, "sampleid"])
+        colors[[rep]] <- as.character(tmp_expt[["colors"]][1])
+        batches[[rep]] <- as.character(tmp_expt[["batches"]][1])
+        conditions[[rep]] <- as.character(tmp_expt[["conditions"]][1])
+        samplenames[[rep]] <- paste(conditions[[rep]], batches[[rep]], sep="-")
         colnames(final_data) <- column_names
     }
-    final_expt$design <- final_design
-    final_expt$definitions <- final_definitions
+    final_expt[["design"]] <- final_design
     metadata <- new("AnnotatedDataFrame", final_design)
     Biobase::sampleNames(metadata) <- colnames(final_data)
-    feature_data <- new("AnnotatedDataFrame", Biobase::fData(expt$expressionset))
+    feature_data <- new("AnnotatedDataFrame", Biobase::fData(expt[["expressionset"]]))
     Biobase::featureNames(feature_data) <- rownames(final_data)
     experiment <- new("ExpressionSet", exprs=final_data,
                       phenoData=metadata, featureData=feature_data)
-    final_expt$expressionset <- experiment
-    final_expt$original_expressionset <- experiment
-    final_expt$samples <- final_design
-    final_expt$colors <- as.character(colors)
-    final_expt$batches <- as.character(batches)
-    final_expt$conditions <- as.character(conditions)
-    final_expt$names <- as.character(names)
+    final_expt[["expressionset"]] <- experiment
+    final_expt[["original_expressionset"]] <- experiment
+    final_expt[["samples"]] <- final_design
+    final_expt[["colors"]] <- as.character(colors)
+    final_expt[["batches"]] <- as.character(batches)
+    final_expt[["conditions"]] <- as.character(conditions)
+    final_expt[["samplenames"]] <- as.character(samplenames)
     return(final_expt)
 }
 
@@ -571,7 +536,7 @@ median_by_factor <- function(data, fact) {
         med <- matrixStats::rowMedians(data[, columns])
         medians <- cbind(medians, med)
     }
-    medians <- medians[-1]
+    medians <- medians[, -1, drop=FALSE]
     colnames(medians) <- levels(fact)
     return(medians)
 }

@@ -1,4 +1,14 @@
-## Time-stamp: <Wed Mar  9 16:33:24 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue Apr 26 16:00:12 2016 Ashton Trey Belew (abelew@gmail.com)>
+
+#' png() shortcut
+#'
+#' I hate remembering my options for png()
+#' @param file a filename to write
+#' @return a png with height=width=9 inches and a high resolution
+#' @export
+pp <- function(file) {
+    png(filename=file, width=9, height=9, units="in", res=180)
+}
 
 #' Grab gene lengths from a gff file.
 #'
@@ -22,40 +32,15 @@
 #' #6 YAL068W-A     3
 #' }
 #' @export
-get_genelengths <- function(gff, type="gene", key='ID') {
+get_genelengths <- function(gff, type="gene", key="ID") {
     ret <- gff2df(gff)
-    ret <- ret[ret$type == type,]
-    ret <- ret[,c(key,"width")]
-    colnames(ret) <- c("ID","width")
+    ret <- ret[ret$type == type, ]
+    ret <- ret[, c(key, "width")]
+    colnames(ret) <- c("ID", "width")
     if (dim(ret)[1] == 0) {
         stop(paste0("No genelengths were found.  Perhaps you are using the wrong 'type' or 'key' arguments, type is: ", type, ", key is: ", key))
     }
     return(ret)
-}
-
-#' Extract annotation information from biomart without having to remember the stupid biomart parameters
-#'
-#' @param species currently only hsapiens
-#' @examples
-#' \dontrun{
-#'  tt = get_biomarg_annotations()
-#' }
-#' @export
-get_biomart_annotations <- function(species="hsapiens") {
-    dataset <- paste0(species, "_gene_ensembl")
-    ##mart <- biomaRt::useMart(biomart="ensembl", dataset=dataset)
-    mart <- NULL
-    mart <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL", host="useast.ensembl.org")
-    ensembl <- biomaRt::useDataset(dataset, mart=mart)
-    ## The following was stolen from Laura's logs for human annotations.
-    ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
-    desc <- biomaRt::getBM(attributes = c("ensembl_gene_id", "hgnc_symbol", "description", "gene_biotype"), mart=ensembl)
-    colnames(desc) <- c("ID", "hgnc_symbol", "Description", "Type")
-    ## Remove commas from description
-    desc$Description <- gsub(",", "", desc$Description)
-    ## In order for the return from this function to work with other functions in this, the rownames must be set.
-    rownames(desc) <- make.names(desc$ID, unique=TRUE)
-    return(desc)
 }
 
 #' Given a data frame of exon counts and annotation information, sum the exons.
@@ -306,18 +291,20 @@ gff2df <- function(gff, type=NULL) {
     if (isTRUE(gtf_test)) {  ## Start with an attempted import of gtf files.
         ret <- try(rtracklayer::import.gff(gff, format="gtf"), silent=TRUE)
     } else {
-        annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
+        annotations <- try(rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE), silent=TRUE)
         if (class(annotations) == 'try-error') {
             annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
-            if (class(annotations) == 'try-error') {
-                stop("Could not extract the widths from the gff file.")
-            } else {
-                ret <- annotations
-            }
-        } else {
-            ret <- annotations
         }
-    } ## End else this is not a gtf file
+        if (class(annotations) == 'try-error') {
+            annotations <- try(rtracklayer::import.gff(gff), silent=TRUE)
+        }
+    }
+    if (class(annotations) == 'try-error') {
+        stop("Could not extract the widths from the gff file.")
+    } else {
+        ret <- annotations
+    }
+
     ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
     ## no method to coerce an S4 class to a vector.
     ret <- GenomicRanges::as.data.frame(ret)
@@ -394,16 +381,20 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' information for gVis graphs. The tooltip column is also a handy proxy for
 #' anontations information when it would otherwise be too troublesome.
 #'
-#' @param annotations  Either a gff file or annotation data frame (which likely came from a gff file.)
-#' @param desc_col   a column from a gff file to grab the data from
-#' @return a df of tooltip information or name of a gff file
+#' @param annotations Either a gff file or annotation data frame (which likely came from a gff file.)
+#' @param desc_col A column from a gff file to grab the data from
+#' @param type A gff type to key from
+#' @param id_col which annotation column to cross reference against
+#' @param ... extra arguments dropped into arglist
+#' @return A df of tooltip information or name of a gff file
 #' @seealso \pkg{googleVis} \link{gff2df}
 #' @examples
 #' \dontrun{
 #' tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
 #' }
 #' @export
-make_tooltips <- function(annotations, desc_col='description', type="gene") {
+make_tooltips <- function(annotations, desc_col='description', type="gene", id_col="ID", ...) {
+    arglist <- list(...)
     tooltip_data <- NULL
     if (class(annotations) == 'character') {
         tooltip_data <- gff2df(gff=annotations, type=type)
@@ -412,24 +403,26 @@ make_tooltips <- function(annotations, desc_col='description', type="gene") {
     } else {
         stop("This requires either a filename or data frame.")
     }
-    tooltip_data <- tooltip_data[,c("ID", desc_col)]
+    if (is.null(tooltip_data[[id_col]])) {
+        tooltip_data[["ID"]] <- rownames(tooltip_data)
+    }
 
     ## Attempt to use multiple columns if a c() was given
-    tooltip_data$tooltip <- tooltip_data$ID
+    tooltip_data[["tooltip"]] <- tooltip_data[[id_col]]
     for (col in desc_col) {
         if (is.null(tooltip_data[[col]])) {
             message(paste0("The column ", col, " is null, not using it."))
         } else {
-            tooltip_data$tooltip <- paste0(tooltip_data$tooltip, ": ", tooltip_data[[desc_col]])
+            tooltip_data[["tooltip"]] <- paste0(tooltip_data[["tooltip"]], ": ", tooltip_data[[col]])
         }
     }
-    tooltip_data$tooltip <- gsub("\\+", " ", tooltip_data$tooltip)
-    tooltip_data$tooltip <- gsub(": $", "", tooltip_data$tooltip)
-    tooltip_data$tooltip <- gsub("^: ", "", tooltip_data$tooltip)
-    rownames(tooltip_data) <- make.names(tooltip_data$ID, unique=TRUE)
-    tooltip_data <- tooltip_data[-1]
-    colnames(tooltip_data) <- c("short", "1.tooltip")
-    tooltip_data <- tooltip_data[-1]
+    tooltip_data[["tooltip"]] <- gsub("\\+", " ", tooltip_data[["tooltip"]])
+    tooltip_data[["tooltip"]] <- gsub(": $", "", tooltip_data[["tooltip"]])
+    tooltip_data[["tooltip"]] <- gsub("^: ", "", tooltip_data[["tooltip"]])
+    rownames(tooltip_data) <- make.names(tooltip_data[[id_col]], unique=TRUE)
+    ## Now remove extraneous columns
+    tooltip_data <- tooltip_data[, c("tooltip"), drop=FALSE]
+    colnames(tooltip_data) <- c("1.tooltip")
     return(tooltip_data)
 }
 
@@ -549,11 +542,9 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #' This function has been through many iterations, first using XLConnect,
 #' then xlsx, and now openxlsx.  Hopefully this will not change again.
 #'
-#' @param wb the workbook to which to write
 #' @param data  A data frame to print
+#' @param wb the workbook to which to write
 #' @param sheet   Name of the sheet to write
-#' @param first_two_widths   I add long titles to the tops of the sheets
-#'   setting this makes sure that those columns are not too wide
 #' @param start_row   The first row of the sheet to write
 #' @param start_col   The first column to write
 #' @param ...  the set of arguments given to for openxlsx
@@ -566,7 +557,7 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #'  xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
 #' }
 #' @export
-write_xls <- function(wb, data, sheet="first", first_two_widths=c("30","60"),
+write_xls <- function(data, wb=NULL, sheet="first",
                       start_row=1, start_col=1, ...) {
     arglist <- list(...)
     if (class(data) == 'matrix') {
@@ -574,10 +565,26 @@ write_xls <- function(wb, data, sheet="first", first_two_widths=c("30","60"),
     }
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
+    } else if (class(wb)[[1]] == "list") { ## In case the return from write_xls() was passed to write_xls()
+        wb <- wb[["workbook"]]
+    } else if (class(wb)[[1]] != "Workbook") {
+        stop("A workbook was passed to this, but the format is not understood.")
     }
+
     newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
     if (class(newsheet) == 'try-error') {
-        message(paste0("The sheet ", sheet, " already exists."))
+        if (grepl(pattern="too long", x=newsheet[1])) {
+            message("The sheet name was too long for Excel, truncating it by removing vowels.")
+            sheet <- gsub(pattern="a|e|i|o|u", replacement="", x=sheet)
+            newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
+            if (class(newsheet) == 'try-error') {
+                message("hmph, still too long, truncating to 30 characters.")
+                sheet <- substr(sheet, start=1, stop=30)
+                newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
+            }
+        } else {
+            message(paste0("The sheet ", sheet, " already exists, it will get overwritten"))
+        }
     }
     hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
     new_row <- start_row
@@ -604,10 +611,7 @@ write_xls <- function(wb, data, sheet="first", first_two_widths=c("30","60"),
     openxlsx::writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9",
                              startRow=new_row, rowNames=TRUE, startCol=new_col)
     new_row <- new_row + nrow(data) + 2
-    ## Going to make an assumption about columns 1,2
-    ## Maybe make this a parameter? nah for now at least
-    openxlsx::setColWidths(wb, sheet=sheet, widths=first_two_widths, cols=c(1,2))
-    openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=3:ncol(data))
+    openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=1:ncol(data))
     end_col <- ncol(data) + 1
     ret <- list(workbook=wb, end_row=new_row, end_col=end_col)
     return(ret)

@@ -55,6 +55,6 @@ than throwing an unhelpful error.  Also, the Elist output gets a
 }
 }
 \seealso{
-\link[limma]{voom} \link[cbcbSEQ]{voomMod} \link[limma]{lmFit}
+\link[limma]{voom} \link[limma]{lmFit}
 }
 

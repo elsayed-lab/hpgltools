@@ -8,18 +8,15 @@ of hate excel.  Most people I work with use it, so therefore I do too.
 This function has been through many iterations, first using XLConnect,
 then xlsx, and now openxlsx.  Hopefully this will not change again.}
 \usage{
-write_xls(wb, data, sheet = "first", first_two_widths = c("30", "60"),
-  start_row = 1, start_col = 1, ...)
+write_xls(data, wb = NULL, sheet = "first", start_row = 1,
+  start_col = 1, ...)
 }
 \arguments{
-\item{wb}{the workbook to which to write}
-
 \item{data}{A data frame to print}
 
-\item{sheet}{Name of the sheet to write}
+\item{wb}{the workbook to which to write}
 
-\item{first_two_widths}{I add long titles to the tops of the sheets
-setting this makes sure that those columns are not too wide}
+\item{sheet}{Name of the sheet to write}
 
 \item{start_row}{The first row of the sheet to write}
 

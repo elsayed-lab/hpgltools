@@ -11,3 +11,25 @@
 ## #' @importFrom plyr defaults
 ## #' @importFrom stats setNames
 ## NULL
+
+#' hpgltools: a suite of tools to make our analyses easier
+#'
+#' This provides a series of helpers for working with sequencing data
+#'
+#' It falls under a few main topics
+#'
+#' \itemize{
+#' \item Data exploration, look for trends in sequencing data and identify batch effects or skewed distributions
+#' \item Differential expression analyses, use DESeq2/limma/EdgeR in a hopefully robust and flexible fashion
+#' \item Ontology analyses, use goseq/clusterProfiler/topGO/GOStats in hopefully robust ways
+#' }
+#'
+#' To see examples of this inaction, check out the vignettes:
+#' \code{browseVignettes(package = 'hpgltools')}
+#'
+#' @docType package
+#' @name hpgltools
+#' @import magrittr
+#' @importFrom utils head tail
+#' @import stats
+NULL

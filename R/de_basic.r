@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Mar  1 11:20:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 13 12:01:19 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a pairwise comparison among conditions which takes
 #' nothing into account.  It _only_ takes the conditions, a mean value/variance among
@@ -19,24 +19,43 @@
 basic_pairwise <- function(input, design=NULL) {
     message("Starting basic pairwise comparison.")
     input_class <- class(input)[1]
+
     if (input_class == 'expt') {
-        conditions <- input$conditions
-        if (!is.null(input$transform)) {
-            if (input$transform != "raw") {
-                message("The counts were already log2, reverting to raw.")
-                data <- input$normalized$normalized_counts$count_table
+        design <- input[["design"]]
+        conditions <- input[["conditions"]]
+        batches <- input[["batches"]]
+        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+        if (!is.null(input[["norm"]])) {
+            ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
+            ## and expects data as integer counts, not floating point or a log2 transformation
+            if (isTRUE(force)) {
+                warning("About to round the data, this is a pretty terrible thing to do")
+                warning("But if you, like me, want to see what happens when you put")
+                warning("non-standard data into deseq, then here you go.")
+                data <- round(data)
+        } else if (input[["norm"]][[1]] != "raw") {
+            message("DESeq2 demands raw data as input, reverting to the original expressionset.")
+            data <- Biobase::exprs(input[["original_expressionset"]])
+        } else if (!is.null(input[["transform"]]) & input[["transform"]] != "raw") {
+            if (input[["transform"]] == "log2") {
+                ##data = (2^data) - 1
+                message("Reverting to the pre-log2 transformed counts.")
+                data <- input[["normalized"]][["lowfiltered_counts"]]
             } else {
-                data <- Biobase::exprs(input$expressionset)
+                message("Reverting to the original count table.")
+                data <- input[["normalized"]][["original_counts"]][["counts"]]
             }
         } else {
-            data <- Biobase::exprs(input$expressionset)
+            message("The data should be suitable for deseq2.")
+            message("If deseq freaks out, check the state of the count table and ensure that it is in integer counts.")
         }
-    } else {  ## Not an expt class, data frame or matrix
+            ## End testing if normalization has been performed
+        }
+    } else {
         data <- as.data.frame(input)
-        conditions <- as.factor(design$condition)
     }
     data <- convert_counts(data, convert="cpm")$count_table
-    types <- levels(conditions)
+    types <- levels(as.factor(conditions))
     num_conds <- length(types)
     ## These will be filled with num_conds columns and numRows(input) rows.
     median_table <- data.frame()

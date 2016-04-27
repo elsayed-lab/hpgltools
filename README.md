@@ -244,3 +244,35 @@ PCA is weird.
 - **u_plot**: Plot the rank-order slope change of svd's u field.
 - **pca_information**: Play with the various data returned from svd.
 - **pca_highscores**: Get the highest scoring genes for each PC.
+
+
+# Notes to self
+
+* Single and double quotes are actually interchangeable in R, I have been assuming there was a
+  difference with respect to character/vector or interpolation or escaping and just that I hadn't
+  hit a case where it mattered.  This is untrue, in fact the only arbiter I have seen suggests that
+  double quotes are preferred style because they remind programmers of other languages that they are
+  not characters.  This works for me.
+* I have been subsetting poorly.  It turns out that R has two subsetting 'modes', one which
+  preserves the type of the original data, and one which does not.  For consistency one should
+  probably be careful to use the preserving method: (http://adv-r.had.co.nz/Subsetting.html#subsetting-operators)
+  Here are the preserving methods for the first and third elements of each type:
+  ** vec <- as.vector(c(1,2,3,4,5,6))   :: vec[c(1,3)]
+  ** lst <- as.list(c(1,2,3,4,5,6))     :: lst[c(1,3)]
+  ** fac <- as.factor(c(1,2,3,4,5,6))   :: fac[c(1,3), drop=FALSE]
+  FALSE is default, which is important if you want to get rid of unused levels, at least for my work
+  drop=TRUE is helpful
+  ** arr <- as.array(c(1,2,3,4,5,6))    :: arr[c(1,3), drop=FALSE]
+  Hadley's example doesn't work for me x[, 1, drop=FALSE]
+  ** df <- data.frame(id=c('a','b','c','d'), data=c(1,2,3,4))  :: df[, 'id', drop=FALSE]
+
+In contrast, the simplifying methods coerce the results into a different data type, which may be
+either awesome or obnoxious depending on context.  An example of awesome would include times when
+you want to subset a list and just get the character representation of what is left after the
+subset.  If you take the above lst[c(1,3)] you get back the names and values, but if you instead do
+lst[[1]] you get just '1' -- trying lst[[c(1,2)]] ends badly, I am not sure why.
+vec[[1]]
+lst[[1]]
+fac[1:2, drop=TRUE]
+array[c(1,2), drop=TRUE]  TRUE is the default
+df[['id']] or df[, 'id']  drop=TRUE is default

@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Mar 11 11:25:31 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 16:05:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Plot out 2 coefficients with respect to one another from deseq2
 #'
@@ -87,6 +87,7 @@ deseq_pairwise <- function(...) {
 #' @param model_cond   Have condition in the experimental model?
 #' @param model_batch   Have batch in the experimental model?
 #' @param annot_df   Include some annotation information in the results?
+#' @param force  Force deseq to accept data which likely violates its assumptions
 #' @param ... triple dots!
 #' @return A list including the following information:
 #'   run = the return from calling DESeq()
@@ -103,29 +104,49 @@ deseq_pairwise <- function(...) {
 #' }
 #' @export
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                            model_batch=NULL, annot_df=NULL, ...) {
+                            model_batch=NULL, annot_df=NULL, force=FALSE, ...) {
     arglist <- list(...)
     message("Starting DESeq2 pairwise comparisons.")
     input_class <- class(input)[1]
     if (input_class == 'expt') {
-        design <- input$design
-        conditions <- input$conditions
-        batches <- input$batches
-        data <- as.data.frame(Biobase::exprs(input$expressionset))
-        if (!is.null(input$normalized)) {
-            ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
-            ## and expects data as floating point counts,
-            ## not a log2 transformation.
-            if (input$normalized[[1]] != "raw") {
-                message("DESeq2 demands raw data as input, reverting to the original expressionset.")
-                data <- Biobase::exprs(input$original_expressionset)
-            } else if (!is.null(input$transform)) {
-                if (input$transform == "log2") {
-                    ##data = (2^data) - 1
-                    data <- input$normalized$normalized_counts$count_table
+        design <- input[["design"]]
+        conditions <- input[["conditions"]]
+        batches <- input[["batches"]]
+        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+
+        ## As I understand it, DESeq2 fits a binomial distribution
+        ## and expects data as integer counts, not floating point or a log2 transformation
+        ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
+        ## violation of DESeq's stated preferred/demanded input.  There are of course ways around this
+        ## but one should not take them lightly, nor perhaps ever.
+        if (!is.null(input[["state"]][["normalization"]])) {
+            ## These if statements may be insufficient to check for the appropriate input for deseq.
+            if (isTRUE(force)) {
+                ## Setting force to TRUE allows one to round the data to fool deseq into accepting it
+                ## This is a pretty terrible thing to do
+                warning("About to round the data, this is a pretty terrible thing to do")
+                warning("But if you, like me, want to see what happens when you put")
+                warning("non-standard data into deseq, then here you go.")
+                data <- round(data)
+            } else if (input[["state"]][["normalization"]] != "raw" |
+                       (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
+                ## This makes use of the fact that the order of operations in the normalization function is static.
+                ## lowfilter->normalization->convert->batch->transform.
+                ## Thus, if the normalized state is not raw, we can look back either to the lowfiltered or original data
+                ## The same is true for the transformation state.
+                if (input[["state"]][["lowfilter"]] == "raw") {
+                    message("DESeq2 demands raw data as input, reverting to the low-count filtered data.")
+                    data <- input[["normalized"]][["intermediate_counts"]][["lowfilter"]][["count_table"]]
+                } else {
+                    message("DESeq2 demands raw data as input, reverting to the original expressionset.")
+                    data <- Biobase::exprs(input[["original_expressionset"]])
                 }
+            } else {
+                message("The data should be suitable for deseq2.")
+                message("If deseq freaks out, check the state of the count table and ensure that it is in integer counts.")
             }
-        } ## End testing if normalization has been performed
+            ## End testing if normalization has been performed
+        }
     } else {
         data <- as.data.frame(input)
     }
@@ -142,8 +163,9 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         message("DESeq2 step 1/5: Including batch and condition in the deseq model.")
         ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
         ## conditions and batch in this context is information taken from pData()
+        column_data <- Biobase::pData(input[["expressionset"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                     colData=Biobase::pData(input$expressionset),
+                                                     colData=Biobase::pData(input[["expressionset"]]),
                                                      ##design=~ batch_levels + condition_levels)
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
@@ -154,14 +176,31 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                                                      colData=Biobase::pData(input$expressionset),
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
-    } else if (model_batch <- 'sva') {
-        non_condition_estimate <- get_model_adjust(input)
-        model_modifier <- non_condition_estimate$model_adjust
-        model_string <- "~ condition + model_modifier"
+    } else if (class(model_batch) == 'numeric') {
+        message("DESeq2 step 1/5: Including batch estimates from sva/ruv/pca in the deseq model.")
+        model_string <- "~ condition"
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=Biobase::pData(input$expressionset),
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
+        dataset$SV1 <- model_batch
+        DESeq2::design(dataset) <- as.formula(~ SV1 + condition)
+    } else if (class(model_batch) == 'matrix') {
+        message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
+        model_string <- "~ condition"
+        summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
+                                                     colData=Biobase::pData(input$expressionset),
+                                                     design=as.formula(model_string))
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
+        formula_string <- "as.formula(~ "
+        for (count in 1:ncol(model_batch)) {
+            colname <- paste0("SV", count)
+            dataset[[colname]] <- model_batch[, 1]
+            formula_string <- paste0(formula_string, " ", colname, " + ")
+        }
+        formula_string <- paste0(formula_string, "condition)")
+        new_formula <- eval(parse(text=formula_string))
+        DESeq2::design(dataset) <- new_formula
     } else {
         message("DESeq2 step 1/5: Including only condition in the deseq model.")
         model_string <- "~ condition"
