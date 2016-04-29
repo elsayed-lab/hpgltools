@@ -2,31 +2,28 @@
 % Please edit documentation in R/misc_functions.r
 \name{make_tooltips}
 \alias{make_tooltips}
-\title{Create a simple df from gff which contains tooltip usable
-information for gVis graphs. The tooltip column is also a handy proxy for
-anontations information when it would otherwise be too troublesome.}
+\title{Create a simple df from a gff which contains tooltips usable in googleVis graphs.}
 \usage{
 make_tooltips(annotations, desc_col = "description", type = "gene",
   id_col = "ID", ...)
 }
 \arguments{
-\item{annotations}{Either a gff file or annotation data frame (which likely came from a gff file.)}
+\item{annotations}{Either a gff file or annotation data frame (which likely came from a gff file.).}
 
-\item{desc_col}{A column from a gff file to grab the data from}
+\item{desc_col}{Gff column from which to gather data.}
 
-\item{type}{A gff type to key from}
+\item{type}{Gff type to use as the master key.}
 
-\item{id_col}{which annotation column to cross reference against}
+\item{id_col}{Which annotation column to cross reference against?}
 
-\item{...}{extra arguments dropped into arglist}
+\item{...}{Extra arguments dropped into arglist.}
 }
 \value{
-A df of tooltip information or name of a gff file
+Df of tooltip information or name of a gff file.
 }
 \description{
-Create a simple df from gff which contains tooltip usable
-information for gVis graphs. The tooltip column is also a handy proxy for
-anontations information when it would otherwise be too troublesome.
+The tooltip column is a handy proxy for more thorough anontations information when it would
+otherwise be too troublesome to acquire.
 }
 \examples{
 \dontrun{

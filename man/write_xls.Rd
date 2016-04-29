@@ -2,34 +2,29 @@
 % Please edit documentation in R/misc_functions.r
 \name{write_xls}
 \alias{write_xls}
-\title{Write a dataframe to an excel spreadsheet sheet.
-I like to give folks data in any format they prefer, even though I sort
-of hate excel.  Most people I work with use it, so therefore I do too.
-This function has been through many iterations, first using XLConnect,
-then xlsx, and now openxlsx.  Hopefully this will not change again.}
+\title{Write a dataframe to an excel spreadsheet sheet.}
 \usage{
 write_xls(data, wb = NULL, sheet = "first", start_row = 1,
   start_col = 1, ...)
 }
 \arguments{
-\item{data}{A data frame to print}
+\item{data}{Data frame to print.}
 
-\item{wb}{the workbook to which to write}
+\item{wb}{Workbook to which to write.}
 
-\item{sheet}{Name of the sheet to write}
+\item{sheet}{Name of the sheet to write.}
 
-\item{start_row}{The first row of the sheet to write}
+\item{start_row}{First row of the sheet to write. Useful if writing multiple tables.}
 
-\item{start_col}{The first column to write}
+\item{start_col}{First column to write.}
 
-\item{...}{the set of arguments given to for openxlsx}
+\item{...}{Set of extra arguments given to openxlsx.}
 }
 \value{
-a list containing the sheet and workbook written as well as the bottom-right coordinates of the last
-  row/column written of the table.
+List containing the sheet and workbook written as well as the bottom-right coordinates of
+    the last row/column written to the worksheet.
 }
 \description{
-Write a dataframe to an excel spreadsheet sheet.
 I like to give folks data in any format they prefer, even though I sort
 of hate excel.  Most people I work with use it, so therefore I do too.
 This function has been through many iterations, first using XLConnect,

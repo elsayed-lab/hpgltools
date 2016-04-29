@@ -2,29 +2,40 @@
 % Please edit documentation in R/biomart.r
 \name{get_biomart_ontology}
 \alias{get_biomart_ontology}
-\title{Extract gene ontology information from biomart without having to remember the stupid biomart parameters}
+\title{Extract gene ontology information from biomart.}
 \usage{
 get_biomart_ontology(species = "hsapiens", overwrite = FALSE,
   do_save = FALSE, host = "dec2015.archive.ensembl.org",
-  trymart = "ENSEMBL_MART_ENSEMBL")
+  trymart = "ENSEMBL_MART_ENSEMBL", secondtry = "_gene")
 }
 \arguments{
-\item{species}{currently only hsapiens}
+\item{species}{Species to query.}
 
-\item{overwrite}{overwrite a savefile if it exists}
+\item{overwrite}{Overwrite existing savefile?}
 
-\item{do_save}{create a savefile of the annotations}
+\item{do_save}{Create a savefile of the annotations?}
 
-\item{host}{ensembl hostname to use}
+\item{host}{Ensembl hostname to use.}
 
-\item{trymart}{default mart to try}
+\item{trymart}{Default mart to try, newer marts use a different notation.}
+
+\item{secondtry}{The newer mart name.}
+}
+\value{
+Df of geneIDs and GOIDs.
 }
 \description{
-Extract gene ontology information from biomart without having to remember the stupid biomart parameters
+I perceive that every time I go to acquire annotation data from biomart, they have changed
+something important and made it more difficult for me to find what I want. I recently found the
+*.archive.ensembl.org, and so this function uses that to try to keep things predictable, if not
+consistent.
 }
 \examples{
 \dontrun{
  tt = get_biomart_ontology()
 }
+}
+\seealso{
+\link[biomaRt]{getBM}
 }
 

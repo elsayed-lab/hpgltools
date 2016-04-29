@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Apr 27 17:54:46 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 20:37:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -357,30 +357,35 @@ pval_plot <- function(df, ontology="MF") {
     return(pvalue_plot)
 }
 
-#' Perform ontology searches of the output from limma.
+#' Perform ontology searches given the results of a differential expression analysis.
 #'
-#' This passes a set of limma results to (optionally) goseq, clusterprofiler, topgo, and gostats,
-#' collects the outputs, and provides them as a list.  This function needs a species argument,
-#' as I recently made the simple_() functions able to automatically use the various supported organisms.
+#' This takes a set of differential expression results, extracts a subset of up/down expressed
+#' genes; passes them to goseq, clusterProfiler, topGO, GOstats, and gProfiler; collects the
+#' outputs; and returns them in a (hopefully) consistent fashion.  It attempts to handle the
+#' differing required annotation/GOid inputs required for each tool and/or provide supported species
+#' in ways which the various tools expect.
 #'
-#' @param de_out  a list of topTables comprising limma/deseq/edger outputs.
-#' @param gene_lengths   a data frame of gene lengths for goseq.
-#' @param goids   a data frame of goids and genes.
-#' @param n   a number of genes at the top/bottom to search.
-#' @param z   a number of standard deviations to search. (if this and n are null, it assumes 1z)
-#' @param fc   a number of standard deviations to search. (if this and n are null, it assumes 1z)
-#' @param p   a maximum pvalue
-#' @param overwrite  overwrite the excel file
-#' @param goid_map   a map file used by topGO, if it does not exist then provide goids_df to make it.
-#' @param gff_file   a gff file containing the annotations used by gff2genetable from clusterprofiler, which I hacked to make faster.
-#' @param gff_type   column to use from the gff file
-#' @param goids_df   FIXME! a dataframe of genes and goids which I am relatively certain is no longer needed and superseded by goids.
-#' @param do_goseq   perform simple_goseq()?
-#' @param do_cluster   perform simple_clusterprofiler()?
-#' @param do_topgo   perform simple_topgo()?
-#' @param do_gostats   perform simple_gostats()?
-#' @param do_trees   make topGO trees from the data?
-#' @return a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and associated trees, all optionally.
+#' @param de_out List of topTables comprising limma/deseq/edger outputs.
+#' @param gene_lengths Data frame of gene lengths for goseq.
+#' @param goids Data frame of goids and genes.
+#' @param n Number of genes at the top/bottom of the fold-changes to define 'significant.'
+#' @param z Number of standard deviations from the mean fold-change used to define 'significant.'
+#' @param fc Log fold-change used to define 'significant'.
+#' @param p Maximum pvalue to define 'significant.'
+#' @param overwrite Overwrite existing excel results file?
+#' @param organism Supported organism used by the tools.
+#' @param goid_map Mapping file used by topGO, if it does not exist then goids_df creates it.
+#' @param gff_file gff file containing the annotations used by gff2genetable from clusterprofiler.
+#' @param gff_type Column to use from the gff file for the universe of genes.
+#' @param goids_df FIXME! Dataframe of genes and goids which I am relatively certain is no longer needed and superseded by goids.
+#' @param do_goseq Perform simple_goseq()?
+#' @param do_cluster Perform simple_clusterprofiler()?
+#' @param do_topgo Perform simple_topgo()?
+#' @param do_gostats Perform simple_gostats()?
+#' @param do_gprofiler Perform simple_gprofiler()?
+#' @param do_trees make topGO trees from the data?
+#' @return a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and
+#'     associated trees.
 #' @examples
 #' \dontrun{
 #'  many_comparisons = limma_pairwise(expt=an_expt)

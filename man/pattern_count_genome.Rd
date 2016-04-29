@@ -8,21 +8,23 @@ pattern_count_genome(fasta, gff = NULL, pattern = "TA", type = "gene",
   key = "locus_tag")
 }
 \arguments{
-\item{fasta}{a fasta genome}
+\item{fasta}{Genome sequence.}
 
-\item{gff}{an optional gff of annotations (if not provided it will just ask the whole genome.}
+\item{gff}{Gff of annotation information from which to acquire CDS (if not provided it will just
+query the entire genome).}
 
-\item{pattern}{what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.}
+\item{pattern}{What to search for? This was used for tnseq and TA is the mariner insertion point.}
 
-\item{type}{the column to get frmo the gff file}
+\item{type}{Column to use in the gff file.}
 
-\item{key}{what type of entry of the gff file to key from?}
+\item{key}{What type of entry of the gff file to key from?}
 }
 \value{
-num_pattern a data frame of names and numbers.
+Data frame of gene names and number of times the pattern appears/gene.
 }
 \description{
-Find how many times a given pattern occurs in every gene of a genome.
+There are times when knowing how many times a given string appears in a genome/CDS is helpful.
+This function provides that information and is primarily used by cp_seq_m().
 }
 \examples{
 \dontrun{

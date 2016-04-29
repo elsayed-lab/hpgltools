@@ -2,25 +2,33 @@
 % Please edit documentation in R/annotations.r
 \name{load_parasite_annotations}
 \alias{load_parasite_annotations}
-\title{Load organism annotation data (parasite)}
+\title{Load organism annotation data (parasite).}
 \usage{
 load_parasite_annotations(orgdb, gene_ids, keytype = "ENSEMBL",
   fields = c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE"))
 }
 \arguments{
-\item{orgdb}{An OrganismDb instance}
+\item{orgdb}{OrganismDb instance.}
 
-\item{gene_ids}{Identifiers of the genes to retrieve annotations for}
+\item{gene_ids}{Gene identifiers for retrieving annotations.}
 
-\item{keytype}{mmm the key type used}
+\item{keytype}{mmm the key type used?}
 
-\item{fields}{Columns to include in the output}
+\item{fields}{Columns included in the output.}
 }
 \value{
-a table of geneids, chromosomes, descriptions, strands, types, and lengths
+Table of geneids, chromosomes, descriptions, strands, types, and lengths.
 }
 \description{
 Creates a dataframe gene and transcript information for a given set of gene
 ids using the OrganismDbi interface.
+}
+\examples{
+\dontrun{
+one_gene <- load_parasite_annotations(org, c("LmJF.01.0010"))
+}
+}
+\seealso{
+\link[AnnotationDbi]{select}
 }
 

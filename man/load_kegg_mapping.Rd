@@ -2,21 +2,29 @@
 % Please edit documentation in R/annotations.r
 \name{load_kegg_mapping}
 \alias{load_kegg_mapping}
-\title{Creates a gene/KEGG mapping dataframe}
+\title{Creates a gene/KEGG mapping dataframe.}
 \usage{
 load_kegg_mapping(orgdb, gene_ids, keytype = "ENSEMBL")
 }
 \arguments{
-\item{orgdb}{An OrganismDb instance}
+\item{orgdb}{OrganismDb instance.}
 
-\item{gene_ids}{Identifiers of the genes to retrieve annotations for}
+\item{gene_ids}{Identifiers of the genes to retrieve annotations.}
 
 \item{keytype}{the keytype, damn I really need to read this code}
 }
 \value{
-a df of kegg mappings
+Df of kegg mappings
 }
 \description{
-Creates a gene/KEGG mapping dataframe
+In much the same way AnnotationDbi provides GO data, it also provides KEGG data.
+}
+\examples{
+\dontrun{
+kegg_data <- load_kegg_mapping(org, c("a","b"))
+}
+}
+\seealso{
+\link[AnnotationDbi]{select}
 }
 

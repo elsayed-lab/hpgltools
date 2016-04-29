@@ -2,25 +2,32 @@
 % Please edit documentation in R/biomart.r
 \name{get_biomart_annotations}
 \alias{get_biomart_annotations}
-\title{Extract annotation information from biomart without having to remember the stupid biomart parameters}
+\title{Extract annotation information from biomart.}
 \usage{
 get_biomart_annotations(species = "hsapiens", overwrite = FALSE,
-  do_save = FALSE, host = "dec2015.archive.ensembl.org",
-  trymart = "ENSEMBL_MART_ENSEMBL")
+  do_save = TRUE, host = "dec2015.archive.ensembl.org",
+  trymart = "ENSEMBL_MART_ENSEMBL", include_lengths = FALSE)
 }
 \arguments{
-\item{species}{currently only hsapiens}
+\item{species}{Choose a species.}
 
-\item{overwrite}{overwrite a savefile if it exists}
+\item{overwrite}{Overwite an existing save file?}
 
-\item{do_save}{create a savefile of the annotations}
+\item{do_save}{Create a savefile of annotations for future runs?}
 
-\item{host}{ensembl hostname to use}
+\item{host}{Ensembl hostname to use.}
 
-\item{trymart}{biomart has become a circular dependency, this makes me sad, now to list the marts, you need to have a mart loaded...}
+\item{trymart}{Biomart has become a circular dependency, this makes me sad, now to list the
+marts, you need to have a mart loaded...}
+
+\item{include_lengths}{Also perform a search on structural elements in the genome?}
+}
+\value{
+Df of some (by default) human annotations.
 }
 \description{
-Extract annotation information from biomart without having to remember the stupid biomart parameters
+Biomart is an amazing resource of information, but using it is a bit annoying.  This function
+hopes to alleviate some common headaches.
 }
 \examples{
 \dontrun{

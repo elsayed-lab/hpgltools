@@ -8,27 +8,23 @@ Authors@R: c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","c
              person("Keith", "Hughitt", email="khughitt@umd.edu", role=c("aut")))
 Maintainer: Ashton Trey Belew <abelew@gmail.com>
 Description: This is a set of functions I have been using in my various
-    analyses in the El-Sayed laboratory.  They are intended to
-    be useful for anyone, but primarily attempt to make some
-    graphs easier to create, some data normalizations easier,
-    and as reminders about what to (not) do.
+    analyses in the El-Sayed laboratory. The set of tasks included herein run a spectrum from
+    preprocessing count-tables from RNAseq-like data, through differential expression analyses, to
+    post-processing tasks like gene ontology enrichment.  Along the way, these function seek to make
+    plotting analyses consistent, provide multiple entry-points to the various tools, and handle
+    corner cases which are not flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
-    affy, AnnotationDbi, BiocGenerics, Biostrings, biomaRt, Category,
-    clusterProfiler, corpcor, corrplot, data.table, DESeq2, DESeq,
-    directlabels, dplyr, DOSE, EDASeq, edgeR, ffpe, fission,
-    genefilter, genomeIntervals, GenomicFeatures, GenomicRanges,
-    ggplot2, ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph,
-    gProfileR, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc,
-    igraph, IRanges, KEGGREST, knitcitations, knitrBootstrap,
-    lattice,limma, matrixStats, methods, motifStack, motifRG,
-    multtest, mygene, openxlsx, pasilla, pathview, plyr,
-    preprocessCore, qsmooth, qvalue, RamiGO, RColorBrewer, ReactomePA,
-    reshape2, RCurl, rGADEM, Rgraphviz, robustbase, RUVSeq, reshape,
-    rjson, robust, Rsamtools, rtracklayer, S4Vectors, scales, seqinr,
-    seqLogo, stringi, stringr, survJamda, sva, topGO, XLConnect, xtable,
-    XVector
+    affy, AnnotationDbi, BiocGenerics, Biostrings, biomaRt, Category, clusterProfiler, corpcor,
+    corrplot, data.table, DESeq2, DESeq, directlabels, dplyr, DOSE, EDASeq, edgeR, ffpe, fission,
+    genefilter, genomeIntervals, GenomicFeatures, GenomicRanges, ggplot2, ggrepel, GO.db, googleVis,
+    goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc,
+    igraph, IRanges, KEGGREST, knitcitations, lattice,limma, matrixStats, methods, motifStack,
+    motifRG, multtest, mygene, openxlsx, pasilla, pathview, plyr, preprocessCore, qsmooth, qvalue,
+    RamiGO, RColorBrewer, ReactomePA, reshape2, RCurl, rGADEM, Rgraphviz, robustbase, RUVSeq,
+    reshape, rjson, robust, Rsamtools, rtracklayer, S4Vectors, scales, seqinr, seqLogo, stringi,
+    stringr, survJamda, sva, topGO, XLConnect, xtable, XVector
 Imports:
-    devtools, knitr, rmarkdown, Biobase, magrittr
+    devtools, knitr, rmarkdown, Biobase, magrittr, testthat
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

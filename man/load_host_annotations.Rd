@@ -2,22 +2,22 @@
 % Please edit documentation in R/annotations.r
 \name{load_host_annotations}
 \alias{load_host_annotations}
-\title{Load organism annotation data (mouse/human)}
+\title{Load organism annotation data (mouse/human).}
 \usage{
 load_host_annotations(orgdb, gene_ids, keytype = "ENSEMBL",
   fields = c("TXCHROM", "GENENAME", "TXSTRAND", "TXSTART", "TXEND"),
   biomart_dataset = "hsapiens_gene_ensembl")
 }
 \arguments{
-\item{orgdb}{An OrganismDb instance}
+\item{orgdb}{OrganismDb instance.}
 
-\item{gene_ids}{Identifiers of the genes to retrieve annotations for}
+\item{gene_ids}{Gene identifiers for retrieving annotations.}
 
 \item{keytype}{a, umm keytype? I need to properly read this code.}
 
-\item{fields}{Columns to include in the output}
+\item{fields}{Columns to include in the output.}
 
-\item{biomart_dataset}{Name of the biomaRt dataset to query for gene type}
+\item{biomart_dataset}{Name of the biomaRt dataset to query for gene type.}
 }
 \value{
 a table of gene information
@@ -25,5 +25,13 @@ a table of gene information
 \description{
 Creates a dataframe gene and transcript information for a given set of gene
 ids using the OrganismDbi interface.
+}
+\examples{
+\dontrun{
+host <- load_host_annotations(org, c("a","b"))
+}
+}
+\seealso{
+\link[AnnotationDbi]{select}
 }
 

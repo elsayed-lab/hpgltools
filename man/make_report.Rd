@@ -2,20 +2,20 @@
 % Please edit documentation in R/misc_functions.r
 \name{make_report}
 \alias{make_report}
-\title{Make a knitr report with some defaults set}
+\title{Make a knitr report with some defaults set a priori.}
 \usage{
 make_report(name = "report", type = "pdf")
 }
 \arguments{
 \item{name}{Name the document!}
 
-\item{type}{html/pdf/fancy html reports?}
+\item{type}{Html or pdf reports?}
 }
 \value{
-a dated report file
+Dated report file.
 }
 \description{
-Make a knitr report with some defaults set
+I keep forgetting to set appropriate options for knitr.  This tries to set them.
 }
 \seealso{
 \pkg{knitr} \pkg{rmarkdown} \pkg{knitrBootstrap}

@@ -1,12 +1,12 @@
-## Time-stamp: <Mon Apr 25 16:08:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 28 23:41:37 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
 #'
 #' During a lab meeting, the following function was suggested as a quick and dirty batch removal tool
 #'
-#' @param normalized_counts  a data frame of log2cpm counts
-#' @param model  a balanced experimental model containing condition and batch factors
-#' @return a dataframe of residuals after subtracting batch from the model
+#' @param normalized_counts Data frame of log2cpm counts.
+#' @param model Balanced experimental model containing condition and batch factors.
+#' @return Dataframe of residuals after subtracting batch from the model.
 #' @seealso \link[limma]{voom} \link[limma]{lmFit}
 #' @examples
 #' \dontrun{
@@ -23,30 +23,31 @@ cbcb_batch_effect <- function(normalized_counts, model) {
     return(new_data)
 }
 
-#'   Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
-#'   I found this note which is the clearest explanation of what happens with batch effect data:
-#'   https://support.bioconductor.org/p/76099/
-#'   Just to be clear, there's an important difference between removing a batch effect and modelling a
-#'   batch effect. Including the batch in your design formula will model the batch effect in the
-#'   regression step, which means that the raw data are not modified (so the batch effect is not
-#'   removed), but instead the regression will estimate the size of the batch effect and subtract it
-#'   out when performing all other tests. In addition, the model's residual degrees of freedom will
-#'   be reduced appropriately to reflect the fact that some degrees of freedom were "spent"
-#'   modelling the batch effects. This is the preferred approach for any method that is capable of
-#'   using it (this includes DESeq2). You would only remove the batch effect (e.g. using limma's
-#'   removeBatchEffect function) if you were going to do some kind of downstream analysis that can't
-#'   model the batch effects, such as training a classifier.
-#'   I don't have experience with ComBat, but I would expect that you run it on log-transformed CPM
-#'   values, while DESeq2 expects raw counts as input. I couldn't tell you how to properly use the
-#'   two methods together.
+#' Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
 #'
-#' @param count_table  a matrix of (pseudo)counts.
-#' @param design  a model matrix defining the experimental conditions/batches/etc
-#' @param batch   a string describing the method to try to remove the batch effect (or FALSE to leave it alone, TRUE uses limma)
-#' @param batch1   the column in the design table describing the presumed covariant to remove.
-#' @param batch2   the column in the design table describing the second covariant to remove (only used by limma at the moment).
-#' @param noscale   used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.
-#' @param ... more options for you!
+#' I found this note which is the clearest explanation of what happens with batch effect data:
+#' https://support.bioconductor.org/p/76099/
+#' Just to be clear, there's an important difference between removing a batch effect and modelling a
+#' batch effect. Including the batch in your design formula will model the batch effect in the
+#' regression step, which means that the raw data are not modified (so the batch effect is not
+#' removed), but instead the regression will estimate the size of the batch effect and subtract it
+#' out when performing all other tests. In addition, the model's residual degrees of freedom will
+#' be reduced appropriately to reflect the fact that some degrees of freedom were "spent"
+#' modelling the batch effects. This is the preferred approach for any method that is capable of
+#' using it (this includes DESeq2). You would only remove the batch effect (e.g. using limma's
+#' removeBatchEffect function) if you were going to do some kind of downstream analysis that can't
+#' model the batch effects, such as training a classifier.
+#' I don't have experience with ComBat, but I would expect that you run it on log-transformed CPM
+#' values, while DESeq2 expects raw counts as input. I couldn't tell you how to properly use the
+#' two methods together.
+#'
+#' @param count_table Matrix of (pseudo)counts.
+#' @param design Model matrix defining the experimental conditions/batches/etc.
+#' @param batch String describing the method to try to remove the batch effect (or FALSE to leave it alone, TRUE uses limma).
+#' @param batch1 Column in the design table describing the presumed covariant to remove.
+#' @param batch2 Column in the design table describing the second covariant to remove (only used by limma at the moment).
+#' @param noscale Used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.
+#' @param ... More options for you!
 #' @return The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this
 #' may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
 #' @seealso \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
@@ -172,15 +173,16 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     return(counts)
 }
 
-#' Use a modified version of combat on some data
-#' This is a hack of Kwame's combatMod to make it not fail on corner-cases.
+#' A modified version of comBat.
 #'
-#' @param dat a df to modify
-#' @param batch a factor of batches
-#' @param mod a factor of conditions
-#' @param noScale the normal 'scale' option squishes the data too much, so this defaults to TRUE
-#' @param prior.plots print out prior plots? FALSE
-#' @return a df of batch corrected data
+#' This is a hack of Kwame Okrah's combatMod to make it not fail on corner-cases.
+#'
+#' @param dat Df to modify.
+#' @param batch Factor of batches.
+#' @param mod Factor of conditions.
+#' @param noScale The normal 'scale' option squishes the data too much, so this defaults to TRUE.
+#' @param prior.plots Print out prior plots?
+#' @return Df of batch corrected data
 #' @seealso \pkg{sva} \code{\link[sva]{ComBat}}
 #' @examples
 #' \dontrun{
@@ -274,7 +276,7 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
         a.prior <- apply(delta.hat, 1, sva:::aprior)
         b.prior <- apply(delta.hat, 1, sva:::bprior)
         if (prior.plots & par.prior) {
-            par(mfrow = c(2, 2))
+            oldpar <- par(mfrow = c(2, 2))
             tmp <- density(gamma.hat[1, ])
             plot(tmp, type="l", main="Density Plot")
             xx <- seq(min(tmp$x), max(tmp$x), length = 100)
@@ -289,6 +291,7 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
             stats::qqplot(delta.hat[1, ], invgam, xlab="Sample Quantiles", ylab="Theoretical Quantiles")
             lines(c(0, max(invgam)), c(0, max(invgam)), col=2)
             title("Q-Q Plot")
+            newpar <- par(oldpar)
         }
         gamma.star <- delta.star <- NULL
         if (par.prior) {
@@ -320,3 +323,5 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
         return(bayesdata)
     }
 }
+
+## EOF

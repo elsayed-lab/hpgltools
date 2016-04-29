@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Apr 25 16:30:05 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 28 10:41:14 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Perform a simple normalization of a count table
 #'
@@ -215,7 +215,7 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
             ##      xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1))
         }
         abline(h=0.5, v=0.5, col="red", lty=2)
-        par(oldpar)
+        newpar <- par(oldpar)
     }
     return(normExprs)
 }

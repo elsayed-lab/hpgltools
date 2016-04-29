@@ -1,10 +1,14 @@
-## Time-stamp: <Wed Apr 27 16:18:27 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr 29 00:13:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' Make sure that clusterProfiler is ready to run
+#' Make sure that clusterProfiler is ready to run.
 #'
-#' @param gff   The gff file containing annotation data (gene lengths)
-#' @param gomap   a data frame of gene IDs and GO ontologies 1:1, other columns are ignored.
-#' @return the GO2EG data structure created, probably don't save this, its big
+#' Many of our ontology searches are using non-supported organisms.  These need to have a
+#' geneTable.rda file in place which maps the gene IDs to GO IDs.  This function checks for that
+#' file and attempts to set it up if it is not found.
+#'
+#' @param gff Ggff file containing annotation data (gene lengths).
+#' @param gomap Data frame of gene IDs and GO ontologies 1:1, other columns are ignored.
+#' @return GO2EG data structure created, probably don't save this, it is entirely too big.
 #' @examples
 #' \dontrun{
 #'  go2eg <- check_clusterprofiler(gff, goids)
@@ -44,21 +48,28 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 
 #' Perform a simplified clusterProfiler analysis
 #'
-#' @param de_genes a data frame of differentially expressed genes, containing IDs and whatever other columns
-#' @param goids   a file containing mappings of genes to goids in the format expected by topgo
-#' @param golevel   a relative level in the tree for printing p-value plots, higher is more specific
-#' @param pcutoff   a p-value cutoff
-#' @param fold_changes   a df of fold changes for the DE genes
-#' @param include_cnetplots   the cnetplots are often stupid and can be left behind
-#' @param showcategory   how many categories to show in p-value plots
-#' @param universe   universe to use
-#' @param species   name of the species to use
-#' @param gff   gff file to generate the universe
-#' @param wrapped_width  width of ontology names in the pvalue plots
-#' @param method   pvalue calculation method
-#' @param padjust   a method for adjusting the p-values
-#' @param ...  more options!
-#' @return a big list including the following:
+#' I like clusterProfiler quite a lot, but making it work for non-standard species is a bit of a
+#' chore.  This attempts to alleivate some of those headaches and cover some corner cases where it
+#' fails.
+#'
+#' @param de_genes Data frame of differentially expressed genes, it must contain an ID column.
+#' @param goids File containing mappings of genes to goids in the format expected by buildGOmap().
+#' @param golevel Relative level in the tree for printing p-value plots, higher is more specific.
+#' @param pcutoff (Adj)p-value cutoff to define 'significant'.
+#' @param fold_changes Df of fold changes for the DE genes.
+#' @param include_cnetplots Cnetplots often have too many glyphs to read, so by default they are not
+#'     included, however on occasion they are fairly interesting to look at.
+#' @param showcategory How many categories to show in p-value plots?  Too many and they become
+#'     illegible.
+#' @param universe Gene universe to use.
+#' @param species Name of the species to use if supported, jibberish otherwise.
+#' @param gff Gff file to generate the universe of genes.
+#' @param wrapped_width Width of ontology names in the pvalue plots, too long and the bars
+#'     disappear, too short and the words run into the lines above.
+#' @param method Method for calculating p-values.
+#' @param padjust Method for adjusting the p-values.
+#' @param ... More options, passed to arglist.
+#' @return List including the following:
 #'   mf_interesting: A table of the interesting molecular function groups
 #'   bp_interesting: A table of the interesting biological process groups
 #'   cc_interesting: A table of the interesting cellular component groups
@@ -339,17 +350,19 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     return(return_information)
 }
 
-#'   Take clusterprofile group data and print it on a tree as topGO does
-#' Make fun trees a la topgo from goseq data.
+#' Take clusterprofile group data and print it on a tree as per topGO.
 #'
-#' @param de_genes  A list of genes deemed 'interesting'
-#' @param cpdata  data from simple_clusterprofiler()
-#' @param goid_map   A mapping file of IDs to GO ontologies
-#' @param goids_df   A dataframe of mappings used to build goid_map
-#' @param score_limit   A scoring limit above which to ignore genes
-#' @param overwrite   Overwrite an existing goid mapping file?
-#' @param selector   The name of a function for applying scores to the trees
-#' @param pval_column   The name of the column in the table from which to extract scores
+#' TopGO's ontology trees can be very illustrative.  This function shoe-horns clusterProfiler data
+#' into the format expected by topGO and uses it to make those trees.
+#'
+#' @param de_genes List of genes deemed 'interesting'.
+#' @param cpdata Data from simple_clusterprofiler().
+#' @param goid_map Mapping file of IDs to GO ontologies.
+#' @param goids_df Dataframe of mappings used to build goid_map.
+#' @param score_limit Scoring limit above which to ignore genes.
+#' @param overwrite Overwrite an existing goid mapping file?
+#' @param selector Name of a function for applying scores to the trees.
+#' @param pval_column Name of the column in the GO table from which to extract scores.
 #' @return plots! Trees! oh my!
 #' @seealso \pkg{Ramigo} \code{\link[topGO]{showSigOfNodes}}
 #' @examples
@@ -440,19 +453,22 @@ cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", g
     return(trees)
 }
 
-
-#' A minor hack in the clusterProfiler function 'enrichGO'
+#' A minor hack in the clusterProfiler function 'enrichGO'.
 #'
-#' @param gene some differentially expressed genes
-#' @param organism if used will cause this to pull the ensG annotations
-#' @param ont mf bp or cc
-#' @param pvalueCutoff  pvalue cutoff
-#' @param pAdjustMethod   p-value adjustment
-#' @param universe  the gene universe
-#' @param qvalueCutoff   maximum qvalue before adding
-#' @param minGSSize   smallest group size
-#' @param readable  readable tag on the object
-#' @return some clusterProfiler data
+#' I do not remember any longer why, but enrichGO errors out in ways which do not always make sense,
+#' this was written to alleviate that problem.  I believe I sent a diff to the clusterProfiler
+#' author but did not hear back and so added this function.
+#'
+#' @param gene Some differentially expressed genes.
+#' @param organism if used will cause this to pull the ensG annotations.
+#' @param ont Molecular function, Biological process, or Cellular component?
+#' @param pvalueCutoff P-value cutoff.
+#' @param pAdjustMethod P-value adjustment.
+#' @param universe Gene universe to use.
+#' @param qvalueCutoff Maximum qvalue before adding.
+#' @param minGSSize Smallest ontology group size allowed.
+#' @param readable Set the readable tag on the returned object?
+#' @return Some clusterProfiler data.
 #' @seealso \pkg{clusterProfiler}
 #' @export
 hpgl_enrichGO <- function(gene, organism="human", ont="MF",
@@ -466,18 +482,22 @@ hpgl_enrichGO <- function(gene, organism="human", ont="MF",
     return(information)
 }
 
-#' A minor hack in the clusterProfiler function 'enrich.internal'
+#' A minor hack in the clusterProfiler function 'enrich.internal'.
 #'
-#' @param gene some differentially expressed genes
-#' @param organism again will cause this to pull ensG if recognized by clusteprofiler
-#' @param pvalueCutoff a pvalue cutoff
-#' @param pAdjustMethod  p adjust method
-#' @param ont mf bp or cc
-#' @param minGSSize   a minimum gs size
-#' @param qvalueCutoff   maximum q value
-#' @param readable   set the readable flag for dose
-#' @param universe  a universe to use
-#' @return some clusterProfiler data
+#' I do not remember any longer why, but enrichGO errors out in ways which do not always make sense,
+#' this was written to alleviate that problem.  I believe I sent a diff to the clusterProfiler
+#' author but did not hear back and so added this function.
+#'
+#' @param gene Differentially expressed genes.
+#' @param organism Pull ensembl annotations if this is a supported species.
+#' @param pvalueCutoff P-value cutoff.
+#' @param pAdjustMethod P-adjust method.
+#' @param ont Molecular function, Biological process, or Cellular component?
+#' @param minGSSize Minimum gs size?
+#' @param qvalueCutoff Maximum allowed q-value.
+#' @param readable Set the readable flag for the DOSE object?
+#' @param universe Universe of genes to score significance against.
+#' @return Some clusterProfiler data.
 #' @seealso \pkg{clusterProfiler}
 #' @export
 hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="BH",
@@ -613,46 +633,51 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
 ##}
 ##
 
-#' A copy and paste of clusterProfiler's readGff
+#' A near copy-paste of clusterProfiler's readGff().
 #'
-#' @param gffFile a gff file
-#' @param compress  compress them
-#' @param split   the splitter when reading gff files
+#' There is a redundant merge in the original code which caused my invocations to use up all the
+#' memory on my machine.
+#'
+#' @param gffFile Gff file of annotations.
+#' @param compress Compress the results?
+#' @param split Splitter when reading gff files to extract annotation information.
+#' @return geneTable.rda file of gene attributes.
 #' @export
 hpgl_Gff2GeneTable <- function(gffFile, compress=TRUE, split="=") {
-    ##gffFile="reference/gff/clbrener_8.1_complete_genes.gff"
     if (is.data.frame(gffFile)) {
-        GeneID <- data.frame(GeneID = gffFile$ID)
+        GeneID <- data.frame(GeneID = gffFile[["ID"]])
         geneInfo <- gffFile
         geneInfo$start <- 1
-        geneInfo$GeneID <- gffFile$ID
-        geneInfo$GeneName <- gffFile$ID
-        geneInfo$Locus <- gffFile$ID
-        geneInfo$end <- geneInfo$width
+        geneInfo$GeneID <- gffFile[["ID"]]
+        geneInfo$GeneName <- gffFile[["ID"]]
+        geneInfo$Locus <- gffFile[["ID"]]
+        geneInfo$end <- geneInfo[["width"]]
         geneInfo$strand <- "+"
     } else {
         gff <- clusterProfiler:::readGff(gffFile)
-        GeneID <- data.frame(GeneID=hpgl_getGffAttribution(gff$attributes, field="ID", split=split))
-        geneInfo <- gff[gff$feature == "gene",]
+        GeneID <- data.frame(
+            "GeneID" = hpgl_getGffAttribution(gff[["attributes"]], field="ID", split=split))
+        geneInfo <- gff[gff[["feature"]] == "gene",]
         geneInfo <- geneInfo[, c("seqname", "start", "end", "strand", "attributes")]
-        geneInfo$GeneID <- hpgl_getGffAttribution(geneInfo$attributes, field="ID", split=split)
-        geneInfo$GeneName <- hpgl_getGffAttribution(geneInfo$attributes, field="gene", split=split)
-        first_locus <- hpgl_getGffAttribution(geneInfo$attributes, field="locus_tag", split=split)
+        geneInfo[["GeneID"]] <- hpgl_getGffAttribution(geneInfo[["attributes"]], field="ID", split=split)
+        geneInfo[["GeneName"]] <- hpgl_getGffAttribution(geneInfo[["attributes"]], field="gene", split=split)
+        first_locus <- hpgl_getGffAttribution(geneInfo[["attributes"]], field="locus_tag", split=split)
         first_sum <- sum(is.na(first_locus))
         second_locus <- NULL
         second_sum <- first_sum
-        if (first_sum > (length(geneInfo$attributes) / 2)) { ## Using this to approximate whether locus_tag has a useful meaning.
+        if (first_sum > (length(geneInfo[["attributes"]]) / 2)) {
+            ## Using this to approximate whether locus_tag has a useful meaning.
             ## If more than 1/2 of the attributes have no locus tag, try using gene_id instead -- which is what yeast uses (btw).
             message("Trying to use gene_id insteady of locus_tag, because locus_tag is poorly defined.")
-            second_locus <- hpgl_getGffAttribution(geneInfo$attributes, field="gene_id", split=split)
+            second_locus <- hpgl_getGffAttribution(geneInfo[["attributes"]], field="gene_id", split=split)
             second_sum <- sum(is.na(second_locus))
         }
         if (first_sum > second_sum) {
-            geneInfo$Locus <- second_locus
+            geneInfo[["Locus"]] <- second_locus
         } else {
-            geneInfo$Locus <- first_locus
+            geneInfo[["Locus"]] <- first_locus
         }
-        geneInfo$GeneName[is.na(geneInfo$GeneName)] = "-"
+        geneInfo$GeneName[is.na(geneInfo$GeneName)] = "-"  ## wtf is going on here?
         geneInfo <- geneInfo[, -5] ## drop "attributes" column.
     }
     ##GI2GeneID <- data.frame(GI=getGffAttribution(gff$attributes, field="GI"),
@@ -697,4 +722,4 @@ hpgl_getGffAttribution <- function(x, field, attrsep=";", split='=') {
     })
 }
 
-# EOF
+## EOF

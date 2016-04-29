@@ -7,29 +7,30 @@
 get_genelengths(gff, type = "gene", key = "ID")
 }
 \arguments{
-\item{gff}{a gff file with (hopefully) IDs and widths}
+\item{gff}{Gff file with (hopefully) IDs and widths.}
 
-\item{type}{the annotation type to use.}
+\item{type}{Annotation type to use (3rd column).}
 
-\item{key}{the identifier in the 10th column of the gff file to use.}
+\item{key}{Identifier in the 10th column of the gff file to use.}
 }
 \value{
-a data frame of gene IDs and widths.
+Data frame of gene IDs and widths.
 }
 \description{
-This function attempts to be robust to the differences in output from importing gff2/gff3 files.  But it certainly isn't perfect.
+This function attempts to be robust to the differences in output from importing gff2/gff3 files.
+But it certainly isn't perfect.
 }
 \examples{
 \dontrun{
  tt = get_genelengths('reference/fun.gff.gz')
  head(tt)
-#          ID width
-#1   YAL069W   312
-#2   YAL069W   315
-#3   YAL069W     3
-#4 YAL068W-A   252
-#5 YAL068W-A   255
-#6 YAL068W-A     3
+##           ID width
+## 1   YAL069W   312
+## 2   YAL069W   315
+## 3   YAL069W     3
+## 4 YAL068W-A   252
+## 5 YAL068W-A   255
+## 6 YAL068W-A     3
 }
 }
 \seealso{

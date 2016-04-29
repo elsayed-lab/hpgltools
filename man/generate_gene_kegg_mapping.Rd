@@ -2,23 +2,31 @@
 % Please edit documentation in R/annotations.r
 \name{generate_gene_kegg_mapping}
 \alias{generate_gene_kegg_mapping}
-\title{Generate GENE/KEGG mapping}
+\title{Generate GENE/KEGG mapping.}
 \usage{
 generate_gene_kegg_mapping(pathways, org_abbreviation, verbose = FALSE)
 }
 \arguments{
 \item{pathways}{Vector of KEGG pathway IDs returned from call to keggLink()
-e.g. "path:mmu05134"}
+e.g. "path:mmu05134".}
 
 \item{org_abbreviation}{KEGG identifier for the species of interest (e.g.
-"hsa" for Homo sapiens)}
+"hsa" for Homo sapiens).}
 
 \item{verbose}{talky talky?}
 }
 \value{
-a df mapping kegg and gene IDs
+Df mapping kegg and gene IDs.
 }
 \description{
-Generate GENE/KEGG mapping
+This uses KEGGREST and related function kegg_to_ensembl() to associate genes to KEGG pathways.
+}
+\examples{
+\dontrun{
+kegg_df <- generate_gene_kegg_mapping(path, org)
+}
+}
+\seealso{
+\link[KEGGREST]{keggLink}
 }
 

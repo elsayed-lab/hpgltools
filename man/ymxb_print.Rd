@@ -7,9 +7,12 @@
 ymxb_print(model)
 }
 \arguments{
-\item{model}{a model to print from glm/lm/robustbase}
+\item{model}{Model to print from glm/lm/robustbase.}
+}
+\value{
+a string representation of that model.
 }
 \description{
-Print a model as y = mx + b just like in grade school!
+Because, why not!?
 }
 
