@@ -2,21 +2,30 @@
 % Please edit documentation in R/annotations.r
 \name{load_go_terms}
 \alias{load_go_terms}
-\title{Retrieve GO terms associated with a set of genes}
+\title{Retrieve GO terms associated with a set of genes.}
 \usage{
 load_go_terms(orgdb, gene_ids, keytype = "ENSEMBL")
 }
 \arguments{
-\item{orgdb}{An OrganismDb instance}
+\item{orgdb}{OrganismDb instance.}
 
-\item{gene_ids}{Identifiers of the genes to retrieve annotations for}
+\item{gene_ids}{Identifiers of the genes to retrieve annotations.}
 
 \item{keytype}{the mysterious keytype returns yet again to haunt my dreams}
 }
 \value{
-a data frame of gene IDs, go terms, and names.
+Data frame of gene IDs, go terms, and names.
 }
 \description{
-Retrieve GO terms associated with a set of genes
+AnnotationDbi provides a reasonably complete set of GO mappings between gene ID and
+ontologies.  This will extract that table for a given set of gene IDs.
+}
+\examples{
+\dontrun{
+go_terms <- load_go_terms(org, c("a","b"))
+}
+}
+\seealso{
+\link[AnnotationDbi]{select}
 }
 

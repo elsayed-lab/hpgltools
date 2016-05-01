@@ -4,19 +4,17 @@
 \alias{require.auto}
 \title{Automatic loading and/or installing of packages.}
 \usage{
-require.auto(lib, github_path = NULL, verbose = FALSE, update = FALSE)
+require.auto(lib, github_path = NULL, update = FALSE)
 }
 \arguments{
-\item{lib}{string name of a library}
+\item{lib}{String name of a library to check/install.}
 
-\item{github_path}{an optional github username/path.}
+\item{github_path}{Github username/repository.}
 
-\item{verbose}{print some information while loading.}
-
-\item{update}{update packages?}
+\item{update}{Update packages?}
 }
 \value{
-NULL currently
+0 or 1, whether a package was installed or not.
 }
 \description{
 Load a library, install it first if necessary.

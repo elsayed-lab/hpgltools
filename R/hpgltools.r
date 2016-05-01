@@ -30,6 +30,7 @@
 #' @docType package
 #' @name hpgltools
 #' @import magrittr
+#' @importFrom magrittr `%>%`
 #' @importFrom utils head tail
 #' @import stats
 NULL

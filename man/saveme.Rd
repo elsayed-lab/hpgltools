@@ -7,12 +7,12 @@
 saveme(directory = "savefiles", backups = 4)
 }
 \arguments{
-\item{directory}{the directory to save the Rdata file.}
+\item{directory}{Directory to save the Rdata file.}
 
-\item{backups}{how many revisions?}
+\item{backups}{How many revisions?}
 }
 \value{
-the command used to save the global environment
+Command string used to save the global environment.
 }
 \description{
 I often use R over a sshfs connection, sometimes with significant latency, and

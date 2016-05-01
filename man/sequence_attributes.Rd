@@ -2,24 +2,25 @@
 % Please edit documentation in R/misc_functions.r
 \name{sequence_attributes}
 \alias{sequence_attributes}
-\title{Gather some simple sequence attributes}
+\title{Gather some simple sequence attributes.}
 \usage{
 sequence_attributes(fasta, gff = NULL, type = "gene", key = "locus_tag")
 }
 \arguments{
-\item{fasta}{a fasta genome}
+\item{fasta}{Genome encoded as a fasta file.}
 
-\item{gff}{an optional gff of annotations (if not provided it will just ask the whole genome.}
+\item{gff}{Optional gff of annotations (if not provided it will just ask the whole genome).}
 
-\item{type}{the column to get frmo the gff file}
+\item{type}{Column of the gff file to use.}
 
-\item{key}{what type of entry of the gff file to key from?}
+\item{key}{What type of entry of the gff file to key from?}
 }
 \value{
-num_pattern a data frame of names and numbers.
+List of data frames containing gc/at/gt/ac contents.
 }
 \description{
-Gather some simple sequence attributes
+This extends the logic of the pattern searching in pattern_count_genome() to search on some other
+attributes.
 }
 \examples{
 \dontrun{

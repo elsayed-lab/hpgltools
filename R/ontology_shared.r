@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Apr 26 10:50:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed Apr 27 20:37:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -357,30 +357,35 @@ pval_plot <- function(df, ontology="MF") {
     return(pvalue_plot)
 }
 
-#' Perform ontology searches of the output from limma.
+#' Perform ontology searches given the results of a differential expression analysis.
 #'
-#' This passes a set of limma results to (optionally) goseq, clusterprofiler, topgo, and gostats,
-#' collects the outputs, and provides them as a list.  This function needs a species argument,
-#' as I recently made the simple_() functions able to automatically use the various supported organisms.
+#' This takes a set of differential expression results, extracts a subset of up/down expressed
+#' genes; passes them to goseq, clusterProfiler, topGO, GOstats, and gProfiler; collects the
+#' outputs; and returns them in a (hopefully) consistent fashion.  It attempts to handle the
+#' differing required annotation/GOid inputs required for each tool and/or provide supported species
+#' in ways which the various tools expect.
 #'
-#' @param de_out  a list of topTables comprising limma/deseq/edger outputs.
-#' @param gene_lengths   a data frame of gene lengths for goseq.
-#' @param goids   a data frame of goids and genes.
-#' @param n   a number of genes at the top/bottom to search.
-#' @param z   a number of standard deviations to search. (if this and n are null, it assumes 1z)
-#' @param fc   a number of standard deviations to search. (if this and n are null, it assumes 1z)
-#' @param p   a maximum pvalue
-#' @param overwrite  overwrite the excel file
-#' @param goid_map   a map file used by topGO, if it does not exist then provide goids_df to make it.
-#' @param gff_file   a gff file containing the annotations used by gff2genetable from clusterprofiler, which I hacked to make faster.
-#' @param gff_type   column to use from the gff file
-#' @param goids_df   FIXME! a dataframe of genes and goids which I am relatively certain is no longer needed and superseded by goids.
-#' @param do_goseq   perform simple_goseq()?
-#' @param do_cluster   perform simple_clusterprofiler()?
-#' @param do_topgo   perform simple_topgo()?
-#' @param do_gostats   perform simple_gostats()?
-#' @param do_trees   make topGO trees from the data?
-#' @return a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and associated trees, all optionally.
+#' @param de_out List of topTables comprising limma/deseq/edger outputs.
+#' @param gene_lengths Data frame of gene lengths for goseq.
+#' @param goids Data frame of goids and genes.
+#' @param n Number of genes at the top/bottom of the fold-changes to define 'significant.'
+#' @param z Number of standard deviations from the mean fold-change used to define 'significant.'
+#' @param fc Log fold-change used to define 'significant'.
+#' @param p Maximum pvalue to define 'significant.'
+#' @param overwrite Overwrite existing excel results file?
+#' @param organism Supported organism used by the tools.
+#' @param goid_map Mapping file used by topGO, if it does not exist then goids_df creates it.
+#' @param gff_file gff file containing the annotations used by gff2genetable from clusterprofiler.
+#' @param gff_type Column to use from the gff file for the universe of genes.
+#' @param goids_df FIXME! Dataframe of genes and goids which I am relatively certain is no longer needed and superseded by goids.
+#' @param do_goseq Perform simple_goseq()?
+#' @param do_cluster Perform simple_clusterprofiler()?
+#' @param do_topgo Perform simple_topgo()?
+#' @param do_gostats Perform simple_gostats()?
+#' @param do_gprofiler Perform simple_gprofiler()?
+#' @param do_trees make topGO trees from the data?
+#' @return a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and
+#'     associated trees.
 #' @examples
 #' \dontrun{
 #'  many_comparisons = limma_pairwise(expt=an_expt)
@@ -390,10 +395,10 @@ pval_plot <- function(df, ontology="MF") {
 #' }
 #' @export
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
-                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE,
+                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE, organism="unsupported",
                                   goid_map="reference/go/id2go.map", gff_file=NULL, gff_type="gene",
                                   goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE,
-                                  do_topgo=TRUE, do_gostats=TRUE, do_trees=FALSE) {
+                                  do_topgo=TRUE, do_gostats=TRUE, do_gprofiler=TRUE, do_trees=FALSE) {
     message("This function expects a list of de contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
     if (isTRUE(do_goseq) & is.null(gene_lengths)) {
@@ -442,6 +447,8 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
         cluster_up_ontology <- cluster_up_trees <- cluster_down_ontology <- cluster_down_trees <- NULL
         topgo_up_ontology <- topgo_up_trees <- topgo_down_ontology <- topgo_down_trees <- NULL
         gostats_up_ontology <- gostats_up_trees <- gostats_down_ontology <- gostats_down_trees <- NULL
+        gprofiler_up_ontology <- gprofiler_down_ontology <- NULL
+
         if (isTRUE(do_goseq)) {
             goseq_up_ontology <- try(simple_goseq(up_genes, lengths=gene_lengths, goids=goids))
             goseq_down_ontology <- try(simple_goseq(down_genes, lengths=gene_lengths, goids=goids))
@@ -450,6 +457,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                 goseq_down_trees <- try(goseq_trees(down_genes, goseq_down_ontology, goid_map=goid_map, goids_df=goids))
             }
         }
+
         if (isTRUE(do_cluster)) {
             cluster_up_ontology <- try(simple_clusterprofiler(up_genes, goids=goids, gff=gff_file))
             cluster_down_ontology <- try(simple_clusterprofiler(down_genes, goids=goids, gff=gff_file))
@@ -458,6 +466,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                 cluster_down_trees <- try(cluster_trees(down_genes, cluster_down_ontology, goid_map=goid_map, goids_df=goids))
             }
         }
+
         if (isTRUE(do_topgo)) {
             topgo_up_ontology <- try(simple_topgo(up_genes, goid_map=goid_map, goids_df=goids))
             topgo_down_ontology <- try(simple_topgo(down_genes, goid_map=goid_map, goids_df=goids))
@@ -466,6 +475,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                 topgo_down_trees <- try(topgo_trees(topgo_down_ontology))
             }
         }
+
         if (isTRUE(do_gostats)) {
             gostats_up_ontology <- try(simple_gostats(up_genes, gff_file, goids, gff_type=gff_type))
             gostats_down_ontology <- try(simple_gostats(down_genes, gff_file, goids, gff_type=gff_type))
@@ -475,15 +485,31 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                 ## topgo_down_trees = try(gostats_trees(topgo_down_ontology))
             }
         }
-        c_data <- list(up_table=up_genes, down_table=down_genes,
-                       up_goseq=goseq_up_ontology, down_goseq=goseq_down_ontology,
-                       up_cluster=cluster_up_ontology, down_cluster=cluster_down_ontology,
-                       up_topgo=topgo_up_ontology, down_topgo=topgo_down_ontology,
-                       up_goseqtrees=goseq_up_trees, down_goseqtrees=goseq_down_trees,
-                       up_clustertrees=cluster_up_trees, down_clustertrees=cluster_down_trees,
-                       up_topgotrees=topgo_up_trees, down_topgotrees=topgo_down_trees,
-                       up_gostats=gostats_up_ontology, down_gostats=gostats_down_ontology,
-                       up_gostatstrees=gostats_up_trees, down_gostatstrees=gostats_down_trees)
+
+        if (isTRUE(do_gprofiler)) {
+            gprofiler_up_ontology <- try(simple_gprofiler(up_genes, organism=organism))
+            gprofiler_down_ontology <- try(simple_gprofiler(down_genes, organism=organism))
+        }
+        c_data <- list("up_table" = up_genes,
+                       "down_table" = down_genes,
+                       "up_goseq" = goseq_up_ontology,
+                       "down_goseq" = goseq_down_ontology,
+                       "up_cluster" = cluster_up_ontology,
+                       "down_cluster" = cluster_down_ontology,
+                       "up_topgo" = topgo_up_ontology,
+                       "down_topgo" = topgo_down_ontology,
+                       "up_gostats" = gostats_up_ontology,
+                       "down_gostats" = gostats_down_ontology,
+                       "up_gprofiler" = profiler_up_ontology,
+                       "down_gprofiler" = profiler_down_ontology,
+                       "up_goseqtrees" = goseq_up_trees,
+                       "down_goseqtrees" = goseq_down_trees,
+                       "up_clustertrees" = cluster_up_trees,
+                       "down_clustertrees" = cluster_down_trees,
+                       "up_topgotrees" = topgo_up_trees,
+                       "down_topgotrees" = topgo_down_trees,
+                       "up_gostatstrees" = gostats_up_trees,
+                       "down_gostatstrees" = gostats_down_trees)
         output[[c]] <- c_data
     }
     names(output) <- names(de_out)

@@ -2,18 +2,26 @@
 % Please edit documentation in R/annotations.r
 \name{kegg_to_ensembl}
 \alias{kegg_to_ensembl}
-\title{Maps KEGG identifiers to ENSEMBL gene ids}
+\title{Maps KEGG identifiers to ENSEMBL gene ids.}
 \usage{
 kegg_to_ensembl(kegg_ids)
 }
 \arguments{
-\item{kegg_ids}{List of KEGG identifiers to be mapped}
+\item{kegg_ids}{List of KEGG identifiers to be mapped.}
 }
 \value{
-some ensembl IDs
+Ensembl IDs as a character list.
 }
 \description{
 Takes a list of KEGG gene identifiers and returns a list of ENSEMBL
 ids corresponding to those genes.
+}
+\examples{
+\dontrun{
+ensembl_list <- kegg_to_ensembl("a")
+}
+}
+\seealso{
+\link[KEGGREST]{keggGet}
 }
 

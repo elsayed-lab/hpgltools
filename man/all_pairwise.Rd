@@ -2,44 +2,44 @@
 % Please edit documentation in R/de_shared.r
 \name{all_pairwise}
 \alias{all_pairwise}
-\title{Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.}
+\title{Perform limma, DESeq2, EdgeR pairwise analyses.}
 \usage{
 all_pairwise(input, conditions = NULL, batches = NULL, model_cond = TRUE,
   model_batch = TRUE, model_intercept = FALSE, extra_contrasts = NULL,
   alt_model = NULL, libsize = NULL, annot_df = NULL, ...)
 }
 \arguments{
-\item{input}{a dataframe/vector or expt class containing count tables, normalization state, etc.}
+\item{input}{Dataframe/vector or expt class containing count tables, normalization state, etc.}
 
-\item{conditions}{a factor of conditions in the experiment}
+\item{conditions}{Factor of conditions in the experiment.}
 
-\item{batches}{a factor of batches in the experiment}
+\item{batches}{Factor of batches in the experiment.}
 
-\item{model_cond}{include condition in the model?  This is likely always true.}
+\item{model_cond}{Include condition in the model?  This is likely always true.}
 
-\item{model_batch}{include batch in the model?}
+\item{model_batch}{Include batch in the model?}
 
-\item{model_intercept}{use an intercept model instead of cell means?}
+\item{model_intercept}{Use an intercept model instead of cell means?}
 
-\item{extra_contrasts}{some extra contrasts to add to the list
-This can be pretty neat, lets say one has conditions A,B,C,D,E
-and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
-with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
-de_vs_cb = (E-D)-(C-B),"}
+\item{extra_contrasts}{Optional extra contrasts beyone the pairwise comparisons.  This can be
+pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or
+(E/D)/(C/B) then use this with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla =
+(E-D)-A, de_vs_cb = (E-D)-(C-B)".}
 
-\item{alt_model}{an optional alternate model to use rather than just condition/batch}
+\item{alt_model}{Alternate model to use rather than just condition/batch.}
 
-\item{libsize}{the library size of the original data to help voom()}
+\item{libsize}{Library size of the original data to help voom().}
 
-\item{annot_df}{annotations to add to the tables}
+\item{annot_df}{Annotations to add to the result tables.}
 
-\item{...}{The elipsis parameter is fed to write_limma() at the end.}
+\item{...}{Picks up extra arguments into arglist, currently only passed to write_limma().}
 }
 \value{
 A list of limma, deseq, edger results.
 }
 \description{
-Wrap up limma/DESeq2/EdgeR pairwise analyses in one call.
+This takes an expt object, collects the set of all possible pairwise comparisons, sets up
+experimental models appropriate for the differential expression analyses, and performs them.
 }
 \examples{
 \dontrun{

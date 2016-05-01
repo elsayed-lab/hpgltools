@@ -2,27 +2,27 @@
 % Please edit documentation in R/misc_functions.r
 \name{sillydist}
 \alias{sillydist}
-\title{A stupid distance function of a point against two axes.}
+\title{Calculate a simplistic distance function of a point against two axes.}
 \usage{
 sillydist(firstterm, secondterm, firstaxis = 0, secondaxis = 0)
 }
 \arguments{
-\item{firstterm}{the x-values of the points.}
+\item{firstterm}{X-values of the points.}
 
-\item{secondterm}{the y-values of the points.}
+\item{secondterm}{Y-values of the points.}
 
-\item{firstaxis}{the x-value of the vertical axis.}
+\item{firstaxis}{X-value of the vertical axis.}
 
-\item{secondaxis}{the y-value of the second axis.}
+\item{secondaxis}{Y-value of the second axis.}
 }
 \value{
-dataframe of the distances
-This just takes the abs(distances) of each point to the axes,
-normalizes them against the largest point on the axes, multiplies
-the result, and normalizes against the max of all points.
+Dataframe of the distances.
 }
 \description{
-A stupid distance function of a point against two axes.
+Sillydist provides a distance of any point vs. the axes of a plot.
+This just takes the abs(distances) of each point to the axes,
+normalizes them against the largest point on the axes, multiplies
+the result, and normalizes against the max of all point.
 }
 \examples{
 \dontrun{

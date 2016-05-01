@@ -1,5 +1,7 @@
-## Time-stamp: <Wed Apr 13 12:01:19 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 28 23:37:26 2016 Ashton Trey Belew (abelew@gmail.com)>
 
+#' The simplest possible differential expression method.
+#'
 #' Perform a pairwise comparison among conditions which takes
 #' nothing into account.  It _only_ takes the conditions, a mean value/variance among
 #' them, divides by condition, and returns the result.  No fancy nomalizations, no
@@ -7,15 +9,15 @@
 #' But, it should also provide a baseline to compare the other tools against, they should
 #' all do better than this, always.
 #'
-#' @param input a count table by sample
-#' @param design   a data frame of samples and conditions
-#' @return I am not sure yet
+#' @param input Count table by sample.
+#' @param design Data frame of samples and conditions.
+#' @return Df of pseudo-logFC, p-values, numerators, and denominators.
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
-#' @export
 #' @examples
 #' \dontrun{
 #' stupid_de <- basic_pairwise(expt)
 #' }
+#' @export
 basic_pairwise <- function(input, design=NULL) {
     message("Starting basic pairwise comparison.")
     input_class <- class(input)[1]

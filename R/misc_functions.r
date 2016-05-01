@@ -1,8 +1,9 @@
-## Time-stamp: <Tue Apr 26 16:00:12 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 28 01:52:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' png() shortcut
 #'
 #' I hate remembering my options for png()
+#'
 #' @param file a filename to write
 #' @return a png with height=width=9 inches and a high resolution
 #' @export
@@ -12,29 +13,30 @@ pp <- function(file) {
 
 #' Grab gene lengths from a gff file.
 #'
-#' This function attempts to be robust to the differences in output from importing gff2/gff3 files.  But it certainly isn't perfect.
+#' This function attempts to be robust to the differences in output from importing gff2/gff3 files.
+#' But it certainly isn't perfect.
 #'
-#' @param gff  a gff file with (hopefully) IDs and widths
-#' @param type   the annotation type to use.
-#' @param key   the identifier in the 10th column of the gff file to use.
-#' @return  a data frame of gene IDs and widths.
+#' @param gff Gff file with (hopefully) IDs and widths.
+#' @param type Annotation type to use (3rd column).
+#' @param key Identifier in the 10th column of the gff file to use.
+#' @return Data frame of gene IDs and widths.
 #' @seealso \pkg{rtracklayer} \link[rtracklayer]{import.gff}
 #' @examples
 #' \dontrun{
 #'  tt = get_genelengths('reference/fun.gff.gz')
 #'  head(tt)
-#' #          ID width
-#' #1   YAL069W   312
-#' #2   YAL069W   315
-#' #3   YAL069W     3
-#' #4 YAL068W-A   252
-#' #5 YAL068W-A   255
-#' #6 YAL068W-A     3
+#' ##           ID width
+#' ## 1   YAL069W   312
+#' ## 2   YAL069W   315
+#' ## 3   YAL069W     3
+#' ## 4 YAL068W-A   252
+#' ## 5 YAL068W-A   255
+#' ## 6 YAL068W-A     3
 #' }
 #' @export
 get_genelengths <- function(gff, type="gene", key="ID") {
     ret <- gff2df(gff)
-    ret <- ret[ret$type == type, ]
+    ret <- ret[ret[["type"]] == type, ]
     ret <- ret[, c(key, "width")]
     colnames(ret) <- c("ID", "width")
     if (dim(ret)[1] == 0) {
@@ -49,13 +51,13 @@ get_genelengths <- function(gff, type="gene", key="ID") {
 #' It will then sum all rows of exons by parent gene and sum the widths of the exons.
 #' Finally it will return a list containing a df of gene lengths and summed counts.
 #'
-#' @param data  a count table by exon
-#' @param gff   a gff filename
-#' @param annotdf   a dataframe of annotations (probably from gff2df)
-#' @param parent   a column from the annotations with the gene names
-#' @param child   a column from the annotations with the exon names
+#' @param data Count tables of exons.
+#' @param gff Gff filename.
+#' @param annotdf Dataframe of annotations (probably from gff2df).
+#' @param parent Column from the annotations with the gene names.
+#' @param child Column from the annotations with the exon names.
 #'
-#' @return  a list of 2 data frames, counts and lengths by summed exons
+#' @return List of 2 data frames, counts and lengths by summed exons.
 #' @seealso \pkg{rtracklayer}
 #' @examples
 #' \dontrun{
@@ -70,62 +72,79 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent='Parent', child='row.
     }
 
     tmp_data <- merge(data, annotdf, by=child)
-    rownames(tmp_data) <- tmp_data$Row.names
+    rownames(tmp_data) <- tmp_data[["Row.names"]]
     tmp_data <- tmp_data[-1]
     ## Start out by summing the gene widths
-    column <- aggregate(tmp_data[,"width"], by=list(Parent=tmp_data[,parent]), FUN=sum)
-    new_data <- data.frame(column$x)
-    rownames(new_data) <- column$Parent
+    column <- aggregate(tmp_data[, "width"], by=list(Parent=tmp_data[, parent]), FUN=sum)
+    new_data <- data.frame(column[["x"]])
+    rownames(new_data) <- column[["Parent"]]
     colnames(new_data) <- c("width")
 
     for (c in 1:length(colnames(data))) {
         column_name <- colnames(data)[[c]]
-        column <- aggregate(tmp_data[,column_name], by=list(Parent=tmp_data[,parent]), FUN=sum)
-        rownames(column) <- column$Parent
-        new_data <- cbind(new_data, column$x)
+        column <- aggregate(tmp_data[, column_name], by=list(Parent=tmp_data[, parent]), FUN=sum)
+        rownames(column) <- column[["Parent"]]
+        new_data <- cbind(new_data, column[["x"]])
     } ## End for loop
-    width_df <- data.frame(new_data$width)
+
+    width_df <- data.frame(new_data[["width"]])
     rownames(width_df) <- rownames(new_data)
     colnames(width_df) <- c("width")
     new_data <- new_data[-1]
     colnames(new_data) <- colnames(data)
     rownames(new_data) <- rownames(column)
-    ret <- list(width=width_df, counts=new_data)
+    ret <- list(
+        "width" = width_df,
+        "counts" = new_data)
     return(ret)
 }
 
-#' Make a knitr report with some defaults set
+#' Make a knitr report with some defaults set a priori.
 #'
-#' @param name   Name the document!
-#' @param type   html/pdf/fancy html reports?
-#' @return a dated report file
+#' I keep forgetting to set appropriate options for knitr.  This tries to set them.
+#'
+#' @param name Name the document!
+#' @param type Html or pdf reports?
+#' @return Dated report file.
 #' @seealso \pkg{knitr} \pkg{rmarkdown} \pkg{knitrBootstrap}
 #' @export
 make_report <- function(name="report", type='pdf') {
-    knitr::opts_knit$set(progress=FALSE, verbose=FALSE, error=FALSE, fig.width=7, fig.height=7)
+    knitr::opts_knit$set(
+        progress = TRUE,
+        verbose = TRUE,
+        width = 90,
+        echo = TRUE)
+    knitr::opts_chunk$set(
+        error = TRUE,
+        fig.width = 8,
+        fig.height = 8,
+        dpi = 96)
+    options(digits = 4,
+            stringsAsFactors = FALSE,
+            knitr.duplicate.label = "allow")
     ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
     set.seed(1)
     output_date <- format(Sys.time(), "%Y%m%d-%H%M")
     input_filename <- name
     ## In case I add .rmd on the end.
     input_filename <- gsub("\\.rmd", "", input_filename, perl=TRUE)
-    input_filename <- paste0(input_filename, ".rmd")
+    input_filename <- gsub("\\.Rmd", "", input_filename, perl=TRUE)
+    input_filename <- paste0(input_filename, ".Rmd")
     if (type == 'html') {
         output_filename <- paste0(name, "-", output_date, ".html")
         output_format <- 'html_document'
         rmarkdown::render(output_filename, output_format)
-    } else if (type == 'pdf') {
+    } else {
         output_filename <- paste0(name, "-", output_date, ".pdf")
         output_format <- 'pdf_document'
-    } else {
-        output_filename <- paste0(name, "-", output_date, ".html")
-        output_format <- 'knitrBootstrap::bootstrap_document'
     }
-    message(paste0("About to run: render(input=", input_filename, ", output_file=", output_filename, " and output_format=", output_format))
+    message(paste0("About to run: render(input=", input_filename, ", output_file=",
+                   output_filename, " and output_format=", output_format))
     result <- try(rmarkdown::render(
-        input=input_filename,
-        output_file=output_filename,
-        output_format=output_format), silent=TRUE)
+        "input" = input_filename,
+        "output_file" = output_filename,
+        "output_format" = output_format), silent=TRUE)
+
     return(result)
 }
 
@@ -140,8 +159,8 @@ make_report <- function(name="report", type='pdf') {
 #'
 #' Note that I did this two months ago and haven't touched it since...
 #'
-#' @param x  A DNA/RNA StringSet containing the UTR sequences of interest
-#' @param basal   I dunno.
+#' @param x DNA/RNA StringSet containing the UTR sequences of interest
+#' @param basal I dunno.
 #' @param overlapping default=1.5
 #' @param d1.3 default=0.75  These parameter names are so stupid, lets be realistic
 #' @param d4.6 default=0.4
@@ -217,15 +236,14 @@ hpgl_arescore <- function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
     cbind(ans, S4Vectors::DataFrame(clust))
 }
 
-#' copy/paste the function from SeqTools
-#' and find where it falls on its ass.
+#' copy/paste the function from SeqTools and figure out where it falls on its ass.
 #'
 #' Yeah, I do not remember what I changed in this function.
 #'
-#' @param x  A sequence object
-#' @param min.length   I dunno.
-#' @param p.to.start   the p to start of course
-#' @param p.to.end   and the p to end
+#' @param x Sequence object
+#' @param min.length I dunno.
+#' @param p.to.start P to start of course
+#' @param p.to.end The p to end -- wtf who makes names like this?
 #'
 #' @return a list of IRanges which contain a bunch of As and Us.
 my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
@@ -261,22 +279,19 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
     return(ret)
 }
 
-#' Try to make import.gff a little more robust
-#' I acquire (hopefully) valid gff3 files from various sources:
-#' yeastgenome.org, microbesonline, tritrypdb, ucsc, ncbi.
-#' To my eyes, they all look like reasonably good gff3 files, but
-#' some of them must be loaded with import.gff2, import.gff3, etc.
-#' That is super annoying.
-#' Also, I pretty much always just do as.data.frame() when I get something
-#' valid from rtracklayer, so this does that for me, I have another function
-#' which returns the iranges etc.
+#' Extract annotation information from a gff file into a df
 #'
-#' This function wraps import.gff/import.gff3/import.gff2 calls in try()
-#' Because sometimes those functions fail in unpredictable ways.
+#' Try to make import.gff a little more robust; I acquire (hopefully) valid gff files from various
+#' sources: yeastgenome.org, microbesonline, tritrypdb, ucsc, ncbi. To my eyes, they all look like
+#' reasonably good gff3 files, but some of them must be loaded with import.gff2, import.gff3, etc.
+#' That is super annoying. Also, I pretty much always just do as.data.frame() when I get something
+#' valid from rtracklayer, so this does that for me, I have another function which returns the
+#' iranges etc.  This function wraps import.gff/import.gff3/import.gff2 calls in try() because
+#' sometimes those functions fail in unpredictable ways.
 #'
-#' @param gff  a gff filename
-#' @param type   subset the gff file for entries of a specific type
-#' @return  a df!
+#' @param gff Gff filename.
+#' @param type Subset the gff file for entries of a specific type.
+#' @return Dataframe of the annotation information found in the gff file.
 #' @seealso \pkg{rtracklayer} \link[rtracklayer]{import.gff} \link[rtracklayer]{import.gff2} \link[rtracklayer]{import.gff3}
 #' @examples
 #' \dontrun{
@@ -305,8 +320,8 @@ gff2df <- function(gff, type=NULL) {
         ret <- annotations
     }
 
-    ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
-    ## no method to coerce an S4 class to a vector.
+    ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one
+    ## gets an error about "no method to coerce an S4 class to a vector."
     ret <- GenomicRanges::as.data.frame(ret)
     if (!is.null(type)) {
         index <- ret[, "type"] == type
@@ -315,14 +330,22 @@ gff2df <- function(gff, type=NULL) {
     return(ret)
 }
 
-#' Try to make import.gff a little more robust
+#' Extract annotation information from a gff file into an irange object.
 #'
-#' @param gff  a gff filename
-#' @param type   a subset to extract
+#' Try to make import.gff a little more robust; I acquire (hopefully) valid gff files from various
+#' sources: yeastgenome.org, microbesonline, tritrypdb, ucsc, ncbi. To my eyes, they all look like
+#' reasonably good gff3 files, but some of them must be loaded with import.gff2, import.gff3, etc.
+#' That is super annoying. Also, I pretty much always just do as.data.frame() when I get something
+#' valid from rtracklayer, so this does that for me, I have another function which returns the
+#' iranges etc.  This function wraps import.gff/import.gff3/import.gff2 calls in try() because
+#' sometimes those functions fail in unpredictable ways.
 #'
-#' Essentially gff2df() above, but returns data suitable for getSet()
+#' This is essentially gff2df(), but returns data suitable for getSet()
 #'
-#' @return  an iranges! (useful for getSeq())
+#' @param gff Gff filename.
+#' @param type Subset to extract.
+#'
+#' @return Iranges! (useful for getSeq().)
 #' @seealso \pkg{rtracklayer} \link{gff2df} \link[Biostrings]{getSeq}
 #' @examples
 #' \dontrun{
@@ -356,10 +379,13 @@ gff2irange <- function(gff, type=NULL) {
 
 #' Wrap cor() to include robust correlations.
 #'
-#' @param df  a data frame to test.
-#' @param method correlation method to use. Includes pearson, spearman, kendal, robust.
-#' @param ...  other options to pass to stats::cor()
-#' @return  correlation some fun correlation statistics
+#' Take covRob's robust correlation coefficient and add it to the set of correlations available when
+#' one calls cor().
+#'
+#' @param df Data frame to test.
+#' @param method Correlation method to use. Includes pearson, spearman, kendal, robust.
+#' @param ... Other options to pass to stats::cor().
+#' @return Some fun correlation statistics.
 #' @seealso \pkg{robust} \link{cor} \link{cov} \link[robust]{covRob}
 #' @examples
 #' \dontrun{
@@ -377,16 +403,17 @@ hpgl_cor <- function(df, method="pearson", ...) {
     return(correlation)
 }
 
-#'   Create a simple df from gff which contains tooltip usable
-#' information for gVis graphs. The tooltip column is also a handy proxy for
-#' anontations information when it would otherwise be too troublesome.
+#' Create a simple df from a gff which contains tooltips usable in googleVis graphs.
 #'
-#' @param annotations Either a gff file or annotation data frame (which likely came from a gff file.)
-#' @param desc_col A column from a gff file to grab the data from
-#' @param type A gff type to key from
-#' @param id_col which annotation column to cross reference against
-#' @param ... extra arguments dropped into arglist
-#' @return A df of tooltip information or name of a gff file
+#' The tooltip column is a handy proxy for more thorough anontations information when it would
+#' otherwise be too troublesome to acquire.
+#'
+#' @param annotations Either a gff file or annotation data frame (which likely came from a gff file.).
+#' @param desc_col Gff column from which to gather data.
+#' @param type Gff type to use as the master key.
+#' @param id_col Which annotation column to cross reference against?
+#' @param ... Extra arguments dropped into arglist.
+#' @return Df of tooltip information or name of a gff file.
 #' @seealso \pkg{googleVis} \link{gff2df}
 #' @examples
 #' \dontrun{
@@ -428,12 +455,16 @@ make_tooltips <- function(annotations, desc_col='description', type="gene", id_c
 
 #' Find how many times a given pattern occurs in every gene of a genome.
 #'
-#' @param fasta  a fasta genome
-#' @param gff   an optional gff of annotations (if not provided it will just ask the whole genome.
-#' @param pattern   what pattern to search for?  This was used for tnseq and TA is the mariner insertion point.
-#' @param type  the column to get frmo the gff file
-#' @param key   what type of entry of the gff file to key from?
-#' @return num_pattern a data frame of names and numbers.
+#' There are times when knowing how many times a given string appears in a genome/CDS is helpful.
+#' This function provides that information and is primarily used by cp_seq_m().
+#'
+#' @param fasta Genome sequence.
+#' @param gff Gff of annotation information from which to acquire CDS (if not provided it will just
+#'     query the entire genome).
+#' @param pattern What to search for? This was used for tnseq and TA is the mariner insertion point.
+#' @param type Column to use in the gff file.
+#' @param key What type of entry of the gff file to key from?
+#' @return Data frame of gene names and number of times the pattern appears/gene.
 #' @seealso \pkg{Biostrings} \pkg{Rsamtools} \link[Biostrings]{PDict} \link[Rsamtools]{FaFile}
 #' @examples
 #' \dontrun{
@@ -454,18 +485,22 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern='TA', type='gene', key
     }
     dict <- Biostrings::PDict(pattern, max.mismatch=0)
     result <- Biostrings::vcountPDict(dict, entry_sequences)
-    num_pattern <- data.frame("name"=names(entry_sequences),
-                              "num"=as.data.frame(t(result)))
+    num_pattern <- data.frame(
+        "name" = names(entry_sequences),
+        "num" = as.data.frame(t(result)))
     return(num_pattern)
 }
 
-#' Gather some simple sequence attributes
+#' Gather some simple sequence attributes.
 #'
-#' @param fasta  a fasta genome
-#' @param gff   an optional gff of annotations (if not provided it will just ask the whole genome.
-#' @param type  the column to get frmo the gff file
-#' @param key   what type of entry of the gff file to key from?
-#' @return num_pattern a data frame of names and numbers.
+#' This extends the logic of the pattern searching in pattern_count_genome() to search on some other
+#' attributes.
+#'
+#' @param fasta Genome encoded as a fasta file.
+#' @param gff Optional gff of annotations (if not provided it will just ask the whole genome).
+#' @param type Column of the gff file to use.
+#' @param key What type of entry of the gff file to key from?
+#' @return List of data frames containing gc/at/gt/ac contents.
 #' @seealso \pkg{Biostrings} \pkg{Rsamtools} \link[Biostrings]{letterFrequency} \link[Rsamtools]{FaFile}
 #' @examples
 #' \dontrun{
@@ -479,31 +514,33 @@ sequence_attributes <- function(fasta, gff=NULL, type='gene', key='locus_tag') {
     } else {
         entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
         ## type_entries <- subset(entries, type==type)
-        type_entries <- entries[entries$type == type, ]
+        type_entries <- entries[entries[["type"]] == type, ]
         ##names(type_entries) <- rownames(type_entries)
         entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
-        names(entry_sequences) <- type_entries$Name
+        names(entry_sequences) <- type_entries[["Name"]]
     }
     attribs <- data.frame(
-        gc = Biostrings::letterFrequency(entry_sequences, "CG", as.prob=TRUE),
-        at = Biostrings::letterFrequency(entry_sequences, "AT", as.prob=TRUE),
-        gt = Biostrings::letterFrequency(entry_sequences, "GT", as.prob=TRUE),
-        ac = Biostrings::letterFrequency(entry_sequences, "AC", as.prob=TRUE))
-    rownames(attribs) <- type_entries$locus_tag
+        "gc" = Biostrings::letterFrequency(entry_sequences, "CG", as.prob=TRUE),
+        "at" = Biostrings::letterFrequency(entry_sequences, "AT", as.prob=TRUE),
+        "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob=TRUE),
+        "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob=TRUE))
+    rownames(attribs) <- type_entries[["locus_tag"]]
     colnames(attribs) <- c("gc","at","gt","ac")
     return(attribs)
 }
 
-#'   A stupid distance function of a point against two axes.
+#' Calculate a simplistic distance function of a point against two axes.
 #'
-#' @param firstterm  the x-values of the points.
-#' @param secondterm  the y-values of the points.
-#' @param firstaxis   the x-value of the vertical axis.
-#' @param secondaxis   the y-value of the second axis.
-#' @return dataframe of the distances
+#' Sillydist provides a distance of any point vs. the axes of a plot.
 #' This just takes the abs(distances) of each point to the axes,
 #' normalizes them against the largest point on the axes, multiplies
-#' the result, and normalizes against the max of all points.
+#' the result, and normalizes against the max of all point.
+#'
+#' @param firstterm X-values of the points.
+#' @param secondterm Y-values of the points.
+#' @param firstaxis X-value of the vertical axis.
+#' @param secondaxis Y-value of the second axis.
+#' @return Dataframe of the distances.
 #' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{
@@ -527,29 +564,30 @@ sequence_attributes <- function(fasta, gff=NULL, type='gene', key='locus_tag') {
 #' @export
 sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
     dataframe <- data.frame(firstterm, secondterm)
-    dataframe$x <- (abs(dataframe[,1]) - abs(firstaxis)) / abs(firstaxis)
-    dataframe$y <- abs((dataframe[,2] - secondaxis) / secondaxis)
-    dataframe$x <- abs(dataframe[,1] / max(dataframe$x))
-    dataframe$y <- abs(dataframe[,2] / max(dataframe$y))
-    dataframe$dist <- abs(dataframe$x * dataframe$y)
-    dataframe$dist <- dataframe$dist / max(dataframe$dist)
+    dataframe[["x"]] <- (abs(dataframe[, 1]) - abs(firstaxis)) / abs(firstaxis)
+    dataframe[["y"]] <- abs((dataframe[, 2] - secondaxis) / secondaxis)
+    dataframe[["x"]] <- abs(dataframe[, 1] / max(dataframe[["x"]]))
+    dataframe[["y"]] <- abs(dataframe[, 2] / max(dataframe[["y"]]))
+    dataframe[["dist"]] <- abs(dataframe$x * dataframe[["y"]])
+    dataframe[["dist"]] <- dataframe$dist / max(dataframe[["dist"]])
     return(dataframe)
 }
 
 #' Write a dataframe to an excel spreadsheet sheet.
+#'
 #' I like to give folks data in any format they prefer, even though I sort
 #' of hate excel.  Most people I work with use it, so therefore I do too.
 #' This function has been through many iterations, first using XLConnect,
 #' then xlsx, and now openxlsx.  Hopefully this will not change again.
 #'
-#' @param data  A data frame to print
-#' @param wb the workbook to which to write
-#' @param sheet   Name of the sheet to write
-#' @param start_row   The first row of the sheet to write
-#' @param start_col   The first column to write
-#' @param ...  the set of arguments given to for openxlsx
-#' @return a list containing the sheet and workbook written as well as the bottom-right coordinates of the last
-#'   row/column written of the table.
+#' @param data Data frame to print.
+#' @param wb Workbook to which to write.
+#' @param sheet Name of the sheet to write.
+#' @param start_row First row of the sheet to write. Useful if writing multiple tables.
+#' @param start_col First column to write.
+#' @param ...  Set of extra arguments given to openxlsx.
+#' @return List containing the sheet and workbook written as well as the bottom-right coordinates of
+#'     the last row/column written to the worksheet.
 #' @seealso \pkg{openxlsx} \link[openxlsx]{writeDataTable}
 #' @examples
 #' \dontrun{
@@ -591,7 +629,7 @@ write_xls <- function(data, wb=NULL, sheet="first",
     new_col <- start_col
     ##print(paste0("GOT HERE openxlswrite, title? ", arglist$title))
     if (!is.null(arglist$title)) {
-        openxlsx::writeData(wb, sheet, x=arglist$title, startRow=new_row)
+        openxlsx::writeData(wb, sheet, x=arglist[["title"]], startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
     }
@@ -603,7 +641,8 @@ write_xls <- function(data, wb=NULL, sheet="first",
     for (col in colnames(data)) {
         ## data[[col]] <- as.character(data[[col]])
         ## print(paste0("TESTME: ", class(data[[col]])))
-        if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' | class(data[[col]]) == 'factor' | class(data[[col]]) == 'AsIs') {
+        if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' |
+            class(data[[col]]) == 'factor' | class(data[[col]]) == 'AsIs') {
             message(paste0("Converted ", col, " to characters."))
             data[[col]] <- as.character(data[[col]])
         }
@@ -613,7 +652,10 @@ write_xls <- function(data, wb=NULL, sheet="first",
     new_row <- new_row + nrow(data) + 2
     openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=1:ncol(data))
     end_col <- ncol(data) + 1
-    ret <- list(workbook=wb, end_row=new_row, end_col=end_col)
+    ret <- list(
+        "workbook" = wb,
+        "end_row" = new_row,
+        "end_col" = end_col)
     return(ret)
 }
 
@@ -626,8 +668,11 @@ openxlsx_add_plot <- function(wb, plot) {
 
 #' Make a backup of an existing file with n revisions, like VMS!
 #'
-#' @param backup_file  the file to backup.
-#' @param backups how many revisions?
+#' Sometimes I just want to kick myself for overwriting important files and then I remember using
+#' VMS and wish modern computers were a little more like it.
+#'
+#' @param backup_file Filename to backup.
+#' @param backups How many revisions?
 backup_file <- function(backup_file, backups=4) {
     if (file.exists(backup_file)) {
         for (i in backups:01) {
@@ -650,11 +695,11 @@ backup_file <- function(backup_file, backups=4) {
 
 #' Load a backup rdata file
 #'
-#' I often use R over a sshfs connection, sometimes with significant latency, and
-#' I want to be able to save/load my R sessions relatively quickly.
-#' Thus this function uses my backup directory to load its R environment.
+#' I often use R over a sshfs connection, sometimes with significant latency, and I want to be able
+#' to save/load my R sessions relatively quickly. Thus this function uses my backup directory to
+#' load its R environment.
 #'
-#' @param dir   the directory containing the RData.rda.xz file.
+#' @param dir Directory containing the RData.rda.xz file.
 #' @return a bigger global environment
 #' @seealso \link{load} \link{save}
 #' @examples
@@ -678,9 +723,9 @@ loadme <- function(dir="savefiles") {
 #' Thus this function uses pxz to compress the R session maximally and relatively fast.
 #' This assumes you have pxz installed and >= 4 CPUs.
 #'
-#' @param directory  the directory to save the Rdata file.
-#' @param backups   how many revisions?
-#' @return the command used to save the global environment
+#' @param directory Directory to save the Rdata file.
+#' @param backups How many revisions?
+#' @return Command string used to save the global environment.
 #' @seealso \link{save} \link{pipe}
 #' @examples
 #' \dontrun{
@@ -705,7 +750,10 @@ saveme <- function(directory="savefiles", backups=4) {
 
 #' Print a model as y = mx + b just like in grade school!
 #'
-#' @param model a model to print from glm/lm/robustbase
+#' Because, why not!?
+#'
+#' @param model Model to print from glm/lm/robustbase.
+#' @return a string representation of that model.
 ymxb_print <- function(model) {
     intercept <- round(coefficients(model)[1], 2)
     x_name <- names(coefficients(model)[-1])
@@ -714,6 +762,5 @@ ymxb_print <- function(model) {
     message(ret)
     return(ret)
 }
-
 
 ## EOF

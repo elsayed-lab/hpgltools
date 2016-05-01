@@ -8,18 +8,18 @@ sum_exons(data, gff = NULL, annotdf = NULL, parent = "Parent",
   child = "row.names")
 }
 \arguments{
-\item{data}{a count table by exon}
+\item{data}{Count tables of exons.}
 
-\item{gff}{a gff filename}
+\item{gff}{Gff filename.}
 
-\item{annotdf}{a dataframe of annotations (probably from gff2df)}
+\item{annotdf}{Dataframe of annotations (probably from gff2df).}
 
-\item{parent}{a column from the annotations with the gene names}
+\item{parent}{Column from the annotations with the gene names.}
 
-\item{child}{a column from the annotations with the exon names}
+\item{child}{Column from the annotations with the exon names.}
 }
 \value{
-a list of 2 data frames, counts and lengths by summed exons
+List of 2 data frames, counts and lengths by summed exons.
 }
 \description{
 This function will merge a count table to an annotation table by the child column.

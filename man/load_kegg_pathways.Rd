@@ -2,21 +2,29 @@
 % Please edit documentation in R/annotations.r
 \name{load_kegg_pathways}
 \alias{load_kegg_pathways}
-\title{Creates a KEGG pathway/description mapping dataframe}
+\title{Creates a KEGG pathway/description mapping dataframe.}
 \usage{
 load_kegg_pathways(orgdb, gene_ids, keytype = "ENSEMBL")
 }
 \arguments{
-\item{orgdb}{An OrganismDb instance}
+\item{orgdb}{OrganismDb instance.}
 
-\item{gene_ids}{Identifiers of the genes to retrieve annotations for}
+\item{gene_ids}{Identifiers of the genes to retrieve annotations.}
 
 \item{keytype}{as per the previous functions, I don't know what this does yet}
 }
 \value{
-a character list of pathways
+Character list of pathways.
 }
 \description{
-Creates a KEGG pathway/description mapping dataframe
+Use AnnotationDbi to map descriptions of KEGG pathways to gene IDs.
+}
+\examples{
+\dontrun{
+pathnames <- load_kegg_pathways(org, c("a","b","c")
+}
+}
+\seealso{
+\link[AnnotationDbi]{select}
 }
 

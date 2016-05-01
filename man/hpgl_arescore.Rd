@@ -9,7 +9,7 @@ hpgl_arescore(x, basal = 1, overlapping = 1.5, d1.3 = 0.75, d4.6 = 0.4,
   aub.p.to.start = 0.8, aub.p.to.end = 0.55)
 }
 \arguments{
-\item{x}{A DNA/RNA StringSet containing the UTR sequences of interest}
+\item{x}{DNA/RNA StringSet containing the UTR sequences of interest}
 
 \item{basal}{I dunno.}
 

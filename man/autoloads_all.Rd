@@ -2,18 +2,19 @@
 % Please edit documentation in R/autoloads.r
 \name{autoloads_all}
 \alias{autoloads_all}
-\title{Automatic loading of stuff I use, I am deprecating this now.}
+\title{Automatic installation of stuff I use.}
 \usage{
 autoloads_all(update = FALSE)
 }
 \arguments{
-\item{update}{packages?}
+\item{update}{Update installed packages?}
 }
 \value{
-NULL currently
+The number of installed packages
 }
 \description{
-Automatic loading of stuff I use, I am deprecating this now.
+hpgltools uses too many packages, ~65 at last count, I use autoloads_all() to make sure they are
+all installed.
 }
 \seealso{
 \link[BiocInstaller]{biocLite} \link{install.packages}

@@ -7,17 +7,18 @@
 hpgl_cor(df, method = "pearson", ...)
 }
 \arguments{
-\item{df}{a data frame to test.}
+\item{df}{Data frame to test.}
 
-\item{method}{correlation method to use. Includes pearson, spearman, kendal, robust.}
+\item{method}{Correlation method to use. Includes pearson, spearman, kendal, robust.}
 
-\item{...}{other options to pass to stats::cor()}
+\item{...}{Other options to pass to stats::cor().}
 }
 \value{
-correlation some fun correlation statistics
+Some fun correlation statistics.
 }
 \description{
-Wrap cor() to include robust correlations.
+Take covRob's robust correlation coefficient and add it to the set of correlations available when
+one calls cor().
 }
 \examples{
 \dontrun{

@@ -7,11 +7,12 @@
 backup_file(backup_file, backups = 4)
 }
 \arguments{
-\item{backup_file}{the file to backup.}
+\item{backup_file}{Filename to backup.}
 
-\item{backups}{how many revisions?}
+\item{backups}{How many revisions?}
 }
 \description{
-Make a backup of an existing file with n revisions, like VMS!
+Sometimes I just want to kick myself for overwriting important files and then I remember using
+VMS and wish modern computers were a little more like it.
 }
 

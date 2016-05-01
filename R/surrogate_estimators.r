@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Apr 25 15:20:15 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu Apr 28 17:28:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -24,13 +24,13 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
     arglist <- list(...)
     ## Gather all the likely pieces we can use
     design <- expt[["design"]]
-    data <- as.data.frame(Biobase::exprs(expt$expressionset))
+    data <- as.data.frame(Biobase::exprs(expt[["expressionset"]]))
     mtrx <- as.matrix(data)
     l2_data <- NULL
 
     ## control type is to help empirical.controls
     control_type <- "norm"
-    if (expt$transform == "raw") {
+    if (expt[["state"]][["transform"]] == "raw") {
         l2_data <- transform_counts(count_table=data, transform="log2")[["count_table"]]
         control_type <- "counts"
     } else {
@@ -252,6 +252,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
         "ruv_residuals" = ruv_residuals[["model_adjust"]],
         "ruv_empirical" = ruv_empirical[["model_adjust"]])
     batch_names <- c("condition","batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
+    silly <- testthat::compare(batch_names, batch_names)  ## I want to try something silly
     if (!is.null(extra_factors)) {
         for (fact in extra_factors) {
             if (!is.null(design[, fact])) {
@@ -262,7 +263,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
         }
     }
     correlations <- cor(first_svs)
-    par(mar=c(5,5,5,5))
+    oldpar <- par(mar=c(5,5,5,5))
     corrplot::corrplot(correlations, method="ellipse", type="lower", tl.pos="d")
     ret_plot <- grDevices::recordPlot()
 
@@ -313,6 +314,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
     legend(200, 0.5, legend=c("some stuff about methods used."), lty=c(1,2,1,3,1), lwd=3)
     catplot_together <- grDevices::recordPlot()
 
+    newpar <- par(oldpar)
     ret <- list(
         "pca_adjust" = pca_adjust,
         "sva_supervised_adjust" = sva_supervised,

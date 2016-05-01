@@ -2,19 +2,25 @@
 % Please edit documentation in R/annotations.r
 \name{generate_kegg_pathway_mapping}
 \alias{generate_kegg_pathway_mapping}
-\title{Generate a KEGG PATHWAY / description mapping}
+\title{Generate a KEGG PATHWAY / description mapping.}
 \usage{
 generate_kegg_pathway_mapping(pathways, verbose = FALSE)
 }
 \arguments{
-\item{pathways}{Vector of KEGG pathway identifiers}
+\item{pathways}{Vector of KEGG pathway identifiers.}
 
 \item{verbose}{talk talk?}
 }
 \value{
-a data frame describing some kegg pathways
+Data frame describing some kegg pathways
 }
 \description{
-Generate a KEGG PATHWAY / description mapping
+Make an easier to use df of KEGG -> descriptions using keggGet.
+}
+\examples{
+ mapping <- generate_kegg_pathway_mapping(c("hsa00040", "hsa00100"))
+}
+\seealso{
+\link[KEGGREST]{keggGet}
 }
 
