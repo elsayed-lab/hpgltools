@@ -2,36 +2,38 @@
 % Please edit documentation in R/ontology_clusterprofiler.r
 \name{hpgl_enrich.internal}
 \alias{hpgl_enrich.internal}
-\title{A minor hack in the clusterProfiler function 'enrich.internal'}
+\title{A minor hack in the clusterProfiler function 'enrich.internal'.}
 \usage{
 hpgl_enrich.internal(gene, organism, pvalueCutoff = 1, pAdjustMethod = "BH",
   ont, minGSSize = 2, qvalueCutoff = 0.2, readable = FALSE,
   universe = NULL)
 }
 \arguments{
-\item{gene}{some differentially expressed genes}
+\item{gene}{Differentially expressed genes.}
 
-\item{organism}{again will cause this to pull ensG if recognized by clusteprofiler}
+\item{organism}{Pull ensembl annotations if this is a supported species.}
 
-\item{pvalueCutoff}{a pvalue cutoff}
+\item{pvalueCutoff}{P-value cutoff.}
 
-\item{pAdjustMethod}{p adjust method}
+\item{pAdjustMethod}{P-adjust method.}
 
-\item{ont}{mf bp or cc}
+\item{ont}{Molecular function, Biological process, or Cellular component?}
 
-\item{minGSSize}{a minimum gs size}
+\item{minGSSize}{Minimum gs size?}
 
-\item{qvalueCutoff}{maximum q value}
+\item{qvalueCutoff}{Maximum allowed q-value.}
 
-\item{readable}{set the readable flag for dose}
+\item{readable}{Set the readable flag for the DOSE object?}
 
-\item{universe}{a universe to use}
+\item{universe}{Universe of genes to score significance against.}
 }
 \value{
-some clusterProfiler data
+Some clusterProfiler data.
 }
 \description{
-A minor hack in the clusterProfiler function 'enrich.internal'
+I do not remember any longer why, but enrichGO errors out in ways which do not always make sense,
+this was written to alleviate that problem.  I believe I sent a diff to the clusterProfiler
+author but did not hear back and so added this function.
 }
 \seealso{
 \pkg{clusterProfiler}

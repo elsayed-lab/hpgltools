@@ -7,12 +7,12 @@
 cbcb_batch_effect(normalized_counts, model)
 }
 \arguments{
-\item{normalized_counts}{a data frame of log2cpm counts}
+\item{normalized_counts}{Data frame of log2cpm counts.}
 
-\item{model}{a balanced experimental model containing condition and batch factors}
+\item{model}{Balanced experimental model containing condition and batch factors.}
 }
 \value{
-a dataframe of residuals after subtracting batch from the model
+Dataframe of residuals after subtracting batch from the model.
 }
 \description{
 During a lab meeting, the following function was suggested as a quick and dirty batch removal tool

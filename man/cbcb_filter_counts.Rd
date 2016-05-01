@@ -7,17 +7,19 @@
 cbcb_filter_counts(count_table, threshold = 2, min_samples = 2)
 }
 \arguments{
-\item{count_table}{a data frame of (pseudo)counts by sample.}
+\item{count_table}{Data frame of (pseudo)counts by sample.}
 
-\item{threshold}{lower threshold of counts for each gene.}
+\item{threshold}{Lower threshold of counts for each gene.}
 
-\item{min_samples}{minimum number of samples}
+\item{min_samples}{Minimum number of samples.}
 }
 \value{
-dataframe of counts without the low-count genes
+Dataframe of counts without the low-count genes.
 }
 \description{
-This was a function written by Kwame Okrah and perhaps also Laura Dillon to remove low-count genes.  It drops genes based on a threshold and number of samples.
+This was a function written by Kwame Okrah and perhaps also Laura Dillon to remove low-count
+genes.  It drops genes based on a threshold and number of samples. Either this or
+cbcb_lowfilter_counts() is redundant I think.
 }
 \examples{
 \dontrun{
@@ -25,6 +27,6 @@ filtered_table <- cbcb_filter_counts(count_table)
 }
 }
 \seealso{
-log2CPM which this uses to decide what to keep
+log2CPM which this uses to decide what to keep.
 }
 

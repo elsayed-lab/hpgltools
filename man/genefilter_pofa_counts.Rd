@@ -2,22 +2,23 @@
 % Please edit documentation in R/normalize_filter.r
 \name{genefilter_pofa_counts}
 \alias{genefilter_pofa_counts}
-\title{Filter low-count genes from a data set using genefilter's pOverA()}
+\title{Filter low-count genes from a data set using genefilter's pOverA().}
 \usage{
 genefilter_pofa_counts(count_table, p = 0.01, A = 100)
 }
 \arguments{
-\item{count_table}{input data frame of counts by sample}
+\item{count_table}{Input data frame of counts by sample.}
 
-\item{p}{a minimum proportion of each gene's counts/sample to be greater than a minimum(A)}
+\item{p}{Minimum proportion of each gene's counts/sample to be greater than a minimum(A).}
 
-\item{A}{the minimum number of counts in the above proportion}
+\item{A}{Minimum number of counts in the above proportion.}
 }
 \value{
-dataframe of counts without the low-count genes
+Dataframe of counts without the low-count genes.
 }
 \description{
-I keep thinking this function is pofa... oh well.
+I keep thinking this function is pofa... oh well.  Of the various tools in genefilter, this one
+to me is the most intuitive.  Take the ratio of counts/samples and make sure it is >= a score.
 }
 \examples{
 \dontrun{
@@ -25,6 +26,6 @@ I keep thinking this function is pofa... oh well.
 }
 }
 \seealso{
-\pkg{genefilter} \code{\link[genefilter]{pOverA}} which this uses to decide what to keep
+\pkg{genefilter} \code{\link[genefilter]{pOverA}} which this uses to decide what to keep.
 }
 

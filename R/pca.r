@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Apr 25 16:31:25 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat Apr 30 11:08:34 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix comprised of the matrix - rowMeans(matrix)
@@ -140,31 +140,29 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         plot_colors <- RColorBrewer::brewer.pal(12, "Dark2")[plot_colors]
     }
 
-    if (is.null(plot_labels)) {
-        if (is.null(plot_names)) {
-            plot_labels <- colnames(data)
-        } else {
-            plot_labels <- plot_names
-        }
-    } else if (plot_labels[1] == "boring") {
-        if (is.null(plot_names)) {
-            plot_labels <- colnames(data)
-        } else {
-            plot_labels <- plot_names
-        }
-    }
-
     if (is.null(design)) {
         message("No design was provided.  Making one with x conditions, 1 batch.")
         design <- cbind(plot_labels, 1)
         design <- as.data.frame(design)
-        design[, "condition"] <- as.numeric(design[, "plot_labels"])
+        design[["condition"]] <- as.numeric(design[["plot_labels"]])
         colnames(design) <- c("name","batch","condition")
         design <- design[, c("name","condition","batch")]
+        plot_names <- design[["name"]]
     }
+
+    label_list <- NULL
+    if (is.null(arglist[["label_list"]])) {
+        label_list <- plot_names
+    } else if (arglist[["label_list"]] == "concat") {
+        label_list <- paste(design[[cond_column]], design[[batch_column]], sep="_")
+    } else {
+        label_list <- paste0(design[["sampleid"]], "_", design[[cond_column]])
+    }
+
     pca <- makeSVD(data)
-    included_batches <- as.factor(as.character(design[, batch_column]))
-    included_conditions <- as.factor(as.character(design[, cond_column]))
+    included_batches <- as.factor(as.character(design[[batch_column]]))
+    included_conditions <- as.factor(as.character(design[[cond_column]]))
+
     if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
         warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
     } else if (length(levels(included_conditions)) == 1) {
@@ -176,60 +174,40 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     } else {
         pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, cond_column], batch=design[, batch_column])
     }
+
     pca_variance <- round((pca[["d"]] ^ 2) / sum(pca[["d"]] ^ 2) * 100, 2)
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
     colnames(design)[colnames(design) == "sampleid"] <- 'sample'
-    pca_data <- data.frame("sampleid"=as.character(design[, "sample"]),
-                           "condition"=as.character(design[, cond_column]),
-                           "batch"=as.character(design[, batch_column]),
-                           "batch_int"=as.integer(as.factor(design[, batch_column])),
-                           "PC1"=pca[["v"]][, 1],
-                           "PC2"=pca[["v"]][, 2],
-                           "colors"=plot_colors,
-                           "labels"=as.character(plot_labels))
+
+    pca_data <- data.frame(
+        "sampleid" = as.character(design[["sample"]]),
+        "condition" = as.character(design[[cond_column]]),
+        "batch" = as.character(design[[batch_column]]),
+        "batch_int" = as.integer(as.factor(design[[batch_column]])),
+        "PC1" = pca[["v"]][, 1],
+        "PC2" = pca[["v"]][, 2],
+        "colors" = plot_colors,
+        "labels" = label_list)
+
     if (!is.null(size_column)) {
         pca_data[[size_column]] <- as.integer(as.factor(design[, size_column]))
         pca_data[[size_column]] <- pca_data[[size_column]] + 1
     }
+
     pca_plot <- NULL
-    ## I think these smallbatch/largebatch functions are no longer needed
-    ## Lets see what happens if I replace this with a single call...
-    ##if (num_batches <= 5) {
-    ##    pca_plot <- pca_plot_smallbatch(pca_data, size=plot_size, first='PC1', second='PC2')
-    ##} else {
-    ##    pca_plot <- pca_plot_largebatch(pca_data, size=plot_size, first='PC1', second='PC2')
-    ##}
-    ## pca_plot <- plot_pcs(pca_data, size=plot_size, first="PC1", second="PC2", design=design, ...)
-    pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2", design=design, plot_size=plot_size, size_column=size_column)
+    pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2", design=design, plot_labels=plot_labels, plot_size=plot_size, size_column=size_column, ...)
+
+    ## These should be moved into plot_pcs
     pca_plot <- pca_plot +
         ggplot2::xlab(xl) +
         ggplot2::ylab(yl) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.key.size=grid::unit(0.5, "cm"))
-    if (!is.null(plot_labels)) {
-        if (plot_labels[[1]] == "fancy") {
-            pca_plot <- pca_plot + directlabels::geom_dl(ggplot2::aes_string(label="sampleid"), method="smart.grid")
-        } else if (plot_labels[[1]] == "normal") {
-            pca_labels <- paste(design[[cond_column]], design[[batch_column]], sep="_")
-            pca_plot <- pca_plot +
-                ggrepel::geom_text_repel(ggplot2::aes_string(label="pca_labels"), size=3)
-        } else if (plot_labels[[1]] == "text") {
-            pca_plot <- pca_plot +
-                ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2",
-                                                       label='paste(design[, cond_column], design[, batch_column], sep="_")'),
-                                   angle=45, size=4, vjust=2)
-        } else {
-            pca_plot <- pca_plot +
-                ## remember labels at this point is in the df made on line 96
-                ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2", label="labels"),
-                                   angle=45, size=4, vjust=2)
-        }
-    }
-
     if (!is.null(plot_title)) {
         pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
     }
+
     pca_return <- list(
         "pca" = pca,
         "plot" = pca_plot,
@@ -282,54 +260,108 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                      design=NULL, plot_title=NULL, plot_labels=NULL, plot_size=5, size_column=NULL, ...) {
     arglist <- list(...)
     hpgl_env <- environment()
-    batches <- pca_data[, "batch"]
-    point_labels <- factor(pca_data[, "condition"])
+    batches <- pca_data[["batch"]]
+    label_column <- "condition"
+    if (!is.null(arglist[["label_column"]])) {
+        label_column <- arglist[["label_column"]]
+    }
+    point_labels <- factor(pca_data[[label_column]])
     if (is.null(plot_title)) {
         plot_title <- paste(first, " vs. ", second, sep="")
     }
     num_batches <- length(unique(batches))
     pca_plot <- NULL
-    if (num_batches <= 5) {
-        pca_plot <- ggplot2::ggplot(data=as.data.frame(pca_data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
-            ## ggplot2::geom_point(size=plot_size, ggplot2::aes_string(shape="as.factor(batches)", fill="condition"), colour="black", size="plot_size") +
-        if (!is.null(size_column)) {
-            pca_plot <- pca_plot +
-                ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
-                                                        fill="condition", size=size_column),
-                                    colour="black")
-            maxsize <- max(pca_data[[size_column]])
-            pca_plot <- pca_plot + ggplot2::scale_size(range=c(2,7))
-        } else {
-            pca_plot <- pca_plot + ggplot2::geom_point(size=plot_size,
-                                                      ggplot2::aes_string(shape="as.factor(batches)", fill="condition"),
-                                                      colour="black")
-        }
+
+    color_listing <- pca_data[, c("condition","colors")]
+    color_listing <- unique(color_listing)
+    color_list <- as.character(color_listing[["colors"]])
+    names(color_list) <- as.character(color_listing[["condition"]])
+
+    ## Ok, so this is shockingly difficult.  For <5 batch data I want properly colored points with black outlines
+    ## The legend colors need to match, in addition, the legend needs to have the shapes noted.
+    ## In order to do this, one must do, _in_order_:
+    ## 1.  Set up the normal ggplot object
+    ## 2.  Set up a geom_point with color _and_ fill as the proper color.
+    ##     The color but _NOT_ fill is used to color the legend's copy of the glyph.
+    ## 3.  Then set up a new geom_point with color=black _and_ show_guide=FALSE
+    ## 4.  Then set scale_color_manual to the proper color_list
+    ## 5.  Then set scale_fill_manual to the proper color_list
+    ## 6.  Finally, set the shape manual with a guide_legend override
+
+    ## Step 1
+    pca_plot <- ggplot2::ggplot(data=as.data.frame(pca_data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
+
+    if (is.null(size_column) & num_batches <= 5) {
         pca_plot <- pca_plot +
-            ggplot2::scale_fill_manual(name="Condition", guide="legend", labels=levels(as.factor(pca_data[, "condition"])),
-                                       values=levels(as.factor(pca_data[, "colors"]))) +
-            ggplot2::scale_shape_manual(name="Batch", labels=levels(as.factor(pca_data[, "batch"])),
-                                        guide=ggplot2::guide_legend(override.aes=ggplot2::aes(size=6, fill="grey")), values=21:25) +
-            ## This changes only the size of the condition legend
-            ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=6, colour=levels(factor(pca_data[, "colors"])))),
-                            colour=ggplot2::guide_legend(override.aes=list("black")))
+            ggplot2::geom_point(size=plot_size,
+                                ggplot2::aes_string(shape="as.factor(batches)",
+                                                    colour="as.factor(condition)",
+                                                    fill="as.factor(condition)")) +
+            ggplot2::geom_point(size=plot_size, colour="black", show_guide=FALSE,
+                                ggplot2::aes_string(shape="as.factor(batches)",
+                                                    fill="as.factor(condition)")) +
+            ggplot2::scale_color_manual(name="Condition",
+                                        guide="legend",
+                                        values=color_list) +
+            ggplot2::scale_fill_manual(name="Condition",
+                                       guide="legend",
+                                       values=color_list) +
+            ggplot2::scale_shape_manual(name="Batch",
+                                        labels=levels(as.factor(pca_data[["batch"]])),
+                                        guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
+                                        values=21:25)
+    } else if (is.null(size_column) & num_batches > 5) {
+        pca_plot <- pca_plot +
+            ggplot2::geom_point(size=plot_size,
+                                ggplot2::aes_string(shape="as.factor(batches)",
+                                                    colour="pca_data[['condition']]")) +
+            ggplot2::scale_shape_manual(name="Batch",
+                                        labels=levels(as.factor(pca_data[["batch"]])),
+                                        guide=ggplot2::guide_legend(overwrite.aes=list(size=plot_size)),
+                                        values=1:num_batches) +
+            ggplot2::scale_color_identity(name="Condition",
+                                          guide="legend",
+                                          values=color_list)
+
+    } else if (!is.null(size_column) & num_batches <= 5) {
+        ## This will require the 6 steps above and one more
+        maxsize <- max(pca_data[[size_column]])
+        pca_plot <- pca_plot +
+            ggplot2::geom_point(size=plot_size,
+                                ggplot2::aes_string(shape="as.factor(batches)",
+                                                    size=size_column,
+                                                    colour="as.factor(condition)",
+                                                    fill="as.factor(condition)")) +
+            ggplot2::geom_point(size=plot_size, colour="black", show_guide=FALSE,
+                                ggplot2::aes_string(shape="as.factor(batches)",
+                                                    fill="as.factor(condition)")) +
+            ggplot2::scale_color_manual(name="Condition",
+                                        guide="legend",
+                                        values=color_list) +
+            ggplot2::scale_fill_manual(name="Condition",
+                                       guide="legend",
+                                       values=color_list) +
+            ggplot2::scale_shape_manual(name="Batch",
+                                        labels=levels(as.factor(pca_data[["batch"]])),
+                                        guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
+                                        values=21:25) +
+            ggplot2::scale_size(range=c(2,7))
+    } else if (!is.null(size_column) & num_batches > 5) {
+        maxsize <- max(pca_data[[size_column]])
+        pca_plot <- pca_plot +
+            ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
+                                                    colour="pca_data[['condition']]",
+                                                    size=size_column)) +
+            ggplot2::scale_shape_manual(name="Batch",
+                                        labels=levels(as.factor(pca_data[["batch"]])),
+                                        guide=ggplot2::guide_legend(overwrite.aes=list(size=plot_size)),
+                                        values=1:num_batches) +
+            ggplot2::scale_color_identity(name="Condition",
+                                          guide="legend",
+                                          values=color_list) +
+            ggplot2::scale_size(range=c(2,7))
     } else {
-        pca_plot <- ggplot2::ggplot(data=as.data.frame(pca_data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
-        if (!is.null(size_column)) {
-            pca_plot <- pca_plot + ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)", fill="condition", size=size_column), colour="black")
-            maxsize <- max(pca_data[[size_column]])
-            pca_plot <- pca_plot + ggplot2::scale_size_continuous(range=c(2, maxsize + 1))
-        } else {
-            pca_plot <- pca_plot + ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
-                                                                           fill="as.factor(condition)",
-                                                                           colour="pca_data[, 'colors']"))
-        }
-        pca_plot <- pca_plot +
-            ggplot2::scale_color_manual(name="Condition", guide="legend",
-                                       labels=as.factor(pca_data[, "condition"]),
-                                       values=levels(as.factor(pca_data[, "colors"]))) +
-            ggplot2::scale_shape_manual(name="Batch", labels=as.factor(pca_data[, "batch"]), values=1:25) +
-            ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(colour=levels(factor(pca_data[, "colors"])))),
-                            colour=ggplot2::guide_legend(override.aes=list("black")))
+        stop("This should be an impossible state.")
     }
 
     if (!is.null(variances)) {
@@ -340,17 +372,27 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
         pca_plot <- pca_plot + ggplot2::xlab(x_label) + ggplot2::ylab(y_label)
     }
 
-    if (!is.null(plot_labels)) {
-        if (plot_labels[[1]] == "fancy") {
-            pca_plot <- pca_plot +
-                directlabels::geom_dl(ggplot2::aes_string(x="get(first)", y="get(second)", label="point_labels"),
-                                      list("top.bumpup", cex=0.5))
-        } else {
-            pca_plot <- pca_plot +
-                ggplot2::geom_text(ggplot2::aes_string(x="get(first)", y="get(second)", label="point_labels"),
-                                   angle=45, size=4, vjust=2)
-        }
+    if (is.null(plot_labels)) {
+        plot_labels <- "repel"
     }
+    if (plot_labels == "normal") {
+        pca_plot <- pca_plot +
+            ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2", label="labels",
+                                                   angle=45, size=4, vjust=2))
+    } else if (plot_labels == "repel") {
+        pca_plot <- pca_plot +
+            ggrepel::geom_text_repel(ggplot2::aes_string(label="labels"),
+                                     size=5, box.padding=ggplot2::unit(0.5, 'lines'),
+                                     point.padding=ggplot2::unit(1.6, 'lines'),
+                                     arrow=ggplot2::arrow(length=ggplot2::unit(0.01, 'npc')))
+    } else if (plot_labels == "dlsmart") {
+        pca_plot <- pca_plot +
+            directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="smart.grid")
+    } else {
+        pca_plot <- pca_plot +
+            directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="first.qp")
+    }
+
     return(pca_plot)
 }
 

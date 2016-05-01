@@ -2,28 +2,26 @@
 % Please edit documentation in R/normalize_batch.r
 \name{hpgl_combatMod}
 \alias{hpgl_combatMod}
-\title{Use a modified version of combat on some data
-This is a hack of Kwame's combatMod to make it not fail on corner-cases.}
+\title{A modified version of comBat.}
 \usage{
 hpgl_combatMod(dat, batch, mod, noScale = TRUE, prior.plots = FALSE)
 }
 \arguments{
-\item{dat}{a df to modify}
+\item{dat}{Df to modify.}
 
-\item{batch}{a factor of batches}
+\item{batch}{Factor of batches.}
 
-\item{mod}{a factor of conditions}
+\item{mod}{Factor of conditions.}
 
-\item{noScale}{the normal 'scale' option squishes the data too much, so this defaults to TRUE}
+\item{noScale}{The normal 'scale' option squishes the data too much, so this defaults to TRUE.}
 
-\item{prior.plots}{print out prior plots? FALSE}
+\item{prior.plots}{Print out prior plots?}
 }
 \value{
-a df of batch corrected data
+Df of batch corrected data
 }
 \description{
-Use a modified version of combat on some data
-This is a hack of Kwame's combatMod to make it not fail on corner-cases.
+This is a hack of Kwame Okrah's combatMod to make it not fail on corner-cases.
 }
 \examples{
 \dontrun{

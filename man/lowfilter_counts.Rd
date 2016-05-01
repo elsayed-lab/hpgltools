@@ -2,35 +2,36 @@
 % Please edit documentation in R/normalize_filter.r
 \name{lowfilter_counts}
 \alias{lowfilter_counts}
-\title{A caller for different low-count filters}
+\title{Call various low-count filters.}
 \usage{
 lowfilter_counts(count_table, type = "cbcb", p = 0.01, A = 1, k = 1,
   cv_min = 0.01, cv_max = 1000, thresh = 2, min_samples = 2)
 }
 \arguments{
-\item{count_table}{some counts to filter}
+\item{count_table}{Some counts to filter.}
 
-\item{type}{Filtering method to apply (cbcb, pofa, kofa, cv right now)}
+\item{type}{Filtering method to apply (cbcb, pofa, kofa, cv right now).}
 
-\item{p}{For pofa()}
+\item{p}{Used by genefilter's pofa().}
 
-\item{A}{For pofa()}
+\item{A}{Also for pofa().}
 
-\item{k}{For kofa()}
+\item{k}{Used by genefilter's kofa().}
 
-\item{cv_min}{For cv()}
+\item{cv_min}{Used by genefilter's cv().}
 
-\item{cv_max}{For cv()}
+\item{cv_max}{Also used by cv().}
 
-\item{thresh}{Minimum threshold across samples for cbcb}
+\item{thresh}{Minimum threshold across samples for cbcb.}
 
-\item{min_samples}{Minimum number of samples for cbcb}
+\item{min_samples}{Minimum number of samples for cbcb.}
 }
 \value{
-a data frame of lowfiltered counts
+Data frame of lowfiltered counts.
 }
 \description{
-A caller for different low-count filters
+This calls the various filtering functions in genefilter along with suggestions made in our lab
+meetings; defaulting to the threshold based filter suggested by Hector.
 }
 \examples{
 \dontrun{

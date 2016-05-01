@@ -29,8 +29,19 @@
 #'
 #' @docType package
 #' @name hpgltools
-#' @import magrittr
-#' @importFrom magrittr `%>%`
 #' @importFrom utils head tail
+#' @importFrom ggplot2 aes aes_string
 #' @import stats
+NULL
+
+#' Pipe operator
+#'
+#' Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
+#'
+#' @name %>%
+#' @rdname pipe
+#' @keywords internal
+#' @export
+#' @importFrom magrittr %>%
+#' @usage lhs \%>\% rhs
 NULL

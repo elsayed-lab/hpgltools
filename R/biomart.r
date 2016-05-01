@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 28 22:12:30 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr 29 11:45:53 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Extract annotation information from biomart.
 #'
@@ -20,11 +20,11 @@
 #' @export
 get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                     host="dec2015.archive.ensembl.org",
-                                    trymart="ENSEMBL_MART_ENSEMBL", include_lengths=FALSE) {
+                                    trymart="ENSEMBL_MART_ENSEMBL", include_lengths=TRUE) {
     savefile <- "biomart_annotations.rda"
     biomart_annotations <- NULL
     if (file.exists(savefile) & overwrite == FALSE) {
-        fresh <- environment()
+        fresh <- new.env()
         message("The biomart annotations file already exists, loading from it.")
         load_string <- paste0("load('", savefile, "', envir=fresh)")
         eval(parse(text=load_string))
@@ -77,7 +77,7 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 
     if (isTRUE(do_save)) {
         message(paste0("Saving annotations to ", savefile, "."))
-        save(list=ls(c("biomart_annotations"), envir=globalenv()), envir=globalenv(), file=savefile)
+        save(list=ls(pattern="biomart_annotations"), file=savefile)
         message("Finished save().")
     }
     return(biomart_annotations)
@@ -110,7 +110,7 @@ get_biomart_ontology <- function(species="hsapiens", overwrite=FALSE, do_save=FA
     secondtry <- paste0(species, secondtry)
     go_annotations <- NULL
     if (file.exists(savefile) & overwrite == FALSE) {
-        fresh <- environment()
+        fresh <- new.env()
         message("The biomart annotations file already exists, loading from it.")
         load_string <- paste0("load('", savefile, "', envir=fresh)")
         eval(parse(text=load_string))
@@ -139,7 +139,9 @@ get_biomart_ontology <- function(species="hsapiens", overwrite=FALSE, do_save=FA
     go_annotations <- biomaRt::getBM(attributes = c("ensembl_gene_id","go_id"), mart=ensembl)
     message(paste0("Finished downloading ensembl go annotations, saving to ", savefile, "."))
     if (isTRUE(do_save)) {
-        save(list=ls(c("biomart_annotations", "go_annotations"), envir=globalenv()), envir=globalenv(), file=savefile)
+        message(paste0("Saving ontologies to ", savefile, "."))
+        save(list=ls(pattern="biomart_annotations"), file=savefile)
+        message("Finished save().")
     }
     colnames(go_annotations) <- c("ID","GO")
     return(go_annotations)

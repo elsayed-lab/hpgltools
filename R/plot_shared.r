@@ -1,4 +1,4 @@
-## Time-stamp: <Tue Apr 26 12:28:44 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr 29 22:46:10 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
@@ -84,11 +84,12 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     message("Graphing a correlation heatmap.")
     corheat <- try(hpgl_corheat(expt, method=cormethod, title=corheat_title, ...))
     message("Graphing a standard median correlation.")
-    smc <- try(hpgl_smc(expt, method=cormethod, title=smc_title, ...))
+    ##smc <- try(hpgl_smc(expt, method=cormethod, title=smc_title, ...))
+    smc <- try(plot_sm(expt, method=cormethod, title=smc_title, ...))
     message("Graphing a distance heatmap.")
     disheat <- try(hpgl_disheat(expt, method=distmethod, title=disheat_title, ...))
     message("Graphing a standard median distance.")
-    smd <- try(hpgl_smd(expt, method=distmethod, title=smd_title, ...))
+    smd <- try(plot_sm(expt, method=distmethod, title=smd_title, ...))
     message("Graphing a PCA plot.")
     pca <- try(hpgl_pca(expt, title=pca_title, ...))
     message("Plotting a density plot.")

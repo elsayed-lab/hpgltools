@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 28 23:37:26 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr 29 14:25:27 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' The simplest possible differential expression method.
 #'
@@ -18,9 +18,10 @@
 #' stupid_de <- basic_pairwise(expt)
 #' }
 #' @export
-basic_pairwise <- function(input, design=NULL) {
+basic_pairwise <- function(input, design=NULL, ...) {
     message("Starting basic pairwise comparison.")
     input_class <- class(input)[1]
+    arglist <- list(...)
 
     if (input_class == 'expt') {
         design <- input[["design"]]
