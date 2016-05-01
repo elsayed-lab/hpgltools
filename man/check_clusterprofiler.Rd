@@ -2,20 +2,22 @@
 % Please edit documentation in R/ontology_clusterprofiler.r
 \name{check_clusterprofiler}
 \alias{check_clusterprofiler}
-\title{Make sure that clusterProfiler is ready to run}
+\title{Make sure that clusterProfiler is ready to run.}
 \usage{
 check_clusterprofiler(gff = "test.gff", gomap = NULL)
 }
 \arguments{
-\item{gff}{The gff file containing annotation data (gene lengths)}
+\item{gff}{Ggff file containing annotation data (gene lengths).}
 
-\item{gomap}{a data frame of gene IDs and GO ontologies 1:1, other columns are ignored.}
+\item{gomap}{Data frame of gene IDs and GO ontologies 1:1, other columns are ignored.}
 }
 \value{
-the GO2EG data structure created, probably don't save this, its big
+GO2EG data structure created, probably don't save this, it is entirely too big.
 }
 \description{
-Make sure that clusterProfiler is ready to run
+Many of our ontology searches are using non-supported organisms.  These need to have a
+geneTable.rda file in place which maps the gene IDs to GO IDs.  This function checks for that
+file and attempts to set it up if it is not found.
 }
 \examples{
 \dontrun{

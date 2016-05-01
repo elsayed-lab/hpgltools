@@ -2,18 +2,22 @@
 % Please edit documentation in R/ontology_clusterprofiler.r
 \name{hpgl_Gff2GeneTable}
 \alias{hpgl_Gff2GeneTable}
-\title{A copy and paste of clusterProfiler's readGff}
+\title{A near copy-paste of clusterProfiler's readGff().}
 \usage{
 hpgl_Gff2GeneTable(gffFile, compress = TRUE, split = "=")
 }
 \arguments{
-\item{gffFile}{a gff file}
+\item{gffFile}{Gff file of annotations.}
 
-\item{compress}{compress them}
+\item{compress}{Compress the results?}
 
-\item{split}{the splitter when reading gff files}
+\item{split}{Splitter when reading gff files to extract annotation information.}
+}
+\value{
+geneTable.rda file of gene attributes.
 }
 \description{
-A copy and paste of clusterProfiler's readGff
+There is a redundant merge in the original code which caused my invocations to use up all the
+memory on my machine.
 }
 

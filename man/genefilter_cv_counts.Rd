@@ -2,22 +2,23 @@
 % Please edit documentation in R/normalize_filter.r
 \name{genefilter_cv_counts}
 \alias{genefilter_cv_counts}
-\title{Filter genes from a dataset outside a range of variance}
+\title{Filter genes from a dataset outside a range of variance.}
 \usage{
 genefilter_cv_counts(count_table, cv_min = 0.01, cv_max = 1000)
 }
 \arguments{
-\item{count_table}{input data frame of counts by sample}
+\item{count_table}{Input data frame of counts by sample.}
 
-\item{cv_min}{a minimum coefficient of variance}
+\item{cv_min}{Minimum coefficient of variance.}
 
-\item{cv_max}{guess}
+\item{cv_max}{Maximum coefficient of variance.}
 }
 \value{
-dataframe of counts without the low-count genes
+Dataframe of counts without the high/low variance genes.
 }
 \description{
-Filter genes from a dataset outside a range of variance
+This function from genefilter removes genes surpassing a variance cutoff.  It is not therefore a
+low-count filter per se.
 }
 \examples{
 \dontrun{
@@ -25,6 +26,6 @@ filtered_table = genefilter_kofa_counts(count_table)
 }
 }
 \seealso{
-\pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep
+\pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep.
 }
 

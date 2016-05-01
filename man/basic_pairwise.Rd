@@ -2,22 +2,17 @@
 % Please edit documentation in R/de_basic.r
 \name{basic_pairwise}
 \alias{basic_pairwise}
-\title{Perform a pairwise comparison among conditions which takes
-nothing into account.  It _only_ takes the conditions, a mean value/variance among
-them, divides by condition, and returns the result.  No fancy nomalizations, no
-statistical models, no nothing.  It should be the very worst method possible.
-But, it should also provide a baseline to compare the other tools against, they should
-all do better than this, always.}
+\title{The simplest possible differential expression method.}
 \usage{
-basic_pairwise(input, design = NULL)
+basic_pairwise(input, design = NULL, ...)
 }
 \arguments{
-\item{input}{a count table by sample}
+\item{input}{Count table by sample.}
 
-\item{design}{a data frame of samples and conditions}
+\item{design}{Data frame of samples and conditions.}
 }
 \value{
-I am not sure yet
+Df of pseudo-logFC, p-values, numerators, and denominators.
 }
 \description{
 Perform a pairwise comparison among conditions which takes

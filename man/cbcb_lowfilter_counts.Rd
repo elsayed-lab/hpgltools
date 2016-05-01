@@ -2,25 +2,25 @@
 % Please edit documentation in R/normalize_filter.r
 \name{cbcb_lowfilter_counts}
 \alias{cbcb_lowfilter_counts}
-\title{Filter low-count genes from a data set using filterCounts() originally from cbcbSEQ}
+\title{Filter low-count genes from a data set using filterCounts() originally from cbcbSEQ.}
 \usage{
 cbcb_lowfilter_counts(count_table, thresh = 2, min_samples = 2,
   libsize = NULL)
 }
 \arguments{
-\item{count_table}{input data frame of counts by sample}
+\item{count_table}{Input data frame of counts by sample.}
 
-\item{thresh}{lower threshold of counts (default: 4)}
+\item{thresh}{Lower threshold of counts.}
 
-\item{min_samples}{minimum number of samples (default: 2)}
+\item{min_samples}{Minimum number of samples.}
 
-\item{libsize}{the pre-quantile library sizes}
+\item{libsize}{Pre-quantile/normalization library sizes.}
 }
 \value{
-dataframe of counts without the low-count genes
+Dataframe of counts without the low-count genes.
 }
 \description{
-Filter low-count genes from a data set using filterCounts() originally from cbcbSEQ
+Use a threshold and minimum number of samples to drop low-count genes from a data set.
 }
 \examples{
 \dontrun{
@@ -28,6 +28,6 @@ Filter low-count genes from a data set using filterCounts() originally from cbcb
 }
 }
 \seealso{
-log2CPM which this uses to decide what to keep
+log2CPM which this uses to decide what to keep.
 }
 

@@ -2,36 +2,38 @@
 % Please edit documentation in R/ontology_clusterprofiler.r
 \name{hpgl_enrichGO}
 \alias{hpgl_enrichGO}
-\title{A minor hack in the clusterProfiler function 'enrichGO'}
+\title{A minor hack in the clusterProfiler function 'enrichGO'.}
 \usage{
 hpgl_enrichGO(gene, organism = "human", ont = "MF", pvalueCutoff = 0.05,
   pAdjustMethod = "BH", universe, qvalueCutoff = 0.2, minGSSize = 2,
   readable = FALSE)
 }
 \arguments{
-\item{gene}{some differentially expressed genes}
+\item{gene}{Some differentially expressed genes.}
 
-\item{organism}{if used will cause this to pull the ensG annotations}
+\item{organism}{if used will cause this to pull the ensG annotations.}
 
-\item{ont}{mf bp or cc}
+\item{ont}{Molecular function, Biological process, or Cellular component?}
 
-\item{pvalueCutoff}{pvalue cutoff}
+\item{pvalueCutoff}{P-value cutoff.}
 
-\item{pAdjustMethod}{p-value adjustment}
+\item{pAdjustMethod}{P-value adjustment.}
 
-\item{universe}{the gene universe}
+\item{universe}{Gene universe to use.}
 
-\item{qvalueCutoff}{maximum qvalue before adding}
+\item{qvalueCutoff}{Maximum qvalue before adding.}
 
-\item{minGSSize}{smallest group size}
+\item{minGSSize}{Smallest ontology group size allowed.}
 
-\item{readable}{readable tag on the object}
+\item{readable}{Set the readable tag on the returned object?}
 }
 \value{
-some clusterProfiler data
+Some clusterProfiler data.
 }
 \description{
-A minor hack in the clusterProfiler function 'enrichGO'
+I do not remember any longer why, but enrichGO errors out in ways which do not always make sense,
+this was written to alleviate that problem.  I believe I sent a diff to the clusterProfiler
+author but did not hear back and so added this function.
 }
 \seealso{
 \pkg{clusterProfiler}

@@ -10,36 +10,39 @@ simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
   method = "Wallenius", padjust = "BH", ...)
 }
 \arguments{
-\item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}
+\item{de_genes}{Data frame of differentially expressed genes, it must contain an ID column.}
 
-\item{goids}{a file containing mappings of genes to goids in the format expected by topgo}
+\item{goids}{File containing mappings of genes to goids in the format expected by buildGOmap().}
 
-\item{golevel}{a relative level in the tree for printing p-value plots, higher is more specific}
+\item{golevel}{Relative level in the tree for printing p-value plots, higher is more specific.}
 
-\item{pcutoff}{a p-value cutoff}
+\item{pcutoff}{(Adj)p-value cutoff to define 'significant'.}
 
-\item{fold_changes}{a df of fold changes for the DE genes}
+\item{fold_changes}{Df of fold changes for the DE genes.}
 
-\item{include_cnetplots}{the cnetplots are often stupid and can be left behind}
+\item{include_cnetplots}{Cnetplots often have too many glyphs to read, so by default they are not
+included, however on occasion they are fairly interesting to look at.}
 
-\item{showcategory}{how many categories to show in p-value plots}
+\item{showcategory}{How many categories to show in p-value plots?  Too many and they become
+illegible.}
 
-\item{universe}{universe to use}
+\item{universe}{Gene universe to use.}
 
-\item{species}{name of the species to use}
+\item{species}{Name of the species to use if supported, jibberish otherwise.}
 
-\item{gff}{gff file to generate the universe}
+\item{gff}{Gff file to generate the universe of genes.}
 
-\item{wrapped_width}{width of ontology names in the pvalue plots}
+\item{wrapped_width}{Width of ontology names in the pvalue plots, too long and the bars
+disappear, too short and the words run into the lines above.}
 
-\item{method}{pvalue calculation method}
+\item{method}{Method for calculating p-values.}
 
-\item{padjust}{a method for adjusting the p-values}
+\item{padjust}{Method for adjusting the p-values.}
 
-\item{...}{more options!}
+\item{...}{More options, passed to arglist.}
 }
 \value{
-a big list including the following:
+List including the following:
   mf_interesting: A table of the interesting molecular function groups
   bp_interesting: A table of the interesting biological process groups
   cc_interesting: A table of the interesting cellular component groups
@@ -55,7 +58,9 @@ a big list including the following:
   mf_group_barplot/bp_group_barplot/cc_group_barplot: The group barplots from clusterProfiler
 }
 \description{
-Perform a simplified clusterProfiler analysis
+I like clusterProfiler quite a lot, but making it work for non-standard species is a bit of a
+chore.  This attempts to alleivate some of those headaches and cover some corner cases where it
+fails.
 }
 \examples{
 \dontrun{

@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 28 20:09:12 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri Apr 29 22:53:33 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
@@ -127,6 +127,7 @@ autoloads_graphs <- function() {
     count <- count + require.auto("ggplot2")
     count <- count + require.auto("googleVis")
     count <- count + require.auto("gplots")
+    count <- count + require.auto("ggrepel")
     count <- count + require.auto("grid")
     count <- count + require.auto("gridExtra")
     count <- count + require.auto("RColorBrewer")

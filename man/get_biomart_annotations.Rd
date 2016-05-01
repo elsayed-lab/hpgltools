@@ -6,7 +6,7 @@
 \usage{
 get_biomart_annotations(species = "hsapiens", overwrite = FALSE,
   do_save = TRUE, host = "dec2015.archive.ensembl.org",
-  trymart = "ENSEMBL_MART_ENSEMBL", include_lengths = FALSE)
+  trymart = "ENSEMBL_MART_ENSEMBL", include_lengths = TRUE)
 }
 \arguments{
 \item{species}{Choose a species.}
