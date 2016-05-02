@@ -5,7 +5,7 @@
 \title{Collect the r^2 values from a linear model fitting between a singular
 value decomposition and factor.}
 \usage{
-factor_rsquared(svd_v, factor)
+factor_rsquared(svd_v, fact, type = "factor")
 }
 \arguments{
 \item{svd_v}{the V' V = I portion of a fast.svd call.}

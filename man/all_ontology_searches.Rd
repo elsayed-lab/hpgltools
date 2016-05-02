@@ -6,7 +6,7 @@
 \usage{
 all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
   z = NULL, fc = NULL, p = NULL, overwrite = FALSE,
-  organism = "unsupported", goid_map = "reference/go/id2go.map",
+  species = "unsupported", goid_map = "reference/go/id2go.map",
   gff_file = NULL, gff_type = "gene", goids_df = NULL, do_goseq = TRUE,
   do_cluster = TRUE, do_topgo = TRUE, do_gostats = TRUE,
   do_gprofiler = TRUE, do_trees = FALSE)
@@ -28,7 +28,7 @@ all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
 
 \item{overwrite}{Overwrite existing excel results file?}
 
-\item{organism}{Supported organism used by the tools.}
+\item{species}{Supported organism used by the tools.}
 
 \item{goid_map}{Mapping file used by topGO, if it does not exist then goids_df creates it.}
 

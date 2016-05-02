@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Apr 27 17:55:05 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May  2 03:06:03 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Run searches against the web service g:Profiler
 #'
@@ -8,7 +8,7 @@
 #' @param second_col if that fails, try some where else.
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @export
-simple_gprofiler <- function(gene_list, organism="hsapiens", first_col="logFC", second_col="limma_logfc") {
+simple_gprofiler <- function(gene_list, species="hsapiens", first_col="logFC", second_col="limma_logfc") {
     ## Assume for the moment a limma-ish data frame
     if (!is.null(gene_list[[first_col]])) {
         gene_list <- gene_list[order(-gene_list[[first_col]]), ]
@@ -26,25 +26,25 @@ simple_gprofiler <- function(gene_list, organism="hsapiens", first_col="logFC", 
     }
     ## Setting 'ordered_query' to TRUE, so rank these by p-value or FC or something
     message("Performing g:Profiler GO search.")
-    go_result <- try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,
+    go_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                           ordered_query=TRUE, src_filter="GO"))
     message("Performing g:Profiler KEGG search.")
-    kegg_result <- try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,
+    kegg_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                              ordered_query=TRUE, src_filter="KEGG"))
     message("Performing g:Profiler reactome.db search.")
-    reactome_result <- try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,
+    reactome_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                                 ordered_query=TRUE, src_filter="REAC"))
     message("Performing g:Profiler mi search.")
-    mi_result <- try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,
+    mi_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                           ordered_query=TRUE, src_filter="MI"))
     message("Performing g:Profiler tf search.")
-    tf_result <- try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,
+    tf_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                           ordered_query=TRUE, src_filter="TF"))
     message("Performing g:Profiler corum search.")
-    corum_result <- try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,
+    corum_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                              ordered_query=TRUE, src_filter="CORUM"))
     message("Performing g:Profiler hp search.")
-    hp_result <- try(gProfileR::gprofiler(query=gene_ids, organism=organism, significant=TRUE,
+    hp_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                           ordered_query=TRUE, src_filter="HP"))
     retlist <- list(
         "go" = go_result,

@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Apr 27 20:37:55 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May  2 03:05:05 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #'   Extract more easily readable information from a GOTERM datum.
@@ -373,7 +373,7 @@ pval_plot <- function(df, ontology="MF") {
 #' @param fc Log fold-change used to define 'significant'.
 #' @param p Maximum pvalue to define 'significant.'
 #' @param overwrite Overwrite existing excel results file?
-#' @param organism Supported organism used by the tools.
+#' @param species Supported organism used by the tools.
 #' @param goid_map Mapping file used by topGO, if it does not exist then goids_df creates it.
 #' @param gff_file gff file containing the annotations used by gff2genetable from clusterprofiler.
 #' @param gff_type Column to use from the gff file for the universe of genes.
@@ -395,7 +395,7 @@ pval_plot <- function(df, ontology="MF") {
 #' }
 #' @export
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
-                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE, organism="unsupported",
+                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE, species="unsupported",
                                   goid_map="reference/go/id2go.map", gff_file=NULL, gff_type="gene",
                                   goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE,
                                   do_topgo=TRUE, do_gostats=TRUE, do_gprofiler=TRUE, do_trees=FALSE) {
@@ -487,8 +487,8 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
         }
 
         if (isTRUE(do_gprofiler)) {
-            gprofiler_up_ontology <- try(simple_gprofiler(up_genes, organism=organism))
-            gprofiler_down_ontology <- try(simple_gprofiler(down_genes, organism=organism))
+            gprofiler_up_ontology <- try(simple_gprofiler(up_genes, species=species))
+            gprofiler_down_ontology <- try(simple_gprofiler(down_genes, species=species))
         }
         c_data <- list("up_table" = up_genes,
                        "down_table" = down_genes,
@@ -516,16 +516,20 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
     return(output)
 }
 
-#'   Perform ontology searches on data subsets.
+#' Perform ontology searches on up/down subsets of differential expression data.
 #'
-#' @param changed_counts  the list of changed counts as ups and downs
-#' @param doplot   include plots in the results
+#' In the same way all_pairwise() attempts to simplify using multiple DE tools, this function seeks
+#' to make it easier to extract subsets of differentially expressed data and pass them to goseq,
+#' clusterProfiler, topGO, GOstats, and gProfiler.
+#'
+#' @param changed_counts List of changed counts as ups and downs.
+#' @param doplot Include plots in the results?
 #' @param ...  extra arguments which I don't realize
 #' @return a list of ontology search results, up and down for each contrast
 #' @export
 subset_ontology_search <- function(changed_counts, doplot=TRUE, ...) {
-    up_list <- changed_counts$ups
-    down_list <- changed_counts$downs
+    up_list <- changed_counts[["ups"]]
+    down_list <- changed_counts[["downs"]]
     arglist <- list(...)
     up_goseq <- list()
     down_goseq <- list()
@@ -535,6 +539,8 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, ...) {
     down_topgo <- list()
     up_gostats <- list()
     down_gostats <- list()
+    up_gprofiler <- list()
+    down_gprofiler <- list()
     ## goseq() requires minimally gene_lengths and goids
     lengths <- arglist[["lengths"]]
     goids <- arglist[["goids"]]
@@ -552,22 +558,62 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, ...) {
         uppers <- up_list[[cluster_count]]
         downers <- down_list[[cluster_count]]
         message(paste0(cluster_count, "/", names_length, ": Starting goseq"))
-        up_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=uppers, lengths=lengths, goids=goids, doplot=doplot, species=arglist[["species"]]))
-        down_goseq[[name]] <- suppressMessages(simple_goseq(de_genes=downers, lengths=lengths, goids=goids, doplot=doplot, species=arglist[["species"]]))
+        up_goseq[[name]] <- suppressMessages(try(simple_goseq(de_genes=uppers,
+                                                              lengths=lengths,
+                                                              goids=goids,
+                                                              doplot=doplot,
+                                                              ...)))
+        down_goseq[[name]] <- suppressMessages(try(simple_goseq(de_genes=downers,
+                                                                lengths=lengths,
+                                                                goids=goids,
+                                                                doplot=doplot,
+                                                                ...)))
         message(paste0(cluster_count, "/", names_length, ": Starting clusterprofiler"))
-        up_cluster[[name]] <- suppressMessages(simple_clusterprofiler(uppers, goids=goids, include_cnetplots=FALSE, species=arglist[["species"]], gff=gff))
-        down_cluster[[name]] <- suppressMessages(simple_clusterprofiler(downers, goids=goids, include_cnetplots=FALSE, species=arglist[["species"]], gff=gff))
+        up_cluster[[name]] <- suppressMessages(try(simple_clusterprofiler(uppers,
+                                                                          goids=goids,
+                                                                          include_cnetplots=FALSE,
+                                                                          gff=gff,
+                                                                          ...)))
+        down_cluster[[name]] <- suppressMessages(try(simple_clusterprofiler(downers,
+                                                                            goids=goids,
+                                                                            include_cnetplots=FALSE,
+                                                                            gff=gff,
+                                                                            ...)))
         message(paste0(cluster_count, "/", names_length, ": Starting topgo"))
-        up_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=uppers, goids_df=goids))
-        down_topgo[[name]] <- suppressMessages(simple_topgo(de_genes=downers, goids_df=goids))
+        up_topgo[[name]] <- suppressMessages(try(simple_topgo(de_genes=uppers,
+                                                              goids_df=goids,
+                                                              ...)))
+        down_topgo[[name]] <- suppressMessages(try(simple_topgo(de_genes=downers,
+                                                                goids_df=goids,
+                                                                ...)))
         message(paste0(cluster_count, "/", names_length, ": Starting gostats"))
-        up_gostats[[name]] <- suppressMessages(simple_gostats(uppers, gff, goids, gff_type=gff_type, species=arglist$species))
-        down_gostats[[name]] <- suppressMessages(simple_gostats(downers, gff, goids, gff_type=gff_type, species=arglist$species))
+        up_gostats[[name]] <- suppressMessages(try(simple_gostats(uppers,
+                                                                  gff,
+                                                                  goids,
+                                                                  gff_type=gff_type,
+                                                                  ...)))
+        down_gostats[[name]] <- suppressMessages(try(simple_gostats(downers,
+                                                                    gff,
+                                                                    goids,
+                                                                    gff_type=gff_type,
+                                                                    ...)))
+        up_gprofiler[[name]] <- suppressMessages(try(simple_gprofiler(uppers,
+                                                                      ...)))
+        down_gprofiler[[name]] <- suppressMessages(try(simple_gprofiler(downers,
+                                                                        ...)))
     }
 
     ret <- list(
-        up_goseq=up_goseq, down_goseq=down_goseq, up_cluster=up_cluster, down_cluster=down_cluster,
-        up_topgo=up_topgo, down_topgo=down_topgo, up_gostats=up_gostats, down_gostats=down_gostats)
+        "up_goseq" = up_goseq,
+        "down_goseq" = down_goseq,
+        "up_cluster" = up_cluster,
+        "down_cluster" = down_cluster,
+        "up_topgo" = up_topgo,
+        "down_topgo" = down_topgo,
+        "up_gostats" = up_gostats,
+        "down_gostats" = down_gostats,
+        "up_gprofiler" = up_gprofiler,
+        "down_gprofiler" = down_gprofiler)
     if (!file.exists("savefiles")) {
         dir.create("savefiles")
     }

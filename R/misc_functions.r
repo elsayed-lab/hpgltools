@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 28 01:52:01 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May  2 02:39:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' png() shortcut
 #'
@@ -306,12 +306,12 @@ gff2df <- function(gff, type=NULL) {
     if (isTRUE(gtf_test)) {  ## Start with an attempted import of gtf files.
         ret <- try(rtracklayer::import.gff(gff, format="gtf"), silent=TRUE)
     } else {
-        annotations <- try(rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE), silent=TRUE)
+        annotations <- try(rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE))
         if (class(annotations) == 'try-error') {
-            annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
+            annotations <- try(rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE))
         }
         if (class(annotations) == 'try-error') {
-            annotations <- try(rtracklayer::import.gff(gff), silent=TRUE)
+            annotations <- try(rtracklayer::import.gff(gff))
         }
     }
     if (class(annotations) == 'try-error') {

@@ -1,32 +1,42 @@
-## Time-stamp: <Wed Apr 27 16:58:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May  2 02:58:05 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
+#' Simplification function for gostats, in the same vein as those written for clusterProfiler,
+#' goseq, and topGO.
 #'
-#' GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be integers.
-#' As a result, I am going to have this function take a gff file in order to get the go ids and
-#' gene ids on the same page.
+#' GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be
+#' integers. As a result, I am going to have this function take a gff file in order to get the go
+#' ids and gene ids on the same page.
 #'
-#' @param de_genes  input list of differentially expressed genes
-#' @param gff The annotation information for this genome
-#' @param goids The set of GOids, as before in the format ID/GO
-#' @param universe_merge   column from which to create the universe of genes
-#' @param second_merge_try   if the first universe merge fails, try this
-#' @param organism   genbank organism to use
-#' @param pcutoff   pvalue cutoff for deciding significant
-#' @param direction   under or over represented categories
-#' @param conditional   perform a conditional search?
-#' @param categorysize   category size below which to not include groups
-#' @param gff_type   gff column to use for creating the universe
-#' @param ... more parameters!
-#' @return dunno yet
+#' @param de_genes Input list of differentially expressed genes.
+#' @param gff Annotation information for this genome.
+#' @param goids Set of GOids, as before in the format ID/GO.
+#' @param universe_merge Column from which to create the universe of genes.
+#' @param second_merge_try If the first universe merge fails, try this.
+#' @param species Genbank organism to use.
+#' @param pcutoff Pvalue cutoff for deciding significant.
+#' @param direction Under or over represented categories.
+#' @param conditional Perform a conditional search?
+#' @param categorysize Category size below which to not include groups.
+#' @param gff_type Gff column to use for creating the universe.
+#' @param ... More parameters!
+#' @return List of returns from GSEABase, Category, etc.
 #' @seealso \pkg{GSEABase} \pkg{Category}
 #' @export
-simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_merge_try="locus_tag",
-                           organism="fun", pcutoff=0.10, direction="over", conditional=FALSE,
-                           categorysize=NULL, gff_type="CDS", ...) {
+simple_gostats <- function(de_genes, gff, goids, universe_merge="id", second_merge_try="locus_tag",
+                           species="fun", pcutoff=0.10, direction="over", conditional=FALSE,
+                           categorysize=NULL, gff_type="cds", ...) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should)
-    ## contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
-    annotation <- gff2df(gff, type=gff_type)
+    ## contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much
+    ## perfect.
+    arglist = list(...)
+    if (!is.null(arglist[["gff_df"]])) {
+        annotation <- arglist[["gff_df"]]
+    } else {
+        annotation <- gff2df(gff, type=gff_type)
+    }
+    colnames(annotation) <- tolower(colnames(annotation))
+    colnames(annotation) <- gsub(pattern="length", replacement="width", x=colnames(annotation))
+
     ## This is similar to logic in ontology_goseq and is similarly problematic.
     ## Some gff files I use have all the annotation data in the type called 'gene', others use 'CDS', others use 'exon'
     ## I need a robust method of finding the correct feature type to call upon.
@@ -54,7 +64,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     ## library("GOstats")
     ## library("AnnotationDbi")
     message(paste0("simple_gostats(): gff_type is: ", gff_type, ". Change that if there are bad merges."))
-    types <- c("CDS","gene","exon")
+    types <- c("cds","gene","exon","protein_coding")
     for (type in types) {
         message(paste0("simple_gostats(): type ", type, " has ", sum(annotation$type == type), " annotations."))
     }
@@ -94,10 +104,16 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     if (nrow(gostats_go) == 0) {
         stop("simple_gostats(): The merging of the universe vs. goids failed.")
     }
-    colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "ID")
+    if (ncol(gostats_go) == 5) {
+        colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "ID")
+    } else if (ncol(gostats_go) == 4) {
+        colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id")
+    } else {
+        stop("Cannot set the columns for the gostats df.")
+    }
     gostats_go[["frame.Evidence"]] <- "TAS"
     gostats_go <- gostats_go[, c("frame.go_id", "frame.Evidence", "frame.gene_id")]
-    gostats_frame <- AnnotationDbi::GOFrame(gostats_go, organism=organism)
+    gostats_frame <- AnnotationDbi::GOFrame(gostats_go, organism=species)
     gostats_all <- AnnotationDbi::GOAllFrame(gostats_frame)
     message("simple_gostats(): Creating the gene set collection.  This is slow.")
     gsc <- GSEABase::GeneSetCollection(gostats_all,
@@ -107,7 +123,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     mf_under <- bp_under <- cc_under <- NULL
     message("simple_gostats(): Performing MF GSEA.")
     mf_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="MF", pvalueCutoff=pcutoff,
         conditional=conditional, testDirection="over")
@@ -116,7 +132,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("Found ", nrow(GOstats::summary(mf_over)), " over MF categories."))
     message("simple_gostats(): Performing BP GSEA.")
     bp_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""),
+        name=paste("GSEA of ", species, sep=""),
         geneSetCollection=gsc, geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="BP", pvalueCutoff=pcutoff,
         conditional=FALSE, testDirection="over")
@@ -124,7 +140,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("Found ", nrow(GOstats::summary(bp_over)), " over BP categories."))
     message("simple_gostats(): Performing CC GSEA.")
     cc_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="CC", pvalueCutoff=pcutoff,
         conditional=FALSE, testDirection="over")
@@ -132,7 +148,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("Found ", nrow(GOstats::summary(cc_over)), " over CC categories."))
     message("simple_gostats(): Performing under MF GSEA.")
     mf_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="MF", pvalueCutoff=pcutoff,
         conditional=conditional, testDirection="under")
@@ -140,7 +156,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("Found ", nrow(GOstats::summary(mf_under)), " under MF categories."))
     message("simple_gostats(): Performing under BP GSEA.")
     bp_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="BP", pvalueCutoff=pcutoff,
         conditional=FALSE, testDirection="under")
@@ -148,7 +164,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("Found ", nrow(GOstats::summary(bp_under)), " under BP categories."))
     message("simple_gostats(): Performing under CC GSEA.")
     cc_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="CC", pvalueCutoff=pcutoff,
         conditional=FALSE, testDirection="under")
