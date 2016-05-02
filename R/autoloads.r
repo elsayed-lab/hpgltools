@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr 29 22:53:33 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun May  1 22:02:26 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
@@ -68,6 +68,8 @@ autoloads_genome <- function() {
     count <- count + require.auto("genomeIntervals")
     count <- count + require.auto("rtracklayer")
     count <- count + require.auto("OrganismDbi")
+    count <- count + require.auto("AnnotationHub")
+    count <- count + require.auto("AnnotationDbi")
     return(count)
 }
 

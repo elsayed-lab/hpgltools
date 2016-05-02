@@ -1,17 +1,17 @@
-## Time-stamp: <Fri Apr 29 23:01:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun May  1 15:34:29 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_dotplot.r: Dotplots in various contexts, currently just smc/smd
 
-#' make a dotplot of some categorised factors and a set of SVs (for other factors)
+#' Make a dotplot of some categorised factors and a set of SVs (for other factors).
 #'
 #' This should make a quick df of the factors and surrogates and plot them.
 #'
-#' @param expt an experiment from which to acquire the design, counts, etc
-#' @param svest a set of surrogate variable estimations from sva/svg
-#'        or batch estimates
-#' @param chosen_factor a factor to compare against
-#' @param factor_type this may be a factor or range, it is intended to plot
-#'        a scatterplot if it is a range, a dotplot if a factor
+#' @param expt Experiment from which to acquire the design, counts, etc.
+#' @param svest Set of surrogate variable estimations from sva/svg
+#'        or batch estimates.
+#' @param chosen_factor Factor to compare against.
+#' @param factor_type This may be a factor or range, it is intended to plot
+#'        a scatterplot if it is a range, a dotplot if a factor.
 #' @examples
 #' \dontrun{
 #' estimate_vs_snps <- plot_svfactor(start, surrogate_estimate, "snpcategory")
@@ -38,6 +38,92 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
         ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
         ggplot2::theme_bw()
     return(sv_plot)
+}
+
+## I want to make some notes on getting ggplot plots to look like I want:
+## 1. Order of geom_thingie()/scale_thingie() matters
+## 2. The initial df needs to have a column for every color, fill, shape, etc.
+## 3. The initial aes needs to have a mapping for the same color, fill, shape, etc.
+## 4. Lay down a geom/scale for every element to change.
+
+###    factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
+###                                  aes_string(x="factor", y="svs",
+###                                             fill="condition", colour="condition",
+###                                             shape="shape")) +
+###        ggplot2::geom_point(size=5,
+###                            aes_string(shape="as.factor(shape)",
+###                                       colour="condition",
+###                                       fill="condition")) +
+###        ggplot2::geom_point(size=5,
+###                            colour="black",
+###                            show.legend=FALSE,
+###                            aes_string(shape="as.factor(shape)",fill="condition")) +
+###        ggplot2::scale_color_manual(values=color_list) +
+###        ggplot2::scale_fill_manual(values=color_list) +
+###        ggplot2::scale_shape_manual(values=21, guide=FALSE)
+
+
+#' Make a dotplot of known batches vs. SVs.
+#'
+#' This should make a quick df of the factors and surrogates and plot them.  Maybe it should be
+#' folded into plot_svfactor?  Hmm, I think first I will write this and see if it is better.
+#'
+#' @param expt Experiment from which to acquire the design, counts, etc.
+#' @param svest Set of surrogate variable estimations from sva/svg
+#'        or batch estimates.
+#' @param chosen_factor Factor to compare against.
+#' @param factor_type This may be a factor or range, it is intended to plot
+#'        a scatterplot if it is a range, a dotplot if a factor.
+#' @examples
+#' \dontrun{
+#' estimate_vs_snps <- plot_batchsv(start, surrogate_estimate, "snpcategory")
+#' }
+#' @export
+plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") {
+    chosen <- expt[["design"]][[batch_column]]
+
+    factor_df <- data.frame(
+        "sample" = expt[["design"]][["sampleid"]],
+        "factor" = as.integer(as.factor(expt[["design"]][[batch_column]])),
+        "fill" = expt[["colors"]],
+        "condition" = expt[["conditions"]],
+        "shape" = 21,
+        "color" = "black",
+        "svs" = svs)
+    color_list <- as.character(factor_df[["fill"]])
+    names(color_list) <- as.character(factor_df[["condition"]])
+
+    sample_factor <- ggplot(factor_df, aes_string(x="sample", y="factor")) +
+        ggplot2::geom_dotplot(binaxis="y", stackdir="center", binpositions="all", colour="black", fill=factor_df[["fill"]])
+
+    factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
+                                  ggplot2::aes_string(x="factor",
+                                                      y="svs",
+                                                      fill="condition",
+                                                      colour="condition",
+                                                      shape="shape")) +
+        ggplot2::geom_point(size=5,
+                            aes_string(shape="as.factor(shape)",
+                                       colour="condition",
+                                       fill="condition")) +
+        ggplot2::geom_point(size=5,
+                            colour="black",
+                            show.legend=FALSE,
+                            aes_string(shape="as.factor(shape)",
+                                       fill="condition")) +
+        ggplot2::scale_color_manual(values=color_list) +
+        ggplot2::scale_fill_manual(values=color_list) +
+        ggplot2::scale_shape_manual(values=21, guide=FALSE)
+
+    svs_sample <- ggplot(factor_df, aes_string(x="sample", y="svs")) +
+        ggplot2::geom_dotplot(binaxis="y", stackdir="center", binpositions="all", colour="black", fill=factor_df[["fill"]]) +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+
+    plots <- list(
+        "sample_factor" = sample_factor,
+        "factor_svs" = factor_svs,
+        "svs_sample" = svs_sample)
+    return(plots)
 }
 
 #' make a dotplot of some categorised factors and a set of principle components.

@@ -7,18 +7,18 @@
 hpgl_pairwise_ma(data, log = NULL, ...)
 }
 \arguments{
-\item{data}{an expt expressionset or data frame}
+\item{data}{Expt expressionset or data frame.}
 
-\item{log}{is the data in log format?}
+\item{log}{Is the data in log format?}
 
-\item{...}{more options are good}
+\item{...}{Options are good and passed to arglist().}
 }
 \value{
-a list of affy::maplots
+List of affy::maplots
 }
 \description{
-Use affy's ma.plot() on every pair of columns in a data set to help
-diagnose problematic samples.
+Use affy's ma.plot() on every pair of columns in a data set to help diagnose problematic
+samples.
 }
 \examples{
 \dontrun{

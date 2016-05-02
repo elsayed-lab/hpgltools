@@ -2,27 +2,27 @@
 % Please edit documentation in R/surrogate_estimators.r
 \name{compare_surrogate_estimates}
 \alias{compare_surrogate_estimates}
-\title{Perform a comparison of the surrogate estimators demonstrated by Jeff Leek.
-Once again this is entirely derivative, but seeks to provide similar estimates for one's own actual data
-and catch corner cases not taken into account in that document (for example if the estimators
-don't converge on a surrogate variable)}
+\title{Perform a comparison of the surrogate estimators demonstrated by Jeff Leek.}
 \usage{
 compare_surrogate_estimates(expt, extra_factors = NULL)
 }
 \arguments{
-\item{expt}{an experiment containing a design and other information}
+\item{expt}{Experiment containing a design and other information.}
 
-\item{extra_factors}{character list of extra factors which may be included in the final plot of the data}
+\item{extra_factors}{Character list of extra factors which may be included in the final plot of
+the data.}
 }
 \value{
-a list of toys
+List of the results.
 }
 \description{
-This will attempt each of the surrogate estimators described by Leek: pca, sva supervised,
-sva unsupervised, ruv supervised, ruv residuals, ruv empirical. Upon completion it will perform
-the same limma expression analysis and plot the ranked t statistics as well as a correlation plot
-making use of the extracted estimators against condition/batch/whatever else.
-Finally, it does the same ranking plot against a linear fitting Leek performed and returns the
-whole pile of information as a list.
+This is entirely derivative, but seeks to provide similar estimates for one's own actual data
+and catch corner cases not taken into account in that document (for example if the estimators
+don't converge on a surrogate variable). This will attempt each of the surrogate estimators
+described by Leek: pca, sva supervised, sva unsupervised, ruv supervised, ruv residuals, ruv
+empirical. Upon completion it will perform the same limma expression analysis and plot the ranked
+t statistics as well as a correlation plot making use of the extracted estimators against
+condition/batch/whatever else. Finally, it does the same ranking plot against a linear fitting
+Leek performed and returns the whole pile of information as a list.
 }
 

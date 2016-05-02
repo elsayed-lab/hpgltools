@@ -2,8 +2,7 @@
 % Please edit documentation in R/plot_point.r
 \name{hpgl_bcv_plot}
 \alias{hpgl_bcv_plot}
-\title{Steal edgeR's plotBCV() and make it a ggplot2
-This was written primarily to understand what that function is doing in edgeR.}
+\title{Steal edgeR's plotBCV() and make it a ggplot2.}
 \usage{
 hpgl_bcv_plot(data)
 }
@@ -14,7 +13,6 @@ hpgl_bcv_plot(data)
 a plot! of the BCV a la ggplot2.
 }
 \description{
-Steal edgeR's plotBCV() and make it a ggplot2
 This was written primarily to understand what that function is doing in edgeR.
 }
 \examples{

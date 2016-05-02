@@ -1,8 +1,9 @@
-## Time-stamp: <Mon Apr 25 15:07:10 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun May  1 19:00:23 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_scatter.r: Various scatter plots
 
-#' Steal edgeR's plotBCV() and make it a ggplot2
+#' Steal edgeR's plotBCV() and make it a ggplot2.
+#'
 #' This was written primarily to understand what that function is doing in edgeR.
 #'
 #' @param data  A dataframe/expt/exprs with count data
@@ -43,14 +44,14 @@ hpgl_bcv_plot <- function(data) {
                           "disp" = sqrt(disper))
     fitted_disp <- gplots::lowess(disp_df$A, disp_df$disp, f=0.5)
     f <- stats::approxfun(fitted_disp, rule=2)
-    disp_plot <- ggplot2::ggplot(disp_df, ggplot2::aes_string(x="A", y="disp")) +
+    disp_plot <- ggplot(disp_df, aes_string(x="A", y="disp")) +
         ggplot2::geom_point() +
         ggplot2::xlab("Average log(CPM)") +
         ggplot2::ylab("Dispersion of Biological Variance") +
-        ##ggplot2::stat_density2d(geom="tile", ggplot2::aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
+        ##ggplot2::stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
         ## ..density.. leads to no visible binding for global variable, but I don't fully understand that notation
         ## I remember looking at it a while ago and being confused
-        ggplot2::stat_density2d(geom="tile", ggplot2::aes_string(fill="..density..^0.25"), contour=FALSE, show.legend=FALSE) +
+        ggplot2::stat_density2d(geom="tile", aes_string(fill="..density..^0.25"), contour=FALSE, show.legend=FALSE) +
         ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white","black"))(256)) +
         ggplot2::geom_smooth(method="loess") +
         ggplot2::stat_function(fun=f, colour="red") +
@@ -59,21 +60,19 @@ hpgl_bcv_plot <- function(data) {
     return(ret)
 }
 
-#' Make a pretty scatter plot between two sets of numbers with a
-#' cheesy distance metric and some statistics of the two sets.
+#' Make a scatter plot between two sets of numbers with a cheesy distance metric and some statistics
+#' of the two sets.
 #'
 #' The distance metric should be codified and made more intelligent.
 #' Currently it creates a dataframe of distances which are absolute
 #' distances from each axis, multiplied by each other, summed by axis,
 #' then normalized against the maximum.
 #'
-#' @param df  a dataframe likely containing two columns
-#' @param tooltip_data   a df of tooltip information for gvis
-#' graphs.
-#' @param gvis_filename   a filename to write a fancy html graph.
-#' Defaults to NULL in which case the following parameter isn't needed.
-#' @param size size of the dots
-#' @return a ggplot2 scatter plot.  This plot provides a "bird's eye"
+#' @param df Dataframe likely containing two columns.
+#' @param tooltip_data Df of tooltip information for gvis graphs.
+#' @param gvis_filename Filename to write a fancy html graph.
+#' @param size Size of the dots.
+#' @return Ggplot2 scatter plot.  This plot provides a "bird's eye"
 #' view of two data sets.  This plot assumes the two data structures
 #' are not correlated, and so it calculates the median/mad of each
 #' axis and uses these to calculate a stupid, home-grown distance
@@ -109,7 +108,7 @@ hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
     mydist$dist <- mydist$x * mydist$y
     mydist$dist <- mydist$dist / max(mydist$dist)
     line_size <- size / 2
-    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"), environment=hpgl_env) +
+    first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +
         ggplot2::ylab(paste("Expression of", df_y_axis)) +
         ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
@@ -126,36 +125,31 @@ hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
     return(first_vs_second)
 }
 
-#' Make a pretty scatter plot between two sets of numbers with a
-#' linear model superimposed and some supporting statistics.
+#' Make a scatter plot between two groups with a linear model superimposed and some supporting
+#' statistics.
 #'
-#' @param df  a dataframe likely containing two columns
-#' @param tooltip_data   a df of tooltip information for gvis
-#' graphs.
-#' @param gvis_filename   a filename to write a fancy html graph.
-#' @param cormethod   what type of correlation to check?
-#' @param size   size of the dots on the plot.
-#' @param verbose   be verbose?
-#' @param identity   add the identity line?
-#' @param loess   add a loess estimation?
-#' @param gvis_trendline  add a trendline to the gvis plot?  There are a couple possible types, I think linear is the most common.
-#' @param first  first column to plot
-#' @param second  second column to plot
-#' @param base_url  a base url to add to the plot
-#' @param pretty_colors  colors!
-#' @return a list including a ggplot2 scatter plot and some
-#' histograms.  This plot provides a "bird's eye"
-#' view of two data sets.  This plot assumes a (potential) linear
-#' correlation between the data, so it calculates the correlation
-#' between them.  It then calculates and plots a robust linear model
-#' of the data using an 'SMDM' estimator (which I don't remember how
-#' to describe, just that the document I was reading said it is good).
-#' The median/mad of each axis is calculated and plotted as well.  The
-#' distance from the linear model is finally used to color the dots on
-#' the plot.  Histograms of each axis are plotted separately and then
-#' together under a single cdf to allow tests of distribution
-#' similarity.  This will make a fun clicky googleVis graph if
-#' requested.
+#' @param df Dataframe likely containing two columns.
+#' @param tooltip_data Df of tooltip information for gvis graphs.
+#' @param gvis_filename  Filename to write a fancy html graph.
+#' @param cormethod What type of correlation to check?
+#' @param size Size of the dots on the plot.
+#' @param identity Add the identity line?
+#' @param loess Add a loess estimation?
+#' @param gvis_trendline Add a trendline to the gvis plot?  There are a couple possible types, I
+#'     think linear is the most common.
+#' @param first First column to plot.
+#' @param second Second column to plot.
+#' @param base_url Base url to add to the plot.
+#' @param pretty_colors Colors!
+#' @return List including a ggplot2 scatter plot and some histograms.  This plot provides a "bird's
+#'     eye" view of two data sets.  This plot assumes a (potential) linear correlation between the
+#'     data, so it calculates the correlation between them.  It then calculates and plots a robust
+#'     linear model of the data using an 'SMDM' estimator (which I don't remember how to describe,
+#'     just that the document I was reading said it is good).  The median/mad of each axis is
+#'     calculated and plotted as well.  The distance from the linear model is finally used to color
+#'     the dots on the plot.  Histograms of each axis are plotted separately and then together under
+#'     a single cdf to allow tests of distribution similarity.  This will make a fun clicky
+#'     googleVis graph if requested.
 #' @seealso \link[robust]{lmRob} \link[stats]{weights} \link{hpgl_histogram}
 #' @examples
 #' \dontrun{
@@ -164,7 +158,7 @@ hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #' }
 #' @export
 hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson",
-                                size=2, verbose=FALSE, loess=FALSE, identity=FALSE, gvis_trendline=NULL,
+                                size=2, loess=FALSE, identity=FALSE, gvis_trendline=NULL,
                                 first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE) {
     hpgl_env <- environment()
     df <- data.frame(df[,c(1,2)])
@@ -201,7 +195,7 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     first_mad <- stats::mad(df$first, na.rm=TRUE)
     second_mad <- stats::mad(df$second, na.rm=TRUE)
     line_size <- size / 2
-    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"), environment=hpgl_env) +
+    first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +
         ggplot2::ylab(paste("Expression of", df_y_axis)) +
         ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
@@ -234,9 +228,6 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
         ggplot2::theme_bw()
 
     if (!is.null(gvis_filename)) {
-        if (verbose) {
-            message("Generating an interactive graph.")
-        }
         hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename,
                           trendline=gvis_trendline, base_url=base_url)
     }
@@ -247,46 +238,35 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     } else if (!is.null(second)) {
         colnames(df) <- c("first", second)
     }
-    x_histogram <- hpgl_histogram(data.frame(df[, 1]), verbose=verbose, fillcolor="lightblue", color="blue")
-    y_histogram <- hpgl_histogram(data.frame(df[, 2]), verbose=verbose, fillcolor="pink", color="red")
-    both_histogram <- hpgl_multihistogram(df, verbose=verbose)
+    x_histogram <- hpgl_histogram(data.frame(df[, 1]), fillcolor="lightblue", color="blue")
+    y_histogram <- hpgl_histogram(data.frame(df[, 2]), fillcolor="pink", color="red")
+    both_histogram <- hpgl_multihistogram(df)
     plots <- list(data=df, scatter=first_vs_second, x_histogram=x_histogram,
                   y_histogram=y_histogram, both_histogram=both_histogram,
                   correlation=correlation, lm_model=linear_model, lm_summary=linear_model_summary,
                   lm_weights=linear_model_weights, lm_rsq=linear_model_rsq,
                   first_median=first_median, first_mad=first_mad,
                   second_median=second_median, second_mad=second_mad)
-    if (verbose) {
-        message(sprintf("Calculating correlation between the axes using:", cormethod))
-        message(correlation)
-        message("Calculating linear model between the axes")
-        message(linear_model_summary)
-        message("Generating histogram of the x axis.")
-        message("Generating histogram of the y axis.")
-        message("Generating a histogram comparing the axes.")
-    }
     return(plots)
 }
 
 #' Make a pretty MA plot from the output of voom/limma/eBayes/toptable.
 #'
-#' @param counts  df of linear-modelling, normalized counts by sample-type,
+#' @param counts  Df of linear-modelling, normalized counts by sample-type,
 #'        which is to say the output from voom/voomMod/hpgl_voom().
-#' @param de_genes  df from toptable or its friends containing p-values.
-#' @param pval_cutoff   a cutoff defining significant from not.
-#' @param alpha   how transparent to make the dots.
-#' @param logfc_cutoff a fold change cutoff
-#' @param pval the name of the pvalue column to use for cutoffs
-#' @param size   how big are the dots?
-#' @param tooltip_data   a df of tooltip information for gvis
-#' @param gvis_filename   a filename to write a fancy html graph.
-#'        graphs.
-#' @param ... more options for you
-#' @return a ggplot2 MA scatter plot.  This is defined as the rowmeans
-#' of the normalized counts by type across all sample types on the
-#' x-axis, and the log fold change between conditions on the y-axis.
-#' Dots are colored depending on if they are 'significant.'  This will
-#' make a fun clicky googleVis graph if requested.
+#' @param de_genes Df from toptable or its friends containing p-values.
+#' @param pval_cutoff Cutoff defining significant from not.
+#' @param alpha How transparent to make the dots.
+#' @param logfc_cutoff Fold change cutoff.
+#' @param pval Name of the pvalue column to use for cutoffs.
+#' @param size How big are the dots?
+#' @param tooltip_data Df of tooltip information for gvis.
+#' @param gvis_filename Filename to write a fancy html graph.
+#' @param ... More options for you!
+#' @return Ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
+#'     type across all sample types on the x-axis, and the log fold change between conditions on the
+#'     y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
+#'     googleVis graph if requested.
 #' @seealso \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
 #' \link[limma]{voom} \link{hpgl_voom}
 #' \link[limma]{lmFit} \link[limma]{makeContrasts}
@@ -322,17 +302,17 @@ hpgl_ma_plot <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.5, logfc_cu
     num_upsig <- sum(df[["state"]] == "upsig")
     num_downsig <- sum(df[["state"]] == "downsig")
     num_fcinsig <- sum(df[["state"]] == "fcinsig")
-    plt <- ggplot2::ggplot(df, ggplot2::aes_string(x="avg", y="logfc", color=aes_color),
+    plt <- ggplot(df, aes_string(x="avg", y="logfc", color=aes_color),
                            environment=hpgl_env) +
         ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1), logfc_cutoff), color="red", size=(size / 2)) +
-        ggplot2::geom_point(stat="identity", size=size, alpha=alpha, ggplot2::aes_string(shape="as.factor(state)", fill=aes_color)) +
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha, aes_string(shape="as.factor(state)", fill=aes_color)) +
         ggplot2::scale_shape_manual(name="state", values=c(21,22,23,24),
                                     labels=c(
                                         paste0("Down Sig.: ", num_downsig),
                                         paste0("FC Insig.: ", num_fcinsig),
                                         paste0("P Insig.: ", num_pinsig),
                                         paste0("Up Sig.: ", num_upsig)),
-                                    guide=ggplot2::guide_legend(override.aes=ggplot2::aes(size=3, fill="grey"))) +
+                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
         ggplot2::scale_color_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
         ggplot2::scale_fill_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
         ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=3))) +
@@ -350,17 +330,18 @@ hpgl_ma_plot <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.5, logfc_cu
 ##+   stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE) +
 ##+   scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256))
 
-#'   Make a ggplot graph of the number of non-zero genes by sample.
+#' Make a ggplot graph of the number of non-zero genes by sample.
+#'
 #' Made by Ramzi Temanni <temanni at umd dot edu>
 #'
-#' @param data an expt, expressionset, or dataframe.
-#' @param design   a design matrix.
-#' @param colors   a color scheme.
-#' @param labels   how do you want to label the graph?
-#'   'fancy' will use directlabels() to try to match the labels with the positions without overlapping
-#'   anything else will just stick them on a 45' offset next to the graphed point
-#' @param title   add a title?
-#' @param ... rawr
+#' @param data Expt, expressionset, or dataframe.
+#' @param design Eesign matrix.
+#' @param colors Ccolor scheme.
+#' @param labels How do you want to label the graph? 'fancy' will use directlabels() to try to match
+#'     the labels with the positions without overlapping anything else will just stick them on a 45'
+#'     offset next to the graphed point
+#' @param title Add a title?
+#' @param ... rawr!
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each library's CPM
 #' @seealso \link[ggplot2]{geom_point} \link[directlabels]{geom_dl}
 #' @examples
@@ -406,9 +387,9 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
                            "cpm"=colSums(data) * 1e-6,
                            "condition"=design$condition,
                            "batch"=design$batch)
-    non_zero_plot <- ggplot2::ggplot(data=non_zero, ggplot2::aes_string(x="cpm", y="nonzero_genes"), environment=hpgl_env, fill=colors, shape=shapes) +
+    non_zero_plot <- ggplot(data=non_zero, aes_string(x="cpm", y="nonzero_genes"), environment=hpgl_env, fill=colors, shape=shapes) +
         ## geom_point(stat="identity", size=3, colour=hpgl_colors, pch=21) +
-        ggplot2::geom_point(ggplot2::aes_string(fill="colors"), colour="black", pch=21, stat="identity", size=3) +
+        ggplot2::geom_point(aes_string(fill="colors"), colour="black", pch=21, stat="identity", size=3) +
         ggplot2::scale_fill_manual(name="Condition", values=levels(as.factor(colors)), labels=levels(as.factor(design$condition))) +
         ggplot2::ylab("Number of non-zero genes observed.") +
         ggplot2::xlab("Observed CPM") +
@@ -416,11 +397,11 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     if (!is.null(labels)) {
         if (labels[[1]] == "fancy") {
             non_zero_plot <- non_zero_plot +
-                directlabels::geom_dl(ggplot2::aes_string(label="labels"),
+                directlabels::geom_dl(aes_string(label="labels"),
                                       method="smart.grid", colour=colors)
         } else {
             non_zero_plot <- non_zero_plot +
-                ggplot2::geom_text(ggplot2::aes_string(x="cpm", y="nonzero_genes", label="labels"),
+                ggplot2::geom_text(aes_string(x="cpm", y="nonzero_genes", label="labels"),
                                    angle=45, size=4, vjust=2)
         }
     }
@@ -433,15 +414,15 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
 }
 
 
-#'   Plot all pairwise MA plots in an experiment.
+#' Plot all pairwise MA plots in an experiment.
 #'
-#' Use affy's ma.plot() on every pair of columns in a data set to help
-#' diagnose problematic samples.
+#' Use affy's ma.plot() on every pair of columns in a data set to help diagnose problematic
+#' samples.
 #'
-#' @param data an expt expressionset or data frame
-#' @param log   is the data in log format?
-#' @param ... more options are good
-#' @return a list of affy::maplots
+#' @param data Expt expressionset or data frame.
+#' @param log Is the data in log format?
+#' @param ... Options are good and passed to arglist().
+#' @return List of affy::maplots
 #' @seealso \link[affy]{ma.plot}
 #' @examples
 #' \dontrun{
@@ -524,7 +505,7 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]
     colnames(df) <- c("first","second")
-    first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"), environment=hpgl_env) +
+    first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +
         ggplot2::ylab(paste("Expression of", df_y_axis)) +
         ggplot2::geom_point(colour=color, alpha=0.6, size=size) +
@@ -535,24 +516,24 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
     return(first_vs_second)
 }
 
-#'   Make a pretty Volcano plot!
+#' Make a pretty Volcano plot!
 #'
-#' @param toptable_data  a dataframe from limma's toptable which
-#' includes log(fold change) and an adjusted p-value.
-#' @param p_cutoff   a cutoff defining significant from not.
-#' @param fc_cutoff   a cutoff defining the minimum/maximum fold change
-#' for interesting.  This is log, so I went with +/- 0.8 mostly
-#' arbitrarily as the default.
-#' @param alpha   how transparent to make the dots.
-#' @param size   how big are the dots?
-#' @param gvis_filename  a filename to write a fancy html graph.
-#' @param tooltip_data   a df of tooltip information for gvis.
+#' Volcano plots and MA plots provide quick an easy methods to view the set of (in)significantly
+#' differentially expressed genes.
+#'
+#' @param toptable_data Dataframe from limma's toptable which includes log(fold change) and an
+#'     adjusted p-value.
+#' @param p_cutoff Cutoff defining significant from not.
+#' @param fc_cutoff Cutoff defining the minimum/maximum fold change for interesting.  This is log,
+#'     so I went with +/- 0.8 mostly arbitrarily as the default.
+#' @param alpha How transparent to make the dots.
+#' @param size How big are the dots?
+#' @param gvis_filename Filename to write a fancy html graph.
+#' @param tooltip_data Df of tooltip information for gvis.
 #' @param ...  I love parameters!
-#' @return a ggplot2 MA scatter plot.  This is defined as the
-#' -log10(p-value) with respect to log(fold change).  The cutoff
-#' values are delineated with lines and mark the boundaries between
-#' 'significant' and not.  This will make a fun clicky googleVis graph
-#' if requested.
+#' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to
+#'     log(fold change).  The cutoff values are delineated with lines and mark the boundaries
+#'     between 'significant' and not.  This will make a fun clicky googleVis graph if requested.
 #' @seealso \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
 #' \link[limma]{voom} \link{hpgl_voom} \link[limma]{lmFit}
 #' \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
@@ -570,8 +551,8 @@ hpgl_volcano_plot <- function(toptable_data, tooltip_data=NULL, gvis_filename=NU
     low_vert_line <- 0.0 - fc_cutoff
     horiz_line <- -1 * log10(p_cutoff)
     toptable_data$modified_p <- -1 * log10(toptable_data$P.Value)
-    plt <- ggplot2::ggplot(toptable_data,
-                           ggplot2::aes_string(x="logFC", y="modified_p", color="(P.Value <= p_cutoff)"),
+    plt <- ggplot(toptable_data,
+                           aes_string(x="logFC", y="modified_p", color="(P.Value <= p_cutoff)"),
                            environment=hpgl_env) +
         ggplot2::geom_hline(yintercept=horiz_line, color="black", size=size) +
         ggplot2::geom_vline(xintercept=fc_cutoff, color="black", size=size) +
@@ -586,3 +567,5 @@ hpgl_volcano_plot <- function(toptable_data, tooltip_data=NULL, gvis_filename=NU
     }
     return(plt)
 }
+
+## EOF

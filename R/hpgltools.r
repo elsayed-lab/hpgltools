@@ -30,7 +30,7 @@
 #' @docType package
 #' @name hpgltools
 #' @importFrom utils head tail
-#' @importFrom ggplot2 aes aes_string
+#' @importFrom ggplot2 aes aes_string ggplot
 #' @import stats
 NULL
 

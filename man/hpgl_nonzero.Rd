@@ -2,32 +2,30 @@
 % Please edit documentation in R/plot_point.r
 \name{hpgl_nonzero}
 \alias{hpgl_nonzero}
-\title{Make a ggplot graph of the number of non-zero genes by sample.
-Made by Ramzi Temanni <temanni at umd dot edu>}
+\title{Make a ggplot graph of the number of non-zero genes by sample.}
 \usage{
 hpgl_nonzero(data, design = NULL, colors = NULL, labels = NULL,
   title = NULL, ...)
 }
 \arguments{
-\item{data}{an expt, expressionset, or dataframe.}
+\item{data}{Expt, expressionset, or dataframe.}
 
-\item{design}{a design matrix.}
+\item{design}{Eesign matrix.}
 
-\item{colors}{a color scheme.}
+\item{colors}{Ccolor scheme.}
 
-\item{labels}{how do you want to label the graph?
-'fancy' will use directlabels() to try to match the labels with the positions without overlapping
-anything else will just stick them on a 45' offset next to the graphed point}
+\item{labels}{How do you want to label the graph? 'fancy' will use directlabels() to try to match
+the labels with the positions without overlapping anything else will just stick them on a 45'
+offset next to the graphed point}
 
-\item{title}{add a title?}
+\item{title}{Add a title?}
 
-\item{...}{rawr}
+\item{...}{rawr!}
 }
 \value{
 a ggplot2 plot of the number of non-zero genes with respect to each library's CPM
 }
 \description{
-Make a ggplot graph of the number of non-zero genes by sample.
 Made by Ramzi Temanni <temanni at umd dot edu>
 }
 \examples{

@@ -8,16 +8,18 @@ get_model_adjust(expt, estimate_type = "sva_supervised", surrogates = "be",
   ...)
 }
 \arguments{
-\item{expt}{a raw experiment object}
+\item{expt}{Raw experiment object}
 
-\item{estimate_type}{one of sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised, ruv_residuals, or pca}
+\item{estimate_type}{One of sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
+ruv_residuals, or pca.}
 
-\item{surrogates}{choose a method for getting the number of surrogates, be or leek}
+\item{surrogates}{Choose a method for getting the number of surrogates, be or leek.}
 
-\item{...}{parameters fed to arglist}
+\item{...}{Parameters fed to arglist.}
 }
 \value{
-a list including the adjustments for a model matrix, a modified count table, and 3 plots of the known batch, surrogates, and batch/surrogate.
+List including the adjustments for a model matrix, a modified count table, and 3 plots of
+    the known batch, surrogates, and batch/surrogate.
 }
 \description{
 This applies the methodologies very nicely explained by Jeff Leek at

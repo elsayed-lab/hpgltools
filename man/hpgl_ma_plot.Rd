@@ -9,34 +9,32 @@ hpgl_ma_plot(counts, de_genes, pval_cutoff = 0.05, alpha = 0.5,
   gvis_filename = NULL, ...)
 }
 \arguments{
-\item{counts}{df of linear-modelling, normalized counts by sample-type,
+\item{counts}{Df of linear-modelling, normalized counts by sample-type,
 which is to say the output from voom/voomMod/hpgl_voom().}
 
-\item{de_genes}{df from toptable or its friends containing p-values.}
+\item{de_genes}{Df from toptable or its friends containing p-values.}
 
-\item{pval_cutoff}{a cutoff defining significant from not.}
+\item{pval_cutoff}{Cutoff defining significant from not.}
 
-\item{alpha}{how transparent to make the dots.}
+\item{alpha}{How transparent to make the dots.}
 
-\item{logfc_cutoff}{a fold change cutoff}
+\item{logfc_cutoff}{Fold change cutoff.}
 
-\item{pval}{the name of the pvalue column to use for cutoffs}
+\item{pval}{Name of the pvalue column to use for cutoffs.}
 
-\item{size}{how big are the dots?}
+\item{size}{How big are the dots?}
 
-\item{tooltip_data}{a df of tooltip information for gvis}
+\item{tooltip_data}{Df of tooltip information for gvis.}
 
-\item{gvis_filename}{a filename to write a fancy html graph.
-graphs.}
+\item{gvis_filename}{Filename to write a fancy html graph.}
 
-\item{...}{more options for you}
+\item{...}{More options for you!}
 }
 \value{
-a ggplot2 MA scatter plot.  This is defined as the rowmeans
-of the normalized counts by type across all sample types on the
-x-axis, and the log fold change between conditions on the y-axis.
-Dots are colored depending on if they are 'significant.'  This will
-make a fun clicky googleVis graph if requested.
+Ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
+    type across all sample types on the x-axis, and the log fold change between conditions on the
+    y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
+    googleVis graph if requested.
 }
 \description{
 Make a pretty MA plot from the output of voom/limma/eBayes/toptable.

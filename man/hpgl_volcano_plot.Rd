@@ -8,34 +8,32 @@ hpgl_volcano_plot(toptable_data, tooltip_data = NULL, gvis_filename = NULL,
   fc_cutoff = 0.8, p_cutoff = 0.05, size = 2, alpha = 0.6, ...)
 }
 \arguments{
-\item{toptable_data}{a dataframe from limma's toptable which
-includes log(fold change) and an adjusted p-value.}
+\item{toptable_data}{Dataframe from limma's toptable which includes log(fold change) and an
+adjusted p-value.}
 
-\item{tooltip_data}{a df of tooltip information for gvis.}
+\item{tooltip_data}{Df of tooltip information for gvis.}
 
-\item{gvis_filename}{a filename to write a fancy html graph.}
+\item{gvis_filename}{Filename to write a fancy html graph.}
 
-\item{fc_cutoff}{a cutoff defining the minimum/maximum fold change
-for interesting.  This is log, so I went with +/- 0.8 mostly
-arbitrarily as the default.}
+\item{fc_cutoff}{Cutoff defining the minimum/maximum fold change for interesting.  This is log,
+so I went with +/- 0.8 mostly arbitrarily as the default.}
 
-\item{p_cutoff}{a cutoff defining significant from not.}
+\item{p_cutoff}{Cutoff defining significant from not.}
 
-\item{size}{how big are the dots?}
+\item{size}{How big are the dots?}
 
-\item{alpha}{how transparent to make the dots.}
+\item{alpha}{How transparent to make the dots.}
 
 \item{...}{I love parameters!}
 }
 \value{
-a ggplot2 MA scatter plot.  This is defined as the
--log10(p-value) with respect to log(fold change).  The cutoff
-values are delineated with lines and mark the boundaries between
-'significant' and not.  This will make a fun clicky googleVis graph
-if requested.
+Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to
+    log(fold change).  The cutoff values are delineated with lines and mark the boundaries
+    between 'significant' and not.  This will make a fun clicky googleVis graph if requested.
 }
 \description{
-Make a pretty Volcano plot!
+Volcano plots and MA plots provide quick an easy methods to view the set of (in)significantly
+differentially expressed genes.
 }
 \examples{
 \dontrun{
