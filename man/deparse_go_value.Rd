@@ -7,11 +7,11 @@
 deparse_go_value(value)
 }
 \arguments{
-\item{value}{the result of try(as.character(somefunction(GOTERM[id])), silent=TRUE)
+\item{value}{Result of try(as.character(somefunction(GOTERM[id])), silent=TRUE).
 somefunction would be 'Synonym' 'Secondary' 'Ontology', etc...}
 }
 \value{
-something more sane (hopefully)
+something more sane (hopefully).
 }
 \description{
 The output from the GOTERM/GO.db functions is inconsistent, to put it nicely.

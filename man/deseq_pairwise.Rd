@@ -2,18 +2,18 @@
 % Please edit documentation in R/de_deseq.r
 \name{deseq_pairwise}
 \alias{deseq_pairwise}
-\title{deseq_pairwise()  Because I can't be trusted to remember '2'}
+\title{deseq_pairwise()  Because I can't be trusted to remember '2'.}
 \usage{
 deseq_pairwise(...)
 }
 \arguments{
-\item{...}{I like cats}
+\item{...}{I like cats.}
 }
 \value{
-stuff from deseq2_pairwise
+stuff deseq2_pairwise results.
 }
 \description{
-This calls deseq2_pairwise(...) because I am determined to forget typing deseq2
+This calls deseq2_pairwise(...) because I am determined to forget typing deseq2.
 }
 \seealso{
 \link{deseq2_pairwise}

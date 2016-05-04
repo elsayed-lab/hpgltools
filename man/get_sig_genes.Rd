@@ -2,32 +2,38 @@
 % Please edit documentation in R/de_shared.r
 \name{get_sig_genes}
 \alias{get_sig_genes}
-\title{Get a set of up/down genes using the top/bottom n or >/< z scores away from the median.}
+\title{Get a set of up/down differentially expressed genes.}
 \usage{
 get_sig_genes(table, n = NULL, z = NULL, fc = NULL, p = NULL,
   column = "logFC", fold = "plusminus", p_column = "adj.P.Val")
 }
 \arguments{
-\item{table}{a table from limma/edger/deseq.}
+\item{table}{Table from limma/edger/deseq.}
 
-\item{n}{a rank-order top/bottom number of genes to take.}
+\item{n}{Rank-order top/bottom number of genes to take.}
 
-\item{z}{a number of z-scores >/< the median to take.}
+\item{z}{Number of z-scores >/< the median to take.}
 
-\item{fc}{a number of fold-changes to take}
+\item{fc}{Fold-change cutoff.}
 
-\item{p}{a p-value cutoff}
+\item{p}{P-value cutoff.}
 
-\item{column}{a column to use to distinguish top/bottom}
+\item{column}{Table's column used to distinguish top vs. bottom.}
 
-\item{fold}{an identifier reminding how to get the bottom portion of a fold-change (plusminus says to get the negative of the positive, otherwise 1/positive is taken).}
+\item{fold}{Identifier reminding how to get the bottom portion of a
+fold-change (plusminus says to get the negative of the
+positive, otherwise 1/positive is taken).  This effectively
+tells me if this is a log fold change or not.}
 
-\item{p_column}{a column containing (adjusted or not)p-values}
+\item{p_column}{Table's column containing (adjusted or not)p-values.}
 }
 \value{
-a list of up/down genes
+Subset of the up/down genes given the provided criteria.
 }
 \description{
-Get a set of up/down genes using the top/bottom n or >/< z scores away from the median.
+Take one or more criteria (fold change, rank order, (adj)p-value,
+z-score from median FC) and use them to extract the set of genes
+which are defined as 'differentially expressed.'  If no criteria
+are provided, it arbitrarily chooses all genes outside of 1-z.
 }
 

@@ -4,7 +4,7 @@
 \alias{hpgl_ma_plot}
 \title{Make a pretty MA plot from the output of voom/limma/eBayes/toptable.}
 \usage{
-hpgl_ma_plot(counts, de_genes, pval_cutoff = 0.05, alpha = 0.5,
+hpgl_ma_plot(counts, de_genes, pval_cutoff = 0.05, alpha = 0.4,
   logfc_cutoff = 1, pval = "adjpval", size = 2, tooltip_data = NULL,
   gvis_filename = NULL, ...)
 }

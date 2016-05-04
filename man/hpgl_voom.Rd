@@ -2,36 +2,26 @@
 % Please edit documentation in R/de_limma.r
 \name{hpgl_voom}
 \alias{hpgl_voom}
-\title{A slight modification of limma's voom() function.
-Estimate mean-variance relationship between samples and generate
-'observational-level weights' in preparation for linear modelling
-RNAseq data.  This particular implementation was primarily scabbed
-from cbcbSEQ, but changes the mean-variance plot slightly and
-attempts to handle corner cases where the sample design is
-confounded by setting the coefficient to 1 for those samples rather
-than throwing an unhelpful error.  Also, the Elist output gets a
-'plot' slot which contains the plot rather than just printing it.}
+\title{A slight modification of limma's voom().}
 \usage{
 hpgl_voom(dataframe, model = NULL, libsize = NULL, stupid = FALSE,
   logged = FALSE, converted = FALSE)
 }
 \arguments{
-\item{dataframe}{a dataframe of sample counts which have been
-normalized and log transformed}
+\item{dataframe}{Dataframe of sample counts which have been normalized and log transformed.}
 
-\item{model}{an experimental model defining batches/conditions/etc}
+\item{model}{Experimental model defining batches/conditions/etc.}
 
-\item{libsize}{the size of the libraries (usually provided by
-edgeR).}
+\item{libsize}{Size of the libraries (usually provided by edgeR).}
 
-\item{stupid}{whether or not to cheat when the resulting matrix is not solvable.}
+\item{stupid}{Cheat when the resulting matrix is not solvable?}
 
-\item{logged}{whether the input data is known to be logged.}
+\item{logged}{Is the input data is known to be logged?}
 
-\item{converted}{whether the input data is known to be cpm converted.}
+\item{converted}{Is the input data is known to be cpm converted?}
 }
 \value{
-an EList containing the following information:
+EList containing the following information:
   E = The normalized data
   weights = The weights of said data
   design = The resulting design
@@ -39,15 +29,12 @@ an EList containing the following information:
   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
 }
 \description{
-A slight modification of limma's voom() function.
-Estimate mean-variance relationship between samples and generate
-'observational-level weights' in preparation for linear modelling
-RNAseq data.  This particular implementation was primarily scabbed
-from cbcbSEQ, but changes the mean-variance plot slightly and
-attempts to handle corner cases where the sample design is
-confounded by setting the coefficient to 1 for those samples rather
-than throwing an unhelpful error.  Also, the Elist output gets a
-'plot' slot which contains the plot rather than just printing it.
+Estimate mean-variance relationship between samples and generate 'observational-level weights' in
+preparation for linear modeling RNAseq data.  This particular implementation was primarily
+scabbed from cbcbSEQ, but changes the mean-variance plot slightly and attempts to handle corner
+cases where the sample design is confounded by setting the coefficient to 1 for those samples
+rather than throwing an unhelpful error.  Also, the Elist output gets a 'plot' slot which
+contains the plot rather than just printing it.
 }
 \examples{
 \dontrun{

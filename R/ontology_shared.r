@@ -1,7 +1,7 @@
-## Time-stamp: <Mon May  2 03:05:05 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 18:01:47 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
-#'   Extract more easily readable information from a GOTERM datum.
+#' Extract more easily readable information from a GOTERM datum.
 #'
 #' The output from the GOTERM/GO.db functions is inconsistent, to put it nicely.
 #' This attempts to extract from that heterogeneous datatype something easily readable.
@@ -9,9 +9,9 @@
 #' NA, NULL, "NA", "NULL", c("NA",NA,"GO:00001"), "GO:00002", c("Some text",NA, NULL, "GO:00003")
 #' This function will boil that down to 'not found', '', 'GO:00004', or "GO:0001,  some text, GO:00004"
 #'
-#' @param value  the result of try(as.character(somefunction(GOTERM[id])), silent=TRUE)
+#' @param value Result of try(as.character(somefunction(GOTERM[id])), silent=TRUE).
 #'   somefunction would be 'Synonym' 'Secondary' 'Ontology', etc...
-#' @return something more sane (hopefully)
+#' @return something more sane (hopefully).
 #' @examples
 #' \dontrun{
 #'  goterms = GOTERM[ids]
@@ -46,9 +46,9 @@ deparse_go_value <- function(value) {
 
 #' Get a go term from ID.
 #'
-#' @param go   a go ID or list thereof
-#' this may be a character or list(assuming the elements, not names, are goids)
-#' @return Some text
+#' @param go GO id or a list thereof, this may be a character or list(assuming the elements, not
+#'     names, are goids).
+#' @return Some text containing the terms associated with GO id(s).
 #' @seealso \pkg{GOTermsAnnDbBimap}
 #' @examples
 #' \dontrun{
@@ -75,12 +75,11 @@ goterm <- function(go="GO:0032559") {
 #'
 #' I think I will need to do similar parsing of the output for this function as per gosec()
 #' In some cases this also returns stuff like c("some text", "GO:someID")
-#' versus "some other text"  versus NULL versus NA
-#'
+#' versus "some other text"  versus NULL versus NA.
 #' This function just goes a mapply(gosn, go).
 #'
-#' @param go  a go ID, this may be a character or list(assuming the elements are goids).
-#' @return Some text
+#' @param go GO id, this may be a character or list(assuming the elements are goids).
+#' @return Some text providing the synonyms for the given id(s).
 #' @seealso \pkg{GOTermsAnnDbBimap}
 #' @examples
 #' \dontrun{
@@ -104,12 +103,13 @@ gosyn <- function(go) {
     return(go)
 }
 
-#' Get a go secondary ID from an id
+#' Get a GO secondary ID from an id.
 #'
 #' Unfortunately, GOTERM's returns for secondary IDs are not consistent, so this function
 #' has to have a whole bunch of logic to handle the various outputs.
-#' @param go A go ID -- this may be a character or list(assuming the elements, not names, are goids)
-#' @return Some text
+#'
+#' @param go GO ID, this may be a character or list(assuming the elements, not names, are goids).
+#' @return Some text comprising the secondary GO id(s).
 #' @seealso \pkg{GOTermsAnnDbBimap}
 #' @examples
 #' \dontrun{
@@ -133,8 +133,10 @@ gosec <- function(go) {
 
 #' Get a go long-form definition from an id.
 #'
-#' @param go  a go ID, this may be a character or list (assuming the elements are goids).
-#' @return Some text
+#' Sometimes it is nice to be able to read the full definition of some GO terms.
+#'
+#' @param go GO ID, this may be a character or list (assuming the elements are goids).
+#' @return Some text providing the long definition of each provided GO id.
 #' @seealso \pkg{GOTermsAnnDbBimap}
 #' @examples
 #' \dontrun{
@@ -161,8 +163,8 @@ godef <- function(go) {
 
 #'  Get a go ontology name from an ID.
 #'
-#' @param go  a go ID, this may be a character or list (assuming the elements are goids).
-#' @return Some text
+#' @param go GO id, this may be a character or list (assuming the elements are goids).
+#' @return The set of ontology IDs associated with the GO ids, thus 'MF' or 'BP' or 'CC'.
 #' @seealso \pkg{GOTermsAnnDbBimap}
 #' @examples
 #' \dontrun{
@@ -185,11 +187,14 @@ goont <- function(go) {
     return(go)
 }
 
-#'   Get a go level approximation from an ID.
+#' Get a go level approximation from an ID.
 #'
-#' @param go  a go ID, this may be a character or list (assuming the elements are goids).
+#' Sometimes it is useful to know how far up/down the ontology tree a given id resides.  This
+#' attmepts to answer that question.
+#'
+#' @param go GO id, this may be a character or list (assuming the elements are goids).
 #' @param verbose print some information as it recurses.
-#' @return Some text
+#' @return Set of numbers corresponding to approximate tree positions of the GO ids.
 #' @seealso \pkg{GOTermsAnnDbBimap}
 #' @examples
 #' \dontrun{
@@ -231,9 +236,11 @@ golev <- function(go, verbose=FALSE) {
     return(level)
 }
 #' Get a go level approximation from a set of IDs.
+#'
 #' This just wraps golev() in mapply.
-#' @param go  a character list of IDs.
-#' @return Some text
+#
+#' @param go Character list of IDs.
+#' @return Set pf approximate levels within the onlogy.
 #' @seealso \pkg{GOTermsAnnDbBimap}
 #' @examples
 #' \dontrun{
@@ -246,6 +253,7 @@ golevel <- function(go) {
 }
 
 #' Test GO ids to see if they are useful.
+#'
 #' This just wraps gotst in mapply.
 #'
 #' @param go  go IDs as characters.
@@ -285,11 +293,11 @@ gotest <- function(go) {
 #' exist.  For some species it may also be auto-generated.
 #' With little work this can be made much more generic, and it probably should.
 #'
-#' @param goseq_data  a list of goseq specific results as generated by simple_goseq()
-#' @param ontology   an ontology to search
-#' @param pval   a maximum accepted pvalue to include in the list of categories to cross reference.
-#' @param include_all   include all genes in the ontology search
-#' @return a data frame of categories/genes.
+#' @param goseq_data List of goseq specific results as generated by simple_goseq().
+#' @param ontology Ontology to search (MF/BP/CC).
+#' @param pval Maximum accepted pvalue to include in the list of categories to cross reference.
+#' @param include_all Include all genes in the ontology search?
+#' @return Data frame of categories/genes.
 #' @seealso \link{simple_goseq} \code{\link[clusterProfiler]{buildGOmap}},
 #' @examples
 #' \dontrun{
@@ -339,9 +347,9 @@ gather_genes <- function(goseq_data, ontology='MF', pval=0.05, include_all=FALSE
 #'
 #' This function seeks to make generating pretty pvalue plots as shown by clusterprofiler easier.
 #'
-#' @param df  some data from topgo/goseq/clusterprofiler.
-#' @param ontology   an ontology to plot (MF,BP,CC).
-#' @return a plot!
+#' @param df Some data from topgo/goseq/clusterprofiler.
+#' @param ontology  Ontology to plot (MF,BP,CC).
+#' @return Ggplot2 plot of pvalues vs. ontology.
 #' @seealso \link[goseq]{goseq} \pkg{ggplot2}
 #' @export
 pval_plot <- function(df, ontology="MF") {
@@ -500,8 +508,8 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                        "down_topgo" = topgo_down_ontology,
                        "up_gostats" = gostats_up_ontology,
                        "down_gostats" = gostats_down_ontology,
-                       "up_gprofiler" = profiler_up_ontology,
-                       "down_gprofiler" = profiler_down_ontology,
+                       "up_gprofiler" = gprofiler_up_ontology,
+                       "down_gprofiler" = gprofiler_down_ontology,
                        "up_goseqtrees" = goseq_up_trees,
                        "down_goseqtrees" = goseq_down_trees,
                        "up_clustertrees" = cluster_up_trees,
@@ -524,8 +532,8 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
 #'
 #' @param changed_counts List of changed counts as ups and downs.
 #' @param doplot Include plots in the results?
-#' @param ...  extra arguments which I don't realize
-#' @return a list of ontology search results, up and down for each contrast
+#' @param ...  Extra arguments!
+#' @return List of ontology search results, up and down for each contrast.
 #' @export
 subset_ontology_search <- function(changed_counts, doplot=TRUE, ...) {
     up_list <- changed_counts[["ups"]]
@@ -621,7 +629,7 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, ...) {
     return(ret)
 }
 
-#'   Extract a dataframe of golevels using getGOLevel() from clusterProfiler.
+#' Extract a dataframe of golevels using getGOLevel() from clusterProfiler.
 #'
 #' This function is way faster than my previous iterative golevel function.
 #' That is not to say it is very fast, so it saves the result to ontlevel.rda for future lookups.

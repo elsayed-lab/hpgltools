@@ -57,7 +57,7 @@ holy_asscrackers <- graph_metrics(norm, qq=TRUE, ma=TRUE)
 \seealso{
 \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
 \link[Biobase]{exprs} \link{hpgl_norm} \link{hpgl_nonzero} \link{hpgl_libsize}
-\link{hpgl_boxplot} \link{hpgl_corheat} \link{hpgl_smc} \link{hpgl_disheat}
-\link{hpgl_smd} \link{hpgl_pca} \link{hpgl_qq_all} \link{hpgl_pairwise_ma}
+\link{hpgl_boxplot} \link{hpgl_corheat} \link{plot_sm} \link{hpgl_disheat}
+\link{hpgl_pca} \link{hpgl_qq_all} \link{hpgl_pairwise_ma}
 }
 

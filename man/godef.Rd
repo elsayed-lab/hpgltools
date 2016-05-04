@@ -7,13 +7,13 @@
 godef(go)
 }
 \arguments{
-\item{go}{a go ID, this may be a character or list (assuming the elements are goids).}
+\item{go}{GO ID, this may be a character or list (assuming the elements are goids).}
 }
 \value{
-Some text
+Some text providing the long definition of each provided GO id.
 }
 \description{
-Get a go long-form definition from an id.
+Sometimes it is nice to be able to read the full definition of some GO terms.
 }
 \examples{
 \dontrun{

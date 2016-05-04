@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr 29 14:25:27 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 17:34:08 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' The simplest possible differential expression method.
 #'
@@ -11,6 +11,7 @@
 #'
 #' @param input Count table by sample.
 #' @param design Data frame of samples and conditions.
+#' @param ... Extra options passed to arglist.
 #' @return Df of pseudo-logFC, p-values, numerators, and denominators.
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @examples

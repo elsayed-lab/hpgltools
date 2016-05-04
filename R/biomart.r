@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr 29 11:45:53 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 17:24:53 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Extract annotation information from biomart.
 #'
@@ -31,7 +31,6 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
         biomart_annotations <- fresh[["biomart_annotations"]]
         return(biomart_annotations)
     }
-    dataset <- paste0(species, "_gene_ensembl")
     mart <- NULL
     mart <- try(biomaRt::useMart(biomart=trymart, host=host))
     if (class(mart) == 'try-error') {
@@ -43,6 +42,7 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
         message("Trying the first one.")
         mart <- biomaRt::useMart(biomart=marts[[1,1]], host=host)
     }
+    dataset <- paste0(species, "_gene_ensembl")
     ensembl <- try(biomaRt::useDataset(dataset, mart=mart))
     if (class(ensembl) == 'try-error') {
         message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", dataset, "."))
@@ -192,15 +192,12 @@ translate_ids_querymany <- function(queries, from="ensembl", to="entrez", specie
 #' @param gene_ids List of gene IDs to translate.
 #' @param first_species Linnean species name for one species.
 #' @param second_species Linnean species name for the second species.
-#' @param host Ensembl server to query
+#' @param host Ensembl server to query.
 #' @param trymart Assumed mart name to use.
-#' @return Df of orthologs
+#' @return Df of orthologs.
 #' @export
 biomart_orthologs <- function(gene_ids, first_species='hsapiens', second_species='mmusculus',
                               host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL") {
-    first_name <- paste0(first_species, "_gene_ensembl")
-    second_name <- paste0(second_species, "_gene_ensembl")
-
     first_mart <- NULL
     first_mart <- try(biomaR::useMart(biomart=trymart, host=host))
     if (class(first_mart) == 'try-error') {
@@ -212,7 +209,8 @@ biomart_orthologs <- function(gene_ids, first_species='hsapiens', second_species
         message("Trying the first one.")
         first_mart <- biomaRt::useMart(biomart=first_marts[[1,1]], host=host)
     }
-    first_ensembl <- try(biomaRt::useDataset(dataset, mart=first_mart))
+    first_dataset <- paste0(first_species, "_gene_ensembl")
+    first_ensembl <- try(biomaRt::useDataset(first_dataset, mart=first_mart))
     if (class(first_ensembl) == 'try-error') {
         message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", dataset, "."))
         datasets <- biomaRt::listDatasets(mart=first_mart)
@@ -231,7 +229,8 @@ biomart_orthologs <- function(gene_ids, first_species='hsapiens', second_species
         message("Trying the first one.")
         second_mart <- biomaRt::useMart(biomart=second_marts[[1,1]], host=host)
     }
-    second_ensembl <- try(biomaRt::useDataset(dataset, mart=second_mart))
+    second_dataset <- paste0(second_species, "_gene_ensembl")
+    second_ensembl <- try(biomaRt::useDataset(second_dataset, mart=second_mart))
     if (class(second_ensembl) == 'try-error') {
         message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", dataset, "."))
         datasets <- biomaRt::listDatasets(mart=second_mart)
@@ -239,8 +238,8 @@ biomart_orthologs <- function(gene_ids, first_species='hsapiens', second_species
         return(NULL)
     }
 
-    linked_genes <- getLDS(attributes=c('ensembl_gene_id','hgnc_symbol'), values=gene_ids,
-                           mart=first_ensembl, attributesL=c('ensembl_gene_id'), martL=second_ensembl)
+    linked_genes <- biomaRt::getLDS(attributes=c('ensembl_gene_id','hgnc_symbol'), values=gene_ids,
+                                    mart=first_ensembl, attributesL=c('ensembl_gene_id'), martL=second_ensembl)
 
     return(linked_genes)
 }

@@ -7,15 +7,16 @@
 golev(go, verbose = FALSE)
 }
 \arguments{
-\item{go}{a go ID, this may be a character or list (assuming the elements are goids).}
+\item{go}{GO id, this may be a character or list (assuming the elements are goids).}
 
 \item{verbose}{print some information as it recurses.}
 }
 \value{
-Some text
+Set of numbers corresponding to approximate tree positions of the GO ids.
 }
 \description{
-Get a go level approximation from an ID.
+Sometimes it is useful to know how far up/down the ontology tree a given id resides.  This
+attmepts to answer that question.
 }
 \examples{
 \dontrun{

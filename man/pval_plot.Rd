@@ -7,12 +7,12 @@
 pval_plot(df, ontology = "MF")
 }
 \arguments{
-\item{df}{some data from topgo/goseq/clusterprofiler.}
+\item{df}{Some data from topgo/goseq/clusterprofiler.}
 
-\item{ontology}{an ontology to plot (MF,BP,CC).}
+\item{ontology}{Ontology to plot (MF,BP,CC).}
 }
 \value{
-a plot!
+Ggplot2 plot of pvalues vs. ontology.
 }
 \description{
 This function seeks to make generating pretty pvalue plots as shown by clusterprofiler easier.

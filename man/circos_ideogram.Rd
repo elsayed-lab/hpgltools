@@ -2,23 +2,22 @@
 % Please edit documentation in R/circos.r
 \name{circos_ideogram}
 \alias{circos_ideogram}
-\title{Create the description of chromosome markings}
+\title{Create the description of chromosome markings.}
 \usage{
 circos_ideogram(name = "default", conf_dir = "circos/conf",
   band_url = NULL)
 }
 \arguments{
-\item{name}{the name of the configuration}
+\item{name}{Name of the configuration file to which to add the ideogram.}
 
-\item{conf_dir}{where does the configuration live?}
+\item{conf_dir}{Where does the configuration live?}
 
-\item{band_url}{provide a url for making these imagemaps.}
+\item{band_url}{Provide a url for making these imagemaps?}
 }
 \value{
-undef
+The file to which the ideogram configuration was written.
 }
 \description{
 This function writes ideogram files for circos.
-Currently it only has a single format.
 }
 

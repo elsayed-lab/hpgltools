@@ -2,8 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{gotest}
 \alias{gotest}
-\title{Test GO ids to see if they are useful.
-This just wraps gotst in mapply.}
+\title{Test GO ids to see if they are useful.}
 \usage{
 gotest(go)
 }
@@ -14,7 +13,6 @@ gotest(go)
 Some text
 }
 \description{
-Test GO ids to see if they are useful.
 This just wraps gotst in mapply.
 }
 \examples{

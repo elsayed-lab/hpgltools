@@ -2,31 +2,36 @@
 % Please edit documentation in R/de_shared.r
 \name{extract_significant_genes}
 \alias{extract_significant_genes}
-\title{Pull the highly up/down genes in combined tables}
+\title{Extract the sets of genes which are significantly up/down regulated
+from the combined tables.}
 \usage{
 extract_significant_genes(combined, according_to = "limma", fc = 1,
   p = 0.05, z = NULL, n = NULL, excel = "excel/significant_genes.xlsx")
 }
 \arguments{
-\item{combined}{the output from combine_de_tables()}
+\item{combined}{Output from combine_de_tables().}
 
-\item{according_to}{one may use the deseq, edger, limma, or meta data.}
+\item{according_to}{What tool(s) decide 'significant?'  One may use
+the deseq, edger, limma, basic, meta, or all.}
 
-\item{fc}{a log fold change to define 'significant'}
+\item{fc}{Log fold change to define 'significant'.}
 
-\item{p}{a (adjusted)p-value to define 'significant'}
+\item{p}{(Adjusted)p-value to define 'significant'.}
 
-\item{z}{a z-score to define 'significant'}
+\item{z}{Z-score to define 'significant'.}
 
-\item{n}{a set of top/bottom-n genes}
+\item{n}{Take the top/bottom-n genes.}
 
-\item{excel}{an excel file to write}
+\item{excel}{Write the results to this excel file, or NULL.}
 }
 \value{
-a set of up-genes, down-genes, and numbers therein
+The set of up-genes, down-genes, and numbers therein.
 }
 \description{
-Given the output from combine_de_tables(), extract the fun genes.
+Given the output from combine_de_tables(), extract the genes in
+which we have the greatest likely interest, either because they
+have the largest fold changes, lowest p-values, fall outside a
+z-score, or are at the top/bottom of the ranked list.
 }
 \seealso{
 \code{\link{combine_de_tables}}

@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May  2 00:01:26 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 17:35:40 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix comprised of the matrix - rowMeans(matrix)
@@ -221,8 +221,9 @@ hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
 #' Collect the r^2 values from a linear model fitting between a singular
 #' value decomposition and factor.
 #'
-#' @param svd_v  the V' V = I portion of a fast.svd call.
-#' @param factor  an experimental factor from the original data.
+#' @param svd_v V' V = I portion of a fast.svd call.
+#' @param fact Experimental factor from the original data.
+#' @param type Make this categorical or continuous with factor/continuous.
 #' @return The r^2 values of the linear model as a percentage.
 #' @seealso \code{\link[corpcor]{fast.svd}}
 #' @export
@@ -301,18 +302,17 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     ## 6.  Finally, set the shape manual with a guide_legend override
 
     ## Step 1
-    pca_plot <- ggplot2::ggplot(data=as.data.frame(pca_data), ggplot2::aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
+    pca_plot <- ggplot(data=as.data.frame(pca_data), aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
 
     if (is.null(size_column) & num_batches <= 5) {
         pca_plot <- pca_plot +
             ggplot2::geom_point(size=plot_size,
-                                ggplot2::aes_string(shape="as.factor(batches)",
-                                                    colour="as.factor(condition)",
-                                                    fill="as.factor(condition)")) +
-###            ggplot2::geom_point(size=plot_size, colour="black", show_guide=FALSE,
+                                aes_string(shape="as.factor(batches)",
+                                           colour="as.factor(condition)",
+                                           fill="as.factor(condition)")) +
             ggplot2::geom_point(size=plot_size, colour="black", show.legend=FALSE,
-                                ggplot2::aes_string(shape="as.factor(batches)",
-                                                    fill="as.factor(condition)")) +
+                                aes_string(shape="as.factor(batches)",
+                                           fill="as.factor(condition)")) +
             ggplot2::scale_color_manual(name="Condition",
                                         guide="legend",
                                         values=color_list) +
@@ -326,33 +326,32 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     } else if (is.null(size_column) & num_batches > 5) {
         pca_plot <- pca_plot +
             ggplot2::geom_point(size=plot_size,
-                                ggplot2::aes_string(shape="as.factor(batches)",
-                                                    colour="pca_data[['condition']]")) +
+                                aes_string(shape="as.factor(batches)",
+                                           colour="as.factor(condition)")) +
+            ggplot2::scale_color_manual(name="Condition",
+                                        guide="legend",
+                                        values=color_list) +
             ggplot2::scale_shape_manual(name="Batch",
                                         labels=levels(as.factor(pca_data[["batch"]])),
                                         guide=ggplot2::guide_legend(overwrite.aes=list(size=plot_size)),
-                                        values=1:num_batches) +
-            ggplot2::scale_color_identity(name="Condition",
-                                          guide="legend",
-                                          values=color_list)
-
+                                        values=1:num_batches)
     } else if (!is.null(size_column) & num_batches <= 5) {
         ## This will require the 6 steps above and one more
         maxsize <- max(pca_data[[size_column]])
         pca_plot <- pca_plot +
-            ggplot2::geom_point(size=plot_size,
-                                ggplot2::aes_string(shape="as.factor(batches)",
+            ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
                                                     size=size_column,
                                                     colour="as.factor(condition)",
                                                     fill="as.factor(condition)")) +
-            ggplot2::geom_point(size=plot_size, colour="black", show_guide=FALSE,
-                                ggplot2::aes_string(shape="as.factor(batches)",
-                                                    fill="as.factor(condition)")) +
+            ggplot2::geom_point(colour="black", show.legend=FALSE,
+                                aes_string(shape="as.factor(batches)",
+                                           size=size_column,
+                                           fill="as.factor(condition)")) +
             ggplot2::scale_color_manual(name="Condition",
                                         guide="legend",
                                         values=color_list) +
             ggplot2::scale_fill_manual(name="Condition",
-                                       guide="legend",
+                                       guide=ggplot2::guide_legend(override.aes=list(size=plot_size)),
                                        values=color_list) +
             ggplot2::scale_shape_manual(name="Batch",
                                         labels=levels(as.factor(pca_data[["batch"]])),

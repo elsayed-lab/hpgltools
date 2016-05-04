@@ -2,28 +2,26 @@
 % Please edit documentation in R/circos.r
 \name{circos_plus_minus}
 \alias{circos_plus_minus}
-\title{Write tiles of bacterial ontology groups using the categories from microbesonline.org}
+\title{Write tiles of bacterial ontology groups using the categories from microbesonline.org.}
 \usage{
 circos_plus_minus(go_table, cfgout = "circos/conf/default.conf",
   chr = "chr1", outer = 1, width = 0.08, spacing = 0)
 }
 \arguments{
-\item{go_table}{a dataframe with starts/ends and categories}
+\item{go_table}{Dataframe with starts/ends and categories.}
 
-\item{cfgout}{The master configuration file to write.}
+\item{cfgout}{Master configuration file to write.}
 
-\item{chr}{The name of the chromosome (This currently assumes a bacterial chromosome)}
+\item{chr}{Name of the chromosome.}
 
-\item{outer}{the floating point radius of the circle
-into which to place the plus-strand data}
+\item{outer}{Floating point radius of the circle into which to place the plus-strand data.}
 
-\item{width}{the radial width of each tile}
+\item{width}{Radial width of each tile.}
 
-\item{spacing}{the radial distance between outer,inner
-and inner,whatever follows.}
+\item{spacing}{Radial distance between outer, inner, and inner to whatever follows.}
 }
 \value{
-the radius after adding the plus/minus information and the spacing between them.
+Radius after adding the plus/minus information and the spacing between them.
 }
 \description{
 This function tries to save me from writing out ontology

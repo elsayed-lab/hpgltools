@@ -2,32 +2,32 @@
 % Please edit documentation in R/de_limma.r
 \name{limma_scatter}
 \alias{limma_scatter}
-\title{Plot arbitrary data from limma}
+\title{Plot arbitrary data from limma as a scatter plot.}
 \usage{
 limma_scatter(all_pairwise_result, first_table = 1, first_column = "logFC",
   second_table = 2, second_column = "logFC", type = "linear_scatter", ...)
 }
 \arguments{
-\item{all_pairwise_result}{the result from calling balanced_pairwise()}
+\item{all_pairwise_result}{Result from calling balanced_pairwise().}
 
-\item{first_table}{the first table from all_pairwise_result$limma_result to look at (may be a name or number)}
+\item{first_table}{First table from all_pairwise_result$limma_result to look at (may be a name or number).}
 
-\item{first_column}{the name of the column to plot from the first table}
+\item{first_column}{Name of the column to plot from the first table.}
 
-\item{second_table}{the second table inside all_pairwise_result$limma_result (name or number)}
+\item{second_table}{Second table inside all_pairwise_result$limma_result (name or number).}
 
-\item{second_column}{a column to compare against}
+\item{second_column}{Column to compare against.}
 
-\item{type}{A type of scatter plot (linear model, distance, vanilla)}
+\item{type}{Type of scatter plot (linear model, distance, vanilla).}
 
-\item{...}{so that you may feed it the gvis/tooltip information to make clicky graphs if so desired.}
+\item{...}{Use the elipsis to feed options to the html graphs.}
 }
 \value{
-a hpgl_linear_scatter() set of plots comparing the chosen columns
-If you forget to specify tables to compare, it will try the first vs the second.
+Hpgl_linear_scatter() set of plots comparing the chosen columns.  If you forget to
+    specify tables to compare, it will try the first vs the second.
 }
 \description{
-Plot arbitrary data from limma
+Extract the adjusted abundances for the two conditions used in the pairw
 }
 \examples{
 \dontrun{

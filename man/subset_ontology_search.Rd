@@ -11,10 +11,10 @@ subset_ontology_search(changed_counts, doplot = TRUE, ...)
 
 \item{doplot}{Include plots in the results?}
 
-\item{...}{extra arguments which I don't realize}
+\item{...}{Extra arguments!}
 }
 \value{
-a list of ontology search results, up and down for each contrast
+List of ontology search results, up and down for each contrast.
 }
 \description{
 In the same way all_pairwise() attempts to simplify using multiple DE tools, this function seeks

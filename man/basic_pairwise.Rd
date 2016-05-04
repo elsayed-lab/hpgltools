@@ -10,6 +10,8 @@ basic_pairwise(input, design = NULL, ...)
 \item{input}{Count table by sample.}
 
 \item{design}{Data frame of samples and conditions.}
+
+\item{...}{Extra options passed to arglist.}
 }
 \value{
 Df of pseudo-logFC, p-values, numerators, and denominators.

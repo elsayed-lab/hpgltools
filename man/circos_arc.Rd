@@ -8,22 +8,22 @@ circos_arc(df, cfgout = "circos/conf/default.conf", first_col = "chr1",
   second_col = "chr2", color = "blue", radius = 0.75, thickness = 3)
 }
 \arguments{
-\item{df}{a dataframe with starts/ends and the floating point information}
+\item{df}{Dataframe with starts/ends and the floating point information.}
 
-\item{cfgout}{The master configuration file to write.}
+\item{cfgout}{Master configuration file to write.}
 
-\item{first_col}{The name of the first chromosome}
+\item{first_col}{Name of the first chromosome.}
 
-\item{second_col}{The name of the second chromosome}
+\item{second_col}{Name of the second chromosome.}
 
-\item{color}{the color of the histogram}
+\item{color}{Color of the chromosomes.}
 
-\item{radius}{the radius at which to add the arcs}
+\item{radius}{Outer radius at which to add the arcs.}
 
-\item{thickness}{integer thickness of the arcs}
+\item{thickness}{Integer thickness of the arcs.}
 }
 \value{
-undef
+The file to which the arc configuration information was written.
 }
 \description{
 Ok, so when I said I only do 1 chromosome images, I lied.

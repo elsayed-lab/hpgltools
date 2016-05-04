@@ -2,16 +2,7 @@
 % Please edit documentation in R/de_limma.r
 \name{simple_comparison}
 \alias{simple_comparison}
-\title{Perform a simple experimental/control comparison
-This is a function written primarily to provide examples for how to use limma.
-It does the following:  1.  Makes a model matrix using condition/batch
-2.  Optionally uses sva's combat (from cbcbSEQ)  3.  Runs voom/lmfit
-4.  Sets the first element of the design to "changed" and the second to "control".
-5.  Performs a makeContrasts() of changed - control.  6.  Fits them
-7.  Makes histograms of the two elements of the contrast, cor.tests() them,
-makes a histogram of the p-values, ma-plot, volcano-plot, writes out the results in
-an excel sheet, pulls the up/down significant and p-value significant (maybe this should be
-replaced with write_limma()? 8.  And returns a list containining these data and plots.}
+\title{Perform a simple experimental/control comparison.}
 \usage{
 simple_comparison(subset, workbook = "simple_comparison.xls",
   sheet = "simple_comparison", basename = NA, batch = TRUE,
@@ -19,29 +10,29 @@ simple_comparison(subset, workbook = "simple_comparison.xls",
   logfc_cutoff = 0.6, tooltip_data = NULL, verbose = FALSE, ...)
 }
 \arguments{
-\item{subset}{an experimental subset with two conditions to compare.}
+\item{subset}{Experimental subset with two conditions to compare.}
 
-\item{workbook}{an excel workbook to which to write.}
+\item{workbook}{Excel workbook to which to write.}
 
-\item{sheet}{an excel worksheet to which to write.}
+\item{sheet}{Excel worksheet to which to write.}
 
-\item{basename}{a url to which to send click evens in clicky volcano/ma plots.}
+\item{basename}{Url to which to send click evens in clicky volcano/ma plots.}
 
-\item{batch}{whether or not to include batch in limma's model.}
+\item{batch}{Whether or not to include batch in limma's model.}
 
-\item{combat}{whether or not to use combatMod().}
+\item{combat}{Whether or not to use combatMod().}
 
-\item{combat_noscale}{whether or not to include combat_noscale (makes combat a little less heavy-handed).}
+\item{combat_noscale}{Whether or not to include combat_noscale (makes combat a little less heavy-handed).}
 
-\item{pvalue_cutoff}{p-value definition of 'significant.'}
+\item{pvalue_cutoff}{P-value definition of 'significant.'}
 
-\item{logfc_cutoff}{fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.}
+\item{logfc_cutoff}{Fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.}
 
-\item{tooltip_data}{text descriptions of genes if one wants google graphs.}
+\item{tooltip_data}{Text descriptions of genes if one wants google graphs.}
 
-\item{verbose}{be verbose?}
+\item{verbose}{Be verbose?}
 
-\item{...}{more parameters!}
+\item{...}{More parameters!}
 }
 \value{
 A list containing the following pieces:
@@ -69,9 +60,18 @@ A list containing the following pieces:
   voom_plot = a plot from voom(), redunant with voom_data
 }
 \description{
-Currently this assumes that a variant of toptable was used which
- gives adjusted p-values.  This is not always the case and I should
- check for that, but I have not yet.
+This is a function written primarily to provide examples for how to use limma.
+It does the following:
+1.  Makes a model matrix using condition/batch
+2.  Optionally uses sva's combat (from cbcbSEQ)  3.  Runs voom/lmfit
+4.  Sets the first element of the design to "changed" and the second to "control".
+5.  Performs a makeContrasts() of changed - control.  6.  Fits them
+7.  Makes histograms of the two elements of the contrast, cor.tests() them,
+makes a histogram of the p-values, ma-plot, volcano-plot, writes out the results in
+an excel sheet, pulls the up/down significant and p-value significant (maybe this should be
+replaced with write_limma()? 8.  And returns a list containining these data and plots.
+Currently this assumes that a variant of toptable was used which gives adjusted p-values.  This
+is not always the case and I should check for that, but I have not yet.
 }
 \examples{
 \dontrun{

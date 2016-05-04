@@ -1,4 +1,4 @@
-## Time-stamp: <Sun May  1 22:02:26 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 12:27:28 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
@@ -147,6 +147,7 @@ autoloads_helpers <- function() {
     count <- count + require.auto("dplyr")
     count <- count + require.auto("BiocParallel")
     count <- count + require.auto("data.table")
+    count <- count + require.auto("ffpe")
     count <- count + require.auto("gtools")
     count <- count + require.auto("hash")
     count <- count + require.auto("knitcitations")

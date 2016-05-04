@@ -2,19 +2,17 @@
 % Please edit documentation in R/ontology_shared.r
 \name{golevel}
 \alias{golevel}
-\title{Get a go level approximation from a set of IDs.
-This just wraps golev() in mapply.}
+\title{Get a go level approximation from a set of IDs.}
 \usage{
 golevel(go)
 }
 \arguments{
-\item{go}{a character list of IDs.}
+\item{go}{Character list of IDs.}
 }
 \value{
-Some text
+Set pf approximate levels within the onlogy.
 }
 \description{
-Get a go level approximation from a set of IDs.
 This just wraps golev() in mapply.
 }
 \examples{

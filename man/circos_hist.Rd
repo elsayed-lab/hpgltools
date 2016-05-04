@@ -9,29 +9,26 @@ circos_hist(df, cfgout = "circos/conf/default.conf", colname = "datum",
   width = 0.08, spacing = 0)
 }
 \arguments{
-\item{df}{a dataframe with starts/ends and the floating point information}
+\item{df}{Dataframe with starts/ends and the floating point information.}
 
-\item{cfgout}{The master configuration file to write.}
+\item{cfgout}{Master configuration file to write.}
 
-\item{colname}{The name of the column with the data of interest.}
+\item{colname}{Name of the column with the data of interest.}
 
-\item{chr}{The name of the chromosome (This
-currently assumes a bacterial chromosome)}
+\item{chr}{Name of the chromosome (This currently assumes a bacterial chromosome).}
 
-\item{color}{the color of the histogram}
+\item{color}{Color of the plotted data.}
 
-\item{fill_color}{guess}
+\item{fill_color}{Guess!}
 
-\item{outer}{the floating point radius of the circle
-into which to place the plus-strand data}
+\item{outer}{Floating point radius of the circle into which to place the data.}
 
-\item{width}{the radial width of each tile}
+\item{width}{Radial width of each tile.}
 
-\item{spacing}{the radial distance between outer,inner
-and inner,whatever follows.}
+\item{spacing}{Distance between outer, inner, and inner to whatever follows.}
 }
 \value{
-the radius after adding the histogram and the spacing.
+Radius after adding the histogram and the spacing.
 }
 \description{
 This function tries to make the writing of histogram data in circos

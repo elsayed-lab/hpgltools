@@ -10,11 +10,11 @@ simple_gprofiler(gene_list, species = "hsapiens", first_col = "logFC",
 \arguments{
 \item{gene_list}{guess!}
 
+\item{species}{an organism supported by gprofiler}
+
 \item{first_col}{where to search for the order of 'significant' first}
 
 \item{second_col}{if that fails, try some where else.}
-
-\item{organism}{an organism supported by gprofiler}
 }
 \value{
 a list of results for go, kegg, reactome, and a few more.

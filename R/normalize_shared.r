@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Apr 27 15:40:27 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 11:54:50 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -288,7 +288,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     if (transform == "raw") {
         message("Leaving the data in its current base format, keep in mind that
  some metrics are easier to see when the data is log2 transformed, but
- EdgeR/DESeq don't like transformed data.
+ EdgeR/DESeq do not accept transformed data.
 ")
     }
     if (convert == "raw") {
@@ -310,9 +310,14 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
  batch effects this is a good parameter to play with.
 ")
     }
+    if (convert == "cpm" & transform == "tmm") {
+        warning("Cpm and tmm perform similar purposes. They should not be applied to the same data.")
+    }
     new_expt[["backup_expressionset"]] <- new_expt[["expressionset"]]
     current_data <- Biobase::exprs(current_exprs)
     design <- expt[["design"]]
+    ## A bunch of these options should be moved into ...
+    ## Having them as options to maintain is foolish
     normalized <- hpgl_norm(current_data, design=design, transform=transform,
                             norm=norm, convert=convert, batch=batch,
                             batch1=batch1, batch2=batch2,

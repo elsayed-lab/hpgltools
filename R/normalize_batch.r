@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 28 23:41:37 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 17:32:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
 #'
@@ -116,12 +116,18 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         ## new_expt$mod_sv = mod_sv
         ## new_expt$fsva_result = fsva_result
         count_table <- fsva_result$db
-    } else if (batch == 'combat_noprior') {
-        message("batch_counts: Using sva::combat without a prior for batch correction.")
-        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=FALSE)
     } else if (batch == 'combat') {
-        message("batch_counts: Using sva::combat with a prior for batch correction.")
-        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE)
+        message("batch_counts: Using sva::combat with a prior for batch correction and no scaling.")
+        count_table <- sva::ComBat(count_table, batches, mod=NULL, par.prior=TRUE, prior.plots=TRUE, mean.only=TRUE)
+    } else if (batch == 'combat_noprior') {
+        message("batch_counts: Using sva::combat without a prior for batch correction and no scaling.")
+        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=FALSE, mean.only=TRUE)
+    } else if (batch == 'combat_scale') {
+        message("batch_counts: Using sva::combat with a prior for batch correction and with scaling.")
+        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE, mean.only=FALSE)
+    } else if (batch == 'combat_noprior_scale') {
+        message("batch_counts: Using sva::combat without a prior for batch correction and with scaling.")
+        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=TRUE, mean.only=FALSE)
     } else if (batch == "svaseq") {
         message("batch_counts: Using sva::svaseq for batch correction.")
         message("Note to self:  If you feed svaseq a data frame you will get an error like:")

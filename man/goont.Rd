@@ -7,10 +7,10 @@
 goont(go)
 }
 \arguments{
-\item{go}{a go ID, this may be a character or list (assuming the elements are goids).}
+\item{go}{GO id, this may be a character or list (assuming the elements are goids).}
 }
 \value{
-Some text
+The set of ontology IDs associated with the GO ids, thus 'MF' or 'BP' or 'CC'.
 }
 \description{
 Get a go ontology name from an ID.

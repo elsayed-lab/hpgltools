@@ -1,4 +1,4 @@
-## Time-stamp: <Sun May  1 19:00:23 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 11:02:08 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_scatter.r: Various scatter plots
 
@@ -279,7 +279,7 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' ## check for that, but I have not yet.
 #' }
 #' @export
-hpgl_ma_plot <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.5, logfc_cutoff=1, pval="adjpval",
+hpgl_ma_plot <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1, pval="adjpval",
                          size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
     hpgl_env <- environment()
     if (pval == "adjpval") {

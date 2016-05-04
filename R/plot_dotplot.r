@@ -1,4 +1,4 @@
-## Time-stamp: <Sun May  1 15:34:29 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 17:37:24 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_dotplot.r: Dotplots in various contexts, currently just smc/smd
 
@@ -69,9 +69,9 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
 #' folded into plot_svfactor?  Hmm, I think first I will write this and see if it is better.
 #'
 #' @param expt Experiment from which to acquire the design, counts, etc.
-#' @param svest Set of surrogate variable estimations from sva/svg
+#' @param svs Set of surrogate variable estimations from sva/svg
 #'        or batch estimates.
-#' @param chosen_factor Factor to compare against.
+#' @param batch_column Which experimental design column to use?
 #' @param factor_type This may be a factor or range, it is intended to plot
 #'        a scatterplot if it is a range, a dotplot if a factor.
 #' @examples
@@ -131,29 +131,26 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
 #' This should make a quick df of the factors and PCs and plot them.
 #'
 #' @param pc_df Df of principle components.
+#' @param expt Expt containing counts, metadata, etc.
 #' @param exp_factor Experimental factor to compare against.
+#' @param component Which principal component to compare against?
 #' @examples
 #' \dontrun{
 #' estimate_vs_pcs <- plot_pcfactor(pcs, times)
 #' }
 #' @export
-plot_pcfactor <- function(pc_df, exp_factpr) {
-    chosen <- expt[["design"]][[chosen_factor]]
-    sv_df <- data.frame(
-        "adjust" = svest$model_adjust[, 1],  ## Take a single estimate from compare_estimates()
-        "factors" = chosen,
-        "samplenames" = rownames(expt[["design"]])
-    )
+plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") {
     samplenames <- rownames(expt[["design"]])
-    my_colors <- expt[["colors"]]
 
-    sv_melted <- reshape2::melt(sv_df, idvars="factors")
-    minval <- min(sv_df$adjust)
-    maxval <- max(sv_df$adjust)
+    my_colors <- expt[["colors"]]
+    minval <- min(pc_df[[component]])
+    maxval <- max(pc_df[[component]])
     my_binwidth <- (maxval - minval) / 40
-    sv_plot <- ggplot2::ggplot(sv_melted, ggplot2::aes_string(x="factors", y="value")) +
-        ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y", stackdir="center", binpositions="all", colour="black", fill=my_colors) +
-        ggplot2::xlab(paste0("Experimental factor: ", chosen_factor)) +
+    sv_plot <- ggplot2::ggplot(pc_df, aes_string(x="factors", y="value")) +
+        ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y",
+                              stackdir="center", binpositions="all",
+                              colour="black", fill=my_colors) +
+        ggplot2::xlab(paste0("Experimental factor: ", exp_factor)) +
         ggplot2::ylab(paste0("1st surrogate variable estimation")) +
         ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
         ggplot2::theme_bw()

@@ -2,19 +2,19 @@
 % Please edit documentation in R/de_limma.r
 \name{limma_subset}
 \alias{limma_subset}
-\title{A quick and dirty way to pull the top/bottom genes from toptable()}
+\title{A quick and dirty way to pull the top/bottom genes from toptable().}
 \usage{
 limma_subset(table, n = NULL, z = NULL)
 }
 \arguments{
-\item{table}{the original data from limma}
+\item{table}{Original data from limma.}
 
-\item{n}{a number of genes to keep}
+\item{n}{Number of genes to keep.}
 
-\item{z}{a number of z-scores from the mean}
+\item{z}{Number of z-scores from the mean.}
 }
 \value{
-a dataframe subset from toptable
+Dataframe subset from toptable.
 }
 \description{
 If neither n nor z is provided, it assumes you want 1.5 z-scores from the median.

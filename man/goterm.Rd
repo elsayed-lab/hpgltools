@@ -7,11 +7,11 @@
 goterm(go = "GO:0032559")
 }
 \arguments{
-\item{go}{a go ID or list thereof
-this may be a character or list(assuming the elements, not names, are goids)}
+\item{go}{GO id or a list thereof, this may be a character or list(assuming the elements, not
+names, are goids).}
 }
 \value{
-Some text
+Some text containing the terms associated with GO id(s).
 }
 \description{
 Get a go term from ID.

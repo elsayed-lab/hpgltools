@@ -9,6 +9,27 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
+```{r options, include=FALSE}
+## These are the options I tend to favor
+library("hpgltools")
+knitr::opts_knit$set(
+    progress = TRUE,
+    verbose = TRUE,
+    width = 90,
+    echo = TRUE)
+knitr::opts_chunk$set(
+    error = TRUE,
+    fig.width = 8,
+    fig.height = 8,
+    dpi = 96)
+options(
+    digits = 4,
+    stringsAsFactors = FALSE,
+    knitr.duplicate.label = "allow")
+ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
+set.seed(1)
+```
+
 # Example hpgltool usage with a real data set (fission)
 
 This document aims to provide further examples in how to use the hpgltools.
@@ -22,7 +43,6 @@ Here are the commands I invoke to get ready to play with new data, including eve
 required to install hpgltools, the software it uses, and the fission data.
 
 ```{r setup, include=TRUE}
-
 ## These first 4 lines are not needed once hpgltools is installed.
 ## source("http://bioconductor.org/biocLite.R")
 ## biocLite("devtools")
@@ -32,8 +52,6 @@ library(hpgltools)
 require.auto("fission")
 library(fission)
 data(fission)
-knitr::opts_knit$set(progress=TRUE, verbose=TRUE, error=TRUE,  fig.width=7, fig.height=7)
-
 ```
 
 ## Data import
@@ -46,7 +64,6 @@ think its format is quite nice and am likely to have my experiment
 class instead be a SummarizedExperiment.
 
 ```{r data_import}
-
 ## Extract the meta data from the fission dataset
 meta <- as.data.frame(fission@colData)
 ## Make conditions and batches
@@ -59,7 +76,6 @@ fission_data <- fission@assays$data$counts
 ## an ExpressionSet along with any arbitrary additional information one might want to include.
 ## Along the way it writes a Rdata file which is by default called 'expt.Rdata'
 fission_expt <- create_expt(meta_dataframe=meta, count_dataframe=fission_data)
-
 ```
 
 ## Normalizing and exploring data
@@ -72,7 +88,6 @@ generated with the wrapper 'graph_metrics()' but that takes away the
 chance to explain the graphs as I generate them.
 
 ```{r norm_explore}
-
 ## First make a bar plot of the library sizes in the experiment.
 ## Notice that the colors were auto-chosen by create_expt() and they should
 ## be maintained throughout this process
@@ -81,7 +96,6 @@ fis_libsize
 ## Here we see that the wild type replicate 3 sample for 15 minutes has fewer non-zero genes than all its friends.
 fis_nonzero <- hpgl_nonzero(fission_expt, labels="boring", title="nonzero vs. cpm")
 fis_nonzero
-
 ```
 
 ### An initial pca plot
@@ -92,7 +106,6 @@ normalize the data using the defaults (cpm, quantile, log2) and try
 again.
 
 ```{r pca}
-
 ## Something in this is causing a build loop on travis...
 
 ## I am no longer certain that code is maintained, what remains from it I might pull in to my own.
@@ -103,7 +116,7 @@ fis_rawpca$plot
 ## So, normalize the data
 norm_expt <- normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm")
 ## And try the pca again
-fis_normpca <- hpgl_pca(norm_expt, plot_labels="boring", title="normalized pca")
+fis_normpca <- hpgl_pca(norm_expt, plot_labels="normal", title="normalized pca")
 fis_normpca$plot
 
 normbatch_expt <- normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm", batch="sva")
@@ -128,7 +141,6 @@ batchnorm_expt <- normalize_expt(fission_expt, batch="limma", norm="quant", tran
 fis_batchnormpca <- hpgl_pca(batchnorm_expt, plot_title="limma corrected pca")
 fis_batchnormpca$plot
 test_pca <- pca_information(batchnorm_expt, expt_factors=c("condition","batch","strain","minute"), num_components=6)
-
 ```
 
 Interesting, the batch normalized pca plot looks much the same as the
@@ -140,7 +152,6 @@ We have some tools which provide visualizations of the distribution of
 the data:
 
 ```{r distributions}
-
 hpgl_boxplot(fission_expt)
 sf_expt <- normalize_expt(fission_expt, norm="sf")
 hpgl_boxplot(sf_expt)
@@ -157,7 +168,6 @@ hpgl_density(tm_expt)
 
 compare_12 <- hpgl_qq_plot(fission_expt, x=1, y=2)
 compare_12$log
-
 ```
 
 ## See how they cluster
@@ -166,11 +176,8 @@ Ok, so we can further check out how the data cluster with respect to
 one another...
 
 ```{r clustering}
-
 hpgl_corheat(norm_expt)
 hpgl_corheat(batchnorm_expt)
 hpgl_disheat(norm_expt)
 hpgl_disheat(batchnorm_expt)
-
 ```
-

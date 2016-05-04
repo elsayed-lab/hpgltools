@@ -2,8 +2,7 @@
 % Please edit documentation in R/de_edger.r
 \name{edger_pairwise}
 \alias{edger_pairwise}
-\title{Set up a model matrix and set of contrasts to do
-a pairwise comparison of all conditions using EdgeR.}
+\title{Set up a model matrix and set of contrasts to do pairwise comparisons using EdgeR.}
 \usage{
 edger_pairwise(input, conditions = NULL, batches = NULL,
   model_cond = TRUE, model_batch = NULL, model_intercept = FALSE,
@@ -11,44 +10,42 @@ edger_pairwise(input, conditions = NULL, batches = NULL,
   force = FALSE, ...)
 }
 \arguments{
-\item{input}{a dataframe/vector or expt class containing data, normalization state, etc.}
+\item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}
 
-\item{conditions}{a factor of conditions in the experiment}
+\item{conditions}{Factor of conditions in the experiment.}
 
-\item{batches}{a factor of batches in the experiment}
+\item{batches}{Factor of batches in the experiment.}
 
-\item{model_cond}{Include condition in the experimental model?  This is pretty much always true.}
+\item{model_cond}{Include condition in the experimental model?}
 
 \item{model_batch}{Include batch in the model?  In most cases this is a good thing(tm).}
 
-\item{model_intercept}{Use cell means or intercept? (I default to the former,
-but they work out the same)}
+\item{model_intercept}{Use cell means or intercept?}
 
-\item{alt_model}{An alternate experimental model to use}
+\item{alt_model}{Alternate experimental model to use?}
 
-\item{extra_contrasts}{some extra contrasts to add to the list
+\item{extra_contrasts}{Add some extra contrasts to add to the list of pairwise contrasts.
 This can be pretty neat, lets say one has conditions A,B,C,D,E
 and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 de_vs_cb = (E-D)-(C-B),"}
 
-\item{annot_df}{Add some annotation information to the data tables?}
+\item{annot_df}{Annotation information to the data tables?}
 
-\item{force}{Force edgeR to accept inputs which it should not have to deal with}
+\item{force}{Force edgeR to accept inputs which it should not have to deal with.}
 
 \item{...}{The elipsis parameter is fed to write_edger() at the end.}
 }
 \value{
-A list including the following information:
+List including the following information:
   contrasts = The string representation of the contrasts performed.
   lrt = A list of the results from calling glmLRT(), one for each contrast.
   contrast_list = The list of each call to makeContrasts()
-    I do this to avoid running into the limit on # of contrasts addressable by topTags()
+  I do this to avoid running into the limit on # of contrasts addressable by topTags()
   all_tables = a list of tables for the contrasts performed.
 }
 \description{
-Set up a model matrix and set of contrasts to do
-a pairwise comparison of all conditions using EdgeR.
+This function performs the set of possible pairwise comparisons using EdgeR.
 }
 \examples{
 \dontrun{

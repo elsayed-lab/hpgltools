@@ -18,13 +18,13 @@ Suggests:
     affy, AnnotationDbi, AnnotationHub, BiocGenerics, Biostrings, biomaRt, Category,
     clusterProfiler, corpcor, corrplot, data.table, DESeq2, DESeq, directlabels, dplyr, DOSE,
     EDASeq, edgeR, ffpe, fission, genefilter, genomeIntervals, GenomicFeatures, GenomicRanges,
-    ggplot2, ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools,
+    ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools,
     gridExtra, hash, Heatplus, Hmisc, igraph, IRanges, KEGGREST, knitcitations, lattice,limma,
     matrixStats, methods, motifStack, motifRG, multtest, mygene, openxlsx, pasilla, pathview, plyr,
     preprocessCore, qsmooth, qvalue, RamiGO, RColorBrewer, ReactomePA, reshape2, RCurl, rGADEM,
     Rgraphviz, robustbase, RUVSeq, reshape, rjson, robust, Rsamtools, rtracklayer, S4Vectors,
     scales, seqinr, seqLogo, stringi, stringr, survJamda, sva, topGO, XLConnect, xtable, XVector
 Imports:
-    devtools, knitr, rmarkdown, Biobase, magrittr, testthat
+    devtools, knitr, rmarkdown, Biobase, magrittr, testthat, ggplot2
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

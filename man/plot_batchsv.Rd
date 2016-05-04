@@ -9,13 +9,13 @@ plot_batchsv(expt, svs, batch_column = "batch", factor_type = "factor")
 \arguments{
 \item{expt}{Experiment from which to acquire the design, counts, etc.}
 
-\item{factor_type}{This may be a factor or range, it is intended to plot
-a scatterplot if it is a range, a dotplot if a factor.}
-
-\item{svest}{Set of surrogate variable estimations from sva/svg
+\item{svs}{Set of surrogate variable estimations from sva/svg
 or batch estimates.}
 
-\item{chosen_factor}{Factor to compare against.}
+\item{batch_column}{Which experimental design column to use?}
+
+\item{factor_type}{This may be a factor or range, it is intended to plot
+a scatterplot if it is a range, a dotplot if a factor.}
 }
 \description{
 This should make a quick df of the factors and surrogates and plot them.  Maybe it should be

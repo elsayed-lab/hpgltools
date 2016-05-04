@@ -1,18 +1,18 @@
-## Time-stamp: <Sat Apr 16 00:36:21 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed May  4 00:22:36 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#'   Plot out 2 coefficients with respect to one another from edger
+#' Plot two coefficients with respect to one another from edgeR.
 #'
 #' It can be nice to see a plot of two coefficients from a edger comparison with respect to one another
 #' This hopefully makes that easy.
 #'
-#' @param output the set of pairwise comparisons provided by edger_pairwise()
-#' @param x   the name or number of the first coefficient column to extract, this will be the x-axis of the plot
-#' @param y   the name or number of the second coefficient column to extract, this will be the y-axis of the plot
-#' @param gvis_filename   A filename for plotting gvis interactive graphs of the data.
-#' @param gvis_trendline   add a trendline to the gvis plot?
-#' @param tooltip_data   a dataframe of gene annotations to be used in the gvis plot
-#' @param base_url   for gvis plots
-#' @return a ggplot2 plot showing the relationship between the two coefficients
+#' @param output Set of pairwise comparisons provided by edger_pairwise().
+#' @param x Name or number of the x-axis coefficient column to extract.
+#' @param y Name or number of the y-axis coefficient column to extract.
+#' @param gvis_filename Filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline Add a trendline to the gvis plot?
+#' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
+#' @param base_url Add a linkout to gvis plots to this base url.
+#' @return Ggplot2 plot showing the relationship between the two coefficients.
 #' @seealso \link{hpgl_linear_scatter} \link{edger_pairwise}
 #' @examples
 #' \dontrun{
@@ -62,30 +62,30 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
     return(plot)
 }
 
-#' Set up a model matrix and set of contrasts to do
-#' a pairwise comparison of all conditions using EdgeR.
+#' Set up a model matrix and set of contrasts to do pairwise comparisons using EdgeR.
 #'
-#' @param input  a dataframe/vector or expt class containing data, normalization state, etc.
-#' @param conditions   a factor of conditions in the experiment
-#' @param batches   a factor of batches in the experiment
-#' @param model_cond   Include condition in the experimental model?  This is pretty much always true.
-#' @param model_batch   Include batch in the model?  In most cases this is a good thing(tm).
-#' @param model_intercept   Use cell means or intercept? (I default to the former,
-#'   but they work out the same)
-#' @param alt_model   An alternate experimental model to use
-#' @param extra_contrasts   some extra contrasts to add to the list
+#' This function performs the set of possible pairwise comparisons using EdgeR.
+#'
+#' @param input Dataframe/vector or expt class containing data, normalization state, etc.
+#' @param conditions Factor of conditions in the experiment.
+#' @param batches Factor of batches in the experiment.
+#' @param model_cond Include condition in the experimental model?
+#' @param model_batch Include batch in the model?  In most cases this is a good thing(tm).
+#' @param model_intercept Use cell means or intercept?
+#' @param alt_model Alternate experimental model to use?
+#' @param extra_contrasts Add some extra contrasts to add to the list of pairwise contrasts.
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
-#' @param annot_df   Add some annotation information to the data tables?
-#' @param force  Force edgeR to accept inputs which it should not have to deal with
+#' @param annot_df Annotation information to the data tables?
+#' @param force Force edgeR to accept inputs which it should not have to deal with.
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
-#' @return A list including the following information:
+#' @return List including the following information:
 #'   contrasts = The string representation of the contrasts performed.
 #'   lrt = A list of the results from calling glmLRT(), one for each contrast.
 #'   contrast_list = The list of each call to makeContrasts()
-#'     I do this to avoid running into the limit on # of contrasts addressable by topTags()
+#'   I do this to avoid running into the limit on # of contrasts addressable by topTags()
 #'   all_tables = a list of tables for the contrasts performed.
 #' @seealso \pkg{edgeR} \code{\link[edgeR]{topTags}} \code{\link[edgeR]{glmLRT}}
 #'   \code{\link{make_pairwise_contrasts}} \code{\link[edgeR]{DGEList}}

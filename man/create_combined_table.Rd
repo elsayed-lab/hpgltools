@@ -2,33 +2,40 @@
 % Please edit documentation in R/de_shared.r
 \name{create_combined_table}
 \alias{create_combined_table}
-\title{Given a limma, edger, and deseq table, combine them}
+\title{Given a limma, edger, and deseq table, combine them into one.}
 \usage{
 create_combined_table(li, ed, de, ba, table_name, annot_df = NULL,
   inverse = FALSE, include_basic = TRUE, fc_cutoff = 1, p_cutoff = 0.05)
 }
 \arguments{
-\item{li}{a limma output}
+\item{li}{Limma output table.}
 
-\item{ed}{a edger output}
+\item{ed}{Edger output table.}
 
-\item{de}{a deseq output}
+\item{de}{Deseq2 output table.}
 
-\item{ba}{a basic output}
+\item{ba}{Basic output table.}
 
-\item{table_name}{name of the table to merge}
+\item{table_name}{Name of the table to merge.}
 
-\item{annot_df}{add some annotation information}
+\item{annot_df}{Add some annotation information?}
 
-\item{inverse}{invert the fold changes}
+\item{inverse}{Invert the fold changes?}
 
-\item{include_basic}{include the basic table?}
+\item{include_basic}{Include the basic table?}
 
-\item{fc_cutoff}{logfoldchange cutoff}
+\item{fc_cutoff}{Preferred logfoldchange cutoff.}
 
-\item{p_cutoff}{a pvalue cutoff}
+\item{p_cutoff}{Preferred pvalue cutoff.}
+}
+\value{
+List containing a) Dataframe containing the merged
+    limma/edger/deseq/basic tables, and b) A summary of how many
+    genes were observed as up/down by output table.
 }
 \description{
-Given a limma, edger, and deseq table, combine them
+This combines the outputs from the various differential expression
+tools and formalizes some column names to make them a little more
+consistent.
 }
 

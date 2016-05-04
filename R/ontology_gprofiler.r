@@ -1,9 +1,9 @@
-## Time-stamp: <Mon May  2 03:06:03 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 17:37:48 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Run searches against the web service g:Profiler
 #'
 #' @param gene_list guess!
-#' @param organism an organism supported by gprofiler
+#' @param species an organism supported by gprofiler
 #' @param first_col where to search for the order of 'significant' first
 #' @param second_col if that fails, try some where else.
 #' @return a list of results for go, kegg, reactome, and a few more.

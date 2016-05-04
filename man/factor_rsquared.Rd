@@ -8,9 +8,11 @@ value decomposition and factor.}
 factor_rsquared(svd_v, fact, type = "factor")
 }
 \arguments{
-\item{svd_v}{the V' V = I portion of a fast.svd call.}
+\item{svd_v}{V' V = I portion of a fast.svd call.}
 
-\item{factor}{an experimental factor from the original data.}
+\item{fact}{Experimental factor from the original data.}
+
+\item{type}{Make this categorical or continuous with factor/continuous.}
 }
 \value{
 The r^2 values of the linear model as a percentage.
