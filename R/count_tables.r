@@ -1,10 +1,12 @@
-## Time-stamp: <Mon Apr 25 16:24:52 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May  5 17:58:04 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' Given a table of meta data, read it in for use by create_expt()
+#' Given a table of meta data, read it in for use by create_expt().
 #'
-#' @param file a csv/xls file to read
-#' @param ... for sep, header and similar read.csv/read.table parameters
-#' @return a df of metadata
+#' Reads an experimental design in a few different formats in preparation for creating an expt.
+#'
+#' @param file Csv/xls file to read.
+#' @param ... Arguments for arglist, used by sep, header and similar read.csv/read.table parameters.
+#' @return Df of metadata.
 read_metadata <- function(file, ...) {
     arglist <- list(...)
     if (is.null(arglist[["sep"]])) {
@@ -42,29 +44,28 @@ read_metadata <- function(file, ...) {
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.
 #'
-#' this is relevant because the ceph object storage by default lowercases filenames.
-#'
 #' It is worth noting that this function has a lot of logic used to
 #' find the count tables in the local filesystem.  This logic has been
 #' superceded by simply adding a field to the .csv file called
 #' 'file'.  create_expt() will then just read that filename, it may be
 #' a full pathname or local to the cwd of the project.
 #'
-#' @param file   a comma separated file describing the samples with
-#' information like condition,batch,count_filename,etc
-#' @param sample_colors   a list of colors by condition, if not provided
-#' it will generate its own colors using colorBrewer
-#' @param gene_info   annotation information describing the rows of the data set, usually
-#' this comes from a call to import.gff()
-#' @param include_type   I have usually assumed that all gff annotations should be used,
-#' but that is not always true, this allows one to limit.
-#' @param include_gff   A gff file to help in sorting which features to keep
-#' @param count_dataframe   If one does not wish to read the count tables from processed_data/
-#' they may instead be fed here
-#' @param meta_dataframe   an optional dataframe containing the metadata rather than a file
-#' @param savefile   an Rdata filename prefix for saving the data of the resulting expt.
-#' @param low_files   whether or not to explicitly lowercase the filenames when searching in processed_data/
-#' @param ... more parameters are fun
+#' @param file Comma separated file (or excel) describing the samples with information like
+#'     condition, batch, count_filename, etc.
+#' @param sample_colors List of colors by condition, if not provided it will generate its own colors
+#'     using colorBrewer.
+#' @param gene_info Annotation information describing the rows of the data set, this often comes
+#'     from a call to import.gff() or biomart or organismdbi.
+#' @param include_type I have usually assumed that all gff annotations should be used, but that is
+#'     not always true, this allows one to limit to a specific annotation type.
+#' @param include_gff Gff file to help in sorting which features to keep.
+#' @param count_dataframe If one does not wish to read the count tables from the filesystem, they
+#'     may instead be fed as a data frame here.
+#' @param meta_dataframe Dataframe containing the metadata rather than reading it from a
+#'     file. (TODO: merge these two options into one smarter option).
+#' @param savefile Rdata filename prefix for saving the data of the resulting expt.
+#' @param low_files Explicitly lowercase the filenames when searching the filesystem?
+#' @param ... More parameters are fun!
 #' @return  experiment an expressionset
 #' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData} \link[Biobase]{exprs}
 #' \link{hpgl_read_files} \link[hash]{as.list.hash}
@@ -292,15 +293,15 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
     return(expt)
 }
 
-#'  Extract a subset of samples following some rule(s) from an
-#' experiment class
+#' Extract a subset of samples following some rule(s) from an
+#' experiment class.
 #'
-#' @param expt  an expt which is a home-grown class containing an
-#' expressionSet, design, colors, etc.
-#' @param subset  a valid R expression which defines a subset of the
-#' design to keep.
-#' @return  metadata an expt class which contains the smaller set of
-#' data
+#' Sometimes an experiment has too many parts to work with conveniently, this operation allows one
+#' to break it into smaller pieces.
+#'
+#' @param expt Expt chosen to extract a subset of data.
+#' @param subset Valid R expression which defines a subset of the design to keep.
+#' @return metadata Expt class which contains the smaller set of data.
 #' @seealso \pkg{Biobase} \link[Biobase]{pData}
 #' \link[Biobase]{exprs} \link[Biobase]{fData}
 #' @examples
@@ -366,18 +367,18 @@ expt_subset <- function(expt, subset=NULL) {
     return(metadata)
 }
 
-#'  Read a bunch of count tables and create a usable data frame from
-#' them.
+#' Read a bunch of count tables and create a usable data frame from them.
+#'
 #' It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
 #' It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.
 #'
-#' @param ids  a list of experimental ids
-#' @param files  a list of files to read
-#' @param header   whether or not the count tables include a header row.
-#' @param include_summary_rows   whether HTSeq summary rows should be included.
-#' @param suffix  an optional suffix to add to the filenames when reading them.
-#' @param ... more options for happy time
-#' @return  count_table a data frame of count tables
+#' @param ids List of experimental ids.
+#' @param files List of files to read.
+#' @param header Whether or not the count tables include a header row.
+#' @param include_summary_rows Whether HTSeq summary rows should be included.
+#' @param suffix Optional suffix to add to the filenames when reading them.
+#' @param ... More options for happy time!
+#' @return Data frame of count tables.
 #' @seealso \link{create_expt}
 #' @examples
 #' \dontrun{
@@ -459,11 +460,15 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
     return(count_table)
 }
 
-#' \code{concatenate_runs()}  Sum the reads/gene for multiple sequencing runs of a single condition/batch
+#' Sum the reads/gene for multiple sequencing runs of a single condition/batch.
 #'
-#' @param expt  an experiment class containing the requisite metadata and count tables
-#' @param column  a column of the design matrix used to specify which samples are replicates
-#' @return the input expt with the new design matrix, batches, conditions, colors, and count tables.
+#' On occasion we have multiple technical replicates of a sequencing run.  This can use a column in
+#' the experimental design to identify those replicates and sum the counts into a single column in
+#' the count tables.
+#'
+#' @param expt Experiment class containing the requisite metadata and count tables.
+#' @param column Column of the design matrix used to specify which samples are replicates.
+#' @return Expt with the concatenated counts, new design matrix, batches, conditions, etc.
 #' @seealso
 #' \pkg{Biobase}
 #' @examples
@@ -514,15 +519,15 @@ concatenate_runs <- function(expt, column='replicate') {
     return(final_expt)
 }
 
-#' Create a data frame of the medians of rows by a given factor in the data
+#' Create a data frame of the medians of rows by a given factor in the data.
 #'
 #' This assumes of course that (like expressionsets) there are separate columns for each replicate
 #' of the conditions.  This will just iterate through the levels of a factor describing the columns,
 #' extract them, calculate the median, and add that as a new column in a separate data frame.
 #'
-#' @param data  a data frame, presumably of counts.
-#' @param fact  a factor describing the columns in the data.
-#' @return a data frame of the medians
+#' @param data Data frame, presumably of counts.
+#' @param fact Factor describing the columns in the data.
+#' @return Data frame of the medians.
 #' @examples
 #' \dontrun{
 #'  compressed = hpgltools:::median_by_factor(data, experiment$condition)
