@@ -7,13 +7,29 @@ warnings_are_errors: false
 before_install:
   - sudo apt-get -qq update && apt-cache search libgsl
   - sudo apt-get install -y libgsl0-dev
+  - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
+  - chmod 755 ./travis-tool.sh
+  - ./travis-tool.sh bootstrap
 
-global:
- - R_CHECK_ARGS="--no-build-vignettes --no-manual --timings"
- - _R_CHECK_TIMINGS_="0"
+install:
+  - ./travis-tool.sh install_github kokrah/qsmooth
 
 script:
- - make install && make test
+  - make
+  - make install
+  - ./travis-tool.sh run_test
+
+on_failure:
+  - ./travis-tool.sh dump_logs
+
+after_script:
+  - ./travis-tool.sh dump_logs_by_extension "timings"
+  - ./travis-tool.sh dump_sysinfo
 
 notifications:
   email: false
+
+env:
+  global:
+    - R_CHECK_ARGS="--no-build-vignettes --no-manual --timings"
+    - _R_CHECK_TIMINGS_="0"
