@@ -1,19 +1,20 @@
-## Time-stamp: <Tue Apr 26 12:56:56 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed May  4 23:34:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_heatmap.r: Heatmaps separated by usage
 
-#'   Make a heatmap.3 description of the correlation between samples.
+#' Make a heatmap.3 description of the correlation between samples.
 #'
-#' @param data  a dataframe, expt, or expressionset to work with.
-#' @param design   a design matrix.
-#' @param colors   a color scheme.
-#' @param method    correlation statistic to use.
-#' @param names   alternate names to use.
-#' @param row   what to place on the row of the map, batches or conditions?
-#' @param title   a title for the plot.
-#' @param ... more options are wonderful
-#' @return  corheat_plot a gplots heatmap describing how the samples
-#' pairwise correlate with one another.
+#' Given a set of count tables and design, this will calculate the pairwise correlations and plot
+#' them as a heatmap.  It attempts to standardize the inputs and eventual output.
+#'
+#' @param data Dataframe, expt, or expressionset to work with.
+#' @param design Design matrix describing the experiment, not needed if this is an expt.
+#' @param colors Color scheme for the samples, not needed if this is an expt.
+#' @param method Correlation statistic to use. (pearson, spearman, kendall, robust).
+#' @param names Alternate names to use for the samples.
+#' @param title Title for the plot.
+#' @param ... More options are wonderful!
+#' @return Gplots heatmap describing describing how the samples are clustering vis a vis pairwise correlation.
 #' @seealso \link{hpgl_cor} \link[RColorBrewer]{brewer.pal}
 #' \link[grDevices]{recordPlot}
 #' @examples
@@ -21,21 +22,23 @@
 #' ## corheat_plot
 #' @export
 hpgl_corheat <- function(data, colors=NULL, design=NULL, method="pearson",
-                         names=NULL, row="batch", title=NULL, ...) {
+                         names=NULL, title=NULL, ...) {
     hpgl_heatmap(data, colors=colors, design=design, method=method,
-                 names=names, type="correlation", row=row, title=title, ...)
+                 names=names, type="correlation", title=title, ...)
 }
 
-#'   Make a heatmap.3 description of the similarity (euclildean distance) between samples.
+#' Make a heatmap.3 description of the distances (euclidean by default) between samples.
 #'
-#' @param data  a dataframe, expt, or expressionset to work with.
-#' @param colors   a color scheme.
-#' @param design   a design matrix.
-#' @param method distance metric to use.
-#' @param names   alternate names to use.
-#' @param row   what to place on the row of the map, batches or conditions?
-#' @param title   a title for the plot.
-#' @param ... more parameters
+#' Given a set of count tables and design, this will calculate the pairwise distances and plot
+#' them as a heatmap.  It attempts to standardize the inputs and eventual output.
+#'
+#' @param data Dataframe, expt, or expressionset to work with.
+#' @param colors Color scheme (not needed if an expt is provided).
+#' @param design Design matrix (not needed if an expt is provided).
+#' @param method Distance metric to use.
+#' @param names Alternate names to use for the samples.
+#' @param title Title for the plot.
+#' @param ... More parameters!
 #' @return a recordPlot() heatmap describing the distance between samples.
 #' @seealso \link[RColorBrewer]{brewer.pal} \link[gplots]{heatmap.2} \link[grDevices]{recordPlot}
 #' @examples
@@ -45,22 +48,24 @@ hpgl_corheat <- function(data, colors=NULL, design=NULL, method="pearson",
 #' }
 #' @export
 hpgl_disheat <- function(data, colors=NULL, design=NULL, method="euclidean",
-                         names=NULL, row="batch", title=NULL, ...) {
+                         names=NULL, title=NULL, ...) {
     hpgl_heatmap(data, colors=colors, design=design, method=method,
                  names=names, type="distance", row=row, title=title, ...)
 }
 
-#' Make a heatmap.3 plots, does the work for hpgl_disheat and hpgl_corheat.
+#' Make a heatmap.3 plot, does the work for hpgl_disheat and hpgl_corheat.
 #'
-#' @param data  a dataframe, expt, or expressionset to work with.
-#' @param colors   a color scheme.
-#' @param design   a design matrix.
-#' @param method    distance or correlation metric to use.
-#' @param names   alternate names to use.
-#' @param type correlation or distance or sample
-#' @param row   what to place on the row of the map, batches or conditions?
-#' @param title   a title for the plot.
-#' @param ... I like elipses
+#' This does what is says on the tin.  Sets the colors for correlation or distance heatmaps, handles
+#' the calculation of the relevant metrics, and plots the heatmap.
+#'
+#' @param data Dataframe, expt, or expressionset to work with.
+#' @param colors Color scheme for the samples.
+#' @param design Design matrix describing the experiment vis a vis conditions and batches.
+#' @param method Distance or correlation metric to use.
+#' @param names Alternate names to use for the samples.
+#' @param type Defines the use of correlation, distance, or sample heatmap.
+#' @param title Title for the plot.
+#' @param ... I like elipses!
 #' @return a recordPlot() heatmap describing the distance between samples.
 #' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
 #' @export
@@ -131,16 +136,60 @@ hpgl_heatplus <- function(fundata) {
     ret <- grDevices::recordPlot()
 }
 
+## Taken from https://plot.ly/ggplot2/ggdendro-dendrograms/
+## Check out the following link for a neat dendrogram library.
+## http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning
 
-#'   Make a heatmap.3 description of the similarity of the genes among samples.
+ggplot2_heatmap <- function() {
+    x <- as.matrix(scale(mtcars))
+    dd.col <- as.dendrogram(hclust(dist(x)))
+    dd.row <- as.dendrogram(hclust(dist(t(x))))
+    dx <- dendro_data(dd.row)
+    dy <- dendro_data(dd.col)
+    ## helper function for creating dendograms
+    ggdend <- function(df) {
+        ggplot() +
+            geom_segment(data = df, aes(x=x, y=y, xend=xend, yend=yend)) +
+            labs(x = "", y = "") + theme_minimal() +
+            theme(axis.text = element_blank(), axis.ticks = element_blank(),
+                  panel.grid = element_blank())
+    }
+    ## x/y dendograms
+    px <- ggdend(dx$segments)
+    py <- ggdend(dy$segments) + coord_flip()
+    ## heatmap
+    col.ord <- order.dendrogram(dd.col)
+    row.ord <- order.dendrogram(dd.row)
+    xx <- scale(mtcars)[col.ord, row.ord]
+    xx_names <- attr(xx, "dimnames")
+    df <- as.data.frame(xx)
+    colnames(df) <- xx_names[[2]]
+    df$car <- xx_names[[1]]
+    df$car <- with(df, factor(car, levels=car, ordered=TRUE))
+    mdf <- reshape2::melt(df, id.vars="car")
+    p <- ggplot(mdf, aes(x = variable, y = car)) + geom_tile(aes(fill = value))
+    ## hide axis ticks and grid lines
+    eaxis <- list(
+        showticklabels = FALSE,
+        showgrid = FALSE,
+        zeroline = FALSE
+    )
+}
+
+
+#' Make a heatmap.3 description of the similarity of the genes among samples.
 #'
-#' @param data  an expt/expressionset/dataframe set of samples
-#' @param colors   a color scheme
-#' @param design   a design matrix
-#' @param names   add names?
-#' @param title   title of the plot.
-#' @param Rowv   include the row names
-#' @param ... more parameters for a good time
+#' Sometimes you just want to see how the genes of an experiment are related to each other.  This
+#' can handle that.  These heatmap functions should probably be replaced with neatmaps or heatplus
+#' or whatever it is, as the annotation dataframes in them are pretty awesome.
+#'
+#' @param data Expt/expressionset/dataframe set of samples.
+#' @param colors Color scheme of the samples (not needed if input is an expt).
+#' @param design Design matrix describing the experiment (gotten for free if an expt).
+#' @param names Alternate samples names.
+#' @param title Title of the plot!
+#' @param Rowv Include the row names?
+#' @param ... More parameters for a good time!
 #' @return a recordPlot() heatmap describing the samples.
 #' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
 #' @export

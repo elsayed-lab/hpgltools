@@ -8,25 +8,27 @@ hpgl_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
   title = NULL, Rowv = FALSE, ...)
 }
 \arguments{
-\item{data}{an expt/expressionset/dataframe set of samples}
+\item{data}{Expt/expressionset/dataframe set of samples.}
 
-\item{colors}{a color scheme}
+\item{colors}{Color scheme of the samples (not needed if input is an expt).}
 
-\item{design}{a design matrix}
+\item{design}{Design matrix describing the experiment (gotten for free if an expt).}
 
-\item{names}{add names?}
+\item{names}{Alternate samples names.}
 
-\item{title}{title of the plot.}
+\item{title}{Title of the plot!}
 
-\item{Rowv}{include the row names}
+\item{Rowv}{Include the row names?}
 
-\item{...}{more parameters for a good time}
+\item{...}{More parameters for a good time!}
 }
 \value{
 a recordPlot() heatmap describing the samples.
 }
 \description{
-Make a heatmap.3 description of the similarity of the genes among samples.
+Sometimes you just want to see how the genes of an experiment are related to each other.  This
+can handle that.  These heatmap functions should probably be replaced with neatmaps or heatplus
+or whatever it is, as the annotation dataframes in them are pretty awesome.
 }
 \seealso{
 \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}

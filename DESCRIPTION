@@ -17,7 +17,7 @@ License: GPL-2 | file LICENSE
 Suggests:
     affy, AnnotationDbi, AnnotationHub, BiocGenerics, Biostrings, biomaRt, Category,
     clusterProfiler, corpcor, corrplot, data.table, DESeq2, DESeq, directlabels, dplyr, DOSE,
-    EDASeq, edgeR, ffpe, fission, genefilter, genomeIntervals, GenomicFeatures, GenomicRanges,
+    EDASeq, edgeR, fission, genefilter, genomeIntervals, GenomicFeatures, GenomicRanges,
     ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools,
     gridExtra, hash, Heatplus, Hmisc, igraph, IRanges, KEGGREST, knitcitations, lattice,limma,
     matrixStats, methods, motifStack, motifRG, multtest, mygene, openxlsx, pasilla, pathview, plyr,

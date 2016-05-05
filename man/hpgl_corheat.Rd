@@ -5,31 +5,29 @@
 \title{Make a heatmap.3 description of the correlation between samples.}
 \usage{
 hpgl_corheat(data, colors = NULL, design = NULL, method = "pearson",
-  names = NULL, row = "batch", title = NULL, ...)
+  names = NULL, title = NULL, ...)
 }
 \arguments{
-\item{data}{a dataframe, expt, or expressionset to work with.}
+\item{data}{Dataframe, expt, or expressionset to work with.}
 
-\item{colors}{a color scheme.}
+\item{colors}{Color scheme for the samples, not needed if this is an expt.}
 
-\item{design}{a design matrix.}
+\item{design}{Design matrix describing the experiment, not needed if this is an expt.}
 
-\item{method}{correlation statistic to use.}
+\item{method}{Correlation statistic to use. (pearson, spearman, kendall, robust).}
 
-\item{names}{alternate names to use.}
+\item{names}{Alternate names to use for the samples.}
 
-\item{row}{what to place on the row of the map, batches or conditions?}
+\item{title}{Title for the plot.}
 
-\item{title}{a title for the plot.}
-
-\item{...}{more options are wonderful}
+\item{...}{More options are wonderful!}
 }
 \value{
-corheat_plot a gplots heatmap describing how the samples
-pairwise correlate with one another.
+Gplots heatmap describing describing how the samples are clustering vis a vis pairwise correlation.
 }
 \description{
-Make a heatmap.3 description of the correlation between samples.
+Given a set of count tables and design, this will calculate the pairwise correlations and plot
+them as a heatmap.  It attempts to standardize the inputs and eventual output.
 }
 \examples{
 ## corheat_plot = hpgl_corheat(expt=expt, method="robust")

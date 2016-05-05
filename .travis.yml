@@ -3,6 +3,11 @@ cache: packages
 bioc_required: true
 warnings_are_errors: false
 
+## motIV requires libgsl
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libgsl libgsl-dev
+
 global:
  - R_CHECK_ARGS="--no-build-vignettes --no-manual --timings"
  - _R_CHECK_TIMINGS_="0"

@@ -2,33 +2,32 @@
 % Please edit documentation in R/plot_heatmap.r
 \name{hpgl_disheat}
 \alias{hpgl_disheat}
-\title{Make a heatmap.3 description of the similarity (euclildean distance) between samples.}
+\title{Make a heatmap.3 description of the distances (euclidean by default) between samples.}
 \usage{
 hpgl_disheat(data, colors = NULL, design = NULL, method = "euclidean",
-  names = NULL, row = "batch", title = NULL, ...)
+  names = NULL, title = NULL, ...)
 }
 \arguments{
-\item{data}{a dataframe, expt, or expressionset to work with.}
+\item{data}{Dataframe, expt, or expressionset to work with.}
 
-\item{colors}{a color scheme.}
+\item{colors}{Color scheme (not needed if an expt is provided).}
 
-\item{design}{a design matrix.}
+\item{design}{Design matrix (not needed if an expt is provided).}
 
-\item{method}{distance metric to use.}
+\item{method}{Distance metric to use.}
 
-\item{names}{alternate names to use.}
+\item{names}{Alternate names to use for the samples.}
 
-\item{row}{what to place on the row of the map, batches or conditions?}
+\item{title}{Title for the plot.}
 
-\item{title}{a title for the plot.}
-
-\item{...}{more parameters}
+\item{...}{More parameters!}
 }
 \value{
 a recordPlot() heatmap describing the distance between samples.
 }
 \description{
-Make a heatmap.3 description of the similarity (euclildean distance) between samples.
+Given a set of count tables and design, this will calculate the pairwise distances and plot
+them as a heatmap.  It attempts to standardize the inputs and eventual output.
 }
 \examples{
 \dontrun{

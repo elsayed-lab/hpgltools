@@ -2,35 +2,34 @@
 % Please edit documentation in R/plot_heatmap.r
 \name{hpgl_heatmap}
 \alias{hpgl_heatmap}
-\title{Make a heatmap.3 plots, does the work for hpgl_disheat and hpgl_corheat.}
+\title{Make a heatmap.3 plot, does the work for hpgl_disheat and hpgl_corheat.}
 \usage{
 hpgl_heatmap(data, colors = NULL, design = NULL, method = "pearson",
   names = NULL, type = "correlation", row = "batch", title = NULL, ...)
 }
 \arguments{
-\item{data}{a dataframe, expt, or expressionset to work with.}
+\item{data}{Dataframe, expt, or expressionset to work with.}
 
-\item{colors}{a color scheme.}
+\item{colors}{Color scheme for the samples.}
 
-\item{design}{a design matrix.}
+\item{design}{Design matrix describing the experiment vis a vis conditions and batches.}
 
-\item{method}{distance or correlation metric to use.}
+\item{method}{Distance or correlation metric to use.}
 
-\item{names}{alternate names to use.}
+\item{names}{Alternate names to use for the samples.}
 
-\item{type}{correlation or distance or sample}
+\item{type}{Defines the use of correlation, distance, or sample heatmap.}
 
-\item{row}{what to place on the row of the map, batches or conditions?}
+\item{title}{Title for the plot.}
 
-\item{title}{a title for the plot.}
-
-\item{...}{I like elipses}
+\item{...}{I like elipses!}
 }
 \value{
 a recordPlot() heatmap describing the distance between samples.
 }
 \description{
-Make a heatmap.3 plots, does the work for hpgl_disheat and hpgl_corheat.
+This does what is says on the tin.  Sets the colors for correlation or distance heatmaps, handles
+the calculation of the relevant metrics, and plots the heatmap.
 }
 \seealso{
 \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
