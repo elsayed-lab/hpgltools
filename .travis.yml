@@ -13,9 +13,12 @@ before_install:
 
 install:
   - ./travis-tool.sh install_github kokrah/qsmooth
+  - ./travis-tool.sh install_deps
+  - ./travis-tool.sh install_bioc_deps
 
 script:
   - make
+  - make autoloads
   - make install
   - ./travis-tool.sh run_test
 
