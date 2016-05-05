@@ -5,7 +5,7 @@ all: clean prereq document reference check build install test
 
 install:
 	echo "Performing R CMD INSTALL hpgltools"
-	cd ../ && R CMD INSTALL hpgltools
+	ls && cd ../ && R CMD INSTALL hpgltools
 
 reference:
 	echo "Generating reference manual with R CMD Rd2pdf"
@@ -51,10 +51,10 @@ clean:
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
 
 autoloads:
-	Rscript -e "library(devtools); devtools::load_all('.'); autoloads_all()"
+	Rscript -e "devtools::load_all('.'); autoloads_all()"
 
 prereq:
 	Rscript -e "source('http://bioconductor.org/biocLite.R');\
 bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr');\
-for (req in bioc_prereq) { load <- try(requireNamespace(req)); if (class(load) == 'try-error') { biocLite(req) }; };\
+for (req in bioc_prereq) { if (class(try(requireNamespace(req))) == 'try-error') { biocLite(req) } };\
 " ;
