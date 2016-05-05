@@ -5,8 +5,8 @@ warnings_are_errors: false
 
 ## motIV requires libgsl
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libgsl libgsl-dev
+  - sudo apt-get -qq update && apt-cache search libgsl
+  - sudo apt-get install -y libgsl0 libgsl0-dev
 
 global:
  - R_CHECK_ARGS="--no-build-vignettes --no-manual --timings"
