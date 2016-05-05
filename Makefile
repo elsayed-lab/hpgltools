@@ -55,20 +55,6 @@ autoloads:
 
 prereq:
 	Rscript -e "source('http://bioconductor.org/biocLite.R');\
-pasilla <- try(library('pasilla'));\
-if (class(pasilla) == 'try-error') { biocLite('pasilla') };\
-tt <- try(library('testthat'));\
-if (class(tt) == 'try-error') { biocLite('testthat')};\
-roxygen <- try(library('roxygen2'));\
-if (class(roxygen2) == 'try-error') { biocLite('roxygen2') };\
-bb <- try(library('Biobase'));\
-if (class(bb) == 'try-error') { biocLite('Biobase') };\
-prep <- try(library('preprocessCore'));\
-if (class(prep) == 'try-error') { biocLite('preprocessCore') };\
-devtools <- try(library('devtools'));\
-if (class(devtools) == 'try-error') { biocLite('devtools') };\
-rmarkdown <- try(library('rmarkdown')); \
-if (calass(rmarkdown) == 'try-error') {install_github('rstudio/rmarkdown') };\
-knitr <- try(library('knitr')); \
-if (calass(knitr) == 'try-error') { biocLite('knitr') };\
+bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr');\
+for (req in bioc_prereq) { load <- try(requireNamespace(req)); if (class(load) == 'try-error') { biocLite(req) }; };\
 " ;
