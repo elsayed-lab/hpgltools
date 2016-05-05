@@ -55,18 +55,20 @@ autoloads:
 
 prereq:
 	Rscript -e "source('http://bioconductor.org/biocLite.R');\
-pasilla = try(library('pasilla'));\
-if (class(pasilla) == 'try-error') { biocLite('pasilla'); library('pasilla') };\
-tt = try(library('testthat'));\
-if (class(tt) == 'try-error') { biocLite('testthat'); library('testthat') };\
-bb = try(library('Biobase'));\
-if (class(bb) == 'try-error') { biocLite('Biobase'); library('Biobase') };\
-prep = try(library('preprocessCore'));\
-if (class(prep) == 'try-error') { biocLite('preprocessCore'); library('preprocessCore') };\
-devtools = try(library('devtools'));\
-if (class(devtools) == 'try-error') { biocLite('devtools'); library('devtools') };\
-rmarkdown = try(library('rmarkdown')); \
-if (class(rmarkdown) == 'try-error') {install_github('rstudio/rmarkdown'); library('rmarkdown') };\
-knitrbootstrap = try(library('knitrBootstrap'));\
-if (class(knitrbootstrap) == 'try-error') { install_github('jimhester/knitrBootstrap'); library('knitrBootstrap') };\
+pasilla <- try(library('pasilla'));\
+if (class(pasilla) == 'try-error') { biocLite('pasilla') };\
+tt <- try(library('testthat'));\
+if (class(tt) == 'try-error') { biocLite('testthat')};\
+roxygen <- try(library('roxygen2'));\
+if (class(roxygen2) == 'try-error') { biocLite('roxygen2') };\
+bb <- try(library('Biobase'));\
+if (class(bb) == 'try-error') { biocLite('Biobase') };\
+prep <- try(library('preprocessCore'));\
+if (class(prep) == 'try-error') { biocLite('preprocessCore') };\
+devtools <- try(library('devtools'));\
+if (class(devtools) == 'try-error') { biocLite('devtools') };\
+rmarkdown <- try(library('rmarkdown')); \
+if (calass(rmarkdown) == 'try-error') {install_github('rstudio/rmarkdown') };\
+knitr <- try(library('knitr')); \
+if (calass(knitr) == 'try-error') { biocLite('knitr') };\
 " ;

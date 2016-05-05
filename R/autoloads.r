@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May  3 12:27:28 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May  5 15:45:39 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
@@ -215,6 +215,7 @@ autoloads_all <- function(update=FALSE) {
         update.packages()
     }
     packages_installed <- helpers + misc + genome + graphs + stats + deseq + ontology + motif
+    message(paste0("autoloads_all() installed ", packages_installed, " packages."))
     return(packages_installed)
 }
 

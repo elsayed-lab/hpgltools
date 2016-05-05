@@ -13,6 +13,7 @@ before_install:
 
 install:
   - ./travis-tool.sh install_github kokrah/qsmooth
+  - ./travis-tool.sh install roxygen2
   - ./travis-tool.sh install_deps
   - ./travis-tool.sh install_bioc_deps
 
