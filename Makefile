@@ -50,7 +50,7 @@ clean:
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
 
 autoloads:
-	Rscript -e "devtools::load_all('.'); autoloads_all()"
+	Rscript -e "library('hpgltools'); autoloads_all();"
 
 prereq:
 	Rscript -e "source('http://bioconductor.org/biocLite.R');\

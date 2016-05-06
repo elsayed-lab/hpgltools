@@ -17,16 +17,9 @@ install:
   - ./travis-tool.sh install_bioc_deps
 
 script:
-  - make autoloads
   - make install
+  - make autoloads
   - ./travis-tool.sh run_test
-
-on_failure:
-  - ./travis-tool.sh dump_logs
-
-after_script:
-  - ./travis-tool.sh dump_logs_by_extension "timings"
-  - ./travis-tool.sh dump_sysinfo
 
 notifications:
   email: false
