@@ -5,7 +5,7 @@ all: clean prereq document reference check build install test
 
 install:
 	echo "Performing R CMD INSTALL hpgltools"
-	ls && cd ../ && R CMD INSTALL hpgltools
+	ls && cd ../ && R CMD INSTALL hpgltools && cd hpgltools
 
 reference:
 	echo "Generating reference manual with R CMD Rd2pdf"
@@ -14,11 +14,11 @@ reference:
 
 check:
 	echo "Performing check with R CMD check hpgltools"
-	cd ../ && export _R_CHECK_FORCE_SUGGESTS_=FALSE && R CMD check hpgltools --no-build-vignettes
+	cd ../ && export _R_CHECK_FORCE_SUGGESTS_=FALSE && R CMD check hpgltools --no-build-vignettes && cd hpgltools
 
 build:
 	echo "Performing build with R CMD build hpgltools"
-	cd ../ && R CMD build hpgltools
+	cd ../ && R CMD build hpgltools && cd hpgltools
 
 test:
 	echo "Running run_tests.R"
@@ -45,7 +45,6 @@ clean:
 	rm -rf hpgltools/
 	rm -rf hpgltools.Rcheck/
 	rm -rf hpgltools_${VERSION}.tar.gz
-	rm -rf $(find . -type f -name '*.rda' | grep -v 'hpgltools.rda')
 	find . -type f -name '*.Rdata' -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name excel -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
@@ -55,6 +54,6 @@ autoloads:
 
 prereq:
 	Rscript -e "source('http://bioconductor.org/biocLite.R');\
-bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr');\
-for (req in bioc_prereq) { if (class(try(requireNamespace(req))) == 'try-error') { biocLite(req) } };\
+bioc_prereq <- c('kittytime', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr');\
+for (req in bioc_prereq) { if (class(try(library(req))) == 'try-error') { biocLite(req) } };\
 " ;
