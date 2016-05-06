@@ -1,5 +1,5 @@
 language: r
-cache: packages
+cache: false
 bioc_required: true
 warnings_are_errors: false
 
