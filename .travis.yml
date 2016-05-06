@@ -7,14 +7,6 @@ warnings_are_errors: false
 before_install:
   - sudo apt-get -qq update && apt-cache search libgsl
   - sudo apt-get install -y libgsl0-dev
-  - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
-  - chmod 755 ./travis-tool.sh
-  - ./travis-tool.sh bootstrap
-
-install:
-  - ./travis-tool.sh install_github kokrah/qsmooth
-  - ./travis-tool.sh install_deps
-  - ./travis-tool.sh install_bioc_deps
 
 script:
   - make install
