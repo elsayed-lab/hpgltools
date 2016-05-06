@@ -54,6 +54,6 @@ autoloads:
 
 prereq:
 	Rscript -e "source('http://bioconductor.org/biocLite.R');\
-bioc_prereq <- c('kittytime', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','kokrah/qsmooth');\
+bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','kokrah/qsmooth');\
 for (req in bioc_prereq) { if (class(try(library(req))) == 'try-error') { biocLite(req) } };\
 " ;
