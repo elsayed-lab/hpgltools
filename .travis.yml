@@ -19,7 +19,7 @@ install:
 script:
   - make install
   - make autoloads
-  - ./travis-tool.sh run_test
+  - make test
 
 notifications:
   email: false
