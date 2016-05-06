@@ -2,20 +2,22 @@
 % Please edit documentation in R/count_tables.r
 \name{concatenate_runs}
 \alias{concatenate_runs}
-\title{\code{concatenate_runs()}  Sum the reads/gene for multiple sequencing runs of a single condition/batch}
+\title{Sum the reads/gene for multiple sequencing runs of a single condition/batch.}
 \usage{
 concatenate_runs(expt, column = "replicate")
 }
 \arguments{
-\item{expt}{an experiment class containing the requisite metadata and count tables}
+\item{expt}{Experiment class containing the requisite metadata and count tables.}
 
-\item{column}{a column of the design matrix used to specify which samples are replicates}
+\item{column}{Column of the design matrix used to specify which samples are replicates.}
 }
 \value{
-the input expt with the new design matrix, batches, conditions, colors, and count tables.
+Expt with the concatenated counts, new design matrix, batches, conditions, etc.
 }
 \description{
-\code{concatenate_runs()}  Sum the reads/gene for multiple sequencing runs of a single condition/batch
+On occasion we have multiple technical replicates of a sequencing run.  This can use a column in
+the experimental design to identify those replicates and sum the counts into a single column in
+the count tables.
 }
 \examples{
 \dontrun{

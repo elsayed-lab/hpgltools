@@ -2,17 +2,17 @@
 % Please edit documentation in R/count_tables.r
 \name{median_by_factor}
 \alias{median_by_factor}
-\title{Create a data frame of the medians of rows by a given factor in the data}
+\title{Create a data frame of the medians of rows by a given factor in the data.}
 \usage{
 median_by_factor(data, fact)
 }
 \arguments{
-\item{data}{a data frame, presumably of counts.}
+\item{data}{Data frame, presumably of counts.}
 
-\item{fact}{a factor describing the columns in the data.}
+\item{fact}{Factor describing the columns in the data.}
 }
 \value{
-a data frame of the medians
+Data frame of the medians.
 }
 \description{
 This assumes of course that (like expressionsets) there are separate columns for each replicate

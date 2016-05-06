@@ -10,38 +10,36 @@ create_expt(file = NULL, sample_colors = NULL, gene_info = NULL,
   meta_dataframe = NULL, savefile = "expt", low_files = FALSE, ...)
 }
 \arguments{
-\item{file}{a comma separated file describing the samples with
-information like condition,batch,count_filename,etc}
+\item{file}{Comma separated file (or excel) describing the samples with information like
+condition, batch, count_filename, etc.}
 
-\item{sample_colors}{a list of colors by condition, if not provided
-it will generate its own colors using colorBrewer}
+\item{sample_colors}{List of colors by condition, if not provided it will generate its own colors
+using colorBrewer.}
 
-\item{gene_info}{annotation information describing the rows of the data set, usually
-this comes from a call to import.gff()}
+\item{gene_info}{Annotation information describing the rows of the data set, this often comes
+from a call to import.gff() or biomart or organismdbi.}
 
-\item{include_type}{I have usually assumed that all gff annotations should be used,
-but that is not always true, this allows one to limit.}
+\item{include_type}{I have usually assumed that all gff annotations should be used, but that is
+not always true, this allows one to limit to a specific annotation type.}
 
-\item{include_gff}{A gff file to help in sorting which features to keep}
+\item{include_gff}{Gff file to help in sorting which features to keep.}
 
-\item{count_dataframe}{If one does not wish to read the count tables from processed_data/
-they may instead be fed here}
+\item{count_dataframe}{If one does not wish to read the count tables from the filesystem, they
+may instead be fed as a data frame here.}
 
-\item{meta_dataframe}{an optional dataframe containing the metadata rather than a file}
+\item{meta_dataframe}{Dataframe containing the metadata rather than reading it from a
+file. (TODO: merge these two options into one smarter option).}
 
-\item{savefile}{an Rdata filename prefix for saving the data of the resulting expt.}
+\item{savefile}{Rdata filename prefix for saving the data of the resulting expt.}
 
-\item{low_files}{whether or not to explicitly lowercase the filenames when searching in processed_data/}
+\item{low_files}{Explicitly lowercase the filenames when searching the filesystem?}
 
-\item{...}{more parameters are fun}
+\item{...}{More parameters are fun!}
 }
 \value{
 experiment an expressionset
 }
 \description{
-this is relevant because the ceph object storage by default lowercases filenames.
-}
-\details{
 It is worth noting that this function has a lot of logic used to
 find the count tables in the local filesystem.  This logic has been
 superceded by simply adding a field to the .csv file called

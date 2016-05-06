@@ -3,24 +3,21 @@
 \name{expt_subset}
 \alias{expt_subset}
 \title{Extract a subset of samples following some rule(s) from an
-experiment class}
+experiment class.}
 \usage{
 expt_subset(expt, subset = NULL)
 }
 \arguments{
-\item{expt}{an expt which is a home-grown class containing an
-expressionSet, design, colors, etc.}
+\item{expt}{Expt chosen to extract a subset of data.}
 
-\item{subset}{a valid R expression which defines a subset of the
-design to keep.}
+\item{subset}{Valid R expression which defines a subset of the design to keep.}
 }
 \value{
-metadata an expt class which contains the smaller set of
-data
+metadata Expt class which contains the smaller set of data.
 }
 \description{
-Extract a subset of samples following some rule(s) from an
-experiment class
+Sometimes an experiment has too many parts to work with conveniently, this operation allows one
+to break it into smaller pieces.
 }
 \examples{
 \dontrun{

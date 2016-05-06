@@ -26,11 +26,11 @@ test:
 
 roxygen:
 	echo "Generating documentation with roxygen2::roxygenize()"
-	rm -f NAMESPACE && Rscript -e "roxygen2::roxygenize()"
+	Rscript -e "roxygen2::roxygenize()"
 
 document:
 	echo "Generating documentation with devtools::document()"
-	rm -f NAMESPACE && Rscript -e "devtools::document()"
+	Rscript -e "devtools::document()"
 
 vignette:
 	echo "Building vignettes with devtools::build_vignettes()"
