@@ -1,4 +1,4 @@
-## Time-stamp: <Sun May  1 18:45:56 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May  9 00:02:29 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -302,7 +302,17 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
         modified_fit <- limma::eBayes(limma_fit)
         tstats[[adjust]] <- abs(modified_fit[["t"]][, 2])
         ##names(tstats[[counter]]) <- as.character(1:dim(data)[1])
-        catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[adjust]]), -rank(tstats[["null"]]), maxrank=1000, make.plot=TRUE)
+        if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+            ## ffpe has some requirements which do not install all the time.
+            autoloads_github()
+            require.auto("ffpe")
+        }
+        if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+            catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[adjust]]), -rank(tstats[["null"]]), maxrank=1000, make.plot=TRUE)
+        } else {
+            catplots[[counter]] <- NULL
+        }
+
     }
 
     plot(catplots[["pca"]], ylim=c(0, 1), col="black",

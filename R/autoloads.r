@@ -1,4 +1,4 @@
-## Time-stamp: <Sun May  8 22:31:16 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May  9 00:02:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
