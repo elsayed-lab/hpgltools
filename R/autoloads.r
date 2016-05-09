@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May  5 15:45:39 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun May  8 22:31:16 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
@@ -43,6 +43,12 @@ require.auto <- function(lib, github_path=NULL, update=FALSE) {
         }
     }
     return(count)
+}
+
+autoloads_github <- function() {
+    count <- 0
+    count <- count + require.auto("seandavi/GEOquery")
+    count <- count + require.auto("kasperdanielhansen/minfi")
 }
 
 autoloads_ontology <- function() {
