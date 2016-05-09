@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May  3 11:34:28 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May  9 10:48:05 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' png() shortcut
 #'
@@ -302,19 +302,36 @@ gff2df <- function(gff, type=NULL) {
     ret <- NULL
     gff_test <- grepl("\\.gff", gff)
     gtf_test <- grepl("\\.gtf", gff)
-    annotations <- NULL
+    annotations <- 0
+    class(annotations) <- "try-error"
     if (isTRUE(gtf_test)) {  ## Start with an attempted import of gtf files.
         annotations <- try(rtracklayer::import.gff(gff, format="gtf"), silent=TRUE)
-    } else {
-        annotations <- try(rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE))
-        if (class(annotations) == 'try-error') {
-            annotations <- try(rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE))
-        }
-        if (class(annotations) == 'try-error') {
-            annotations <- try(rtracklayer::import.gff(gff))
-        }
     }
-    if (class(annotations) == 'try-error') {
+    ## Try gff3 with seqinfo on
+    if (class(annotations) == "try-error") {
+        annotations <- try(rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE))
+    }
+    ## try it again with seqinfo off
+    if (class(annotations) == "try-error") {
+        message("Importing the gff file as gff3 with seqinfo as TRUE failed, trying FALSE.")
+        annotations <- try(rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE))
+    }
+    ## Then try gff2 with seqinfo on
+    if (class(annotations) == "try-error") {
+        message("Importing the gff file as gff3 with seqinfo as FALSE failed, trying gff2.")
+        annotations <- try(rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE))
+    }
+    ## Try gff2 again with seqinfo off
+    if (class(annotations) == "try-error") {
+        message("Importing the gff file as gff2 with seqinfo as TRUE failed, trying FALSE.")
+        annotations <- try(rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE))
+    }
+    ## Ok, if we got to here, that kind of sucks.
+    if (class(annotations) == "try-error") {
+        message("Importing the gff file as gff2 with seqinfo as FALSE failed, trying gff1.")
+        annotations <- try(rtracklayer::import.gff(gff))
+    }
+    if (class(annotations) == "try-error") {
         stop("Could not extract the widths from the gff file.")
     } else {
         ret <- annotations
@@ -327,6 +344,7 @@ gff2df <- function(gff, type=NULL) {
         index <- ret[, "type"] == type
         ret <- ret[index, ]
     }
+    message(paste0("Returning a df with ", ncol(ret), " columns and ", nrow(ret), " rows."))
     return(ret)
 }
 

@@ -280,18 +280,22 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             summary <- NULL
             found <- 0
             found_table <- NULL
+            do_inverse <- NULL
             for (tab in names(edger[["contrast_list"]])) {
-                do_inverse <- FALSE
                 if (tab == same_string) {
+                    do_inverse <- FALSE
                     found <- found + 1
                     found_table <- same_string
+                    message(paste0("Found table with ", same_string))
                 } else if (tab == inverse_string) {
                     do_inverse <- TRUE
                     found <- found + 1
                     found_table <- inverse_string
+                    message(paste0("Found inverse table with ", inverse_string))
                 }
             }
             if (found > 0) {
+                message(paste0("Running create_combined_table with inverse=", do_inverse))
                 combined <- create_combined_table(limma, edger, deseq, basic, found_table, inverse=do_inverse,
                                                   annot_df=annot_df, include_basic=include_basic)
                 dat <- combined[["data"]]
@@ -482,7 +486,7 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
     comb$p_var <- format(x=comb[["p_var"]], digits=4, scientific=TRUE)
     comb$p_meta <- format(x=comb[["p_meta"]], digits=4, scientific=TRUE)
     if (!is.null(annot_df)) {
-        colnames(annot_df) <- gsub("[[:digit:]]", "", colnames(annot_df))
+        ## colnames(annot_df) <- gsub("[[:digit:]]", "", colnames(annot_df))
         colnames(annot_df) <- gsub("[[:punct:]]", "", colnames(annot_df))
         comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
         rownames(comb) <- comb[["Row.names"]]

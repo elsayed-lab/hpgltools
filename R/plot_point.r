@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May  3 11:02:08 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May  9 12:13:58 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_scatter.r: Various scatter plots
 
@@ -159,11 +159,12 @@ hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #' @export
 hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson",
                                 size=2, loess=FALSE, identity=FALSE, gvis_trendline=NULL,
-                                first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE) {
+                                first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE,
+                                color_high=NULL, color_low=NULL) {
     hpgl_env <- environment()
-    df <- data.frame(df[,c(1,2)])
-    df <- df[complete.cases(df),]
-    correlation <- cor.test(df[,1], df[,2], method=cormethod, exact=FALSE)
+    df <- data.frame(df[, c(1, 2)])
+    df <- df[complete.cases(df), ]
+    correlation <- cor.test(df[, 1], df[, 2], method=cormethod, exact=FALSE)
     df_columns <- colnames(df)
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]
@@ -190,8 +191,8 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     linear_model_weights <- stats::weights(linear_model, type="robustness", na.action=NULL)
     linear_model_intercept <- stats::coef(linear_model_summary)[1]
     linear_model_slope <- stats::coef(linear_model_summary)[2]
-    first_median <- summary(df$first)["Median"]
-    second_median <- summary(df$second)["Median"]
+    first_median <- summary(df$first)[["Median"]]
+    second_median <- summary(df$second)[["Median"]]
     first_mad <- stats::mad(df$first, na.rm=TRUE)
     second_mad <- stats::mad(df$second, na.rm=TRUE)
     line_size <- size / 2
@@ -205,6 +206,32 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
         ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
         ggplot2::geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
         ggplot2::geom_abline(colour="grey", slope=linear_model_slope, intercept=linear_model_intercept, size=line_size)
+    ## The axes and guide-lines are set up, now add the points
+
+    low_df <- high_df <- NULL
+    if (!is.null(color_low) | !is.null(color_high)) {
+        ## If you want to color the above or below identity line points, then you will need subsets to define them
+        tmpdf <- df
+        tmpdf[["ratio"]] <- tmpdf[, 2] / tmpdf[, 1]
+        subset_points <- suppressMessages(get_sig_genes(tmpdf, z=1, column="ratio"))
+        high_subset = subset_points[["up_genes"]]
+        low_subset = subset_points[["down_genes"]]
+        original_df = tmpdf
+        high_index = rownames(original_df) %in% rownames(high_subset)
+        high_df = original_df[high_index, ]
+        low_index = rownames(original_df) %in% rownames(low_subset)
+        low_df = original_df[low_index, ]
+        first_vs_second <- first_vs_second +
+            ggplot2::geom_point(colour="black", size=size, alpha=0.4)
+    }
+        ## Add a color to the dots which are lower than the identity line by some amount
+    if (!is.null(color_low)) {
+        first_vs_second <- first_vs_second + geom_point(data=low_df, color="#FF0000", alpha=0.4)
+    }
+    if (!is.null(color_high)) {
+        first_vs_second <- first_vs_second + geom_point(data=high_df, color="#7B9F35", alpha=0.4)
+    }
+
     if (isTRUE(pretty_colors)) {
         first_vs_second <- first_vs_second +
             ggplot2::geom_point(size=size, alpha=0.4,
@@ -215,14 +242,17 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
         first_vs_second <- first_vs_second +
             ggplot2::geom_point(colour="black", size=size, alpha=0.4)
     }
+
     if (loess == TRUE) {
         first_vs_second <- first_vs_second +
             ggplot2::geom_smooth(method="loess")
     }
+
     if (identity == TRUE) {
         first_vs_second <- first_vs_second +
             ggplot2::geom_abline(colour="darkgreen", slope=1, intercept=0, size=1)
     }
+
     first_vs_second <- first_vs_second +
         ggplot2::theme(legend.position="none") +
         ggplot2::theme_bw()

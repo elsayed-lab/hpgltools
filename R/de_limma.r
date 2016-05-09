@@ -1,4 +1,4 @@
-## Time-stamp: <Wed May  4 00:40:38 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May  9 12:11:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot out 2 coefficients with respect to one another from limma.
 #'
@@ -35,9 +35,6 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
     if (!is.null(arglist$qlimit)) {
         qlimit <- arglist$qlimit
     }
-    message("This can do comparisons among the following columns in the limma result:")
-    thenames <- colnames(output$pairwise_comparisons$coefficients)
-    message(thenames)
     xname <- ""
     yname <- ""
     if (is.numeric(x)) {
