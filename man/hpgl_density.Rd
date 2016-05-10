@@ -2,34 +2,35 @@
 % Please edit documentation in R/plot_distribution.r
 \name{hpgl_density}
 \alias{hpgl_density}
-\title{Density plots!}
+\title{Create a density plot, showing the distribution of each column of data.}
 \usage{
 hpgl_density(data, colors = NULL, sample_names = NULL,
   position = "identity", fill = NULL, title = NULL, scale = NULL,
   colors_by = "condition")
 }
 \arguments{
-\item{data}{an expt, expressionset, or data frame.}
+\item{data}{Expt, expressionset, or data frame.}
 
-\item{colors}{a color scheme to use.}
+\item{colors}{Color scheme to use.}
 
-\item{sample_names}{names of the samples.}
+\item{sample_names}{Names of the samples.}
 
-\item{position}{how to place the lines, either let them overlap (identity), or stack them.}
+\item{position}{How to place the lines, either let them overlap (identity), or stack them.}
 
-\item{fill}{fill the distributions?  This might make the plot unreasonably colorful.}
+\item{fill}{Fill the distributions?  This might make the plot unreasonably colorful.}
 
-\item{title}{a title for the plot.}
+\item{title}{Title for the plot.}
 
-\item{scale}{plot on the log scale?}
+\item{scale}{Plot on the log scale?}
 
-\item{colors_by}{a factor for coloring the lines}
+\item{colors_by}{Factor for coloring the lines}
 }
 \value{
-a density plot!
+Ggplot2 density plot!
 }
 \description{
-Density plots!
+Density plots and boxplots are cousins and provide very similar views of data distributions.
+Some people like one, some the other.  I think they are both colorful and fun!
 }
 \examples{
 \dontrun{

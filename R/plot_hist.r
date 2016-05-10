@@ -1,24 +1,26 @@
-## Time-stamp: <Mon Apr 25 15:04:17 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 14:21:53 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_hist.r: Histograms used in other functions
 
-#'   Make a pretty histogram of something.
+#' Make a pretty histogram of something.
 #'
-#' @param df  a dataframe of lots of pretty numbers.
-#' @param binwidth   width of the bins for the histogram.
-#' @param log   replot on the log scale?
-#' @param bins  bins for the histogram
-#' @param verbose   be verbose?
-#' @param fillcolor   change the fill colors of the plotted elements.
-#' @param color   change the color of the lines of the plotted elements.
-#' @return a ggplot histogram
+#' A shortcut to make a ggplot2 histogram which makes an attempt to set reasonable bin widths and
+#' set the scale to log if that seems a good idea.
+#'
+#' @param df Dataframe of lots of pretty numbers.
+#' @param binwidth Width of the bins for the histogram.
+#' @param log Replot on the log scale?
+#' @param bins Number of bins for the histogram.
+#' @param fillcolor Change the fill colors of the plotted elements?
+#' @param color Change the color of the lines of the plotted elements?
+#' @return Ggplot histogram.
 #' @seealso \link[ggplot2]{geom_histogram} \link[ggplot2]{geom_density}
 #' @examples
 #' \dontrun{
 #'  kittytime = hpgl_histogram(df)
 #' }
 #' @export
-hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE,
+hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
                            fillcolor="darkgrey", color="black") {
     hpgl_env <- environment()
     if (class(df) == "data.frame") {
@@ -34,9 +36,7 @@ hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE
         minval <- min(df, na.rm=TRUE)
         maxval <- max(df, na.rm=TRUE)
         binwidth <- (maxval - minval) / bins
-        if (verbose) {
-            message(paste("No binwidth provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
-        }
+        message(paste("No binwidth provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
     }
     a_histogram <- ggplot2::ggplot(df, ggplot2::aes_string(x="values"), environment=hpgl_env) +
         ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), stat="bin", binwidth=binwidth,
@@ -56,21 +56,22 @@ hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, verbose=FALSE
 
 #' Make a pretty histogram of multiple datasets.
 #'
-#' @param data  a dataframe of lots of pretty numbers, this also accepts lists.
-#' @param log   plot the data on the log scale?
-#' @param bins   set a static # of bins of an unknown width?
-#' @param binwidth   set a static bin width with an unknown # of bins?  If neither of these are provided, then bins is set to 500, if both are provided, then bins wins.
-#' @param verbose   be verbose?
-#' @return a ggplot histogram comparing multiple data sets
-#' Along the way this generates pairwise t tests of the columns of
-#' data.
+#' If there are multiple data sets, it might be useful to plot them on a histogram together and look
+#' at the t.test results between distributions.
+#'
+#' @param data Dataframe of lots of pretty numbers, this also accepts lists.
+#' @param log Plot the data on the log scale?
+#' @param bins Set a static # of bins of an unknown width?
+#' @param binwidth Set a static bin width with an unknown # of bins?  If neither of these are
+#'     provided, then bins is set to 500, if both are provided, then bins wins.
+#' @return List of the ggplot histogram and some statistics describing the distributions.
 #' @seealso \link[stats]{pairwise.t.test} \link[plyr]{ddply}
 #' @examples
 #' \dontrun{
 #'  kittytime = hpgl_multihistogram(df)
 #' }
 #' @export
-hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, verbose=FALSE) {
+hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
     if (is.data.frame(data)) {
         df <- data
         columns <- colnames(df)
@@ -119,20 +120,23 @@ hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, verbo
             hpgl_multi <- logged
         }
     }
-    if (verbose) {
-        message("Summarise the data.")
-        message(summary_df)
-        message("Uncorrected t test(s) between columns:")
-        message(uncor_t)
-        if (class(bon_t) == "try-error") {
-            message("Unable to perform corrected test.")
-        } else {
-            message("Bon Ferroni corrected t test(s) between columns:")
-            message(bon_t)
-        }
+    message("Summarise the data.")
+    message(summary_df)
+    message("Uncorrected t test(s) between columns:")
+    message(uncor_t)
+    if (class(bon_t) == "try-error") {
+        message("Unable to perform corrected test.")
+    } else {
+        message("Bon Ferroni corrected t test(s) between columns:")
+        message(bon_t)
     }
-    returns <- list(plot=hpgl_multi, data_summary=summary_df,
-                    uncor_t=uncor_t, bon_t=bon_t)
+
+    returns <- list(
+        "plot" = hpgl_multi,
+        "data_summary" = summary_df,
+        "uncor_t" = uncor_t,
+        "bon_t" = bon_t)
     return(returns)
 }
 
+## EOF

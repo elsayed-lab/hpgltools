@@ -1,17 +1,21 @@
-## Time-stamp: <Mon Apr 25 15:05:36 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 14:29:34 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_distribution.r: A few plots to describe data distributions
 ## Currently this includes boxplots, density plots, and qq plots.
 
 #' Make a ggplot boxplot of a set of samples.
 #'
-#' @param data  an expt or data frame set of samples.
-#' @param colors   a color scheme, if not provided will make its own.
-#' @param names   a nicer version of the sample names.
-#' @param scale   whether to log scale the y-axis.
-#' @param title   A title!
-#' @param ... more parameters are fun
-#' @return a ggplot2 boxplot of the samples.  Each boxplot
+#' Boxplots and density plots provide complementary views of data distributions.  The general idea
+#' is that if the box for one sample is significantly shifted from the others, then it is likely an
+#' outlier in the same way a density plot shifted is an outlier.
+#'
+#' @param data Expt or data frame set of samples.
+#' @param colors Color scheme, if not provided will make its own.
+#' @param names Another version of the sample names for printing.
+#' @param scale Whether to log scale the y-axis.
+#' @param title A title!
+#' @param ... More parameters are more fun!
+#' @return Ggplot2 boxplot of the samples.  Each boxplot
 #' contains the following information: a centered line describing the
 #' median value of counts of all genes in the sample, a box around the
 #' line describing the inner-quartiles around the median (quartiles 2
@@ -86,17 +90,20 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     return(boxplot)
 }
 
-#' Density plots!
+#' Create a density plot, showing the distribution of each column of data.
 #'
-#' @param data  an expt, expressionset, or data frame.
-#' @param colors   a color scheme to use.
-#' @param sample_names   names of the samples.
-#' @param position   how to place the lines, either let them overlap (identity), or stack them.
-#' @param fill   fill the distributions?  This might make the plot unreasonably colorful.
-#' @param scale   plot on the log scale?
-#' @param title   a title for the plot.
-#' @param colors_by a factor for coloring the lines
-#' @return a density plot!
+#' Density plots and boxplots are cousins and provide very similar views of data distributions.
+#' Some people like one, some the other.  I think they are both colorful and fun!
+#'
+#' @param data Expt, expressionset, or data frame.
+#' @param colors Color scheme to use.
+#' @param sample_names Names of the samples.
+#' @param position How to place the lines, either let them overlap (identity), or stack them.
+#' @param fill Fill the distributions?  This might make the plot unreasonably colorful.
+#' @param scale Plot on the log scale?
+#' @param title Title for the plot.
+#' @param colors_by Factor for coloring the lines
+#' @return Ggplot2 density plot!
 #' @seealso \pkg{ggplot2} \link[ggplot2]{geom_density}
 #' @examples
 #' \dontrun{
@@ -175,17 +182,19 @@ hpgl_density <- function(data, colors=NULL, sample_names=NULL, position="identit
     return(densityplot)
 }
 
-#'   quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)
+#' Quantile/quantile comparison of the mean of all samples vs. each sample.
 #'
-#' @param data  an expressionset, expt, or dataframe of samples.
-#' @param verbose   be chatty while running?
-#' @param labels   what kind of labels to print?
-#' @return a list containing:
-#'   logs = a recordPlot() of the pairwise log qq plots
-#'   ratios = a recordPlot() of the pairwise ratio qq plots
-#'   means = a table of the median values of all the summaries of the qq plots
+#' This allows one to visualize all individual data columns against the mean of all columns of data
+#' in order to see if any one is significantly different than the cloud.
+#'
+#' @param data Expressionset, expt, or dataframe of samples.
+#' @param labels What kind of labels to print?
+#' @return List containing:
+#'   logs = a recordPlot() of the pairwise log qq plots.
+#'   ratios = a recordPlot() of the pairwise ratio qq plots.
+#'   means = a table of the median values of all the summaries of the qq plots.
 #' @export
-hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
+hpgl_qq_all <- function(data, labels="short") {
     data_class <- class(data)[1]
     if (data_class == "expt") {
         design <- data$design
@@ -216,9 +225,7 @@ hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
     count <- 1
     for (i in 1:comparisons) {
         ith <- colnames(data)[i]
-        if (verbose) {
-            message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
-        }
+        message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
         tmpdf <- data.frame("ith"=data[,i],
                             "mean"=sample_data$mean)
         colnames(tmpdf) <- c(ith, "mean")
@@ -236,12 +243,15 @@ hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
     return(plots)
 }
 
-#'   Perform a qqplot between two columns of a matrix.
+#' Perform a qqplot between two columns of a matrix.
 #'
-#' @param data  data frame/expt/expressionset.
-#' @param x   the first column.
-#' @param y   the second column.
-#' @param labels   include the lables?
+#' Given two columns of data, how well do the distributions match one another?  The answer to that
+#' question may be visualized through a qq plot!
+#'
+#' @param data Data frame/expt/expressionset.
+#' @param x First column to compare.
+#' @param y Second column to compare.
+#' @param labels Include the lables?
 #' @return a list of the logs, ratios, and mean between the plots as ggplots.
 #' @export
 hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
@@ -363,13 +373,14 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
 }
 
 #' Perform qq plots of every column against every other column of a dataset.
-#' This function is stupid, don't use it.
 #'
-#' @param data the data
-#' @param verbose  talky talky
-#' @return a list containing the recordPlot() output of the ratios, logs, and means among samples
+#' This function is stupid, don't use it.  It makes more sense to just use hpgl_qq, however I am not
+#' quite read to delete this function yet.
+#'
+#' @param data Dataframe to perform pairwise qqplots with.
+#' @return List containing the recordPlot() output of the ratios, logs, and means among samples.
 #' @export
-hpgl_qq_all_pairwise <- function(data, verbose=FALSE) {
+hpgl_qq_all_pairwise <- function(data) {
     data_class <- class(data)[1]
     names <- NULL
     if (data_class == "expt") {
@@ -394,9 +405,7 @@ hpgl_qq_all_pairwise <- function(data, verbose=FALSE) {
         for (j in 1:rows) {
             ith <- colnames(data)[i]
             jth <- colnames(data)[j]
-            if (verbose) {
-                message(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
-            }
+            message(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
             tmp <- hpgl_qq_plot(data, x=i, y=j, labels=names)
             logs[[count]] <- tmp$log
             ratios[[count]] <- tmp$ratio
@@ -414,3 +423,4 @@ hpgl_qq_all_pairwise <- function(data, verbose=FALSE) {
     return(plots)
 }
 
+## EOF

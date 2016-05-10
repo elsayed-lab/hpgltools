@@ -2,21 +2,18 @@
 % Please edit documentation in R/plot_distribution.r
 \name{hpgl_qq_all_pairwise}
 \alias{hpgl_qq_all_pairwise}
-\title{Perform qq plots of every column against every other column of a dataset.
-This function is stupid, don't use it.}
+\title{Perform qq plots of every column against every other column of a dataset.}
 \usage{
-hpgl_qq_all_pairwise(data, verbose = FALSE)
+hpgl_qq_all_pairwise(data)
 }
 \arguments{
-\item{data}{the data}
-
-\item{verbose}{talky talky}
+\item{data}{Dataframe to perform pairwise qqplots with.}
 }
 \value{
-a list containing the recordPlot() output of the ratios, logs, and means among samples
+List containing the recordPlot() output of the ratios, logs, and means among samples.
 }
 \description{
-Perform qq plots of every column against every other column of a dataset.
-This function is stupid, don't use it.
+This function is stupid, don't use it.  It makes more sense to just use hpgl_qq, however I am not
+quite read to delete this function yet.
 }
 

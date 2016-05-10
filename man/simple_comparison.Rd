@@ -7,7 +7,7 @@
 simple_comparison(subset, workbook = "simple_comparison.xls",
   sheet = "simple_comparison", basename = NA, batch = TRUE,
   combat = FALSE, combat_noscale = TRUE, pvalue_cutoff = 0.05,
-  logfc_cutoff = 0.6, tooltip_data = NULL, verbose = FALSE, ...)
+  logfc_cutoff = 0.6, tooltip_data = NULL, ...)
 }
 \arguments{
 \item{subset}{Experimental subset with two conditions to compare.}
@@ -29,8 +29,6 @@ simple_comparison(subset, workbook = "simple_comparison.xls",
 \item{logfc_cutoff}{Fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.}
 
 \item{tooltip_data}{Text descriptions of genes if one wants google graphs.}
-
-\item{verbose}{Be verbose?}
 
 \item{...}{More parameters!}
 }

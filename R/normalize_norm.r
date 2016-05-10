@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 28 10:41:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 14:07:48 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #'   Perform a simple normalization of a count table
 #'
@@ -15,7 +15,8 @@
 #' norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
 #' }
 #' @export
-normalize_counts <- function(data, design=NULL, norm="raw") {
+normalize_counts <- function(data, design=NULL, norm="raw", ...) {
+    arglist <- list(...)
     ## Note that checkUsage flagged my 'libsize = ' calls
     ## I set norm_libsize at the bottom of the function
     ## but perhaps instead I should be using these libsizes?

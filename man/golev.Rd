@@ -4,12 +4,10 @@
 \alias{golev}
 \title{Get a go level approximation from an ID.}
 \usage{
-golev(go, verbose = FALSE)
+golev(go)
 }
 \arguments{
 \item{go}{GO id, this may be a character or list (assuming the elements are goids).}
-
-\item{verbose}{print some information as it recurses.}
 }
 \value{
 Set of numbers corresponding to approximate tree positions of the GO ids.

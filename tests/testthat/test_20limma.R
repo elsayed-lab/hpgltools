@@ -55,3 +55,5 @@ similarity <- as.numeric(cor.test(hpgl_vs_edger$logFC.x, hpgl_vs_edger$logFC.y)[
 test_that("Is the hpgl pairwise similar to edgeR's default method?", {
     expect_gt(similarity, 0.999)
 })
+
+message("YAY Finished testing limma!")

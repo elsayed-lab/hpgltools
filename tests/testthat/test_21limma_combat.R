@@ -122,4 +122,4 @@ test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
     expect_equal(cbcb_table, hpgl_table)
 })
 
-message("YAY!")
+message("YAY! Finished testing limma with combat!")

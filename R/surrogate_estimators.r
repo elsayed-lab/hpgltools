@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 00:36:35 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 14:45:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -295,7 +295,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, do_catplots=FA
     oldpar <- par(mar=c(5,5,5,5))
     for (adjust in adjustments) {
         counter <- counter + 1
-        message(paste0(counter, "/", num_adjust, ": Performing lmFit(data) etc. with ", adjust, " in the model."))
+        message(paste0(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with ", adjust, " in the model."))
         modified_formula <- as.formula(paste0("~ condition ", adjust))
         limma_design <- model.matrix(modified_formula, data=design)
         voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)

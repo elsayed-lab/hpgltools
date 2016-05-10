@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May  3 18:01:47 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 14:31:00 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' Extract more easily readable information from a GOTERM datum.
@@ -193,7 +193,6 @@ goont <- function(go) {
 #' attmepts to answer that question.
 #'
 #' @param go GO id, this may be a character or list (assuming the elements are goids).
-#' @param verbose print some information as it recurses.
 #' @return Set of numbers corresponding to approximate tree positions of the GO ids.
 #' @seealso \pkg{GOTermsAnnDbBimap}
 #' @examples
@@ -202,15 +201,12 @@ goont <- function(go) {
 #'  ## > 3
 #' }
 #' @export
-golev <- function(go, verbose=FALSE) {
+golev <- function(go) {
     go <- as.character(go)
     level <- 0
     requireNamespace("GO.db")
     while(class(try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]])),
                     silent=FALSE)) != 'try-error') {
-        if(isTRUE(verbose)) {
-            print(paste("Restarting while loop, level: ", level, go, sep=" "))
-        }
         ontology <- as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]]))
         if (ontology == "MF") {
             ## I am not certain if GO.db:: will work for this
@@ -223,9 +219,6 @@ golev <- function(go, verbose=FALSE) {
             ## There was an error
             message(paste("There was an error getting the ontology: ", as.character(go), sep=""))
             ancestors <- "error"
-        }
-        if(isTRUE(verbose)) {
-            print("Incrementing level")
         }
         go <- ancestors[1]
         level <- level + 1

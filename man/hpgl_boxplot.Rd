@@ -8,20 +8,20 @@ hpgl_boxplot(data, colors = NULL, names = NULL, title = NULL,
   scale = NULL, ...)
 }
 \arguments{
-\item{data}{an expt or data frame set of samples.}
+\item{data}{Expt or data frame set of samples.}
 
-\item{colors}{a color scheme, if not provided will make its own.}
+\item{colors}{Color scheme, if not provided will make its own.}
 
-\item{names}{a nicer version of the sample names.}
+\item{names}{Another version of the sample names for printing.}
 
 \item{title}{A title!}
 
-\item{scale}{whether to log scale the y-axis.}
+\item{scale}{Whether to log scale the y-axis.}
 
-\item{...}{more parameters are fun}
+\item{...}{More parameters are more fun!}
 }
 \value{
-a ggplot2 boxplot of the samples.  Each boxplot
+Ggplot2 boxplot of the samples.  Each boxplot
 contains the following information: a centered line describing the
 median value of counts of all genes in the sample, a box around the
 line describing the inner-quartiles around the median (quartiles 2
@@ -31,7 +31,9 @@ the non-outliers), and single dots for each gene which is outside
 that range.  A single dot is transparent.
 }
 \description{
-Make a ggplot boxplot of a set of samples.
+Boxplots and density plots provide complementary views of data distributions.  The general idea
+is that if the box for one sample is significantly shifted from the others, then it is likely an
+outlier in the same way a density plot shifted is an outlier.
 }
 \examples{
 \dontrun{

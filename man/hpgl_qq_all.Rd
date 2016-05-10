@@ -2,24 +2,23 @@
 % Please edit documentation in R/plot_distribution.r
 \name{hpgl_qq_all}
 \alias{hpgl_qq_all}
-\title{quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)}
+\title{Quantile/quantile comparison of the mean of all samples vs. each sample.}
 \usage{
-hpgl_qq_all(data, verbose = FALSE, labels = "short")
+hpgl_qq_all(data, labels = "short")
 }
 \arguments{
-\item{data}{an expressionset, expt, or dataframe of samples.}
+\item{data}{Expressionset, expt, or dataframe of samples.}
 
-\item{verbose}{be chatty while running?}
-
-\item{labels}{what kind of labels to print?}
+\item{labels}{What kind of labels to print?}
 }
 \value{
-a list containing:
-  logs = a recordPlot() of the pairwise log qq plots
-  ratios = a recordPlot() of the pairwise ratio qq plots
-  means = a table of the median values of all the summaries of the qq plots
+List containing:
+  logs = a recordPlot() of the pairwise log qq plots.
+  ratios = a recordPlot() of the pairwise ratio qq plots.
+  means = a table of the median values of all the summaries of the qq plots.
 }
 \description{
-quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)
+This allows one to visualize all individual data columns against the mean of all columns of data
+in order to see if any one is significantly different than the cloud.
 }
 

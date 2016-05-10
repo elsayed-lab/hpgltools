@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May  9 12:11:01 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 14:08:45 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot out 2 coefficients with respect to one another from limma.
 #'
@@ -553,7 +553,6 @@ limma_subset <- function(table, n=NULL, z=NULL) {
 #' @param pvalue_cutoff P-value definition of 'significant.'
 #' @param logfc_cutoff Fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.
 #' @param tooltip_data Text descriptions of genes if one wants google graphs.
-#' @param verbose Be verbose?
 #' @param ... More parameters!
 #' @return A list containing the following pieces:
 #'   amean_histogram = a histogram of the mean values between the two conditions
@@ -590,7 +589,7 @@ limma_subset <- function(table, n=NULL, z=NULL) {
 simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="simple_comparison",
                               basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE,
                               pvalue_cutoff=0.05, logfc_cutoff=0.6, tooltip_data=NULL,
-                              verbose=FALSE, ...) {
+                              ...) {
     condition_model <- stats::model.matrix(~ 0 + subset$condition)
     if (length(levels(subset$batch)) == 1) {
         message("There is only one batch! I can only include condition in the model.")
@@ -662,29 +661,28 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
     ## psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)
     psignificant_table <- cond_table[ which(cond_table$P.Value <= pvalue_cutoff), ]
 
-    if (isTRUE(verbose)) {
-        message("The model looks like:")
-        message(model)
-        message("The mean:variance trend follows")
-        plot(expt_voom$plot)
-        message("Drawing a scatterplot of the genes.")
-        message("The following statistics describe the relationship between:")
-        print(coefficient_scatter$scatter)
-        message(paste("Setting the column:", colnames(lf$design)[2], "to control"))
-        message(paste("Setting the column:", colnames(lf$design)[1], "to changed"))
-        message("Performing contrasts of the experimental - control.")
-        message("Taking a histogram of the subtraction values.")
-        print(contrast_histogram)
-        message("Taking a histogram of the mean values across samples.")
-        message("The subtraction values should not be related to the mean values.")
-        print(coef_amean_cor)
-        message("Making a table of the data including p-values and F-statistics.")
-        message("Taking a histogram of the p-values.")
-        print(pvalue_histogram)
-        message("Printing a volcano plot of this data.")
-        message("Printing an maplot of this data.")
-        message(paste("Writing excel sheet:", sheet))
-    }
+    message("The model looks like:")
+    message(model)
+    message("The mean:variance trend follows")
+    plot(expt_voom$plot)
+    message("Drawing a scatterplot of the genes.")
+    message("The following statistics describe the relationship between:")
+    print(coefficient_scatter$scatter)
+    message(paste("Setting the column:", colnames(lf$design)[2], "to control"))
+    message(paste("Setting the column:", colnames(lf$design)[1], "to changed"))
+    message("Performing contrasts of the experimental - control.")
+    message("Taking a histogram of the subtraction values.")
+    print(contrast_histogram)
+    message("Taking a histogram of the mean values across samples.")
+    message("The subtraction values should not be related to the mean values.")
+    print(coef_amean_cor)
+    message("Making a table of the data including p-values and F-statistics.")
+    message("Taking a histogram of the p-values.")
+    print(pvalue_histogram)
+    message("Printing a volcano plot of this data.")
+    message("Printing an maplot of this data.")
+    message(paste("Writing excel sheet:", sheet))
+
     return_info <- list(
         "amean_histogram" = amean_histogram,
         "coef_amean_cor" = coef_amean_cor,

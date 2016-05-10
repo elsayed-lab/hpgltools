@@ -1,19 +1,21 @@
-## Time-stamp: <Sat Mar  5 00:23:01 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 14:39:28 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' Print some data onto KEGG pathways
+#' Print some data onto KEGG pathways.
 #'
-#' @param path_data some differentially expressed genes
-#' @param indir   A directory into which the unmodified kegg images will be downloaded (or already exist).
-#' @param outdir   A directory which will contain the colored images.
-#' @param pathway   Perform the coloring for a specific pathway?
-#' @param species   The kegg identifier for the species of interest.
-#' @param string_from   for renaming kegg categories
-#' @param string_to  for renaming kegg categories
-#' @param suffix  for renaming finished files
-#' @param second_from  sometimes jsut one regex isnt enough
-#' @param second_to  sometimes just one regex isnt enough
-#' @param verbose  talk more
-#' @param filenames   name the final files by id or name?
+#' KEGGREST and pathview provide neat functions for coloring molecular pathways with arbitrary data.
+#' Unfortunately they are somewhat evil to use.  This attempts to alleviate that.
+#'
+#' @param path_data Some differentially expressed genes.
+#' @param indir Directory into which the unmodified kegg images will be downloaded (or already exist).
+#' @param outdir Directory which will contain the colored images.
+#' @param pathway Perform the coloring for a specific pathway?
+#' @param species Kegg identifier for the species of interest.
+#' @param string_from Regex to help in renaming KEGG categories/gene names from one format to another.
+#' @param string_to Regex to help in renaming KEGG categories/gene names from one format to another.
+#' @param suffix Add a suffix to the completed, colored files.
+#' @param second_from Sometimes just one regex is not enough!
+#' @param second_to Sometimes just one regex is not enough!
+#' @param filenames Name the final files by id or name?
 #' @return A list of some information for every KEGG pathway downloaded/examined.  This information includes:
 #'   a. The filename of the final image for each pathway.
 #'   b. The number of genes which were found in each pathway image.
@@ -27,7 +29,7 @@
 #'                                    string_to="_Spy_", filenames="pathname")
 #' }
 #' @export
-hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, verbose=FALSE, filenames="id") {
+hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, filenames="id") {
     ## Please note that the KGML parser fails if other XML parsers are loaded into R
     ## eh = new.env(hash=TRUE, size=NA)
     ## There is a weird namespace conflict when using pathview, so I will reload it here
@@ -90,25 +92,14 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
         limit_min <- -1.0 * max(limit_test)
         limit_max <- max(limit_test)
         limits <- c(limit_min, limit_max)
-        if (isTRUE(verbose)) {
-            print(paste("Here are some path gene examples: ", gene_examples, sep=""))
-            print(paste("Here are your genes: ", head(names(path_data))), sep="")
-            pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
-                                         species=species, limit=list(gene=limits, cpd=limits),
-                                         map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix,
-                                         split.group=TRUE, expand.node=TRUE, kegg.native=TRUE,
-                                         map.symbol=TRUE, same.layer=FALSE, res=1200,
-                                         new.signature=FALSE, cex=0.05, key.pos="topright"))
-        } else {
-            pv <- suppressMessages(try(pathview::pathview(gene.data=path_data, kegg.dir=indir,
-                                                         pathway.id=path, species=species,
-                                                         limit=list(gene=limits, cpd=limits), map.null=TRUE,
-                                                         gene.idtype="KEGG", out.suffix=suffix,
-                                                         split.group=TRUE, expand.node=TRUE,
-                                                         kegg.native=TRUE, map.symbol=TRUE,
-                                                         same.layer=FALSE, res=1200, new.signature=FALSE,
-                                                         cex=0.05, key.pos="topright")))
-        }
+        print(paste("Here are some path gene examples: ", gene_examples, sep=""))
+        print(paste("Here are your genes: ", head(names(path_data))), sep="")
+        pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
+                                     species=species, limit=list(gene=limits, cpd=limits),
+                                     map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix,
+                                     split.group=TRUE, expand.node=TRUE, kegg.native=TRUE,
+                                     map.symbol=TRUE, same.layer=FALSE, res=1200,
+                                     new.signature=FALSE, cex=0.05, key.pos="topright"))
         if (class(pv) == "numeric") {
             colored_genes <- NULL
             newfile <- NULL
@@ -124,9 +115,6 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
                 newfile <- paste(outdir,"/", path, suffix, ".png", sep="")
             } else {  ## If filenames is not 'id', put in the path name...
                 newfile <- paste(outdir, "/", path_name, suffix, ".png", sep="")
-            }
-            if (isTRUE(verbose)) {
-                message(paste("Moving file to: ", newfile, sep=""))
             }
             rename_try <- try(file.rename(from=oldfile, to=newfile), silent=TRUE)
             if (class(rename_try)[1] == 'try-error') {
@@ -166,17 +154,23 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
     return(retdf)
 }
 
-#'   Use gostats() against kegg pathways
+#' Use gostats() against kegg pathways
 #'
+#' This sets up a GSEABase analysis using KEGG pathways rather than gene ontologies.
 #' Does this even work?  I don't think I have ever tested it yet.
 #' oh, it sort of does, maybe if I export it I will rembmer it
+#'
+#' @param organism The organism used to make the KEGG frame, human readable no taxonomic.
+#' @param pathdb Name of the pathway database for this organism.
+#' @param godb Name of the ontology database for this organism.
+#' @return Results from hyperGTest using the KEGG pathways.
 #' @export
-gostats_kegg <- function() {
-    org <- get0("org.Hs.egPATH")
-    org_go <- get0("org.Hs.egGO")
+gostats_kegg <- function(organism="Homo sapiens", pathdb="org.Hs.egPATH", godb="org.Hs.egGO") {
+    org <- get0(pathdb)
+    org_go <- get0(godb)
     frame <- AnnotationDbi::toTable(org)
     keggframedata <- data.frame(frame$path_id, frame$gene_id)
-    keggFrame <- AnnotationDbi::KEGGFrame(keggframedata, organism="Homo sapiens")
+    keggFrame <- AnnotationDbi::KEGGFrame(keggframedata, organism=organism)
     gsc <- GSEABase::GeneSetCollection(keggFrame, setType=GSEABase::KEGGCollection())
     universe <- AnnotationDbi::Lkeys(org_go)
     genes <- universe[1:500]
@@ -190,12 +184,16 @@ gostats_kegg <- function() {
     return(kOver)
 }
 
-#' Search the kegg identifier for a given species
+#' Search KEGG identifiers for a given species name.
 #'
-#' @param species   A search string (Something like 'Homo sapiens')
-#' @param short   only pull the orgid
-#' @return a data frame of possible KEGG identifier codes,
-#' genome ID numbers, species, and phylogenetic classifications.
+#' KEGG identifiers do not always make sense.  For example, how am I supposed to remember that
+#' Leishmania major is lmj?  This takes in a human readable string and finds the KEGG identifiers
+#' that match it.
+#'
+#' @param species Search string (Something like 'Homo sapiens').
+#' @param short Only pull the orgid?
+#' @return Data frame of possible KEGG identifier codes, genome ID numbers, species, and
+#'     phylogenetic classifications.
 #' @seealso \pkg{RCurl}
 #' @examples
 #' \dontrun{
@@ -216,251 +214,5 @@ kegg_get_orgn <- function(species="Leishmania", short=TRUE) {
     }
     return(candidates)
 }
-
-
-##parseKGML2Graph2 <- function (file, ...) {
-##    pathway <- parseKGML2(file)
-##    gR <- KEGGpathway2Graph2(pathway, ...)
-##    return(gR)
-##}
-
-
-##hpgl_base_pathview <- function (gene.data=NULL, cpd.data=NULL, xml.file=NULL,
-##                                pathway.id, species="hsa", kegg.dir=".", cpd.idtype="kegg",
-##                                gene.idtype="entrez", gene.annotpkg=NULL, min.nnodes=3,
-##                                kegg.native=TRUE, map.null=TRUE, expand.node=FALSE,
-##                                split.group=FALSE, map.symbol=TRUE, map.cpdname=TRUE,
-##                                node.sum="sum", discrete=list(gene=FALSE, cpd=FALSE),
-##                                 limit=list(gene=1, cpd=1), bins=list(gene=10, cpd=10),
-##                                 both.dirs=list(gene=T, cpd=T), trans.fun=list(gene=NULL, cpd=NULL),
-##                                 low=list(gene="green", cpd="blue"),
-##                                 mid=list(gene="gray", cpd="gray"), high=list(gene="red", cpd="yellow"),
-##                                 na.col="transparent", ...) {
-##     if (is.character(gene.data)) {
-##         gd.names <- gene.data
-##         gene.data <- rep(1, length(gene.data))
-##         names(gene.data) <- gd.names
-##         both.dirs$gene <- FALSE
-##         ng <- length(gene.data)
-##         nsamp.g <- 1
-##     } else if (!is.null(gene.data)) {
-##         if (length(dim(gene.data)) == 2) {
-##             gd.names <- rownames(gene.data)
-##             ng <- nrow(gene.data)
-##             nsamp.g <- 2
-##         } else if (is.numeric(gene.data) & is.null(dim(gene.data))) {
-##             gd.names <- names(gene.data)
-##             ng <- length(gene.data)
-##             nsamp.g <- 1
-##         } else stop("wrong gene.data format!")
-##     }
-##     else if (is.null(cpd.data)) {
-##         stop("gene.data and cpd.data are both NULL!")
-##     }
-##     gene.idtype <- toupper(gene.idtype)
-##     data(bods)
-##     data(gene.idtype.list)
-##     if (species != "ko") {
-##         species.data <- pathview::kegg.species.code(species, na.rm = T, code.only = FALSE)
-##     } else {
-##         species.data <- c(kegg.code="ko", entrez.gnodes="0", kegg.geneid="K01488", ncbi.geneid="")
-##         gene.idtype <- "KEGG"
-##         msg.fmt <- "Only KEGG ortholog gene ID is supported, make sure it looks like \"%s\"!"
-##         msg <- sprintf(msg.fmt, species.data["kegg.geneid"])
-##         message(msg)
-##     }
-##     if (length(dim(species.data)) == 2) {
-##         message("More than two valide species!")
-##         species.data <- species.data[1, ]
-##     }
-##     species <- species.data["kegg.code"]
-##     entrez.gnodes <- species.data["entrez.gnodes"] == 1
-##     if (is.na(species.data["ncbi.geneid"])) {
-##         if (!is.na(species.data["kegg.geneid"])) {
-##             msg.fmt <- "Only native KEGG gene ID is supported for this species,\nmake sure it looks like \"%s\"!"
-##             msg <- sprintf(msg.fmt, species.data["kegg.geneid"])
-##             message(msg)
-##         }
-##         else {
-##             stop("This species is not annotated in KEGG!")
-##         }
-##     }
-##     if (is.null(gene.annotpkg))
-##         gene.annotpkg <- bods[match(species, bods[, 3]), 1]
-##     if (length(grep("ENTREZ|KEGG", gene.idtype)) < 1 & !is.null(gene.data)) {
-##         if (is.na(gene.annotpkg))
-##             stop("No proper gene annotation package available!")
-##         if (!gene.idtype %in% gene.idtype.list) {
-##             stop("Wrong input gene ID type!")
-##         }
-##         gene.idmap <- id2eg(gd.names, category = gene.idtype, pkg.name = gene.annotpkg)
-##         gene.data <- mol.sum(gene.data, gene.idmap)
-##         gene.idtype <- "ENTREZ"
-##     }
-##     if (gene.idtype == "ENTREZ" & !entrez.gnodes & !is.null(gene.data)) {
-##         message("Getting gene ID data from KEGG...")
-##         gene.idmap <- keggConv("ncbi-geneid", species)
-##         message("Done with data retrieval!")
-##         kegg.ids <- gsub(paste(species, ":", sep = ""), "", names(gene.idmap))
-##         ncbi.ids <- gsub("ncbi-geneid:", "", gene.idmap)
-##         gene.idmap <- cbind(ncbi.ids, kegg.ids)
-##         gene.data <- mol.sum(gene.data, gene.idmap)
-##         gene.idtype <- "KEGG"
-##     }
-##     if (is.character(cpd.data)) {
-##         cpdd.names <- cpd.data
-##         cpd.data <- rep(1, length(cpd.data))
-##         names(cpd.data) <- cpdd.names
-##         both.dirs$cpd <- FALSE
-##         ncpd <- length(cpd.data)
-##     }
-##     else if (!is.null(cpd.data)) {
-##         if (length(dim(cpd.data)) == 2) {
-##             cpdd.names <- rownames(cpd.data)
-##             ncpd <- nrow(cpd.data)
-##         }
-##         else if (is.numeric(cpd.data) & is.null(dim(cpd.data))) {
-##             cpdd.names <- names(cpd.data)
-##             ncpd <- length(cpd.data)
-##         } else {
-##             stop("wrong cpd.data format!")
-##         }
-##     }
-##     if (length(grep("kegg", cpd.idtype)) < 1 & !is.null(cpd.data)) {
-##         data(rn.list)
-##         cpd.types <- c(names(rn.list), "name")
-##         cpd.types <- tolower(cpd.types)
-##         cpd.types <- cpd.types[-grep("kegg", cpd.types)]
-##         if (!tolower(cpd.idtype) %in% cpd.types) {
-##             stop("Wrong input cpd ID type!")
-##         }
-##         cpd.idmap <- cpd2kegg(cpdd.names, in.type = cpd.idtype)
-##         cpd.data <- mol.sum(cpd.data, cpd.idmap)
-##     }
-##     warn.fmt <- "Parsing %s file failed, please check the file!"
-##     if (length(grep(species, pathway.id)) > 0) {
-##         pathway.name <- pathway.id
-##         pathway.id <- gsub(species, "", pathway.id)
-##     }
-##     else pathway.name <- paste(species, pathway.id, sep = "")
-##     kfiles <- list.files(path=kegg.dir, pattern="[.]xml|[.]png")
-##     tfiles <- paste(pathway.name, c("xml", "png"), sep = ".")
-##     if (!all(tfiles %in% kfiles)) {
-##         dstatus <- download.kegg(pathway.id = pathway.id, species = species, kegg.dir = kegg.dir)
-##         if (dstatus == "failed") {
-##             warn.fmt <- "Failed to download KEGG xml/png files, %s skipped!"
-##             warn.msg <- sprintf(warn.fmt, pathway.name)
-##             message(warn.msg)
-##             return(invisible(0))
-##         }
-##     }
-##     if (missing(xml.file))
-##         xml.file <- paste(kegg.dir, "/", pathway.name, ".xml", sep = "")
-##     if (kegg.native) {
-##         node.data <- try(node.info(xml.file), silent = T)
-##         if (class(node.data) == "try-error") {
-##             warn.msg <- sprintf(warn.fmt, xml.file)
-##             message(warn.msg)
-##             return(invisible(0))
-##         }
-##         node.type <- c("gene", "enzyme", "compound", "ortholog")
-##         sel.idx <- node.data$type %in% node.type
-##         nna.idx <- !is.na(node.data$x + node.data$y + node.data$width + node.data$height)
-##         sel.idx <- sel.idx & nna.idx
-##         if (sum(sel.idx) < min.nnodes) {
-##             warn.fmt <- "Number of mappable nodes is below %d, %s skipped!"
-##             warn.msg <- sprintf(warn.fmt, min.nnodes, pathway.name)
-##             message(warn.msg)
-##             return(invisible(0))
-##         }
-##         node.data <- lapply(node.data, "[", sel.idx)
-##     }
-##     else {
-##         gR1 <- try(parseKGML2Graph2(xml.file, genes=F, expand=expand.node, split.group=split.group), silent=T)
-##         node.data <- try(node.info(gR1), silent = T)
-##         if (class(node.data) == "try-error") {
-##             warn.msg <- sprintf(warn.fmt, xml.file)
-##             message(warn.msg)
-##             return(invisible(0))
-##         }
-##     }
-##     if (species == "ko") {
-##         gene.node.type <- "ortholog"
-##     } else {
-##         gene.node.type <- "gene"
-##     }
-##     if ((!is.null(gene.data) | map.null) & sum(node.data$type == gene.node.type) > 1) {
-##         plot.data.gene <- node.map(gene.data, node.data, node.types=gene.node.type,
-##                                    node.sum=node.sum, entrez.gnodes=entrez.gnodes)
-##         kng <- plot.data.gene$kegg.names
-##         kng.char <- gsub("[0-9]", "", unlist(kng))
-##         if (any(kng.char > "")) {
-##             entrez.gnodes <- FALSE
-##         }
-##         if (map.symbol & species != "ko" & entrez.gnodes) {
-##             if (is.na(gene.annotpkg)) {
-##                 warm.fmt <- "No annotation package for the species %s, gene symbols not mapped!"
-##                 warm.msg <- sprintf(warm.fmt, species)
-##                 message(warm.msg)
-##             } else {
-##                 plot.data.gene$labels <- eg2id(as.character(plot.data.gene$kegg.names), category = "SYMBOL", pkg.name = gene.annotpkg)[,2]
-##                 mapped.gnodes <- rownames(plot.data.gene)
-##                 node.data$labels[mapped.gnodes] <- plot.data.gene$labels
-##             }
-##         }
-##         cols.ts.gene <- node.color(plot.data.gene, limit$gene, bins$gene, both.dirs=both.dirs$gene, trans.fun=trans.fun$gene,
-##                                    discrete=discrete$gene, low=low$gene, mid=mid$gene, high=high$gene, na.col=na.col)
-##     } else {
-##         plot.data.gene <- cols.ts.gene <- NULL
-##     }
-##     if ((!is.null(cpd.data) | map.null) & sum(node.data$type == "compound") > 1) {
-##         plot.data.cpd <- node.map(cpd.data, node.data, node.types="compound", node.sum=node.sum)
-##         if (map.cpdname & !kegg.native) {
-##             plot.data.cpd$labels <- cpdkegg2name(plot.data.cpd$labels)[,2]
-##             mapped.cnodes <- rownames(plot.data.cpd)
-##             node.data$labels[mapped.cnodes] <- plot.data.cpd$labels
-##         }
-##         cols.ts.cpd <- node.color(plot.data.cpd, limit$cpd, bins$cpd, both.dirs=both.dirs$cpd, trans.fun=trans.fun$cpd,
-##                                   discrete=discrete$cpd, low=low$cpd, mid=mid$cpd, high=high$cpd, na.col=na.col)
-##     } else {
-##         plot.data.cpd <- cols.ts.cpd = NULL
-##     }
-##     if (kegg.native) {
-##         pv.pars <- keggview.native(plot.data.gene=plot.data.gene, cols.ts.gene=cols.ts.gene,
-##                                    plot.data.cpd=plot.data.cpd, cols.ts.cpd=cols.ts.cpd,
-##                                    node.data=node.data, pathway.name=pathway.name, kegg.dir=kegg.dir,
-##                                    limit=limit, bins=bins, both.dirs=both.dirs, discrete=discrete,
-##                                    low=low, mid=mid, high=high, na.col=na.col, ...)
-##     } else {
-##         pv.pars <- keggview.graph(plot.data.gene=plot.data.gene, cols.ts.gene=cols.ts.gene,
-##                                   plot.data.cpd=plot.data.cpd, cols.ts.cpd=cols.ts.cpd,
-##                                   node.data=node.data, path.graph=gR1, pathway.name=pathway.name,
-##                                   map.cpdname=map.cpdname, split.group=split.group, limit=limit,
-##                                   bins=bins, both.dirs=both.dirs, discrete=discrete, low=low,
-##                                   mid=mid, high=high, na.col=na.col, ...)
-##     }
-##     plot.data.gene <- cbind(plot.data.gene, cols.ts.gene)
-##     if (!is.null(plot.data.gene)) {
-##         cnames <- colnames(plot.data.gene)[-(1:7)]
-##         nsamp <- length(cnames)/2
-##         if (nsamp > 1) {
-##             cnames[(nsamp + 1):(2 * nsamp)] <- paste(cnames[(nsamp + 1):(2 * nsamp)], "col", sep = ".")
-##         }
-##         else cnames[2] <- "mol.col"
-##         colnames(plot.data.gene)[-(1:7)] <- cnames
-##     }
-##     plot.data.cpd <- cbind(plot.data.cpd, cols.ts.cpd)
-##     if (!is.null(plot.data.cpd)) {
-##         cnames <- colnames(plot.data.cpd)[-(1:7)]
-##         nsamp <- length(cnames)/2
-##         if (nsamp > 1) {
-##             cnames[(nsamp + 1):(2 * nsamp)] <- paste(cnames[(nsamp + 1):(2 * nsamp)], "col", sep = ".")
-##         } else {
-##             cnames[2] <- "mol.col"
-##         }
-##         colnames(plot.data.cpd)[-(1:7)] <- cnames
-##     }
-##     return(invisible(list(plot.data.gene=plot.data.gene, plot.data.cpd=plot.data.cpd)))
-## }
 
 # EOF

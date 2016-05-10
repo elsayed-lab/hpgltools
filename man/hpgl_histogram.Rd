@@ -5,28 +5,27 @@
 \title{Make a pretty histogram of something.}
 \usage{
 hpgl_histogram(df, binwidth = NULL, log = FALSE, bins = 500,
-  verbose = FALSE, fillcolor = "darkgrey", color = "black")
+  fillcolor = "darkgrey", color = "black")
 }
 \arguments{
-\item{df}{a dataframe of lots of pretty numbers.}
+\item{df}{Dataframe of lots of pretty numbers.}
 
-\item{binwidth}{width of the bins for the histogram.}
+\item{binwidth}{Width of the bins for the histogram.}
 
-\item{log}{replot on the log scale?}
+\item{log}{Replot on the log scale?}
 
-\item{bins}{bins for the histogram}
+\item{bins}{Number of bins for the histogram.}
 
-\item{verbose}{be verbose?}
+\item{fillcolor}{Change the fill colors of the plotted elements?}
 
-\item{fillcolor}{change the fill colors of the plotted elements.}
-
-\item{color}{change the color of the lines of the plotted elements.}
+\item{color}{Change the color of the lines of the plotted elements?}
 }
 \value{
-a ggplot histogram
+Ggplot histogram.
 }
 \description{
-Make a pretty histogram of something.
+A shortcut to make a ggplot2 histogram which makes an attempt to set reasonable bin widths and
+set the scale to log if that seems a good idea.
 }
 \examples{
 \dontrun{

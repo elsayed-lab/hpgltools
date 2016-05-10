@@ -34,4 +34,6 @@ test_that("Does the compare_surrogate stuff work?", {
                  as.numeric(as.character(pasilla_surrogates[["pca_adjust"]][["model_adjust"]])),
                  tolerance = 0.0001)
 })
+
 message("Hey, write more tests here.")
+message("YAY! Finished testing surrogate estimators!")

@@ -7,18 +7,19 @@
 hpgl_qq_plot(data, x = 1, y = 2, labels = TRUE)
 }
 \arguments{
-\item{data}{data frame/expt/expressionset.}
+\item{data}{Data frame/expt/expressionset.}
 
-\item{x}{the first column.}
+\item{x}{First column to compare.}
 
-\item{y}{the second column.}
+\item{y}{Second column to compare.}
 
-\item{labels}{include the lables?}
+\item{labels}{Include the lables?}
 }
 \value{
 a list of the logs, ratios, and mean between the plots as ggplots.
 }
 \description{
-Perform a qqplot between two columns of a matrix.
+Given two columns of data, how well do the distributions match one another?  The answer to that
+question may be visualized through a qq plot!
 }
 

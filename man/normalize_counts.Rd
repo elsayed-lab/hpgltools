@@ -4,7 +4,7 @@
 \alias{normalize_counts}
 \title{Perform a simple normalization of a count table}
 \usage{
-normalize_counts(data, design = NULL, norm = "raw")
+normalize_counts(data, design = NULL, norm = "raw", ...)
 }
 \arguments{
 \item{data}{A matrix of count data}

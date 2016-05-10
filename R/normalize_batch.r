@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 12:21:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 14:43:30 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
 #'
@@ -58,8 +58,12 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #' sva_batch <- batch_counts(table, design, batch='sva')
 #' }
 #' @export
-batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2=NULL, noscale=TRUE, low_to_zero=TRUE, ...) {
+batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2=NULL, noscale=TRUE, ...) {
     arglist <- list(...)
+    low_to_zero <- FALSE
+    if (!is.null(arglist[["low_to_zero"]])) {
+        low_to_zero <- arglist[["low_to_zero"]]
+    }
     batches <- as.factor(design[[batch1]])
     conditions <- as.factor(design[["condition"]])
 
