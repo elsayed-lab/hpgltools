@@ -20,7 +20,7 @@ Suggests:
     EDASeq, edgeR, fission, genefilter, genomeIntervals, GenomicFeatures, GenomicRanges,
     ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools,
     gridExtra, hash, Heatplus, Hmisc, igraph, IRanges, KEGGREST, knitcitations, lattice,limma,
-    matrixStats, methods, motifStack, motifRG, multtest, mygene, openxlsx, pasilla, pathview, plyr,
+    matrixStats, methods, multtest, mygene, openxlsx, pasilla, pathview, plyr,
     preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, reshape2, RCurl, rGADEM,
     Rgraphviz, robustbase, RUVSeq, reshape, rjson, robust, Rsamtools, rtracklayer, S4Vectors,
     scales, seqinr, seqLogo, stringi, stringr, survJamda, sva, topGO, XLConnect, xtable, XVector

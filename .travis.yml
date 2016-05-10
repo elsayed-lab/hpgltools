@@ -1,12 +1,13 @@
 language: r
-cache: false
+cache: packages
+sudo: false
 bioc_required: true
 warnings_are_errors: false
 
 ## motIV requires libgsl
-before_install:
-  - sudo apt-get -qq update && apt-cache search libgsl
-  - sudo apt-get install -y libgsl0-dev
+##before_install:
+##  - sudo apt-get -qq update && apt-cache search libgsl
+##  - sudo apt-get install -y libgsl0-dev
 ##  - sudo apt-get install $(apt-cache search r-cran | awk '{print $1}')
 
 script:
