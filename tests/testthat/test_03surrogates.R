@@ -25,12 +25,13 @@ pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
 
 pasilla_surrogates <- compare_surrogate_estimates(pasilla_expt)
 
-pca_char_adjust <- c("-0.108919503928491", "-0.570855719628606",
+pca_char_adjust <- as.numeric(c("-0.108919503928491", "-0.570855719628606",
                      "0.413293224481248", "0.293317999343559",
                      "-0.527145619820086", "0.284623554215443",
-                     "0.215686065336933" )
+                     "0.215686065336933"))
 test_that("Does the compare_surrogate stuff work?", {
     expect_equal(pca_char_adjust,
-                 as.character(pasilla_surrogates[["pca_adjust"]][["model_adjust"]]))
+                 as.numeric(as.character(pasilla_surrogates[["pca_adjust"]][["model_adjust"]])),
+                 tolerance = 0.0001)
 })
 message("Hey, write more tests here.")
