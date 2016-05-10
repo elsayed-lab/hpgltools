@@ -60,7 +60,7 @@ test_that("Do they agree with my approximated vignette results?", {
 })
 cbcb_fit <- lmFit(cbcb_v)
 cbcb_eb <- eBayes(cbcb_fit)
-cbcb_table <- topTable(cbcb_eb, coef=2, n=nrow(v$E))
+cbcb_table <- topTable(cbcb_eb, coef=2, n=nrow(cbcb_v$E))
 
 
 ## Now create a hpgltools expt and try the same thing
