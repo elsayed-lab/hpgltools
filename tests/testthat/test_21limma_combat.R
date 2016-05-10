@@ -62,7 +62,6 @@ cbcb_fit <- lmFit(cbcb_v)
 cbcb_eb <- eBayes(cbcb_fit)
 cbcb_table <- topTable(cbcb_eb, coef=2, n=nrow(cbcb_v$E))
 
-
 ## Now create a hpgltools expt and try the same thing
 message("Setting up an expt class to contain the pasilla data and metadata.")
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
@@ -80,7 +79,7 @@ test_that("Do cbcbSEQ and hpgltools agree on the definition of log2(quantile(cpm
     expect_equal(cbcb_qcpmcounts, hpgl_qcpmcounts)
 })
 
-hpgl_qcpmcombat <- normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod")
+hpgl_qcpmcombat <- normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", low_to_zero=FALSE)
 hpgl_combat <- Biobase::exprs(hpgl_qcpmcombat$expressionset)
 test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts))))?", {
     expect_equal(cbcb_hpgl_combat, hpgl_combat)

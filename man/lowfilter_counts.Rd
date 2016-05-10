@@ -5,7 +5,7 @@
 \title{Call various low-count filters.}
 \usage{
 lowfilter_counts(count_table, type = "cbcb", p = 0.01, A = 1, k = 1,
-  cv_min = 0.01, cv_max = 1000, thresh = 2, min_samples = 2)
+  cv_min = 0.01, cv_max = 1000, thresh = 2, min_samples = 2, ...)
 }
 \arguments{
 \item{count_table}{Some counts to filter.}

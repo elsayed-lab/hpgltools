@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 11:34:25 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 12:17:10 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -104,7 +104,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     if (filter_low != FALSE) {
         message(paste0("Performing low-count filter with option: ", filter_low))
         ## All the other intermediates have a libsize slot, perhaps this should too
-        lowfiltered_counts <- lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2)
+        lowfiltered_counts <- lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2, ...)
         count_table <- lowfiltered_counts[["count_table"]]
         lowfilter_performed <- filter_low
     }
@@ -118,7 +118,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
             message("The experimental design is null.  Some normalizations will therefore fail.")
             message("If you receive an error about an object with no dimensions, that is likely why.")
         }
-        normalized_counts <- normalize_counts(count_table, expt_design, norm=norm)
+        normalized_counts <- normalize_counts(count_table, expt_design, norm=norm, ...)
         count_table <- normalized_counts[["count_table"]]
         norm_performed <- norm
     }
@@ -129,7 +129,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     ## They have nice ways of handling the log2 which I should consider
     converted_counts <- NULL
     if (convert != "raw") {
-        converted_counts <- convert_counts(count_table, convert=convert, annotations=annotations, fasta=fasta, entry_type=entry_type)
+        converted_counts <- convert_counts(count_table, convert=convert, annotations=annotations, fasta=fasta, entry_type=entry_type, ...)
         count_table <- converted_counts[["count_table"]]
         convert_performed <- convert
     }
@@ -148,8 +148,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     ## Step 5: Batch correction
     batched_counts <- NULL
     if (batch != "raw") {
-        ## batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
-        tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design))
+        tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design, ...))
         if (class(tmp_counts) == 'try-error') {
             warning("The batch_counts called failed.  Returning non-batch reduced data.")
             batched_counts <- NULL

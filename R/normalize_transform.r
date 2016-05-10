@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Apr 25 14:57:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 12:20:04 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simple transformation of a count table (log2)
 #'
@@ -15,7 +15,8 @@
 #' }
 #' @export
 transform_counts <- function(count_table, transform="raw",
-                             base=NULL) {
+                             base=NULL, ...) {
+    arglist <- list(...)
     ## Short circuit this if we are going with raw data.
     if (transform == "raw") {
         libsize <- colSums(count_table)
@@ -49,7 +50,9 @@ transform_counts <- function(count_table, transform="raw",
 ")
     }
     libsize <- colSums(count_table)
-    counts <- list(count_table=count_table, libsize=libsize)
+    counts <- list(
+        "count_table" = count_table,
+        "libsize" = libsize)
     return(counts)
 }
 

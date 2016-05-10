@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 11:37:48 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 12:21:43 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
 #'
@@ -58,9 +58,10 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #' sva_batch <- batch_counts(table, design, batch='sva')
 #' }
 #' @export
-batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2=NULL, noscale=TRUE, low_to_zero=FALSE, ...) {
-    batches <- as.factor(design[, batch1])
-    conditions <- as.factor(design[, "condition"])
+batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2=NULL, noscale=TRUE, low_to_zero=TRUE, ...) {
+    arglist <- list(...)
+    batches <- as.factor(design[[batch1]])
+    conditions <- as.factor(design[["condition"]])
 
     num_low <- sum(count_table < 1 & count_table > 0)
     if (num_low > 0) {
@@ -80,7 +81,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
             message("batch_counts: Using limma's removeBatchEffect to remove batch effect.")
             count_table <- limma::removeBatchEffect(count_table, batch=batches)
         } else {
-            batches2 <- as.factor(design[, batch2])
+            batches2 <- as.factor(design[[batch2]])
             count_table <- limma::removeBatchEffect(count_table, batch=batches, batch2=batches2)
         }
     } else if (batch == 'limmaresid') {
@@ -173,6 +174,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     num_low <- sum(count_table < 0)
     if (num_low > 0) {
         message(paste0("The number of elements which are < 0 after batch correction is: ", num_low))
+        message(paste0("The variable low_to_zero sets whether to change <0 values to 0 and is: ", low_to_zero))
         if (isTRUE(low_to_zero)) {
             count_table[count_table < 0] <- 0
         }

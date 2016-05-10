@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Apr 25 14:54:58 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 12:19:33 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a cpm/rpkm/whatever transformation of a count table.
 #'
@@ -25,6 +25,7 @@
 #' }
 #' @export
 convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pattern='TA', entry_type='gene', ...) {
+    arglist <- list(...)
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         count_table <- Biobase::exprs(data$expressionset)
@@ -59,8 +60,11 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
     return(counts)
 }
 
-#'   Express a data frame of counts as reads per pattern per
+#' Express a data frame of counts as reads per pattern per
 #' million(library).
+#'
+#' This uses a sequence pattern rather than length to normalize sequence.  It is essentially rpkm
+#' but fancy pants.
 #'
 #' @param counts read count matrix
 #' @param pattern pattern to search against.  Defaults to 'TA'
@@ -74,7 +78,9 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
 #' cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
 #' }
 #' @export
-divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff", entry_type="gene") {
+divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff",
+                       entry_type="gene", ...) {
+    arglist <- list(...)
     if (!file.exists(fasta)) {
         compressed_fasta <- paste0(fasta, '.xz')
         system(paste0("xz -d ", compressed_fasta))

@@ -6,7 +6,7 @@
 million(library).}
 \usage{
 divide_seq(counts, pattern = "TA", fasta = "testme.fasta",
-  gff = "testme.gff", entry_type = "gene")
+  gff = "testme.gff", entry_type = "gene", ...)
 }
 \arguments{
 \item{counts}{read count matrix}
@@ -23,8 +23,8 @@ divide_seq(counts, pattern = "TA", fasta = "testme.fasta",
 The 'RPseqM' counts
 }
 \description{
-Express a data frame of counts as reads per pattern per
-million(library).
+This uses a sequence pattern rather than length to normalize sequence.  It is essentially rpkm
+but fancy pants.
 }
 \examples{
 \dontrun{

@@ -5,7 +5,7 @@
 \title{Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.}
 \usage{
 batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
-  batch2 = NULL, noscale = TRUE, ...)
+  batch2 = NULL, noscale = TRUE, low_to_zero = TRUE, ...)
 }
 \arguments{
 \item{count_table}{Matrix of (pseudo)counts.}
@@ -19,6 +19,8 @@ batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
 \item{batch2}{Column in the design table describing the second covariant to remove (only used by limma at the moment).}
 
 \item{noscale}{Used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.}
+
+\item{low_to_zero}{Set low values to an explicit 0?}
 
 \item{...}{More options for you!}
 }
