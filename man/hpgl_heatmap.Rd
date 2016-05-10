@@ -4,21 +4,24 @@
 \alias{hpgl_heatmap}
 \title{Make a heatmap.3 plot, does the work for hpgl_disheat and hpgl_corheat.}
 \usage{
-hpgl_heatmap(data, colors = NULL, design = NULL, method = "pearson",
-  names = NULL, type = "correlation", row = "batch", title = NULL, ...)
+hpgl_heatmap(expt_data, expt_colors = NULL, expt_design = NULL,
+  method = "pearson", expt_names = NULL, type = "correlation",
+  batch_row = "batch", title = NULL, ...)
 }
 \arguments{
-\item{data}{Dataframe, expt, or expressionset to work with.}
+\item{expt_data}{Dataframe, expt, or expressionset to work with.}
 
-\item{colors}{Color scheme for the samples.}
+\item{expt_colors}{Color scheme for the samples.}
 
-\item{design}{Design matrix describing the experiment vis a vis conditions and batches.}
+\item{expt_design}{Design matrix describing the experiment vis a vis conditions and batches.}
 
 \item{method}{Distance or correlation metric to use.}
 
-\item{names}{Alternate names to use for the samples.}
+\item{expt_names}{Alternate names to use for the samples.}
 
 \item{type}{Defines the use of correlation, distance, or sample heatmap.}
+
+\item{batch_row}{Name of the design row used for 'batch' column colors.}
 
 \item{title}{Title for the plot.}
 

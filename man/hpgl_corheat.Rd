@@ -4,19 +4,22 @@
 \alias{hpgl_corheat}
 \title{Make a heatmap.3 description of the correlation between samples.}
 \usage{
-hpgl_corheat(data, colors = NULL, design = NULL, method = "pearson",
-  names = NULL, title = NULL, ...)
+hpgl_corheat(expt_data, expt_colors = NULL, expt_design = NULL,
+  method = "pearson", expt_names = NULL, batch_row = "batch",
+  title = NULL, ...)
 }
 \arguments{
-\item{data}{Dataframe, expt, or expressionset to work with.}
+\item{expt_data}{Dataframe, expt, or expressionset to work with.}
 
-\item{colors}{Color scheme for the samples, not needed if this is an expt.}
+\item{expt_colors}{Color scheme for the samples, not needed if this is an expt.}
 
-\item{design}{Design matrix describing the experiment, not needed if this is an expt.}
+\item{expt_design}{Design matrix describing the experiment, not needed if this is an expt.}
 
 \item{method}{Correlation statistic to use. (pearson, spearman, kendall, robust).}
 
-\item{names}{Alternate names to use for the samples.}
+\item{expt_names}{Alternate names to use for the samples.}
+
+\item{batch_row}{Name of the design row used for 'batch' column colors.}
 
 \item{title}{Title for the plot.}
 

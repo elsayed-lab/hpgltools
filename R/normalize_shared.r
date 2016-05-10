@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May  3 11:54:50 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 11:34:25 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -130,11 +130,22 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     converted_counts <- NULL
     if (convert != "raw") {
         converted_counts <- convert_counts(count_table, convert=convert, annotations=annotations, fasta=fasta, entry_type=entry_type)
-        count_table <- converted_counts$count_table
+        count_table <- converted_counts[["count_table"]]
         convert_performed <- convert
     }
 
-    ## Step 4: Batch correction
+    ## Step 4: Transformation
+    ## Finally, this considers whether to log2 the data or no
+    transformed_counts <- NULL
+    if (transform != "raw") {
+        message(paste0("Applying: ", transform, " transformation."))
+        transformed_counts <- transform_counts(count_table, transform=transform, ...)
+        ##transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
+        count_table <- transformed_counts[["count_table"]]
+        transform_performed <- transform
+    }
+
+    ## Step 5: Batch correction
     batched_counts <- NULL
     if (batch != "raw") {
         ## batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
@@ -148,17 +159,6 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
             batch_performed <- batch
             count_table <- batched_counts[["count_table"]]
         }
-    }
-
-    ## Step 5: Transformation
-    ## Finally, this considers whether to log2 the data or no
-    transformed_counts <- NULL
-    if (transform != "raw") {
-        message(paste0("Applying: ", transform, " transformation."))
-        transformed_counts <- transform_counts(count_table, transform=transform, ...)
-        ##transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
-        count_table <- transformed_counts[["count_table"]]
-        transform_performed <- transform
     }
 
     ## This list provides the list of operations performed on the data in order they were done.

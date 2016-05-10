@@ -4,19 +4,22 @@
 \alias{hpgl_disheat}
 \title{Make a heatmap.3 description of the distances (euclidean by default) between samples.}
 \usage{
-hpgl_disheat(data, colors = NULL, design = NULL, method = "euclidean",
-  names = NULL, title = NULL, ...)
+hpgl_disheat(expt_data, expt_colors = NULL, expt_design = NULL,
+  method = "euclidean", expt_names = NULL, batch_row = "batch",
+  title = NULL, ...)
 }
 \arguments{
-\item{data}{Dataframe, expt, or expressionset to work with.}
+\item{expt_data}{Dataframe, expt, or expressionset to work with.}
 
-\item{colors}{Color scheme (not needed if an expt is provided).}
+\item{expt_colors}{Color scheme (not needed if an expt is provided).}
 
-\item{design}{Design matrix (not needed if an expt is provided).}
+\item{expt_design}{Design matrix (not needed if an expt is provided).}
 
 \item{method}{Distance metric to use.}
 
-\item{names}{Alternate names to use for the samples.}
+\item{expt_names}{Alternate names to use for the samples.}
+
+\item{batch_row}{Name of the design row used for 'batch' column colors.}
 
 \item{title}{Title for the plot.}
 
