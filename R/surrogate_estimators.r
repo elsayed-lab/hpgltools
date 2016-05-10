@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May  9 00:02:29 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 00:30:45 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -209,9 +209,10 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
 #' @param expt Experiment containing a design and other information.
 #' @param extra_factors Character list of extra factors which may be included in the final plot of
 #'     the data.
+#' @param do_catplots Include the catplots?  They don't make a lot of sense yet, so probably no.
 #' @return List of the results.
 #' @export
-compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
+compare_surrogate_estimates <- function(expt, extra_factors=NULL, do_catplots=FALSE) {
     design <- expt[["design"]]
     pca_plots <- list()
     pca_plots[["null"]] <- hpgl_pca(expt)[["plot"]]
@@ -302,30 +303,31 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL) {
         modified_fit <- limma::eBayes(limma_fit)
         tstats[[adjust]] <- abs(modified_fit[["t"]][, 2])
         ##names(tstats[[counter]]) <- as.character(1:dim(data)[1])
-        if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-            ## ffpe has some requirements which do not install all the time.
-            autoloads_github()
-            require.auto("ffpe")
-        }
-        if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-            catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[adjust]]), -rank(tstats[["null"]]), maxrank=1000, make.plot=TRUE)
-        } else {
-            catplots[[counter]] <- NULL
-        }
-
+        catplots_together <- NULL
+        if (isTRUE(do_catplots)) {
+            if (!isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+                ## ffpe has some requirements which do not install all the time.
+                autoloads_github()
+                require.auto("ffpe")
+            }
+            if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+                catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[adjust]]), -rank(tstats[["null"]]), maxrank=1000, make.plot=TRUE)
+            } else {
+                catplots[[counter]] <- NULL
+            }
+            plot(catplots[["pca"]], ylim=c(0, 1), col="black",
+                 lwd=3, type="l", xlab="Rank",
+                 ylab="Concordance between study and different methods.")
+            lines(catplots[["sva_sup"]], col="red", lwd=3, lty=2)
+            lines(catplots[["sva_unsup"]], col="blue", lwd=3)
+            lines(catplots[["ruv_sup"]], col="green", lwd=3, lty=3)
+            lines(catplots[["ruv_resid"]], col="orange", lwd=3)
+            lines(catplots[["ruv_emp"]], col="purple", lwd=3)
+            legend(200, 0.5, legend=c("some stuff about methods used."), lty=c(1,2,1,3,1), lwd=3)
+            catplot_together <- grDevices::recordPlot()
+            newpar <- par(oldpar)
+        } ## End checking whether to do catplots
     }
-
-    plot(catplots[["pca"]], ylim=c(0, 1), col="black",
-         lwd=3, type="l", xlab="Rank",
-         ylab="Concordance between study and different methods.")
-    lines(catplots[["sva_sup"]], col="red", lwd=3, lty=2)
-    lines(catplots[["sva_unsup"]], col="blue", lwd=3)
-    lines(catplots[["ruv_sup"]], col="green", lwd=3, lty=3)
-    lines(catplots[["ruv_resid"]], col="orange", lwd=3)
-    lines(catplots[["ruv_emp"]], col="purple", lwd=3)
-    legend(200, 0.5, legend=c("some stuff about methods used."), lty=c(1,2,1,3,1), lwd=3)
-    catplot_together <- grDevices::recordPlot()
-    newpar <- par(oldpar)
 
     ret <- list(
         "pca_adjust" = pca_adjust,
