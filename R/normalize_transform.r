@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 12:20:04 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed May 11 15:39:43 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simple transformation of a count table (log2)
 #'
@@ -56,3 +56,4 @@ transform_counts <- function(count_table, transform="raw",
     return(counts)
 }
 
+## EOF

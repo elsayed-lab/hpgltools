@@ -3,15 +3,10 @@ library(cbcbSEQ)
 library(testthat)
 library(hpgltools)
 context("Test hpgltools and cbcbSEQ")
-require.auto("pasilla")
 library(pasilla)
 data(pasillaGenes)
 
-## WTF why does travis give me this:
-## Error in loadNamespace(name) : there is no package called 'cbcbSEQ'
-## The damn library call is just above!
-
-## Load the pasilla data set
+## This section is copy/pasted to all of these tests, that is dumb.
 message("Loading pasilla, setting up count tables.")
 datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
 ## Load the counts and drop super-low counts genes
@@ -33,9 +28,6 @@ pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
 cbcb_data = as.matrix(counts)
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
 hpgl_data = Biobase::exprs(pasilla_expt$expressionset)
-test_that("Does data from an expt equal a raw dataframe?", {
-    expect_equal(cbcb_data, hpgl_data)
-})
 
 ## Check that normalization tools work similarly
 message("Testing quantile raw normalization.")
@@ -71,9 +63,9 @@ test_that("Are cpm conversions identical?", {
 message("Testing log2(quantile(cpm())) normalization using the cpm from voom()")
 cbcb_l2qcpm_data = cbcbSEQ::log2CPM(cbcb_quantile)
 cbcb_l2qcpm = cbcb_l2qcpm_data$y
-hpgl_l2qcpm_data = hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE)
+hpgl_l2qcpm_data = suppressMessages(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))
 hpgl_l2qcpm = hpgl_l2qcpm_data[["count_table"]]
-hpgl_l2qcpm_expt = normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE)
+hpgl_l2qcpm_expt = suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))
 hpgl_l2qcpm2 = Biobase::exprs(hpgl_l2qcpm_expt$expressionset)
 test_that("Are l2qcpm conversions/transformations identical using two codepaths?", {
     expect_equal(cbcb_l2qcpm, hpgl_l2qcpm)
@@ -94,7 +86,7 @@ test_that("Do the PCA invocations provide the same results?", {
 })
 
 ## invocation of batch correction
-message("Testing batch correction results using modified combat.")
+##message("Testing batch correction results using modified combat.")
 ## sva no longer has a function 'design.mat'
 ##cbcb_batch = cbcbSEQ::combatMod(cbcb_l2qcpm, batch=design$libType, mod=design$condition, noScale=TRUE)
 ##hpgl_batch_expt = normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", filter_low=FALSE)
@@ -119,10 +111,10 @@ test_that("In preparing for voom(), are the library sizes the same?", {
 message("Testing different methods of invoking voom, with/without cpm/log2 converted/transformed data.")
 condition = design$condition
 test_model = model.matrix(~condition)
-cbcb_voom = cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize, plot=TRUE)
-hpgl_voom = cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize, plot=TRUE)
-hpgl_voom2 = hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
-hpgl_voom3 = hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE)
+cbcb_voom = cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize)
+hpgl_voom = cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize)
+hpgl_voom2 = suppressMessages(hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE))
+hpgl_voom3 = suppressMessages(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))
 
 message("I can't test cbcb_voom vs. hpgl_voom3 because I set the row/colnames.")
 test_that("Do different voom() invocations end with the same data?", {
@@ -139,8 +131,10 @@ message("Test the final results from limma by invoking it through different code
 cbcb_fit = limma::lmFit(cbcb_voom)
 cbcb_eb = limma::eBayes(cbcb_fit)
 cbcb_top = limma::topTable(cbcb_eb, number=nrow(cbcb_eb))
-hpgl_toptables = hpgltools::limma_pairwise(hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize)
+hpgl_toptables = suppressMessages(hpgltools::limma_pairwise(hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize))
 hpgl_top = hpgl_toptables$all_tables
 test_that("Limma results.", {
     expect_equal(cbcb_top, hpgl_top)
 })
+
+message("Finished tests in 05cbcbseq.")

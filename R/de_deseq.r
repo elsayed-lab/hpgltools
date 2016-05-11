@@ -1,4 +1,4 @@
-## Time-stamp: <Wed May  4 00:51:49 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed May 11 15:30:31 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot out 2 coefficients with respect to one another from deseq2.
 #'

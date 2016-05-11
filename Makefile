@@ -1,7 +1,7 @@
 VERSION=2016.02
 export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
-all: clean prereq document reference check build install test
+all: clean prereq document reference check build test
 
 install:
 	echo "Performing R CMD INSTALL hpgltools"
@@ -20,7 +20,7 @@ build:
 	echo "Performing build with R CMD build hpgltools"
 	cd ../ && R CMD build hpgltools && cd hpgltools
 
-test:
+test: install
 	echo "Running run_tests.R"
 	./run_tests.R
 

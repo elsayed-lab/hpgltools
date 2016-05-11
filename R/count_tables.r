@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May  5 17:58:04 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed May 11 14:08:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -286,6 +286,7 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
     expt[["conditions"]] <- as.factor(sample_definitions[, "condition"])
     expt[["batches"]] <- as.factor(sample_definitions[, "batch"])
     expt[["original_libsize"]] <- colSums(Biobase::exprs(experiment))
+    expt[["libsize"]] <- expt[["original_libsize"]]
     expt[["colors"]] <- chosen_colors
     if (!is.null(savefile)) {
         save(list = c("expt"), file=paste(savefile, ".Rdata", sep=""))

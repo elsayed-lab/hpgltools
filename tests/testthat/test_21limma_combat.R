@@ -1,14 +1,10 @@
 library(testthat)
 library(hpgltools)
 context("Test usability of limma")
-require.auto("pasilla")
-require.auto("edgeR")
-require.auto("kokrah/cbcbSEQ")
-
-context("Testing limma usage.")
 
 message("Loading pasilla, setting up count tables.")
 message("Taking this section directly from the cbcbSEQ vignette.")
+## This section is copy/pasted to all of these tests, that is dumb.
 datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
 counts = read.table(datafile, header=TRUE, row.names=1)
 counts = counts[rowSums(counts) > ncol(counts), ]
@@ -47,7 +43,7 @@ cbcb_actual_vignette_result <- c(30.97, 18.65, 14.69, 12.65, 12.09, 10.94)  ## T
 test_that("Does the post-batch correction PCA give the same result?", {
     expect_equal(cbcb_almost_vignette_result, as.numeric(cbcb_res$propVar))
 })
-cbcb_v <- cbcbSEQ::voomMod(cbcb_hpgl_combat, model.matrix(~design$condition), lib.size=cbcb_libsize, plot=FALSE)
+cbcb_v <- cbcbSEQ::voomMod(cbcb_hpgl_combat, model.matrix(~design$condition), lib.size=cbcb_libsize)
 ## It looks to me like the voomMod function is missing a is.na() check and so the lowess() function is failing.
 hpgl_v <- hpgl_voom(cbcb_hpgl_combat, model=model.matrix(~design$condition), libsize=cbcb_libsize, logged=TRUE, converted=TRUE)
 ## Taking the first column of the E slot in in v
@@ -72,21 +68,21 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform log2/cpm/quantile/combatMod normalization
-hpgl_norm <- normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm")
+hpgl_norm <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))
 hpgl_qcpmcounts <- Biobase::exprs(hpgl_norm$expressionset)
-hpgl_qcpm_combat_counts <- normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod")
+hpgl_qcpm_combat_counts <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod"))
 test_that("Do cbcbSEQ and hpgltools agree on the definition of log2(quantile(cpm(counts)))?", {
     expect_equal(cbcb_qcpmcounts, hpgl_qcpmcounts)
 })
 
-hpgl_qcpmcombat <- normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", low_to_zero=FALSE)
+hpgl_qcpmcombat <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", low_to_zero=FALSE))
 hpgl_combat <- Biobase::exprs(hpgl_qcpmcombat$expressionset)
 test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts))))?", {
     expect_equal(cbcb_hpgl_combat, hpgl_combat)
 })
 
 message("If we made it this far, then the inputs to limma should agree.")
-hpgl_limma_result <- limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=TRUE)
+hpgl_limma_result <- suppressMessages(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=TRUE))
 hpgl_voom <- hpgl_limma_result$voom_result
 hpgl_fit <- hpgl_limma_result$fit
 hpgl_eb <- hpgl_limma_result$pairwise_comparisons
@@ -122,4 +118,4 @@ test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
     expect_equal(cbcb_table, hpgl_table)
 })
 
-message("YAY! Finished testing limma with combat!")
+message("Finished tests in 21limma_combat.")
