@@ -3,10 +3,9 @@ library(hpgltools)
 library(pasilla)
 data(pasillaGenes)
 
-context("Test data loading.")
+context("Does pasilla load into hpgltools?")
 
 ## This section is copy/pasted to all of these tests, that is dumb.
-message("Loading pasilla, setting up count tables.")
 datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
 ## Load the counts and drop super-low counts genes
 counts = read.table(datafile, header=TRUE, row.names=1)
@@ -22,7 +21,6 @@ colnames(metadata) = c("condition", "batch")
 metadata$sampleid = rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-message("Setting up an expt class to contain the pasilla data and metadata.")
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
 count_data = as.matrix(counts)
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
@@ -31,6 +29,7 @@ test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(count_data, hpgl_data)
 })
 
+## Test that the expt has a design which makes sense.
 known_samples <- c("untreated1","untreated2","untreated3","untreated4","treated1","treated2","treated3")
 expt_samples <- as.character(pasilla_expt[["design"]][["sampleid"]])
 known_conditions <- c("untreated","untreated","untreated","untreated","treated","treated","treated")
@@ -50,4 +49,3 @@ test_that("Are the library sizes intact?", {
     expect_equal(known_libsizes, expt_libsizes)
 })
 
-message("Finished tests in 01_load_data.")

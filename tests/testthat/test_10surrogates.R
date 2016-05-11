@@ -1,8 +1,9 @@
 library(testthat)
 library(hpgltools)
-context("Testing surrogate testing.")
 library(pasilla)
 data(pasillaGenes)
+
+context("Do surrogate estimators provide expected outputs?")
 
 ## This section is copy/pasted to all of these tests, that is dumb.
 datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
@@ -19,11 +20,9 @@ metadata$Sample.id = rownames(metadata)
 
 counts <- counts[rowSums(counts) > ncol(counts),]
 
-message("Setting up an expt class to contain the pasilla data and metadata.")
 pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
 
 pasilla_surrogates <- suppressMessages(compare_surrogate_estimates(pasilla_expt))
-
 pca_char_adjust <- as.numeric(c("-0.108919503928491", "-0.570855719628606",
                      "0.413293224481248", "0.293317999343559",
                      "-0.527145619820086", "0.284623554215443",
@@ -33,6 +32,3 @@ test_that("Does the compare_surrogate stuff work?", {
                  as.numeric(as.character(pasilla_surrogates[["pca_adjust"]][["model_adjust"]])),
                  tolerance = 0.0001)
 })
-
-message("Hey, write more tests here.")
-message("Finished tests in 10surrogates.")

@@ -2,12 +2,12 @@ require.auto("kokrah/cbcbSEQ")
 library(cbcbSEQ)
 library(testthat)
 library(hpgltools)
-context("Test hpgltools and cbcbSEQ")
 library(pasilla)
 data(pasillaGenes)
 
+context("Compare cbcbSEQ output to hpgltools.")
+
 ## This section is copy/pasted to all of these tests, that is dumb.
-message("Loading pasilla, setting up count tables.")
 datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
 ## Load the counts and drop super-low counts genes
 counts = read.table(datafile, header=TRUE, row.names=1)
@@ -23,14 +23,12 @@ colnames(metadata) = c("condition", "batch")
 metadata$sampleid = rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-message("Setting up an expt class to contain the pasilla data and metadata.")
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
 cbcb_data = as.matrix(counts)
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
 hpgl_data = Biobase::exprs(pasilla_expt$expressionset)
 
 ## Check that normalization tools work similarly
-message("Testing quantile raw normalization.")
 cbcb_quantile = cbcbSEQ::qNorm(cbcb_data)
 hpgl_quantile_data = hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE, verbose=TRUE)
 hpgl_quantile = hpgl_quantile_data[["count_table"]]
@@ -39,7 +37,6 @@ test_that("Are the quantile normalizations identical?", {
 })
 
 ## Check that quant+cpm are the same
-message("Testing quantile(cpm()) normalization using edgeR's cpm().")
 cbcb_qcpm = cbcbSEQ::qNorm(cbcb_data)
 library(edgeR)
 ## I don't know how to call cpm without using a library call first.
@@ -53,14 +50,12 @@ test_that("Are quantiles identical?", {
 })
 
 hpgl_qcpm = hpgl_norm(pasilla_expt, norm="quant", convert="edgecpm", filter_low=FALSE, verbose=TRUE)
-##hpgl_qcpm = hpgl_qcpm$final_counts$count_table
 hpgl_qcpm = hpgl_qcpm$count_table
 test_that("Are cpm conversions identical?", {
     expect_equal(cbcb_qcpm, hpgl_qcpm)
 })
 
 ## log2/cpm that
-message("Testing log2(quantile(cpm())) normalization using the cpm from voom()")
 cbcb_l2qcpm_data = cbcbSEQ::log2CPM(cbcb_quantile)
 cbcb_l2qcpm = cbcb_l2qcpm_data$y
 hpgl_l2qcpm_data = suppressMessages(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))
@@ -73,7 +68,6 @@ test_that("Are l2qcpm conversions/transformations identical using two codepaths?
 })
 
 ## Check that PCA invocations are similar
-message("Testing PCA invocations.")
 cbcb_svd = cbcbSEQ::makeSVD(cbcb_l2qcpm)
 hpgl_pca_info = hpgl_pca(hpgl_l2qcpm_expt)
 hpgl_svd = hpgl_pca_info$pca
@@ -99,8 +93,7 @@ test_that("Do the PCA invocations provide the same results?", {
 ## This is a peculiar thing, the cbcbSEQ log2CPM() returns the normalized libsizes rather than those following log2() transformation.
 ## It then goes on to call voom() with this libsize rather than the log2().
 ## As a result, my normalization function is now keeping a copy of the libsizes and count tables from beginning to end
-## to ensure that this is still accessible when required.\
-message("Testing that the libsize input to voom is identical.")
+## to ensure that this is still accessible when required.
 cbcb_libsize = cbcb_l2qcpm_data$lib.size
 hpgl_libsize = hpgl_l2qcpm_data[["intermediate_counts"]][["normalization"]][["libsize"]]
 test_that("In preparing for voom(), are the library sizes the same?", {
@@ -108,7 +101,6 @@ test_that("In preparing for voom(), are the library sizes the same?", {
 })
 
 ## Given that, lets try a voom() invocation and see what happens
-message("Testing different methods of invoking voom, with/without cpm/log2 converted/transformed data.")
 condition = design$condition
 test_model = model.matrix(~condition)
 cbcb_voom = cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize)
@@ -116,7 +108,6 @@ hpgl_voom = cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.si
 hpgl_voom2 = suppressMessages(hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE))
 hpgl_voom3 = suppressMessages(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))
 
-message("I can't test cbcb_voom vs. hpgl_voom3 because I set the row/colnames.")
 test_that("Do different voom() invocations end with the same data?", {
     expect_equal(cbcb_voom, hpgl_voom)
     expect_equal(cbcb_voom$E, hpgl_voom2$E)
@@ -127,7 +118,6 @@ test_that("Do different voom() invocations end with the same data?", {
 ## But checking manually shows them the same.
 ## expect_equal(cbcb_voom$weights, hpgl_voom$weights)
 
-message("Test the final results from limma by invoking it through different codepaths.")
 cbcb_fit = limma::lmFit(cbcb_voom)
 cbcb_eb = limma::eBayes(cbcb_fit)
 cbcb_top = limma::topTable(cbcb_eb, number=nrow(cbcb_eb))
@@ -136,5 +126,3 @@ hpgl_top = hpgl_toptables$all_tables
 test_that("Limma results.", {
     expect_equal(cbcb_top, hpgl_top)
 })
-
-message("Finished tests in 05cbcbseq.")

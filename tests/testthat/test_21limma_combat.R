@@ -1,9 +1,8 @@
 library(testthat)
 library(hpgltools)
-context("Test usability of limma")
 
-message("Loading pasilla, setting up count tables.")
-message("Taking this section directly from the cbcbSEQ vignette.")
+context("Does limma work with hpgltools?")
+
 ## This section is copy/pasted to all of these tests, that is dumb.
 datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
 counts = read.table(datafile, header=TRUE, row.names=1)
@@ -17,7 +16,7 @@ metadata = design
 colnames(metadata) = c("condition", "batch")
 metadata$Sample.id = rownames(metadata)
 
-message("Testing that hpgltools gets a similar result to cbcbSEQ using limma.")
+## Testing that hpgltools gets a similar result to cbcbSEQ using limma.
 library(cbcbSEQ)
 cbcb_qcounts <- cbcbSEQ::qNorm(counts)
 cbcb_cpm <- cbcbSEQ::log2CPM(cbcb_qcounts)
@@ -35,7 +34,8 @@ cbcb_libsize <- cbcb_cpm[["lib.size"]]
 cbcb_hpgl_combat <- hpgl_combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE)
 ## Ok, here is a point where the cbcbSEQ vignette does not agree with its output.
 ## the return of cbcbSEQ::combatMod (if it worked) is a variable containing only 'bayesdata', not a list of bayesdata and info.
-message("Test again that cbcbSEQ's principle components match these (since I dropped in a different implementation of combatMod.")
+
+## Test again that cbcbSEQ's principle components match these (since I dropped in a different implementation of combatMod.
 cbcb_svd <- cbcbSEQ::makeSVD(cbcb_hpgl_combat)
 cbcb_res <- cbcbSEQ::pcRes(cbcb_svd$v, cbcb_svd$d, design$condition, design$libType)
 cbcb_almost_vignette_result <- c(30.39, 18.56, 14.71, 12.92, 12.39, 11.03)  ## Taken from when I run the commands in the vignette.
@@ -59,7 +59,7 @@ cbcb_eb <- eBayes(cbcb_fit)
 cbcb_table <- topTable(cbcb_eb, coef=2, n=nrow(cbcb_v$E))
 
 ## Now create a hpgltools expt and try the same thing
-message("Setting up an expt class to contain the pasilla data and metadata.")
+## Setting up an expt class to contain the pasilla data and metadata.
 pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
 cbcb_data = as.matrix(counts)
 hpgl_data = Biobase::exprs(pasilla_expt$expressionset)
@@ -75,23 +75,27 @@ test_that("Do cbcbSEQ and hpgltools agree on the definition of log2(quantile(cpm
     expect_equal(cbcb_qcpmcounts, hpgl_qcpmcounts)
 })
 
+## Getting log2(combat(cpm(quantile(counts))))
 hpgl_qcpmcombat <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", low_to_zero=FALSE))
 hpgl_combat <- Biobase::exprs(hpgl_qcpmcombat$expressionset)
 test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts))))?", {
     expect_equal(cbcb_hpgl_combat, hpgl_combat)
 })
 
-message("If we made it this far, then the inputs to limma should agree.")
+
+## If we made it this far, then the inputs to limma should agree.
 hpgl_limma_result <- suppressMessages(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=TRUE))
 hpgl_voom <- hpgl_limma_result$voom_result
 hpgl_fit <- hpgl_limma_result$fit
 hpgl_eb <- hpgl_limma_result$pairwise_comparisons
 hpgl_table <- hpgl_limma_result$all_tables
-message("The order of operations in a limma analysis are: voom->fit->ebayes->table, test them in that order.")
-message("Keep in mind that I do not default to an intercept model, and I rename the columns of the coefficients to make them more readable.")
+
+## The order of operations in a limma analysis are: voom->fit->ebayes->table, test them in that order.
+## Keep in mind that I do not default to an intercept model, and I rename the columns of the coefficients to make them more readable.
 test_that("Do cbcbSEQ and hpgltools agree on the voom output?", {
     expect_equal(cbcb_v$E, hpgl_voom$E)
 })
+
 test_that("Do cbcbSEQ and hpgltools agree on the lmFit result?", {
     expect_equal(cbcb_fit$coefficients[[1]], hpgl_fit$coefficients[[1]])
     expect_equal(cbcb_fit$coefficients[[2]], hpgl_fit$coefficients[[2]])
@@ -103,7 +107,6 @@ test_that("Do cbcbSEQ and hpgltools agree on the lmFit result?", {
     expect_equal(cbcb_fit$pivot, hpgl_fit$pivot)
     expect_equal(cbcb_fit$rank, hpgl_fit$rank)
     expect_equal(cbcb_fit$Amean, hpgl_fit$Amean)
-    message("There are a couple more slots in these returns, but I think by now we get the point.")
 })
 
 test_that("Do cbcbSEQ and hpgltools agree on the eBayes result?", {
@@ -117,5 +120,3 @@ test_that("Do cbcbSEQ and hpgltools agree on the eBayes result?", {
 test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
     expect_equal(cbcb_table, hpgl_table)
 })
-
-message("Finished tests in 21limma_combat.")

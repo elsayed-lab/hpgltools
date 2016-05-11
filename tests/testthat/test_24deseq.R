@@ -1,6 +1,7 @@
 library(testthat)
 library(hpgltools)
-context("Test usability of DESeq2")
+
+context("Does DESeq2 work with hpgltools?")
 
 ## This section is copy/pasted to all of these tests, that is dumb.
 datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
@@ -15,7 +16,7 @@ metadata <- design
 colnames(metadata) <- c("condition", "batch")
 metadata$Sample.id <- rownames(metadata)
 
-message("Performing DESeq2 differential expression analysis as per the DESeq vignette.")
+## Performing DESeq2 differential expression analysis as per the DESeq vignette.
 summarized <- DESeq2::DESeqDataSetFromMatrix(countData=counts,
                                              colData=metadata,
                                              design=~ condition + batch)
@@ -27,7 +28,7 @@ deseq_result <- as.data.frame(DESeq2::results(deseq_run,
                                               contrast=c("condition", "treated", "untreated"),
                                               format="DataFrame"))
 
-message("Performing DESeq2 analysis using hpgltools.")
+## Performing DESeq2 analysis using hpgltools.
 pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
 hpgl_deseq <- suppressMessages(deseq2_pairwise(pasilla_expt, model_batch=TRUE))
 ## Note that running the all_pairwise family of functions results in arbitrarily chosen x/y which may be
@@ -39,6 +40,7 @@ hpgl_result$logFC <- (-1 * hpgl_result$logFC)
 hpgl_result_reordered <- hpgl_result[order(hpgl_result[["logFC"]]),]
 deseq_result_reordered <- deseq_result[order(deseq_result[["log2FoldChange"]]),]
 
+## Extract some columns from the results to compare
 hpgl_logfc <- hpgl_result_reordered$logFC
 deseq_logfc <- deseq_result_reordered$log2FoldChange
 hpgl_basemean <- hpgl_result_reordered$baseMean
@@ -48,6 +50,7 @@ deseq_stat <- deseq_result_reordered$stat
 test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise()?", {
           expect_equal(deseq_logfc, hpgl_logfc, tolerance=0.001)
           expect_equal(deseq_basemean, hpgl_basemean, tolerance=1)
+
 ### for reasons I have not yet figured out, this passes on my computer, but not on travis!
 ### in fact, it looks like travis gets a completely different stat column than I do at least
 ### for the set of rows which are printed as mismatches.  (Eg. row 22 travis sees -8.72 and -7.29
@@ -55,9 +58,9 @@ test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise()?
 ### Even stranger, the other columns agree!
 ###          expect_equal(deseq_stat, hpgl_stat, tolerance=0.1)
 })
-message("Printing the head of deseq_result.")
-print(head(deseq_result_reordered))
-message("Printing the head of the hpgl_result.")
-print(head(hpgl_result_reordered))
 
-message("Finished tests in 24deseq.")
+## Ok what in the flying hell, now they agree!?  I didn't change anything other than printing!!
+## message("Printing the head of deseq_result.")
+## print(head(deseq_result_reordered))
+## message("Printing the head of the hpgl_result.")
+## print(head(hpgl_result_reordered))
