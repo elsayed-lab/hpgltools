@@ -5,7 +5,7 @@ all: clean prereq document reference check build test
 
 install:
 	echo "Performing R CMD INSTALL hpgltools"
-	ls && cd ../ && R CMD INSTALL hpgltools && cd hpgltools
+	cd ../ && R CMD INSTALL hpgltools && cd hpgltools
 
 reference:
 	echo "Generating reference manual with R CMD Rd2pdf"
