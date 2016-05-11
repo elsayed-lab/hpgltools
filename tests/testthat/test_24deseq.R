@@ -3,17 +3,17 @@ library(hpgltools)
 context("Test usability of DESeq2")
 
 ## This section is copy/pasted to all of these tests, that is dumb.
-datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
-counts = read.table(datafile, header=TRUE, row.names=1)
-counts = counts[rowSums(counts) > ncol(counts),]
-design = data.frame(row.names=colnames(counts),
+datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
+counts <- read.table(datafile, header=TRUE, row.names=1)
+counts <- counts[rowSums(counts) > ncol(counts),]
+design <- data.frame(row.names=colnames(counts),
     condition=c("untreated","untreated","untreated",
         "untreated","treated","treated","treated"),
     libType=c("single-end","single-end","paired-end",
         "paired-end","single-end","paired-end","paired-end"))
-metadata = design
-colnames(metadata) = c("condition", "batch")
-metadata$Sample.id = rownames(metadata)
+metadata <- design
+colnames(metadata) <- c("condition", "batch")
+metadata$Sample.id <- rownames(metadata)
 
 message("Performing DESeq2 differential expression analysis as per the DESeq vignette.")
 summarized <- DESeq2::DESeqDataSetFromMatrix(countData=counts,
@@ -22,14 +22,13 @@ summarized <- DESeq2::DESeqDataSetFromMatrix(countData=counts,
 dataset <- suppressMessages(DESeq2::DESeqDataSet(se=summarized, design=~ condition + batch))
 deseq_sf <- suppressMessages(DESeq2::estimateSizeFactors(dataset))
 deseq_disp <- suppressMessages(DESeq2::estimateDispersions(deseq_sf))
-deseq_run = suppressMessages(DESeq2::nbinomWaldTest(deseq_disp))
+deseq_run <- suppressMessages(DESeq2::nbinomWaldTest(deseq_disp))
 deseq_result <- as.data.frame(DESeq2::results(deseq_run,
                                               contrast=c("condition", "treated", "untreated"),
                                               format="DataFrame"))
 
-
 message("Performing DESeq2 analysis using hpgltools.")
-pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
+pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
 hpgl_deseq <- suppressMessages(deseq_pairwise(pasilla_expt, model_batch=TRUE))
 ## Note that running the all_pairwise family of functions results in arbitrarily chosen x/y which may be
 ## the opposite of what you actually want.
