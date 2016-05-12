@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May  3 17:34:08 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 12 16:02:09 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' The simplest possible differential expression method.
 #'
@@ -11,6 +11,7 @@
 #'
 #' @param input Count table by sample.
 #' @param design Data frame of samples and conditions.
+#' @param force Force as input non-normalized data?
 #' @param ... Extra options passed to arglist.
 #' @return Df of pseudo-logFC, p-values, numerators, and denominators.
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
@@ -19,7 +20,7 @@
 #' stupid_de <- basic_pairwise(expt)
 #' }
 #' @export
-basic_pairwise <- function(input, design=NULL, ...) {
+basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     message("Starting basic pairwise comparison.")
     input_class <- class(input)[1]
     arglist <- list(...)
@@ -29,36 +30,29 @@ basic_pairwise <- function(input, design=NULL, ...) {
         conditions <- input[["conditions"]]
         batches <- input[["batches"]]
         data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
-        if (!is.null(input[["norm"]])) {
-            ## As I understand it, DESeq2 (and edgeR) fits a binomial distribution
-            ## and expects data as integer counts, not floating point or a log2 transformation
+        if (!is.null(input[["state"]])) {
             if (isTRUE(force)) {
-                warning("About to round the data, this is a pretty terrible thing to do")
-                warning("But if you, like me, want to see what happens when you put")
-                warning("non-standard data into deseq, then here you go.")
-                data <- round(data)
-        } else if (input[["norm"]][[1]] != "raw") {
-            message("DESeq2 demands raw data as input, reverting to the original expressionset.")
-            data <- Biobase::exprs(input[["original_expressionset"]])
-        } else if (!is.null(input[["transform"]]) & input[["transform"]] != "raw") {
-            if (input[["transform"]] == "log2") {
-                ##data = (2^data) - 1
-                message("Reverting to the pre-log2 transformed counts.")
-                data <- input[["normalized"]][["lowfiltered_counts"]]
+                warning("This function really does require some sort of
+ normalization to be applied to the data, but if you insist,
+ I will not mess with it.")
+            } else if (input[["state"]][["normalization"]] == "raw" &
+                       input[["state"]][["conversion"]] == "raw" &
+                       input[["state"]][["transform"]] == "raw") {
+                message("This basic pairwise function assumes log2, converted, normalized counts, normalizing now.")
+                input <- suppressMessages(normalize_expt(input, norm="quant", convert="cpm", transform="log2"))
+                data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+            } else if (input[["state"]][["transform"]] == "raw") {
+                message("This basic pairwise function assumes log2 counts, transforming now.")
+                data <- suppressMessages(transform_counts(data, transform="log2")[["count_table"]])
             } else {
-                message("Reverting to the original count table.")
-                data <- input[["normalized"]][["original_counts"]][["counts"]]
+                message("The data appears to have been at least transformed, leaving it alone.")
             }
-        } else {
-            message("The data should be suitable for deseq2.")
-            message("If deseq freaks out, check the state of the count table and ensure that it is in integer counts.")
-        }
-            ## End testing if normalization has been performed
+        } else {  ## There is no 'state' associated with this data.
+            message("Cannot tell if this data has been normalized, leaving it alone.")
         }
     } else {
         data <- as.data.frame(input)
     }
-    data <- convert_counts(data, convert="cpm")$count_table
     types <- levels(as.factor(conditions))
     num_conds <- length(types)
     ## These will be filled with num_conds columns and numRows(input) rows.
@@ -87,6 +81,7 @@ basic_pairwise <- function(input, design=NULL, ...) {
             variance_table <- cbind(variance_table, var)
         }
     } ## end creation of median and variance tables.
+
     rownames(median_table) <- rownames(data)
     rownames(variance_table) <- rownames(data)
     ## We have tables of the median values by condition
@@ -99,20 +94,16 @@ basic_pairwise <- function(input, design=NULL, ...) {
     column_list <- c()
     message("Basic step 2/3: Performing comparisons.")
     num_comparisons <- sum(1:lenminus)
+
     for (c in 1:lenminus) {
         c_name <- types[c]
         nextc <- c + 1
         for (d in nextc:length(types)) {
             num_done <- num_done + 1
             d_name <- types[d]
-            ## Actually, all the other tools do a log2 subtraction
-            ## so I think I will too
             message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons, ": Performing log2 subtraction: ", d_name, "_vs_", c_name))
-##            division <- data.frame(
-##                log2(median_table[, d] + 1) - log2(median_table[, c] + 1))
             division <- data.frame(
-                median_table[, d] / median_table[, c])
-            division <- log2(division)
+                median_table[, d] - median_table[, c])
             comparison_name <- paste0(d_name, "_vs_", c_name)
             column_list <- append(column_list, comparison_name)
             colnames(division) <- comparison_name
@@ -121,15 +112,7 @@ basic_pairwise <- function(input, design=NULL, ...) {
             ycols <- which(conditions == d_name)
             xdata <- as.data.frame(data[, xcols])
             ydata <- as.data.frame(data[, ycols])
-            ##t_p <- matrix(nrow=nrow(xdata), ncol=2)
-            ## I have read many many times how one should not do things as a for loop in R
-            ## This is a very simple task and yet it remains to me much clearer as a loop
-            ## than as an application of (m|l|v)apply and takes the same amount of time
-            ##get_p <- function(co) {
-            ##    res <- t.test(xdata[co, ], ydata[co, ])
-            ##    c(tstat=res[[1]], pval=res[[3]])
-            ##}
-            ##t_p = as.data.frame(do.call(rbind, lapply(1:nrow(xdata), get_p)))
+
             t_data <- vector("list", nrow(xdata))
             p_data <- vector("list", nrow(xdata))
             for (j in 1:nrow(xdata)) {
@@ -142,23 +125,19 @@ basic_pairwise <- function(input, design=NULL, ...) {
                     p_data[[j]] <- 1
                 }
             } ## Done calculating cheapo p-values
-            ##t_values[mapply(is.na, t_values)] <- 0
-            ##p_values[mapply(is.na, p_values)] <- 1
+
             if (num_done == 1) {
                 comparisons <- division
                 tvalues <- t_data
-                ##tvalues <- t_p$tstat.t
                 pvalues <- p_data
-                ##pvalues <- t_p$pval
             } else {
                 comparisons <- cbind(comparisons, division)
                 tvalues <- cbind(tvalues, t_data)
-                ##tvalues <- cbind(tvalues, t_p$tstat.t)
                 pvalues <- cbind(pvalues, p_data)
-                ##pvalues <- cbind(pvalues, t_p$pval)
             }
         } ## End for each d
-    }
+    }  ## End for each c
+
     ## Because of the way I made tvalues/pvalues into a list
     ## If only 1 comparison was performed, the resulting data structure never gets coerced into a data frame
     ## therefore I am performing this check which, if a single comparison was done, adds a second column,
@@ -178,6 +157,7 @@ basic_pairwise <- function(input, design=NULL, ...) {
     rownames(tvalues) <- rownames(data)
     rownames(pvalues) <- rownames(data)
     all_tables <- list()
+
     message("Basic step 3/3: Creating faux DE Tables.")
     for (e in 1:length(colnames(comparisons))) {
         colname <- colnames(comparisons)[[e]]
@@ -192,11 +172,10 @@ basic_pairwise <- function(input, design=NULL, ...) {
                                denominator_median=median_table[[denominator]],
                                numerator_var=variance_table[[numerator]],
                                denominator_var=variance_table[[denominator]],
-                               ##t=t(as.data.frame(t_column)),
                                t=t_column,
-                               ##p=t(as.data.frame(p_column)),
                                p=p_column,
                                logFC=fc_column)
+
         fc_table$numerator_median <- signif(x=fc_table$numerator_median, digits=4)
         fc_table$denominator_median <- signif(x=fc_table$denominator_median, digits=4)
         fc_table$numerator_var <- format(x=fc_table$numerator_var, digits=4, scientific=TRUE)

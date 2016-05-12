@@ -3,6 +3,8 @@ library(hpgltools)
 library(pasilla)
 data(pasillaGenes)
 
+context("Do the various ontology helper functions still work?")
+
 expected_term_result <- "adenyl ribonucleotide binding"
 actual_term_result <- as.character(goterm())
 expected_syn_result <- "mitochondrial inheritance"

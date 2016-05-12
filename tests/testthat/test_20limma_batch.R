@@ -1,7 +1,8 @@
 library(testthat)
 library(hpgltools)
+library(cbcbSEQ)
 
-context("Does limma with combat work with hpgltools?")
+context("Does limma work with hpgltools?")
 
 ## This section is copy/pasted to all of these tests, that is dumb.
 datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
@@ -17,43 +18,19 @@ colnames(metadata) = c("condition", "batch")
 metadata$Sample.id = rownames(metadata)
 
 ## Testing that hpgltools gets a similar result to cbcbSEQ using limma.
-library(cbcbSEQ)
 cbcb_qcounts <- cbcbSEQ::qNorm(counts)
 cbcb_cpm <- cbcbSEQ::log2CPM(cbcb_qcounts)
 cbcb_qcpmcounts <- as.matrix(cbcb_cpm[["y"]])
 cbcb_svd <- cbcbSEQ::makeSVD(cbcb_qcpmcounts)
 cbcb_res <- cbcbSEQ::pcRes(cbcb_svd$v, cbcb_svd$d, design$condition, design$libType)
-cbcb_vignette_result <- c(27.57, 24.66, 15.62, 12.15, 10.53, 9.46)
-test_that("Does cbcbSEQ give the same result for the initial pcRes call?", {
-    expect_equal(cbcb_vignette_result, as.numeric(cbcb_res$propVar))
-})
 
 cbcb_libsize <- cbcb_cpm[["lib.size"]]
 ## cbcb_combat <- cbcbSEQ::combatMod(cbcb_cpm, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE)
 ## oh yeah, cbcbSEQ's combatMod no longer works
-cbcb_hpgl_combat <- hpgl_combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE)
-## Ok, here is a point where the cbcbSEQ vignette does not agree with its output.
-## the return of cbcbSEQ::combatMod (if it worked) is a variable containing only 'bayesdata', not a list of bayesdata and info.
-
-## Test again that cbcbSEQ's principle components match these (since I dropped in a different implementation of combatMod.
-cbcb_svd <- cbcbSEQ::makeSVD(cbcb_hpgl_combat)
-cbcb_res <- cbcbSEQ::pcRes(cbcb_svd$v, cbcb_svd$d, design$condition, design$libType)
-cbcb_almost_vignette_result <- c(30.39, 18.56, 14.71, 12.92, 12.39, 11.03)  ## Taken from when I run the commands in the vignette.
-cbcb_actual_vignette_result <- c(30.97, 18.65, 14.69, 12.65, 12.09, 10.94)  ## Taken from cbcbSEQIntro.pdf
-test_that("Does the post-batch correction PCA give the same result?", {
-    expect_equal(cbcb_almost_vignette_result, as.numeric(cbcb_res$propVar))
-})
-cbcb_v <- cbcbSEQ::voomMod(cbcb_hpgl_combat, model.matrix(~design$condition), lib.size=cbcb_libsize)
+cbcb_v <- cbcbSEQ::voomMod(cbcb_qcpmcounts, model.matrix(~design$condition + design$libType), lib.size=cbcb_libsize)
 ## It looks to me like the voomMod function is missing a is.na() check and so the lowess() function is failing.
-hpgl_v <- hpgl_voom(cbcb_hpgl_combat, model=model.matrix(~design$condition), libsize=cbcb_libsize, logged=TRUE, converted=TRUE)
+hpgl_v <- hpgl_voom(cbcb_qcpmcounts, model=model.matrix(~design$condition + design$libType), libsize=cbcb_libsize, logged=TRUE, converted=TRUE)
 ## Taking the first column of the E slot in in v
-cbcb_almost_vignette_result <- c(2.968411, 3.028748, 3.265501, 2.858357, 2.838402, 3.178890, 2.713208)
-cbcb_actual_vignette_result <- c(2.9772407, 3.0375781, 3.259578, 2.852434, 2.847232, 3.1729673, 2.7072849)
-test_that("Does the cbcbSEQ voomMod() function give the same results as hpgl_voom()?", {
-    expect_equal(cbcb_v$E, hpgl_v$E) })
-test_that("Do they agree with my approximated vignette results?", {
-    expect_equal(as.numeric(head(cbcb_v$E, n=1)), cbcb_almost_vignette_result, tolerance=0.0001)
-})
 cbcb_fit <- lmFit(cbcb_v)
 cbcb_eb <- eBayes(cbcb_fit)
 cbcb_table <- topTable(cbcb_eb, coef=2, n=nrow(cbcb_v$E))
@@ -69,26 +46,15 @@ test_that("Does data from an expt equal a raw dataframe?", {
 
 ## Perform log2/cpm/quantile/combatMod normalization
 hpgl_norm <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))
-hpgl_qcpmcounts <- Biobase::exprs(hpgl_norm$expressionset)
-hpgl_qcpm_combat_counts <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod"))
-test_that("Do cbcbSEQ and hpgltools agree on the definition of log2(quantile(cpm(counts)))?", {
-    expect_equal(cbcb_qcpmcounts, hpgl_qcpmcounts)
-})
-
-## Getting log2(combat(cpm(quantile(counts))))
-hpgl_qcpmcombat <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", low_to_zero=FALSE))
-hpgl_combat <- Biobase::exprs(hpgl_qcpmcombat$expressionset)
-test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts))))?", {
-    expect_equal(cbcb_hpgl_combat, hpgl_combat)
-})
-
 
 ## If we made it this far, then the inputs to limma should agree.
-hpgl_limma_combat_result <- suppressMessages(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=TRUE))
-hpgl_voom <- hpgl_limma_combat_result$voom_result
-hpgl_fit <- hpgl_limma_combat_result$fit
-hpgl_eb <- hpgl_limma_combat_result$pairwise_comparisons
-hpgl_table <- hpgl_limma_combat_result$all_tables
+hpgl_limma_intercept <- suppressMessages(limma_pairwise(hpgl_norm, model_batch=TRUE, model_intercept=TRUE))
+hpgl_voom <- hpgl_limma_intercept$voom_result
+hpgl_fit <- hpgl_limma_intercept$fit
+hpgl_eb <- hpgl_limma_intercept$pairwise_comparisons
+hpgl_table <- hpgl_limma_intercept$all_tables
+
+hpgl_limma <- suppressMessages(limma_pairwise(hpgl_norm, model_batch=TRUE))
 
 ## The order of operations in a limma analysis are: voom->fit->ebayes->table, test them in that order.
 ## Keep in mind that I do not default to an intercept model, and I rename the columns of the coefficients to make them more readable.
@@ -117,8 +83,22 @@ test_that("Do cbcbSEQ and hpgltools agree on the eBayes result?", {
     message("The eBayes results include the previous fits and some more slots.  I only tested a few here.")
 })
 
+cbcb_result_reordered <- cbcb_table[order(cbcb_table[["logFC"]]),]
+hpgl_result_reordered <- hpgl_table[order(hpgl_table[["untreated"]]),]
+cbcb_logfc <- as.numeric(cbcb_result_reordered$logFC)
+hpgl_logfc <- as.numeric(hpgl_result_reordered$untreated)
+
 test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
-    expect_equal(cbcb_table, hpgl_table)
+    expect_equal(cbcb_logfc, hpgl_logfc)
 })
 
-save(list=ls(), file="de_limma_combat.rda")
+reordered <- hpgl_limma[["all_tables"]][["untreated_vs_treated"]]
+reordered <- reordered[order(reordered[["logFC"]]), ]
+test_that("Do the intercept model results equal those from cell means?", {
+    expect_equal(hpgl_voom$E, hpgl_limma$voom_result$E)
+    expect_equal(hpgl_fit$coefficients[[1]], hpgl_limma$fit$coefficients[[1]])
+    expect_equal(hpgl_eb$p.value[[1]], hpgl_limma$pairwise_comparisons$p.value[[1]])
+    expect_equal(as.numeric(hpgl_logfc), as.numeric(reordered$logFC), tolerance=0.1)
+})
+
+save(list=ls(), file="de_limma.rda")

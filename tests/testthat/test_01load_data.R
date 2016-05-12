@@ -14,8 +14,8 @@ counts = counts[rowSums(counts) > ncol(counts),]
 design = data.frame(row.names=colnames(counts),
     condition=c("untreated","untreated","untreated",
         "untreated","treated","treated","treated"),
-    libType=c("single-end","single-end","paired-end",
-        "paired-end","single-end","paired-end","paired-end"))
+    libType=c("single_end","single_end","paired_end",
+        "paired_end","single_end","paired_end","paired_end"))
 metadata = design
 colnames(metadata) = c("condition", "batch")
 metadata$sampleid = rownames(metadata)
@@ -34,7 +34,7 @@ known_samples <- c("untreated1","untreated2","untreated3","untreated4","treated1
 expt_samples <- as.character(pasilla_expt[["design"]][["sampleid"]])
 known_conditions <- c("untreated","untreated","untreated","untreated","treated","treated","treated")
 expt_conditions <- as.character(pasilla_expt[["design"]][["condition"]])
-known_batches <- c("single-end","single-end","paired-end","paired-end","single-end","paired-end","paired-end")
+known_batches <- c("single_end","single_end","paired_end","paired_end","single_end","paired_end","paired_end")
 expt_batches <-  as.character(pasilla_expt[["design"]][["batch"]])
 test_that("Is the experimental design maintained?", {
     expect_equal(known_samples, expt_samples)
@@ -48,4 +48,3 @@ expt_libsizes <- pasilla_expt[["libsize"]]
 test_that("Are the library sizes intact?", {
     expect_equal(known_libsizes, expt_libsizes)
 })
-

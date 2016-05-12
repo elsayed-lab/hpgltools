@@ -1,4 +1,4 @@
-## Time-stamp: <Wed May 11 15:30:31 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 12 11:06:04 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot out 2 coefficients with respect to one another from deseq2.
 #'
@@ -105,7 +105,7 @@ deseq_pairwise <- function(...) {
 #' }
 #' @export
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                            model_batch=NULL, annot_df=NULL, force=FALSE, ...) {
+                            model_batch=TRUE, annot_df=NULL, force=FALSE, ...) {
     arglist <- list(...)
     message("Starting DESeq2 pairwise comparisons.")
     input_class <- class(input)[1]

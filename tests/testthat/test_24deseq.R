@@ -10,8 +10,8 @@ counts <- counts[rowSums(counts) > ncol(counts),]
 design <- data.frame(row.names=colnames(counts),
     condition=c("untreated","untreated","untreated",
         "untreated","treated","treated","treated"),
-    libType=c("single-end","single-end","paired-end",
-        "paired-end","single-end","paired-end","paired-end"))
+    libType=c("single_end","single_end","paired_end",
+        "paired_end","single_end","paired_end","paired_end"))
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
 metadata$Sample.id <- rownames(metadata)
@@ -64,3 +64,5 @@ test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise()?
 ## print(head(deseq_result_reordered))
 ## message("Printing the head of the hpgl_result.")
 ## print(head(hpgl_result_reordered))
+
+save(list=ls(), file="de_deseq.rda")

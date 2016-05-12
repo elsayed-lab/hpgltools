@@ -1,4 +1,4 @@
-## Time-stamp: <Wed May  4 00:22:36 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 12 11:05:52 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot two coefficients with respect to one another from edgeR.
 #'
@@ -98,7 +98,7 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
 #' }
 #' @export
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                          model_batch=NULL, model_intercept=FALSE, alt_model=NULL,
+                          model_batch=TRUE, model_intercept=FALSE, alt_model=NULL,
                           extra_contrasts=NULL, annot_df=NULL, force=FALSE, ...) {
     message("Starting edgeR pairwise comparisons.")
     input_class <- class(input)[1]

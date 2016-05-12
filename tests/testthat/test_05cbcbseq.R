@@ -16,8 +16,8 @@ counts = counts[rowSums(counts) > ncol(counts),]
 design = data.frame(row.names=colnames(counts),
     condition=c("untreated","untreated","untreated",
         "untreated","treated","treated","treated"),
-    libType=c("single-end","single-end","paired-end",
-        "paired-end","single-end","paired-end","paired-end"))
+    libType=c("single_end","single_end","paired_end",
+        "paired_end","single_end","paired_end","paired_end"))
 metadata = design
 colnames(metadata) = c("condition", "batch")
 metadata$sampleid = rownames(metadata)

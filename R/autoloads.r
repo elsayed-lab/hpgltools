@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May  9 00:02:35 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 12 10:26:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
@@ -8,7 +8,6 @@
 #' http://sbamin.com/2012/11/05/tips-for-working-in-r-automatically-install-missing-package/
 #'
 #' @param lib String name of a library to check/install.
-#' @param github_path Github username/repository.
 #' @param update Update packages?
 #' @return 0 or 1, whether a package was installed or not.
 #' @seealso \link[BiocInstaller]{biocLite} \link{install.packages}
@@ -17,7 +16,7 @@
 #' require.auto("ggplot2")
 #' }
 #' @export
-require.auto <- function(lib, github_path=NULL, update=FALSE) {
+require.auto <- function(lib, update=FALSE) {
     count <- 0
     local({r <- getOption("repos")
            r["CRAN"] <- "http://cran.r-project.org"
@@ -25,6 +24,13 @@ require.auto <- function(lib, github_path=NULL, update=FALSE) {
        })
     if (isTRUE(update)) {
         update.packages(ask=FALSE)
+    }
+    github_path <- NULL
+    ## If there is a / in the library's name, assume it is a github path
+    split_lib <- strsplit(x=lib, split="/")[[1]]
+    if (length(split_lib) == 2) {
+        github_path <- lib
+        lib <- split_lib[[2]]
     }
     if (!isTRUE(lib %in% .packages(all.available=TRUE))) {
         ##eval(parse(text=paste("suppressPackageStartupMessages(require(", lib, "))", sep="")))
