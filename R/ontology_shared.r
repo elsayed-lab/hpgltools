@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 14:31:00 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 12 10:05:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' Extract more easily readable information from a GOTERM datum.
@@ -89,7 +89,7 @@ goterm <- function(go="GO:0032559") {
 #' ## > "mitochondrial inheritance"
 #' }
 #' @export
-gosyn <- function(go) {
+gosyn <- function(go="GO:0000001") {
     go <- as.character(go)
     gosn <- function(go) {
         go <- as.character(go)
@@ -118,7 +118,7 @@ gosyn <- function(go) {
 #' ## > "GO:0000141" "GO:0030482"
 #' }
 #' @export
-gosec <- function(go) {
+gosec <- function(go="GO:0032432") {
     gosc <- function(go) {
         go <- as.character(go)
         result <- ""
@@ -146,7 +146,7 @@ gosec <- function(go) {
 #' ## > same or opposite polarities and may be packed with different levels of tightness."
 #' }
 #' @export
-godef <- function(go) {
+godef <- function(go="GO:0032432") {
     go <- as.character(go)
     def <- function(id) {
         ## This call to AnnotationDbi might be wrong
@@ -173,7 +173,7 @@ godef <- function(go) {
 #' ## > "CC" "CC"
 #' }
 #' @export
-goont <- function(go) {
+goont <- function(go=c("GO:0032432", "GO:0032433")) {
     go <- as.character(go)
     ont <- function(id) {
         value <- try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[id])),
@@ -241,7 +241,7 @@ golev <- function(go) {
 #' ## > 3 4
 #' }
 #' @export
-golevel <- function(go) {
+golevel <- function(go=c("GO:0032559", "GO:0000001")) {
     mapply(golev, go)
 }
 

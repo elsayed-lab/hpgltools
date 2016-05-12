@@ -53,7 +53,13 @@ autoloads:
 	Rscript -e "library('hpgltools'); autoloads_all();"
 
 prereq:
-	Rscript -e "source('http://bioconductor.org/biocLite.R');\
-bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','kokrah/qsmooth');\
-for (req in bioc_prereq) { if (class(try(library(req))) == 'try-error') { biocLite(req) } };\
-" ;
+	Rscript -e "suppressMessages(source('http://bioconductor.org/biocLite.R'));\
+bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr');\
+for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocLite(req) } };\
+## hahaha looks like lisp!"
+
+update_bioc:
+	Rscript -e "source('http://bioconductor.org/biocLite.R'); biocLite(); biocLite('BiocUpgrade');"
+
+update:
+	Rscript -e "source('http://bioconductor.org/biocLite.R'); biocLite(); library(BiocInstaller); biocValid()"
