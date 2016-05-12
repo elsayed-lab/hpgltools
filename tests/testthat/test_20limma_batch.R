@@ -5,17 +5,17 @@ library(cbcbSEQ)
 context("Does limma work with hpgltools?")
 
 ## This section is copy/pasted to all of these tests, that is dumb.
-datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
-counts = read.table(datafile, header=TRUE, row.names=1)
-counts = counts[rowSums(counts) > ncol(counts), ]
-design = data.frame(row.names=colnames(counts),
+datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
+counts <- read.table(datafile, header=TRUE, row.names=1)
+counts <- counts[rowSums(counts) > ncol(counts), ]
+design <- data.frame(row.names=colnames(counts),
     condition=c("untreated","untreated","untreated",
         "untreated","treated","treated","treated"),
     libType=c("single_end","single_end","paired_end",
         "paired_end","single_end","paired_end","paired_end"))
-metadata = design
-colnames(metadata) = c("condition", "batch")
-metadata$Sample.id = rownames(metadata)
+metadata <- design
+colnames(metadata) <- c("condition", "batch")
+metadata$Sample.id <- rownames(metadata)
 
 ## Testing that hpgltools gets a similar result to cbcbSEQ using limma.
 cbcb_qcounts <- cbcbSEQ::qNorm(counts)
@@ -37,9 +37,9 @@ cbcb_table <- topTable(cbcb_eb, coef=2, n=nrow(cbcb_v$E))
 
 ## Now create a hpgltools expt and try the same thing
 ## Setting up an expt class to contain the pasilla data and metadata.
-pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
-cbcb_data = as.matrix(counts)
-hpgl_data = Biobase::exprs(pasilla_expt$expressionset)
+pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
+cbcb_data <- as.matrix(counts)
+hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(cbcb_data, hpgl_data)
 })

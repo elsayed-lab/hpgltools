@@ -7,16 +7,16 @@ context("Do surrogate estimators provide expected outputs?")
 
 ## This section is copy/pasted to all of these tests, that is dumb.
 datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
-counts = read.table(datafile, header=TRUE, row.names=1)
-counts = counts[rowSums(counts) > ncol(counts),]
-design = data.frame(row.names=colnames(counts),
+counts <- read.table(datafile, header=TRUE, row.names=1)
+counts <- counts[rowSums(counts) > ncol(counts),]
+design <- data.frame(row.names=colnames(counts),
     condition=c("untreated","untreated","untreated",
         "untreated","treated","treated","treated"),
     libType=c("single_end","single_end","paired_end",
         "paired_end","single_end","paired_end","paired_end"))
-metadata = design
-colnames(metadata) = c("condition", "batch")
-metadata$Sample.id = rownames(metadata)
+metadata <- design
+colnames(metadata) <- c("condition", "batch")
+metadata$Sample.id <- rownames(metadata)
 
 counts <- counts[rowSums(counts) > ncol(counts),]
 
@@ -30,5 +30,5 @@ pca_char_adjust <- as.numeric(c("-0.108919503928491", "-0.570855719628606",
 test_that("Does the compare_surrogate stuff work?", {
     expect_equal(pca_char_adjust,
                  as.numeric(as.character(pasilla_surrogates[["pca_adjust"]][["model_adjust"]])),
-                 tolerance = 0.0001)
+                 tolerance <- 0.0001)
 })

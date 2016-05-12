@@ -13,7 +13,22 @@ load("de_edger.rda", envir=edger)
 load("de_limma.rda", envir=limma)
 load("de_basic.rda", envir=basic)
 
-normalized_expt <- limma$hpgl_norm
+## This section is copy/pasted to all of these tests, that is dumb.
+datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
+counts <- read.table(datafile, header=TRUE, row.names=1)
+counts <- counts[rowSums(counts) > ncol(counts), ]
+design <- data.frame(row.names=colnames(counts),
+    condition=c("untreated","untreated","untreated",
+        "untreated","treated","treated","treated"),
+    libType=c("single_end","single_end","paired_end",
+        "paired_end","single_end","paired_end","paired_end"))
+metadata <- design
+colnames(metadata) <- c("condition", "batch")
+metadata$Sample.id <- rownames(metadata)
+
+pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
+normalized_expt <- normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm")
+
 hpgl_result <- suppressMessages(all_pairwise(normalized_expt, model_batch=TRUE))
 
 previous_deseq <- deseq$hpgl_deseq$all_tables[["untreated_vs_treated"]]
@@ -53,7 +68,7 @@ if (is.null(d) | is.null(e) | is.null(l) | is.null(b)) {
         expect_gt(ed, 0.75)
         expect_gt(lb, 0.88)
         expect_gt(eb, 0.83)
-        expect_gt(db, 0.72)
+        expect_gt(db, 0.68)
     })
     de_removed <- file.remove("de_deseq.rda")
     ed_removed <- file.remove("de_edger.rda")

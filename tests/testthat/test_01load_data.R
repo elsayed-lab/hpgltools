@@ -6,25 +6,25 @@ data(pasillaGenes)
 context("Does pasilla load into hpgltools?")
 
 ## This section is copy/pasted to all of these tests, that is dumb.
-datafile = system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
+datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
 ## Load the counts and drop super-low counts genes
-counts = read.table(datafile, header=TRUE, row.names=1)
-counts = counts[rowSums(counts) > ncol(counts),]
+counts <- read.table(datafile, header=TRUE, row.names=1)
+counts <- counts[rowSums(counts) > ncol(counts),]
 ## Set up a quick design to be used by cbcbSEQ and hpgltools
-design = data.frame(row.names=colnames(counts),
+design <- data.frame(row.names=colnames(counts),
     condition=c("untreated","untreated","untreated",
         "untreated","treated","treated","treated"),
     libType=c("single_end","single_end","paired_end",
         "paired_end","single_end","paired_end","paired_end"))
-metadata = design
-colnames(metadata) = c("condition", "batch")
-metadata$sampleid = rownames(metadata)
+metadata <- design
+colnames(metadata) <- c("condition", "batch")
+metadata$sampleid <- rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
-count_data = as.matrix(counts)
-pasilla_expt = create_expt(count_dataframe=counts, meta_dataframe=metadata)
-hpgl_data = Biobase::exprs(pasilla_expt$expressionset)
+pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
+count_data <- as.matrix(counts)
+pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
+hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(count_data, hpgl_data)
 })
