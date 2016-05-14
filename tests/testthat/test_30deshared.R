@@ -58,6 +58,6 @@ test_that("Are the comparisons between DE tools sufficiently similar?", {
     expect_gt(db, 0.68)
 })
 
-combined_table <- combine_de_tables(hpgl_result)
-sig_tables <- extract_significant_genes(combined_table, excel=NULL)
-sig_up_genes <- sig_tables$limma$ups
+##combined_table <- combine_de_tables(hpgl_result, excel=NULL)
+##sig_tables <- extract_significant_genes(combined_table, excel=NULL)
+##sig_up_genes <- sig_tables$limma$ups

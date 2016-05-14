@@ -1,4 +1,4 @@
-## Time-stamp: <Sat May 14 12:47:22 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 14:36:39 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Extract annotation information from biomart.
 #'
@@ -219,7 +219,7 @@ biomart_orthologs <- function(gene_ids, first_species='hsapiens', second_species
     }
 
     second_mart <- NULL
-    second_mart <- try(biomaR::useMart(biomart=trymart, host=host))
+    second_mart <- try(biomaRt::useMart(biomart=trymart, host=host))
     if (class(second_mart) == 'try-error') {
         message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ", host, " ", trymart, "."))
         second_marts <- biomaRt::listMarts(host=host)

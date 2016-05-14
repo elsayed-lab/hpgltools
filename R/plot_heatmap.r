@@ -1,4 +1,4 @@
-## Time-stamp: <Sat May 14 13:21:09 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 14:39:33 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_heatmap.r: Heatmaps separated by usage
 
@@ -170,9 +170,11 @@ ggplot2_heatmap <- function(some_df) {
     ## helper function for creating dendograms
     ggdend <- function(df) {
         ggplot() +
-            ggplot2::geom_segment(data = df, aes(x=x, y=y, xend=xend, yend=yend)) +
-            ggplot2::labs(x = "", y = "") + ggplot2::theme_minimal() +
-            ggplot2::theme(axis.text = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(),
+            ggplot2::geom_segment(data = df, aes_string(x="x", y="y", xend="xend", yend="yend")) +
+            ggplot2::labs(x = "", y = "") +
+            ggplot2::theme_minimal() +
+            ggplot2::theme(axis.text=ggplot2::element_blank(),
+                           axis.ticks=ggplot2::element_blank(),
                            panel.grid = ggplot2::element_blank())
     }
     ## x/y dendograms
@@ -188,7 +190,8 @@ ggplot2_heatmap <- function(some_df) {
     df$car <- xx_names[[1]]
     df$car <- with(df, factor(car, levels=car, ordered=TRUE))
     mdf <- reshape2::melt(df, id.vars="car")
-    p <- ggplot(mdf, aes(x = variable, y = car)) + ggplot2::geom_tile(aes(fill = value))
+    p <- ggplot(mdf, aes_string(x="variable", y="car")) +
+        ggplot2::geom_tile(aes_string(fill="value"))
     ## hide axis ticks and grid lines
     eaxis <- list(
         showticklabels = FALSE,

@@ -1,4 +1,4 @@
-## Time-stamp: <Sat May 14 13:34:19 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 14:40:33 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways.
 #'
@@ -325,7 +325,7 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
         if (class(retrieved) == "try-error") {
             retlist <- list(
                 "pathway" = pathway,
-                "filename" = unavailable,
+                "filename" = "unavailable",
                 "percent" = NA,
                 "all_nodes" = NULL,
                 "diff_nodes" = NULL)

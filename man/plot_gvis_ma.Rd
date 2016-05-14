@@ -39,6 +39,6 @@ statistical analysis. If the median line is not straight, the data should be nor
 }
 }
 \seealso{
-\link{plot_ma_plot}
+\link{plot_ma}
 }
 
