@@ -4,7 +4,7 @@
 \alias{gosec}
 \title{Get a GO secondary ID from an id.}
 \usage{
-gosec(go)
+gosec(go = "GO:0032432")
 }
 \arguments{
 \item{go}{GO ID, this may be a character or list(assuming the elements, not names, are goids).}

@@ -4,7 +4,7 @@
 \alias{godef}
 \title{Get a go long-form definition from an id.}
 \usage{
-godef(go)
+godef(go = "GO:0032432")
 }
 \arguments{
 \item{go}{GO ID, this may be a character or list (assuming the elements are goids).}

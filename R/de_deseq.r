@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 12 11:06:04 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 15:22:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot out 2 coefficients with respect to one another from deseq2.
 #'
@@ -13,7 +13,7 @@
 #' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
 #' @param base_url When plotting interactive plots, have link-outs to this base url.
 #' @return Ggplot2 plot showing the relationship between the two coefficients.
-#' @seealso \link{hpgl_linear_scatter} \link{deseq2_pairwise}
+#' @seealso \link{plot_linear_scatter} \link{deseq2_pairwise}
 #' @examples
 #' \dontrun{
 #'  pretty = coefficient_scatter(deseq_data, x="wt", y="mut")
@@ -55,7 +55,7 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     coefficient_df <- coefficient_df[,c(xname, yname, "mean.1", "mean.2")]
     coefficient_df[is.na(coefficient_df)] <- 0
     maxvalue <- max(coefficient_df) + 1.0
-    plot <- hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+    plot <- plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
                                 tooltip_data=tooltip_data, base_url=base_url)
     plot$scatter <- plot$scatter +

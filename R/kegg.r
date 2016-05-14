@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 14:39:28 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 03:47:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways.
 #'
@@ -55,7 +55,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
     if (!is.null(second_from)) {
         tmp_names <- gsub(second_from, second_to, tmp_names)
     }
-##    tmp_names = gsub("\\.","_", tmp_names)
+    ## tmp_names = gsub("\\.","_", tmp_names)
     names(path_data) <- tmp_names
     rm(tmp_names)
 
@@ -87,7 +87,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
         path_name <- gsub(" ", "_", path_name)
         ## RCurl is crap and fails sometimes for no apparent reason.
         gene_examples <- try(KEGGREST::keggLink(paste("path", path, sep=":"))[,2])
-        ##limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
+        ## limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
         limit_test <- c(abs(min(path_data, na.rm=TRUE)), abs(max(path_data, na.rm=TRUE)))
         limit_min <- -1.0 * max(limit_test)
         limit_max <- max(limit_test)
@@ -107,7 +107,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
             down <- NULL
         } else {
             colored_genes <- dim(pv$plot.data.gene)[1]
-            ##        "lma04070._proeff.png"
+            ## "lma04070._proeff.png"
             oldfile <- paste(path, ".", suffix, ".png", sep="")
             ## An if-statement to see if the user prefers pathnames by kegg ID or pathway name
             ## Dr. McIver wants path names...
@@ -154,11 +154,11 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
     return(retdf)
 }
 
-#' Use gostats() against kegg pathways
+#' Use gostats() against kegg pathways.
 #'
 #' This sets up a GSEABase analysis using KEGG pathways rather than gene ontologies.
 #' Does this even work?  I don't think I have ever tested it yet.
-#' oh, it sort of does, maybe if I export it I will rembmer it
+#' oh, it sort of does, maybe if I export it I will rembmer it.
 #'
 #' @param organism The organism used to make the KEGG frame, human readable no taxonomic.
 #' @param pathdb Name of the pathway database for this organism.
@@ -215,4 +215,166 @@ kegg_get_orgn <- function(species="Leishmania", short=TRUE) {
     return(candidates)
 }
 
-# EOF
+#' Extract the percent differentially expressed genes for all KEGG pathways.
+#'
+#' KEGGgraph provides some interesting functionality for mapping KEGGids and examining the
+#' pieces. This attempts to use that in order to evaluate how many 'significant' genes are in a
+#' given pathway.
+#'
+#' @param all_ids Set of all gene IDs in a given analysis.
+#' @param sig_ids Set of significant gene IDs.
+#' @param organism KEGG organism identifier.
+#' @param pathways What pathways to look at?
+#' @param pathdir Directory into which to copy downloaded pathway files.
+#' @return Dataframe including the filenames, percentages, nodes included, and differential nodes.
+#' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
+#' @export
+pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathdir="kegg_pathways", ...) {
+    arglist <- list(...)
+    if (!file.exists(pathdir)) {
+        dir.create(pathdir)
+    }
+    paths <- NULL
+    if (class(pathways) == "character") {
+        if (length(pathways) > 1) {
+            paths <- paste0("path:", organism, pathways)
+        } else if (pathways == "all") {
+            all_pathways <- unique(KEGGREST::keggLink("pathway", organism))
+            paths <- all_pathways
+            paths <- gsub("path:", "", paths)
+            ## all_modules = unique(KEGGREST::keggLink("module", species))
+        } else {
+            paths <- pathways
+        }
+    } else {
+        paths <- pathways
+    }
+
+    percentages <- list()
+    filenames <- list()
+    path_names <- list()
+    diff_nodes <- list()
+    path_nodes <- list()
+    for (count in 1:length(paths)) {
+        path <- paths[count]
+        path_name <- try(KEGGREST::keggGet(path), silent=TRUE)
+        if (class(path_name) == "try-error") {
+            path_names[count] <- NA
+            filenames[count] <- NA
+            percentages[count] <- NA
+            path_nodes[count] <- NA
+            diff_nodes[count] <- NA
+        } else {
+            path_name <- path_name[[1]]$NAME
+            path_name <- gsub("(.*) - .*", "\\1", path_name)
+            path_name <- tolower(path_name)
+            path_name <- gsub(" ", "_", path_name)
+            path_names[count] <- path_name
+            message(paste0("Extracting data for ", path, ": ", path_name, "."))
+            pct_diff <- pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
+                                                 pathdir=pathdir)
+            filenames[count] <- pct_diff[["filename"]]
+            percentages[count] <- pct_diff[["percent"]]
+            path_nodes[count] <- pct_diff[["all_nodes"]]
+            diff_nodes[count] <- pct_diff[["diff_nodes"]]
+            message(paste0("The path: ", path_names[count], " was written to ", filenames[count], " and has ", percentages[count], "% diff."))
+        }
+    }
+    path_data <- as.data.frame(cbind(pathways, path_names, filenames, percentages, path_nodes, diff_nodes))
+    colnames(path_data) <- c("pathway","path_name","filename","percent","all_nodes","diff_nodes")
+    path_data[["pathway"]] <- as.character(path_data[["pathway"]])
+    path_data[["path_name"]] <- as.character(path_data[["path_name"]])
+    path_data[["filename"]] <- as.character(path_data[["filename"]])
+    path_data[["percent"]] <- as.numeric(path_data[["percent"]])
+    path_data[["all_nodes"]] <- as.character(path_data[["all_nodes"]])
+    path_data[["diff_nodes"]] <- as.character(path_data[["diff_nodes"]])
+    return(path_data)
+}
+
+#' Extract the percent differentially expressed genes in a given KEGG pathway.
+#'
+#' KEGGgraph provides some interesting functionality for mapping KEGGids and examining the
+#' pieces. This attempts to use that in order to evaluate how many 'significant' genes are in a
+#' given pathway.
+#'
+#' @param all_ids Set of all gene IDs in a given analysis.
+#' @param sig_ids Set of significant gene IDs.
+#' @param pathway Numeric pathway identifier.
+#' @param organism KEGG organism identifier.
+#' @param pathdir Directory into which to copy downloaded pathway files.
+#' @return Percent genes/pathway deemed significant.
+#' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
+#' @export
+pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pathdir="kegg_pathways", ...) {
+    arglist <- list(...)
+    if (!file.exists(pathdir)) {
+        dir.create(pathdir)
+    }
+    pathway <- gsub(pattern=organism, replacement="", x=pathway)
+    pathway <- gsub(pattern="path:", replacement="", x=pathway)
+    filename <- paste0(pathdir, "/", organism, pathway, ".xml")
+    pathwayid <- paste0(organism, pathway)
+    retrieved <- NULL
+    if (file.exists(filename)) {
+        message("The file already exists, loading from it.")
+        retrieved <- filename
+    } else {
+        log <- capture.output(type="message", { retrieved <- try(suppressMessages(KEGGgraph::retrieveKGML(pathwayid=pathway, organism=organism, destfile=filename, method="internal")), silent=TRUE); })
+        if (class(retrieved) == "try-error") {
+            retlist <- list(
+                "pathway" = pathway,
+                "filename" = unavailable,
+                "percent" = NA,
+                "all_nodes" = NULL,
+                "diff_nodes" = NULL)
+            return(retlist)
+        }
+    }
+    parse_result <- KEGGgraph::parseKGML2Graph(filename, expandGenes=TRUE)
+
+    all_keggids <- KEGGgraph::translateGeneID2KEGGID(all_ids, organism=organism)
+    de_keggids <- KEGGgraph::translateGeneID2KEGGID(sig_ids, organism=organism)
+
+    possible_nodes <- KEGGgraph::nodes(parse_result)
+    is_differential <- possible_nodes %in% de_keggids
+    found_nodes <- possible_nodes[is_differential]
+    pct_diff <- signif(mean(is_differential) * 100.0, 4)
+    path_data <- KEGGREST::keggGet(pathwayid)
+    path_name <- path_data[[1]][["NAME"]]
+    message(paste0(pct_diff, "% genes differentially expressed in pathway ", pathway, ": '", path_name, "'."))
+    retlist <- list(
+        "pathway" = pathway,
+        "filename" = filename,
+        "percent" = pct_diff,
+        "all_nodes" = toString(possible_nodes),
+        "diff_nodes" = toString(found_nodes))
+    return(retlist)
+}
+
+play_kegggraph <- function() {
+    library(KEGGgraph)
+    map <- system.file("extdata/hsa04010.xml", package="KEGGgraph")
+    mapkpathway <- parseKGML(map)
+    mapkpathway
+    map_graph <- KEGGpathway2Graph(mapkpathway, expandGenes=TRUE)
+    map_nodes <- nodes(map_graph)
+    map_edges <- KEGGgraph::edges(map_graph)
+    node_data <- getKEGGnodeData(map_graph)
+    library(Rgraphviz)
+    mapped_graph <- subGraph(map_nodes, map_graph)
+    mapped_graph
+    outs <- sapply(edges(mapped_graph), length) > 0
+    ins <- sapply(inEdges(mapped_graph), length) > 0
+    ios <- outs | ins
+    library("org.Hs.eg.db")
+    io_gene_ids <- translateKEGGID2GeneID(names(ios))
+    node_names <- sapply(mget(io_gene_ids, org.Hs.egSYMBOL, ifnotfound=NA), "[[",1)
+    names(node_names) <- names(ios)
+    nattrs <- list()
+    nattrs$fillcolor <- Rgraphviz::makeNodeAttrs(mapped_graph, "lightgrey", list(orang=names(ios)[ios]))
+    nattrs$label <- node_names
+    plot(mapped_graph, "neato", nodeAttrs=nattrs, attrs=list(node=list(fillcolor="lightgreen", width=0.75, shape="ellipse"), edge=list(arrowsize=0.7)))
+}
+
+
+## EOF

@@ -35,6 +35,6 @@ This hopefully makes that easy.
 }
 }
 \seealso{
-\link{hpgl_linear_scatter} \link{edger_pairwise}
+\link{plot_linear_scatter} \link{edger_pairwise}
 }
 

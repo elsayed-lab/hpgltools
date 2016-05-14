@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May  3 17:35:40 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 15:14:06 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
 #' It just does fast.svd of a matrix comprised of the matrix - rowMeans(matrix)
@@ -92,11 +92,11 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 #' @examples
 #' \dontrun{
-#'  pca_plot = hpgl_pca(expt=expt)
+#'  pca_plot = plot_pca(expt=expt)
 #'  pca_plot
 #' }
 #' @export
-hpgl_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
+plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
                      plot_title=NULL, plot_size=5, size_column=NULL, ...) {
     hpgl_env <- environment()
     arglist <- list(...)

@@ -22,10 +22,11 @@ metadata <- design
 colnames(metadata) <- c("condition", "batch")
 metadata$sampleid <- rownames(metadata)
 
-## Make sure it is still possible to create an expt
-pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
+pasilla <- new.env()
+load("pasilla.Rdata", envir=pasilla)
+pasilla_expt <- pasilla[["expt"]]
+
 cbcb_data <- as.matrix(counts)
-pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
 hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
 
 ## Check that normalization tools work similarly
@@ -69,7 +70,7 @@ test_that("Are l2qcpm conversions/transformations identical using two codepaths?
 
 ## Check that PCA invocations are similar
 cbcb_svd <- cbcbSEQ::makeSVD(cbcb_l2qcpm)
-hpgl_pca_info <- hpgl_pca(hpgl_l2qcpm_expt)
+hpgl_pca_info <- plot_pca(hpgl_l2qcpm_expt)
 hpgl_svd <- hpgl_pca_info$pca
 cbcb_res <- cbcbSEQ::pcRes(cbcb_svd$v, cbcb_svd$d, design$condition, design$libType)
 hpgl_res <- hpgl_pca_info$res

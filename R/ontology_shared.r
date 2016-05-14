@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 12 10:05:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 16:42:31 2016 Ashton Trey Belew (abelew@gmail.com)>
 ## Most of the functions in here probably shouldn't be exported...
 
 #' Extract more easily readable information from a GOTERM datum.
@@ -345,7 +345,7 @@ gather_genes <- function(goseq_data, ontology='MF', pval=0.05, include_all=FALSE
 #' @return Ggplot2 plot of pvalues vs. ontology.
 #' @seealso \link[goseq]{goseq} \pkg{ggplot2}
 #' @export
-pval_plot <- function(df, ontology="MF") {
+plot_ontpval <- function(df, ontology="MF") {
     y_name <- paste("Enriched ", ontology, " categories.", sep="")
     pvalue_plot <- ggplot2::ggplot(df, ggplot2::aes_string(x="term", y="score", fill="pvalue")) +
         ggplot2::geom_bar(stat="identity") +

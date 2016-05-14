@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May  3 17:37:24 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 22:00:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_dotplot.r: Dotplots in various contexts, currently just smc/smd
 
@@ -251,7 +251,7 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
 
     sm_plot <- ggplot2::ggplot(sm_df, ggplot2::aes_string(x="sample", y="sm")) +
         ggplot2::geom_hline(color="red", yintercept=ylimit, size=2) +
-        ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y", stackdir="center", binpositions="all", colour="black", fill=sm_df[["color"]]) +
+        ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y", stackdir="center", binpositions="all", colour="black", fill=sm_df[["color"]], dotsize=2) +
         ggplot2::ylab(paste0("Standard Median ", method)) +
         ggplot2::xlab(paste0("Sample")) +
         ggplot2::ggtitle(title) +

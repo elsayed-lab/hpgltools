@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May  9 12:13:58 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 15:12:01 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_scatter.r: Various scatter plots
 
@@ -11,12 +11,12 @@
 #' @seealso \pkg{edgeR} \link[edgeR]{plotBCV}
 #' @examples
 #' \dontrun{
-#' bcv <- hpgl_bcv_plot(expt)
+#' bcv <- plot_bcv(expt)
 #' summary(bcv$data)
 #' bcv$plot
 #' }
 #' @export
-hpgl_bcv_plot <- function(data) {
+plot_bcv <- function(data) {
     data_class <- class(data)[1]
     if (data_class == "expt") {
         data <- Biobase::exprs(data$expressionset)
@@ -80,15 +80,15 @@ hpgl_bcv_plot <- function(data) {
 #' color dots which are presumed the therefore be interesting because
 #' they are far from 'normal.'  This will make a fun clicky googleVis
 #' graph if requested.
-#' @seealso \pkg{ggplot2} \link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}
-#' \link{hpgl_linear_scatter}
+#' @seealso \pkg{ggplot2} \link{gvis_scatter} \link[ggplot2]{geom_point}
+#' \link{linear_scatter}
 #' @examples
 #' \dontrun{
-#'  hpgl_dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+#'  dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
 #'                    gvis_filename="html/fun_scatterplot.html")
 #' }
 #' @export
-hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2) {
+plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2) {
     hpgl_env <- environment()
     df <- data.frame(df[, c(1,2)])
     df <- df[complete.cases(df) ,]
@@ -150,14 +150,14 @@ hpgl_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #'     the dots on the plot.  Histograms of each axis are plotted separately and then together under
 #'     a single cdf to allow tests of distribution similarity.  This will make a fun clicky
 #'     googleVis graph if requested.
-#' @seealso \link[robust]{lmRob} \link[stats]{weights} \link{hpgl_histogram}
+#' @seealso \link[robust]{lmRob} \link[stats]{weights} \link{plot_histogram}
 #' @examples
 #' \dontrun{
-#'  hpgl_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+#'  plot_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
 #'                      gvis_filename="html/fun_scatterplot.html")
 #' }
 #' @export
-hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson",
+plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson",
                                 size=2, loess=FALSE, identity=FALSE, gvis_trendline=NULL,
                                 first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE,
                                 color_high=NULL, color_low=NULL) {
@@ -179,7 +179,7 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     if (class(model_test) == "try-error") {
         message("Could not perform a linear modelling of the data.")
         message("Going to perform a scatter plot without linear model.")
-        plot <- hpgl_scatter(df)
+        plot <- plot_scatter(df)
         ret <- list(data=df, scatter=plot)
         return(ret)
     } else {
@@ -258,7 +258,7 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
         ggplot2::theme_bw()
 
     if (!is.null(gvis_filename)) {
-        hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename,
+        gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename,
                           trendline=gvis_trendline, base_url=base_url)
     }
     if (!is.null(first) & !is.null(second)) {
@@ -268,9 +268,9 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     } else if (!is.null(second)) {
         colnames(df) <- c("first", second)
     }
-    x_histogram <- hpgl_histogram(data.frame(df[, 1]), fillcolor="lightblue", color="blue")
-    y_histogram <- hpgl_histogram(data.frame(df[, 2]), fillcolor="pink", color="red")
-    both_histogram <- hpgl_multihistogram(df)
+    x_histogram <- plot_histogram(data.frame(df[, 1]), fillcolor="lightblue", color="blue")
+    y_histogram <- plot_histogram(data.frame(df[, 2]), fillcolor="pink", color="red")
+    both_histogram <- plot_multihistogram(df)
     plots <- list(data=df, scatter=first_vs_second, x_histogram=x_histogram,
                   y_histogram=y_histogram, both_histogram=both_histogram,
                   correlation=correlation, lm_model=linear_model, lm_summary=linear_model_summary,
@@ -297,20 +297,20 @@ hpgl_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #'     type across all sample types on the x-axis, and the log fold change between conditions on the
 #'     y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
 #'     googleVis graph if requested.
-#' @seealso \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
+#' @seealso \link{gvis_ma_plot} \link[limma]{toptable}
 #' \link[limma]{voom} \link{hpgl_voom}
 #' \link[limma]{lmFit} \link[limma]{makeContrasts}
 #' \link[limma]{contrasts.fit}
 #' @examples
 #' \dontrun{
-#' hpgl_ma_plot(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
+#' plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
 #' ## Currently this assumes that a variant of toptable was used which
 #' ## gives adjusted p-values.  This is not always the case and I should
 #' ## check for that, but I have not yet.
 #' }
 #' @export
-hpgl_ma_plot <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1, pval="adjpval",
-                         size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
+plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1, pval="adjpval",
+                    size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
     hpgl_env <- environment()
     if (pval == "adjpval") {
         pval_column <- "adj.P.Val"
@@ -351,28 +351,25 @@ hpgl_ma_plot <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cu
         ggplot2::ylab("log fold change") +
         ggplot2::theme_bw()
     if (!is.null(gvis_filename)) {
-        hpgl_gvis_ma_plot(counts, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
+        plot_gvis_ma(counts, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
     }
     return(plt)
 }
-## Consider using these options for the kind of pretty graph Eva likes.
-##ggplot(mydata) + aes(x=x, y=y) + scale_x_log10() + scale_y_log10() +
-##+   stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE) +
-##+   scale_fill_gradientn(colours = colorRampPalette(c("white", blues9))(256))
 
 #' Make a ggplot graph of the number of non-zero genes by sample.
 #'
-#' Made by Ramzi Temanni <temanni at umd dot edu>
+#' This puts the number of genes with > 0 hits on the y-axis and CPM on the x-axis. Made by Ramzi
+#' Temanni <temanni at umd dot edu>.
 #'
 #' @param data Expt, expressionset, or dataframe.
 #' @param design Eesign matrix.
-#' @param colors Ccolor scheme.
+#' @param colors Color scheme.
 #' @param labels How do you want to label the graph? 'fancy' will use directlabels() to try to match
 #'     the labels with the positions without overlapping anything else will just stick them on a 45'
-#'     offset next to the graphed point
+#'     offset next to the graphed point.
 #' @param title Add a title?
 #' @param ... rawr!
-#' @return a ggplot2 plot of the number of non-zero genes with respect to each library's CPM
+#' @return a ggplot2 plot of the number of non-zero genes with respect to each library's CPM.
 #' @seealso \link[ggplot2]{geom_point} \link[directlabels]{geom_dl}
 #' @examples
 #' \dontrun{
@@ -380,15 +377,15 @@ hpgl_ma_plot <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cu
 #'  nonzero_plot  ## ooo pretty
 #' }
 #' @export
-hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL, ...) {
+plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL, ...) {
     hpgl_env <- environment()
     names <- NULL
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        design <- data$design
-        colors <- data$colors
-        names <- data$samplenames
-        data <- Biobase::exprs(data$expressionset)
+        design <- data[["design"]]
+        colors <- data[["colors"]]
+        names <- data[["samplenames"]]
+        data <- Biobase::exprs(data[["expressionset"]])
     } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
@@ -411,12 +408,14 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
         }
     }
 
-    shapes <- as.integer(as.factor(design$batch))
-    non_zero <- data.frame("id"=colnames(data),
-                           "nonzero_genes"=colSums(data >= 1),
-                           "cpm"=colSums(data) * 1e-6,
-                           "condition"=design$condition,
-                           "batch"=design$batch)
+    shapes <- as.integer(as.factor(design[["batch"]]))
+    non_zero <- data.frame(
+        "id" = colnames(data),
+        "nonzero_genes" = colSums(data >= 1),
+        "cpm" = colSums(data) * 1e-6,
+        "condition" = design[["condition"]],
+        "batch" = design[["batch"]])
+
     non_zero_plot <- ggplot(data=non_zero, aes_string(x="cpm", y="nonzero_genes"), environment=hpgl_env, fill=colors, shape=shapes) +
         ## geom_point(stat="identity", size=3, colour=hpgl_colors, pch=21) +
         ggplot2::geom_point(aes_string(fill="colors"), colour="black", pch=21, stat="identity", size=3) +
@@ -443,7 +442,6 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     return(non_zero_plot)
 }
 
-
 #' Plot all pairwise MA plots in an experiment.
 #'
 #' Use affy's ma.plot() on every pair of columns in a data set to help diagnose problematic
@@ -459,8 +457,7 @@ hpgl_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
 #'  ma_plots = hpgl_pairwise_ma(expt=some_expt)
 #' }
 #' @export
-hpgl_pairwise_ma <- function(data, log=NULL, ...) {
-    ##require.auto('affy')
+plot_pairwise_ma <- function(data, log=NULL, ...) {
     data_class <- class(data)[1]
     if (data_class == "expt") {
         design <- data[["design"]]
@@ -511,14 +508,17 @@ hpgl_pairwise_ma <- function(data, log=NULL, ...) {
     return(plot_list)
 }
 
-#'   Make a pretty scatter plot between two sets of numbers.
+#' Make a pretty scatter plot between two sets of numbers.
 #'
-#' @param df  a dataframe likely containing two columns
-#' @param gvis_filename   a filename to write a fancy html graph.
-#' @param tooltip_data   a df of tooltip information for gvis
-#' @param size   the size of the dots on the graph.
-#' @param color   color of the dots on the graph.
-#' @return a ggplot2 scatter plot.
+#' This function tries to supplement a normal scatterplot with some information describing the
+#' relationship between the columns of data plotted.
+#'
+#' @param df Dataframe likely containing two columns.
+#' @param gvis_filename Filename to write a fancy html graph.
+#' @param tooltip_data Df of tooltip information for gvis.
+#' @param size Size of the dots on the graph.
+#' @param color Color of the dots on the graph.
+#' @return Ggplot2 scatter plot.
 #' @seealso \link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}
 #' \link{hpgl_linear_scatter}
 #' @examples
@@ -527,7 +527,7 @@ hpgl_pairwise_ma <- function(data, log=NULL, ...) {
 #'              gvis_filename="html/fun_scatterplot.html")
 #' }
 #' @export
-hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=2) {
+plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=2) {
     hpgl_env <- environment()
     df <- data.frame(df[,c(1,2)])
     df <- df[complete.cases(df),]
@@ -541,7 +541,7 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
         ggplot2::geom_point(colour=color, alpha=0.6, size=size) +
         ggplot2::theme(legend.position="none")
     if (!is.null(gvis_filename)) {
-        hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
+        plot_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
     }
     return(first_vs_second)
 }
@@ -549,7 +549,11 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' Make a pretty Volcano plot!
 #'
 #' Volcano plots and MA plots provide quick an easy methods to view the set of (in)significantly
-#' differentially expressed genes.
+#' differentially expressed genes.  In the case of a volcano plot, it places the -log10 of the
+#' p-value estimate on the y-axis and the fold-change between conditions on the x-axis.  Here is a
+#' neat snippet from wikipedia: "The concept of volcano plot can be generalized to other
+#' applications, where the x-axis is related to a measure of the strength of a statistical signal,
+#' and y-axis is related to a measure of the statistical significance of the signal."
 #'
 #' @param toptable_data Dataframe from limma's toptable which includes log(fold change) and an
 #'     adjusted p-value.
@@ -575,15 +579,15 @@ hpgl_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' ## check for that, but I have not yet.
 #' }
 #' @export
-hpgl_volcano_plot <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
-                              fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6, ...) {
+plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
+                         fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6, ...) {
     hpgl_env <- environment()
     low_vert_line <- 0.0 - fc_cutoff
     horiz_line <- -1 * log10(p_cutoff)
-    toptable_data$modified_p <- -1 * log10(toptable_data$P.Value)
+    toptable_data$modified_p <- -1 * log10(toptable_data[["P.Value"]])  ## this should be parameterized
     plt <- ggplot(toptable_data,
-                           aes_string(x="logFC", y="modified_p", color="(P.Value <= p_cutoff)"),
-                           environment=hpgl_env) +
+                  aes_string(x="logFC", y="modified_p", color="(P.Value <= p_cutoff)"),
+                  environment=hpgl_env) +
         ggplot2::geom_hline(yintercept=horiz_line, color="black", size=size) +
         ggplot2::geom_vline(xintercept=fc_cutoff, color="black", size=size) +
         ggplot2::geom_vline(xintercept=low_vert_line, color="black", size=size) +

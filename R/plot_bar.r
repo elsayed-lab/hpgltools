@@ -1,26 +1,29 @@
-## Time-stamp: <Mon Apr 25 15:03:21 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 14:59:10 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_bar.r: Some useful bar plots, currently only library size
 
-#'   Make a ggplot graph of library sizes.
+#' Make a ggplot graph of library sizes.
 #'
-#' @param data  an expt, dataframe, or expressionset of samples.
-#' @param colors   a color scheme.
-#' @param names   alternate names for the x-axis.
-#' @param text   add the numeric values inside the top of the bars of the plot?
-#' @param title   a title for the plot.
-#' @param yscale    whether or not to log10 the y-axis.
-#' @param ... more parameters for your good time
+#' It is often useful to have a quick view of which samples have more/fewer reads.  This does that
+#' and maintains one's favorite color scheme and tries to make it pretty!
+#'
+#' @param data Expt, dataframe, or expressionset of samples.
+#' @param colors Color scheme if the data is not an expt.
+#' @param names Alternate names for the x-axis.
+#' @param text Add the numeric values inside the top of the bars of the plot?
+#' @param title Title for the plot.
+#' @param yscale Whether or not to log10 the y-axis.
+#' @param ... More parameters for your good time!
 #' @return a ggplot2 bar plot of every sample's size
 #' @seealso \link[ggplot2]{geom_bar} \link[ggplot2]{geom_text}
 #' \link{prettyNum} \link[ggplot2]{scale_y_log10}
 #' @examples
 #' \dontrun{
-#'  libsize_plot = hpgl_libsize(expt=expt)
+#'  libsize_plot = plot_libsize(expt=expt)
 #'  libsize_plot  ## ooo pretty bargraph
 #' }
 #' @export
-hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  yscale=NULL, ...) {
+plot_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  yscale=NULL, ...) {
     hpgl_env <- environment()
     arglist <- list(...)
     if (is.null(text)) {
@@ -94,3 +97,5 @@ hpgl_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
     }
     return(libsize_plot)
 }
+
+## EOF  Damners I don't have many bar plots, do I?

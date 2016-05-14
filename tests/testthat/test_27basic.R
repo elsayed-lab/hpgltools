@@ -3,20 +3,10 @@ library(hpgltools)
 
 context("Does the basic differential expression analysis work?")
 
-## This section is copy/pasted to all of these tests, that is dumb.
-datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
-counts <- read.table(datafile, header=TRUE, row.names=1)
-counts <- counts[rowSums(counts) > ncol(counts),]
-design <- data.frame(row.names=colnames(counts),
-    condition=c("untreated","untreated","untreated",
-        "untreated","treated","treated","treated"),
-    libType=c("single_end","single_end","paired_end",
-        "paired_end","single_end","paired_end","paired_end"))
-metadata <- design
-colnames(metadata) <- c("condition", "batch")
-metadata$Sample.id <- rownames(metadata)
+pasilla <- new.env()
+load("pasilla.Rdata", envir=pasilla)
+pasilla_expt <- pasilla[["expt"]]
 
-pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
 norm_expt <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))
 
 hpgl_pas_basic <- suppressMessages(basic_pairwise(pasilla_expt))

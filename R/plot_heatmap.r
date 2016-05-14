@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May  9 11:42:05 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 02:04:30 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_heatmap.r: Heatmaps separated by usage
 
@@ -22,10 +22,10 @@
 #' ## corheat_plot = hpgl_corheat(expt=expt, method="robust")
 #' ## corheat_plot
 #' @export
-hpgl_corheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
+plot_corheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="pearson", expt_names=NULL,
                          batch_row="batch", title=NULL, ...) {
-    hpgl_heatmap(data, expt_colors=expt_colors, expt_design=expt_design,
+    plot_heatmap(expt_data, expt_colors=expt_colors, expt_design=expt_design,
                  method=method, expt_names=expt_names, type="correlation",
                  batch_row=batch_row, title=title, ...)
 }
@@ -47,19 +47,19 @@ hpgl_corheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 #' @seealso \link[RColorBrewer]{brewer.pal} \link[gplots]{heatmap.2} \link[grDevices]{recordPlot}
 #' @examples
 #' \dontrun{
-#'  disheat_plot = hpgl_disheat(expt=expt, method="euclidean")
+#'  disheat_plot = plot_disheat(expt=expt, method="euclidean")
 #'  disheat_plot
 #' }
 #' @export
-hpgl_disheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
+plot_disheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="euclidean", expt_names=NULL,
                          batch_row="batch",  title=NULL, ...) {
-    hpgl_heatmap(data, expt_colors=expt_colors, expt_design=expt_design,
+    plot_heatmap(expt_data, expt_colors=expt_colors, expt_design=expt_design,
                  method=method, expt_names=names, type="distance",
                  batch_row=batch_row, title=title, ...)
 }
 
-#' Make a heatmap.3 plot, does the work for hpgl_disheat and hpgl_corheat.
+#' Make a heatmap.3 plot, does the work for plot_disheat and plot_corheat.
 #'
 #' This does what is says on the tin.  Sets the colors for correlation or distance heatmaps, handles
 #' the calculation of the relevant metrics, and plots the heatmap.
@@ -76,17 +76,17 @@ hpgl_disheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 #' @return a recordPlot() heatmap describing the distance between samples.
 #' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
 #' @export
-hpgl_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
+plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="pearson", expt_names=NULL,
                          type="correlation", batch_row="batch", title=NULL, ...) {
     arglist <- list(...)
-    hpgl_env <- environment()
-    data_class <- class(data)[1]
+    plot_env <- environment()
+    data_class <- class(expt_data)[1]
     if (data_class == "expt") {
-        expt_design <- data[["design"]]
-        expt_colors <- data[["colors"]]
-        expt_names <- data[["names"]]
-        expt_data <- Biobase::exprs(data[["expressionset"]])
+        expt_design <- expt_data[["design"]]
+        expt_colors <- expt_data[["colors"]]
+        expt_names <- expt_data[["names"]]
+        expt_data <- Biobase::exprs(expt_data[["expressionset"]])
     } else if (data_class == "ExpressionSet") {
         expt_data <- Biobase::exprs(expt_data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
@@ -149,7 +149,7 @@ hpgl_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     return(hpgl_heatmap_plot)
 }
 
-hpgl_heatplus <- function(fundata) {
+plot_heatplus <- function(fundata) {
     heatmap_data <- hpgl_cor(fundata)
     heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
     funkytown <- Heatplus::annHeatmap2(heatmap_data)
@@ -214,7 +214,7 @@ ggplot2_heatmap <- function() {
 #' @return a recordPlot() heatmap describing the samples.
 #' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
 #' @export
-hpgl_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=FALSE, ...) {
+plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=FALSE, ...) {
     hpgl_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
@@ -234,13 +234,15 @@ hpgl_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
         names <- colnames(data)
     }
     data <- as.matrix(data)
-    heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors,
+    heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, dendrogram="column",
               labCol=names, margins=c(12,8), trace="none", linewidth=0.5, main=title, Rowv=Rowv)
     hpgl_heatmap_plot <- grDevices::recordPlot()
     return(hpgl_heatmap_plot)
 }
 
 #' a minor change to heatmap.2 makes heatmap.3
+#'
+#' heamap.2 is the devil.
 #'
 #' @param x data
 #' @param Rowv add rows?

@@ -78,7 +78,7 @@ is not always the case and I should check for that, but I have not yet.
 }
 }
 \seealso{
-\link{hpgl_gvis_ma_plot} \link[limma]{toptable}
+\link{plot_gvis_ma} \link[limma]{toptable}
 \link[limma]{voom} \link{hpgl_voom}
 \link[limma]{lmFit} \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
 }

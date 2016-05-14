@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 14:45:59 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 15:16:54 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -215,23 +215,23 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
 compare_surrogate_estimates <- function(expt, extra_factors=NULL, do_catplots=FALSE) {
     design <- expt[["design"]]
     pca_plots <- list()
-    pca_plots[["null"]] <- hpgl_pca(expt)[["plot"]]
+    pca_plots[["null"]] <- plot_pca(expt)[["plot"]]
     pca_adjust <- get_model_adjust(expt, estimate_type="pca")
-    pca_plots[["pca"]] <- hpgl_pca(pca_adjust[["new_counts"]], design=design, plot_colors=expt[["colors"]])[["plot"]]
+    pca_plots[["pca"]] <- plot_pca(pca_adjust[["new_counts"]], design=design, plot_colors=expt[["colors"]])[["plot"]]
     sva_supervised <- get_model_adjust(expt, estimate_type="sva_supervised")
-    pca_plots[["svasup"]] <- hpgl_pca(sva_supervised$new_counts, design=design,
+    pca_plots[["svasup"]] <- plot_pca(sva_supervised$new_counts, design=design,
                                       plot_colors=expt[["colors"]])[["plot"]]
     sva_unsupervised <- get_model_adjust(expt, estimate_type="sva_unsupervised")
-    pca_plots[["svaunsup"]] <- hpgl_pca(sva_unsupervised[["new_counts"]], design=design,
+    pca_plots[["svaunsup"]] <- plot_pca(sva_unsupervised[["new_counts"]], design=design,
                                         plot_colors=expt[["colors"]])[["plot"]]
     ruv_supervised <- get_model_adjust(expt, estimate_type="ruv_supervised")
-    pca_plots[["ruvsup"]] <- hpgl_pca(ruv_supervised[["new_counts"]], design=design,
+    pca_plots[["ruvsup"]] <- plot_pca(ruv_supervised[["new_counts"]], design=design,
                                       plot_colors=expt[["colors"]])[["plot"]]
     ruv_residuals <- get_model_adjust(expt, estimate_type="ruv_residuals")
-    pca_plots[["ruvresid"]] <- hpgl_pca(ruv_residuals[["new_counts"]], design=design,
+    pca_plots[["ruvresid"]] <- plot_pca(ruv_residuals[["new_counts"]], design=design,
                                         plot_colors=expt[["colors"]])[["plot"]]
     ruv_empirical <- get_model_adjust(expt, estimate_type="ruv_empirical")
-    pca_plots[["ruvemp"]] <- hpgl_pca(ruv_empirical[["new_counts"]], design=design,
+    pca_plots[["ruvemp"]] <- plot_pca(ruv_empirical[["new_counts"]], design=design,
                                       plot_colors=expt[["colors"]])[["plot"]]
 
     first_svs <- data.frame(
@@ -241,8 +241,8 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, do_catplots=FA
         "sva_supervised" = sva_supervised[["model_adjust"]][, 1],
         "sva_unsupervised" = sva_unsupervised[["model_adjust"]][, 1],
         "ruv_supervised" = ruv_supervised[["model_adjust"]][, 1],
-        "ruv_residuals" = ruv_residuals[["model_adjust"]][,1],
-        "ruv_empirical" = ruv_empirical[["model_adjust"]][,1])
+        "ruv_residuals" = ruv_residuals[["model_adjust"]][, 1],
+        "ruv_empirical" = ruv_empirical[["model_adjust"]][, 1])
     batch_adjustments <- list(
         "condition" = as.factor(expt[["conditions"]]),
         "batch" = as.factor(expt[["batches"]]),

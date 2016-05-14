@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr 29 00:13:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 16:03:45 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make sure that clusterProfiler is ready to run.
 #'
@@ -46,7 +46,7 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
     return(go2eg)
 }
 
-#' Perform a simplified clusterProfiler analysis
+#' Perform a simplified clusterProfiler analysis.
 #'
 #' I like clusterProfiler quite a lot, but making it work for non-standard species is a bit of a
 #' chore.  This attempts to alleivate some of those headaches and cover some corner cases where it
@@ -123,7 +123,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     mf_group <- clusterProfiler::groupGO(gene_list, organism=species, ont="MF", level=golevel, readable=TRUE)
     mf_all <- hpgl_enrichGO(gene_list, organism=species, ont="MF",
                             pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
-    all_mf_phist <- try(hpgl_histogram(mf_all@result$pvalue, bins=20))
+    all_mf_phist <- try(plot_histogram(mf_all@result$pvalue, bins=20))
     if (class(all_mf_phist)[1] != 'try-error') {
         y_limit <- (sort(unique(table(all_mf_phist$data)), decreasing=TRUE)[2]) * 2
         all_mf_phist <- all_mf_phist +
@@ -138,7 +138,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
                                          level=golevel, readable=TRUE)
     bp_all <- hpgl_enrichGO(gene_list, organism=species, ont="BP", pvalueCutoff=1.0,
                             qvalueCutoff=1.0, pAdjustMethod="none")
-    all_bp_phist <- try(hpgl_histogram(bp_all@result$pvalue, bins=20))
+    all_bp_phist <- try(plot_histogram(bp_all@result$pvalue, bins=20))
     if (class(all_bp_phist)[1] != 'try-error') {
         y_limit <- (sort(unique(table(all_bp_phist$data)), decreasing=TRUE)[2]) * 2
         all_bp_phist <- all_bp_phist +
@@ -154,7 +154,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
                             qvalueCutoff=1.0, pAdjustMethod="none")
     enriched_cc <- hpgl_enrichGO(gene_list, organism=species, ont="CC", pvalueCutoff=pcutoff,
                                  qvalueCutoff=1.0, pAdjustMethod=padjust)
-    all_cc_phist <- try(hpgl_histogram(cc_all@result$pvalue, bins=20))
+    all_cc_phist <- try(plot_histogram(cc_all@result$pvalue, bins=20))
     ## Try and catch if there are no significant hits.
     if (class(all_cc_phist)[1] != 'try-error') {
         y_limit <- (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
@@ -448,8 +448,13 @@ cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", g
     } else {
         cc_tree <- grDevices::recordPlot()
     }
-    trees <- list(MF=mf_tree, BP=bp_tree, CC=cc_tree,
-                  MFdata=mf_tree_data, BPdata=bp_tree_data, CCdata=cc_tree_data)
+    trees <- list(
+        "MF_over" = mf_tree,
+        "BP_over" = bp_tree,
+        "CC_over" = cc_tree,
+        "MF_overdata" = mf_tree_data,
+        "BP_overdata" = bp_tree_data,
+        "CC_overdata" = cc_tree_data)
     return(trees)
 }
 
@@ -695,7 +700,6 @@ hpgl_Gff2GeneTable <- function(gffFile, compress=TRUE, split="=") {
     }
     message("Gene Table file save in the working directory.")
 }
-
 
 hpgl_getGffAttribution <- function(x, field, attrsep=";", split='=') {
     s <- strsplit(x, split=attrsep, fixed=TRUE)

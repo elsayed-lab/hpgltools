@@ -91,10 +91,10 @@ chance to explain the graphs as I generate them.
 ## First make a bar plot of the library sizes in the experiment.
 ## Notice that the colors were auto-chosen by create_expt() and they should
 ## be maintained throughout this process
-fis_libsize <- hpgl_libsize(fission_expt)
+fis_libsize <- plot_libsize(fission_expt)
 fis_libsize
 ## Here we see that the wild type replicate 3 sample for 15 minutes has fewer non-zero genes than all its friends.
-fis_nonzero <- hpgl_nonzero(fission_expt, labels="boring", title="nonzero vs. cpm")
+fis_nonzero <- plot_nonzero(fission_expt, labels="boring", title="nonzero vs. cpm")
 fis_nonzero
 ```
 
@@ -111,16 +111,16 @@ again.
 ## I am no longer certain that code is maintained, what remains from it I might pull in to my own.
 ## require.auto("kokrah/cbcbSEQ")  ## Install Kwame's cbcbSEQ
 ## Unsurprisingly, the raw data doesn't cluster well at all...
-fis_rawpca <- hpgl_pca(fission_expt, expt_labels=fission_expt$condition)
+fis_rawpca <- plot_pca(fission_expt, expt_labels=fission_expt$condition)
 fis_rawpca$plot
 ## So, normalize the data
 norm_expt <- normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm")
 ## And try the pca again
-fis_normpca <- hpgl_pca(norm_expt, plot_labels="normal", title="normalized pca")
+fis_normpca <- plot_pca(norm_expt, plot_labels="normal", title="normalized pca")
 fis_normpca$plot
 
 normbatch_expt <- normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm", batch="sva")
-fis_normbatchpca <- hpgl_pca(normbatch_expt, title="Normalized PCA with batch effect correction.")
+fis_normbatchpca <- plot_pca(normbatch_expt, title="Normalized PCA with batch effect correction.")
 fis_normbatchpca$plot
 ## ok, that caused the 0, 60, 15, and 30 minute samples to cluster nicely
 ## the 120 and 180 minute samples are still a bit tight
@@ -138,7 +138,7 @@ fis_info$anova_p
 
 ## Try again with batch removed data
 batchnorm_expt <- normalize_expt(fission_expt, batch="limma", norm="quant", transform="log2", convert="cpm")
-fis_batchnormpca <- hpgl_pca(batchnorm_expt, plot_title="limma corrected pca")
+fis_batchnormpca <- plot_pca(batchnorm_expt, plot_title="limma corrected pca")
 fis_batchnormpca$plot
 test_pca <- pca_information(batchnorm_expt, expt_factors=c("condition","batch","strain","minute"), num_components=6)
 ```
@@ -152,21 +152,21 @@ We have some tools which provide visualizations of the distribution of
 the data:
 
 ```{r distributions}
-hpgl_boxplot(fission_expt)
+plot_boxplot(fission_expt)
 sf_expt <- normalize_expt(fission_expt, norm="sf")
-hpgl_boxplot(sf_expt)
+plot_boxplot(sf_expt)
 tm_expt <- normalize_expt(fission_expt, norm="tmm")
-hpgl_boxplot(tm_expt)
+plot_boxplot(tm_expt)
 rle_expt <- normalize_expt(fission_expt, norm="rle")
-hpgl_boxplot(rle_expt)
+plot_boxplot(rle_expt)
 up_expt <- normalize_expt(fission_expt, norm="upperquartile")
-hpgl_boxplot(up_expt)
+plot_boxplot(up_expt)
 
-hpgl_density(norm_expt)
-hpgl_density(sf_expt)
-hpgl_density(tm_expt)
+plot_density(norm_expt)
+plot_density(sf_expt)
+plot_density(tm_expt)
 
-compare_12 <- hpgl_qq_plot(fission_expt, x=1, y=2)
+compare_12 <- plot_qq_plot(fission_expt, x=1, y=2)
 compare_12$log
 ```
 
@@ -176,8 +176,8 @@ Ok, so we can further check out how the data cluster with respect to
 one another...
 
 ```{r clustering}
-hpgl_corheat(norm_expt)
-hpgl_corheat(batchnorm_expt)
-hpgl_disheat(norm_expt)
-hpgl_disheat(batchnorm_expt)
+plot_corheat(norm_expt)
+plot_corheat(batchnorm_expt)
+plot_disheat(norm_expt)
+plot_disheat(batchnorm_expt)
 ```

@@ -1,3 +1,4 @@
+## Time-stamp: <Fri May 13 10:25:07 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -461,6 +462,7 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
     if (isTRUE(inverse)) {
         comb[["limma_logfc"]] <- comb[["limma_logfc"]] * -1
         comb[["deseq_logfc"]] <- comb[["deseq_logfc"]] * -1
+        comb[["deseq_stat"]] <- comb[["deseq_stat"]] * -1
         comb[["edger_logfc"]] <- comb[["edger_logfc"]] * -1
         if (isTRUE(include_basic)) {
             comb[["basic_logfc"]] <- comb[["basic_logfc"]] * -1

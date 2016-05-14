@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 14:08:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 15:22:22 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot out 2 coefficients with respect to one another from limma.
 #'
@@ -51,7 +51,7 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
     coefficients <- output$pairwise_comparisons$coefficients
     coefficients <- coefficients[, c(x,y)]
     maxvalue <- max(coefficients) + 1
-    plot <- hpgl_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
+    plot <- plot_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
                                 tooltip_data=tooltip_data, base_url=base_url, pretty_colors=FALSE)
     plot$scatter <- plot$scatter +
@@ -445,9 +445,9 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
 #' @param second_column Column to compare against.
 #' @param type Type of scatter plot (linear model, distance, vanilla).
 #' @param ... Use the elipsis to feed options to the html graphs.
-#' @return Hpgl_linear_scatter() set of plots comparing the chosen columns.  If you forget to
+#' @return plot_linear_scatter() set of plots comparing the chosen columns.  If you forget to
 #'     specify tables to compare, it will try the first vs the second.
-#' @seealso \link{hpgl_linear_scatter} \link[limma]{topTable}
+#' @seealso \link{plot_linear_scatter} \link[limma]{topTable}
 #' @examples
 #' \dontrun{
 #' compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
@@ -480,11 +480,11 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
     colnames(df) <- c(x_name, y_name)
     plots <- NULL
     if (type == "linear_scatter") {
-        plots <- hpgl_linear_scatter(df, loess=TRUE, ...)
+        plots <- plot_linear_scatter(df, loess=TRUE, ...)
     } else if (type == "dist_scatter") {
-        plots <- hpgl_dist_scatter(df, ...)
+        plots <- plot_dist_scatter(df, ...)
     } else {
-        plots <- hpgl_scatter(df, ...)
+        plots <- plot_scatter(df, ...)
     }
     plots[['dataframe']] <- df
     return(plots)
@@ -577,7 +577,7 @@ limma_subset <- function(table, n=NULL, z=NULL) {
 #'   volcano_plot = a volcano plot of x/y
 #'   voom_data = the result from calling voom()
 #'   voom_plot = a plot from voom(), redunant with voom_data
-#' @seealso \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
+#' @seealso \link{plot_gvis_ma} \link[limma]{toptable}
 #' \link[limma]{voom} \link{hpgl_voom}
 #' \link[limma]{lmFit} \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
 #' @examples
@@ -607,11 +607,11 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
 #        expt_data = ComBat(expt_data, subset$batches, condition_model)
         expt_data <- hpgl_combatMod(expt_data, subset$batches, subset$conditions)
     }
-    expt_voom <- hpgltools::hpgl_voom(expt_data, model, libsize=subset$original_libsize,
+    expt_voom <- hpgl_voom(expt_data, model, libsize=subset$original_libsize,
                                       logged=subset$transform, converted=subset$convert)
     lf <- limma::lmFit(expt_voom)
     colnames(lf$coefficients)
-    coefficient_scatter <- hpgltools::hpgl_linear_scatter(lf$coefficients)
+    coefficient_scatter <- plot_linear_scatter(lf$coefficients)
     colnames(lf$design)[1] <- "changed"
     colnames(lf$coefficients)[1] <- "changed"
     colnames(lf$design)[2] <- "control"
@@ -629,28 +629,28 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
     ## contrast_matrix = limma::makeContrasts(changed_v_control=changed-control, levels=lf$design)
     cond_contrasts <- limma::contrasts.fit(lf, contrast_matrix)
     hist_df <- data.frame(values=cond_contrasts$coefficients)
-    contrast_histogram <- hpgl_histogram(hist_df)
+    contrast_histogram <- plot_histogram(hist_df)
     hist_df <- data.frame(values=cond_contrasts$Amean)
-    amean_histogram <- hpgltools::hpgl_histogram(hist_df, fillcolor="pink", color="red")
+    amean_histogram <- plot_histogram(hist_df, fillcolor="pink", color="red")
     coef_amean_cor <- stats::cor.test(cond_contrasts$coefficients, cond_contrasts$Amean, exact=FALSE)
     cond_comparison <- limma::eBayes(cond_contrasts)
     hist_df <- data.frame(values=cond_comparison$p.value)
-    pvalue_histogram <- hpgl_histogram(hist_df, fillcolor="lightblue", color="blue")
+    pvalue_histogram <- plot_histogram(hist_df, fillcolor="lightblue", color="blue")
     cond_table <- limma::topTable(cond_comparison, number=nrow(expt_voom$E),
                                   coef="changed_v_control", sort.by="logFC")
     if (!is.na(basename)) {
         vol_gvis_filename <- paste(basename, "volplot.html", sep="_")
-        a_volcano_plot <- hpgl_volcano_plot(cond_table, gvis_filename=vol_gvis_filename,
+        a_volcano_plot <- plot_volcano(cond_table, gvis_filename=vol_gvis_filename,
                                             tooltip_data=tooltip_data)
     } else {
-        a_volcano_plot <- hpgl_volcano_plot(cond_table)
+        a_volcano_plot <- plot_volcano(cond_table)
     }
     if (!is.na(basename)) {
         ma_gvis_filename <- paste(basename, "maplot.html", sep="_")
-        an_ma_plot <- hpgl_ma_plot(expt_voom$E, cond_table, gvis_filename=ma_gvis_filename,
-                                   tooltip_data=tooltip_data)
+        an_ma_plot <- plot_ma(expt_voom$E, cond_table, gvis_filename=ma_gvis_filename,
+                              tooltip_data=tooltip_data)
     } else {
-        an_ma_plot <- hpgltools::hpgl_ma_plot(expt_voom$E, cond_table)
+        an_ma_plot <- plot_ma(expt_voom$E, cond_table)
     }
     write_xls(cond_table, sheet, file=workbook, rowname="row.names")
     ## upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)

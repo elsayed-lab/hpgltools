@@ -4,7 +4,7 @@
 \alias{golevel}
 \title{Get a go level approximation from a set of IDs.}
 \usage{
-golevel(go)
+golevel(go = c("GO:0032559", "GO:0000001"))
 }
 \arguments{
 \item{go}{Character list of IDs.}

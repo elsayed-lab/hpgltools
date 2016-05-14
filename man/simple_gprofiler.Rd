@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_gprofiler.r
 \name{simple_gprofiler}
 \alias{simple_gprofiler}
-\title{Run searches against the web service g:Profiler}
+\title{Run searches against the web service g:Profiler.}
 \usage{
 simple_gprofiler(gene_list, species = "hsapiens", first_col = "logFC",
   second_col = "limma_logfc")
@@ -20,6 +20,6 @@ simple_gprofiler(gene_list, species = "hsapiens", first_col = "logFC",
 a list of results for go, kegg, reactome, and a few more.
 }
 \description{
-Run searches against the web service g:Profiler
+Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
 }
 

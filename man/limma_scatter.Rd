@@ -23,7 +23,7 @@ limma_scatter(all_pairwise_result, first_table = 1, first_column = "logFC",
 \item{...}{Use the elipsis to feed options to the html graphs.}
 }
 \value{
-Hpgl_linear_scatter() set of plots comparing the chosen columns.  If you forget to
+plot_linear_scatter() set of plots comparing the chosen columns.  If you forget to
     specify tables to compare, it will try the first vs the second.
 }
 \description{
@@ -37,6 +37,6 @@ compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
 }
 }
 \seealso{
-\link{hpgl_linear_scatter} \link[limma]{topTable}
+\link{plot_linear_scatter} \link[limma]{topTable}
 }
 

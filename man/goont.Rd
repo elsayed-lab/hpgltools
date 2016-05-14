@@ -4,7 +4,7 @@
 \alias{goont}
 \title{Get a go ontology name from an ID.}
 \usage{
-goont(go)
+goont(go = c("GO:0032432", "GO:0032433"))
 }
 \arguments{
 \item{go}{GO id, this may be a character or list (assuming the elements are goids).}

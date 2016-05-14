@@ -3,21 +3,18 @@ library(hpgltools)
 
 context("Does limma with combat work with hpgltools?")
 
-## This section is copy/pasted to all of these tests, that is dumb.
-datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
-counts <- read.table(datafile, header=TRUE, row.names=1)
-counts <- counts[rowSums(counts) > ncol(counts), ]
-design <- data.frame(row.names=colnames(counts),
-    condition=c("untreated","untreated","untreated",
-        "untreated","treated","treated","treated"),
-    libType=c("single_end","single_end","paired_end",
-        "paired_end","single_end","paired_end","paired_end"))
-metadata <- design
-colnames(metadata) <- c("condition", "batch")
-metadata$Sample.id <- rownames(metadata)
+pasilla <- new.env()
+load("pasilla.Rdata", envir=pasilla)
+pasilla_expt <- pasilla[["expt"]]
+limma <- new.env()
+load("de_limma.rda", envir=limma)
+counts <- limma$counts
+design <- limma$design
 
 ## Testing that hpgltools gets a similar result to cbcbSEQ using limma.
 library(cbcbSEQ)
+counts <- limma$counts
+design <- limma$design
 cbcb_qcounts <- cbcbSEQ::qNorm(counts)
 cbcb_cpm <- cbcbSEQ::log2CPM(cbcb_qcounts)
 cbcb_qcpmcounts <- as.matrix(cbcb_cpm[["y"]])
@@ -60,7 +57,6 @@ cbcb_table <- topTable(cbcb_eb, coef=2, n=nrow(cbcb_v$E))
 
 ## Now create a hpgltools expt and try the same thing
 ## Setting up an expt class to contain the pasilla data and metadata.
-pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata)
 cbcb_data <- as.matrix(counts)
 hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
 test_that("Does data from an expt equal a raw dataframe?", {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_clusterprofiler.r
 \name{simple_clusterprofiler}
 \alias{simple_clusterprofiler}
-\title{Perform a simplified clusterProfiler analysis}
+\title{Perform a simplified clusterProfiler analysis.}
 \usage{
 simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
   fold_changes = NULL, include_cnetplots = FALSE, showcategory = 12,

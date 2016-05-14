@@ -2,22 +2,23 @@
 % Please edit documentation in R/ontology_topgo.r
 \name{make_id2gomap}
 \alias{make_id2gomap}
-\title{Make a go mapping from IDs in a format suitable for topGO}
+\title{Make a go mapping from IDs in a format suitable for topGO.}
 \usage{
 make_id2gomap(goid_map = "reference/go/id2go.map", goids_df = NULL,
   overwrite = FALSE)
 }
 \arguments{
-\item{goid_map}{A topGO mapping file}
+\item{goid_map}{TopGO mapping file.}
 
-\item{goids_df}{If there is no goid_map, create it with this}
+\item{goids_df}{If there is no goid_map, create it with this data frame.}
 
-\item{overwrite}{A boolean, if it already exists, rewrite the mapping file?}
+\item{overwrite}{Rewrite the mapping file?}
 }
 \value{
-a summary of the new goid table
+Summary of the new goid table.
 }
 \description{
-Make a go mapping from IDs in a format suitable for topGO
+When using a non-supported organism, one must write out mappings in the format expected by
+topgo.  This handles that process and gives a summary of the new table.
 }
 

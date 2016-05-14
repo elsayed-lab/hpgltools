@@ -35,6 +35,6 @@ another. This hopefully makes that easy.
 }
 }
 \seealso{
-\link{hpgl_linear_scatter} \link{deseq2_pairwise}
+\link{plot_linear_scatter} \link{deseq2_pairwise}
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/kegg.r
 \name{gostats_kegg}
 \alias{gostats_kegg}
-\title{Use gostats() against kegg pathways}
+\title{Use gostats() against kegg pathways.}
 \usage{
 gostats_kegg(organism = "Homo sapiens", pathdb = "org.Hs.egPATH",
   godb = "org.Hs.egGO")
@@ -20,6 +20,6 @@ Results from hyperGTest using the KEGG pathways.
 \description{
 This sets up a GSEABase analysis using KEGG pathways rather than gene ontologies.
 Does this even work?  I don't think I have ever tested it yet.
-oh, it sort of does, maybe if I export it I will rembmer it
+oh, it sort of does, maybe if I export it I will rembmer it.
 }
 

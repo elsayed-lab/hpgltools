@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_gostats.r
 \name{gostats_trees}
 \alias{gostats_trees}
-\title{Make fun trees a la topgo from goseq data.}
+\title{Take gostats data and print it on a tree as topGO does.}
 \usage{
 gostats_trees(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under, cc_under,
   goid_map = "reference/go/id2go.map", score_limit = 0.01,
@@ -10,37 +10,38 @@ gostats_trees(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under, cc_under,
   pval_column = "adj.P.Val")
 }
 \arguments{
-\item{de_genes}{some differentially expressed genes}
+\item{de_genes}{Some differentially expressed genes.}
 
-\item{mf_over}{mfover data}
+\item{mf_over}{Mfover data.}
 
-\item{bp_over}{bpover data}
+\item{bp_over}{Bpover data.}
 
-\item{cc_over}{ccover data}
+\item{cc_over}{Ccover data.}
 
-\item{mf_under}{mfunder data}
+\item{mf_under}{Mfunder data.}
 
-\item{bp_under}{bpunder data}
+\item{bp_under}{Bpunder data.}
 
-\item{cc_under}{ccunder expression data}
+\item{cc_under}{Ccunder expression data.}
 
-\item{goid_map}{a mapping of IDs to GO in the Ramigo expected format}
+\item{goid_map}{Mapping of IDs to GO in the Ramigo expected format.}
 
-\item{score_limit}{maximum score to include as 'significant'}
+\item{score_limit}{Maximum score to include as 'significant'.}
 
-\item{goids_df}{a dataframe of available goids (used to generate goid_map)}
+\item{goids_df}{Dataframe of available goids (used to generate goid_map).}
 
-\item{overwrite}{overwrite the goid_map?}
+\item{overwrite}{Overwrite the goid_map?}
 
-\item{selector}{a function to choose differentially expressed genes in the data}
+\item{selector}{Function to choose differentially expressed genes in the data.}
 
-\item{pval_column}{a column in the data to be used to extract pvalue scores}
+\item{pval_column}{Column in the data to be used to extract pvalue scores.}
 }
 \value{
 plots! Trees! oh my!
 }
 \description{
-Make fun trees a la topgo from goseq data.
+This shoehorns gostats data into a format acceptable by topgo and uses it to print pretty
+ontology trees showing the over represented ontologies.
 }
 \seealso{
 \pkg{topGO}

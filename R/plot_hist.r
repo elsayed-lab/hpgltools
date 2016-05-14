@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 14:21:53 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 15:03:12 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_hist.r: Histograms used in other functions
 
@@ -17,10 +17,10 @@
 #' @seealso \link[ggplot2]{geom_histogram} \link[ggplot2]{geom_density}
 #' @examples
 #' \dontrun{
-#'  kittytime = hpgl_histogram(df)
+#'  kittytime = plot_histogram(df)
 #' }
 #' @export
-hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
+plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
                            fillcolor="darkgrey", color="black") {
     hpgl_env <- environment()
     if (class(df) == "data.frame") {
@@ -68,10 +68,10 @@ hpgl_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
 #' @seealso \link[stats]{pairwise.t.test} \link[plyr]{ddply}
 #' @examples
 #' \dontrun{
-#'  kittytime = hpgl_multihistogram(df)
+#'  kittytime = plot_multihistogram(df)
 #' }
 #' @export
-hpgl_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
+plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
     if (is.data.frame(data)) {
         df <- data
         columns <- colnames(df)

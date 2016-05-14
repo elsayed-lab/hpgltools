@@ -1,12 +1,16 @@
-## Time-stamp: <Wed Apr 27 16:13:47 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 16:08:39 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
-#' @param df a dataframe of ontology information.  This is intended to
-#' be the output from goseq including information like
-#' numbers/category, GOids, etc.  It requires a column 'category' which contains: GO:000001 and such.
-#' @param file a csv file to which to write the table
-#' @return the ontology table with annotation information included
+#' While goseq has some nice functionality, the table of outputs it provides is somewhat lacking.
+#' This attempts to increase that with some extra helpful data like ontology categories,
+#' definitions, etc.
+#'
+#' @param df Dataframe of ontology information.  This is intended to be the output from goseq
+#'     including information like numbers/category, GOids, etc.  It requires a column 'category'
+#'     which contains: GO:000001 and such.
+#' @param file Csv file to which to write the table.
+#' @return Ontology table with annotation information included.
 #' @seealso \pkg{goseq}
 #' @examples
 #' \dontrun{
@@ -60,23 +64,27 @@ goseq_table <- function(df, file=NULL) {
     return(df)
 }
 
-#' simple_goseq() Perform a simplified goseq analysis
+#' Perform a simplified goseq analysis.
 #'
-#' @param de_genes a data frame of differentially expressed genes, containing IDs and whatever other columns
-#' @param all_genes the universe of possible genes
-#' @param lengths the length of each gene with an ID in de_genes
-#' @param goids a list of ontology accessions to gene accessions
-#' @param doplot   include pwf plots
-#' @param adjust   minimum adjusted pvalue
-#' @param pvalue   minimum pvalue
-#' @param qvalue   minimum qvalue
-#' @param goseq_method   testing used by goseq
-#' @param padjust_method   which method to adjust the pvalues
-#' @param species   optionally choose a species from supportedOrganisms()
-#' @param length_db   Source of gene lengths
-#' @param gff   gff file source of gene lengths
-#' @param ... extra parameters which I do not recall
-#' @return a big list including:
+#' goseq can be pretty difficult to get set up for non-supported organisms.  This attempts to make
+#' that process a bit simpler as well as give some standard outputs which should be similar to those
+#' returned by clusterprofiler/topgo/gostats/gprofiler.
+#'
+#' @param de_genes Data frame of differentially expressed genes, containing IDs etc.
+#' @param all_genes Universe of possible genes.
+#' @param lengths Length of each gene with an ID in de_genes.
+#' @param goids List of ontology accessions to gene accessions.
+#' @param doplot Include pwf plots?
+#' @param adjust Minimum adjusted pvalue for 'significant.'
+#' @param pvalue Minimum pvalue for 'significant.'
+#' @param qvalue Minimum qvalue for 'significant.'
+#' @param goseq_method Statistical test for goseq to use.
+#' @param padjust_method Which method to use to adjust the pvalues.
+#' @param species Optionally choose a species from supportedOrganisms().
+#' @param length_db Source of gene lengths?
+#' @param gff gff file source of gene lengths.
+#' @param ... Extra parameters which I do not recall
+#' @return Big list including:
 #'   the pwd:pwf function,
 #'   alldata:the godata dataframe,
 #'   pvalue_histogram:p-value histograms,
@@ -183,7 +191,7 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     } else {
         godata <- goseq::goseq(pwf, species, length_db, use_genes_without_cat=TRUE, method=goseq_method)
     }
-    goseq_p <- try(hpgltools::hpgl_histogram(godata$over_represented_pvalue, bins=20))
+    goseq_p <- try(plot_histogram(godata$over_represented_pvalue, bins=20))
     goseq_p_second <- sort(unique(table(goseq_p$data)), decreasing=TRUE)[2]
     ## Set the y scale to 2x the second highest number
     ## (assuming always that the highest is a p-value of 1)
@@ -223,7 +231,7 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     message("simple_goseq(): Filling godata with terms, this is slow.")
     godata_interesting <- goseq_table(godata_interesting)
     message("simple_goseq(): Making pvalue plots for the ontologies.")
-    pvalue_plots <- goseq_pval_plots(godata)
+    pvalue_plots <- plot_goseq_pval(godata)
     ## mf_subset <- subset(godata, ontology == "MF")
 
     mf_subset <- godata[godata$ontology == "MF", ]
@@ -245,9 +253,9 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     cc_interesting <- cc_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
 
     pval_plots <- list(
-        "bpp_plot_over" = pvalue_plots$bpp_plot,
-        "mfp_plot_over" = pvalue_plots$mfp_plot,
-        "ccp_plot_over" = pvalue_plots$ccp_plot)
+        "bpp_plot_over" = pvalue_plots[["bpp_plot"]],
+        "mfp_plot_over" = pvalue_plots[["mfp_plot"]],
+        "ccp_plot_over" = pvalue_plots[["ccp_plot"]])
 
     return_list <- list("input" = de_genes,
                         "pwf" = pwf,
@@ -268,20 +276,23 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     return(return_list)
 }
 
-#' Make a pvalue plot from goseq data
+#' Make a pvalue plot from goseq data.
 #'
-#' @param goterms some data from goseq!
-#' @param wrapped_width the number of characters before wrapping to help legibility
-#' @param cutoff   pvalue cutoff for the plot
-#' @param n    how many groups to include
-#' @param mincat   minimum size of the category
-#' @param level   levels of the ontology tree to use
-#' @return plots!
+#' With minor changes, it is possible to push the goseq results into a clusterProfiler-ish pvalue
+#' plot.  This handles those changes and returns the ggplot results.
+#'
+#' @param goterms Some data from goseq!
+#' @param wrapped_width Number of characters before wrapping to help legibility.
+#' @param cutoff Pvalue cutoff for the plot.
+#' @param n How many groups to include?
+#' @param mincat Minimum size of the category for inclusion.
+#' @param level Levels of the ontology tree to use.
+#' @return Plots!
 #' @seealso \link[goseq]{goseq} \pkg{clusterProfiler} \code{\link{pval_plot}}
 #' @export
-goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat=10, level=NULL) {
+plot_goseq_pval <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat=10, level=NULL) {
     ## The following supports stuff like level='level > 3 & level < 6'
-        if (!is.null(level)) {
+    if (!is.null(level)) {
         keepers <- data.frame()
         message("Getting all go levels.  This takes a moment.")
         mf_go <- golevel_df(ont="MF")
@@ -312,71 +323,67 @@ goseq_pval_plots <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat
     ## TODO: Replace the subset calls with the less noxious which calls.
     plotting_mf <- subset(goterms, complete.cases(goterms))
     plotting_mf$score <- plotting_mf$numDEInCat / plotting_mf$numInCat
-    ## plotting_mf <- subset(plotting_mf, ontology == "MF")
     plotting_mf <- plotting_mf[ plotting_mf$ontology == "MF", ]
-    ## plotting_mf <- subset(plotting_mf, term != "NULL")
     plotting_mf <- plotting_mf[ plotting_mf$term != "NULL", ]
-    ## plotting_mf <- subset(plotting_mf, over_represented_pvalue <= cutoff)
     plotting_mf <- plotting_mf[ plotting_mf$over_represented_pvalue <= cutoff, ]
-    ## plotting_mf <- subset(plotting_mf, numInCat > mincat)
     plotting_mf <- plotting_mf[ plotting_mf$numInCat > mincat, ]
     plotting_mf <- plotting_mf[order(plotting_mf$over_represented_pvalue),]
     plotting_mf <- head(plotting_mf, n=n)
     plotting_mf <- plotting_mf[,c("term","over_represented_pvalue","score")]
     plotting_mf$term <- as.character(lapply(strwrap(plotting_mf$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     colnames(plotting_mf) <- c("term","pvalue","score")
-    mf_pval_plot <- pval_plot(plotting_mf, ontology="MF")
+    mf_pval_plot <- plot_ontpval(plotting_mf, ontology="MF")
 
     plotting_bp <- subset(goterms, complete.cases(goterms))
     plotting_bp$score <- plotting_bp$numDEInCat / plotting_bp$numInCat
-    ## plotting_bp <- subset(plotting_bp, ontology == "BP")
     plotting_bp <- plotting_bp[ plotting_bp$ontology == "BP", ]
-    ## plotting_bp <- subset(plotting_bp, term != "NULL")
     plotting_bp <- plotting_bp[ plotting_bp$term != "NULL", ]
-    ## plotting_bp <- subset(plotting_bp, over_represented_pvalue <= cutoff)
     plotting_bp <- plotting_bp[ plotting_bp$over_represented_pvalue <= cutoff, ]
-    ## plotting_bp <- subset(plotting_bp, numInCat > mincat)
     plotting_bp <- plotting_bp[ plotting_bp$numInCat > mincat, ]
     plotting_bp <- plotting_bp[order(plotting_bp$over_represented_pvalue),]
     plotting_bp <- head(plotting_bp, n=n)
     plotting_bp <- plotting_bp[,c("term","over_represented_pvalue","score")]
     colnames(plotting_bp) <- c("term","pvalue","score")
     plotting_bp$term <- as.character(lapply(strwrap(plotting_bp$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    bp_pval_plot <- pval_plot(plotting_bp, ontology="BP")
+    bp_pval_plot <- plot_ontpval(plotting_bp, ontology="BP")
 
     plotting_cc <- subset(goterms, complete.cases(goterms))
     plotting_cc$score <- plotting_cc$numDEInCat / plotting_cc$numInCat
-    ## plotting_cc <- subset(plotting_cc, ontology == "CC")
     plotting_cc <- plotting_cc[ plotting_cc$ontology == "CC", ]
-    ## plotting_cc <- subset(plotting_cc, term != "NULL")
     plotting_cc <- plotting_cc[ plotting_cc$term != "NULL", ]
-    ## plotting_cc <- subset(plotting_cc, over_represented_pvalue <= cutoff)
     plotting_cc <- plotting_cc[ plotting_cc$over_represented_pvalue <= cutoff, ]
-    ## plotting_cc <- subset(plotting_cc, numInCat > mincat)
     plotting_cc <- plotting_cc[ plotting_cc$numInCat > mincat, ]
     plotting_cc <- plotting_cc[order(plotting_cc$over_represented_pvalue),]
     plotting_cc <- head(plotting_cc, n=n)
     plotting_cc <- plotting_cc[,c("term","over_represented_pvalue","score")]
     colnames(plotting_cc) <- c("term","pvalue","score")
     plotting_cc$term <- as.character(lapply(strwrap(plotting_cc$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    cc_pval_plot <- pval_plot(plotting_cc, ontology="CC")
+    cc_pval_plot <- plot_ontpval(plotting_cc, ontology="CC")
 
-    pval_plots <- list(mfp_plot=mf_pval_plot, bpp_plot=bp_pval_plot, ccp_plot=cc_pval_plot,
-                       mf_subset=plotting_mf, bp_subset=plotting_bp, cc_subset=plotting_cc)
+    pval_plots <- list(
+        "mfp_plot_over" = mf_pval_plot,
+        "bpp_plot_over" = bp_pval_plot,
+        "ccp_plot_over" = cc_pval_plot,
+        "mf_subset_over" = plotting_mf,
+        "bp_subset_over" = plotting_bp,
+        "cc_subset_over" = plotting_cc)
     return(pval_plots)
 }
 
 #' Make fun trees a la topgo from goseq data.
 #'
-#' @param de_genes some differentially expressed genes
-#' @param godata data from goseq
-#' @param goid_map   file to save go id mapping
-#' @param score_limit   score limit for the coloring
-#' @param goids_df   a mapping of IDs to GO in the Ramigo expected format
-#' @param overwrite   overwrite the trees
-#' @param selector   a function for choosing genes
-#' @param pval_column  column to acquire pvalues
-#' @return a plot!
+#' This seeks to force goseq data into a format suitable for topGO and then use its tree plotting
+#' function to make it possible to see significantly increased ontology trees.
+#'
+#' @param de_genes Some differentially expressed genes.
+#' @param godata Data from goseq.
+#' @param goid_map File to save go id mapping.
+#' @param score_limit Score limit for the coloring.
+#' @param goids_df Mapping of IDs to GO in the Ramigo expected format.
+#' @param overwrite Overwrite the trees?
+#' @param selector Function for choosing genes.
+#' @param pval_column Column to acquire pvalues.
+#' @return A plot!
 #' @seealso \pkg{Ramigo}
 #' @export
 goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
@@ -451,9 +458,14 @@ goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
     } else {
         cc_tree <- recordPlot()
     }
-    trees <- list(MF=mf_tree, BP=bp_tree, CC=cc_tree,
-                  MFdata=mf_tree_data, BPdata=bp_tree_data, CCdata=cc_tree_data)
+    trees <- list(
+        "MF_over" = mf_tree,
+        "BP_over" = bp_tree,
+        "CC_over" = cc_tree,
+        "MF_overdata" = mf_tree_data,
+        "BP_overdata" = bp_tree_data,
+        "CC_overdata" = cc_tree_data)
     return(trees)
 }
 
-# EOF
+## EOF

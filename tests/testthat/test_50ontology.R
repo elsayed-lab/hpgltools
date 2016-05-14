@@ -27,4 +27,15 @@ test_that("Are GO.db functions working?", {
     expect_equal(expected_level_result, actual_level_result)
 })
 
-
+## I want to do some much longer tests using goseq/clusterprofiler/topgo/gostats/gprofiler
+## These will likely not work with Travis as they take forever.
+## I am not however, certain how to use skip_on_travis(), so I printed it and am copying the
+## useful bits here.
+if (!identical(Sys.getenv("TRAVIS"), "true")) {
+    ## Run your tests here
+    test_that("Do my non-travis test go?", {
+        expect_equal(1,1)
+    })
+} else {
+    skip("On Travis.")
+}

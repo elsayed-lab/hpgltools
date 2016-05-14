@@ -3,41 +3,41 @@ export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
 all: clean prereq document reference check build test
 
-install:
-	echo "Performing R CMD INSTALL hpgltools"
-	cd ../ && R CMD INSTALL hpgltools && cd hpgltools
+install: document
+	@echo "Performing R CMD INSTALL hpgltools"
+	@cd ../ && R CMD INSTALL hpgltools && cd hpgltools
 
 reference:
-	echo "Generating reference manual with R CMD Rd2pdf"
-	rm -f inst/doc/reference.pdf
-	R CMD Rd2pdf . -o inst/doc/reference.pdf
+	@echo "Generating reference manual with R CMD Rd2pdf"
+	@rm -f inst/doc/reference.pdf
+	@R CMD Rd2pdf . -o inst/doc/reference.pdf
 
 check:
-	echo "Performing check with R CMD check hpgltools"
-	cd ../ && export _R_CHECK_FORCE_SUGGESTS_=FALSE && R CMD check hpgltools --no-build-vignettes && cd hpgltools
+	@echo "Performing check with R CMD check hpgltools"
+	@cd ../ && export _R_CHECK_FORCE_SUGGESTS_=FALSE && R CMD check hpgltools --no-build-vignettes && cd hpgltools
 
 build:
-	echo "Performing build with R CMD build hpgltools"
-	cd ../ && R CMD build hpgltools && cd hpgltools
+	@echo "Performing build with R CMD build hpgltools"
+	@cd ../ && R CMD build hpgltools && cd hpgltools
 
 test: install
-	echo "Running run_tests.R"
-	./run_tests.R
+	@echo "Running run_tests.R"
+	@./run_tests.R
 
 roxygen:
-	echo "Generating documentation with roxygen2::roxygenize()"
-	Rscript -e "roxygen2::roxygenize()"
+	@echo "Generating documentation with roxygen2::roxygenize()"
+	@Rscript -e "roxygen2::roxygenize()"
 
 document:
-	echo "Generating documentation with devtools::document()"
-	Rscript -e "devtools::document()"
+	@echo "Generating documentation with devtools::document()"
+	@Rscript -e "devtools::document()"
 
 vignette:
-	echo "Building vignettes with devtools::build_vignettes()"
-	Rscript -e "devtools::build_vignettes()"
+	@echo "Building vignettes with devtools::build_vignettes()"
+	@Rscript -e "devtools::build_vignettes()"
 
 clean_vignette:
-	rm -f inst/doc/*
+	@rm -f inst/doc/*
 
 vt:	clean_vignette vignette install
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_goseq.r
 \name{simple_goseq}
 \alias{simple_goseq}
-\title{simple_goseq() Perform a simplified goseq analysis}
+\title{Perform a simplified goseq analysis.}
 \usage{
 simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids = NULL,
   doplot = TRUE, adjust = 0.1, pvalue = 0.1, qvalue = 0.1,
@@ -10,36 +10,36 @@ simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids = NULL,
   length_db = "ensGene", gff = NULL, ...)
 }
 \arguments{
-\item{de_genes}{a data frame of differentially expressed genes, containing IDs and whatever other columns}
+\item{de_genes}{Data frame of differentially expressed genes, containing IDs etc.}
 
-\item{all_genes}{the universe of possible genes}
+\item{all_genes}{Universe of possible genes.}
 
-\item{lengths}{the length of each gene with an ID in de_genes}
+\item{lengths}{Length of each gene with an ID in de_genes.}
 
-\item{goids}{a list of ontology accessions to gene accessions}
+\item{goids}{List of ontology accessions to gene accessions.}
 
-\item{doplot}{include pwf plots}
+\item{doplot}{Include pwf plots?}
 
-\item{adjust}{minimum adjusted pvalue}
+\item{adjust}{Minimum adjusted pvalue for 'significant.'}
 
-\item{pvalue}{minimum pvalue}
+\item{pvalue}{Minimum pvalue for 'significant.'}
 
-\item{qvalue}{minimum qvalue}
+\item{qvalue}{Minimum qvalue for 'significant.'}
 
-\item{goseq_method}{testing used by goseq}
+\item{goseq_method}{Statistical test for goseq to use.}
 
-\item{padjust_method}{which method to adjust the pvalues}
+\item{padjust_method}{Which method to use to adjust the pvalues.}
 
-\item{species}{optionally choose a species from supportedOrganisms()}
+\item{species}{Optionally choose a species from supportedOrganisms().}
 
-\item{length_db}{Source of gene lengths}
+\item{length_db}{Source of gene lengths?}
 
-\item{gff}{gff file source of gene lengths}
+\item{gff}{gff file source of gene lengths.}
 
-\item{...}{extra parameters which I do not recall}
+\item{...}{Extra parameters which I do not recall}
 }
 \value{
-a big list including:
+Big list including:
   the pwd:pwf function,
   alldata:the godata dataframe,
   pvalue_histogram:p-value histograms,
@@ -53,7 +53,9 @@ a big list including:
   and ccp_plot
 }
 \description{
-simple_goseq() Perform a simplified goseq analysis
+goseq can be pretty difficult to get set up for non-supported organisms.  This attempts to make
+that process a bit simpler as well as give some standard outputs which should be similar to those
+returned by clusterprofiler/topgo/gostats/gprofiler.
 }
 \seealso{
 \pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}

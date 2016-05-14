@@ -2,16 +2,16 @@
 % Please edit documentation in R/ontology_topgo.r
 \name{plot_topgo_densities}
 \alias{plot_topgo_densities}
-\title{Plot the density of categories vs. the possibilities}
+\title{Plot the density of categories vs. the possibilities of all categories.}
 \usage{
 plot_topgo_densities(godata, table)
 }
 \arguments{
-\item{godata}{the result from topgo}
+\item{godata}{Result from topgo.}
 
-\item{table}{a table of genes}
+\item{table}{Table of genes.}
 }
 \description{
-This can make a large number of plots
+This can make a large number of plots.
 }
 

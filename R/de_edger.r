@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 12 11:05:52 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 15:22:36 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot two coefficients with respect to one another from edgeR.
 #'
@@ -13,7 +13,7 @@
 #' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
 #' @param base_url Add a linkout to gvis plots to this base url.
 #' @return Ggplot2 plot showing the relationship between the two coefficients.
-#' @seealso \link{hpgl_linear_scatter} \link{edger_pairwise}
+#' @seealso \link{plot_linear_scatter} \link{edger_pairwise}
 #' @examples
 #' \dontrun{
 #'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
@@ -50,7 +50,7 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
         coefficient_df <- coefficient_df * -1.0
     }
 
-    plot <- hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+    plot <- plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
                                 tooltip_data=tooltip_data, base_url=base_url)
     maxvalue <- as.numeric(max(coefficient_df) + 1)

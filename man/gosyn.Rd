@@ -4,7 +4,7 @@
 \alias{gosyn}
 \title{Get a go synonym from an ID.}
 \usage{
-gosyn(go)
+gosyn(go = "GO:0000001")
 }
 \arguments{
 \item{go}{GO id, this may be a character or list(assuming the elements are goids).}
