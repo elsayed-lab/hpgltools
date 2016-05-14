@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 13 22:15:21 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:25:49 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
@@ -36,9 +36,9 @@
 #'   qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
 #'   density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
 #' @seealso \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
-#' \link[Biobase]{exprs} \link{hpgl_norm} \link{hpgl_nonzero} \link{hpgl_libsize}
-#' \link{hpgl_boxplot} \link{hpgl_corheat} \link{plot_sm} \link{hpgl_disheat}
-#' \link{hpgl_pca} \link{hpgl_qq_all} \link{hpgl_pairwise_ma}
+#' \link[Biobase]{exprs} \link{hpgl_norm} \link{plot_nonzero} \link{plot_libsize}
+#' \link{plot_boxplot} \link{plot_corheat} \link{plot_sm} \link{plot_disheat}
+#' \link{plot_pca} \link{plot_qq_all} \link{plot_pairwise_ma}
 #' @examples
 #' \dontrun{
 #' toomany_plots <- graph_metrics(expt)

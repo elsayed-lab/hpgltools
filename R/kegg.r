@@ -1,4 +1,4 @@
-## Time-stamp: <Sat May 14 03:47:35 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:34:19 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Print some data onto KEGG pathways.
 #'
@@ -226,6 +226,7 @@ kegg_get_orgn <- function(species="Leishmania", short=TRUE) {
 #' @param organism KEGG organism identifier.
 #' @param pathways What pathways to look at?
 #' @param pathdir Directory into which to copy downloaded pathway files.
+#' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return Dataframe including the filenames, percentages, nodes included, and differential nodes.
 #' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
 #' @export
@@ -302,6 +303,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
 #' @param pathway Numeric pathway identifier.
 #' @param organism KEGG organism identifier.
 #' @param pathdir Directory into which to copy downloaded pathway files.
+#' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return Percent genes/pathway deemed significant.
 #' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
 #' @export
@@ -351,30 +353,30 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
     return(retlist)
 }
 
-play_kegggraph <- function() {
-    library(KEGGgraph)
-    map <- system.file("extdata/hsa04010.xml", package="KEGGgraph")
-    mapkpathway <- parseKGML(map)
-    mapkpathway
-    map_graph <- KEGGpathway2Graph(mapkpathway, expandGenes=TRUE)
-    map_nodes <- nodes(map_graph)
-    map_edges <- KEGGgraph::edges(map_graph)
-    node_data <- getKEGGnodeData(map_graph)
-    library(Rgraphviz)
-    mapped_graph <- subGraph(map_nodes, map_graph)
-    mapped_graph
-    outs <- sapply(edges(mapped_graph), length) > 0
-    ins <- sapply(inEdges(mapped_graph), length) > 0
-    ios <- outs | ins
-    library("org.Hs.eg.db")
-    io_gene_ids <- translateKEGGID2GeneID(names(ios))
-    node_names <- sapply(mget(io_gene_ids, org.Hs.egSYMBOL, ifnotfound=NA), "[[",1)
-    names(node_names) <- names(ios)
-    nattrs <- list()
-    nattrs$fillcolor <- Rgraphviz::makeNodeAttrs(mapped_graph, "lightgrey", list(orang=names(ios)[ios]))
-    nattrs$label <- node_names
-    plot(mapped_graph, "neato", nodeAttrs=nattrs, attrs=list(node=list(fillcolor="lightgreen", width=0.75, shape="ellipse"), edge=list(arrowsize=0.7)))
-}
+## play_kegggraph <- function() {
+##     library(KEGGgraph)
+##     map <- system.file("extdata/hsa04010.xml", package="KEGGgraph")
+##     mapkpathway <- parseKGML(map)
+##     mapkpathway
+##     map_graph <- KEGGpathway2Graph(mapkpathway, expandGenes=TRUE)
+##     map_nodes <- nodes(map_graph)
+##     map_edges <- KEGGgraph::edges(map_graph)
+##     node_data <- getKEGGnodeData(map_graph)
+##     library(Rgraphviz)
+##     mapped_graph <- subGraph(map_nodes, map_graph)
+##     mapped_graph
+##     outs <- sapply(edges(mapped_graph), length) > 0
+##     ins <- sapply(inEdges(mapped_graph), length) > 0
+##     ios <- outs | ins
+##     library("org.Hs.eg.db")
+##     io_gene_ids <- translateKEGGID2GeneID(names(ios))
+##     node_names <- sapply(mget(io_gene_ids, org.Hs.egSYMBOL, ifnotfound=NA), "[[",1)
+##     names(node_names) <- names(ios)
+##     nattrs <- list()
+##     nattrs$fillcolor <- Rgraphviz::makeNodeAttrs(mapped_graph, "lightgrey", list(orang=names(ios)[ios]))
+##     nattrs$label <- node_names
+##     plot(mapped_graph, "neato", nodeAttrs=nattrs, attrs=list(node=list(fillcolor="lightgreen", width=0.75, shape="ellipse"), edge=list(arrowsize=0.7)))
+##}
 
 
 ## EOF

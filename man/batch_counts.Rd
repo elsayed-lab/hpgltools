@@ -21,8 +21,6 @@ batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
 \item{noscale}{Used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.}
 
 \item{...}{More options for you!}
-
-\item{low_to_zero}{Set low values to an explicit 0?}
 }
 \value{
 The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this

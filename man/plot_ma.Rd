@@ -48,7 +48,7 @@ plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
 }
 }
 \seealso{
-\link{gvis_ma_plot} \link[limma]{toptable}
+\link{plot_gvis_ma} \link[limma]{toptable}
 \link[limma]{voom} \link{hpgl_voom}
 \link[limma]{lmFit} \link[limma]{makeContrasts}
 \link[limma]{contrasts.fit}

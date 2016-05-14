@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 12 10:26:35 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 12:41:28 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Automatic loading and/or installing of packages.
 #'
@@ -23,7 +23,7 @@ require.auto <- function(lib, update=FALSE) {
            options(repos=r)
        })
     if (isTRUE(update)) {
-        update.packages(ask=FALSE)
+        utils::update.packages(ask=FALSE)
     }
     github_path <- NULL
     ## If there is a / in the library's name, assume it is a github path
@@ -224,7 +224,7 @@ autoloads_all <- function(update=FALSE) {
     ontology <- autoloads_ontology()
     motif <- autoloads_motif()
     if (isTRUE(update)) {
-        update.packages()
+        utils::update.packages(ask=FALSE)
     }
     packages_installed <- helpers + misc + genome + graphs + stats + deseq + ontology + motif
     message(paste0("autoloads_all() installed ", packages_installed, " packages."))

@@ -7,21 +7,16 @@
 hpgl_rpkm(df, annotations = get0("gene_annotations"))
 }
 \arguments{
-\item{df}{a data frame of counts, alternately an edgeR DGEList}
+\item{df}{Data frame of counts, alternately an edgeR DGEList.}
 
-\item{annotations}{containing gene lengths, defaulting to
-'gene_annotations'}
+\item{annotations}{Contains gene lengths, defaulting to 'gene_annotations'.}
 }
 \value{
-rpkm_df a data frame of counts expressed as rpkm
+Data frame of counts expressed as rpkm.
 }
 \description{
-Express a data frame of counts as reads per kilobase(gene) per
-million(library).
-}
-\details{
-This function wraps EdgeR's rpkm in an attempt to make sure that
-the required gene lengths get sent along.
+Express a data frame of counts as reads per kilobase(gene) per million(library). This function
+wraps EdgeR's rpkm in an attempt to make sure that the required gene lengths get sent along.
 }
 \examples{
 \dontrun{

@@ -17,6 +17,8 @@ pct_all_kegg(all_ids, sig_ids, organism = "dme", pathways = "all",
 \item{pathways}{What pathways to look at?}
 
 \item{pathdir}{Directory into which to copy downloaded pathway files.}
+
+\item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{
 Dataframe including the filenames, percentages, nodes included, and differential nodes.

@@ -17,6 +17,8 @@ pct_kegg_diff(all_ids, sig_ids, pathway = "00500", organism = "dme",
 \item{organism}{KEGG organism identifier.}
 
 \item{pathdir}{Directory into which to copy downloaded pathway files.}
+
+\item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{
 Percent genes/pathway deemed significant.

@@ -23,7 +23,7 @@ output from voom/voomMod/hpgl_voom().}
 }
 \value{
 NULL, but along the way an html file is generated which contains a googleVis MA plot.
-    See hpgl_ma_plot() for details.
+    See plot_ma() for details.
 }
 \description{
 A fun snippet from wikipedia: "In many microarray gene expression experiments, an underlying
@@ -39,6 +39,6 @@ statistical analysis. If the median line is not straight, the data should be nor
 }
 }
 \seealso{
-\link{hpgl_ma_plot}
+\link{plot_ma_plot}
 }
 

@@ -5,18 +5,20 @@
 \title{Make a pvalue plot from gprofiler data.}
 \usage{
 plot_gprofiler_pval(gp_result, wrapped_width = 20, cutoff = 0.1, n = 12,
-  group_minsize = 5)
+  group_minsize = 5, ...)
 }
 \arguments{
+\item{gp_result}{Some data from gProfiler.}
+
 \item{wrapped_width}{Maximum width of the text names.}
 
 \item{cutoff}{P-value cutoff for the plots.}
 
 \item{n}{Maximum number of ontologies to include.}
 
-\item{topgo}{Some data from topgo!}
+\item{group_minsize}{Minimum ontology group size to include.}
 
-\item{type}{Type of score to use.}
+\item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{
 List of MF/BP/CC pvalue plots.

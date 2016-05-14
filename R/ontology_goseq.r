@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 13 16:08:39 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:27:11 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -288,7 +288,7 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
 #' @param mincat Minimum size of the category for inclusion.
 #' @param level Levels of the ontology tree to use.
 #' @return Plots!
-#' @seealso \link[goseq]{goseq} \pkg{clusterProfiler} \code{\link{pval_plot}}
+#' @seealso \link[goseq]{goseq} \pkg{clusterProfiler} \code{\link{plot_ontpval}}
 #' @export
 plot_goseq_pval <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat=10, level=NULL) {
     ## The following supports stuff like level='level > 3 & level < 6'

@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 13 15:22:22 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:26:05 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot out 2 coefficients with respect to one another from limma.
 #'
@@ -18,7 +18,7 @@
 #' @param down_color Color for the downs.
 #' @param ... More parameters to make you happy!
 #' @return Ggplot2 plot showing the relationship between the two coefficients.
-#' @seealso \link{hpgl_linear_scatter} \link{limma_pairwise}
+#' @seealso \link{plot_linear_scatter} \link{limma_pairwise}
 #' @examples
 #' \dontrun{
 #'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")

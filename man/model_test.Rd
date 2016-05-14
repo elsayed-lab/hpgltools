@@ -12,6 +12,8 @@ model_test(design, goal = "condition", factors = NULL, ...)
 \item{goal}{Experimental factor you actually want to learn about.}
 
 \item{factors}{Experimental factors you rather wish would just go away.}
+
+\item{...}{I might decide to add more options from other functions.}
 }
 \value{
 List of booleans telling if the factors + goal will work.

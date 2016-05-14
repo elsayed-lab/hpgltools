@@ -19,12 +19,12 @@ Suggests:
     clusterProfiler, corpcor, corrplot, data.table, DESeq2, DESeq, directlabels, dplyr, DOSE,
     EDASeq, edgeR, fission, genefilter, genomeIntervals, GenomicFeatures, GenomicRanges,
     ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools,
-    gridExtra, hash, Heatplus, Hmisc, igraph, IRanges, KEGGREST, knitcitations, lattice,limma,
-    matrixStats, methods, multtest, mygene, openxlsx, pasilla, pathview, plyr,
+    gridExtra, hash, Heatplus, Hmisc, igraph, IRanges, KEGGgraph, KEGGREST, knitcitations, lattice, limma,
+    matrixStats, motifRG, multtest, mygene, openxlsx, pasilla, pathview, plyr,
     preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, reshape2, RCurl, rGADEM,
     Rgraphviz, robustbase, RUVSeq, reshape, rjson, robust, Rsamtools, rtracklayer, S4Vectors,
-    scales, seqinr, seqLogo, stringi, stringr, survJamda, sva, topGO, XLConnect, xtable, XVector
+    scales, seqinr, seqLogo, stringi, stringr, survJamda, sva, topGO, xtable, XVector
 Imports:
-    devtools, knitr, rmarkdown, Biobase, magrittr, testthat, ggplot2
+    Biobase, knitr, ggplot2, magrittr, methods
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

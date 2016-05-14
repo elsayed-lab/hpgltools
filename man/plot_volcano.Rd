@@ -41,14 +41,14 @@ and y-axis is related to a measure of the statistical significance of the signal
 }
 \examples{
 \dontrun{
- hpgl_volcano_plot(toptable_data, gvis_filename="html/fun_ma_plot.html")
+ plot_volcano(toptable_data, gvis_filename="html/fun_ma_plot.html")
 ## Currently this assumes that a variant of toptable was used which
 ## gives adjusted p-values.  This is not always the case and I should
 ## check for that, but I have not yet.
 }
 }
 \seealso{
-\link{hpgl_gvis_ma_plot} \link[limma]{toptable}
+\link{plot_gvis_ma} \link[limma]{toptable}
 \link[limma]{voom} \link{hpgl_voom} \link[limma]{lmFit}
 \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
 }

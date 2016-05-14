@@ -35,6 +35,10 @@ think linear is the most common.}
 \item{base_url}{Base url to add to the plot.}
 
 \item{pretty_colors}{Colors!}
+
+\item{color_high}{Chosen color for points significantly above the mean.}
+
+\item{color_low}{Chosen color for points significantly below the mean.}
 }
 \value{
 List including a ggplot2 scatter plot and some histograms.  This plot provides a "bird's

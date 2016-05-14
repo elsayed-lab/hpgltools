@@ -9,15 +9,17 @@ divide_seq(counts, pattern = "TA", fasta = "testme.fasta",
   gff = "testme.gff", entry_type = "gene", ...)
 }
 \arguments{
-\item{counts}{read count matrix}
+\item{counts}{Read count matrix.}
 
-\item{pattern}{pattern to search against.  Defaults to 'TA'}
+\item{pattern}{Pattern to search against.  Defaults to 'TA'.}
 
-\item{fasta}{a fasta genome to search}
+\item{fasta}{Fasta genome to search.}
 
-\item{gff}{the gff set of annotations to define start/ends of genes.}
+\item{gff}{Gff set of annotations to define start/ends of genes.}
 
-\item{entry_type}{which type of gff entry to search against.  Defaults to 'gene'.}
+\item{entry_type}{Type of gff entry to search against.  Defaults to 'gene'.}
+
+\item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{
 The 'RPseqM' counts

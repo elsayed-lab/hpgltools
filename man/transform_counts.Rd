@@ -12,6 +12,8 @@ transform_counts(count_table, transform = "raw", base = NULL, ...)
 \item{transform}{A type of transformation to perform: log2/log10/log}
 
 \item{base}{for other log scales}
+
+\item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{
 dataframe of logx(counts)

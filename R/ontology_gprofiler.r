@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 13 21:17:30 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:41:28 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Run searches against the web service g:Profiler.
 #'
@@ -65,15 +65,16 @@ simple_gprofiler <- function(gene_list, species="hsapiens", first_col="logFC", s
 #' The p-value plots from clusterProfiler are pretty, this sets the gprofiler data into a format
 #' suitable for plotting in that fashion and returns the resulting plots of significant ontologies.
 #'
-#' @param topgo Some data from topgo!
+#' @param gp_result Some data from gProfiler.
 #' @param wrapped_width  Maximum width of the text names.
 #' @param cutoff P-value cutoff for the plots.
 #' @param n Maximum number of ontologies to include.
-#' @param type Type of score to use.
+#' @param group_minsize Minimum ontology group size to include.
+#' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return List of MF/BP/CC pvalue plots.
 #' @seealso \pkg{topgo} \code{clusterProfiler}
 #' @export
-plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5) {
+plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5, ...) {
     go_result <- gp_result[["go"]]
     kegg_result <- gp_result[["kegg"]]
     react_result <- gp_result[["react"]]

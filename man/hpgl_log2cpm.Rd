@@ -7,12 +7,12 @@
 hpgl_log2cpm(counts, lib.size = NULL)
 }
 \arguments{
-\item{counts}{read count matrix}
+\item{counts}{Read count matrix.}
 
-\item{lib.size}{library size}
+\item{lib.size}{Library size.}
 }
 \value{
-log2-CPM read count matrix
+log2-CPM read count matrix.
 }
 \description{
 Based on the method used by limma as described in the Law et al. (2014) voom

@@ -25,6 +25,8 @@ lowfilter_counts(count_table, type = "cbcb", p = 0.01, A = 1, k = 1,
 \item{thresh}{Minimum threshold across samples for cbcb.}
 
 \item{min_samples}{Minimum number of samples for cbcb.}
+
+\item{...}{More options might be needed, especially if I fold cv/p/etc into ...}
 }
 \value{
 Data frame of lowfiltered counts.

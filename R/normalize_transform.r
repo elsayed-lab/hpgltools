@@ -1,4 +1,4 @@
-## Time-stamp: <Wed May 11 15:39:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:37:11 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simple transformation of a count table (log2)
 #'
@@ -8,6 +8,7 @@
 #' @param count_table  A matrix of count data
 #' @param transform   A type of transformation to perform: log2/log10/log
 #' @param base   for other log scales
+#' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return dataframe of logx(counts)
 #' @examples
 #' \dontrun{

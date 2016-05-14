@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May  3 17:24:53 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 12:47:22 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Extract annotation information from biomart.
 #'
@@ -199,7 +199,7 @@ translate_ids_querymany <- function(queries, from="ensembl", to="entrez", specie
 biomart_orthologs <- function(gene_ids, first_species='hsapiens', second_species='mmusculus',
                               host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL") {
     first_mart <- NULL
-    first_mart <- try(biomaR::useMart(biomart=trymart, host=host))
+    first_mart <- try(biomaRt::useMart(biomart=trymart, host=host))
     if (class(first_mart) == 'try-error') {
         message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ", host, " ", trymart, "."))
         first_marts <- biomaRt::listMarts(host=host)
@@ -212,7 +212,7 @@ biomart_orthologs <- function(gene_ids, first_species='hsapiens', second_species
     first_dataset <- paste0(first_species, "_gene_ensembl")
     first_ensembl <- try(biomaRt::useDataset(first_dataset, mart=first_mart))
     if (class(first_ensembl) == 'try-error') {
-        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", dataset, "."))
+        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", first_ensembl, "."))
         datasets <- biomaRt::listDatasets(mart=first_mart)
         print(datasets)
         return(NULL)
@@ -232,7 +232,7 @@ biomart_orthologs <- function(gene_ids, first_species='hsapiens', second_species
     second_dataset <- paste0(second_species, "_gene_ensembl")
     second_ensembl <- try(biomaRt::useDataset(second_dataset, mart=second_mart))
     if (class(second_ensembl) == 'try-error') {
-        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", dataset, "."))
+        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", second_ensembl, "."))
         datasets <- biomaRt::listDatasets(mart=second_mart)
         print(datasets)
         return(NULL)

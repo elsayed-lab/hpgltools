@@ -1,4 +1,4 @@
-## Time-stamp: <Sat May 14 02:04:30 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:21:09 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_heatmap.r: Heatmaps separated by usage
 
@@ -128,7 +128,7 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         row_colors <- RColorBrewer::brewer.pal(12, "Set3")[batch_color_assignments]
     } else {
         ## If we just have 1 batch, make it... green!
-        row_colors <- rep("green", length(design[batch_row]))
+        row_colors <- rep("green", length(expt_design[batch_row]))
     }
 
     if (type == "correlation") {
@@ -161,34 +161,34 @@ plot_heatplus <- function(fundata) {
 ## Check out the following link for a neat dendrogram library.
 ## http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning
 
-ggplot2_heatmap <- function() {
-    x <- as.matrix(scale(mtcars))
+ggplot2_heatmap <- function(some_df) {
+    x <- as.matrix(scale(some_df))
     dd.col <- as.dendrogram(hclust(dist(x)))
     dd.row <- as.dendrogram(hclust(dist(t(x))))
-    dx <- dendro_data(dd.row)
-    dy <- dendro_data(dd.col)
+    dx <- ggdendro::dendro_data(dd.row)
+    dy <- ggdendro::dendro_data(dd.col)
     ## helper function for creating dendograms
     ggdend <- function(df) {
         ggplot() +
-            geom_segment(data = df, aes(x=x, y=y, xend=xend, yend=yend)) +
-            labs(x = "", y = "") + theme_minimal() +
-            theme(axis.text = element_blank(), axis.ticks = element_blank(),
-                  panel.grid = element_blank())
+            ggplot2::geom_segment(data = df, aes(x=x, y=y, xend=xend, yend=yend)) +
+            ggplot2::labs(x = "", y = "") + ggplot2::theme_minimal() +
+            ggplot2::theme(axis.text = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(),
+                           panel.grid = ggplot2::element_blank())
     }
     ## x/y dendograms
-    px <- ggdend(dx$segments)
-    py <- ggdend(dy$segments) + coord_flip()
+    px <- ggdendro::ggdendrogram(dx$segments)
+    py <- ggdendro::ggdendrogram(dy$segments) + ggplot2::coord_flip()
     ## heatmap
     col.ord <- order.dendrogram(dd.col)
     row.ord <- order.dendrogram(dd.row)
-    xx <- scale(mtcars)[col.ord, row.ord]
+    xx <- scale(some_df)[col.ord, row.ord]
     xx_names <- attr(xx, "dimnames")
     df <- as.data.frame(xx)
     colnames(df) <- xx_names[[2]]
     df$car <- xx_names[[1]]
     df$car <- with(df, factor(car, levels=car, ordered=TRUE))
     mdf <- reshape2::melt(df, id.vars="car")
-    p <- ggplot(mdf, aes(x = variable, y = car)) + geom_tile(aes(fill = value))
+    p <- ggplot(mdf, aes(x = variable, y = car)) + ggplot2::geom_tile(aes(fill = value))
     ## hide axis ticks and grid lines
     eaxis <- list(
         showticklabels = FALSE,

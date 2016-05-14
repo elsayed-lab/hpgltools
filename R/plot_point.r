@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 13 15:12:01 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:36:19 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_scatter.r: Various scatter plots
 
@@ -80,8 +80,8 @@ plot_bcv <- function(data) {
 #' color dots which are presumed the therefore be interesting because
 #' they are far from 'normal.'  This will make a fun clicky googleVis
 #' graph if requested.
-#' @seealso \pkg{ggplot2} \link{gvis_scatter} \link[ggplot2]{geom_point}
-#' \link{linear_scatter}
+#' @seealso \pkg{ggplot2} \link{plot_gvis_scatter} \link[ggplot2]{geom_point}
+#' \link{plot_linear_scatter}
 #' @examples
 #' \dontrun{
 #'  dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
@@ -120,7 +120,7 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
         ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist), alpha=0.6, size=size) +
         ggplot2::theme(legend.position="none")
     if (!is.null(gvis_filename)) {
-        hpgl_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
+        plot_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
     }
     return(first_vs_second)
 }
@@ -141,6 +141,8 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #' @param second Second column to plot.
 #' @param base_url Base url to add to the plot.
 #' @param pretty_colors Colors!
+#' @param color_high Chosen color for points significantly above the mean.
+#' @param color_low Chosen color for points significantly below the mean.
 #' @return List including a ggplot2 scatter plot and some histograms.  This plot provides a "bird's
 #'     eye" view of two data sets.  This plot assumes a (potential) linear correlation between the
 #'     data, so it calculates the correlation between them.  It then calculates and plots a robust
@@ -226,10 +228,10 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     }
         ## Add a color to the dots which are lower than the identity line by some amount
     if (!is.null(color_low)) {
-        first_vs_second <- first_vs_second + geom_point(data=low_df, color="#FF0000", alpha=0.4)
+        first_vs_second <- first_vs_second + ggplot2::geom_point(data=low_df, color="#FF0000", alpha=0.4)
     }
     if (!is.null(color_high)) {
-        first_vs_second <- first_vs_second + geom_point(data=high_df, color="#7B9F35", alpha=0.4)
+        first_vs_second <- first_vs_second + ggplot2::geom_point(data=high_df, color="#7B9F35", alpha=0.4)
     }
 
     if (isTRUE(pretty_colors)) {
@@ -258,7 +260,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
         ggplot2::theme_bw()
 
     if (!is.null(gvis_filename)) {
-        gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename,
+        plot_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename,
                           trendline=gvis_trendline, base_url=base_url)
     }
     if (!is.null(first) & !is.null(second)) {
@@ -297,7 +299,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #'     type across all sample types on the x-axis, and the log fold change between conditions on the
 #'     y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
 #'     googleVis graph if requested.
-#' @seealso \link{gvis_ma_plot} \link[limma]{toptable}
+#' @seealso \link{plot_gvis_ma} \link[limma]{toptable}
 #' \link[limma]{voom} \link{hpgl_voom}
 #' \link[limma]{lmFit} \link[limma]{makeContrasts}
 #' \link[limma]{contrasts.fit}
@@ -373,7 +375,7 @@ plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=
 #' @seealso \link[ggplot2]{geom_point} \link[directlabels]{geom_dl}
 #' @examples
 #' \dontrun{
-#'  nonzero_plot = hpgl_nonzero(expt=expt)
+#'  nonzero_plot = plot_nonzero(expt=expt)
 #'  nonzero_plot  ## ooo pretty
 #' }
 #' @export
@@ -454,7 +456,7 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
 #' @seealso \link[affy]{ma.plot}
 #' @examples
 #' \dontrun{
-#'  ma_plots = hpgl_pairwise_ma(expt=some_expt)
+#'  ma_plots = plot_pairwise_ma(expt=some_expt)
 #' }
 #' @export
 plot_pairwise_ma <- function(data, log=NULL, ...) {
@@ -519,11 +521,11 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
 #' @param size Size of the dots on the graph.
 #' @param color Color of the dots on the graph.
 #' @return Ggplot2 scatter plot.
-#' @seealso \link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}
-#' \link{hpgl_linear_scatter}
+#' @seealso \link{plot_gvis_scatter} \link[ggplot2]{geom_point}
+#' \link{plot_linear_scatter}
 #' @examples
 #' \dontrun{
-#' hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+#' plot_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
 #'              gvis_filename="html/fun_scatterplot.html")
 #' }
 #' @export
@@ -568,12 +570,12 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to
 #'     log(fold change).  The cutoff values are delineated with lines and mark the boundaries
 #'     between 'significant' and not.  This will make a fun clicky googleVis graph if requested.
-#' @seealso \link{hpgl_gvis_ma_plot} \link[limma]{toptable}
+#' @seealso \link{plot_gvis_ma} \link[limma]{toptable}
 #' \link[limma]{voom} \link{hpgl_voom} \link[limma]{lmFit}
 #' \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
 #' @examples
 #' \dontrun{
-#'  hpgl_volcano_plot(toptable_data, gvis_filename="html/fun_ma_plot.html")
+#'  plot_volcano(toptable_data, gvis_filename="html/fun_ma_plot.html")
 #' ## Currently this assumes that a variant of toptable was used which
 #' ## gives adjusted p-values.  This is not always the case and I should
 #' ## check for that, but I have not yet.
@@ -597,7 +599,7 @@ plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
         ggplot2::ylab("-log10(adjusted p value)") +
         ggplot2::theme(legend.position="none")
     if (!is.null(gvis_filename)) {
-        hpgl_gvis_volcano_plot(toptable_data, fc_cutoff=fc_cutoff, p_cutoff=p_cutoff, tooltip_data=tooltip_data, filename=gvis_filename)
+        plot_gvis_volcano(toptable_data, fc_cutoff=fc_cutoff, p_cutoff=p_cutoff, tooltip_data=tooltip_data, filename=gvis_filename)
     }
     return(plt)
 }

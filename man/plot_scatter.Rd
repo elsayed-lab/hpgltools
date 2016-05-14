@@ -27,12 +27,12 @@ relationship between the columns of data plotted.
 }
 \examples{
 \dontrun{
-hpgl_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+plot_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
              gvis_filename="html/fun_scatterplot.html")
 }
 }
 \seealso{
-\link{hpgl_gvis_scatter} \link[ggplot2]{geom_point}
-\link{hpgl_linear_scatter}
+\link{plot_gvis_scatter} \link[ggplot2]{geom_point}
+\link{plot_linear_scatter}
 }
 

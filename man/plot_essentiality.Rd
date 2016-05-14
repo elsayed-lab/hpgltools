@@ -13,6 +13,6 @@ plot_essentiality(file)
 A couple of plots
 }
 \description{
-Plot the essentiality of a library as per DeJesus et al.
+This provides a plot of the essentiality metrics 'zbar' with respect to gene.
 }
 

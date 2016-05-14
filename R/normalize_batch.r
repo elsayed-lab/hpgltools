@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 14:43:30 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:29:09 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
 #'
@@ -47,7 +47,6 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #' @param batch1 Column in the design table describing the presumed covariant to remove.
 #' @param batch2 Column in the design table describing the second covariant to remove (only used by limma at the moment).
 #' @param noscale Used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.
-#' @param low_to_zero Set low values to an explicit 0?
 #' @param ... More options for you!
 #' @return The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this
 #' may not be what you want for voom/limma and would therefore lead to spurious differential expression values.

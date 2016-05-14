@@ -31,7 +31,7 @@ Temanni <temanni at umd dot edu>.
 }
 \examples{
 \dontrun{
- nonzero_plot = hpgl_nonzero(expt=expt)
+ nonzero_plot = plot_nonzero(expt=expt)
  nonzero_plot  ## ooo pretty
 }
 }

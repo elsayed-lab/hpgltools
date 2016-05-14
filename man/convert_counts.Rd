@@ -8,31 +8,30 @@ convert_counts(data, convert = "raw", annotations = NULL, fasta = NULL,
   pattern = "TA", entry_type = "gene", ...)
 }
 \arguments{
-\item{data}{A matrix of count data}
+\item{data}{Matrix of count data.}
 
-\item{convert}{A type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m}
+\item{convert}{Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.}
 
-\item{annotations}{a set of gff annotations are needed if using rpkm so we can get gene lengths.}
+\item{annotations}{Set of gff annotations are needed if using rpkm so we can get gene lengths.}
 
-\item{fasta}{a fasta for rpkmish}
+\item{fasta}{Fasta for rpkmish normalization.}
 
-\item{pattern}{for cp_seq_m counts}
+\item{pattern}{Cp_seq_m counts require a pattern to search on.}
 
-\item{entry_type}{used to acquire gene lengths}
+\item{entry_type}{Used when reading a gff to acquire gene lengths.}
 
-\item{...}{more options}
+\item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{
-dataframe of cpm/rpkm/whatever(counts)
+Dataframe of cpm/rpkm/whatever(counts)
 }
 \description{
-I should probably tell it to also handle a simple df/vector/list of gene lengths, but I haven't.
-cp_seq_m is a cpm conversion of the data followed by a rp-ish
-conversion which normalizes by the number of the given oligo.  By
-default this oligo is 'TA' because it was used for tnseq which
-should be normalized by the number of possible transposition sites
-by mariner.  It could, however, be used to normalize by the number
-of methionines, for example -- if one wanted to do such a thing.
+I should probably tell it to also handle a simple df/vector/list of gene lengths, but I
+haven't. cp_seq_m is a cpm conversion of the data followed by a rp-ish conversion which
+normalizes by the number of the given oligo.  By default this oligo is 'TA' because it was used
+for tnseq which should be normalized by the number of possible transposition sites by mariner.
+It could, however, be used to normalize by the number of methionines, for example -- if one
+wanted to do such a thing.
 }
 \examples{
 \dontrun{
