@@ -43,7 +43,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     expected_tp_mfp <- c("GO:0004252", "GO:0008236", "GO:0017171", "GO:0008509", "GO:0004175", "GO:0022857")
     actual_tp_mfp <- head(tp_result$pvalue_plots$mfp_plot_over$data$GO.ID)
 
-    test_that("Are the clusterprofiler interesting results as expected?", {
+    test_that("Are the topGO interesting results as expected?", {
         expect_equal(expected_tp_mf, actual_tp_mf)
         expect_equal(expected_tp_bp, actual_tp_bp)
         expect_equal(expected_tp_cc, actual_tp_cc)
