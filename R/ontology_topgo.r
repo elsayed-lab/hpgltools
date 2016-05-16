@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 13 16:06:12 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 16 15:31:24 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simplified topgo analysis.
 #'
@@ -35,24 +35,19 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
 ### If we do something like above to give scores to all the 'DEgenes', then we set up the GOdata object like this:
 ### mf_GOdata = new("topGOdata", description="something", ontology="BP", allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO, gene2GO=geneID2GO, nodeSize=2)
     ## The following library invocation is in case it was unloaded for pathview
-    require.auto("topGO")
     requireNamespace("topGO")
-    ## library("topGO")
     require.auto("Hmisc")
     requireNamespace("Hmisc")
     gomap_info <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
-    ##message(paste0("simple_topgo(): Found ID->GO map: ", gomap_info))
     geneID2GO <- topGO::readMappings(file=goid_map)
     annotated_genes <- names(geneID2GO)
     if (is.null(de_genes[["ID"]])) {
         de_genes[["ID"]] <- make.names(rownames(de_genes), unique=TRUE)
     }
-    ## interesting_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
     fisher_interesting_genes <- as.factor(as.integer(annotated_genes %in% de_genes[["ID"]]))
     names(fisher_interesting_genes) <- annotated_genes
-    ## ks_interesting_genes <- as.integer(annotated_genes %nin% de_genes$ID) ## %nin% is from Hmisc
-    ks_interesting_genes <- as.integer(!annotated_genes %in% de_genes[["ID"]]) ## %nin% is from Hmisc
-    if (!is.null(de_genes[["P.Value"]])) {
+    ks_interesting_genes <- as.integer(!annotated_genes %in% de_genes[["ID"]])
+    if (!is.null(de_genes[[pval_column]])) {
         ## I think this needs to include the entire gene universe, not only the set of x differentially expressed genes
         ## Making this an explicit as.vector(as.numeric()) because it turns out the values from DESeq are characters.
         pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
@@ -91,7 +86,7 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
     mf_ks_result <- topGO::getSigGroups(ks_mf_GOdata, test_stat)
     bp_ks_result <- topGO::getSigGroups(ks_bp_GOdata, test_stat)
     cc_ks_result <- topGO::getSigGroups(ks_cc_GOdata, test_stat)
-    test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="Fisher test", cutOff=0.01)
+    test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="Fisher test", cutOff=0.05)
     mf_el_result <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
     bp_el_result <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
     cc_el_result <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
@@ -147,19 +142,20 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
         "bp_weight" = bp_weight_result,
         "cc_weight" = cc_weight_result)
 
-    tables <- try(topgo_tables(results, limitby=limitby, limit=limit))
+    tables <- try(topgo_tables(results, limitby=limitby, limit=limit), silent=TRUE)
     if (class(tables)[1] == 'try-error') {
         tables <- NULL
     }
 
     mf_densities <- bp_densities <- cc_densities <- list()
     if (isTRUE(densities)) {
-        mf_densities <- plot_topgo_densities(fisher_mf_GOdata, tables$mf)
-        bp_densities <- plot_topgo_densities(fisher_bp_GOdata, tables$bp)
-        cc_densities <- plot_topgo_densities(fisher_cc_GOdata, tables$cc)
+        mf_densities <- suppressMessages(plot_topgo_densities(fisher_mf_GOdata, tables$mf))
+        bp_densities <- suppressMessages(plot_topgo_densities(fisher_bp_GOdata, tables$bp))
+        cc_densities <- suppressMessages(plot_topgo_densities(fisher_cc_GOdata, tables$cc))
     } else {
-        message("simple_topgo(): Set densities=TRUE for ontology densitya plots.")
+        message("simple_topgo(): Set densities=TRUE for ontology density plots.")
     }
+
 
     information <- list(
         "mf_godata" = fisher_mf_GOdata,
@@ -174,10 +170,8 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
         "bp_densities" = bp_densities,
         "cc_densities" = cc_densities,
         "pdists" = p_dists)
-
-    if (isTRUE(pval_plots)) {
-        information[["pvalue_plots"]] <- plot_topgo_pval(information)
-    }
+    pval_plots <- plot_topgo_pval(information)
+    information[["pvalue_plots"]] <- pval_plots
     return(information)
 }
 
@@ -509,7 +503,7 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
             rm(id2go_test)
         }
     } else { ## overwrite is not true
-        if (is.na(id2go_test$size)) {
+        if (is.na(id2go_test[["size"]])) {
             if (is.null(goids_df)) {
                 stop("There is neither a id2go file nor a data frame of goids.")
             } else {

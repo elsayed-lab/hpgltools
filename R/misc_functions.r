@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May  9 10:48:05 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 16 17:56:55 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' png() shortcut
 #'
@@ -9,6 +9,121 @@
 #' @export
 pp <- function(file) {
     png(filename=file, width=9, height=9, units="in", res=180)
+}
+
+#' We want to catch *and* save both errors and warnings, and in the case of
+#' a warning, also keep the computed result.
+#'
+#' This was taken from:http://r.789695.n4.nabble.com/How-to-catch-both-warnings-and-errors-td3073597.html
+#' and http://tolstoy.newcastle.edu.au/R/help/04/06/0217.html
+#'
+#' @title tryCatch both warnings and errors
+#' @param expr
+#' @return a list with 'value' and 'warning', where
+#'  'value' may be an error caught.
+#' @author Martin Maechler
+tryCatch.W.E <- function(expr) {
+    W <- NULL
+    w.handler <- function(w){ # warning handler
+        W <<- w
+        invokeRestart("muffleWarning")
+    }
+    ret <- list(
+        "value" = withCallingHandlers(tryCatch(expr,
+                                               error = function(e) e),
+                                      warning = w.handler),
+        "warning" = W)
+    return(ret)
+}
+
+#' Silence, peasant!
+#'
+#' Some libraries/functions just won't shut up.  Ergo, silence, peasant!
+#' This function uses 2 invocations of capture.output and a try(silent=TRUE) to capture the strings
+#' of the outputs from the given expression in 'output', and the messages in 'message'.  The result
+#' of the expression goes into 'result.'  If there is an error in the expression, it is returned as
+#' a try-error object which may therefore be inspected as needed.
+#'
+#' @param code Some code to shut up.
+#' @return List of the output log, message log, and result of the expression.
+#' @export
+sp <- function(code) {
+    warnings <- NULL
+    output_log <- NULL
+    message_log <- NULL
+    result <- NULL
+    output_log <- capture.output(type="output", {
+        message_log <- capture.output(type="message", {
+            result <- try(code)
+        })
+    })
+    retlist <- list(
+        "output" = output_log,
+        "message" = message_log,
+        "warnings" = warnings,
+        "result" = result)
+    return(retlist)
+}
+
+sq <- function(code, ps=NULL) {
+    warnings <- NULL
+    output_log <- NULL
+    message_log <- NULL
+    tryCatch(result <- { output_log <<- capture.output(type="output", { code }) },
+                       error = function(e) {
+                           call <- conditionCall(e)
+                           if (!is.null(call)) {
+                               if (identical(call[[1L]], quote(doTryCatch))) {
+                                   call <- sys.call(-4L)
+                               }
+                               dcall <- deparse(call)[1L]
+                               prefix <- paste("Error in", dcall, ": ")
+                               LONG <- 75L
+                               msg <- conditionMessage(e)
+                               sm <- strsplit(msg, "\n")[[1L]]
+                               w <- 14L + nchar(dcall, type = "w") + nchar(sm[1L], type = "w")
+                               if (is.na(w)) {
+                                   w <- 14L + nchar(dcall, type = "b") + nchar(sm[1L], type = "b")
+                               }
+                               if (w > LONG) {
+                                   prefix <- paste0(prefix, "\n  ")
+                               }
+                           } else {
+                               prefix <- "Error : "
+                               msg <- paste0(prefix, conditionMessage(e), "\n")
+                               .Internal(seterrmessage(msg[1L]))
+                               if (!silent && identical(getOption("show.error.messages"), TRUE)) {
+                                   cat(msg, file = stderr())
+                                   .Internal(printDeferredWarnings())
+                               }
+                               invisible(structure(msg, class = "try-error", condition = e))
+                           }
+                       },
+                       warning = function(w) { message_log <- capture.output(type="message", { w } )},
+                       finally = { ps })
+    retlist <- list(
+        "output" = output_log,
+        "message" = message_log,
+        "warnings" = warnings,
+        "result" = result)
+    return(retlist)
+}
+
+sr <- function(code) {
+    warnings <- NULL
+    output_log <- NULL
+    message_log <- NULL
+    result <- {
+        output_log <- capture.output(type="output", {
+            message_log <- capture.output(type="message", {
+                code
+            })
+        })
+    }
+    retlist <- list(
+        "output" = output_log,
+        "message" = message_log,
+        "result" = result)
 }
 
 #' Grab gene lengths from a gff file.

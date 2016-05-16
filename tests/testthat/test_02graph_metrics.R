@@ -10,9 +10,9 @@ pasilla_expt <- pasilla[["expt"]]
 ## What graphs can we make!?
 libsize_plot <- plot_libsize(pasilla_expt)
 nonzero_plot <- plot_nonzero(pasilla_expt)
-density_plot <- suppressMessages(plot_density(pasilla_expt))
-hist_plot <- suppressMessages(plot_histogram(data.frame(Biobase::exprs(pasilla_expt$expressionset))))
-box_plot <- suppressMessages(plot_boxplot(pasilla_expt))
+density_plot <- sp(plot_density(pasilla_expt))$result
+hist_plot <- sp(plot_histogram(data.frame(Biobase::exprs(pasilla_expt$expressionset))))$result
+box_plot <- sp(plot_boxplot(pasilla_expt))$result
 
 expected_libsize_data <- c(13971670, 21909886, 8357876, 9840745, 18668667, 9571213, 10343219)
 actual_libsize_data <- libsize_plot$data$sum
@@ -32,13 +32,13 @@ test_that("Do the pre-normalized plots work", {
     expect_equal(expected_box_data, actual_box_data)
 })
 
-norm <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", convert="cpm", norm="quant", filter_low=TRUE))
+norm <- sp(normalize_expt(pasilla_expt, transform="log2", convert="cpm", norm="quant", filter_low=TRUE))$result
 
 corheat_plot <- plot_corheat(norm)
 disheat_plot <- plot_disheat(norm)
 sampleheat_plot <- plot_sample_heatmap(norm)
-smc_plot <- suppressMessages(plot_sm(norm, method="pearson"))
-smd_plot <- suppressMessages(plot_sm(norm, method="euclidean"))
+smc_plot <- sp(plot_sm(norm, method="pearson"))$result
+smd_plot <- sp(plot_sm(norm, method="euclidean"))$result
 pca_stuff <- plot_pca(norm)
 pca_plot <- pca_stuff$plot
 pca_pca <- head(pca_stuff$pca)

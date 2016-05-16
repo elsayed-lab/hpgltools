@@ -4,7 +4,7 @@
 \alias{simple_goseq}
 \title{Perform a simplified goseq analysis.}
 \usage{
-simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids = NULL,
+simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids_df = NULL,
   doplot = TRUE, adjust = 0.1, pvalue = 0.1, qvalue = 0.1,
   goseq_method = "Wallenius", padjust_method = "BH", species = NULL,
   length_db = "ensGene", gff = NULL, ...)
@@ -16,7 +16,7 @@ simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids = NULL,
 
 \item{lengths}{Length of each gene with an ID in de_genes.}
 
-\item{goids}{List of ontology accessions to gene accessions.}
+\item{goids_df}{List of ontology accessions to gene accessions.}
 
 \item{doplot}{Include pwf plots?}
 

@@ -4,9 +4,9 @@
 \alias{hpgl_enrich.internal}
 \title{A minor hack in the clusterProfiler function 'enrich.internal'.}
 \usage{
-hpgl_enrich.internal(gene, organism, pvalueCutoff = 1, pAdjustMethod = "BH",
-  ont, minGSSize = 2, qvalueCutoff = 0.2, readable = FALSE,
-  universe = NULL)
+hpgl_enrich.internal(gene, organism, pvalueCutoff = 1,
+  pAdjustMethod = "fdr", ont, minGSSize = 2, qvalueCutoff = 0.2,
+  readable = FALSE, universe = NULL)
 }
 \arguments{
 \item{gene}{Differentially expressed genes.}

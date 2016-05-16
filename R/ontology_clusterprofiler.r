@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 13 16:03:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 16 16:44:30 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make sure that clusterProfiler is ready to run.
 #'
@@ -7,16 +7,16 @@
 #' file and attempts to set it up if it is not found.
 #'
 #' @param gff Ggff file containing annotation data (gene lengths).
-#' @param gomap Data frame of gene IDs and GO ontologies 1:1, other columns are ignored.
+#' @param goids_df Data frame of gene IDs and GO ontologies 1:1, other columns are ignored.
 #' @return GO2EG data structure created, probably don't save this, it is entirely too big.
 #' @examples
 #' \dontrun{
-#'  go2eg <- check_clusterprofiler(gff, goids)
+#'  go2eg <- check_clusterprofiler(gff, gomap)
 #'  rm(go2eg)
 #' }
 #' @export
-check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
-    genetable_test <- try(load("geneTable.rda"))
+check_clusterprofiler <- function(gff='test.gff', goids_df=NULL) {
+    genetable_test <- try(load("geneTable.rda"), silent=TRUE)
     if (class(genetable_test) == 'try-error') {
         if (!is.null(gff)) {
             message("simple_clus(): Generating the geneTable.rda")
@@ -32,12 +32,13 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
     gomapping_test <- suppressWarnings(try(load("GO2EG.rda"), silent=TRUE))
     if (class(gomapping_test) == 'try-error') {
         message("simple_clus(): Generating GO mapping data.")
-        gomap <- gomap[,c(1,2)]
+        gomap <- goids_df[,c(1,2)]
         colnames(gomap) <- c("entrezgene", "go_accession")
         ## It turns out that the author of clusterprofiler reversed these fields...
         ## Column 1 must be GO ID, column 2 must be gene accession.
         gomap <- gomap[,c("go_accession","entrezgene")]
-        clusterProfiler::buildGOmap(gomap)
+
+        log <- capture.output(type="output", { clusterProfiler::buildGOmap(gomap) })
     } else {
         message("Using GO mapping data located in GO2EG.rda")
     }
@@ -53,7 +54,7 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' fails.
 #'
 #' @param de_genes Data frame of differentially expressed genes, it must contain an ID column.
-#' @param goids File containing mappings of genes to goids in the format expected by buildGOmap().
+#' @param goids_file File containing mappings of genes to goids in the format expected by buildGOmap().
 #' @param golevel Relative level in the tree for printing p-value plots, higher is more specific.
 #' @param pcutoff (Adj)p-value cutoff to define 'significant'.
 #' @param fold_changes Df of fold changes for the DE genes.
@@ -96,7 +97,7 @@ check_clusterprofiler <- function(gff='test.gff', gomap=NULL) {
 #' ## >   10 oligosaccharide metabolic process
 #' }
 #' @export
-simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
+simple_clusterprofiler <- function(de_genes, goids_df=NULL, golevel=4, pcutoff=0.1,
                                    fold_changes=NULL, include_cnetplots=FALSE,
                                    showcategory=12, universe=NULL, species="undef", gff=NULL,
                                    wrapped_width=20, method="Wallenius", padjust="BH", ...) {
@@ -105,11 +106,12 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
         species <- "unknown"
     }
     if (!is.null(gff)) {
-        go2eg <- check_clusterprofiler(gff=gff, gomap=goids)
+        go2eg <- check_clusterprofiler(gff=gff, goids_df=goids_df)
         if (length(go2eg) == 0) {
             stop("The GO2EG data structure is empty.")
         }
     }
+    gene_list <- NULL
     if (is.null(de_genes[["ID"]])) {
         gene_list <- as.character(rownames(de_genes))
     } else {
@@ -147,6 +149,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     enriched_bp <- hpgl_enrichGO(gene_list, organism=species, ont="BP",
                                  pvalueCutoff=pcutoff, qvalueCutoff=1.0,
                                  pAdjustMethod=padjust)
+
     message("simple_clus(): Starting CC(cellular component) analysis")
     cc_group <- clusterProfiler::groupGO(gene_list, organism=species, ont="CC",
                                          level=golevel, readable=TRUE)
@@ -155,6 +158,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
     enriched_cc <- hpgl_enrichGO(gene_list, organism=species, ont="CC", pvalueCutoff=pcutoff,
                                  qvalueCutoff=1.0, pAdjustMethod=padjust)
     all_cc_phist <- try(plot_histogram(cc_all@result$pvalue, bins=20))
+
     ## Try and catch if there are no significant hits.
     if (class(all_cc_phist)[1] != 'try-error') {
         y_limit <- (sort(unique(table(all_cc_phist$data)), decreasing=TRUE)[2]) * 2
@@ -168,18 +172,21 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
             BiocGenerics::lapply(strwrap(mf_group_barplot$data$Description,
                                          wrapped_width, simplify=FALSE),paste,collapse="\n"))
     }
+
     bp_group_barplot <- try(barplot(bp_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(bp_group_barplot)[1] != 'try-error') {
         bp_group_barplot$data$Description <- as.character(
             BiocGenerics::lapply(strwrap(bp_group_barplot$data$Description,
                                          wrapped_width, simplify=FALSE),paste,collapse="\n"))
     }
+
     cc_group_barplot <- try(barplot(cc_group, drop=TRUE, showCategory=showcategory), silent=TRUE)
     if (class(cc_group_barplot)[1] != 'try-error') {
         cc_group_barplot$data$Description <- as.character(
             BiocGenerics::lapply(strwrap(cc_group_barplot$data$Description,
                                          wrapped_width, simplify=FALSE),paste,collapse="\n"))
     }
+
     all_mf_barplot <- try(barplot(mf_all, categorySize="pvalue", showCategory=showcategory), silent=TRUE)
     enriched_mf_barplot <- try(barplot(enriched_mf, categorySize="pvalue",
                                        showCategory=showcategory), silent=TRUE)
@@ -195,6 +202,7 @@ simple_clusterprofiler <- function(de_genes, goids=NULL, golevel=4, pcutoff=0.1,
             BiocGenerics::lapply(strwrap(all_mf_barplot$data$Description,
                                          wrapped_width, simplify=FALSE), paste,collapse="\n"))
     }
+
     all_bp_barplot <- try(barplot(bp_all, categorySize="pvalue",
                                   showCategory=showcategory), silent=TRUE)
     enriched_bp_barplot <- try(barplot(enriched_bp, categorySize="pvalue",
@@ -505,7 +513,7 @@ hpgl_enrichGO <- function(gene, organism="human", ont="MF",
 #' @return Some clusterProfiler data.
 #' @seealso \pkg{clusterProfiler}
 #' @export
-hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="BH",
+hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="fdr",
                                  ont, minGSSize=2, qvalueCutoff=0.2, readable=FALSE, universe=NULL) {
     ##require.auto("plyr")  ## dlply and the . function are too obnoxious without pulling them in.
     gene <- as.character(gene)
@@ -573,7 +581,7 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
                        pvalue=pvalues)
     original_over = Over
     p.adj <- p.adjust(Over$pvalue, method=pAdjustMethod)
-    cat(sprintf("The minimum observed pvalue is: %f\n", min(pvalues)))
+    message(paste0("The minimum observed pvalue for ", ont, " is: ", min(pvalues)))
     qobj = try(qvalue::qvalue(p=Over$pvalue, lambda=0.05, pi0.method="bootstrap"), silent=TRUE)
     if (class(qobj) == "qvalue") {
         qvalues <- qobj$qvalues
@@ -597,7 +605,7 @@ hpgl_enrich.internal <- function(gene, organism, pvalueCutoff=1, pAdjustMethod="
     Over$Description <- Description
     nc <- ncol(Over)
     Over <- Over[, c(1,nc, 2:(nc-1))]
-    Over <- Over[order(pvalues),]
+    Over <- Over[order(pvalues), ]
     Over <- Over[ Over$pvalue <= pvalueCutoff, ]
     Over <- Over[ Over$p.adjust <= pvalueCutoff, ]
     if (! any(is.na(Over$qvalue))) {

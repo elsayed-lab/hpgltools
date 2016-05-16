@@ -20,8 +20,8 @@ test_that("Is it possible to look up a kegg species ID?", {
 })
 
 ## Make a map of the weird flybase IDs FBgn to the also weird Cg ids.
-require.auto("org.Dm.eg.db")
-suppressMessages(library(org.Dm.eg.db))
+tt <- require.auto("org.Dm.eg.db")
+tt <- sp(library(org.Dm.eg.db))
 
 x <- org.Dm.egFLYBASE
 mapped_genes <- mappedkeys(org.Dm.egFLYBASECG)
@@ -32,18 +32,17 @@ mapped_ids <- merge(flybase_ids, cg_ids, by="gene_id")
 limma_result <- limma$hpgl_limma
 all_genes <- limma_result$all_tables[[3]]
 all_genes <- merge(x=all_genes, y=mapped_ids, by.x="row.names", by.y="flybase_id", all.x=TRUE)
-sig_up <- suppressMessages(get_sig_genes(all_genes, z=2)$up_genes)
+sig_up <- sp(get_sig_genes(all_genes, z=2)$up_genes)$result
 all_ids <- paste0("Dmel_", all_genes[["flybase_cg_id"]])
 sig_ids <- paste0("Dmel_", sig_up[["flybase_cg_id"]])
 
-
-pct_citrate <- suppressMessages(pct_kegg_diff(all_ids, sig_ids, organism="dme"))
+pct_citrate <- sp(pct_kegg_diff(all_ids, sig_ids, organism="dme"))$result
 test_that("Can we extract the percent differentially expressed genes in one pathway?", {
     expect_equal(19.67, pct_citrate$percent, tolerance=0.1)
 })
 
 pathways <- c("00010", "00020", "00030", "00040","nonexistent", "00051")
-all_percentages <- suppressMessages(pct_all_kegg(all_ids, sig_ids, pathways=pathways, organism="dme"))
+all_percentages <- sp(pct_all_kegg(all_ids, sig_ids, pathways=pathways, organism="dme"))$result
 
 expected_percentages <- c(7.547, 9.302, 0.000, 13.040, NA, 3.704)
 actual_percentages <- all_percentages[["percent"]]

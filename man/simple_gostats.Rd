@@ -5,7 +5,7 @@
 \title{Simplification function for gostats, in the same vein as those written for clusterProfiler,
 goseq, and topGO.}
 \usage{
-simple_gostats(de_genes, gff, goids, universe_merge = "id",
+simple_gostats(de_genes, gff, goids_df, universe_merge = "id",
   second_merge_try = "locus_tag", species = "fun", pcutoff = 0.1,
   direction = "over", conditional = FALSE, categorysize = NULL,
   gff_type = "cds", ...)
@@ -15,7 +15,7 @@ simple_gostats(de_genes, gff, goids, universe_merge = "id",
 
 \item{gff}{Annotation information for this genome.}
 
-\item{goids}{Set of GOids, as before in the format ID/GO.}
+\item{goids_df}{Set of GOids, as before in the format ID/GO.}
 
 \item{universe_merge}{Column from which to create the universe of genes.}
 

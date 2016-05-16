@@ -1,5 +1,5 @@
 require.auto("kokrah/cbcbSEQ")
-library(cbcbSEQ)
+cbcb <- sp(library(cbcbSEQ))
 library(testthat)
 library(hpgltools)
 library(pasilla)
@@ -31,7 +31,7 @@ hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
 
 ## Check that normalization tools work similarly
 cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
-hpgl_quantile_data <- hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE, verbose=TRUE)
+hpgl_quantile_data <- sp(hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE))$result
 hpgl_quantile <- hpgl_quantile_data[["count_table"]]
 test_that("Are the quantile normalizations identical?", {
     expect_equal(cbcb_quantile, hpgl_quantile)
@@ -50,7 +50,7 @@ test_that("Are quantiles identical?", {
     expect_equal(cbcb_quantile, hpgl_quantile)
 })
 
-hpgl_qcpm <- hpgl_norm(pasilla_expt, norm="quant", convert="edgecpm", filter_low=FALSE, verbose=TRUE)
+hpgl_qcpm <- hpgl_norm(pasilla_expt, norm="quant", convert="edgecpm", filter_low=FALSE)
 hpgl_qcpm <- hpgl_qcpm$count_table
 test_that("Are cpm conversions identical?", {
     expect_equal(cbcb_qcpm, hpgl_qcpm)
@@ -59,9 +59,9 @@ test_that("Are cpm conversions identical?", {
 ## log2/cpm that
 cbcb_l2qcpm_data <- cbcbSEQ::log2CPM(cbcb_quantile)
 cbcb_l2qcpm <- cbcb_l2qcpm_data$y
-hpgl_l2qcpm_data <- suppressMessages(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))
+hpgl_l2qcpm_data <- sp(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))$result
 hpgl_l2qcpm <- hpgl_l2qcpm_data[["count_table"]]
-hpgl_l2qcpm_expt <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))
+hpgl_l2qcpm_expt <- sp(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))$result
 hpgl_l2qcpm2 <- Biobase::exprs(hpgl_l2qcpm_expt$expressionset)
 test_that("Are l2qcpm conversions/transformations identical using two codepaths?", {
     expect_equal(cbcb_l2qcpm, hpgl_l2qcpm)
@@ -80,17 +80,6 @@ test_that("Do the PCA invocations provide the same results?", {
     expect_equal(cbcb_res, hpgl_res)
 })
 
-## invocation of batch correction
-##message("Testing batch correction results using modified combat.")
-## sva no longer has a function 'design.mat'
-##cbcb_batch <- cbcbSEQ::combatMod(cbcb_l2qcpm, batch=design$libType, mod=design$condition, noScale=TRUE)
-##hpgl_batch_expt <- normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", filter_low=FALSE)
-##hpgl_batch <- exprs(hpgl_batch_expt$expressionset)
-##test_that("Does combat batch correction end in the same dataframe?", {
-##    expect_equal(cbcb_batch, hpgl_batch)
-##})
-
-## voom invocation
 ## This is a peculiar thing, the cbcbSEQ log2CPM() returns the normalized libsizes rather than those following log2() transformation.
 ## It then goes on to call voom() with this libsize rather than the log2().
 ## As a result, my normalization function is now keeping a copy of the libsizes and count tables from beginning to end
@@ -106,8 +95,8 @@ condition <- design$condition
 test_model <- model.matrix(~condition)
 cbcb_voom <- cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize)
 hpgl_voom <- cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize)
-hpgl_voom2 <- suppressMessages(hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE))
-hpgl_voom3 <- suppressMessages(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))
+hpgl_voom2 <- hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
+hpgl_voom3 <- sp(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))$result
 
 test_that("Do different voom() invocations end with the same data?", {
     expect_equal(cbcb_voom, hpgl_voom)
@@ -121,8 +110,8 @@ test_that("Do different voom() invocations end with the same data?", {
 
 cbcb_fit <- limma::lmFit(cbcb_voom)
 cbcb_eb <- limma::eBayes(cbcb_fit)
-cbcb_top <- limma::topTable(cbcb_eb, number=nrow(cbcb_eb))
-hpgl_toptables <- suppressMessages(hpgltools::limma_pairwise(hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize))
+cbcb_top <- sp(limma::topTable(cbcb_eb, number=nrow(cbcb_eb)))$result
+hpgl_toptables <- sp(hpgltools::limma_pairwise(hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize))$result
 hpgl_top <- hpgl_toptables$all_tables
 test_that("Limma results.", {
     expect_equal(cbcb_top, hpgl_top)

@@ -1,4 +1,4 @@
-## Time-stamp: <Sat May 14 14:49:38 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun May 15 20:35:00 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
@@ -49,9 +49,9 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
         if (class(surrogates) == "character") {
             if (surrogates != "be" & surrogates != "leek") {
                 message("A string was provided, but it was neither 'be' nor 'leek', assuming 'be'.")
-                log <- capture.output(type="message", { chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model); })
+                chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model)
             } else {
-                log <- capture.output(type="message", { chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model, method=surrogates); })
+                chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model, method=surrogates)
             }
             message(paste0("The ", surrogates, " method chose ", chosen_surrogates, " surrogate variable(s)."))
         } else if (class(surrogates) == "numeric") {

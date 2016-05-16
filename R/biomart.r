@@ -1,4 +1,4 @@
-## Time-stamp: <Sat May 14 14:36:39 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 16 11:36:13 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Extract annotation information from biomart.
 #'
@@ -52,7 +52,7 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
     }
     ## The following was stolen from Laura's logs for human annotations.
     ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
-    biomart_annotation <- biomaRt::getBM(attributes=c("ensembl_gene_id", "ensembl_transcript_id", "hgnc_symbol",
+    biomart_annotation <- biomaRt::getBM(attributes=c("ensembl_gene_id", "ensembl_transcript_id",
                                                     "description", "gene_biotype"),
                                        mart=ensembl)
     message("Finished downloading ensembl feature annotations.")
@@ -65,12 +65,11 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
         biomart_annotations <- merge(biomart_annotation, biomart_structure,
                                      by.x="ensembl_transcript_id", by.y="ensembl_transcript_id",
                                      all.x=TRUE)
-        colnames(biomart_annotations) <- c("transcriptID", "geneID", "hgnc_symbol", "Description",
+        colnames(biomart_annotations) <- c("transcriptID", "geneID", "Description",
                                            "Type", "length", "chromosome", "strand", "start", "end")
     } else {
         biomart_annotations <- biomart_annotation
-        colnames(biomart_annotations) <- c("geneID", "transcriptID", "hgnc_symbol", "Description",
-                                           "Type")
+        colnames(biomart_annotations) <- c("geneID", "transcriptID", "Description", "Type")
     }
     rownames(biomart_annotations) <- make.names(biomart_annotations[, "transcriptID"], unique=TRUE)
     ## In order for the return from this function to work with other functions in this, the rownames must be set.
@@ -92,7 +91,7 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #'
 #' @param species Species to query.
 #' @param overwrite Overwrite existing savefile?
-#' @param do_save Create a savefile of the annotations?
+#' @param do_save Create a savefile of the annotations? (if not false, then a filename.)
 #' @param host Ensembl hostname to use.
 #' @param trymart Default mart to try, newer marts use a different notation.
 #' @param secondtry The newer mart name.
@@ -100,22 +99,30 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #' @seealso \link[biomaRt]{getBM}
 #' @examples
 #' \dontrun{
-#'  tt = get_biomart_ontology()
+#'  tt = get_biomart_ontologies()
 #' }
 #' @export
-get_biomart_ontology <- function(species="hsapiens", overwrite=FALSE, do_save=FALSE,
+get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                  host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
                                  secondtry="_gene") {
-    savefile <- "go_annotations.rda"
     secondtry <- paste0(species, secondtry)
     go_annotations <- NULL
+
+    savefile <- "go_annotations.rda"
+    if (!identical(FALSE, do_save)) {
+        if (class(do_save) == "character") {
+            savefile <- do_save
+            do_save <- TRUE
+        }
+    }
+
     if (file.exists(savefile) & overwrite == FALSE) {
         fresh <- new.env()
         message("The biomart annotations file already exists, loading from it.")
         load_string <- paste0("load('", savefile, "', envir=fresh)")
         eval(parse(text=load_string))
-        go_annotations <- fresh[["go_annotations"]]
-        return(go_annotations)
+        biomart_go <- fresh[["biomart_go"]]
+        return(biomart_go)
     }
     dataset <- paste0(species, "_gene_ensembl")
     mart <- NULL
@@ -136,15 +143,17 @@ get_biomart_ontology <- function(species="hsapiens", overwrite=FALSE, do_save=FA
         print(datasets)
         return(NULL)
     }
-    go_annotations <- biomaRt::getBM(attributes = c("ensembl_gene_id","go_id"), mart=ensembl)
+    biomart_go <- biomaRt::getBM(attributes = c("ensembl_gene_id","go_id"), mart=ensembl)
     message(paste0("Finished downloading ensembl go annotations, saving to ", savefile, "."))
+
+    colnames(biomart_go) <- c("ID","GO")
     if (isTRUE(do_save)) {
         message(paste0("Saving ontologies to ", savefile, "."))
-        save(list=ls(pattern="biomart_annotations"), file=savefile)
+        save(list=ls(pattern="biomart_go"), file=savefile)
         message("Finished save().")
     }
-    colnames(go_annotations) <- c("ID","GO")
-    return(go_annotations)
+
+    return(biomart_go)
 }
 
 #' Use mygene's queryMany to translate gene ID types

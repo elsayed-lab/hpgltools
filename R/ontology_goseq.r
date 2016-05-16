@@ -1,4 +1,4 @@
-## Time-stamp: <Sat May 14 13:27:11 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 16 14:38:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Enhance the goseq table of gene ontology information.
 #'
@@ -73,7 +73,7 @@ goseq_table <- function(df, file=NULL) {
 #' @param de_genes Data frame of differentially expressed genes, containing IDs etc.
 #' @param all_genes Universe of possible genes.
 #' @param lengths Length of each gene with an ID in de_genes.
-#' @param goids List of ontology accessions to gene accessions.
+#' @param goids_df List of ontology accessions to gene accessions.
 #' @param doplot Include pwf plots?
 #' @param adjust Minimum adjusted pvalue for 'significant.'
 #' @param pvalue Minimum pvalue for 'significant.'
@@ -98,7 +98,7 @@ goseq_table <- function(df, file=NULL) {
 #'   and ccp_plot
 #' @seealso \pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
 #' @export
-simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, doplot=TRUE,
+simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids_df=NULL, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius",
                          padjust_method="BH", species=NULL, length_db="ensGene", gff=NULL, ...) {
     message("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
@@ -171,10 +171,10 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
         ## length_table = lengths[,c("ID","width")]
         width_vector <- as.vector(de_table$width)
         names(width_vector) <- de_table$ID
-        if (is.null(goids)) {
+        if (is.null(goids_df)) {
             stop("simple_goseq(): The goids are not defined.")
         }
-        goids <- goids[, c("ID","GO")]
+        goids_df <- goids_df[, c("ID","GO")]
         ##colnames(goids) <- c("ID", "GO")
         pwf <- goseq::nullp(DEgenes=de_vector, bias.data=width_vector, plot.fit=doplot)
     } else {
@@ -187,7 +187,7 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
 ##    godata = goseq(pwf, gene2cat=goids, method='Wallenius')
     godata <- NULL
     if (is.null(species)) {
-        godata <- goseq::goseq(pwf, gene2cat=goids, use_genes_without_cat=TRUE, method=goseq_method)
+        godata <- goseq::goseq(pwf, gene2cat=goids_df, use_genes_without_cat=TRUE, method=goseq_method)
     } else {
         godata <- goseq::goseq(pwf, species, length_db, use_genes_without_cat=TRUE, method=goseq_method)
     }
@@ -250,12 +250,13 @@ simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids=NULL, dop
     bp_interesting <- bp_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
     ##cc_interesting <- subset(godata_interesting, ontology == "CC")
     cc_interesting <- godata_interesting[godata_interesting$ontology == "CC", ]
+    rownames(cc_interesting) <- cc_interesting$category
     cc_interesting <- cc_interesting[,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
 
     pval_plots <- list(
-        "bpp_plot_over" = pvalue_plots[["bpp_plot"]],
-        "mfp_plot_over" = pvalue_plots[["mfp_plot"]],
-        "ccp_plot_over" = pvalue_plots[["ccp_plot"]])
+        "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
+        "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
+        "ccp_plot_over" = pvalue_plots[["ccp_plot_over"]])
 
     return_list <- list("input" = de_genes,
                         "pwf" = pwf,

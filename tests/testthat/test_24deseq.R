@@ -17,16 +17,16 @@ colnames(metadata) <- c("condition", "batch")
 summarized <- DESeq2::DESeqDataSetFromMatrix(countData=counts,
                                              colData=metadata,
                                              design=~ condition + batch)
-dataset <- suppressMessages(DESeq2::DESeqDataSet(se=summarized, design=~ condition + batch))
-deseq_sf <- suppressMessages(DESeq2::estimateSizeFactors(dataset))
-deseq_disp <- suppressMessages(DESeq2::estimateDispersions(deseq_sf))
-deseq_run <- suppressMessages(DESeq2::nbinomWaldTest(deseq_disp))
+dataset <- sp(DESeq2::DESeqDataSet(se=summarized, design=~ condition + batch))$result
+deseq_sf <- sp(DESeq2::estimateSizeFactors(dataset))$result
+deseq_disp <- sp(DESeq2::estimateDispersions(deseq_sf))$result
+deseq_run <- sp(DESeq2::nbinomWaldTest(deseq_disp))$result
 deseq_result <- as.data.frame(DESeq2::results(deseq_run,
                                               contrast=c("condition", "treated", "untreated"),
                                               format="DataFrame"))
 
 ## Performing DESeq2 analysis using hpgltools.
-hpgl_deseq <- suppressMessages(deseq2_pairwise(pasilla_expt, model_batch=TRUE))
+hpgl_deseq <- sp(deseq2_pairwise(pasilla_expt, model_batch=TRUE))$result
 
 ## Note that running the all_pairwise family of functions results in arbitrarily chosen x/y which may be
 ## the opposite of what you actually want.

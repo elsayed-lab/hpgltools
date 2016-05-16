@@ -12,8 +12,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
-    sig_genes <- suppressMessages(get_sig_genes(table, column="untreated")$up_genes)
-    gprofiler_result <- suppressMessages(simple_gprofiler(sig_genes, species="dmelanogaster"))
+    sig_genes <- sp(get_sig_genes(table, column="untreated")$up_genes)$result
+
+    gprofiler_result <- sp(simple_gprofiler(sig_genes, species="dmelanogaster"))$result
 
     expected_go <- c(2.75e-03, 6.20e-04, 1.98e-06, 1.47e-04, 5.24e-04, 3.11e-05)
     actual_go <- head(gprofiler_result[["go"]][["p.value"]])
@@ -29,6 +30,5 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected_bpplot_data, actual_bpplot_data, tolerance=0.001)
         expect_equal(expected_ccplot_data, actual_ccplot_data, tolerance=0.001)
     })
-
 }
 

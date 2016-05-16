@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 13 16:40:04 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 16 14:42:13 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Simplification function for gostats, in the same vein as those written for clusterProfiler,
 #' goseq, and topGO.
@@ -9,7 +9,7 @@
 #'
 #' @param de_genes Input list of differentially expressed genes.
 #' @param gff Annotation information for this genome.
-#' @param goids Set of GOids, as before in the format ID/GO.
+#' @param goids_df Set of GOids, as before in the format ID/GO.
 #' @param universe_merge Column from which to create the universe of genes.
 #' @param second_merge_try If the first universe merge fails, try this.
 #' @param species Genbank organism to use.
@@ -22,7 +22,7 @@
 #' @return List of returns from GSEABase, Category, etc.
 #' @seealso \pkg{GSEABase} \pkg{Category}
 #' @export
-simple_gostats <- function(de_genes, gff, goids, universe_merge="id", second_merge_try="locus_tag",
+simple_gostats <- function(de_genes, gff, goids_df, universe_merge="id", second_merge_try="locus_tag",
                            species="fun", pcutoff=0.10, direction="over", conditional=FALSE,
                            categorysize=NULL, gff_type="cds", ...) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should)
@@ -99,8 +99,8 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="id", second_mer
     universe_ids <- universe$id
     ## Sometimes I have the columns set to 'ID','GO' -- others I have 'ORF','GO'
     ## FIXME!  This should be standardized.
-    colnames(goids) <- c("ID","GO")
-    gostats_go <- merge(universe, goids, by.x="geneid", by.y="ID")
+    colnames(goids_df) <- c("ID","GO")
+    gostats_go <- merge(universe, goids_df, by.x="geneid", by.y="ID")
     if (nrow(gostats_go) == 0) {
         stop("simple_gostats(): The merging of the universe vs. goids failed.")
     }

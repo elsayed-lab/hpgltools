@@ -7,10 +7,10 @@ pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-norm_expt <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))
+norm_expt <- sp(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
 
-hpgl_pas_basic <- suppressMessages(basic_pairwise(pasilla_expt))
-hpgl_basic <- suppressMessages(basic_pairwise(norm_expt))
+hpgl_pas_basic <- sp(basic_pairwise(pasilla_expt))$result
+hpgl_basic <- sp(basic_pairwise(norm_expt))$result
 
 test_that("Does a non-normalized basic run equal a normalized basic run?", {
     expect_equal(hpgl_pas_basic$all_tables$untreated_vs_treated, hpgl_basic$all_tables$untreated_vs_treated)
