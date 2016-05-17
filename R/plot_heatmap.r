@@ -1,129 +1,155 @@
-## Time-stamp: <Tue Apr 26 12:56:56 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 14:39:33 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_heatmap.r: Heatmaps separated by usage
 
-#'   Make a heatmap.3 description of the correlation between samples.
+#' Make a heatmap.3 description of the correlation between samples.
 #'
-#' @param data  a dataframe, expt, or expressionset to work with.
-#' @param design   a design matrix.
-#' @param colors   a color scheme.
-#' @param method    correlation statistic to use.
-#' @param names   alternate names to use.
-#' @param row   what to place on the row of the map, batches or conditions?
-#' @param title   a title for the plot.
-#' @param ... more options are wonderful
-#' @return  corheat_plot a gplots heatmap describing how the samples
-#' pairwise correlate with one another.
+#' Given a set of count tables and design, this will calculate the pairwise correlations and plot
+#' them as a heatmap.  It attempts to standardize the inputs and eventual output.
+#'
+#' @param expt_data Dataframe, expt, or expressionset to work with.
+#' @param expt_colors Color scheme for the samples, not needed if this is an expt.
+#' @param expt_design Design matrix describing the experiment, not needed if this is an expt.
+#' @param method Correlation statistic to use. (pearson, spearman, kendall, robust).
+#' @param expt_names Alternate names to use for the samples.
+#' @param batch_row Name of the design row used for 'batch' column colors.
+#' @param title Title for the plot.
+#' @param ... More options are wonderful!
+#' @return Gplots heatmap describing describing how the samples are clustering vis a vis pairwise correlation.
 #' @seealso \link{hpgl_cor} \link[RColorBrewer]{brewer.pal}
 #' \link[grDevices]{recordPlot}
 #' @examples
 #' ## corheat_plot = hpgl_corheat(expt=expt, method="robust")
 #' ## corheat_plot
 #' @export
-hpgl_corheat <- function(data, colors=NULL, design=NULL, method="pearson",
-                         names=NULL, row="batch", title=NULL, ...) {
-    hpgl_heatmap(data, colors=colors, design=design, method=method,
-                 names=names, type="correlation", row=row, title=title, ...)
+plot_corheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
+                         method="pearson", expt_names=NULL,
+                         batch_row="batch", title=NULL, ...) {
+    plot_heatmap(expt_data, expt_colors=expt_colors, expt_design=expt_design,
+                 method=method, expt_names=expt_names, type="correlation",
+                 batch_row=batch_row, title=title, ...)
 }
 
-#'   Make a heatmap.3 description of the similarity (euclildean distance) between samples.
+#' Make a heatmap.3 description of the distances (euclidean by default) between samples.
 #'
-#' @param data  a dataframe, expt, or expressionset to work with.
-#' @param colors   a color scheme.
-#' @param design   a design matrix.
-#' @param method distance metric to use.
-#' @param names   alternate names to use.
-#' @param row   what to place on the row of the map, batches or conditions?
-#' @param title   a title for the plot.
-#' @param ... more parameters
+#' Given a set of count tables and design, this will calculate the pairwise distances and plot
+#' them as a heatmap.  It attempts to standardize the inputs and eventual output.
+#'
+#' @param expt_data Dataframe, expt, or expressionset to work with.
+#' @param expt_colors Color scheme (not needed if an expt is provided).
+#' @param expt_design Design matrix (not needed if an expt is provided).
+#' @param method Distance metric to use.
+#' @param expt_names Alternate names to use for the samples.
+#' @param batch_row Name of the design row used for 'batch' column colors.
+#' @param title Title for the plot.
+#' @param ... More parameters!
 #' @return a recordPlot() heatmap describing the distance between samples.
 #' @seealso \link[RColorBrewer]{brewer.pal} \link[gplots]{heatmap.2} \link[grDevices]{recordPlot}
 #' @examples
 #' \dontrun{
-#'  disheat_plot = hpgl_disheat(expt=expt, method="euclidean")
+#'  disheat_plot = plot_disheat(expt=expt, method="euclidean")
 #'  disheat_plot
 #' }
 #' @export
-hpgl_disheat <- function(data, colors=NULL, design=NULL, method="euclidean",
-                         names=NULL, row="batch", title=NULL, ...) {
-    hpgl_heatmap(data, colors=colors, design=design, method=method,
-                 names=names, type="distance", row=row, title=title, ...)
+plot_disheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
+                         method="euclidean", expt_names=NULL,
+                         batch_row="batch",  title=NULL, ...) {
+    plot_heatmap(expt_data, expt_colors=expt_colors, expt_design=expt_design,
+                 method=method, expt_names=names, type="distance",
+                 batch_row=batch_row, title=title, ...)
 }
 
-#' Make a heatmap.3 plots, does the work for hpgl_disheat and hpgl_corheat.
+#' Make a heatmap.3 plot, does the work for plot_disheat and plot_corheat.
 #'
-#' @param data  a dataframe, expt, or expressionset to work with.
-#' @param colors   a color scheme.
-#' @param design   a design matrix.
-#' @param method    distance or correlation metric to use.
-#' @param names   alternate names to use.
-#' @param type correlation or distance or sample
-#' @param row   what to place on the row of the map, batches or conditions?
-#' @param title   a title for the plot.
-#' @param ... I like elipses
+#' This does what is says on the tin.  Sets the colors for correlation or distance heatmaps, handles
+#' the calculation of the relevant metrics, and plots the heatmap.
+#'
+#' @param expt_data Dataframe, expt, or expressionset to work with.
+#' @param expt_colors Color scheme for the samples.
+#' @param expt_design Design matrix describing the experiment vis a vis conditions and batches.
+#' @param method Distance or correlation metric to use.
+#' @param expt_names Alternate names to use for the samples.
+#' @param type Defines the use of correlation, distance, or sample heatmap.
+#' @param batch_row Name of the design row used for 'batch' column colors.
+#' @param title Title for the plot.
+#' @param ... I like elipses!
 #' @return a recordPlot() heatmap describing the distance between samples.
 #' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
 #' @export
-hpgl_heatmap <- function(data, colors=NULL, design=NULL, method="pearson", names=NULL,
-                         type="correlation", row="batch", title=NULL, ...) {
+plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
+                         method="pearson", expt_names=NULL,
+                         type="correlation", batch_row="batch", title=NULL, ...) {
     arglist <- list(...)
-    hpgl_env <- environment()
-    data_class <- class(data)[1]
+    plot_env <- environment()
+    data_class <- class(expt_data)[1]
     if (data_class == "expt") {
-        design <- data[["design"]]
-        colors <- data[["colors"]]
-        names <- data[["names"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        expt_design <- expt_data[["design"]]
+        expt_colors <- expt_data[["colors"]]
+        expt_names <- expt_data[["names"]]
+        expt_data <- Biobase::exprs(expt_data[["expressionset"]])
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        expt_data <- Biobase::exprs(expt_data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
-        data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        expt_data <- as.data.frame(expt_data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
     chosen_palette <- "Dark2"
-    if (!is.null(arglist$palette)) {
-        chosen_palette <- arglist$palette
+    if (!is.null(arglist[["palette"]])) {
+        chosen_palette <- arglist[["palette"]]
     }
 
-    if (is.null(colors)) {
-        tt <- ncol(data)
+    if (is.null(expt_colors)) {
+        tt <- ncol(expt_data)
         colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(tt, chosen_palette))(tt)
     }
-    if (is.null(names)) {
-        names <- colnames(data)
+    if (is.null(expt_names)) {
+        expt_names <- colnames(expt_data)
     }
+
     if (type == "correlation") {
-        heatmap_data <- hpgl_cor(data, method=method)
+        heatmap_data <- hpgl_cor(expt_data, method=method)
         heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
     } else if (type == "distance") {
-        heatmap_data <- as.matrix(dist(t(data)), method=method)
+        heatmap_data <- as.matrix(dist(t(expt_data)), method=method)
         heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "GnBu"))(100)
     }
-    colors <- as.character(colors)
-    if (is.null(design)) {
-        row_colors <- rep("white", length(colors))
-    } else if (length(as.integer(as.factor(as.data.frame(design[row])[, 1]))) >= 2) {
-        ## row_colors = brewer.pal(12, "Set3")[as.integer(as.list(hpgl_design[ row ]))]
-        row_colors <- RColorBrewer::brewer.pal(12, "Set3")[as.integer(as.factor(as.data.frame(design[ row ])[, 1]))]
+    expt_colors <- as.character(expt_colors)
+
+    ## Set the batch colors depending on # of observed batches
+    if (is.null(expt_design)) {
+        row_colors <- rep("white", length(expt_colors))
+    } else if (is.null(expt_design[[batch_row]])) {
+        row_colors <- rep("white", length(expt_colors))
+    } else if (length(levels(as.factor(expt_design[[batch_row]]))) >= 2) {
+        ## We have >= 2 batches, and so will fill in the column colors
+        num_batch_colors <- length(levels(as.factor(expt_design[[batch_row]])))
+        batch_color_assignments <- as.integer(as.factor(expt_design[[batch_row]]))
+        row_colors <- RColorBrewer::brewer.pal(12, "Set3")[batch_color_assignments]
     } else {
-        row_colors <- rep("green", length(design[row]))
+        ## If we just have 1 batch, make it... green!
+        row_colors <- rep("green", length(expt_design[batch_row]))
     }
+
     if (type == "correlation") {
-        heatmap.3(heatmap_data, keysize=2, labRow=names,
-                  ##col=heatmap_colors,  ## OrRd is slightly different than what we have now
-                  labCol=names, ColSideColors=colors, RowSideColors=row_colors,
-                  margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
+        heatmap.3(heatmap_data, keysize=2, labRow=expt_names,
+                  labCol=expt_names, ColSideColors=expt_colors,
+                  RowSideColors=row_colors, margins=c(8,8),
+                  scale="none", trace="none",
+                  linewidth=0.5, main=title)
     } else {
-        heatmap.3(heatmap_data, keysize=2, labRow=names, col=rev(heatmap_colors),
-                  labCol=names, ColSideColors=colors, RowSideColors=row_colors,
-                  margins=c(8,8), scale="none", trace="none", linewidth=0.5, main=title)
+        heatmap.3(heatmap_data, keysize=2, labRow=expt_names,
+                  labCol=expt_names, ColSideColors=expt_colors,
+                  RowSideColors=row_colors, margins=c(8,8),
+                  scale="none", trace="none",
+                  linewidth=0.5, main=title,
+                  col=rev(heatmap_colors))
     }
     hpgl_heatmap_plot <- grDevices::recordPlot()
     return(hpgl_heatmap_plot)
 }
 
-hpgl_heatplus <- function(fundata) {
+plot_heatplus <- function(fundata) {
     heatmap_data <- hpgl_cor(fundata)
     heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
     funkytown <- Heatplus::annHeatmap2(heatmap_data)
@@ -131,20 +157,67 @@ hpgl_heatplus <- function(fundata) {
     ret <- grDevices::recordPlot()
 }
 
+## Taken from https://plot.ly/ggplot2/ggdendro-dendrograms/
+## Check out the following link for a neat dendrogram library.
+## http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning
 
-#'   Make a heatmap.3 description of the similarity of the genes among samples.
+ggplot2_heatmap <- function(some_df) {
+    x <- as.matrix(scale(some_df))
+    dd.col <- as.dendrogram(hclust(dist(x)))
+    dd.row <- as.dendrogram(hclust(dist(t(x))))
+    dx <- ggdendro::dendro_data(dd.row)
+    dy <- ggdendro::dendro_data(dd.col)
+    ## helper function for creating dendograms
+    ggdend <- function(df) {
+        ggplot() +
+            ggplot2::geom_segment(data = df, aes_string(x="x", y="y", xend="xend", yend="yend")) +
+            ggplot2::labs(x = "", y = "") +
+            ggplot2::theme_minimal() +
+            ggplot2::theme(axis.text=ggplot2::element_blank(),
+                           axis.ticks=ggplot2::element_blank(),
+                           panel.grid = ggplot2::element_blank())
+    }
+    ## x/y dendograms
+    px <- ggdendro::ggdendrogram(dx$segments)
+    py <- ggdendro::ggdendrogram(dy$segments) + ggplot2::coord_flip()
+    ## heatmap
+    col.ord <- order.dendrogram(dd.col)
+    row.ord <- order.dendrogram(dd.row)
+    xx <- scale(some_df)[col.ord, row.ord]
+    xx_names <- attr(xx, "dimnames")
+    df <- as.data.frame(xx)
+    colnames(df) <- xx_names[[2]]
+    df$car <- xx_names[[1]]
+    df$car <- with(df, factor(car, levels=car, ordered=TRUE))
+    mdf <- reshape2::melt(df, id.vars="car")
+    p <- ggplot(mdf, aes_string(x="variable", y="car")) +
+        ggplot2::geom_tile(aes_string(fill="value"))
+    ## hide axis ticks and grid lines
+    eaxis <- list(
+        showticklabels = FALSE,
+        showgrid = FALSE,
+        zeroline = FALSE
+    )
+}
+
+
+#' Make a heatmap.3 description of the similarity of the genes among samples.
 #'
-#' @param data  an expt/expressionset/dataframe set of samples
-#' @param colors   a color scheme
-#' @param design   a design matrix
-#' @param names   add names?
-#' @param title   title of the plot.
-#' @param Rowv   include the row names
-#' @param ... more parameters for a good time
+#' Sometimes you just want to see how the genes of an experiment are related to each other.  This
+#' can handle that.  These heatmap functions should probably be replaced with neatmaps or heatplus
+#' or whatever it is, as the annotation dataframes in them are pretty awesome.
+#'
+#' @param data Expt/expressionset/dataframe set of samples.
+#' @param colors Color scheme of the samples (not needed if input is an expt).
+#' @param design Design matrix describing the experiment (gotten for free if an expt).
+#' @param names Alternate samples names.
+#' @param title Title of the plot!
+#' @param Rowv Include the row names?
+#' @param ... More parameters for a good time!
 #' @return a recordPlot() heatmap describing the samples.
 #' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
 #' @export
-hpgl_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=FALSE, ...) {
+plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=FALSE, ...) {
     hpgl_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
@@ -164,13 +237,15 @@ hpgl_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
         names <- colnames(data)
     }
     data <- as.matrix(data)
-    heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors,
+    heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, dendrogram="column",
               labCol=names, margins=c(12,8), trace="none", linewidth=0.5, main=title, Rowv=Rowv)
     hpgl_heatmap_plot <- grDevices::recordPlot()
     return(hpgl_heatmap_plot)
 }
 
 #' a minor change to heatmap.2 makes heatmap.3
+#'
+#' heamap.2 is the devil.
 #'
 #' @param x data
 #' @param Rowv add rows?

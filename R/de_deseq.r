@@ -1,19 +1,19 @@
-## Time-stamp: <Wed Apr 27 16:05:57 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 15:22:57 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#'   Plot out 2 coefficients with respect to one another from deseq2
+#' Plot out 2 coefficients with respect to one another from deseq2.
 #'
-#' It can be nice to see a plot of two coefficients from a deseq2 comparison with respect to one another
-#' This hopefully makes that easy.
+#' It can be nice to see a plot of two coefficients from a deseq2 comparison with respect to one
+#' another. This hopefully makes that easy.
 #'
-#' @param output the set of pairwise comparisons provided by deseq_pairwise()
-#' @param x   the name or number of the first coefficient column to extract, this will be the x-axis of the plot
-#' @param y   the name or number of the second coefficient column to extract, this will be the y-axis of the plot
-#' @param gvis_filename   A filename for plotting gvis interactive graphs of the data.
-#' @param gvis_trendline   add a trendline to the gvis plot?
-#' @param tooltip_data   a dataframe of gene annotations to be used in the gvis plot
-#' @param base_url   for gvis plots
-#' @return a ggplot2 plot showing the relationship between the two coefficients
-#' @seealso \link{hpgl_linear_scatter} \link{deseq2_pairwise}
+#' @param output Set of pairwise comparisons provided by deseq_pairwise().
+#' @param x Name or number of the x-axis coefficient column to extract.
+#' @param y Name or number of the y-axis coefficient column to extract.
+#' @param gvis_filename Filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline Add a trendline to the gvis plot?
+#' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
+#' @param base_url When plotting interactive plots, have link-outs to this base url.
+#' @return Ggplot2 plot showing the relationship between the two coefficients.
+#' @seealso \link{plot_linear_scatter} \link{deseq2_pairwise}
 #' @examples
 #' \dontrun{
 #'  pretty = coefficient_scatter(deseq_data, x="wt", y="mut")
@@ -55,7 +55,7 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     coefficient_df <- coefficient_df[,c(xname, yname, "mean.1", "mean.2")]
     coefficient_df[is.na(coefficient_df)] <- 0
     maxvalue <- max(coefficient_df) + 1.0
-    plot <- hpgl_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+    plot <- plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
                                 tooltip_data=tooltip_data, base_url=base_url)
     plot$scatter <- plot$scatter +
@@ -65,12 +65,12 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     return(plot)
 }
 
-#' deseq_pairwise()  Because I can't be trusted to remember '2'
+#' deseq_pairwise()  Because I can't be trusted to remember '2'.
 #'
-#' This calls deseq2_pairwise(...) because I am determined to forget typing deseq2
+#' This calls deseq2_pairwise(...) because I am determined to forget typing deseq2.
 #'
-#' @param ... I like cats
-#' @return stuff from deseq2_pairwise
+#' @param ... I like cats.
+#' @return stuff deseq2_pairwise results.
 #' @seealso \link{deseq2_pairwise}
 #' @export
 deseq_pairwise <- function(...) {
@@ -78,18 +78,19 @@ deseq_pairwise <- function(...) {
     deseq2_pairwise(...)
 }
 
-#' Set up a model matrix and set of contrasts to do
-#' a pairwise comparison of all conditions using DESeq2.
+#' Set up model matrices contrasts and do pairwise comparisons of all conditions using DESeq2.
 #'
-#' @param input  A dataframe/vector or expt class containing data, normalization state, etc.
-#' @param conditions   A factor of conditions in the experiment
-#' @param batches  A factor of batches in the experiment
-#' @param model_cond   Have condition in the experimental model?
-#' @param model_batch   Have batch in the experimental model?
-#' @param annot_df   Include some annotation information in the results?
-#' @param force  Force deseq to accept data which likely violates its assumptions
-#' @param ... triple dots!
-#' @return A list including the following information:
+#' Invoking DESeq2 is confusing, this should help.
+#'
+#' @param input Dataframe/vector or expt class containing data, normalization state, etc.
+#' @param conditions Factor of conditions in the experiment.
+#' @param batches Factor of batches in the experiment.
+#' @param model_cond Is condition in the experimental model?
+#' @param model_batch Is batch in the experimental model?
+#' @param annot_df Include some annotation information in the results?
+#' @param force Force deseq to accept data which likely violates its assumptions.
+#' @param ... triple dots!  Options are passed to arglist.
+#' @return List including the following information:
 #'   run = the return from calling DESeq()
 #'   denominators = list of denominators in the contrasts
 #'   numerators = list of the numerators in the contrasts
@@ -104,7 +105,7 @@ deseq_pairwise <- function(...) {
 #' }
 #' @export
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                            model_batch=NULL, annot_df=NULL, force=FALSE, ...) {
+                            model_batch=TRUE, annot_df=NULL, force=FALSE, ...) {
     arglist <- list(...)
     message("Starting DESeq2 pairwise comparisons.")
     input_class <- class(input)[1]
@@ -128,6 +129,11 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                 warning("But if you, like me, want to see what happens when you put")
                 warning("non-standard data into deseq, then here you go.")
                 data <- round(data)
+                if (input[["state"]][["transform"]] != "raw") {
+                    warning("You went one step further and forced in log data.")
+                    warning("Take a moment and think about what you have done.")
+                    Sys.sleep(20)
+                }
             } else if (input[["state"]][["normalization"]] != "raw" |
                        (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
                 ## This makes use of the fact that the order of operations in the normalization function is static.
@@ -294,12 +300,12 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         ## coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
     }
     ret_list <- list(
-        run=deseq_run,
-        denominators=denominators,
-        numerators=numerators,
-        conditions=conditions,
-        coefficients=coefficient_list,
-        all_tables=result_list
+        "run" = deseq_run,
+        "denominators" = denominators,
+        "numerators" = numerators,
+        "conditions" = conditions,
+        "coefficients" = coefficient_list,
+        "all_tables" = result_list
     )
     return(ret_list)
 }

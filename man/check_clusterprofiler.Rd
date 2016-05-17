@@ -4,12 +4,12 @@
 \alias{check_clusterprofiler}
 \title{Make sure that clusterProfiler is ready to run.}
 \usage{
-check_clusterprofiler(gff = "test.gff", gomap = NULL)
+check_clusterprofiler(gff = "test.gff", goids_df = NULL)
 }
 \arguments{
 \item{gff}{Ggff file containing annotation data (gene lengths).}
 
-\item{gomap}{Data frame of gene IDs and GO ontologies 1:1, other columns are ignored.}
+\item{goids_df}{Data frame of gene IDs and GO ontologies 1:1, other columns are ignored.}
 }
 \value{
 GO2EG data structure created, probably don't save this, it is entirely too big.
@@ -21,7 +21,7 @@ file and attempts to set it up if it is not found.
 }
 \examples{
 \dontrun{
- go2eg <- check_clusterprofiler(gff, goids)
+ go2eg <- check_clusterprofiler(gff, gomap)
  rm(go2eg)
 }
 }

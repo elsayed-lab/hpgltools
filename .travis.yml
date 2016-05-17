@@ -1,14 +1,23 @@
 language: r
 cache: packages
+sudo: false
 bioc_required: true
 warnings_are_errors: false
 
-global:
- - R_CHECK_ARGS="--no-build-vignettes --no-manual --timings"
- - _R_CHECK_TIMINGS_="0"
+## motIV requires libgsl
+##before_install:
+##  - sudo apt-get -qq update && apt-cache search libgsl
+##  - sudo apt-get install -y libgsl0-dev
+##  - sudo apt-get install $(apt-cache search r-cran | awk '{print $1}')
 
 script:
- - make install && make test
+  - make install
+  - make test
 
 notifications:
   email: false
+
+env:
+  global:
+    - R_CHECK_ARGS="--no-build-vignettes --no-manual"
+    - _R_CHECK_TIMINGS_="0"

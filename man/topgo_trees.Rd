@@ -2,7 +2,7 @@
 % Please edit documentation in R/ontology_topgo.r
 \name{topgo_trees}
 \alias{topgo_trees}
-\title{Print trees from topGO}
+\title{Print trees from topGO.}
 \usage{
 topgo_trees(tg, score_limit = 0.01, sigforall = TRUE,
   do_mf_fisher_tree = TRUE, do_bp_fisher_tree = TRUE,
@@ -12,11 +12,11 @@ topgo_trees(tg, score_limit = 0.01, sigforall = TRUE,
   do_bp_weight_tree = FALSE, do_cc_weight_tree = FALSE)
 }
 \arguments{
-\item{tg}{data from simple_topgo()}
+\item{tg}{Data from simple_topgo().}
 
-\item{score_limit}{score limit to decide whether to add to the tree}
+\item{score_limit}{Score limit to decide whether to add to the tree.}
 
-\item{sigforall}{add scores to the tree?}
+\item{sigforall}{Add scores to the tree?}
 
 \item{do_mf_fisher_tree}{Add the fisher score molecular function tree?}
 
@@ -43,9 +43,9 @@ topgo_trees(tg, score_limit = 0.01, sigforall = TRUE,
 \item{do_cc_weight_tree}{Add the guess}
 }
 \value{
-a big list including the various outputs from topgo
+Big list including the various outputs from topgo.
 }
 \description{
-Print trees from topGO
+The tree printing functionality of topGO is pretty cool, but difficult to get set correctly.
 }
 

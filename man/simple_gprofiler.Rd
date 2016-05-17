@@ -2,15 +2,15 @@
 % Please edit documentation in R/ontology_gprofiler.r
 \name{simple_gprofiler}
 \alias{simple_gprofiler}
-\title{Run searches against the web service g:Profiler}
+\title{Run searches against the web service g:Profiler.}
 \usage{
-simple_gprofiler(gene_list, organism = "hsapiens", first_col = "logFC",
+simple_gprofiler(gene_list, species = "hsapiens", first_col = "logFC",
   second_col = "limma_logfc")
 }
 \arguments{
 \item{gene_list}{guess!}
 
-\item{organism}{an organism supported by gprofiler}
+\item{species}{an organism supported by gprofiler}
 
 \item{first_col}{where to search for the order of 'significant' first}
 
@@ -20,6 +20,6 @@ simple_gprofiler(gene_list, organism = "hsapiens", first_col = "logFC",
 a list of results for go, kegg, reactome, and a few more.
 }
 \description{
-Run searches against the web service g:Profiler
+Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
 }
 

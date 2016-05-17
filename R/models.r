@@ -1,5 +1,17 @@
-## Time-stamp: <Sat Apr 16 00:12:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:33:25 2016 Ashton Trey Belew (abelew@gmail.com)>
 
+#' Make sure a given experimental factor and design will play together.
+#'
+#' Have you ever wanted to set up a differential expression analysis and after minutes of the
+#' computer churning away it errors out with some weird error about rank?  Then this is the function
+#' for you!
+#'
+#' @param design Dataframe describing the design of the experiment.
+#' @param goal Experimental factor you actually want to learn about.
+#' @param factors Experimental factors you rather wish would just go away.
+#' @param ... I might decide to add more options from other functions.
+#' @return List of booleans telling if the factors + goal will work.
+#' @export
 model_test <- function(design, goal="condition", factors=NULL, ...) {
     arglist <- list(...)
     ## For testing, use some existing matrices/data

@@ -2,30 +2,30 @@
 % Please edit documentation in R/normalize_norm.r
 \name{hpgl_qshrink}
 \alias{hpgl_qshrink}
-\title{A hacked copy of Kwame's qsmooth/qstats code}
+\title{A hacked copy of Kwame's qsmooth/qstats code.}
 \usage{
 hpgl_qshrink(data = NULL, groups = NULL, refType = "mean",
   groupLoc = "mean", window = 99, groupCol = NULL, plot = TRUE, ...)
 }
 \arguments{
-\item{data}{count table to modify}
+\item{data}{Count table to modify}
 
-\item{groups}{factor of the experimental conditions}
+\item{groups}{Factor of the experimental conditions}
 
-\item{refType}{method for grouping conditions}
+\item{refType}{Method for grouping conditions}
 
-\item{groupLoc}{method for grouping groups}
+\item{groupLoc}{Method for grouping groups}
 
-\item{window}{a window, for looking!}
+\item{window}{Window, for looking!}
 
-\item{groupCol}{column to define conditions}
+\item{groupCol}{Column to define conditions}
 
-\item{plot}{plot the quantiles?}
+\item{plot}{Plot the quantiles?}
 
-\item{...}{more options}
+\item{...}{More options}
 }
 \value{
-data a new data frame of normalized counts
+New data frame of normalized counts
 }
 \description{
 I made a couple small changes to Kwame's qstats() function to make

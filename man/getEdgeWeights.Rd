@@ -2,17 +2,17 @@
 % Please edit documentation in R/ontology_topgo.r
 \name{getEdgeWeights}
 \alias{getEdgeWeights}
-\title{Plot the ontology DAG}
+\title{Plot the ontology DAG.}
 \usage{
 getEdgeWeights(graph)
 }
 \arguments{
-\item{graph}{A graph from topGO}
+\item{graph}{Graph from topGO}
 }
 \value{
-weights
+Weights!
 }
 \description{
-This function was stolen from topgo in order to figure out where it was failing
+This function was stolen from topgo in order to figure out where it was failing.
 }
 

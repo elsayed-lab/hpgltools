@@ -4,13 +4,13 @@
 \alias{goont}
 \title{Get a go ontology name from an ID.}
 \usage{
-goont(go)
+goont(go = c("GO:0032432", "GO:0032433"))
 }
 \arguments{
-\item{go}{a go ID, this may be a character or list (assuming the elements are goids).}
+\item{go}{GO id, this may be a character or list (assuming the elements are goids).}
 }
 \value{
-Some text
+The set of ontology IDs associated with the GO ids, thus 'MF' or 'BP' or 'CC'.
 }
 \description{
 Get a go ontology name from an ID.

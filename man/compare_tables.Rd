@@ -8,27 +8,27 @@ compare_tables(limma = NULL, deseq = NULL, edger = NULL, basic = NULL,
   include_basic = TRUE, annot_df = NULL, ...)
 }
 \arguments{
-\item{limma}{limma data from limma_pairwise()}
+\item{limma}{Data from limma_pairwise().}
 
-\item{deseq}{deseq data from deseq2_pairwise()}
+\item{deseq}{Data from deseq2_pairwise().}
 
-\item{edger}{edger data from edger_pairwise()}
+\item{edger}{Data from edger_pairwise().}
 
-\item{basic}{basic data from basic_pairwise()}
+\item{basic}{Data from basic_pairwise().}
 
 \item{include_basic}{include the basic data?}
 
-\item{annot_df}{include annotation data}
+\item{annot_df}{Include annotation data?}
 
-\item{...}{more options!}
+\item{...}{More options!}
 }
 \value{
-a heatmap showing how similar they are along with some
-correlations betwee the three players.
+Heatmap showing how similar they are along with some
+    correlations betwee the three players.
 }
 \description{
-limma, DEseq2, and EdgeR all make somewhat different assumptions
-and choices about what makes a meaningful set of differentially
+limma, DEseq2, and EdgeR all make somewhat different assumptions.
+and choices about what makes a meaningful set of differentially.
 expressed genes.  This seeks to provide a quick and dirty metric
 describing the degree to which they (dis)agree.
 }

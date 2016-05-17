@@ -9,27 +9,28 @@ goseq_trees(de_genes, godata, goid_map = "reference/go/id2go.map",
   selector = "topDiffGenes", pval_column = "adj.P.Val")
 }
 \arguments{
-\item{de_genes}{some differentially expressed genes}
+\item{de_genes}{Some differentially expressed genes.}
 
-\item{godata}{data from goseq}
+\item{godata}{Data from goseq.}
 
-\item{goid_map}{file to save go id mapping}
+\item{goid_map}{File to save go id mapping.}
 
-\item{score_limit}{score limit for the coloring}
+\item{score_limit}{Score limit for the coloring.}
 
-\item{goids_df}{a mapping of IDs to GO in the Ramigo expected format}
+\item{goids_df}{Mapping of IDs to GO in the Ramigo expected format.}
 
-\item{overwrite}{overwrite the trees}
+\item{overwrite}{Overwrite the trees?}
 
-\item{selector}{a function for choosing genes}
+\item{selector}{Function for choosing genes.}
 
-\item{pval_column}{column to acquire pvalues}
+\item{pval_column}{Column to acquire pvalues.}
 }
 \value{
-a plot!
+A plot!
 }
 \description{
-Make fun trees a la topgo from goseq data.
+This seeks to force goseq data into a format suitable for topGO and then use its tree plotting
+function to make it possible to see significantly increased ontology trees.
 }
 \seealso{
 \pkg{Ramigo}

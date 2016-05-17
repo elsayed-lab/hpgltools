@@ -2,21 +2,23 @@
 % Please edit documentation in R/ontology_shared.r
 \name{subset_ontology_search}
 \alias{subset_ontology_search}
-\title{Perform ontology searches on data subsets.}
+\title{Perform ontology searches on up/down subsets of differential expression data.}
 \usage{
 subset_ontology_search(changed_counts, doplot = TRUE, ...)
 }
 \arguments{
-\item{changed_counts}{the list of changed counts as ups and downs}
+\item{changed_counts}{List of changed counts as ups and downs.}
 
-\item{doplot}{include plots in the results}
+\item{doplot}{Include plots in the results?}
 
-\item{...}{extra arguments which I don't realize}
+\item{...}{Extra arguments!}
 }
 \value{
-a list of ontology search results, up and down for each contrast
+List of ontology search results, up and down for each contrast.
 }
 \description{
-Perform ontology searches on data subsets.
+In the same way all_pairwise() attempts to simplify using multiple DE tools, this function seeks
+to make it easier to extract subsets of differentially expressed data and pass them to goseq,
+clusterProfiler, topGO, GOstats, and gProfiler.
 }
 

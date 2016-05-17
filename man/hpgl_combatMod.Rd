@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalize_batch.r
 \name{hpgl_combatMod}
 \alias{hpgl_combatMod}
-\title{A modified version of comBat.}
+\title{A modified version of comBatMod.}
 \usage{
 hpgl_combatMod(dat, batch, mod, noScale = TRUE, prior.plots = FALSE)
 }
@@ -22,6 +22,7 @@ Df of batch corrected data
 }
 \description{
 This is a hack of Kwame Okrah's combatMod to make it not fail on corner-cases.
+This was mostly copy/pasted from https://github.com/kokrah/cbcbSEQ/blob/master/R/transform.R
 }
 \examples{
 \dontrun{

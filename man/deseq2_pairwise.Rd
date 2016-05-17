@@ -2,32 +2,31 @@
 % Please edit documentation in R/de_deseq.r
 \name{deseq2_pairwise}
 \alias{deseq2_pairwise}
-\title{Set up a model matrix and set of contrasts to do
-a pairwise comparison of all conditions using DESeq2.}
+\title{Set up model matrices contrasts and do pairwise comparisons of all conditions using DESeq2.}
 \usage{
 deseq2_pairwise(input, conditions = NULL, batches = NULL,
-  model_cond = TRUE, model_batch = NULL, annot_df = NULL, force = FALSE,
+  model_cond = TRUE, model_batch = TRUE, annot_df = NULL, force = FALSE,
   ...)
 }
 \arguments{
-\item{input}{A dataframe/vector or expt class containing data, normalization state, etc.}
+\item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}
 
-\item{conditions}{A factor of conditions in the experiment}
+\item{conditions}{Factor of conditions in the experiment.}
 
-\item{batches}{A factor of batches in the experiment}
+\item{batches}{Factor of batches in the experiment.}
 
-\item{model_cond}{Have condition in the experimental model?}
+\item{model_cond}{Is condition in the experimental model?}
 
-\item{model_batch}{Have batch in the experimental model?}
+\item{model_batch}{Is batch in the experimental model?}
 
 \item{annot_df}{Include some annotation information in the results?}
 
-\item{force}{Force deseq to accept data which likely violates its assumptions}
+\item{force}{Force deseq to accept data which likely violates its assumptions.}
 
-\item{...}{triple dots!}
+\item{...}{triple dots!  Options are passed to arglist.}
 }
 \value{
-A list including the following information:
+List including the following information:
   run = the return from calling DESeq()
   denominators = list of denominators in the contrasts
   numerators = list of the numerators in the contrasts
@@ -36,8 +35,7 @@ A list including the following information:
   all_tables = list of DE tables
 }
 \description{
-Set up a model matrix and set of contrasts to do
-a pairwise comparison of all conditions using DESeq2.
+Invoking DESeq2 is confusing, this should help.
 }
 \examples{
 \dontrun{

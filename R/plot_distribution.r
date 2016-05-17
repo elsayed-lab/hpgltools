@@ -1,17 +1,21 @@
-## Time-stamp: <Mon Apr 25 15:05:36 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 13 15:00:53 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_distribution.r: A few plots to describe data distributions
 ## Currently this includes boxplots, density plots, and qq plots.
 
 #' Make a ggplot boxplot of a set of samples.
 #'
-#' @param data  an expt or data frame set of samples.
-#' @param colors   a color scheme, if not provided will make its own.
-#' @param names   a nicer version of the sample names.
-#' @param scale   whether to log scale the y-axis.
-#' @param title   A title!
-#' @param ... more parameters are fun
-#' @return a ggplot2 boxplot of the samples.  Each boxplot
+#' Boxplots and density plots provide complementary views of data distributions.  The general idea
+#' is that if the box for one sample is significantly shifted from the others, then it is likely an
+#' outlier in the same way a density plot shifted is an outlier.
+#'
+#' @param data Expt or data frame set of samples.
+#' @param colors Color scheme, if not provided will make its own.
+#' @param names Another version of the sample names for printing.
+#' @param scale Whether to log scale the y-axis.
+#' @param title A title!
+#' @param ... More parameters are more fun!
+#' @return Ggplot2 boxplot of the samples.  Each boxplot
 #' contains the following information: a centered line describing the
 #' median value of counts of all genes in the sample, a box around the
 #' line describing the inner-quartiles around the median (quartiles 2
@@ -23,12 +27,12 @@
 #' \link[reshape2]{melt} \link[ggplot2]{scale_x_discrete}
 #' @examples
 #' \dontrun{
-#'  a_boxplot <- hpgl_boxplot(expt)
+#'  a_boxplot <- plot_boxplot(expt)
 #'  a_boxplot  ## ooo pretty boxplot look at the lines
 #' }
 #' @export
-hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, ...) {
-    hpgl_env <- environment()
+plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, ...) {
+    plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         design <- data[["design"]]
@@ -86,26 +90,29 @@ hpgl_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     return(boxplot)
 }
 
-#' Density plots!
+#' Create a density plot, showing the distribution of each column of data.
 #'
-#' @param data  an expt, expressionset, or data frame.
-#' @param colors   a color scheme to use.
-#' @param sample_names   names of the samples.
-#' @param position   how to place the lines, either let them overlap (identity), or stack them.
-#' @param fill   fill the distributions?  This might make the plot unreasonably colorful.
-#' @param scale   plot on the log scale?
-#' @param title   a title for the plot.
-#' @param colors_by a factor for coloring the lines
-#' @return a density plot!
+#' Density plots and boxplots are cousins and provide very similar views of data distributions.
+#' Some people like one, some the other.  I think they are both colorful and fun!
+#'
+#' @param data Expt, expressionset, or data frame.
+#' @param colors Color scheme to use.
+#' @param sample_names Names of the samples.
+#' @param position How to place the lines, either let them overlap (identity), or stack them.
+#' @param fill Fill the distributions?  This might make the plot unreasonably colorful.
+#' @param scale Plot on the log scale?
+#' @param title Title for the plot.
+#' @param colors_by Factor for coloring the lines
+#' @return Ggplot2 density plot!
 #' @seealso \pkg{ggplot2} \link[ggplot2]{geom_density}
 #' @examples
 #' \dontrun{
-#' funkytown <- hpgl_density(data)
+#' funkytown <- plot_density(data)
 #' }
 #' @export
-hpgl_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
+plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
                          fill=NULL, title=NULL, scale=NULL, colors_by="condition") {  ## also position='stack'
-    hpgl_env <- environment()
+    plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
         design <- data[["design"]]
@@ -145,10 +152,10 @@ hpgl_density <- function(data, colors=NULL, sample_names=NULL, position="identit
     }
     densityplot <- NULL
     if (is.null(fill)) {
-        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes_string(x="counts", colour="sample"), environment=hpgl_env)
+        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes_string(x="counts", colour="sample"), environment=plot_env)
     } else {
         fill <- "sample"
-        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes_string(x="counts", colour="sample", fill="fill"), environment=hpgl_env)
+        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes_string(x="counts", colour="sample", fill="fill"), environment=plot_env)
     }
 
     densityplot <- densityplot +
@@ -175,17 +182,19 @@ hpgl_density <- function(data, colors=NULL, sample_names=NULL, position="identit
     return(densityplot)
 }
 
-#'   quantile/quantile comparison of all samples (in this case the mean of all samples, and each sample)
+#' Quantile/quantile comparison of the mean of all samples vs. each sample.
 #'
-#' @param data  an expressionset, expt, or dataframe of samples.
-#' @param verbose   be chatty while running?
-#' @param labels   what kind of labels to print?
-#' @return a list containing:
-#'   logs = a recordPlot() of the pairwise log qq plots
-#'   ratios = a recordPlot() of the pairwise ratio qq plots
-#'   means = a table of the median values of all the summaries of the qq plots
+#' This allows one to visualize all individual data columns against the mean of all columns of data
+#' in order to see if any one is significantly different than the cloud.
+#'
+#' @param data Expressionset, expt, or dataframe of samples.
+#' @param labels What kind of labels to print?
+#' @return List containing:
+#'   logs = a recordPlot() of the pairwise log qq plots.
+#'   ratios = a recordPlot() of the pairwise ratio qq plots.
+#'   means = a table of the median values of all the summaries of the qq plots.
 #' @export
-hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
+plot_qq_all <- function(data, labels="short") {
     data_class <- class(data)[1]
     if (data_class == "expt") {
         design <- data$design
@@ -203,7 +212,7 @@ hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
     sample_data <- data[,c(1,2)]
     ## This is bizarre, performing this operation with transform fails when called from a function
     ## but works fine when called interactively, wtf indeed?
-    ##    sample_data = transform(sample_data, mean=rowMeans(hpgl_df))
+    ##    sample_data = transform(sample_data, mean=rowMeans(plot_df))
     means <- rowMeans(data)
     sample_data$mean <- means
     logs <- list()
@@ -216,36 +225,37 @@ hpgl_qq_all <- function(data, verbose=FALSE, labels="short") {
     count <- 1
     for (i in 1:comparisons) {
         ith <- colnames(data)[i]
-        if (verbose) {
-            message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
-        }
+        message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
         tmpdf <- data.frame("ith"=data[,i],
                             "mean"=sample_data$mean)
         colnames(tmpdf) <- c(ith, "mean")
-        tmpqq <- hpgl_qq_plot(tmpdf, x=1, y=2, labels=labels)
+        tmpqq <- plot_qq_plot(tmpdf, x=1, y=2, labels=labels)
         logs[[count]] <- tmpqq$log
         ratios[[count]] <- tmpqq$ratio
         means[[count]] <- tmpqq$summary[['Median']]
         count <- count + 1
     }
-    hpgl_multiplot(logs)
+    plot_multiplot(logs)
     log_plots <- grDevices::recordPlot()
-    hpgl_multiplot(ratios)
+    plot_multiplot(ratios)
     ratio_plots <- grDevices::recordPlot()
     plots <- list(logs=log_plots, ratios=ratio_plots, medians=means)
     return(plots)
 }
 
-#'   Perform a qqplot between two columns of a matrix.
+#' Perform a qqplot between two columns of a matrix.
 #'
-#' @param data  data frame/expt/expressionset.
-#' @param x   the first column.
-#' @param y   the second column.
-#' @param labels   include the lables?
+#' Given two columns of data, how well do the distributions match one another?  The answer to that
+#' question may be visualized through a qq plot!
+#'
+#' @param data Data frame/expt/expressionset.
+#' @param x First column to compare.
+#' @param y Second column to compare.
+#' @param labels Include the lables?
 #' @return a list of the logs, ratios, and mean between the plots as ggplots.
 #' @export
-hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
-    hpgl_env <- environment()
+plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
+    plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
         design <- data$design
@@ -274,7 +284,7 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     } else {
         y_string <- paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
     }
-    ratio_plot <- ggplot2::ggplot(ratio_df, ggplot2::aes_string(x="increment", y="vector_ratio"), environment=hpgl_env) +
+    ratio_plot <- ggplot2::ggplot(ratio_df, ggplot2::aes_string(x="increment", y="vector_ratio"), environment=plot_env) +
         ggplot2::geom_point(colour=suppressWarnings(grDevices::densCols(vector_ratio)), stat="identity", size=1, alpha=0.2, na.rm=TRUE) +
         ggplot2::scale_y_continuous(limits=c(0,2))
     if (isTRUE(labels)) {
@@ -316,7 +326,7 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     gg_max <- max(log_df)
     colnames(log_df) <- c(xlabel, ylabel)
     log_df$sub <- log_df[,1] - log_df[,2]
-    log_ratio_plot <- ggplot2::ggplot(log_df, ggplot2::aes_string(x="get(xlabel)", y="get(ylabel)"), environment=hpgl_env) +
+    log_ratio_plot <- ggplot2::ggplot(log_df, ggplot2::aes_string(x="get(xlabel)", y="get(ylabel)"), environment=plot_env) +
         ggplot2::geom_point(colour=suppressWarnings(grDevices::densCols(sorted_x, sorted_y)), na.rm=TRUE) +
         ggplot2::scale_y_continuous(limits=c(0, gg_max)) +
         ggplot2::scale_x_continuous(limits=c(0, gg_max))
@@ -363,13 +373,14 @@ hpgl_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
 }
 
 #' Perform qq plots of every column against every other column of a dataset.
-#' This function is stupid, don't use it.
 #'
-#' @param data the data
-#' @param verbose  talky talky
-#' @return a list containing the recordPlot() output of the ratios, logs, and means among samples
+#' This function is stupid, don't use it.  It makes more sense to just use plot_qq, however I am not
+#' quite read to delete this function yet.
+#'
+#' @param data Dataframe to perform pairwise qqplots with.
+#' @return List containing the recordPlot() output of the ratios, logs, and means among samples.
 #' @export
-hpgl_qq_all_pairwise <- function(data, verbose=FALSE) {
+plot_qq_all_pairwise <- function(data) {
     data_class <- class(data)[1]
     names <- NULL
     if (data_class == "expt") {
@@ -394,19 +405,17 @@ hpgl_qq_all_pairwise <- function(data, verbose=FALSE) {
         for (j in 1:rows) {
             ith <- colnames(data)[i]
             jth <- colnames(data)[j]
-            if (verbose) {
-                message(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
-            }
-            tmp <- hpgl_qq_plot(data, x=i, y=j, labels=names)
+            message(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
+            tmp <- plot_qq_plot(data, x=i, y=j, labels=names)
             logs[[count]] <- tmp$log
             ratios[[count]] <- tmp$ratio
             means[i,j] <- tmp$summary[['Mean']]
             count <- count + 1
         }
     }
-    hpgl_multiplot(logs)
+    plot_multiplot(logs)
     log_plots <- grDevices::recordPlot()
-    hpgl_multiplot(ratios)
+    plot_multiplot(ratios)
     ratio_plots <- grDevices::recordPlot()
     heatmap.3(means, trace="none")
     means_heatmap <- grDevices::recordPlot()
@@ -414,3 +423,4 @@ hpgl_qq_all_pairwise <- function(data, verbose=FALSE) {
     return(plots)
 }
 
+## EOF

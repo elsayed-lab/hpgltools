@@ -4,20 +4,18 @@
 \alias{gosyn}
 \title{Get a go synonym from an ID.}
 \usage{
-gosyn(go)
+gosyn(go = "GO:0000001")
 }
 \arguments{
-\item{go}{a go ID, this may be a character or list(assuming the elements are goids).}
+\item{go}{GO id, this may be a character or list(assuming the elements are goids).}
 }
 \value{
-Some text
+Some text providing the synonyms for the given id(s).
 }
 \description{
 I think I will need to do similar parsing of the output for this function as per gosec()
 In some cases this also returns stuff like c("some text", "GO:someID")
-versus "some other text"  versus NULL versus NA
-}
-\details{
+versus "some other text"  versus NULL versus NA.
 This function just goes a mapply(gosn, go).
 }
 \examples{

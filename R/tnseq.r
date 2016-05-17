@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Feb  4 23:25:01 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:24:16 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make a plot and some simple numbers about tnseq saturation
 #'
@@ -23,7 +23,7 @@ tnseq_saturation <- function(file) {
     data_list <- as.numeric(table$reads)
     max_reads <- max(data_list, na.rm=TRUE)
     log2_data_list <- as.numeric(log2(table$reads + 1))
-    data_plot <- hpgl_histogram(log2_data_list, bins=500)
+    data_plot <- plot_histogram(log2_data_list, bins=500)
     data_plot <- data_plot + ggplot2::scale_x_continuous(limits=c(0,6)) +
         ggplot2::scale_y_continuous(limits=c(0,2))
     print(sprintf("The maximum value is: %s ", max_reads))
@@ -61,7 +61,9 @@ tnseq_saturation <- function(file) {
     return(data_plot)
 }
 
-#'   Plot the essentiality of a library as per DeJesus et al.
+#' Plot the essentiality of a library as per DeJesus et al.
+#'
+#' This provides a plot of the essentiality metrics 'zbar' with respect to gene.
 #'
 #' @param file  a file created using the perl script 'essentiality_tas.pl'
 #' @return A couple of plots
@@ -79,7 +81,7 @@ plot_essentiality <- function(file) {
         ggplot2::geom_hline(color="grey", yintercept=0.9902) +
         ggplot2::theme_bw()
     span_df <- ess[,c("max_run","max_run_span")]
-    span_plot <- hpgl_linear_scatter(span_df)
+    span_plot <- plot_linear_scatter(span_df)
     returns <- list("zbar" = zbar_plot, "scatter" = span_plot$scatter)
     return(returns)
 }

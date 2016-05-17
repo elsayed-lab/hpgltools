@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 28 23:41:37 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:29:09 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
 #'
@@ -57,9 +57,14 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #' sva_batch <- batch_counts(table, design, batch='sva')
 #' }
 #' @export
-batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2=NULL , noscale=TRUE, ...) {
-    batches <- as.factor(design[, batch1])
-    conditions <- as.factor(design[, "condition"])
+batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2=NULL, noscale=TRUE, ...) {
+    arglist <- list(...)
+    low_to_zero <- FALSE
+    if (!is.null(arglist[["low_to_zero"]])) {
+        low_to_zero <- arglist[["low_to_zero"]]
+    }
+    batches <- as.factor(design[[batch1]])
+    conditions <- as.factor(design[["condition"]])
 
     num_low <- sum(count_table < 1 & count_table > 0)
     if (num_low > 0) {
@@ -79,7 +84,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
             message("batch_counts: Using limma's removeBatchEffect to remove batch effect.")
             count_table <- limma::removeBatchEffect(count_table, batch=batches)
         } else {
-            batches2 <- as.factor(design[, batch2])
+            batches2 <- as.factor(design[[batch2]])
             count_table <- limma::removeBatchEffect(count_table, batch=batches, batch2=batches2)
         }
     } else if (batch == 'limmaresid') {
@@ -116,12 +121,18 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         ## new_expt$mod_sv = mod_sv
         ## new_expt$fsva_result = fsva_result
         count_table <- fsva_result$db
-    } else if (batch == 'combat_noprior') {
-        message("batch_counts: Using sva::combat without a prior for batch correction.")
-        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=FALSE)
     } else if (batch == 'combat') {
-        message("batch_counts: Using sva::combat with a prior for batch correction.")
-        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE)
+        message("batch_counts: Using sva::combat with a prior for batch correction and no scaling.")
+        count_table <- sva::ComBat(count_table, batches, mod=NULL, par.prior=TRUE, prior.plots=TRUE, mean.only=TRUE)
+    } else if (batch == 'combat_noprior') {
+        message("batch_counts: Using sva::combat without a prior for batch correction and no scaling.")
+        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=FALSE, mean.only=TRUE)
+    } else if (batch == 'combat_scale') {
+        message("batch_counts: Using sva::combat with a prior for batch correction and with scaling.")
+        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE, mean.only=FALSE)
+    } else if (batch == 'combat_noprior_scale') {
+        message("batch_counts: Using sva::combat without a prior for batch correction and with scaling.")
+        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=TRUE, mean.only=FALSE)
     } else if (batch == "svaseq") {
         message("batch_counts: Using sva::svaseq for batch correction.")
         message("Note to self:  If you feed svaseq a data frame you will get an error like:")
@@ -166,16 +177,20 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     num_low <- sum(count_table < 0)
     if (num_low > 0) {
         message(paste0("The number of elements which are < 0 after batch correction is: ", num_low))
-        count_table[count_table < 0] <- 0
+        message(paste0("The variable low_to_zero sets whether to change <0 values to 0 and is: ", low_to_zero))
+        if (isTRUE(low_to_zero)) {
+            count_table[count_table < 0] <- 0
+        }
     }
     libsize <- colSums(count_table)
     counts <- list(count_table=count_table, libsize=libsize)
     return(counts)
 }
 
-#' A modified version of comBat.
+#' A modified version of comBatMod.
 #'
 #' This is a hack of Kwame Okrah's combatMod to make it not fail on corner-cases.
+#' This was mostly copy/pasted from https://github.com/kokrah/cbcbSEQ/blob/master/R/transform.R
 #'
 #' @param dat Df to modify.
 #' @param batch Factor of batches.
@@ -207,28 +222,31 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
     n.batches <- sapply(batches, length)
     n.array <- sum(n.batches)
     NAs <- any(is.na(dat))
+    B.hat <- NULL
+    ## This is taken from sva's github repository in helper.R
+    Beta.NA <- function(y, X) {
+        des <- X[!is.na(y), ]
+        y1 <- y[!is.na(y) ]
+        B <- solve(t(des)%*%des)%*%t(des)%*%y1
+        B
+    }
+    var.pooled <- NULL
+    message("Standardizing data across genes\n")
     if (NAs) {
-        message(paste0("Found ", sum(is.na(dat)), " missing data values."))
-        message("This might end badly?")
-        B.hat <- apply(dat, 1, NAs, design)
+        warning(paste0("Found ", sum(is.na(dat)), " missing data values."))
+        warning("The original combatMod uses an undefined variable Beta.NA here, I set it to 1 not knowing what its purpose is.")
+        B.hat <- apply(dat, 1, Beta.NA)
     } else {
+        ## There are no NAs in the data, this is a good thing(Tm)!
         B.hat <- solve(t(design) %*% design) %*% t(design) %*% t(as.matrix(dat))
     }
-    message("Standardizing data across genes\n")
-    ## I think that the Beta.NA is incorrect but should just be NAs
-    ## either way, it has no definition, so if this section of code gets called
-    ## then it will end in an error
-    ## if (!NAs) {
-    ##     B.hat <- solve(t(design) %*% design) %*% t(design) %*% t(as.matrix(dat))
-    ## } else {
-    ##     B.hat <- apply(dat, 1, Beta.NA, design)
-    ## }
     grand.mean <- t(n.batches/n.array) %*% B.hat[1:n.batch, ]
-    if (!NAs) {
-        var.pooled <- ((dat - t(design %*% B.hat))^2) %*% rep(1/n.array, n.array)
+
+    if (NAs) {
+        var.pooled <- apply(dat - t(design %*% B.hat), 1, var, na.rm=TRUE)
     }
     else {
-        var.pooled <- apply(dat - t(design %*% B.hat), 1, var, na.rm = T)
+        var.pooled <- ((dat - t(design %*% B.hat))^2) %*% rep(1/n.array, n.array)
     }
     stand.mean <- t(grand.mean) %*% t(rep(1, n.array))
     if (!is.null(design)) {
@@ -254,7 +272,11 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
                 bayesdata[, i] <- bayesdata[, i] - gammaPost
             }
             stats <- data.frame(gammaPost=gammaPost, gammaMLE=gammaMLE, prop=prop)
-            hld[[paste("Batch", k, sep=".")]] <- list(stats=stats, indices=sel, mprior=mprior, vprior=vprior)
+            hld[[paste("Batch", k, sep=".")]] <- list(
+                "stats" = stats,
+                "indices" = sel,
+                "mprior" = mprior,
+                "vprior" = vprior)
         }
         message("Adjusting data for batch effects.")
         return(bayesdata)
@@ -262,14 +284,13 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
         message("Fitting L/S model and finding priors.")
         batch.design <- design[, 1:n.batch]
         if (NAs) {
-            ## gamma.hat <- apply(s.data, 1, Beta.NA, batch.design)
-            gamma.hat <- apply(s.data, 1, NAs, batch.design)
+            gamma.hat <- apply(s.data, 1, Beta.NA, batch.design)
         } else {
             gamma.hat <- solve(t(batch.design) %*% batch.design) %*% t(batch.design) %*% t(as.matrix(s.data))
         }
         delta.hat <- NULL
         for (i in batches) {
-            delta.hat <- rbind(delta.hat, apply(s.data[, i], 1, var, na.rm = T))
+            delta.hat <- rbind(delta.hat, apply(s.data[, i], 1, var, na.rm=TRUE))
         }
         gamma.bar <- apply(gamma.hat, 1, mean)
         t2 <- apply(gamma.hat, 1, var)

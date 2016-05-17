@@ -2,24 +2,31 @@
 % Please edit documentation in R/de_shared.r
 \name{semantic_copynumber_filter}
 \alias{semantic_copynumber_filter}
-\title{Remove multicopy genes from up/down gene expression lists}
+\title{Remove multicopy genes from up/down gene expression lists.}
 \usage{
 semantic_copynumber_filter(de_list, max_copies = 2, semantic = c("mucin",
   "sialidase", "RHS", "MASP", "DGF"), semantic_column = "1.tooltip")
 }
 \arguments{
-\item{de_list}{a list of sets of genes deemed significantly up/down with a column expressing approximate count numbers}
+\item{de_list}{List of sets of genes deemed significantly
+up/down with a column expressing approximate count numbers.}
 
-\item{max_copies}{Keep only those genes with <= n putative copies}
+\item{max_copies}{Keep only those genes with <= n putative
+copies.}
 
-\item{semantic}{a set of strings to exclude}
+\item{semantic}{Set of strings with gene names to exclude.}
 
-\item{semantic_column}{a column to use to find the above mentioned strings}
+\item{semantic_column}{Column in the DE table used to find the
+semantic strings for removal.}
 }
 \value{
-a smaller list of up/down genes
+Smaller list of up/down genes.
 }
 \description{
-Remove multicopy genes from up/down gene expression lists
+In our parasite data, there are a few gene types which are
+consistently obnoxious.  Multi-gene families primarily where the
+coding sequences are divergent, but the UTRs nearly identical.  For
+these genes, our sequence based removal methods fail and so this
+just excludes them by name.
 }
 

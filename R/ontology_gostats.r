@@ -1,32 +1,42 @@
-## Time-stamp: <Wed Apr 27 16:58:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 16 14:42:13 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.
+#' Simplification function for gostats, in the same vein as those written for clusterProfiler,
+#' goseq, and topGO.
 #'
-#' GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be integers.
-#' As a result, I am going to have this function take a gff file in order to get the go ids and
-#' gene ids on the same page.
+#' GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be
+#' integers. As a result, I am going to have this function take a gff file in order to get the go
+#' ids and gene ids on the same page.
 #'
-#' @param de_genes  input list of differentially expressed genes
-#' @param gff The annotation information for this genome
-#' @param goids The set of GOids, as before in the format ID/GO
-#' @param universe_merge   column from which to create the universe of genes
-#' @param second_merge_try   if the first universe merge fails, try this
-#' @param organism   genbank organism to use
-#' @param pcutoff   pvalue cutoff for deciding significant
-#' @param direction   under or over represented categories
-#' @param conditional   perform a conditional search?
-#' @param categorysize   category size below which to not include groups
-#' @param gff_type   gff column to use for creating the universe
-#' @param ... more parameters!
-#' @return dunno yet
+#' @param de_genes Input list of differentially expressed genes.
+#' @param gff Annotation information for this genome.
+#' @param goids_df Set of GOids, as before in the format ID/GO.
+#' @param universe_merge Column from which to create the universe of genes.
+#' @param second_merge_try If the first universe merge fails, try this.
+#' @param species Genbank organism to use.
+#' @param pcutoff Pvalue cutoff for deciding significant.
+#' @param direction Under or over represented categories.
+#' @param conditional Perform a conditional search?
+#' @param categorysize Category size below which to not include groups.
+#' @param gff_type Gff column to use for creating the universe.
+#' @param ... More parameters!
+#' @return List of returns from GSEABase, Category, etc.
 #' @seealso \pkg{GSEABase} \pkg{Category}
 #' @export
-simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_merge_try="locus_tag",
-                           organism="fun", pcutoff=0.10, direction="over", conditional=FALSE,
-                           categorysize=NULL, gff_type="CDS", ...) {
+simple_gostats <- function(de_genes, gff, goids_df, universe_merge="id", second_merge_try="locus_tag",
+                           species="fun", pcutoff=0.10, direction="over", conditional=FALSE,
+                           categorysize=NULL, gff_type="cds", ...) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should)
-    ## contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much perfect.
-    annotation <- gff2df(gff, type=gff_type)
+    ## contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much
+    ## perfect.
+    arglist = list(...)
+    if (!is.null(arglist[["gff_df"]])) {
+        annotation <- arglist[["gff_df"]]
+    } else {
+        annotation <- gff2df(gff, type=gff_type)
+    }
+    colnames(annotation) <- tolower(colnames(annotation))
+    colnames(annotation) <- gsub(pattern="length", replacement="width", x=colnames(annotation))
+
     ## This is similar to logic in ontology_goseq and is similarly problematic.
     ## Some gff files I use have all the annotation data in the type called 'gene', others use 'CDS', others use 'exon'
     ## I need a robust method of finding the correct feature type to call upon.
@@ -54,7 +64,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     ## library("GOstats")
     ## library("AnnotationDbi")
     message(paste0("simple_gostats(): gff_type is: ", gff_type, ". Change that if there are bad merges."))
-    types <- c("CDS","gene","exon")
+    types <- c("cds","gene","exon","protein_coding")
     for (type in types) {
         message(paste0("simple_gostats(): type ", type, " has ", sum(annotation$type == type), " annotations."))
     }
@@ -89,15 +99,21 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     universe_ids <- universe$id
     ## Sometimes I have the columns set to 'ID','GO' -- others I have 'ORF','GO'
     ## FIXME!  This should be standardized.
-    colnames(goids) <- c("ID","GO")
-    gostats_go <- merge(universe, goids, by.x="geneid", by.y="ID")
+    colnames(goids_df) <- c("ID","GO")
+    gostats_go <- merge(universe, goids_df, by.x="geneid", by.y="ID")
     if (nrow(gostats_go) == 0) {
         stop("simple_gostats(): The merging of the universe vs. goids failed.")
     }
-    colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "ID")
+    if (ncol(gostats_go) == 5) {
+        colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "ID")
+    } else if (ncol(gostats_go) == 4) {
+        colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id")
+    } else {
+        stop("Cannot set the columns for the gostats df.")
+    }
     gostats_go[["frame.Evidence"]] <- "TAS"
     gostats_go <- gostats_go[, c("frame.go_id", "frame.Evidence", "frame.gene_id")]
-    gostats_frame <- AnnotationDbi::GOFrame(gostats_go, organism=organism)
+    gostats_frame <- AnnotationDbi::GOFrame(gostats_go, organism=species)
     gostats_all <- AnnotationDbi::GOAllFrame(gostats_frame)
     message("simple_gostats(): Creating the gene set collection.  This is slow.")
     gsc <- GSEABase::GeneSetCollection(gostats_all,
@@ -107,7 +123,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     mf_under <- bp_under <- cc_under <- NULL
     message("simple_gostats(): Performing MF GSEA.")
     mf_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="MF", pvalueCutoff=pcutoff,
         conditional=conditional, testDirection="over")
@@ -116,7 +132,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("Found ", nrow(GOstats::summary(mf_over)), " over MF categories."))
     message("simple_gostats(): Performing BP GSEA.")
     bp_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""),
+        name=paste("GSEA of ", species, sep=""),
         geneSetCollection=gsc, geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="BP", pvalueCutoff=pcutoff,
         conditional=FALSE, testDirection="over")
@@ -124,7 +140,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("Found ", nrow(GOstats::summary(bp_over)), " over BP categories."))
     message("simple_gostats(): Performing CC GSEA.")
     cc_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="CC", pvalueCutoff=pcutoff,
         conditional=FALSE, testDirection="over")
@@ -132,7 +148,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("Found ", nrow(GOstats::summary(cc_over)), " over CC categories."))
     message("simple_gostats(): Performing under MF GSEA.")
     mf_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="MF", pvalueCutoff=pcutoff,
         conditional=conditional, testDirection="under")
@@ -140,7 +156,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("Found ", nrow(GOstats::summary(mf_under)), " under MF categories."))
     message("simple_gostats(): Performing under BP GSEA.")
     bp_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="BP", pvalueCutoff=pcutoff,
         conditional=FALSE, testDirection="under")
@@ -148,7 +164,7 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
     message(paste0("Found ", nrow(GOstats::summary(bp_under)), " under BP categories."))
     message("simple_gostats(): Performing under CC GSEA.")
     cc_params <- Category::GSEAGOHyperGParams(
-        name=paste("GSEA of ", organism, sep=""), geneSetCollection=gsc,
+        name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
         geneIds=degenes_ids, universeGeneIds=universe_ids,
         ontology="CC", pvalueCutoff=pcutoff,
         conditional=FALSE, testDirection="under")
@@ -287,51 +303,56 @@ simple_gostats <- function(de_genes, gff, goids, universe_merge="ID", second_mer
         bp_under_sig <- NULL
     }
 
-    gostats_p_mf_over <- try(hpgl_histogram(mf_over_table$Pvalue, bins=20), silent=TRUE)
-    gostats_p_mf_under <- try(hpgl_histogram(mf_under_table$Pvalue, bins=20), silent=TRUE)
-    gostats_p_bp_over <- try(hpgl_histogram(bp_over_table$Pvalue, bins=20), silent=TRUE)
-    gostats_p_bp_under <- try(hpgl_histogram(bp_under_table$Pvalue, bins=20), silent=TRUE)
-    gostats_p_cc_over <- try(hpgl_histogram(cc_over_table$Pvalue, bins=20), silent=TRUE)
-    gostats_p_cc_under <- try(hpgl_histogram(cc_under_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_mf_over <- try(plot_histogram(mf_over_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_mf_under <- try(plot_histogram(mf_under_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_bp_over <- try(plot_histogram(bp_over_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_bp_under <- try(plot_histogram(bp_under_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_cc_over <- try(plot_histogram(cc_over_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_cc_under <- try(plot_histogram(cc_under_table$Pvalue, bins=20), silent=TRUE)
 
-    ## mf_over_table = as.data.frame(mf_over_table)
-    ## bp_over_table = as.data.frame(bp_over_table)
-    ## cc_over_table = as.data.frame(cc_over_table)
-    ## mf_under_table = as.data.frame(mf_under_table)
-    ## bp_under_table = as.data.frame(bp_under_table)
-    ## cc_under_table = as.data.frame(cc_under_table)
+    ret_list <- list(
+        "mf_over_all" = mf_over_table,
+        "bp_over_all" = bp_over_table,
+        "cc_over_all" = cc_over_table,
+        "mf_under_all" = mf_under_table,
+        "bp_under_all" = bp_under_table,
+        "cc_under_all" = cc_under_table,
+        "mf_over_enriched" = mf_over_sig,
+        "bp_over_enriched" = bp_over_sig,
+        "cc_over_enriched" = cc_over_sig,
+        "mf_under_enriched" = mf_under_sig,
+        "bp_under_enriched" = bp_under_sig,
+        "cc_under_enriched" = cc_under_sig,
+        "gostats_mfp_over" = gostats_p_mf_over,
+        "gostats_bpp_over" = gostats_p_bp_over,
+        "gostats_ccp_over" = gostats_p_cc_over,
+        "gostats_mfp_under" = gostats_p_mf_under,
+        "gostats_bpp_under" = gostats_p_bp_under,
+        "gostats_ccp_under" = gostats_p_cc_under)
 
-    ret_list <- list(mf_over_all=mf_over_table, bp_over_all=bp_over_table,
-                     cc_over_all=cc_over_table, mf_under_all=mf_under_table,
-                     bp_under_all=bp_under_table, cc_under_all=cc_under_table,
-                     mf_over_enriched=mf_over_sig, bp_over_enriched=bp_over_sig,
-                     cc_over_enriched=cc_over_sig, mf_under_enriched=mf_under_sig,
-                     bp_under_enriched=bp_under_sig, cc_under_enriched=cc_under_sig,
-                     gostats_mfp_over=gostats_p_mf_over, gostats_bpp_over=gostats_p_bp_over,
-                     gostats_ccp_over=gostats_p_cc_over, gostats_mfp_under=gostats_p_mf_under,
-                     gostats_bpp_under=gostats_p_bp_under, gostats_ccp_under=gostats_p_cc_under)
-
-    pvalue_plots <- try(gostats_pval_plots(ret_list))
-    ret_list$pvalue_plots <- pvalue_plots
+    pvalue_plots <- try(plot_gostats_pval(ret_list))
+    ret_list[["pvalue_plots"]] <- pvalue_plots
     return(ret_list)
 }
 
-## Take gostats data and print it on a tree as topGO does
-#' Make fun trees a la topgo from goseq data.
+#' Take gostats data and print it on a tree as topGO does.
 #'
-#' @param de_genes some differentially expressed genes
-#' @param mf_over mfover data
-#' @param bp_over bpover data
-#' @param cc_over ccover data
-#' @param mf_under mfunder data
-#' @param bp_under bpunder data
-#' @param cc_under ccunder expression data
-#' @param goid_map   a mapping of IDs to GO in the Ramigo expected format
-#' @param score_limit    maximum score to include as 'significant'
-#' @param goids_df   a dataframe of available goids (used to generate goid_map)
-#' @param overwrite   overwrite the goid_map?
-#' @param selector    a function to choose differentially expressed genes in the data
-#' @param pval_column    a column in the data to be used to extract pvalue scores
+#' This shoehorns gostats data into a format acceptable by topgo and uses it to print pretty
+#' ontology trees showing the over represented ontologies.
+#'
+#' @param de_genes Some differentially expressed genes.
+#' @param mf_over Mfover data.
+#' @param bp_over Bpover data.
+#' @param cc_over Ccover data.
+#' @param mf_under Mfunder data.
+#' @param bp_under Bpunder data.
+#' @param cc_under Ccunder expression data.
+#' @param goid_map Mapping of IDs to GO in the Ramigo expected format.
+#' @param score_limit Maximum score to include as 'significant'.
+#' @param goids_df Dataframe of available goids (used to generate goid_map).
+#' @param overwrite Overwrite the goid_map?
+#' @param selector Function to choose differentially expressed genes in the data.
+#' @param pval_column Column in the data to be used to extract pvalue scores.
 #' @return plots! Trees! oh my!
 #' @seealso \pkg{topGO}
 #' @export
@@ -468,40 +489,45 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
     }
 
     trees <- list(
-        MF_over=mf_over_tree, BP_over=bp_over_tree,
-        CC_over=cc_over_tree, MF_overdata=mf_over_tree_data,
-        BP_overdata=bp_over_tree_data, CC_overdata=cc_over_tree_data,
-        MF_under=mf_under_tree, BP_under=bp_under_tree,
-        CC_under=cc_under_tree, MF_underdata=mf_under_tree_data,
-        BP_underdata=bp_under_tree_data, CC_underdata=cc_under_tree_data)
+        "MF_over" = mf_over_tree,
+        "BP_over" = bp_over_tree,
+        "CC_over" = cc_over_tree,
+        "MF_overdata" = mf_over_tree_data,
+        "BP_overdata" = bp_over_tree_data,
+        "CC_overdata" = cc_over_tree_data,
+        "MF_under" = mf_under_tree,
+        "BP_under" = bp_under_tree,
+        "CC_under" = cc_under_tree,
+        "MF_underdata" = mf_under_tree_data,
+        "BP_underdata" = bp_under_tree_data,
+        "CC_underdata" = cc_under_tree_data)
     return(trees)
 }
 
-#' Make a pvalue plot similar to that from clusterprofiler from gostats data
+#' Make a pvalue plot similar to that from clusterprofiler from gostats data.
 #'
 #' clusterprofiler provides beautiful plots describing significantly overrepresented categories.
 #' This function attempts to expand the repetoire of data available to them to include data from gostats.
-#'
 #' The pval_plot function upon which this is based now has a bunch of new helpers now
 #' that I understand how the ontology trees work better, this should take advantage of that, but
 #' currently does not.
 #'
-#' @param gs_result ontology search results
-#' @param wrapped_width   how big to make the text so that it is legible
-#' @param cutoff   what is the maximum pvalue allowed
-#' @param n   how many groups to include in the plot
-#' @param group_minsize default=5  minimum group size before inclusion
-#' @return plots!
-#' @seealso \pkg{clusterProfiler} \link{pval_plot}
+#' @param gs_result Ontology search results.
+#' @param wrapped_width Make the text large enough to read.
+#' @param cutoff What is the maximum pvalue allowed?
+#' @param n How many groups to include in the plot?
+#' @param group_minsize Minimum group size before inclusion.
+#' @return Plots!
+#' @seealso \pkg{clusterProfiler} \link{plot_ontpval}
 #' @export
-gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5) {
+plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5) {
     ## TODO: replace the subset calls
-    mf_over <- gs_result$mf_over_enriched
-    mf_under <- gs_result$mf_under_enriched
-    bp_over <- gs_result$bp_over_enriched
-    bp_under <- gs_result$bp_under_enriched
-    cc_over <- gs_result$cc_over_enriched
-    cc_under <- gs_result$cc_under_enriched
+    mf_over <- gs_result[["mf_over_enriched"]]
+    mf_under <- gs_result[["mf_under_enriched"]]
+    bp_over <- gs_result[["bp_over_enriched"]]
+    bp_under <- gs_result[["bp_under_enriched"]]
+    cc_over <- gs_result[["cc_over_enriched"]]
+    cc_under <- gs_result[["cc_under_enriched"]]
 
     plotting_mf_over <- mf_over
     mf_pval_plot_over <- NULL
@@ -522,7 +548,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_mf_over$term <- as.character(lapply(strwrap(plotting_mf_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_mf_over) > 0) {
-        mf_pval_plot_over <- pval_plot(plotting_mf_over, ontology="MF")
+        mf_pval_plot_over <- plot_ontpval(plotting_mf_over, ontology="MF")
     }
     plotting_mf_under <- mf_under
     mf_pval_plot_under <- NULL
@@ -543,7 +569,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_mf_under$term <- as.character(lapply(strwrap(plotting_mf_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_mf_under) > 0) {
-        mf_pval_plot_under <- pval_plot(plotting_mf_under, ontology="MF")
+        mf_pval_plot_under <- plot_ontpval(plotting_mf_under, ontology="MF")
     }
     plotting_bp_over <- bp_over
     bp_pval_plot_over <- NULL
@@ -564,7 +590,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_bp_over$term <- as.character(lapply(strwrap(plotting_bp_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_bp_over) > 0) {
-        bp_pval_plot_over <- pval_plot(plotting_bp_over, ontology="BP")
+        bp_pval_plot_over <- plot_ontpval(plotting_bp_over, ontology="BP")
     }
     plotting_bp_under <- bp_under
     bp_pval_plot_under <- NULL
@@ -585,7 +611,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_bp_under$term <- as.character(lapply(strwrap(plotting_bp_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_bp_under) > 0) {
-        bp_pval_plot_under <- pval_plot(plotting_bp_under, ontology="BP")
+        bp_pval_plot_under <- plot_ontpval(plotting_bp_under, ontology="BP")
     }
     plotting_cc_over <- cc_over
     cc_pval_plot_over <- NULL
@@ -606,7 +632,7 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_cc_over$term <- as.character(lapply(strwrap(plotting_cc_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_cc_over) > 0) {
-        cc_pval_plot_over <- pval_plot(plotting_cc_over, ontology="CC")
+        cc_pval_plot_over <- plot_ontpval(plotting_cc_over, ontology="CC")
     }
     plotting_cc_under <- cc_under
     cc_pval_plot_under <- NULL
@@ -627,16 +653,22 @@ gostats_pval_plots <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gr
         plotting_cc_under$term <- as.character(lapply(strwrap(plotting_cc_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_cc_under) > 0) {
-        cc_pval_plot_under <- pval_plot(plotting_cc_under, ontology="CC")
+        cc_pval_plot_under <- plot_ontpval(plotting_cc_under, ontology="CC")
     }
 
     pval_plots <- list(
-        mfp_plot_over=mf_pval_plot_over, bpp_plot_over=bp_pval_plot_over,
-        ccp_plot_over=cc_pval_plot_over, mf_subset_over=plotting_mf_over,
-        bp_subset_over=plotting_bp_over, cc_subset_over=plotting_cc_over,
-        mfp_plot_under=mf_pval_plot_under, bpp_plot_under=bp_pval_plot_under,
-        ccp_plot_under=cc_pval_plot_under, mf_subset_under=plotting_mf_under,
-        bp_subset_under=plotting_bp_under, cc_subset_under=plotting_cc_under)
+        "mfp_plot_over" = mf_pval_plot_over,
+        "bpp_plot_over" = bp_pval_plot_over,
+        "ccp_plot_over" = cc_pval_plot_over,
+        "mf_subset_over" = plotting_mf_over,
+        "bp_subset_over" = plotting_bp_over,
+        "cc_subset_over" = plotting_cc_over,
+        "mfp_plot_under" = mf_pval_plot_under,
+        "bpp_plot_under" = bp_pval_plot_under,
+        "ccp_plot_under" = cc_pval_plot_under,
+        "mf_subset_under" = plotting_mf_under,
+        "bp_subset_under" = plotting_bp_under,
+        "cc_subset_under" = plotting_cc_under)
     return(pval_plots)
 }
 

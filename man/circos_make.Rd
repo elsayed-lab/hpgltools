@@ -8,17 +8,16 @@ circos_make(target = "", output = "circos/Makefile",
   circos = "/usr/bin/circos")
 }
 \arguments{
-\item{target}{the make target}
+\item{target}{Default make target.}
 
-\item{output}{the makefile}
+\item{output}{Makefile to write.}
 
-\item{circos}{the location of circos.  I have a copy in home/bin/circos and use that sometimes.}
+\item{circos}{Location of circos.  I have a copy in home/bin/circos and use that sometimes.}
 }
 \value{
 a kitten
 }
 \description{
-I regenerate all my circos pictures with make(1).  This is my
-makefile.
+I regenerate all my circos pictures with make(1).  This is my makefile.
 }
 

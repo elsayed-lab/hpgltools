@@ -1,4 +1,4 @@
-## Time-stamp: <Fri Apr 29 22:46:10 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:25:49 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
@@ -36,9 +36,9 @@
 #'   qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
 #'   density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
 #' @seealso \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
-#' \link[Biobase]{exprs} \link{hpgl_norm} \link{hpgl_nonzero} \link{hpgl_libsize}
-#' \link{hpgl_boxplot} \link{hpgl_corheat} \link{hpgl_smc} \link{hpgl_disheat}
-#' \link{hpgl_smd} \link{hpgl_pca} \link{hpgl_qq_all} \link{hpgl_pairwise_ma}
+#' \link[Biobase]{exprs} \link{hpgl_norm} \link{plot_nonzero} \link{plot_libsize}
+#' \link{plot_boxplot} \link{plot_corheat} \link{plot_sm} \link{plot_disheat}
+#' \link{plot_pca} \link{plot_qq_all} \link{plot_pairwise_ma}
 #' @examples
 #' \dontrun{
 #' toomany_plots <- graph_metrics(expt)
@@ -76,30 +76,29 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
         dens_title <- paste0(dens_title, ": ", title_suffix)
     }
     message("Graphing number of non-zero genes with respect to CPM by library.")
-    nonzero_plot <- try(hpgl_nonzero(expt, title=nonzero_title, ...))
+    nonzero_plot <- try(plot_nonzero(expt, title=nonzero_title, ...))
     message("Graphing library sizes.")
-    libsize_plot <- try(hpgl_libsize(expt, title=libsize_title, ...))
+    libsize_plot <- try(plot_libsize(expt, title=libsize_title, ...))
     message("Graphing a boxplot.")
-    boxplot <- try(hpgl_boxplot(expt, title=boxplot_title, ...))
+    boxplot <- try(plot_boxplot(expt, title=boxplot_title, ...))
     message("Graphing a correlation heatmap.")
-    corheat <- try(hpgl_corheat(expt, method=cormethod, title=corheat_title, ...))
+    corheat <- try(plot_corheat(expt, method=cormethod, title=corheat_title, ...))
     message("Graphing a standard median correlation.")
-    ##smc <- try(hpgl_smc(expt, method=cormethod, title=smc_title, ...))
     smc <- try(plot_sm(expt, method=cormethod, title=smc_title, ...))
     message("Graphing a distance heatmap.")
-    disheat <- try(hpgl_disheat(expt, method=distmethod, title=disheat_title, ...))
+    disheat <- try(plot_disheat(expt, method=distmethod, title=disheat_title, ...))
     message("Graphing a standard median distance.")
     smd <- try(plot_sm(expt, method=distmethod, title=smd_title, ...))
     message("Graphing a PCA plot.")
-    pca <- try(hpgl_pca(expt, title=pca_title, ...))
+    pca <- try(plot_pca(expt, title=pca_title, ...))
     message("Plotting a density plot.")
-    density <- try(hpgl_density(expt, title=dens_title))
+    density <- try(plot_density(expt, title=dens_title))
 
     qq_logs <- NULL
     qq_ratios <- NULL
     if (isTRUE(qq)) {
         message("QQ plotting!")
-        qq_plots <- try(suppressWarnings(hpgl_qq_all(expt)))
+        qq_plots <- try(suppressWarnings(plot_qq_all(expt)))
         qq_logs <- qq_plots$logs
         qq_ratios <- qq_plots$ratios
     }
@@ -107,13 +106,25 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     ma_plots <- NULL
     if (isTRUE(ma)) {
         message("Many MA plots!")
-        ma_plots <- try(suppressWarnings(hpgl_pairwise_ma(expt)))
+        ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt)))
     }
 
     ret_data <- list(
-        nonzero=nonzero_plot, libsize=libsize_plot, boxplot=boxplot, corheat=corheat, smc=smc,
-        disheat=disheat, smd=smd, pcaplot=pca$plot, pcatable=pca$table, pcares=pca$res,
-        pcavar=pca$variance, density=density, qqlog=qq_logs, qqrat=qq_ratios, ma=ma_plots)
+        "nonzero" = nonzero_plot,
+        "libsize" = libsize_plot,
+        "boxplot" = boxplot,
+        "corheat" = corheat,
+        "smc" = smc,
+        "disheat" = disheat,
+        "smd" = smd,
+        "pcaplot" = pca$plot,
+        "pcatable" = pca$table,
+        "pcares" = pca$res,
+        "pcavar" = pca$variance,
+        "density" = density,
+        "qqlog" = qq_logs,
+        "qqrat" = qq_ratios,
+        "ma" = ma_plots)
     new_options <- options(old_options)
     return(ret_data)
 }
@@ -131,7 +142,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
 #' @param layout  set the layout specifically
 #' @return a multiplot!
 #' @export
-hpgl_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
+plot_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
   ## Make a list from the ... arguments and plotlist
   ##  plots <- c(list(...), plotlist)
   numPlots <- length(plots)

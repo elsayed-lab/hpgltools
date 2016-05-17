@@ -2,39 +2,34 @@
 % Please edit documentation in R/de_limma.r
 \name{write_limma}
 \alias{write_limma}
-\title{Writes out the results of a limma search using toptable()
-However, this will do a couple of things to make one's life easier:
-1.  Make a list of the output, one element for each comparison of the contrast matrix
-2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
-3.  Since I have been using qvalues a lot for other stuff, add a column for them.}
+\title{Writes out the results of a limma search using toptable().}
 \usage{
 write_limma(data, adjust = "fdr", n = 0, coef = NULL,
   workbook = "excel/limma.xls", excel = FALSE, csv = FALSE,
   annot_df = NULL)
 }
 \arguments{
-\item{data}{the output from eBayes()}
+\item{data}{Output from eBayes().}
 
-\item{adjust}{the pvalue adjustment chosen.}
+\item{adjust}{Pvalue adjustment chosen.}
 
-\item{n}{the number of entries to report, 0 says do them all.}
+\item{n}{Number of entries to report, 0 says do them all.}
 
-\item{coef}{which coefficients/contrasts to report, NULL says do them all.}
+\item{coef}{Which coefficients/contrasts to report, NULL says do them all.}
 
-\item{workbook}{an excel filename into which to write the data}
+\item{workbook}{Excel filename into which to write the data.}
 
-\item{excel}{write an excel workbook?}
+\item{excel}{Write an excel workbook?}
 
-\item{csv}{write out csv files of the tables?}
+\item{csv}{Write out csv files of the tables?}
 
-\item{annot_df}{an optional data frame including annotation information to include with the tables.}
+\item{annot_df}{Optional data frame including annotation information to include with the tables.}
 }
 \value{
-a list of data frames comprising the toptable output for each coefficient,
-   I also added a qvalue entry to these toptable() outputs.
+List of data frames comprising the toptable output for each coefficient, I also added a
+    qvalue entry to these toptable() outputs.
 }
 \description{
-Writes out the results of a limma search using toptable()
 However, this will do a couple of things to make one's life easier:
 1.  Make a list of the output, one element for each comparison of the contrast matrix
 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel

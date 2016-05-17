@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 28 20:35:49 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May  3 15:32:43 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Everything in this was written by Keith, I stole it with his permission and incorporated it here.
 ## I might change a few function declarations in this: tbl_df
@@ -299,13 +299,14 @@ generate_kegg_pathway_mapping <- function(pathways, verbose=FALSE) {
         }
         ## Get pathway info
 
-        meta <- try(KEGGREST::keggGet(pathway, "kgml")[[1]])
+        ##        meta <- try(KEGGREST::keggGet(pathway, "kgml")[[1]])
+        meta <- try(KEGGREST::keggGet(pathway)[[1]])
         if (class(meta) != "try-error") {
-            pathway_desc  <- ifelse(is.null(meta$DESCRIPTION), '', meta$DESCRIPTION)
-            pathway_class <- ifelse(is.null(meta$CLASS), '', meta$CLASS)
+            pathway_desc  <- ifelse(is.null(meta[["DESCRIPTION"]]), '', meta[["DESCRIPTION"]])
+            pathway_class <- ifelse(is.null(meta[["CLASS"]]), '', meta[["CLASS"]])
             kegg_pathways <- rbind(kegg_pathways,
                                    data.frame("pathway" = pathway,
-                                              "name" = meta$PATHWAY_MAP,
+                                              "name" = meta[["PATHWAY_MAP"]],
                                               "class" = pathway_class,
                                               "description" = pathway_desc))
         }

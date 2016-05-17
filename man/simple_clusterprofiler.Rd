@@ -2,17 +2,15 @@
 % Please edit documentation in R/ontology_clusterprofiler.r
 \name{simple_clusterprofiler}
 \alias{simple_clusterprofiler}
-\title{Perform a simplified clusterProfiler analysis}
+\title{Perform a simplified clusterProfiler analysis.}
 \usage{
-simple_clusterprofiler(de_genes, goids = NULL, golevel = 4, pcutoff = 0.1,
-  fold_changes = NULL, include_cnetplots = FALSE, showcategory = 12,
-  universe = NULL, species = "undef", gff = NULL, wrapped_width = 20,
-  method = "Wallenius", padjust = "BH", ...)
+simple_clusterprofiler(de_genes, goids_df = NULL, golevel = 4,
+  pcutoff = 0.1, fold_changes = NULL, include_cnetplots = FALSE,
+  showcategory = 12, universe = NULL, species = "undef", gff = NULL,
+  wrapped_width = 20, method = "Wallenius", padjust = "BH", ...)
 }
 \arguments{
 \item{de_genes}{Data frame of differentially expressed genes, it must contain an ID column.}
-
-\item{goids}{File containing mappings of genes to goids in the format expected by buildGOmap().}
 
 \item{golevel}{Relative level in the tree for printing p-value plots, higher is more specific.}
 
@@ -40,6 +38,8 @@ disappear, too short and the words run into the lines above.}
 \item{padjust}{Method for adjusting the p-values.}
 
 \item{...}{More options, passed to arglist.}
+
+\item{goids_file}{File containing mappings of genes to goids in the format expected by buildGOmap().}
 }
 \value{
 List including the following:

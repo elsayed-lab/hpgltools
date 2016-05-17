@@ -7,13 +7,16 @@
 hpgl_GroupDensity(object, whichGO, ranks = TRUE, rm.one = FALSE)
 }
 \arguments{
-\item{object}{a topGO enrichment object}
+\item{object}{TopGO enrichment object.}
 
-\item{whichGO}{an individual ontology group to compare with}
+\item{whichGO}{Individual ontology group to compare against.}
 
-\item{ranks}{rank order the set of ontologies}
+\item{ranks}{Rank order the set of ontologies?}
 
-\item{rm.one}{remove pvalue=1 groups}
+\item{rm.one}{Remove pvalue=1 groups?}
+}
+\value{
+plot of group densities.
 }
 \description{
 This just adds a couple wrappers to avoid errors in groupDensity.

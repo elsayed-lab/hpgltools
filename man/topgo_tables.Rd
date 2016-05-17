@@ -8,19 +8,19 @@ topgo_tables(result, limit = 0.1, limitby = "fisher", numchar = 300,
   orderby = "classic", ranksof = "classic")
 }
 \arguments{
-\item{result}{a topgo result}
+\item{result}{Topgo result.}
 
-\item{limit}{a pvalue limit defining 'significant'}
+\item{limit}{Pvalue limit defining 'significant'.}
 
-\item{limitby}{what type of test to perform}
+\item{limitby}{Type of test to perform.}
 
-\item{numchar}{how many characters to allow in the description}
+\item{numchar}{How many characters to allow in the description?}
 
-\item{orderby}{which of the available columns to order the table by?}
+\item{orderby}{Which of the available columns to order the table by?}
 
-\item{ranksof}{which of the available columns are used to rank the data?}
+\item{ranksof}{Which of the available columns are used to rank the data?}
 }
 \description{
-The topgo function GenTable is neat, but it needs some simplification to not be obnoxious
+The topgo function GenTable is neat, but it needs some simplification to not be obnoxious.
 }
 

@@ -8,16 +8,16 @@ circos_prefix(name = "mgas", conf_dir = "circos/conf", radius = 1800,
   band_url = NULL)
 }
 \arguments{
-\item{name}{The name of the map, called with 'make name'}
+\item{name}{Name of the map, called with 'make name'.}
 
-\item{conf_dir}{The directory containing the circos configuration data.}
+\item{conf_dir}{Directory containing the circos configuration data.}
 
-\item{radius}{The size of the image.}
+\item{radius}{Size of the image.}
 
-\item{band_url}{a place to imagemap link}
+\item{band_url}{Place to imagemap link.}
 }
 \value{
-undef
+The master configuration file name.
 }
 \description{
 A few parameters need to be set when starting circos.  This sets

@@ -1,21 +1,23 @@
-## Time-stamp: <Thu Apr 28 10:41:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:32:12 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#'   Perform a simple normalization of a count table
+#' Perform a simple normalization of a count table.
 #'
-#' @param data A matrix of count data
-#' @param design  A dataframe describing the experimental design
-#' (conditions/batches/etc)
-#' @param norm  A normalization to perform:
-#' 'sf|quant|qsmooth|tmm|upperquartile|tmm|rle'
-#' I keep wishy-washing on whether design is a required argument.
-#' @return dataframe of normalized(counts)
+#' This provides shortcut interfaces for normalization functions from deseq2/edger and friends.
+#'
+#' @param data Matrix of count data.
+#' @param design Dataframe describing the experimental design. (conditions/batches/etc)
+#' @param norm Normalization to perform: 'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep
+#'     wishy-washing on whether design is a required argument.
+#' @param ... More arguments might be necessary.
+#' @return Dataframe of normalized(counts)
 #' @seealso \pkg{edgeR} \pkg{limma} \pkg{DESeq2}
 #' @examples
 #' \dontrun{
 #' norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
 #' }
 #' @export
-normalize_counts <- function(data, design=NULL, norm="raw") {
+normalize_counts <- function(data, design=NULL, norm="raw", ...) {
+    arglist <- list(...)
     ## Note that checkUsage flagged my 'libsize = ' calls
     ## I set norm_libsize at the bottom of the function
     ## but perhaps instead I should be using these libsizes?
@@ -130,21 +132,21 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
     return(norm_counts)
 }
 
-#' A hacked copy of Kwame's qsmooth/qstats code
+#' A hacked copy of Kwame's qsmooth/qstats code.
 #'
 #' I made a couple small changes to Kwame's qstats() function to make
 #' it not fail when on corner-cases.  I sent him a diff, but haven't
 #' checked to see if it was useful yet.
 #'
-#' @param data count table to modify
-#' @param groups factor of the experimental conditions
-#' @param refType method for grouping conditions
-#' @param groupLoc method for grouping groups
-#' @param window a window, for looking!
-#' @param groupCol column to define conditions
-#' @param plot plot the quantiles?
-#' @param ... more options
-#' @return data a new data frame of normalized counts
+#' @param data Count table to modify
+#' @param groups Factor of the experimental conditions
+#' @param refType Method for grouping conditions
+#' @param groupLoc Method for grouping groups
+#' @param window Window, for looking!
+#' @param groupCol Column to define conditions
+#' @param plot Plot the quantiles?
+#' @param ... More options
+#' @return New data frame of normalized counts
 #' @seealso \pkg{qsmooth}
 #' @examples
 #' \dontrun{
@@ -220,18 +222,18 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
     return(normExprs)
 }
 
-#' A hacked copy of Kwame's qsmooth/qstats code
+#' A hacked copy of Kwame's qsmooth/qstats code.
 #'
 #' I made a couple small changes to Kwame's qstats() function to make
 #' it not fail when on corner-cases.  I sent him a diff, but haven't
 #' checked to see if it was useful yet.
 #'
-#' @param data the initial count data
-#' @param groups the experimental conditions as a factor
-#' @param refType  (or median) the method to separate groups
-#' @param groupLoc   I don't remember
-#' @param window window for basking
-#' @return new data
+#' @param data Initial count data
+#' @param groups Experimental conditions as a factor.
+#' @param refType Method to separate groups, mean or median.
+#' @param groupLoc I don't remember what this is for.
+#' @param window Window for basking!
+#' @return Some new data.
 #' @examples
 #' \dontrun{
 #' qstatted <- hpgl_qstats(data, conditions)
@@ -290,3 +292,4 @@ hpgl_qstats <- function (data, groups, refType="mean",
     return(qstats_result)
 }
 
+## EOF

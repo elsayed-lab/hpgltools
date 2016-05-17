@@ -1,4 +1,4 @@
-## Time-stamp: <Mon Apr 25 14:57:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:37:11 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a simple transformation of a count table (log2)
 #'
@@ -8,6 +8,7 @@
 #' @param count_table  A matrix of count data
 #' @param transform   A type of transformation to perform: log2/log10/log
 #' @param base   for other log scales
+#' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return dataframe of logx(counts)
 #' @examples
 #' \dontrun{
@@ -15,7 +16,8 @@
 #' }
 #' @export
 transform_counts <- function(count_table, transform="raw",
-                             base=NULL) {
+                             base=NULL, ...) {
+    arglist <- list(...)
     ## Short circuit this if we are going with raw data.
     if (transform == "raw") {
         libsize <- colSums(count_table)
@@ -49,7 +51,10 @@ transform_counts <- function(count_table, transform="raw",
 ")
     }
     libsize <- colSums(count_table)
-    counts <- list(count_table=count_table, libsize=libsize)
+    counts <- list(
+        "count_table" = count_table,
+        "libsize" = libsize)
     return(counts)
 }
 
+## EOF

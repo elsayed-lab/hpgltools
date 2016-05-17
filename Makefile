@@ -1,43 +1,43 @@
 VERSION=2016.02
 export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
-all: clean prereq document reference check build install test
+all: clean reference check build test
 
-install:
-	echo "Performing R CMD INSTALL hpgltools"
-	cd ../ && R CMD INSTALL hpgltools
+install: prereq document
+	@echo "Performing R CMD INSTALL hpgltools"
+	@cd ../ && R CMD INSTALL hpgltools && cd hpgltools
 
 reference:
-	echo "Generating reference manual with R CMD Rd2pdf"
-	rm -f inst/doc/reference.pdf
-	R CMD Rd2pdf . -o inst/doc/reference.pdf
+	@echo "Generating reference manual with R CMD Rd2pdf"
+	@rm -f inst/doc/reference.pdf
+	@R CMD Rd2pdf . -o inst/doc/reference.pdf
 
 check:
-	echo "Performing check with R CMD check hpgltools"
-	cd ../ && export _R_CHECK_FORCE_SUGGESTS_=FALSE && R CMD check hpgltools --no-build-vignettes
+	@echo "Performing check with R CMD check hpgltools"
+	@cd ../ && export _R_CHECK_FORCE_SUGGESTS_=FALSE && R CMD check hpgltools --no-build-vignettes && cd hpgltools
 
 build:
-	echo "Performing build with R CMD build hpgltools"
-	cd ../ && R CMD build hpgltools
+	@echo "Performing build with R CMD build hpgltools"
+	@cd ../ && R CMD build hpgltools && cd hpgltools
 
-test:
-	echo "Running run_tests.R"
-	./run_tests.R
+test: install
+	@echo "Running run_tests.R"
+	@./run_tests.R
 
 roxygen:
-	echo "Generating documentation with roxygen2::roxygenize()"
-	rm -f NAMESPACE && Rscript -e "roxygen2::roxygenize()"
+	@echo "Generating documentation with roxygen2::roxygenize()"
+	@Rscript -e "roxygen2::roxygenize()"
 
 document:
-	echo "Generating documentation with devtools::document()"
-	rm -f NAMESPACE && Rscript -e "devtools::document()"
+	@echo "Generating documentation with devtools::document()"
+	@Rscript -e "devtools::document()"
 
 vignette:
-	echo "Building vignettes with devtools::build_vignettes()"
-	Rscript -e "devtools::build_vignettes()"
+	@echo "Building vignettes with devtools::build_vignettes()"
+	@Rscript -e "devtools::build_vignettes()"
 
 clean_vignette:
-	rm -f inst/doc/*
+	@rm -f inst/doc/*
 
 vt:	clean_vignette vignette install
 
@@ -45,28 +45,21 @@ clean:
 	rm -rf hpgltools/
 	rm -rf hpgltools.Rcheck/
 	rm -rf hpgltools_${VERSION}.tar.gz
-	rm -rf $(find . -type f -name '*.rda' | grep -v 'hpgltools.rda')
 	find . -type f -name '*.Rdata' -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name excel -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
 
 autoloads:
-	Rscript -e "library(devtools); devtools::load_all('.'); autoloads_all()"
+	Rscript -e "library('hpgltools'); autoloads_all();"
 
 prereq:
-	Rscript -e "source('http://bioconductor.org/biocLite.R');\
-pasilla = try(library('pasilla'));\
-if (class(pasilla) == 'try-error') { biocLite('pasilla'); library('pasilla') };\
-tt = try(library('testthat'));\
-if (class(tt) == 'try-error') { biocLite('testthat'); library('testthat') };\
-bb = try(library('Biobase'));\
-if (class(bb) == 'try-error') { biocLite('Biobase'); library('Biobase') };\
-prep = try(library('preprocessCore'));\
-if (class(prep) == 'try-error') { biocLite('preprocessCore'); library('preprocessCore') };\
-devtools = try(library('devtools'));\
-if (class(devtools) == 'try-error') { biocLite('devtools'); library('devtools') };\
-rmarkdown = try(library('rmarkdown')); \
-if (class(rmarkdown) == 'try-error') {install_github('rstudio/rmarkdown'); library('rmarkdown') };\
-knitrbootstrap = try(library('knitrBootstrap'));\
-if (class(knitrbootstrap) == 'try-error') { install_github('jimhester/knitrBootstrap'); library('knitrBootstrap') };\
-" ;
+	Rscript -e "suppressMessages(source('http://bioconductor.org/biocLite.R'));\
+bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr');\
+for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocLite(req) } };\
+## hahaha looks like lisp!"
+
+update_bioc:
+	Rscript -e "source('http://bioconductor.org/biocLite.R'); biocLite(); biocLite('BiocUpgrade');"
+
+update:
+	Rscript -e "source('http://bioconductor.org/biocLite.R'); biocLite(); library(BiocInstaller); biocValid()"

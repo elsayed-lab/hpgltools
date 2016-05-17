@@ -1,25 +1,25 @@
-## Time-stamp: <Wed Apr 27 16:19:12 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 16 15:31:24 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' Perform a simplified topgo analysis
+#' Perform a simplified topgo analysis.
 #'
 #' This will attempt to make it easier to run topgo on a set of genes.
 #'
-#' @param de_genes  a data frame of differentially expressed genes, containing IDs and whatever other columns
-#' @param goid_map   a file containing mappings of genes to goids in the format expected by topgo
-#' @param goids_df   a data frame of the goids which may be used to make the goid_map
-#' @param pvals   a set of pvalues in the DE data which may be used to improve the topgo results
-#' @param limitby   test to index the results by
-#' @param limit   ontology pvalue to use as the lower limit
-#' @param signodes   I don't remember right now
-#' @param sigforall   provide the significance for all nodes?
-#' @param numchar   character limit for the table of results
-#' @param selector   a function name for choosing genes to include
-#' @param overwrite   yeah I do not remember this one either
-#' @param densities   the densities, yeah, the densities
-#' @param pval_plots   include pvalue plots of the results a la clusterprofiler
-#' @param pval_column   column from which to acquire scores
-#' @param ... other options which I do not remember right now
-#' @return a big list including the various outputs from topgo
+#' @param de_genes Data frame of differentially expressed genes, containing IDs any other columns.
+#' @param goid_map File containing mappings of genes to goids in the format expected by topgo.
+#' @param goids_df Data frame of the goids which may be used to make the goid_map.
+#' @param pvals Set of pvalues in the DE data which may be used to improve the topgo results.
+#' @param limitby Test to index the results by.
+#' @param limit Ontology pvalue to use as the lower limit.
+#' @param signodes I don't remember right now.
+#' @param sigforall Provide the significance for all nodes?
+#' @param numchar Character limit for the table of results.
+#' @param selector Function name for choosing genes to include.
+#' @param overwrite Yeah I do not remember this one either.
+#' @param densities Densities, yeah, the densities...
+#' @param pval_plots Include pvalue plots of the results a la clusterprofiler?
+#' @param pval_column Column from which to acquire scores.
+#' @param ... Other options which I do not remember right now!
+#' @return Big list including the various outputs from topgo
 #' @export
 simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
                          pvals=NULL, limitby="fisher", limit=0.1, signodes=100,
@@ -35,24 +35,19 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
 ### If we do something like above to give scores to all the 'DEgenes', then we set up the GOdata object like this:
 ### mf_GOdata = new("topGOdata", description="something", ontology="BP", allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO, gene2GO=geneID2GO, nodeSize=2)
     ## The following library invocation is in case it was unloaded for pathview
-    require.auto("topGO")
     requireNamespace("topGO")
-    ## library("topGO")
     require.auto("Hmisc")
     requireNamespace("Hmisc")
     gomap_info <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
-    ##message(paste0("simple_topgo(): Found ID->GO map: ", gomap_info))
     geneID2GO <- topGO::readMappings(file=goid_map)
     annotated_genes <- names(geneID2GO)
-    if (is.null(de_genes$ID)) {
-        de_genes$ID <- make.names(rownames(de_genes), unique=TRUE)
+    if (is.null(de_genes[["ID"]])) {
+        de_genes[["ID"]] <- make.names(rownames(de_genes), unique=TRUE)
     }
-    ## interesting_genes = factor(as.integer(annotated_genes %in% de_genes$ID))
-    fisher_interesting_genes <- as.factor(as.integer(annotated_genes %in% de_genes$ID))
+    fisher_interesting_genes <- as.factor(as.integer(annotated_genes %in% de_genes[["ID"]]))
     names(fisher_interesting_genes) <- annotated_genes
-    ## ks_interesting_genes <- as.integer(annotated_genes %nin% de_genes$ID) ## %nin% is from Hmisc
-    ks_interesting_genes <- as.integer(!annotated_genes %in% de_genes$ID) ## %nin% is from Hmisc
-    if (!is.null(de_genes$P.Value)) {
+    ks_interesting_genes <- as.integer(!annotated_genes %in% de_genes[["ID"]])
+    if (!is.null(de_genes[[pval_column]])) {
         ## I think this needs to include the entire gene universe, not only the set of x differentially expressed genes
         ## Making this an explicit as.vector(as.numeric()) because it turns out the values from DESeq are characters.
         pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
@@ -68,7 +63,8 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
     requireNamespace("topGO")
     library("topGO")
     ## Unless I do an explicit 'library("topGO")', I get annoying errors like
-    ## "GOMFTerm not found", requireNamespace() is insufficient.
+    ## "GOMFTerm not found"
+    ## Ergo, requireNamespace() is insufficient!
     fisher_mf_GOdata <- new("topGOdata", ontology="MF", allGenes=fisher_interesting_genes,
                             annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     fisher_bp_GOdata <- new("topGOdata", ontology="BP", allGenes=fisher_interesting_genes,
@@ -90,7 +86,7 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
     mf_ks_result <- topGO::getSigGroups(ks_mf_GOdata, test_stat)
     bp_ks_result <- topGO::getSigGroups(ks_bp_GOdata, test_stat)
     cc_ks_result <- topGO::getSigGroups(ks_cc_GOdata, test_stat)
-    test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="Fisher test", cutOff=0.01)
+    test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="Fisher test", cutOff=0.05)
     mf_el_result <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
     bp_el_result <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
     cc_el_result <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
@@ -99,67 +95,92 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
     bp_weight_result <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
     cc_weight_result <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
 
-    mf_fisher_pdist <- try(hpgltools::hpgl_histogram(mf_fisher_result@score, bins=20))
-    mf_ks_pdist <- try(hpgltools::hpgl_histogram(mf_ks_result@score, bins=20))
-    mf_el_pdist <- try(hpgltools::hpgl_histogram(mf_el_result@score, bins=20))
-    mf_weight_pdist <- try(hpgltools::hpgl_histogram(mf_weight_result@score, bins=20))
-    bp_fisher_pdist <- try(hpgltools::hpgl_histogram(bp_fisher_result@score, bins=20))
-    bp_ks_pdist <- try(hpgltools::hpgl_histogram(bp_ks_result@score, bins=20))
-    bp_el_pdist <- try(hpgltools::hpgl_histogram(bp_el_result@score, bins=20))
-    bp_weight_pdist <- try(hpgltools::hpgl_histogram(bp_weight_result@score, bins=20))
-    cc_fisher_pdist <- try(hpgltools::hpgl_histogram(cc_fisher_result@score, bins=20))
-    cc_ks_pdist <- try(hpgltools::hpgl_histogram(cc_ks_result@score, bins=20))
-    cc_el_pdist <- try(hpgltools::hpgl_histogram(cc_el_result@score, bins=20))
-    cc_weight_pdist <- try(hpgltools::hpgl_histogram(cc_weight_result@score, bins=20))
-    p_dists <- list(mf_fisher=mf_fisher_pdist, bp_fisher=bp_fisher_pdist,
-                    cc_fisher=cc_fisher_pdist, mf_ks=mf_ks_pdist, bp_ks=bp_ks_pdist,
-                    cc_ks=cc_ks_pdist, mf_el=mf_el_pdist, bp_el=bp_el_pdist,
-                    cc_el=cc_el_pdist, mf_weight=mf_weight_pdist,
-                    bp_weight=bp_weight_pdist, cc_weight=cc_weight_pdist)
+    mf_fisher_pdist <- try(plot_histogram(mf_fisher_result@score, bins=20))
+    mf_ks_pdist <- try(plot_histogram(mf_ks_result@score, bins=20))
+    mf_el_pdist <- try(plot_histogram(mf_el_result@score, bins=20))
+    mf_weight_pdist <- try(plot_histogram(mf_weight_result@score, bins=20))
+    bp_fisher_pdist <- try(plot_histogram(bp_fisher_result@score, bins=20))
+    bp_ks_pdist <- try(plot_histogram(bp_ks_result@score, bins=20))
+    bp_el_pdist <- try(plot_histogram(bp_el_result@score, bins=20))
+    bp_weight_pdist <- try(plot_histogram(bp_weight_result@score, bins=20))
+    cc_fisher_pdist <- try(plot_histogram(cc_fisher_result@score, bins=20))
+    cc_ks_pdist <- try(plot_histogram(cc_ks_result@score, bins=20))
+    cc_el_pdist <- try(plot_histogram(cc_el_result@score, bins=20))
+    cc_weight_pdist <- try(plot_histogram(cc_weight_result@score, bins=20))
 
-    results <- list(fmf_godata=fisher_mf_GOdata, fbp_godata=fisher_bp_GOdata,
-                    fcc_godata=fisher_cc_GOdata, kmf_godata=ks_mf_GOdata,
-                    kbp_godata=ks_bp_GOdata, kcc_godata=ks_cc_GOdata,
-                    mf_fisher=mf_fisher_result, bp_fisher=bp_fisher_result,
-                    cc_fisher=cc_fisher_result, mf_ks=mf_ks_result,
-                    bp_ks=bp_ks_result, cc_ks=cc_ks_result,
-                    mf_el=mf_el_result, bp_el=bp_el_result,
-                    cc_el=cc_el_result, mf_weight=mf_weight_result,
-                    bp_weight=bp_weight_result, cc_weight=cc_weight_result)
+    p_dists <- list(
+        "mf_fisher" = mf_fisher_pdist,
+        "bp_fisher" = bp_fisher_pdist,
+        "cc_fisher" = cc_fisher_pdist,
+        "mf_ks" = mf_ks_pdist,
+        "bp_ks" = bp_ks_pdist,
+        "cc_ks" = cc_ks_pdist,
+        "mf_el" = mf_el_pdist,
+        "bp_el" = bp_el_pdist,
+        "cc_el" = cc_el_pdist,
+        "mf_weight" = mf_weight_pdist,
+        "bp_weight" = bp_weight_pdist,
+        "cc_weight" = cc_weight_pdist)
 
-    tables <- try(topgo_tables(results, limitby=limitby, limit=limit))
+    results <- list(
+        "fmf_godata" = fisher_mf_GOdata,
+        "fbp_godata" = fisher_bp_GOdata,
+        "fcc_godata" = fisher_cc_GOdata,
+        "kmf_godata" = ks_mf_GOdata,
+        "kbp_godata" = ks_bp_GOdata,
+        "kcc_godata" = ks_cc_GOdata,
+        "mf_fisher" = mf_fisher_result,
+        "bp_fisher" = bp_fisher_result,
+        "cc_fisher" = cc_fisher_result,
+        "mf_ks" = mf_ks_result,
+        "bp_ks" = bp_ks_result,
+        "cc_ks" = cc_ks_result,
+        "mf_el" = mf_el_result,
+        "bp_el" = bp_el_result,
+        "cc_el" = cc_el_result,
+        "mf_weight" = mf_weight_result,
+        "bp_weight" = bp_weight_result,
+        "cc_weight" = cc_weight_result)
+
+    tables <- try(topgo_tables(results, limitby=limitby, limit=limit), silent=TRUE)
     if (class(tables)[1] == 'try-error') {
         tables <- NULL
     }
 
     mf_densities <- bp_densities <- cc_densities <- list()
     if (isTRUE(densities)) {
-        mf_densities <- plot_topgo_densities(fisher_mf_GOdata, tables$mf)
-        bp_densities <- plot_topgo_densities(fisher_bp_GOdata, tables$bp)
-        cc_densities <- plot_topgo_densities(fisher_cc_GOdata, tables$cc)
+        mf_densities <- suppressMessages(plot_topgo_densities(fisher_mf_GOdata, tables$mf))
+        bp_densities <- suppressMessages(plot_topgo_densities(fisher_bp_GOdata, tables$bp))
+        cc_densities <- suppressMessages(plot_topgo_densities(fisher_cc_GOdata, tables$cc))
     } else {
-        message("simple_topgo(): Set densities=TRUE for ontology densitya plots.")
+        message("simple_topgo(): Set densities=TRUE for ontology density plots.")
     }
+
 
     information <- list(
-        mf_godata=fisher_mf_GOdata, bp_godata=fisher_bp_GOdata, cc_godata=fisher_cc_GOdata,
-        kmf_godata=ks_mf_GOdata, kbp_godata=ks_bp_GOdata, kcc_godata=ks_cc_GOdata,
-        results=results, tables=tables, mf_densities=mf_densities,
-        bp_densities=bp_densities, cc_densities=cc_densities, pdists=p_dists)
-
-    if (isTRUE(pval_plots)) {
-        information$pvalue_plots <- topgo_pval_plot(information)
-    }
-
+        "mf_godata" = fisher_mf_GOdata,
+        "bp_godata" = fisher_bp_GOdata,
+        "cc_godata" = fisher_cc_GOdata,
+        "kmf_godata" = ks_mf_GOdata,
+        "kbp_godata" = ks_bp_GOdata,
+        "kcc_godata" = ks_cc_GOdata,
+        "results" = results,
+        "tables" = tables,
+        "mf_densities" = mf_densities,
+        "bp_densities" = bp_densities,
+        "cc_densities" = cc_densities,
+        "pdists" = p_dists)
+    pval_plots <- plot_topgo_pval(information)
+    information[["pvalue_plots"]] <- pval_plots
     return(information)
 }
 
-#' Plot the density of categories vs. the possibilities
+#' Plot the density of categories vs. the possibilities of all categories.
 #'
-#' This can make a large number of plots
+#' This can make a large number of plots.
 #'
-#' @param godata  the result from topgo
-#' @param table  a table of genes
+#' @param godata Result from topgo.
+#' @param table  Table of genes.
 #' @export
 plot_topgo_densities <- function(godata, table) {
     ret <- list()
@@ -174,14 +195,14 @@ plot_topgo_densities <- function(godata, table) {
 
 #' Make pretty tables out of topGO data
 #'
-#' The topgo function GenTable is neat, but it needs some simplification to not be obnoxious
+#' The topgo function GenTable is neat, but it needs some simplification to not be obnoxious.
 #'
-#' @param result a topgo result
-#' @param limit a pvalue limit defining 'significant'
-#' @param limitby  what type of test to perform
-#' @param numchar  how many characters to allow in the description
-#' @param orderby  which of the available columns to order the table by?
-#' @param ranksof  which of the available columns are used to rank the data?
+#' @param result Topgo result.
+#' @param limit Pvalue limit defining 'significant'.
+#' @param limitby Type of test to perform.
+#' @param numchar How many characters to allow in the description?
+#' @param orderby Which of the available columns to order the table by?
+#' @param ranksof Which of the available columns are used to rank the data?
 #' @export
 topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, orderby="classic", ranksof="classic") {
     ## The following if statement could be replaced by get(limitby)
@@ -263,30 +284,36 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, order
                                                 "fisher","qvalue","KS","EL","weight","Term")]
         }
     }
-    tables <- list(mf=mf_allRes, bp=bp_allRes, cc=cc_allRes,
-                   mf_interesting=mf_interesting, bp_interesting=bp_interesting,
-                   cc_interesting=cc_interesting)
+    tables <- list(
+        "mf" = mf_allRes,
+        "bp" = bp_allRes,
+        "cc" = cc_allRes,
+        "mf_interesting" = mf_interesting,
+        "bp_interesting" = bp_interesting,
+        "cc_interesting" = cc_interesting)
     return(tables)
 }
 
-#' Print trees from topGO
+#' Print trees from topGO.
 #'
-#' @param tg  data from simple_topgo()
-#' @param score_limit   score limit to decide whether to add to the tree
-#' @param sigforall   add scores to the tree?
-#' @param do_mf_fisher_tree   Add the fisher score molecular function tree?
-#' @param do_bp_fisher_tree   Add the fisher biological process tree?
-#' @param do_cc_fisher_tree   Add the fisher cellular component tree?
-#' @param do_mf_ks_tree   Add the ks molecular function tree?
-#' @param do_bp_ks_tree   Add the ks biological process tree?
-#' @param do_cc_ks_tree   Add the ks cellular component tree?
-#' @param do_mf_el_tree   Add the el molecular function tree?
-#' @param do_bp_el_tree   Add the el biological process tree?
-#' @param do_cc_el_tree   Add the el cellular component tree?
-#' @param do_mf_weight_tree  Add the weight mf tree?
-#' @param do_bp_weight_tree  Add the bp weighted tree?
-#' @param do_cc_weight_tree  Add the guess
-#' @return a big list including the various outputs from topgo
+#' The tree printing functionality of topGO is pretty cool, but difficult to get set correctly.
+#'
+#' @param tg Data from simple_topgo().
+#' @param score_limit Score limit to decide whether to add to the tree.
+#' @param sigforall Add scores to the tree?
+#' @param do_mf_fisher_tree Add the fisher score molecular function tree?
+#' @param do_bp_fisher_tree Add the fisher biological process tree?
+#' @param do_cc_fisher_tree Add the fisher cellular component tree?
+#' @param do_mf_ks_tree Add the ks molecular function tree?
+#' @param do_bp_ks_tree Add the ks biological process tree?
+#' @param do_cc_ks_tree Add the ks cellular component tree?
+#' @param do_mf_el_tree Add the el molecular function tree?
+#' @param do_bp_el_tree Add the el biological process tree?
+#' @param do_cc_el_tree Add the el cellular component tree?
+#' @param do_mf_weight_tree Add the weight mf tree?
+#' @param do_bp_weight_tree Add the bp weighted tree?
+#' @param do_cc_weight_tree Add the guess
+#' @return Big list including the various outputs from topgo.
 #' @export
 topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=TRUE,
                         do_bp_fisher_tree=TRUE, do_cc_fisher_tree=TRUE, do_mf_ks_tree=FALSE,
@@ -415,39 +442,45 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
     }
 
     trees <- list(
-        mf_fisher_nodes=mf_fisher_nodes,
-        bp_fisher_nodes=bp_fisher_nodes,
-        cc_fisher_nodes=cc_fisher_nodes,
-        mf_ks_nodes=mf_ks_nodes,
-        bp_ks_nodes=bp_ks_nodes,
-        cc_ks_nodes=cc_ks_nodes,
-        mf_el_nodes=mf_el_nodes,
-        bp_el_nodes=bp_el_nodes,
-        cc_el_nodes=cc_el_nodes,
-        mf_weight_nodes=mf_weight_nodes,
-        bp_weight_nodes=bp_weight_nodes,
-        cc_weight_nodes=cc_weight_nodes,
-        mf_fisher_tree=mf_fisher_tree,
-        bp_fisher_tree=bp_fisher_tree,
-        cc_fisher_tree=cc_fisher_tree,
-        mf_ks_tree=mf_ks_tree,
-        bp_ks_tree=bp_ks_tree,
-        cc_ks_tree=cc_ks_tree,
-        mf_el_tree=mf_el_tree,
-        bp_el_tree=bp_el_tree,
-        cc_el_tree=cc_el_tree,
-        mf_weight_tree=mf_weight_tree,
-        bp_weight_tree=bp_weight_tree,
-        cc_weight_tree=cc_weight_tree)
+        "mf_fisher_nodes" = mf_fisher_nodes,
+        "bp_fisher_nodes" = bp_fisher_nodes,
+        "cc_fisher_nodes" = cc_fisher_nodes,
+        "mf_ks_nodes" = mf_ks_nodes,
+        "bp_ks_nodes" = bp_ks_nodes,
+        "cc_ks_nodes" = cc_ks_nodes,
+        "mf_el_nodes" = mf_el_nodes,
+        "bp_el_nodes" = bp_el_nodes,
+        "cc_el_nodes" = cc_el_nodes,
+        "mf_weight_nodes" = mf_weight_nodes,
+        "bp_weight_nodes" = bp_weight_nodes,
+        "cc_weight_nodes" = cc_weight_nodes,
+        "MF_over" = mf_fisher_tree,  ## copying these here for consistent returns between goseq/cluster/topgo/gostats.
+        "BP_over" = bp_fisher_tree,  ## copying these here for consistent returns between goseq/cluster/topgo/gostats.
+        "CC_over" = cc_fisher_tree,  ## copying these here for consistent returns between goseq/cluster/topgo/gostats.
+        "MF_fisher_tree" = mf_fisher_tree,
+        "BP_fisher_tree" = bp_fisher_tree,
+        "CC_fisher_tree" = cc_fisher_tree,
+        "MF_ks_tree" = mf_ks_tree,
+        "BP_ks_tree" = bp_ks_tree,
+        "CC_ks_tree" = cc_ks_tree,
+        "MF_el_tree" = mf_el_tree,
+        "BP_el_tree" = bp_el_tree,
+        "CC_el_tree" = cc_el_tree,
+        "MF_weight_tree" = mf_weight_tree,
+        "BP_weight_tree" = bp_weight_tree,
+        "CC_weight_tree" = cc_weight_tree)
     return(trees)
 }
 
-#' Make a go mapping from IDs in a format suitable for topGO
+#' Make a go mapping from IDs in a format suitable for topGO.
 #'
-#' @param goid_map A topGO mapping file
-#' @param goids_df If there is no goid_map, create it with this
-#' @param overwrite A boolean, if it already exists, rewrite the mapping file?
-#' @return a summary of the new goid table
+#' When using a non-supported organism, one must write out mappings in the format expected by
+#' topgo.  This handles that process and gives a summary of the new table.
+#'
+#' @param goid_map TopGO mapping file.
+#' @param goids_df If there is no goid_map, create it with this data frame.
+#' @param overwrite Rewrite the mapping file?
+#' @return Summary of the new goid table.
 #' @export
 make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, overwrite=FALSE) {
     id2go_test <- file.info(goid_map)
@@ -470,7 +503,7 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
             rm(id2go_test)
         }
     } else { ## overwrite is not true
-        if (is.na(id2go_test$size)) {
+        if (is.na(id2go_test[["size"]])) {
             if (is.null(goids_df)) {
                 stop("There is neither a id2go file nor a data frame of goids.")
             } else {
@@ -514,25 +547,28 @@ hpgl_topdiffgenes <- function(scores, df=get0("de_genes"), direction="up") {
 #' @export
 topDiffGenes <- function(allScore) { return(allScore < 0.01) }
 
-#' Make a pvalue plot from topgo data
+#' Make a pvalue plot from topgo data.
 #'
-#' @param topgo some data from topgo!
-#' @param wrapped_width  maximum width of the text names
-#' @param cutoff   p-value cutoff for the plots
-#' @param n   maximum number of ontologies to include
-#' @param type   type of score to use
-#' @return a list of MF/BP/CC pvalue plots
-#' @seealso \pkg{topgo} \code{goseq}
+#' The p-value plots from clusterProfiler are pretty, this sets the topgo data into a format
+#' suitable for plotting in that fashion and returns the resulting plots of significant ontologies.
+#'
+#' @param topgo Some data from topgo!
+#' @param wrapped_width  Maximum width of the text names.
+#' @param cutoff P-value cutoff for the plots.
+#' @param n Maximum number of ontologies to include.
+#' @param type Type of score to use.
+#' @return List of MF/BP/CC pvalue plots.
+#' @seealso \pkg{topgo} \code{clusterProfiler}
 #' @export
-topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
-    mf_newdf <- topgo$tables$mf[,c("GO.ID", "Term", "Annotated","Significant", type)]
+plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
+    mf_newdf <- topgo$tables$mf[, c("GO.ID", "Term", "Annotated","Significant", type)]
     mf_newdf$term <- as.character(lapply(strwrap(mf_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
     mf_newdf$pvalue <- as.numeric(mf_newdf[[type]])
     mf_newdf <- subset(mf_newdf, get(type) < cutoff)
     mf_newdf <- mf_newdf[order(mf_newdf$pvalue, mf_newdf[[type]]),]
     mf_newdf <- head(mf_newdf, n=n)
     mf_newdf$score <- mf_newdf$Significant / mf_newdf$Annotated
-    mf_pval_plot <- pval_plot(mf_newdf, ontology="MF")
+    mf_pval_plot <- plot_ontpval(mf_newdf, ontology="MF")
 
     bp_newdf <- topgo$tables$bp[,c("GO.ID", "Term", "Annotated","Significant",type)]
     bp_newdf$term <- as.character(lapply(strwrap(bp_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
@@ -541,7 +577,7 @@ topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
     bp_newdf <- bp_newdf[order(bp_newdf$pvalue, bp_newdf[[type]]),]
     bp_newdf <- head(bp_newdf, n=n)
     bp_newdf$score <- bp_newdf$Significant / bp_newdf$Annotated
-    bp_pval_plot <- pval_plot(bp_newdf, ontology="MF")
+    bp_pval_plot <- plot_ontpval(bp_newdf, ontology="MF")
 
     cc_newdf <- topgo$tables$cc[,c("GO.ID", "Term", "Annotated","Significant",type)]
     cc_newdf$term <- as.character(lapply(strwrap(cc_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
@@ -550,7 +586,7 @@ topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
     cc_newdf <- cc_newdf[order(cc_newdf$pvalue, cc_newdf[[type]]),]
     cc_newdf <- head(cc_newdf, n=n)
     cc_newdf$score <- cc_newdf$Significant / cc_newdf$Annotated
-    cc_pval_plot <- pval_plot(cc_newdf, ontology="CC")
+    cc_pval_plot <- plot_ontpval(cc_newdf, ontology="CC")
 
     pval_plots <- list(
         "mfp_plot_over" = mf_pval_plot,
@@ -560,12 +596,12 @@ topgo_pval_plot <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
 }
 
 
-#' Plot the ontology DAG
+#' Plot the ontology DAG.
 #'
-#' This function was stolen from topgo in order to figure out where it was failing
+#' This function was stolen from topgo in order to figure out where it was failing.
 #'
-#' @param graph  A graph from topGO
-#' @return weights
+#' @param graph Graph from topGO
+#' @return Weights!
 #' @export
 getEdgeWeights <- function(graph) {
     weightsList <- graph::edgeWeights(graph)
@@ -582,22 +618,23 @@ getEdgeWeights <- function(graph) {
     return(edge.weights)
 }
 
-#' hpgl_GOplot() A minor hack of the topGO GOplot function
+#' A minor hack of the topGO GOplot function.
+#'
 #' This allows me to change the line widths from the default.
 #'
-#' @param dag  The DAG tree of ontologies
-#' @param sigNodes  The set of significant ontologies (with p-values)
-#' @param dag.name   A name for the graph
-#' @param edgeTypes   Set the types of the edges for graphviz
-#' @param nodeShape.type   The shapes on the tree
-#' @param genNodes   Generate the nodes?
-#' @param wantedNodes   A subset of the ontologies to plot
-#' @param showEdges   Show the arrows?
-#' @param useFullNames   Full names of the ontologies (they can get long)
-#' @param oldSigNodes   I dunno
-#' @param nodeInfo    Hmm
-#' @param maxchars   Maximum characters per line inside the shapes
-#' @return a topgo plot
+#' @param dag DAG tree of ontologies.
+#' @param sigNodes Set of significant ontologies (with p-values).
+#' @param dag.name Name for the graph.
+#' @param edgeTypes Types of the edges for graphviz.
+#' @param nodeShape.type Shapes on the tree.
+#' @param genNodes Generate the nodes?
+#' @param wantedNodes Subset of the ontologies to plot.
+#' @param showEdges Show the arrows?
+#' @param useFullNames Full names of the ontologies (they can get long).
+#' @param oldSigNodes I dunno.
+#' @param nodeInfo Hmm.
+#' @param maxchars Maximum characters per line inside the shapes.
+#' @return Topgo plot!
 #' @export
 hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
                         nodeShape.type=c('box','circle','ellipse','plaintext')[3],
@@ -611,7 +648,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
     }
 
     ## we set the global Graphviz attributes
-    ##  graphAttrs <- getDefaultAttrs(layoutType = 'dot')
+    ## graphAttrs <- getDefaultAttrs(layoutType = 'dot')
     graphAttrs <- Rgraphviz::getDefaultAttrs(layoutType = 'dot')
     graphAttrs$cluster <- NULL
     graphAttrs$edge$arrowsize = "0.4"
@@ -731,14 +768,15 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
     return(final_dag)
 }
 
-#'   A hack of topGO's groupDensity()
+#' A hack of topGO's groupDensity()
 #'
 #' This just adds a couple wrappers to avoid errors in groupDensity.
 #'
-#' @param object  a topGO enrichment object
-#' @param whichGO  an individual ontology group to compare with
-#' @param ranks   rank order the set of ontologies
-#' @param rm.one   remove pvalue=1 groups
+#' @param object TopGO enrichment object.
+#' @param whichGO Individual ontology group to compare against.
+#' @param ranks Rank order the set of ontologies?
+#' @param rm.one Remove pvalue=1 groups?
+#' @return plot of group densities.
 hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     groupMembers <- try(topGO::genesInTerm(object, whichGO)[[1]])
     if (class(groupMembers)[1] == 'try-error') {
@@ -759,4 +797,4 @@ hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     return(plot)
 }
 
-# EOF
+## EOF

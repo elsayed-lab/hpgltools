@@ -15,12 +15,12 @@ biomart_orthologs(gene_ids, first_species = "hsapiens",
 
 \item{second_species}{Linnean species name for the second species.}
 
-\item{host}{Ensembl server to query}
+\item{host}{Ensembl server to query.}
 
 \item{trymart}{Assumed mart name to use.}
 }
 \value{
-Df of orthologs
+Df of orthologs.
 }
 \description{
 Biomart's function getLDS is incredibly powerful, but it makes me think very polite people are

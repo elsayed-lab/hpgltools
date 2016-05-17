@@ -1,4 +1,4 @@
-## Time-stamp: <Thu Apr 28 23:54:11 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:33:00 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Call various low-count filters.
 #'
@@ -14,6 +14,7 @@
 #' @param cv_max Also used by cv().
 #' @param thresh Minimum threshold across samples for cbcb.
 #' @param min_samples Minimum number of samples for cbcb.
+#' @param ... More options might be needed, especially if I fold cv/p/etc into ...
 #' @return Data frame of lowfiltered counts.
 #' @seealso \pkg{genefilter}
 #' @examples
@@ -22,7 +23,8 @@
 #' }
 #' @export
 lowfilter_counts <- function(count_table, type='cbcb', p=0.01, A=1, k=1,
-                             cv_min=0.01, cv_max=1000, thresh=2, min_samples=2) {
+                             cv_min=0.01, cv_max=1000, thresh=2, min_samples=2, ...) {
+    arglist <- list(...)
     if (tolower(type) == 'povera') {
         type <- 'pofa'
     } else if (tolower(type) == 'kovera') {

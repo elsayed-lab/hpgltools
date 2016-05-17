@@ -1,4 +1,4 @@
-## Time-stamp: <Wed Apr 27 15:40:27 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 10 12:17:10 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -104,7 +104,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     if (filter_low != FALSE) {
         message(paste0("Performing low-count filter with option: ", filter_low))
         ## All the other intermediates have a libsize slot, perhaps this should too
-        lowfiltered_counts <- lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2)
+        lowfiltered_counts <- lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2, ...)
         count_table <- lowfiltered_counts[["count_table"]]
         lowfilter_performed <- filter_low
     }
@@ -118,7 +118,7 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
             message("The experimental design is null.  Some normalizations will therefore fail.")
             message("If you receive an error about an object with no dimensions, that is likely why.")
         }
-        normalized_counts <- normalize_counts(count_table, expt_design, norm=norm)
+        normalized_counts <- normalize_counts(count_table, expt_design, norm=norm, ...)
         count_table <- normalized_counts[["count_table"]]
         norm_performed <- norm
     }
@@ -129,16 +129,26 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     ## They have nice ways of handling the log2 which I should consider
     converted_counts <- NULL
     if (convert != "raw") {
-        converted_counts <- convert_counts(count_table, convert=convert, annotations=annotations, fasta=fasta, entry_type=entry_type)
-        count_table <- converted_counts$count_table
+        converted_counts <- convert_counts(count_table, convert=convert, annotations=annotations, fasta=fasta, entry_type=entry_type, ...)
+        count_table <- converted_counts[["count_table"]]
         convert_performed <- convert
     }
 
-    ## Step 4: Batch correction
+    ## Step 4: Transformation
+    ## Finally, this considers whether to log2 the data or no
+    transformed_counts <- NULL
+    if (transform != "raw") {
+        message(paste0("Applying: ", transform, " transformation."))
+        transformed_counts <- transform_counts(count_table, transform=transform, ...)
+        ##transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
+        count_table <- transformed_counts[["count_table"]]
+        transform_performed <- transform
+    }
+
+    ## Step 5: Batch correction
     batched_counts <- NULL
     if (batch != "raw") {
-        ## batched_counts = batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=design, ...)
-        tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design))
+        tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design, ...))
         if (class(tmp_counts) == 'try-error') {
             warning("The batch_counts called failed.  Returning non-batch reduced data.")
             batched_counts <- NULL
@@ -148,17 +158,6 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
             batch_performed <- batch
             count_table <- batched_counts[["count_table"]]
         }
-    }
-
-    ## Step 5: Transformation
-    ## Finally, this considers whether to log2 the data or no
-    transformed_counts <- NULL
-    if (transform != "raw") {
-        message(paste0("Applying: ", transform, " transformation."))
-        transformed_counts <- transform_counts(count_table, transform=transform, ...)
-        ##transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
-        count_table <- transformed_counts[["count_table"]]
-        transform_performed <- transform
     }
 
     ## This list provides the list of operations performed on the data in order they were done.
@@ -288,7 +287,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     if (transform == "raw") {
         message("Leaving the data in its current base format, keep in mind that
  some metrics are easier to see when the data is log2 transformed, but
- EdgeR/DESeq don't like transformed data.
+ EdgeR/DESeq do not accept transformed data.
 ")
     }
     if (convert == "raw") {
@@ -310,9 +309,14 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
  batch effects this is a good parameter to play with.
 ")
     }
+    if (convert == "cpm" & transform == "tmm") {
+        warning("Cpm and tmm perform similar purposes. They should not be applied to the same data.")
+    }
     new_expt[["backup_expressionset"]] <- new_expt[["expressionset"]]
     current_data <- Biobase::exprs(current_exprs)
     design <- expt[["design"]]
+    ## A bunch of these options should be moved into ...
+    ## Having them as options to maintain is foolish
     normalized <- hpgl_norm(current_data, design=design, transform=transform,
                             norm=norm, convert=convert, batch=batch,
                             batch1=batch1, batch2=batch2,

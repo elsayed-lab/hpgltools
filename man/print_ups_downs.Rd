@@ -2,28 +2,28 @@
 % Please edit documentation in R/de_shared.r
 \name{print_ups_downs}
 \alias{print_ups_downs}
-\title{Reprint the output from extract_significant_genes()}
+\title{Reprint the output from extract_significant_genes().}
 \usage{
 print_ups_downs(upsdowns, wb = NULL, excel = "excel/significant_genes.xlsx",
   according = "limma", summary_count = 1)
 }
 \arguments{
-\item{upsdowns}{the output from extract_significant_genes()}
+\item{upsdowns}{Output from extract_significant_genes().}
 
-\item{wb}{a workbook object to use for writing, or start a new one}
+\item{wb}{Workbook object to use for writing, or start a new one.}
 
-\item{excel}{filename to write to, this should be removed I think}
+\item{excel}{Filename for writing the data.}
 
-\item{according}{use limma, deseq, or edger for defining 'significant'}
+\item{according}{Use limma, deseq, or edger for defining 'significant'.}
 
-\item{summary_count}{I don't remember, but this helps space sequential tables}
+\item{summary_count}{For spacing sequential tables one after another.}
 }
 \value{
-the return from write_xls
+Return from write_xls.
 }
 \description{
-I found myself needing to reprint these excel sheets because I added some new information.
-This shortcuts that process for me.
+I found myself needing to reprint these excel sheets because I
+added some new information. This shortcuts that process for me.
 }
 \seealso{
 \code{\link{combine_de_tables}}

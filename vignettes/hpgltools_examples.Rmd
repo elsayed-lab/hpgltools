@@ -136,28 +136,28 @@ at all.
 
 ## doing nothing to the data except log2 transforming it has a surprisingly large effect
 norm_test <- normalize_expt(elt, transform="log2")
-hpgl_pca(norm_test)$plot
+plot_pca(norm_test)$plot
 
 ## a quantile normalization alone affect some, but not all of the data
 norm_test <- normalize_expt(elt, norm="quant")
-hpgl_pca(norm_test)$plot
+plot_pca(norm_test)$plot
 
 ## cpm alone brings out some samples, too
 norm_test <- normalize_expt(elt, convert="cpm")
-hpgl_pca(norm_test)$plot
+plot_pca(norm_test)$plot
 
 ## low count filtering has some effect, too
 norm_test <- normalize_expt(elt, filter_low="pofa")
-hpgl_pca(norm_test)$plot
+plot_pca(norm_test)$plot
 
 ## how about if we mix and match methods?
 norm_test <- normalize_expt(elt, transform="log2", convert="cpm", norm="quant", batch="svaseq", filter_low=TRUE)
-hpgl_pca(norm_test)$plot
+plot_pca(norm_test)$plot
 ## The different batch effect testing methods have a pretty widely ranging effect on the clustering
 ## play with them by changing the batch= parameter to:
 ## "limma", "sva", "svaseq", "limmaresid", "ruvg", "combat", combatmod"
 
-pca_test <- hpgl_pca(norm_test)
+pca_test <- plot_pca(norm_test)
 head(pca_test$res)
 ## Thus we see a dramatic decrease in variance accounted for
 ## by batch after applying limma's 'removebatcheffect'

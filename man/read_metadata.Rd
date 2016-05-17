@@ -2,19 +2,19 @@
 % Please edit documentation in R/count_tables.r
 \name{read_metadata}
 \alias{read_metadata}
-\title{Given a table of meta data, read it in for use by create_expt()}
+\title{Given a table of meta data, read it in for use by create_expt().}
 \usage{
 read_metadata(file, ...)
 }
 \arguments{
-\item{file}{a csv/xls file to read}
+\item{file}{Csv/xls file to read.}
 
-\item{...}{for sep, header and similar read.csv/read.table parameters}
+\item{...}{Arguments for arglist, used by sep, header and similar read.csv/read.table parameters.}
 }
 \value{
-a df of metadata
+Df of metadata.
 }
 \description{
-Given a table of meta data, read it in for use by create_expt()
+Reads an experimental design in a few different formats in preparation for creating an expt.
 }
 

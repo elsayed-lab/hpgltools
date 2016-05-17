@@ -2,15 +2,15 @@
 % Please edit documentation in R/ontology_shared.r
 \name{gosec}
 \alias{gosec}
-\title{Get a go secondary ID from an id}
+\title{Get a GO secondary ID from an id.}
 \usage{
-gosec(go)
+gosec(go = "GO:0032432")
 }
 \arguments{
-\item{go}{A go ID -- this may be a character or list(assuming the elements, not names, are goids)}
+\item{go}{GO ID, this may be a character or list(assuming the elements, not names, are goids).}
 }
 \value{
-Some text
+Some text comprising the secondary GO id(s).
 }
 \description{
 Unfortunately, GOTERM's returns for secondary IDs are not consistent, so this function

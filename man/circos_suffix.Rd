@@ -7,10 +7,10 @@
 circos_suffix(cfgout = "circos/conf/default.conf")
 }
 \arguments{
-\item{cfgout}{The master configuration file to write.}
+\item{cfgout}{Master configuration file to write.}
 }
 \value{
-undef
+The filename of the configuration.
 }
 \description{
 circos configuration files need an ending.  This writes it.

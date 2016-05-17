@@ -2,45 +2,46 @@
 % Please edit documentation in R/ontology_gostats.r
 \name{simple_gostats}
 \alias{simple_gostats}
-\title{A simplification function for gostats, in the same vein as those written for clusterProfiler, goseq, and topGO.}
+\title{Simplification function for gostats, in the same vein as those written for clusterProfiler,
+goseq, and topGO.}
 \usage{
-simple_gostats(de_genes, gff, goids, universe_merge = "ID",
-  second_merge_try = "locus_tag", organism = "fun", pcutoff = 0.1,
+simple_gostats(de_genes, gff, goids_df, universe_merge = "id",
+  second_merge_try = "locus_tag", species = "fun", pcutoff = 0.1,
   direction = "over", conditional = FALSE, categorysize = NULL,
-  gff_type = "CDS", ...)
+  gff_type = "cds", ...)
 }
 \arguments{
-\item{de_genes}{input list of differentially expressed genes}
+\item{de_genes}{Input list of differentially expressed genes.}
 
-\item{gff}{The annotation information for this genome}
+\item{gff}{Annotation information for this genome.}
 
-\item{goids}{The set of GOids, as before in the format ID/GO}
+\item{goids_df}{Set of GOids, as before in the format ID/GO.}
 
-\item{universe_merge}{column from which to create the universe of genes}
+\item{universe_merge}{Column from which to create the universe of genes.}
 
-\item{second_merge_try}{if the first universe merge fails, try this}
+\item{second_merge_try}{If the first universe merge fails, try this.}
 
-\item{organism}{genbank organism to use}
+\item{species}{Genbank organism to use.}
 
-\item{pcutoff}{pvalue cutoff for deciding significant}
+\item{pcutoff}{Pvalue cutoff for deciding significant.}
 
-\item{direction}{under or over represented categories}
+\item{direction}{Under or over represented categories.}
 
-\item{conditional}{perform a conditional search?}
+\item{conditional}{Perform a conditional search?}
 
-\item{categorysize}{category size below which to not include groups}
+\item{categorysize}{Category size below which to not include groups.}
 
-\item{gff_type}{gff column to use for creating the universe}
+\item{gff_type}{Gff column to use for creating the universe.}
 
-\item{...}{more parameters!}
+\item{...}{More parameters!}
 }
 \value{
-dunno yet
+List of returns from GSEABase, Category, etc.
 }
 \description{
-GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be integers.
-As a result, I am going to have this function take a gff file in order to get the go ids and
-gene ids on the same page.
+GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be
+integers. As a result, I am going to have this function take a gff file in order to get the go
+ids and gene ids on the same page.
 }
 \seealso{
 \pkg{GSEABase} \pkg{Category}

@@ -2,24 +2,24 @@
 % Please edit documentation in R/normalize_norm.r
 \name{hpgl_qstats}
 \alias{hpgl_qstats}
-\title{A hacked copy of Kwame's qsmooth/qstats code}
+\title{A hacked copy of Kwame's qsmooth/qstats code.}
 \usage{
 hpgl_qstats(data, groups, refType = "mean", groupLoc = "mean",
   window = 99)
 }
 \arguments{
-\item{data}{the initial count data}
+\item{data}{Initial count data}
 
-\item{groups}{the experimental conditions as a factor}
+\item{groups}{Experimental conditions as a factor.}
 
-\item{refType}{(or median) the method to separate groups}
+\item{refType}{Method to separate groups, mean or median.}
 
-\item{groupLoc}{I don't remember}
+\item{groupLoc}{I don't remember what this is for.}
 
-\item{window}{window for basking}
+\item{window}{Window for basking!}
 }
 \value{
-new data
+Some new data.
 }
 \description{
 I made a couple small changes to Kwame's qstats() function to make

@@ -2,32 +2,32 @@
 % Please edit documentation in R/de_deseq.r
 \name{deseq_coefficient_scatter}
 \alias{deseq_coefficient_scatter}
-\title{Plot out 2 coefficients with respect to one another from deseq2}
+\title{Plot out 2 coefficients with respect to one another from deseq2.}
 \usage{
 deseq_coefficient_scatter(output, x = 1, y = 2, gvis_filename = NULL,
   gvis_trendline = TRUE, tooltip_data = NULL, base_url = NULL)
 }
 \arguments{
-\item{output}{the set of pairwise comparisons provided by deseq_pairwise()}
+\item{output}{Set of pairwise comparisons provided by deseq_pairwise().}
 
-\item{x}{the name or number of the first coefficient column to extract, this will be the x-axis of the plot}
+\item{x}{Name or number of the x-axis coefficient column to extract.}
 
-\item{y}{the name or number of the second coefficient column to extract, this will be the y-axis of the plot}
+\item{y}{Name or number of the y-axis coefficient column to extract.}
 
-\item{gvis_filename}{A filename for plotting gvis interactive graphs of the data.}
+\item{gvis_filename}{Filename for plotting gvis interactive graphs of the data.}
 
-\item{gvis_trendline}{add a trendline to the gvis plot?}
+\item{gvis_trendline}{Add a trendline to the gvis plot?}
 
-\item{tooltip_data}{a dataframe of gene annotations to be used in the gvis plot}
+\item{tooltip_data}{Dataframe of gene annotations to be used in the gvis plot.}
 
-\item{base_url}{for gvis plots}
+\item{base_url}{When plotting interactive plots, have link-outs to this base url.}
 }
 \value{
-a ggplot2 plot showing the relationship between the two coefficients
+Ggplot2 plot showing the relationship between the two coefficients.
 }
 \description{
-It can be nice to see a plot of two coefficients from a deseq2 comparison with respect to one another
-This hopefully makes that easy.
+It can be nice to see a plot of two coefficients from a deseq2 comparison with respect to one
+another. This hopefully makes that easy.
 }
 \examples{
 \dontrun{
@@ -35,6 +35,6 @@ This hopefully makes that easy.
 }
 }
 \seealso{
-\link{hpgl_linear_scatter} \link{deseq2_pairwise}
+\link{plot_linear_scatter} \link{deseq2_pairwise}
 }
 

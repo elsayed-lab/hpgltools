@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_shared.r
 \name{combine_de_tables}
 \alias{combine_de_tables}
-\title{Combine portions of deseq/limma/edger table output}
+\title{Combine portions of deseq/limma/edger table output.}
 \usage{
 combine_de_tables(all_pairwise_result, annot_df = NULL, excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
@@ -10,30 +10,32 @@ combine_de_tables(all_pairwise_result, annot_df = NULL, excel = NULL,
   add_plots = TRUE, plot_dim = 6)
 }
 \arguments{
-\item{all_pairwise_result}{the output from all_pairwise()}
+\item{all_pairwise_result}{Output from all_pairwise().}
 
-\item{annot_df}{add some annotation information}
+\item{annot_df}{Add some annotation information?}
 
-\item{excel}{filename for the excel workbook, or null if not printed.}
+\item{excel}{Filename for the excel workbook, or null if not printed.}
 
-\item{excel_title}{a title, if it has YYY in it, that will be replaced by the contrast name}
+\item{excel_title}{Title for the excel sheet(s).  If it has the
+string 'YYY', that will be replaced by the contrast name.}
 
-\item{excel_sheet}{name the sheet}
+\item{excel_sheet}{Name the excel sheet.}
 
-\item{keepers}{a list of reformatted table names to explicitly keep
-certain contrasts in specific orders}
+\item{keepers}{List of reformatted table names to explicitly keep
+certain contrasts in specific orders and orientations.}
 
-\item{include_basic}{Include my stupid basic logFC tables}
+\item{include_basic}{Include my stupid basic logFC tables?}
 
-\item{add_plots}{add plots to the end of the sheets}
+\item{add_plots}{Add plots to the end of the sheets with expression values?}
 
-\item{plot_dim}{number of inches squared for the plot if added}
+\item{plot_dim}{Number of inches squared for the plot if added.}
 }
 \value{
-a table combinine limma/edger/deseq outputs.
+Table combining limma/edger/deseq outputs.
 }
 \description{
-This hopefully makes it easy to compare the outputs from limma/DESeq2/EdgeR on a table-by-table basis.
+This hopefully makes it easy to compare the outputs from
+limma/DESeq2/EdgeR on a table-by-table basis.
 }
 \examples{
 \dontrun{

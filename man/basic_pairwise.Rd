@@ -4,12 +4,16 @@
 \alias{basic_pairwise}
 \title{The simplest possible differential expression method.}
 \usage{
-basic_pairwise(input, design = NULL, ...)
+basic_pairwise(input, design = NULL, force = FALSE, ...)
 }
 \arguments{
 \item{input}{Count table by sample.}
 
 \item{design}{Data frame of samples and conditions.}
+
+\item{force}{Force as input non-normalized data?}
+
+\item{...}{Extra options passed to arglist.}
 }
 \value{
 Df of pseudo-logFC, p-values, numerators, and denominators.

@@ -2,37 +2,35 @@
 % Please edit documentation in R/kegg.r
 \name{hpgl_pathview}
 \alias{hpgl_pathview}
-\title{Print some data onto KEGG pathways}
+\title{Print some data onto KEGG pathways.}
 \usage{
 hpgl_pathview(path_data, indir = "pathview_in", outdir = "pathview",
   pathway = "all", species = "lma", string_from = "LmjF",
   string_to = "LMJF", suffix = "_colored", second_from = NULL,
-  second_to = NULL, verbose = FALSE, filenames = "id")
+  second_to = NULL, filenames = "id")
 }
 \arguments{
-\item{path_data}{some differentially expressed genes}
+\item{path_data}{Some differentially expressed genes.}
 
-\item{indir}{A directory into which the unmodified kegg images will be downloaded (or already exist).}
+\item{indir}{Directory into which the unmodified kegg images will be downloaded (or already exist).}
 
-\item{outdir}{A directory which will contain the colored images.}
+\item{outdir}{Directory which will contain the colored images.}
 
 \item{pathway}{Perform the coloring for a specific pathway?}
 
-\item{species}{The kegg identifier for the species of interest.}
+\item{species}{Kegg identifier for the species of interest.}
 
-\item{string_from}{for renaming kegg categories}
+\item{string_from}{Regex to help in renaming KEGG categories/gene names from one format to another.}
 
-\item{string_to}{for renaming kegg categories}
+\item{string_to}{Regex to help in renaming KEGG categories/gene names from one format to another.}
 
-\item{suffix}{for renaming finished files}
+\item{suffix}{Add a suffix to the completed, colored files.}
 
-\item{second_from}{sometimes jsut one regex isnt enough}
+\item{second_from}{Sometimes just one regex is not enough!}
 
-\item{second_to}{sometimes just one regex isnt enough}
+\item{second_to}{Sometimes just one regex is not enough!}
 
-\item{verbose}{talk more}
-
-\item{filenames}{name the final files by id or name?}
+\item{filenames}{Name the final files by id or name?}
 }
 \value{
 A list of some information for every KEGG pathway downloaded/examined.  This information includes:
@@ -42,7 +40,8 @@ A list of some information for every KEGG pathway downloaded/examined.  This inf
   d. The number of genes in the 'down' category
 }
 \description{
-Print some data onto KEGG pathways
+KEGGREST and pathview provide neat functions for coloring molecular pathways with arbitrary data.
+Unfortunately they are somewhat evil to use.  This attempts to alleviate that.
 }
 \examples{
 \dontrun{

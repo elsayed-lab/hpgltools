@@ -4,12 +4,10 @@
 \alias{require.auto}
 \title{Automatic loading and/or installing of packages.}
 \usage{
-require.auto(lib, github_path = NULL, update = FALSE)
+require.auto(lib, update = FALSE)
 }
 \arguments{
 \item{lib}{String name of a library to check/install.}
-
-\item{github_path}{Github username/repository.}
 
 \item{update}{Update packages?}
 }

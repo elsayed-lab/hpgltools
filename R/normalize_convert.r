@@ -1,23 +1,22 @@
-## Time-stamp: <Mon Apr 25 14:54:58 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 14 13:41:08 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform a cpm/rpkm/whatever transformation of a count table.
 #'
-#' I should probably tell it to also handle a simple df/vector/list of gene lengths, but I haven't.
-#' cp_seq_m is a cpm conversion of the data followed by a rp-ish
-#' conversion which normalizes by the number of the given oligo.  By
-#' default this oligo is 'TA' because it was used for tnseq which
-#' should be normalized by the number of possible transposition sites
-#' by mariner.  It could, however, be used to normalize by the number
-#' of methionines, for example -- if one wanted to do such a thing.
+#' I should probably tell it to also handle a simple df/vector/list of gene lengths, but I
+#' haven't. cp_seq_m is a cpm conversion of the data followed by a rp-ish conversion which
+#' normalizes by the number of the given oligo.  By default this oligo is 'TA' because it was used
+#' for tnseq which should be normalized by the number of possible transposition sites by mariner.
+#' It could, however, be used to normalize by the number of methionines, for example -- if one
+#' wanted to do such a thing.
 #'
-#' @param data A matrix of count data
-#' @param convert   A type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m
-#' @param annotations   a set of gff annotations are needed if using rpkm so we can get gene lengths.
-#' @param fasta   a fasta for rpkmish
-#' @param pattern   for cp_seq_m counts
-#' @param entry_type  used to acquire gene lengths
-#' @param ... more options
-#' @return dataframe of cpm/rpkm/whatever(counts)
+#' @param data Matrix of count data.
+#' @param convert Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
+#' @param annotations Set of gff annotations are needed if using rpkm so we can get gene lengths.
+#' @param fasta Fasta for rpkmish normalization.
+#' @param pattern Cp_seq_m counts require a pattern to search on.
+#' @param entry_type Used when reading a gff to acquire gene lengths.
+#' @param ... Options I might pass from other functions are dropped into arglist.
+#' @return Dataframe of cpm/rpkm/whatever(counts)
 #' @seealso \pkg{edgeR} \pkg{Biobase} \code{\link[edgeR]{cpm}}
 #' @examples
 #' \dontrun{
@@ -25,6 +24,7 @@
 #' }
 #' @export
 convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pattern='TA', entry_type='gene', ...) {
+    arglist <- list(...)
     data_class <- class(data)[1]
     if (data_class == 'expt') {
         count_table <- Biobase::exprs(data$expressionset)
@@ -59,14 +59,18 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
     return(counts)
 }
 
-#'   Express a data frame of counts as reads per pattern per
+#' Express a data frame of counts as reads per pattern per
 #' million(library).
 #'
-#' @param counts read count matrix
-#' @param pattern pattern to search against.  Defaults to 'TA'
-#' @param fasta a fasta genome to search
-#' @param gff the gff set of annotations to define start/ends of genes.
-#' @param entry_type which type of gff entry to search against.  Defaults to 'gene'.
+#' This uses a sequence pattern rather than length to normalize sequence.  It is essentially rpkm
+#' but fancy pants.
+#'
+#' @param counts Read count matrix.
+#' @param pattern Pattern to search against.  Defaults to 'TA'.
+#' @param fasta Fasta genome to search.
+#' @param gff Gff set of annotations to define start/ends of genes.
+#' @param entry_type Type of gff entry to search against.  Defaults to 'gene'.
+#' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return The 'RPseqM' counts
 #' @seealso \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
 #' @examples
@@ -74,7 +78,9 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
 #' cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
 #' }
 #' @export
-divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff", entry_type="gene") {
+divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff",
+                       entry_type="gene", ...) {
+    arglist <- list(...)
     if (!file.exists(fasta)) {
         compressed_fasta <- paste0(fasta, '.xz')
         system(paste0("xz -d ", compressed_fasta))
@@ -128,9 +134,9 @@ divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.g
 #' Based on the method used by limma as described in the Law et al. (2014) voom
 #' paper.
 #'
-#' @param counts read count matrix
-#' @param lib.size  library size
-#' @return log2-CPM read count matrix
+#' @param counts Read count matrix.
+#' @param lib.size Library size.
+#' @return log2-CPM read count matrix.
 #' @seealso \pkg{edgeR}
 #' @examples
 #' \dontrun{
@@ -149,16 +155,12 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 
 #' Reads/(kilobase(gene) * million reads)
 #'
-#' Express a data frame of counts as reads per kilobase(gene) per
-#' million(library).
+#' Express a data frame of counts as reads per kilobase(gene) per million(library). This function
+#' wraps EdgeR's rpkm in an attempt to make sure that the required gene lengths get sent along.
 #'
-#' This function wraps EdgeR's rpkm in an attempt to make sure that
-#' the required gene lengths get sent along.
-#'
-#' @param df a data frame of counts, alternately an edgeR DGEList
-#' @param annotations containing gene lengths, defaulting to
-#' 'gene_annotations'
-#' @return rpkm_df a data frame of counts expressed as rpkm
+#' @param df Data frame of counts, alternately an edgeR DGEList.
+#' @param annotations Contains gene lengths, defaulting to 'gene_annotations'.
+#' @return Data frame of counts expressed as rpkm.
 #' @seealso \pkg{edgeR} and \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 #' @examples
 #' \dontrun{
@@ -199,4 +201,4 @@ hpgl_rpkm <- function(df, annotations=get0('gene_annotations')) {
     return(rpkm_df)
 }
 
-
+## EOF

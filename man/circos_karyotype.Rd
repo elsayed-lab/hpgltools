@@ -9,24 +9,24 @@ circos_karyotype(name = "default", conf_dir = "circos/conf",
   chr_num = 1, fasta = NULL)
 }
 \arguments{
-\item{name}{the name of the chromosome (This currently assumes a bacterial chromosome)}
+\item{name}{Name of the chromosome (This currently assumes a bacterial chromosome).}
 
-\item{conf_dir}{where to put the circos configuration}
+\item{conf_dir}{Where to put the circos configuration file(s).}
 
-\item{length}{the default length of the chromosome (That is mgas5005)}
+\item{length}{Length of the chromosome (the default is mgas5005).}
 
-\item{chr_name}{the name of the chromosome}
+\item{chr_name}{Short name of the chromosome.}
 
-\item{segments}{how many segments to cut it into}
+\item{segments}{How many segments to cut the chromosome into?}
 
-\item{color}{how to colors the chromosomal arc. (circos images are cluttered enough)}
+\item{color}{Color segments of the chromosomal arc?}
 
-\item{chr_num}{the number to record (This and name above should change for multi-chromosomal species)}
+\item{chr_num}{Number to record for each chromosome.}
 
-\item{fasta}{fasta file to use to create the karyotype}
+\item{fasta}{Fasta file to use to create the karyotype.}
 }
 \value{
-undef
+The output filename.
 }
 \description{
 This function tries to save me from having to get the lengths of arcs for bacterial chromosomes
@@ -36,8 +36,6 @@ outlined in circos_prefix(), however that will need to be changed in order for t
 in variable conditions.  Next time I make one of these graphs I will do that I suspect.
 In addition, this currently only understands how to write bacterial chromosomes, that will
 likely be fixed when I am asked to write out a L.major karyotype.
-}
-\details{
 These defaults were chosen because I have a chromosome of this length that is correct.
 }
 

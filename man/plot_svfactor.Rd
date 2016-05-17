@@ -2,21 +2,21 @@
 % Please edit documentation in R/plot_dotplot.r
 \name{plot_svfactor}
 \alias{plot_svfactor}
-\title{make a dotplot of some categorised factors and a set of SVs (for other factors)}
+\title{Make a dotplot of some categorised factors and a set of SVs (for other factors).}
 \usage{
 plot_svfactor(expt, svest, chosen_factor = "snpcategory",
   factor_type = "factor")
 }
 \arguments{
-\item{expt}{an experiment from which to acquire the design, counts, etc}
+\item{expt}{Experiment from which to acquire the design, counts, etc.}
 
-\item{svest}{a set of surrogate variable estimations from sva/svg
-or batch estimates}
+\item{svest}{Set of surrogate variable estimations from sva/svg
+or batch estimates.}
 
-\item{chosen_factor}{a factor to compare against}
+\item{chosen_factor}{Factor to compare against.}
 
-\item{factor_type}{this may be a factor or range, it is intended to plot
-a scatterplot if it is a range, a dotplot if a factor}
+\item{factor_type}{This may be a factor or range, it is intended to plot
+a scatterplot if it is a range, a dotplot if a factor.}
 }
 \description{
 This should make a quick df of the factors and surrogates and plot them.

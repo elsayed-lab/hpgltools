@@ -2,21 +2,23 @@
 % Please edit documentation in R/kegg.r
 \name{kegg_get_orgn}
 \alias{kegg_get_orgn}
-\title{Search the kegg identifier for a given species}
+\title{Search KEGG identifiers for a given species name.}
 \usage{
 kegg_get_orgn(species = "Leishmania", short = TRUE)
 }
 \arguments{
-\item{species}{A search string (Something like 'Homo sapiens')}
+\item{species}{Search string (Something like 'Homo sapiens').}
 
-\item{short}{only pull the orgid}
+\item{short}{Only pull the orgid?}
 }
 \value{
-a data frame of possible KEGG identifier codes,
-genome ID numbers, species, and phylogenetic classifications.
+Data frame of possible KEGG identifier codes, genome ID numbers, species, and
+    phylogenetic classifications.
 }
 \description{
-Search the kegg identifier for a given species
+KEGG identifiers do not always make sense.  For example, how am I supposed to remember that
+Leishmania major is lmj?  This takes in a human readable string and finds the KEGG identifiers
+that match it.
 }
 \examples{
 \dontrun{

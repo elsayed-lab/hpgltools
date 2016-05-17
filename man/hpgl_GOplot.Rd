@@ -2,8 +2,7 @@
 % Please edit documentation in R/ontology_topgo.r
 \name{hpgl_GOplot}
 \alias{hpgl_GOplot}
-\title{hpgl_GOplot() A minor hack of the topGO GOplot function
-This allows me to change the line widths from the default.}
+\title{A minor hack of the topGO GOplot function.}
 \usage{
 hpgl_GOplot(dag, sigNodes, dag.name = "GO terms", edgeTypes = TRUE,
   nodeShape.type = c("box", "circle", "ellipse", "plaintext")[3],
@@ -12,35 +11,34 @@ hpgl_GOplot(dag, sigNodes, dag.name = "GO terms", edgeTypes = TRUE,
   maxchars = 30)
 }
 \arguments{
-\item{dag}{The DAG tree of ontologies}
+\item{dag}{DAG tree of ontologies.}
 
-\item{sigNodes}{The set of significant ontologies (with p-values)}
+\item{sigNodes}{Set of significant ontologies (with p-values).}
 
-\item{dag.name}{A name for the graph}
+\item{dag.name}{Name for the graph.}
 
-\item{edgeTypes}{Set the types of the edges for graphviz}
+\item{edgeTypes}{Types of the edges for graphviz.}
 
-\item{nodeShape.type}{The shapes on the tree}
+\item{nodeShape.type}{Shapes on the tree.}
 
 \item{genNodes}{Generate the nodes?}
 
-\item{wantedNodes}{A subset of the ontologies to plot}
+\item{wantedNodes}{Subset of the ontologies to plot.}
 
 \item{showEdges}{Show the arrows?}
 
-\item{useFullNames}{Full names of the ontologies (they can get long)}
+\item{useFullNames}{Full names of the ontologies (they can get long).}
 
-\item{oldSigNodes}{I dunno}
+\item{oldSigNodes}{I dunno.}
 
-\item{nodeInfo}{Hmm}
+\item{nodeInfo}{Hmm.}
 
-\item{maxchars}{Maximum characters per line inside the shapes}
+\item{maxchars}{Maximum characters per line inside the shapes.}
 }
 \value{
-a topgo plot
+Topgo plot!
 }
 \description{
-hpgl_GOplot() A minor hack of the topGO GOplot function
 This allows me to change the line widths from the default.
 }
 
