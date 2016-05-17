@@ -13,15 +13,16 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
-    sig_genes <- suppressMessages(get_sig_genes(table, column="untreated")$up_genes)
+    sig_genes <- sp(get_sig_genes(table, column="untreated")$up_genes)$result
 
-    suppressMessages(library("org.Dm.eg.db"))
+    tt <- sp(library("org.Dm.eg.db"))
     ## goseq_result <- simple_goseq(sig_genes, species="hsapiens")
     ## gprofiler_result <- suppressMessages(simple_gprofiler(sig_genes, species="dmelanogaster"))
 
-    library("GeneAnswers")
-    library("org.Dm.eg.db")
-    library("GO.db")
+    tt <- sp(require.auto("GeneAnswers"))
+    tt <- sp(library("GeneAnswers"))
+    tt <- sp(library("org.Dm.eg.db"))
+    tt <- sp(library("GO.db"))
 
     ## get named vector of entrez ids
     fb.entrez <- unlist(as.list(org.Dm.egFLYBASE2EG))

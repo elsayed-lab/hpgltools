@@ -20,7 +20,7 @@ test_that("Is it possible to look up a kegg species ID?", {
 })
 
 ## Make a map of the weird flybase IDs FBgn to the also weird Cg ids.
-tt <- require.auto("org.Dm.eg.db")
+tt <- sp(require.auto("org.Dm.eg.db"))
 tt <- sp(library(org.Dm.eg.db))
 
 x <- org.Dm.egFLYBASE

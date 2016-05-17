@@ -29,6 +29,5 @@ test_that("Are GO.db functions working?", {
 ## These will likely not work with Travis as they take forever.
 ## I am not however, certain how to use skip_on_travis(), so I printed it and am copying the
 ## useful bits here.
-if (!identical(Sys.getenv("TRAVIS"), "true")) {
-    message("Run non-travis tests here.")
-}
+## if (!identical(Sys.getenv("TRAVIS"), "true")) {
+## }

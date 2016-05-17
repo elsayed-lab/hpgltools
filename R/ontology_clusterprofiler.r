@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May 16 16:44:30 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 17 00:34:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Make sure that clusterProfiler is ready to run.
 #'
