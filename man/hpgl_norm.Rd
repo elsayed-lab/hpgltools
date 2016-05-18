@@ -7,55 +7,52 @@
 hpgl_norm(data, design = NULL, transform = "raw", norm = "raw",
   convert = "raw", batch = "raw", batch1 = "batch", batch2 = NULL,
   filter_low = FALSE, annotations = NULL, entry_type = "gene",
-  fasta = NULL, thresh = 2, min_samples = 2, noscale = TRUE, p = 0.01,
-  A = 1, k = 1, cv_min = 0.01, cv_max = 1000, ...)
+  fasta = NULL, thresh = 2, min_samples = 2, batch_step = 4,
+  noscale = TRUE, p = 0.01, A = 1, k = 1, cv_min = 0.01,
+  cv_max = 1000, ...)
 }
 \arguments{
-\item{data}{some data}
+\item{data}{Some data as a df/expt/whatever.}
 
-\item{design}{design dataframe must come with it}
+\item{design}{Experimental design df (if not an expt).}
 
-\item{transform}{defines whether to log(2|10) transform the
-data. Defaults to raw.}
+\item{transform}{Should we log(2|10) transform the data?}
 
-\item{norm}{specify the normalization strategy.  Defaults to
-raw.  This makes use of DESeq/EdgeR to provide: RLE, upperquartile,
-size-factor, or tmm normalization.  I tend to like quantile, but there are
-definitely corner-case scenarios for all strategies.}
+\item{norm}{Should we normalize the data? (quant, rle, tmm, vsd, etc)}
 
-\item{convert}{defines the output type which may be raw, cpm,
-rpkm, or cp_seq_m.  Defaults to raw.}
+\item{convert}{Convert the data? (cpm, rpkm, cp_seq_m)}
 
-\item{batch}{batch correction method to try out}
+\item{batch}{Should we try a batch correction method? (sva, ruvg, combat, etc)}
 
-\item{batch1}{column from design to get batch info}
+\item{batch1}{Column from design used to acquire batch information.}
 
-\item{batch2}{a second covariate to try}
+\item{batch2}{Try for a second covariate?}
 
-\item{filter_low}{choose whether to low-count filter the data.}
+\item{filter_low}{Low-count filter the data?}
 
-\item{annotations}{is used for rpkm or sequence normalizations to
-extract the lengths of sequences for normalization}
+\item{annotations}{Annotation data, primarily used for rpkm.}
 
-\item{entry_type}{default gff entry to cull from}
+\item{entry_type}{When using a gff file, what type of entry should be used?}
 
-\item{fasta}{fasta genome for rpkm}
+\item{fasta}{Fasta genome for extracting rpkm/cp_seq_m information.}
 
-\item{thresh}{threshold for low count filtering}
+\item{thresh}{Threshold used for low count filtering.}
 
-\item{min_samples}{minimum samples for low count filtering}
+\item{min_samples}{Minimum samples for low count filtering.}
 
-\item{noscale}{used by combatmod}
+\item{batch_step}{At what step should batch correction be performed?}
 
-\item{p}{for povera genefilter}
+\item{noscale}{For cbcbSEQ::combatMod, also sva::combat now.}
 
-\item{A}{for povera genefilter}
+\item{p}{povera() in genefilter uses this.}
 
-\item{k}{for kovera genefilter}
+\item{A}{povera() in genefilter uses this.}
 
-\item{cv_min}{for genefilter cv}
+\item{k}{kovera() in genefilter uses this.}
 
-\item{cv_max}{for genefilter cv}
+\item{cv_min}{cv() in genefilter.}
+
+\item{cv_max}{cv() in genefilter.}
 
 \item{...}{I should put all those other options here}
 }

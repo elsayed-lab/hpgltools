@@ -22,7 +22,6 @@ Here are the commands I invoke to get ready to play with new data, including eve
 required to install hpgltools, the software it uses, and the fission data.
 
 ```{r setup, include=TRUE}
-
 ## These first 4 lines are not needed once hpgltools is installed.
 ## source("http://bioconductor.org/biocLite.R")
 ## biocLite("devtools")
@@ -30,10 +29,9 @@ required to install hpgltools, the software it uses, and the fission data.
 ## install_github("elsayed-lab/hpgltools")
 library(hpgltools)
 require.auto("fission")
-library(fission)
-data(fission)
+s_p(library(fission))
+tt <- data(fission)
 knitr::opts_knit$set(progress=TRUE, verbose=TRUE, error=TRUE,  fig.width=7, fig.height=7)
-
 ```
 
 ## Data import
@@ -46,7 +44,6 @@ think its format is quite nice and am likely to have my experiment
 class instead be a SummarizedExperiment.
 
 ```{r data_import}
-
 ## Extract the meta data from the fission dataset
 meta <- as.data.frame(fission@colData)
 ## Make conditions and batches
@@ -59,7 +56,6 @@ fission_data <- fission@assays$data$counts
 ## an ExpressionSet along with any arbitrary additional information one might want to include.
 ## Along the way it writes a Rdata file which is by default called 'expt.Rdata'
 fission_expt <- create_expt(meta_dataframe=meta, count_dataframe=fission_data)
-
 ```
 
 # Some simple differential expression analyses
@@ -69,17 +65,14 @@ My tools by default will attempt all possible pairwise comparisons, which takes 
 Therefore I am going to take a subset of the data and limit these comparisons to that.
 
 ```{r simple_subset}
-
 fun_data <- expt_subset(fission_expt, subset="condition=='wt.120'|condition=='mut.120'")
-fun_norm <- normalize_expt(fun_data, batch="limma", norm="quant", transform="log2", convert="cpm")
-
+fun_norm <- s_p(normalize_expt(fun_data, batch="limma", norm="quant", transform="log2", convert="cpm"))$result
 ```
 
 ## Try using limma first
 
 ```{r simple_limma}
-
-limma_comparison <- limma_pairwise(fun_norm)
+limma_comparison <- s_p(limma_pairwise(fun_norm))$result
 names(limma_comparison$all_tables)
 summary(limma_comparison$all_tables$wt.120_vs_mut.120)
 wt_120 <- limma_comparison$all_tables$wt.120
@@ -87,44 +80,35 @@ mut_120 <- limma_comparison$all_tables$mut.120
 scatter_wt_mut <- limma_coefficient_scatter(limma_comparison, x="wt.120", y="mut.120", gvis_filename=NULL)
 scatter_wt_mut$scatter
 scatter_wt_mut$both_histogram
-
 ```
 
 ## Then DESeq2
 
 ```{r simple_deseq2}
-
-deseq_comparison <- deseq2_pairwise(fun_data, model_batch=TRUE)
+deseq_comparison <- s_p(deseq2_pairwise(fun_data, model_batch=TRUE))$result
 summary(deseq_comparison$all_tables$wt.120_vs_mut.120)
-
 ```
 
 ## And EdgeR
 
 ```{r simple_edger}
-
-edger_comparison <- edger_pairwise(fun_data, model_batch=TRUE)
+edger_comparison <- s_p(edger_pairwise(fun_data, model_batch=TRUE))$result
 summary(edger_comparison$all_tables$wt.120_vs_mut.120)
-
 ```
 
 ## My stupid basic comparison
 
 ```{r simple_basic}
-
-basic_comparison <- basic_pairwise(fun_data)
+basic_comparison <- s_p(basic_pairwise(fun_data))$result
 summary(basic_comparison$all_tables$wt.120_vs_mut.120)
-
 ```
 
 ## Combine them all
 
 ```{r simple_all}
-
-all_comparisons <- all_pairwise(fun_data, model_batch=TRUE)
+all_comparisons <- s_p(all_pairwise(fun_data, model_batch=TRUE))$result
 all_combined <- combine_de_tables(all_comparisons)
 sig_genes <- extract_significant_genes(all_combined, excel=NULL)
-
 ```
 
 ## Ontology searches
@@ -141,7 +125,6 @@ gff file which may be used by clusterprofiler, topgo, and gostats.
 Therefore, I am going to make use of TxDb to make the requisite gff file.
 
 ```{r ontology_setup}
-
 limma_results <- limma_comparison$all_tables
 ## The set of comparisons performed
 names(limma_results)

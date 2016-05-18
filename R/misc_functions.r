@@ -18,7 +18,7 @@ pp <- function(file) {
 #' and http://tolstoy.newcastle.edu.au/R/help/04/06/0217.html
 #'
 #' @title tryCatch both warnings and errors
-#' @param expr
+#' @param expr an expression to try
 #' @return a list with 'value' and 'warning', where
 #'  'value' may be an error caught.
 #' @author Martin Maechler

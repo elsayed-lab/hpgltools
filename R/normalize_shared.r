@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 10 12:17:10 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 17 23:57:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -19,32 +19,27 @@
 #'
 #' Sometime soon I am going to elipsis all these variables
 #'
-#' @param data some data
-#' @param design   design dataframe must come with it
-#' @param transform   defines whether to log(2|10) transform the
-#' data. Defaults to raw.
-#' @param norm   specify the normalization strategy.  Defaults to
-#' raw.  This makes use of DESeq/EdgeR to provide: RLE, upperquartile,
-#' size-factor, or tmm normalization.  I tend to like quantile, but there are
-#' definitely corner-case scenarios for all strategies.
-#' @param convert   defines the output type which may be raw, cpm,
-#' rpkm, or cp_seq_m.  Defaults to raw.
-#' @param batch   batch correction method to try out
-#' @param batch1  column from design to get batch info
-#' @param batch2   a second covariate to try
-#' @param filter_low   choose whether to low-count filter the data.
-#' @param annotations   is used for rpkm or sequence normalizations to
-#' extract the lengths of sequences for normalization
-#' @param entry_type   default gff entry to cull from
-#' @param fasta   fasta genome for rpkm
-#' @param thresh   threshold for low count filtering
-#' @param min_samples   minimum samples for low count filtering
-#' @param noscale   used by combatmod
-#' @param p   for povera genefilter
-#' @param A   for povera genefilter
-#' @param k   for kovera genefilter
-#' @param cv_min   for genefilter cv
-#' @param cv_max   for genefilter cv
+#' @param data Some data as a df/expt/whatever.
+#' @param design Experimental design df (if not an expt).
+#' @param transform Should we log(2|10) transform the data?
+#' @param norm Should we normalize the data? (quant, rle, tmm, vsd, etc)
+#' @param convert Convert the data? (cpm, rpkm, cp_seq_m)
+#' @param batch Should we try a batch correction method? (sva, ruvg, combat, etc)
+#' @param batch1 Column from design used to acquire batch information.
+#' @param batch2 Try for a second covariate?
+#' @param filter_low Low-count filter the data?
+#' @param annotations Annotation data, primarily used for rpkm.
+#' @param entry_type When using a gff file, what type of entry should be used?
+#' @param fasta Fasta genome for extracting rpkm/cp_seq_m information.
+#' @param thresh Threshold used for low count filtering.
+#' @param min_samples Minimum samples for low count filtering.
+#' @param batch_step At what step should batch correction be performed?
+#' @param noscale For cbcbSEQ::combatMod, also sva::combat now.
+#' @param p povera() in genefilter uses this.
+#' @param A povera() in genefilter uses this.
+#' @param k kovera() in genefilter uses this.
+#' @param cv_min cv() in genefilter.
+#' @param cv_max cv() in genefilter.
 #' @param ... I should put all those other options here
 #' @return edgeR's DGEList expression of a count table.  This seems to
 #' me to be the easiest to deal with.
@@ -63,7 +58,7 @@
 hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
                       convert="raw", batch="raw", batch1="batch", batch2=NULL,
                       filter_low=FALSE, annotations=NULL, entry_type="gene",
-                      fasta=NULL, thresh=2, min_samples=2,
+                      fasta=NULL, thresh=2, min_samples=2, batch_step=4,
                       noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
     lowfilter_performed <- FALSE
     norm_performed <- "raw"
@@ -99,6 +94,31 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
         original_libsize <- colSums(count_table)
     }
 
+    do_batch <- function() {
+        if (batch != "raw") {
+            tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design, ...))
+            if (class(tmp_counts) == 'try-error') {
+                warning("The batch_counts called failed.  Returning non-batch reduced data.")
+                batched_counts <- NULL
+                batch_performed <- "raw"
+            } else {
+                batched_counts <- tmp_counts
+                batch_performed <- batch
+                count_table <- batched_counts[["count_table"]]
+            }
+        }
+    }
+
+    batched_counts <- NULL
+    if (!is.numeric(batch_step)) {
+        batch_step <- 4
+    } else if (batch_step > 5 | batch_step < 1) {
+        batch_step <- 4
+    }
+    if (batch_step == 1) {
+        message("Performing batch correction at step 1.")
+        do_batch()
+    }
     ## Step 1: Low-count filtering
     lowfiltered_counts <- NULL
     if (filter_low != FALSE) {
@@ -109,6 +129,10 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
         lowfilter_performed <- filter_low
     }
 
+    if (batch_step == 2) {
+        message("Performing batch correction at step 2.")
+        do_batch()
+    }
     ## Step 2: Normalization
     ## This section handles the various normalization strategies
     ## If nothing is chosen, then the filtering is considered sufficient
@@ -127,6 +151,10 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
     ## The following stanza handles the three possible output types
     ## cpm and rpkm are both from edgeR
     ## They have nice ways of handling the log2 which I should consider
+    if (batch_step == 3) {
+        message("Performing batch correction at step 3.")
+        do_batch()
+    }
     converted_counts <- NULL
     if (convert != "raw") {
         converted_counts <- convert_counts(count_table, convert=convert, annotations=annotations, fasta=fasta, entry_type=entry_type, ...)
@@ -136,6 +164,10 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
 
     ## Step 4: Transformation
     ## Finally, this considers whether to log2 the data or no
+    if (batch_step == 4) {
+        message("Performing batch correction at step 4.")
+        do_batch()
+    }
     transformed_counts <- NULL
     if (transform != "raw") {
         message(paste0("Applying: ", transform, " transformation."))
@@ -145,19 +177,9 @@ hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
         transform_performed <- transform
     }
 
-    ## Step 5: Batch correction
-    batched_counts <- NULL
-    if (batch != "raw") {
-        tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design, ...))
-        if (class(tmp_counts) == 'try-error') {
-            warning("The batch_counts called failed.  Returning non-batch reduced data.")
-            batched_counts <- NULL
-            batch_performed <- "raw"
-        } else {
-            batched_counts <- tmp_counts
-            batch_performed <- batch
-            count_table <- batched_counts[["count_table"]]
-        }
+    if (batch_step == 5) {
+        message("Performing batch correction at step 5.")
+        do_batch()
     }
 
     ## This list provides the list of operations performed on the data in order they were done.
@@ -323,7 +345,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                             filter_low=filter_low, annotations=annotations,
                             fasta=fasta, thresh=thresh,
                             min_samples=min_samples, p=p, A=A, k=k,
-                            cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
+                            cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
     final_libsize <- normalized[["libsize"]]
     final_data <- as.matrix(normalized[["count_table"]])
     Biobase::exprs(current_exprs) <- final_data
