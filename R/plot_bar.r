@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 13 14:59:10 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed May 18 13:22:11 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## plot_bar.r: Some useful bar plots, currently only library size
 
@@ -96,6 +96,85 @@ plot_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
             ggplot2::scale_x_discrete(labels=names)
     }
     return(libsize_plot)
+}
+
+plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start=1000, end=2000, strand=1, padding=100) {
+
+    head(genes)
+    genes = genes[,c(2,3,5,11)]
+    for(ch in 1:36) {
+        mychr = paste("LmjF.", sprintf("%02d", ch), sep="")
+        print(mychr)
+        table_path = paste("~/riboseq/coverage/", mychr, "/testme.txt.cov.gz", sep="")
+
+        rpms = read.table(table_path)
+        colnames(rpms) = c("chromosome","position","rpm")
+        chr_index = with(genes, grepl(mychr, Name))
+        genes_on_chr = genes[chr_index, ]
+
+        for(i in 1:nrow(genes_on_chr)) {
+            row = genes_on_chr[i,]
+            genename=row$Name
+            output_file=paste("~/riboseq/coverage/", mychr, "/", genename, ".svg", sep="")
+            svg(file=output_file, height=2, width=8, units="in")
+            plot_rpm(rpms, start=row$start, end=row$end, strand=row$strand, output=output_file, name=row$Name)
+            dev.off()
+        }
+    }
+
+
+    ##for(i in 1:nrow(genes)) {
+    ##    row <- genes[i,]
+    ##    genename=row$Name
+    ##    chromosome_number =
+    ##        output_file=paste("~/riboseq/rpm/", genename, ".svg", sep="")
+    ##    svg(file=output_file, height=2, width=6)
+    ##    plot_rpm(rpms, st=row$start, en=row$end, strand=row$strand, output=output_file, name=row$name)
+    ##    dev.off()
+    ##}
+    ##dev.new(height=2, width=6)
+    ##plot_rpm(rpms, st=2000, en=20000, strand="+", output=test, name=row$Name)
+    ##dev.off()
+
+    mychr = gsub("\\.\\d+$", "", name, perl=TRUE)
+    plotted_start = start - padding
+    plotted_end = end + padding
+    my_start = start
+    my_end = end
+    rpm_region = subset(input, chromosome==mychr & position >= plotted_start & position <= plotted_end)
+    rpm_region = rpm_region[,-1]
+    rpm_region$log = log2(rpm_region$rpm + 1)
+
+    pre_start = subset(rpm_region, position < my_start)
+    post_stop = subset(rpm_region, position > my_end)
+    cds = subset(rpm_region, position >= my_start & position < my_end)
+
+    theme_set(theme_bw())
+
+    ## Wow R is such a piece of shit.
+    ## Apparently aes messes with its scope in arbitrary ways, so you have to do stupid workarounds like this...
+    ## Ok, fuck you then.
+    eval(substitute(
+        expr = {
+            stupid = aes(y=0,yend=0,x=my_start,xend=my_end)
+        },
+        env = list(my_start=my_start, my_end=my_end)))
+
+    if (strand == "+") {
+        gene_arrow = arrow(type="closed", ends="last")
+    } else {
+        gene_arrow = arrow(type="closed", ends="first")
+    }
+    xlabel_string = paste(name, ": ", my_start, " to ", my_end)
+    my_plot = ggplot(rpm_region, aes(x=position, y=log)) +
+        xlab(xlabel_string) +
+            ylab("Log2(RPM) reads") +
+                geom_bar(data=rpm_region, stat="identity", fill="black", colour="black") +
+                    geom_bar(data=pre_start, stat="identity", fill="red", colour="red") +
+                        geom_bar(data=post_stop, stat="identity", fill="red", colour="red") +
+                            geom_segment(data=rpm_region, mapping=stupid, arrow=gene_arrow, size=2, color="blue")
+    plot(my_plot)
+
 }
 
 ## EOF  Damners I don't have many bar plots, do I?

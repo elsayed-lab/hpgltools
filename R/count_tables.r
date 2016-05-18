@@ -1,4 +1,4 @@
-## Time-stamp: <Wed May 11 14:08:01 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Wed May 18 16:01:11 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -175,11 +175,11 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
             success <- success + 1
             sample_definitions[, "file"] <- test_filenames
         } else {
-            test_filenames <- tolower(test_filenames)
-            num_found <- sum(file.exists(test_filenames))
+            lower_test_filenames <- tolower(test_filenames)
+            num_found <- sum(file.exists(lower_test_filenames))
             if (num_found == num_samples) {
                 success <- success + 1
-                sample_definitions[, "file"] <- test_filenames
+                sample_definitions[, "file"] <- lower_test_filenames
             }
         }
         if (success == 0) {
