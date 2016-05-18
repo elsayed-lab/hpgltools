@@ -9,12 +9,12 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
-    sig_genes <- sp(get_sig_genes(table, column="untreated")$up_genes)$result
+    sig_genes <- s_p(get_sig_genes(table, column="untreated")$up_genes)$result
 
     ## Use biomart's result to get the gene lengths etc.
-    dmel_annotations <- sp(get_biomart_annotations(species="dmelanogaster"))$result
+    dmel_annotations <- s_p(get_biomart_annotations(species="dmelanogaster"))$result
     ## And ontology cateogies.
-    dmel_ontologies <- sp(get_biomart_ontologies(species="dmelanogaster"))$result
+    dmel_ontologies <- s_p(get_biomart_ontologies(species="dmelanogaster"))$result
 
     ## Get the annotations ready to be recast as a gff file.
     dmel_annotations$strand <- ifelse(dmel_annotations$strand == "1", "+", "-")
@@ -23,18 +23,18 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ## I got a weird error when the column was Type and not type, I suspect though that this line is not needed.
     dmel_granges$type <- dmel_annotations$Type
     ## Recast the data frame first as a List of GRanges
-    dmel <- rtracklayer::GenomicData(dmel_granges)
+    ## dmel <- rtracklayer::GenomicData(dmel_granges)
     ## Set the gff filename
     gff_file="dmel.gff"
     ## And write the entries as a gff file.  This gff file may be used by clusterprofiler, topgo, and gostats.
-    dmel_gff <- rtracklayer::export(object=dmel, con=gff_file)
+    dmel_gff <- rtracklayer::export(object=dmel_granges, con=gff_file)
 
-    tp_result <- sp(simple_topgo(sig_genes, gff=gff_file, goids_df=dmel_ontologies))$result
-    tp_trees <- sp(topgo_trees(tp_result))$result
+    tp_result <- s_p(simple_topgo(sig_genes, gff=gff_file, goids_df=dmel_ontologies))$result
+    tp_trees <- s_p(topgo_trees(tp_result))$result
 
     expected_tp_mf <- c("GO:0004252", "GO:0008236", "GO:0017171", "GO:0008509", "GO:0004175", "GO:0022857")
     actual_tp_mf <- head(tp_result$tables$mf_interesting$GO.ID)
-    expected_tp_bp <- c("GO:0006811", "GO:0055085", "GO:0055114", "GO:0030001", "GO:0006814", "GO:0006820")
+    expected_tp_bp <- c("GO:0006811", "GO:0055085", "GO:0055114", "GO:0030001", "GO:0006814", "GO:0009605")
     actual_tp_bp <- head(tp_result$tables$bp_interesting$GO.ID)
     expected_tp_cc <- c("GO:0016021", "GO:0031224", "GO:0016020", "GO:0044425", "GO:0005576", "GO:0044421")
     actual_tp_cc <- head(tp_result$tables$cc_interesting$GO.ID)

@@ -8,9 +8,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
-    sig_genes <- sp(get_sig_genes(table, column="untreated")$up_genes)$result
-    dmel_annotations <- sp(get_biomart_annotations(species="dmelanogaster"))$result
-    dmel_go <- sp(get_biomart_ontologies(species="dmelanogaster"))$result
+    sig_genes <- s_p(get_sig_genes(table, column="untreated")$up_genes)$result
+    dmel_annotations <- s_p(get_biomart_annotations(species="dmelanogaster"))$result
+    dmel_go <- s_p(get_biomart_ontologies(species="dmelanogaster"))$result
 
     expected_lengths <- c(1776, 819, 2361, NA, 633, 1164)
     actual_lengths <- head(dmel_annotations$length)

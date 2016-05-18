@@ -9,7 +9,7 @@ pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-pasilla_surrogates <- sp(compare_surrogate_estimates(pasilla_expt))$result
+pasilla_surrogates <- s_p(compare_surrogate_estimates(pasilla_expt))$result
 
 pca_char_adjust <- as.numeric(c("-0.108919503928491", "-0.570855719628606",
                                 "0.413293224481248", "0.293317999343559",

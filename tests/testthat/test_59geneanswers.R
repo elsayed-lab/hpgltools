@@ -13,16 +13,16 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
-    sig_genes <- sp(get_sig_genes(table, column="untreated")$up_genes)$result
+    sig_genes <- s_p(get_sig_genes(table, column="untreated")$up_genes)$result
 
-    tt <- sp(library("org.Dm.eg.db"))
+    tt <- s_p(library("org.Dm.eg.db"))
     ## goseq_result <- simple_goseq(sig_genes, species="hsapiens")
     ## gprofiler_result <- suppressMessages(simple_gprofiler(sig_genes, species="dmelanogaster"))
 
-    tt <- sp(require.auto("GeneAnswers"))
-    tt <- sp(library("GeneAnswers"))
-    tt <- sp(library("org.Dm.eg.db"))
-    tt <- sp(library("GO.db"))
+    tt <- s_p(require.auto("GeneAnswers"))
+    tt <- s_p(library("GeneAnswers"))
+    tt <- s_p(library("org.Dm.eg.db"))
+    tt <- s_p(library("GO.db"))
 
     ## get named vector of entrez ids
     fb.entrez <- unlist(as.list(org.Dm.egFLYBASE2EG))
@@ -47,5 +47,5 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ## Get BP enrichment
     ##foo <- geneAnswersBuilder(topset, 'org.Dm.eg.db', categoryType='GO.BP', testType='hyperG')
     ##go.bp <- foo@enrichmentInfo
-
+    message("SeqAnswers does not do anything yet.")
 }

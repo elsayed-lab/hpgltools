@@ -1,6 +1,6 @@
 library(testthat)
 library(hpgltools)
-cbcb <- sp(library(cbcbSEQ))
+cbcb <- s_p(library(cbcbSEQ))
 
 context("Does limma work with hpgltools?")
 
@@ -48,16 +48,16 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform log2/cpm/quantile/combatMod normalization
-hpgl_norm <- sp(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
+hpgl_norm <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
 
 ## If we made it this far, then the inputs to limma should agree.
-hpgl_limma_intercept <- sp(limma_pairwise(hpgl_norm, model_batch=TRUE, model_intercept=TRUE))$result
+hpgl_limma_intercept <- s_p(limma_pairwise(hpgl_norm, model_batch=TRUE, model_intercept=TRUE))$result
 hpgl_voom <- hpgl_limma_intercept$voom_result
 hpgl_fit <- hpgl_limma_intercept$fit
 hpgl_eb <- hpgl_limma_intercept$pairwise_comparisons
 hpgl_table <- hpgl_limma_intercept$all_tables
 
-hpgl_limma <- sp(limma_pairwise(hpgl_norm, model_batch=TRUE))$result
+hpgl_limma <- s_p(limma_pairwise(hpgl_norm, model_batch=TRUE))$result
 
 ## The order of operations in a limma analysis are: voom->fit->ebayes->table, test them in that order.
 ## Keep in mind that I do not default to an intercept model, and I rename the columns of the coefficients to make them more readable.

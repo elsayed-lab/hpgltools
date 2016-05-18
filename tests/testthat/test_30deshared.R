@@ -17,8 +17,8 @@ pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-normalized_expt <- sp(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
-hpgl_result <- sp(all_pairwise(normalized_expt, model_batch=TRUE))$result
+normalized_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
+hpgl_result <- s_p(all_pairwise(normalized_expt, model_batch=TRUE))$result
 
 previous_deseq <- deseq$hpgl_deseq$all_tables[["untreated_vs_treated"]]
 previous_edger <- edger$hpgl_edger$all_tables[["untreated_vs_treated"]]

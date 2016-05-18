@@ -1,5 +1,5 @@
 require.auto("kokrah/cbcbSEQ")
-cbcb <- sp(library(cbcbSEQ))
+cbcb <- s_p(library(cbcbSEQ))
 library(testthat)
 library(hpgltools)
 library(pasilla)
@@ -31,7 +31,7 @@ hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
 
 ## Check that normalization tools work similarly
 cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
-hpgl_quantile_data <- sp(hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE))$result
+hpgl_quantile_data <- s_p(hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE))$result
 hpgl_quantile <- hpgl_quantile_data[["count_table"]]
 test_that("Are the quantile normalizations identical?", {
     expect_equal(cbcb_quantile, hpgl_quantile)
@@ -59,9 +59,9 @@ test_that("Are cpm conversions identical?", {
 ## log2/cpm that
 cbcb_l2qcpm_data <- cbcbSEQ::log2CPM(cbcb_quantile)
 cbcb_l2qcpm <- cbcb_l2qcpm_data$y
-hpgl_l2qcpm_data <- sp(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))$result
+hpgl_l2qcpm_data <- s_p(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))$result
 hpgl_l2qcpm <- hpgl_l2qcpm_data[["count_table"]]
-hpgl_l2qcpm_expt <- sp(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))$result
+hpgl_l2qcpm_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))$result
 hpgl_l2qcpm2 <- Biobase::exprs(hpgl_l2qcpm_expt$expressionset)
 test_that("Are l2qcpm conversions/transformations identical using two codepaths?", {
     expect_equal(cbcb_l2qcpm, hpgl_l2qcpm)
@@ -96,7 +96,7 @@ test_model <- model.matrix(~condition)
 cbcb_voom <- cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize)
 hpgl_voom <- cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize)
 hpgl_voom2 <- hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
-hpgl_voom3 <- sp(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))$result
+hpgl_voom3 <- s_p(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))$result
 
 test_that("Do different voom() invocations end with the same data?", {
     expect_equal(cbcb_voom, hpgl_voom)
@@ -110,8 +110,8 @@ test_that("Do different voom() invocations end with the same data?", {
 
 cbcb_fit <- limma::lmFit(cbcb_voom)
 cbcb_eb <- limma::eBayes(cbcb_fit)
-cbcb_top <- sp(limma::topTable(cbcb_eb, number=nrow(cbcb_eb)))$result
-hpgl_toptables <- sp(hpgltools::limma_pairwise(hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize))$result
+cbcb_top <- s_p(limma::topTable(cbcb_eb, number=nrow(cbcb_eb)))$result
+hpgl_toptables <- s_p(hpgltools::limma_pairwise(hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize))$result
 hpgl_top <- hpgl_toptables$all_tables
 test_that("Limma results.", {
     expect_equal(cbcb_top, hpgl_top)

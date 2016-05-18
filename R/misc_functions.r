@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May 16 17:56:55 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 17 22:10:32 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' png() shortcut
 #'
@@ -47,7 +47,7 @@ tryCatch.W.E <- function(expr) {
 #' @param code Some code to shut up.
 #' @return List of the output log, message log, and result of the expression.
 #' @export
-sp <- function(code) {
+s_p <- function(code) {
     warnings <- NULL
     output_log <- NULL
     message_log <- NULL

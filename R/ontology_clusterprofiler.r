@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 17 16:44:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Tue May 17 21:25:38 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform the array of analyses in the 2016-04 version of clusterProfiler
 #'
@@ -25,19 +25,24 @@
 #' @param categories How many categories should be plotted in bar/dot plots?
 simple_cp_orgdb <- function(sig_genes, de_table, orgdb="org.Dm.eg.db",
                             orgdb_from="FLYBASE", orgdb_to=c("ENSEMBL","SYMBOL","ENTREZID"),
-                            go_level=3, pcutoff=0.01, qcutoff=0.1, fc_column="logFC",
+                            go_level=3, pcutoff=0.05, qcutoff=0.1, fc_column="logFC",
                             permutations=100, min_groupsize=5, kegg_prefix="Dmel_",
                             kegg_organism="dme", kegg_id_column="FLYBASECG", categories=12) {
-    org <- get0(orgdb)
-    mapper_keys <- keytypes(org)
+    requireNamespace(orgdb)
+    org <- loadNamespace(orgdb) ## put the orgDb instance into an environment
+    org <- org[[orgdb]] ## Then extract it
+    mapper_keys <- AnnotationDbi::keytypes(org)
     all_genenames <- rownames(de_table)
     all_genes_df <- clusterProfiler::bitr(all_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
     sig_genenames <- rownames(sig_genes)
     sig_genes_df <- clusterProfiler::bitr(sig_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
-    universe <- keys(org)
+    universe <- AnnotationDbi::keys(org)
     all_genes_df <- merge(de_table, all_genes_df, by.x="row.names", by.y=orgdb_from)
     ## Rename the first column
     colnames(all_genes_df)[1] <- orgdb_from
+    if (is.null(all_genes_df[[fc_column]])) {
+        stop("The fold change column appears to provide no genes, try another column in the data set.")
+    }
     all_genes_df <- all_genes_df[ order(all_genes_df[[fc_column]], decreasing=TRUE), ]
 
     message("Calculating GO groups.")
@@ -72,7 +77,7 @@ simple_cp_orgdb <- function(sig_genes, de_table, orgdb="org.Dm.eg.db",
 
     message("Performing GSE analyses of gene lists (this is slow).")
     genelist <- as.vector(all_genes_df[[fc_column]])
-    names(genelist) <- entrez_table[["ENTREZID"]]
+    names(genelist) <- all_genes_df[["ENTREZID"]]
     gse_all_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
                                          nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
     gse_sig_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
@@ -98,7 +103,7 @@ simple_cp_orgdb <- function(sig_genes, de_table, orgdb="org.Dm.eg.db",
     all_kegg <- clusterProfiler::enrichKEGG(gene=kegg_sig_ids, organism=kegg_organism,
                                             pvalueCutoff=1.0)
     Sys.sleep(3)
-    enrich_kegg <- clusterProfiler::enrichKEGG(gene=kegg_ids, organism=kegg_organism, pvalueCutoff=pcutoff)
+    enrich_kegg <- clusterProfiler::enrichKEGG(gene=kegg_sig_ids, organism=kegg_organism, pvalueCutoff=pcutoff)
 
     kegg_genelist <- as.vector(all_genes_df[[fc_column]])
     names(kegg_genelist) <- paste0(kegg_prefix, all_genes_df[[kegg_id_column]])
