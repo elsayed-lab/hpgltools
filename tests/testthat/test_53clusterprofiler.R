@@ -29,12 +29,14 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ## And write the entries as a gff file.  This gff file may be used by clusterprofiler, topgo, and gostats.
     dmel_gff <- rtracklayer::export(object=dmel_granges, con=gff_file)
 
+    require.auto("org.Dm.eg.db")
     tt <-sp(library(AnnotationHub))
     tt <- sp(hub <- AnnotationHub())
     query(hub, "Drosophila_melanogaster")
     ## dmelanogaster <- hub[["AH79"]]
     genes <- dmel_annotations$geneID
-    gene.df <- clusterProfiler::bitr(genes, fromType="FLYBASE", toType=c("ENSEMBL", "SYMBOL", "FLYBASECG", "ENTREZID"), OrgDb=org.Dm.eg.db)
+    requireNamespace("org.Dm.eg.db")
+    gene.df <- clusterProfiler::bitr(genes, fromType="FLYBASE", toType=c("ENSEMBL", "SYMBOL", "FLYBASECG", "ENTREZID"), "org.Dm.eg.db")
     head(gene.df)
 
     mappers <- clusterProfiler::idType(org.Dm.eg.db)
@@ -122,4 +124,135 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ##     expect_equal(expected_cp_cc, actual_cp_cc)
     ##     expect_equal(expected_cp_mfp, actual_cp_mfp, tolerance=0.0001)
     ## })
+
+    de_table <- table
+    orgdb_to <- c("ENTREZID","ENSEMBL","SYMBOL","FLYBASECG")
+    orgdb <- "org.Dm.eg.db"
+    orgdb_from <- "FLYBASE"
+    fc_column <- "untreated"
+    kegg_prefix="Dmel_"
+    kegg_organism="dme"
+    kegg_id_column="FLYBASECG"
+    simple_cp_orgdb <- function(sig_genes, de_table, orgdb="NULL", goids_df=NULL,
+                                orgdb_from="FLYBASE", orgdb_to=c("ENSEMBL","SYMBOL","ENTREZID")
+                                go_level=3, pcutoff=0.01, qcutoff=0.1, fc_column="logFC",
+                                permutations=100, min_groupsize=5, kegg_prefix="Dmel_",
+                                kegg_organism="dme", kegg_id_column="FLYBASECG", categories=12) {
+        org <- get0(orgdb)
+        mapper_keys <- keytypes(org)
+        all_genenames <- rownames(de_table)
+        all_genes_df <- clusterProfiler::bitr(all_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
+        sig_genenames <- rownames(sig_genes)
+        sig_genes_df <- clusterProfiler::bitr(sig_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
+        universe <- keys(org)
+        all_genes_df <- merge(de_table, all_genes_df, by.x="row.names", by.y=orgdb_from)
+        ## Rename the first column
+        colnames(all_genes_df)[1] <- orgdb_from
+        all_genes_df <- all_genes_df[ order(all_genes_df[[fc_column]], decreasing=TRUE), ]
+
+        ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[["ENTREZID"]], OrgDb=org, ont="MF", level=go_level, readable=TRUE)
+        ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[["ENTREZID"]], OrgDb=org, ont="BP", level=go_level, readable=TRUE)
+        ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[["ENTREZID"]], OrgDb=org, ont="CC", level=go_level, readable=TRUE)
+        group_go <- list(
+            "MF" = summary(ggo_mf),
+            "BP" = summary(ggo_bp),
+            "CC" = summary(ggo_cc))
+
+        ego_all_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="MF",
+                                                pAdjustMethod="BH", pvalueCutoff=1.0, qvalueCutoff=1.0, readable=TRUE)
+        ego_sig_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="MF",
+                                                pAdjustMethod="BH", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, readable=TRUE)
+        ego_all_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="BP",
+                                                pAdjustMethod="BH", pvalueCutoff=1.0, qvalueCutoff=1.0, readable=TRUE)
+        ego_sig_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="BP",
+                                                pAdjustMethod="BH", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, readable=TRUE)
+        ego_all_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="CC",
+                                                pAdjustMethod="BH", pvalueCutoff=1.0, qvalueCutoff=1.0, readable=TRUE)
+        ego_sig_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="CC",
+                                                pAdjustMethod="BH", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, readable=TRUE)
+        enrich_go <- list(
+            "MF_all" = summary(ego_all_mf),
+            "MF_sig" = summary(ego_sig_mf),
+            "BP_all" = summary(ego_all_bp),
+            "BP_sig" = summary(ego_sig_bp),
+            "CC_all" = summary(ego_all_cc),
+            "CC_sig" = summary(ego_sig_cc))
+
+        genelist <- as.vector(all_genes_df[[fc_column]])
+        names(genelist) <- entrez_table[["ENTREZID"]]
+        gse_all_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
+                                             nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
+        gse_sig_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
+                                             nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
+        gse_all_bp <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
+                                             nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
+        gse_sig_bp <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
+                                             nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
+        gse_all_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
+                                             nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
+        gse_sig_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
+                                             nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
+        gse_go <- list(
+            "MF_all" = gse_all_mf,
+            "MF_sig" = gse_sig_mf,
+            "BP_all" = gse_all_bp,
+            "BP_sig" = gse_sig_bp,
+            "CC_all" = gse_all_cc,
+            "CC_sig" = gse_sig_cc)
+
+        kegg_sig_ids <- paste0(kegg_prefix, sig_genes_df[[kegg_id_column]])
+        all_kegg <- clusterProfiler::enrichKEGG(gene=kegg_sig_ids, organism=kegg_organism, pvalueCutoff=1.0)
+        enrich_kegg <- clusterProfiler::enrichKEGG(gene=kegg_ids, organism=kegg_organism, pvalueCutoff=pcutoff)
+
+        kegg_genelist <- as.vector(all_genes_df[[fc_column]])
+        names(kegg_genelist) <- paste0(kegg_prefix, all_genes_df[[kegg_id_column]])
+        gse_all_kegg <- clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
+                                                 nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
+        gse_sig_kegg <- clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
+                                                 nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
+        kegg_data <- list(
+            "kegg_all" <- all_kegg,
+            "kegg_sig" <- enrich_kegg,
+            "kegg_gse_all" <- gse_all_kegg,
+            "kegg_gse_sig" <- gse_sig_kegg)
+
+        plotlist <- list(
+            "ggo_mf_bar" = barplot(ggo_mf, drop=TRUE, showCategory=categories),
+            "ggo_bp_bar" = barplot(ggo_bp, drop=TRUE, showCategory=categories),
+            "ggo_cc_bar" = barplot(ggo_cc, drop=TRUE, showCategory=categories),
+            "ego_all_mf" = barplot(ego_all_mf, showCategory=categories, drop=TRUE),
+            "ego_all_bp" = barplot(ego_all_bp, showCategory=categories, drop=TRUE),
+            "ego_all_cc" = barplot(ego_all_cc, showCategory=categories, drop=TRUE),
+            "ego_sig_mf" = barplot(ego_sig_mf, showCategory=categories, drop=TRUE),
+            "ego_sig_bp" = barplot(ego_sig_bp, showCategory=categories, drop=TRUE),
+            "ego_sig_cc" = barplot(ego_sig_cc, showCategory=categories, drop=TRUE),
+            "dot_all_mf" = dotplot(ego_all_mf),
+            "dot_all_bp" = dotplot(ego_all_bp),
+            "dot_all_cc" = dotplot(ego_all_cc),
+            "dot_sig_mf" = dotplot(ego_sig_mf),
+            "dot_sig_bp" = dotplot(ego_sig_bp),
+            "dot_sig_cc" = dotplot(ego_sig_cc),
+            "map_sig_mf" = enrichMap(ego_sig_mf),
+            "map_sig_bp" = enrichMap(ego_sig_bp),
+            "map_sig_cc" = enrichMap(ego_sig_cc),
+            "net_sig_mf" = cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist),
+            "net_sig_bp" = cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist),
+            "net_sig_cc" = cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist)
+            "tree_sig_mf" = clusterProfiler::plotGOgraph(ego_sig_mf),
+            "tree_sig_bp" = clusterProfiler::plotGOgraph(ego_sig_bp),
+            "tree_sig_cc" = clusterProfiler::plotGOgraph(ego_sig_cc)
+            )
+
+        retlist <- list(
+            "all_mappings" = all_genes_df,
+            "sig_mappings" = sig_genes_df,
+            "group_go" = group_go,
+            "enrich_go" = enrich_go,
+            "gse_go" = gse_go,
+            "kegg_data" = kegg_data,
+            "plots" = plotlist)
+        return(retlist)
+    }
+
+
 }
