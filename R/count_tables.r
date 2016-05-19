@@ -1,4 +1,4 @@
-## Time-stamp: <Wed May 18 16:01:11 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 19 16:10:56 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -258,10 +258,17 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
         "counts" = sample_definitions[, "file"],
         "intercounts" = sample_definitions[, "intercounts"])
 
+    final_annotations <- gene_info
+    final_counts <- as.data.frame(rownames(all_count_matrix))
+    colnames(final_counts) <- c("tmp_id")
+    final_annotations <- merge(final_counts, final_annot, by.x="tmp_id", by.y="row.names", all.x=TRUE)
+    rownames(final_annotations) <- final_annotations[["tmp_id"]]
+    final_annotations <- final_annotations[-1]
+
     requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
     metadata <- methods::new("AnnotatedDataFrame", meta_frame)
     Biobase::sampleNames(metadata) <- colnames(all_count_matrix)
-    feature_data <- methods::new("AnnotatedDataFrame", gene_info)
+    feature_data <- methods::new("AnnotatedDataFrame", final_annotations)
     Biobase::featureNames(feature_data) <- rownames(all_count_matrix)
     experiment <- methods::new("ExpressionSet", exprs=all_count_matrix,
                                phenoData=metadata, featureData=feature_data)
