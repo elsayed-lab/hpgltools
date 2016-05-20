@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 19 13:44:45 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 20 14:59:47 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Everything in this was written by Keith, I stole it with his permission and incorporated it here.
 ## I might change a few function declarations in this: tbl_df
@@ -448,7 +448,7 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
 #' host <- load_host_annotations(org, c("a","b"))
 #' }
 #' @export
-orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ENSEMBL')) {
+orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl')) {
     avail_keytypes <- AnnotationDbi::keytypes(orgdb)
     if (!mapto %in% avail_keytypes) {
         warning(paste0("The chosen keytype ", mapto, " is not in this orgdb."))
@@ -461,7 +461,9 @@ orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ENSEMBL')) {
     }
     ## Gene info
     ## Note querying by "GENEID" will exclude noncoding RNAs
+    mapto <- toupper(mapto)
     gene_info <- AnnotationDbi::select(orgdb, keys=gene_ids, columns=mapto)
+    colnames(gene_info) <- tolower(colnames(gene_info))
     return(gene_info)
 }
 
