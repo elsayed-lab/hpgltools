@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 20 19:01:54 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 20 19:25:50 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -120,8 +120,8 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
     ## this case, just so long as I am consistent -- I think because I have trouble remembering the
     ## difference between the concept of 'row' and 'column' I should probably use the [, column] or
     ## [row, ] method to reinforce my weak neurons.
-    if (is.null(sample_definitions[, "condition"])) {
-        sample_definitions[, "condition"] <- tolower(paste(sample_definitions[, "type"], sample_definitions[, "stage"], sep="_"))
+    if (is.null(sample_definitions[["condition"]])) {
+        sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]], sample_definitions[["stage"]], sep="_"))
     }
     condition_names <- unique(sample_definitions[["condition"]])
     if (is.null(condition_names)) {
@@ -160,7 +160,7 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
     all_count_tables <- NULL
     if (!is.null(count_dataframe)) {
         all_count_tables <- count_dataframe
-        colnames(all_count_tables) <- rownames(sample_definitions)
+        expect_equal(colnames(all_count_tables), rownames(sample_definitions))
         ## If neither of these cases is true, start looking for the files in the processed_data/ directory
     } else if (is.null(sample_definitions[["file"]])) {
         success <- 0
@@ -239,6 +239,7 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
     final_annotations <- merge(tmp_counts, gene_info, by.x="tmp_id", by.y="row.names", all.x=TRUE)
     rownames(final_annotations) <- final_annotations[["tmp_id"]]
     final_annotations <- final_annotations[-1]
+    expect_equal(rownames(final_annotations), rownames(all_count_matrix))
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
@@ -320,18 +321,14 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
 #' }
 #' @export
 expt_subset <- function(expt, subset=NULL) {
-    if (class(expt) == "ExpressionSet") {
+    if (class(expt)[[1]] == "ExpressionSet") {
         original_expressionset <- expt
-    } else if (class(expt) == "expt") {
+        original_metadata <- Biobase::pData(original_expressionset)
+    } else if (class(expt)[[1]] == "expt") {
         original_expressionset <- expt[["expressionset"]]
+        original_metadata <- original_expressionset[["design"]]
     } else {
         stop("expt is neither an expt nor ExpressionSet")
-    }
-    if (is.null(expt[["design"]])) {
-        ## warning("There is no expt$definitions, using the expressionset.")
-        original_metadata <- Biobase::pData(original_expressionset)
-    } else {
-        original_metadata <- expt[["design"]]
     }
 
     if (is.null(subset)) {
