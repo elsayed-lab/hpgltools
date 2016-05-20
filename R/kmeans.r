@@ -1,4 +1,4 @@
-x## Time-stamp: <Fri May 20 18:01:15 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 20 18:01:15 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## This is for the moment just a code dump of some arbitrarily chosen kmeans clustering stuff
 ## Fill this in asap with real code for Ginger's search of gene sets which have similar profiles over time.
