@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 13 15:22:36 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 20 00:01:23 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot two coefficients with respect to one another from edgeR.
 #'
@@ -124,12 +124,12 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             } else if (input[["state"]][["normalization"]] != "raw" |
                        (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
                 ## This makes use of the fact that the order of operations in the normalization function is static.
-                ## lowfilter->normalization->convert->batch->transform.
-                ## Thus, if the normalized state is not raw, we can look back either to the lowfiltered or original data
+                ## filter->normalization->convert->batch->transform.
+                ## Thus, if the normalized state is not raw, we can look back either to the filtered or original data
                 ## The same is true for the transformation state.
-                if (input[["state"]][["lowfilter"]] == "raw") {
-                    message("EdgeR expects raw data as input, reverting to the low-count filtered data.")
-                    data <- input[["normalized"]][["intermediate_counts"]][["lowfilter"]][["count_table"]]
+                if (input[["state"]][["filter"]] == "raw") {
+                    message("EdgeR expects raw data as input, reverting to the count filtered data.")
+                    data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
                 } else {
                     message("EdgeR expects raw data as input, reverting to the original expressionset.")
                     data <- Biobase::exprs(input[["original_expressionset"]])

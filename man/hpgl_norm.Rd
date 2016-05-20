@@ -4,55 +4,10 @@
 \alias{hpgl_norm}
 \title{Normalize a dataframe/expt, express it, and/or transform it}
 \usage{
-hpgl_norm(data, design = NULL, transform = "raw", norm = "raw",
-  convert = "raw", batch = "raw", batch1 = "batch", batch2 = NULL,
-  filter_low = FALSE, annotations = NULL, entry_type = "gene",
-  fasta = NULL, thresh = 2, min_samples = 2, batch_step = 4,
-  noscale = TRUE, p = 0.01, A = 1, k = 1, cv_min = 0.01,
-  cv_max = 1000, ...)
+hpgl_norm(data, ...)
 }
 \arguments{
 \item{data}{Some data as a df/expt/whatever.}
-
-\item{design}{Experimental design df (if not an expt).}
-
-\item{transform}{Should we log(2|10) transform the data?}
-
-\item{norm}{Should we normalize the data? (quant, rle, tmm, vsd, etc)}
-
-\item{convert}{Convert the data? (cpm, rpkm, cp_seq_m)}
-
-\item{batch}{Should we try a batch correction method? (sva, ruvg, combat, etc)}
-
-\item{batch1}{Column from design used to acquire batch information.}
-
-\item{batch2}{Try for a second covariate?}
-
-\item{filter_low}{Low-count filter the data?}
-
-\item{annotations}{Annotation data, primarily used for rpkm.}
-
-\item{entry_type}{When using a gff file, what type of entry should be used?}
-
-\item{fasta}{Fasta genome for extracting rpkm/cp_seq_m information.}
-
-\item{thresh}{Threshold used for low count filtering.}
-
-\item{min_samples}{Minimum samples for low count filtering.}
-
-\item{batch_step}{At what step should batch correction be performed?}
-
-\item{noscale}{For cbcbSEQ::combatMod, also sva::combat now.}
-
-\item{p}{povera() in genefilter uses this.}
-
-\item{A}{povera() in genefilter uses this.}
-
-\item{k}{kovera() in genefilter uses this.}
-
-\item{cv_min}{cv() in genefilter.}
-
-\item{cv_max}{cv() in genefilter.}
 
 \item{...}{I should put all those other options here}
 }
@@ -61,7 +16,7 @@ edgeR's DGEList expression of a count table.  This seems to
 me to be the easiest to deal with.
 }
 \description{
-Sometime soon I am going to elipsis all these variables
+There are many possible options to this function.  Refer to normalize_expt() for a more complete list.
 }
 \examples{
 \dontrun{

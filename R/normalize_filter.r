@@ -1,12 +1,12 @@
-## Time-stamp: <Sat May 14 13:33:00 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 19 23:24:11 2016 Ashton Trey Belew (abelew@gmail.com)>
 
-#' Call various low-count filters.
+#' Call various count filters.
 #'
 #' This calls the various filtering functions in genefilter along with suggestions made in our lab
 #' meetings; defaulting to the threshold based filter suggested by Hector.
 #'
 #' @param count_table Some counts to filter.
-#' @param type Filtering method to apply (cbcb, pofa, kofa, cv right now).
+#' @param filter Filtering method to apply (cbcb, pofa, kofa, cv right now).
 #' @param p Used by genefilter's pofa().
 #' @param A Also for pofa().
 #' @param k Used by genefilter's kofa().
@@ -15,37 +15,37 @@
 #' @param thresh Minimum threshold across samples for cbcb.
 #' @param min_samples Minimum number of samples for cbcb.
 #' @param ... More options might be needed, especially if I fold cv/p/etc into ...
-#' @return Data frame of lowfiltered counts.
+#' @return Data frame of filtered counts.
 #' @seealso \pkg{genefilter}
 #' @examples
 #' \dontrun{
-#' new <- lowfilter_counts(old)
+#' new <- filter_counts(old)
 #' }
 #' @export
-lowfilter_counts <- function(count_table, type='cbcb', p=0.01, A=1, k=1,
-                             cv_min=0.01, cv_max=1000, thresh=2, min_samples=2, ...) {
+filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
+                          cv_min=0.01, cv_max=1000, thresh=2, min_samples=2, ...) {
     arglist <- list(...)
-    if (tolower(type) == 'povera') {
+    if (tolower(filter) == "povera") {
         type <- 'pofa'
-    } else if (tolower(type) == 'kovera') {
+    } else if (tolower(filter) == "kovera") {
         type <- 'kofa'
     }
-    lowfiltered_counts <- NULL
-    if (type == 'cbcb') {
-        lowfiltered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
+    filtered_counts <- NULL
+    if (filter == "cbcb") {
+        filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
                                                  min_samples=min_samples)
-    } else if (type == 'pofa') {
-        lowfiltered_counts <- genefilter_pofa_counts(count_table, p=p, A=A)
-    } else if (type == 'kofa') {
-        lowfiltered_counts <- genefilter_kofa_counts(count_table, k=k, A=A)
-    } else if (type == 'cv') {
-        lowfiltered_counts <- genefilter_cv_counts(count_table, cv_min=cv_min,
+    } else if (filter == "pofa") {
+        filtered_counts <- genefilter_pofa_counts(count_table, p=p, A=A)
+    } else if (filter == "kofa") {
+        filtered_counts <- genefilter_kofa_counts(count_table, k=k, A=A)
+    } else if (filter == "cv") {
+        filtered_counts <- genefilter_cv_counts(count_table, cv_min=cv_min,
                                                    cv_max=cv_max)
     } else {
-        lowfiltered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
+        filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
                                                  min_samples=min_samples)
     }
-    return(lowfiltered_counts)
+    return(filtered_counts)
 }
 
 #' Filter low-count genes from a data set.

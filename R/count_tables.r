@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 19 16:10:56 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 19 21:53:14 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -233,6 +233,12 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
             gene_info <- annotation
         }
     }
+    tmp_counts <- as.data.frame(rownames(all_count_matrix))
+    colnames(tmp_counts) <- c("tmp_id")
+    dim(tmp_counts)
+    final_annotations <- merge(tmp_counts, gene_info, by.x="tmp_id", by.y="row.names", all.x=TRUE)
+    rownames(final_annotations) <- final_annotations[["tmp_id"]]
+    final_annotations <- final_annotations[-1]
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
@@ -257,13 +263,6 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
         "batch" = as.character(sample_definitions[, "batch"]),
         "counts" = sample_definitions[, "file"],
         "intercounts" = sample_definitions[, "intercounts"])
-
-    final_annotations <- gene_info
-    final_counts <- as.data.frame(rownames(all_count_matrix))
-    colnames(final_counts) <- c("tmp_id")
-    final_annotations <- merge(final_counts, final_annot, by.x="tmp_id", by.y="row.names", all.x=TRUE)
-    rownames(final_annotations) <- final_annotations[["tmp_id"]]
-    final_annotations <- final_annotations[-1]
 
     requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
     metadata <- methods::new("AnnotatedDataFrame", meta_frame)

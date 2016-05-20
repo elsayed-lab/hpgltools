@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 17 23:57:59 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 19 23:58:41 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -15,243 +15,60 @@
 ### More well understood and conservative.
 ##  Why have we nonetheless done #2 in a few instances?  (not only because we learned that first)
 
-#' Normalize a dataframe/expt, express it, and/or transform it
+#' Normalize the data of an expt object.  Save the original data, and note what was done.
 #'
-#' Sometime soon I am going to elipsis all these variables
+#' It is the responsibility of normalize_expt() to perform any arbitrary normalizations desired as
+#' well as to ensure that the data integrity is maintained.  In order to do this, it writes the
+#' actions performed in expt$state and saves the intermediate steps of the normalization in
+#' expt$intermediate_counts.  Furthermore, it should tell you every step of the normalization
+#' process, from count filtering, to normalization, conversion, transformation, and batch
+#' correction.
 #'
-#' @param data Some data as a df/expt/whatever.
-#' @param design Experimental design df (if not an expt).
-#' @param transform Should we log(2|10) transform the data?
-#' @param norm Should we normalize the data? (quant, rle, tmm, vsd, etc)
-#' @param convert Convert the data? (cpm, rpkm, cp_seq_m)
-#' @param batch Should we try a batch correction method? (sva, ruvg, combat, etc)
-#' @param batch1 Column from design used to acquire batch information.
-#' @param batch2 Try for a second covariate?
-#' @param filter_low Low-count filter the data?
-#' @param annotations Annotation data, primarily used for rpkm.
-#' @param entry_type When using a gff file, what type of entry should be used?
-#' @param fasta Fasta genome for extracting rpkm/cp_seq_m information.
-#' @param thresh Threshold used for low count filtering.
-#' @param min_samples Minimum samples for low count filtering.
-#' @param batch_step At what step should batch correction be performed?
-#' @param noscale For cbcbSEQ::combatMod, also sva::combat now.
-#' @param p povera() in genefilter uses this.
-#' @param A povera() in genefilter uses this.
-#' @param k kovera() in genefilter uses this.
-#' @param cv_min cv() in genefilter.
-#' @param cv_max cv() in genefilter.
-#' @param ... I should put all those other options here
-#' @return edgeR's DGEList expression of a count table.  This seems to
-#' me to be the easiest to deal with.
-#' @seealso \link[edgeR]{cpm} \link[edgeR]{rpkm}
-#' \link{hpgl_rpkm} \link[DESeq2]{DESeqDataSetFromMatrix}
-#' \link[DESeq]{estimateSizeFactors} \link[edgeR]{DGEList} \link[edgeR]{calcNormFactors}
-#' @export
-#' @examples
-#' \dontrun{
-#' df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
-#' df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-#' df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2',
-#'                        convert='rpkm')  ## Quantile, log2, rpkm
-#' count_table = df_ql2rpkm$counts
-#' }
-hpgl_norm <- function(data, design=NULL, transform="raw", norm="raw",
-                      convert="raw", batch="raw", batch1="batch", batch2=NULL,
-                      filter_low=FALSE, annotations=NULL, entry_type="gene",
-                      fasta=NULL, thresh=2, min_samples=2, batch_step=4,
-                      noscale=TRUE, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000, ...) {
-    lowfilter_performed <- FALSE
-    norm_performed <- "raw"
-    convert_performed <- "raw"
-    transform_performed <- "raw"
-    batch_performed <- "raw"
-    data_class <- class(data)[1]
-    original_counts <- NULL
-    original_libsize <- NULL
-    if (data_class == 'expt') {
-        design <- data[["design"]]
-        original_counts <- data[["original_counts"]]
-        original_libsizes <- data[["original_libsize"]]
-        data <- Biobase::exprs(data[["expressionset"]])
-    } else if (data_class == 'ExpressionSet') {
-        data <- Biobase::exprs(data)
-    } else if (data_class == 'list') {
-        data <- data$count_table
-        if (is.null(data)) {
-            stop("The list provided contains no count_table.")
-        }
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
-        data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
-    } else {
-        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
-    }
-    count_table <- as.matrix(data)
-    expt_design <- design
-    if (is.null(original_counts)) {
-        original_counts <- data
-    }
-    if (is.null(original_libsize)) {
-        original_libsize <- colSums(count_table)
-    }
-
-    do_batch <- function() {
-        if (batch != "raw") {
-            tmp_counts <- try(batch_counts(count_table, batch=batch, batch1=batch1, batch2=batch2, design=expt_design, ...))
-            if (class(tmp_counts) == 'try-error') {
-                warning("The batch_counts called failed.  Returning non-batch reduced data.")
-                batched_counts <- NULL
-                batch_performed <- "raw"
-            } else {
-                batched_counts <- tmp_counts
-                batch_performed <- batch
-                count_table <- batched_counts[["count_table"]]
-            }
-        }
-    }
-
-    batched_counts <- NULL
-    if (!is.numeric(batch_step)) {
-        batch_step <- 4
-    } else if (batch_step > 5 | batch_step < 1) {
-        batch_step <- 4
-    }
-    if (batch_step == 1) {
-        message("Performing batch correction at step 1.")
-        do_batch()
-    }
-    ## Step 1: Low-count filtering
-    lowfiltered_counts <- NULL
-    if (filter_low != FALSE) {
-        message(paste0("Performing low-count filter with option: ", filter_low))
-        ## All the other intermediates have a libsize slot, perhaps this should too
-        lowfiltered_counts <- lowfilter_counts(count_table, type=filter_low, p=p, A=A, k=k, cv_min=cv_min, cv_max=cv_max, thresh=2, min_samples=2, ...)
-        count_table <- lowfiltered_counts[["count_table"]]
-        lowfilter_performed <- filter_low
-    }
-
-    if (batch_step == 2) {
-        message("Performing batch correction at step 2.")
-        do_batch()
-    }
-    ## Step 2: Normalization
-    ## This section handles the various normalization strategies
-    ## If nothing is chosen, then the filtering is considered sufficient
-    normalized_counts <- NULL
-    if (norm != "raw") {
-        if (is.null(expt_design)) {
-            message("The experimental design is null.  Some normalizations will therefore fail.")
-            message("If you receive an error about an object with no dimensions, that is likely why.")
-        }
-        normalized_counts <- normalize_counts(count_table, expt_design, norm=norm, ...)
-        count_table <- normalized_counts[["count_table"]]
-        norm_performed <- norm
-    }
-
-    ## Step 3: Convert the data to (likely) cpm
-    ## The following stanza handles the three possible output types
-    ## cpm and rpkm are both from edgeR
-    ## They have nice ways of handling the log2 which I should consider
-    if (batch_step == 3) {
-        message("Performing batch correction at step 3.")
-        do_batch()
-    }
-    converted_counts <- NULL
-    if (convert != "raw") {
-        converted_counts <- convert_counts(count_table, convert=convert, annotations=annotations, fasta=fasta, entry_type=entry_type, ...)
-        count_table <- converted_counts[["count_table"]]
-        convert_performed <- convert
-    }
-
-    ## Step 4: Transformation
-    ## Finally, this considers whether to log2 the data or no
-    if (batch_step == 4) {
-        message("Performing batch correction at step 4.")
-        do_batch()
-    }
-    transformed_counts <- NULL
-    if (transform != "raw") {
-        message(paste0("Applying: ", transform, " transformation."))
-        transformed_counts <- transform_counts(count_table, transform=transform, ...)
-        ##transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
-        count_table <- transformed_counts[["count_table"]]
-        transform_performed <- transform
-    }
-
-    if (batch_step == 5) {
-        message("Performing batch correction at step 5.")
-        do_batch()
-    }
-
-    ## This list provides the list of operations performed on the data in order they were done.
-    actions <- list(
-        "lowfilter" = lowfilter_performed,
-        "normalization" = norm_performed,
-        "conversion" = convert_performed,
-        "batch" = batch_performed,
-        "transform" = transform_performed)
-    ## This list contains the intermediate count tables generated at each step
-    ## This may be useful if there is a problem in this process.
-    ## Each of them also contains the libsize at that point in the process.
-    intermediate_counts <- list(
-        "original" = original_counts, ## The original count table, should never change from iteration to iteration
-        "input" = as.matrix(data),  ## The input provided to this function, this may diverge from original
-        "lowfilter" = lowfiltered_counts,  ## After lowfiltering
-        "normalization" = normalized_counts,  ## and normalization
-        "conversion" = converted_counts,  ## and conversion
-        "batch" = batched_counts,  ## and batch correction
-        "transform" = transformed_counts)  ## and finally, transformation.
-
-    ret_list <- list(
-        "actions" = actions,
-        "intermediate_counts" = intermediate_counts,
-        "count_table" = count_table,  ## The final count table
-        "libsize" = colSums(count_table)  ## The final libsizes
-    )
-    return(ret_list)
-}
-
-#'   Replace the data of an expt with normalized data.
-#'
-#' @param expt   The original expt
-#' @param transform   The transformation desired (raw, log2, log, log10)
-#' @param norm   How to normalize the data (raw, quant, sf, upperquartile, tmm, rle)
-#' @param convert   Conversion to perform (raw, cpm, rpkm, cp_seq_m)
-#' @param batch   Batch effect removal tool to use (limma sva fsva ruv etc)
-#' @param filter_low   Filter out low sequences (cbcb, pofa, kofa, others?)
-#' @param annotations  used for rpkm, a df
-#' @param fasta  fasta file for cp_seq_m counting of oligos
-#' @param entry_type   for getting genelengths by feature type (rpkm or cp_seq_m)
-#' @param use_original   whether to use the backup data in the expt class
-#' @param batch1   experimental factor to extract first
-#' @param batch2   a second factor to remove (only with limma's removebatcheffect())
-#' @param thresh   for cbcb_lowfilter
-#' @param min_samples   for cbcb_lowfilter
-#' @param p   for genefilter's pofa
-#' @param A   for genefilter's pofa
-#' @param k   for genefilter's kofa
-#' @param cv_min   for genefilter's cv()
-#' @param cv_max  for genefilter's cv()
+#' @param expt Original expt.
+#' @param transform Transformation desired, usually log2.
+#' @param norm How to normalize the data? (raw, quant, sf, upperquartile, tmm, rle)
+#' @param convert Conversion to perform? (raw, cpm, rpkm, cp_seq_m)
+#' @param batch Batch effect removal tool to use? (limma sva fsva ruv etc)
+#' @param filter Filter out low/undesired features? (cbcb, pofa, kofa, others?)
+#' @param annotations Used for rpkm -- probably not needed as this is in fData now.
+#' @param fasta Fasta file for cp_seq_m counting of oligos.
+#' @param entry_type For getting genelengths by feature type (rpkm or cp_seq_m).
+#' @param use_original Use the backup data in the expt class?
+#' @param batch1 Experimental factor to extract first.
+#' @param batch2 Second factor to remove (only with limma's removebatcheffect()).
+#' @param batch_step From step 1-5, when should batch correction be applied?
+#' @param low_to_zero When log transforming, change low numbers (< 0) to 0 to avoid NaN?
+#' @param thresh Used by cbcb_lowfilter().
+#' @param min_samples Also used by cbcb_lowfilter().
+#' @param p Used by genefilter's pofa().
+#' @param A Also used by genefilter's pofa().
+#' @param k Used by genefilter's kofa().
+#' @param cv_min Used by genefilter's cv().
+#' @param cv_max Also used by genefilter's cv().
 #' @param ... more options
-#' @return a new expt object with normalized data and the original data saved as 'original_expressionset'
+#' @return Expt object with normalized data and the original data saved as 'original_expressionset'
 #' @seealso \pkg{genefilter} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
 #' @examples
 #' \dontrun{
 #' normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
-#'                          batch='raw', filter_low='pofa')
+#'                          batch='raw', filter='pofa')
 #' normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
-#'                                batch='sva', filter_low='pofa')
+#'                                batch='sva', filter='pofa')
 #' }
 #' @export
 normalize_expt <- function(expt, ## The expt class passed to the normalizer
     ## choose the normalization strategy
-    transform="raw", norm="raw", convert="raw", batch="raw", filter_low=FALSE,
+    transform="raw", norm="raw", convert="raw", batch="raw", filter=FALSE,
     ## annotations used for rpkm/cpseqm, original may be used to ensure double-normalization isn't performed.
     annotations=NULL, fasta=NULL, entry_type="gene", use_original=FALSE,
-    batch1="batch", batch2=NULL, ## extra parameters for batch correction
+    batch1="batch", batch2=NULL, batch_step=5, low_to_zero=FALSE, ## extra parameters for batch correction
     thresh=2, min_samples=2, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
     ...) {
     new_expt <- expt
     current_exprs <- expt[["expressionset"]]
+    if (filter == FALSE) {
+        filter <- "raw"
+    }
     if (is.null(new_expt[["original_expressionset"]])) {
         new_expt[["original_expressionset"]] = new_expt[["expressionset"]]
     } else {
@@ -269,8 +86,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
         if (norm != "raw") {
             type <- paste0(type, norm, '(')
         }
-        if (filter_low != FALSE) {
-            type <- paste0(type, 'low-filter(')
+        if (filter != "raw") {
+            type <- paste0(type, 'filter(')
         }
         type <- paste0(type, 'data')
         if (transform != 'raw') {
@@ -285,7 +102,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
         if (norm != "raw") {
             type <- paste0(type, ')')
         }
-        if (filter_low != FALSE) {
+        if (filter != "raw") {
             type <- paste0(type, ')')
         }
         message(type)
@@ -299,8 +116,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
  new_expt$best_libsize
 ")
     }
-    if (filter_low == FALSE) {
-        message("Filter low is false, this should likely be set to something, good
+    if (filter == "raw") {
+        message("Filter is false, this should likely be set to something, good
  choices include cbcb, kofa, pofa (anything but FALSE).  If you want this to
  stay FALSE, keep in mind that if other normalizations are performed, then the
  resulting libsizes are likely to be strange (potentially negative!)
@@ -341,9 +158,9 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     ## Having them as options to maintain is foolish
     normalized <- hpgl_norm(current_data, design=design, transform=transform,
                             norm=norm, convert=convert, batch=batch,
-                            batch1=batch1, batch2=batch2,
-                            filter_low=filter_low, annotations=annotations,
-                            fasta=fasta, thresh=thresh,
+                            batch1=batch1, batch2=batch2, low_to_zero=low_to_zero,
+                            filter=filter, annotations=annotations,
+                            fasta=fasta, thresh=thresh, batch_step=batch_step,
                             min_samples=min_samples, p=p, A=A, k=k,
                             cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
     final_libsize <- normalized[["libsize"]]
@@ -371,7 +188,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     ## new_expt$normalized$actions
     ## I am hoping this will prove a more direct place to access it and provide a chance to double-check that things match
     new_state <- list(
-        "lowfilter" = normalized[["actions"]][["lowfilter"]],
+        "filter" = normalized[["actions"]][["filter"]],
         "normalization" = normalized[["actions"]][["normalization"]],
         "conversion" = normalized[["actions"]][["conversion"]],
         "batch" = normalized[["actions"]][["batch"]],
@@ -384,8 +201,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     ## may get violated.
     if (!is.null(normalized[["intermediate_counts"]][["normalization"]][["libsize"]])) {
         new_expt[["best_libsize"]] <- normalized[["intermediate_counts"]][["normalization"]][["libsize"]]
-    } else if (!is.null(normalized[["intermediate_counts"]][["lowfilter"]][["libsize"]])) {
-        new_expt[["best_libsize"]] <- normalized[["intermediate_counts"]][["lowfilter"]][["libsize"]]
+    } else if (!is.null(normalized[["intermediate_counts"]][["filter"]][["libsize"]])) {
+        new_expt[["best_libsize"]] <- normalized[["intermediate_counts"]][["filter"]][["libsize"]]
     } else {
         new_expt[["best_libsize"]] <- NULL
     }
@@ -393,6 +210,216 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     new_expt[["norm_result"]] <- normalized
     new_expt[["expressionset"]] <- current_exprs
     return(new_expt)
+}
+
+#' Normalize a dataframe/expt, express it, and/or transform it
+#'
+#' There are many possible options to this function.  Refer to normalize_expt() for a more complete list.
+#'
+#' @param data Some data as a df/expt/whatever.
+#' @param ... I should put all those other options here
+#' @return edgeR's DGEList expression of a count table.  This seems to
+#' me to be the easiest to deal with.
+#' @seealso \link[edgeR]{cpm} \link[edgeR]{rpkm}
+#' \link{hpgl_rpkm} \link[DESeq2]{DESeqDataSetFromMatrix}
+#' \link[DESeq]{estimateSizeFactors} \link[edgeR]{DGEList} \link[edgeR]{calcNormFactors}
+#' @export
+#' @examples
+#' \dontrun{
+#' df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
+#' df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
+#' df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2',
+#'                        convert='rpkm')  ## Quantile, log2, rpkm
+#' count_table = df_ql2rpkm$counts
+#' }
+hpgl_norm <- function(data, ...) {
+    arglist <- list(...)
+    filter_performed <- FALSE
+    norm_performed <- "raw"
+    convert_performed <- "raw"
+    transform_performed <- "raw"
+    batch_performed <- "raw"
+    data_class <- class(data)[1]
+    original_counts <- NULL
+    original_libsize <- NULL
+    if (data_class == 'expt') {
+        design <- data[["design"]]
+        original_counts <- data[["original_counts"]]
+        original_libsizes <- data[["original_libsize"]]
+        data <- Biobase::exprs(data[["expressionset"]])
+    } else if (data_class == 'ExpressionSet') {
+        data <- Biobase::exprs(data)
+        design <- arglist[["design"]]
+    } else if (data_class == "list") {
+        data <- data[["count_table"]]
+        design <- arglist[["design"]]
+        if (is.null(data)) {
+            stop("The list provided contains no count_table.")
+        }
+    } else if (data_class == "matrix" | data_class == "data.frame") {
+        data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        design <- arglist[["design"]]
+    } else {
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    }
+    count_table <- as.matrix(data)
+    expt_design <- design
+    if (is.null(original_counts)) {
+        original_counts <- data
+    }
+    if (is.null(original_libsize)) {
+        original_libsize <- colSums(count_table)
+    }
+
+    batched_counts <- NULL
+    batch_step <- 5
+    if (!is.null(arglist[["batch_step"]])) {
+        batch_step <- arglist[["batch_step"]]
+    }
+    if (!is.numeric(batch_step)) {
+        batch_step <- 5
+    } else if (batch_step > 5 | batch_step < 0) {
+        batch_step <- 5
+    }
+    do_batch <- function(count_table, design=design, ...) {
+        batch <- "raw"
+        if (!is.null(arglist[["batch"]])) {
+            batch <- arglist[["batch"]]
+        }
+        if (batch == "raw") {
+            message(paste0("Step ", arglist[["batch_step"]], ": not doing batch correction."))
+        } else {
+            message(paste0("Step ", arglist[["batch_step"]], ": doing batch correction with ", arglist[["batch"]],"."))
+            tmp_counts <- try(batch_counts(count_table, design=design, ...))
+            if (class(tmp_counts) == 'try-error') {
+                warning("The batch_counts call failed.  Returning non-batch reduced data.")
+                batched_counts <- NULL
+                batch_performed <- "raw"
+            } else {
+                batched_counts <- tmp_counts
+                batch_performed <- batch
+                count_table <- batched_counts[["count_table"]]
+            }
+        }
+        return(count_table)
+    }
+
+    if (batch_step == 1) {
+        count_table <- do_batch(count_table, ...)
+    }
+
+    ## Step 1: count filtering
+    filter <- FALSE
+    if (!is.null(arglist[["filter"]])) {
+        filter <- arglist[["filter"]]
+    }
+    filtered_counts <- NULL
+    if (filter == FALSE | filter == "raw") {
+        message("Step 1: not doing count filtering.")
+    } else {
+        message(paste0("Step 1: performing count filter with option: ", filter))
+        ## All the other intermediates have a libsize slot, perhaps this should too
+        filtered_counts <- filter_counts(count_table, ...)
+        count_table <- filtered_counts[["count_table"]]
+        filter_performed <- filter
+    }
+
+    if (batch_step == 2) {
+        count_table <- do_batch(count_table, ...)
+    }
+    ## Step 2: Normalization
+    ## This section handles the various normalization strategies
+    ## If nothing is chosen, then the filtering is considered sufficient
+    norm <- "raw"
+    if (!is.null(arglist[["norm"]])) {
+        norm <- arglist[["norm"]]
+    }
+    normalized_counts <- NULL
+    if (norm == "raw") {
+        message("Step 2: not normalizing the data.")
+    } else {
+        message(paste0("Step 2: normalizing the data with ", arglist[["norm"]], "."))
+        if (is.null(expt_design)) {
+            message("The experimental design is null.  Some normalizations will therefore fail.")
+            message("If you receive an error about an object with no dimensions, that is likely why.")
+        }
+        normalized_counts <- normalize_counts(count_table, ...)
+        count_table <- normalized_counts[["count_table"]]
+        norm_performed <- norm
+    }
+
+    ## Step 3: Convert the data to (likely) cpm
+    ## The following stanza handles the three possible output types
+    ## cpm and rpkm are both from edgeR
+    ## They have nice ways of handling the log2 which I should consider
+    if (batch_step == 3) {
+        count_table <- do_batch(count_table, ...)
+    }
+    converted_counts <- NULL
+    convert <- "raw"
+    if (!is.null(arglist[["convert"]])) {
+        convert <- arglist[["convert"]]
+    }
+    if (convert == "raw") {
+        message("Step 3: not converting the data.")
+    } else {
+        message(paste0("Step 3: converting the data with ", arglist[["convert"]], "."))
+        converted_counts <- convert_counts(count_table, ...)
+        count_table <- converted_counts[["count_table"]]
+        convert_performed <- convert
+    }
+
+    ## Step 4: Transformation
+    ## Finally, this considers whether to log2 the data or no
+    if (batch_step == 4) {
+        count_table <- do_batch(count_table, ...)
+    }
+    transformed_counts <- NULL
+    transform <- "raw"
+    if (!is.null(arglist[["transform"]])) {
+        transform <- arglist[["transform"]]
+    }
+    if (transform == "raw") {
+        message("Step 4: not transforming the data.")
+    } else {
+        message(paste0("Step 4: transforming the data with ", arglist[["transform"]], "."))
+        transformed_counts <- transform_counts(count_table, ...)
+        ##transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
+        count_table <- transformed_counts[["count_table"]]
+        transform_performed <- transform
+    }
+
+    if (batch_step == 5) {
+        message("Performing batch correction at step 5.")
+        count_table <- do_batch(count_table, ...)
+    }
+
+    ## This list provides the list of operations performed on the data in order they were done.
+    actions <- list(
+        "filter" = filter_performed,
+        "normalization" = norm_performed,
+        "conversion" = convert_performed,
+        "batch" = batch_performed,
+        "transform" = transform_performed)
+    ## This list contains the intermediate count tables generated at each step
+    ## This may be useful if there is a problem in this process.
+    ## Each of them also contains the libsize at that point in the process.
+    intermediate_counts <- list(
+        "original" = original_counts, ## The original count table, should never change from iteration to iteration
+        "input" = as.matrix(data),  ## The input provided to this function, this may diverge from original
+        "filter" = filtered_counts,  ## After filtering
+        "normalization" = normalized_counts,  ## and normalization
+        "conversion" = converted_counts,  ## and conversion
+        "batch" = batched_counts,  ## and batch correction
+        "transform" = transformed_counts)  ## and finally, transformation.
+
+    ret_list <- list(
+        "actions" = actions,
+        "intermediate_counts" = intermediate_counts,
+        "count_table" = count_table,  ## The final count table
+        "libsize" = colSums(count_table)  ## The final libsizes
+    )
+    return(ret_list)
 }
 
 ## EOF

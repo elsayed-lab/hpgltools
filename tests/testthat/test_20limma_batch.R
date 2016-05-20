@@ -83,7 +83,6 @@ test_that("Do cbcbSEQ and hpgltools agree on the eBayes result?", {
     expect_equal(cbcb_eb$t[[2]], hpgl_eb$t[[2]])
     expect_equal(cbcb_eb$p.value[[1]], hpgl_eb$p.value[[1]])
     expect_equal(cbcb_eb$p.value[[2]], hpgl_eb$p.value[[2]])
-    message("The eBayes results include the previous fits and some more slots.  I only tested a few here.\n")
 })
 
 cbcb_result_reordered <- cbcb_table[order(cbcb_table[["logFC"]]),]

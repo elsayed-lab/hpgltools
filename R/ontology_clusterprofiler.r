@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May 17 21:25:38 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 19 22:00:52 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Perform the array of analyses in the 2016-04 version of clusterProfiler
 #'
@@ -215,7 +215,7 @@ simple_cp_enricher <- function(sig_genes, de_table, goids_df=NULL) {
 #' @return GO2EG data structure created, probably don't save this, it is entirely too big.
 #' @examples
 #' \dontrun{
-#'  go2eg <- check_clusterprofiler(gff, gomap)
+#'  go2eg <- check_clusterprofiler(gff, goids_df)
 #'  rm(go2eg)
 #' }
 #' @export
@@ -236,13 +236,12 @@ check_clusterprofiler <- function(gff='test.gff', goids_df=NULL) {
     gomapping_test <- suppressWarnings(try(load("GO2EG.rda"), silent=TRUE))
     if (class(gomapping_test) == 'try-error') {
         message("simple_clus(): Generating GO mapping data.")
-        gomap <- goids_df[,c(1,2)]
+        gomap <- goids_df[, c(1,2)]
         colnames(gomap) <- c("entrezgene", "go_accession")
         ## It turns out that the author of clusterprofiler reversed these fields...
         ## Column 1 must be GO ID, column 2 must be gene accession.
-        gomap <- gomap[,c("go_accession","entrezgene")]
-
-        log <- capture.output(type="output", { clusterProfiler::buildGOmap(gomap) })
+        gomap <- gomap[, c("go_accession","entrezgene")]
+        clusterProfiler::buildGOmap(gomap)
     } else {
         message("Using GO mapping data located in GO2EG.rda")
     }

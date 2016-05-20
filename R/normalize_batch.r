@@ -1,4 +1,4 @@
-## Time-stamp: <Sat May 14 13:29:09 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 19 22:10:07 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
 #'
@@ -197,6 +197,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
 #' @param mod Factor of conditions.
 #' @param noScale The normal 'scale' option squishes the data too much, so this defaults to TRUE.
 #' @param prior.plots Print out prior plots?
+#' @param ... Extra options are passed to arglist
 #' @return Df of batch corrected data
 #' @seealso \pkg{sva} \code{\link[sva]{ComBat}}
 #' @examples
@@ -204,7 +205,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
 #' df_new = hpgl_combatMod(df, batches, model)
 #' }
 #' @export
-hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE) {
+hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE, ...) {
+    arglist <- list(...)
     par.prior <- TRUE
     numCovs <- NULL
     mod <- cbind(mod, batch)

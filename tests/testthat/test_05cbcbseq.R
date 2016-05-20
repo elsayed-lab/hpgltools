@@ -1,9 +1,9 @@
-require.auto("kokrah/cbcbSEQ")
-cbcb <- s_p(library(cbcbSEQ))
 library(testthat)
 library(hpgltools)
 library(pasilla)
 data(pasillaGenes)
+num_installed <- require.auto("kokrah/cbcbSEQ")
+cbcb <- s_p(library(cbcbSEQ))
 
 context("Compare cbcbSEQ output to hpgltools.")
 
@@ -44,13 +44,13 @@ library(edgeR)
 cbcb_qcpm <- edgeR::cpm(cbcb_qcpm)
 
 cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
-hpgl_quantile <- hpgl_norm(pasilla_expt, norm="quant")
+hpgl_quantile <- s_p(hpgl_norm(pasilla_expt, norm="quant"))$result
 hpgl_quantile <- hpgl_quantile$count_table
 test_that("Are quantiles identical?", {
     expect_equal(cbcb_quantile, hpgl_quantile)
 })
 
-hpgl_qcpm <- hpgl_norm(pasilla_expt, norm="quant", convert="edgecpm", filter_low=FALSE)
+hpgl_qcpm <- s_p(hpgl_norm(pasilla_expt, norm="quant", convert="edgecpm", filter_low=FALSE))$result
 hpgl_qcpm <- hpgl_qcpm$count_table
 test_that("Are cpm conversions identical?", {
     expect_equal(cbcb_qcpm, hpgl_qcpm)

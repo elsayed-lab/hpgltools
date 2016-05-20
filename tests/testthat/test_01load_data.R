@@ -5,6 +5,12 @@ data(pasillaGenes)
 
 context("Does pasilla load into hpgltools?")
 
+## Try loading some annotation information for this species.
+gene_info <- s_p(get_biomart_annotations(species="dmelanogaster"))$result
+info_idx <- gene_info[["Type"]] == "protein_coding"
+gene_info <- gene_info[info_idx, ]
+rownames(gene_info) <- make.names(gene_info$geneID, unique=TRUE)
+
 ## This section is copy/pasted to all of these tests, that is dumb.
 datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
 ## Load the counts and drop super-low counts genes
@@ -21,11 +27,18 @@ colnames(metadata) <- c("condition", "batch")
 metadata$sampleid <- rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata, savefile="pasilla")
+pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata, savefile="pasilla", gene_info=gene_info)
 count_data <- as.matrix(counts)
 hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(count_data, hpgl_data)
+})
+
+hpgl_annotations <- Biobase::fData(pasilla_expt$expressionset)
+expected_lengths <- c(3990, 993, 4863, 1620, 1950, 1317)
+actual_lengths <- head(hpgl_annotations[["length"]])
+test_that("Was the annotation information imported into the expressionset?", {
+    expect_equal(expected_lengths, actual_lengths)
 })
 
 ## Test that the expt has a design which makes sense.

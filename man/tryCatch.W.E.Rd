@@ -6,6 +6,9 @@
 \usage{
 tryCatch.W.E(expr)
 }
+\arguments{
+\item{expr}{an expression to try}
+}
 \value{
 a list with 'value' and 'warning', where
  'value' may be an error caught.

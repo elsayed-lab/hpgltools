@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 19 18:11:16 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Thu May 19 21:19:48 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -793,11 +793,11 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
         extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")
         eval_strings <- append(eval_strings, extra_contrasts)
     }
-##    for (f in 1:length(eval_strings)) {
-##        eval_name = names(eval_strings[f])
-##        print(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
-##        eval(parse(text=as.character(eval_strings[f])))
-##    }
+    ## for (f in 1:length(eval_strings)) {
+    ##     eval_name = names(eval_strings[f])
+    ##     print(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
+    ##     eval(parse(text=as.character(eval_strings[f])))
+    ## }
     ## Now we have bob=(somestuff) in memory in R's environment
     ## Add them to makeContrasts()
     contrast_string <- paste("all_pairwise_contrasts = limma::makeContrasts(")
@@ -1000,6 +1000,21 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, semantic=c('mucin'
     return(de_list)
 }
 
+#' Given a DE table with fold changes and p-values, show how 'significant' changes with changing cutoffs.
+#'
+#' Sometimes one might want to know how many genes are deemed significant while shifting the bars
+#' which define significant.  This provides that metrics as a set of tables of numbers of
+#' significant up/down genes when p-value is held constant, as well as number when fold-change is
+#' held constant.
+#'
+#' @param table DE table to examine.
+#' @param p_column Column in the DE table defining the changing p-value cutoff.
+#' @param fc_column Column in the DE table defining the changing +/- log fold change.
+#' @param bins Number of incremental changes in p-value/FC to examine.
+#' @param constant_p When plotting changing FC, where should the p-value be held?
+#' @param constant_fc When plotting changing p, where should the FC be held?
+#' @return Plots and dataframes describing the changing definition of 'significant.'
+#' @export
 plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_logfc", bins=100, constant_p=0.05, constant_fc=0) {
     fc_column="limma_logfc"
     p_column="limma_adjp"
