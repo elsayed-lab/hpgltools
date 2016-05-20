@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 20 00:01:03 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 20 15:42:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot out 2 coefficients with respect to one another from deseq2.
 #'
@@ -26,7 +26,7 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     message("This can do comparisons among the following columns in the deseq2 result:")
-    thenames <- names(output$coefficients)
+    thenames <- names(output[["coefficients"]])
     message(thenames)
     xname <- ""
     yname <- ""
@@ -41,27 +41,27 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
         yname <- y
     }
     message(paste0("Actually comparing ", xname, " and ", yname, "."))
-    first_df <- output$coefficients[[xname]]
-    first_df$delta <- log2(first_df$baseMean) + first_df$log2FoldChange
-    second_df <- output$coefficients[[yname]]
-    second_df$delta <- log2(second_df$baseMean) + second_df$log2FoldChange
-    first_col <- first_df[,c("baseMean","log2FoldChange","delta")]
+    first_df <- output[["coefficients"]][[xname]]
+    first_df[["delta"]] <- log2(first_df[["baseMean"]]) + first_df[["log2FoldChange"]]
+    second_df <- output[["coefficients"]][[yname]]
+    second_df[["delta"]] <- log2(second_df[["baseMean"]]) + second_df[["log2FoldChange"]]
+    first_col <- first_df[, c("baseMean", "log2FoldChange", "delta")]
     colnames(first_col) <- c("mean.1", "fc.1", xname)
-    second_col <- second_df[,c("baseMean","log2FoldChange","delta")]
+    second_col <- second_df[, c("baseMean", "log2FoldChange", "delta")]
     colnames(second_col) <- c("mean.2", "fc.2", yname)
     coefficient_df <- merge(first_col, second_col, by="row.names")
-    rownames(coefficient_df) <- coefficient_df$Row.names
+    rownames(coefficient_df) <- coefficient_df[["Row.names"]]
     coefficient_df <- coefficient_df[-1]
-    coefficient_df <- coefficient_df[,c(xname, yname, "mean.1", "mean.2")]
+    coefficient_df <- coefficient_df[, c(xname, yname, "mean.1", "mean.2")]
     coefficient_df[is.na(coefficient_df)] <- 0
     maxvalue <- max(coefficient_df) + 1.0
     plot <- plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
                                 tooltip_data=tooltip_data, base_url=base_url)
-    plot$scatter <- plot$scatter +
+    plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
-    plot$df <- coefficient_df
+    plot[["df"]] <- coefficient_df
     return(plot)
 }
 
@@ -109,7 +109,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     arglist <- list(...)
     message("Starting DESeq2 pairwise comparisons.")
     input_class <- class(input)[1]
-    if (input_class == 'expt') {
+    if (input_class == "expt") {
         design <- input[["design"]]
         conditions <- input[["conditions"]]
         batches <- input[["batches"]]
@@ -251,20 +251,20 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             result <- result[order(result$log2FoldChange),]
             colnames(result) <- c("baseMean","logFC","lfcSE","stat","P.Value","adj.P.Val")
             ## From here on everything is the same.
-            result[is.na(result$P.Value), "P.Value"] = 1 ## Some p-values come out as NA
-            result[is.na(result$adj.P.Val), "adj.P.Val"] = 1 ## Some p-values come out as NA
-            result$baseMean <- signif(x=as.numeric(result$baseMean), digits=4)
-            result$logFC <- signif(x=as.numeric(result$logFC), digits=4)
-            result$lfcSE <- signif(x=as.numeric(result$lfcSE), digits=4)
-            result$stat <- signif(x=as.numeric(result$stat), digits=4)
-            result$P.Value <- signif(x=as.numeric(result$P.Value), digits=4)
-            result$adj.P.Val <- signif(x=as.numeric(result$adj.P.Val), digits=4)
+            result[is.na(result[["P.Value"]]), "P.Value"] = 1 ## Some p-values come out as NA
+            result[is.na(result[["adj.P.Val"]]), "adj.P.Val"] = 1 ## Some p-values come out as NA
+            result[["baseMean"]] <- signif(x=as.numeric(result[["baseMean"]]), digits=4)
+            result[["logFC"]] <- signif(x=as.numeric(result[["logFC"]]), digits=4)
+            result[["lfcSE"]] <- signif(x=as.numeric(result[["lfcSE"]]), digits=4)
+            result[["stat"]] <- signif(x=as.numeric(result[["stat"]]), digits=4)
+            result[["P.Value"]] <- signif(x=as.numeric(result[["P.Value"]]), digits=4)
+            result[["adj.P.Val"]] <- signif(x=as.numeric(result[["adj.P.Val"]]), digits=4)
 
             result$qvalue <- tryCatch(
             {
                 ## Nested expressions are way too confusing for me
-                ttmp <- as.numeric(result$P.Value)
-                ttmp <- qvalue::qvalue(ttmp)$qvalues
+                ttmp <- as.numeric(result[["P.Value"]])
+                ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
                 signif(x=ttmp, digits=4)
                 ## as.numeric(format(signif(qvalue::qvalue(as.numeric(result$P.Value), robust=TRUE)$qvalues, 4), scientific=TRUE))
             },
@@ -295,7 +295,8 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     for (c in 1:(length(condition_levels))) {
         coef <- condition_levels[c]
         coef_name <- paste0("condition", coef)
-        coefficient_list[[coef]] <- as.data.frame(DESeq2::results(deseq_run, contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
+        coefficient_list[[coef]] <- as.data.frame(
+            DESeq2::results(deseq_run, contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
         message(paste0("Collected coefficients for: ", coef))
         ## coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
     }

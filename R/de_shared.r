@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 19 21:19:48 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 20 18:01:24 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
@@ -312,9 +312,9 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
                 summary <- combined[["summary"]]
                 plt <- NULL
                 if (isTRUE(do_inverse)) {
-                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL))[["scatter"]]
+                    plt <- limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL)[["scatter"]]
                 } else {
-                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
+                    plt <- limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL)[["scatter"]]
                 }
             } ## End checking that we found the numerator/denominator
             else {
@@ -343,7 +343,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             splitted <- strsplit(x=tab, split="_vs_")
             xname <- splitted[[1]][1]
             yname <- splitted[[1]][2]
-            plots[[tab]] <- suppressMessages(limma_coefficient_scatter(limma, x=xname, y=yname, gvis_filename=NULL))[["scatter"]]
+            plots[[tab]] <- limma_coefficient_scatter(limma, x=xname, y=yname, gvis_filename=NULL)[["scatter"]]
         }
 
         ## Or a single specific table
@@ -366,7 +366,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
         table_names[[a]] <- combined[["summary"]][["table"]]
         xname <- splitted[[1]][1]
         yname <- splitted[[1]][2]
-        plots[[name]] <- suppressMessages(limma_coefficient_scatter(limma, x=xname, y=yname))[["scatter"]]
+        plots[[name]] <- limma_coefficient_scatter(limma, x=xname, y=yname)[["scatter"]]
     } else {
         stop("I don't know what to do with your specification of tables to keep.")
     }
