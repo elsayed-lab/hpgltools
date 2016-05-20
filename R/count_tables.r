@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 19 21:53:14 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 20 19:01:54 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -257,15 +257,17 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL,
         sample_definitions[["file"]] <- "null"
     }
 
-    meta_frame <- data.frame(
-        "sample" = as.character(sample_definitions[, "sampleid"]),
-        "condition" = as.character(sample_definitions[, "condition"]),
-        "batch" = as.character(sample_definitions[, "batch"]),
-        "counts" = sample_definitions[, "file"],
-        "intercounts" = sample_definitions[, "intercounts"])
+##    meta_frame <- data.frame(
+##        "sample" = as.character(sample_definitions[["sampleid"]]),
+##        "condition" = as.character(sample_definitions[["condition"]]),
+##        "batch" = as.character(sample_definitions[["batch"]]),
+##        "counts" = sample_definitions[["file"]],
+##        "intercounts" = sample_definitions[["intercounts"]])
 
     requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
-    metadata <- methods::new("AnnotatedDataFrame", meta_frame)
+    ##    metadata <- methods::new("AnnotatedDataFrame", meta_frame)
+    metadata <- methods::new("AnnotatedDataFrame", sample_definitions)
+    ## FIXME:  ADD SOMETHING HERE TO MAKE CERTAIN THE SAMPLE ORDERS ARE MAINTAINED!!!
     Biobase::sampleNames(metadata) <- colnames(all_count_matrix)
     feature_data <- methods::new("AnnotatedDataFrame", final_annotations)
     Biobase::featureNames(feature_data) <- rownames(all_count_matrix)
