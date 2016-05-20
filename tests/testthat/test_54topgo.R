@@ -32,16 +32,17 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     tp_result <- s_p(simple_topgo(sig_genes, gff=gff_file, goids_df=dmel_ontologies))$result
     tp_trees <- s_p(topgo_trees(tp_result))$result
 
-    expected_tp_mf <- c("GO:0004252", "GO:0008236", "GO:0017171", "GO:0008509", "GO:0004175", "GO:0022857")
-    actual_tp_mf <- head(tp_result$tables$mf_interesting$GO.ID)
-    expected_tp_bp <- c("GO:0006811", "GO:0055085", "GO:0055114", "GO:0030001", "GO:0006814", "GO:0009605")
-    actual_tp_bp <- head(tp_result$tables$bp_interesting$GO.ID)
-    expected_tp_cc <- c("GO:0016021", "GO:0031224", "GO:0016020", "GO:0044425", "GO:0005576", "GO:0044421")
-    actual_tp_cc <- head(tp_result$tables$cc_interesting$GO.ID)
-    expected_tree_mf_nodes <- c("GO:0001071", "GO:0003674", "GO:0003700", "GO:0003824", "GO:0004175", "GO:0004222")
-    actual_tree_mf_nodes <-  head(tp_trees$mf_fisher_nodes$dag@nodes)
-    expected_tp_mfp <- c("GO:0004252", "GO:0008236", "GO:0017171", "GO:0008509", "GO:0004175", "GO:0022857")
-    actual_tp_mfp <- head(tp_result$pvalue_plots$mfp_plot_over$data$GO.ID)
+    ## There is some run-to-run variability in these searches.
+    expected_tp_mf <- c("GO:0004252", "GO:0008236", "GO:0017171")
+    actual_tp_mf <- head(tp_result$tables$mf_interesting$GO.ID, n=3)
+    expected_tp_bp <- c("GO:0006811", "GO:0055085", "GO:0055114")
+    actual_tp_bp <- head(tp_result$tables$bp_interesting$GO.ID, n=3)
+    expected_tp_cc <- c("GO:0016021", "GO:0031224", "GO:0016020")
+    actual_tp_cc <- head(tp_result$tables$cc_interesting$GO.ID, n=3)
+    expected_tree_mf_nodes <- c("GO:0001071", "GO:0003674", "GO:0003700")
+    actual_tree_mf_nodes <-  head(tp_trees$mf_fisher_nodes$dag@nodes, n=3)
+    expected_tp_mfp <- c("GO:0004252", "GO:0008236", "GO:0017171")
+    actual_tp_mfp <- head(tp_result$pvalue_plots$mfp_plot_over$data$GO.ID, n=3)
 
     test_that("Are the topGO interesting results as expected?", {
         expect_equal(expected_tp_mf, actual_tp_mf)
