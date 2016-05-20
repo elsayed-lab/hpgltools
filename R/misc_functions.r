@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 19 15:32:50 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 20 18:19:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' png() shortcut
 #'
@@ -419,14 +419,16 @@ gff2df <- function(gff, type=NULL) {
     success <- FALSE
     ## First try gtf annotations
 
-    attempts <- c("rtracklayer::import.gff(gff, format='gtf')",
-                  "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
+    attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
                   "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE)",
                   "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE)",
                   "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE)",
+                  "rtracklayer::import.gff(gff, format='gtf')",
                   "rtracklayer::import.gff(gff)"
                   )
-    for (attempt in attempts) {
+    for (att in 1:length(attempts)) {
+        message(paste0("Trying attempt: ", attempts[[att]]))
+        attempt <- attempts[[att]]
         eval_string <- paste0("annotations <- try(", attempt, ")")
         eval(parse(text=eval_string))
         if (class(annotations) == "try-error") {
