@@ -3,22 +3,21 @@ library(hpgltools)
 
 context("Do the combined differential expression searches work?")
 
-deseq <- new.env()
-edger <- new.env()
-limma <- new.env()
-basic <- new.env()
-
-load("de_deseq.rda", envir=deseq)
-load("de_edger.rda", envir=edger)
-load("de_limma.rda", envir=limma)
-load("de_basic.rda", envir=basic)
-
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-normalized_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
-hpgl_result <- s_p(all_pairwise(normalized_expt, model_batch=TRUE))$result
+deseq <- new.env()
+load("de_deseq.rda", envir=deseq)
+edger <- new.env()
+load("de_edger.rda", envir=edger)
+limma <- new.env()
+load("de_limma.rda", envir=limma)
+basic <- new.env()
+load("de_basic.rda", envir=basic)
+
+normalized_expt <- normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm")
+hpgl_result <- all_pairwise(normalized_expt, model_batch=TRUE)
 
 previous_deseq <- deseq$hpgl_deseq$all_tables[["untreated_vs_treated"]]
 previous_edger <- edger$hpgl_edger$all_tables[["untreated_vs_treated"]]

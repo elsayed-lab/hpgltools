@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 19 23:58:41 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 20 21:29:20 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
@@ -78,7 +78,11 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
             type <- paste0(type, transform, '(')
         }
         if (batch != "raw") {
-            type <- paste0(type, 'batch-correct(')
+            if (isTRUE(batch)) {
+                type <- paste0(type, 'batch-correct(')
+            } else {
+                type <- paste0(type, batch, '(')
+            }
         }
         if (convert != "raw") {
             type <- paste0(type, convert, '(')
@@ -87,7 +91,11 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
             type <- paste0(type, norm, '(')
         }
         if (filter != "raw") {
-            type <- paste0(type, 'filter(')
+            if (isTRUE(filter)) {
+                type <- paste0(type, 'filter(')
+            } else {
+                type <- paste0(type, filter, '(')
+            }
         }
         type <- paste0(type, 'data')
         if (transform != 'raw') {
@@ -209,6 +217,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     ## limma should probably use this
     new_expt[["norm_result"]] <- normalized
     new_expt[["expressionset"]] <- current_exprs
+    current_notes <- paste0(new_expt[["notes"]], "Normalized with ", type, " at ", date(), ".\n")
+    new_expt[["notes"]] <- toString(current_notes)
     return(new_expt)
 }
 
@@ -234,7 +244,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 #' }
 hpgl_norm <- function(data, ...) {
     arglist <- list(...)
-    filter_performed <- FALSE
+    filter_performed <- "raw"
     norm_performed <- "raw"
     convert_performed <- "raw"
     transform_performed <- "raw"
@@ -281,6 +291,7 @@ hpgl_norm <- function(data, ...) {
     } else if (batch_step > 5 | batch_step < 0) {
         batch_step <- 5
     }
+
     do_batch <- function(count_table, design=design, ...) {
         batch <- "raw"
         if (!is.null(arglist[["batch"]])) {
@@ -293,11 +304,11 @@ hpgl_norm <- function(data, ...) {
             tmp_counts <- try(batch_counts(count_table, design=design, ...))
             if (class(tmp_counts) == 'try-error') {
                 warning("The batch_counts call failed.  Returning non-batch reduced data.")
-                batched_counts <- NULL
+                batched_counts <<- NULL
                 batch_performed <- "raw"
             } else {
                 batched_counts <- tmp_counts
-                batch_performed <- batch
+                batch_performed <<- batch
                 count_table <- batched_counts[["count_table"]]
             }
         }
@@ -317,6 +328,9 @@ hpgl_norm <- function(data, ...) {
     if (filter == FALSE | filter == "raw") {
         message("Step 1: not doing count filtering.")
     } else {
+        if (isTRUE(filter)) {
+            filter <- "cbcb"
+        }
         message(paste0("Step 1: performing count filter with option: ", filter))
         ## All the other intermediates have a libsize slot, perhaps this should too
         filtered_counts <- filter_counts(count_table, ...)

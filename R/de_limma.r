@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 20 16:08:10 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Fri May 20 21:53:16 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot out 2 coefficients with respect to one another from limma.
 #'
@@ -290,7 +290,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     fun_model <- NULL
     fun_int_model <- NULL
     if (isTRUE(model_cond) & isTRUE(model_batch)) {
-        if (class(condbatch_model) == 'try-error') {
+        if (class(condbatch_model) == "try-error") {
             message("The condition+batch model failed.  Does your experimental design support both condition and batch?")
             message("Using only a conditional model.")
             fun_model <- cond_model
@@ -320,6 +320,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     if (!is.null(alt_model)) {
         fun_model <- alt_model
     }
+
     tmpnames <- colnames(fun_model)
     tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
     tmpnames <- gsub("-", "", tmpnames)

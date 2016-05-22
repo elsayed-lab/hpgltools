@@ -1,4 +1,4 @@
-## Time-stamp: <Thu May 19 13:02:25 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sat May 21 10:06:35 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Extract annotation information from biomart.
 #'
@@ -21,7 +21,7 @@
 get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                     host="dec2015.archive.ensembl.org",
                                     trymart="ENSEMBL_MART_ENSEMBL", include_lengths=TRUE) {
-    savefile <- "biomart_annotations.rda"
+    savefile <- paste0(species, "_biomart_annotations.rda")
     biomart_annotations <- NULL
     if (file.exists(savefile) & overwrite == FALSE) {
         fresh <- new.env()
@@ -108,7 +108,7 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
     secondtry <- paste0(species, secondtry)
     go_annotations <- NULL
 
-    savefile <- "go_annotations.rda"
+    savefile <- paste0(species, "_go_annotations.rda")
     if (!identical(FALSE, do_save)) {
         if (class(do_save) == "character") {
             savefile <- do_save
