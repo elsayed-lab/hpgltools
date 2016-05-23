@@ -1,4 +1,4 @@
-## Time-stamp: <Mon May 23 13:50:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 23 17:50:51 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -331,7 +331,7 @@ expt_subset <- function(expt, subset=NULL) {
         original_metadata <- Biobase::pData(original_expressionset)
     } else if (class(expt)[[1]] == "expt") {
         original_expressionset <- expt[["expressionset"]]
-        original_metadata <- original_expressionset[["design"]]
+        original_metadata <- Biobase::pData(expt[["expressionset"]])
     } else {
         stop("expt is neither an expt nor ExpressionSet")
     }

@@ -43,22 +43,17 @@ function and the genome annotations were loaded with gff2df().
 
 ```{r loading_data}
 library(hpgltools)
-data_file <- system.file("hpgltools.rda", package="hpgltools")
-load(data_file, envir=globalenv())
+data_file <- system.file("cdm_expt.rda", package="hpgltools")
+cdm <- new.env()
+load(data_file, envir=cdm)
 
 ls()
+
+expt <- create_expt(count_dataframe=cdm$cdm_counts, meta_dataframe=cdm$cdm_metadata, gene_info=cdm$gene_info)
 ## The gff information is in 'annotations'
 ## The experiment is in most_v0M1
 ## Here is the meta-data! (well, the first 6 lines anyway).
-knitr::kable(head(most_v0M1$definitions))
-
-## We can re-create the experiment using it:
-meta <- most_v0M1$definitions
-## This is a terrible thing to do, never do it outside of a demonstration!
-meta$batch <- gsub(pattern="b", replacement="a", x=meta$batch)
-counts <- Biobase::exprs(most_v0M1$expressionset)
-## Originally the meta-data was kept in a file: all_samples.csv
-expt <- create_expt(meta_dataframe=meta, count_dataframe=counts)
+knitr::kable(head(expt$design))
 summary(expt)
 ```
 
@@ -115,13 +110,15 @@ Once we have a smaller data set, we can more easily use PCA to see how
 the sample separate.
 
 ```{r subset_data}
-head(expt$definition)
+head(expt$design)
 ## elt stands for: "early/late in thy"
-elt <- expt_subset(expt, subset="(stage=='EL'|stage=='LL')&type=='WT'&grepl(pattern='_thy', x=condition)")
+batch_a <- expt_subset(expt, subset="batch=='a'")
+batch_b <- expt_subset(expt, subset="batch=='b'")
 
-elt_metrics <- graph_metrics(elt)
-elt_metrics$pcaplot
-head(elt_metrics$pcares)
+a_metrics <- graph_metrics(batch_a)
+a_metrics$pcaplot
+b_metrics <- graph_metrics(batch_b)
+b_metrics$pcaplot
 ```
 
 It is pretty obvious that the raw data is a bit jumbled according to
@@ -130,19 +127,20 @@ at all.
 
 ```{r normalize_subset}
 ## doing nothing to the data except log2 transforming it has a surprisingly large effect
-norm_test <- normalize_expt(elt, transform="log2")
+norm_test <- normalize_expt(expt, transform="log2")
 plot_pca(norm_test)$plot
+## Looks like 2 samples got switched
 ## a quantile normalization alone affect some, but not all of the data
-norm_test <- normalize_expt(elt, norm="quant")
+norm_test <- s_p(normalize_expt(expt, norm="quant"))$result
 plot_pca(norm_test)$plot
 ## cpm alone brings out some samples, too
-norm_test <- normalize_expt(elt, convert="cpm")
+norm_test <- s_p(normalize_expt(expt, convert="cpm"))$result
 plot_pca(norm_test)$plot
 ## low count filtering has some effect, too
-norm_test <- normalize_expt(elt, filter_low="pofa")
+norm_test <- s_p(normalize_expt(expt, filter_low="pofa"))$result
 plot_pca(norm_test)$plot
 ## how about if we mix and match methods?
-norm_test <- normalize_expt(elt, transform="log2", convert="cpm", norm="quant", batch="combat_scale", filter_low=TRUE, batch_step=4)
+norm_test <- s_p(normalize_expt(expt, transform="log2", convert="cpm", norm="quant", batch="combat_scale", filter_low=TRUE, batch_step=4, low_to_zero=TRUE))$result
 plot_pca(norm_test)$plot
 ## The different batch effect testing methods have a pretty widely ranging effect on the clustering
 ## play with them by changing the batch= parameter to:
