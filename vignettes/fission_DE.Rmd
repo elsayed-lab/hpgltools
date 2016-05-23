@@ -29,7 +29,7 @@ required to install hpgltools, the software it uses, and the fission data.
 ## install_github("elsayed-lab/hpgltools")
 library(hpgltools)
 require.auto("fission")
-s_p(library(fission))
+tt <- s_p(library(fission))
 tt <- data(fission)
 knitr::opts_knit$set(progress=TRUE, verbose=TRUE, error=TRUE,  fig.width=7, fig.height=7)
 ```
