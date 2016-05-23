@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 20 20:57:15 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Read a bunch of count tables and create a usable data frame from them.
 #'
 #' It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.

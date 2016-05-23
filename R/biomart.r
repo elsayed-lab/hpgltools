@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 21 10:06:35 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Extract annotation information from biomart.
 #'
 #' Biomart is an amazing resource of information, but using it is a bit annoying.  This function

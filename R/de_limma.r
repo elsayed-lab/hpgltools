@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 20 21:53:16 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Plot out 2 coefficients with respect to one another from limma.
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one

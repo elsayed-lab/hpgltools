@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 20 18:19:42 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' png() shortcut
 #'
 #' I hate remembering my options for png()

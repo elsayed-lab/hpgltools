@@ -1,5 +1,3 @@
-## Time-stamp: <Mon May 23 18:00:15 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Given a table of meta data, read it in for use by create_expt().
 #'
 #' Reads an experimental design in a few different formats in preparation for creating an expt.

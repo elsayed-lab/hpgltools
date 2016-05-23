@@ -1,4 +1,3 @@
-
 #' run the rGADEM suite
 #'
 #' This is another function I started but never had cause to finish

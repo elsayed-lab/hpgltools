@@ -1,6 +1,3 @@
-## Time-stamp: <Mon May 16 16:01:19 2016 Ashton Trey Belew (abelew@gmail.com)>
-## Most of the functions in here probably shouldn't be exported...
-
 #' Extract more easily readable information from a GOTERM datum.
 #'
 #' The output from the GOTERM/GO.db functions is inconsistent, to put it nicely.

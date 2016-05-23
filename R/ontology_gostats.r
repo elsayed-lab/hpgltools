@@ -1,5 +1,3 @@
-## Time-stamp: <Mon May 16 14:42:13 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Simplification function for gostats, in the same vein as those written for clusterProfiler,
 #' goseq, and topGO.
 #'

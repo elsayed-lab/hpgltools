@@ -1,6 +1,5 @@
-## Time-stamp: <Fri May 13 15:14:06 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' this a function scabbed from Hector and Kwame's cbcbSEQ
+#'
 #' It just does fast.svd of a matrix comprised of the matrix - rowMeans(matrix)
 #'
 #' @param data A data frame to decompose
@@ -21,6 +20,7 @@ makeSVD <- function (data) {
 }
 
 #' Compute variance of each principal component and how they correlate with batch and cond
+#'
 #' This was copy/pasted from cbcbSEQ
 #' https://github.com/kokrah/cbcbSEQ/blob/master/R/explore.R
 #'

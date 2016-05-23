@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 20 21:29:20 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## Note to self, @title and @description are not needed in roxygen
 ## comments, the first separate #' is the title, the second the
 ## description, the third is the long form description.  Then add in

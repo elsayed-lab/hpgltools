@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 20 18:01:24 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
 ## The null hypothesis is (H0): (infected == uninfected) || (infected == beads)

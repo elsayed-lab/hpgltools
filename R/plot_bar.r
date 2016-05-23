@@ -1,5 +1,3 @@
-## Time-stamp: <Wed May 18 13:22:11 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## plot_bar.r: Some useful bar plots, currently only library size
 
 #' Make a ggplot graph of library sizes.

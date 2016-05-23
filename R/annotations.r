@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 20 14:59:47 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## Everything in this was written by Keith, I stole it with his permission and incorporated it here.
 ## I might change a few function declarations in this: tbl_df
 ## for example is not included in any import declarations and so I will likely

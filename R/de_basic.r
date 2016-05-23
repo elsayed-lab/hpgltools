@@ -1,5 +1,3 @@
-## Time-stamp: <Thu May 12 16:02:09 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' The simplest possible differential expression method.
 #'
 #' Perform a pairwise comparison among conditions which takes
