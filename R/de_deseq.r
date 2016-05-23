@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 20 15:42:35 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun May 22 20:01:59 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot out 2 coefficients with respect to one another from deseq2.
 #'
@@ -143,10 +143,14 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                 if (input[["state"]][["filter"]] == "raw") {
                     message("DESeq2 demands raw data as input, reverting to the count filtered data.")
                     data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
+                    if (is.null(data)) {
+                        data <- input[["normalized"]][["intermediate_counts"]][["original"]]
+                    }
                 } else {
                     message("DESeq2 demands raw data as input, reverting to the original expressionset.")
                     data <- Biobase::exprs(input[["original_expressionset"]])
                 }
+
             } else {
                 message("The data should be suitable for deseq2.")
                 message("If deseq freaks out, check the state of the count table and ensure that it is in integer counts.")

@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 20 15:47:51 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun May 22 20:00:53 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Plot two coefficients with respect to one another from edgeR.
 #'
@@ -130,6 +130,9 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
                 if (input[["state"]][["filter"]] == "raw") {
                     message("EdgeR expects raw data as input, reverting to the count filtered data.")
                     data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
+                    if (is.null(data)) {
+                        data <- input[["normalized"]][["intermediate_counts"]][["original"]]
+                    }
                 } else {
                     message("EdgeR expects raw data as input, reverting to the original expressionset.")
                     data <- Biobase::exprs(input[["original_expressionset"]])

@@ -1,4 +1,4 @@
-## Time-stamp: <Tue May  3 13:53:43 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Sun May 22 18:06:49 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 ## The karyotype file is circos/data/5005_5448_karyotype.txt
 ## The 5005 genome is 1838562 nt. long (looking at reference/genbank/mgas_5005.gb)
@@ -141,23 +141,24 @@ circos_ideogram <- function(name='default', conf_dir='circos/conf', band_url=NUL
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the plus/minus information and the spacing between them.
 #' @export
-circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr='chr1',
+circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr="chr1",
                              outer=1.0, width=0.08, spacing=0.0) {
+    message("This function assumes an input table including the columns: 'start', 'stop', 'strand', and 'COGFun'")
     plus_cfg_file <- cfgout
     minus_cfg_file <- cfgout
     plus_cfg_file <- gsub(".conf$", "_plus_go.conf", plus_cfg_file)
     minus_cfg_file <- gsub(".conf$", "_minus_go.conf", minus_cfg_file)
-    go_plus <- as.data.frame(go_table[go_table$strand == "+",])
-    go_minus <- as.data.frame(go_table[go_table$strand == "-",])
-    go_plus$chr <- chr
-    go_minus$chr <- chr
+    go_table <- go_table[, c("start", "stop", "strand", "COGFun")]
+    go_plus <- as.data.frame(go_table[go_table[["strand"]] == "+",])
+    go_minus <- as.data.frame(go_table[go_table[["strand"]] == "-",])
+    go_plus[["chr"]] <- chr
+    go_minus[["chr"]] <- chr
     ##    go_plus = go_plus[,c(5,1,2,4)]
-    message("This function assumes an input go table including the columns: 'start', 'end', 'strand', and 'go'")
-    go_plus <- go_plus[,c("chr","start","end","go")]
+    go_plus <- go_plus[, c("chr","start","stop","COGFun")]
     ##go_minus = go_minus[,c(5,1,2,4)]
-    go_minus <- go_minus[,c("chr","start","end","go")]
-    go_plus$go <- paste0("value=", go_plus$go, "0")
-    go_minus$go <- paste0("value=", go_minus$go, "0")
+    go_minus <- go_minus[, c("chr","start","stop","COGFun")]
+    go_plus[["go"]] <- paste0("value=", go_plus[["COGFun"]], "0")
+    go_minus[["go"]] <- paste0("value=", go_minus[["COGFun"]], "0")
     data_prefix <- cfgout
     data_prefix <- gsub("/conf/", "/data/", data_prefix)
     data_prefix <- gsub(".conf$", "", data_prefix)
@@ -527,26 +528,28 @@ circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr='
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_tile <- function(df, cfgout="circos/conf/default.conf", colname="datum",
+circos_tile <- function(df, annot_df, cfgout="circos/conf/default.conf", colname="logFC",
                        chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
     ## because I am tired of mistyping something stupid.
-    if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) | is.null(df[[colname]])) {
+    full_table <- merge(df, annot_df, by.x="row.names", by.y="row.names")
+    full_table <- full_table[, c("start", "stop", colname)]
+    if (is.null(full_table[["start"]]) | is.null(full_table[["stop"]]) | is.null(rownames(full_table)) | is.null(full_table[[colname]])) {
         stop("This requires columns: start, end, rownames, and datum")
     }
     datum_cfg_file <- cfgout
     datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
     datum_cfg_file <- paste0(datum_cfg_file, "_", colname, "_tile.conf")
-    df$chr <- chr
-    df <- df[,c("chr","start","end", colname)]
+    full_table[["chr"]] <- chr
+    full_table <- full_table[,c("chr","start","stop", colname)]
     data_prefix <- cfgout
     data_prefix <- gsub("/conf/", "/data/", data_prefix)
     data_prefix <- gsub(".conf$", "", data_prefix)
     data_filename <- paste0(data_prefix, "_", colname, "_tile.txt")
     message(paste0("Writing data file: ", data_filename, " with the ", colname, " column."))
-    write.table(df, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
+    write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
     num_colors <- 1
     if (is.null(colors)) {
@@ -560,8 +563,7 @@ circos_tile <- function(df, cfgout="circos/conf/default.conf", colname="datum",
     inner <- outer - width
     data_cfg_out <- file(datum_cfg_file, open="w+")
     data_cfg_filename <- gsub("^circos/", "", datum_cfg_file)
-    data_file_string <- gsub("^circos/", "", data_filename)
-
+    data_relative_filename <- gsub(pattern="circos/", replacement="", x=data_filename)
     data_cfg_string <- sprintf("## This is a circos tile configuration stanza.
  <plot>
   type = tile
@@ -579,7 +581,7 @@ circos_tile <- function(df, cfgout="circos/conf/default.conf", colname="datum",
   r1 = %fr
   r0 = %fr
   <rules>
-", data_file_string, outer, inner)
+", data_relative_filename, outer, inner)
     cat(data_cfg_string, file=data_cfg_out, sep="")
     for (c in 1:num_colors) {
         red_component <- paste0("0x", substr(colors[[c]], 2, 3))
@@ -605,13 +607,14 @@ circos_tile <- function(df, cfgout="circos/conf/default.conf", colname="datum",
     master_cfg_out <- file(cfgout, open="a+")
     data_cfg_include <- data_cfg_filename
     data_cfg_include <- gsub("^circos/", "", data_cfg_include)
-    new_outer <- inner - spacing
-    master_cfg_string <- sprintf("## The tile ring for column:%s, extending from %sr to %sr
+    master_cfg_string <- sprintf("
+## The tile ring for %s
 <<include %s>>
-", colname, outer, new_outer, data_cfg_include)
+", colname, data_cfg_include)
     cat(master_cfg_string, file=master_cfg_out, sep="")
     close(master_cfg_out)
 
+    new_outer <- inner - spacing
     return(new_outer)
 }
 
@@ -636,30 +639,32 @@ circos_tile <- function(df, cfgout="circos/conf/default.conf", colname="datum",
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_heatmap <- function(df, cfgout="circos/conf/default.conf", colname="datum",
+circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", colname="logFC",
                           chr='chr1', colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
     ## because I am tired of mistyping something stupid.
-    if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) | is.null(df[[colname]])) {
-        stop("This requires columns: start, end, rownames, and datum")
+    full_table <- merge(df, annot_df, by.x="row.names", by.y="row.names")
+    full_table <- full_table[, c("start", "stop", colname)]
+    if (is.null(full_table[["start"]]) | is.null(full_table[["stop"]]) | is.null(rownames(full_table)) | is.null(full_table[[colname]])) {
+        stop("This requires columns: start, stop, rownames, and datum")
     }
     datum_cfg_file <- cfgout
     datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
     datum_cfg_file <- paste0(datum_cfg_file, "_", colname, "_heatmap.conf")
-    df$chr <- chr
-    df <- df[,c("chr","start","end", colname)]
+    full_table[["chr"]] <- chr
+    full_table <- full_table[, c("chr","start","stop", colname)]
     data_prefix <- cfgout
     data_prefix <- gsub("/conf/", "/data/", data_prefix)
     data_prefix <- gsub(".conf$", "", data_prefix)
     data_filename <- paste0(data_prefix, "_", colname, "_heatmap.txt")
     message(paste0("Writing data file: ", data_filename, " with the ", colname, " column."))
-    write.table(df, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
+    write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
     num_colors <- 1
     if (is.null(colors)) {
-        conditions <- levels(as.factor(df[[colname]]))
+        conditions <- levels(as.factor(full_table[[colname]]))
         num_colors <- length(conditions)
         colors <- suppressWarnings(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
         names(colors) <- conditions
@@ -669,18 +674,19 @@ circos_heatmap <- function(df, cfgout="circos/conf/default.conf", colname="datum
     inner <- outer - width
     data_cfg_out <- file(datum_cfg_file, open="w+")
     data_cfg_filename <- gsub("^circos/", "", datum_cfg_file)
+    data_relative_filename <- gsub(pattern="circos/", replacement="", x=data_filename)
     data_cfg_string <- sprintf("## This is a circos heatmap configuration stanza.
  <plot>
   type = heatmap
-  r1 = %fr
-  r0 = %fr
-  color = conf(plots, color_alt)
   file = %s
-  pattern = hline,vline  # Also solid
+##  pattern = hline,vline  # Also solid
   color_mapping = 0 ## also 1, 2
   min = 0
   max = 10
   stroke_thickness = 0
+  r1 = %fr
+  r0 = %fr
+##   color = conf(plots, color_alt)
 ##  layers = 1
 ##  layers_overflow = hide
 ##  margin = 0.00u
@@ -691,7 +697,7 @@ circos_heatmap <- function(df, cfgout="circos/conf/default.conf", colname="datum
 ##  stroke_color = black
 ##  color = black
 ##  fill_color = black
- </plot>", sep="")
+ </plot>", data_relative_filename, outer, inner)
     cat(data_cfg_string, file=data_cfg_out, sep="")
     close(data_cfg_out)
 
@@ -699,12 +705,14 @@ circos_heatmap <- function(df, cfgout="circos/conf/default.conf", colname="datum
     master_cfg_out <- file(cfgout, open="a+")
     data_cfg_include <- data_cfg_filename
     data_cfg_include <- gsub("^circos/", "", data_cfg_include)
-    new_outer <- inner - spacing
-    master_cfg_string <- sprintf("## The tile ring for column:%s, extending from %sr to %sr
+    master_cfg_string <- sprintf("
+## The tile ring for %s
 <<include %s>>
-", colname, outer, new_outer, data_cfg_include)
+", colname, data_cfg_include)
     cat(master_cfg_string, file=master_cfg_out, sep="")
     close(master_cfg_out)
+
+    new_outer <- inner - spacing
     return(new_outer)
 }
 
@@ -730,34 +738,36 @@ circos_heatmap <- function(df, cfgout="circos/conf/default.conf", colname="datum
 #' @param spacing Distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_hist <- function(df, cfgout="circos/conf/default.conf", colname="datum", chr='chr1',
+circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname="logFC", chr='chr1',
                        color="blue", fill_color="blue", outer=0.9, width=0.08, spacing=0.0) {
     ## I am going to have this take as input a data frame with genes as rownames
     ## starts, ends, and functional calls
     ## I will tell R to print out a suitable stanza for circos while I am at it
     ## because I am tired of mistyping something stupid.
-    if (is.null(df$start) | is.null(df$end) | is.null(rownames(df)) | is.null(df[[colname]])) {
+    full_table <- merge(df, annot_df, by.x="row.names", by.y="row.names")
+    full_table <- full_table[, c("start", "stop", colname)]
+    if (is.null(full_table[["start"]]) | is.null(full_table[["stop"]]) | is.null(rownames(full_table)) | is.null(full_table[[colname]])) {
         stop("This requires columns: start, end, rownames, and datum")
     }
     datum_cfg_file <- cfgout
     datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
     datum_cfg_file <- paste0(datum_cfg_file, "_", colname, "_hist.conf")
-    df$chr <- chr
-    df <- df[,c("chr","start","end", colname)]
+    full_table[["chr"]] <- chr
+    full_table <- full_table[, c("chr","start","stop", colname)]
     data_prefix <- cfgout
     data_prefix <- gsub("/conf/", "/data/", data_prefix)
     data_prefix <- gsub(".conf$", "", data_prefix)
     data_filename <- paste0(data_prefix, "_", colname, "_hist.txt")
     message(paste0("Writing data file: ", data_filename, " with the ", colname, " column."))
-    write.table(df, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
+    write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
     num_colors <- 1
-    if (is.null(colors)) {
-        conditions <- levels(as.factor(df$call))
-        num_colors <- length(conditions)
-        colors <- suppressWarnings(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
-        names(colors) <- conditions
-    }
+    ## if (is.null(colors)) {
+    ##     conditions <- levels(as.factor(df[["call"]]))
+    ##     num_colors <- length(conditions)
+    ##     colors <- suppressWarnings(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
+    ##     names(colors) <- conditions
+    ## }
 
     ## Now write the config stanza
     inner <- outer - width
@@ -826,8 +836,8 @@ CIRCOS=\"%s\"
 %%:\t%%.conf
 \t$(CIRCOS) -conf $< -outputfile $*.png && \t$(CIRCOS) -conf $< -outputfile $*.svg
 ", circos)
-    cat(makefile_string, file=out, sep="")
-    close(out)
+    cat(makefile_string, file=output, sep="")
+    close(output)
 
     make_target <- gsub(pattern="circos/conf/", replacement="", x=target)
     make_target_svg <- gsub(pattern="\\.conf", replacement="\\.svg", x=make_target)

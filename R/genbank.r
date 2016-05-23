@@ -5,6 +5,7 @@
 #'
 #' @param accession Accession to download and import
 #' @return List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
+#' @export
 gbk2txdb <- function(accession="AE009949") {
     gbk <- NULL
     if (file.exists(paste0(accession, ".gb"))) {
@@ -39,6 +40,7 @@ gbk2txdb <- function(accession="AE009949") {
 #'
 #' @param gbr TxDb object to poke at.
 #' @return Granges data
+#' @export
 gbk_annotations <- function(gbr) {
     chromosomes <- GenomeInfoDb::seqlevels(gbr)
     genes <- AnnotationDbi::keys(gbr)

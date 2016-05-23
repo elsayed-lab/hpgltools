@@ -35,7 +35,7 @@ test_that("Did orgdb give useful ID mappings?", {
 
 limma_result <- limma$hpgl_limma
 all_genes <- limma_result$all_tables[[3]]
-all_genes <- merge(x=all_genes, y=mapping, by.x="row.names", by.y="FLYBASE", all.x=TRUE)
+all_genes <- merge(x=all_genes, y=mapping, by.x="row.names", by.y="flybase", all.x=TRUE)
 sig_up <- s_p(get_sig_genes(all_genes, z=2)$up_genes)$result
 all_ids <- paste0("Dmel_", all_genes[["flybasecg"]])
 sig_ids <- paste0("Dmel_", sig_up[["flybasecg"]])
