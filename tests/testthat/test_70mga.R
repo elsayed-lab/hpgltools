@@ -34,7 +34,9 @@ test_that("Are the expt notes and state maintained?", {
 mgas_pairwise <- s_p(all_pairwise(mgas_expt))$result
 
 mgas_data <- s_p(hpgltools::gbk2txdb())$result
-actual_width <- GenomicRanges::width(mgas_data$seq)
+message("Just before '$ operator is invalid for atomic vectors' -- wtf!?")
+actual_width <- GenomicRanges::width(mgas_data$seq)  ## This fails on travis?
+message("Just after.")
 expected_width = 1895017
 actual_exons <- as.data.frame(mgas_data$exons)
 expected_num_exons <- 1845
