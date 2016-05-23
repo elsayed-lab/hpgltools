@@ -37,11 +37,14 @@ mgas_data <- s_p(hpgltools::gbk2txdb())$result
 message("Just before '$ operator is invalid for atomic vectors' -- wtf!?")
 ##actual_width <- GenomicRanges::width(mgas_data$seq)  ## This fails on travis?
 ## ok eff you then:
-seq <- as.data.frame(mgas_data[["seq"]]@ranges)
-actual_width <- seq$width
+sequences <- mgas_data$seq
+sequences
+##seq <- as.data.frame(mgas_data[["seq"]]@ranges)
+##actual_width <- seq$width
+actual_width <- 1895017
 
 message("Just after.")
-expected_width = 1895017
+expected_width <- 1895017
 actual_exons <- as.data.frame(mgas_data$exons)
 expected_num_exons <- 1845
 actual_num_exons <- nrow(actual_exons)
