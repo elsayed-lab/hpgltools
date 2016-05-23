@@ -1,4 +1,4 @@
-## Time-stamp: <Fri May 20 21:52:33 2016 Ashton Trey Belew (abelew@gmail.com)>
+## Time-stamp: <Mon May 23 13:50:42 2016 Ashton Trey Belew (abelew@gmail.com)>
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -168,7 +168,7 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NUL
     all_count_tables <- NULL
     if (!is.null(count_dataframe)) {
         all_count_tables <- count_dataframe
-        expect_equal(colnames(all_count_tables), rownames(sample_definitions))
+        testthat::expect_equal(colnames(all_count_tables), rownames(sample_definitions))
         ## If neither of these cases is true, start looking for the files in the processed_data/ directory
     } else if (is.null(sample_definitions[["file"]])) {
         success <- 0
@@ -247,7 +247,7 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NUL
     final_annotations <- merge(tmp_counts, gene_info, by.x="tmp_id", by.y="row.names", all.x=TRUE)
     rownames(final_annotations) <- final_annotations[["tmp_id"]]
     final_annotations <- final_annotations[-1]
-    expect_equal(rownames(final_annotations), rownames(all_count_matrix))
+    testthat::expect_equal(rownames(final_annotations), rownames(all_count_matrix))
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
