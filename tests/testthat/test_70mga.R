@@ -80,3 +80,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     circos_suffix(cfgout=circos_test)
     circos_make(target="mgas")
 }
+
