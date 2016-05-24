@@ -525,7 +525,9 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
 #' @param ...  Extra arguments!
 #' @return List of ontology search results, up and down for each contrast.
 #' @export
-subset_ontology_search <- function(changed_counts, doplot=TRUE, ...) {
+subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
+                                   do_cluster=TRUE, do_topgo=TRUE, do_gostats=TRUE,
+                                   do_gprofiler=TRUE, ...) {
     up_list <- changed_counts[["ups"]]
     down_list <- changed_counts[["downs"]]
     arglist <- list(...)
@@ -555,50 +557,65 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, ...) {
         name <- names_list[[cluster_count]]
         uppers <- up_list[[cluster_count]]
         downers <- down_list[[cluster_count]]
-        message(paste0(cluster_count, "/", names_length, ": Starting goseq"))
-        up_goseq[[name]] <- try(simple_goseq(de_genes=uppers,
-                                             lengths=lengths,
-                                             goids=goids,
-                                             doplot=doplot,
-                                             ...))
-        down_goseq[[name]] <- try(simple_goseq(de_genes=downers,
-                                               lengths=lengths,
-                                               goids=goids,
-                                               doplot=doplot,
-                                               ...))
-        message(paste0(cluster_count, "/", names_length, ": Starting clusterprofiler"))
-        up_cluster[[name]] <- try(simple_clusterprofiler(uppers,
-                                                         goids=goids,
-                                                         include_cnetplots=FALSE,
-                                                         gff=gff,
-                                                         ...))
-        down_cluster[[name]] <- try(simple_clusterprofiler(downers,
-                                                           goids=goids,
-                                                           include_cnetplots=FALSE,
-                                                           gff=gff,
-                                                           ...))
-        message(paste0(cluster_count, "/", names_length, ": Starting topgo"))
-        up_topgo[[name]] <- try(simple_topgo(de_genes=uppers,
-                                             goids_df=goids,
-                                             ...))
-        down_topgo[[name]] <- try(simple_topgo(de_genes=downers,
-                                               goids_df=goids,
-                                               ...))
-        message(paste0(cluster_count, "/", names_length, ": Starting gostats"))
-        up_gostats[[name]] <- try(simple_gostats(uppers,
-                                                 gff,
-                                                 goids,
-                                                 gff_type=gff_type,
+        up_goseq[[name]] <- down_goseq[[name]] <- NULL
+        if (isTRUE(do_goseq)) {
+            message(paste0(cluster_count, "/", names_length, ": Starting goseq"))
+            up_goseq[[name]] <- try(simple_goseq(de_genes=uppers,
+                                                 lengths=lengths,
+                                                 goids=goids,
+                                                 doplot=doplot,
                                                  ...))
-        down_gostats[[name]] <- try(simple_gostats(downers,
-                                                   gff,
-                                                   goids,
-                                                   gff_type=gff_type,
+            down_goseq[[name]] <- try(simple_goseq(de_genes=downers,
+                                                   lengths=lengths,
+                                                   goids=goids,
+                                                   doplot=doplot,
                                                    ...))
-        up_gprofiler[[name]] <- try(simple_gprofiler(uppers,
+        }
+        up_cluster[[name]] <- down_cluster[[name]] <- NULL
+        if (isTRUE(do_cluster)) {
+            message(paste0(cluster_count, "/", names_length, ": Starting clusterprofiler"))
+            up_cluster[[name]] <- try(simple_clusterprofiler(uppers,
+                                                             goids=goids,
+                                                             include_cnetplots=FALSE,
+                                                             gff=gff,
+                                                             ...))
+            down_cluster[[name]] <- try(simple_clusterprofiler(downers,
+                                                               goids=goids,
+                                                               include_cnetplots=FALSE,
+                                                               gff=gff,
+                                                               ...))
+        }
+        up_topgo[[name]] <- down_topgo[[name]] <- NULL
+        if (isTRUE(do_topgo)) {
+            message(paste0(cluster_count, "/", names_length, ": Starting topgo"))
+            up_topgo[[name]] <- try(simple_topgo(de_genes=uppers,
+                                                 goids_df=goids,
+                                                 ...))
+            down_topgo[[name]] <- try(simple_topgo(de_genes=downers,
+                                                   goids_df=goids,
+                                                   ...))
+        }
+        up_gostats[[name]] <- down_gostats[[name]] <- NULL
+        if (isTRUE(do_gostats)) {
+            message(paste0(cluster_count, "/", names_length, ": Starting gostats"))
+            up_gostats[[name]] <- try(simple_gostats(uppers,
+                                                     gff,
+                                                     goids,
+                                                     gff_type=gff_type,
                                                      ...))
-        down_gprofiler[[name]] <- try(simple_gprofiler(downers,
+            down_gostats[[name]] <- try(simple_gostats(downers,
+                                                       gff,
+                                                       goids,
+                                                       gff_type=gff_type,
                                                        ...))
+        }
+        if (isTRUE(go_gprofiler)) {
+            message(paste0(cluster_count, "/", names_length, ": Starting gostats"))
+            up_gprofiler[[name]] <- try(simple_gprofiler(uppers,
+                                                         ...))
+            down_gprofiler[[name]] <- try(simple_gprofiler(downers,
+                                                           ...))
+        }
     }
 
     ret <- list(

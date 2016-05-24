@@ -270,7 +270,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
     plots <- list()
     sheet_count <- 0
     de_summaries <- data.frame()
-    if (class(keepers) == 'list') {
+    if (class(keepers) == "list") {
         ## Then keep specific tables in specific orientations.
         a <- 0
         keeper_len <- length(names(keepers))
@@ -310,9 +310,9 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
                 summary <- combined[["summary"]]
                 plt <- NULL
                 if (isTRUE(do_inverse)) {
-                    plt <- limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL)[["scatter"]]
+                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL))[["scatter"]]
                 } else {
-                    plt <- limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL)[["scatter"]]
+                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
                 }
             } ## End checking that we found the numerator/denominator
             else {
@@ -326,7 +326,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
         }
 
         ## If you want all the tables in a dump
-    } else if (class(keepers) == 'character' & keepers == 'all') {
+    } else if (class(keepers) == "character" & keepers == "all") {
         a <- 0
         names_length <- length(names(edger[["contrast_list"]]))
         table_names <- names(edger[["contrast_list"]])
@@ -341,11 +341,11 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             splitted <- strsplit(x=tab, split="_vs_")
             xname <- splitted[[1]][1]
             yname <- splitted[[1]][2]
-            plots[[tab]] <- limma_coefficient_scatter(limma, x=xname, y=yname, gvis_filename=NULL)[["scatter"]]
+            plots[[tab]] <- suppressMessages(limma_coefficient_scatter(limma, x=xname, y=yname, gvis_filename=NULL))[["scatter"]]
         }
 
         ## Or a single specific table
-    } else if (class(keepers) == 'character') {
+    } else if (class(keepers) == "character") {
         table <- keepers
         sheet_count <- sheet_count + 1
         if (table %in% names(edger[["contrast_list"]])) {
@@ -364,7 +364,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
         table_names[[a]] <- combined[["summary"]][["table"]]
         xname <- splitted[[1]][1]
         yname <- splitted[[1]][2]
-        plots[[name]] <- limma_coefficient_scatter(limma, x=xname, y=yname)[["scatter"]]
+        plots[[name]] <- suppressMessages(limma_coefficient_scatter(limma, x=xname, y=yname))[["scatter"]]
     } else {
         stop("I don't know what to do with your specification of tables to keep.")
     }

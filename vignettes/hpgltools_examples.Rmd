@@ -9,6 +9,42 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
+```{r options, include=FALSE}
+## These are the options I tend to favor
+library("hpgltools")
+knitr::opts_knit$set(
+    progress = TRUE,
+    verbose = TRUE,
+    width = 90,
+    echo = TRUE)
+knitr::opts_chunk$set(
+    error = TRUE,
+    fig.width = 8,
+    fig.height = 8,
+    dpi = 96)
+options(
+    digits = 4,
+    stringsAsFactors = FALSE,
+    knitr.duplicate.label = "allow")
+ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
+set.seed(1)
+```
+
+
+```{r rendering, include=FALSE, eval=FALSE}
+## This block is used to render a document from within it.
+rmarkdown::render("index.Rmd")
+
+## An extra renderer for pdf output
+rmarkdown::render("index.Rmd", output_format="pdf_document", output_options=c("skip_html"))
+
+## Or to save/load large Rdata files.
+hpgltools:::saveme()
+hpgltools:::loadme()
+rm(list=ls())
+```
+
+
 Using hpgltools for fun and profit!
 ===================================
 
