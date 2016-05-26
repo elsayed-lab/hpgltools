@@ -1,5 +1,3 @@
-## Time-stamp: <Thu May 19 23:24:11 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Call various count filters.
 #'
 #' This calls the various filtering functions in genefilter along with suggestions made in our lab

@@ -1,5 +1,3 @@
-## Time-stamp: <Thu May 19 22:00:52 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Perform the array of analyses in the 2016-04 version of clusterProfiler
 #'
 #' The new version of clusterProfiler has a bunch of new toys.  However, it is more stringent in

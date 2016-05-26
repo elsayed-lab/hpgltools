@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 13:24:16 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Make a plot and some simple numbers about tnseq saturation
 #'
 #' This function takes as input a tab separated file from essentiality_tas.pl

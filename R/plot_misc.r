@@ -1,7 +1,4 @@
-## Time-stamp: <Fri May 13 15:03:41 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## plot_misc.r:  Silly plots
-
 
 #' Make spirographs!
 #'

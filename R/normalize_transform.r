@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 13:37:11 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Perform a simple transformation of a count table (log2)
 #'
 #' the add argument is only important if the data was previously cpm'd because that does a +1, thus

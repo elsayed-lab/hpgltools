@@ -1,5 +1,3 @@
-## Time-stamp: <Thu May 19 13:15:17 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## plot_heatmap.r: Heatmaps separated by usage
 
 #' Make a heatmap.3 description of the correlation between samples.

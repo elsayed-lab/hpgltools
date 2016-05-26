@@ -1,5 +1,3 @@
-## Time-stamp: <Thu May 19 22:10:07 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
 #'
 #' During a lab meeting, the following function was suggested as a quick and dirty batch removal tool

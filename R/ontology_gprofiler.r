@@ -1,5 +1,3 @@
-## Time-stamp: <Thu May 26 15:13:45 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Run searches against the web service g:Profiler.
 #'
 #' Thank you Ginger for showing me your thesis, gProfiler is pretty cool!

@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 12:41:28 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Automatic loading and/or installing of packages.
 #'
 #' Load a library, install it first if necessary.

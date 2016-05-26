@@ -1,5 +1,3 @@
-## Time-stamp: <Tue May 24 17:46:07 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Enhance the goseq table of gene ontology information.
 #'
 #' While goseq has some nice functionality, the table of outputs it provides is somewhat lacking.

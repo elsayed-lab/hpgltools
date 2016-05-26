@@ -1,5 +1,3 @@
-## Time-stamp: <Sun May 22 18:06:49 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## The karyotype file is circos/data/5005_5448_karyotype.txt
 ## The 5005 genome is 1838562 nt. long (looking at reference/genbank/mgas_5005.gb)
 ## The 5448 genome is 1829516 nt. long

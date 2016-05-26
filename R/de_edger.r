@@ -1,5 +1,3 @@
-## Time-stamp: <Sun May 22 20:00:53 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Plot two coefficients with respect to one another from edgeR.
 #'
 #' It can be nice to see a plot of two coefficients from a edger comparison with respect to one another

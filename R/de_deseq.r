@@ -1,5 +1,3 @@
-## Time-stamp: <Sun May 22 20:01:59 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Plot out 2 coefficients with respect to one another from deseq2.
 #'
 #' It can be nice to see a plot of two coefficients from a deseq2 comparison with respect to one

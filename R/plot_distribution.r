@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 13 15:00:53 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## plot_distribution.r: A few plots to describe data distributions
 ## Currently this includes boxplots, density plots, and qq plots.
 

@@ -1,5 +1,3 @@
-## Time-stamp: <Thu Feb  4 23:26:15 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' TriTrypDB gene information table parser
 #'
 #' An example input file is the T. brucei Lister427 gene information table

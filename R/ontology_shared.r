@@ -1,6 +1,3 @@
-## Time-stamp: <Tue May 24 17:17:51 2016 Ashton Trey Belew (abelew@gmail.com)>
-## Most of the functions in here probably shouldn't be exported...
-
 #' Extract more easily readable information from a GOTERM datum.
 #'
 #' The output from the GOTERM/GO.db functions is inconsistent, to put it nicely.
@@ -528,9 +525,9 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
 #' @param ...  Extra arguments!
 #' @return List of ontology search results, up and down for each contrast.
 #' @export
-subset_ontology_search <- function(changed_counts, according_to="limma",
-                                   do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE,
-                                   do_gostats=TRUE, do_gprofiler=TRUE, doplot=TRUE, ...) {
+subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
+                                   do_cluster=TRUE, do_topgo=TRUE, do_gostats=TRUE,
+                                   do_gprofiler=TRUE, ...) {
     arglist <- list(...)
     up_list <- NULL
     down_list <- NULL

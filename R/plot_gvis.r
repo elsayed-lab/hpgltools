@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 14:41:07 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Make an html version of an MA plot: M(log ratio of conditions) / A(mean average).
 #'
 #' A fun snippet from wikipedia: "In many microarray gene expression experiments, an underlying

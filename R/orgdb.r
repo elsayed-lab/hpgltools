@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 20 14:59:47 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## Everything in this was written by Keith, I stole it with his permission and incorporated it here.
 ## I might change a few function declarations in this: tbl_df
 ## for example is not included in any import declarations and so I will likely
@@ -21,10 +19,38 @@
 #' one_gene <- load_parasite_annotations(org, c("LmJF.01.0010"))
 #' }
 #' @export
-load_parasite_annotations <- function(orgdb, gene_ids, keytype='ENSEMBL',
-                            fields=c('CHR', 'GENENAME', 'TXSTRAND',
-                                     'TXSTART', 'TXEND', 'TYPE')) {
+load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
+                                      ##fields=c("CHR", "GENENAME", "TXSTRAND",
+                                      fields=NULL, sum_exons=FALSE) {
+                                      ##         "TXSTART", "TXEND", "TYPE")) {
+
+    keytype <- toupper(keytype)
+    all_fields <- AnnotationDbi::columns(orgdb)
+    if (is.null(fields)) {
+        fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
+    } else if (fields == "all") {
+        fields <- all_fields
+    }
+
+    if (sum(fields %in% all_fields) != length(fields)) {
+        stop(paste0("Some of the fields requested are not in the available: ", toString(all_fields)))
+    }
+    ## fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
+
     ## Gene info
+    if (is.null(gene_ids)) {
+        gene_ids <- try(AnnotationDbi::keys(orgdb, keytype=keytype))
+        if (class(gene_ids) == "try-error") {
+            if (grepl(x=gene_ids[[1]], pattern="Invalid keytype")) {
+                valid_keytypes <- AnnotationDbi::keytypes(orgdb)
+                stop(paste0("Try using valid keytypes: ", toString(valid_keytypes)))
+            } else {
+                stop("There was an error getting the gene ids.")
+            }
+        } else {
+            message("Extracted all gene ids.")
+        }
+    }
     ## Note querying by "GENEID" will exclude noncoding RNAs
     transcript_length <- NULL
     gene_info <- AnnotationDbi::select(orgdb,
@@ -34,25 +60,32 @@ load_parasite_annotations <- function(orgdb, gene_ids, keytype='ENSEMBL',
 
     ## Compute total transcript lengths (for all exons)
     ## https://www.biostars.org/p/83901/
-    gene_exons <- GenomicFeatures::exonsBy(orgdb, by='gene')
+    gene_exons <- GenomicFeatures::exonsBy(orgdb, by="gene")
+    transcripts <- GenomicFeatures::transcripts(orgdb)
+    message("Summing exon lengths, this takes a while.")
     lengths <- lapply(gene_exons, function(x) {
         sum(BiocGenerics::width(GenomicRanges::reduce(x)))
     })
+    message("Adding exon lengths to the gene_exons.")
     lengths <- as.data.frame(unlist(lengths))
-    colnames(lengths) <- 'transcript_length'
+    colnames(lengths) <- "transcript_length"
 
-    gene_info <- merge(gene_info, lengths, by.x=keytype, by.y='row.names')
+    gene_info <- merge(gene_info, lengths, by.x=keytype, by.y="row.names")
+    colnames(gene_info) <- tolower(colnames(gene_info))
 
     ## Convert to tbl_df and reorganize
     ret <- dplyr::tbl_df(gene_info) %>%
-        AnnotationDbi::select_(
-            gene_id=get(keytype),
-            chromosome="CHR",
-            description="GENENAME",
-            strand="TXSTRAND",
-            type="TYPE",
-            transcript_length=transcript_length)
-    return(ret)
+        dplyr::select_(
+            gene_id=tolower(keytype),
+            chromosome="chr",
+            description="genename",
+            strand="txstrand",
+            type="type",
+            transcript_length="transcript_length")
+    retlist <- list(
+        "genes" = ret,
+        "transcripts" = transcripts)
+    return(retlist)
 }
 
 #' Load organism annotation data (mouse/human).
@@ -72,11 +105,24 @@ load_parasite_annotations <- function(orgdb, gene_ids, keytype='ENSEMBL',
 #' host <- load_host_annotations(org, c("a","b"))
 #' }
 #' @export
-load_host_annotations <- function(orgdb, gene_ids, keytype='ENSEMBL',
-                                 fields=c('TXCHROM', 'GENENAME', 'TXSTRAND',
-                                          'TXSTART', 'TXEND'),
-                                 biomart_dataset='hsapiens_gene_ensembl') {
+load_host_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
+                                 fields=c("TXCHROM", "GENENAME", "TXSTRAND",
+                                          "TXSTART", "TXEND"),
+                                 biomart_dataset="hsapiens_gene_ensembl") {
     ## Gene info
+    if (is.null(gene_ids)) {
+        gene_ids <- try(AnnotationDbi::keys(orgdb, keytype=keytype))
+        if (class(gene_ids) == "try-error") {
+            if (grepl(x=gene_ids[[1]], pattern="Invalid keytype")) {
+                valid_keytypes <- AnnotationDbi::keytypes(orgdb)
+                stop(paste0("Try using valid keytypes: ", toString(valid_keytypes)))
+            } else {
+                stop("There was an error getting the gene ids.")
+            }
+        } else {
+            message("Extracted all gene ids.")
+        }
+    }
     ## Note querying by "GENEID" will exclude noncoding RNAs
     gene_info <- AnnotationDbi::select_(orgdb,
                         keys=gene_ids,

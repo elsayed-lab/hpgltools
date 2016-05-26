@@ -1,5 +1,3 @@
-## Time-stamp: <Mon May 16 15:31:24 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Perform a simplified topgo analysis.
 #'
 #' This will attempt to make it easier to run topgo on a set of genes.

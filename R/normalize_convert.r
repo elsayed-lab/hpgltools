@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 13:41:08 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Perform a cpm/rpkm/whatever transformation of a count table.
 #'
 #' I should probably tell it to also handle a simple df/vector/list of gene lengths, but I

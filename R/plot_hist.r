@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 13 15:03:12 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## plot_hist.r: Histograms used in other functions
 
 #' Make a pretty histogram of something.

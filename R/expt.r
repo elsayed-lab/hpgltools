@@ -1,5 +1,3 @@
-## Time-stamp: <Mon May 23 13:50:42 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Given a table of meta data, read it in for use by create_expt().
 #'
 #' Reads an experimental design in a few different formats in preparation for creating an expt.
@@ -232,8 +230,8 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NUL
     tooltip_data <- NULL
     if (is.null(gene_info)) {
         if (is.null(include_gff)) {
-            gene_info <- as.data.frame(all_count_tables)
-            gene_info[["ID"]] <- rownames(gene_info)
+            gene_info <- as.data.frame(rownames(all_count_matrix))
+            rownames(gene_info) <- rownames(all_count_matrix)
         } else {
             message("create_expt(): Reading annotation gff, this is slow.")
             annotation <- gff2df(gff=include_gff, type=gff_type)
@@ -243,11 +241,11 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NUL
     }
     tmp_counts <- as.data.frame(rownames(all_count_matrix))
     colnames(tmp_counts) <- c("tmp_id")
-    dim(tmp_counts)
-    final_annotations <- merge(tmp_counts, gene_info, by.x="tmp_id", by.y="row.names", all.x=TRUE)
-    rownames(final_annotations) <- final_annotations[["tmp_id"]]
+    rownames(tmp_counts) <- rownames(all_count_matrix)
+    final_annotations <- merge(tmp_counts, gene_info, by.x="row.names", by.y="row.names", all.x=TRUE)
+    rownames(final_annotations) <- final_annotations[["Row.names"]]
     final_annotations <- final_annotations[-1]
-    testthat::expect_equal(rownames(final_annotations), rownames(all_count_matrix))
+    testthat::expect_equal(sort(rownames(final_annotations)), sort(rownames(all_count_matrix)))
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
@@ -331,7 +329,7 @@ expt_subset <- function(expt, subset=NULL) {
         original_metadata <- Biobase::pData(original_expressionset)
     } else if (class(expt)[[1]] == "expt") {
         original_expressionset <- expt[["expressionset"]]
-        original_metadata <- original_expressionset[["design"]]
+        original_metadata <- Biobase::pData(expt[["expressionset"]])
     } else {
         stop("expt is neither an expt nor ExpressionSet")
     }
