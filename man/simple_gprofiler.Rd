@@ -6,8 +6,8 @@
 \usage{
 simple_gprofiler(de_genes, species = "hsapiens", first_col = "logFC",
   second_col = "limma_logfc", do_go = TRUE, do_kegg = TRUE,
-  do_reactome = TRUE, do_mi = TRUE, do_tf = FALSE, do_corum = FALSE,
-  do_hp = FALSE)
+  do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE, do_corum = TRUE,
+  do_hp = TRUE)
 }
 \arguments{
 \item{de_genes}{guess!}

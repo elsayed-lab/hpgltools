@@ -8,12 +8,13 @@
 #' @param second_col if that fails, try some where else.
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @export
-simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC", second_col="limma_logfc", do_go=TRUE, do_kegg=TRUE, do_reactome=TRUE, do_mi=TRUE, do_tf=FALSE, do_corum=FALSE, do_hp=FALSE) {
+simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC", second_col="limma_logfc", do_go=TRUE, do_kegg=TRUE, do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE, do_corum=TRUE, do_hp=TRUE) {
     ## Assume for the moment a limma-ish data frame
-    if (!is.null(gene_list[[first_col]])) {
-        gene_list <- gene_list[order(-gene_list[[first_col]]), ]
-    } else if (!is.null(gene_list[[second_col]])) {
-        gene_list <- gene_list[order(-gene_list[[second_col]]), ]
+    gene_list <- NULL
+    if (!is.null(de_genes[[first_col]])) {
+        gene_list <- de_genes[order(-de_genes[[first_col]]), ]
+    } else if (!is.null(de_genes[[second_col]])) {
+        gene_list <- de_genes[order(-de_genes[[second_col]]), ]
     }
 
     gene_ids <- NULL

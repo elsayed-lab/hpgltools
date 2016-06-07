@@ -323,7 +323,7 @@ simple_clusterprofiler <- function(de_genes, goids_df=NULL, golevel=4, pcutoff=0
     ##ego2 = try(clusterProfiler::gseGO(geneList=gene_list, organism=organism, ont="GO", nPerm=100, minGSSize=2, pvalueCutoff=1, verbose=TRUE))
     ##message(paste0("Has ego desided to work? ", ego2)
     message("simple_clus(): Starting MF(molecular function) analysis")
-    mf_group <- clusterProfiler::groupGO(gene_list, organism=species, ont="MF", level=golevel, readable=TRUE)
+    mf_group <- clusterProfiler::groupGO(gene_list, OrgDb=species, ont="MF", level=golevel, readable=TRUE)
     mf_all <- hpgl_enrichGO(gene_list, organism=species, ont="MF",
                             pvalueCutoff=1.0, qvalueCutoff=1.0, pAdjustMethod="none")
     all_mf_phist <- try(plot_histogram(mf_all@result$pvalue, bins=20))

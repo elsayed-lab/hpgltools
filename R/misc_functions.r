@@ -132,6 +132,7 @@ sr <- function(code) {
 #' @param gff Gff file with (hopefully) IDs and widths.
 #' @param type Annotation type to use (3rd column).
 #' @param key Identifier in the 10th column of the gff file to use.
+#' @param ... Extra arguments likely for gff2df
 #' @return Data frame of gene IDs and widths.
 #' @seealso \pkg{rtracklayer} \link[rtracklayer]{import.gff}
 #' @examples
@@ -147,8 +148,8 @@ sr <- function(code) {
 #' ## 6 YAL068W-A     3
 #' }
 #' @export
-get_genelengths <- function(gff, type="gene", key="ID") {
-    ret <- gff2df(gff)
+get_genelengths <- function(gff, type="gene", key="ID", ...) {
+    ret <- gff2df(gff, ...)
     ret <- ret[ret[["type"]] == type, ]
     ret <- ret[, c(key, "width")]
     colnames(ret) <- c("ID", "width")
@@ -404,6 +405,9 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #'
 #' @param gff Gff filename.
 #' @param type Subset the gff file for entries of a specific type.
+#' @param id_col Column in a successful import containing the IDs of interest.
+#' @param second_id_col Second column to check.
+#' @param try Give your own function call to use for importing.
 #' @return Dataframe of the annotation information found in the gff file.
 #' @seealso \pkg{rtracklayer} \link[rtracklayer]{import.gff} \link[rtracklayer]{import.gff2} \link[rtracklayer]{import.gff3}
 #' @examples
@@ -411,35 +415,45 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #' funkytown <- gff2df('reference/gff/saccharomyces_cerevsiae.gff.xz')
 #' }
 #' @export
-gff2df <- function(gff, type=NULL) {
+gff2df <- function(gff, type=NULL, id_col="ID", second_id_col="locus_tag", try=NULL) {
     ret <- NULL
-    annotations <- NULL
     success <- FALSE
-    ## First try gtf annotations
-
     attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
                   "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE)",
                   "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE)",
-                  "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE)",
+                  "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=FALSE)",
                   "rtracklayer::import.gff(gff, format='gtf')",
-                  "rtracklayer::import.gff(gff)"
-                  )
+                  "rtracklayer::import.gff(gff)")
+    if (!is.null(try)) {
+        attempts <- c(paste0(try, "(gff)"), attempts)
+    }
+
+    annot <- NULL
     for (att in 1:length(attempts)) {
+        annotations <- NULL
         message(paste0("Trying attempt: ", attempts[[att]]))
         attempt <- attempts[[att]]
         eval_string <- paste0("annotations <- try(", attempt, ")")
         eval(parse(text=eval_string))
         if (class(annotations) == "try-error") {
             success <- FALSE
+            rm(annotations)
+        } else if (is.null(GenomicRanges::as.data.frame(annotations)[[id_col]]) &
+                   is.null(GenomicRanges::as.data.frame(annotations)[[second_id_col]])) {
+            success <- FALSE
+            rm(annotations)
         } else {
             success <- TRUE
+            annot <- annotations
+            rm(annotations)
             message("Had a successful gff import with ", attempt)
             break
         }
     }
     ret <- NULL
-    if (class(annotations)[[1]] == "GRanges") {
-        ret <- GenomicRanges::as.data.frame(annotations)
+    if (class(annot)[[1]] == "GRanges") {
+        ret <- GenomicRanges::as.data.frame(annot)
+        rm(annot)
     } else {
         stop("Unable to load gff file.")
     }

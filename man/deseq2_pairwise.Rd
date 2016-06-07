@@ -5,8 +5,8 @@
 \title{Set up model matrices contrasts and do pairwise comparisons of all conditions using DESeq2.}
 \usage{
 deseq2_pairwise(input, conditions = NULL, batches = NULL,
-  model_cond = TRUE, model_batch = TRUE, annot_df = NULL, force = FALSE,
-  ...)
+  model_cond = TRUE, alt_model = NULL, extra_contrasts = NULL,
+  model_batch = TRUE, annot_df = NULL, force = FALSE, ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}

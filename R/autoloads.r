@@ -135,6 +135,7 @@ autoloads_deseq <- function() {
 autoloads_graphs <- function() {
     count <- 0
     count <- count + require.auto("Cairo")
+    count <- count + require.auto("corrplot")
     count <- count + require.auto("directlabels")
     count <- count + require.auto("ggplot2")
     count <- count + require.auto("googleVis")
@@ -186,6 +187,7 @@ autoloads_stats <- function() {
 
 autoloads_misc <- function() {
     count <- 0
+    count <- count + require.auto("corpcor")
     count <- count + require.auto("Rsamtools")
     count <- count + require.auto("scales")
     count <- count + require.auto("seqinr")

@@ -16,8 +16,8 @@ colnames(metadata) <- c("condition", "batch")
 ## Performing DESeq2 differential expression analysis as per the DESeq vignette.
 summarized <- DESeq2::DESeqDataSetFromMatrix(countData=counts,
                                              colData=metadata,
-                                             design=~ condition + batch)
-dataset <- s_p(DESeq2::DESeqDataSet(se=summarized, design=~ condition + batch))$result
+                                             design=~ batch + condition)
+dataset <- s_p(DESeq2::DESeqDataSet(se=summarized, design=~ batch + condition))$result
 deseq_sf <- s_p(DESeq2::estimateSizeFactors(dataset))$result
 deseq_disp <- s_p(DESeq2::estimateDispersions(deseq_sf))$result
 deseq_run <- s_p(DESeq2::nbinomWaldTest(deseq_disp))$result

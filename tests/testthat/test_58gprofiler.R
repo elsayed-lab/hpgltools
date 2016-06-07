@@ -14,7 +14,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     table <- limma$hpgl_table
     sig_genes <- s_p(get_sig_genes(table, column="untreated")$up_genes)$result
 
-    gprofiler_result <- s_p(simple_gprofiler(sig_genes, species="dmelanogaster"))$result
+    gprofiler_result <- simple_gprofiler(sig_genes, species="dmelanogaster", first_col="untreated")
 
     expected_go <- c(2.75e-03, 6.20e-04, 1.98e-06, 1.47e-04, 5.24e-04, 3.11e-05)
     actual_go <- head(gprofiler_result[["go"]][["p.value"]])

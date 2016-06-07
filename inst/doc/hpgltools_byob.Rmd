@@ -23,16 +23,13 @@ vignette: >
 ---
 
 ```{r options, include=FALSE}
-
 library("hpgltools")
 knitr::opts_knit$set(
     progress = TRUE,
     verbose = TRUE,
     width = 90,
-##    stop_on_error = FALSE,
     echo = TRUE)
 knitr::opts_chunk$set(
-    ## results = "hold",  ## This is weird
     error = TRUE,
     fig.width = 8,
     fig.height = 8,
@@ -42,11 +39,9 @@ options(digits = 4,
         knitr.duplicate.label = "allow")
 ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
-
 ```
 
 ```{r rendering, include=FALSE, eval=FALSE}
-
 hpgltools:::saveme()
 hpgltools:::loadme()
 rm(list=ls())
@@ -58,7 +53,6 @@ rmarkdown::render(render_filename, output_format="html_document")
 render_filename="hpgltools_byob.Rmd"
 setwd("~/scratch/hpgltools/vignettes")
 rmarkdown::render(render_filename)
-
 ```
 
 Hpgltools: helper functions for RNAseq data analysis
@@ -88,19 +82,16 @@ When performing these tasks, I use this package for:
 Installation of hpgltools is fairly simple
 
 ```{r installation, eval=FALSE}
-
 ## The easiest way to install hpgltools is via devtools
 install.packages("devtools")
 devtools::install_github("abelew/hpgltools")
 library(hpgltools)
-
 ```
 
 It uses many R packages, which are annoying to install piecemeal,
 therefore it has the function autoload_all() to help.
 
 ```{r startup, eval=FALSE}
-
 library(hpgltools)
 ## If uncommented, the following line queries the libraries used by hpgltools
 ## and if they are not available, installs them.
@@ -110,7 +101,6 @@ hpgltools::autoloads_all()
 ## shortcuts for using bioconductor's biocLite() and install_github()
 hpgltools::require.auto("elsayedlab/TxDb.LmajorFriedlin.tritryp27.genes") ## Uses install_github()
 hpgltools::require.auto("dplyr", update=TRUE) ## uses biocLite() and looks for packages to update.
-
 ```
 
 Now that hpgltools has been loaded, let us load an experimental design,
@@ -126,10 +116,12 @@ In each of the examples above the following pieces of information are required:
 
 ## Human macrophage data loading
 
-```{r human_macrophage_loading, cache=TRUE}
+Quite note to self, this vignette will fail utterly if I move any of the raw data on the umiacs
+system, this really is not how you are supposed to do vignettes.
 
+```{r human_macrophage_loading, cache=TRUE}
 library(hpgltools)
-setwd("~/scratch/rnaseq_lpanamensis")
+setwd("~/scratch/rnaseq/lpanamensis")
 lp_gff <- "reference/lpanamensis.gff"
 hs_gff <- "reference/hsapiens.gff"
 lp_annotations <- gff2df(lp_gff, type="gene")
@@ -145,10 +137,9 @@ knitr::kable(head(hs_inf_lp$design))
 dim(Biobase::exprs(hs_inf_lp$expressionset))
 
 library(org.Hs.eg.db)
-hs_go_ensembl <-load_go_terms(org.Hs.eg.db, hs_annotations$ID)
+hs_go_ensembl <- load_go_terms(org.Hs.eg.db, hs_annotations$geneID)
 hs_goids <- hs_go_ensembl[, c("ENSEMBL","GO")]
 colnames(hs_goids) <- c("ID","GO")
-
 ```
 
 This infection experiment contains 51,041 genes in 50 samples.
@@ -173,13 +164,11 @@ Lets extract from it a portion of samples with interesting data
 While at it, lets also change the colors.
 
 ```{r hs_inf_lp_subset, cache=TRUE}
-
 hs_inf_lp_sub <- hpgltools::expt_subset(hs_inf_lp, subset="condition=='macro_nil'|condition=='macro_sh'|condition=='macro_ch'")
 hs_inf_lp_sub$colors <- gsub(pattern="1B9E77", replacement="005500", x=hs_inf_lp_sub$colors)
 hs_inf_lp_sub$colors <- gsub(pattern="817C37", replacement="880000", x=hs_inf_lp_sub$colors)
 hs_inf_lp_sub$colors <- gsub(pattern="D1600F", replacement="0000FF", x=hs_inf_lp_sub$colors)
 dim(Biobase::exprs(hs_inf_lp_sub$expressionset))
-
 ```
 
 ## Switching gears to yeast
@@ -188,14 +177,12 @@ Let us load a data set of yeast data.  This data is rather simpler, no batch eff
 In addition, the count tables are in the processed/ tree rather than the df.
 
 ```{r load_sc, cache=TRUE}
-
-setwd("~/scratch/rnaseq_cbf5")
+setwd("~/scratch/rnaseq/scerevisiae_cbf5")
 sc = create_expt(file="cbf5_samples.csv", file_suffix="_forward-trimmed-v0M1.count.gz", by_sample=TRUE)
-sc_genelengths = hpgltools::get_genelengths("reference/scerevisiae.gff.gz")
-sc_goids = read.delim("reference/go_trimmed.csv.gz", sep=",")
+sc_genelengths = get_genelengths("reference/scerevisiae.gff.gz", try="rtracklayer::import.gff2")
+sc_goids = read.delim("reference/go_trimmed.csv.gz", sep=",", header=FALSE)
 colnames(sc_goids) = c("ID","GO","Yeast_ID")
 knitr::kable(sc$design)
-
 ```
 
 file_suffix and file_prefix allow some flexibility in searching for filenames.
@@ -205,11 +192,9 @@ file_suffix and file_prefix allow some flexibility in searching for filenames.
 Thus in the bacterial data set, we use both.
 
 ```{r load_spy, cache=TRUE}
-
-setwd("~/scratch/rnaseq_mga")
+setwd("~/scratch/rnaseq/spyogenes_mga")
 sp <- suppressMessages(create_expt(file="all_samples.csv", sep="\t", file_prefix="07v2M1gen_", file_suffix="_genome.count.gz"))
 knitr::kable(sp$design)
-
 ```
 
 This data set is a bit problematic, as we will see.
@@ -244,12 +229,10 @@ S.pyogenes reinforces the fact that the samples at stationary have a different
 distribution than all the others.
 
 ```{r visualizations, fig.show="hide"}
-
 hs_metrics <- graph_metrics(hs_inf_lp_sub)
 sc_metrics <- suppressMessages(graph_metrics(sc, qq=TRUE, ma=TRUE))
 sp_metrics <- suppressMessages(graph_metrics(sp))
 summary(sc_metrics)
-
 ```
 
 The following includes a few of the resulting images for the human data.  I want
@@ -263,7 +246,6 @@ The result is a set of tables, lists, recorded R plots, and ggplot2 objects.
 They may be printed one at a time or as a group.
 
 ```{r vis_result}
-
 print(hs_metrics$libsize)
 ## The samples numbered >600 have smaller libraries.
 
@@ -272,7 +254,6 @@ print(hs_metrics$corheat)
 
 print(hs_metrics$pcaplot)
 ## But the new batch (squares) clearly segregates separately.
-
 ```
 
 ### Yeast metrics
@@ -281,7 +262,6 @@ Looking at the yeast data, it is pretty immediately obvious that it is much
 more well behaved than the human data.
 
 ```{r vis_yeast}
-
 print(sc_metrics$libsize)
 ## 3 libraries are significantly smaller than the other 4.
 
@@ -296,7 +276,6 @@ print(sc_metrics$boxplot)
 
 print(sc_metrics$disheat)
 ## Well, normalization will at least be able to help _something_
-
 ```
 
 ### Streptococcus initial visualization
@@ -304,13 +283,11 @@ print(sc_metrics$disheat)
 In contrast, something strange is going on with the pyogenes data.
 
 ```{r sp_vis}
-
 print(sp_metrics$libsize)
 ## 4 libraries are rather larger than the others
 
 print(sp_metrics$density)
 ## The densities are a bit concerning
-
 ```
 
 # Normalizing and re-graphing
@@ -342,7 +319,6 @@ alone. For each of the 5 sections above, there is an option, as illustrated
 in the next block.
 
 ```{r perform_normalizations}
-
 hs_norm <- normalize_expt(hs_inf_lp_sub, filter_low=TRUE, norm="quant", convert="cpm", transform="log2", batch="combat")
 sc_norm <- suppressMessages(normalize_expt(sc, norm="tmm", convert="cpm"))
 sp_norm <- suppressMessages(normalize_expt(sp, norm="rle", convert="cpm", transform="log2"))
@@ -357,7 +333,6 @@ hs_norm$normalized$actions
 
 summary(hs_norm$normalized$intermediate_counts)
 ## Each of these slots contains the eset of each step.
-
 ```
 
 The return of normalize_expt is another expt object with a few fields filled in.
@@ -381,7 +356,6 @@ an expt object, an expressionset, or just a df count table (perhaps with a
 design and/or colors).
 
 ```{r norm_poking}
-
 hs_density <- plot_density(hs_norm)
 print(hs_density)
 ## The quantile normalization really homogenizes the data distributions
@@ -394,7 +368,6 @@ hs_pca$plot
 ## The pca plot now separates pretty clearly from self-healing/uninfected vs. chronic
 
 hs_pca$res
-
 ```
 
 ### Yeast normalized plots
@@ -403,13 +376,10 @@ In contrast, since the normalized expt is just another expt, we may call
 graph_metrics() on it.  I am going to suppress the message from it, too.
 
 ```{r sc_norm_graph_metrics, fig.show="hide"}
-
 sc_plots <- suppressMessages(graph_metrics(sc_norm))
-
 ```
 
 ```{r show_sc_norm}
-
 print(sc_plots$pcaplot)
 ## hpgl0566 is a bit weird
 
@@ -420,7 +390,6 @@ print(sc_plots$smd)
 ## and even that weird sample is well below the standard median distance cutoff
 
 print(sc_plots$density)
-
 ```
 
 ### Streptococcus pyogenes normalized plots
@@ -428,13 +397,10 @@ print(sc_plots$density)
 Even normalization is insufficient to salvage this data, as we can see below.
 
 ```{r sp_norm_graph_metrics, fig.show="hide"}
-
 sp_plots <- suppressMessages(graph_metrics(sp_norm, qq=TRUE, ma=TRUE))
-
 ```
 
 ```{r show_sp_norm}
-
 print(sp_plots$pcaplot)
 ## Some weird clustering is going on, we can see that there is another
 ## experimental factor which is much more important than our delineation
@@ -449,7 +415,6 @@ print(sp_plots$ma$HPGL0149_HPGL0150)
 print(sp_plots$qqlog)
 ## clearly some samples are not on the same distribution
 ## and this is after normalization
-
 ```
 
 # Perform a differential expression analysis
@@ -477,12 +442,10 @@ Limma is what we use primarily in our lab, and so I have more options for it
 than the other tools.
 
 ```{r single_de_limma}
-
 sc_limma <- limma_pairwise(sc_norm)
 sc_scatter <- limma_coefficient_scatter(sc_limma)
 sc_scatter$scatter
 sc_scatter$both_histogram
-
 ```
 
 ### EdgeR
@@ -496,21 +459,17 @@ Oh yeah, I used to color all of my dots by distance from the linear
 model.  This has not changed for this plot.
 
 ```{r single_de_edger}
-
 sc_edger <- edger_pairwise(sc_norm)
 sc_scatter <- edger_coefficient_scatter(sc_edger)
 sc_scatter$scatter
-
 ```
 
 ### DESeq2
 
 ```{r single_de_deseq}
-
 sc_deseq <- deseq_pairwise(sc_norm)
 sc_scatter <- deseq_coefficient_scatter(sc_deseq)
-## oops, I broke deseq_coefficient_scatter() FIXME!!
-
+sc_scatter$scatter
 ```
 
 ### All 3 and a basic non-statistical implementation
@@ -537,7 +496,6 @@ unmodified integer counts).  As a result, we can see that limma does not agree
 with _anything_ for this data.
 
 ```{r some_de, cache=TRUE}
-
 hs_de <- all_pairwise(hs_norm)
 ## The data structure presented by doing all these tools is of a necessity
 ## quite complex.
@@ -557,7 +515,6 @@ hs_sig <- extract_significant_genes(hs_combined, excel=NULL)
 ## I made some attempt to standardize the columns from the various tools
 ## when presenting them all together.
 knitr::kable(head(hs_sig$limma$ups$chr_vs_sh))
-
 ```
 
 The all_pairwise() function does more than we usually want.  When it performs
@@ -574,7 +531,6 @@ The yeast data has only 1 batch, we can make that explicit when we call all_pair
 In addition, the yeast data is relatively well behaved, thus it agrees across the board.
 
 ```{r some_de_sc, cache=TRUE}
-
 sc_de <- suppressMessages(all_pairwise(sc_norm, model_batch=FALSE))
 
 sc_combined <- combine_de_tables(sc_de)
@@ -583,7 +539,6 @@ sc_combined$plots
 ## to smash it with a comBat
 
 sc_sig <- extract_significant_genes(sc_combined, according_to="edger", fc=0.7, z=1, excel=NULL)
-
 ```
 
 As you can see, it is possible to ask for interesting subsets of the available
@@ -597,7 +552,6 @@ or combination.
 #### S. pyogenes all pairwise
 
 ```{r some_de_sp, cache=TRUE}
-
 sp_de <- suppressMessages(all_pairwise(sp))
 sp_keepers <- list(
     "late-early" = c("LL","EL"),
@@ -607,7 +561,6 @@ sp_sig <- extract_significant_genes(sp_combined, according_to="all", excel=NULL)
 knitr::kable(sp_sig$limma$counts)
 knitr::kable(sp_sig$edger$counts)
 knitr::kable(sp_sig$deseq$counts)
-
 ```
 
 We know a priori that the S.pyogenes data is screwed up, but we can still pass
@@ -641,7 +594,6 @@ The function simple_goseq() seeks to make a goseq search less onerous.
 However, it explicitly requires a table of differentially expressed genes.
 
 ```{r simple_goseq}
-
 sc_up <- sc_sig$edger$ups$wt_vs_mut
 ## sc_genelengths came from waaaaay at the top of this document
 sc_goseq <- simple_goseq(sc_up, lengths=sc_genelengths, goids=sc_goids)
@@ -649,7 +601,6 @@ sc_goseq <- simple_goseq(sc_up, lengths=sc_genelengths, goids=sc_goids)
 knitr::kable(head(sc_goseq$bp_subset))
 
 print(sc_goseq$pvalue_plots$bpp_plot_over)
-
 ```
 
 ### clusterProfiler
@@ -659,16 +610,16 @@ Also, it takes a long time for it to generate the rdata files it needs to run,
 since I already generated them in my yeast working directory, I will just take
 advantage of the previously existing files.
 
-```{r simple_clusterprofiler}
+Since writing this, clusterprofiler has changed utterly, so this won't work for the moment.
 
-setwd("~/scratch/rnaseq_cbf5")
-sc_clust <- simple_clusterprofiler(sc_up, goids=sc_goids)
+```{r simple_clusterprofiler, eval=FALSE}
+setwd("~/scratch/rnaseq/scerevisiae_cbf5")
+sc_clust <- simple_cp_orgdb(sc_up, orgdb="org.Sc.eg.db")
 
 summary(sc_clust)
 print(sc_clust$group_plots$mf_group_barplot)
 
 knitr::kable(head(sc_clust$bp_interesting))
-
 ```
 
 ### topGO
@@ -678,31 +629,25 @@ As a result, I am going to set a flag on this block to tell it to ignore
 the voluminous output from topgo.
 
 ```{r simple_topgo, results="hide"}
-
-setwd("~/scratch/rnaseq_cbf5")
+setwd("~/scratch/rnaseq/scerevisiae_cbf5")
 sc_top <- simple_topgo(sc_up)
-
 ```
 
 ```{r topgo_results}
-
 sc_top$pvalue_plots$bpp_plot_over
 
 knitr::kable(head(sc_top$tables$bp_interesting))
-
 ```
 
 ### GOstats
 
 GOstats is neat because it is good about using the suite of existing
-bioconductor tools.
+bioconductor tools.  It also talks a lot, perhaps I should hide its output, too.
 
 ```{r simple_gostats}
-
-setwd("~/scratch/rnaseq_cbf5")
+setwd("~/scratch/rnaseq/scerevisiae_cbf5")
 sc_gost <- simple_gostats(sc_up, gff="reference/scerevisiae.gff.gz", goids=sc_goids, gff_type="gene")
 sc_gost$pvalue_plots$bpp_plot_over
-
 ```
 
 ### gProfiler
@@ -710,18 +655,17 @@ sc_gost$pvalue_plots$bpp_plot_over
 gprofiler hasnot yet been incorporated into the all_ontology tools.
 
 ```{r gprofiler}
-
-sc_gprof <- simple_gprofiler(sc_up, organism="scerevisiae")
+sc_gprof <- simple_gprofiler(sc_up, species="scerevisiae")
+knitr::kable(head(sc_gprof$go))
 knitr::kable(head(sc_gprof$kegg))
 knitr::kable(head(sc_gprof$reactome))
-
+knitr::kable(head(sc_gprof$tf))
 ```
 
 ### Do all searches in one shot
 
 ```{r ontology_searches, cache=TRUE, eval=FALSE}
-
-setwd("~/scratch/rnaseq_lpanamensis")
+setwd("~/scratch/rnaseq/lpanamensis")
 ## This takes forever, I will likely only run single searches for the other organisms
 hs_ontologies <- subset_ontology_search(hs_sig$limma, species="hsapiens", gff=hs_gff, goids=hs_goids, gff_type="gene")
 hs_ontologies[["up_goseq"]][[1]][["pvalue_plots"]][["bpp_plot_over"]]
@@ -731,8 +675,6 @@ hs_ontologies[["up_cluster"]][[1]][["pvalue_plots"]][["bpp_plot_over"]]
 hs_ontologies[["up_gostats"]][[1]][["pvalue_plots"]][["bpp_plot_over"]]
 
 hs_ontologies[["up_topgo"]][[1]][["pvalue_plots"]][["bpp_plot_over"]]
-
-
 ```
 
 # Some things not covered

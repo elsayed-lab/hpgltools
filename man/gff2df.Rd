@@ -4,12 +4,19 @@
 \alias{gff2df}
 \title{Extract annotation information from a gff file into a df}
 \usage{
-gff2df(gff, type = NULL)
+gff2df(gff, type = NULL, id_col = "ID", second_id_col = "locus_tag",
+  try = NULL)
 }
 \arguments{
 \item{gff}{Gff filename.}
 
 \item{type}{Subset the gff file for entries of a specific type.}
+
+\item{id_col}{Column in a successful import containing the IDs of interest.}
+
+\item{second_id_col}{Second column to check.}
+
+\item{try}{Give your own function call to use for importing.}
 }
 \value{
 Dataframe of the annotation information found in the gff file.
