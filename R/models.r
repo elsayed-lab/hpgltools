@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 13:33:25 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Make sure a given experimental factor and design will play together.
 #'
 #' Have you ever wanted to set up a differential expression analysis and after minutes of the

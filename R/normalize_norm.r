@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 13:32:12 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Perform a simple normalization of a count table.
 #'
 #' This provides shortcut interfaces for normalization functions from deseq2/edger and friends.

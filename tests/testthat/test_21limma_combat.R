@@ -12,7 +12,7 @@ counts <- limma$counts
 design <- limma$design
 
 ## Testing that hpgltools gets a similar result to cbcbSEQ using limma.
-cbcb <- sp(library(cbcbSEQ))
+cbcb <- s_p(library(cbcbSEQ))
 counts <- limma$counts
 design <- limma$design
 cbcb_qcounts <- cbcbSEQ::qNorm(counts)
@@ -28,7 +28,7 @@ test_that("Does cbcbSEQ give the same result for the initial pcRes call?", {
 cbcb_libsize <- cbcb_cpm[["lib.size"]]
 ## cbcb_combat <- cbcbSEQ::combatMod(cbcb_cpm, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE)
 ## oh yeah, cbcbSEQ's combatMod no longer works
-cbcb_hpgl_combat <- sp(hpgl_combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE))$result
+cbcb_hpgl_combat <- s_p(hpgl_combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE))$result
 ## Ok, here is a point where the cbcbSEQ vignette does not agree with its output.
 ## the return of cbcbSEQ::combatMod (if it worked) is a variable containing only 'bayesdata', not a list of bayesdata and info.
 
@@ -47,7 +47,8 @@ hpgl_v <- hpgl_voom(cbcb_hpgl_combat, model=model.matrix(~design$condition), lib
 cbcb_almost_vignette_result <- c(2.968411, 3.028748, 3.265501, 2.858357, 2.838402, 3.178890, 2.713208)
 cbcb_actual_vignette_result <- c(2.9772407, 3.0375781, 3.259578, 2.852434, 2.847232, 3.1729673, 2.7072849)
 test_that("Does the cbcbSEQ voomMod() function give the same results as hpgl_voom()?", {
-    expect_equal(cbcb_v$E, hpgl_v$E) })
+    expect_equal(cbcb_v$E, hpgl_v$E)
+})
 test_that("Do they agree with my approximated vignette results?", {
     expect_equal(as.numeric(head(cbcb_v$E, n=1)), cbcb_almost_vignette_result, tolerance=0.0001)
 })
@@ -64,23 +65,22 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform log2/cpm/quantile/combatMod normalization
-hpgl_norm <- sp(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
+hpgl_norm <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
 hpgl_qcpmcounts <- Biobase::exprs(hpgl_norm$expressionset)
-hpgl_qcpm_combat_counts <- suppressMessages(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod"))
 test_that("Do cbcbSEQ and hpgltools agree on the definition of log2(quantile(cpm(counts)))?", {
     expect_equal(cbcb_qcpmcounts, hpgl_qcpmcounts)
 })
 
 ## Getting log2(combat(cpm(quantile(counts))))
-hpgl_qcpmcombat <- sp(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", low_to_zero=FALSE))$result
+hpgl_qcpmcombat <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", low_to_zero=FALSE))$result
 hpgl_combat <- Biobase::exprs(hpgl_qcpmcombat$expressionset)
+## cbcb_hpgl_combat <- hpgl_combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE)
 test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts))))?", {
     expect_equal(cbcb_hpgl_combat, hpgl_combat)
 })
 
-
 ## If we made it this far, then the inputs to limma should agree.
-hpgl_limma_combat_result <- sp(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=TRUE))$result
+hpgl_limma_combat_result <- s_p(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=TRUE))$result
 hpgl_voom <- hpgl_limma_combat_result$voom_result
 hpgl_fit <- hpgl_limma_combat_result$fit
 hpgl_eb <- hpgl_limma_combat_result$pairwise_comparisons

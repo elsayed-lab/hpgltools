@@ -1,16 +1,14 @@
-## Time-stamp: <Sat May 14 13:41:28 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Run searches against the web service g:Profiler.
 #'
 #' Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
 #'
-#' @param gene_list guess!
+#' @param de_genes guess!
 #' @param species an organism supported by gprofiler
 #' @param first_col where to search for the order of 'significant' first
 #' @param second_col if that fails, try some where else.
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @export
-simple_gprofiler <- function(gene_list, species="hsapiens", first_col="logFC", second_col="limma_logfc") {
+simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC", second_col="limma_logfc") {
     ## Assume for the moment a limma-ish data frame
     if (!is.null(gene_list[[first_col]])) {
         gene_list <- gene_list[order(-gene_list[[first_col]]), ]

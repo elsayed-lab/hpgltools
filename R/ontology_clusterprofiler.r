@@ -1,4 +1,206 @@
-## Time-stamp: <Tue May 17 00:34:42 2016 Ashton Trey Belew (abelew@gmail.com)>
+#' Perform the array of analyses in the 2016-04 version of clusterProfiler
+#'
+#' The new version of clusterProfiler has a bunch of new toys.  However, it is more stringent in
+#' terms of input in that it now explicitly expects to receive annotation data in terms of a orgdb
+#' object.  This is mostly advantageous, but will probably cause some changes in the other ontology
+#' functions in the near future.  This function is an initial pass at making something similar to my
+#' previous 'simple_clusterprofiler()' but using these new toys.
+#'
+#' @param sig_genes Dataframe of genes deemed 'significant.'
+#' @param de_table Dataframe of all genes in the analysis, primarily for gse analyses.
+#' @param orgdb Name of the orgDb used for gathering annotation data.
+#' @param orgdb_from Name of a key in the orgdb used to cross reference to entrez IDs.
+#' @param orgdb_to List of keys to grab from the orgdb for cross referencing ontologies.
+#' @param go_level How deep into the ontology tree should this dive for over expressed categories.
+#' @param pcutoff P-value cutoff for 'significant' analyses.
+#' @param qcutoff Q-value cutoff for 'significant' analyses.
+#' @param fc_column When extracting vectors of all genes, what column should be used?
+#' @param permutations How many permutations for GSEA-ish analyses?
+#' @param min_groupsize What is the minimum ontology group's size?
+#' @param kegg_prefix Many KEGG ids need a prefix before they will cross reference.
+#' @param kegg_organism Choose the 3 letter KEGG organism name here.
+#' @param kegg_id_column Column in the orgdb to use for cross referencing to KEGG.
+#' @param categories How many categories should be plotted in bar/dot plots?
+simple_cp_orgdb <- function(sig_genes, de_table, orgdb="org.Dm.eg.db",
+                            orgdb_from="FLYBASE", orgdb_to=c("ENSEMBL","SYMBOL","ENTREZID"),
+                            go_level=3, pcutoff=0.05, qcutoff=0.1, fc_column="logFC",
+                            permutations=100, min_groupsize=5, kegg_prefix="Dmel_",
+                            kegg_organism="dme", kegg_id_column="FLYBASECG", categories=12) {
+    requireNamespace(orgdb)
+    org <- loadNamespace(orgdb) ## put the orgDb instance into an environment
+    org <- org[[orgdb]] ## Then extract it
+    mapper_keys <- AnnotationDbi::keytypes(org)
+    all_genenames <- rownames(de_table)
+    all_genes_df <- clusterProfiler::bitr(all_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
+    sig_genenames <- rownames(sig_genes)
+    sig_genes_df <- clusterProfiler::bitr(sig_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
+    universe <- AnnotationDbi::keys(org)
+    all_genes_df <- merge(de_table, all_genes_df, by.x="row.names", by.y=orgdb_from)
+    ## Rename the first column
+    colnames(all_genes_df)[1] <- orgdb_from
+    if (is.null(all_genes_df[[fc_column]])) {
+        stop("The fold change column appears to provide no genes, try another column in the data set.")
+    }
+    all_genes_df <- all_genes_df[ order(all_genes_df[[fc_column]], decreasing=TRUE), ]
+
+    message("Calculating GO groups.")
+    ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[["ENTREZID"]], OrgDb=org, ont="MF", level=go_level, readable=TRUE)
+    ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[["ENTREZID"]], OrgDb=org, ont="BP", level=go_level, readable=TRUE)
+    ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[["ENTREZID"]], OrgDb=org, ont="CC", level=go_level, readable=TRUE)
+    group_go <- list(
+        "MF" = summary(ggo_mf),
+        "BP" = summary(ggo_bp),
+        "CC" = summary(ggo_cc))
+
+    message("Calculating enriched GO groups.")
+    ego_all_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="MF",
+                                            pAdjustMethod="BH", pvalueCutoff=1.0, qvalueCutoff=1.0, readable=TRUE)
+    ego_sig_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="MF",
+                                            pAdjustMethod="BH", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, readable=TRUE)
+    ego_all_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="BP",
+                                            pAdjustMethod="BH", pvalueCutoff=1.0, qvalueCutoff=1.0, readable=TRUE)
+    ego_sig_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="BP",
+                                            pAdjustMethod="BH", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, readable=TRUE)
+    ego_all_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="CC",
+                                            pAdjustMethod="BH", pvalueCutoff=1.0, qvalueCutoff=1.0, readable=TRUE)
+    ego_sig_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="CC",
+                                            pAdjustMethod="BH", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, readable=TRUE)
+    enrich_go <- list(
+        "MF_all" = summary(ego_all_mf),
+        "MF_sig" = summary(ego_sig_mf),
+        "BP_all" = summary(ego_all_bp),
+        "BP_sig" = summary(ego_sig_bp),
+        "CC_all" = summary(ego_all_cc),
+        "CC_sig" = summary(ego_sig_cc))
+
+    message("Performing GSE analyses of gene lists (this is slow).")
+    genelist <- as.vector(all_genes_df[[fc_column]])
+    names(genelist) <- all_genes_df[["ENTREZID"]]
+    gse_all_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
+                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
+    gse_sig_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
+                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
+    gse_all_bp <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
+                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
+    gse_sig_bp <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
+                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
+    gse_all_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
+                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
+    gse_sig_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
+                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
+    gse_go <- list(
+        "MF_all" = summary(gse_all_mf),
+        "MF_sig" = summary(gse_sig_mf),
+        "BP_all" = summary(gse_all_bp),
+        "BP_sig" = summary(gse_sig_bp),
+        "CC_all" = summary(gse_all_cc),
+        "CC_sig" = summary(gse_sig_cc))
+
+    message("Performing KEGG analyses.")
+    kegg_sig_ids <- paste0(kegg_prefix, sig_genes_df[[kegg_id_column]])
+    all_kegg <- clusterProfiler::enrichKEGG(gene=kegg_sig_ids, organism=kegg_organism,
+                                            pvalueCutoff=1.0)
+    Sys.sleep(3)
+    enrich_kegg <- clusterProfiler::enrichKEGG(gene=kegg_sig_ids, organism=kegg_organism, pvalueCutoff=pcutoff)
+
+    kegg_genelist <- as.vector(all_genes_df[[fc_column]])
+    names(kegg_genelist) <- paste0(kegg_prefix, all_genes_df[[kegg_id_column]])
+    Sys.sleep(3)
+    gse_all_kegg <- clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=1.0)
+    Sys.sleep(3)
+    gse_sig_kegg <- clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=pcutoff)
+    Sys.sleep(3)
+    gse_all_mkegg <- clusterProfiler::gseMKEGG(geneList=kegg_genelist, organism=kegg_organism,
+                                               pvalueCutoff=1.0)
+    Sys.sleep(3)
+    gse_sig_mkegg <- clusterProfiler::gseMKEGG(geneList=kegg_genelist, organism=kegg_organism,
+    pvalueCutoff=pcutoff)
+    kegg_data <- list(
+        "kegg_all" <- summary(all_kegg),
+        "kegg_sig" <- summary(enrich_kegg),
+        "kegg_gse_all" <- summary(gse_all_kegg),
+        "kegg_gse_sig" <- summary(gse_sig_kegg),
+        "kegg_gsem_all" <- summary(gse_all_mkegg),
+        "kegg_gsem_sig" <- summary(gse_sig_mkegg))
+
+    message("Plotting results.")
+    enrichMap(ego_sig_mf)
+    map_sig_mf <- recordPlot()
+    enrichMap(ego_sig_bp)
+    map_sig_bp <- recordPlot()
+    enrichMap(ego_sig_cc)
+    map_sig_cc <- recordPlot()
+    cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist)
+    net_sig_mf <- recordPlot()
+    cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist)
+    net_sig_bp <- recordPlot()
+    cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist)
+    net_sig_cc <- recordPlot()
+    tree_mf <- try(clusterProfiler::plotGOgraph(ego_sig_mf), silent=TRUE)
+    tree_sig_mf <- recordPlot()
+    tree_bp <- try(clusterProfiler::plotGOgraph(ego_sig_bp), silent=TRUE)
+    tree_sig_bp <- recordPlot()
+    tree_cc <- try(clusterProfiler::plotGOgraph(ego_sig_cc), silent=TRUE)
+    tree_sig_cc <- recordPlot()
+
+    plotlist <- list(
+        "ggo_mf_bar" = barplot(ggo_mf, drop=TRUE, showCategory=categories),
+        "ggo_bp_bar" = barplot(ggo_bp, drop=TRUE, showCategory=categories),
+        "ggo_cc_bar" = barplot(ggo_cc, drop=TRUE, showCategory=categories),
+        "ego_all_mf" = barplot(ego_all_mf, showCategory=categories, drop=TRUE),
+        "ego_all_bp" = barplot(ego_all_bp, showCategory=categories, drop=TRUE),
+        "ego_all_cc" = barplot(ego_all_cc, showCategory=categories, drop=TRUE),
+        "ego_sig_mf" = barplot(ego_sig_mf, showCategory=categories, drop=TRUE),
+        "ego_sig_bp" = barplot(ego_sig_bp, showCategory=categories, drop=TRUE),
+        "ego_sig_cc" = barplot(ego_sig_cc, showCategory=categories, drop=TRUE),
+        "dot_all_mf" = dotplot(ego_all_mf),
+        "dot_all_bp" = dotplot(ego_all_bp),
+        "dot_all_cc" = dotplot(ego_all_cc),
+        "dot_sig_mf" = dotplot(ego_sig_mf),
+        "dot_sig_bp" = dotplot(ego_sig_bp),
+        "dot_sig_cc" = dotplot(ego_sig_cc),
+        "map_sig_mf" = map_sig_mf,
+        "map_sig_bp" = map_sig_bp,
+        "map_sig_cc" = map_sig_cc,
+        "net_sig_mf" = net_sig_mf,
+        "net_sig_bp" = net_sig_bp,
+        "net_sig_cc" = net_sig_cc,
+        "tree_sig_mf" = tree_sig_mf,
+        "tree_sig_bp" = tree_sig_bp,
+        "tree_sig_cc" = tree_sig_cc)
+
+    retlist <- list(
+        "all_mappings" = all_genes_df,
+        "sig_mappings" = sig_genes_df,
+        "group_go" = group_go,
+        "enrich_go" = enrich_go,
+        "gse_go" = gse_go,
+        "kegg_data" = kegg_data,
+        "plots" = plotlist)
+    return(retlist)
+}
+
+#' Generic enrichment using clusterProfiler.
+#'
+#' culsterProfiler::enricher provides a quick and easy enrichment analysis given a set of
+#' siginficant' genes and a data frame which connects each gene to a category.
+#'
+#' @param sig_genes Set of 'significant' genes as a table.
+#' @param de_table All genes from the original analysis.
+#' @param goids_df Dataframe of GO->ID matching the gene names of sig_genes to GO categories.
+#' @return Table of 'enriched' categories.
+simple_cp_enricher <- function(sig_genes, de_table, goids_df=NULL) {
+    all_genenames <- rownames(de_table)
+    sig_genenames <- rownames(sig_genes)
+    enriched <- clusterProfiler::enricher(sig_genenames, TERM2GENE=goids_df)
+    retlist <- list(
+        "enriched" = summary(enriched))
+    return(retlist)
+}
 
 #' Make sure that clusterProfiler is ready to run.
 #'
@@ -11,7 +213,7 @@
 #' @return GO2EG data structure created, probably don't save this, it is entirely too big.
 #' @examples
 #' \dontrun{
-#'  go2eg <- check_clusterprofiler(gff, gomap)
+#'  go2eg <- check_clusterprofiler(gff, goids_df)
 #'  rm(go2eg)
 #' }
 #' @export
@@ -32,13 +234,12 @@ check_clusterprofiler <- function(gff='test.gff', goids_df=NULL) {
     gomapping_test <- suppressWarnings(try(load("GO2EG.rda"), silent=TRUE))
     if (class(gomapping_test) == 'try-error') {
         message("simple_clus(): Generating GO mapping data.")
-        gomap <- goids_df[,c(1,2)]
+        gomap <- goids_df[, c(1,2)]
         colnames(gomap) <- c("entrezgene", "go_accession")
         ## It turns out that the author of clusterprofiler reversed these fields...
         ## Column 1 must be GO ID, column 2 must be gene accession.
-        gomap <- gomap[,c("go_accession","entrezgene")]
-
-        log <- capture.output(type="output", { clusterProfiler::buildGOmap(gomap) })
+        gomap <- gomap[, c("go_accession","entrezgene")]
+        clusterProfiler::buildGOmap(gomap)
     } else {
         message("Using GO mapping data located in GO2EG.rda")
     }

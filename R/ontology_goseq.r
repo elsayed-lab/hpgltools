@@ -1,5 +1,3 @@
-## Time-stamp: <Mon May 16 14:38:59 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Enhance the goseq table of gene ontology information.
 #'
 #' While goseq has some nice functionality, the table of outputs it provides is somewhat lacking.
@@ -390,7 +388,7 @@ plot_goseq_pval <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat=
 goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
                         score_limit=0.01, goids_df=NULL, overwrite=FALSE,
                         selector="topDiffGenes", pval_column="adj.P.Val") {
-    make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+    mapping <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO <- topGO::readMappings(file=goid_map)
     annotated_genes <- names(geneID2GO)
     if (is.null(de_genes$ID)) {
@@ -406,8 +404,10 @@ goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
     } else {
         pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
         names(pvals) <- rownames(de_genes)
+        requireNamespace("topGO")
+        attachNamespace("topGO")
         mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
-                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata <- new("topGOdata", description="BP", ontology="BP", allGenes=pvals,
                          geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=pvals,

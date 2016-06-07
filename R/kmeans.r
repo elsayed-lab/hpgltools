@@ -1,5 +1,3 @@
-## Time-stamp: <Tue Feb  2 15:03:26 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## This is for the moment just a code dump of some arbitrarily chosen kmeans clustering stuff
 ## Fill this in asap with real code for Ginger's search of gene sets which have similar profiles over time.
 kmeans_testing <- function(gene_ids=get0("gene_ids")) {

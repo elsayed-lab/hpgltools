@@ -1,5 +1,3 @@
-## Time-stamp: <Sun May 15 20:35:00 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
 ## and use the results to attempt to more completely understand batch effects in our data

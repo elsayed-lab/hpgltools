@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 13:36:19 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## plot_scatter.r: Various scatter plots
 
 #' Steal edgeR's plotBCV() and make it a ggplot2.

@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 14:40:33 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Print some data onto KEGG pathways.
 #'
 #' KEGGREST and pathview provide neat functions for coloring molecular pathways with arbitrary data.

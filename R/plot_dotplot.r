@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 13 22:00:35 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## plot_dotplot.r: Dotplots in various contexts, currently just smc/smd
 
 #' Make a dotplot of some categorised factors and a set of SVs (for other factors).

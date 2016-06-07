@@ -21,7 +21,7 @@ file and attempts to set it up if it is not found.
 }
 \examples{
 \dontrun{
- go2eg <- check_clusterprofiler(gff, gomap)
+ go2eg <- check_clusterprofiler(gff, goids_df)
  rm(go2eg)
 }
 }

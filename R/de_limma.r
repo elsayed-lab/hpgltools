@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 13:26:05 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Plot out 2 coefficients with respect to one another from limma.
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one
@@ -24,7 +22,7 @@
 #'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
 #' }
 #' @export
-limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_filename="limma_scatter.html",
+limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
                                       gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
                                       tooltip_data=NULL, base_url=NULL,
                                       up_color="#7B9F35", down_color="#DD0000", ...) {
@@ -32,8 +30,8 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
     ##  output$pairwise_comparisons$coefficients
     arglist <- list(...)
     qlimit <- 0.1
-    if (!is.null(arglist$qlimit)) {
-        qlimit <- arglist$qlimit
+    if (!is.null(arglist[["qlimit"]])) {
+        qlimit <- arglist[["qlimit"]]
     }
     xname <- ""
     yname <- ""
@@ -48,36 +46,34 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ##gvis_fi
         yname <- y
     }
     message(paste0("Actually comparing ", xname, " and ", yname, "."))
-    coefficients <- output$pairwise_comparisons$coefficients
-    coefficients <- coefficients[, c(x,y)]
+    coefficients <- output[["pairwise_comparisons"]][["coefficients"]]
+    coefficients <- coefficients[, c(x, y)]
     maxvalue <- max(coefficients) + 1
     plot <- plot_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
                                 tooltip_data=tooltip_data, base_url=base_url, pretty_colors=FALSE)
-    plot$scatter <- plot$scatter +
+    plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
     if (!is.null(toptable)) {
-        theplot <- plot$scatter + ggplot2::theme_bw()
+        theplot <- plot[["scatter"]] + ggplot2::theme_bw()
         sig <- limma_subset(toptable, z=z)
-        sigup <- sig$up
-        sigdown <- sig$down
-        ## sigup <- subset(sigup, qvalue < 0.1)
-        sigup <- sigup[sigup$qvalue <= qlimit, ]
-        ## sigdown <- subset(sigdown, qvalue < 0.1)
-        sigdown <- sigdown[sigdown$qvalue <= qlimit, ]
+        sigup <- sig[["up"]]
+        sigdown <- sig[["down"]]
+        sigup <- sigup[sigup[["qvalue"]] <= qlimit, ]
+        sigdown <- sigdown[sigdown[["qvalue"]] <= qlimit, ]
         up_index <- rownames(coefficients) %in% rownames(sigup)
         down_index <- rownames(coefficients) %in% rownames(sigdown)
         up_df <- as.data.frame(coefficients[up_index, ])
         down_df <- as.data.frame(coefficients[down_index, ])
-        colnames(up_df) <- c("first","second")
-        colnames(down_df) <- c("first","second")
+        colnames(up_df) <- c("first", "second")
+        colnames(down_df) <- c("first", "second")
         theplot <- theplot +
             ggplot2::geom_point(data=up_df, colour=up_color) +
             ggplot2::geom_point(data=down_df, colour=down_color)
-        plot$scatter <- theplot
+        plot[["scatter"]] <- theplot
     }
-    plot$df <- coefficients
+    plot[["df"]] <- coefficients
     return(plot)
 }
 
@@ -122,7 +118,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
         dataframe <- t(posed / (libsize + 1) * 1e+06)
         ##y <- t(log2(t(counts + 0.5)/(lib.size + 1) * 1000000)) ## from voom()
     }
-    if (logged == 'log2') {
+    if (logged == "log2") {
         logged <- TRUE
     }
     if (isTRUE(logged)) {
@@ -145,11 +141,11 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
         colnames(model) <- "GrandMean"
     }
     linear_fit <- limma::lmFit(dataframe, model, method="ls")
-    if (is.null(linear_fit$Amean)) {
-        linear_fit$Amean <- rowMeans(dataframe, na.rm=TRUE)
+    if (is.null(linear_fit[["Amean"]])) {
+        linear_fit[["Amean"]] <- rowMeans(dataframe, na.rm=TRUE)
     }
-    sx <- linear_fit$Amean + mean(log2(libsize + 1)) - log2(1e+06)
-    sy <- sqrt(linear_fit$sigma)
+    sx <- linear_fit[["Amean"]] + mean(log2(libsize + 1)) - log2(1e+06)
+    sy <- sqrt(linear_fit[["sigma"]])
     if (is.na(sum(sy))) { ## 1 replicate
         return(NULL)
     }
@@ -169,40 +165,39 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
         ggplot2::geom_point() +
         ggplot2::xlab("Log2(count size + 0.5)") +
         ggplot2::ylab("Square root of the standard deviation.") +
-        ## stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
         ggplot2::stat_density2d(geom="tile", ggplot2::aes_string(fill="..density..^0.25"),
                                 contour=FALSE, show.legend=FALSE) +
-        ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white","black"))(256)) +
+        ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white", "black"))(256)) +
         ggplot2::geom_smooth(method="loess") +
         ggplot2::stat_function(fun=f, colour="red") +
         ggplot2::theme(legend.position="none")
-    if (is.null(linear_fit$rank)) {
+    if (is.null(linear_fit[["rank"]])) {
         message("Some samples cannot be balanced across the experimental design.")
         if (isTRUE(stupid)) {
             ## I think this is telling me I have confounded data, and so
             ## for those replicates I will have no usable coefficients, so
             ## I say set them to 1 and leave them alone.
-            linear_fit$coefficients[is.na(linear_fit$coef)] <- 1
-            fitted.values <- linear_fit$coef %*% t(linear_fit$design)
+            linear_fit[["coefficients"]][is.na(linear_fit[["coefficients"]])] <- 1
+            fitted.values <- linear_fit[["coefficients"]] %*% t(linear_fit[["design"]])
         }
-    } else if (linear_fit$rank < ncol(linear_fit$design)) {
-        j <- linear_fit$pivot[1:linear_fit$rank]
-        fitted.values <- linear_fit$coef[, j, drop=FALSE] %*% t(linear_fit$design[, j, drop=FALSE])
+    } else if (linear_fit[["rank"]] < ncol(linear_fit[["design"]])) {
+        j <- linear_fit[["pivot"]][1:linear_fit[["rank"]]]
+        fitted.values <- linear_fit[["coefficients"]][, j, drop=FALSE] %*% t(linear_fit[["design"]][, j, drop=FALSE])
     } else {
-        fitted.values <- linear_fit$coef %*% t(linear_fit$design)
+        fitted.values <- linear_fit[["coefficients"]] %*% t(linear_fit[["design"]])
     }
-    fitted.cpm <- 2^fitted.values
+    fitted.cpm <- 2 ^ fitted.values
     fitted.count <- 1e-06 * t(t(fitted.cpm) * (libsize + 1))
     fitted.logcount <- log2(fitted.count)
-    w <- 1 / f(fitted.logcount)^4
+    w <- 1 / f(fitted.logcount) ^ 4
     dim(w) <- dim(fitted.logcount)
     rownames(w) <- rownames(dataframe)
     colnames(w) <- colnames(dataframe)
-    out$E <- dataframe
-    out$weights <- w
-    out$design <- model
-    out$lib.size <- libsize
-    out$plot <- mean_var_plot
+    out[["E"]] <- dataframe
+    out[["weights"]] <- w
+    out[["design"]] <- model
+    out[["lib.size"]] <- libsize
+    out[["plot"]] <- mean_var_plot
     new("EList", out)
 }
 
@@ -254,7 +249,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     arglist <- list(...)
     message("Starting limma pairwise comparison.")
     input_class <- class(input)[1]
-    if (input_class == 'expt') {
+    if (input_class == "expt") {
         conditions <- input[["conditions"]]
         batches <- input[["batches"]]
         data <- Biobase::exprs(input[["expressionset"]])
@@ -293,7 +288,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     fun_model <- NULL
     fun_int_model <- NULL
     if (isTRUE(model_cond) & isTRUE(model_batch)) {
-        if (class(condbatch_model) == 'try-error') {
+        if (class(condbatch_model) == "try-error") {
             message("The condition+batch model failed.  Does your experimental design support both condition and batch?")
             message("Using only a conditional model.")
             fun_model <- cond_model
@@ -302,7 +297,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             fun_model <- condbatch_model
             fun_int_model <- condbatch_int_model
         }
-    } else if (class(model_batch) == 'matrix' | class(model_batch) == 'numeric') {
+    } else if (class(model_batch) == "matrix" | class(model_batch) == "numeric") {
         message("Limma: Including multiple sv batch estimates from sva/ruv/pca in the limma model.")
         fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
         fun_int_model <- stats::model.matrix(~ conditions + model_batch)
@@ -323,6 +318,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     if (!is.null(alt_model)) {
         fun_model <- alt_model
     }
+
     tmpnames <- colnames(fun_model)
     tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
     tmpnames <- gsub("-", "", tmpnames)
@@ -486,7 +482,7 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
     } else {
         plots <- plot_scatter(df, ...)
     }
-    plots[['dataframe']] <- df
+    plots[["dataframe"]] <- df
     return(plots)
 }
 
@@ -520,11 +516,13 @@ limma_subset <- function(table, n=NULL, z=NULL) {
         down_genes <- table[ which(table$logFC <= down_median_dist), ]
         ## down_genes = subset(table, logFC <= down_median_dist)
     } else if (is.null(z)) {
-        upranked <- table[ order(table$logFC, decreasing=TRUE),]
+        upranked <- table[order(table$logFC, decreasing=TRUE), ]
         up_genes <- head(upranked, n=n)
         down_genes <- tail(upranked, n=n)
     }
-    ret_list <- list(up=up_genes, down=down_genes)
+    ret_list <- list(
+        "up" = up_genes,
+        "down" = down_genes)
     return(ret_list)
 }
 
@@ -590,86 +588,86 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
                               basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE,
                               pvalue_cutoff=0.05, logfc_cutoff=0.6, tooltip_data=NULL,
                               ...) {
-    condition_model <- stats::model.matrix(~ 0 + subset$condition)
-    if (length(levels(subset$batch)) == 1) {
+    condition_model <- stats::model.matrix(~ 0 + subset[["condition"]])
+    if (length(levels(subset[["batch"]])) == 1) {
         message("There is only one batch! I can only include condition in the model.")
-        condbatch_model <- stats::model.matrix(~ 0 + subset$condition)
+        condbatch_model <- stats::model.matrix(~ 0 + subset[["condition"]])
     } else {
-        condbatch_model <- stats::model.matrix(~ 0 + subset$condition + subset$batch)
+        condbatch_model <- stats::model.matrix(~ 0 + subset[["condition"]] + subset[["batch"]])
     }
     if (isTRUE(batch)) {
         model <- condbatch_model
     } else {
         model <- condition_model
     }
-    expt_data <- as.data.frame(Biobase::exprs(subset$expressionset))
+    expt_data <- as.data.frame(Biobase::exprs(subset[["expressionset"]]))
     if (combat) {
-#        expt_data = ComBat(expt_data, subset$batches, condition_model)
-        expt_data <- hpgl_combatMod(expt_data, subset$batches, subset$conditions)
+        ## expt_data = ComBat(expt_data, subset$batches, condition_model)
+        expt_data <- hpgl_combatMod(expt_data, subset[["batches"]], subset[["conditions"]])
     }
-    expt_voom <- hpgl_voom(expt_data, model, libsize=subset$original_libsize,
-                                      logged=subset$transform, converted=subset$convert)
+    expt_voom <- hpgl_voom(expt_data, model, libsize=subset[["original_libsize"]],
+                           logged=subset[["transform"]], converted=subset[["convert"]])
     lf <- limma::lmFit(expt_voom)
-    colnames(lf$coefficients)
-    coefficient_scatter <- plot_linear_scatter(lf$coefficients)
-    colnames(lf$design)[1] <- "changed"
-    colnames(lf$coefficients)[1] <- "changed"
-    colnames(lf$design)[2] <- "control"
-    colnames(lf$coefficients)[2] <- "control"
+    colnames(lf[["coefficients"]])
+    coefficient_scatter <- plot_linear_scatter(lf[["coefficients"]])
+    colnames(lf[["design"]])[1] <- "changed"
+    colnames(lf[["coefficients"]])[1] <- "changed"
+    colnames(lf[["design"]])[2] <- "control"
+    colnames(lf[["coefficients"]])[2] <- "control"
     ## Now make sure there are no weird characters in the column names...
-    if (length(colnames(lf$design)) >= 3) {
-        for (counter in 3:length(colnames(lf$design))) {
-            oldname <- colnames(lf$design)[counter]
+    if (length(colnames(lf[["design"]])) >= 3) {
+        for (counter in 3:length(colnames(lf[["design"]]))) {
+            oldname <- colnames(lf[["design"]])[counter]
             newname <- gsub("\\$","_", oldname, perl=TRUE)
-            colnames(lf$design)[counter] <- newname
-            colnames(lf$coefficients)[counter] <- newname
+            colnames(lf[["design"]])[counter] <- newname
+            colnames(lf[["coefficients"]])[counter] <- newname
         }
     }
-    contrast_matrix <- limma::makeContrasts(changed_v_control="changed-control", levels=lf$design)
+    contrast_matrix <- limma::makeContrasts(changed_v_control="changed-control", levels=lf[["design"]])
     ## contrast_matrix = limma::makeContrasts(changed_v_control=changed-control, levels=lf$design)
     cond_contrasts <- limma::contrasts.fit(lf, contrast_matrix)
-    hist_df <- data.frame(values=cond_contrasts$coefficients)
+    hist_df <- data.frame(values=cond_contrasts[["coefficients"]])
     contrast_histogram <- plot_histogram(hist_df)
-    hist_df <- data.frame(values=cond_contrasts$Amean)
+    hist_df <- data.frame("values" = cond_contrasts[["Amean"]])
     amean_histogram <- plot_histogram(hist_df, fillcolor="pink", color="red")
-    coef_amean_cor <- stats::cor.test(cond_contrasts$coefficients, cond_contrasts$Amean, exact=FALSE)
+    coef_amean_cor <- stats::cor.test(cond_contrasts[["coefficients"]], cond_contrasts[["Amean"]], exact=FALSE)
     cond_comparison <- limma::eBayes(cond_contrasts)
-    hist_df <- data.frame(values=cond_comparison$p.value)
+    hist_df <- data.frame(values=cond_comparison[["p.value"]])
     pvalue_histogram <- plot_histogram(hist_df, fillcolor="lightblue", color="blue")
-    cond_table <- limma::topTable(cond_comparison, number=nrow(expt_voom$E),
+    cond_table <- limma::topTable(cond_comparison, number=nrow(expt_voom[["E"]]),
                                   coef="changed_v_control", sort.by="logFC")
     if (!is.na(basename)) {
         vol_gvis_filename <- paste(basename, "volplot.html", sep="_")
         a_volcano_plot <- plot_volcano(cond_table, gvis_filename=vol_gvis_filename,
-                                            tooltip_data=tooltip_data)
+                                       tooltip_data=tooltip_data)
     } else {
         a_volcano_plot <- plot_volcano(cond_table)
     }
     if (!is.na(basename)) {
         ma_gvis_filename <- paste(basename, "maplot.html", sep="_")
-        an_ma_plot <- plot_ma(expt_voom$E, cond_table, gvis_filename=ma_gvis_filename,
+        an_ma_plot <- plot_ma(expt_voom[["E"]], cond_table, gvis_filename=ma_gvis_filename,
                               tooltip_data=tooltip_data)
     } else {
-        an_ma_plot <- plot_ma(expt_voom$E, cond_table)
+        an_ma_plot <- plot_ma(expt_voom[["E"]], cond_table)
     }
     write_xls(cond_table, sheet, file=workbook, rowname="row.names")
     ## upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
-    upsignificant_table <- cond_table[ which(cond_table$logFC >= logfc_cutoff), ]
+    upsignificant_table <- cond_table[ which(cond_table[["logFC"]] >= logfc_cutoff), ]
     ## downsignificant_table = subset(cond_table, logFC <= (-1 * logfc_cutoff))
-    downsignificant_table <- cond_table[ which(cond_table$logFC <= (-1 * logfc_cutoff)), ]
+    downsignificant_table <- cond_table[ which(cond_table[["logFC"]] <= (-1 * logfc_cutoff)), ]
     ## psignificant_table = subset(cond_table, adj.P.Val <= pvalue_cutoff)
     ## psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)
-    psignificant_table <- cond_table[ which(cond_table$P.Value <= pvalue_cutoff), ]
+    psignificant_table <- cond_table[ which(cond_table[["P.Value"]] <= pvalue_cutoff), ]
 
     message("The model looks like:")
     message(model)
     message("The mean:variance trend follows")
-    plot(expt_voom$plot)
+    plot(expt_voom[["plot"]])
     message("Drawing a scatterplot of the genes.")
     message("The following statistics describe the relationship between:")
-    print(coefficient_scatter$scatter)
-    message(paste("Setting the column:", colnames(lf$design)[2], "to control"))
-    message(paste("Setting the column:", colnames(lf$design)[1], "to changed"))
+    print(coefficient_scatter[["scatter"]])
+    message(paste("Setting the column:", colnames(lf[["design"]])[2], "to control"))
+    message(paste("Setting the column:", colnames(lf[["design"]])[1], "to changed"))
     message("Performing contrasts of the experimental - control.")
     message("Taking a histogram of the subtraction values.")
     print(contrast_histogram)
@@ -737,10 +735,10 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
                        excel=FALSE, csv=FALSE, annot_df=NULL) {
     testdir <- dirname(workbook)
     if (n == 0) {
-        n <- dim(data$coefficients)[1]
+        n <- dim(data[["coefficients"]])[1]
     }
     if (is.null(coef)) {
-        coef <- colnames(data$contrasts)
+        coef <- colnames(data[["contrasts"]])
     } else {
         coef <- as.character(coef)
     }
@@ -751,30 +749,30 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
         message(paste0("limma step 6/6: ", c, "/", end, ": Printing table: ", comparison, "."))
         data_table <- limma::topTable(data, adjust=adjust, n=n, coef=comparison)
         ## Reformat the numbers so they are not so obnoxious
-##        data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
-##        data_table$AveExpr <- refnum(data_table$AveExpr, sci=FALSE)
-##        data_table$t <- refnum(data_table$t, sci=FALSE)
-##        data_table$P.Value <- refnum(data_table$P.Value)
-##        data_table$adj.P.Val <- refnum(data_table$adj.P.Val)
-##        data_table$B <- refnum(data_table$B, sci=FALSE)
-        data_table$logFC <- signif(x=as.numeric(data_table$logFC), digits=4)
-        data_table$AveExpr <- signif(x=as.numeric(data_table$AveExpr), digits=4)
-        data_table$t <- signif(x=as.numeric(data_table$t), digits=4)
-        data_table$P.Value <- signif(x=as.numeric(data_table$P.Value), digits=4)
-        data_table$adj.P.Val <- signif(x=as.numeric(data_table$adj.P.Val), digits=4)
-        data_table$B <- signif(x=as.numeric(data_table$B), digits=4)
-        data_table$qvalue <- tryCatch(
+        ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
+        ## data_table$AveExpr <- refnum(data_table$AveExpr, sci=FALSE)
+        ## data_table$t <- refnum(data_table$t, sci=FALSE)
+        ## data_table$P.Value <- refnum(data_table$P.Value)
+        ## data_table$adj.P.Val <- refnum(data_table$adj.P.Val)
+        ## data_table$B <- refnum(data_table$B, sci=FALSE)
+        data_table[["logFC"]] <- signif(x=as.numeric(data_table[["logFC"]]), digits=4)
+        data_table[["AveExpr"]] <- signif(x=as.numeric(data_table[["AveExpr"]]), digits=4)
+        data_table[["t"]] <- signif(x=as.numeric(data_table[["t"]]), digits=4)
+        data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
+        data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
+        data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
+        data_table[["qvalue"]] <- tryCatch(
         {
-            ##as.numeric(format(signif(
-            ##    suppressWarnings(qvalue::qvalue(
-            ##        as.numeric(data_table$P.Value), robust=TRUE))$qvalues, 4),
-            ##    scientific=TRUE))
-            ttmp <- as.numeric(data_table$P.Value)
-            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            ## as.numeric(format(signif(
+            ## suppressWarnings(qvalue::qvalue(
+            ## as.numeric(data_table$P.Value), robust=TRUE))$qvalues, 4),
+            ## scientific=TRUE))
+            ttmp <- as.numeric(data_table[["P.Value"]])
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
-##            ttmp <- signif(ttmp, 4)
-##            ttmp <- format(ttmp, scientific=TRUE)
-##            ttmp
+            ## ttmp <- signif(ttmp, 4)
+            ## ttmp <- format(ttmp, scientific=TRUE)
+            ## ttmp
         },
         error=function(cond) {
             message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))

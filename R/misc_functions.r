@@ -1,5 +1,3 @@
-## Time-stamp: <Mon May 16 17:56:55 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' png() shortcut
 #'
 #' I hate remembering my options for png()
@@ -18,7 +16,7 @@ pp <- function(file) {
 #' and http://tolstoy.newcastle.edu.au/R/help/04/06/0217.html
 #'
 #' @title tryCatch both warnings and errors
-#' @param expr
+#' @param expr an expression to try
 #' @return a list with 'value' and 'warning', where
 #'  'value' may be an error caught.
 #' @author Martin Maechler
@@ -47,7 +45,7 @@ tryCatch.W.E <- function(expr) {
 #' @param code Some code to shut up.
 #' @return List of the output log, message log, and result of the expression.
 #' @export
-sp <- function(code) {
+s_p <- function(code) {
     warnings <- NULL
     output_log <- NULL
     message_log <- NULL
@@ -415,46 +413,36 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #' @export
 gff2df <- function(gff, type=NULL) {
     ret <- NULL
-    gff_test <- grepl("\\.gff", gff)
-    gtf_test <- grepl("\\.gtf", gff)
-    annotations <- 0
-    class(annotations) <- "try-error"
-    if (isTRUE(gtf_test)) {  ## Start with an attempted import of gtf files.
-        annotations <- try(rtracklayer::import.gff(gff, format="gtf"), silent=TRUE)
-    }
-    ## Try gff3 with seqinfo on
-    if (class(annotations) == "try-error") {
-        annotations <- try(rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE))
-    }
-    ## try it again with seqinfo off
-    if (class(annotations) == "try-error") {
-        message("Importing the gff file as gff3 with seqinfo as TRUE failed, trying FALSE.")
-        annotations <- try(rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE))
-    }
-    ## Then try gff2 with seqinfo on
-    if (class(annotations) == "try-error") {
-        message("Importing the gff file as gff3 with seqinfo as FALSE failed, trying gff2.")
-        annotations <- try(rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE))
-    }
-    ## Try gff2 again with seqinfo off
-    if (class(annotations) == "try-error") {
-        message("Importing the gff file as gff2 with seqinfo as TRUE failed, trying FALSE.")
-        annotations <- try(rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE))
-    }
-    ## Ok, if we got to here, that kind of sucks.
-    if (class(annotations) == "try-error") {
-        message("Importing the gff file as gff2 with seqinfo as FALSE failed, trying gff1.")
-        annotations <- try(rtracklayer::import.gff(gff))
-    }
-    if (class(annotations) == "try-error") {
-        stop("Could not extract the widths from the gff file.")
-    } else {
-        ret <- annotations
-    }
+    annotations <- NULL
+    success <- FALSE
+    ## First try gtf annotations
 
-    ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one
-    ## gets an error about "no method to coerce an S4 class to a vector."
-    ret <- GenomicRanges::as.data.frame(ret)
+    attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
+                  "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE)",
+                  "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE)",
+                  "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE)",
+                  "rtracklayer::import.gff(gff, format='gtf')",
+                  "rtracklayer::import.gff(gff)"
+                  )
+    for (att in 1:length(attempts)) {
+        message(paste0("Trying attempt: ", attempts[[att]]))
+        attempt <- attempts[[att]]
+        eval_string <- paste0("annotations <- try(", attempt, ")")
+        eval(parse(text=eval_string))
+        if (class(annotations) == "try-error") {
+            success <- FALSE
+        } else {
+            success <- TRUE
+            message("Had a successful gff import with ", attempt)
+            break
+        }
+    }
+    ret <- NULL
+    if (class(annotations)[[1]] == "GRanges") {
+        ret <- GenomicRanges::as.data.frame(annotations)
+    } else {
+        stop("Unable to load gff file.")
+    }
     if (!is.null(type)) {
         index <- ret[, "type"] == type
         ret <- ret[index, ]

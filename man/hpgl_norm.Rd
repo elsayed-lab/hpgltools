@@ -4,58 +4,10 @@
 \alias{hpgl_norm}
 \title{Normalize a dataframe/expt, express it, and/or transform it}
 \usage{
-hpgl_norm(data, design = NULL, transform = "raw", norm = "raw",
-  convert = "raw", batch = "raw", batch1 = "batch", batch2 = NULL,
-  filter_low = FALSE, annotations = NULL, entry_type = "gene",
-  fasta = NULL, thresh = 2, min_samples = 2, noscale = TRUE, p = 0.01,
-  A = 1, k = 1, cv_min = 0.01, cv_max = 1000, ...)
+hpgl_norm(data, ...)
 }
 \arguments{
-\item{data}{some data}
-
-\item{design}{design dataframe must come with it}
-
-\item{transform}{defines whether to log(2|10) transform the
-data. Defaults to raw.}
-
-\item{norm}{specify the normalization strategy.  Defaults to
-raw.  This makes use of DESeq/EdgeR to provide: RLE, upperquartile,
-size-factor, or tmm normalization.  I tend to like quantile, but there are
-definitely corner-case scenarios for all strategies.}
-
-\item{convert}{defines the output type which may be raw, cpm,
-rpkm, or cp_seq_m.  Defaults to raw.}
-
-\item{batch}{batch correction method to try out}
-
-\item{batch1}{column from design to get batch info}
-
-\item{batch2}{a second covariate to try}
-
-\item{filter_low}{choose whether to low-count filter the data.}
-
-\item{annotations}{is used for rpkm or sequence normalizations to
-extract the lengths of sequences for normalization}
-
-\item{entry_type}{default gff entry to cull from}
-
-\item{fasta}{fasta genome for rpkm}
-
-\item{thresh}{threshold for low count filtering}
-
-\item{min_samples}{minimum samples for low count filtering}
-
-\item{noscale}{used by combatmod}
-
-\item{p}{for povera genefilter}
-
-\item{A}{for povera genefilter}
-
-\item{k}{for kovera genefilter}
-
-\item{cv_min}{for genefilter cv}
-
-\item{cv_max}{for genefilter cv}
+\item{data}{Some data as a df/expt/whatever.}
 
 \item{...}{I should put all those other options here}
 }
@@ -64,7 +16,7 @@ edgeR's DGEList expression of a count table.  This seems to
 me to be the easiest to deal with.
 }
 \description{
-Sometime soon I am going to elipsis all these variables
+There are many possible options to this function.  Refer to normalize_expt() for a more complete list.
 }
 \examples{
 \dontrun{

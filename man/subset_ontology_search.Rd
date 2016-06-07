@@ -4,7 +4,9 @@
 \alias{subset_ontology_search}
 \title{Perform ontology searches on up/down subsets of differential expression data.}
 \usage{
-subset_ontology_search(changed_counts, doplot = TRUE, ...)
+subset_ontology_search(changed_counts, doplot = TRUE, do_goseq = TRUE,
+  do_cluster = TRUE, do_topgo = TRUE, do_gostats = TRUE,
+  do_gprofiler = TRUE, ...)
 }
 \arguments{
 \item{changed_counts}{List of changed counts as ups and downs.}

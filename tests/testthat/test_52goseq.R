@@ -11,14 +11,14 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
-    sig_genes <- sp(get_sig_genes(table, column="untreated")$up_genes)$result
+    sig_genes <- s_p(get_sig_genes(table, column="untreated")$up_genes)$result
 
-    dmel_annotations <- sp(get_biomart_annotations(species="dmelanogaster"))$result
-    dmel_ontologies <- sp(get_biomart_ontologies(species="dmelanogaster"))$result
+    dmel_annotations <- s_p(get_biomart_annotations(species="dmelanogaster"))$result
+    dmel_ontologies <- s_p(get_biomart_ontologies(species="dmelanogaster"))$result
     dmel_lengths <- dmel_annotations[, c("geneID", "length")]
     colnames(dmel_lengths) <- c("ID","width")
 
-    goseq_result <- sp(simple_goseq(sig_genes, lengths=dmel_lengths, goids_df=dmel_ontologies))$result
+    goseq_result <- s_p(simple_goseq(sig_genes, lengths=dmel_lengths, goids_df=dmel_ontologies))$result
 
     expected_goseq_mf <- c("GO:0004252", "GO:0003824", "GO:0043169", "GO:0020037", "GO:0016918", "GO:0008146")
     actual_goseq_mf <- head(rownames(goseq_result$mf_interesting))

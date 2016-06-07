@@ -1,5 +1,3 @@
-## Time-stamp: <Sat May 14 14:39:33 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## plot_heatmap.r: Heatmaps separated by usage
 
 #' Make a heatmap.3 description of the correlation between samples.
@@ -128,7 +126,7 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         row_colors <- RColorBrewer::brewer.pal(12, "Set3")[batch_color_assignments]
     } else {
         ## If we just have 1 batch, make it... green!
-        row_colors <- rep("green", length(expt_design[batch_row]))
+        row_colors <- rep("darkgreen", length(expt_colors))
     }
 
     if (type == "correlation") {

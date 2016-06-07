@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 13 15:22:36 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 #' Plot two coefficients with respect to one another from edgeR.
 #'
 #' It can be nice to see a plot of two coefficients from a edger comparison with respect to one another
@@ -26,7 +24,7 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     message("This can do comparisons among the following columns in the edger result:")
-    thenames <- names(output$contrasts$identities)
+    thenames <- names(output[["contrasts"]][["identities"]])
     cat(thenames)
     xname <- ""
     yname <- ""
@@ -44,7 +42,7 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
     message(paste0("Actually comparing ", xname, " and ", yname, "."))
     ## It looks like the lrt data structure is redundant, so I will test that by looking at the apparent
     ## coefficients from lrt[[1]] and then repeating with lrt[[2]]
-    coefficient_df <- output$lrt[[1]]$coefficients
+    coefficient_df <- output[["lrt"]][[1]][["coefficients"]]
     coefficient_df <- coefficient_df[, c(xname, yname)]
     if (max(coefficient_df) < 0) {
         coefficient_df <- coefficient_df * -1.0
@@ -55,10 +53,10 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
                                 tooltip_data=tooltip_data, base_url=base_url)
     maxvalue <- as.numeric(max(coefficient_df) + 1)
     print(maxvalue)
-    plot$scatter <- plot$scatter +
+    plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
-    plot$df <- coefficient_df
+    plot[["df"]] <- coefficient_df
     return(plot)
 }
 
@@ -102,7 +100,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
                           extra_contrasts=NULL, annot_df=NULL, force=FALSE, ...) {
     message("Starting edgeR pairwise comparisons.")
     input_class <- class(input)[1]
-    if (input_class == 'expt') {
+    if (input_class == "expt") {
         conditions <- input[["conditions"]]
         batches <- input[["batches"]]
         data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
@@ -124,12 +122,15 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             } else if (input[["state"]][["normalization"]] != "raw" |
                        (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
                 ## This makes use of the fact that the order of operations in the normalization function is static.
-                ## lowfilter->normalization->convert->batch->transform.
-                ## Thus, if the normalized state is not raw, we can look back either to the lowfiltered or original data
+                ## filter->normalization->convert->batch->transform.
+                ## Thus, if the normalized state is not raw, we can look back either to the filtered or original data
                 ## The same is true for the transformation state.
-                if (input[["state"]][["lowfilter"]] == "raw") {
-                    message("EdgeR expects raw data as input, reverting to the low-count filtered data.")
-                    data <- input[["normalized"]][["intermediate_counts"]][["lowfilter"]][["count_table"]]
+                if (input[["state"]][["filter"]] == "raw") {
+                    message("EdgeR expects raw data as input, reverting to the count filtered data.")
+                    data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
+                    if (is.null(data)) {
+                        data <- input[["normalized"]][["intermediate_counts"]][["original"]]
+                    }
                 } else {
                     message("EdgeR expects raw data as input, reverting to the original expressionset.")
                     data <- Biobase::exprs(input[["original_expressionset"]])
@@ -165,7 +166,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     if (isTRUE(model_cond) & isTRUE(model_batch)) {
         fun_model <- condbatch_model
         fun_int_model <- condbatch_int_model
-    } else if (class(model_batch) == 'numeric' | class(model_batch) == 'matrix') {
+    } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
         message("EdgeR: Including batch estimates from sva/ruv/pca in the EdgeR model.")
         fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
         fun_int_model <- stats::model.matrix(~ conditions + model_batch)
@@ -216,12 +217,12 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     contrast_list <- list()
     result_list <- list()
     lrt_list <- list()
-    sc <- vector("list", length(apc$names))
-    end <- length(apc$names)
-    for (con in 1:length(apc$names)) {
-        name <- apc$names[[con]]
+    sc <- vector("list", length(apc[["names"]]))
+    end <- length(apc[["names"]])
+    for (con in 1:length(apc[["names"]])) {
+        name <- apc[["names"]][[con]]
         message(paste0("EdgeR step 9/9: ", con, "/", end, ": Printing table: ", name, ".")) ## correct
-        sc[[name]] <- gsub(pattern=",", replacement="", apc$all_pairwise[[con]])
+        sc[[name]] <- gsub(pattern=",", replacement="", apc[["all_pairwise"]][[con]])
         tt <- parse(text=sc[[name]])
         ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=fun_model)")
         eval(parse(text=ctr_string))
@@ -229,20 +230,20 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         lrt_list[[name]] <- edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
         res <- edgeR::topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")
         res <- as.data.frame(res)
-        res$logFC <- signif(x=as.numeric(res$logFC), digits=4)
-        res$logCPM <- signif(x=as.numeric(res$logCPM), digits=4)
-        res$LR <- signif(x=as.numeric(res$LR), digits=4)
-        res$PValue <- signif(x=as.numeric(res$PValue), digits=4)
-        res$FDR <- signif(x=as.numeric(res$FDR), digits=4)
-        res$qvalue <- tryCatch(
+        res[["logFC"]] <- signif(x=as.numeric(res[["logFC"]]), digits=4)
+        res[["logCPM"]] <- signif(x=as.numeric(res[["logCPM"]]), digits=4)
+        res[["LR"]] <- signif(x=as.numeric(res[["LR"]]), digits=4)
+        res[["PValue"]] <- signif(x=as.numeric(res[["PValue"]]), digits=4)
+        res[["FDR"]] <- signif(x=as.numeric(res[["FDR"]]), digits=4)
+        res[["qvalue"]] <- tryCatch(
         {
             ##as.numeric(format(signif(
             ##    suppressWarnings(qvalue::qvalue(
             ##        as.numeric(res$PValue), robust=TRUE))$qvalues, 4),
             ##scientific=TRUE))
             ## ok I admit it, I am not smart enough for nested expressions
-            ttmp <- as.numeric(res$PValue)
-            ttmp <- qvalue::qvalue(ttmp)$qvalues
+            ttmp <- as.numeric(res[["PValue"]])
+            ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
             format(x=ttmp, digits=4, scientific=TRUE)
         },
         error=function(cond) {
@@ -259,10 +260,10 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         result_list[[name]] <- res
     } ## End for loop
     final <- list(
-        contrasts=apc,
-        lrt=lrt_list,
-        contrast_list=contrast_list,
-        all_tables=result_list)
+        "contrasts" = apc,
+        "lrt" = lrt_list,
+        "contrast_list" = contrast_list,
+        "all_tables" = result_list)
     return(final)
 }
 

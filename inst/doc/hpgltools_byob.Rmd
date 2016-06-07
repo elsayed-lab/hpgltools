@@ -382,14 +382,14 @@ design and/or colors).
 
 ```{r norm_poking}
 
-hs_density <- hpgl_density(hs_norm)
+hs_density <- plot_density(hs_norm)
 print(hs_density)
 ## The quantile normalization really homogenizes the data distributions
 
-hs_cor <- hpgl_corheat(hs_norm)
+hs_cor <- plot_corheat(hs_norm)
 ## It appears the uninfected looks a lot like self-healing
 
-hs_pca <- hpgl_pca(hs_norm)
+hs_pca <- plot_pca(hs_norm)
 hs_pca$plot
 ## The pca plot now separates pretty clearly from self-healing/uninfected vs. chronic
 

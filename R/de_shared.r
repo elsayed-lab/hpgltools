@@ -1,5 +1,3 @@
-## Time-stamp: <Fri May 13 10:25:07 2016 Ashton Trey Belew (abelew@gmail.com)>
-
 ## Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
 ## The null hypothesis is (H0): (infected == uninfected) || (infected == beads)
@@ -82,8 +80,13 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     result_comparison <- compare_tables(limma=limma_result, deseq=deseq_result,
                                         edger=edger_result, basic=basic_result,
                                         annot_df=annot_df, ...)
-    ret <- list(limma=limma_result, deseq=deseq_result, edger=edger_result,
-                basic=basic_result, comparison=result_comparison)
+    ret <- list(
+        "input" = input,
+        "limma" = limma_result,
+        "deseq" = deseq_result,
+        "edger" = edger_result,
+        "basic" = basic_result,
+        "comparison" = result_comparison)
     return(ret)
 }
 
@@ -259,11 +262,15 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
         wb <- openxlsx::createWorkbook(creator="hpgltools")
     }
 
+    if (is.null(annot_df)) {
+        annot_df <- Biobase::fData(all_pairwise_result[["input"]][["expressionset"]])
+    }
+
     combo <- list()
     plots <- list()
     sheet_count <- 0
     de_summaries <- data.frame()
-    if (class(keepers) == 'list') {
+    if (class(keepers) == "list") {
         ## Then keep specific tables in specific orientations.
         a <- 0
         keeper_len <- length(names(keepers))
@@ -319,7 +326,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
         }
 
         ## If you want all the tables in a dump
-    } else if (class(keepers) == 'character' & keepers == 'all') {
+    } else if (class(keepers) == "character" & keepers == "all") {
         a <- 0
         names_length <- length(names(edger[["contrast_list"]]))
         table_names <- names(edger[["contrast_list"]])
@@ -338,7 +345,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
         }
 
         ## Or a single specific table
-    } else if (class(keepers) == 'character') {
+    } else if (class(keepers) == "character") {
         table <- keepers
         sheet_count <- sheet_count + 1
         if (table %in% names(edger[["contrast_list"]])) {
@@ -493,6 +500,7 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
         comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
         rownames(comb) <- comb[["Row.names"]]
         comb <- comb[-1]
+        colnames(comb) <- make.names(tolower(colnames(comb)), unique=TRUE)
     }
 
     up_fc <- fc_cutoff
@@ -783,11 +791,11 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
         extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")
         eval_strings <- append(eval_strings, extra_contrasts)
     }
-##    for (f in 1:length(eval_strings)) {
-##        eval_name = names(eval_strings[f])
-##        print(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
-##        eval(parse(text=as.character(eval_strings[f])))
-##    }
+    ## for (f in 1:length(eval_strings)) {
+    ##     eval_name = names(eval_strings[f])
+    ##     print(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
+    ##     eval(parse(text=as.character(eval_strings[f])))
+    ## }
     ## Now we have bob=(somestuff) in memory in R's environment
     ## Add them to makeContrasts()
     contrast_string <- paste("all_pairwise_contrasts = limma::makeContrasts(")
@@ -988,6 +996,101 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, semantic=c('mucin'
         }
     }
     return(de_list)
+}
+
+#' Given a DE table with fold changes and p-values, show how 'significant' changes with changing cutoffs.
+#'
+#' Sometimes one might want to know how many genes are deemed significant while shifting the bars
+#' which define significant.  This provides that metrics as a set of tables of numbers of
+#' significant up/down genes when p-value is held constant, as well as number when fold-change is
+#' held constant.
+#'
+#' @param table DE table to examine.
+#' @param p_column Column in the DE table defining the changing p-value cutoff.
+#' @param fc_column Column in the DE table defining the changing +/- log fold change.
+#' @param bins Number of incremental changes in p-value/FC to examine.
+#' @param constant_p When plotting changing FC, where should the p-value be held?
+#' @param constant_fc When plotting changing p, where should the FC be held?
+#' @return Plots and dataframes describing the changing definition of 'significant.'
+#' @export
+plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_logfc", bins=100, constant_p=0.05, constant_fc=0) {
+    fc_column="limma_logfc"
+    p_column="limma_adjp"
+    bins = 100
+    num_genes <- nrow(table)
+    min_fc <- min(table[[fc_column]])
+    neutral_fc <- 0.0
+    max_fc <- max(table[[fc_column]])
+    min_p <- 0.0
+    max_p <- 1.0
+    up_increments <- max_fc / bins
+    down_increments <- min_fc / bins
+    p_increments <- (max_p - min_p) / bins
+
+    constant_up_fc <- constant_fc
+    constant_down_fc <- constant_fc * -1.0
+    start_up <- max_fc
+    start_down <- min_fc
+    start_p <- 0.00
+    current_up_fc <- start_up
+    current_down_fc <- start_down
+    current_p <- start_p
+    up_nums <- data.frame()
+    down_nums <- data.frame()
+    p_nums <- data.frame()
+    for (inc in 1:bins) {
+        current_up_fc <- current_up_fc - up_increments
+        current_down_fc <- current_down_fc - down_increments
+        current_p <- current_p + p_increments
+        num_up <- sum(table[[fc_column]] >= current_up_fc & table[[p_column]] <= constant_p)
+        num_down <- sum(table[[fc_column]] <= current_down_fc & table[[p_column]] <= constant_p)
+        num_pup <- sum(table[[fc_column]] >= constant_up_fc & table[[p_column]] <= current_p)
+        num_pdown <- sum(table[[fc_column]] <= constant_down_fc & table[[p_column]] <= current_p)
+        up_nums <- rbind(up_nums, c(current_up_fc, num_up))
+        down_nums <- rbind(down_nums, c(current_down_fc, num_down))
+        p_nums <- rbind(p_nums, c(current_p, num_pup, num_pdown))
+    }
+    colnames(p_nums) <- c("p","up","down")
+    colnames(up_nums) <- c("fc","num")
+    colnames(down_nums) <- c("fc", "num")
+
+    putative_up_inflection <- inflection::findiplist(x=as.matrix(up_nums[[1]]), y=as.matrix(up_nums[[2]]), 0)
+    up_point_num <- putative_up_inflection[2,1]
+    up_label <- paste0("At fc=", signif(up_nums[point_num, ][["fc"]], 4), " and p=", constant_p, ", ", up_nums[point_num, ][["num"]], " genes are de.")
+    up_plot <- ggplot(data=up_nums, aes_string(x="fc", y="num")) +
+        ggplot2::geom_point() + ggplot2::geom_line() +
+        ggplot2::geom_hline(yintercept=up_nums[[2]][[up_point_num]]) +
+        ggplot2::geom_vline(xintercept=up_nums[[1]][[up_point_num]]) +
+        ggplot2::geom_vline(xintercept=1.0, colour="red")
+
+    putative_down_inflection <- inflection::findiplist(x=as.matrix(down_nums[[1]]), y=as.matrix(down_nums[[2]]), 0)
+    down_point_num <- putative_down_inflection[1,2]
+    down_plot <- ggplot(data=down_nums, aes_string(x="fc", y="num")) +
+        ggplot2::geom_point() + ggplot2::geom_line() +
+        ggplot2::geom_hline(yintercept=down_nums[[2]][[point_num]]) +
+        ggplot2::geom_vline(xintercept=down_nums[[1]][[point_num]]) +
+        ggplot2::geom_vline(xintercept=-1.0, colour="red")
+
+    putative_pup_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)
+    pup_point_num <- putative_pup_inflection[2,1]
+    putative_pdown_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)
+    pdown_point_num <- putative_pdown_inflection[2,1]
+    p_plot <- ggplot(data=p_nums) +
+        ggplot2::geom_point(aes_string(x="p", y="up"), colour="darkred") +
+        ggplot2::geom_point(aes_string(x="p", y="down"), colour="darkblue") +
+        ggplot2::geom_vline(xintercept=0.05, colour="red") +
+        ggplot2::geom_hline(yintercept=p_nums[[2]][[pup_point_num]], colour="darkred") +
+        ggplot2::geom_vline(xintercept=p_nums[[1]][[pup_point_num]], colour="black") +
+        ggplot2::geom_hline(yintercept=p_nums[[3]][[pdown_point_num]], colour="darkblue")
+
+    retlist <- list(
+        "up" = up_plot,
+        "down" = down_plot,
+        "p" = p_plot,
+        "up_data" = up_nums,
+        "down_data" = down_nums,
+        "p_data" = p_nums)
+    return(retlist)
 }
 
 ## EOF

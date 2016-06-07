@@ -2,9 +2,7 @@
 % Please edit documentation in R/pca.r
 \name{pcRes}
 \alias{pcRes}
-\title{Compute variance of each principal component and how they correlate with batch and cond
-This was copy/pasted from cbcbSEQ
-https://github.com/kokrah/cbcbSEQ/blob/master/R/explore.R}
+\title{Compute variance of each principal component and how they correlate with batch and cond}
 \usage{
 pcRes(v, d, condition = NULL, batch = NULL)
 }
@@ -21,7 +19,6 @@ pcRes(v, d, condition = NULL, batch = NULL)
 A dataframe containig variance, cum. variance, cond.R-sqrd, batch.R-sqrd
 }
 \description{
-Compute variance of each principal component and how they correlate with batch and cond
 This was copy/pasted from cbcbSEQ
 https://github.com/kokrah/cbcbSEQ/blob/master/R/explore.R
 }
