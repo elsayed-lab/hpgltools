@@ -71,7 +71,8 @@ test_that("Do cbcbSEQ and hpgltools agree on the lmFit result?", {
     expect_equal(cbcb_fit$stdev.unscaled[[1]], hpgl_fit$stdev.unscaled[[1]])
     expect_equal(cbcb_fit$stdev.unscaled[[2]], hpgl_fit$stdev.unscaled[[2]])
     expect_equal(cbcb_fit$df.residual, hpgl_fit$df.residual)
-    expect_equal(cbcb_fit$cov.coefficients[[1]], hpgl_fit$cov.coefficients[[1]])
+    expect_equal(cbcb_fit$cov.coefficients["design$conditionuntreated","design$conditionuntreated"],
+                 hpgl_fit$cov.coefficients["untreated","untreated"])
     expect_equal(cbcb_fit$cov.coefficients[[2]], hpgl_fit$cov.coefficients[[2]])
     expect_equal(cbcb_fit$pivot, hpgl_fit$pivot)
     expect_equal(cbcb_fit$rank, hpgl_fit$rank)

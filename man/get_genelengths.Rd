@@ -4,7 +4,7 @@
 \alias{get_genelengths}
 \title{Grab gene lengths from a gff file.}
 \usage{
-get_genelengths(gff, type = "gene", key = "ID")
+get_genelengths(gff, type = "gene", key = "ID", ...)
 }
 \arguments{
 \item{gff}{Gff file with (hopefully) IDs and widths.}
@@ -12,6 +12,8 @@ get_genelengths(gff, type = "gene", key = "ID")
 \item{type}{Annotation type to use (3rd column).}
 
 \item{key}{Identifier in the 10th column of the gff file to use.}
+
+\item{...}{Extra arguments likely for gff2df}
 }
 \value{
 Data frame of gene IDs and widths.

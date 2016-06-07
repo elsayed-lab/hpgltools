@@ -25,7 +25,6 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
     ##  output$pairwise_comparisons$coefficients
     message("This can do comparisons among the following columns in the edger result:")
     thenames <- names(output[["contrasts"]][["identities"]])
-    cat(thenames)
     xname <- ""
     yname <- ""
     if (is.numeric(x)) {
@@ -99,103 +98,18 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
                           model_batch=TRUE, model_intercept=FALSE, alt_model=NULL,
                           extra_contrasts=NULL, annot_df=NULL, force=FALSE, ...) {
     message("Starting edgeR pairwise comparisons.")
-    input_class <- class(input)[1]
-    if (input_class == "expt") {
-        conditions <- input[["conditions"]]
-        batches <- input[["batches"]]
-        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+    input_data <- choose_dataset(input)
+    conditions <- input_data[["conditions"]]
+    batches <- input_data[["batches"]]
+    data <- input_data[["data"]]
 
-        ## As I understand it, EdgeR fits a binomial distribution
-        ## and expects data as integer counts, not floating point nor a log2 transformation
-        ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
-        ## violation of its stated preferred/demanded input.  There are of course ways around this
-        ## but one should not take them lightly, perhaps never.
-        if (!is.null(input[["state"]][["normalization"]])) {
-            ## These if statements may be insufficient to check for the appropriate input for deseq.
-            if (isTRUE(force)) {
-                ## Setting force to TRUE allows one to round the data to fool edger into accepting it
-                ## This is a pretty terrible thing to do
-                warning("About to round the data, this is a pretty terrible thing to do")
-                warning("But if you, like me, want to see what happens when you put")
-                warning("non-standard data into deseq, then here you go.")
-                data <- round(data)
-            } else if (input[["state"]][["normalization"]] != "raw" |
-                       (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
-                ## This makes use of the fact that the order of operations in the normalization function is static.
-                ## filter->normalization->convert->batch->transform.
-                ## Thus, if the normalized state is not raw, we can look back either to the filtered or original data
-                ## The same is true for the transformation state.
-                if (input[["state"]][["filter"]] == "raw") {
-                    message("EdgeR expects raw data as input, reverting to the count filtered data.")
-                    data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
-                    if (is.null(data)) {
-                        data <- input[["normalized"]][["intermediate_counts"]][["original"]]
-                    }
-                } else {
-                    message("EdgeR expects raw data as input, reverting to the original expressionset.")
-                    data <- Biobase::exprs(input[["original_expressionset"]])
-                }
-            } else {
-                message("The data should be suitable for EdgeR.")
-                message("If EdgeR freaks out, check the state of the count table and ensure that it is in integer counts.")
-            }
-            ## End testing if normalization has been performed
-        }
-    } else {
-        data <- as.data.frame(input)
-    }
+    fun_model <- choose_model(conditions, batches,
+                              model_batch=model_batch,
+                              model_cond=model_cond,
+                              model_intercept=model_intercept,
+                              alt_model=alt_model)
+    fun_model <- fun_model[["model"]]
 
-    conditions <- as.factor(conditions)
-    batches <- as.factor(batches)
-    ## Make a model matrix which will have one entry for
-    ## each of the condition/batches
-    ## It would be much smarter to generate the models in the following if() {} blocks
-    ## But I have it in my head to eventually compare results using different models.
-    cond_model <- stats::model.matrix(~ 0 + conditions)
-    batch_model <- try(stats::model.matrix(~ 0 + batches), silent=TRUE)
-    condbatch_model <- try(stats::model.matrix(~ 0 + conditions + batches), silent=TRUE)
-    cond_int_model <- try(stats::model.matrix(~ conditions), silent=TRUE)
-    batch_int_model <- try(stats::model.matrix(~ batches), silent=TRUE)
-    condbatch_int_model <- try(stats::model.matrix(~ conditions + batches), silent=TRUE)
-    fun_model <- NULL
-    fun_int_model <- NULL
-    if (is.null(model_batch)) {
-        fun_model <- cond_model
-        fun_int_model <- cond_int_model
-    }
-    if (isTRUE(model_cond) & isTRUE(model_batch)) {
-        fun_model <- condbatch_model
-        fun_int_model <- condbatch_int_model
-    } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
-        message("EdgeR: Including batch estimates from sva/ruv/pca in the EdgeR model.")
-        fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
-        fun_int_model <- stats::model.matrix(~ conditions + model_batch)
-    } else if (isTRUE(model_cond)) {
-        fun_model <- cond_model
-        fun_int_model <- cond_int_model
-    } else if (isTRUE(model_batch)) {
-        fun_model <- batch_model
-        fun_int_model <- batch_int_model
-    } else {
-        ## Default to the conditional model
-        fun_model <- cond_model
-        fun_int_model <- cond_int_model
-    }
-    if (isTRUE(model_intercept)) {
-        fun_model <- fun_int_model
-    }
-    if (!is.null(alt_model)) {
-        fun_model <- alt_model
-    }
-    tmpnames <- colnames(fun_model)
-    tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
-    tmpnames <- gsub("conditions", "", tmpnames)
-    colnames(fun_model) <- tmpnames
-
-    ##tmpnames = colnames(condbatch_model)
-    ##tmpnames = gsub("data[[:punct:]]", "", tmpnames)
-    ##tmpnames = gsub("conditions", "", tmpnames)
-    ##colnames(cond_model) = tmpnames
     raw <- edgeR::DGEList(counts=data, group=conditions)
     message("EdgeR step 1/9: normalizing data.")
     norm <- edgeR::calcNormFactors(raw)

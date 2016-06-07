@@ -5,7 +5,7 @@
 \title{Make a heatmap.3 description of the similarity of the genes among samples.}
 \usage{
 plot_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
-  title = NULL, Rowv = FALSE, ...)
+  title = NULL, Rowv = TRUE, ...)
 }
 \arguments{
 \item{data}{Expt/expressionset/dataframe set of samples.}
@@ -18,7 +18,7 @@ plot_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
 
 \item{title}{Title of the plot!}
 
-\item{Rowv}{Include the row names?}
+\item{Rowv}{Reorder the rows by expression?}
 
 \item{...}{More parameters for a good time!}
 }

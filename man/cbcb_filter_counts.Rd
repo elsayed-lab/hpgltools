@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalize_filter.r
 \name{cbcb_filter_counts}
 \alias{cbcb_filter_counts}
-\title{Filter low-count genes from a data set.}
+\title{Filter low-count genes from a data set using cpm data and a threshold.}
 \usage{
 cbcb_filter_counts(count_table, threshold = 2, min_samples = 2)
 }
@@ -18,15 +18,11 @@ Dataframe of counts without the low-count genes.
 }
 \description{
 This was a function written by Kwame Okrah and perhaps also Laura Dillon to remove low-count
-genes.  It drops genes based on a threshold and number of samples. Either this or
-cbcb_lowfilter_counts() is redundant I think.
+genes.  It drops genes based on a cpm threshold and number of samples.
 }
 \examples{
 \dontrun{
 filtered_table <- cbcb_filter_counts(count_table)
 }
-}
-\seealso{
-log2CPM which this uses to decide what to keep.
 }
 

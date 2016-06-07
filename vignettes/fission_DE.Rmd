@@ -2,12 +2,46 @@
 title: "hpgltools Differential Expression Analyses Using the Fission Dataset"
 author: "atb abelew@gmail.com"
 date: "`r Sys.Date()`"
-output: rmarkdown::pdf_document
+output:
+ html_document:
+  theme: cosmo
+  highlight: tango
+  fig_height: 7
+  fig_width: 7
+  fig_caption: true
+  code_folding: show
+  self_contained: true
+  keep_md: true
+  toc: true
+  toc_float:
+    collapsed: false
+    smooth_scroll: false
 vignette: >
-  %\VignetteIndexEntry{fission examples}
+  %\VignetteIndexEntry{hpgltools_introduction}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
+
+```{r options, include=FALSE}
+## These are the options I tend to favor
+library("hpgltools")
+knitr::opts_knit$set(
+    progress = TRUE,
+    verbose = TRUE,
+    width = 90,
+    echo = TRUE)
+knitr::opts_chunk$set(
+    error = TRUE,
+    fig.width = 8,
+    fig.height = 8,
+    dpi = 96)
+options(
+    digits = 4,
+    stringsAsFactors = FALSE,
+    knitr.duplicate.label = "allow")
+ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
+set.seed(1)
+```
 
 # Example hpgltool usage with a real data set (fission)
 
@@ -72,7 +106,7 @@ fun_norm <- s_p(normalize_expt(fun_data, batch="limma", norm="quant", transform=
 ## Try using limma first
 
 ```{r simple_limma}
-limma_comparison <- s_p(limma_pairwise(fun_norm))$result
+limma_comparison <- limma_pairwise(fun_norm)
 names(limma_comparison$all_tables)
 summary(limma_comparison$all_tables$wt.120_vs_mut.120)
 wt_120 <- limma_comparison$all_tables$wt.120
@@ -85,7 +119,7 @@ scatter_wt_mut$both_histogram
 ## Then DESeq2
 
 ```{r simple_deseq2}
-deseq_comparison <- s_p(deseq2_pairwise(fun_data, model_batch=TRUE))$result
+deseq_comparison <- deseq2_pairwise(fun_data, model_batch=TRUE)
 summary(deseq_comparison$all_tables$wt.120_vs_mut.120)
 ```
 
@@ -132,7 +166,7 @@ table <- limma_results$wt.120_vs_mut.120
 dim(table)
 gene_names <- rownames(table)
 
-updown_genes <- get_sig_genes(table)
+updown_genes <- get_sig_genes(table, p=0.1, fc=0.8, p_column="P.Value")
 require.auto("GenomicFeatures")
 require.auto("biomaRt")
 ensembl_pombe <- biomaRt::useMart("fungal_mart", dataset="spombe_eg_gene", host="fungi.ensembl.org")
@@ -146,7 +180,7 @@ colnames(pombe_goids) <- c("ID","GO")
 
 pombe <- GenomicFeatures::makeTxDbFromBiomart(biomart ="fungal_mart", dataset = "spombe_eg_gene", host="fungi.ensembl.org")
 pombe_transcripts <- as.data.frame(GenomicFeatures::transcriptsBy(pombe))
-lengths <- pombe_transcripts[,c("group_name","width")]
+lengths <- pombe_transcripts[, c("group_name","width")]
 colnames(lengths) <- c("ID","width")
 ## Something useful I didn't notice before:
 ## makeTranscriptDbFromGFF()  ## From GenomicFeatures, much like my own gff2df()
@@ -154,57 +188,4 @@ gff_from_txdb <- GenomicFeatures::asGFF(pombe)
 ## why is GeneID: getting prefixed to the IDs!?
 gff_from_txdb$ID <- gsub(x=gff_from_txdb$ID, pattern="GeneID:", replacement="")
 written_gff <- rtracklayer::export.gff3(gff_from_txdb, con="pombe.gff")
-
-```
-
-## Perform a simplified goseq search
-
-Lets try a simplified goseq search using out population of differentially expressed genes, gene lengths, and GOids.
-
-```{r simple_goseq}
-
-goseq_search <- simple_goseq(de_genes=updown_genes$up_genes, lengths=lengths, goids=pombe_goids)
-goseq_search$pvalue_histogram + ggplot2::scale_y_discrete(limits=c(0, 10))
-goseq_search$bpp_plot
-
-```
-
-## Perform a simplified clusterprofiler search
-
-The first time this is run for a new species, it takes _forever_ because of the
-time required to generate the GO<->ID rda files.
-That will never float on travis, so I am commenting this out.
-
-```{r simple_clusterprofiler, eval=FALSE}
-
-cluster_search = simple_clusterprofiler(de_genes=updown_genes$up_genes, goids=pombe_goids, gff="pombe.gff")
-cluster_search$bp_group_barplot
-cluster_search$bp_all_barplot
-
-```
-
-## Simplified topgo
-
-Topgo also takes forever, you will just have to trust me that it works I guess.
-
-```{r simple_topgo, eval=FALSE}
-
-topgo_search = simple_topgo(de_genes=updown_genes$up_genes, goids_df=pombe_goids)
-topgo_search$pvalue_plots$BP
-head(topgo_search$tables$bp)
-
-```
-
-## Simplified gostats
-
-This too takes quite a long time.  Maybe I should drop it too?
-
-```{r simple_gostats, eval=FALSE}
-
-gostats_search = simple_gostats(updown_genes$up_genes, "pombe.gff", pombe_goids, gff_type="gene")
-## Oops I forgot to add my 25 character wrapper for these plots, whatever
-## that is weird I thought I did!
-gostats_search$pvalue_plots$mfp_plot_over
-head(gostats_search$mf_over_all)
-
 ```

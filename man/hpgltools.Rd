@@ -12,9 +12,10 @@ This provides a series of helpers for working with sequencing data
 It falls under a few main topics
 
 \itemize{
-\item Data exploration, look for trends in sequencing data and identify batch effects or skewed distributions
-\item Differential expression analyses, use DESeq2/limma/EdgeR in a hopefully robust and flexible fashion
-\item Ontology analyses, use goseq/clusterProfiler/topGO/GOStats in hopefully robust ways
+\item Data exploration, look for trends in sequencing data and identify batch effects or skewed distributions.
+\item Differential expression analyses, use DESeq2/limma/EdgeR in a hopefully robust and flexible fashion.
+\item Ontology analyses, use goseq/clusterProfiler/topGO/GOStats/gProfiler in hopefully robust ways.
+\item Perform some simple TnSeq analyses.
 }
 
 To see examples of this inaction, check out the vignettes:

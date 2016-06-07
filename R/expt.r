@@ -264,6 +264,10 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NUL
         sample_definitions[["file"]] <- "null"
     }
 
+    ## Adding this so that deseq does not complain about characters when calling DESeqDataSetFromMatrix()
+    sample_definitions[["condition"]] <- as.factor(sample_definitions[["condition"]])
+    sample_definitions[["batch"]] <- as.factor(sample_definitions[["batch"]])
+
     requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
     metadata <- methods::new("AnnotatedDataFrame",
                              sample_definitions)
