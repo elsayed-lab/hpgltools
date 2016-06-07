@@ -177,7 +177,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
         model_test <- try(glm(formula=second ~ first, data=df), silent=TRUE)
     }
     if (class(model_test) == "try-error") {
-        message("Could not perform a linear modelling of the data.")
+        message("Could not create a linear model of the data.")
         message("Going to perform a scatter plot without linear model.")
         plot <- plot_scatter(df)
         ret <- list(data=df, scatter=plot)

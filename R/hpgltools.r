@@ -12,6 +12,16 @@
 ## #' @importFrom stats setNames
 ## NULL
 
+## Some notes!
+##
+## Something I should have realized:
+## From: hcorrada@gmail.com [mailto:hcorrada@gmail.com] On Behalf Of Hector Corrada Bravo
+## To: Najib M. El-Sayed
+## Subject: Re: fold change
+## Sorry for the delay in answering, I missed this. Using 'topTable' you can get confidence
+## intervals for the logFC estimate. If you want the standard error itself you can get by dividing
+## the logFC by the t statistic.
+
 #' hpgltools: a suite of tools to make our analyses easier
 #'
 #' This provides a series of helpers for working with sequencing data
@@ -19,9 +29,10 @@
 #' It falls under a few main topics
 #'
 #' \itemize{
-#' \item Data exploration, look for trends in sequencing data and identify batch effects or skewed distributions
-#' \item Differential expression analyses, use DESeq2/limma/EdgeR in a hopefully robust and flexible fashion
-#' \item Ontology analyses, use goseq/clusterProfiler/topGO/GOStats in hopefully robust ways
+#' \item Data exploration, look for trends in sequencing data and identify batch effects or skewed distributions.
+#' \item Differential expression analyses, use DESeq2/limma/EdgeR in a hopefully robust and flexible fashion.
+#' \item Ontology analyses, use goseq/clusterProfiler/topGO/GOStats/gProfiler in hopefully robust ways.
+#' \item Perform some simple TnSeq analyses.
 #' }
 #'
 #' To see examples of this inaction, check out the vignettes:

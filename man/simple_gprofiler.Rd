@@ -4,11 +4,13 @@
 \alias{simple_gprofiler}
 \title{Run searches against the web service g:Profiler.}
 \usage{
-simple_gprofiler(gene_list, species = "hsapiens", first_col = "logFC",
-  second_col = "limma_logfc")
+simple_gprofiler(de_genes, species = "hsapiens", first_col = "logFC",
+  second_col = "limma_logfc", do_go = TRUE, do_kegg = TRUE,
+  do_reactome = TRUE, do_mi = TRUE, do_tf = FALSE, do_corum = FALSE,
+  do_hp = FALSE)
 }
 \arguments{
-\item{gene_list}{guess!}
+\item{de_genes}{guess!}
 
 \item{species}{an organism supported by gprofiler}
 

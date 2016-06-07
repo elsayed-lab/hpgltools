@@ -33,6 +33,8 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
     if (!is.null(arglist[["qlimit"]])) {
         qlimit <- arglist[["qlimit"]]
     }
+    coefficients <- output[["pairwise_comparisons"]][["coefficients"]]
+    thenames <- colnames(coefficients)
     xname <- ""
     yname <- ""
     if (is.numeric(x)) {
@@ -278,53 +280,14 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     batch_table <- table(batches)
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
-    ## Make a model matrix which will have one entry for each of these condition/batches
-    cond_model <- stats::model.matrix(~ 0 + conditions)  ## I am not putting a try() on this, because if it fails, then we are effed.
-    batch_model <- try(stats::model.matrix(~ 0 + batches), silent=TRUE)
-    condbatch_model <- try(stats::model.matrix(~ 0 + conditions + batches), silent=TRUE)
-    batch_int_model <- try(stats::model.matrix(~ batches), silent=TRUE)
-    cond_int_model <- try(stats::model.matrix(~ conditions), silent=TRUE)
-    condbatch_int_model <- try(stats::model.matrix(~ conditions + batches), silent=TRUE)
-    fun_model <- NULL
-    fun_int_model <- NULL
-    if (isTRUE(model_cond) & isTRUE(model_batch)) {
-        if (class(condbatch_model) == "try-error") {
-            message("The condition+batch model failed.  Does your experimental design support both condition and batch?")
-            message("Using only a conditional model.")
-            fun_model <- cond_model
-            fun_int_model <- cond_int_model
-        } else {
-            fun_model <- condbatch_model
-            fun_int_model <- condbatch_int_model
-        }
-    } else if (class(model_batch) == "matrix" | class(model_batch) == "numeric") {
-        message("Limma: Including multiple sv batch estimates from sva/ruv/pca in the limma model.")
-        fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
-        fun_int_model <- stats::model.matrix(~ conditions + model_batch)
-    } else if (isTRUE(model_cond)) {
-        fun_model <- cond_model
-        fun_int_model <- cond_int_model
-    } else if (isTRUE(model_batch)) {
-        fun_model <- batch_model
-        fun_int_model <- batch_int_model
-    } else {
-        ## Default to the conditional model
-        fun_model <- cond_model
-        fun_int_model <- cond_int_model
-    }
-    if (isTRUE(model_intercept)) {
-        fun_model <- fun_int_model
-    }
-    if (!is.null(alt_model)) {
-        fun_model <- alt_model
-    }
 
-    tmpnames <- colnames(fun_model)
-    tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
-    tmpnames <- gsub("-", "", tmpnames)
-    tmpnames <- gsub("+", "", tmpnames)
-    tmpnames <- gsub("conditions", "", tmpnames)
-    colnames(fun_model) <- tmpnames
+    fun_model <- choose_model(conditions, batches,
+                              model_batch=model_batch,
+                              model_cond=model_cond,
+                              model_intercept=model_intercept,
+                              alt_model=alt_model)
+    fun_model <- fun_model[["model"]]
+
     fun_voom <- NULL
     message("Limma step 1/6: choosing model.")
     ## voom() it, taking into account whether the data has been log2 transformed.

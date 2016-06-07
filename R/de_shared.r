@@ -1093,4 +1093,177 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
     return(retlist)
 }
 
+#' Try out a few experimental models and return a likely working option.
+#'
+#' The _pairwise family of functions all demand an experimental model.  This tries to choose a
+#' consistent and useful model for all for them.  This does not try to do multi-factor, interacting,
+#' nor dependent variable models, if you want those do them yourself and pass them off as alt_model.
+#'
+#' @param conditions Factor of conditions in the putative model.
+#' @param batches Factor of batches in the putative model.
+#' @param model_batch Try to include batch in the model?
+#' @param model_cond Try to include condition in the model? (Yes!)
+#' @param model_intercept Use an intercept model instead of cell-means?
+#' @param alt_model Use your own model.
+#' @param alt_string String describing an alternate model.
+#' @return List including a model matrix and strings describing cell-means and intercept models.
+choose_model <- function(conditions, batches, model_batch=TRUE, model_cond=TRUE, model_intercept=FALSE, alt_model=NULL, alt_string=NULL) {
+    conditions <- as.factor(conditions)
+    batches <- as.factor(batches)
+    ## Make a model matrix which will have one entry for
+    ## each of the condition/batches
+    ## It would be much smarter to generate the models in the following if() {} blocks
+    ## But I have it in my head to eventually compare results using different models.
+    cond_string <- "~ 0 + condition"
+    cond_model <- stats::model.matrix(~ 0 + conditions)
+    batch_string <- "~ 0 + batch"
+    batch_model <- try(stats::model.matrix(~ 0 + batches), silent=TRUE)
+    condbatch_string <- "~ 0 + condition + batch"
+    condbatch_model <- try(stats::model.matrix(~ 0 + conditions + batches), silent=TRUE)
+    cond_int_string <- "~ condition"
+    cond_int_model <- try(stats::model.matrix(~ conditions), silent=TRUE)
+    batch_int_string <- "~ batch"
+    batch_int_model <- try(stats::model.matrix(~ batches), silent=TRUE)
+    condbatch_int_string <- "~ condition + batch"
+    condbatch_int_model <- try(stats::model.matrix(~ conditions + batches), silent=TRUE)
+    fun_model <- NULL
+    fun_int_model <- NULL
+    fun_string <- NULL
+    fun_int_string <- NULL
+    including <- NULL
+    if (is.null(model_batch)) {
+        fun_model <- cond_model
+        fun_int_model <- cond_int_model
+        fun_string <- cond_string
+        fun_int_string <- cond_int_string
+        including <- "condition"
+    }
+    if (isTRUE(model_cond) & isTRUE(model_batch)) {
+        if (class(condbatch_model) == "try-error") {
+            message("The condition+batch model failed.  Does your experimental design support both condition and batch?")
+            message("Using only a conditional model.")
+            fun_model <- cond_model
+            fun_int_model <- cond_int_model
+            fun_string <- cond_string
+            fun_int_string <- cond_int_string
+            including <- "condition"
+        } else {
+            fun_model <- condbatch_model
+            fun_int_model <- condbatch_int_model
+            fun_string <- condbatch_string
+            fun_int_string <- condbatch_int_string
+            including <- "condition+batch"
+        }
+    } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
+        message("Including batch estimates from sva/ruv/pca in the model.")
+        fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
+        fun_int_model <- stats::model.matrix(~ conditions + model_batch)
+        fun_string <- condbatch_string
+        fun_int_string <- condbatch_int_string
+        including <- "condition+batch"
+    } else if (isTRUE(model_cond)) {
+        fun_model <- cond_model
+        fun_int_model <- cond_int_model
+        fun_string <- cond_string
+        fun_int_string <- cond_int_string
+        including <- "condition"
+    } else if (isTRUE(model_batch)) {
+        fun_model <- batch_model
+        fun_int_model <- batch_int_model
+        fun_string <- batch_string
+        fun_int_string <- batch_int_string
+        including <- "batch"
+    } else {
+        ## Default to the conditional model
+        fun_model <- cond_model
+        fun_int_model <- cond_int_model
+        fun_string <- cond_string
+        fun_int_string <- cond_int_string
+        including <- "condition"
+    }
+    if (isTRUE(model_intercept)) {
+        fun_model <- fun_int_model
+        fun_string <- fun_int_string
+    }
+    if (!is.null(alt_model)) {
+        fun_model <- alt_model
+        fun_string <- alt_string
+        including <- "alt"
+    }
+    tmpnames <- colnames(fun_model)
+    tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
+    tmpnames <- gsub("-", "", tmpnames)
+    tmpnames <- gsub("+", "", tmpnames)
+    tmpnames <- gsub("conditions", "", tmpnames)
+    colnames(fun_model) <- tmpnames
+
+    retlist <- list(
+        "model" = fun_model,
+        "int_model" = fun_int_model,
+        "string" = fun_string,
+        "int_string" = fun_int_string,
+        "including" = including)
+    return(retlist)
+}
+
+#' Choose a suitable data set for Edger/DESeq
+#'
+#' The _pairwise family of functions all demand data in specific formats.
+#' This tries to make that consistent.
+#'
+#' @param input Expt input.
+#' @return List the data, conditions, and batches in the data.
+choose_dataset <- function(input) {
+    input_class <- class(input)[1]
+    if (input_class == "expt") {
+        conditions <- input[["conditions"]]
+        batches <- input[["batches"]]
+        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+
+        ## As I understand it, EdgeR fits a binomial distribution
+        ## and expects data as integer counts, not floating point nor a log2 transformation
+        ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
+        ## violation of its stated preferred/demanded input.  There are of course ways around this
+        ## but one should not take them lightly, perhaps never.
+        if (!is.null(input[["state"]][["normalization"]])) {
+            ## These if statements may be insufficient to check for the appropriate input for deseq.
+            if (isTRUE(force)) {
+                ## Setting force to TRUE allows one to round the data to fool edger into accepting it
+                ## This is a pretty terrible thing to do
+                warning("About to round the data, this is a pretty terrible thing to do")
+                warning("But if you, like me, want to see what happens when you put")
+                warning("non-standard data into deseq, then here you go.")
+                data <- round(data)
+            } else if (input[["state"]][["normalization"]] != "raw" |
+                       (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
+                ## This makes use of the fact that the order of operations in the normalization function is static.
+                ## filter->normalization->convert->batch->transform.
+                ## Thus, if the normalized state is not raw, we can look back either to the filtered or original data
+                ## The same is true for the transformation state.
+                if (input[["state"]][["filter"]] == "raw") {
+                    message("EdgeR/DESeq expect raw data as input, reverting to the count filtered data.")
+                    data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
+                    if (is.null(data)) {
+                        data <- input[["normalized"]][["intermediate_counts"]][["original"]]
+                    }
+                } else {
+                    message("EdgeR/DESeq expect raw data as input, reverting to the original expressionset.")
+                    data <- Biobase::exprs(input[["original_expressionset"]])
+                }
+            } else {
+                message("The data should be suitable for EdgeR/DESeq.")
+                message("If EdgeR/DESeq freaks out, check the state of the count table and ensure that it is in integer counts.")
+            }
+            ## End testing if normalization has been performed
+        }
+    } else {
+        data <- as.data.frame(input)
+    }
+    retlist <- list(
+        "conditions" = conditions,
+        "batches" = batches,
+        "data" = data)
+    return(retlist)
+}
+
 ## EOF

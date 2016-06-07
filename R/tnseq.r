@@ -11,16 +11,13 @@
 #' @return A plot and some numbers
 #' @export
 tnseq_saturation <- function(file) {
-    ## Test arguments
-    ##    file = "data/essentiality/mh_ess/5448/tas_t0v0.txt"
-    ## End test arguments
     table <- read.table(file=file, header=1)
-    second_file <- paste(file, "-inter", sep="")
-    second_table <- read.table(file=second_file, header=1)
-    table <- rbind(table, second_table)
-    data_list <- as.numeric(table$reads)
+    ##second_file <- paste(file, "-inter", sep="")
+    ##second_table <- read.table(file=second_file, header=1)
+    ##table <- rbind(table, second_table)
+    data_list <- as.numeric(table[["variableStep"]])
     max_reads <- max(data_list, na.rm=TRUE)
-    log2_data_list <- as.numeric(log2(table$reads + 1))
+    log2_data_list <- as.numeric(log2(data_list + 1))
     data_plot <- plot_histogram(log2_data_list, bins=500)
     data_plot <- data_plot + ggplot2::scale_x_continuous(limits=c(0,6)) +
         ggplot2::scale_y_continuous(limits=c(0,2))
@@ -28,32 +25,25 @@ tnseq_saturation <- function(file) {
     print(summary(data_list))
     raw <- table(unlist(data_list))
     num_zeros <- raw[as.numeric(names(raw)) == 0]
-    num_zeros
     num_gt_ones <- raw[as.numeric(names(raw)) >= 1]
     num_gt_one <- sum(num_gt_ones)
-    num_gt_one
     num_gt_twos <- raw[as.numeric(names(raw)) >= 2]
     num_gt_two <- sum(num_gt_twos)
-    num_gt_two
     num_gt_fours <- raw[as.numeric(names(raw)) >= 4]
     num_gt_four <- sum(num_gt_fours)
-    num_gt_four
     num_gt_eights <- raw[as.numeric(names(raw)) >= 8]
     num_gt_eight <- sum(num_gt_eights)
-    num_gt_eight
     num_gt_sixteens <- raw[as.numeric(names(raw)) >= 16]
     num_gt_sixteen <- sum(num_gt_sixteens)
-    num_gt_sixteen
     num_gt_thirtytwos <- raw[as.numeric(names(raw)) >= 32]
     num_gt_thirtytwo <- sum(num_gt_thirtytwos)
-    num_gt_thirtytwo
     saturation_ratio_1 <- num_gt_one / num_zeros
-    print(sprintf("Saturation ratio of 1s to 0s is: %s", saturation_ratio_1))
+    message(sprintf("Saturation ratio of 1s to 0s is: %s", saturation_ratio_1))
     saturation_ratio_8 <- num_gt_eight / num_zeros
-    print(sprintf("Saturation ratio of 8 to 0s is: %s", saturation_ratio_8))
+    message(sprintf("Saturation ratio of 8 to 0s is: %s", saturation_ratio_8))
     saturation_ratio_32 <- num_gt_thirtytwo / num_zeros
-    print(sprintf("Saturation ratio of 32 to 0s is: %s", saturation_ratio_32))
-    print(sprintf("The number of zeros, ones, twos, fours, eights, sixteens, thirtytwos, saturation1, saturation8, saturation32 are: %s %s %s %s %s %s %s %s %s %s",
+    message(sprintf("Saturation ratio of 32 to 0s is: %s", saturation_ratio_32))
+    message(sprintf("The number of zeros, ones, twos, fours, eights, sixteens, thirtytwos, saturation1, saturation8, saturation32 are: %s %s %s %s %s %s %s %s %s %s",
                   num_zeros, num_gt_one, num_gt_two, num_gt_four, num_gt_eight, num_gt_sixteen,
                   num_gt_thirtytwo, saturation_ratio_1, saturation_ratio_8, saturation_ratio_32))
     return(data_plot)

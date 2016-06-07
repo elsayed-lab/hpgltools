@@ -210,12 +210,12 @@ ggplot2_heatmap <- function(some_df) {
 #' @param design Design matrix describing the experiment (gotten for free if an expt).
 #' @param names Alternate samples names.
 #' @param title Title of the plot!
-#' @param Rowv Include the row names?
+#' @param Rowv Reorder the rows by expression?
 #' @param ... More parameters for a good time!
 #' @return a recordPlot() heatmap describing the samples.
 #' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
 #' @export
-plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=FALSE, ...) {
+plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=TRUE, ...) {
     hpgl_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {

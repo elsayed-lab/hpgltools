@@ -25,7 +25,7 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     ##  output$pairwise_comparisons$coefficients
     message("This can do comparisons among the following columns in the deseq2 result:")
     thenames <- names(output[["coefficients"]])
-    message(thenames)
+    message(toString(thenames))
     xname <- ""
     yname <- ""
     if (is.numeric(x)) {
@@ -50,12 +50,12 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     coefficient_df <- merge(first_col, second_col, by="row.names")
     rownames(coefficient_df) <- coefficient_df[["Row.names"]]
     coefficient_df <- coefficient_df[-1]
-    coefficient_df <- coefficient_df[, c(xname, yname, "mean.1", "mean.2")]
+    coefficient_df <- coefficient_df[, c(xname, yname)]
     coefficient_df[is.na(coefficient_df)] <- 0
     maxvalue <- max(coefficient_df) + 1.0
-    plot <- plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
-                                gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                tooltip_data=tooltip_data, base_url=base_url)
+    plot <- suppressMessages(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+                                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
+                                                 tooltip_data=tooltip_data, base_url=base_url))
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
@@ -103,61 +103,15 @@ deseq_pairwise <- function(...) {
 #' }
 #' @export
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
+                            alt_model=NULL, extra_contrasts=NULL,
                             model_batch=TRUE, annot_df=NULL, force=FALSE, ...) {
     arglist <- list(...)
     message("Starting DESeq2 pairwise comparisons.")
-    input_class <- class(input)[1]
-    if (input_class == "expt") {
-        design <- input[["design"]]
-        conditions <- input[["conditions"]]
-        batches <- input[["batches"]]
-        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+    input_data <- choose_dataset(input)
+    conditions <- input_data[["conditions"]]
+    batches <- input_data[["batches"]]
+    data <- input_data[["data"]]
 
-        ## As I understand it, DESeq2 fits a binomial distribution
-        ## and expects data as integer counts, not floating point or a log2 transformation
-        ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
-        ## violation of DESeq's stated preferred/demanded input.  There are of course ways around this
-        ## but one should not take them lightly, nor perhaps ever.
-        if (!is.null(input[["state"]][["normalization"]])) {
-            ## These if statements may be insufficient to check for the appropriate input for deseq.
-            if (isTRUE(force)) {
-                ## Setting force to TRUE allows one to round the data to fool deseq into accepting it
-                ## This is a pretty terrible thing to do
-                warning("About to round the data, this is a pretty terrible thing to do")
-                warning("But if you, like me, want to see what happens when you put")
-                warning("non-standard data into deseq, then here you go.")
-                data <- round(data)
-                if (input[["state"]][["transform"]] != "raw") {
-                    warning("You went one step further and forced in log data.")
-                    warning("Take a moment and think about what you have done.")
-                    Sys.sleep(20)
-                }
-            } else if (input[["state"]][["normalization"]] != "raw" |
-                       (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
-                ## This makes use of the fact that the order of operations in the normalization function is static.
-                ## filter->normalization->convert->batch->transform.
-                ## Thus, if the normalized state is not raw, we can look back either to the filtered or original data
-                ## The same is true for the transformation state.
-                if (input[["state"]][["filter"]] == "raw") {
-                    message("DESeq2 demands raw data as input, reverting to the count filtered data.")
-                    data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
-                    if (is.null(data)) {
-                        data <- input[["normalized"]][["intermediate_counts"]][["original"]]
-                    }
-                } else {
-                    message("DESeq2 demands raw data as input, reverting to the original expressionset.")
-                    data <- Biobase::exprs(input[["original_expressionset"]])
-                }
-
-            } else {
-                message("The data should be suitable for deseq2.")
-                message("If deseq freaks out, check the state of the count table and ensure that it is in integer counts.")
-            }
-            ## End testing if normalization has been performed
-        }
-    } else {
-        data <- as.data.frame(input)
-    }
     condition_table <- table(conditions)
     condition_levels <- levels(as.factor(conditions))
     batch_levels <- levels(as.factor(batches))
@@ -166,20 +120,34 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     summarized <- NULL
     ## Moving the size-factor estimation into this if(){} block in order to accomodate sva-ish batch estimation in the model
     deseq_sf <- NULL
-    model_string <- "~ batch + condition"
+
+    model_choice <- choose_model(conditions, batches,
+                                 model_batch=model_batch,
+                                 model_cond=model_cond,
+                                 alt_model=alt_model)
+    model_including <- model_choice[["including"]]
+    model_string <- NULL
+    ## I keep forgetting that deseq wants the thing you care about last in the list of the model string.
+    if (model_including == "batch") {
+        model_string <- "~ condition"
+    } else if (model_including == "condition+batch") {
+        model_string <- "~ batch + condition"
+    } else {
+        model_string <- "~ condition"
+    }
+
     if (isTRUE(model_batch) & isTRUE(model_cond)) {
         message("DESeq2 step 1/5: Including batch and condition in the deseq model.")
         ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
         ## conditions and batch in this context is information taken from pData()
         column_data <- Biobase::pData(input[["expressionset"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                     colData=Biobase::pData(input[["expressionset"]]),
+                                                     colData=column_data,
                                                      ##design=~ batch_levels + condition_levels)
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     } else if (isTRUE(model_batch)) {
         message("DESeq2 step 1/5: Including only batch in the deseq model.")
-        model_string = "~ batch"
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=Biobase::pData(input$expressionset),
                                                      design=as.formula(model_string))
