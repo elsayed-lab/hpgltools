@@ -978,8 +978,9 @@ circos_prefix <- function(name="mgas", conf_dir="circos/conf", radius=1800, band
     }
     karyotype_file <- gsub("circos/conf", "conf/karyotypes", cfgout)
     ideogram_file <- gsub("circos/conf", "conf/ideograms", cfgout)
-    etc_file <- paste0(path.package("hpgltools"), "/inst/circos/circos_etc.tar.xz")
+    etc_file <- paste0(path.package("hpgltools"), "/circos/circos_etc.tar.xz")
     etc_cmd <- paste0("tar -C ", dirname(conf_dir), " -xavf ", etc_file)
+    message(paste0("TESTME ", etc_cmd))
     system(command=etc_cmd)
 
     ## If you want clickable ideograms, add band_url='script?start=[start]&end=[end]&label=[label]
