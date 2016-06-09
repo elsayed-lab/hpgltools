@@ -160,6 +160,12 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     new_expt[["backup_expressionset"]] <- new_expt[["expressionset"]]
     current_data <- Biobase::exprs(current_exprs)
     design <- expt[["design"]]
+    if (is.null(annotations)) {
+        annotations <- Biobase::fData(current_exprs)
+    }
+    if (is.null(design)) {
+        design <- Biobase::pData(current_exprs)
+    }
     ## A bunch of these options should be moved into ...
     ## Having them as options to maintain is foolish
     normalized <- hpgl_norm(current_data, design=design, transform=transform,
@@ -250,14 +256,17 @@ hpgl_norm <- function(data, ...) {
     data_class <- class(data)[1]
     original_counts <- NULL
     original_libsize <- NULL
+    annot <- NULL
     if (data_class == 'expt') {
-        design <- data[["design"]]
         original_counts <- data[["original_counts"]]
         original_libsizes <- data[["original_libsize"]]
         data <- Biobase::exprs(data[["expressionset"]])
+        design <- Biobase::pData(data)
+        annot <- Biobase::fData(data[["expressionset"]])
     } else if (data_class == 'ExpressionSet') {
         data <- Biobase::exprs(data)
-        design <- arglist[["design"]]
+        design <- Biobase::pData(data)
+        annot <- Biobase::fData(data)
     } else if (data_class == "list") {
         data <- data[["count_table"]]
         design <- arglist[["design"]]
@@ -277,6 +286,9 @@ hpgl_norm <- function(data, ...) {
     }
     if (is.null(original_libsize)) {
         original_libsize <- colSums(count_table)
+    }
+    if (is.null(annotations) & !is.null(annot)) {
+        annotations <- annot
     }
 
     batched_counts <- NULL

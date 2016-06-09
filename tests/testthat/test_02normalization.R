@@ -35,5 +35,17 @@ test_that("If we use normalize_expt with no arguments, nothing should happen, ye
     expect_equal(expected_libsize, actual_libsize)
 })
 
+## First test conversions alone
+cpm_expt <- s_p(normalize_expt(pasilla_expt, convert="edgecpm"))$result
+hpgl_cpm <- Biobase::exprs(cpm_expt$expressionset)
+edger_cpm <- edgeR::cpm(pasilla_expt$expressionset)
 
-## FIXME!!! This needs to step through every normalization performed and ensure that nothing changes over time without my knowledge!!!
+rpkm_expt <- normalize_expt(pasilla_expt, convert="rpkm")
+lengths <- as.vector(Biobase::fData(pasilla_expt$expressionset)$length)
+hpgl_rpkm <- Biobase::exprs(rpkm_expt$expressionset)
+edger_rpkm <- edgeR::rpkm(x=pasilla_expt$expressionset, gene.length=lengths)
+
+test_that("cpm/rpkm conversions are equivalent?", {
+    expect_equal(edger_cpm, hpgl_cpm)
+    expect_equal(edger_rpkm, hpgl_rpkm)
+})

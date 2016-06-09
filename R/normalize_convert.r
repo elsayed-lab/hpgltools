@@ -24,18 +24,21 @@
 convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pattern='TA', entry_type='gene', ...) {
     arglist <- list(...)
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
-        count_table <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+    annot <- NULL
+    if (data_class == "expt") {
+        count_table <- Biobase::exprs(data[["expressionset"]])
+        annot <- Biobase::fData(data[["expressionset"]])
+    } else if (data_class == "ExpressionSet") {
+        annot <- Biobase::fData(data)
         count_table <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         count_table <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    if (convert == "edgecpm") {
+    if (convert == "cpm") {
         count_table <- edgeR::cpm(count_table)
-    } else if (convert == "cpm") {
+    } else if (convert == "cbcbcpm") {
         lib_size <- colSums(count_table)
         ## count_table = t(t((count_table$counts + 0.5) / (lib_size + 1)) * 1e+06)
         transposed <- t(count_table + 0.5)
@@ -43,8 +46,10 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
         cpm_counts <- t(cp_counts * 1e+06)
         count_table <- cpm_counts
     } else if (convert == "rpkm") {
-        if (is.null(annotations)) {
-            stop("RPKM conversion requires gene lengths.")
+        if (is.null(annotations) & is.null(annot)) {
+            stop("No annotations data frame provided.")
+        } else if (is.null(annotations)) {
+            annotations <- annot
         }
         count_table <- hpgl_rpkm(count_table, annotations=annotations)
     } else if (convert == "cp_seq_m") {
@@ -53,7 +58,9 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
         count_table <- divide_seq(counts, fasta=fasta, gff=annotations, pattern=pattern, entry_type=entry_type)
     }
     libsize <- colSums(count_table)
-    counts <- list(count_table=count_table, libsize=libsize)
+    counts <- list(
+        "count_table" = count_table,
+        "libsize" = libsize)
     return(counts)
 }
 
@@ -165,9 +172,10 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #' rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
 #' }
 #' @export
-hpgl_rpkm <- function(df, annotations=get0('gene_annotations')) {
+hpgl_rpkm <- function(df, annotations=NULL) {
+    ## holy crapola I wrote this when I had no clue what I was doing.
     if (class(df) == "edgeR") {
-        df <- df$counts
+        df <- df[["counts"]]
     }
     df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
     if (dim(df_in)[1] == 0) {
