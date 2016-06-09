@@ -21,7 +21,7 @@ test_that("Does the expt contain everything we expect?", {
     expect_equal(expected_expt, actual_expt)
 })
 
-unmolested <- s_p(normalize_expt(pasilla_expt))$result
+unmolested <- normalize_expt(pasilla_expt)
 
 expected_expt <- Biobase::exprs(pasilla_expt$expressionset)
 actual_expt <- Biobase::exprs(unmolested$expressionset)
@@ -36,7 +36,7 @@ test_that("If we use normalize_expt with no arguments, nothing should happen, ye
 })
 
 ## First test conversions alone
-cpm_expt <- s_p(normalize_expt(pasilla_expt, convert="edgecpm"))$result
+cpm_expt <- s_p(normalize_expt(pasilla_expt, convert="cpm"))$result
 hpgl_cpm <- Biobase::exprs(cpm_expt$expressionset)
 edger_cpm <- edgeR::cpm(pasilla_expt$expressionset)
 

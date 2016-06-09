@@ -287,7 +287,10 @@ hpgl_norm <- function(data, ...) {
     if (is.null(original_libsize)) {
         original_libsize <- colSums(count_table)
     }
-    if (is.null(annotations) & !is.null(annot)) {
+    annotations <- NULL
+    if (!is.null(arglist[["annotations"]])) {
+        annotations <- arglist[["annotations"]]
+    } else if (!is.null(annot)) {
         annotations <- annot
     }
 
