@@ -35,7 +35,7 @@ mgas_pairwise <- s_p(all_pairwise(mgas_expt))$result
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
-    mgas_data <- s_p(gbk2txdb())$result
+    mgas_data <- s_p(gbk2txdb(accession="AE009949"))$result
     actual_width <- GenomicRanges::width(mgas_data$seq)  ## This fails on travis?
     expected_width <- 1895017
     actual_exons <- as.data.frame(mgas_data$exons)

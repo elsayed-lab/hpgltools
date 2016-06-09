@@ -6,8 +6,8 @@
 \usage{
 limma_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
   gvis_filename = NULL, gvis_trendline = TRUE, z = 1.5,
-  tooltip_data = NULL, base_url = NULL, up_color = "#7B9F35",
-  down_color = "#DD0000", ...)
+  tooltip_data = NULL, base_url = NULL, color_low = "#7B9F35",
+  color_high = "#DD0000", ...)
 }
 \arguments{
 \item{output}{Set of pairwise comparisons provided by limma_pairwise().}
@@ -28,11 +28,11 @@ limma_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
 
 \item{base_url}{Basename for gvis plots.}
 
+\item{...}{More parameters to make you happy!}
+
 \item{up_color}{Color for the ups.}
 
 \item{down_color}{Color for the downs.}
-
-\item{...}{More parameters to make you happy!}
 }
 \value{
 Ggplot2 plot showing the relationship between the two coefficients.

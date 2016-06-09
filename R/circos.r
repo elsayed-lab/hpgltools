@@ -835,11 +835,13 @@ CIRCOS=\"%s\"
 \t$(CIRCOS) -conf $< -outputfile $*.png && \t$(CIRCOS) -conf $< -outputfile $*.svg
 ", circos)
     cat(makefile_string, file=output, sep="")
-    close(output)
+    ## close(output)
 
     make_target <- gsub(pattern="circos/conf/", replacement="", x=target)
-    make_target_svg <- gsub(pattern="\\.conf", replacement="\\.svg", x=make_target)
-    make_target_png <- gsub(pattern="\\.conf", replacement="\\.png", x=make_target)
+    make_target_svg <- gsub(pattern="\\.conf", replacement="", x=make_target)
+    make_target_svg <- paste0(make_target_svg, ".svg")
+    make_target_png <- gsub(pattern="\\.conf", replacement="", x=make_target)
+    make_target_png <- paste0(make_target_png, ".png")
     make_command <- paste0("cd circos && make ", make_target_svg, " && make ", make_target_png)
     message(paste0("Running: ", make_command))
     system(make_command)

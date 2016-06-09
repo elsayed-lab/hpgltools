@@ -25,7 +25,7 @@
 limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
                                       gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
                                       tooltip_data=NULL, base_url=NULL,
-                                      up_color="#7B9F35", down_color="#DD0000", ...) {
+                                      color_low="#7B9F35", color_high="#DD0000", ...) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     arglist <- list(...)
@@ -53,7 +53,8 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
     maxvalue <- max(coefficients) + 1
     plot <- plot_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                tooltip_data=tooltip_data, base_url=base_url, pretty_colors=FALSE)
+                                tooltip_data=tooltip_data, base_url=base_url,
+                                pretty_colors=FALSE, color_low=color_low, color_high=color_high, ...)
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))

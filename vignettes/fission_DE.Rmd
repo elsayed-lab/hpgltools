@@ -17,7 +17,7 @@ output:
     collapsed: false
     smooth_scroll: false
 vignette: >
-  %\VignetteIndexEntry{hpgltools_introduction}
+  %\VignetteIndexEntry{fission_differential_expression}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

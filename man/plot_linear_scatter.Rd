@@ -8,7 +8,7 @@ statistics.}
 plot_linear_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
   cormethod = "pearson", size = 2, loess = FALSE, identity = FALSE,
   gvis_trendline = NULL, first = NULL, second = NULL, base_url = NULL,
-  pretty_colors = TRUE, color_high = NULL, color_low = NULL)
+  pretty_colors = TRUE, color_high = NULL, color_low = NULL, ...)
 }
 \arguments{
 \item{df}{Dataframe likely containing two columns.}
@@ -39,6 +39,8 @@ think linear is the most common.}
 \item{color_high}{Chosen color for points significantly above the mean.}
 
 \item{color_low}{Chosen color for points significantly below the mean.}
+
+\item{...}{Extra args likely used for choosing significant genes.}
 }
 \value{
 List including a ggplot2 scatter plot and some histograms.  This plot provides a "bird's
