@@ -16,7 +16,7 @@ load("de_limma.rda", envir=limma)
 basic <- new.env()
 load("de_basic.rda", envir=basic)
 
-normalized_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
+normalized_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))$result
 hpgl_result <- s_p(all_pairwise(normalized_expt, model_batch=TRUE))$result
 
 previous_deseq <- deseq$hpgl_deseq$all_tables[["untreated_vs_treated"]]

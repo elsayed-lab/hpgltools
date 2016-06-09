@@ -33,7 +33,7 @@ test_that("Do the pre-normalized plots work", {
 })
 
 ## Ahh yes I changed the cbcb_filter options to match those from the cbcbSEQ vignette.
-norm <- s_p(normalize_expt(pasilla_expt, transform="log2", convert="cpm", norm="quant", filter=TRUE))$result
+norm <- s_p(normalize_expt(pasilla_expt, transform="log2", convert="cbcbcpm", norm="quant", filter=TRUE))$result
 
 corheat_plot <- plot_corheat(norm)
 disheat_plot <- plot_disheat(norm)

@@ -257,32 +257,33 @@ hpgl_norm <- function(data, ...) {
     original_counts <- NULL
     original_libsize <- NULL
     annot <- NULL
+    counts <- NULL
     if (data_class == 'expt') {
         original_counts <- data[["original_counts"]]
         original_libsizes <- data[["original_libsize"]]
-        data <- Biobase::exprs(data[["expressionset"]])
-        design <- Biobase::pData(data)
+        design <- Biobase::pData(data[["expressionset"]])
         annot <- Biobase::fData(data[["expressionset"]])
+        counts <- Biobase::exprs(data[["expressionset"]])
     } else if (data_class == 'ExpressionSet') {
-        data <- Biobase::exprs(data)
+        counts <- Biobase::exprs(data)
         design <- Biobase::pData(data)
         annot <- Biobase::fData(data)
     } else if (data_class == "list") {
-        data <- data[["count_table"]]
+        counts <- data[["count_table"]]
         design <- arglist[["design"]]
         if (is.null(data)) {
             stop("The list provided contains no count_table.")
         }
     } else if (data_class == "matrix" | data_class == "data.frame") {
-        data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        counts <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
         design <- arglist[["design"]]
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    count_table <- as.matrix(data)
+    count_table <- as.matrix(counts)
     expt_design <- design
     if (is.null(original_counts)) {
-        original_counts <- data
+        original_counts <- counts
     }
     if (is.null(original_libsize)) {
         original_libsize <- colSums(count_table)

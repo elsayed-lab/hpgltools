@@ -65,14 +65,14 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform log2/cpm/quantile/combatMod normalization
-hpgl_norm <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
+hpgl_norm <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))$result
 hpgl_qcpmcounts <- Biobase::exprs(hpgl_norm$expressionset)
 test_that("Do cbcbSEQ and hpgltools agree on the definition of log2(quantile(cpm(counts)))?", {
     expect_equal(cbcb_qcpmcounts, hpgl_qcpmcounts)
 })
 
 ## Getting log2(combat(cpm(quantile(counts))))
-hpgl_qcpmcombat <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", batch="combatmod", low_to_zero=FALSE))$result
+hpgl_qcpmcombat <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", batch="combatmod", low_to_zero=FALSE))$result
 hpgl_combat <- Biobase::exprs(hpgl_qcpmcombat$expressionset)
 ## cbcb_hpgl_combat <- hpgl_combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE)
 test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts))))?", {
