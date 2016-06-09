@@ -97,7 +97,6 @@ plot_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
 }
 
 plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start=1000, end=2000, strand=1, padding=100) {
-
     head(genes)
     genes = genes[,c(2,3,5,11)]
     for(ch in 1:36) {
@@ -114,7 +113,7 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
             row = genes_on_chr[i,]
             genename=row$Name
             output_file=paste("~/riboseq/coverage/", mychr, "/", genename, ".svg", sep="")
-            svg(file=output_file, height=2, width=8, units="in")
+            svg(filename=output_file, height=2, width=8)
             plot_rpm(rpms, start=row$start, end=row$end, strand=row$strand, output=output_file, name=row$Name)
             dev.off()
         }
@@ -139,19 +138,23 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
     plotted_end = end + padding
     my_start = start
     my_end = end
-    rpm_region = subset(input, chromosome==mychr & position >= plotted_start & position <= plotted_end)
+    ## These are good chances to use %>% I guess
+    ## rpm_region = subset(input, chromosome==mychr & position >= plotted_start & position <= plotted_end)
+    region_idx <- input[["chromosome"]] == mychr & input[["position"]] >= plotted_start & input[["position"]] <= plotted_end
+    rpm_region <- rpm_region[region_idx, ]
     rpm_region = rpm_region[,-1]
     rpm_region$log = log2(rpm_region$rpm + 1)
 
-    pre_start = subset(rpm_region, position < my_start)
-    post_stop = subset(rpm_region, position > my_end)
-    cds = subset(rpm_region, position >= my_start & position < my_end)
+    ## pre_start = subset(rpm_region, position < my_start)
+    start_idx <- rpm_region[["position"]] < my_start
+    pre_start <- rpm_region[start_idx, ]
+    ## post_stop = subset(rpm_region, position > my_end)
+    stop_idx <- rpm_region[["position"]] > my_end
+    post_stop <- rpm_region[stop_idx, ]
+    ## cds = subset(rpm_region, position >= my_start & position < my_end)
+    cds_idx <- rpm_region[["position"]] >= my_start & rpm_region[["position"]] < my_end
+    cds <- rpm_region[cds_idx, ]
 
-    theme_set(theme_bw())
-
-    ## Wow R is such a piece of shit.
-    ## Apparently aes messes with its scope in arbitrary ways, so you have to do stupid workarounds like this...
-    ## Ok, fuck you then.
     eval(substitute(
         expr = {
             stupid = aes(y=0,yend=0,x=my_start,xend=my_end)
@@ -159,18 +162,19 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
         env = list(my_start=my_start, my_end=my_end)))
 
     if (strand == "+") {
-        gene_arrow = arrow(type="closed", ends="last")
+        gene_arrow = grid::arrow(type="closed", ends="last")
     } else {
-        gene_arrow = arrow(type="closed", ends="first")
+        gene_arrow = grid::arrow(type="closed", ends="first")
     }
     xlabel_string = paste(name, ": ", my_start, " to ", my_end)
-    my_plot = ggplot(rpm_region, aes(x=position, y=log)) +
-        xlab(xlabel_string) +
-            ylab("Log2(RPM) reads") +
-                geom_bar(data=rpm_region, stat="identity", fill="black", colour="black") +
-                    geom_bar(data=pre_start, stat="identity", fill="red", colour="red") +
-                        geom_bar(data=post_stop, stat="identity", fill="red", colour="red") +
-                            geom_segment(data=rpm_region, mapping=stupid, arrow=gene_arrow, size=2, color="blue")
+    my_plot = ggplot(rpm_region, aes_string(x="position", y="log")) +
+        ggplot2::xlab(xlabel_string) +
+        ggplot2::ylab("Log2(RPM) reads") +
+        ggplot2::geom_bar(data=rpm_region, stat="identity", fill="black", colour="black") +
+        ggplot2::geom_bar(data=pre_start, stat="identity", fill="red", colour="red") +
+        ggplot2::geom_bar(data=post_stop, stat="identity", fill="red", colour="red") +
+        ggplot2::geom_segment(data=rpm_region, mapping=stupid, arrow=gene_arrow, size=2, color="blue") +
+        ggplot2::theme_bw()
     plot(my_plot)
 
 }

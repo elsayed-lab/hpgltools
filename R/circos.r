@@ -517,6 +517,7 @@ circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr="
 #' and finally adds an include to circos/bob.conf
 #'
 #' @param df Dataframe with starts/ends and the floating point information.
+#' @param annot_df Annotation data frame defining starts/stops.
 #' @param cfgout Master configuration file to write.
 #' @param colname Name of the column with the data of interest.
 #' @param chr Name of the chromosome (This currently assumes a bacterial chromosome)
@@ -628,6 +629,7 @@ circos_tile <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
 #' and finally adds an include to circos/bob.conf
 #'
 #' @param df Dataframe with starts/ends and the floating point information.
+#' @param annot_df Annotation data frame with starts/ends.
 #' @param cfgout Master configuration file to write.
 #' @param colname Name of the column with the data of interest.
 #' @param chr Name of the chromosome (This currently assumes a bacterial chromosome).
@@ -726,6 +728,7 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
 #' and finally adds an include to circos/bob.conf
 #'
 #' @param df Dataframe with starts/ends and the floating point information.
+#' @param annot_df Annotation data frame containing starts/ends.
 #' @param cfgout Master configuration file to write.
 #' @param colname Name of the column with the data of interest.
 #' @param chr Name of the chromosome (This currently assumes a bacterial chromosome).
@@ -842,9 +845,9 @@ CIRCOS=\"%s\"
     make_target_svg <- paste0(make_target_svg, ".svg")
     make_target_png <- gsub(pattern="\\.conf", replacement="", x=make_target)
     make_target_png <- paste0(make_target_png, ".png")
-    make_command <- paste0("cd circos && make ", make_target_svg, " && make ", make_target_png)
-    message(paste0("Running: ", make_command))
-    system(make_command)
+    make_command <- paste0("bash $(cd circos && make ", make_target_svg, " 2>>make.out 1>&2 && make ", make_target_png, " 2>>make.out 1>&2)")
+    result <- system(make_command, show.output.on.console=FALSE)
+    return(result)
 }
 
 #' Write arcs between chromosomes in circos.
@@ -981,8 +984,7 @@ circos_prefix <- function(name="mgas", conf_dir="circos/conf", radius=1800, band
     karyotype_file <- gsub("circos/conf", "conf/karyotypes", cfgout)
     ideogram_file <- gsub("circos/conf", "conf/ideograms", cfgout)
     etc_file <- paste0(path.package("hpgltools"), "/circos/circos_etc.tar.xz")
-    etc_cmd <- paste0("tar -C ", dirname(conf_dir), " -xavf ", etc_file)
-    message(paste0("TESTME ", etc_cmd))
+    etc_cmd <- paste0("tar -C ", dirname(conf_dir), " -xavf ", etc_file, " 2>/dev/null 1>&2")
     system(command=etc_cmd)
 
     ## If you want clickable ideograms, add band_url='script?start=[start]&end=[end]&label=[label]

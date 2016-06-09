@@ -63,67 +63,6 @@ s_p <- function(code) {
     return(retlist)
 }
 
-sq <- function(code, ps=NULL) {
-    warnings <- NULL
-    output_log <- NULL
-    message_log <- NULL
-    tryCatch(result <- { output_log <<- capture.output(type="output", { code }) },
-                       error = function(e) {
-                           call <- conditionCall(e)
-                           if (!is.null(call)) {
-                               if (identical(call[[1L]], quote(doTryCatch))) {
-                                   call <- sys.call(-4L)
-                               }
-                               dcall <- deparse(call)[1L]
-                               prefix <- paste("Error in", dcall, ": ")
-                               LONG <- 75L
-                               msg <- conditionMessage(e)
-                               sm <- strsplit(msg, "\n")[[1L]]
-                               w <- 14L + nchar(dcall, type = "w") + nchar(sm[1L], type = "w")
-                               if (is.na(w)) {
-                                   w <- 14L + nchar(dcall, type = "b") + nchar(sm[1L], type = "b")
-                               }
-                               if (w > LONG) {
-                                   prefix <- paste0(prefix, "\n  ")
-                               }
-                           } else {
-                               prefix <- "Error : "
-                               msg <- paste0(prefix, conditionMessage(e), "\n")
-                               .Internal(seterrmessage(msg[1L]))
-                               if (!silent && identical(getOption("show.error.messages"), TRUE)) {
-                                   cat(msg, file = stderr())
-                                   .Internal(printDeferredWarnings())
-                               }
-                               invisible(structure(msg, class = "try-error", condition = e))
-                           }
-                       },
-                       warning = function(w) { message_log <- capture.output(type="message", { w } )},
-                       finally = { ps })
-    retlist <- list(
-        "output" = output_log,
-        "message" = message_log,
-        "warnings" = warnings,
-        "result" = result)
-    return(retlist)
-}
-
-sr <- function(code) {
-    warnings <- NULL
-    output_log <- NULL
-    message_log <- NULL
-    result <- {
-        output_log <- capture.output(type="output", {
-            message_log <- capture.output(type="message", {
-                code
-            })
-        })
-    }
-    retlist <- list(
-        "output" = output_log,
-        "message" = message_log,
-        "result" = result)
-}
-
 #' Grab gene lengths from a gff file.
 #'
 #' This function attempts to be robust to the differences in output from importing gff2/gff3 files.

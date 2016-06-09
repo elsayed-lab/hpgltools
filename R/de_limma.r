@@ -12,8 +12,8 @@
 #' @param z How far from the median to color the plot red and green.
 #' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
 #' @param base_url Basename for gvis plots.
-#' @param up_color Color for the ups.
-#' @param down_color Color for the downs.
+#' @param color_low Color for the ups.
+#' @param color_high Color for the downs.
 #' @param ... More parameters to make you happy!
 #' @return Ggplot2 plot showing the relationship between the two coefficients.
 #' @seealso \link{plot_linear_scatter} \link{limma_pairwise}
@@ -72,8 +72,8 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
         colnames(up_df) <- c("first", "second")
         colnames(down_df) <- c("first", "second")
         theplot <- theplot +
-            ggplot2::geom_point(data=up_df, colour=up_color) +
-            ggplot2::geom_point(data=down_df, colour=down_color)
+            ggplot2::geom_point(data=up_df, colour=color_high) +
+            ggplot2::geom_point(data=down_df, colour=color_low)
         plot[["scatter"]] <- theplot
     }
     plot[["df"]] <- coefficients

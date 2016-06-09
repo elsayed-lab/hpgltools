@@ -6,9 +6,18 @@
 #' @param species an organism supported by gprofiler
 #' @param first_col where to search for the order of 'significant' first
 #' @param second_col if that fails, try some where else.
+#' @param do_go Perform GO search?
+#' @param do_kegg Perform KEGG search?
+#' @param do_reactome Perform reactome search?
+#' @param do_mi Do miRNA search?
+#' @param do_tf Search for transcription factors?
+#' @param do_corum Do corum search?
+#' @param do_hp Do the hp search?
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @export
-simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC", second_col="limma_logfc", do_go=TRUE, do_kegg=TRUE, do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE, do_corum=TRUE, do_hp=TRUE) {
+simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
+                             second_col="limma_logfc", do_go=TRUE, do_kegg=TRUE,
+                             do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE, do_corum=TRUE, do_hp=TRUE) {
     ## Assume for the moment a limma-ish data frame
     gene_list <- NULL
     if (!is.null(de_genes[[first_col]])) {

@@ -11,11 +11,7 @@ orgdb_idmap(orgdb, gene_ids = NULL, mapto = c("ensembl"))
 
 \item{gene_ids}{Gene identifiers for retrieving annotations.}
 
-\item{keytype}{a, umm keytype? I need to properly read this code.}
-
-\item{fields}{Columns to include in the output.}
-
-\item{biomart_dataset}{Name of the biomaRt dataset to query for gene type.}
+\item{mapto}{Key to map the IDs against.}
 }
 \value{
 a table of gene information

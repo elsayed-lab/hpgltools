@@ -9,21 +9,19 @@
 #'
 #' @param data Matrix of count data.
 #' @param convert Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
-#' @param annotations Set of gff annotations are needed if using rpkm so we can get gene lengths.
-#' @param fasta Fasta for rpkmish normalization.
-#' @param pattern Cp_seq_m counts require a pattern to search on.
-#' @param entry_type Used when reading a gff to acquire gene lengths.
-#' @param ... Options I might pass from other functions are dropped into arglist.
+#' @param ... Options I might pass from other functions are dropped into arglist, used by rpkm (gene
+#'     lengths) and divide_seq (genome, pattern to match, and annotation type).
 #' @return Dataframe of cpm/rpkm/whatever(counts)
 #' @seealso \pkg{edgeR} \pkg{Biobase} \code{\link[edgeR]{cpm}}
 #' @examples
 #' \dontrun{
-#'  converted_table = convert_counts(count_table, convert='edgecpm')
+#'  converted_table = convert_counts(count_table, convert='cbcbcpm')
 #' }
 #' @export
-convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pattern='TA', entry_type='gene', ...) {
+convert_counts <- function(data, convert="raw", ...) {
     arglist <- list(...)
     data_class <- class(data)[1]
+    annotations <- arglist[["annotations"]]
     annot <- NULL
     if (data_class == "expt") {
         count_table <- Biobase::exprs(data[["expressionset"]])
@@ -51,11 +49,15 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
         } else if (is.null(annotations)) {
             annotations <- annot
         }
-        count_table <- hpgl_rpkm(count_table, annotations=annotations)
+        count_table <- hpgl_rpkm(count_table, annotations=annotations, ...)
     } else if (convert == "cp_seq_m") {
+        if (is.null(annotations) & is.null(annot)) {
+            stop("No annotations data frame provided.")
+        } else if (is.null(annotations)) {
+            annotations <- annot
+        }
         counts <- edgeR::cpm(count_table)
-        ## count_table = divide_seq(counts, ...)
-        count_table <- divide_seq(counts, fasta=fasta, gff=annotations, pattern=pattern, entry_type=entry_type)
+        count_table <- divide_seq(counts, annotations=annotations, ...)
     }
     libsize <- colSums(count_table)
     counts <- list(
@@ -71,10 +73,7 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
 #' but fancy pants.
 #'
 #' @param counts Read count matrix.
-#' @param pattern Pattern to search against.  Defaults to 'TA'.
-#' @param fasta Fasta genome to search.
-#' @param gff Gff set of annotations to define start/ends of genes.
-#' @param entry_type Type of gff entry to search against.  Defaults to 'gene'.
+#' @param genome Genome to search (fasta/BSgenome).
 #' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return The 'RPseqM' counts
 #' @seealso \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
@@ -83,54 +82,87 @@ convert_counts <- function(data, convert="raw", annotations=NULL, fasta=NULL, pa
 #' cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
 #' }
 #' @export
-divide_seq <- function(counts, pattern="TA", fasta="testme.fasta", gff="testme.gff",
-                       entry_type="gene", ...) {
+divide_seq <- function(counts, genome=NULL, ...) {
     arglist <- list(...)
-    if (!file.exists(fasta)) {
-        compressed_fasta <- paste0(fasta, '.xz')
-        system(paste0("xz -d ", compressed_fasta))
+    annotations <- arglist[["annotations"]]
+    pattern <- arglist[["pattern"]]
+    if (is.null(pattern)) {
+        pattern <- "TA"
     }
-    raw_seq <- try(Rsamtools::FaFile(fasta))
-    if (class(raw_seq)[1] == 'try-error') {
-        stop(paste0("There was a problem reading: ", fasta))
-    }
-    gff_entries <- gff2irange(gff)
-    ## print(head(gff_entries))
-    ##    cds_entries = subset(gff_entries, type==entry_type)
-    found_entries <- (gff_entries$type == entry_type)
-    if (sum(found_entries) == 0) {
-        message(paste0("There were no found entries of type: ", entry_type, "."))
-        message("Going to try locus_tag, and failing that, mRNA.")
-        locus_entries <- (gff_entries$type == 'locus_tag')
-        mrna_entries <- (gff_entries$type == 'mRNA')
-        if ((sum(locus_entries) > sum(mrna_entries)) & sum(locus_entries) > 100) {
-            found_entries <- locus_entries
-        } else if (sum(mrna_entries) > 100) {
-            found_entries <- mrna_entries
-        } else {
-            stop("Unable to find any entries of type locus_tag nor mrna.")
+    message(paste0("Using pattern: ", pattern, " instead of length for an rpkm-ish normalization."))
+    compression <- NULL
+    genome_class <- class(genome)[1]
+    if (genome_class == "character") {
+        ## This is presumably a fasta file, then.
+        ## Sadly as of the last time I checked, FaFile doesn't handle compressed fasta
+        if (grepl(pattern="gz$", x=genome)) {
+            compression <- "gzip"
+            system(paste0("gunzip ", genome))
+        } else if (grepl(pattern="xz$", x=genome)) {
+            compression <- "xz"
+            system(paste0("xz -d ", genome))
         }
+        raw_seq <- try(Rsamtools::FaFile(genome))
+        if (class(raw_seq)[1] == 'try-error') {
+            stop(paste0("There was a problem reading: ", genome))
+        }
+        system(paste0(compression, " ", sub("^([^.]*).*", "\\1", genome)))
+    } else if (genome_class == "BSgenome") {
+        raw_seq <- genome
+    } else {
+        stop("Need a genome to search.")
     }
-    ##cds_entries = subset(gff_entries, type==entry_type)
-    cds_entries <- gff_entries[found_entries, ]
-    names(cds_entries) <- make.names(cds_entries$locus_tag, unique=TRUE)
-    cds_seq <- Biostrings::getSeq(raw_seq, cds_entries)
-    names(cds_seq) <- cds_entries$locus_tag
+
+    ## Test that the annotations and genome have the same seqnames
+    genome_seqnames <- sort(levels(as.factor(GenomicRanges::seqnames(genome))))
+    annotation_seqnames <- sort(levels(as.factor(annotations[["chromosome"]])))
+    hits <- sum(annotation_seqnames %in% genome_seqnames)
+    if (hits == 0) {
+        ## These are mislabeled (it seems the most common error is a chromosome names 'chr4' vs. '4'
+        annotations[["chromosome"]] <- paste0("chr", annotations[["chromosome"]])
+    } else if (hits < length(annotation_seqnames)) {
+        warning("Not all the annotation sequence names were found in the genome, this will probably end badly.")
+    }
+
+    annotation_class <- class(annotations)[1]
+    annotation_entries <- NULL
+    if (annotation_class == "character") {
+        ## This is presumably a gff file, then
+        annotation_entries <- gff2irange(annotations, ...)
+    } else if (annotation_class == "data.frame") {
+        colnames(annotations) <- tolower(colnames(annotations))
+        annotations <- annotations[complete.cases(annotations),]
+        if (class(annotations[["strand"]]) == "integer") {
+            annotations[["strand"]] <- ifelse(annotations[["strand"]] > 0, "+", "-")
+        }
+        annotation_entries <- GenomicRanges::makeGRangesFromDataFrame(annotations)
+    } else if (annotation_class == "Granges") {
+        annotations <- as.data.frame(annotations)
+        colnames(annotations) <- tolower(colnames(annotations))
+        annotation_entries <- annotations
+    } else if (annotation_class == "orgDb") {
+        ## TODO: Extract the annotation data frame
+    } else {
+        stop("Need some annotation information.")
+    }
+
+    cds_seq <- Biostrings::getSeq(raw_seq, annotation_entries)
+    ## names(cds_seq) <- annotation_entries[[entry_type]]
     dict <- Biostrings::PDict(pattern, max.mismatch=0)
     result <- Biostrings::vcountPDict(dict, cds_seq)
     num_tas <- data.frame(name=names(cds_seq), tas=as.data.frame(t(result)))
-    rownames(num_tas) <- make.names(num_tas$name, unique=TRUE)
-    colnames(num_tas) <- c("name","TAs")
-    num_tas$TAs <- num_tas$TAs + 1
-    factor <- median(num_tas$TAs)
-    num_tas$TAs <- num_tas$TAs / factor
+    rownames(num_tas) <- make.names(num_tas[["name"]], unique=TRUE)
+    colnames(num_tas) <- c("name","pattern")
+    num_tas[["pattern"]] <- num_tas[["pattern"]] + 1  ## No division by 0
+    factor <- median(num_tas[["pattern"]])
+    num_tas[["pattern"]] <- num_tas[["pattern"]] / factor
     merged_tas <- merge(counts, num_tas, by="row.names", all.x=TRUE)
-    rownames(merged_tas) <- merged_tas$Row.names
+    rownames(merged_tas) <- merged_tas[["Row.names"]]
     merged_tas <- merged_tas[-1]
-    ##merged_tas <- subset(merged_tas, select=-c("name"))  ## Two different ways of removing columns...
     merged_tas <- merged_tas[, -which(colnames(merged_tas) %in% c("name"))]
-    merged_tas <- merged_tas / merged_tas$TAs
-    merged_tas <- merged_tas[, !(colnames(merged_tas) %in% c("TAs"))]  ## Here is another!
+    merged_tas <- merged_tas / merged_tas[["pattern"]]
+    ##merged_tas <- subset(merged_tas, select=-c("name"))  ## Two different ways of removing columns...
+    merged_tas <- merged_tas[, !(colnames(merged_tas) %in% c("pattern"))]  ## Here is another!
     return(merged_tas)
 }
 
@@ -164,7 +196,7 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #' wraps EdgeR's rpkm in an attempt to make sure that the required gene lengths get sent along.
 #'
 #' @param df Data frame of counts, alternately an edgeR DGEList.
-#' @param annotations Contains gene lengths, defaulting to 'gene_annotations'.
+#' @param ... extra options including annotations for defining gene lengths.
 #' @return Data frame of counts expressed as rpkm.
 #' @seealso \pkg{edgeR} and \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 #' @examples
@@ -172,7 +204,9 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #' rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
 #' }
 #' @export
-hpgl_rpkm <- function(df, annotations=NULL) {
+hpgl_rpkm <- function(df, ...) {
+    arglist <- list(...)
+    annotations <- arglist[["annotations"]]
     ## holy crapola I wrote this when I had no clue what I was doing.
     if (class(df) == "edgeR") {
         df <- df[["counts"]]
@@ -195,10 +229,10 @@ hpgl_rpkm <- function(df, annotations=NULL) {
     ##rownames(df_in) = merged_annotations[,"Row.names"]
     ## Sometimes I am stupid and call it length...
     lenvec <- NULL
-    if (is.null(merged_annotations$width)) {
-        lenvec <- as.vector(merged_annotations$length)
+    if (is.null(merged_annotations[["width"]])) {
+        lenvec <- as.vector(merged_annotations[["length"]])
     } else {
-        lenvec <- as.vector(merged_annotations$width)
+        lenvec <- as.vector(merged_annotations[["width"]])
     }
     names(lenvec) <- rownames(merged_annotations)
     requireNamespace("edgeR")

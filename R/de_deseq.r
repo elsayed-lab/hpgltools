@@ -83,6 +83,8 @@ deseq_pairwise <- function(...) {
 #' @param input Dataframe/vector or expt class containing data, normalization state, etc.
 #' @param conditions Factor of conditions in the experiment.
 #' @param batches Factor of batches in the experiment.
+#' @param alt_model Provide an arbitrary model here.
+#' @param extra_contrasts Provide extra contrasts here.
 #' @param model_cond Is condition in the experimental model?
 #' @param model_batch Is batch in the experimental model?
 #' @param annot_df Include some annotation information in the results?

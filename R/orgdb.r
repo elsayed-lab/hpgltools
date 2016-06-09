@@ -12,6 +12,7 @@
 #' @param gene_ids Gene identifiers for retrieving annotations.
 #' @param keytype mmm the key type used?
 #' @param fields Columns included in the output.
+#' @param sum_exons Perform a sum of the exons in the data set?
 #' @return Table of geneids, chromosomes, descriptions, strands, types, and lengths.
 #' @seealso \link[AnnotationDbi]{select}
 #' @examples
@@ -124,7 +125,7 @@ load_host_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
         }
     }
     ## Note querying by "GENEID" will exclude noncoding RNAs
-    gene_info <- AnnotationDbi::select_(orgdb,
+    gene_info <- dplyr::select_(orgdb,
                         keys=gene_ids,
                         keytype=keytype,
                         columns=fields)
@@ -138,7 +139,7 @@ load_host_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
 
     ## filter(keytype %in% gene_ids) %>%
     ## Are TXSTRAND and friends quotable?
-    AnnotationDbi::select_(
+    dplyr::select_(
         gene_id=get(keytype),
         chromosome="TXCHROM",
         description="GENENAME",
@@ -250,7 +251,7 @@ load_kegg_pathways <- function(orgdb, gene_ids, keytype='ENSEMBL') {
         na.omit() %>%
         ## AnnotationDbi::select(KEGG_PATH, KEGG_NAME, KEGG_CLASS, KEGG_DESCRIPTION)
         ## I think these should be quoted
-        AnnotationDbi::select_("KEGG_PATH", "KEGG_NAME", "KEGG_CLASS", "KEGG_DESCRIPTION")
+        dplyr::select_("KEGG_PATH", "KEGG_NAME", "KEGG_CLASS", "KEGG_DESCRIPTION")
         #select(-get(keytype))
     colnames(kegg_pathways) <- c('pathway', 'name', 'class', 'description')
     return(kegg_pathways)
@@ -467,7 +468,7 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
 
     }
     tx <- tx[[try_txdb]]
-    avail_namespaces <- ls(paste0("package:", try_txdb))
+    ## avail_namespaces <- ls(paste0("package:", try_txdb))
     if (is.null(tx)) {
         stop("Did not extract the relevant txDb.")
     } else {
@@ -484,9 +485,7 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
 #'
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Gene identifiers for retrieving annotations.
-#' @param keytype a, umm keytype? I need to properly read this code.
-#' @param fields Columns to include in the output.
-#' @param biomart_dataset Name of the biomaRt dataset to query for gene type.
+#' @param mapto Key to map the IDs against.
 #' @return a table of gene information
 #' @seealso \link[AnnotationDbi]{select}
 #' @examples

@@ -28,11 +28,11 @@ limma_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
 
 \item{base_url}{Basename for gvis plots.}
 
+\item{color_low}{Color for the ups.}
+
+\item{color_high}{Color for the downs.}
+
 \item{...}{More parameters to make you happy!}
-
-\item{up_color}{Color for the ups.}
-
-\item{down_color}{Color for the downs.}
 }
 \value{
 Ggplot2 plot showing the relationship between the two coefficients.

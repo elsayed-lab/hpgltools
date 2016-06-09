@@ -7,7 +7,7 @@
 all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
   z = NULL, fc = NULL, p = NULL, overwrite = FALSE,
   species = "unsupported", goid_map = "reference/go/id2go.map",
-  gff_file = NULL, gff_type = "gene", goids_df = NULL, do_goseq = TRUE,
+  gff_file = NULL, gff_type = "gene", do_goseq = TRUE,
   do_cluster = TRUE, do_topgo = TRUE, do_gostats = TRUE,
   do_gprofiler = TRUE, do_trees = FALSE)
 }
@@ -35,8 +35,6 @@ all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
 \item{gff_file}{gff file containing the annotations used by gff2genetable from clusterprofiler.}
 
 \item{gff_type}{Column to use from the gff file for the universe of genes.}
-
-\item{goids_df}{FIXME! Dataframe of genes and goids which I am relatively certain is no longer needed and superseded by goids.}
 
 \item{do_goseq}{Perform simple_goseq()?}
 

@@ -20,8 +20,8 @@ simple_reactome <- function(de_list, annotations, shortname="org.Sc.sgd") {
     summary(x)
     barplot(x, showCategory=8)
     DOSE::dotplot(x, showCategory=15)
-    ReactomePA::enrichMap(x, layout=igraph::layout.kamada.kawai, vertex.label.cex = 1)
-    ReactomePA::cnetplot(x, categorySize="pvalue", foldChange=de_list$log2FC)
+    DOSE::enrichMap(x, layout=igraph::layout.kamada.kawai, vertex.label.cex = 1)
+    DOSE::cnetplot(x, categorySize="pvalue", foldChange=de_list$log2FC)
     res <- clusterProfiler::compareCluster(ids, fun="enrichPathway")
     ## I think for this to work, I need the full set of DE values
     ## Then do the SGDID->Entrez conversion and reset the names() to that.

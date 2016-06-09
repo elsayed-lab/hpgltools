@@ -101,6 +101,7 @@ mdesc_table <- function(table="Locus2GO") {
 
 get_loci_go <- function(taxonid="160490") {
     db_driver <- DBI::dbDriver("MySQL")
+    connection <- DBI::dbConnect(db_driver, user="guest", password="guest", host="pub.microbesonline.org", dbname="genomics")
     ## cheese and crackers their database is entirely too complex and poorly documented.
     query <- paste0("SELECT L.locusId, G.goID, T.acc_synonym FROM genomics.Scaffold S, genomics.term_synonym T, genomics.Locus L, genomics.Locus2Go G where S.TaxonomyId = '",
                     taxonid, "' and S.isGenomic = 1 and S.scaffoldId = L.scaffoldId  and G.locusId = L.locusId and T.term_id = G.goID")

@@ -12,6 +12,8 @@ simple_clusterprofiler(de_genes, goids_df = NULL, golevel = 4,
 \arguments{
 \item{de_genes}{Data frame of differentially expressed genes, it must contain an ID column.}
 
+\item{goids_df}{df containing mappings of genes to goids in the format expected by buildGOmap().}
+
 \item{golevel}{Relative level in the tree for printing p-value plots, higher is more specific.}
 
 \item{pcutoff}{(Adj)p-value cutoff to define 'significant'.}
@@ -38,8 +40,6 @@ disappear, too short and the words run into the lines above.}
 \item{padjust}{Method for adjusting the p-values.}
 
 \item{...}{More options, passed to arglist.}
-
-\item{goids_file}{File containing mappings of genes to goids in the format expected by buildGOmap().}
 }
 \value{
 List including the following:

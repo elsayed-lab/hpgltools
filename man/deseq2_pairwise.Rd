@@ -17,6 +17,10 @@ deseq2_pairwise(input, conditions = NULL, batches = NULL,
 
 \item{model_cond}{Is condition in the experimental model?}
 
+\item{alt_model}{Provide an arbitrary model here.}
+
+\item{extra_contrasts}{Provide extra contrasts here.}
+
 \item{model_batch}{Is batch in the experimental model?}
 
 \item{annot_df}{Include some annotation information in the results?}

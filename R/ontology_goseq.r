@@ -407,7 +407,7 @@ goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
         requireNamespace("topGO")
         attachNamespace("topGO")
         mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
-                         geneSel=get(selector), annot=annFUN.gene2GO, gene2GO=geneID2GO)
+                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         bp_GOdata <- new("topGOdata", description="BP", ontology="BP", allGenes=pvals,
                          geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
         cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=pvals,

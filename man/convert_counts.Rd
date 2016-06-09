@@ -4,23 +4,15 @@
 \alias{convert_counts}
 \title{Perform a cpm/rpkm/whatever transformation of a count table.}
 \usage{
-convert_counts(data, convert = "raw", annotations = NULL, fasta = NULL,
-  pattern = "TA", entry_type = "gene", ...)
+convert_counts(data, convert = "raw", ...)
 }
 \arguments{
 \item{data}{Matrix of count data.}
 
 \item{convert}{Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.}
 
-\item{annotations}{Set of gff annotations are needed if using rpkm so we can get gene lengths.}
-
-\item{fasta}{Fasta for rpkmish normalization.}
-
-\item{pattern}{Cp_seq_m counts require a pattern to search on.}
-
-\item{entry_type}{Used when reading a gff to acquire gene lengths.}
-
-\item{...}{Options I might pass from other functions are dropped into arglist.}
+\item{...}{Options I might pass from other functions are dropped into arglist, used by rpkm (gene
+lengths) and divide_seq (genome, pattern to match, and annotation type).}
 }
 \value{
 Dataframe of cpm/rpkm/whatever(counts)
@@ -35,7 +27,7 @@ wanted to do such a thing.
 }
 \examples{
 \dontrun{
- converted_table = convert_counts(count_table, convert='edgecpm')
+ converted_table = convert_counts(count_table, convert='cbcbcpm')
 }
 }
 \seealso{

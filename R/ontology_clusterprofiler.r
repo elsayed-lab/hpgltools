@@ -128,17 +128,17 @@ simple_cp_orgdb <- function(sig_genes, de_table, orgdb="org.Dm.eg.db",
         "kegg_gsem_sig" <- summary(gse_sig_mkegg))
 
     message("Plotting results.")
-    enrichMap(ego_sig_mf)
+    DOSE::enrichMap(ego_sig_mf)
     map_sig_mf <- recordPlot()
-    enrichMap(ego_sig_bp)
+    DOSE::enrichMap(ego_sig_bp)
     map_sig_bp <- recordPlot()
-    enrichMap(ego_sig_cc)
+    DOSE::enrichMap(ego_sig_cc)
     map_sig_cc <- recordPlot()
-    cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist)
+    DOSE::cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist)
     net_sig_mf <- recordPlot()
-    cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist)
+    DOSE::cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist)
     net_sig_bp <- recordPlot()
-    cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist)
+    DOSE::cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist)
     net_sig_cc <- recordPlot()
     tree_mf <- try(clusterProfiler::plotGOgraph(ego_sig_mf), silent=TRUE)
     tree_sig_mf <- recordPlot()
@@ -157,12 +157,12 @@ simple_cp_orgdb <- function(sig_genes, de_table, orgdb="org.Dm.eg.db",
         "ego_sig_mf" = barplot(ego_sig_mf, showCategory=categories, drop=TRUE),
         "ego_sig_bp" = barplot(ego_sig_bp, showCategory=categories, drop=TRUE),
         "ego_sig_cc" = barplot(ego_sig_cc, showCategory=categories, drop=TRUE),
-        "dot_all_mf" = dotplot(ego_all_mf),
-        "dot_all_bp" = dotplot(ego_all_bp),
-        "dot_all_cc" = dotplot(ego_all_cc),
-        "dot_sig_mf" = dotplot(ego_sig_mf),
-        "dot_sig_bp" = dotplot(ego_sig_bp),
-        "dot_sig_cc" = dotplot(ego_sig_cc),
+        "dot_all_mf" = clusterProfiler::dotplot(ego_all_mf),
+        "dot_all_bp" = clusterProfiler::dotplot(ego_all_bp),
+        "dot_all_cc" = clusterProfiler::dotplot(ego_all_cc),
+        "dot_sig_mf" = clusterProfiler::dotplot(ego_sig_mf),
+        "dot_sig_bp" = clusterProfiler::dotplot(ego_sig_bp),
+        "dot_sig_cc" = clusterProfiler::dotplot(ego_sig_cc),
         "map_sig_mf" = map_sig_mf,
         "map_sig_bp" = map_sig_bp,
         "map_sig_cc" = map_sig_cc,
@@ -255,7 +255,7 @@ check_clusterprofiler <- function(gff='test.gff', goids_df=NULL) {
 #' fails.
 #'
 #' @param de_genes Data frame of differentially expressed genes, it must contain an ID column.
-#' @param goids_file File containing mappings of genes to goids in the format expected by buildGOmap().
+#' @param goids_df df containing mappings of genes to goids in the format expected by buildGOmap().
 #' @param golevel Relative level in the tree for printing p-value plots, higher is more specific.
 #' @param pcutoff (Adj)p-value cutoff to define 'significant'.
 #' @param fold_changes Df of fold changes for the DE genes.
@@ -443,38 +443,38 @@ simple_clusterprofiler <- function(de_genes, goids_df=NULL, golevel=4, pcutoff=0
     if (include_cnetplots == TRUE) {
         message("simple_clus(): Attempting to include the cnetplots.")
         message("simple_clus(): If they fail, set include_cnetplots to FALSE")
-        cnetplot_mf <- try(clusterProfiler::cnetplot(enriched_mf, categorySize="pvalue",
+        cnetplot_mf <- try(DOSE::cnetplot(enriched_mf, categorySize="pvalue",
                                                      foldChange=fold_changes))
         if (class(cnetplot_mf)[1] != 'try-error') {
             cnetplot_mf <- grDevices::recordPlot()
         } else {
             message("simple_clus(): cnetplot failed for MF, no worries.")
         }
-        cnetplot_bp <- try(clusterProfiler::cnetplot(enriched_bp, categorySize="pvalue",
+        cnetplot_bp <- try(DOSE::cnetplot(enriched_bp, categorySize="pvalue",
                                                      foldChange=fold_changes))
         if (class(cnetplot_bp)[1] != 'try-error') {
             cnetplot_bp <- grDevices::recordPlot()
         } else {
             message("simple_clus(): cnetplot failed for BP, no worries.")
         }
-        cnetplot_cc <- try(clusterProfiler::cnetplot(enriched_cc, categorySize="pvalue",
+        cnetplot_cc <- try(DOSE::cnetplot(enriched_cc, categorySize="pvalue",
                                                      foldChange=fold_changes))
         if (class(cnetplot_cc)[1] != 'try-error') {
             cnetplot_cc <- grDevices::recordPlot()
         } else {
             message("simple_clus(): cnetplot failed for CC, no worries.")
         }
-        cnetplot_mfall <- try(clusterProfiler::cnetplot(mf_all, categorySize="pvalue",
+        cnetplot_mfall <- try(DOSE::cnetplot(mf_all, categorySize="pvalue",
                                                         foldChange=fold_changes))
         if (class(cnetplot_mfall)[1] != 'try-error') {
             cnetplot_mfall <- grDevices::recordPlot()
         }
-        cnetplot_bpall <- try(clusterProfiler::cnetplot(bp_all, categorySize="pvalue",
+        cnetplot_bpall <- try(DOSE::cnetplot(bp_all, categorySize="pvalue",
                                                         foldChange=fold_changes))
         if (class(cnetplot_bpall)[1] != 'try-error') {
             cnetplot_bpall <- grDevices::recordPlot()
         }
-        cnetplot_ccall <- try(clusterProfiler::cnetplot(cc_all, categorySize="pvalue",
+        cnetplot_ccall <- try(DOSE::cnetplot(cc_all, categorySize="pvalue",
                                                         foldChange=fold_changes))
         if (class(cnetplot_ccall)[1] != 'try-error') {
             cnetplot_ccall <- grDevices::recordPlot()
