@@ -11,7 +11,7 @@ pasilla_expt <- pasilla[["expt"]]
 actual <- pasilla_expt[["title"]]
 expected <- "This is an expt class."
 test_that("Pasilla title?", {
-    expect_equal(expected_title, actual_title)
+    expect_equal(expected, actual)
 })
 
 actual <- pasilla_expt[["original_libsize"]]
