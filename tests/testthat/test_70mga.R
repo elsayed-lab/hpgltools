@@ -11,7 +11,7 @@ load(cdm_data, envir=mgas_data)
 rm(cdm_data)
 
 mgas_expt <- create_expt(count_dataframe=mgas_data$cdm_counts,
-                         meta_dataframe=mgas_data$cdm_metadata,
+                         metadata=mgas_data$cdm_metadata,
                          gene_info=mgas_data$gene_info)
 rm(mgas_data)
 
