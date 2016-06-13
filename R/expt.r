@@ -109,11 +109,11 @@ create_expt <- function(metadata=NULL, sample_colors=NULL, gene_info=NULL, title
     sample_definitions <- data.frame()
 
     file <- NULL
-    metadata_frame <- NULL
+    meta_dataframe <- NULL
     if (class(metadata) == "character") { ## This is a filename containing the metadata
         file <- metadata
     } else if (class(metadata) == "data.frame") {
-        metadata_frame <- metadata
+        meta_dataframe <- metadata
     } else {
         stop("This requires either a file or meta data.frame.")
     }

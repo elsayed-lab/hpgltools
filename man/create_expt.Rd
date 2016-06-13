@@ -5,13 +5,12 @@
 \title{Wrap bioconductor's expressionset to include some other extraneous
 information.}
 \usage{
-create_expt(file = NULL, sample_colors = NULL, gene_info = NULL,
+create_expt(metadata = NULL, sample_colors = NULL, gene_info = NULL,
   title = NULL, notes = NULL, include_type = "all", include_gff = NULL,
-  count_dataframe = NULL, meta_dataframe = NULL, savefile = "expt",
-  low_files = FALSE, ...)
+  count_dataframe = NULL, savefile = "expt", low_files = FALSE, ...)
 }
 \arguments{
-\item{file}{Comma separated file (or excel) describing the samples with information like
+\item{metadata}{Comma separated file (or excel) describing the samples with information like
 condition, batch, count_filename, etc.}
 
 \item{sample_colors}{List of colors by condition, if not provided it will generate its own colors
@@ -31,9 +30,6 @@ not always true, this allows one to limit to a specific annotation type.}
 
 \item{count_dataframe}{If one does not wish to read the count tables from the filesystem, they
 may instead be fed as a data frame here.}
-
-\item{meta_dataframe}{Dataframe containing the metadata rather than reading it from a
-file. (TODO: merge these two options into one smarter option).}
 
 \item{savefile}{Rdata filename prefix for saving the data of the resulting expt.}
 
