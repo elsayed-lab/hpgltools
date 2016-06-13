@@ -165,10 +165,10 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     arglist <- list(...)
     hpgl_env <- environment()
     if (isTRUE(color_high)) {
-        color_high <- "#FF0000"
+        color_low <- "#7B9F35"
     }
     if (isTRUE(color_low)) {
-        color_low <- "#7B9F35"
+        color_high <- "#FF0000"
     }
 
     df <- data.frame(df[, c(1, 2)])

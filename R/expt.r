@@ -48,7 +48,7 @@ read_metadata <- function(file, ...) {
 #' 'file'.  create_expt() will then just read that filename, it may be
 #' a full pathname or local to the cwd of the project.
 #'
-#' @param file Comma separated file (or excel) describing the samples with information like
+#' @param metadata Comma separated file (or excel) describing the samples with information like
 #'     condition, batch, count_filename, etc.
 #' @param sample_colors List of colors by condition, if not provided it will generate its own colors
 #'     using colorBrewer.
@@ -61,8 +61,6 @@ read_metadata <- function(file, ...) {
 #' @param include_gff Gff file to help in sorting which features to keep.
 #' @param count_dataframe If one does not wish to read the count tables from the filesystem, they
 #'     may instead be fed as a data frame here.
-#' @param meta_dataframe Dataframe containing the metadata rather than reading it from a
-#'     file. (TODO: merge these two options into one smarter option).
 #' @param savefile Rdata filename prefix for saving the data of the resulting expt.
 #' @param low_files Explicitly lowercase the filenames when searching the filesystem?
 #' @param ... More parameters are fun!
@@ -75,11 +73,10 @@ read_metadata <- function(file, ...) {
 #' ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
-create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NULL, notes=NULL,
+create_expt <- function(metadata=NULL, sample_colors=NULL, gene_info=NULL, title=NULL, notes=NULL,
                         include_type="all", include_gff=NULL, count_dataframe=NULL,
-                        meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
+                        savefile="expt", low_files=FALSE, ...) {
     arglist <- list(...)  ## pass stuff like sep=, header=, etc here
-
     ## Palette for colors when auto-chosen
     chosen_palette <- "Dark2"
     ## I am learning about simplifying vs. preserving subsetting
@@ -110,6 +107,16 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NUL
 
     ## Read in the metadata from the provided data frame, csv, or xlsx.
     sample_definitions <- data.frame()
+
+    file <- NULL
+    metadata_frame <- NULL
+    if (class(metadata) == "character") { ## This is a filename containing the metadata
+        file <- metadata
+    } else if (class(metadata) == "data.frame") {
+        metadata_frame <- metadata
+    } else {
+        stop("This requires either a file or meta data.frame.")
+    }
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
