@@ -73,7 +73,7 @@ read_metadata <- function(file, ...) {
 #' ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
-create_expt <- function(metadata=NULL, sample_colors=NULL, gene_info=NULL, title=NULL, notes=NULL,
+create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL, notes=NULL,
                         include_type="all", include_gff=NULL, count_dataframe=NULL,
                         savefile="expt", low_files=FALSE, ...) {
     arglist <- list(...)  ## pass stuff like sep=, header=, etc here
