@@ -221,15 +221,15 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     if (!is.null(color_low) | !is.null(color_high)) {
         ## If you want to color the above or below identity line points, then you will need subsets to define them
         tmpdf <- df
-        tmpdf[["ratio"]] <- tmpdf[, 2] / tmpdf[, 1]
+        tmpdf[["ratio"]] <- tmpdf[, 2] - tmpdf[, 1]
         subset_points <- suppressMessages(get_sig_genes(tmpdf, column="ratio", ...))
-        high_subset = subset_points[["up_genes"]]
-        low_subset = subset_points[["down_genes"]]
-        original_df = tmpdf
-        high_index = rownames(original_df) %in% rownames(high_subset)
-        high_df = original_df[high_index, ]
-        low_index = rownames(original_df) %in% rownames(low_subset)
-        low_df = original_df[low_index, ]
+        high_subset <- subset_points[["up_genes"]]
+        low_subset <- subset_points[["down_genes"]]
+        original_df <- tmpdf
+        high_index <- rownames(original_df) %in% rownames(high_subset)
+        high_df <- original_df[high_index, ]
+        low_index <- rownames(original_df) %in% rownames(low_subset)
+        low_df <- original_df[low_index, ]
         first_vs_second <- first_vs_second +
             ggplot2::geom_point(colour="black", size=size, alpha=0.4)
     }

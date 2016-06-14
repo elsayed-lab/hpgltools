@@ -27,7 +27,7 @@ colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-pasilla_expt <- create_expt(count_dataframe=counts, meta_dataframe=metadata, savefile="pasilla", gene_info=gene_info)
+pasilla_expt <- create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info)
 actual <- Biobase::exprs(pasilla_expt[["expressionset"]])
 expected <- as.matrix(counts)
 test_that("Does data from an expt equal a raw dataframe?", {

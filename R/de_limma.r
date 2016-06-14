@@ -25,7 +25,7 @@
 limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
                                       gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
                                       tooltip_data=NULL, base_url=NULL,
-                                      color_low="#7B9F35", color_high="#DD0000", ...) {
+                                      color_low="#DD0000", color_high="#7B9F35", ...) {
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
     arglist <- list(...)
