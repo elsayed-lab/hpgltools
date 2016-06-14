@@ -7,7 +7,9 @@ context("Does goseq work?")
 ## These will likely not work with Travis as they take forever.
 ## I am not however, certain how to use skip_on_travis(), so I printed it and am copying the
 ## useful bits here.
-if (!identical(Sys.getenv("TRAVIS"), "true")) {
+
+
+##if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
@@ -42,4 +44,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected_goseq_ccp, actual_goseq_ccp, tolerance=0.0001)
     })
 
-}
+##}
