@@ -22,6 +22,22 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     message("Starting basic pairwise comparison.")
     input_class <- class(input)[1]
     arglist <- list(...)
+    norm <- "quant"
+    if (!is.null(arglist[["norm"]])) {
+        norm <- arglist[["norm"]]
+    }
+    convert <- "cbcbcpm"
+    if (!is.null(arglist[["convert"]])) {
+        convert <- arglist[["convert"]]
+    }
+    transform <- "log2"
+    if (!is.null(arglist[["transform"]])) {
+        transform <- arglist[["transform"]]
+    }
+    filter <- FALSE
+    if (!is.null(arglist[["filter"]])) {
+        filter <- arglist[["filter"]]
+    }
 
     if (input_class == 'expt') {
         design <- input[["design"]]
@@ -37,7 +53,10 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
                        input[["state"]][["conversion"]] == "raw" &
                        input[["state"]][["transform"]] == "raw") {
                 message("This basic pairwise function assumes log2, converted, normalized counts, normalizing now.")
-                input <- suppressMessages(normalize_expt(input, norm="quant", convert="cpm", transform="log2"))
+                input <- suppressMessages(normalize_expt(input, norm=norm,
+                                                         convert=convert,
+                                                         transform=transform,
+                                                         filter=filter))
                 data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
             } else if (input[["state"]][["transform"]] == "raw") {
                 message("This basic pairwise function assumes log2 counts, transforming now.")

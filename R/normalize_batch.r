@@ -61,8 +61,9 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     if (!is.null(arglist[["low_to_zero"]])) {
         low_to_zero <- arglist[["low_to_zero"]]
     }
-    batches <- as.factor(design[[batch1]])
-    conditions <- as.factor(design[["condition"]])
+    ## These droplevels calls are required to avoid errors like 'confounded by batch'
+    batches <- droplevels(as.factor(design[[batch1]]))
+    conditions <- droplevels(as.factor(design[["condition"]]))
 
     num_low <- sum(count_table < 1 & count_table > 0)
     if (num_low > 0) {
@@ -85,12 +86,12 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
             batches2 <- as.factor(design[[batch2]])
             count_table <- limma::removeBatchEffect(count_table, batch=batches, batch2=batches2)
         }
-    } else if (batch == 'limmaresid') {
+    } else if (batch == "limmaresid") {
         message("batch_counts: Using residuals of limma's lmfit to remove batch effect.")
         batch_model <- model.matrix(~batches)
         batch_voom <- limma::voom(data.frame(count_table), batch_model, normalize.method="quantile", plot=FALSE)
         batch_fit <- limma::lmFit(batch_voom, design=batch_model)
-        count_table <- residuals(batch_fit, batch_voom$E)
+        count_table <- residuals(batch_fit, batch_voom[["E"]])
     } else if (batch == "combatmod") {
         ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches, mod=conditions, noScale=noscale, ...)
         message("batch_counts: Using a modified cbcbSEQ combatMod for batch correction.")
@@ -118,8 +119,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         ## new_expt$sva_object = sva_object
         ## new_expt$mod_sv = mod_sv
         ## new_expt$fsva_result = fsva_result
-        count_table <- fsva_result$db
-    } else if (batch == 'combat') {
+        count_table <- fsva_result[["db"]]
+    } else if (batch == "combat") {
         message("batch_counts: Using sva::combat with a prior for batch correction and no scaling.")
         count_table <- sva::ComBat(count_table, batches, mod=NULL, par.prior=TRUE, prior.plots=TRUE, mean.only=TRUE)
     } else if (batch == 'combat_noprior') {

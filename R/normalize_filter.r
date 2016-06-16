@@ -40,7 +40,7 @@ filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
         filtered_counts <- genefilter_cv_counts(count_table, cv_min=cv_min,
                                                 cv_max=cv_max)
     } else if (filter == "simple") {
-        filtered_counts <- simple_filter(count_table, threshold=thresh,
+        filtered_counts <- simple_filter_counts(count_table, threshold=thresh,
                                          min_samples=min_samples)
     } else {
         filtered_counts <- simple_filter_counts(count_table, threshold=thresh,

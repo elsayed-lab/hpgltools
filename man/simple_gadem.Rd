@@ -4,12 +4,14 @@
 \alias{simple_gadem}
 \title{run the rGADEM suite}
 \usage{
-simple_gadem(inputfile, genome = "BSgenome.Hsapiens.UCSC.hs19")
+simple_gadem(inputfile, genome = "BSgenome.Hsapiens.UCSC.hs19", ...)
 }
 \arguments{
 \item{inputfile}{Fasta or bed file containing sequences to search.}
 
 \item{genome}{BSgenome to read.}
+
+\item{...}{Parameters for plotting the gadem result.}
 }
 \description{
 This is another function I started but never had cause to finish

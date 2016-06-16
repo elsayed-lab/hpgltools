@@ -1056,7 +1056,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 
     putative_up_inflection <- inflection::findiplist(x=as.matrix(up_nums[[1]]), y=as.matrix(up_nums[[2]]), 0)
     up_point_num <- putative_up_inflection[2,1]
-    up_label <- paste0("At fc=", signif(up_nums[point_num, ][["fc"]], 4), " and p=", constant_p, ", ", up_nums[point_num, ][["num"]], " genes are de.")
+    up_label <- paste0("At fc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p, ", ", up_nums[up_point_num, ][["num"]], " genes are de.")
     up_plot <- ggplot(data=up_nums, aes_string(x="fc", y="num")) +
         ggplot2::geom_point() + ggplot2::geom_line() +
         ggplot2::geom_hline(yintercept=up_nums[[2]][[up_point_num]]) +
@@ -1067,8 +1067,8 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
     down_point_num <- putative_down_inflection[1,2]
     down_plot <- ggplot(data=down_nums, aes_string(x="fc", y="num")) +
         ggplot2::geom_point() + ggplot2::geom_line() +
-        ggplot2::geom_hline(yintercept=down_nums[[2]][[point_num]]) +
-        ggplot2::geom_vline(xintercept=down_nums[[1]][[point_num]]) +
+        ggplot2::geom_hline(yintercept=down_nums[[2]][[down_point_num]]) +
+        ggplot2::geom_vline(xintercept=down_nums[[1]][[down_point_num]]) +
         ggplot2::geom_vline(xintercept=-1.0, colour="red")
 
     putative_pup_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)

@@ -17,6 +17,20 @@ simple_gprofiler(de_genes, species = "hsapiens", first_col = "logFC",
 \item{first_col}{where to search for the order of 'significant' first}
 
 \item{second_col}{if that fails, try some where else.}
+
+\item{do_go}{Perform GO search?}
+
+\item{do_kegg}{Perform KEGG search?}
+
+\item{do_reactome}{Perform reactome search?}
+
+\item{do_mi}{Do miRNA search?}
+
+\item{do_tf}{Search for transcription factors?}
+
+\item{do_corum}{Do corum search?}
+
+\item{do_hp}{Do the hp search?}
 }
 \value{
 a list of results for go, kegg, reactome, and a few more.

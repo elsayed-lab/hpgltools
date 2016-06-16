@@ -141,6 +141,7 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #' @param pretty_colors Colors!
 #' @param color_high Chosen color for points significantly above the mean.
 #' @param color_low Chosen color for points significantly below the mean.
+#' @param ... Extra args likely used for choosing significant genes.
 #' @return List including a ggplot2 scatter plot and some histograms.  This plot provides a "bird's
 #'     eye" view of two data sets.  This plot assumes a (potential) linear correlation between the
 #'     data, so it calculates the correlation between them.  It then calculates and plots a robust
@@ -160,8 +161,16 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson",
                                 size=2, loess=FALSE, identity=FALSE, gvis_trendline=NULL,
                                 first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE,
-                                color_high=NULL, color_low=NULL) {
+                                color_high=NULL, color_low=NULL, ...) {
+    arglist <- list(...)
     hpgl_env <- environment()
+    if (isTRUE(color_high)) {
+        color_high <- "#FF0000"
+    }
+    if (isTRUE(color_low)) {
+        color_low <- "#7B9F35"
+    }
+
     df <- data.frame(df[, c(1, 2)])
     df <- df[complete.cases(df), ]
     correlation <- cor.test(df[, 1], df[, 2], method=cormethod, exact=FALSE)
@@ -212,24 +221,24 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     if (!is.null(color_low) | !is.null(color_high)) {
         ## If you want to color the above or below identity line points, then you will need subsets to define them
         tmpdf <- df
-        tmpdf[["ratio"]] <- tmpdf[, 2] / tmpdf[, 1]
-        subset_points <- suppressMessages(get_sig_genes(tmpdf, z=1, column="ratio"))
-        high_subset = subset_points[["up_genes"]]
-        low_subset = subset_points[["down_genes"]]
-        original_df = tmpdf
-        high_index = rownames(original_df) %in% rownames(high_subset)
-        high_df = original_df[high_index, ]
-        low_index = rownames(original_df) %in% rownames(low_subset)
-        low_df = original_df[low_index, ]
+        tmpdf[["ratio"]] <- tmpdf[, 2] - tmpdf[, 1]
+        subset_points <- suppressMessages(get_sig_genes(tmpdf, column="ratio", ...))
+        high_subset <- subset_points[["up_genes"]]
+        low_subset <- subset_points[["down_genes"]]
+        original_df <- tmpdf
+        high_index <- rownames(original_df) %in% rownames(high_subset)
+        high_df <- original_df[high_index, ]
+        low_index <- rownames(original_df) %in% rownames(low_subset)
+        low_df <- original_df[low_index, ]
         first_vs_second <- first_vs_second +
             ggplot2::geom_point(colour="black", size=size, alpha=0.4)
     }
         ## Add a color to the dots which are lower than the identity line by some amount
     if (!is.null(color_low)) {
-        first_vs_second <- first_vs_second + ggplot2::geom_point(data=low_df, color="#FF0000", alpha=0.4)
+        first_vs_second <- first_vs_second + ggplot2::geom_point(data=low_df, colour=color_low)
     }
     if (!is.null(color_high)) {
-        first_vs_second <- first_vs_second + ggplot2::geom_point(data=high_df, color="#7B9F35", alpha=0.4)
+        first_vs_second <- first_vs_second + ggplot2::geom_point(data=high_df, colour=color_high)
     }
 
     if (isTRUE(pretty_colors)) {

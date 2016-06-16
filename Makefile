@@ -21,6 +21,7 @@ build:
 	@cd ../ && R CMD build hpgltools && cd hpgltools
 
 test: install
+	@rm -rf tests/testthat/*.rda tests/testthat/circos tests/testthat/*.pdf tests/testthat/*.Rdata test/testthat/*.map
 	@echo "Running run_tests.R"
 	@./run_tests.R
 
@@ -37,7 +38,7 @@ vignette:
 	@Rscript -e "devtools::build_vignettes()"
 
 clean_vignette:
-	@rm -f inst/doc/*
+	@rm -f inst/doc/* vignettes/*.rda vignettes/*.map vignettes/*.Rdata
 
 vt:	clean_vignette vignette install
 

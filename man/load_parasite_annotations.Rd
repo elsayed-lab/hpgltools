@@ -15,6 +15,8 @@ load_parasite_annotations(orgdb, gene_ids = NULL, keytype = "ENSEMBL",
 \item{keytype}{mmm the key type used?}
 
 \item{fields}{Columns included in the output.}
+
+\item{sum_exons}{Perform a sum of the exons in the data set?}
 }
 \value{
 Table of geneids, chromosomes, descriptions, strands, types, and lengths.

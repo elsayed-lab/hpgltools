@@ -11,7 +11,7 @@ load(cdm_data, envir=mgas_data)
 rm(cdm_data)
 
 mgas_expt <- create_expt(count_dataframe=mgas_data$cdm_counts,
-                         meta_dataframe=mgas_data$cdm_metadata,
+                         metadata=mgas_data$cdm_metadata,
                          gene_info=mgas_data$gene_info)
 rm(mgas_data)
 
@@ -21,12 +21,12 @@ test_that("Did the gene information load?", {
     expect_equal(expected_gene_names, actual_gene_names)
 })
 
-mgas_norm <- s_p(normalize_expt(mgas_expt, transform="log2", norm="quant", convert="cpm", filter=TRUE, batch="combat_scale", low_to_zero=TRUE))$result
+mgas_norm <- s_p(normalize_expt(mgas_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=TRUE, batch="combat_scale", low_to_zero=TRUE))$result
 test_that("Are the expt notes and state maintained?", {
-    expect_match(object=mgas_norm$notes, regexp="log2\\(combat_scale\\(cpm\\(quant\\(filter\\(data\\)\\)\\)\\)\\)")
+    expect_match(object=mgas_norm$notes, regexp="log2\\(combat_scale\\(cbcbcpm\\(quant\\(filter\\(data\\)\\)\\)\\)\\)")
     expect_equal("cbcb", mgas_norm$state$filter)
     expect_equal("quant", mgas_norm$state$normalization)
-    expect_equal("cpm", mgas_norm$state$conversion)
+    expect_equal("cbcbcpm", mgas_norm$state$conversion)
     expect_equal("combat_scale", mgas_norm$state$batch)
     expect_equal("log2", mgas_norm$state$transform)
 })
@@ -35,7 +35,7 @@ mgas_pairwise <- s_p(all_pairwise(mgas_expt))$result
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
-    mgas_data <- s_p(gbk2txdb())$result
+    mgas_data <- s_p(gbk2txdb(accession="AE009949"))$result
     actual_width <- GenomicRanges::width(mgas_data$seq)  ## This fails on travis?
     expected_width <- 1895017
     actual_exons <- as.data.frame(mgas_data$exons)
@@ -71,13 +71,12 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     fructose_table <- mgas_pairwise$limma$all_tables$mga1_ll_cf
     wtvmga_glucose <- mgas_pairwise$limma$all_tables$wt_ll_cg_vs_mga1_ll_cg
 
-    circos_test <- circos_prefix()
-    circos_kary <- circos_karyotype("mgas", length=actual_width)
-    circos_plus <- circos_plus_minus(mgas_df, circos_test)
-    circos_hist_ll_cg <- circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus)
-    circos_heat_ll_cf <- circos_heatmap(fructose_table, mgas_df, circos_test, outer=circos_hist_ll_cg)
-    circos_tile_wtmga <- circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf)
+    circos_test <- s_p(circos_prefix())$result
+    circos_kary <- s_p(circos_karyotype("mgas", length=actual_width))$result
+    circos_plus <- s_p(circos_plus_minus(mgas_df, circos_test))$result
+    circos_hist_ll_cg <- s_p(circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus))$result
+    circos_heat_ll_cf <- s_p(circos_heatmap(fructose_table, mgas_df, circos_test, outer=circos_hist_ll_cg))$result
+    circos_tile_wtmga <- s_p(circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf))$result
     circos_suffix(cfgout=circos_test)
-    circos_make(target="mgas")
+    circos_made <- s_p(circos_make(target="mgas"))$result
 }
-

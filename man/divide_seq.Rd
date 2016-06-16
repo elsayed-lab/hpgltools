@@ -5,19 +5,12 @@
 \title{Express a data frame of counts as reads per pattern per
 million(library).}
 \usage{
-divide_seq(counts, pattern = "TA", fasta = "testme.fasta",
-  gff = "testme.gff", entry_type = "gene", ...)
+divide_seq(counts, genome = NULL, ...)
 }
 \arguments{
 \item{counts}{Read count matrix.}
 
-\item{pattern}{Pattern to search against.  Defaults to 'TA'.}
-
-\item{fasta}{Fasta genome to search.}
-
-\item{gff}{Gff set of annotations to define start/ends of genes.}
-
-\item{entry_type}{Type of gff entry to search against.  Defaults to 'gene'.}
+\item{genome}{Genome to search (fasta/BSgenome).}
 
 \item{...}{Options I might pass from other functions are dropped into arglist.}
 }

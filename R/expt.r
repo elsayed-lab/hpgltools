@@ -48,7 +48,7 @@ read_metadata <- function(file, ...) {
 #' 'file'.  create_expt() will then just read that filename, it may be
 #' a full pathname or local to the cwd of the project.
 #'
-#' @param file Comma separated file (or excel) describing the samples with information like
+#' @param metadata Comma separated file (or excel) describing the samples with information like
 #'     condition, batch, count_filename, etc.
 #' @param sample_colors List of colors by condition, if not provided it will generate its own colors
 #'     using colorBrewer.
@@ -61,8 +61,6 @@ read_metadata <- function(file, ...) {
 #' @param include_gff Gff file to help in sorting which features to keep.
 #' @param count_dataframe If one does not wish to read the count tables from the filesystem, they
 #'     may instead be fed as a data frame here.
-#' @param meta_dataframe Dataframe containing the metadata rather than reading it from a
-#'     file. (TODO: merge these two options into one smarter option).
 #' @param savefile Rdata filename prefix for saving the data of the resulting expt.
 #' @param low_files Explicitly lowercase the filenames when searching the filesystem?
 #' @param ... More parameters are fun!
@@ -75,11 +73,10 @@ read_metadata <- function(file, ...) {
 #' ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
-create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NULL, notes=NULL,
+create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL, notes=NULL,
                         include_type="all", include_gff=NULL, count_dataframe=NULL,
-                        meta_dataframe=NULL, savefile="expt", low_files=FALSE, ...) {
+                        savefile="expt", low_files=FALSE, ...) {
     arglist <- list(...)  ## pass stuff like sep=, header=, etc here
-
     ## Palette for colors when auto-chosen
     chosen_palette <- "Dark2"
     ## I am learning about simplifying vs. preserving subsetting
@@ -110,6 +107,16 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NUL
 
     ## Read in the metadata from the provided data frame, csv, or xlsx.
     sample_definitions <- data.frame()
+
+    file <- NULL
+    meta_dataframe <- NULL
+    if (class(metadata) == "character") { ## This is a filename containing the metadata
+        file <- metadata
+    } else if (class(metadata) == "data.frame") {
+        meta_dataframe <- metadata
+    } else {
+        stop("This requires either a file or meta data.frame.")
+    }
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
@@ -238,14 +245,20 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NUL
             tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
             gene_info <- annotation
         }
+    } else if (class(gene_info) == "list" & !is.null(gene_info[["genes"]])) {
+        gene_info <- as.data.frame(gene_info[["genes"]])
     }
-    tmp_counts <- as.data.frame(rownames(all_count_matrix))
-    colnames(tmp_counts) <- c("tmp_id")
-    rownames(tmp_counts) <- rownames(all_count_matrix)
-    final_annotations <- merge(tmp_counts, gene_info, by.x="row.names", by.y="row.names", all.x=TRUE)
-    rownames(final_annotations) <- final_annotations[["Row.names"]]
-    final_annotations <- final_annotations[-1]
-    testthat::expect_equal(sort(rownames(final_annotations)), sort(rownames(all_count_matrix)))
+
+    tmp_gene_info <- gene_info
+    tmp_gene_info[["temporary_id_number"]] <- 1:nrow(tmp_gene_info)
+    counts_and_annotations <- merge(all_count_matrix, tmp_gene_info, by="row.names")
+    counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
+    final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ]
+    rownames(final_annotations) <- counts_and_annotations[["Row.names"]]
+    final_counts <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_matrix) ]
+    rownames(final_counts) <- counts_and_annotations[["Row.names"]]
+    rm(counts_and_annotations)
+    rm(tmp_gene_info)
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
@@ -271,12 +284,14 @@ create_expt <- function(file=NULL, sample_colors=NULL, gene_info=NULL, title=NUL
     requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
     metadata <- methods::new("AnnotatedDataFrame",
                              sample_definitions)
-    Biobase::sampleNames(metadata) <- colnames(all_count_matrix)
+    Biobase::sampleNames(metadata) <- colnames(final_counts)
+
     feature_data <- methods::new("AnnotatedDataFrame",
                                  final_annotations)
-    Biobase::featureNames(feature_data) <- rownames(all_count_matrix)
+    Biobase::featureNames(feature_data) <- rownames(final_counts)
+
     experiment <- methods::new("ExpressionSet",
-                               exprs=all_count_matrix,
+                               exprs=final_counts,
                                phenoData=metadata,
                                featureData=feature_data)
 
@@ -368,6 +383,12 @@ expt_subset <- function(expt, subset=NULL) {
     notes <- expt[["notes"]]
     if (!is.null(note_appended)) {
         notes <- paste0(notes, note_appended)
+    }
+
+    for (col in 1:ncol(subset_design)) {
+        if (class(subset_design[[col]]) == "factor") {
+            subset_design[[col]] <- droplevels(subset_design[[col]])
+        }
     }
 
     new_expt <- list(

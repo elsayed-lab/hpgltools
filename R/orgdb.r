@@ -12,6 +12,7 @@
 #' @param gene_ids Gene identifiers for retrieving annotations.
 #' @param keytype mmm the key type used?
 #' @param fields Columns included in the output.
+#' @param sum_exons Perform a sum of the exons in the data set?
 #' @return Table of geneids, chromosomes, descriptions, strands, types, and lengths.
 #' @seealso \link[AnnotationDbi]{select}
 #' @examples
@@ -33,7 +34,8 @@ load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
     }
 
     if (sum(fields %in% all_fields) != length(fields)) {
-        stop(paste0("Some of the fields requested are not in the available: ", toString(all_fields)))
+        message(toString(fields %in% all_fields))
+        stop(paste0("Some of the fields requested are not in the available, we do have the following ", toString(all_fields)))
     }
     ## fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
 
@@ -62,28 +64,39 @@ load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
     ## https://www.biostars.org/p/83901/
     gene_exons <- GenomicFeatures::exonsBy(orgdb, by="gene")
     transcripts <- GenomicFeatures::transcripts(orgdb)
-    message("Summing exon lengths, this takes a while.")
-    lengths <- lapply(gene_exons, function(x) {
-        sum(BiocGenerics::width(GenomicRanges::reduce(x)))
-    })
-    message("Adding exon lengths to the gene_exons.")
-    lengths <- as.data.frame(unlist(lengths))
-    colnames(lengths) <- "transcript_length"
-
-    gene_info <- merge(gene_info, lengths, by.x=keytype, by.y="row.names")
     colnames(gene_info) <- tolower(colnames(gene_info))
+    gene_info_ret <- NULL
+    if (isTRUE(sum_exons)) {
+        message("Summing exon lengths, this takes a while.")
+        lengths <- lapply(gene_exons, function(x) {
+            sum(BiocGenerics::width(GenomicRanges::reduce(x)))
+        })
+        message("Adding exon lengths to the gene_exons.")
+        lengths <- as.data.frame(unlist(lengths))
+        colnames(lengths) <- "transcript_length"
+        gene_info <- merge(gene_info, lengths, by.x=keytype, by.y="row.names")
+        ## Convert to tbl_df and reorganize
+##        gene_info_ret <- dplyr::tbl_df(gene_info) %>%
+##            dplyr::select_(
+##                gene_id=tolower(keytype),
+##                chromosome="chr",
+##                description="genename",
+##                strand="txstrand",
+##                type="type",
+##                transcript_length="transcript_length")
+##    } else {
+##        ## Convert to tbl_df and reorganize
+##        gene_info_ret <- dplyr::tbl_df(gene_info) %>%
+##            dplyr::select_(
+##                gene_id=tolower(keytype),
+##                chromosome="chr",
+##                description="genename",
+##                strand="txstrand",
+##                type="type")
+    }
 
-    ## Convert to tbl_df and reorganize
-    ret <- dplyr::tbl_df(gene_info) %>%
-        dplyr::select_(
-            gene_id=tolower(keytype),
-            chromosome="chr",
-            description="genename",
-            strand="txstrand",
-            type="type",
-            transcript_length="transcript_length")
     retlist <- list(
-        "genes" = ret,
+        "genes" = gene_info,
         "transcripts" = transcripts)
     return(retlist)
 }
@@ -124,7 +137,7 @@ load_host_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
         }
     }
     ## Note querying by "GENEID" will exclude noncoding RNAs
-    gene_info <- AnnotationDbi::select_(orgdb,
+    gene_info <- dplyr::select_(orgdb,
                         keys=gene_ids,
                         keytype=keytype,
                         columns=fields)
@@ -138,7 +151,7 @@ load_host_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
 
     ## filter(keytype %in% gene_ids) %>%
     ## Are TXSTRAND and friends quotable?
-    AnnotationDbi::select_(
+    dplyr::select_(
         gene_id=get(keytype),
         chromosome="TXCHROM",
         description="GENENAME",
@@ -250,7 +263,7 @@ load_kegg_pathways <- function(orgdb, gene_ids, keytype='ENSEMBL') {
         na.omit() %>%
         ## AnnotationDbi::select(KEGG_PATH, KEGG_NAME, KEGG_CLASS, KEGG_DESCRIPTION)
         ## I think these should be quoted
-        AnnotationDbi::select_("KEGG_PATH", "KEGG_NAME", "KEGG_CLASS", "KEGG_DESCRIPTION")
+        dplyr::select_("KEGG_PATH", "KEGG_NAME", "KEGG_CLASS", "KEGG_DESCRIPTION")
         #select(-get(keytype))
     colnames(kegg_pathways) <- c('pathway', 'name', 'class', 'description')
     return(kegg_pathways)
@@ -439,9 +452,10 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
         "homo_sapiens" = c("TxDb.Hsapiens.UCSC.hg38.knownGene", "bioconductor"),
         "mus_musculus" = c("TxDb.Mmusculus.UCSC.mm10.knownGene", "bioconductor"),
         "leishmania_major" = c("TxDb.LmajorFriedlin.tritryp27.genes", "elsayed-lab"),
-        "trypanosoma_cruzi_clb" = c(" TxDb.TcruziCLBrener.tritryp27.genes", "elsayed-lab"),
-        "trypanosoma_cruzi_esmer" = c(" TxDb.TcruziCLBrenerEsmer.tritryp27.genes", "elsayed-lab"),
-        "trypanosoma_cruzi_nonesmer" = c(" TxDb.TcruziCLBrenerNonEsmer.tritryp27.genes", "elsayed-lab"),
+        "trypanosoma_cruzi_clb" = c("TxDb.TcruziCLBrener.tritryp27.genes", "elsayed-lab"),
+        "trypanosoma_cruzi_sylvio" = c("TxDb.TcruziSylvio.tritryp27.genes", "elsayed-lab"),
+        "trypanosoma_cruzi_esmer" = c("TxDb.TcruziCLBrenerEsmer.tritryp27.genes", "elsayed-lab"),
+        "trypanosoma_cruzi_nonesmer" = c("TxDb.TcruziCLBrenerNonEsmer.tritryp27.genes", "elsayed-lab"),
         "drosophila_melanogaster" = c("TxDb.Dmelanogaster.UCSC.dm6.ensGene", "bioconductor"),
         "saccharomyces_cerevisiae" = c("TxDb.Scerevisiae.UCSC.sacCer3.sgdGene", "bioconductor")
     )
@@ -467,7 +481,7 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
 
     }
     tx <- tx[[try_txdb]]
-    avail_namespaces <- ls(paste0("package:", try_txdb))
+    ## avail_namespaces <- ls(paste0("package:", try_txdb))
     if (is.null(tx)) {
         stop("Did not extract the relevant txDb.")
     } else {
@@ -484,9 +498,7 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
 #'
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Gene identifiers for retrieving annotations.
-#' @param keytype a, umm keytype? I need to properly read this code.
-#' @param fields Columns to include in the output.
-#' @param biomart_dataset Name of the biomaRt dataset to query for gene type.
+#' @param mapto Key to map the IDs against.
 #' @return a table of gene information
 #' @seealso \link[AnnotationDbi]{select}
 #' @examples

@@ -9,7 +9,7 @@
 gbk2txdb <- function(accession="AE009949") {
     gbk <- NULL
     if (file.exists(paste0(accession, ".gb"))) {
-        gbk <- import(accession)
+        gbk <- genbankr::import(accession)
         ## The file exists, read it
     } else {
         require.auto("rentrez")

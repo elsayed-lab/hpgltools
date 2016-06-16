@@ -48,7 +48,7 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform log2/cpm/quantile/combatMod normalization
-hpgl_norm <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm"))$result
+hpgl_norm <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))$result
 
 ## If we made it this far, then the inputs to limma should agree.
 hpgl_limma_intercept <- s_p(limma_pairwise(hpgl_norm, model_batch=TRUE, model_intercept=TRUE))$result

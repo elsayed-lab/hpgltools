@@ -11,6 +11,8 @@ circos_heatmap(df, annot_df, cfgout = "circos/conf/default.conf",
 \arguments{
 \item{df}{Dataframe with starts/ends and the floating point information.}
 
+\item{annot_df}{Annotation data frame with starts/ends.}
+
 \item{cfgout}{Master configuration file to write.}
 
 \item{colname}{Name of the column with the data of interest.}

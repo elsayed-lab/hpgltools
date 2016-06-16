@@ -375,7 +375,6 @@ plot_ontpval <- function(df, ontology="MF") {
 #' @param goid_map Mapping file used by topGO, if it does not exist then goids_df creates it.
 #' @param gff_file gff file containing the annotations used by gff2genetable from clusterprofiler.
 #' @param gff_type Column to use from the gff file for the universe of genes.
-#' @param goids_df FIXME! Dataframe of genes and goids which I am relatively certain is no longer needed and superseded by goids.
 #' @param do_goseq Perform simple_goseq()?
 #' @param do_cluster Perform simple_clusterprofiler()?
 #' @param do_topgo Perform simple_topgo()?
@@ -395,8 +394,8 @@ plot_ontpval <- function(df, ontology="MF") {
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                                   z=NULL, fc=NULL, p=NULL, overwrite=FALSE, species="unsupported",
                                   goid_map="reference/go/id2go.map", gff_file=NULL, gff_type="gene",
-                                  goids_df=NULL, do_goseq=TRUE, do_cluster=TRUE,
-                                  do_topgo=TRUE, do_gostats=TRUE, do_gprofiler=TRUE, do_trees=FALSE) {
+                                  do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE,
+                                  do_gostats=TRUE, do_gprofiler=TRUE, do_trees=FALSE) {
     message("This function expects a list of de contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
     if (isTRUE(do_goseq) & is.null(gene_lengths)) {
@@ -448,8 +447,8 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
         gprofiler_up_ontology <- gprofiler_down_ontology <- NULL
 
         if (isTRUE(do_goseq)) {
-            goseq_up_ontology <- try(simple_goseq(up_genes, lengths=gene_lengths, goids=goids))
-            goseq_down_ontology <- try(simple_goseq(down_genes, lengths=gene_lengths, goids=goids))
+            goseq_up_ontology <- try(simple_goseq(up_genes, lengths=gene_lengths, goids_df=goids))
+            goseq_down_ontology <- try(simple_goseq(down_genes, lengths=gene_lengths, goids_df=goids))
             if (isTRUE(do_trees)) {
                 goseq_up_trees <- try(goseq_trees(up_genes, goseq_up_ontology, goid_map=goid_map, goids_df=goids, overwrite=overwrite))
                 goseq_down_trees <- try(goseq_trees(down_genes, goseq_down_ontology, goid_map=goid_map, goids_df=goids))
@@ -457,8 +456,8 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
         }
 
         if (isTRUE(do_cluster)) {
-            cluster_up_ontology <- try(simple_clusterprofiler(up_genes, goids=goids, gff=gff_file))
-            cluster_down_ontology <- try(simple_clusterprofiler(down_genes, goids=goids, gff=gff_file))
+            cluster_up_ontology <- try(simple_clusterprofiler(up_genes, goids_df=goids, gff=gff_file))
+            cluster_down_ontology <- try(simple_clusterprofiler(down_genes, goids_df=goids, gff=gff_file))
             if (isTRUE(do_trees)) {
                 cluster_up_trees <- try(cluster_trees(up_genes, cluster_up_ontology, goid_map=goid_map, goids_df=goids))
                 cluster_down_trees <- try(cluster_trees(down_genes, cluster_down_ontology, goid_map=goid_map, goids_df=goids))
@@ -522,12 +521,18 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
 #'
 #' @param changed_counts List of changed counts as ups and downs.
 #' @param doplot Include plots in the results?
+#' @param do_goseq Perform goseq search?
+#' @param do_cluster Perform clusterprofiler search?
+#' @param do_topgo Perform topgo search?
+#' @param do_gostats Perform gostats search?
+#' @param do_gprofiler Do a gprofiler search?
+#' @param according_to If results from multiple DE tools were passed, which one defines 'significant'?
 #' @param ...  Extra arguments!
 #' @return List of ontology search results, up and down for each contrast.
 #' @export
 subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
                                    do_cluster=TRUE, do_topgo=TRUE, do_gostats=TRUE,
-                                   do_gprofiler=TRUE, ...) {
+                                   do_gprofiler=TRUE, according_to="limma", ...) {
     arglist <- list(...)
     up_list <- NULL
     down_list <- NULL

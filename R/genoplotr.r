@@ -1,6 +1,13 @@
 
 test_genoplotr <- function() {
     data(three_genes, package="genoPlotR")
+    bbone <- NULL
+    barto <- NULL
+    annots <- NULL
+    tree_barto <- NULL
+    chrY_subseg <- NULL
+    annot_homo <- NULL
+    annot_pan <- NULL
     comparisons[[1]]$col <- genoPlotR::apply_color_scheme(c(0.6, 0.4, 0.5), "grey")
     names <- c("Huey", "Dewey", "Louie")
     names(dna_segs) <- names
@@ -29,7 +36,7 @@ test_genoplotr <- function() {
                              dna_seg_scale=TRUE, scale=FALSE)
 
     grid::pushViewport(
-        viewport(
+        grid::viewport(
             layout=grid::grid.layout(
                 3, 1,
                 heights=grid::unit(c(1,1.3,0.8), rep("null", 3))),
@@ -62,14 +69,14 @@ test_genoplotr <- function() {
     grid::downViewport("panelA")
     for (i in 1:length(names)){
         new_label <- sub("_", ". ", names[[i]])
-        grid.edit(paste("label", i, sep="."), label=new_label, gp=grid::gpar(fontface="italic"))
+        grid::grid.edit(paste("label", i, sep="."), label=new_label, gp=grid::gpar(fontface="italic"))
     }
 
     grid::grid.remove("label.2")
     grid::upViewport(0)
     grid::downViewport("panelB")
     grid::downViewport("dna_seg.3.2")
-    grid::grid.rect(height = unit(2.2, "npc"), gp=grid::gpar(col="red", lwd=2, fill=0))
+    grid::grid.rect(height = grid::unit(2.2, "npc"), gp=grid::gpar(col="red", lwd=2, fill=0))
     grid::upViewport(0)
     dev.off()
 }

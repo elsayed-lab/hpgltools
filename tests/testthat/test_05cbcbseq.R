@@ -41,7 +41,7 @@ test_that("Are the quantile normalizations identical?", {
 cbcb_qcpm <- cbcbSEQ::qNorm(cbcb_data)
 library(edgeR)
 ## I don't know how to call cpm without using a library call first.
-cbcb_qcpm <- edgeR::cpm(cbcb_qcpm)
+cbcb_edger_qcpm <- edgeR::cpm(cbcb_qcpm)
 
 cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
 hpgl_quantile <- s_p(hpgl_norm(pasilla_expt, norm="quant"))$result
@@ -50,18 +50,18 @@ test_that("Are quantiles identical?", {
     expect_equal(cbcb_quantile, hpgl_quantile)
 })
 
-hpgl_qcpm <- s_p(hpgl_norm(pasilla_expt, norm="quant", convert="edgecpm", filter_low=FALSE))$result
+hpgl_qcpm <- s_p(hpgl_norm(pasilla_expt, norm="quant", convert="cpm", filter_low=FALSE))$result
 hpgl_qcpm <- hpgl_qcpm$count_table
 test_that("Are cpm conversions identical?", {
-    expect_equal(cbcb_qcpm, hpgl_qcpm)
+    expect_equal(cbcb_edger_qcpm, hpgl_qcpm)
 })
 
 ## log2/cpm that
 cbcb_l2qcpm_data <- cbcbSEQ::log2CPM(cbcb_quantile)
 cbcb_l2qcpm <- cbcb_l2qcpm_data$y
-hpgl_l2qcpm_data <- s_p(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))$result
+hpgl_l2qcpm_data <- s_p(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter_low=FALSE))$result
 hpgl_l2qcpm <- hpgl_l2qcpm_data[["count_table"]]
-hpgl_l2qcpm_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cpm", filter_low=FALSE))$result
+hpgl_l2qcpm_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter_low=FALSE))$result
 hpgl_l2qcpm2 <- Biobase::exprs(hpgl_l2qcpm_expt$expressionset)
 test_that("Are l2qcpm conversions/transformations identical using two codepaths?", {
     expect_equal(cbcb_l2qcpm, hpgl_l2qcpm)

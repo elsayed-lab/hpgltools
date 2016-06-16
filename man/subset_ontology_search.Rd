@@ -6,12 +6,24 @@
 \usage{
 subset_ontology_search(changed_counts, doplot = TRUE, do_goseq = TRUE,
   do_cluster = TRUE, do_topgo = TRUE, do_gostats = TRUE,
-  do_gprofiler = TRUE, ...)
+  do_gprofiler = TRUE, according_to = "limma", ...)
 }
 \arguments{
 \item{changed_counts}{List of changed counts as ups and downs.}
 
 \item{doplot}{Include plots in the results?}
+
+\item{do_goseq}{Perform goseq search?}
+
+\item{do_cluster}{Perform clusterprofiler search?}
+
+\item{do_topgo}{Perform topgo search?}
+
+\item{do_gostats}{Perform gostats search?}
+
+\item{do_gprofiler}{Do a gprofiler search?}
+
+\item{according_to}{If results from multiple DE tools were passed, which one defines 'significant'?}
 
 \item{...}{Extra arguments!}
 }

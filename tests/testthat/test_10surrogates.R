@@ -10,13 +10,11 @@ load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
 pasilla_surrogates <- s_p(compare_surrogate_estimates(pasilla_expt))$result
-
-expected_adjust_pca <- as.numeric(c("-0.108919503928491", "-0.570855719628606",
-                                    "0.413293224481248", "0.293317999343559",
-                                    "-0.527145619820086", "0.284623554215443",
-                                    "0.215686065336933"))
-actual_adjust_pca <- as.numeric(as.character(pasilla_surrogates[["pca_adjust"]][["model_adjust"]]))
-
+actual <- as.numeric(as.character(pasilla_surrogates[["pca_adjust"]][["model_adjust"]]))
+expected <- as.numeric(c("-0.108919503928491", "-0.570855719628606",
+                         "0.413293224481248", "0.293317999343559",
+                         "-0.527145619820086", "0.284623554215443",
+                         "0.215686065336933"))
 test_that("Does the compare_surrogate stuff work?", {
-    expect_equal(expected_adjust_pca, actual_adjust_pca, tolerance=0.0001)
+    expect_equal(expected, actual, tolerance=0.0001)
 })

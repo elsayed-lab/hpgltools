@@ -5,8 +5,10 @@
 #'
 #' @param inputfile Fasta or bed file containing sequences to search.
 #' @param genome BSgenome to read.
+#' @param ... Parameters for plotting the gadem result.
 #' @export
-simple_gadem <- function(inputfile, genome="BSgenome.Hsapiens.UCSC.hs19") {
+simple_gadem <- function(inputfile, genome="BSgenome.Hsapiens.UCSC.hs19", ...) {
+    arglist <- list(...)
     ext <- tools::file_ext(inputfile)
     sequences <- NULL
     if (ext == "bed") {
@@ -25,15 +27,15 @@ simple_gadem <- function(inputfile, genome="BSgenome.Hsapiens.UCSC.hs19") {
     gadem_and_prints <- s_p(rGADEM::GADEM(sequences, verbose=1, pValue=0.05, eValue=10, genome=genome))
     gadem_result <- gadem_and_prints[["result"]]
     gadem_occurences <- rGADEM::nOccurrences(gadem_result)
-    gadem_consensus <- rGADEM::consensus(gadem)
-    gadem_motifs <- rGADEM::getPWM(gadem)
+    gadem_consensus <- rGADEM::consensus(gadem_occurences)
+    gadem_motifs <- rGADEM::getPWM(gadem_consensus)
     plots <- list()
     count <- 1
     for (motif_name in names(gadem_motifs)) {
         motif_matrix <- gadem_motifs[[motif_name]]
         pwm <- seqLogo::makePWM(matrix)
         ## Stolen from seqLogo with a minor change for RNA
-        seqLogo::seqLogo(pwm, ic.scale=ic.scale, xaxis=xaxis, yaxis=yaxis, xfontsize=xfontsize, yfontsize=yfontsize)
+        seqLogo::seqLogo(pwm, ...)
         plot <- recordPlot()
         count <- count + 1
         plots[[count]] <- plot
@@ -45,12 +47,12 @@ simple_gadem <- function(inputfile, genome="BSgenome.Hsapiens.UCSC.hs19") {
         "occurences" = gadem_occurences,
         "consensus" = gadem_consensus,
         "motifs" = gadem_motifs)
-    return(motifs)
+    return(retlist)
 }
 
 simple_motifRG <- function(input_fasta, control_fasta, maximum=3,
                            title="Motifs of XXX", prefix="motif", genome="BSgenome.Hsapiens.UCSC.hg19") {
-    motifRG::findMotifFasta(input_fasta, control_fasta, both.strand=TRUE, enriched=TRUE, mask=FALSE, start.width=4, min.cutoff=10, min.frac=0.001, max.motif=10, max.width=30, discretize=FALSE)
+    motifs <- motifRG::findMotifFasta(input_fasta, control_fasta, both.strand=TRUE, enriched=TRUE, mask=FALSE, start.width=4, min.cutoff=10, min.frac=0.001, max.motif=10, max.width=30, discretize=FALSE)
     table <- motifRG::motifLatexTable(main=title, motifs, prefix=prefix)
 
 ##    motifRG::motifLatexTable(main="YY1 motifs", YY1.motif.1, prefix="YY1-1")
