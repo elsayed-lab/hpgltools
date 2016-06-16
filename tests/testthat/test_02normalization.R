@@ -26,7 +26,7 @@ test_that("Pasilla libsize?", {
     expect_equal(expected, actual)
 })
 
-actual <- as.numeric(head(Biobase::exprs(pasilla_expt[["expressionset"]]))[["untreated1"]])
+actual <- as.numeric(head(Biobase::exprs(pasilla_expt[["expressionset"]]))[, "untreated1"])
 expected <- c(7629, 9, 4, 253, 597, 220)
 test_that("Pasilla count tables? (untreated1)", {
     expect_equal(expected, actual)
@@ -71,10 +71,11 @@ test_that("calling convert_counts and normalize_expt are equivalent?", {
     expect_equal(pasilla_convert[["count_table"]], Biobase::exprs(pasilla_norm[["expressionset"]]))
 })
 
+### WHAT!? I just had this passing!!
 fdata_lengths <- as.vector(Biobase::fData(pasilla_expt[["expressionset"]])[["length"]])
 names(fdata_lengths) <- rownames(Biobase::fData(pasilla_expt[["expressionset"]]))
 actual <- Biobase::exprs(pasilla_norm[["expressionset"]])
-expected <- edgeR::rpkm(x=exprs(pasilla_expt[["expressionset"]]), gene.length=fdata_lengths)
+expected <- edgeR::rpkm(exprs(pasilla_expt[["expressionset"]]), gene.length=fdata_lengths)
 test_that("rpkm conversions are equivalent?", {
     expect_equal(expected, actual)
 })
@@ -151,7 +152,7 @@ test_that("tmm normalization gives expected values?", {
 pasilla_norm <- s_p(normalize_expt(pasilla_expt, norm="upperquartile"))[["result"]]
 actual_df <- head(Biobase::exprs(pasilla_norm[["expressionset"]]))
 actual_vector <- actual_df[, c("untreated1")]
-expected_vector <- c(7614.957402, 8.870394, 4.086935, 266.221201, 557.761246, 221.757090)
+expected_vector <- c(7491.078822, 8.824845, 4.119288, 264.164211, 566.482680, 222.489408)
 names(expected_vector) <- c("FBgn0260439", "FBgn0031081", "FBgn0062565", "FBgn0031089", "FBgn0031092", "FBgn0031094")
 test_that("upperquartile normalization gives expected values?", {
     expect_equal(expected_vector, actual_vector, tolerance=0.0001)
