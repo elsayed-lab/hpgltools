@@ -36,8 +36,8 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
     } else {
         l2_data <- data
     }
-    conditions <- as.factor(design[["condition"]])
-    batches <- as.factor(design[["batch"]])
+    conditions <- droplevels(as.factor(design[["condition"]]))
+    batches <- droplevels(as.factor(design[["batch"]]))
     conditional_model <- model.matrix(~ conditions, data=data)
     null_model <- conditional_model[, 1]
     chosen_surrogates <- 1

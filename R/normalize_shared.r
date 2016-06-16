@@ -174,6 +174,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                             filter=filter, annotations=annotations,
                             fasta=fasta, thresh=thresh, batch_step=batch_step,
                             min_samples=min_samples, p=p, A=A, k=k,
+                            ## cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
                             cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
     final_libsize <- normalized[["libsize"]]
     final_data <- as.matrix(normalized[["count_table"]])
@@ -348,6 +349,7 @@ hpgl_norm <- function(data, ...) {
         message(paste0("Step 1: performing count filter with option: ", filter))
         ## All the other intermediates have a libsize slot, perhaps this should too
         filtered_counts <- filter_counts(count_table, ...)
+        ## filtered_counts <- filter_counts(count_table, filter)
         count_table <- filtered_counts[["count_table"]]
         filter_performed <- filter
     }
@@ -372,6 +374,7 @@ hpgl_norm <- function(data, ...) {
             message("If you receive an error about an object with no dimensions, that is likely why.")
         }
         normalized_counts <- normalize_counts(count_table, ...)
+        ## normalized_counts <- normalize_counts(count_table, norm=norm)
         count_table <- normalized_counts[["count_table"]]
         norm_performed <- norm
     }
@@ -393,6 +396,7 @@ hpgl_norm <- function(data, ...) {
     } else {
         message(paste0("Step 3: converting the data with ", arglist[["convert"]], "."))
         converted_counts <- convert_counts(count_table, ...)
+        ## converted_counts <- convert_counts(count_table, convert=convert)
         count_table <- converted_counts[["count_table"]]
         convert_performed <- convert
     }
@@ -412,7 +416,7 @@ hpgl_norm <- function(data, ...) {
     } else {
         message(paste0("Step 4: transforming the data with ", arglist[["transform"]], "."))
         transformed_counts <- transform_counts(count_table, ...)
-        ##transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
+        ## transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
         count_table <- transformed_counts[["count_table"]]
         transform_performed <- transform
     }

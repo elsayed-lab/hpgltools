@@ -61,8 +61,9 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     if (!is.null(arglist[["low_to_zero"]])) {
         low_to_zero <- arglist[["low_to_zero"]]
     }
-    batches <- as.factor(design[[batch1]])
-    conditions <- as.factor(design[["condition"]])
+    ## These droplevels calls are required to avoid errors like 'confounded by batch'
+    batches <- droplevels(as.factor(design[[batch1]]))
+    conditions <- droplevels(as.factor(design[["condition"]]))
 
     num_low <- sum(count_table < 1 & count_table > 0)
     if (num_low > 0) {

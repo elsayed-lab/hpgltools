@@ -245,14 +245,20 @@ create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL
             tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
             gene_info <- annotation
         }
+    } else if (class(gene_info) == "list" & !is.null(gene_info[["genes"]])) {
+        gene_info <- as.data.frame(gene_info[["genes"]])
     }
-    tmp_counts <- as.data.frame(rownames(all_count_matrix))
-    colnames(tmp_counts) <- c("tmp_id")
-    rownames(tmp_counts) <- rownames(all_count_matrix)
-    final_annotations <- merge(tmp_counts, gene_info, by.x="row.names", by.y="row.names", all.x=TRUE)
-    rownames(final_annotations) <- final_annotations[["Row.names"]]
-    final_annotations <- final_annotations[-1]
-    testthat::expect_equal(sort(rownames(final_annotations)), sort(rownames(all_count_matrix)))
+
+    tmp_gene_info <- gene_info
+    tmp_gene_info[["temporary_id_number"]] <- 1:nrow(tmp_gene_info)
+    counts_and_annotations <- merge(all_count_matrix, tmp_gene_info, by="row.names")
+    counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
+    final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ]
+    rownames(final_annotations) <- counts_and_annotations[["Row.names"]]
+    final_counts <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_matrix) ]
+    rownames(final_counts) <- counts_and_annotations[["Row.names"]]
+    rm(counts_and_annotations)
+    rm(tmp_gene_info)
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
@@ -278,12 +284,14 @@ create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL
     requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
     metadata <- methods::new("AnnotatedDataFrame",
                              sample_definitions)
-    Biobase::sampleNames(metadata) <- colnames(all_count_matrix)
+    Biobase::sampleNames(metadata) <- colnames(final_counts)
+
     feature_data <- methods::new("AnnotatedDataFrame",
                                  final_annotations)
-    Biobase::featureNames(feature_data) <- rownames(all_count_matrix)
+    Biobase::featureNames(feature_data) <- rownames(final_counts)
+
     experiment <- methods::new("ExpressionSet",
-                               exprs=all_count_matrix,
+                               exprs=final_counts,
                                phenoData=metadata,
                                featureData=feature_data)
 
@@ -375,6 +383,12 @@ expt_subset <- function(expt, subset=NULL) {
     notes <- expt[["notes"]]
     if (!is.null(note_appended)) {
         notes <- paste0(notes, note_appended)
+    }
+
+    for (col in 1:ncol(subset_design)) {
+        if (class(subset_design[[col]]) == "factor") {
+            subset_design[[col]] <- droplevels(subset_design[[col]])
+        }
     }
 
     new_expt <- list(
