@@ -22,12 +22,11 @@ convert_counts <- function(data, convert="raw", ...) {
     arglist <- list(...)
     data_class <- class(data)[1]
     annotations <- arglist[["annotations"]]
-    annot <- NULL
     if (data_class == "expt") {
+        annotations <- Biobase::fData(data[["expressionset"]])
         count_table <- Biobase::exprs(data[["expressionset"]])
-        annot <- Biobase::fData(data[["expressionset"]])
     } else if (data_class == "ExpressionSet") {
-        annot <- Biobase::fData(data)
+        annotations <- Biobase::fData(data)
         count_table <- Biobase::exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         count_table <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
@@ -44,18 +43,8 @@ convert_counts <- function(data, convert="raw", ...) {
         cpm_counts <- t(cp_counts * 1e+06)
         count_table <- cpm_counts
     } else if (convert == "rpkm") {
-        if (is.null(annotations) & is.null(annot)) {
-            stop("No annotations data frame provided.")
-        } else if (is.null(annotations)) {
-            annotations <- annot
-        }
         count_table <- hpgl_rpkm(count_table, annotations=annotations, ...)
     } else if (convert == "cp_seq_m") {
-        if (is.null(annotations) & is.null(annot)) {
-            stop("No annotations data frame provided.")
-        } else if (is.null(annotations)) {
-            annotations <- annot
-        }
         counts <- edgeR::cpm(count_table)
         count_table <- divide_seq(counts, annotations=annotations, ...)
     }
@@ -217,26 +206,32 @@ hpgl_rpkm <- function(df, ...) {
   the result was null.  Perhaps your annotation or df's rownames are not set?
   Going to attempt to use the column 'ID'.
 ")
-        rownames(annotations) = make.names(annotations$ID, unique=TRUE)
+        rownames(annotations) = make.names(annotations[["ID"]], unique=TRUE)
         df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
         if (dim(df_in)[1] == 0) {
             stop("The ID column failed too.")
         }
     }
     colnames(df_in) <- colnames(df)
-    merged_annotations <- merge(df, annotations, by="row.names")
+    df_in[["temporary_id_number"]] <- 1:nrow(df_in)
+    merged_annotations <- merge(df_in, annotations, by="row.names", all.x=TRUE)
     rownames(merged_annotations) <- merged_annotations[,"Row.names"]
+    merged_annotations <- merged_annotations[-1]
+    merged_annotations <- merged_annotations[order(merged_annotations[["temporary_id_number"]]), ]
+    merged_counts <- merged_annotations[, colnames(merged_annotations) %in% colnames(df) ]
+    merged_annot <- merged_annotations[, colnames(merged_annotations) %in% colnames(annotations) ]
+
     ##rownames(df_in) = merged_annotations[,"Row.names"]
     ## Sometimes I am stupid and call it length...
     lenvec <- NULL
-    if (is.null(merged_annotations[["width"]])) {
-        lenvec <- as.vector(merged_annotations[["length"]])
+    if (is.null(merged_annot[["width"]])) {
+        lenvec <- as.vector(merged_annot[["length"]])
     } else {
-        lenvec <- as.vector(merged_annotations[["width"]])
+        lenvec <- as.vector(merged_annot[["width"]])
     }
-    names(lenvec) <- rownames(merged_annotations)
+    names(lenvec) <- rownames(merged_annot)
     requireNamespace("edgeR")
-    rpkm_df <- edgeR::rpkm(df_in, gene.length=lenvec)
+    rpkm_df <- edgeR::rpkm(merged_counts, gene.length=lenvec)
     colnames(rpkm_df) <- colnames(df)
     return(rpkm_df)
 }

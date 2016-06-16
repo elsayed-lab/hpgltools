@@ -251,7 +251,7 @@ create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL
 
     tmp_gene_info <- gene_info
     tmp_gene_info[["temporary_id_number"]] <- 1:nrow(tmp_gene_info)
-    counts_and_annotations <- merge(all_count_matrix, tmp_gene_info, by="row.names")
+    counts_and_annotations <- merge(all_count_matrix, tmp_gene_info, by="row.names", all.x=TRUE)
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
     final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ]
     rownames(final_annotations) <- counts_and_annotations[["Row.names"]]
@@ -291,7 +291,7 @@ create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL
     Biobase::featureNames(feature_data) <- rownames(final_counts)
 
     experiment <- methods::new("ExpressionSet",
-                               exprs=final_counts,
+                               exprs=as.matrix(final_counts),
                                phenoData=metadata,
                                featureData=feature_data)
 
