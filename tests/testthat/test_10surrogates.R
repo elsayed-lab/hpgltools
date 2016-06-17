@@ -11,14 +11,14 @@ pasilla_expt <- pasilla[["expt"]]
 
 pasilla_svasup <- s_p(get_model_adjust(pasilla_expt, estimate_type="sva_supervised"))[["result"]]
 actual <- as.numeric(pasilla_svasup[["model_adjust"]])
-expected <- c(0.1184778, 0.5678904, -0.4166829, -0.2938793, 0.5250849, -0.2844593, -0.2164316)
+expected <- c(-0.1184778, -0.5678904, 0.4166829, 0.2938793, -0.5250849, 0.2844593, 0.2164316)
 test_that("Have the sva supervised model adjustments stayed the same?", {
-    expect_equal(expected, actual)
+    expect_equal(expected, actual, tolerance=0.000001)
 })
 
 pasilla_svaunsup <- s_p(get_model_adjust(pasilla_expt, estimate_type="sva_unsupervised"))[["result"]]
 actual <- as.numeric(pasilla_svaunsup[["model_adjust"]])
-expected <- c(0.1185214, 0.5617694, -0.4119131, -0.2947645, 0.5325897, -0.2850143, -0.2211886)
+expected <- c(-0.1185214, -0.5617694, 0.4119131, 0.2947645, -0.5325897, 0.2850143, 0.2211886)
 test_that("Have the sva unsupervised model adjustments stayed the same?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
@@ -33,15 +33,23 @@ test_that("Have the pca model adjustments stayed the same?", {
 pasilla_ruvsup <- s_p(get_model_adjust(pasilla_expt, estimate_type="ruv_supervised"))[["result"]]
 actual <- as.numeric(pasilla_ruvsup[["model_adjust"]])
 expected <- c(-0.1085012, -0.5712475, 0.4130910, 0.2928087, -0.5269890, 0.2849590, 0.2158789)
-
 test_that("Have the pca model adjustments stayed the same?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-pasilla_ruvresid <- get_model_adjust(pasilla_expt, estimate_type="ruv_residuals")
-pasilla_ruvemp <- get_model_adjust(pasilla_expt, estimate_type="ruv_empirical")
+pasilla_ruvresid <- s_p(get_model_adjust(pasilla_expt, estimate_type="ruv_residuals"))[["result"]]
+actual <- as.numeric(pasilla_ruvresid[["model_adjust"]])
+expected <- c(-0.2029818, -0.3981149, 0.2824784, 0.2863400, -0.6407893, 0.3101006, 0.3629670)
+test_that("Have the ruv resid model adjustments stayed the same?", {
+    expect_equal(expected, actual, tolerance=0.001)
+})
 
-
+pasilla_ruvemp <- s_p(get_model_adjust(pasilla_expt, estimate_type="ruv_empirical"))[["result"]]
+actual <- as.numeric(pasilla_ruvemp[["model_adjust"]])
+expected <- c(-0.1409532, -0.5704923, 0.3987880, 0.2900914, -0.5148203, 0.3007386, 0.2366479)
+test_that("Have the ruv resid empirical adjustments stayed the same?", {
+    expect_equal(expected, actual, tolerance=0.001)
+})
 
 pasilla_surrogates <- s_p(compare_surrogate_estimates(pasilla_expt))[["result"]]
 actual <- as.numeric(as.character(pasilla_surrogates[["pca_adjust"]][["model_adjust"]]))

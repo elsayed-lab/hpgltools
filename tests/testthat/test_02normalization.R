@@ -71,11 +71,10 @@ test_that("calling convert_counts and normalize_expt are equivalent?", {
     expect_equal(pasilla_convert[["count_table"]], Biobase::exprs(pasilla_norm[["expressionset"]]))
 })
 
-### WHAT!? I just had this passing!!
 fdata_lengths <- as.vector(Biobase::fData(pasilla_expt[["expressionset"]])[["length"]])
 names(fdata_lengths) <- rownames(Biobase::fData(pasilla_expt[["expressionset"]]))
 actual <- Biobase::exprs(pasilla_norm[["expressionset"]])
-expected <- edgeR::rpkm(exprs(pasilla_expt[["expressionset"]]), gene.length=fdata_lengths)
+expected <- edgeR::rpkm(Biobase::exprs(pasilla_expt[["expressionset"]]), gene.length=fdata_lengths)
 test_that("rpkm conversions are equivalent?", {
     expect_equal(expected, actual)
 })
