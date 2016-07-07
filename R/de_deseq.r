@@ -105,7 +105,7 @@ deseq_pairwise <- function(...) {
 #' }
 #' @export
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                            alt_model=NULL, extra_contrasts=NULL,
+                            alt_model=NULL, extra_contrasts=NULL, model_intercept=FALSE,
                             model_batch=TRUE, annot_df=NULL, force=FALSE, ...) {
     arglist <- list(...)
     message("Starting DESeq2 pairwise comparisons.")
@@ -128,6 +128,8 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                                  model_cond=model_cond,
                                  alt_model=alt_model)
     model_including <- model_choice[["including"]]
+    ## choose_model should now take all of the following into account
+    ## Therefore the following 8 or so lines should not be needed any longer.
     model_string <- NULL
     ## I keep forgetting that deseq wants the thing you care about last in the list of the model string.
     if (model_including == "batch") {
@@ -191,7 +193,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     ## dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
     message("DESeq2 step 2/5: Estimate size factors.")
     deseq_sf <- DESeq2::estimateSizeFactors(dataset)
-    message("DESeq2 step 3/5: estimate Dispersions.")
+    message("DESeq2 step 3/5: Estimate dispersions.")
     deseq_disp <- DESeq2::estimateDispersions(deseq_sf, quiet=TRUE)
     ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
     message("DESeq2 step 4/5: nbinomWaldTest.")

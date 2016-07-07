@@ -1,44 +1,3 @@
-#' Given a table of meta data, read it in for use by create_expt().
-#'
-#' Reads an experimental design in a few different formats in preparation for creating an expt.
-#'
-#' @param file Csv/xls file to read.
-#' @param ... Arguments for arglist, used by sep, header and similar read.csv/read.table parameters.
-#' @return Df of metadata.
-read_metadata <- function(file, ...) {
-    arglist <- list(...)
-    if (is.null(arglist[["sep"]])) {
-        arglist[["sep"]] <- ","
-    }
-    if (is.null(arglist[["header"]])) {
-        arglist[["header"]] <- TRUE
-    }
-    if (tools::file_ext(file) == "csv") {
-        definitions <- read.csv(file=file, comment.char="#",
-                                sep=arglist[["sep"]], header=arglist[["header"]])
-    } else if (tools::file_ext(file) == "xlsx") {
-        ## xls = loadWorkbook(file, create=FALSE)
-        ## tmp_definitions = readWorksheet(xls, 1)
-        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1, ...)
-    } else if (tools::file_ext(file) == "xls") {
-        ## This is not correct, but it is a start
-        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1, ...)
-    } else {
-        definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
-    }
-
-    colnames(definitions) <- tolower(colnames(definitions))
-    colnames(definitions) <- gsub("[[:punct:]]", "", colnames(definitions))
-    rownames(definitions) <- make.names(definitions[["sampleid"]], unique=TRUE)
-    ## "no visible binding for global variable 'sampleid'"  ## hmm sample.id is a column from the csv file.
-    ## tmp_definitions <- subset(tmp_definitions, sampleid != "")
-    empty_samples <- which(definitions[, "sampleid"] == "" | is.na(definitions[, "sampleid"]) | grepl(pattern="^#", x=definitions[, "sampleid"]))
-    if (length(empty_samples) > 0) {
-        definitions <- definitions[-empty_samples, ]
-    }
-    return(definitions)
-}
-
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.
 #'
@@ -50,17 +9,17 @@ read_metadata <- function(file, ...) {
 #'
 #' @param metadata Comma separated file (or excel) describing the samples with information like
 #'     condition, batch, count_filename, etc.
-#' @param sample_colors List of colors by condition, if not provided it will generate its own colors
-#'     using colorBrewer.
 #' @param gene_info Annotation information describing the rows of the data set, this often comes
 #'     from a call to import.gff() or biomart or organismdbi.
+#' @param count_dataframe If one does not wish to read the count tables from the filesystem, they
+#'     may instead be fed as a data frame here.
+#' @param sample_colors List of colors by condition, if not provided it will generate its own colors
+#'     using colorBrewer.
 #' @param title Provide a title for the expt?
 #' @param notes Additional notes?
 #' @param include_type I have usually assumed that all gff annotations should be used, but that is
 #'     not always true, this allows one to limit to a specific annotation type.
 #' @param include_gff Gff file to help in sorting which features to keep.
-#' @param count_dataframe If one does not wish to read the count tables from the filesystem, they
-#'     may instead be fed as a data frame here.
 #' @param savefile Rdata filename prefix for saving the data of the resulting expt.
 #' @param low_files Explicitly lowercase the filenames when searching the filesystem?
 #' @param ... More parameters are fun!
@@ -73,8 +32,8 @@ read_metadata <- function(file, ...) {
 #' ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
-create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL, notes=NULL,
-                        include_type="all", include_gff=NULL, count_dataframe=NULL,
+create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_colors=NULL, title=NULL, notes=NULL,
+                        include_type="all", include_gff=NULL,
                         savefile="expt", low_files=FALSE, ...) {
     arglist <- list(...)  ## pass stuff like sep=, header=, etc here
     ## Palette for colors when auto-chosen
@@ -239,6 +198,7 @@ create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL
         if (is.null(include_gff)) {
             gene_info <- as.data.frame(rownames(all_count_matrix))
             rownames(gene_info) <- rownames(all_count_matrix)
+            colnames(gene_info) <- "name"
         } else {
             message("create_expt(): Reading annotation gff, this is slow.")
             annotation <- gff2df(gff=include_gff, type=gff_type)
@@ -251,9 +211,11 @@ create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL
 
     tmp_gene_info <- gene_info
     tmp_gene_info[["temporary_id_number"]] <- 1:nrow(tmp_gene_info)
+    message("Bringing together the count matrix and gene information.")
     counts_and_annotations <- merge(all_count_matrix, tmp_gene_info, by="row.names", all.x=TRUE)
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
-    final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ]
+    final_annotations <- as.data.frame(counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ])
+    colnames(final_annotations) <- colnames(gene_info)
     rownames(final_annotations) <- counts_and_annotations[["Row.names"]]
     final_counts <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_matrix) ]
     rownames(final_counts) <- counts_and_annotations[["Row.names"]]
@@ -407,4 +369,45 @@ expt_subset <- function(expt, subset=NULL) {
         "libsize" = subset_libsize)
     class(new_expt) <- "expt"
     return(new_expt)
+}
+
+#' Given a table of meta data, read it in for use by create_expt().
+#'
+#' Reads an experimental design in a few different formats in preparation for creating an expt.
+#'
+#' @param file Csv/xls file to read.
+#' @param ... Arguments for arglist, used by sep, header and similar read.csv/read.table parameters.
+#' @return Df of metadata.
+read_metadata <- function(file, ...) {
+    arglist <- list(...)
+    if (is.null(arglist[["sep"]])) {
+        arglist[["sep"]] <- ","
+    }
+    if (is.null(arglist[["header"]])) {
+        arglist[["header"]] <- TRUE
+    }
+    if (tools::file_ext(file) == "csv") {
+        definitions <- read.csv(file=file, comment.char="#",
+                                sep=arglist[["sep"]], header=arglist[["header"]])
+    } else if (tools::file_ext(file) == "xlsx") {
+        ## xls = loadWorkbook(file, create=FALSE)
+        ## tmp_definitions = readWorksheet(xls, 1)
+        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1, ...)
+    } else if (tools::file_ext(file) == "xls") {
+        ## This is not correct, but it is a start
+        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1, ...)
+    } else {
+        definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
+    }
+
+    colnames(definitions) <- tolower(colnames(definitions))
+    colnames(definitions) <- gsub("[[:punct:]]", "", colnames(definitions))
+    rownames(definitions) <- make.names(definitions[["sampleid"]], unique=TRUE)
+    ## "no visible binding for global variable 'sampleid'"  ## hmm sample.id is a column from the csv file.
+    ## tmp_definitions <- subset(tmp_definitions, sampleid != "")
+    empty_samples <- which(definitions[, "sampleid"] == "" | is.na(definitions[, "sampleid"]) | grepl(pattern="^#", x=definitions[, "sampleid"]))
+    if (length(empty_samples) > 0) {
+        definitions <- definitions[-empty_samples, ]
+    }
+    return(definitions)
 }

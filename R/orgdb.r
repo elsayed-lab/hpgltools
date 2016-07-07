@@ -21,9 +21,9 @@
 #' }
 #' @export
 load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
-                                      ##fields=c("CHR", "GENENAME", "TXSTRAND",
+                                      ## fields=c("CHR", "GENENAME", "TXSTRAND",
                                       fields=NULL, sum_exons=FALSE) {
-                                      ##         "TXSTART", "TXEND", "TYPE")) {
+                                      ## "TXSTART", "TXEND", "TYPE")) {
 
     keytype <- toupper(keytype)
     all_fields <- AnnotationDbi::columns(orgdb)
@@ -506,21 +506,40 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
 #' host <- load_host_annotations(org, c("a","b"))
 #' }
 #' @export
-orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl')) {
+orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="geneid") {
+    mapto <- toupper(mapto)
+    keytype <- toupper(keytype)
     avail_keytypes <- AnnotationDbi::keytypes(orgdb)
-    if (!mapto %in% avail_keytypes) {
+    found_keys <- sum(mapto %in% avail_keytypes)
+    if (found_keys < length(mapto)) {
         warning(paste0("The chosen keytype ", mapto, " is not in this orgdb."))
-        message("Try some of the following instead: ", toString(avail_keytypes), ".")
-        return(NULL)
+        warning("Try some of the following instead: ", toString(avail_keytypes), ".")
+        warning("Going to pull all the availble keytypes, which is probably not what you want.")
+        mapto <- avail_keytypes
     }
+
+    test_masterkey <- sum(keytype %in% avail_keytypes)
+    if (test_masterkey != 1) {
+        warning(paste0("The chosen master key ", keytype, " is not in this orgdb."))
+        warning("Try some of the following instead: ", toString(avail_keytypes), ".")
+        warning("I am going to choose one arbitrarily, which is probably not what you want.")
+        if ("ENTREZID" %in% avail_keytypes) {
+            keytype <- "ENTREZID"
+            message("Using entrezid as the master key.")
+        } else if ("ENSEMBLID" %in% avail_keytypes) {
+            keytype <- "ENSEMBLID"
+            message("Using ensemblid as the master key.")
+        } else
+            stop("Could not think of a usable master key.")
+    }
+
     ## If no gene ids were chosen, grab them all.
     if (is.null(gene_ids)) {
-        gene_ids <- AnnotationDbi::keys(orgdb)
+        gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
     }
     ## Gene info
     ## Note querying by "GENEID" will exclude noncoding RNAs
-    mapto <- toupper(mapto)
-    gene_info <- AnnotationDbi::select(orgdb, keys=gene_ids, columns=mapto)
+    gene_info <- AnnotationDbi::select(orgdb, keys=gene_ids, columns=mapto, keytype=keytype)
     colnames(gene_info) <- tolower(colnames(gene_info))
     return(gene_info)
 }

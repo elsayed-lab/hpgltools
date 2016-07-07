@@ -62,8 +62,13 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     batch1="batch", batch2=NULL, batch_step=5, low_to_zero=FALSE, ## extra parameters for batch correction
     thresh=2, min_samples=2, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
     ...) {
+    arglist <- list(...)
     new_expt <- expt
     current_exprs <- expt[["expressionset"]]
+    if (!is.null(arglist[["filter_low"]])) {  ## I changed the name of this argument.
+        warning("This argument has been changed to 'filter'.")
+        filter <- arglist[["filter"]]
+    }
     if (filter == FALSE) {
         filter <- "raw"
     }

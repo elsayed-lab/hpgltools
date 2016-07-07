@@ -5,7 +5,7 @@
 \title{Set up a model matrix and set of contrasts for pairwise comparisons using voom/limma.}
 \usage{
 limma_pairwise(input, conditions = NULL, batches = NULL,
-  model_cond = TRUE, model_batch = TRUE, model_intercept = FALSE,
+  model_cond = TRUE, model_batch = TRUE, model_intercept = TRUE,
   extra_contrasts = NULL, alt_model = NULL, libsize = NULL,
   annot_df = NULL, ...)
 }

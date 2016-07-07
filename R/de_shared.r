@@ -42,7 +42,7 @@ disjunct_tab <- function(contrast_fit, coef1, coef2, ...) {
 #' }
 #' @export
 all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                         model_batch=TRUE, model_intercept=FALSE, extra_contrasts=NULL,
+                         model_batch=TRUE, model_intercept=TRUE, extra_contrasts=NULL,
                          alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
     arglist <- list(...)
     surrogates <- 1
@@ -134,6 +134,12 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
     edger_vs_deseq <- list()
     edger_vs_basic <- list()
     deseq_vs_basic <- list()
+    limma_vs_edger_scatter <- list()
+    limma_vs_deseq_scatter <- list()
+    limma_vs_basic_scatter <- list()
+    edger_vs_deseq_scatter <- list()
+    edger_vs_basic_scatter <- list()
+    deseq_vs_basic_scatter <- list()
     cc <- 0
     for (comp in names(deseq)) {
         ## assume all three have the same names() -- note that limma has more than the other two though
@@ -145,28 +151,46 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         b <- data.frame(basic[[comp]])
         le <- merge(l, e, by.x="row.names", by.y="row.names")
         le <- le[,c("logFC.x","logFC.y")]
+        colnames(le) <- c("limma logFC", "edgeR logFC")
         lec <- stats::cor.test(x=le[, 1], y=le[, 2])[["estimate"]]
+        les <- plot_scatter(le) + ggplot2::labs(title=paste0(comp, ": limma vs. edgeR.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         ld <- merge(l, d, by.x="row.names", by.y="row.names")
         ld <- ld[, c("logFC.x","logFC.y")]
+        colnames(ld) <- c("limma logFC", "DESeq2 logFC")
         ldc <- stats::cor.test(ld[,1], ld[,2])[["estimate"]]
+        lds <- plot_scatter(ld) + ggplot2::labs(title=paste0(comp, ": limma vs. DESeq2.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         lb <- merge(l, b, by.x="row.names", by.y="row.names")
         lb <- lb[, c("logFC.x","logFC.y")]
+        colnames(lb) <- c("limma logFC", "basic logFC")
         lbc <- stats::cor.test(lb[,1], lb[,2])[["estimate"]]
+        lbs <- plot_scatter(lb) + ggplot2::labs(title=paste0(comp, ": limma vs. basic.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         ed <- merge(e, d, by.x="row.names", by.y="row.names")
         ed <- ed[, c("logFC.x","logFC.y")]
+        colnames(ed) <- c("edgeR logFC", "DESeq2 logFC")
         edc <- stats::cor.test(ed[,1], ed[,2])[["estimate"]]
+        eds <- plot_scatter(ed) + ggplot2::labs(title=paste0(comp, ": edgeR vs. DESeq2.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         eb <- merge(e, b, by.x="row.names", by.y="row.names")
         eb <- eb[, c("logFC.x","logFC.y")]
+        colnames(eb) <- c("edgeR logFC", "basic logFC")
         ebc <- stats::cor.test(eb[,1], eb[,2])[["estimate"]]
+        ebs <- plot_scatter(eb) + ggplot2::labs(title=paste0(comp, ": edgeR vs. basic.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         db <- merge(d, b, by.x="row.names", by.y="row.names")
         db <- db[, c("logFC.x","logFC.y")]
+        colnames(db) <- c("DESeq2 logFC", "basic logFC")
         dbc <- stats::cor.test(db[,1], db[,2])[["estimate"]]
+        dbs <- plot_scatter(db) + ggplot2::labs(title=paste0(comp, ": DESeq2 vs basic.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         limma_vs_edger[[comp]] <- lec
         limma_vs_deseq[[comp]] <- ldc
         edger_vs_deseq[[comp]] <- edc
         limma_vs_basic[[comp]] <- lbc
         edger_vs_basic[[comp]] <- ebc
         deseq_vs_basic[[comp]] <- dbc
+        limma_vs_edger_scatter[[comp]] <- les
+        limma_vs_deseq_scatter[[comp]] <- lds
+        edger_vs_deseq_scatter[[comp]] <- eds
+        limma_vs_basic_scatter[[comp]] <- lbs
+        edger_vs_basic_scatter[[comp]] <- ebs
+        deseq_vs_basic_scatter[[comp]] <- dbs
     } ## End loop
     names(limma_vs_edger) <- names(deseq)
     names(limma_vs_deseq) <- names(deseq)
@@ -174,6 +198,12 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
     names(limma_vs_basic) <- names(deseq)
     names(edger_vs_basic) <- names(deseq)
     names(deseq_vs_basic) <- names(deseq)
+    names(limma_vs_edger_scatter) <- names(deseq)
+    names(limma_vs_deseq_scatter) <- names(deseq)
+    names(edger_vs_deseq_scatter) <- names(deseq)
+    names(limma_vs_basic_scatter) <- names(deseq)
+    names(edger_vs_basic_scatter) <- names(deseq)
+    names(deseq_vs_basic_scatter) <- names(deseq)
 
     comparison_df <- rbind(as.numeric(limma_vs_edger), as.numeric(limma_vs_deseq))
     comparison_df <- rbind(comparison_df, as.numeric(edger_vs_deseq))
@@ -203,6 +233,12 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         "edger_vs_deseq" = edger_vs_deseq,
         "edger_vs_basic" = edger_vs_basic,
         "deseq_vs_basic" = deseq_vs_basic,
+        "limma_vs_edger_scatter" = limma_vs_edger_scatter,
+        "limma_vs_deseq_scatter" = limma_vs_deseq_scatter,
+        "limma_vs_basic_scatter" = limma_vs_basic_scatter,
+        "edger_vs_deseq_scatter" = edger_vs_deseq_scatter,
+        "edger_vs_basic_scatter" = edger_vs_basic_scatter,
+        "deseq_vs_basic_scatter" = deseq_vs_basic_scatter,
         "comp" = comparison_df,
         "heat" = heat)
     return(ret)
@@ -218,7 +254,7 @@ deprint <- function(f){
 #' limma/DESeq2/EdgeR on a table-by-table basis.
 #'
 #' @param all_pairwise_result Output from all_pairwise().
-#' @param annot_df Add some annotation information?
+#' @param extra_annot Add some annotation information?
 #' @param excel Filename for the excel workbook, or null if not printed.
 #' @param excel_title Title for the excel sheet(s).  If it has the
 #'     string 'YYY', that will be replaced by the contrast name.
@@ -235,7 +271,7 @@ deprint <- function(f){
 #' pretty = combine_de_tables(big_result, table='t12_vs_t0')
 #' }
 #' @export
-combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
+combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
                               excel_sheet="combined_DE", keepers="all",
                               include_basic=TRUE, add_plots=TRUE, plot_dim=6) {
@@ -262,8 +298,11 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
         wb <- openxlsx::createWorkbook(creator="hpgltools")
     }
 
-    if (is.null(annot_df)) {
-        annot_df <- Biobase::fData(all_pairwise_result[["input"]][["expressionset"]])
+    annot_df <- Biobase::fData(all_pairwise_result[["input"]][["expressionset"]])
+    if (!is.null(extra_annot)) {
+        annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
+        rownames(annot_df) <- annot_df[["Row.names"]]
+        annot_df <- annot_df[-1]
     }
 
     combo <- list()
@@ -414,7 +453,7 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
     ret <- list(
         "data" = combo,
         "plots" = plots,
-        "comp_plot" = comp,
+       "comp_plot" = comp,
         "de_summay" = de_summaries)
     return(ret)
 }
@@ -1107,101 +1146,134 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' @param alt_model Use your own model.
 #' @param alt_string String describing an alternate model.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
-choose_model <- function(conditions, batches, model_batch=TRUE, model_cond=TRUE, model_intercept=FALSE, alt_model=NULL, alt_string=NULL) {
+choose_model <- function(conditions, batches, model_batch=TRUE,
+                         model_cond=TRUE, model_intercept=TRUE,
+                         alt_model=NULL, alt_string=NULL,
+                         intercept=0, reverse=FALSE) {
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
     ## It would be much smarter to generate the models in the following if() {} blocks
     ## But I have it in my head to eventually compare results using different models.
-    cond_string <- "~ 0 + condition"
-    cond_model <- stats::model.matrix(~ 0 + conditions)
-    batch_string <- "~ 0 + batch"
-    batch_model <- try(stats::model.matrix(~ 0 + batches), silent=TRUE)
-    condbatch_string <- "~ 0 + condition + batch"
-    condbatch_model <- try(stats::model.matrix(~ 0 + conditions + batches), silent=TRUE)
-    cond_int_string <- "~ condition"
-    cond_int_model <- try(stats::model.matrix(~ conditions), silent=TRUE)
-    batch_int_string <- "~ batch"
-    batch_int_model <- try(stats::model.matrix(~ batches), silent=TRUE)
-    condbatch_int_string <- "~ condition + batch"
-    condbatch_int_model <- try(stats::model.matrix(~ conditions + batches), silent=TRUE)
-    fun_model <- NULL
-    fun_int_model <- NULL
-    fun_string <- NULL
-    fun_int_string <- NULL
+    cond_int_string <- paste0("~ condition + ", intercept)
+    cond_int_model <- stats::model.matrix(~ conditions + 0)
+    batch_int_string <- paste0("~ batch + ", intercept)
+    batch_int_model <- try(stats::model.matrix(~ batches + intercept), silent=TRUE)
+    condbatch_int_string <- paste0("~ condition + batch + ", as.numeric(intercept))
+    condbatch_int_model <- try(stats::model.matrix(~ conditions + batches + 0), silent=TRUE)
+    batchcond_int_string <- paste0("~ batch + condition + ", as.numeric(intercept))
+    batchcond_int_model <- try(stats::model.matrix(~ batches + conditions + 0), silent=TRUE)
+    cond_noint_string <- "~ condition"
+    cond_noint_model <- try(stats::model.matrix(~ conditions), silent=TRUE)
+    batch_noint_string <- "~ batch"
+    batch_noint_model <- try(stats::model.matrix(~ batches), silent=TRUE)
+    condbatch_noint_string <- "~ condition + batch"
+    condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches), silent=TRUE)
+    batchcond_noint_string <- "~ batch + condition"
+    batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions), silent=TRUE)
+    noint_model <- NULL
+    int_model <- NULL
+    noint_string <- NULL
+    int_string <- NULL
     including <- NULL
     if (is.null(model_batch)) {
-        fun_model <- cond_model
-        fun_int_model <- cond_int_model
-        fun_string <- cond_string
-        fun_int_string <- cond_int_string
+        int_model <- cond_int_model
+        noint_model <- cond_noint_model
+        int_string <- cond_int_string
+        noint_string <- cond_noint_string
         including <- "condition"
-    }
-    if (isTRUE(model_cond) & isTRUE(model_batch)) {
-        if (class(condbatch_model) == "try-error") {
+    } else if (isTRUE(model_cond) & isTRUE(model_batch)) {
+        if (class(condbatch_int_model) == "try-error") {
             message("The condition+batch model failed.  Does your experimental design support both condition and batch?")
             message("Using only a conditional model.")
-            fun_model <- cond_model
-            fun_int_model <- cond_int_model
-            fun_string <- cond_string
-            fun_int_string <- cond_int_string
+            int_model <- cond_int_model
+            noint_model <- cond_noint_model
+            int_string <- cond_int_string
+            noint_string <- cond_noint_string
             including <- "condition"
+        } else if (isTRUE(reverse)) {
+            int_model <- batchcond_int_model
+            noint_model <- batchcond_noint_model
+            int_string <- batchcond_int_string
+            noint_string <- batchcond_noint_string
+            including <- "batch+condition"
         } else {
-            fun_model <- condbatch_model
-            fun_int_model <- condbatch_int_model
-            fun_string <- condbatch_string
-            fun_int_string <- condbatch_int_string
+            int_model <- condbatch_int_model
+            noint_model <- condbatch_noint_model
+            int_string <- condbatch_int_string
+            noint_string <- condbatch_noint_string
             including <- "condition+batch"
         }
     } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
         message("Including batch estimates from sva/ruv/pca in the model.")
-        fun_model <- stats::model.matrix(~ 0 + conditions + model_batch)
-        fun_int_model <- stats::model.matrix(~ conditions + model_batch)
-        fun_string <- condbatch_string
-        fun_int_string <- condbatch_int_string
-        including <- "condition+batch"
+        int_model <- stats::model.matrix(~ conditions + model_batch + intercept)
+        noint_model <- stats::model.matrix(~ conditions + model_batch)
+        int_string <- condbatch_int_string
+        noint_string <- condbatch_noint_string
+        including <- "condition+batchestimate"
     } else if (isTRUE(model_cond)) {
-        fun_model <- cond_model
-        fun_int_model <- cond_int_model
-        fun_string <- cond_string
-        fun_int_string <- cond_int_string
+        int_model <- cond_int_model
+        noint_model <- cond_noint_model
+        int_string <- cond_int_string
+        noint_string <- cond_noint_string
         including <- "condition"
     } else if (isTRUE(model_batch)) {
-        fun_model <- batch_model
-        fun_int_model <- batch_int_model
-        fun_string <- batch_string
-        fun_int_string <- batch_int_string
+        int_model <- batch_int_model
+        noint_model <- batch_noint_model
+        int_string <- batch_int_string
+        noint_string <- batch_noint_string
         including <- "batch"
     } else {
         ## Default to the conditional model
-        fun_model <- cond_model
-        fun_int_model <- cond_int_model
-        fun_string <- cond_string
-        fun_int_string <- cond_int_string
+        int_model <- cond_int_model
+        noint_model <- cond_noint_model
+        int_string <- cond_int_string
+        noint_string <- cond_noint_string
         including <- "condition"
     }
+
+    tmpnames <- colnames(int_model)
+    tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
+    tmpnames <- gsub("-", "", tmpnames)
+    tmpnames <- gsub("+", "", tmpnames)
+    tmpnames <- gsub("conditions", "", tmpnames)
+    tmpnames <- gsub("batches", "", tmpnames)
+    colnames(int_model) <- tmpnames
+
+    tmpnames <- colnames(noint_model)
+    tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
+    tmpnames <- gsub("-", "", tmpnames)
+    tmpnames <- gsub("+", "", tmpnames)
+    tmpnames <- gsub("conditions", "", tmpnames)
+    tmpnames <- gsub("batches", "", tmpnames)
+    colnames(noint_model) <- tmpnames
+
+    chosen_model <- NULL
+    chosen_string <- NULL
     if (isTRUE(model_intercept)) {
-        fun_model <- fun_int_model
-        fun_string <- fun_int_string
+        message("Choosing the intercept containing model.")
+        chosen_model <- int_model
+        chosen_string <- int_string
+    } else {
+        chosen_model <- noint_model
+        chosen_string <- noint_string
     }
+
     if (!is.null(alt_model)) {
         fun_model <- alt_model
         fun_string <- alt_string
         including <- "alt"
     }
-    tmpnames <- colnames(fun_model)
-    tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
-    tmpnames <- gsub("-", "", tmpnames)
-    tmpnames <- gsub("+", "", tmpnames)
-    tmpnames <- gsub("conditions", "", tmpnames)
-    colnames(fun_model) <- tmpnames
+
 
     retlist <- list(
-        "model" = fun_model,
-        "int_model" = fun_int_model,
-        "string" = fun_string,
-        "int_string" = fun_int_string,
+        "int_model" = int_model,
+        "noint_model" = noint_model,
+        "int_string" = int_string,
+        "noint_string" = noint_string,
+        "chosen_model" = chosen_model,
+        "chosen_string" = chosen_string,
         "including" = including)
     return(retlist)
 }

@@ -54,7 +54,7 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
     plot <- plot_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
                                 tooltip_data=tooltip_data, base_url=base_url,
-                                pretty_colors=FALSE, color_low=color_low, color_high=color_high, ...)
+                                pretty_colors=FALSE, color_low=color_low, color_high=color_high)
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
@@ -134,7 +134,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
             warning("If it really was log2 transformed, then we are about to double-log it and that would be very bad.")
         }
         message("The voom input was not log2, transforming now.")
-        dataframe <- log2(dataframe)
+        dataframe <- log2(dataframe + 1)
     }
     dataframe <- as.matrix(dataframe)
 
@@ -247,7 +247,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
 #' }
 #' @export
 limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                           model_batch=TRUE, model_intercept=FALSE, extra_contrasts=NULL,
+                           model_batch=TRUE, model_intercept=TRUE, extra_contrasts=NULL,
                            alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
     arglist <- list(...)
     message("Starting limma pairwise comparison.")
@@ -262,6 +262,9 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
                 message("Using the libsize from expt$best_libsize.")
                 ## libsize = expt$norm_libsize
                 libsize <- input[["best_libsize"]]
+            } else if (!is.null(input[["libsize"]])) {
+                message("Using the libsize from expt$libsize.")
+                libsize <- input[["libsize"]]
             } else if (!is.null(input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
                 libsize <- colSums(data)
             } else {
@@ -287,7 +290,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
                               model_cond=model_cond,
                               model_intercept=model_intercept,
                               alt_model=alt_model)
-    fun_model <- fun_model[["model"]]
+    fun_model <- fun_model[["chosen_model"]]
 
     fun_voom <- NULL
     message("Limma step 1/6: choosing model.")
@@ -344,12 +347,6 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
     message("Limma step 4/6: making and fitting contrasts.")
     if (isTRUE(model_intercept)) {
-        contrasts <- "intercept"
-        identities <- NULL
-        contrast_string <- NULL
-        all_pairwise <- NULL
-        all_pairwise_fits <- fun_fit
-    } else {
         contrasts <- make_pairwise_contrasts(fun_model, conditions, extra_contrasts=extra_contrasts)
         all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]
         identities <- contrasts[["identities"]]
@@ -359,6 +356,12 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         ## This will first provide the relative abundances of each condition
         ## followed by the set of all pairwise comparisons.
         all_pairwise_fits <- limma::contrasts.fit(fun_fit, all_pairwise_contrasts)
+    } else {
+        contrasts <- "intercept"
+        identities <- NULL
+        contrast_string <- NULL
+        all_pairwise <- NULL
+        all_pairwise_fits <- fun_fit
     }
     all_tables <- NULL
     message("Limma step 5/6: Running eBayes and topTable.")
@@ -370,9 +373,9 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     }
     message("Limma step 6/6: Writing limma outputs.")
     if (isTRUE(model_intercept)) {
-        limma_result <- all_tables
-    } else {
         limma_result <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
+    } else {
+        limma_result <- all_tables
     }
     result <- list(
         "all_pairwise" = all_pairwise,
@@ -698,9 +701,13 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
 write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
                        excel=FALSE, csv=FALSE, annot_df=NULL) {
     testdir <- dirname(workbook)
+
+    ## Figure out the number of genes if not provided
     if (n == 0) {
-        n <- dim(data[["coefficients"]])[1]
+        n <- nrow(data[["coefficients"]])
     }
+
+    ## If specific contrast(s) is/are not requested, get them all.
     if (is.null(coef)) {
         coef <- colnames(data[["contrasts"]])
     } else {

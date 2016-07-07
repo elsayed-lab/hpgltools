@@ -95,8 +95,8 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
 #' }
 #' @export
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                          model_batch=TRUE, model_intercept=FALSE, alt_model=NULL,
-                          extra_contrasts=NULL, annot_df=NULL, force=FALSE, ...) {
+                          model_batch=TRUE, model_intercept=TRUE, alt_model=NULL,
+                          extra_contrasts=NULL, annot_df=NULL, force=FALSE, edger_method="default", ...) {
     message("Starting edgeR pairwise comparisons.")
     input_data <- choose_dataset(input)
     conditions <- input_data[["conditions"]]
@@ -108,26 +108,39 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
                               model_cond=model_cond,
                               model_intercept=model_intercept,
                               alt_model=alt_model)
-    fun_model <- fun_model[["model"]]
+    fun_model <- fun_model[["chosen_model"]]
 
+    ## I have a strong sense that the most recent version of edgeR changed its dispersion estimate code
+    ## Here is a note from the user's guide, which may have been there previously and I merely did not notice:
+    ## To estimate common dispersion, trended dispersions and tagwise dispersions in one run
+    ## y <- estimateDisp(y, design)
     raw <- edgeR::DGEList(counts=data, group=conditions)
     message("EdgeR step 1/9: normalizing data.")
     norm <- edgeR::calcNormFactors(raw)
-    message("EdgeR step 2/9: Estimating the common dispersion.")
-    disp_norm <- edgeR::estimateCommonDisp(norm)
-    message("EdgeR step 3/9: Estimating dispersion across genes.")
-    tagdisp_norm <- edgeR::estimateTagwiseDisp(disp_norm)
-    message("EdgeR step 4/9: Estimating GLM Common dispersion.")
-    glm_norm <- edgeR::estimateGLMCommonDisp(tagdisp_norm, fun_model)
-    message("EdgeR step 5/9: Estimating GLM Trended dispersion.")
-    glm_trended <- edgeR::estimateGLMTrendedDisp(glm_norm, fun_model)
-    message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
-    glm_tagged <- edgeR::estimateGLMTagwiseDisp(glm_trended, fun_model)
-    message("EdgeR step 7/9: Running glmFit.")
-    cond_fit <- edgeR::glmFit(glm_tagged, design=fun_model)
-    message("EdgeR step 8/9: Making pairwise contrasts.")
+    ##message("EdgeR step 2/9: Estimating the common dispersion.")
+    ##disp_norm <- edgeR::estimateCommonDisp(norm)
+    ##message("EdgeR step 3/9: Estimating dispersion across genes.")
+    ##tagdisp_norm <- edgeR::estimateTagwiseDisp(disp_norm)
+    ##message("EdgeR step 4/9: Estimating GLM Common dispersion.")
+    ##glm_norm <- edgeR::estimateGLMCommonDisp(tagdisp_norm, fun_model)
+    ##message("EdgeR step 5/9: Estimating GLM Trended dispersion.")
+    ##glm_trended <- edgeR::estimateGLMTrendedDisp(glm_norm, fun_model)
+    ##message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
+    ##glm_tagged <- edgeR::estimateGLMTagwiseDisp(glm_trended, fun_model)
+    ##message("EdgeR step 7/9: Running glmFit.")
+    ##cond_fit <- edgeR::glmFit(glm_tagged, design=fun_model)
+    ##message("EdgeR step 8/9: Making pairwise contrasts.")
+    ##apc <- make_pairwise_contrasts(fun_model, conditions, do_identities=FALSE)
+
+    ## Try this instead:
+    norm <- edgeR::estimateDisp(norm, design=fun_model, robust=TRUE)
+    ##cond_fit <- edgeR::glmFit(norm, design=fun_model)
+    cond_fit <- edgeR::glmQLFit(norm, design=fun_model, robust=TRUE)
     apc <- make_pairwise_contrasts(fun_model, conditions, do_identities=FALSE)
-    ## This is pretty weird because glmLRT only seems to take up to 7 contrasts at a time...
+
+    ## This section is convoluted because glmLRT only seems to take up to 7 contrasts at a time.
+    ## As a result, I iterate through the set of possible contrasts one at a time and ask for each
+    ## separately.
     contrast_list <- list()
     result_list <- list()
     lrt_list <- list()
@@ -141,12 +154,17 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=fun_model)")
         eval(parse(text=ctr_string))
         contrast_list[[name]] <- tt
-        lrt_list[[name]] <- edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
+        ##lrt_list[[name]] <- edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
+        lrt_list[[name]] <- edgeR::glmQLFTest(cond_fit, contrast=contrast_list[[name]])
         res <- edgeR::topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")
         res <- as.data.frame(res)
         res[["logFC"]] <- signif(x=as.numeric(res[["logFC"]]), digits=4)
         res[["logCPM"]] <- signif(x=as.numeric(res[["logCPM"]]), digits=4)
-        res[["LR"]] <- signif(x=as.numeric(res[["LR"]]), digits=4)
+        if (!is.null(res[["LR"]])) {
+            res[["LR"]] <- signif(x=as.numeric(res[["LR"]]), digits=4)
+        } else if (!is.null(res[["F"]])) {
+            res[["F"]] <- signif(x=as.numeric(res[["F"]]), digits=4)
+        }
         res[["PValue"]] <- signif(x=as.numeric(res[["PValue"]]), digits=4)
         res[["FDR"]] <- signif(x=as.numeric(res[["FDR"]]), digits=4)
         res[["qvalue"]] <- tryCatch(
@@ -174,6 +192,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         result_list[[name]] <- res
     } ## End for loop
     final <- list(
+        "model" = fun_model,
         "contrasts" = apc,
         "lrt" = lrt_list,
         "contrast_list" = contrast_list,
