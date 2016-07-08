@@ -1,4 +1,4 @@
-## Test for infected/control/beads -- a placebo effect?
+# Test for infected/control/beads -- a placebo effect?
 ## The goal is therefore to find responses different than beads
 ## The null hypothesis is (H0): (infected == uninfected) || (infected == beads)
 ## The alt hypothesis is (HA): (infected != uninfected) && (infected != beads)
@@ -63,6 +63,7 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         model_batch <- params[["model_adjust"]]
     }
 
+    ##limma_result <- limma_pairwise(input, conditions=conditions, batches=batches, model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept, extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize, annot_df=annot_df)
     limma_result <- limma_pairwise(input, conditions=conditions, batches=batches,
                                    model_cond=model_cond, model_batch=model_batch,
                                    model_intercept=model_intercept, extra_contrasts=extra_contrasts,
@@ -779,11 +780,13 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
                                     do_pairwise=TRUE, extra_contrasts=NULL) {
     tmpnames <- colnames(model)
-    tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
-    tmpnames <- gsub("-", "", tmpnames)
-    tmpnames <- gsub("+", "", tmpnames)
-    tmpnames <- gsub("conditions", "", tmpnames)
+    tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
+    tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
+    tmpnames <- gsub(pattern="+", replacement="", x=tmpnames)
+    tmpnames <- gsub(pattern="conditions^(\\d+)$", replacement="c\\1", x=tmpnames)
+    tmpnames <- gsub(pattern="conditions", replacement="", x=tmpnames)
     colnames(model) <- tmpnames
+    conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=conditions)
     condition_table <- table(conditions)
     identities <- list()
     contrast_string <- ""
@@ -837,14 +840,14 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
     ## }
     ## Now we have bob=(somestuff) in memory in R's environment
     ## Add them to makeContrasts()
-    contrast_string <- paste("all_pairwise_contrasts = limma::makeContrasts(")
+    contrast_string <- paste0("all_pairwise_contrasts = limma::makeContrasts(")
     for (f in 1:length(eval_strings)) {
         ## eval_name = names(eval_strings[f])
-        eval_string <- paste(eval_strings[f], sep="")
+        eval_string <- paste0(eval_strings[f])
         contrast_string <- paste(contrast_string, eval_string, sep="   ")
     }
     ## The final element of makeContrasts() is the design from voom()
-    contrast_string <- paste(contrast_string, "levels=model)")
+    contrast_string <- paste0(contrast_string, "levels=model)")
     eval(parse(text=contrast_string))
     ## I like to change the column names of the contrasts because by default
     ## they are kind of obnoxious and too long to type
@@ -1207,7 +1210,7 @@ choose_model <- function(conditions, batches, model_batch=TRUE,
         }
     } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
         message("Including batch estimates from sva/ruv/pca in the model.")
-        int_model <- stats::model.matrix(~ conditions + model_batch + intercept)
+        int_model <- stats::model.matrix(~ 0 + conditions + model_batch)
         noint_model <- stats::model.matrix(~ conditions + model_batch)
         int_string <- condbatch_int_string
         noint_string <- condbatch_noint_string
@@ -1237,6 +1240,11 @@ choose_model <- function(conditions, batches, model_batch=TRUE,
     tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
     tmpnames <- gsub("-", "", tmpnames)
     tmpnames <- gsub("+", "", tmpnames)
+    ## The next lines ensure that conditions/batches which are all numeric will not cause weird errors for contrasts
+    ## Ergo, if a condition is something like '111', now it will be 'c111'
+    ## Similarly, a batch '01' will be 'b01'
+    tmpnames <- gsub("^conditions(\\d+)$", replacement="c\\1", x=tmpnames)
+    tmpnames <- gsub("^batches(\\d+)$", replacement="b\\1", x=tmpnames)
     tmpnames <- gsub("conditions", "", tmpnames)
     tmpnames <- gsub("batches", "", tmpnames)
     colnames(int_model) <- tmpnames
@@ -1245,6 +1253,11 @@ choose_model <- function(conditions, batches, model_batch=TRUE,
     tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
     tmpnames <- gsub("-", "", tmpnames)
     tmpnames <- gsub("+", "", tmpnames)
+    ## The next lines ensure that conditions/batches which are all numeric will not cause weird errors for contrasts
+    ## Ergo, if a condition is something like '111', now it will be 'c111'
+    ## Similarly, a batch '01' will be 'b01'
+    tmpnames <- gsub("conditions^(\\d+)$", replacement="c\\1", x=tmpnames)
+    tmpnames <- gsub("batches^(\\d+)$", replacement="b\\1", x=tmpnames)
     tmpnames <- gsub("conditions", "", tmpnames)
     tmpnames <- gsub("batches", "", tmpnames)
     colnames(noint_model) <- tmpnames

@@ -110,14 +110,10 @@ test_that("Do different voom() invocations end with the same data?", {
     expect_equal(cbcb_voom, hpgl_voom)
     expect_equal(cbcb_voom$E, hpgl_voom2$E)
     expect_equal(cbcb_voom$E, hpgl_voom3$E)
+    expect_equal(cbcb_voom$weights, hpgl_voom$weights)
 })
 
-## my hpgl_voom() sets row/column names and causes a test of the weights to fail.
-## But checking manually shows them the same.
-## expect_equal(cbcb_voom$weights, hpgl_voom$weights)
-
-hpgl_limma <- limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, model_intercept=FALSE)
-
+hpgl_limma <- s_p(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, model_intercept=FALSE))$result
 ## First check the voom result from limma_pairwise
 hpgl_limma_voom <- hpgl_limma$voom_result
 hpgl_limma_voom_e <- hpgl_limma$voom_result$E[order(rownames(hpgl_limma$voom_result$E)), ]
@@ -131,13 +127,13 @@ hpgl_limma_fit_coef <- hpgl_limma$fit$coefficients[order(rownames(hpgl_limma$fit
 cbcb_fit <- limma::lmFit(cbcb_voom)
 cbcb_fit_coef <- cbcb_fit$coefficients[order(rownames(cbcb_fit$coefficients)), ]
 colnames(cbcb_fit_coef) <- c("(Intercept)", "untreated")
-test_that("Limma results, fitting.", {
+test_that("Limma results, fitting coefficients.", {
     expect_equal(cbcb_fit_coef, hpgl_limma_fit_coef)
 })
 hpgl_limma_fit_stdev <- hpgl_limma$fit$stdev.unscaled[order(rownames(hpgl_limma$fit$stdev.unscaled)), ]
 cbcb_fit_stdev <- cbcb_fit$stdev.unscaled[order(rownames(cbcb_fit$stdev.unscaled)), ]
 colnames(cbcb_fit_stdev) <- c("(Intercept)", "untreated")
-test_that("Limma results, fitting.", {
+test_that("Limma results, fitting standard deviations.", {
     expect_equal(cbcb_fit_stdev, hpgl_limma_fit_stdev)
 })
 

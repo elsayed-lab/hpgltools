@@ -27,7 +27,7 @@ colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-pasilla_expt <- create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info)
+pasilla_expt <- s_p(create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info))$result
 ## Recent changes to how my expressionsets are created mean that the order of genes is hard-set to the order of annotations
 ## in the annotation data and therefore _not_ the order of genes found in the count tables.
 actual <- as.matrix(Biobase::exprs(pasilla_expt[["expressionset"]]))
@@ -55,7 +55,7 @@ test_that("Was the annotation information imported into the expressionset? (stat
     expect_equal(expected, actual)
 })
 actual <- head(hpgl_annotations[["chromosome"]])
-expected <- c("2L", "X", "X", "X", "X", "X")
+expected <- c("2R", "3R", "3L", "2L", "3R", "3R")
 test_that("Was the annotation information imported into the expressionset? (static chromosomes?)", {
     expect_equal(expected, actual)
 })

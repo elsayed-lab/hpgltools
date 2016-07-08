@@ -42,7 +42,9 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     if (input_class == 'expt') {
         design <- input[["design"]]
         conditions <- input[["conditions"]]
+        conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=conditions)
         batches <- input[["batches"]]
+        batches <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=batches)
         data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
         if (!is.null(input[["state"]])) {
             if (isTRUE(force)) {

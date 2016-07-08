@@ -13,12 +13,17 @@
 model_test <- function(design, goal="condition", factors=NULL, ...) {
     arglist <- list(...)
     ## For testing, use some existing matrices/data
-    message(paste0("There are ", length(levels(as.factor(design[, goal]))), " levels in the goal."))
+    message(paste0("There are ", length(levels(as.factor(design[, goal]))), " levels in the goal: ", goal, "."))
     ret_list <- list()
     if (is.null(factors)) {
         for (factor in colnames(design)) {
+            message(paste0("Testing: ", factor))
             matrix_goal <- design[, goal]
             matrix_factor <- design[, factor]
+            if (length(levels(as.factor(matrix_factor))) == 1) {
+                message(paste0("Factor ", factor, " has only 1 level, skipping it."))
+                next
+            }
             matrix_all_formula <- as.formula(paste0("~ 0 + ", goal, " + ", factor))
             matrix_test <- model.matrix(matrix_all_formula, data=design)
             num_columns <- ncol(matrix_test)

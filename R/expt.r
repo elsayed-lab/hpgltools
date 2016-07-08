@@ -209,10 +209,10 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         gene_info <- as.data.frame(gene_info[["genes"]])
     }
 
-    tmp_gene_info <- gene_info
-    tmp_gene_info[["temporary_id_number"]] <- 1:nrow(tmp_gene_info)
+    tmp_counts <- as.data.frame(all_count_matrix)
+    tmp_counts[["temporary_id_number"]] <- 1:nrow(tmp_counts)
     message("Bringing together the count matrix and gene information.")
-    counts_and_annotations <- merge(all_count_matrix, tmp_gene_info, by="row.names", all.x=TRUE)
+    counts_and_annotations <- merge(tmp_counts, gene_info, by="row.names", all.x=TRUE)
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
     final_annotations <- as.data.frame(counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ])
     colnames(final_annotations) <- colnames(gene_info)
@@ -220,7 +220,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     final_counts <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_matrix) ]
     rownames(final_counts) <- counts_and_annotations[["Row.names"]]
     rm(counts_and_annotations)
-    rm(tmp_gene_info)
+    rm(tmp_counts)
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
