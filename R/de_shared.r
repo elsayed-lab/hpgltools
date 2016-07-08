@@ -1156,14 +1156,14 @@ choose_model <- function(conditions, batches, model_batch=TRUE,
     ## each of the condition/batches
     ## It would be much smarter to generate the models in the following if() {} blocks
     ## But I have it in my head to eventually compare results using different models.
-    cond_int_string <- paste0("~ condition + ", intercept)
-    cond_int_model <- stats::model.matrix(~ conditions + 0)
-    batch_int_string <- paste0("~ batch + ", intercept)
-    batch_int_model <- try(stats::model.matrix(~ batches + intercept), silent=TRUE)
-    condbatch_int_string <- paste0("~ condition + batch + ", as.numeric(intercept))
-    condbatch_int_model <- try(stats::model.matrix(~ conditions + batches + 0), silent=TRUE)
-    batchcond_int_string <- paste0("~ batch + condition + ", as.numeric(intercept))
-    batchcond_int_model <- try(stats::model.matrix(~ batches + conditions + 0), silent=TRUE)
+    cond_int_string <- "~ 0 + condition"
+    cond_int_model <- stats::model.matrix(~ 0 + conditions)
+    batch_int_string <- "~ 0 + batch"
+    batch_int_model <- try(stats::model.matrix(~ 0 + batches), silent=TRUE)
+    condbatch_int_string <- "~ 0 + condition + batch"
+    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches), silent=TRUE)
+    batchcond_int_string <- "~ 0 + batch + condition"
+    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions), silent=TRUE)
     cond_noint_string <- "~ condition"
     cond_noint_model <- try(stats::model.matrix(~ conditions), silent=TRUE)
     batch_noint_string <- "~ batch"

@@ -134,7 +134,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
             warning("If it really was log2 transformed, then we are about to double-log it and that would be very bad.")
         }
         message("The voom input was not log2, transforming now.")
-        dataframe <- log2(dataframe + 1)
+        dataframe <- log2(dataframe)
     }
     dataframe <- as.matrix(dataframe)
 
@@ -357,7 +357,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         ## followed by the set of all pairwise comparisons.
         all_pairwise_fits <- limma::contrasts.fit(fun_fit, all_pairwise_contrasts)
     } else {
-        contrasts <- "intercept"
+        contrasts <- "nointercept"
         identities <- NULL
         contrast_string <- NULL
         all_pairwise <- NULL
