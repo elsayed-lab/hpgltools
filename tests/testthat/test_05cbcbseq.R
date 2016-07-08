@@ -143,15 +143,15 @@ test_that("Limma results, fitting.", {
 
 ## Now the result from eBayes
 cbcb_eb <- limma::eBayes(cbcb_fit)
-
+hpgl_eb <- limma::eBayes(hpgl_limma$fit)
+test_that("Limma results, eBayes.", {
+    expect_equal(sort(cbcb_eb$F), sort(hpgl_eb$F))
+})
 
 cbcb_top <- s_p(limma::topTable(cbcb_eb, number=nrow(cbcb_eb)))[["result"]]
 cbcb_top <- cbcb_top[sort(rownames(cbcb_top)), ]
-
-
-hpgl_top <- hpgl_limma[["all_tables"]][["untreated_vs_treated"]]
+hpgl_top <- s_p(limma::topTable(hpgl_eb, number=nrow(cbcb_eb)))$result
 hpgl_top <- hpgl_top[sort(rownames(hpgl_top)), ]
-
-
+test_that("Limma results, toptable.", {
     expect_equal(cbcb_top, hpgl_top)
 })
