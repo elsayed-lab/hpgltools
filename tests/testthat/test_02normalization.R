@@ -114,16 +114,16 @@ test_that("rpkm conversions are equivalent?", {
 tt <- s_p(require.auto("BSgenome.Dmelanogaster.UCSC.dm6"))
 tt <- s_p(library("BSgenome.Dmelanogaster.UCSC.dm6"))
 pasilla_convert <- s_p(normalize_expt(pasilla_expt, convert="cp_seq_m", genome=BSgenome.Dmelanogaster.UCSC.dm6))[["result"]]
-actual <- as.numeric(head(Biobase::exprs(pasilla_convert[["expressionset"]]))[, 1])
-expected <- c(0.46719586, 0.03443909, 22.38432168, 54.32421464, 0.03908639, 106.58455139)
+expected <- c(0.03443909, 0.46719586, 22.38432168, 54.32421464, 0.03908639)
+actual <- as.numeric(Biobase::exprs(pasilla_convert[["expressionset"]])[test_genes, 1])
 test_that("cp_seq_m works for TA?", {
     expect_equal(expected, actual)
 })
 
 ## Repeat cp_seq_m() for ATG
 pasilla_convert <- s_p(normalize_expt(pasilla_expt, convert="cp_seq_m", genome=BSgenome.Dmelanogaster.UCSC.dm6, pattern="ATG"))[["result"]]
-actual <- as.numeric(head(Biobase::exprs(pasilla_convert[["expressionset"]]))[, c("untreated1")])
-expected <- c(0.51893853, 0.04536343, 27.76677691, 46.94320722, 0.05237078, 99.09109542)
+expected <- c(0.04536343, 0.51893853, 27.76677691, 46.94320722, 0.05237078)
+actual <- as.numeric(Biobase::exprs(pasilla_convert[["expressionset"]])[test_genes, c("untreated1")])
 test_that("cp_seq_m works for ATG?", {
     expect_equal(expected, actual)
 })
@@ -138,13 +138,13 @@ test_that("quant normalization gives expected values?", {
 })
 
 ## Similar test for size-factor normalization
+expected <- c(4.392658, 80.824908, 4097.471407, 512.183926, 8.785316)
+names(expected) <- test_genes
 pasilla_norm <- s_p(normalize_expt(pasilla_expt, norm="sf"))[["result"]]
-actual_df <- head(Biobase::exprs(pasilla_norm[["expressionset"]]))
-actual_vector <- actual_df[, c("untreated1")]
-expected_vector <- c(6702.317616, 7.906784, 3.514126, 222.268496, 524.483368, 193.276953)
-names(expected_vector) <- c("FBgn0260439", "FBgn0031081", "FBgn0062565", "FBgn0031089", "FBgn0031092", "FBgn0031094")
+actual_df <- Biobase::exprs(pasilla_norm[["expressionset"]])
+actual <- actual_df[test_genes, c("untreated1")]
 test_that("size-factor normalization gives expected values?", {
-    expect_equal(expected_vector, actual_vector)
+    expect_equal(expected, actual)
 })
 
 ## Check another size-factor normalization
@@ -218,13 +218,13 @@ test_that("log10 transformation gives expected values (why log10!?)?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-expected <- c(0.7781513, 1.9684829, 3.6688516, 2.7664128, 1.0413927)
+expected <- c(1.791759, 4.532599, 8.447843, 6.369901, 2.397895)
 names(expected) <- test_genes
 pasilla_trans <- s_p(normalize_expt(pasilla_expt, transform="log"))[["result"]]
 actual_df <- Biobase::exprs(pasilla_trans[["expressionset"]])
 actual <- actual_df[test_genes, c("untreated1")]
 test_that("loge transformation gives expected values (why log10!?)?", {
-    expect_equal(expected_vector, actual_vector, tolerance=0.0001)
+    expect_equal(expected, actual, tolerance=0.0001)
 })
 
 ## Test filter

@@ -10,15 +10,15 @@ load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
 pasilla_svasup <- s_p(get_model_adjust(pasilla_expt, estimate_type="sva_supervised"))[["result"]]
-actual <- as.numeric(pasilla_svasup[["model_adjust"]])
-expected <- c(-0.1184778, -0.5678904, 0.4166829, 0.2938793, -0.5250849, 0.2844593, 0.2164316)
+expected <- c(0.1184778, 0.5678904, 0.4166829, 0.2938793, 0.5250849, 0.2844593, 0.2164316)
+actual <- abs(as.numeric(pasilla_svasup[["model_adjust"]]))
 test_that("Have the sva supervised model adjustments stayed the same?", {
     expect_equal(expected, actual, tolerance=0.000001)
 })
 
 pasilla_svaunsup <- s_p(get_model_adjust(pasilla_expt, estimate_type="sva_unsupervised"))[["result"]]
-actual <- as.numeric(pasilla_svaunsup[["model_adjust"]])
-expected <- c(-0.1185214, -0.5617694, 0.4119131, 0.2947645, -0.5325897, 0.2850143, 0.2211886)
+expected <- c(0.1185214, 0.5617694, 0.4119131, 0.2947645, 0.5325897, 0.2850143, 0.2211886)
+actual <- abs(as.numeric(pasilla_svaunsup[["model_adjust"]]))
 test_that("Have the sva unsupervised model adjustments stayed the same?", {
     expect_equal(expected, actual, tolerance=0.001)
 })

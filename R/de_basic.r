@@ -83,10 +83,10 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
         condition_name <- types[c]
         columns <- which(conditions == condition_name)
         if (length(columns) == 1) {
-            med <- data.frame(data[,columns])
+            med <- data.frame(data[, columns])
             var <- as.data.frame(matrix(NA, ncol=1, nrow=nrow(med)))
         } else {
-            med_input <- data[,columns]
+            med_input <- data[, columns]
             med <- data.frame(Biobase::rowMedians(as.matrix(med_input)))
             colnames(med) <- c(condition_name)
             var <- as.data.frame(genefilter::rowVars(as.matrix(med_input)))
@@ -180,9 +180,9 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     message("Basic step 3/3: Creating faux DE Tables.")
     for (e in 1:length(colnames(comparisons))) {
         colname <- colnames(comparisons)[[e]]
-        fc_column <- comparisons[,e]
-        t_column <- as.numeric(tvalues[,e])
-        p_column <- as.numeric(pvalues[,e])
+        fc_column <- comparisons[, e]
+        t_column <- as.numeric(tvalues[, e])
+        p_column <- as.numeric(pvalues[, e])
         fc_column[mapply(is.infinite, fc_column)] <- 0
         numer_denom <- strsplit(x=colname, split="_vs_")[[1]]
         numerator <- numer_denom[1]
@@ -194,14 +194,16 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
                                t=t_column,
                                p=p_column,
                                logFC=fc_column)
+        fc_table[["adjp"]] <- stats::p.adjust(as.numeric(fc_table[["p"]]), method="BH")
 
-        fc_table$numerator_median <- signif(x=fc_table$numerator_median, digits=4)
-        fc_table$denominator_median <- signif(x=fc_table$denominator_median, digits=4)
-        fc_table$numerator_var <- format(x=fc_table$numerator_var, digits=4, scientific=TRUE)
-        fc_table$denominator_var <- format(x=fc_table$denominator_var, digits=4, scientific=TRUE)
-        fc_table$t <- signif(x=fc_table$t, digits=4)
-        fc_table$p <- format(x=fc_table$p, digits=4, scientific=TRUE)
-        fc_table$logFC <- signif(x=fc_table$logFC, digits=4)
+        fc_table[["numerator_median"]] <- signif(x=fc_table[["numerator_median"]], digits=4)
+        fc_table[["denominator_median"]] <- signif(x=fc_table[["denominator_median"]], digits=4)
+        fc_table[["numerator_var"]] <- format(x=fc_table[["numerator_var"]], digits=4, scientific=TRUE)
+        fc_table[["denominator_var"]] <- format(x=fc_table[["denominator_var"]], digits=4, scientific=TRUE)
+        fc_table[["t"]] <- signif(x=fc_table[["t"]], digits=4)
+        fc_table[["p"]] <- format(x=fc_table[["p"]], digits=4, scientific=TRUE)
+        fc_table[["adjp"]] <- format(x=fc_table[["adjp"]], digits=4, scientific=TRUE)
+        fc_table[["logFC"]] <- signif(x=fc_table[["logFC"]], digits=4)
         rownames(fc_table) <- rownames(data)
         all_tables[[e]] <- fc_table
     }

@@ -179,7 +179,9 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         db <- db[, c("logFC.x","logFC.y")]
         colnames(db) <- c("DESeq2 logFC", "basic logFC")
         dbc <- stats::cor.test(db[,1], db[,2])[["estimate"]]
-        dbs <- plot_scatter(db) + ggplot2::labs(title=paste0(comp, ": DESeq2 vs basic.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
+        dbs <- plot_scatter(db) +
+            ggplot2::labs(title=paste0(comp, ": DESeq2 vs basic.")) +
+            ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         limma_vs_edger[[comp]] <- lec
         limma_vs_deseq[[comp]] <- ldc
         edger_vs_deseq[[comp]] <- edc
@@ -490,8 +492,8 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
     ed <- ed[["all_tables"]][[table_name]]
     colnames(ed) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
     ba <- ba[["all_tables"]][[table_name]]
-    ba <- ba[, c("numerator_median","denominator_median","numerator_var","denominator_var", "logFC", "t", "p")]
-    colnames(ba) <- c("basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p")
+    ba <- ba[, c("numerator_median","denominator_median","numerator_var","denominator_var", "logFC", "t", "p", "adjp")]
+    colnames(ba) <- c("basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p", "basic_adjp")
 
     comb <- merge(li, de, by="row.names")
     comb <- merge(comb, ed, by.x="Row.names", by.y="row.names")
@@ -502,7 +504,7 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
     comb <- comb[-1]
     comb[is.na(comb)] <- 0
     if (isTRUE(include_basic)) {
-        comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q","basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p")]
+        comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q","basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p", "basic_adjp")]
     } else {
         comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q")]
     }
@@ -521,18 +523,18 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
                      as.numeric(comb[["edger_logfc"]]),
                      as.numeric(comb[["deseq_logfc"]]))
     temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
-    comb$fc_meta <- rowMeans(temp_fc, na.rm=TRUE)
-    comb$fc_var <- genefilter::rowVars(temp_fc, na.rm=TRUE)
-    comb$fc_varbymed <- comb$fc_var / comb$fc_meta
+    comb[["fc_meta"]] <- rowMeans(temp_fc, na.rm=TRUE)
+    comb[["fc_var"]] <- genefilter::rowVars(temp_fc, na.rm=TRUE)
+    comb[["fc_varbymed"]] <- comb$fc_var / comb$fc_meta
     temp_p <- cbind(as.numeric(comb[["limma_p"]]),
                     as.numeric(comb[["edger_p"]]),
                     as.numeric(comb[["deseq_p"]]))
-    comb$p_meta <- rowMeans(temp_p, na.rm=TRUE)
-    comb$p_var <- genefilter::rowVars(temp_p, na.rm=TRUE)
-    comb$fc_meta <- signif(x=comb[["fc_meta"]], digits=4)
-    comb$fc_var <- format(x=comb[["fc_var"]], digits=4, scientific=TRUE)
-    comb$fc_varbymed <- format(x=comb[["fc_varbymed"]], digits=4, scientific=TRUE)
-    comb$p_var <- format(x=comb[["p_var"]], digits=4, scientific=TRUE)
+    comb[["p_meta"]] <- rowMeans(temp_p, na.rm=TRUE)
+    comb[["p_var"]] <- genefilter::rowVars(temp_p, na.rm=TRUE)
+    comb[["fc_meta"]] <- signif(x=comb[["fc_meta"]], digits=4)
+    comb[["fc_var"]] <- format(x=comb[["fc_var"]], digits=4, scientific=TRUE)
+    comb[["fc_varbymed"]] <- format(x=comb[["fc_varbymed"]], digits=4, scientific=TRUE)
+    comb[["p_var"]] <- format(x=comb[["p_var"]], digits=4, scientific=TRUE)
     comb$p_meta <- format(x=comb[["p_meta"]], digits=4, scientific=TRUE)
     if (!is.null(annot_df)) {
         ## colnames(annot_df) <- gsub("[[:digit:]]", "", colnames(annot_df))
@@ -621,7 +623,7 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
     num_tables <- length(names(combined))
     table_count <- 0
     if (according_to == "all") {
-        according_to <- c("limma","edger","deseq")
+        according_to <- c("limma","edger","deseq","basic")
     }
     wb <- openxlsx::createWorkbook(creator="hpgltools")
     ret <- list()
