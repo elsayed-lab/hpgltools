@@ -99,6 +99,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     if (is.null(condition_names)) {
         warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
     }
+    sample_definitions[["condition"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=sample_definitions[["condition"]])
+    sample_definitions[["batch"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=sample_definitions[["batch"]])
 
     ## Make sure we have a viable set of colors for plots
     chosen_colors <- as.character(sample_definitions[["condition"]])
@@ -277,7 +279,9 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         "transform" = "raw")
     expt[["state"]] <- starting_state
     expt[["conditions"]] <- droplevels(as.factor(sample_definitions[, "condition"]))
+    expt[["conditions"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=expt[["conditions"]])
     expt[["batches"]] <- droplevels(as.factor(sample_definitions[, "batch"]))
+    expt[["batches"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=expt[["batches"]])
     expt[["original_libsize"]] <- colSums(Biobase::exprs(experiment))
     expt[["libsize"]] <- expt[["original_libsize"]]
     expt[["colors"]] <- chosen_colors
