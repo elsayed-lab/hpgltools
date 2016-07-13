@@ -48,10 +48,10 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
         data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
         if (!is.null(input[["state"]])) {
             if (isTRUE(force)) {
-                warning("This function really does require some sort of
- normalization to be applied to the data, but if you insist,
- I will not mess with it.")
-            } else if (input[["state"]][["normalization"]] == "raw" &
+                message("The force option was applied, maybe going to modify normalization applied.")
+            }
+
+            if (input[["state"]][["normalization"]] == "raw" &
                        input[["state"]][["conversion"]] == "raw" &
                        input[["state"]][["transform"]] == "raw") {
                 message("This basic pairwise function assumes log2, converted, normalized counts, normalizing now.")

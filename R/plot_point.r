@@ -179,31 +179,45 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     df_y_axis <- df_columns[2]
     colnames(df) <- c("first","second")
     model_test <- try(robustbase::lmrob(formula=second ~ first, data=df, method="SMDM"), silent=TRUE)
+    linear_model <- NULL
+    linear_model_summary <- NULL
+    linear_model_rsq <- NULL
+    linear_model_weights <- NULL
+    linear_model_intercept <- NULL
+    linear_model_slope <- NULL
     if (class(model_test) == "try-error") {
         model_test <- try(lm(formula=second ~ first, data=df), silent=TRUE)
+    } else {
+        linear_model <- model_test
+        linear_model_summary <- summary(linear_model)
+        linear_model_rsq <- linear_model_summary[["r.squared"]]
+        linear_model_weights <- stats::weights(linear_model, type="robustness", na.action=NULL)
+        linear_model_intercept <- stats::coef(linear_model_summary)[1]
+        linear_model_slope <- stats::coef(linear_model_summary)[2]
     }
     if (class(model_test) == "try-error") {
         model_test <- try(glm(formula=second ~ first, data=df), silent=TRUE)
+    } else {
+        linear_model <- model_test
+        linear_model_summary <- summary(linear_model)
+        linear_model_rsq <- linear_model_summary[["r.squared"]]
+        linear_model_weights <- stats::weights(linear_model, type="robustness", na.action=NULL)
+        linear_model_intercept <- stats::coef(linear_model_summary)[1]
+        linear_model_slope <- stats::coef(linear_model_summary)[2]
     }
+
     if (class(model_test) == "try-error") {
         message("Could not create a linear model of the data.")
         message("Going to perform a scatter plot without linear model.")
         plot <- plot_scatter(df)
         ret <- list(data=df, scatter=plot)
         return(ret)
-    } else {
-        linear_model <- model_test
     }
-    linear_model <- try(robustbase::lmrob(formula=second ~ first, data=df, method="SMDM"))
-    linear_model_summary <- summary(linear_model)
-    linear_model_rsq <- linear_model_summary$r.squared
-    linear_model_weights <- stats::weights(linear_model, type="robustness", na.action=NULL)
-    linear_model_intercept <- stats::coef(linear_model_summary)[1]
-    linear_model_slope <- stats::coef(linear_model_summary)[2]
-    first_median <- summary(df$first)[["Median"]]
-    second_median <- summary(df$second)[["Median"]]
-    first_mad <- stats::mad(df$first, na.rm=TRUE)
-    second_mad <- stats::mad(df$second, na.rm=TRUE)
+
+    first_median <- summary(df[["first"]])[["Median"]]
+    second_median <- summary(df[["second"]])[["Median"]]
+    first_mad <- stats::mad(df[["first"]], na.rm=TRUE)
+    second_mad <- stats::mad(df[["second"]], na.rm=TRUE)
     line_size <- size / 2
     first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +

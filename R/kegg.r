@@ -27,7 +27,7 @@
 #'                                    string_to="_Spy_", filenames="pathname")
 #' }
 #' @export
-hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, filenames="id") {
+hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, filenames="id", fc_column="limma_logfc", format="png") {
     ## Please note that the KGML parser fails if other XML parsers are loaded into R
     ## eh = new.env(hash=TRUE, size=NA)
     ## There is a weird namespace conflict when using pathview, so I will reload it here
@@ -42,8 +42,8 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
     ## Similar stanzas should probably be added for deseq/edger
     ## This is added because pathview() only works with dataframes/lists with only numbers.
     ## So it is wise to pull only the column of numbers one cares about.
-    if (!is.null(path_data$logFC)) {
-        tmp_data <- as.vector(path_data[, "logFC"])
+    if (!is.null(path_data[[fc_column]])) {
+        tmp_data <- as.vector(path_data[[fc_column]])
         names(tmp_data) <- rownames(path_data)
         path_data <- tmp_data
         rm(tmp_data)
@@ -92,27 +92,40 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
         limits <- c(limit_min, limit_max)
         print(paste("Here are some path gene examples: ", gene_examples, sep=""))
         print(paste("Here are your genes: ", head(names(path_data))), sep="")
-        pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
-                                     species=species, limit=list(gene=limits, cpd=limits),
-                                     map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix,
-                                     split.group=TRUE, expand.node=TRUE, kegg.native=TRUE,
-                                     map.symbol=TRUE, same.layer=FALSE, res=1200,
-                                     new.signature=FALSE, cex=0.05, key.pos="topright"))
+        if (format == "png") {
+            pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
+                                         species=species, limit=list(gene=limits, cpd=limits),
+                                         map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix,
+                                         split.group=TRUE, expand.node=TRUE, kegg.native=TRUE,
+                                         map.symbol=TRUE, same.layer=FALSE, res=1200,
+                                         new.signature=FALSE, cex=0.05, key.pos="topright"))
+        } else {
+            pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
+                                         species=species, limit=list(gene=limits, cpd=limits),
+                                         map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix,
+                                         split.group=TRUE, expand.node=TRUE, kegg.native=FALSE,
+                                         map.symbol=TRUE, same.layer=FALSE, res=1200,
+                                         new.signature=FALSE, cex=0.05, key.pos="topright"))
+        }
         if (class(pv) == "numeric") {
             colored_genes <- NULL
             newfile <- NULL
             up <- NULL
             down <- NULL
         } else {
+            filetype <- ".png"
+            if (format != "png") {
+                filetype <- ".pdf"
+            }
             colored_genes <- dim(pv$plot.data.gene)[1]
             ## "lma04070._proeff.png"
-            oldfile <- paste(path, ".", suffix, ".png", sep="")
+            oldfile <- paste(path, ".", suffix, filetype, sep="")
             ## An if-statement to see if the user prefers pathnames by kegg ID or pathway name
             ## Dr. McIver wants path names...
             if (filenames == "id") {
-                newfile <- paste(outdir,"/", path, suffix, ".png", sep="")
+                newfile <- paste(outdir,"/", path, suffix, filetype, sep="")
             } else {  ## If filenames is not 'id', put in the path name...
-                newfile <- paste(outdir, "/", path_name, suffix, ".png", sep="")
+                newfile <- paste(outdir, "/", path_name, suffix, filetype, sep="")
             }
             rename_try <- try(file.rename(from=oldfile, to=newfile), silent=TRUE)
             if (class(rename_try)[1] == 'try-error') {

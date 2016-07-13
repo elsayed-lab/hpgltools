@@ -76,6 +76,11 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
         ## as.data.frame is not only base, but also biocgenerics!!!
         test_meta <- BiocGenerics::as.data.frame(testing)
         overlap <- gene_list %in% rownames(test_meta)
+        if (sum(overlap) == 0) {
+            ## sometimes the rownames get set to 1..rows, in that case, try the last column which is the transcript name
+            overlap <- gene_list %in% test_meta[, ncol(test_meta)]
+            rownames(test_meta) <- test_meta[, ncol(test_meta)]
+        }
         if (sum(overlap) == length(gene_list)) {
             success <- TRUE
             if (!is.null(test_meta[["width"]])) {
@@ -108,10 +113,22 @@ extract_go <- function(db) {
         if (found == length(test)) {
             ## Use this keytype to get geneIDs
             ids <- keys(x=db, keytype=type)
-            godf <- select(x=db, keys=ids, keytype=type, columns=c("GOID"))
-            godf[["ID"]] <- godf[[1]]
-            godf <- godf[, c("ID","GOID")]
-            colnames(godf) <- c("ID","GO")
+            if ("GOID" %in% possible_keytypes) {
+                godf <- select(x=db, keys=ids, keytype=type, columns=c("GOID"))
+                godf[["ID"]] <- godf[[1]]
+                godf <- godf[, c("ID","GOID")]
+                colnames(godf) <- c("ID","GO")
+            } else if ("GO" %in% possible_keytypes) {
+                godf <- select(x=db, keys=ids, keytype=type, columns=c("GO"))
+                godf[["ID"]] <- godf[[1]]
+                godf <- godf[, c("ID","GO")]
+                colnames(godf) <- c("ID","GO")
+            } else if ("GOALL" %in% possible_keytypes) {
+                godf <- select(x=db, keys=ids, keytype=type, columns=c("GOALL"))
+                godf[["ID"]] <- godf[[1]]
+                godf <- godf[, c("ID","GO")]
+                colnames(godf) <- c("ID","GO")
+            }
             return(godf)
         }
     }
@@ -259,7 +276,7 @@ new_simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
     ## Database of lengths may be a gff file, TxDb, or OrganismDb
     metadf <- NULL
     if (class(length_db) == "character")  {  ## Then this should be either a gff file or species name.
-        if (grepl(pattern="\\.gff", x=length_db, perl=TRUE) | grepl(pattern="\\.gtf", x=gff_species, perl=TRUE)) { ## gff file
+        if (grepl(pattern="\\.gff", x=length_db, perl=TRUE) | grepl(pattern="\\.gtf", x=length_db, perl=TRUE)) { ## gff file
             txdb <- GenomicFeatures::makeTxDbFromGFF(length_db)
             metadf <- extract_lengths(db=txdb, gene_list=gene_list)
         } else {  ## Then species name
@@ -269,7 +286,7 @@ new_simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
         stop("This currently requires an actual OrganismDb, not AnnotationDbi.")
     } else if (class(length_db)[[1]] == "OrgDb") {
         stop("OrgDb objects contain links to other databases, but sadly are missing gene lengths.")
-    } else if (class(length_db)[[1]] == "OrganismDb" | class(db_species)[[1]] == "AnnotationDbi") {
+    } else if (class(length_db)[[1]] == "OrganismDb" | class(length_db)[[1]] == "AnnotationDbi") {
         metadf <- extract_lengths(db=length_db, gene_list=gene_list)
         stop("I can't work with OrganismDb just yet.")
     } else if (class(length_db)[[1]] == "TxDb") {
