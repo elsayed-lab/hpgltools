@@ -17,14 +17,27 @@
 #'  pretty = coefficient_scatter(deseq_data, x="wt", y="mut")
 #' }
 #' @export
-deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_scatter.html",
-                                      gvis_filename=NULL,
-                                      gvis_trendline=TRUE, tooltip_data=NULL,
-                                      base_url=NULL) {
+deseq_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ## gvis_filename="limma_scatter.html",
+                                      gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
+                                      tooltip_data=NULL, base_url=NULL,
+                                      color_low="#DD0000", color_high="#7B9F35", ...) {
+    arglist <- list(...)
+    qlimit <- 0.1
+    if (!is.null(arglist[["qlimit"]])) {
+        qlimit <- arglist[["qlimit"]]
+    }
+    fc_column <- "limma_logfc"
+    if (!is.null(arglist[["fc_column"]])) {
+        fc_column <- arglist[["fc_column"]]
+    }
+    p_column <- "limma_adjp"
+    if (!is.null(arglist[["p_column"]])) {
+        p_column <- arglist[["p_column"]]
+    }
     ##  If taking a limma_pairwise output, then this lives in
     ##  output$pairwise_comparisons$coefficients
-    message("This can do comparisons among the following columns in the deseq2 result:")
     thenames <- names(output[["coefficients"]])
+    message("This can do comparisons among the following columns in the deseq2 result:")
     message(toString(thenames))
     xname <- ""
     yname <- ""
@@ -55,13 +68,32 @@ deseq_coefficient_scatter <- function(output, x=1, y=2, ## gvis_filename="limma_
     maxvalue <- max(coefficient_df) + 1.0
     plot <- suppressMessages(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
                                                  gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                                 tooltip_data=tooltip_data, base_url=base_url))
+                                                 tooltip_data=tooltip_data, base_url=base_url,
+                                                 pretty_colors=FALSE, color_low=color_low, color_high=color_high))
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
+    if (!is.null(toptable)) {
+        theplot <- plot[["scatter"]] + ggplot2::theme_bw()
+        sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
+        sigup <- sig[["up_genes"]]
+        sigdown <- sig[["down_genes"]]
+        up_index <- rownames(coefficients) %in% rownames(sigup)
+        down_index <- rownames(coefficients) %in% rownames(sigdown)
+        up_df <- as.data.frame(coefficients[up_index, ])
+        down_df <- as.data.frame(coefficients[down_index, ])
+        colnames(up_df) <- c("first", "second")
+        colnames(down_df) <- c("first", "second")
+        theplot <- theplot +
+            ggplot2::geom_point(data=up_df, colour=color_high) +
+            ggplot2::geom_point(data=down_df, colour=color_low)
+        plot[["scatter"]] <- theplot
+    }
     plot[["df"]] <- coefficient_df
     return(plot)
 }
+
+
 
 #' deseq_pairwise()  Because I can't be trusted to remember '2'.
 #'

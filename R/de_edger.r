@@ -17,14 +17,26 @@
 #'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
 #' }
 #' @export
-edger_coefficient_scatter <- function(output, x=1, y=2,
-                                      gvis_filename=NULL,
-                                      gvis_trendline=TRUE, tooltip_data=NULL,
-                                      base_url=NULL) {
-    ##  If taking a limma_pairwise output, then this lives in
-    ##  output$pairwise_comparisons$coefficients
-    message("This can do comparisons among the following columns in the edger result:")
+edger_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
+                                      gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
+                                      tooltip_data=NULL, base_url=NULL,
+                                      color_low="#DD0000", color_high="#7B9F35", ...) {
+    arglist <- list(...)
+    qlimit <- 0.1
+    if (!is.null(arglist[["qlimit"]])) {
+        qlimit <- arglist[["qlimit"]]
+    }
+    fc_column <- "limma_logfc"
+    if (!is.null(arglist[["fc_column"]])) {
+        fc_column <- arglist[["fc_column"]]
+    }
+    p_column <- "limma_adjp"
+    if (!is.null(arglist[["p_column"]])) {
+        p_column <- arglist[["p_column"]]
+    }
     thenames <- names(output[["contrasts"]][["identities"]])
+    message("This can do comparisons among the following columns in the edger result:")
+    message(toString(thenames))
     xname <- ""
     yname <- ""
     if (is.numeric(x)) {
@@ -47,9 +59,9 @@ edger_coefficient_scatter <- function(output, x=1, y=2,
         coefficient_df <- coefficient_df * -1.0
     }
 
-    plot <- plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
-                                gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                tooltip_data=tooltip_data, base_url=base_url)
+    plot <- suppressMessages(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+                                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
+                                                 tooltip_data=tooltip_data, base_url=base_url))
     maxvalue <- as.numeric(max(coefficient_df) + 1)
     print(maxvalue)
     plot[["scatter"]] <- plot[["scatter"]] +
