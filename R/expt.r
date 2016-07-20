@@ -291,6 +291,152 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     return(expt)
 }
 
+#' Change the factors (condition and batch) of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param condition New condition factor
+#' @param batch New batch factor
+#' @param ... Arguments passed along (likely colors)
+#' @return expt Send back the expt with some new metadata
+#' #' \dontrun{
+#'  expt = set_expt_factors(big_expt, condition="column", batch="another_column")
+#' }
+#' @export
+set_expt_factors <- function(expt, condition=NULL, batch=NULL, ...) {
+    arglist <- list(...)
+    if (!is.null(condition)) {
+        expt <- set_expt_condition(expt, factor=condition, ...)
+    }
+    if (!is.null(batch)) {
+        expt <- set_expt_batch(expt, factor=batch, ...)
+    }
+    return(expt)
+}
+
+#' Change the condition of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param factor Conditions to replace
+#' @param colors Reset the set of colors (Give a factor if you want to choose your own).
+#' @return expt Send back the expt with some new metadata
+#' #' \dontrun{
+#'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))")
+#' }
+#' @export
+set_expt_condition <- function(expt, factor, colors=TRUE, ...) {
+    arglist <- list(...)
+    original_conditions <- expt[["conditions"]]
+    original_length <- length(original_conditions)
+    if (length(factor) == 1) {
+        ## Assume it is a column in the design
+        if (factor %in% colnames(expt[["design"]])) {
+            factor <- expt[["design"]][[factor]]
+        } else {
+            stop("The provided factor is not in the design matrix.")
+        }
+    }
+
+    if (length(factor) != original_length) {
+        stop("The new factor of conditions is not the same length as the original.")
+    }
+
+    expt[["conditions"]] <- factor
+    Biobase::pData(expt[["expressionset"]])[["condition"]] <- factor
+    expt[["design"]][["condition"]] <- factor
+    if (isTRUE(colors)) {
+        expt <- set_expt_colors(expt, colors=colors, ...)
+    }
+    return(expt)
+}
+
+#' Change the batches of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param factor Batches to replace
+
+#' @return expt Send back the expt with some new metadata
+#' #' \dontrun{
+#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
+#' }
+#' @export
+set_expt_batch <- function(expt, factor) {
+    original_batches <- expt[["batches"]]
+    original_length <- length(original_batches)
+    if (length(factor) == 1) {
+        ## Assume it is a column in the design
+        if (factor %in% colnames(expt[["design"]])) {
+            factor <- expt[["design"]][[factor]]
+        } else {
+            stop("The provided factor is not in the design matrix.")
+        }
+    }
+
+    if (length(factor) != original_length) {
+        stop("The new factor of batches is not the same length as the original.")
+    }
+    expt[["batches"]] <- factor
+    Biobase::pData(expt[["expressionset"]])[["batch"]] <- factor
+    expt[["design"]][["batch"]] <- factor
+    return(expt)
+}
+
+#' Change the colors of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param colors colors to replace
+#' @return expt Send back the expt with some new metadata
+#' #' \dontrun{
+#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
+#' }
+#' @export
+set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
+    num_conditions <- length(expt[["conditions"]])
+    num_samples <- nrow(expt[["design"]])
+    sample_ids <- expt[["design"]][["sampleid"]]
+    chosen_colors <- NULL
+    if (is.null(colors) | isTRUE(colors)) {
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    }
+
+    if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
+        chosen_colors <- sample_colors
+    } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    } else if (is.null(sample_colors)) {
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    } else {
+        warning("The number of colors provided does not match either the number of conditions nor samples.")
+        warning("Unsure of what to do, so choosing colors with RColorBrewer.")
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    }
+    names(chosen_colors) <- sample_ids
+
+    expt[["colors"]] <- chosen_colors
+    return(expt)
+}
+
 #' Extract a subset of samples following some rule(s) from an
 #' experiment class.
 #'
@@ -345,6 +491,8 @@ expt_subset <- function(expt, subset=NULL) {
     original_libsize <- expt[["original_libsize"]]
     subset_libsize <- original_libsize[subset_positions, drop=TRUE]
     subset_expressionset <- original_expressionset[, subset_positions]
+    first_expressionset <- original_expressionset[["original_expressionset"]]
+    subset_first_expressionset <- first_expressionset[, subset_positions]
 
     notes <- expt[["notes"]]
     if (!is.null(note_appended)) {
@@ -356,12 +504,13 @@ expt_subset <- function(expt, subset=NULL) {
             subset_design[[col]] <- droplevels(subset_design[[col]])
         }
     }
+    Biobase::pData(subset_expressionset) <- subset_design
 
     new_expt <- list(
         "title" = expt[["title"]],
         "notes" = toString(notes),
         "initial_metadata" = subset_design,
-        "original_expressionset" = subset_expressionset,
+        "original_expressionset" = subset_first_expressionset,
         "expressionset" = subset_expressionset,
         "design" = subset_design,
         "conditions" = subset_conditions,

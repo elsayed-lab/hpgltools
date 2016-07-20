@@ -109,7 +109,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                             model_batch=TRUE, annot_df=NULL, force=FALSE, ...) {
     arglist <- list(...)
     message("Starting DESeq2 pairwise comparisons.")
-    input_data <- choose_dataset(input)
+    input_data <- choose_dataset(input, force=force)
     conditions <- input_data[["conditions"]]
     batches <- input_data[["batches"]]
     data <- input_data[["data"]]

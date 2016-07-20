@@ -40,10 +40,10 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     }
 
     if (input_class == 'expt') {
-        design <- input[["design"]]
-        conditions <- input[["conditions"]]
+        design <- Biobase::pData(input[["expressionset"]])
+        conditions <- design[["condition"]]
         conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=conditions)
-        batches <- input[["batches"]]
+        batches <- design[["batch"]]
         batches <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=batches)
         data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
         if (!is.null(input[["state"]])) {
@@ -79,8 +79,10 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     variance_table <- data.frame()
     ## First use conditions to rbind a table of medians by condition.
     message("Basic step 1/3: Creating median and variance tables.")
+    median_colnames <- c()
     for (c in 1:num_conds) {
         condition_name <- types[c]
+        median_colnames <- append(median_colnames, condition_name)
         columns <- which(conditions == condition_name)
         if (length(columns) == 1) {
             med <- data.frame(data[, columns])
@@ -100,7 +102,8 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
             variance_table <- cbind(variance_table, var)
         }
     } ## end creation of median and variance tables.
-
+    colnames(median_table) <- median_colnames
+    colnames(variance_table) <- median_colnames
     rownames(median_table) <- rownames(data)
     rownames(variance_table) <- rownames(data)
     ## We have tables of the median values by condition

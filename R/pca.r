@@ -211,7 +211,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
 
     pca_return <- list(
         "pca" = pca,
-        "lpot" = pca_plot,
+        "plot" = pca_plot,
         "table" = pca_data,
         "res" = pca_res,
         "variance" = pca_variance)

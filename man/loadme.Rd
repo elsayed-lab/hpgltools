@@ -4,7 +4,7 @@
 \alias{loadme}
 \title{Load a backup rdata file}
 \usage{
-loadme(dir = "savefiles")
+loadme(directory = "savefiles", filename = "Rdata.rda.xz")
 }
 \arguments{
 \item{dir}{Directory containing the RData.rda.xz file.}

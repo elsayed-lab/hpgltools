@@ -98,9 +98,10 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
                           model_batch=TRUE, model_intercept=TRUE, alt_model=NULL,
                           extra_contrasts=NULL, annot_df=NULL, force=FALSE, edger_method="default", ...) {
     message("Starting edgeR pairwise comparisons.")
-    input_data <- choose_dataset(input)
-    conditions <- input_data[["conditions"]]
-    batches <- input_data[["batches"]]
+    input_data <- choose_dataset(input, force=force)
+    design <- Biobase::pData(input[["expressionset"]])
+    conditions <- design[["condition"]]
+    batches <- design[["batch"]]
     data <- input_data[["data"]]
 
     fun_model <- choose_model(conditions, batches,

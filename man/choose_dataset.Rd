@@ -4,10 +4,14 @@
 \alias{choose_dataset}
 \title{Choose a suitable data set for Edger/DESeq}
 \usage{
-choose_dataset(input)
+choose_dataset(input, force = FALSE, ...)
 }
 \arguments{
 \item{input}{Expt input.}
+
+\item{force}{Force non-standard data}
+
+\item{...}{More options for future expansion}
 }
 \value{
 List the data, conditions, and batches in the data.

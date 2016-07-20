@@ -145,7 +145,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
     for (comp in names(deseq)) {
         ## assume all three have the same names() -- note that limma has more than the other two though
         cc <- cc + 1
-        message(paste0(cc, "/", len, ": Comparing analyses: ", comp))
+        message(paste0("Comparing analyses ", cc, "/", len, ": ", comp))
         l <- data.frame(limma[[comp]])
         e <- data.frame(edger[[comp]])
         d <- data.frame(deseq[[comp]])
@@ -364,7 +364,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             plots[[name]] <- plt
             de_summaries <- rbind(de_summaries, summary)
             table_names[[a]] <- summary[["table"]]
-            print(de_summaries)
         }
 
         ## If you want all the tables in a dump
@@ -420,7 +419,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             ddd <- combo[[count]]
             oddness = summary(ddd) ## until I did this I was getting errors I am guessing devtools::load_all() isn't clearing everything
             final_excel_title <- gsub(pattern='YYY', replacement=tab, x=excel_title)
-            xls_result <- write_xls(wb, data=ddd, sheet=tab, title=final_excel_title)
+            xls_result <- write_xls(data=ddd, wb=wb, sheet=tab, title=final_excel_title)
             if (isTRUE(add_plots)) {
                 plot_column <- xls_result[["end_col"]] + 2
                 message(paste0("Attempting to add a coefficient plot for ", names(combo)[[count]], " at column ", plot_column))
@@ -456,7 +455,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     ret <- list(
         "data" = combo,
         "plots" = plots,
-       "comp_plot" = comp,
+        "comp_plot" = comp,
         "de_summay" = de_summaries)
     return(ret)
 }
@@ -548,8 +547,12 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
     up_fc <- fc_cutoff
     down_fc <- -1 * fc_cutoff
     message(paste0("The table is: ", table_name))
+    summary_table_name <- table_name
+    if (isTRUE(inverse)) {
+        summary_table_name <- paste0(summary_table_name, "-inverted")
+    }
     summary_lst <- list(
-        "table" = table_name,
+        "table" = summary_table_name,
         "total" = nrow(comb),
         "limma_up" = sum(comb[["limma_logfc"]] >= up_fc),
         "limma_sigup" = sum(comb[["limma_logfc"]] >= up_fc & as.numeric(comb[["limma_adjp"]]) <= p_cutoff),
@@ -598,8 +601,9 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
 #' @return The set of up-genes, down-genes, and numbers therein.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=0.05, z=NULL,
-                                      n=NULL, excel="excel/significant_genes.xlsx") {
+extract_significant_genes <- function(combined, according_to="all", fc=1.0,
+                                      p=0.05, z=NULL, n=NULL,
+                                      excel="excel/significant_genes.xlsx") {
     if (!is.null(combined[["plots"]])) {
         combined <- combined$data
     }
@@ -656,8 +660,13 @@ extract_significant_genes <- function(combined, according_to="limma", fc=1.0, p=
         ## xls_result <- write_xls(data=change_counts, sheet="number_changed_genes", file=sig_table,
         ##                         title=summary_title,
         ##                         overwrite_file=TRUE, newsheet=TRUE)
-        ret[[according]] <- list(ups=trimmed_up, downs=trimmed_down, counts=change_counts,
-                                 up_titles=up_titles, down_titles=down_titles, counts_title=summary_title)
+        ret[[according]] <- list(
+            "ups" = trimmed_up,
+            "downs" = trimmed_down,
+            "counts" = change_counts,
+            "up_titles" = up_titles,
+            "down_titles" = down_titles,
+            "counts_title" = summary_title)
         if (is.null(excel)) {
             message("Not printing excel sheets for the significant genes.")
         } else {
@@ -715,6 +724,25 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     }
     message("Writing changed genes summary on last sheet.")
     return(xls_result)
+}
+
+compare_logfc_plots <- function(combined_tables) {
+    plots <- list()
+    for (count in 1:length(combined_tables[["data"]])) {
+        tab <- combined_tables[["data"]][[count]]
+        le <- s_p(plot_linear_scatter(tab[, c("limma_logfc", "edger_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
+        ld <- s_p(plot_linear_scatter(tab[, c("limma_logfc", "deseq_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
+        de <- s_p(plot_linear_scatter(tab[, c("deseq_logfc", "edger_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
+        lb <- s_p(plot_linear_scatter(tab[, c("limma_logfc", "basic_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
+        db <- s_p(plot_linear_scatter(tab[, c("deseq_logfc", "basic_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
+        eb <- s_p(plot_linear_scatter(tab[, c("edger_logfc", "basic_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
+        name <- names(combined_tables[["data"]])[[count]]
+        compared <- list(
+            "le" = le, "ld" = ld, "de" = de,
+            "lb" = lb, "db" = db, "eb" = eb)
+        plots[[name]] <- compared
+    }
+    return(plots)
 }
 
 #' Small hack of limma's exampleData() to allow for arbitrary data set
@@ -837,7 +865,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
     }
     ## for (f in 1:length(eval_strings)) {
     ##     eval_name = names(eval_strings[f])
-    ##     print(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
+    ##     message(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
     ##     eval(parse(text=as.character(eval_strings[f])))
     ## }
     ## Now we have bob=(somestuff) in memory in R's environment
@@ -1299,9 +1327,14 @@ choose_model <- function(conditions, batches, model_batch=TRUE,
 #' This tries to make that consistent.
 #'
 #' @param input Expt input.
+#' @param force Force non-standard data
+#' @param ... More options for future expansion
 #' @return List the data, conditions, and batches in the data.
-choose_dataset <- function(input) {
+choose_dataset <- function(input, force=FALSE, ...) {
+    arglist <- list(...)
     input_class <- class(input)[1]
+    ## I think I would like to make this function smarter so that it will remove the log2 from transformed data.
+
     if (input_class == "expt") {
         conditions <- input[["conditions"]]
         batches <- input[["batches"]]
@@ -1321,6 +1354,7 @@ choose_dataset <- function(input) {
                 warning("But if you, like me, want to see what happens when you put")
                 warning("non-standard data into deseq, then here you go.")
                 data <- round(data)
+                data[ data < 0] <- 0
             } else if (input[["state"]][["normalization"]] != "raw" |
                        (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
                 ## This makes use of the fact that the order of operations in the normalization function is static.

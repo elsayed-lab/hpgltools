@@ -253,8 +253,9 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     message("Starting limma pairwise comparison.")
     input_class <- class(input)[1]
     if (input_class == "expt") {
-        conditions <- input[["conditions"]]
-        batches <- input[["batches"]]
+        design <- Biobase::pData(input[["expressionset"]])
+        conditions <- design[["condition"]]
+        batches <- design[["batch"]]
         data <- Biobase::exprs(input[["expressionset"]])
         if (is.null(libsize)) {
             message("libsize was not specified, this parameter has profound effects on limma's result.")
@@ -341,7 +342,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
     ## This will be important in 17 lines from now.
     ## Do the lmFit() using this model
-    message("limma step 3/6: running lmFit")
+    message("Limma step 3/6: running lmFit")
     fun_fit <- limma::lmFit(fun_voom, fun_model)
     ##fun_fit = lmFit(fun_voom)
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
@@ -717,7 +718,7 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
     end <- length(coef)
     for (c in 1:end) {
         comparison <- coef[c]
-        message(paste0("limma step 6/6: ", c, "/", end, ": Printing table: ", comparison, "."))
+        message(paste0("Limma step 6/6: ", c, "/", end, ": Printing table: ", comparison, "."))
         data_table <- limma::topTable(data, adjust=adjust, n=n, coef=comparison)
         ## Reformat the numbers so they are not so obnoxious
         ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
