@@ -782,8 +782,8 @@ backup_file <- function(backup_file, backups=4) {
 #' saveme()
 #' }
 #' @export
-loadme <- function(dir="savefiles") {
-    savefile <- paste0(getwd(), "/", dir, "/RData.rda.xz")
+loadme <- function(dir="savefiles", filename="RData.rda.xz") {
+    savefile <- paste0(getwd(), "/", dir, "/", filename)
     message(paste0("Loading the savefile: ", savefile))
     load_string <- paste0("load('", savefile, "', envir=globalenv())")
     message(paste0("Command run: ", load_string))
@@ -806,12 +806,12 @@ loadme <- function(dir="savefiles") {
 #' saveme()
 #' }
 #' @export
-saveme <- function(directory="savefiles", backups=4) {
+saveme <- function(directory="savefiles", backups=4, filename="RData.rda.xz") {
     environment()
     if (!file.exists(directory)) {
         dir.create(directory)
     }
-    savefile <- paste0(getwd(), "/", directory, "/RData.rda.xz")
+    savefile <- paste0(getwd(), "/", directory, "/", filename)
     message(paste0("The savefile is: ", savefile))
     backup_file(savefile, backups=backups)
     ## The following save strings work:

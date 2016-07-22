@@ -322,7 +322,6 @@ combine_de_tables <- function(all_pairwise_result, annot_df=NULL,
             plots[[name]] <- plt
             de_summaries <- rbind(de_summaries, summary)
             table_names[[a]] <- summary[["table"]]
-            print(de_summaries)
         }
 
         ## If you want all the tables in a dump
