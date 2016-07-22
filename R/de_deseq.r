@@ -142,8 +142,9 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     arglist <- list(...)
     message("Starting DESeq2 pairwise comparisons.")
     input_data <- choose_dataset(input, force=force)
-    conditions <- input_data[["conditions"]]
-    batches <- input_data[["batches"]]
+    design <- Biobase::pData(input[["expressionset"]])
+    conditions <- design[["condition"]]
+    batches <- design[["batch"]]
     data <- input_data[["data"]]
 
     condition_table <- table(conditions)
@@ -178,7 +179,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         ## conditions and batch in this context is information taken from pData()
         column_data <- Biobase::pData(input[["expressionset"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                     colData=column_data,
+                                                     colData=design,
                                                      ##design=~ batch_levels + condition_levels)
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
