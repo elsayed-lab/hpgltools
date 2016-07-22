@@ -65,7 +65,11 @@ s_p <- function(code) {
 
 #' @export
 sm <- function(...) {
-    suppressMessages(...)
+    ret <- NULL
+    output <- capture.output(type="output", {
+        ret <- suppressWarnings(suppressMessages(...))
+    })
+    return(ret)
 }
 
 #' Grab gene lengths from a gff file.

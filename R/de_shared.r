@@ -726,11 +726,21 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     return(xls_result)
 }
 
+#' Compare logFC values from limma and friends
+#'
+#' There are some peculiar discrepencies among these tools, what is up with that?
+#'
+#' @param combined_tables The combined tables from limma et al.
+#' @return Some plots
+#' @export
 compare_logfc_plots <- function(combined_tables) {
     plots <- list()
     for (count in 1:length(combined_tables[["data"]])) {
         tab <- combined_tables[["data"]][[count]]
-        le <- s_p(plot_linear_scatter(tab[, c("limma_logfc", "edger_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
+        le_data <- tab[, c("limma_logfc", "edger_logfc", "edger_q")]
+        le_data[[3]] <- 1 - as.numeric(le_data[[3]])
+        le <- s_p(plot_linear_scatter(le_data, pretty_colors=FALSE)$scatter)[["result"]]
+        le <- le + geom_point(data=le_data, aes(x=limma_logfc, y=edger_logfc, colour=edger_q)) + scale_colour_gradient()
         ld <- s_p(plot_linear_scatter(tab[, c("limma_logfc", "deseq_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
         de <- s_p(plot_linear_scatter(tab[, c("deseq_logfc", "edger_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
         lb <- s_p(plot_linear_scatter(tab[, c("limma_logfc", "basic_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
@@ -1350,9 +1360,12 @@ choose_dataset <- function(input, force=FALSE, ...) {
             if (isTRUE(force)) {
                 ## Setting force to TRUE allows one to round the data to fool edger into accepting it
                 ## This is a pretty terrible thing to do
-                warning("About to round the data, this is a pretty terrible thing to do")
-                warning("But if you, like me, want to see what happens when you put")
-                warning("non-standard data into deseq, then here you go.")
+                warning("About to round the data, this is a")
+                warning("pretty terrible thing to do.")
+                warning("But if you, like me, want to see")
+                warning("what happens when you put")
+                warning("non-standard data into deseq,")
+                warning("then here you go.")
                 data <- round(data)
                 data[ data < 0] <- 0
             } else if (input[["state"]][["normalization"]] != "raw" |
