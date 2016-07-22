@@ -90,7 +90,7 @@ test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts)
 })
 
 ## If we made it this far, then the inputs to limma should agree.
-hpgl_limma_combat_result <- s_p(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=TRUE))[["result"]]
+hpgl_limma_combat_result <- s_p(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=FALSE))[["result"]]
 hpgl_voom <- hpgl_limma_combat_result[["voom_result"]]
 hpgl_fit <- hpgl_limma_combat_result[["fit"]]
 hpgl_eb <- hpgl_limma_combat_result[["pairwise_comparisons"]]
@@ -151,7 +151,6 @@ test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (rank)", {
 test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (Amean)", {
     expect_equal(sort(as.numeric(cbcb_fit$Amean)), sort(as.numeric(hpgl_fit$Amean)))
 })
-
 
 expected <- cbcb_eb[["t"]]
 expected <- expected[sort(rownames(expected)), ]

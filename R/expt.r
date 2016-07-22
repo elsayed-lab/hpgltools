@@ -1,44 +1,3 @@
-#' Given a table of meta data, read it in for use by create_expt().
-#'
-#' Reads an experimental design in a few different formats in preparation for creating an expt.
-#'
-#' @param file Csv/xls file to read.
-#' @param ... Arguments for arglist, used by sep, header and similar read.csv/read.table parameters.
-#' @return Df of metadata.
-read_metadata <- function(file, ...) {
-    arglist <- list(...)
-    if (is.null(arglist[["sep"]])) {
-        arglist[["sep"]] <- ","
-    }
-    if (is.null(arglist[["header"]])) {
-        arglist[["header"]] <- TRUE
-    }
-    if (tools::file_ext(file) == "csv") {
-        definitions <- read.csv(file=file, comment.char="#",
-                                sep=arglist[["sep"]], header=arglist[["header"]])
-    } else if (tools::file_ext(file) == "xlsx") {
-        ## xls = loadWorkbook(file, create=FALSE)
-        ## tmp_definitions = readWorksheet(xls, 1)
-        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1, ...)
-    } else if (tools::file_ext(file) == "xls") {
-        ## This is not correct, but it is a start
-        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1, ...)
-    } else {
-        definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
-    }
-
-    colnames(definitions) <- tolower(colnames(definitions))
-    colnames(definitions) <- gsub("[[:punct:]]", "", colnames(definitions))
-    rownames(definitions) <- make.names(definitions[["sampleid"]], unique=TRUE)
-    ## "no visible binding for global variable 'sampleid'"  ## hmm sample.id is a column from the csv file.
-    ## tmp_definitions <- subset(tmp_definitions, sampleid != "")
-    empty_samples <- which(definitions[, "sampleid"] == "" | is.na(definitions[, "sampleid"]) | grepl(pattern="^#", x=definitions[, "sampleid"]))
-    if (length(empty_samples) > 0) {
-        definitions <- definitions[-empty_samples, ]
-    }
-    return(definitions)
-}
-
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.
 #'
@@ -50,17 +9,17 @@ read_metadata <- function(file, ...) {
 #'
 #' @param metadata Comma separated file (or excel) describing the samples with information like
 #'     condition, batch, count_filename, etc.
-#' @param sample_colors List of colors by condition, if not provided it will generate its own colors
-#'     using colorBrewer.
 #' @param gene_info Annotation information describing the rows of the data set, this often comes
 #'     from a call to import.gff() or biomart or organismdbi.
+#' @param count_dataframe If one does not wish to read the count tables from the filesystem, they
+#'     may instead be fed as a data frame here.
+#' @param sample_colors List of colors by condition, if not provided it will generate its own colors
+#'     using colorBrewer.
 #' @param title Provide a title for the expt?
 #' @param notes Additional notes?
 #' @param include_type I have usually assumed that all gff annotations should be used, but that is
 #'     not always true, this allows one to limit to a specific annotation type.
 #' @param include_gff Gff file to help in sorting which features to keep.
-#' @param count_dataframe If one does not wish to read the count tables from the filesystem, they
-#'     may instead be fed as a data frame here.
 #' @param savefile Rdata filename prefix for saving the data of the resulting expt.
 #' @param low_files Explicitly lowercase the filenames when searching the filesystem?
 #' @param ... More parameters are fun!
@@ -73,8 +32,8 @@ read_metadata <- function(file, ...) {
 #' ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
-create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL, notes=NULL,
-                        include_type="all", include_gff=NULL, count_dataframe=NULL,
+create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_colors=NULL, title=NULL, notes=NULL,
+                        include_type="all", include_gff=NULL,
                         savefile="expt", low_files=FALSE, ...) {
     arglist <- list(...)  ## pass stuff like sep=, header=, etc here
     ## Palette for colors when auto-chosen
@@ -140,6 +99,8 @@ create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL
     if (is.null(condition_names)) {
         warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
     }
+    sample_definitions[["condition"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=sample_definitions[["condition"]])
+    sample_definitions[["batch"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=sample_definitions[["batch"]])
 
     ## Make sure we have a viable set of colors for plots
     chosen_colors <- as.character(sample_definitions[["condition"]])
@@ -239,6 +200,7 @@ create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL
         if (is.null(include_gff)) {
             gene_info <- as.data.frame(rownames(all_count_matrix))
             rownames(gene_info) <- rownames(all_count_matrix)
+            colnames(gene_info) <- "name"
         } else {
             message("create_expt(): Reading annotation gff, this is slow.")
             annotation <- gff2df(gff=include_gff, type=gff_type)
@@ -249,16 +211,18 @@ create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL
         gene_info <- as.data.frame(gene_info[["genes"]])
     }
 
-    tmp_gene_info <- gene_info
-    tmp_gene_info[["temporary_id_number"]] <- 1:nrow(tmp_gene_info)
-    counts_and_annotations <- merge(all_count_matrix, tmp_gene_info, by="row.names", all.x=TRUE)
+    tmp_counts <- as.data.frame(all_count_matrix)
+    tmp_counts[["temporary_id_number"]] <- 1:nrow(tmp_counts)
+    message("Bringing together the count matrix and gene information.")
+    counts_and_annotations <- merge(tmp_counts, gene_info, by="row.names", all.x=TRUE)
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
-    final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ]
+    final_annotations <- as.data.frame(counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ])
+    colnames(final_annotations) <- colnames(gene_info)
     rownames(final_annotations) <- counts_and_annotations[["Row.names"]]
     final_counts <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_matrix) ]
     rownames(final_counts) <- counts_and_annotations[["Row.names"]]
     rm(counts_and_annotations)
-    rm(tmp_gene_info)
+    rm(tmp_counts)
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
@@ -315,13 +279,161 @@ create_expt <- function(metadata, sample_colors=NULL, gene_info=NULL, title=NULL
         "transform" = "raw")
     expt[["state"]] <- starting_state
     expt[["conditions"]] <- droplevels(as.factor(sample_definitions[, "condition"]))
+    expt[["conditions"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=expt[["conditions"]])
     expt[["batches"]] <- droplevels(as.factor(sample_definitions[, "batch"]))
+    expt[["batches"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=expt[["batches"]])
     expt[["original_libsize"]] <- colSums(Biobase::exprs(experiment))
     expt[["libsize"]] <- expt[["original_libsize"]]
     expt[["colors"]] <- chosen_colors
     if (!is.null(savefile)) {
         save(list = c("expt"), file=paste(savefile, ".Rdata", sep=""))
     }
+    return(expt)
+}
+
+#' Change the factors (condition and batch) of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param condition New condition factor
+#' @param batch New batch factor
+#' @param ... Arguments passed along (likely colors)
+#' @return expt Send back the expt with some new metadata
+#' #' \dontrun{
+#'  expt = set_expt_factors(big_expt, condition="column", batch="another_column")
+#' }
+#' @export
+set_expt_factors <- function(expt, condition=NULL, batch=NULL, ...) {
+    arglist <- list(...)
+    if (!is.null(condition)) {
+        expt <- set_expt_condition(expt, factor=condition, ...)
+    }
+    if (!is.null(batch)) {
+        expt <- set_expt_batch(expt, factor=batch, ...)
+    }
+    return(expt)
+}
+
+#' Change the condition of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param factor Conditions to replace
+#' @param colors Reset the set of colors (Give a factor if you want to choose your own).
+#' @return expt Send back the expt with some new metadata
+#' #' \dontrun{
+#'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))")
+#' }
+#' @export
+set_expt_condition <- function(expt, factor, colors=TRUE, ...) {
+    arglist <- list(...)
+    original_conditions <- expt[["conditions"]]
+    original_length <- length(original_conditions)
+    if (length(factor) == 1) {
+        ## Assume it is a column in the design
+        if (factor %in% colnames(expt[["design"]])) {
+            factor <- expt[["design"]][[factor]]
+        } else {
+            stop("The provided factor is not in the design matrix.")
+        }
+    }
+
+    if (length(factor) != original_length) {
+        stop("The new factor of conditions is not the same length as the original.")
+    }
+
+    expt[["conditions"]] <- factor
+    Biobase::pData(expt[["expressionset"]])[["condition"]] <- factor
+    expt[["design"]][["condition"]] <- factor
+    if (isTRUE(colors)) {
+        expt <- set_expt_colors(expt, colors=colors, ...)
+    }
+    return(expt)
+}
+
+#' Change the batches of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param factor Batches to replace
+
+#' @return expt Send back the expt with some new metadata
+#' #' \dontrun{
+#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
+#' }
+#' @export
+set_expt_batch <- function(expt, factor) {
+    original_batches <- expt[["batches"]]
+    original_length <- length(original_batches)
+    if (length(factor) == 1) {
+        ## Assume it is a column in the design
+        if (factor %in% colnames(expt[["design"]])) {
+            factor <- expt[["design"]][[factor]]
+        } else {
+            stop("The provided factor is not in the design matrix.")
+        }
+    }
+
+    if (length(factor) != original_length) {
+        stop("The new factor of batches is not the same length as the original.")
+    }
+    expt[["batches"]] <- factor
+    Biobase::pData(expt[["expressionset"]])[["batch"]] <- factor
+    expt[["design"]][["batch"]] <- factor
+    return(expt)
+}
+
+#' Change the colors of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param colors colors to replace
+#' @return expt Send back the expt with some new metadata
+#' #' \dontrun{
+#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
+#' }
+#' @export
+set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
+    num_conditions <- length(expt[["conditions"]])
+    num_samples <- nrow(expt[["design"]])
+    sample_ids <- expt[["design"]][["sampleid"]]
+    chosen_colors <- NULL
+    if (is.null(colors) | isTRUE(colors)) {
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    }
+
+    if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
+        chosen_colors <- sample_colors
+    } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    } else if (is.null(sample_colors)) {
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    } else {
+        warning("The number of colors provided does not match either the number of conditions nor samples.")
+        warning("Unsure of what to do, so choosing colors with RColorBrewer.")
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    }
+    names(chosen_colors) <- sample_ids
+
+    expt[["colors"]] <- chosen_colors
     return(expt)
 }
 
@@ -379,6 +491,8 @@ expt_subset <- function(expt, subset=NULL) {
     original_libsize <- expt[["original_libsize"]]
     subset_libsize <- original_libsize[subset_positions, drop=TRUE]
     subset_expressionset <- original_expressionset[, subset_positions]
+    first_expressionset <- original_expressionset[["original_expressionset"]]
+    subset_first_expressionset <- first_expressionset[, subset_positions]
 
     notes <- expt[["notes"]]
     if (!is.null(note_appended)) {
@@ -390,12 +504,13 @@ expt_subset <- function(expt, subset=NULL) {
             subset_design[[col]] <- droplevels(subset_design[[col]])
         }
     }
+    Biobase::pData(subset_expressionset) <- subset_design
 
     new_expt <- list(
         "title" = expt[["title"]],
         "notes" = toString(notes),
         "initial_metadata" = subset_design,
-        "original_expressionset" = subset_expressionset,
+        "original_expressionset" = subset_first_expressionset,
         "expressionset" = subset_expressionset,
         "design" = subset_design,
         "conditions" = subset_conditions,
@@ -407,4 +522,45 @@ expt_subset <- function(expt, subset=NULL) {
         "libsize" = subset_libsize)
     class(new_expt) <- "expt"
     return(new_expt)
+}
+
+#' Given a table of meta data, read it in for use by create_expt().
+#'
+#' Reads an experimental design in a few different formats in preparation for creating an expt.
+#'
+#' @param file Csv/xls file to read.
+#' @param ... Arguments for arglist, used by sep, header and similar read.csv/read.table parameters.
+#' @return Df of metadata.
+read_metadata <- function(file, ...) {
+    arglist <- list(...)
+    if (is.null(arglist[["sep"]])) {
+        arglist[["sep"]] <- ","
+    }
+    if (is.null(arglist[["header"]])) {
+        arglist[["header"]] <- TRUE
+    }
+    if (tools::file_ext(file) == "csv") {
+        definitions <- read.csv(file=file, comment.char="#",
+                                sep=arglist[["sep"]], header=arglist[["header"]])
+    } else if (tools::file_ext(file) == "xlsx") {
+        ## xls = loadWorkbook(file, create=FALSE)
+        ## tmp_definitions = readWorksheet(xls, 1)
+        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1, ...)
+    } else if (tools::file_ext(file) == "xls") {
+        ## This is not correct, but it is a start
+        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1, ...)
+    } else {
+        definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
+    }
+
+    colnames(definitions) <- tolower(colnames(definitions))
+    colnames(definitions) <- gsub("[[:punct:]]", "", colnames(definitions))
+    rownames(definitions) <- make.names(definitions[["sampleid"]], unique=TRUE)
+    ## "no visible binding for global variable 'sampleid'"  ## hmm sample.id is a column from the csv file.
+    ## tmp_definitions <- subset(tmp_definitions, sampleid != "")
+    empty_samples <- which(definitions[, "sampleid"] == "" | is.na(definitions[, "sampleid"]) | grepl(pattern="^#", x=definitions[, "sampleid"]))
+    if (length(empty_samples) > 0) {
+        definitions <- definitions[-empty_samples, ]
+    }
+    return(definitions)
 }

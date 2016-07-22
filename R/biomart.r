@@ -36,17 +36,25 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
         marts <- biomaRt::listMarts(host=host)
         mart_names <- as.character(marts[[1]])
         message(paste0("The available marts are: "))
-        message(mart_names)
+        message(toString(mart_names))
         message("Trying the first one.")
         mart <- biomaRt::useMart(biomart=marts[[1,1]], host=host)
     }
     dataset <- paste0(species, "_gene_ensembl")
+    second_dataset <- paste0(species, "_eg_gene")
     ensembl <- try(biomaRt::useDataset(dataset, mart=mart))
-    if (class(ensembl) == 'try-error') {
-        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", dataset, "."))
-        datasets <- biomaRt::listDatasets(mart=mart)
-        print(datasets)
-        return(NULL)
+    if (class(ensembl) == "try-error") {
+        ensembl <- try(biomaRt::useDataset(second_dataset, mart=mart))
+        if (class(ensembl) == "try-error") {
+            message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", dataset, "."))
+            datasets <- biomaRt::listDatasets(mart=mart)
+            print(datasets)
+            return(NULL)
+        } else {
+            message(paste0("Successfully loaded from the ", second_dataset, " database."))
+        }
+    } else {
+        message(paste0("Successfully loaded from the ", dataset, " database."))
     }
     ## The following was stolen from Laura's logs for human annotations.
     ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)

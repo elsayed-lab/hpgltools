@@ -52,12 +52,27 @@ hpgl_pval <- hpgl_result_reordered$P.Value
 deseq_adjpval <- deseq_result_reordered$adj.P.Val
 hpgl_adjpval <- hpgl_result_reordered$padj
 
-test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise()?", {
+test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): basemean?", {
     expect_equal(deseq_basemean, hpgl_basemean, tolerance=1)
+})
+
+test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): logfc?", {
     expect_equal(deseq_logfc, hpgl_logfc, tolerance=0.001)
+})
+
+test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): lfcse?", {
     expect_equal(deseq_lfcse, hpgl_lfcse, tolerance=0.2)
+})
+
+test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): stat?", {
     expect_equal(deseq_stat, hpgl_stat, tolerance=0.1)
+})
+
+test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): pval?", {
     expect_equal(deseq_pval, hpgl_pval, tolerance=0.1)
+})
+
+test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): adjpval?", {
     expect_equal(deseq_adjpval, hpgl_adjpval, tolerance=0.1)
 })
 

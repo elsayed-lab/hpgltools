@@ -4,8 +4,10 @@
 \alias{edger_coefficient_scatter}
 \title{Plot two coefficients with respect to one another from edgeR.}
 \usage{
-edger_coefficient_scatter(output, x = 1, y = 2, gvis_filename = NULL,
-  gvis_trendline = TRUE, tooltip_data = NULL, base_url = NULL)
+edger_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
+  gvis_filename = NULL, gvis_trendline = TRUE, z = 1.5,
+  tooltip_data = NULL, base_url = NULL, color_low = "#DD0000",
+  color_high = "#7B9F35", ...)
 }
 \arguments{
 \item{output}{Set of pairwise comparisons provided by edger_pairwise().}

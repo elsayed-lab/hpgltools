@@ -5,7 +5,7 @@
 \title{Extract the sets of genes which are significantly up/down regulated
 from the combined tables.}
 \usage{
-extract_significant_genes(combined, according_to = "limma", fc = 1,
+extract_significant_genes(combined, according_to = "all", fc = 1,
   p = 0.05, z = NULL, n = NULL, excel = "excel/significant_genes.xlsx")
 }
 \arguments{

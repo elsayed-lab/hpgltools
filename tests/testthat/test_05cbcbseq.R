@@ -68,7 +68,7 @@ cbcb_l2qcpm <- cbcb_l2qcpm_data[["y"]]
 hpgl_l2qcpm_data <- s_p(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter_low=FALSE))[["result"]]
 hpgl_l2qcpm <- hpgl_l2qcpm_data[["count_table"]]
 hpgl_l2qcpm <- hpgl_l2qcpm[sort(rownames(hpgl_l2qcpm)), ]
-hpgl_l2qcpm_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter_low=FALSE))[["result"]]
+hpgl_l2qcpm_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=FALSE))$result
 hpgl_l2qcpm2 <- Biobase::exprs(hpgl_l2qcpm_expt[["expressionset"]])
 hpgl_l2qcpm2 <- hpgl_l2qcpm2[sort(rownames(hpgl_l2qcpm2)), ]
 test_that("Are l2qcpm conversions/transformations identical using two codepaths?", {
@@ -104,25 +104,50 @@ test_model <- model.matrix(~condition)
 cbcb_voom <- cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize)
 hpgl_voom <- cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize)
 hpgl_voom2 <- hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
-hpgl_voom3 <- s_p(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))[["result"]]
+hpgl_voom3 <- s_p(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))$result
 
 test_that("Do different voom() invocations end with the same data?", {
     expect_equal(cbcb_voom, hpgl_voom)
     expect_equal(cbcb_voom$E, hpgl_voom2$E)
     expect_equal(cbcb_voom$E, hpgl_voom3$E)
+    expect_equal(cbcb_voom$weights, hpgl_voom$weights)
 })
 
-## my hpgl_voom() sets row/column names and causes a test of the weights to fail.
-## But checking manually shows them the same.
-## expect_equal(cbcb_voom$weights, hpgl_voom$weights)
+hpgl_limma <- s_p(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, model_intercept=FALSE))$result
+## First check the voom result from limma_pairwise
+hpgl_limma_voom <- hpgl_limma$voom_result
+hpgl_limma_voom_e <- hpgl_limma$voom_result$E[order(rownames(hpgl_limma$voom_result$E)), ]
+cbcb_voom_e <- cbcb_voom$E[order(rownames(cbcb_voom$E)), ]
+test_that("Limma results, voom.", {
+    expect_equal(cbcb_voom_e, hpgl_limma_voom_e)
+})
 
+## Then the result from lmFit
+hpgl_limma_fit_coef <- hpgl_limma$fit$coefficients[order(rownames(hpgl_limma$fit$coefficients)), ]
 cbcb_fit <- limma::lmFit(cbcb_voom)
+cbcb_fit_coef <- cbcb_fit$coefficients[order(rownames(cbcb_fit$coefficients)), ]
+colnames(cbcb_fit_coef) <- c("(Intercept)", "untreated")
+test_that("Limma results, fitting coefficients.", {
+    expect_equal(cbcb_fit_coef, hpgl_limma_fit_coef)
+})
+hpgl_limma_fit_stdev <- hpgl_limma$fit$stdev.unscaled[order(rownames(hpgl_limma$fit$stdev.unscaled)), ]
+cbcb_fit_stdev <- cbcb_fit$stdev.unscaled[order(rownames(cbcb_fit$stdev.unscaled)), ]
+colnames(cbcb_fit_stdev) <- c("(Intercept)", "untreated")
+test_that("Limma results, fitting standard deviations.", {
+    expect_equal(cbcb_fit_stdev, hpgl_limma_fit_stdev)
+})
+
+## Now the result from eBayes
 cbcb_eb <- limma::eBayes(cbcb_fit)
+hpgl_eb <- limma::eBayes(hpgl_limma$fit)
+test_that("Limma results, eBayes.", {
+    expect_equal(sort(cbcb_eb$F), sort(hpgl_eb$F))
+})
+
 cbcb_top <- s_p(limma::topTable(cbcb_eb, number=nrow(cbcb_eb)))[["result"]]
 cbcb_top <- cbcb_top[sort(rownames(cbcb_top)), ]
-hpgl_toptables <- s_p(hpgltools::limma_pairwise(hpgl_l2qcpm_expt, model_intercept=TRUE, model_batch=FALSE, libsize=hpgl_libsize))[["result"]]
-hpgl_top <- hpgl_toptables[["all_tables"]]
+hpgl_top <- s_p(limma::topTable(hpgl_eb, number=nrow(cbcb_eb)))$result
 hpgl_top <- hpgl_top[sort(rownames(hpgl_top)), ]
-test_that("Limma results.", {
+test_that("Limma results, toptable.", {
     expect_equal(cbcb_top, hpgl_top)
 })

@@ -88,7 +88,7 @@ fission_data <- fission@assays$data$counts
 ## This will make an experiment superclass called 'expt' and it contains
 ## an ExpressionSet along with any arbitrary additional information one might want to include.
 ## Along the way it writes a Rdata file which is by default called 'expt.Rdata'
-fission_expt <- create_expt(meta_dataframe=meta, count_dataframe=fission_data)
+fission_expt <- create_expt(meta, count_dataframe=fission_data)
 ```
 
 ## Normalizing and exploring data

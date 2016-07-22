@@ -13,6 +13,11 @@
 ### More well understood and conservative.
 ##  Why have we nonetheless done #2 in a few instances?  (not only because we learned that first)
 
+default_norm <- function(expt, ...) {
+    new <- normalize_expt(expt, norm="quant", convert="cpm", filter=TRUE, ...)
+    return(new)
+}
+
 #' Normalize the data of an expt object.  Save the original data, and note what was done.
 #'
 #' It is the responsibility of normalize_expt() to perform any arbitrary normalizations desired as
@@ -62,8 +67,14 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     batch1="batch", batch2=NULL, batch_step=5, low_to_zero=FALSE, ## extra parameters for batch correction
     thresh=2, min_samples=2, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
     ...) {
+    arglist <- list(...)
     new_expt <- expt
+    type <- ""
     current_exprs <- expt[["expressionset"]]
+    if (!is.null(arglist[["filter_low"]])) {  ## I changed the name of this argument.
+        warning("This argument has been changed to 'filter'.")
+        filter <- arglist[["filter"]]
+    }
     if (filter == FALSE) {
         filter <- "raw"
     }
@@ -71,7 +82,6 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
         new_expt[["original_expressionset"]] = new_expt[["expressionset"]]
     } else {
         message("This function will replace the expt$expressionset slot with:")
-        type <- ""
         if (transform != "raw") {
             type <- paste0(type, transform, '(')
         }
