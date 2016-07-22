@@ -33,8 +33,18 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
     if (!is.null(arglist[["qlimit"]])) {
         qlimit <- arglist[["qlimit"]]
     }
+    fc_column <- "limma_logfc"
+    if (!is.null(arglist[["fc_column"]])) {
+        fc_column <- arglist[["fc_column"]]
+    }
+    p_column <- "limma_adjp"
+    if (!is.null(arglist[["p_column"]])) {
+        p_column <- arglist[["p_column"]]
+    }
     coefficients <- output[["pairwise_comparisons"]][["coefficients"]]
     thenames <- colnames(coefficients)
+    message("This can do comparisons among the following columns in the limma result:")
+    message(toString(thenames))
     xname <- ""
     yname <- ""
     if (is.numeric(x)) {
@@ -51,20 +61,18 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
     coefficients <- output[["pairwise_comparisons"]][["coefficients"]]
     coefficients <- coefficients[, c(x, y)]
     maxvalue <- max(coefficients) + 1
-    plot <- plot_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
-                                gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                tooltip_data=tooltip_data, base_url=base_url,
-                                pretty_colors=FALSE, color_low=color_low, color_high=color_high)
+    plot <- suppressMessages(plot_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
+                                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
+                                                 tooltip_data=tooltip_data, base_url=base_url,
+                                                 pretty_colors=FALSE, color_low=color_low, color_high=color_high))
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
     if (!is.null(toptable)) {
         theplot <- plot[["scatter"]] + ggplot2::theme_bw()
-        sig <- limma_subset(toptable, z=z)
-        sigup <- sig[["up"]]
-        sigdown <- sig[["down"]]
-        sigup <- sigup[sigup[["qvalue"]] <= qlimit, ]
-        sigdown <- sigdown[sigdown[["qvalue"]] <= qlimit, ]
+        sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
+        sigup <- sig[["up_genes"]]
+        sigdown <- sig[["down_genes"]]
         up_index <- rownames(coefficients) %in% rownames(sigup)
         down_index <- rownames(coefficients) %in% rownames(sigdown)
         up_df <- as.data.frame(coefficients[up_index, ])
@@ -452,46 +460,6 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
     }
     plots[["dataframe"]] <- df
     return(plots)
-}
-
-#' A quick and dirty way to pull the top/bottom genes from toptable().
-#'
-#' If neither n nor z is provided, it assumes you want 1.5 z-scores from the median.
-#'
-#' @param table Original data from limma.
-#' @param n Number of genes to keep.
-#' @param z Number of z-scores from the mean.
-#' @return Dataframe subset from toptable.
-#' @seealso \pkg{limma}
-#' @examples
-#' \dontrun{
-#'  subset = limma_subset(df, n=400)
-#'  subset = limma_subset(df, z=1.5)
-#' }
-#' @export
-limma_subset <- function(table, n=NULL, z=NULL) {
-    if (is.null(n) & is.null(z)) {
-        z <- 1.5
-    }
-    if (is.null(n)) {
-        out_summary <- summary(table$logFC)
-        out_mad <- stats::mad(table$logFC, na.rm=TRUE)
-        up_median_dist <- out_summary["Median"] + (out_mad * z)
-        down_median_dist <- out_summary["Median"] - (out_mad * z)
-
-        up_genes <- table[ which(table$logFC >= up_median_dist), ]
-        ## up_genes = subset(table, logFC >= up_median_dist)
-        down_genes <- table[ which(table$logFC <= down_median_dist), ]
-        ## down_genes = subset(table, logFC <= down_median_dist)
-    } else if (is.null(z)) {
-        upranked <- table[order(table$logFC, decreasing=TRUE), ]
-        up_genes <- head(upranked, n=n)
-        down_genes <- tail(upranked, n=n)
-    }
-    ret_list <- list(
-        "up" = up_genes,
-        "down" = down_genes)
-    return(ret_list)
 }
 
 #' Perform a simple experimental/control comparison.
