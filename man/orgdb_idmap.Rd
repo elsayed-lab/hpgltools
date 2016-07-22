@@ -4,13 +4,8 @@
 \alias{orgdb_idmap}
 \title{Load organism annotation data (mouse/human).}
 \usage{
-<<<<<<< HEAD
-orgdb_idmap(orgdb, gene_ids = NULL, keytype = "geneid",
-  mapto = c("ensembl"))
-=======
 orgdb_idmap(orgdb, gene_ids = NULL, mapto = c("ensembl"),
   keytype = "geneid")
->>>>>>> ba6f79f22ec1f944248f0784d51e034e79eefd4a
 }
 \arguments{
 \item{orgdb}{OrganismDb instance.}

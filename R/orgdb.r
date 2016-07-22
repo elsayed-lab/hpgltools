@@ -506,18 +506,6 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
 #' host <- load_host_annotations(org, c("a","b"))
 #' }
 #' @export
-<<<<<<< HEAD
-orgdb_idmap <- function(orgdb, gene_ids=NULL, keytype="geneid", mapto=c('ensembl')) {
-    avail_keytypes <- AnnotationDbi::keytypes(orgdb)
-    mapto <- toupper(mapto)
-    keytype <- toupper(keytype)
-    for (map in mapto) {
-        if (!map %in% avail_keytypes) {
-            warning(paste0("The chosen keytype ", map, " is not in this orgdb."))
-            message("Try some of the following instead: ", toString(avail_keytypes), ".")
-            return(NULL)
-        }
-=======
 orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="geneid") {
     mapto <- toupper(mapto)
     keytype <- toupper(keytype)
@@ -543,7 +531,6 @@ orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="genei
             message("Using ensemblid as the master key.")
         } else
             stop("Could not think of a usable master key.")
->>>>>>> ba6f79f22ec1f944248f0784d51e034e79eefd4a
     }
 
     ## If no gene ids were chosen, grab them all.
@@ -552,11 +539,7 @@ orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="genei
     }
     ## Gene info
     ## Note querying by "GENEID" will exclude noncoding RNAs
-<<<<<<< HEAD
     gene_info <- AnnotationDbi::select(orgdb, keytype=keytype, keys=gene_ids, columns=mapto)
-=======
-    gene_info <- AnnotationDbi::select(orgdb, keys=gene_ids, columns=mapto, keytype=keytype)
->>>>>>> ba6f79f22ec1f944248f0784d51e034e79eefd4a
     colnames(gene_info) <- tolower(colnames(gene_info))
     return(gene_info)
 }
