@@ -1,3 +1,23 @@
+limma_ma <- function(output, table=1, p_column="limma_adjp") {
+    counts <- NULL
+    de_genes <- NULL
+    pval <- NULL
+    if (!is.null(output[["limma"]])) {
+        output <- output[["limma"]]
+        counts <- output[["voom_result"]][["E"]]
+        de_genes <- output[["all_tables"]][[table]]
+        pval <- "adj.P.Val"
+        ## This handles when the input is the result of a pairwise comparison
+    } else if (!is.null(output[["data"]][[table]])) {
+        output <- output[["data"]][[table]]
+        counts <- "something"
+        sig <- "limma_adjp"
+        ## This handles when the result is a set of combined tables
+    }
+    ## plot_ma(counts=macro_batch_comparisons$limma$voom_result$E, de_genes=macro_batch_table, pval="pval")
+    plot <- plot_ma(counts=counts, de_genes=de_genes, pval=pval)
+}
+
 #' Plot out 2 coefficients with respect to one another from limma.
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one

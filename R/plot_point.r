@@ -353,7 +353,11 @@ plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=
         pval_column <- "P.Value"
         aes_color <- "(pval <= pval_cutoff)"
     }
-    df <- data.frame("avg" = rowMeans(counts[rownames(de_genes),]),
+###    df <- data.frame("avg" = rowMeans(counts[rownames(de_genes),]),
+###                     "logfc" = de_genes[["logFC"]],
+###                     "pval" = de_genes[["P.Value"]],
+###                     "adjpval" = de_genes[[pval_column]])
+    df <- data.frame("avg" = de_genes[["AveExpr"]],
                      "logfc" = de_genes[["logFC"]],
                      "pval" = de_genes[["P.Value"]],
                      "adjpval" = de_genes[[pval_column]])

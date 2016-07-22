@@ -20,7 +20,7 @@
 #'  xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
 #' }
 #' @export
-write_xls <- function(data, wb=NULL, sheet="first",
+write_xls <- function(data, wb=NULL, sheet="first", rownames=TRUE,
                       start_row=1, start_col=1, ...) {
     arglist <- list(...)
     if (class(data) == 'matrix') {
@@ -73,7 +73,7 @@ write_xls <- function(data, wb=NULL, sheet="first",
         }
     }
     openxlsx::writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9",
-                             startRow=new_row, rowNames=TRUE, startCol=new_col)
+                             startRow=new_row, rowNames=rownames, startCol=new_col)
     new_row <- new_row + nrow(data) + 2
     ## Set the column lengths, hard set the first to 20,
     ## then try to set it to auto if the length is not too long.

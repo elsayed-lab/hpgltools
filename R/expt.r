@@ -211,6 +211,23 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         gene_info <- as.data.frame(gene_info[["genes"]])
     }
 
+    ## Take a moment to remove columns which are blank
+    columns_to_remove <- NULL
+    for (col in 1:length(colnames(gene_info))) {
+        sum_na <- sum(is.na(gene_info[[col]]))
+        sum_null <- sum(is.null(gene_info[[col]]))
+        sum_empty <- sum_na + sum_null
+        if (sum_empty ==  nrow(gene_info)) {
+            ## This column is empty.
+            columns_to_remove <- append(columns_to_remove, col)
+        }
+    }
+    if (length(columns_to_remove) > 0) {
+        gene_info <- gene_info[-columns_to_remove]
+    }
+    ## There should no longer be blank columns in the annotation data.
+    ## Maybe I will copy/move this to my annotation collection toys?
+
     tmp_counts <- as.data.frame(all_count_matrix)
     tmp_counts[["temporary_id_number"]] <- 1:nrow(tmp_counts)
     message("Bringing together the count matrix and gene information.")
