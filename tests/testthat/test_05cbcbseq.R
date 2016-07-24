@@ -128,8 +128,10 @@ test_that("Do calls to svd return the same residuals?", {
 })
 
 ## Check that the libsizes are properly maintained
-expected <- cbcb_l2qcpm_data[["lib.size"]]
-actual <- hpgl_l2qcpm_data[["intermediate_counts"]][["normalization"]][["libsize"]]
+cbcb_libsize <- cbcb_l2qcpm_data[["lib.size"]]
+hpgl_libsize <- hpgl_l2qcpm_data[["intermediate_counts"]][["normalization"]][["libsize"]]
+expected <- cbcb_libsize
+actual <- hpgl_libsize
 test_that("In preparing for voom(), are the library sizes maintained?", {
     expect_equal(expected, actual)
 })

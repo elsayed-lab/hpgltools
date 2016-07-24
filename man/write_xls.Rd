@@ -4,8 +4,8 @@
 \alias{write_xls}
 \title{Write a dataframe to an excel spreadsheet sheet.}
 \usage{
-write_xls(data, wb = NULL, sheet = "first", start_row = 1,
-  start_col = 1, ...)
+write_xls(data, wb = NULL, sheet = "first", rownames = TRUE,
+  start_row = 1, start_col = 1, ...)
 }
 \arguments{
 \item{data}{Data frame to print.}

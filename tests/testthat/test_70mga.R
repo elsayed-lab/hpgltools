@@ -21,21 +21,35 @@ test_that("Did the gene information load?", {
     expect_equal(expected_gene_names, actual_gene_names)
 })
 
-mgas_norm <- s_p(normalize_expt(mgas_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=TRUE, batch="combat_scale", low_to_zero=TRUE))$result
+mgas_norm <- normalize_expt(mgas_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=TRUE, batch="combat_scale", low_to_zero=TRUE)
 test_that("Are the expt notes and state maintained?", {
     expect_match(object=mgas_norm$notes, regexp="log2\\(combat_scale\\(cbcbcpm\\(quant\\(filter\\(data\\)\\)\\)\\)\\)")
+})
+
+test_that("Is the filter state maintained?", {
     expect_equal("cbcb", mgas_norm$state$filter)
+})
+
+test_that("Is the normalization state maintained?", {
     expect_equal("quant", mgas_norm$state$normalization)
+})
+
+test_that("Is the conversion state maintained?", {
     expect_equal("cbcbcpm", mgas_norm$state$conversion)
+})
+
+test_that("Is the batch state maintained?", {
     expect_equal("combat_scale", mgas_norm$state$batch)
+})
+
+test_that("Is the transformation state maintained?", {
     expect_equal("log2", mgas_norm$state$transform)
 })
 
-mgas_pairwise <- s_p(all_pairwise(mgas_expt))$result
+mgas_pairwise <- sm(all_pairwise(mgas_expt))
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
-
-    mgas_data <- s_p(gbk2txdb(accession="AE009949"))$result
+    mgas_data <- sm(gbk2txdb(accession="AE009949"))
     actual_width <- GenomicRanges::width(mgas_data$seq)  ## This fails on travis?
     expected_width <- 1895017
     actual_exons <- as.data.frame(mgas_data$exons)

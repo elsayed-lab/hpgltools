@@ -80,49 +80,50 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     }
     if (is.null(new_expt[["original_expressionset"]])) {
         new_expt[["original_expressionset"]] = new_expt[["expressionset"]]
-    } else {
-        message("This function will replace the expt$expressionset slot with:")
-        if (transform != "raw") {
-            type <- paste0(type, transform, '(')
+    }
+
+    message("This function will replace the expt$expressionset slot with:")
+    if (transform != "raw") {
+        type <- paste0(type, transform, '(')
+    }
+    if (batch != "raw") {
+        if (isTRUE(batch)) {
+            type <- paste0(type, 'batch-correct(')
+        } else {
+            type <- paste0(type, batch, '(')
         }
-        if (batch != "raw") {
-            if (isTRUE(batch)) {
-                type <- paste0(type, 'batch-correct(')
-            } else {
-                type <- paste0(type, batch, '(')
-            }
+    }
+    if (convert != "raw") {
+        type <- paste0(type, convert, '(')
+    }
+    if (norm != "raw") {
+        type <- paste0(type, norm, '(')
+    }
+    if (filter != "raw") {
+        if (isTRUE(filter)) {
+            type <- paste0(type, 'filter(')
+        } else {
+            type <- paste0(type, filter, '(')
         }
-        if (convert != "raw") {
-            type <- paste0(type, convert, '(')
-        }
-        if (norm != "raw") {
-            type <- paste0(type, norm, '(')
-        }
-        if (filter != "raw") {
-            if (isTRUE(filter)) {
-                type <- paste0(type, 'filter(')
-            } else {
-                type <- paste0(type, filter, '(')
-            }
-        }
-        type <- paste0(type, 'data')
-        if (transform != 'raw') {
-            type <- paste0(type, ')')
-        }
-        if (batch != "raw") {
-            type <- paste0(type, ')')
-        }
-        if (convert != "raw") {
-            type <- paste0(type, ')')
-        }
-        if (norm != "raw") {
-            type <- paste0(type, ')')
-        }
-        if (filter != "raw") {
-            type <- paste0(type, ')')
-        }
-        message(type)
-        message("It backs up the current data into a slot named:
+    }
+    type <- paste0(type, 'data')
+    if (transform != 'raw') {
+        type <- paste0(type, ')')
+    }
+    if (batch != "raw") {
+        type <- paste0(type, ')')
+    }
+    if (convert != "raw") {
+        type <- paste0(type, ')')
+    }
+    if (norm != "raw") {
+        type <- paste0(type, ')')
+    }
+    if (filter != "raw") {
+        type <- paste0(type, ')')
+    }
+    message(type)
+    message("It backs up the current data into a slot named:
  expt$backup_expressionset. It will also save copies of each step along the way
  in expt$normalized with the corresponding libsizes. Keep the libsizes in mind
  when invoking limma.  The appropriate libsize is the non-log(cpm(normalized)).
@@ -131,7 +132,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
  A copy of this may also be found at:
  new_expt$best_libsize
 ")
-    }
+
+
     if (filter == "raw") {
         message("Filter is false, this should likely be set to something, good
  choices include cbcb, kofa, pofa (anything but FALSE).  If you want this to
