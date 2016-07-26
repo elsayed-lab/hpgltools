@@ -342,7 +342,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         c("fc_var", "The variance between limma/deseq/edger."),
         c("fc_varbymed", "The ratio of the variance/median (closer to 0 means better agreement.)"),
         c("p_meta", "A meta-p-value of the mean p-values."),
-        c("p_var", "Variance among the 3 p-values.")))
+        c("p_var", "Variance among the 3 p-values."),
+        c("The following columns", "3 plots showing the expression coefficients of limma, edgeR, and DESeq2 respectively.")
+        ))
+
     colnames(legend) <- c("column name", "column definition")
     xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
                             title="Columns used in the following tables.")
@@ -355,7 +358,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     }
 
     combo <- list()
-    plots <- list()
+    limma_plots <- list()
+    edger_plots <- list()
+    deseq_plots <- list()
     sheet_count <- 0
     de_summaries <- data.frame()
     if (class(keepers) == "list") {
@@ -396,18 +401,27 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                                   annot_df=annot_df, include_basic=include_basic)
                 dat <- combined[["data"]]
                 summary <- combined[["summary"]]
-                plt <- NULL
+                limma_plt <- NULL
+                edger_plt <- NULL
+                deseq_plt <- NULL
                 if (isTRUE(do_inverse)) {
-                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL))[["scatter"]]
+                    limma_plt <- sm(limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL))[["scatter"]]
+                    edger_plt <- sm(edger_coefficient_scatter(edger, x=denominator, y=numerator, gvis_filename=NULL))[["scatter"]]
+                    deseq_plt <- sm(deseq_coefficient_scatter(deseq, x=denominator, y=numerator, gvis_filename=NULL))[["scatter"]]
                 } else {
-                    plt <- suppressMessages(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
+                    limma_plt <- sm(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
+                    edger_plt <- sm(edger_coefficient_scatter(edger, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
+                    deseq_plt <- sm(deseq_coefficient_scatter(deseq, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
+
                 }
             } ## End checking that we found the numerator/denominator
             else {
                 stop(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
             }
             combo[[name]] <- dat
-            plots[[name]] <- plt
+            limma_plots[[name]] <- limma_plt
+            edger_plots[[name]] <- edger_plt
+            deseq_plots[[name]] <- deseq_plt
             de_summaries <- rbind(de_summaries, summary)
             table_names[[a]] <- summary[["table"]]
         }
@@ -428,7 +442,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             splitted <- strsplit(x=tab, split="_vs_")
             xname <- splitted[[1]][1]
             yname <- splitted[[1]][2]
-            plots[[tab]] <- suppressMessages(limma_coefficient_scatter(limma, x=xname, y=yname, gvis_filename=NULL))[["scatter"]]
+            limma_plots[[tab]] <- sm(limma_coefficient_scatter(limma, x=xname, y=yname, gvis_filename=NULL))[["scatter"]]
+            edger_plots[[tab]] <- sm(edger_coefficient_scatter(edger, x=xname, y=yname, gvis_filename=NULL))[["scatter"]]
+            deseq_plots[[tab]] <- sm(deseq_coefficient_scatter(deseq, x=xname, y=yname, gvis_filename=NULL))[["scatter"]]
         }
 
         ## Or a single specific table
@@ -451,7 +467,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         table_names[[a]] <- combined[["summary"]][["table"]]
         xname <- splitted[[1]][1]
         yname <- splitted[[1]][2]
-        plots[[name]] <- suppressMessages(limma_coefficient_scatter(limma, x=xname, y=yname))[["scatter"]]
+        limma_plots[[name]] <- sm(limma_coefficient_scatter(limma, x=xname, y=yname))[["scatter"]]
+        edger_plots[[name]] <- sm(edger_coefficient_scatter(edger, x=xname, y=yname))[["scatter"]]
+        deseq_plots[[name]] <- sm(limma_coefficient_scatter(deseq, x=xname, y=yname))[["scatter"]]
     } else {
         stop("I don't know what to do with your specification of tables to keep.")
     }
@@ -469,10 +487,22 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             if (isTRUE(add_plots)) {
                 plot_column <- xls_result[["end_col"]] + 2
                 message(paste0("Attempting to add a coefficient plot for ", names(combo)[[count]], " at column ", plot_column))
-                a_plot <- plots[[count]]
-                print(a_plot)
+                openxlsx::writeData(wb, tab, x="Limma expression coefficients", startRow=1, startCol=plot_column)
+                limma_plot <- limma_plots[[count]]
+                print(limma_plot)
                 openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
                                      startCol=plot_column, startRow=2, fileType="png", units="in")
+                openxlsx::writeData(wb, tab, x="EdgeR expression coefficients", startRow=33, startCol=plot_column)
+                edger_plot <- edger_plots[[count]]
+                print(edger_plot)
+                openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
+                                     startCol=plot_column, startRow=34, fileType="png", units="in")
+                openxlsx::writeData(wb, tab, x="DESeq2 expression coefficients", startRow=65, startCol=plot_column)
+                deseq_plot <- deseq_plots[[count]]
+                print(deseq_plot)
+                openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
+                                     startCol=plot_column, startRow=66, fileType="png", units="in")
+
             }
         }  ## End for loop
         count <- count + 1
@@ -501,7 +531,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     }
     ret <- list(
         "data" = combo,
-        "plots" = plots,
+        "limma_plots" = limma_plots,
+        "edger_plots" = edger_plots,
+        "deseq_plots" = deseq_plots,
         "comp_plot" = comp,
         "de_summay" = de_summaries)
     return(ret)
