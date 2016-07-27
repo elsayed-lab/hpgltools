@@ -1,10 +1,10 @@
 library(testthat)
 library(hpgltools)
 library(pasilla)
-library(edgeR)
+tt <- sm(library(edgeR))
 data(pasillaGenes)
 num_installed <- require.auto("kokrah/cbcbSEQ")
-cbcb <- s_p(library(cbcbSEQ))
+cbcb <- sm(library(cbcbSEQ))
 context("Compare cbcbSEQ output to hpgltools.")
 ## This test is intended to compare Kwame Okrah/Hector Corrada Bravo's cbcbSEQ output
 ## against that received from this.  hpgltools is a derivative of it, therefore it should
@@ -59,6 +59,7 @@ hpgl_quantile_data <- s_p(hpgl_norm(pasilla_expt, transform="raw", norm="quant",
 hpgl_quantile <- hpgl_quantile_data[["count_table"]]
 expected <- cbcb_quantile[sort(rownames(cbcb_quantile)), ]
 actual <- hpgl_quantile[sort(rownames(hpgl_quantile)), ]
+
 test_that("Are the quantile normalizations identical?", {
     expect_equal(expected, actual)
 })
@@ -149,6 +150,7 @@ actual <- hpgl_voom
 test_that("Do different voom() invocations end with the same result?", {
     expect_equal(expected, actual)
 })
+
 expected <- cbcb_voom[["E"]]
 actual <- hpgl_voom2[["E"]]
 test_that("Does calling cbcbSEQ voom with hpgl-modified data return the same result?", {
@@ -178,6 +180,7 @@ colnames(cbcb_fit_coef) <- c("(Intercept)", "untreated")
 test_that("Limma results, fitting coefficients.", {
     expect_equal(cbcb_fit_coef, hpgl_limma_fit_coef)
 })
+
 hpgl_limma_fit_stdev <- hpgl_limma$fit$stdev.unscaled[order(rownames(hpgl_limma$fit$stdev.unscaled)), ]
 cbcb_fit_stdev <- cbcb_fit$stdev.unscaled[order(rownames(cbcb_fit$stdev.unscaled)), ]
 colnames(cbcb_fit_stdev) <- c("(Intercept)", "untreated")
