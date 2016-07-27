@@ -29,12 +29,6 @@ this_edger <- hpgl_result$edger$all_tables$untreated_vs_treated
 this_limma <- hpgl_result$limma$all_tables$untreated_vs_treated
 this_basic <- hpgl_result$basic$all_tables$untreated_vs_treated
 
-d <- e <- b <- l <- NULL
-d <- expect_equal(previous_deseq, this_deseq)
-e <- expect_equal(previous_edger, this_edger)
-l <- expect_equal(previous_limma, this_limma)
-b <- expect_equal(previous_basic, this_basic)
-
 test_that("Do we get similar results to previous DE runs: (DESeq2)?", {
     expect_equal(previous_deseq, this_deseq)
 })
@@ -76,14 +70,14 @@ test_that("Are the comparisons between DE tools sufficiently similar? (deseq/bas
     expect_gt(db, 0.68)
 })
 
-combined_table <- s_p(combine_de_tables(hpgl_result, excel=NULL))$result
+combined_table <- sm(combine_de_tables(hpgl_result, excel=NULL))
 expected_size <- c(10153,42)
 actual_size <- dim(combined_table$data[[1]])
 test_that("Has the untreated/treated combined table been filled in?", {
     expect_equal(expected_size, actual_size)
 })
 
-sig_tables <- s_p(extract_significant_genes(combined_table, according_to="all", excel=NULL))$result
+sig_tables <- sm(extract_significant_genes(combined_table, according_to="all", excel=NULL))
 expected_limma_ups <- 134
 actual_limma_ups <- nrow(sig_tables[["limma"]][["ups"]][[1]])
 test_that("Are the limma significant ups expected?", {
