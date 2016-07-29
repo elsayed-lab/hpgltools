@@ -21,7 +21,7 @@ test_that("Did the gene information load?", {
     expect_equal(expected_gene_names, actual_gene_names)
 })
 
-mgas_norm <- normalize_expt(mgas_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=TRUE, batch="combat_scale", low_to_zero=TRUE)
+mgas_norm <- sm(normalize_expt(mgas_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=TRUE, batch="combat_scale", low_to_zero=TRUE))
 test_that("Are the expt notes and state maintained?", {
     expect_match(object=mgas_norm$notes, regexp="log2\\(combat_scale\\(cbcbcpm\\(quant\\(filter\\(data\\)\\)\\)\\)\\)")
 })
