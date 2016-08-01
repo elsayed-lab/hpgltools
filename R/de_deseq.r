@@ -26,11 +26,11 @@ deseq_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ## gvis_f
     if (!is.null(arglist[["qlimit"]])) {
         qlimit <- arglist[["qlimit"]]
     }
-    fc_column <- "limma_logfc"
+    fc_column <- "deseq_logfc"
     if (!is.null(arglist[["fc_column"]])) {
         fc_column <- arglist[["fc_column"]]
     }
-    p_column <- "limma_adjp"
+    p_column <- "deseq_adjp"
     if (!is.null(arglist[["p_column"]])) {
         p_column <- arglist[["p_column"]]
     }
@@ -66,10 +66,10 @@ deseq_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ## gvis_f
     coefficient_df <- coefficient_df[, c(xname, yname)]
     coefficient_df[is.na(coefficient_df)] <- 0
     maxvalue <- max(coefficient_df) + 1.0
-    plot <- suppressMessages(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
-                                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                                 tooltip_data=tooltip_data, base_url=base_url,
-                                                 pretty_colors=FALSE, color_low=color_low, color_high=color_high))
+    plot <- sm(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+                                   gvis_trendline=gvis_trendline, first=xname, second=yname,
+                                   tooltip_data=tooltip_data, base_url=base_url,
+                                   pretty_colors=FALSE, color_low=color_low, color_high=color_high))
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))

@@ -308,6 +308,47 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     return(expt)
 }
 
+set_expt_colors <- function(expt, colors=NULL, ...) {
+    arglist <- list(...)
+    chosen_palette <- "Dark2"
+    if (!is.null(arglist[["chosen_palette"]])) {
+        chosen_palette <- arglist[["chosen_palette"]]
+    }
+    conditions <- expt[["conditions"]]
+    if (is.null(conditions) & !is.null(arglist[["conditions"]])) {
+        conditions <- arglist[["conditions"]]
+    } else if (is.null(conditions) & !is.null(expt[["design"]])) {
+        conditions <- expt[["design"]][["condition"]]
+    } else if (is.null(conditions)) {
+        warning("Unable to discern the number of conditions in the expt.")
+        warning("Choosing 1 color for each sample.")
+        conditions <- rownames(Biobase::pData(expt$expressionset))
+    }
+    num_conditions <- length(levels(as.factor(conditions)))
+    chosen_colors <- as.character(conditions)
+
+    if (is.null(colors)) {
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+        expt[["colors"]] <- chosen_colors
+    } else if (class(colors) == "character" | class(colors) == "factor") {
+        current <- levels(as.factor(expt[["colors"]]))
+        if (length(current) == length(colors)) {
+            for (c in 1:length(current)) {
+                cur <- current[[c]]
+                new <- colors[[c]]
+                expt[["colors"]] <- gsub(pattern=cur, replacement=new, x=expt[["colors"]])
+            }
+        } else {
+                warning("The numbers of colors do not match, using ColorBrewer to generate colors.")
+                expt <- set_expt_colors(expt, colors=NULL)
+            }
+        }
+    return(expt)
+}
+
 #' Change the factors (condition and batch) of an expt
 #'
 #' When exploring differential analyses, it might be useful to play with the conditions/batches of
