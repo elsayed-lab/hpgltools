@@ -371,10 +371,10 @@ set_expt_colors <- function(expt, colors=NULL, ids=NULL, ...) {
 set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
     arglist <- list(...)
     if (!is.null(condition)) {
-        expt <- set_expt_condition(expt, factor=condition, ...)
+        expt <- set_expt_condition(expt, fact=condition, ...)
     }
     if (!is.null(batch)) {
-        expt <- set_expt_batch(expt, factor=batch, ...)
+        expt <- set_expt_batch(expt, fact=batch, ...)
     }
     return(expt)
 }
@@ -446,25 +446,25 @@ set_expt_condition <- function(expt, fact, colors=TRUE, ids=NULL, ...) {
 #'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
 #' }
 #' @export
-set_expt_batch <- function(expt, factor, ids=NULL, ...) {
+set_expt_batch <- function(expt, fact, ids=NULL, ...) {
     arglist <- list(...)
     original_batches <- expt[["batches"]]
     original_length <- length(original_batches)
-    if (length(factor) == 1) {
+    if (length(fact) == 1) {
         ## Assume it is a column in the design
-        if (factor %in% colnames(expt[["design"]])) {
-            factor <- expt[["design"]][[factor]]
+        if (fact %in% colnames(expt[["design"]])) {
+            fact <- expt[["design"]][[fact]]
         } else {
             stop("The provided factor is not in the design matrix.")
         }
     }
 
-    if (length(factor) != original_length) {
+    if (length(fact) != original_length) {
         stop("The new factor of batches is not the same length as the original.")
     }
-    expt[["batches"]] <- factor
-    Biobase::pData(expt[["expressionset"]])[["batch"]] <- factor
-    expt[["design"]][["batch"]] <- factor
+    expt[["batches"]] <- fact
+    Biobase::pData(expt[["expressionset"]])[["batch"]] <- fact
+    expt[["design"]][["batch"]] <- fact
     return(expt)
 }
 

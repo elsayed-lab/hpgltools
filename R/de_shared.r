@@ -528,16 +528,16 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                              startRow=new_row + 1, startCol=1, fileType="png", units="in")
         logfc_comparisons <- compare_logfc_plots(combo)
         logfc_names <- names(logfc_comparisons)
+        new_row <- new_row + 2
         for (c in 1:length(logfc_comparisons)) {
             new_row <- new_row + 32
-            name_row <- new_row - 1
-            openxlsx::writeData(wb, "pairwise_summary", x=paste0("Pairwise comparison: ", logfc_names[c]),
-                                startRow=new_row - 1, startCol=tmpcol)
             le <- logfc_comparisons[[c]][["le"]]
             ld <- logfc_comparisons[[c]][["ld"]]
             de <- logfc_comparisons[[c]][["de"]]
 
             tmpcol <- 1
+            openxlsx::writeData(wb, "pairwise_summary", x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
+                                startRow=new_row - 2, startCol=tmpcol)
             openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
             print(le)
             openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,

@@ -394,6 +394,82 @@ plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=
     return(plt)
 }
 
+#' Make a pretty MA plot from a DE tool (limma/deseq/edger/basic
+#'
+#' @param table  Df of linear-modelling, normalized counts by sample-type,
+#' @param expr_col Column showing the average expression across genes.
+#' @param fc_col Column showing the logFC for each gene.
+#' @param p_col Column containing the relevant p-values.
+#' @param alpha How transparent to make the dots.
+#' @param logfc_cutoff Fold change cutoff.
+#' @param pval Name of the pvalue column to use for cutoffs.
+#' @param size How big are the dots?
+#' @param tooltip_data Df of tooltip information for gvis.
+#' @param gvis_filename Filename to write a fancy html graph.
+#' @param ... More options for you!
+#' @return Ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
+#'     type across all sample types on the x-axis, and the log fold change between conditions on the
+#'     y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
+#'     googleVis graph if requested.
+#' @seealso \link{plot_gvis_ma} \link[limma]{toptable}
+#' \link[limma]{voom} \link{hpgl_voom}
+#' \link[limma]{lmFit} \link[limma]{makeContrasts}
+#' \link[limma]{contrasts.fit}
+#' @examples
+#' \dontrun{
+#' plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
+#' ## Currently this assumes that a variant of toptable was used which
+#' ## gives adjusted p-values.  This is not always the case and I should
+#' ## check for that, but I have not yet.
+#' }
+#' @export
+plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
+                       pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1,
+                       size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
+    hpgl_env <- environment()
+
+    aes_color = "(pval <= pval_cutoff)"
+
+###    df <- data.frame("avg" = rowMeans(counts[rownames(de_genes),]),
+###                     "logfc" = de_genes[["logFC"]],
+###                     "pval" = de_genes[["P.Value"]],
+###                     "adjpval" = de_genes[[pval_column]])
+    df <- data.frame("avg" = table[[expr_col]],
+                     "logfc" = table[[fc_col]],
+                     "pval" = table[[p_col]])
+
+    df[["pval"]] <- as.numeric(format(df[["pval"]], scientific=FALSE))
+    df[["state"]] <- ifelse(df[["pval"]] > pval_cutoff, "pinsig",
+                     ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
+                     ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] <= (-1 * logfc_cutoff), "downsig", "fcinsig")))
+    num_pinsig <- sum(df[["state"]] == "pinsig")
+    num_upsig <- sum(df[["state"]] == "upsig")
+    num_downsig <- sum(df[["state"]] == "downsig")
+    num_fcinsig <- sum(df[["state"]] == "fcinsig")
+    plt <- ggplot(df, aes_string(x="avg", y="logfc", color=aes_color),
+                           environment=hpgl_env) +
+        ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1), logfc_cutoff), color="red", size=(size / 2)) +
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha, aes_string(shape="as.factor(state)", fill=aes_color)) +
+    ggplot2::scale_shape_manual(name="state", values=c(21,22,23,24),
+                                    labels=c(
+                                        paste0("Down Sig.: ", num_downsig),
+                                        paste0("FC Insig.: ", num_fcinsig),
+                                        paste0("P Insig.: ", num_pinsig),
+                                        paste0("Up Sig.: ", num_upsig)),
+                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
+        ggplot2::scale_color_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
+        ggplot2::scale_fill_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
+        ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=3))) +
+        ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
+        ggplot2::xlab("Average Count (Millions of Reads)") +
+        ggplot2::ylab("log fold change") +
+        ggplot2::theme_bw()
+    if (!is.null(gvis_filename)) {
+        plot_gvis_ma(counts, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
+    }
+    return(plt)
+}
+
 #' Make a ggplot graph of the number of non-zero genes by sample.
 #'
 #' This puts the number of genes with > 0 hits on the y-axis and CPM on the x-axis. Made by Ramzi

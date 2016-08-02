@@ -1,3 +1,23 @@
+#' @export
+deseq_ma <- function(output, table=NULL) {
+    counts <- NULL
+    de_genes <- NULL
+    pval <- NULL
+    output <- output[["deseq"]]  ## Currently this only will work with the output from all_pairwise()
+    possible_tables <- names(output[["all_tables"]])
+    if (is.null(table)) {
+        table <- possible_tables[1]
+    } else if (is.numeric(table)) {
+        table <- possible_tables[table]
+    }
+
+    de_genes <- output[["all_tables"]][[table]]
+    de_genes[["logExpr"]] <- log(de_genes[["baseMean"]])
+    plot <- plot_ma_de(table=de_genes, expr_col="logExpr", fc_col="logFC", p_col="qvalue")
+    return(plot)
+}
+
+
 #' Plot out 2 coefficients with respect to one another from deseq2.
 #'
 #' It can be nice to see a plot of two coefficients from a deseq2 comparison with respect to one

@@ -1,3 +1,22 @@
+#' @export
+edger_ma <- function(output, table=NULL) {
+    counts <- NULL
+    de_genes <- NULL
+    pval <- NULL
+    output <- output[["edger"]]  ## Currently this only will work with the output from all_pairwise()
+    possible_tables <- output[["contrasts"]][["names"]]
+    if (is.null(table)) {
+        table <- possible_tables[1]
+    } else if (is.numeric(table)) {
+        table <- possible_tables[table]
+    }
+
+    de_genes <- output[["all_tables"]][[table]]
+    pval <- "qvalue"
+    plot <- plot_ma_de(table=de_genes, expr_col="logCPM", fc_col="logFC", p_col="qvalue")
+    return(plot)
+}
+
 #' Plot two coefficients with respect to one another from edgeR.
 #'
 #' It can be nice to see a plot of two coefficients from a edger comparison with respect to one another
