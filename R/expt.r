@@ -313,6 +313,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     return(expt)
 }
 
+#' @export
 set_expt_colors <- function(expt, colors=NULL, ids=NULL, ...) {
     arglist <- list(...)
     chosen_palette <- "Dark2"
@@ -392,7 +393,7 @@ set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
 #'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))")
 #' }
 #' @export
-set_expt_condition <- function(expt, fact, colors=TRUE, ids=NULL, ...) {
+set_expt_condition <- function(expt, fact, ids=NULL, ...) {
     arglist <- list(...)
     original_conditions <- expt[["conditions"]]
     original_length <- length(original_conditions)
@@ -408,29 +409,23 @@ set_expt_condition <- function(expt, fact, colors=TRUE, ids=NULL, ...) {
         Biobase::pData(expt[["expressionset"]]) <- new_pdata
         expt[["conditions"]][ids] <- fact
         expt[["design"]][["condition"]] <- new_cond
-        return(expt)
-    }
-
-    if (length(fact) == 1) {
+    } else if (length(fact) == 1) {
         ## Assume it is a column in the design
         if (fact %in% colnames(expt[["design"]])) {
             fact <- expt[["design"]][[fact]]
         } else {
             stop("The provided factor is not in the design matrix.")
         }
+    } else if (length(fact) != original_length) {
+            stop("The new factor of conditions is not the same length as the original.")
+    } else {
+        expt[["conditions"]] <- fact
+        Biobase::pData(expt[["expressionset"]])[["condition"]] <- fact
+        expt[["design"]][["condition"]] <- fact
     }
 
-    if (length(fact) != original_length) {
-        stop("The new factor of conditions is not the same length as the original.")
-    }
-
-    expt[["conditions"]] <- fact
-    Biobase::pData(expt[["expressionset"]])[["condition"]] <- fact
-    expt[["design"]][["condition"]] <- fact
-    if (isTRUE(colors)) {
-        expt <- set_expt_colors(expt, colors=colors, ...)
-    }
-    return(expt)
+    tmp_expt <- set_expt_colors(expt)
+    return(tmp_expt)
 }
 
 #' Change the batches of an expt
@@ -481,18 +476,17 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' }
 #' @export
 set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
-    num_conditions <- length(expt[["conditions"]])
+    num_conditions <- length(levels(as.factor(expt[["conditions"]])))
     num_samples <- nrow(expt[["design"]])
     sample_ids <- expt[["design"]][["sampleid"]]
-    chosen_colors <- NULL
+    chosen_colors <- expt[["conditions"]]
+
     if (is.null(colors) | isTRUE(colors)) {
         sample_colors <- suppressWarnings(grDevices::colorRampPalette(
             RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
         mapping <- setNames(sample_colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
-    }
-
-    if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
+    } else if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
         chosen_colors <- sample_colors
     } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
         mapping <- setNames(sample_colors, unique(chosen_colors))
