@@ -540,6 +540,11 @@ expt_subset <- function(expt, subset=NULL) {
     class(new_expt) <- "expt"
     return(new_expt)
 }
+## Because I am an idiot.
+# @export
+subset_expt <- function(...) {
+    expt_subset(...)
+}
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
