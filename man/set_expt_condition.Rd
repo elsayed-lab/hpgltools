@@ -4,14 +4,14 @@
 \alias{set_expt_condition}
 \title{Change the condition of an expt}
 \usage{
-set_expt_condition(expt, fact, colors = TRUE, ids = NULL, ...)
+set_expt_condition(expt, fact, ids = NULL, ...)
 }
 \arguments{
 \item{expt}{Expt to modify}
 
-\item{colors}{Reset the set of colors (Give a factor if you want to choose your own).}
-
 \item{factor}{Conditions to replace}
+
+\item{colors}{Reset the set of colors (Give a factor if you want to choose your own).}
 }
 \value{
 expt Send back the expt with some new metadata

@@ -7,7 +7,7 @@
 #' previous 'simple_clusterprofiler()' but using these new toys.
 #'
 #' @param sig_genes Dataframe of genes deemed 'significant.'
-#' @param de_table Dataframe of all genes in the analysis, primarily for gse analyses.
+#' @param universe Dataframe of all genes in the analysis, primarily for gse analyses.
 #' @param orgdb Name of the orgDb used for gathering annotation data.
 #' @param orgdb_from Name of a key in the orgdb used to cross reference to entrez IDs.
 #' @param orgdb_to List of keys to grab from the orgdb for cross referencing ontologies.
@@ -21,7 +21,7 @@
 #' @param kegg_organism Choose the 3 letter KEGG organism name here.
 #' @param kegg_id_column Column in the orgdb to use for cross referencing to KEGG.
 #' @param categories How many categories should be plotted in bar/dot plots?
-simple_cp_orgdb <- function(sig_genes, de_table, orgdb="org.Dm.eg.db",
+simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
                             orgdb_from="FLYBASE", orgdb_to=c("ENSEMBL","SYMBOL","ENTREZID"),
                             go_level=3, pcutoff=0.05, qcutoff=0.1, fc_column="logFC",
                             permutations=100, min_groupsize=5, kegg_prefix="Dmel_",
@@ -30,12 +30,12 @@ simple_cp_orgdb <- function(sig_genes, de_table, orgdb="org.Dm.eg.db",
     org <- loadNamespace(orgdb) ## put the orgDb instance into an environment
     org <- org[[orgdb]] ## Then extract it
     mapper_keys <- AnnotationDbi::keytypes(org)
-    all_genenames <- rownames(de_table)
+    all_genenames <- rownames(all_genes)
     all_genes_df <- clusterProfiler::bitr(all_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
     sig_genenames <- rownames(sig_genes)
     sig_genes_df <- clusterProfiler::bitr(sig_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
-    universe <- AnnotationDbi::keys(org)
-    all_genes_df <- merge(de_table, all_genes_df, by.x="row.names", by.y=orgdb_from)
+    universe <- AnnotationDbi::keys(org, keytype=orgdb_from)
+    all_genes_df <- merge(all_genes, all_genes_df, by.x="row.names", by.y=orgdb_from)
     ## Rename the first column
     colnames(all_genes_df)[1] <- orgdb_from
     if (is.null(all_genes_df[[fc_column]])) {
@@ -184,6 +184,27 @@ simple_cp_orgdb <- function(sig_genes, de_table, orgdb="org.Dm.eg.db",
     return(retlist)
 }
 
+cp_options <- function(species) {
+    if (species == "dmelanogaster") {
+        options <- list(
+            orgdb = "org.Dm.eg.db",
+            orgdb_from = "FLYBASE",
+            orgdb_to = c("ENSEMBL","SYMBOL","ENTREZID"),
+            kegg_prefix = "Dmel_",
+            kegg_organism = "dme",
+            kegg_id_column = "FLYBASECG")
+    } else if (species == "hsapiens") {
+        options <- list(
+            orgdb = "org.Hs.eg.db",
+            orgdb_from = "ENSEMBL",
+            orgdb_to = c("ENSEMBL","SYMBOL","ENTREZID"),
+            kegg_prefix = "Hsa_",
+            kegg_organism = "hsa",
+            kegg_id_column = "")
+    }
+    return(options)
+}
+
 #' Generic enrichment using clusterProfiler.
 #'
 #' culsterProfiler::enricher provides a quick and easy enrichment analysis given a set of
@@ -298,7 +319,7 @@ check_clusterprofiler <- function(gff='test.gff', goids_df=NULL) {
 #' ## >   10 oligosaccharide metabolic process
 #' }
 #' @export
-simple_clusterprofiler <- function(de_genes, goids_df=NULL, golevel=4, pcutoff=0.1,
+simple_clusterprofiler_old <- function(de_genes, goids_df=NULL, golevel=4, pcutoff=0.1,
                                    fold_changes=NULL, include_cnetplots=FALSE,
                                    showcategory=12, universe=NULL, species="undef", gff=NULL,
                                    wrapped_width=20, method="Wallenius", padjust="BH", ...) {

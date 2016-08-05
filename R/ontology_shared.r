@@ -1,3 +1,89 @@
+#' Take gene/exon lengths from a suitable data source (gff/TxDb/OrganismDbi)
+#'
+#' Primarily goseq, but also other tools on occasion require a set of gene IDs and lengths.
+#' This function is resposible for pulling that data from either a gff, or TxDb/OrganismDbi.
+#'
+#' @param db Object containing data, if it is a string then a filename is assumed to a gff file.
+#' @param gene_list Set of genes to query.
+#' @param type Function name used for extracting data from TxDb objects.
+#' @param id Column from the resulting data structure to extract gene IDs.
+#' @param possible_types Character list of types I have previously used.
+#' @param possible_ids Corresponding IDs for the above types.
+#' @return Dataframe containing 2 columns: ID, length
+#' @export
+extract_lengths <- function(db=NULL, gene_list=NULL,
+                            type = "GenomicFeatures::transcripts", id="TXID",
+                            possible_types=c("GenomicFeatures::genes",
+                                    "GenomicFeatures::cds",
+                                    "GenomicFeatures::transcripts"),
+                            possible_ids=c("GENEID", "CDSID", "TXID")) {
+    ## The 3 ids correspond to the columns produced by genes/cds/transcripts respectively which contain the IDs
+    ## If one is overwritten, the other should be, too
+    tmpdb <- db
+    metadf <- NULL
+    gene_list <- gene_list[complete.cases(gene_list)]  ## Translating to ENTREZIDs sometimes introduces NAs which messes up the following operations.
+    for (c in 1:length(possible_types)) {
+        ty <- types[c]
+        chosen_column <- ids[c]
+        test_string <- paste0("testing <- ", ty, "(tmpdb)")
+        eval(parse(text=test_string))
+        ## as.data.frame is not only base, but also biocgenerics!!!
+        test_meta <- BiocGenerics::as.data.frame(testing)
+        overlap <- gene_list %in% test_meta[[chosen_column]]
+        message(paste0("Testing ", ty, " with column ", chosen_column, " an overlap of ", sum(overlap), " was observed out of ", length(gene_list), " genes."))
+        message(paste0("Actually using type ", type, " consider one of the above if that is not good enough."))
+    }
+    test_string <- paste0("testing <- ", type, "(tmpdb)")
+    eval(parse(text=test_string))
+    meta <- BiocGenerics::as.data.frame(testing)
+    if (!is.null(meta[["width"]])) {
+        metadf <- as.data.frame(cbind(test_meta[[id]], test_meta[["width"]]))
+    } else if (!is.null(test_meta[["length"]])) {
+        metadf <- as.data.frame(cbind(test_meta[[id]], test_meta[["length"]]))
+    } else {
+        stop("This requires either length or width columns.")
+    }
+    colnames(metadf) <- c("ID","length")
+    rownames(metadf) <- metadf[["ID"]]
+    return(metadf)
+}
+
+#' Extract a set of geneID to GOID mappings from a suitable data source.
+#'
+#' Like extract_lengths above, this is primarily intended to read gene ID and GO ID mappings from a
+#'     OrgDb/OrganismDbi object.
+#'
+#' @param db Data source containing mapping information.
+#' @param metadf Data frame containing extant information.
+#' @param keytype Keytype used for querying
+#' @return Dataframe of 2 columns: geneID and goID.
+#' @export
+extract_go <- function(db, metadf=NULL, keytype="ENTREZID") {
+    keytype <- toupper(keytype)
+    possible_keytypes <- keytypes(db)
+    godf <- data.frame()
+    success <- FALSE
+    ids <- keys(x=db, keytype=keytype)
+    if ("GOID" %in% possible_keytypes) {
+        godf <- sm(select(x=db, keys=ids, keytype=keytype, columns=c("GOID")))
+        godf[["ID"]] <- godf[[1]]
+        godf <- godf[, c("ID","GOID")]
+        colnames(godf) <- c("ID","GO")
+    } else if ("GO" %in% possible_keytypes) {
+        godf <- sm(select(x=db, keys=ids, keytype=keytype, columns=c("GO")))
+        godf[["ID"]] <- godf[[1]]
+        godf <- godf[, c("ID","GO")]
+        colnames(godf) <- c("ID","GO")
+    } else if ("GOALL" %in% possible_keytypes) {
+        godf <- sm(select(x=db, keys=ids, keytype=keytype, columns=c("GOALL")))
+        godf[["ID"]] <- godf[[1]]
+        godf <- godf[, c("ID","GO")]
+        colnames(godf) <- c("ID","GO")
+    }
+    return(godf)
+}
+
+
 #' Extract more easily readable information from a GOTERM datum.
 #'
 #' The output from the GOTERM/GO.db functions is inconsistent, to put it nicely.

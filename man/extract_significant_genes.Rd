@@ -6,7 +6,8 @@
 from the combined tables.}
 \usage{
 extract_significant_genes(combined, according_to = "all", fc = 1,
-  p = 0.05, z = NULL, n = NULL, excel = "excel/significant_genes.xlsx")
+  p = 0.05, z = NULL, n = NULL, p_type = "adj",
+  excel = "excel/significant_genes.xlsx")
 }
 \arguments{
 \item{combined}{Output from combine_de_tables().}

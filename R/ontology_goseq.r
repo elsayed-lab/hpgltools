@@ -62,78 +62,16 @@ goseq_table <- function(df, file=NULL) {
     return(df)
 }
 
-
-extract_lengths <- function(db=NULL, gene_list=NULL,
-                            types=c("GenomicFeatures::genes",
-                                    "GenomicFeatures::cds",
-                                    "GenomicFeatures::transcripts")) {
-    tmpdb <- db
-    metadf <- NULL
-    success <- FALSE
-    for (type in types) {
-        test_string <- paste0("testing <- ", type, "(tmpdb)")
-        eval(parse(text=test_string))
-        ## as.data.frame is not only base, but also biocgenerics!!!
-        test_meta <- BiocGenerics::as.data.frame(testing)
-        overlap <- gene_list %in% rownames(test_meta)
-        if (sum(overlap) == 0) {
-            ## sometimes the rownames get set to 1..rows, in that case, try the last column which is the transcript name
-            overlap <- gene_list %in% test_meta[, ncol(test_meta)]
-            rownames(test_meta) <- test_meta[, ncol(test_meta)]
-        }
-        if (sum(overlap) == length(gene_list)) {
-            success <- TRUE
-            if (!is.null(test_meta[["width"]])) {
-                metadf <- as.data.frame(cbind(rownames(test_meta), test_meta[["width"]]))
-            } else if (!is.null(test_meta[["length"]])) {
-                metadf <- as.data.frame(cbind(rownames(test_meta), test_meta[["length"]]))
-            } else {
-                stop("This requires either length or width columns.")
-            }
-            colnames(metadf) <- c("ID","length")
-            rownames(metadf) <- metadf[["ID"]]
-            message("Returning metadf.")
-            return(metadf)
-        }
-    }
-    if (!isTRUE(success)) {
-        stop("Unable to get the set of lengths.")
-    }
-    return(metadf)
-}
-
-## The last step is to gather GO ids
-extract_go <- function(db) {
-    possible_keytypes <- keytypes(db)
-    godf <- data.frame()
-    success <- FALSE
-    for (type in possible_keytypes) {
-        test <- head(keys(x=db, keytype=type))
-        found <- sum(test %in% metadf[["ID"]])
-        if (found == length(test)) {
-            ## Use this keytype to get geneIDs
-            ids <- keys(x=db, keytype=type)
-            if ("GOID" %in% possible_keytypes) {
-                godf <- select(x=db, keys=ids, keytype=type, columns=c("GOID"))
-                godf[["ID"]] <- godf[[1]]
-                godf <- godf[, c("ID","GOID")]
-                colnames(godf) <- c("ID","GO")
-            } else if ("GO" %in% possible_keytypes) {
-                godf <- select(x=db, keys=ids, keytype=type, columns=c("GO"))
-                godf[["ID"]] <- godf[[1]]
-                godf <- godf[, c("ID","GO")]
-                colnames(godf) <- c("ID","GO")
-            } else if ("GOALL" %in% possible_keytypes) {
-                godf <- select(x=db, keys=ids, keytype=type, columns=c("GOALL"))
-                godf[["ID"]] <- godf[[1]]
-                godf <- godf[, c("ID","GO")]
-                colnames(godf) <- c("ID","GO")
-            }
-            return(godf)
-        }
-    }
-}
-
+#' Make a pretty table of goseq data in excel.
+#'
+#' It is my intention to make a function like this for each ontology tool in my repetoire
+#'
+#' @param goseq A set of results from simple_goseq().
+#' @param file An excel file to which to write some pretty results.
+#' @param pval Choose a cutoff for reporting by p-value.
+#' @param add_plots Include some pvalue plots in the excel output?
+#' @return The result from openxlsx
+#' @export
 write_new_goseq_xlsx <- function(goseq, file="excel/goseq.xlsx", pval=0.1, add_plots=TRUE) {
     excel_dir <- dirname(file)
     if (!file.exists(excel_dir)) {
@@ -234,8 +172,41 @@ write_new_goseq_xlsx <- function(goseq, file="excel/goseq.xlsx", pval=0.1, add_p
     return(res)
 }
 
-new_simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
-                             adjust=0.1, pvalue=0.1, qvalue=0.1,
+#' Perform a simplified goseq analysis.
+#'
+#' goseq can be pretty difficult to get set up for non-supported organisms.  This attempts to make
+#' that process a bit simpler as well as give some standard outputs which should be similar to those
+#' returned by clusterprofiler/topgo/gostats/gprofiler.
+#'
+#' @param de_genes Data frame of differentially expressed genes, containing IDs etc.
+#' @param go_db Database of go to gene mappings (OrgDb/OrganismDb)
+#' @param length_db Database of gene lengths (gff/TxDb)
+#' @param doplot Include pwf plots?
+#' @param adjust Minimum adjusted pvalue for 'significant.'
+#' @param pvalue Minimum pvalue for 'significant.'
+#' @param qvalue Minimum qvalue for 'significant.'
+#' @param length_keytype Keytype to provide to extract lengths
+#' @param go_keytype Keytype to provide to extract go IDs
+#' @param goseq_method Statistical test for goseq to use.
+#' @param padjust_method Which method to use to adjust the pvalues.
+#' @param bioc_length_db Source of gene lengths?
+#' @param ... Extra parameters which I do not recall
+#' @return Big list including:
+#'   the pwd:pwf function,
+#'   alldata:the godata dataframe,
+#'   pvalue_histogram:p-value histograms,
+#'   godata_interesting:the ontology information of the enhanced groups,
+#'   term_table:the goterms with some information about them,
+#'   mf_subset:a plot of the MF enhanced groups,
+#'   mfp_plot:the pvalues of the MF group,
+#'   bp_subset:a plot of the BP enhanced groups,
+#'   bpp_plot,
+#'   cc_subset,
+#'   and ccp_plot
+#' @seealso \pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
+#' @export
+simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
+                             adjust=0.1, pvalue=0.1, qvalue=0.1, length_keytype="transcripts", go_keytype="ENTREZID",
                              goseq_method="Wallenius", padjust_method="BH",
                              bioc_length_db="ensGene",
                              ...) {
@@ -260,7 +231,12 @@ new_simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
     } else if (class(de_genes) == "data.frame") {
         if (is.null(rownames(de_genes)) & is.null(de_genes[["ID"]])) {
             stop("This requires a set of gene IDs either from the rownames or a column named 'ID'.")
+        } else if (!is.null(de_genes[["ID"]])) {
+            ## Use a column named 'ID' first because a bunch of annotation databases use ENTREZ IDs which are just integers, which of course is not allowed by data frame row names.
+            message("Using the ID column from your table rather than the row names.")
+            gene_list <- de_genes[["ID"]]
         } else if (!is.null(rownames(de_genes))) {
+            message("Using the row names of your table.")
             gene_list <- rownames(de_genes)
         } else {
             gene_list <- de_genes[["ID"]]
@@ -275,7 +251,7 @@ new_simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
 
     ## Database of lengths may be a gff file, TxDb, or OrganismDb
     metadf <- NULL
-    if (class(length_db) == "character")  {  ## Then this should be either a gff file or species name.
+    if (class(length_db)[[1]] == "character")  {  ## Then this should be either a gff file or species name.
         if (grepl(pattern="\\.gff", x=length_db, perl=TRUE) | grepl(pattern="\\.gtf", x=length_db, perl=TRUE)) { ## gff file
             txdb <- GenomicFeatures::makeTxDbFromGFF(length_db)
             metadf <- extract_lengths(db=txdb, gene_list=gene_list)
@@ -288,7 +264,6 @@ new_simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
         stop("OrgDb objects contain links to other databases, but sadly are missing gene lengths.")
     } else if (class(length_db)[[1]] == "OrganismDb" | class(length_db)[[1]] == "AnnotationDbi") {
         metadf <- extract_lengths(db=length_db, gene_list=gene_list)
-        stop("I can't work with OrganismDb just yet.")
     } else if (class(length_db)[[1]] == "TxDb") {
         metadf <- extract_lengths(db=length_db, gene_list=gene_list)
     } else {
@@ -302,15 +277,12 @@ new_simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
             godf <- read.table(go_db, ...)
             colnames(godf) <- c("ID","GO")
         } else {  ## Assume species name
-            message("Using goseq supported species name.")
             supported <- TRUE
             species <- go_db
         }
     } else if (class(go_db)[[1]] == "OrganismDb") {
-        message("Using Organismdb")
         godf <- extract_go(go_db)
     } else if (class(go_db)[[1]] == "OrgDb") {
-        message("Using Orgdb.")
         godf <- extract_go(go_db)
     } else {
         message("Not sure what to do here.")
@@ -320,6 +292,7 @@ new_simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
     ## So lets merge the de genes and gene lengths to ensure that they are consistent.
     ## Then make the vectors expected by goseq
     merged_ids_lengths <- metadf
+    merged_ids_lengths[["ID"]] <- as.character(merged_ids_lengths[["ID"]])  ## To avoid 'unimplemented type 'list' in 'orderVector1'
     merged_ids_lengths <- merge(merged_ids_lengths, de_genelist, by.x="ID", by.y="ID", all.x=TRUE)
     merged_ids_lengths[is.na(merged_ids_lengths)] <- 0
     ## Not casing the next lines as character/numeric causes weird errors like 'names' attribute must be the same length as the vector
@@ -362,7 +335,7 @@ new_simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
     colnames(godata) <- c("category","over_represented_pvalue","under_represented_pvalue",
                           "numDEInCat","numInCat","term","ontology","qvalue")
     if (is.null(adjust)) {
-        godata_interesting <- subset(godata, godata$over_represented_pvalue <= pvalue)
+        godata_interesting <- subset(godata, godata[["over_represented_pvalue"]] <= pvalue)
         padjust_method <- "none"
     } else {  ## There is a requested pvalue adjustment
         godata_interesting <- subset(godata, stats::p.adjust(godata[["over_represented_pvalue"]], method=padjust_method) <= adjust)
@@ -492,225 +465,6 @@ gather_goseq_genes <- function(goseq_data, ontology=NULL, pval=0.1, include_all=
     gene_df <- data.table::rbindlist(gene_list)
     rownames(gene_df) <- cats
     return(gene_df)
-}
-
-#' Perform a simplified goseq analysis.
-#'
-#' goseq can be pretty difficult to get set up for non-supported organisms.  This attempts to make
-#' that process a bit simpler as well as give some standard outputs which should be similar to those
-#' returned by clusterprofiler/topgo/gostats/gprofiler.
-#'
-#' @param de_genes Data frame of differentially expressed genes, containing IDs etc.
-#' @param all_genes Universe of possible genes.
-#' @param lengths Length of each gene with an ID in de_genes.
-#' @param goids_df List of ontology accessions to gene accessions.
-#' @param doplot Include pwf plots?
-#' @param adjust Minimum adjusted pvalue for 'significant.'
-#' @param pvalue Minimum pvalue for 'significant.'
-#' @param qvalue Minimum qvalue for 'significant.'
-#' @param goseq_method Statistical test for goseq to use.
-#' @param padjust_method Which method to use to adjust the pvalues.
-#' @param species Optionally choose a species from supportedOrganisms().
-#' @param length_db Source of gene lengths?
-#' @param gff gff file source of gene lengths.
-#' @param ... Extra parameters which I do not recall
-#' @return Big list including:
-#'   the pwd:pwf function,
-#'   alldata:the godata dataframe,
-#'   pvalue_histogram:p-value histograms,
-#'   godata_interesting:the ontology information of the enhanced groups,
-#'   term_table:the goterms with some information about them,
-#'   mf_subset:a plot of the MF enhanced groups,
-#'   mfp_plot:the pvalues of the MF group,
-#'   bp_subset:a plot of the BP enhanced groups,
-#'   bpp_plot,
-#'   cc_subset,
-#'   and ccp_plot
-#' @seealso \pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
-#' @export
-simple_goseq <- function(de_genes, all_genes=NULL, lengths=NULL, goids_df=NULL, doplot=TRUE,
-                         adjust=0.1, pvalue=0.1, qvalue=0.1, goseq_method="Wallenius",
-                         padjust_method="BH", species=NULL, length_db="ensGene", gff=NULL, ...) {
-    message("simple_goseq() makes some pretty hard assumptions about the data it is fed:")
-    message("It requires 2 tables, one of GOids which must have columns (gene)ID and GO(category)")
-    message("The other table is of gene lengths with columns (gene)ID and (gene)width.")
-    message("Other columns are fine, but ignored.")
-    arglist <- list(...)
-    if (is.null(arglist[["minimum_interesting"]])) {
-        arglist[["minimum_interesting"]] = 10
-    }
-    if (is.null(lengths) & is.null(gff) & is.null(species)) {
-        stop("simple_goseq() requires either a length dataframe or gff file for gene lengths; or a supported species.")
-    } else if (!is.null(lengths)) {
-        message("simple_goseq(): Using the explicit lengths df for gene lengths.")
-    } else if (!is.null(species)) {
-        message(paste0("simple_goseq(): Hopefully ", species, " is supported by goseq."))
-    } else {
-        ## This is probably hopelessly fragile and requires further thought
-        length_df <- gff2df(gff)
-        lengths <- length_df[length_df[["type"]] == 'CDS', ]
-        lengths <- length_df[, c("gene_id", "width")]
-        colnames(lengths) <- c("ID","width")
-    }
-    if (is.null(de_genes[["ID"]])) {
-        de_genes[["ID"]] <- make.names(rownames(de_genes), unique=TRUE)
-    }
-    if (is.null(de_genes[["DE"]])) {
-        de_genes[["DE"]] <- 1
-    }
-    de_vector <- NULL
-    de_table <- de_genes[, c("ID","DE")]
-    if (is.null(lengths) & is.null(all_genes) & is.null(species)) {
-        stop("simple_goseq(): Need either a set of all genes or gene lengths")
-    } else if (!is.null(lengths)) {
-        message("simple_goseq(): Using the length data to fill in the de vector.")
-        de_table <- merge(de_table, lengths, by.x="ID", by.y="ID", all.y=TRUE)
-        de_table[is.na(de_table)] <- 0  ## Set the new entries DE status to 0
-        rownames(de_table) <- make.names(de_table[["ID"]], unique=TRUE)
-        de_vector <- as.vector(de_table[["DE"]])
-        names(de_vector) <- rownames(de_table)
-    } else if (!is.null(species)) {
-        message("simple_goseq(): Using species and length_db to get metadata.")
-        if (species == 'hsapiens') {
-            message("Replacing hsapiens with hg19.")
-            species <- "hg19"
-        }
-        db_name <- paste0(species, ".", length_db, ".LENGTH")
-        db_invocation <- paste0("data(", db_name, ", package='geneLenDataBase')")
-        eval(parse(text=db_invocation))
-
-        gene_names <- as.data.frame(get(paste(species, length_db, "LENGTH", sep = "."))$Gene)
-        colnames(gene_names) <- c("ID")
-        de_table <- merge(de_table, gene_names, by.x="ID", by.y="ID", all.y=TRUE)
-        de_table[is.na(de_table)] <- 0
-        rownames(de_table) <- make.names(de_table[["ID"]], unique=TRUE)
-        de_vector <- as.vector(de_table[["DE"]])
-        names(de_vector) <- rownames(de_table)
-    } else { ## If both lengths and all_genes are defined, use all_genes.
-        message("simple_goseq(): Using all genes to fill in the de vector.")
-        de_table <- merge(de_table, all_genes, by.x="ID", by.y="row.names", all.y=TRUE)
-        ##de_table[is.na(de_table)] <- 0  ## Set the new entries DE status to 0
-        de_table <- merge(de_table, lengths, by.x="ID", by.y="ID", all.x=TRUE)
-        de_table[["DE"]][is.na(de_table[["DE"]])] <- 0  ## Set the new entries DE status to 0
-        rownames(de_table) <- make.names(de_table[["ID"]], unique=TRUE)
-        de_vector <- as.vector(de_table[["DE"]])
-        names(de_vector) <- rownames(de_table)
-    }
-    pwf <- NULL
-    if (is.null(species)) {
-        ## length_table = lengths[,c("ID","width")]
-        if (!is.null(de_table[["length"]])) {
-            de_table[["width"]] <- de_table[["length"]]
-        }
-        width_vector <- as.vector(de_table[["width"]])
-        names(width_vector) <- de_table[["ID"]]
-        if (is.null(goids_df)) {
-            stop("simple_goseq(): The goids are not defined.")
-        }
-        goids_df <- goids_df[, c("ID","GO")]
-        ##colnames(goids) <- c("ID", "GO")
-        pwf <- goseq::nullp(DEgenes=de_vector, bias.data=width_vector, plot.fit=doplot)
-    } else {
-        pwf <- goseq::nullp(de_vector, species, length_db, plot.fit=doplot) ## Taken from the goseq() reference manual
-    }
-    pwf_plot <- NULL
-    if (isTRUE(doplot)) {
-        pwf_plot <- recordPlot()
-    }
-##    godata = goseq(pwf, gene2cat=goids, method='Wallenius')
-    godata <- NULL
-    if (is.null(species)) {
-        godata <- goseq::goseq(pwf, gene2cat=goids_df, use_genes_without_cat=TRUE, method=goseq_method)
-    } else {
-        godata <- goseq::goseq(pwf, species, length_db, use_genes_without_cat=TRUE, method=goseq_method)
-    }
-    goseq_p <- try(plot_histogram(godata$over_represented_pvalue, bins=20))
-    goseq_p_second <- sort(unique(table(goseq_p[["data"]])), decreasing=TRUE)[2]
-    ## Set the y scale to 2x the second highest number
-    ## (assuming always that the highest is a p-value of 1)
-    goseq_y_limit <- goseq_p_second * 2
-    goseq_p <- goseq_p + ggplot2::scale_y_continuous(limits=c(0, goseq_y_limit))
-    message("simple_goseq(): Calculating q-values")
-    qdata <- godata[["over_represented_pvalue"]]
-    qdata[qdata > 1] <- 1 ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.0000000000000001
-    qvalues <- tryCatch(
-    {
-        ttmp <- as.numeric(qdata)
-        ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
-    },
-    error=function(cond) {
-        message(paste0("The qvalue estimate failed."))
-        return(1)
-    },
-    finally={
-    })
-    godata[["term"]] <- goterm(godata[["category"]])
-    godata[["ontology"]] <- goont(godata[["category"]])
-    godata <- cbind(godata, qvalues)
-    colnames(godata) <- c("category","over_represented_pvalue","under_represented_pvalue",
-                          "numDEInCat","numInCat","term","ontology","qvalue")
-    if (is.null(adjust)) {
-        godata_interesting <- subset(godata, godata$over_represented_pvalue < pvalue)
-        padjust_method <- "none"
-    } else {  ## There is a requested pvalue adjustment
-        godata_interesting <- subset(godata, p.adjust(godata[["over_represented_pvalue"]], method=padjust_method) <= adjust)
-        if (dim(godata_interesting)[1] < arglist[["minimum_interesting"]]) {
-            message(paste("simple_goseq(): There are no genes with an adj.p<", adjust, " using: ", padjust_method, ".", sep=""))
-            message(sprintf("simple_goseq(): Providing genes with raw pvalue<%s", pvalue))
-            godata_interesting <- subset(godata, godata[["over_represented_pvalue"]] <= pvalue)
-            padjust_method <- "none"
-        }
-    }
-    message("simple_goseq(): Filling godata with terms, this is slow.")
-    godata_interesting <- goseq_table(godata_interesting)
-    message("simple_goseq(): Making pvalue plots for the ontologies.")
-    pvalue_plots <- plot_goseq_pval(godata)
-    ## mf_subset <- subset(godata, ontology == "MF")
-
-    mf_subset <- godata[godata[["ontology"]] == "MF", ]
-    rownames(mf_subset) <- mf_subset[["category"]]
-    ##bp_subset <- subset(godata, ontology == "BP")
-    bp_subset <- godata[godata[["ontology"]] == "BP", ]
-    rownames(bp_subset) <- bp_subset[["category"]]
-    ## cc_subset <- subset(godata, ontology == "CC")
-    cc_subset <- godata[godata[["ontology"]] == "CC", ]
-    rownames(cc_subset) <- cc_subset[["category"]]
-    ## mf_interesting <- subset(godata_interesting, ontology == "MF")
-
-    mf_interesting <- godata_interesting[godata_interesting[["ontology"]] == "MF", ]
-    rownames(mf_interesting) <- mf_interesting[["category"]]
-    mf_interesting <- mf_interesting[, c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
-    ##bp_interesting <- subset(godata_interesting, ontology == "BP")
-    bp_interesting <- godata_interesting[godata_interesting[["ontology"]] == "BP", ]
-    rownames(bp_interesting) <- bp_interesting[["category"]]
-    bp_interesting <- bp_interesting[ ,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
-    ##cc_interesting <- subset(godata_interesting, ontology == "CC")
-    cc_interesting <- godata_interesting[godata_interesting[["ontology"]] == "CC", ]
-    rownames(cc_interesting) <- cc_interesting[["category"]]
-    cc_interesting <- cc_interesting[, c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
-
-    pval_plots <- list(
-        "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
-        "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
-        "ccp_plot_over" = pvalue_plots[["ccp_plot_over"]])
-
-    return_list <- list("input" = de_genes,
-                        "pwf" = pwf,
-                        "pwf_plot" = pwf_plot,
-                        "alldata" = godata,
-                        "pvalue_histogram" = goseq_p,
-                        "godata_interesting" = godata_interesting,
-                        "mf_interesting" = mf_interesting,
-                        "bp_interesting" = bp_interesting,
-                        "cc_interesting" = cc_interesting,
-                        "goadjust_method" = goseq_method,
-                        "adjust_method" = padjust_method,
-                        "mf_subset" = mf_subset,
-                        "pvalue_plots" = pval_plots,
-                        "bp_subset" = bp_subset,
-                        "cc_subset" = cc_subset,
-                        "qdata" = qdata)
-    return(return_list)
 }
 
 #' Make a pvalue plot from goseq data.

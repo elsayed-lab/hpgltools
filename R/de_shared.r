@@ -710,7 +710,7 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
 extract_significant_genes <- function(combined, according_to="all", fc=1.0,
-                                      p=0.05, z=NULL, n=NULL,
+                                      p=0.05, z=NULL, n=NULL, p_type="adj",
                                       excel="excel/significant_genes.xlsx") {
     if (!is.null(combined[["plots"]])) {
         combined <- combined[["data"]]
@@ -751,6 +751,9 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0,
             table <- combined[["data"]][[table_name]]
             fc_column <- paste0(according, "_logfc")
             p_column <- paste0(according, "_adjp")
+            if (p_type != "adj") {
+                p_column <- paste0(according, "_p")
+            }
             trimming <- get_sig_genes(table, fc=fc, p=p, z=z, n=n,
                                       column=fc_column, p_column=p_column)
             trimmed_up[[table_name]] <- trimming[["up_genes"]]
