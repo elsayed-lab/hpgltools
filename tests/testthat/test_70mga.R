@@ -10,9 +10,9 @@ cdm_data <- system.file("cdm_expt.rda", package="hpgltools")
 load(cdm_data, envir=mgas_data)
 rm(cdm_data)
 
-mgas_expt <- s_p(create_expt(count_dataframe=mgas_data$cdm_counts,
+mgas_expt <- sm(create_expt(count_dataframe=mgas_data$cdm_counts,
                              metadata=mgas_data$cdm_metadata,
-                             gene_info=mgas_data$gene_info))$result
+                             gene_info=mgas_data$gene_info))
 rm(mgas_data)
 
 expected_gene_names <- c("dnaA", "dnaN", "M5005_Spy_0003", "ychF", "pth", "trcF")
@@ -64,13 +64,13 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected_gene_names, actual_gene_names)
     })
 
-    actual_microbe_ids <- s_p(as.character(get_microbesonline_ids("pyogenes MGAS5005")))$result
+    actual_microbe_ids <- sm(as.character(get_microbesonline_ids("pyogenes MGAS5005")))
     expected_microbe_ids <- c("293653", "Streptococcus pyogenes MGAS5005")
     test_that("Can I get data from microbesonline?", {
         expect_equal(expected_microbe_ids, actual_microbe_ids)
     })
 
-    mgas_df <- s_p(get_microbesonline_annotation(expected_microbe_ids[[1]])[[1]])$result
+    mgas_df <- sm(get_microbesonline_annotation(expected_microbe_ids[[1]])[[1]])
     mgas_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df$sysName)
 
     rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
@@ -85,12 +85,12 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     fructose_table <- mgas_pairwise$limma$all_tables$mga1_ll_cf
     wtvmga_glucose <- mgas_pairwise$limma$all_tables$wt_ll_cg_vs_mga1_ll_cg
 
-    circos_test <- s_p(circos_prefix())$result
-    circos_kary <- s_p(circos_karyotype("mgas", length=actual_width))$result
-    circos_plus <- s_p(circos_plus_minus(mgas_df, circos_test))$result
-    circos_hist_ll_cg <- s_p(circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus))$result
-    circos_heat_ll_cf <- s_p(circos_heatmap(fructose_table, mgas_df, circos_test, outer=circos_hist_ll_cg))$result
-    circos_tile_wtmga <- s_p(circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf))$result
+    circos_test <- sm(circos_prefix())
+    circos_kary <- sm(circos_karyotype("mgas", length=actual_width))
+    circos_plus <- sm(circos_plus_minus(mgas_df, circos_test))
+    circos_hist_ll_cg <- sm(circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus))
+    circos_heat_ll_cf <- sm(circos_heatmap(fructose_table, mgas_df, circos_test, outer=circos_hist_ll_cg))
+    circos_tile_wtmga <- sm(circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf))
     circos_suffix(cfgout=circos_test)
-    circos_made <- s_p(circos_make(target="mgas"))$result
+    circos_made <- sm(circos_make(target="mgas"))
 }

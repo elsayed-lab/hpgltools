@@ -4,7 +4,7 @@
 \alias{set_expt_batch}
 \title{Change the batches of an expt}
 \usage{
-set_expt_batch(expt, factor)
+set_expt_batch(expt, fact, ids = NULL, ...)
 }
 \arguments{
 \item{expt}{Expt to modify}

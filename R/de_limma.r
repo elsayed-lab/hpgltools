@@ -1,21 +1,20 @@
-limma_ma <- function(output, table=1, p_column="limma_adjp") {
+
+#' @export
+limma_ma <- function(output, table=NULL) {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
-    if (!is.null(output[["limma"]])) {
-        output <- output[["limma"]]
-        counts <- output[["voom_result"]][["E"]]
-        de_genes <- output[["all_tables"]][[table]]
-        pval <- "adj.P.Val"
-        ## This handles when the input is the result of a pairwise comparison
-    } else if (!is.null(output[["data"]][[table]])) {
-        output <- output[["data"]][[table]]
-        counts <- "something"
-        sig <- "limma_adjp"
-        ## This handles when the result is a set of combined tables
+    output <- output[["limma"]]  ## Currently this only will work with the output from all_pairwise()
+    possible_tables <- names(output[["all_pairwise"]])
+    if (is.null(table)) {
+        table <- possible_tables[1]
+    } else if (is.numeric(table)) {
+        table <- possible_tables[table]
     }
-    ## plot_ma(counts=macro_batch_comparisons$limma$voom_result$E, de_genes=macro_batch_table, pval="pval")
-    plot <- plot_ma(counts=counts, de_genes=de_genes, pval=pval)
+
+    de_genes <- output[["all_tables"]][[table]]
+    plot <- plot_ma_de(table=de_genes, expr_col="AveExpr", fc_col="logFC", p_col="adj.P.Val")
+    return(plot)
 }
 
 #' Plot out 2 coefficients with respect to one another from limma.

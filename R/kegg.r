@@ -37,7 +37,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
     try(detach("package:KEGGgraph", unload=TRUE), silent=TRUE)
     try(detach("package:RamiGO", unload=TRUE), silent=TRUE)
     try(detach("package:graph", unload=TRUE), silent=TRUE)
-    require.auto("pathview")
+    library(pathview) ## I am not sure how else to avoid the error 'unable to load 'bods''
     ## If a table from limma was passed to this, just assume that one wants logFC
     ## Similar stanzas should probably be added for deseq/edger
     ## This is added because pathview() only works with dataframes/lists with only numbers.

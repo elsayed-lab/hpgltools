@@ -1,3 +1,22 @@
+#' @export
+edger_ma <- function(output, table=NULL) {
+    counts <- NULL
+    de_genes <- NULL
+    pval <- NULL
+    output <- output[["edger"]]  ## Currently this only will work with the output from all_pairwise()
+    possible_tables <- output[["contrasts"]][["names"]]
+    if (is.null(table)) {
+        table <- possible_tables[1]
+    } else if (is.numeric(table)) {
+        table <- possible_tables[table]
+    }
+
+    de_genes <- output[["all_tables"]][[table]]
+    pval <- "qvalue"
+    plot <- plot_ma_de(table=de_genes, expr_col="logCPM", fc_col="logFC", p_col="qvalue")
+    return(plot)
+}
+
 #' Plot two coefficients with respect to one another from edgeR.
 #'
 #' It can be nice to see a plot of two coefficients from a edger comparison with respect to one another
@@ -26,11 +45,11 @@ edger_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
     if (!is.null(arglist[["qlimit"]])) {
         qlimit <- arglist[["qlimit"]]
     }
-    fc_column <- "limma_logfc"
+    fc_column <- "edger_logfc"
     if (!is.null(arglist[["fc_column"]])) {
         fc_column <- arglist[["fc_column"]]
     }
-    p_column <- "limma_adjp"
+    p_column <- "edger_adjp"
     if (!is.null(arglist[["p_column"]])) {
         p_column <- arglist[["p_column"]]
     }
@@ -59,14 +78,31 @@ edger_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
         coefficient_df <- coefficient_df * -1.0
     }
 
-    plot <- suppressMessages(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
-                                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                                 tooltip_data=tooltip_data, base_url=base_url))
+    plot <- sm(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+                                   gvis_trendline=gvis_trendline, first=xname, second=yname,
+                                   tooltip_data=tooltip_data, base_url=base_url,
+                                   pretty_colors=FALSE, color_low=color_low, color_high=color_high))
     maxvalue <- as.numeric(max(coefficient_df) + 1)
-    print(maxvalue)
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
+
+    if (!is.null(toptable)) {
+        theplot <- plot[["scatter"]] + ggplot2::theme_bw()
+        sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
+        sigup <- sig[["up_genes"]]
+        sigdown <- sig[["down_genes"]]
+        up_index <- rownames(coefficients) %in% rownames(sigup)
+        down_index <- rownames(coefficients) %in% rownames(sigdown)
+        up_df <- as.data.frame(coefficients[up_index, ])
+        down_df <- as.data.frame(coefficients[down_index, ])
+        colnames(up_df) <- c("first", "second")
+        colnames(down_df) <- c("first", "second")
+        theplot <- theplot +
+            ggplot2::geom_point(data=up_df, colour=color_high) +
+            ggplot2::geom_point(data=down_df, colour=color_low)
+        plot[["scatter"]] <- theplot
+    }
     plot[["df"]] <- coefficient_df
     return(plot)
 }

@@ -154,27 +154,32 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         le <- le[,c("logFC.x","logFC.y")]
         colnames(le) <- c("limma logFC", "edgeR logFC")
         lec <- stats::cor.test(x=le[, 1], y=le[, 2])[["estimate"]]
-        les <- plot_scatter(le) + ggplot2::labs(title=paste0(comp, ": limma vs. edgeR.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
+        les <- plot_scatter(le) + ggplot2::labs(title=paste0(comp, ": limma vs. edgeR.")) +
+            ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         ld <- merge(l, d, by.x="row.names", by.y="row.names")
         ld <- ld[, c("logFC.x","logFC.y")]
         colnames(ld) <- c("limma logFC", "DESeq2 logFC")
         ldc <- stats::cor.test(ld[,1], ld[,2])[["estimate"]]
-        lds <- plot_scatter(ld) + ggplot2::labs(title=paste0(comp, ": limma vs. DESeq2.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
+        lds <- plot_scatter(ld) + ggplot2::labs(title=paste0(comp, ": limma vs. DESeq2.")) +
+            ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         lb <- merge(l, b, by.x="row.names", by.y="row.names")
         lb <- lb[, c("logFC.x","logFC.y")]
         colnames(lb) <- c("limma logFC", "basic logFC")
         lbc <- stats::cor.test(lb[,1], lb[,2])[["estimate"]]
-        lbs <- plot_scatter(lb) + ggplot2::labs(title=paste0(comp, ": limma vs. basic.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
+        lbs <- plot_scatter(lb) + ggplot2::labs(title=paste0(comp, ": limma vs. basic.")) +
+            ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         ed <- merge(e, d, by.x="row.names", by.y="row.names")
         ed <- ed[, c("logFC.x","logFC.y")]
         colnames(ed) <- c("edgeR logFC", "DESeq2 logFC")
         edc <- stats::cor.test(ed[,1], ed[,2])[["estimate"]]
-        eds <- plot_scatter(ed) + ggplot2::labs(title=paste0(comp, ": edgeR vs. DESeq2.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
+        eds <- plot_scatter(ed) + ggplot2::labs(title=paste0(comp, ": edgeR vs. DESeq2.")) +
+            ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         eb <- merge(e, b, by.x="row.names", by.y="row.names")
         eb <- eb[, c("logFC.x","logFC.y")]
         colnames(eb) <- c("edgeR logFC", "basic logFC")
         ebc <- stats::cor.test(eb[,1], eb[,2])[["estimate"]]
-        ebs <- plot_scatter(eb) + ggplot2::labs(title=paste0(comp, ": edgeR vs. basic.")) + ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
+        ebs <- plot_scatter(eb) + ggplot2::labs(title=paste0(comp, ": edgeR vs. basic.")) +
+            ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         db <- merge(d, b, by.x="row.names", by.y="row.names")
         db <- db[, c("logFC.x","logFC.y")]
         colnames(db) <- c("DESeq2 logFC", "basic logFC")
@@ -245,10 +250,6 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         "comp" = comparison_df,
         "heat" = heat)
     return(ret)
-}
-
-deprint <- function(f){
-    return(function(...) { capture.output(w<-f(...)); return(w); })
 }
 
 #' Combine portions of deseq/limma/edger table output.
@@ -525,7 +526,35 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         comp <- recordPlot()
         openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
                              startRow=new_row + 1, startCol=1, fileType="png", units="in")
+        logfc_comparisons <- compare_logfc_plots(combo)
+        logfc_names <- names(logfc_comparisons)
+        new_row <- new_row + 2
+        for (c in 1:length(logfc_comparisons)) {
+            new_row <- new_row + 32
+            le <- logfc_comparisons[[c]][["le"]]
+            ld <- logfc_comparisons[[c]][["ld"]]
+            de <- logfc_comparisons[[c]][["de"]]
 
+            tmpcol <- 1
+            openxlsx::writeData(wb, "pairwise_summary", x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
+                                startRow=new_row - 2, startCol=tmpcol)
+            openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
+            print(le)
+            openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                 startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+
+            tmpcol <- 8
+            openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. DESeq2)", startRow=new_row - 1, startCol=tmpcol)
+            print(ld)
+            openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                 startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+
+            tmpcol <- 15
+            openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(DESeq2 vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
+            print(de)
+            openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                 startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+        }
         message("Performing save of the workbook.")
         openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     }
@@ -814,18 +843,27 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
 #' @export
 compare_logfc_plots <- function(combined_tables) {
     plots <- list()
-    for (count in 1:length(combined_tables[["data"]])) {
-        tab <- combined_tables[["data"]][[count]]
-        le_data <- tab[, c("limma_logfc", "edger_logfc", "edger_q")]
-        le_data[[3]] <- 1 - as.numeric(le_data[[3]])
-        le <- s_p(plot_linear_scatter(le_data, pretty_colors=FALSE)$scatter)[["result"]]
-        le <- le + geom_point(data=le_data, aes(x=limma_logfc, y=edger_logfc, colour=edger_q)) + scale_colour_gradient()
-        ld <- s_p(plot_linear_scatter(tab[, c("limma_logfc", "deseq_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
-        de <- s_p(plot_linear_scatter(tab[, c("deseq_logfc", "edger_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
-        lb <- s_p(plot_linear_scatter(tab[, c("limma_logfc", "basic_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
-        db <- s_p(plot_linear_scatter(tab[, c("deseq_logfc", "basic_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
-        eb <- s_p(plot_linear_scatter(tab[, c("edger_logfc", "basic_logfc")], pretty_colors=FALSE)$scatter)[["result"]]
-        name <- names(combined_tables[["data"]])[[count]]
+    data <- NULL
+    if (!is.null(combined_tables[["data"]])) {
+        data <- combined_tables[["data"]]
+    } else {
+        data <- combined_tables
+    }
+    for (count in 1:length(data)) {
+        tab <- data[[count]]
+        le_data <- tab[, c("limma_logfc", "edger_logfc", "limma_adjp", "edger_adjp")]
+        le <- sm(plot_linear_scatter(le_data, pretty_colors=FALSE)[["scatter"]])
+        ld_data <- tab[, c("limma_logfc", "deseq_logfc", "limma_adjp", "deseq_adjp")]
+        ld <- sm(plot_linear_scatter(ld_data, pretty_colors=FALSE)[["scatter"]])
+        de_data <- tab[, c("deseq_logfc", "edger_logfc", "deseq_adjp", "edger_adjp")]
+        de <- sm(plot_linear_scatter(de_data, pretty_colors=FALSE)[["scatter"]])
+        lb_data <- tab[, c("limma_logfc", "basic_logfc", "limma_adjp", "basic_p")]
+        lb <- sm(plot_linear_scatter(lb_data, pretty_colors=FALSE)[["scatter"]])
+        db_data <- tab[, c("deseq_logfc", "basic_logfc", "deseq_adjp", "basic_p")]
+        db <- sm(plot_linear_scatter(db_data, pretty_colors=FALSE)[["scatter"]])
+        eb_data <- tab[, c("edger_logfc", "basic_logfc", "edger_adjp", "basic_p")]
+        eb <- sm(plot_linear_scatter(eb_data, pretty_colors=FALSE)[["scatter"]])
+        name <- names(data)[[count]]
         compared <- list(
             "le" = le, "ld" = ld, "de" = de,
             "lb" = lb, "db" = db, "eb" = eb)
