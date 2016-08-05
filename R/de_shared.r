@@ -413,7 +413,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                     limma_plt <- sm(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
                     edger_plt <- sm(edger_coefficient_scatter(edger, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
                     deseq_plt <- sm(deseq_coefficient_scatter(deseq, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
-
                 }
             } ## End checking that we found the numerator/denominator
             else {
@@ -426,7 +425,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             de_summaries <- rbind(de_summaries, summary)
             table_names[[a]] <- summary[["table"]]
         }
-
         ## If you want all the tables in a dump
     } else if (class(keepers) == "character" & keepers == "all") {
         a <- 0
