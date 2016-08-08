@@ -479,7 +479,7 @@ gff2irange <- function(gff, type=NULL) {
 hpgl_cor <- function(df, method="pearson", ...) {
     if (method == "robust") {
         robust_cov <- robust::covRob(df, corr=TRUE)
-        correlation <- robust_cov$cov
+        correlation <- robust_cov[["cov"]]
     } else {
         correlation <- stats::cor(df, method=method, ...)
     }

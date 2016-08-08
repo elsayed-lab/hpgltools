@@ -53,7 +53,7 @@ plot_disheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="euclidean", expt_names=NULL,
                          batch_row="batch",  title=NULL, ...) {
     plot_heatmap(expt_data, expt_colors=expt_colors, expt_design=expt_design,
-                 method=method, expt_names=names, type="distance",
+                 method=method, expt_names=expt_names, type="distance",
                  batch_row=batch_row, title=title, ...)
 }
 
@@ -98,12 +98,13 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     }
 
     if (is.null(expt_colors)) {
-        tt <- ncol(expt_data)
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(tt, chosen_palette))(tt)
+        num_cols <- ncol(expt_data)
+        expt_colors <- sm(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_cols, chosen_palette))(num_cols))
     }
     if (is.null(expt_names)) {
         expt_names <- colnames(expt_data)
     }
+    expt_colors <- as.character(expt_colors)
 
     if (type == "correlation") {
         heatmap_data <- hpgl_cor(expt_data, method=method)
@@ -112,7 +113,6 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         heatmap_data <- as.matrix(dist(t(expt_data)), method=method)
         heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "GnBu"))(100)
     }
-    expt_colors <- as.character(expt_colors)
 
     ## Set the batch colors depending on # of observed batches
     if (is.null(expt_design)) {
@@ -219,13 +219,13 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
     hpgl_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
-        data <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+        design <- data[["design"]]
+        colors <- data[["colors"]]
+        names <- data[["names"]]
+        data <- Biobase::exprs(data[["expressionset"]])
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
