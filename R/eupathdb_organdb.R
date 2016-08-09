@@ -1,7 +1,89 @@
+make_orgdb <- function(id="lmajor_friedlin", cfg=NULL, kegg=NULL, output_dir="tmp_orgdb", ...) {
+    temp_dir <- make_temp_orgdb(id, cfg, kegg, output_dir, ...)
+
+    
+}
 
 #' @export
-orgdb_genes <- function(gff, txt) {
-    gff <- "/cbcb/lab/nelsayed/ref_data/tcruzi_clbrener_nonesmeraldo-like/annotation/TriTrypDB-27_TcruziCLBrenerNon-Esmeraldo-like.gff"
+make_temp_orgdb <- function(id="lmajor_friedlin", cfg=NULL, kegg=NULL, output_dir="tmp_orgdb", ...) {
+    arglist=list(...)
+    cfg <- get_eupath_config(cfg)[id, ]
+    version <- as.character(cfg[["db_version"]])
+    strain <- as.character(cfg[["strain"]])
+    shortname <- as.character(cfg[["shortname"]])
+    files <- tritryp_downloads(version=version, species=shortname, strain=strain, ...)
+    ##files <- tritryp_downloads(version=version, species=shortname, strain=strain)
+    orgdb_info <- make_orgdb_info(files[["gff"]], files[["txt"]])
+    gene_info <- new_orgdb[["gene_info"]]
+    gene_info[["GID"]] <- as.character(gene_info[["GID"]])
+    rownames(gene_info) <- gene_info[["GID"]]
+    chr_info <- new_orgdb[["chr_info"]]
+    chr_info[["GID"]] <- as.character(chr_info[["GID"]])
+    go_info <- new_orgdb[["go_info"]]
+    go_info[["GID"]] <- as.character(go_info[["GID"]])
+    go_info <- go_info[, c("GID", "GO", "EVIDENCE")]
+    gene_types <- new_orgdb[["gene_types"]]
+    gene_types[["GID"]] <- as.character(gene_types[["GID"]])
+
+    if (file.exists(output_dir)) {
+        unlink(x=output_dir, recursive=TRUE)
+    }
+    if (!file.exists(output_dir)) {
+        dir.create(output_dir, recursive=TRUE)
+    }
+    if (is.null(kegg)) {
+        org_result <- AnnotationForge::makeOrgPackage(
+            gene_info = gene_info,
+            chromosome = chr_info,
+            go = go_info,
+            type = gene_types,
+            version = format(cfg[["db_version"]], nsmall=1),
+            author = as.character(cfg[["author"]]),
+            maintainer = as.character(cfg[["maintainer"]]),
+            tax_id = as.character(cfg[["tax_id"]]),
+            genus = as.character(cfg[["genus"]]),
+            species = as.character(cfg[["species"]]),
+            outputDir = output_dir,
+            goTable = "go")
+    } else {
+        kegg_info <- orgdb_kegg(cfg, gene_info)
+        org_result <- makeOrgPackage(
+            gene_info = gene_info,
+            chromosome = chr_info,
+            go = go_info,
+            kegg_info = kegg_table,
+            type = gene_types,
+            version = as.character(cfg[["db_version"]]),
+            author = as.character(cfg[["author"]]),
+            maintainer = as.character(cfg[["maintainer"]]),
+            tax_id = as.character(cfg[["tax_id"]]),
+            genus = as.character(cfg[["genus"]]),
+            species = as.character(cfg[["species"]]),
+            outputDir = output_dir,
+            goTable = "go")
+    }
+    ## The result is the pathname of the created orgdb directory
+    return(org_result)
+}
+
+
+#' @export
+get_eupath_config <- function(cfg=NULL) {
+    cfg_data <- data.frame()
+    if (is.null(cfg)) {
+        cfg <- system.file("eupathdb_organdb.csv", package="hpgltools")
+        cfg_data <- read.csv(cfg)
+    } else if (class(cfg) == "data.frame") {
+        cfg_data <- cfg
+    } else if (class(cfg) == "character") {
+        cfg_data <- read.csv(cfg)
+    }
+    rownames(cfg_data) <- cfg_data[["id"]]
+    return(cfg_data)
+}
+
+#' @export
+make_orgdb_info <- function(gff, txt) {
     gff_entries <- rtracklayer::import.gff3(gff)
     genes <- gff_entries[gff_entries$type == "gene"]  ## WTF? why does this work?
     gene_info <- as.data.frame(elementMetadata(genes))
@@ -14,7 +96,6 @@ orgdb_genes <- function(gff, txt) {
     colnames(gene_info) <- paste0("GENE", colnames(gene_info))
     colnames(gene_info)[1] <- "GID"
     num_rows <- nrow(gene_info)
-    gene_info[["GENEALIAS"]] <- as.character(gene_info[["GENEALIAS"]])
     ## Get rid of character(0) crap and NAs
     is.empty <- function(stuff) {
         (length(stuff) == 0) && (typeof(stuff) == "character")
@@ -42,52 +123,36 @@ orgdb_genes <- function(gff, txt) {
     }
     gene_info[is.na(gene_info)] <- "null"
     gene_info[gene_info == "NA"] <- "null"
+    gene_info[["GENEALIAS"]] <- gsub(pattern="^c\\(", replacement="", x=gene_info[["GENEALIAS"]])
+    gene_info[["GENEALIAS"]] <- gsub(pattern="\\)$", replacement="", x=gene_info[["GENEALIAS"]])
+    gene_info[["GENEALIAS"]] <- gsub(pattern='"', replacement="", x=gene_info[["GENEALIAS"]])
+
+    txt_information <- parse_gene_info_table(file=txt, verbose=TRUE)
+    genes <- txt_information[["genes"]]
+    go_info <- txt_information[["go"]]
 
     chr_info <- data.frame(
-        "GID" = genes$ID,
-        "CHR" = as.character(seqnames(genes)))
+        "GID" = rownames(genes),
+        "CHR" = genes[["chromosome"]])
 
-    gene_types <- orgdb_gene_types(txt)
+    gene_types <- data.frame(
+        "GID" = rownames(genes),
+        "TYPE" = genes[["type"]])
 
+    ## The information in the following list really should be coming from parse_gene_info_table()
     ret <- list(
         "gene_info" = gene_info,
         "chr_info" = chr_info,
         "gene_types" = gene_types,
+        "go_info" = go_info
     )
     return(ret)
 }
 
-orgdb_go <- function(go_file) {
-    go_table <- parse_go_terms(settings$txt)
 
-    ## Map from non-primary IDs to primary GO ids;
-    ## non-primary IDs are filtered out by makeOrgPackage
-    problem_rows <- go_table[!go_table$GO %in% keys(GO.db),]
-    synonyms <- problem_rows$GO
-
-    ##Create a mapping data frame
-    synonym_mapping <- data.frame()
-
-    for (syn in synonyms) {
-        if (!is.null(GOSYNONYM[[syn]])) {
-            synonym_mapping <- rbind(synonym_mapping, c(syn, GOSYNONYM[[syn]]@GOID))
-        }
-    }
-
-    ## replace alternative GO term identifiers
-    if (nrow(synonym_mapping) > 0) {
-        colnames(synonym_mapping) <- c('synonym', 'primary')
-        synonym_mapping <- unique(synonym_mapping)
-
-        go_table$GO[!go_table$GO %in% keys(GO.db)] <- synonym_mapping$primary[match(synonyms, synonym_mapping$synonym)]
-        go_table <- unique(go_table[complete.cases(go_table),])
-    }
-        return(go_table)
-}
-
-orgdb_kegg <- function(kegg) {
-    org_abbreviation <- paste0(tolower(substring(settings$genus, 1, 1)),
-                              substring(settings$species, 1, 2))
+orgdb_kegg <- function(cfg, gene_info) {
+    org_abbreviation <- paste0(tolower(substring(cfg[["genus"]], 1, 1)),
+                              substring(cfg[["species"]], 1, 2))
 
     # Overides for cases where KEGG abbreviation differes from the above
     # pattern.
@@ -97,38 +162,31 @@ orgdb_kegg <- function(kegg) {
         org_abbreviation <- 'lbz'
     }
 
-
-
     # For some species, it is necessary to map gene ids from KEGG to what is
     # currently used on TriTrypDB.
     #
     # TODO: Generalize if possible
     #
-    if (org_abbreviation == 'tbr') {
+    ##if (org_abbreviation == 'tbr') {
         # Load GeneAlias file and convert entry in KEGG results
         # to newer GeneDB/TriTrypDB identifiers.
-        fp <- file(settings$aliases)
-        rows <- strsplit(readLines(fp), "\t")
-        close(fp)
-
-        kegg_id_mapping <- list()
-
+        ## kegg_id_mapping <- list()
         # example alias file entries
         #Tb927.10.2410  TRYP_x-70a06.p2kb545_720  Tb10.70.5290
         #Tb927.9.15520  Tb09.244.2520  Tb09.244.2520:mRNA
         #Tb927.8.5760   Tb08.26E13.490
         #Tb10.v4.0258   Tb10.1120
         #Tb927.11.7240  Tb11.02.5150  Tb11.02.5150:mRNA  Tb11.02.5150:pep
-        for (row in rows) {
-            # get first and third columns in the alias file
-            old_ids <- row[2:length(row)]
-
-            for (old_id in old_ids[grepl('Tb\\d+\\.\\w+\\.\\d+', old_ids)]) {
-                kegg_id_mapping[old_id] <- row[1]
-            }
-        }
-
-    } else if (org_abbreviation == 'lma') {
+        ##for (alias in strsplit(alias, split=", ")) {
+        ##    # get first and third columns in the alias file
+        ##    old_ids <- row[2:length(row)]
+        ##
+        ##    for (old_id in old_ids[grepl('Tb\\d+\\.\\w+\\.\\d+', old_ids)]) {
+        ##        kegg_id_mapping[old_id] <- row[1]
+        ##    }
+        ##}
+    ##
+    ##} else if (org_abbreviation == 'lma') {
         # L. major
         #
         # Convert KEGG identifiers to TriTrypDB identifiers
@@ -136,23 +194,19 @@ orgdb_kegg <- function(kegg) {
         # Note that this currently skips a few entries with a different
         # format, e.g. "md:lma_M00359", and "bsid:85066"
         #
-    } else if (org_abbreviation == 'tcr') {
-        fp <- file(settings$aliases)
-        rows <- strsplit(readLines(fp), "\t")
-        close(fp)
-
-        kegg_id_mapping <- list()
-
-        for (row in rows) {
-            # get first and third columns in the alias file
-            kegg_id_mapping[row[3]] <- row[1]
-        }
+    ##} else if (org_abbreviation == 'tcr') {
+        ##kegg_id_mapping <- list()
+        ##
+        ##for (row in rows) {
+        ##    # get first and third columns in the alias file
+        ##    kegg_id_mapping[row[3]] <- row[1]
+       ## }
 
         # Example: "tcr:509463.30" -> ""
         ##convert_kegg_gene_ids <- function(kegg_ids) {
         ##    kegg_to_genedb(kegg_ids, kegg_id_mapping)
         ##}
-    }
+    ##}
 
     # data frame to store kegg gene mapping and pathway information
     kegg_mapping <- data.frame()
@@ -169,10 +223,11 @@ orgdb_kegg <- function(kegg) {
         pathway_desc  <- ifelse(is.null(meta$DESCRIPTION), '', meta$DESCRIPTION)
         pathway_class <- ifelse(is.null(meta$CLASS), '', meta$CLASS)
         kegg_pathways <- rbind(kegg_pathways,
-                               data.frame(pathway=pathway,
-                                         name=meta$PATHWAY_MAP,
-                                         class=pathway_class,
-                                         description=pathway_desc))
+                               data.frame(
+                                   "pathway" = pathway,
+                                   "name" = meta$PATHWAY_MAP,
+                                   "class" = pathway_class,
+                                   "description" = pathway_desc))
 
         # Get genes in pathway
         kegg_ids <- as.character(keggLink(org_abbreviation, pathway))
@@ -197,11 +252,6 @@ orgdb_kegg <- function(kegg) {
                 data.frame(GID=gene_ids, pathway=pathway)))
         }
     }
-    # Save KEGG mapping
-    write.csv(kegg_mapping, file=kegg_mapping_file, quote=FALSE,
-              row.names=FALSE)
-    write.table(kegg_pathways, file=kegg_pathways_file, quote=FALSE,
-                row.names=FALSE, sep='\t')
 
     # Drop columns with unrecognized identifiers
 kegg_mapping <- kegg_mapping[complete.cases(kegg_mapping),]
@@ -216,37 +266,7 @@ kegg_table <- kegg_table[,c(2, 1, 3, 4, 5)]
 }
 
 make_orgdb_pkg <- function(gene, chr, go, kegg) {
-    if (is.null(kegg)) {
-    org_result <- makeOrgPackage(
-        gene_info  = gene_info,
-        chromosome = chr_info,
-        go         = go_table,
-        type       = gene_types,
-        version    = db_version,
-        author     = settings$author,
-        maintainer = settings$maintainer,
-        outputDir  = settings$output_dir,
-        tax_id     = settings$tax_id,
-        genus      = settings$genus,
-        species    = settings$species,
-        goTable    = "go")
-    } else {
-        org_result <- makeOrgPackage(
-        gene_info  = gene_info,
-        chromosome = chr_info,
-        go         = go_table,
-        kegg = kegg_table,
-        type       = gene_types,
-        version    = db_version,
-        author     = settings$author,
-        maintainer = settings$maintainer,
-        outputDir  = settings$output_dir,
-        tax_id     = settings$tax_id,
-        genus      = settings$genus,
-        species    = settings$species,
-        goTable    = "go")
-    }
-    return(org_result)
+
 }
 
 gather_txdb <- function() {
@@ -574,7 +594,8 @@ convert_kegg_gene_ids <- function(kegg_ids, kegg_id_mapping) {
 #' @return Returns a dataframe mapping gene ids to gene types
 #' @export
 orgdb_gene_types <- function (filepath) {
-    if (file_ext(filepath) == 'gz') {
+    message("Replace me with parse_gene_info_table()")
+    if (tools::file_ext(filepath) == 'gz') {
         fp <- gzfile(filepath, open='rb')
     } else {
         fp <- file(filepath, open='r')
@@ -586,7 +607,7 @@ orgdb_gene_types <- function (filepath) {
     gene_types <- c()
 
     # Counter to keep track of row number
-    i = 1
+    i <- 1
 
     # Iterate through lines in file
     while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
