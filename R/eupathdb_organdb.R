@@ -1,53 +1,167 @@
-make_orgdb <- function(id="lmajor_friedlin", cfg=NULL, kegg=NULL, output_dir="tmp_orgdb", ...) {
-    temp_dir <- make_temp_orgdb(id, cfg, kegg, output_dir, ...)
-
-    
-}
-
 #' @export
-make_temp_orgdb <- function(id="lmajor_friedlin", cfg=NULL, kegg=NULL, output_dir="tmp_orgdb", ...) {
-    arglist=list(...)
+make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb", ...) {
+    arglist <- list(...)
+    kegg <- arglist[["kegg"]]
     cfg <- get_eupath_config(cfg)[id, ]
     version <- as.character(cfg[["db_version"]])
     strain <- as.character(cfg[["strain"]])
     shortname <- as.character(cfg[["shortname"]])
-    files <- tritryp_downloads(version=version, species=shortname, strain=strain, ...)
-    ##files <- tritryp_downloads(version=version, species=shortname, strain=strain)
-    orgdb_info <- make_orgdb_info(files[["gff"]], files[["txt"]])
-    gene_info <- new_orgdb[["gene_info"]]
+    files <- tritryp_downloads(version=version, species=shortname, strain=strain)
+    ##files <- tritryp_downloads(version=version, species=shortname, strain=strain, ...)
+    savefile <- paste0(output_dir, "/", cfg[["id"]], ".rda")
+    orgdb_info <- NULL
+    if (file.exists(savefile)) {
+        message("Found a previous savefile for this species, loading from it.")
+        orgdb_info <- new.env()
+        load(savefile, envir=orgdb_info)
+        orgdb_info <- orgdb_info[["orgdb_info"]]
+        message(paste0("Loaded.  Delete <", savefile, "> to regenerate the rdata file."))
+    } else {
+        message("Reading from a freshly downloaded txt/gff file.")
+        orgdb_info <- make_orgdb_info(files[["gff"]], files[["txt"]])
+        save(orgdb_info, file=savefile)
+    }
+
+    orgdb_result <- make_orgdb(orgdb_info, id=id, cfg=cfg, output_dir=output_dir, kegg=kegg)
+    orgdb_package <- orgdb_result[["package_name"]]
+    txdb_result <- make_txdb(orgdb_info, id=id, cfg=cfg, gff=files[["gff"]], output_dir=output_dir)
+    txdb_package <- txdb_result[["package_name"]]
+
+    graph_data <- list(
+        join1=c(GO.db='GOID', orgdb='GO'),
+        join2=c(orgdb='GID',  txdb='GENEID')
+    )
+
+    names(graph_data[["join1"]]) = c('GO.db', orgdb_package)
+    names(graph_data[["join2"]]) = c(orgdb_package, txdb_package)
+
+    requireNamespace(orgdb_package)
+    requireNamespace(txdb_package)
+    libstring <- paste0("library(", orgdb_package, ")")
+    eval(parse(text=libstring))
+    libstring <- paste0("library(", txdb_package, ")")
+    eval(parse(text=libstring))
+    organism <- paste0(cfg[["genus"]], " ", cfg[["species"]], " ", cfg[["strain"]])
+    organism <- gsub(pattern="-like", replacement="", x=organism)
+    requireNamespace("OrganismDbi")
+    pkgname <- as.character(cfg[["organismdb_name"]])
+    author <- as.character(cfg[["author"]])
+    maintainer <- as.character(cfg[["maintainer"]])
+
+    destination <- paste0(output_dir, "/organismdbi")
+    if (file.exists(destination)) {
+        unlink(x=destination, recursive=TRUE)
+    }
+    dir.create(destination, recursive=TRUE)
+    version = format(as.numeric(version), nsmall=1)
+    organdb <- OrganismDbi::makeOrganismPackage(
+        pkgname = pkgname,
+        graphData = graph_data,
+        organism = organism,
+        version = version,
+        maintainer = maintainer,
+        author = author,
+        destDir = destination,
+        license='Artistic-2.0'
+    )
+    organdb_path <- paste0(destination, "/", pkgname)
+    organdb_path <- pkg_cleaner(organdb_path)
+    if (class(organdb) == "list") {
+        inst <- devtools::install(organdb_path)
+    }
+    return(inst)
+}
+
+#' @export
+pkg_cleaner <- function(path) {
+    ## This is because TxDb creation fails if you have an author like 'abelew <abelew@gmail.com>'
+    at_cmd <- paste0("sed -i 's/ at /\\@/g' ", path, "/DESCRIPTION")
+    message(paste0("Rewriting DESCRIPTION: ", at_cmd))
+    system(command=at_cmd)
+    ## Since I changed @ to at I figured . could be dot too
+    dot_cmd <- paste0("sed -i 's/ dot /\\./g' ", path, "/DESCRIPTION")
+    message(paste0("Rewriting DESCRIPTION to remove dot: ", dot_cmd))
+    system(dot_cmd)
+    new_dir <- path
+    if (grepl(pattern="-like", x=path)) {
+        ## Get rid of the -like in the path name
+        new_dir <- gsub(pattern="-like", replacement="", x=path)
+        ## And rename the directory
+        mv_cmd <- paste0("mv ", path, " ", new_dir)
+        message(paste0("moving orgdb: ", mv_cmd))
+        system(mv_cmd)
+        ## Collect the text files in the new package and remove all -like instances in them
+        find_cmd <- paste0("sed -i 's/-like//g' $(find ", new_dir, " -type f | grep -v sqlite)")
+        message(paste0("rewriting orgdb files: ", find_cmd))
+        system(find_cmd)
+
+        ## Move the sqlite file
+        old_sqlite_basename <- basename(path)
+        old_sqlite_base <- gsub(pattern=".db", replacement="", x=old_sqlite_basename)
+        sqlite_basename <- basename(new_dir)
+        sqlite_base <- gsub(pattern=".db", replacement="", x=sqlite_basename)
+        sqlite_name <- paste0(sqlite_base, ".sqlite")
+        old_sqlite <- paste0(new_dir, "/inst/extdata/", old_sqlite_base, ".sqlite")
+        new_sqlite <- gsub(pattern="-like", replacement="", x=old_sqlite)
+        sqlite_mv_cmd <- paste0("mv ", old_sqlite, " ", new_sqlite)
+        message(paste0("moving sqlite file: ", sqlite_mv_cmd))
+        system(sqlite_mv_cmd)
+        orgdb_dir <- new_dir
+        new_pkg_name <- gsub(pattern="-like", replacement="", x=sqlite_basename)
+        ## Update the orgdb sqlite file to reflect the new name
+        final_sqlite_cmd <- paste0("chmod +w ", new_sqlite, " ; sqlite3 ", new_sqlite, " \"UPDATE metadata SET value='", new_pkg_name, "' WHERE name='SPECIES';\" ; chmod -w ", new_sqlite)
+        message(paste0("rewriting sqlite db:", final_sqlite_cmd))
+        system(final_sqlite_cmd)
+    }
+    message("Finished pkg_cleaner.")
+    return(new_dir)
+}
+
+#' @export
+make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=NULL, output_dir="organismdbi", ...) {
+    arglist=list(...)
+    orgdb_pre <- paste0(output_dir, "/orgdb")
+    if (!file.exists(orgdb_pre)) {
+        dir.create(orgdb_pre, recursive=TRUE)
+    }
+
+    gene_info <- orgdb_info[["gene_info"]]
     gene_info[["GID"]] <- as.character(gene_info[["GID"]])
     rownames(gene_info) <- gene_info[["GID"]]
-    chr_info <- new_orgdb[["chr_info"]]
+    chr_info <- orgdb_info[["chr_info"]]
     chr_info[["GID"]] <- as.character(chr_info[["GID"]])
-    go_info <- new_orgdb[["go_info"]]
+    go_info <- orgdb_info[["go_info"]]
     go_info[["GID"]] <- as.character(go_info[["GID"]])
     go_info <- go_info[, c("GID", "GO", "EVIDENCE")]
-    gene_types <- new_orgdb[["gene_types"]]
+    gene_types <- orgdb_info[["gene_types"]]
     gene_types[["GID"]] <- as.character(gene_types[["GID"]])
 
-    if (file.exists(output_dir)) {
-        unlink(x=output_dir, recursive=TRUE)
+    orgdb_base_name <- paste0("org.", cfg[["shortname"]], ".", cfg[["strain"]], ".eg")
+    orgdb_pkg_name <- paste0(orgdb_base_name, ".db")
+    orgdb_sqlite_name <- paste0(orgdb_base_name, ".sqlite")
+    assumed_dir <- paste0(output_dir, "/orgdb/", orgdb_pkg_name)
+
+    if (file.exists(assumed_dir)) {
+        unlink(x=assumed_dir, recursive=TRUE)
     }
-    if (!file.exists(output_dir)) {
-        dir.create(output_dir, recursive=TRUE)
-    }
+    orgdb_dir <- NULL
     if (is.null(kegg)) {
-        org_result <- AnnotationForge::makeOrgPackage(
+        orgdb_dir <- AnnotationForge::makeOrgPackage(
             gene_info = gene_info,
             chromosome = chr_info,
             go = go_info,
             type = gene_types,
-            version = format(cfg[["db_version"]], nsmall=1),
+            version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
             author = as.character(cfg[["author"]]),
             maintainer = as.character(cfg[["maintainer"]]),
             tax_id = as.character(cfg[["tax_id"]]),
             genus = as.character(cfg[["genus"]]),
-            species = as.character(cfg[["species"]]),
-            outputDir = output_dir,
+            species = paste0(as.character(cfg[["species"]]), ".", as.character(cfg[["strain"]])),
+            outputDir = orgdb_pre,
             goTable = "go")
     } else {
         kegg_info <- orgdb_kegg(cfg, gene_info)
-        org_result <- makeOrgPackage(
+        orgdb_dir <- makeOrgPackage(
             gene_info = gene_info,
             chromosome = chr_info,
             go = go_info,
@@ -59,37 +173,104 @@ make_temp_orgdb <- function(id="lmajor_friedlin", cfg=NULL, kegg=NULL, output_di
             tax_id = as.character(cfg[["tax_id"]]),
             genus = as.character(cfg[["genus"]]),
             species = as.character(cfg[["species"]]),
-            outputDir = output_dir,
+            outputDir = orgdb_pre,
             goTable = "go")
     }
+
+    orgdb_dir <- pkg_cleaner(orgdb_dir)
+
+    inst <- FALSE
+    if (!is.null(orgdb_dir)) {
+        inst <- sm(devtools::install(orgdb_dir))
+    }
+    orgdb_pkg_name <- gsub(pattern="-like", replacement="", x=orgdb_pkg_name)
     ## The result is the pathname of the created orgdb directory
-    return(org_result)
+    ret <- list(
+        package_name = orgdb_pkg_name,
+        result = inst)
+    return(ret)
 }
 
+make_txdb <- function(orgdb_info, cfg, gff=NULL, output_dir="organismdbi", ...) {
+    arglist <- list(...)
+
+    chromosome_info <- orgdb_info[["chromosome_info"]]
+    txdb <- GenomicFeatures::makeTxDbFromGFF(
+        file=gff,
+        format='gff3',
+        chrominfo=chromosome_info,
+        ## exonRankAttributeName=NA,
+        dataSource=paste0(cfg[["db_name"]], "_", cfg[["db_version"]]),
+        organism=paste0(cfg[["genus"]], " ", cfg[["species"]])
+    )
+
+    requireNamespace("GenomicFeatures")
+    destination <- paste0(output_dir, "/txdb")
+    db_version <- format(as.numeric(cfg[["db_version"]]), nsmall=1)
+    maintainer <- as.character(cfg[["maintainer"]])
+    author <- as.character(cfg[["author"]])
+    package_name <- paste0("TxDb.", cfg[["shortname"]], ".", cfg[["strain"]], ".", cfg[["db_name"]], cfg[["db_version"]])
+
+    if (file.exists(destination)) {
+        unlink(x=destination, recursive=TRUE)
+    }
+    dir.create(destination, recursive=TRUE)
+    result <- GenomicFeatures::makeTxDbPackage(
+        txdb=txdb,
+        version=db_version,
+        maintainer=maintainer,
+        author=author,
+        destDir=destination,
+        license="Artistic-2.0",
+        pkgname=package_name
+    )
+    ## What in the flying hell means 'Error in cpSubsCon(src[k], destname) : UNRESOLVED SYMBOLS:
+    ## Line 5 : @umd.edu>, atb <atb@u'
+    ## The entire person/author/maintainer system in R is utterly stupid.
+    install_dir <- paste0(destination, "/", package_name)
+    install_dir <- pkg_cleaner(install_dir)
+    result <- devtools::install(install_dir)
+    package_name <- gsub(pattern="-like", replacement="", x=package_name)
+    ret <- list(
+        package_name = package_name,
+        result = result)
+    return(ret)
+}
 
 #' @export
 get_eupath_config <- function(cfg=NULL) {
     cfg_data <- data.frame()
     if (is.null(cfg)) {
         cfg <- system.file("eupathdb_organdb.csv", package="hpgltools")
-        cfg_data <- read.csv(cfg)
+        cfg_data <- read.csv(cfg, stringsAsFactors=FALSE)
     } else if (class(cfg) == "data.frame") {
         cfg_data <- cfg
     } else if (class(cfg) == "character") {
-        cfg_data <- read.csv(cfg)
+        cfg_data <- read.csv(cfg, stringsAsFactors=FALSE)
     }
     rownames(cfg_data) <- cfg_data[["id"]]
+
     return(cfg_data)
 }
 
 #' @export
 make_orgdb_info <- function(gff, txt) {
     gff_entries <- rtracklayer::import.gff3(gff)
+
     genes <- gff_entries[gff_entries$type == "gene"]  ## WTF? why does this work?
-    gene_info <- as.data.frame(elementMetadata(genes))
+    gene_info <- as.data.frame(GenomicRanges::mcols(genes))
     gene_info[["description"]] <- gsub("\\+", " ", gene_info[["description"]])  ## Get rid of stupid characters
     colnames(gene_info) <- toupper(colnames(gene_info))
     colnames(gene_info)[colnames(gene_info) == "ID"] <- "GID"
+
+    chromosome_types <- c("apicoplast_chromosome", "chromosome", "contig",
+                          "geneontig", "genecontig", "random_sequence", "supercontig")
+    chromosomes <- gff_entries[gff_entries$type %in% chromosome_types]
+    chromosome_info <- data.frame(
+        "chrom" = chromosomes$ID,
+        "length" = as.numeric(chromosomes$size),
+        "is_circular" = NA)
+
     gid_index <- grep("GID", colnames(gene_info))
     ## Move gid to the front of the line.
     gene_info <- gene_info[, c(gid_index, (1:ncol(gene_info))[-gid_index])]
@@ -127,6 +308,7 @@ make_orgdb_info <- function(gff, txt) {
     gene_info[["GENEALIAS"]] <- gsub(pattern="\\)$", replacement="", x=gene_info[["GENEALIAS"]])
     gene_info[["GENEALIAS"]] <- gsub(pattern='"', replacement="", x=gene_info[["GENEALIAS"]])
 
+    ## This function takes a long time.
     txt_information <- parse_gene_info_table(file=txt, verbose=TRUE)
     genes <- txt_information[["genes"]]
     go_info <- txt_information[["go"]]
@@ -144,11 +326,11 @@ make_orgdb_info <- function(gff, txt) {
         "gene_info" = gene_info,
         "chr_info" = chr_info,
         "gene_types" = gene_types,
-        "go_info" = go_info
+        "go_info" = go_info,
+        "chromosome_info" = chromosome_info
     )
     return(ret)
 }
-
 
 orgdb_kegg <- function(cfg, gene_info) {
     org_abbreviation <- paste0(tolower(substring(cfg[["genus"]], 1, 1)),
@@ -265,277 +447,6 @@ colnames(kegg_table) <- c("KEGG_PATH", "GID", "KEGG_NAME", "KEGG_CLASS",
 kegg_table <- kegg_table[,c(2, 1, 3, 4, 5)]
 }
 
-make_orgdb_pkg <- function(gene, chr, go, kegg) {
-
-}
-
-gather_txdb <- function() {
-    gff = import.gff3(settings$gff)
-    ch = gff[gff$type %in% c('apicoplast_chromosome', 'chromosome', 'contig',
-                             'geneontig', 'random_sequence', 'supercontig')]
-
-    ##genes = gff[gff$type == 'gene']
-    ##gene_ch = unique(as.character(chrom(genes)))
-
-    chrom_info = data.frame(
-        chrom=ch$ID,
-        length=as.numeric(ch$size),
-        is_circular=NA
-    )
-
-    ## 2015/06/16 Switching backt o mRNA entries to construct TxDb -- database is
-    ## intended for mRNAs so ncRNAs will be handled separately.
-
-    ##txdb = makeTranscriptDbFromGFF(
-    txdb = makeTxDbFromGFF(
-        file=settings$gff,
-        format='gff3',
-        chrominfo=chrom_info,
-        ## exonRankAttributeName=NA,
-        dataSource=sprintf('%s %s', settings$db_name, settings$db_version),
-        organism=paste(settings$genus, settings$species)
-    )
-
-    ## Save transcript database
-    short_name = paste0(substring(tolower(settings$genus), 1, 1), settings$species)
-    saveDb(txdb, file=file.path(build_dir, sprintf("%s.sqlite", short_name)))
-
-    ## R package versions must be of the form "x.y"
-    db_version = paste(settings$db_version, '0', sep='.')
-
-    ## Build TxDB package
-    makeTxDbPackage(
-        txdb,
-        destDir=settings$output_dir,
-        version=db_version,
-        maintainer=settings$maintainer,
-        author=settings$author,
-        license='Artistic-2.0'
-    )
-}
-
-make_organdb <- function() {
-
-    names(graph_data$join1) = c('GO.db', settings$orgdb_name)
-    names(graph_data$join2) = c(settings$orgdb_name, settings$txdb_name)
-
-    ## R package versions must be of the form "x.y"
-    db_version = paste(settings$db_version, '0', sep='.')
-
-    makeOrganismPackage(
-        pkgname=settings$organismdb_name,
-        graphData=graph_data,
-        organism=paste(settings$genus, settings$species),
-        version=db_version,
-        maintainer=settings$maintainer,
-        author=settings$author,
-        destDir=settings$output_dir,
-        license='Artistic-2.0'
-    )
-}
-
-install_orgdb <- function() {
-
-}
-prepare_dbs <- function() {
-    ## This part really does not make sense to me.
-    ##printf -v orgdb_name_old 'org.%s%s.eg.db' ${genus:0:1} ${species}
-    ##echo "Processing $orgdb_name_old..."
-    ## name without the .db suffix
-    ##orgdb_name_short_old=${orgdb_name_old/.db/}
-    ##orgdb_name_short=${orgdb_name/.db/}
-    ## rename and enter directory
-    ##mv $output_dir/$orgdb_name_old $output_dir/$orgdb_name
-    ##cd $output_dir/$orgdb_name
-    ## Fix DESCRIPTION
-    ##sed -i "s/$orgdb_name_old/$orgdb_name/g" DESCRIPTION
-    ##sed -i "s/species:.*/species: $description/g" DESCRIPTION
-    ##sed -i "s/Entrez/$db_name/g" DESCRIPTION
-    ## Fix NAMESPACE
-    ##sed -i "s/$orgdb_name_short_old/$orgdb_name_short/g" NAMESPACE
-    ## Fix sqlite database
-    ##dbpath=inst/extdata/${orgdb_name_short}.sqlite
-    ##mv inst/extdata/${orgdb_name_short_old}.sqlite $dbpath
-    ##chmod +w $dbpath
-    ##sqlite3 $dbpath "UPDATE metadata SET value=\"$description\" WHERE name='SPECIES';"
-    ##chmod -w $dbpath
-    ## Fix manual pages
-    ##for suffix in "BASE.Rd" "ORGANISM.Rd" "_dbconn.Rd"; do
-    ##mv man/${orgdb_name_short_old}${suffix} man/${orgdb_name_short}${suffix}
-    ##sed -i "s/$orgdb_name_short_old/$orgdb_name_short/g" man/${orgdb_name_short}${suffix} 
-    ##done
-    ## Fix zzz.R
-    ##sed -i "s/$orgdb_name_short_old/$orgdb_name_short/g" R/zzz.R
-    ##
-    ## Generate OrgDb README.md
-    ##
-    ##cat << EOF > README.md
-    ## $orgdb_name
-##Genome-wide annotation package for *$description*, based on
-##annotations from [$db_name $db_version]($db_url).
-##This package was generated using the tools from
-##[https://github.com/elsayed-lab/eupathdb-organismdb](github.com/eupathdb-organismdb).
-##
-##Installation
-##------------
-##
-##You can install the latest version from Github using:
-##
-##\`\`\` r
-##library('devtools')
-##install_github('elsayed-lab/$orgdb_name')
-##\`\`\`
-##
-##Usage
-##-----
-##
-##This package is based on the Bioconductor
-##[AnnotationDbi](http://www.bioconductor.org/packages/release/bioc/html/AnnotationDbi.html)
-##interface. As such, the methods for interacting with this package are similar
-##to the ways one can interact with other commonly-used annotation packages such as
-##[org.Hs.eg.db](http://www.bioconductor.org/packages/release/data/annotation/html/org.Hs.eg.db.html).
-##
-##Example usage:
-##
-##\`\`\`r
-##library($orgdb_name)
-##
-## list available fields to query
-##columns($orgdb_name)
-##
-## get first 10 genes
-##gene_ids = head(keys($orgdb_name), 10)
-##
-## gene names and descriptions
-##annotations = AnnotationDbi::select($orgdb_name, 
-##                                    keys=gene_ids, 
-##                                    keytype='GID', 
-##                                    columns=c('CHROMOSOME', 'GENENAME'))
-##head(annotations)
-##
-## GO terms
-##go_terms = AnnotationDbi::select($orgdb_name, 
-##                                 keys=gene_ids, 
-##                                 keytype='GID', 
-##                                 columns=c('GO', 'ONTOLOGYALL'))
-##head(go_terms)
-##
-## KEGG pathways
-##kegg_paths = AnnotationDbi::select($orgdb_name,
-##                                   keys=gene_ids, 
-##                                   keytype='GID', 
-##                                   columns=c('KEGG_NAME', 'KEGG_PATH'))
-##head(kegg_paths)
-##\`\`\`
-##
-##For more information, check out the [AnnotationDbi - Introduction to Annotation
-##packages vignette](http://www.bioconductor.org/packages/release/bioc/vignettes/AnnotationDbi/inst/doc/IntroToAnnotationPackages.pdf).
-##
-##Additional resources that may be helpful:
-##
-##1. http://www.bioconductor.org/help/workflows/annotation-data/
-##2. http://www.bioconductor.org/packages/release/data/annotation/html/org.Hs.eg.db.html
-##3. http://training.bioinformatics.ucdavis.edu/docs/2012/05/DAV/lectures/annotation/annotation.html
-##EOF
-##
-##cd $cwd
-##
-##
-## TranscriptDB
-##
-##printf -v txdb_name_old 'TxDb.%s%s.%s.%s' ${genus:0:1} ${species} ${db_name} ${db_version}
-##echo "Processing $txdb_name_old..."
-##
-##mv $output_dir/$txdb_name_old $output_dir/$txdb_name
-##cd $output_dir/$txdb_name
-##
-### Fix DESCRIPTION
-##sed -i "s/$txdb_name_old/$txdb_name/g" DESCRIPTION
-##sed -i "s/species:.*/species: $description/g" DESCRIPTION
-##
-## Fix NAMESPACE
-##sed -i "s/$txdb_name_old/$txdb_name/g" NAMESPACE
-##
-## Fix sqlite database
-##dbpath=inst/extdata/${txdb_name}.sqlite
-##mv inst/extdata/${txdb_name_old}.sqlite $dbpath
-##
-## Fix Manual pages
-##sed -i "s/$txdb_name_old/$txdb_name/g" man/package.Rd
-##
-##
-## Generate TxDb README.md
-##
-##cat << EOF > README.md
-## $txdb_name
-##
-##Transcript annotation package for *$description*, based on
-##annotated genes from [$db_name $db_version]($db_url).
-##
-##This package was generated using the tools from
-##[https://github.com/elsayed-lab/eupathdb-organismdb](github.com/eupathdb-organismdb).
-##
-##Installation
-##------------
-##
-##You can install the latest version from Github using:
-##
-##\`\`\` r
-##library('devtools')
-##install_github('elsayed-lab/$txdb_name')
-##\`\`\`
-##
-##Usage
-##-----
-##
-##This package is based on the Bioconductor
-##[AnnotationDbi](http://www.bioconductor.org/packages/release/bioc/html/AnnotationDbi.html)
-##interface. As such, the methods for interacting with this package are similar
-##to the ways one can interact with other commonly-used annotation packages such as
-##[TxDb.Hsapiens.UCSC.hg19.knownGene](http://www.bioconductor.org/packages/release/data/annotation/html/TxDb.Hsapiens.UCSC.hg19.knownGene.html).
-##
-##Example usage:
-##
-##\`\`\`r
-##library($txdb_name)
-##
-## list available fields to query
-##columns($txdb_name)
-##
-## get first 10 genes
-##gene_ids = head(keys($txdb_name), 10)
-##
-## gene coordinates and strand
-##genes = AnnotationDbi::select($txdb_name, 
-##                              keys=gene_ids, 
-##                              keytype='GENEID', 
-##                              columns=c('TXSTART', 'TXEND', 'TXSTRAND'))
-##
-##head(genes)
-##\`\`\`
-##
-##For more information, check out the [AnnotationDbi - Introduction to Annotation
-##packages vignette](http://www.bioconductor.org/packages/release/bioc/vignettes/AnnotationDbi/inst/doc/IntroToAnnotationPackages.pdf).
-##
-##Additional resources that may be helpful:
-##
-##1. http://www.bioconductor.org/help/workflows/annotation-data/
-##2. http://www.bioconductor.org/packages/release/data/annotation/html/TxDb.Hsapiens.UCSC.hg19.knownGene.html
-##3. http://training.bioinformatics.ucdavis.edu/docs/2012/05/DAV/lectures/annotation/annotation.html
-##EOF
-##
-## Install OrgDB and TxDb
-##echo "Installing databases"
-##cd $cwd
-##
-##R CMD INSTALL $output_dir/$orgdb_name
-##R CMD INSTALL $output_dir/$txdb_name
-##
-##echo "Done!"
-}
-
-
-
 convert_kegg_gene_ids <- function(kegg_ids, kegg_id_mapping) {
     result <- c()
     for (kegg_id in kegg_ids) {
@@ -574,64 +485,6 @@ convert_kegg_gene_ids <- function(kegg_ids, kegg_id_mapping) {
     return(result)
 } ## End convert_kegg_gene_ids
 
-
-
-
-
-
-
-
-
-
-
-
-#'
-#' EuPathDB gene information table gene type parser
-#'
-#' @author Keith Hughitt
-#'
-#' @param filepath Location of TriTrypDB gene information table.
-#' @return Returns a dataframe mapping gene ids to gene types
-#' @export
-orgdb_gene_types <- function (filepath) {
-    message("Replace me with parse_gene_info_table()")
-    if (tools::file_ext(filepath) == 'gz') {
-        fp <- gzfile(filepath, open='rb')
-    } else {
-        fp <- file(filepath, open='r')
-    }
-
-    # Create empty vector to store dataframe rows
-    N <- 1e5
-    gene_ids <- c()
-    gene_types <- c()
-
-    # Counter to keep track of row number
-    i <- 1
-
-    # Iterate through lines in file
-    while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
-        # Gene ID
-        if(grepl("^Gene ID", x)) {
-            gene_id = .get_value(x)
-        }
-        # Gene type
-        else if (grepl("^Gene Type:", x)) {
-            gene_ids[i]   = gene_id
-            gene_types[i] = .get_value(x)
-            i = i + 1
-        }
-    }
-    # close file pointer
-    close(fp)
-
-    return(data.frame(GID=gene_ids, TYPE=gene_types))
-}
-
-
-
-
-
 #
 # kegg_to_genedb
 #
@@ -656,18 +509,11 @@ kegg_to_genedb = function(kegg_ids, gene_mapping) {
                     result = append(result, gene_mapping[[old_id]])
                 }
             }
-    
         }
     }
     return(result)
 }
 
-#
-# Parses a key: value string and returns the value
-#
-.get_value = function(x) {
-    return(gsub(" ","", tail(unlist(strsplit(x, ': ')), n=1), fixed=TRUE))
-}
 #'
 #' EuPathDB gene information table GO term parser
 #'
@@ -800,7 +646,6 @@ parse_interpro_domains = function (filepath) {
 
         }
     }
-
 
     # add gene id column
     go_rows = cbind(GID=gene_ids, go_rows)

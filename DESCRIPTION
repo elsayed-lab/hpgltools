@@ -21,7 +21,7 @@ Suggests:
     ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools,
     gridExtra, hash, Heatplus, Hmisc, igraph, inflection, IRanges, KEGGgraph, KEGGREST,
     knitcitations, lattice, limma, matrixStats, motifRG, multtest, mygene, openxlsx, pander,
-    pasilla, pathview, plyr, preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, rentrez,
+    pasilla, pathview, plyr, preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, readr, rentrez,
     reshape2, RCurl, rGADEM, Rgraphviz, robustbase, RUVSeq, reshape, rjson, robust, Rsamtools,
     rtracklayer, S4Vectors, scales, seqinr, seqLogo, statmod, stringi, stringr, survJamda, sva,
     topGO, xtable, XVector

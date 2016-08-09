@@ -40,7 +40,9 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
     go_gene_ids <- c()
     gene_num <- 0
     go_num <- 0
+    message("Using readr to read the txt file.")
     read_vec <- readr::read_lines(file, progress=TRUE)
+    message("Starting to iterate over the txt file, this takes a long time.")
     for (i in 1:length(read_vec)) {
         line <- read_vec[i]
 
