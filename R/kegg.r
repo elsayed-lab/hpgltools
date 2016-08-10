@@ -357,7 +357,7 @@ kegg_get_orgn <- function(species="Leishmania", short=TRUE) {
 #' @return Dataframe including the filenames, percentages, nodes included, and differential nodes.
 #' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
 #' @export
-pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathdir="kegg_pathways", ...) {
+pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathdir="kegg_pathways", verbose=FALSE, ...) {
     arglist <- list(...)
     if (!file.exists(pathdir)) {
         dir.create(pathdir)
@@ -383,6 +383,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
     path_names <- list()
     diff_nodes <- list()
     path_nodes <- list()
+    last_path <- length(paths)
     for (count in 1:length(paths)) {
         path <- paths[count]
         path_name <- try(KEGGREST::keggGet(path), silent=TRUE)
@@ -399,13 +400,18 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
             path_name <- gsub(" ", "_", path_name)
             path_names[count] <- path_name
             message(paste0("Extracting data for ", path, ": ", path_name, "."))
-            pct_diff <- pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
-                                                 pathdir=pathdir)
+            if (isTRUE(verbose)) {
+                pct_diff <- pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
+                                          pathdir=pathdir)
+            } else {
+                pct_diff <- sm(pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
+                                             pathdir=pathdir))
+            }
             filenames[count] <- pct_diff[["filename"]]
             percentages[count] <- pct_diff[["percent"]]
             path_nodes[count] <- pct_diff[["all_nodes"]]
             diff_nodes[count] <- pct_diff[["diff_nodes"]]
-            message(paste0("The path: ", path_names[count], " was written to ", filenames[count], " and has ", percentages[count], "% diff."))
+            message(paste0(count, "/", last_path, ": The path: ", path_names[count], " was written to ", filenames[count], " and has ", percentages[count], "% diff."))
         }
     }
     path_data <- as.data.frame(cbind(pathways, path_names, filenames, percentages, path_nodes, diff_nodes))
@@ -459,7 +465,33 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
             return(retlist)
         }
     }
-    parse_result <- KEGGgraph::parseKGML2Graph(filename, expandGenes=TRUE)
+    parse_result <- try(KEGGgraph::parseKGML2Graph(filename, expandGenes=TRUE))
+    if (class(parse_result) == "try-error") {
+        if (grepl(pattern="Document is empty", x=parse_result[[1]])) {
+            message("Deleting the empty file and trying again.")
+            file.remove(filename)
+            retrieved <- try(sm(KEGGgraph::retrieveKGML(pathwayid=pathway, organism=organism, destfile=filename, method="internal")))
+            parse_result <- try(KEGGgraph::parseKGML2Graph(filename, expandGenes=TRUE))
+            if (class(parse_result) == "try-error") {
+                retlist <- list(
+                    "pathway" = pathway,
+                    "filename" = "unavailable",
+                    "percent" = NA,
+                    "all_nodes" = NULL,
+                    "diff_nodes" = NULL)
+                return(retlist)
+            }
+        } else if (grepl(pattern="Start tag expected", x=parse_result[[1]])) {
+            message("This pathway does not have a complete specification.")
+            retlist <- list(
+                "pathway" = pathway,
+                "filename" = "unavailable",
+                "percent" = NA,
+                "all_nodes" = NULL,
+                "diff_nodes" = NULL)
+            return(retlist)
+        }
+    }
 
     all_keggids <- KEGGgraph::translateGeneID2KEGGID(all_ids, organism=organism)
     de_keggids <- KEGGgraph::translateGeneID2KEGGID(sig_ids, organism=organism)
