@@ -379,6 +379,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
     }
 
     percentages <- list()
+    path_ids <- list()
     filenames <- list()
     path_names <- list()
     diff_nodes <- list()
@@ -388,6 +389,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
         path <- paths[count]
         path_name <- try(KEGGREST::keggGet(path), silent=TRUE)
         if (class(path_name) == "try-error") {
+            path_ids[count] <- NA
             path_names[count] <- NA
             filenames[count] <- NA
             percentages[count] <- NA
@@ -407,6 +409,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
                 pct_diff <- sm(pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
                                              pathdir=pathdir))
             }
+            path_ids[count] <- path
             filenames[count] <- pct_diff[["filename"]]
             percentages[count] <- pct_diff[["percent"]]
             path_nodes[count] <- pct_diff[["all_nodes"]]
@@ -414,7 +417,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
             message(paste0(count, "/", last_path, ": The path: ", path_names[count], " was written to ", filenames[count], " and has ", percentages[count], "% diff."))
         }
     }
-    path_data <- as.data.frame(cbind(pathways, path_names, filenames, percentages, path_nodes, diff_nodes))
+    path_data <- as.data.frame(cbind(path_ids, path_names, filenames, percentages, path_nodes, diff_nodes))
     colnames(path_data) <- c("pathway","path_name","filename","percent","all_nodes","diff_nodes")
     path_data[["pathway"]] <- as.character(path_data[["pathway"]])
     path_data[["path_name"]] <- as.character(path_data[["path_name"]])
