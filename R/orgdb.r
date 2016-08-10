@@ -24,13 +24,14 @@ load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
                                       ## fields=c("CHR", "GENENAME", "TXSTRAND",
                                       fields=NULL, sum_exons=FALSE) {
                                       ## "TXSTART", "TXEND", "TYPE")) {
-
     keytype <- toupper(keytype)
     all_fields <- AnnotationDbi::columns(orgdb)
     if (is.null(fields)) {
         fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
     } else if (fields == "all") {
         fields <- all_fields
+    } else {
+        fields <- toupper(fields)
     }
 
     if (sum(fields %in% all_fields) != length(fields)) {

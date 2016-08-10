@@ -211,6 +211,17 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         gene_info <- as.data.frame(gene_info[["genes"]])
     }
 
+    ## It turns out that loading the annotation information from orgdb/etc may not set the row names.
+    ## Perhaps I should do that there, but I will add a check here, too.
+    if (sum(rownames(gene_info) %in% rownames(all_count_matrix)) == 0) {
+        if (!is.null(gene_info[["geneid"]])) {
+            rownames(gene_info) <- gene_info[["geneid"]]
+        }
+        if (sum(rownames(gene_info) %in% rownames(all_count_matrix)) == 0) {
+            warning("Even after changing the rownames in gene info, they do not match the count table.")
+        }
+    }
+
     ## Take a moment to remove columns which are blank
     columns_to_remove <- NULL
     for (col in 1:length(colnames(gene_info))) {

@@ -165,17 +165,39 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
     return(retdf)
 }
 
+#' Extract the set of geneIDs matching pathways for a given species.
+#'
+#' This uses KEGGREST to extract the mappings for all genes for a species and pathway or 'all'.
+#' Because downloading them takes a while, it will save the results to kegg_species.rda.  When run
+#' interactively, it will give some information regarding the number of genes observed in each
+#' pathway.
+#'
+#' @param pathway  Either a single pathway kegg id or 'all'.
+#' @param abbreviation  Optional 3 letter species kegg id.
+#' @param species  Stringified species name used to extract the 3 letter abbreviation.
+#' @param savefile  Filename to which to save the relevant data.
+#' @return Dataframe of the various kegg data for each pathway, 1 row/gene.
+#' @examples
+#'  \dontrun{
+#'   kegg_info <- get_kegg_genes(species="Canis familiaris")
+#'  }
 #' @export
-get_kegg_genes <- function(pathway="all", species="leishmania major", savefile=NULL) {
-    abbreviation <- kegg_get_orgn(species)
+get_kegg_genes <- function(pathway="all", abbreviation=NULL, species="leishmania major", savefile=NULL) {
+    if (is.null(abbreviation) & is.null(species)) {
+        stop("This requires either a species or 3 letter kegg id.")
+    } else if (is.null(abbreviation)) {  ## Then the species was provided.
+        abbreviation <- kegg_get_orgn(species)
+        message(paste0("The abbreviation detected was: ", abbreviation))
+    }
+
     species <- gsub(pattern=" ", replacement="_", x=as.character(species))
     savefile <- paste0("kegg_", species, ".rda.xz")
     kegg_data <- NULL
     if (file.exists(savefile)) {
         message(paste0("Reading from the savefile, delete ", savefile, " to regenerate."))
-        kegg_data <- new.env()
-        load(savefile, envir=kegg_data)
-        kegg_data <- kegg_data[["kegg_data"]]
+        result <- new.env()
+        load(savefile, envir=result)
+        kegg_data <- result[["result"]]
     } else {
         paths <- list()
         if (pathway == "all") {
@@ -219,20 +241,29 @@ get_kegg_genes <- function(pathway="all", species="leishmania major", savefile=N
             }
 
             for (s in 1:length(tritryp_geneids)) {
-                kegg_data <- rbind(result, data.frame(
-                                               "GID" = tritryp_geneids[s],
-                                               "KEGG_NAME" = kegg_name,
-                                               "KEGG_CLASS" = kegg_class,
-                                               "KEGG_DESCRIPTION" = kegg_description,
-                                               "KEGG" = path))
+                result <- rbind(result, data.frame(
+                                            "GID" = tritryp_geneids[s],
+                                            "KEGG_NAME" = kegg_name,
+                                            "KEGG_CLASS" = kegg_class,
+                                            "KEGG_DESCRIPTION" = kegg_description,
+                                            "KEGG" = path))
             }
         } ## End iterating over pathways
         message(paste0("Total genes observed: ", total_genes))
-        save(kegg_data, file=savefile)
+        save(result, file=savefile)
     }
     return(result)
 }
 
+#' Provide a set of simple substitutions to convert geneIDs from KEGG->TriTryDB
+#'
+#' This function should provide 2 character lists which, when applied sequentially, will result in a
+#' hopefully coherent set of mapped gene IDs matching the TriTypDB/KEGG specifications.
+#'
+#' @param species  3 letter abbreviation for a given kegg type
+#' @return  2 character lists containing the patterns and replace arguments for gsub(), order
+#'     matters!
+#' @export
 get_kegg_sub <- function(species="lma") {
     patterns <- c()
     replaces <- c()
