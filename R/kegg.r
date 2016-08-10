@@ -166,62 +166,70 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
 }
 
 #' @export
-get_kegg_genes <- function(pathway="all", species="lma", savefile=NULL) {
-    paths <- list()
-    if (pathway == "all") {
-        all_pathways <- unique(KEGGREST::keggLink("pathway", species))
-        paths <- all_pathways
-        paths <- gsub("path:", "", paths)
-        ## all_modules = unique(KEGGREST::keggLink("module", species))
-    } else if (class(pathway) == "list") {
-        paths <- pathway
+get_kegg_genes <- function(pathway="all", species="leishmania major", savefile=NULL) {
+    abbreviation <- kegg_get_orgn(species)
+    species <- gsub(pattern=" ", replacement="_", x=as.character(species))
+    savefile <- paste0("kegg_", species, ".rda.xz")
+    kegg_data <- NULL
+    if (file.exists(savefile)) {
+        message(paste0("Reading from the savefile, delete ", savefile, " to regenerate."))
+        kegg_data <- new.env()
+        load(savefile, envir=kegg_data)
+        kegg_data <- kegg_data[["kegg_data"]]
     } else {
-        paths[1] <- pathway
-    }
-    total_genes <- 0
-    result <- NULL
-    for (count in 1:length(paths)) {
-        path <- paths[count]
-        path_name <- KEGGREST::keggGet(path)
-        kegg_class <- path_name[[1]]$CLASS
-        if (is.null(kegg_class)) {
-            kegg_class <- ""
+        paths <- list()
+        if (pathway == "all") {
+            all_pathways <- unique(KEGGREST::keggLink("pathway", abbreviation))
+            paths <- all_pathways
+            paths <- gsub("path:", "", paths)
+            ## all_modules = unique(KEGGREST::keggLink("module", abbreviation))
+        } else if (class(pathway) == "list") {
+            paths <- pathway
+        } else {
+            paths[1] <- pathway
         }
-        kegg_description <- path_name[[1]]$DESCRIPTION
-        if (is.null(kegg_description)) {
-            kegg_description <- ""
-        }
-        kegg_name <- path_name[[1]]$NAME
-        kegg_name <- gsub("(.*) - .*", "\\1", kegg_name)
-        kegg_name <- tolower(kegg_name)
-        kegg_name <- gsub(" ", "_", kegg_name)
-        ## RCurl is crap and fails sometimes for no apparent reason.
-        kegg_geneids <- try(KEGGREST::keggLink(paste("path", path, sep=":"))[, 2])
-        kegg_geneids <- gsub(pattern=paste0("^.*:"), replacement="", x=kegg_geneids)
-        kegg_subst <- get_kegg_sub(species)
-        tritryp_geneids <- kegg_geneids
-        total_genes <- total_genes + length(kegg_geneids)
-        patterns <- kegg_subst[["patterns"]]
-        replaces <- kegg_subst[["replaces"]]
-        message(paste0(count, "/", length(paths), ": Working on path: ", path, " which has ", length(kegg_geneids), " genes."))
-        for (r in 1:length(kegg_subst[["patterns"]])) {
-            tritryp_geneids <- gsub(pattern=patterns[r], replacement=replaces[r], x=tritryp_geneids)
-        }
+        total_genes <- 0
+        result <- NULL
+        for (count in 1:length(paths)) {
+            path <- paths[count]
+            path_name <- KEGGREST::keggGet(path)
+            kegg_class <- path_name[[1]]$CLASS
+            if (is.null(kegg_class)) {
+                kegg_class <- ""
+            }
+            kegg_description <- path_name[[1]]$DESCRIPTION
+            if (is.null(kegg_description)) {
+                kegg_description <- ""
+            }
+            kegg_name <- path_name[[1]]$NAME
+            kegg_name <- gsub("(.*) - .*", "\\1", kegg_name)
+            kegg_name <- tolower(kegg_name)
+            kegg_name <- gsub(" ", "_", kegg_name)
+            ## RCurl is crap and fails sometimes for no apparent reason.
+            kegg_geneids <- try(KEGGREST::keggLink(paste("path", path, sep=":"))[, 2])
+            kegg_geneids <- gsub(pattern=paste0("^.*:"), replacement="", x=kegg_geneids)
+            kegg_subst <- get_kegg_sub(abbreviation)
+            tritryp_geneids <- kegg_geneids
+            total_genes <- total_genes + length(kegg_geneids)
+            patterns <- kegg_subst[["patterns"]]
+            replaces <- kegg_subst[["replaces"]]
+            message(paste0(count, "/", length(paths), ": Working on path: ", path, " which has ", length(kegg_geneids), " genes."))
+            for (r in 1:length(kegg_subst[["patterns"]])) {
+                tritryp_geneids <- gsub(pattern=patterns[r], replacement=replaces[r], x=tritryp_geneids)
+            }
 
-        for (s in 1:length(tritryp_geneids)) {
-            result <- rbind(result, data.frame(
-                                        "GID" = tritryp_geneids[s],
-                                        "KEGG_NAME" = kegg_name,
-                                        "KEGG_CLASS" = kegg_class,
-                                        "KEGG_DESCRIPTION" = kegg_description,
-                                        "KEGG" = path))
-        }
-    } ## End iterating over pathways
-    if (is.null(savefile)) {
-        savefile <- paste0("kegg_", species, ".rda.xz")
-        saveme(filename=savefile)
+            for (s in 1:length(tritryp_geneids)) {
+                kegg_data <- rbind(result, data.frame(
+                                               "GID" = tritryp_geneids[s],
+                                               "KEGG_NAME" = kegg_name,
+                                               "KEGG_CLASS" = kegg_class,
+                                               "KEGG_DESCRIPTION" = kegg_description,
+                                               "KEGG" = path))
+            }
+        } ## End iterating over pathways
+        message(paste0("Total genes observed: ", total_genes))
+        save(kegg_data, file=savefile)
     }
-    message(paste0("Total genes observed: ", total_genes))
     return(result)
 }
 

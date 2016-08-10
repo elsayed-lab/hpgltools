@@ -131,13 +131,14 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, ou
     gene_info <- orgdb_info[["gene_info"]]
     gene_info[["GID"]] <- as.character(gene_info[["GID"]])
     rownames(gene_info) <- gene_info[["GID"]]
-    chr_info <- orgdb_info[["chr_info"]]
+    chr_info <- orgdb_info[["chr_info"]]  ## Maps gene IDs to chromosomes
     chr_info[["GID"]] <- as.character(chr_info[["GID"]])
     go_info <- orgdb_info[["go_info"]]
     go_info[["GID"]] <- as.character(go_info[["GID"]])
     go_info <- go_info[, c("GID", "GO", "EVIDENCE")]
     gene_types <- orgdb_info[["gene_types"]]
     gene_types[["GID"]] <- as.character(gene_types[["GID"]])
+    chromosome_info <- orgdb_info[["chromosome_info"]]  ## The lengths of the chromosomes
 
     orgdb_base_name <- paste0("org.", cfg[["shortname"]], ".", cfg[["strain"]], ".eg")
     orgdb_pkg_name <- paste0(orgdb_base_name, ".db")
@@ -149,7 +150,8 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, ou
     }
     orgdb_dir <- NULL
     if (isTRUE(kegg)) {
-        kegg_info <- get_kegg_genes(species=cfg[["KEGGID"]])
+        kegg_species <- paste0(cfg[["genus"]], " ", cfg[["species"]])
+        kegg_info <- get_kegg_genes(species=kegg_species)
         kegg_info[["GID"]] <- as.character(kegg_info[["GID"]])
         orgdb_dir <- AnnotationForge::makeOrgPackage(
             gene_info = gene_info,
@@ -322,16 +324,16 @@ make_orgdb_info <- function(gff, txt, kegg=TRUE) {
 
     ## This function takes a long time.
     txt_information <- parse_gene_info_table(file=txt, verbose=TRUE)
-    genes <- txt_information[["genes"]]
+    gene_set <- txt_information[["genes"]]
     go_info <- txt_information[["go"]]
 
     chr_info <- data.frame(
-        "GID" = rownames(genes),
-        "CHR" = genes[["chromosome"]])
+        "GID" = rownames(gene_set),
+        "CHR" = gene_set[["chromosome"]])
 
     gene_types <- data.frame(
-        "GID" = rownames(genes),
-        "TYPE" = genes[["type"]])
+        "GID" = rownames(genes_set),
+        "TYPE" = gene_set[["type"]])
 
     ## The information in the following list really should be coming from parse_gene_info_table()
     ret <- list(
