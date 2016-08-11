@@ -10,8 +10,7 @@
 #' @return Returns a dataframe of gene info.
 parse_gene_info_table <- function(file, verbose=FALSE) {
     ## Create empty vector to store dataframe rows
-
-    .get_value <- function(x) {
+    local_get_value <- function(x) {
         return(gsub("^ ","", tail(unlist(strsplit(x, ": ")), n=1), fixed=TRUE))
     }
 
@@ -48,10 +47,9 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
     seqid <- ""
     for (i in 1:length(read_vec)) {
         line <- read_vec[i]
-
         if (grepl("^Gene ID", line)) {  ## Example: Gene ID: TcCLB.397923.10
             gene_num <- gene_num + 1
-            gene_id <- .get_value(line)
+            gene_id <- local_get_value(line)
             gene_ids[gene_num] <- gene_id
             if (verbose) {
                 if ((gene_num %% 100) == 0) {
@@ -62,24 +60,24 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
             if (grepl("^Molecular Weight: Not Assigned", line)) {
                 mweight <- NA
             } else {
-                mweight <- as.numeric(.get_value(line))
+                mweight <- as.numeric(local_get_value(line))
             }
         } else if(grepl("^Isoelectric Point", line)) { ## Example: Isoelectric Point: 7.79
             if (grepl("^Isoelectric Point: Not Assigned", line)) {
                 ipoint <- NA
             } else {
-                ipoint <- as.numeric(.get_value(line))
+                ipoint <- as.numeric(local_get_value(line))
             }
         } else if (grepl("^Genomic Sequence ID", line)) { ## Example: Genomic Sequence ID: Tcruzi_56
             ## Genomic Sequence ID serves as chromosome in some genomes.
             ## And, since it comes before the Chromosome line, I will need a check in the chromosome assignment below.
-            seqid <- as.character(.get_value(line))
+            seqid <- as.character(local_get_value(line))
             ## message(paste0("Set seqid to ", seqid))
         } else if (grepl("^Chromosome", line)) { ## Example: Chromosome: Not Assigned
             if (grepl("^Chromosome: Not Assigned", line)) {
                 chromosome <- seqid
             } else {
-                chromosome <- as.character(.get_value(line))
+                chromosome <- as.character(local_get_value(line))
             }
         } else if (grepl("^Genomic Location:", line)) { ## Example: Genomic location: Tcruzi_56: 2 - 586 (+)
             result <- unlist(regmatches(line, regexec(location_regex, line)))
@@ -87,20 +85,20 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
             gene_stop  <- as.numeric(gsub(",", "", result[3], fixed=TRUE))
             strand <- result[4]
         } else if (grepl("^Gene Type", line)) { ## Example: Gene type: protein coding
-            gene_type <- .get_value(line)
+            gene_type <- local_get_value(line)
         } else if (grepl("^Product Description", line)) { ## Example: Product Description: mucin-associated surface protein (MASP), putative
-            description <- .get_value(line)
+            description <- local_get_value(line)
         } else if (grepl("^Transcript Length", line)) { ## Example: Transcript length: 585
-            transcript_length <- as.numeric(.get_value(line))
+            transcript_length <- as.numeric(local_get_value(line))
         } else if (grepl("^CDS Length", line)) { ## Example: CDS length: 585
-            val <- .get_value(line)
+            val <- local_get_value(line)
             if (val == 'null') {
                 cds_length <- NA
             } else {
                 cds_length <- as.numeric(val)
             }
         } else if (grepl("^Is Pseudo:", line)) { ## Pseudogene
-            is_pseudo <- ifelse((.get_value(line) == "Yes"), TRUE, FALSE)
+            is_pseudo <- ifelse((local_get_value(line) == "Yes"), TRUE, FALSE)
         } else if (grepl("^GO:", line)) { ## Gene ontology terms
             go_num <- go_num + 1
             go_gene_ids[go_num] <- gene_id
@@ -138,10 +136,13 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
     ## use gene id as row name
     rownames(genedb) <- gene_ids
     ## fix numeric types
-    for (colname in c('chromosome', 'start', 'stop', 'transcript_length', 'cds_length')) {
-        genedb[, colname] <- as.numeric(gened[, colname])
+    for (colname in c("start", "stop", "transcript_length", "cds_length")) {
+        genedb[, colname] <- as.numeric(genedb[, colname])
     }
-    # sort data frame
+    for (colname in c("chromosome", "description")) {
+        genedb[, colname] <- as.character(genedb[, colname])
+    }
+    ## sort data frame
     genedb <- genedb[with(genedb, order(chromosome, start)),]
     ret <- list(
         "genes" = genedb,
