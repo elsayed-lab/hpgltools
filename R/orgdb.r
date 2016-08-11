@@ -28,7 +28,7 @@ load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
     all_fields <- AnnotationDbi::columns(orgdb)
     if (is.null(fields)) {
         fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
-    } else if (fields == "all") {
+    } else if (fields[[1]] == "all") {
         fields <- all_fields
     } else {
         fields <- toupper(fields)
@@ -76,24 +76,6 @@ load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
         lengths <- as.data.frame(unlist(lengths))
         colnames(lengths) <- "transcript_length"
         gene_info <- merge(gene_info, lengths, by.x=keytype, by.y="row.names")
-        ## Convert to tbl_df and reorganize
-##        gene_info_ret <- dplyr::tbl_df(gene_info) %>%
-##            dplyr::select_(
-##                gene_id=tolower(keytype),
-##                chromosome="chr",
-##                description="genename",
-##                strand="txstrand",
-##                type="type",
-##                transcript_length="transcript_length")
-##    } else {
-##        ## Convert to tbl_df and reorganize
-##        gene_info_ret <- dplyr::tbl_df(gene_info) %>%
-##            dplyr::select_(
-##                gene_id=tolower(keytype),
-##                chromosome="chr",
-##                description="genename",
-##                strand="txstrand",
-##                type="type")
     }
 
     retlist <- list(

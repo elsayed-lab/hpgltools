@@ -190,6 +190,7 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL, species="leishmania
         message(paste0("The abbreviation detected was: ", abbreviation))
     }
 
+    result <- NULL
     species <- gsub(pattern=" ", replacement="_", x=as.character(species))
     savefile <- paste0("kegg_", species, ".rda.xz")
     kegg_data <- NULL
@@ -197,7 +198,7 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL, species="leishmania
         message(paste0("Reading from the savefile, delete ", savefile, " to regenerate."))
         result <- new.env()
         load(savefile, envir=result)
-        kegg_data <- result[["result"]]
+        result <- result[["result"]]
     } else {
         paths <- list()
         if (pathway == "all") {

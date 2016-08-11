@@ -13,8 +13,29 @@
 ### More well understood and conservative.
 ##  Why have we nonetheless done #2 in a few instances?  (not only because we learned that first)
 
+#' Perform a default normalization of some data
+#'
+#' This just calls normalize expt with the most common arguments except log2 transformation, but
+#' that may be appended with 'transform=log2', so I don't feel bad.  Indeed, it will allow you to
+#' overwrite any arguments if you wish.
+#'
+#' @export
 default_norm <- function(expt, ...) {
-    new <- normalize_expt(expt, norm="quant", convert="cpm", filter=TRUE, ...)
+    arglist <- list(...)
+    norm <- "quant"
+    if (!is.null(arglist[["norm"]])) {
+        norm <- arglist[["norm"]]
+    }
+    convert <- "cpm"
+    if (!is.null(arglist[["convert"]])) {
+        convert <- arglist[["convert"]]
+    }
+    filter <- TRUE
+    if (!is.null(arglist[["filter"]])) {
+        filter <- arglist[["filter"]]
+    }
+
+    new <- normalize_expt(expt, norm=norm, convert=convert, filter=filter, ...)
     return(new)
 }
 
