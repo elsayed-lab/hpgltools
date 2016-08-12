@@ -4,19 +4,17 @@
 \alias{simple_goseq}
 \title{Perform a simplified goseq analysis.}
 \usage{
-simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids_df = NULL,
-  doplot = TRUE, adjust = 0.1, pvalue = 0.1, qvalue = 0.1,
-  goseq_method = "Wallenius", padjust_method = "BH", species = NULL,
-  length_db = "ensGene", gff = NULL, ...)
+simple_goseq(de_genes, go_db, length_db, doplot = TRUE, adjust = 0.1,
+  pvalue = 0.1, qvalue = 0.1, length_keytype = "transcripts",
+  go_keytype = "ENTREZID", goseq_method = "Wallenius",
+  padjust_method = "BH", bioc_length_db = "ensGene", ...)
 }
 \arguments{
 \item{de_genes}{Data frame of differentially expressed genes, containing IDs etc.}
 
-\item{all_genes}{Universe of possible genes.}
+\item{go_db}{Database of go to gene mappings (OrgDb/OrganismDb)}
 
-\item{lengths}{Length of each gene with an ID in de_genes.}
-
-\item{goids_df}{List of ontology accessions to gene accessions.}
+\item{length_db}{Database of gene lengths (gff/TxDb)}
 
 \item{doplot}{Include pwf plots?}
 
@@ -26,15 +24,15 @@ simple_goseq(de_genes, all_genes = NULL, lengths = NULL, goids_df = NULL,
 
 \item{qvalue}{Minimum qvalue for 'significant.'}
 
+\item{length_keytype}{Keytype to provide to extract lengths}
+
+\item{go_keytype}{Keytype to provide to extract go IDs}
+
 \item{goseq_method}{Statistical test for goseq to use.}
 
 \item{padjust_method}{Which method to use to adjust the pvalues.}
 
-\item{species}{Optionally choose a species from supportedOrganisms().}
-
-\item{length_db}{Source of gene lengths?}
-
-\item{gff}{gff file source of gene lengths.}
+\item{bioc_length_db}{Source of gene lengths?}
 
 \item{...}{Extra parameters which I do not recall}
 }

@@ -2,77 +2,50 @@
 % Please edit documentation in R/ontology_clusterprofiler.r
 \name{simple_clusterprofiler}
 \alias{simple_clusterprofiler}
-\title{Perform a simplified clusterProfiler analysis.}
+\title{Perform the array of analyses in the 2016-04 version of clusterProfiler}
 \usage{
-simple_clusterprofiler(de_genes, goids_df = NULL, golevel = 4,
-  pcutoff = 0.1, fold_changes = NULL, include_cnetplots = FALSE,
-  showcategory = 12, universe = NULL, species = "undef", gff = NULL,
-  wrapped_width = 20, method = "Wallenius", padjust = "BH", ...)
+simple_clusterprofiler(sig_genes, all_genes, orgdb = "org.Dm.eg.db",
+  orgdb_from = "FLYBASE", orgdb_to = c("ENSEMBL", "SYMBOL", "ENTREZID"),
+  go_level = 3, pcutoff = 0.05, qcutoff = 0.1, fc_column = "logFC",
+  permutations = 100, min_groupsize = 5, kegg_prefix = "Dmel_",
+  kegg_organism = "dme", kegg_id_column = "FLYBASECG", categories = 12)
 }
 \arguments{
-\item{de_genes}{Data frame of differentially expressed genes, it must contain an ID column.}
+\item{sig_genes}{Dataframe of genes deemed 'significant.'}
 
-\item{goids_df}{df containing mappings of genes to goids in the format expected by buildGOmap().}
+\item{orgdb}{Name of the orgDb used for gathering annotation data.}
 
-\item{golevel}{Relative level in the tree for printing p-value plots, higher is more specific.}
+\item{orgdb_from}{Name of a key in the orgdb used to cross reference to entrez IDs.}
 
-\item{pcutoff}{(Adj)p-value cutoff to define 'significant'.}
+\item{orgdb_to}{List of keys to grab from the orgdb for cross referencing ontologies.}
 
-\item{fold_changes}{Df of fold changes for the DE genes.}
+\item{go_level}{How deep into the ontology tree should this dive for over expressed categories.}
 
-\item{include_cnetplots}{Cnetplots often have too many glyphs to read, so by default they are not
-included, however on occasion they are fairly interesting to look at.}
+\item{pcutoff}{P-value cutoff for 'significant' analyses.}
 
-\item{showcategory}{How many categories to show in p-value plots?  Too many and they become
-illegible.}
+\item{qcutoff}{Q-value cutoff for 'significant' analyses.}
 
-\item{universe}{Gene universe to use.}
+\item{fc_column}{When extracting vectors of all genes, what column should be used?}
 
-\item{species}{Name of the species to use if supported, jibberish otherwise.}
+\item{permutations}{How many permutations for GSEA-ish analyses?}
 
-\item{gff}{Gff file to generate the universe of genes.}
+\item{min_groupsize}{What is the minimum ontology group's size?}
 
-\item{wrapped_width}{Width of ontology names in the pvalue plots, too long and the bars
-disappear, too short and the words run into the lines above.}
+\item{kegg_prefix}{Many KEGG ids need a prefix before they will cross reference.}
 
-\item{method}{Method for calculating p-values.}
+\item{kegg_organism}{Choose the 3 letter KEGG organism name here.}
 
-\item{padjust}{Method for adjusting the p-values.}
+\item{kegg_id_column}{Column in the orgdb to use for cross referencing to KEGG.}
 
-\item{...}{More options, passed to arglist.}
-}
-\value{
-List including the following:
-  mf_interesting: A table of the interesting molecular function groups
-  bp_interesting: A table of the interesting biological process groups
-  cc_interesting: A table of the interesting cellular component groups
-  mf_pvals: A histogram of the molecular function p-values
-  bp_pvals: Ditto, biological process
-  cc_pvals: And cellular component...
-  mf_enriched: A table of the enriched molecular function groups by adjusted p-value.
-  bp_enriched: yep, you guessed it
-  cc_enriched: cellular component, too
-  mf_all/bp_all/cc_all: A table of all go categories observed (mf/bp/cc respectively)
-  mfp_plot/bpp_plot/ccp_plot: ggplot2 p-value bar plots describing the over represented groups
-  mf_cnetplot/bp_cnetplot/cc_cnetplot: clusterProfiler cnetplots
-  mf_group_barplot/bp_group_barplot/cc_group_barplot: The group barplots from clusterProfiler
+\item{categories}{How many categories should be plotted in bar/dot plots?}
+
+\item{universe}{Dataframe of all genes in the analysis, primarily for gse analyses.}
 }
 \description{
-I like clusterProfiler quite a lot, but making it work for non-standard species is a bit of a
-chore.  This attempts to alleivate some of those headaches and cover some corner cases where it
-fails.
-}
-\examples{
-\dontrun{
- up_cluster = simple_clusterprofiler(mga2_ll_thy_top, goids=goids, gff="reference/genome/gas.gff")
-## > Some chattery while it runs
-## tail(head(up_cluster$bp_interesting, n=10), n=1)
-## > ID ont GeneRatio BgRatio     pvalue   p.adjust    qvalue
-## > 10 GO:0009311  BP     5/195 10/1262 0.01089364 0.01089364 0.1272835
-## >   geneID Count
-## >   10 M5005_Spy1632/M5005_Spy1637/M5005_Spy1635/M5005_Spy1636/M5005_Spy1638     5
-## >   Description
-## >   10 oligosaccharide metabolic process
-}
+The new version of clusterProfiler has a bunch of new toys.  However, it is more stringent in
+terms of input in that it now explicitly expects to receive annotation data in terms of a orgdb
+object.  This is mostly advantageous, but will probably cause some changes in the other ontology
+functions in the near future.  This function is an initial pass at making something similar to my
+previous 'simple_clusterprofiler()' but using these new toys.
 }
 

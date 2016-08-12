@@ -23,25 +23,27 @@ tagdispnorm <- edgeR::estimateTagwiseDisp(disp_norm)
 glmnorm <- edgeR::estimateGLMCommonDisp(tagdispnorm, model)
 glmtrend <- edgeR::estimateGLMTrendedDisp(glmnorm, model)
 glmtagged <- edgeR::estimateGLMTagwiseDisp(glmtrend, model)
-glmfit <- edgeR::glmFit(glmtagged, design=model)
+glmfit <- edgeR::glmQLFit(glmtagged, design=model)
 ## This is explicitly in the opposite order as what edger_pairwise will choose in order to
 ## make it necessary to test the columns that change as a result.
 pair <- "treated - untreated"
 contr <- limma::makeContrasts(contrasts=pair, levels=model)
-glm_result <- edgeR::glmLRT(glmfit, contrast=contr)
+glm_result <- edgeR::glmQLFTest(glmfit, contrast=contr)
 glm_table <- as.data.frame(edgeR::topTags(glm_result, n=nrow(raw), sort.by="logFC"))
 
 ## Create the expt object
-cbcb_data <- as.matrix(counts)
-hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
+expected <- as.matrix(counts)
+expected <- expected[sort(rownames(expected)), ]
+actual <- Biobase::exprs(pasilla_expt$expressionset)
+actual <- actual[sort(rownames(actual)), ]
 test_that("Does data from an expt equal a raw dataframe?", {
-    expect_equal(cbcb_data, hpgl_data)
+    expect_equal(expected, actual)
 })
 
 ## Perform the edgeR analysis in hpgltools
-hpgl_edger <- s_p(edger_pairwise(pasilla_expt))$result
+hpgl_edger <- s_p(edger_pairwise(pasilla_expt))[["result"]]
 
-hpgl_result <- hpgl_edger$all_tables$untreated_vs_treated
+hpgl_result <- hpgl_edger[["all_tables"]][["untreated_vs_treated"]]
 hpgl_result[["logFC"]] <- hpgl_result[["logFC"]] * -1
 
 ## Because of rounding errors, the order of logCPM with respect to logFC is not maintained from hpgl->edger
@@ -50,22 +52,34 @@ edger_reordered <- glm_table[order(rownames(glm_table)), ]
 hpgl_reordered <- hpgl_result[order(rownames(hpgl_result)), ]
 
 ## Columns to check: logFC,logCPM,LR,PValue,FDR,qvalue vs. logFC,logCPM,LR,PValue,FDR
-edger_logfc <- edger_reordered$logFC
-hpgl_logfc <- hpgl_reordered$logFC
-edger_logcpm <- edger_reordered$logCPM
-hpgl_logcpm <- hpgl_reordered$logCPM
-edger_lr <- edger_reordered$LR
-hpgl_lr <- hpgl_reordered$LR
-edger_pval <- edger_reordered$PValue
-hpgl_pval <- hpgl_reordered$PValue
-edger_fdr <- edger_reordered$FDR
-hpgl_fdr <- hpgl_reordered$FDR
+edger_logfc <- edger_reordered[["logFC"]]
+hpgl_logfc <- hpgl_reordered[["logFC"]]
+edger_logcpm <- edger_reordered[["logCPM"]]
+hpgl_logcpm <- hpgl_reordered[["logCPM"]]
+edger_f <- edger_reordered[["F"]]
+hpgl_f <- hpgl_reordered[["F"]]  ## I changed the statistic used here, but the result is the same.
+edger_pval <- edger_reordered[["PValue"]]
+hpgl_pval <- hpgl_reordered[["PValue"]]
+edger_fdr <- edger_reordered[["FDR"]]
+hpgl_fdr <- hpgl_reordered[["FDR"]]
 
-test_that("Is the hpgl pairwise similar to edgeR's default method?", {
+test_that("Is the hpgl pairwise similar to edgeR's default method (logfc)?", {
     expect_equal(edger_logfc, hpgl_logfc, tolerance=0.1)
+})
+
+test_that("Is the hpgl pairwise similar to edgeR's default method (logcpm)?", {
     expect_equal(edger_logcpm, hpgl_logcpm, tolerance=0.1)
-    expect_equal(edger_lr, hpgl_lr, tolerance=0.1)
+})
+
+test_that("Is the hpgl pairwise similar to edgeR's default method (F)?", {
+    expect_equal(edger_f, hpgl_f, tolerance=0.1)
+})
+
+test_that("Is the hpgl pairwise similar to edgeR's default method (pval)?", {
     expect_equal(edger_pval, hpgl_pval, tolerance=0.1)
+})
+
+test_that("Is the hpgl pairwise similar to edgeR's default method (fdr)?", {
     expect_equal(edger_fdr, hpgl_fdr, tolerance=0.1)
 })
 

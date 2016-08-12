@@ -65,6 +65,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     batches <- droplevels(as.factor(design[[batch1]]))
     conditions <- droplevels(as.factor(design[["condition"]]))
 
+    message("Note to self:  If you get an error like 'x contains missing values'; I think this means that the data has too many 0's and needs to have a better low-count filter applied.")
+
     num_low <- sum(count_table < 1 & count_table > 0)
     if (num_low > 0) {
         message(paste0("batch_counts: Before batch correction, ", num_low, " entries 0<x<1."))

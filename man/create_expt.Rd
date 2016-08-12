@@ -5,19 +5,23 @@
 \title{Wrap bioconductor's expressionset to include some other extraneous
 information.}
 \usage{
-create_expt(metadata, sample_colors = NULL, gene_info = NULL,
-  title = NULL, notes = NULL, include_type = "all", include_gff = NULL,
-  count_dataframe = NULL, savefile = "expt", low_files = FALSE, ...)
+create_expt(metadata, gene_info = NULL, count_dataframe = NULL,
+  sample_colors = NULL, title = NULL, notes = NULL,
+  include_type = "all", include_gff = NULL, savefile = "expt",
+  low_files = FALSE, ...)
 }
 \arguments{
 \item{metadata}{Comma separated file (or excel) describing the samples with information like
 condition, batch, count_filename, etc.}
 
-\item{sample_colors}{List of colors by condition, if not provided it will generate its own colors
-using colorBrewer.}
-
 \item{gene_info}{Annotation information describing the rows of the data set, this often comes
 from a call to import.gff() or biomart or organismdbi.}
+
+\item{count_dataframe}{If one does not wish to read the count tables from the filesystem, they
+may instead be fed as a data frame here.}
+
+\item{sample_colors}{List of colors by condition, if not provided it will generate its own colors
+using colorBrewer.}
 
 \item{title}{Provide a title for the expt?}
 
@@ -27,9 +31,6 @@ from a call to import.gff() or biomart or organismdbi.}
 not always true, this allows one to limit to a specific annotation type.}
 
 \item{include_gff}{Gff file to help in sorting which features to keep.}
-
-\item{count_dataframe}{If one does not wish to read the count tables from the filesystem, they
-may instead be fed as a data frame here.}
 
 \item{savefile}{Rdata filename prefix for saving the data of the resulting expt.}
 

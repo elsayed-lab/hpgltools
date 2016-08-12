@@ -27,42 +27,64 @@ colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-pasilla_expt <- create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info)
-actual <- Biobase::exprs(pasilla_expt[["expressionset"]])
+pasilla_expt <- s_p(create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info))$result
+## Recent changes to how my expressionsets are created mean that the order of genes is hard-set to the order of annotations
+## in the annotation data and therefore _not_ the order of genes found in the count tables.
+actual <- as.matrix(Biobase::exprs(pasilla_expt[["expressionset"]]))
+actual <- actual[ order(row.names(actual)), ]
 expected <- as.matrix(counts)
+expected <- expected[ order(row.names(expected)), ]
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(expected, actual)
 })
 
 hpgl_annotations <- Biobase::fData(pasilla_expt[["expressionset"]])
-actual <- head(hpgl_annotations[["length"]])
-expected <- c(3990, 993, 4863, 1620, 1950, 1317)
-test_that("Was the annotation information imported into the expressionset?", {
+expected <- c("FBgn0000008", "FBgn0000014", "FBgn0000017", "FBgn0000018", "FBgn0000024", "FBgn0000032")
+actual <- head(sort(rownames(hpgl_annotations)))
+test_that("Was the annotation information imported into the expressionset? (static rownames?)", {
+    expect_equal(expected, actual)
+})
+
+expected <- c(78, 81, 99, 123, 123, 123)
+actual <- head(sort(hpgl_annotations[["length"]]))
+test_that("Was the annotation information imported into the expressionset? (static lengths?)", {
+    expect_equal(expected, actual)
+})
+
+expected <- c(7529, 9839, 21823, 25402, 32478, 47710)
+actual <- head(sort(hpgl_annotations[["start"]]))
+test_that("Was the annotation information imported into the expressionset? (static starts?)", {
+    expect_equal(expected, actual)
+})
+
+expected <- c("2R", "3R", "3L", "2L", "3R", "3R")
+actual <- head(hpgl_annotations[["chromosome"]])
+test_that("Was the annotation information imported into the expressionset? (static chromosomes?)", {
     expect_equal(expected, actual)
 })
 
 ## Test that the expt has a design which makes sense.
-actual <- as.character(pasilla_expt[["design"]][["sampleid"]])
 expected <- c("untreated1","untreated2","untreated3","untreated4","treated1","treated2","treated3")
+actual <- as.character(pasilla_expt[["design"]][["sampleid"]])
 test_that("Is the experimental design maintained for samples?", {
     expect_equal(expected, actual)
 })
 
-actual <- as.character(pasilla_expt[["design"]][["condition"]])
 expected <- c("untreated","untreated","untreated","untreated","treated","treated","treated")
+actual <- as.character(pasilla_expt[["design"]][["condition"]])
 test_that("Is the experimental design maintained for conditions?", {
     expect_equal(expected, actual)
 })
 
-actual <-  as.character(pasilla_expt[["design"]][["batch"]])
 expected <- c("single_end","single_end","paired_end","paired_end","single_end","paired_end","paired_end")
+actual <-  as.character(pasilla_expt[["design"]][["batch"]])
 test_that("Is the experimental design maintained for batches?", {
     expect_equal(expected, actual)
 })
 
-actual <- pasilla_expt[["libsize"]]
 expected <- c(13971670, 21909886, 8357876, 9840745, 18668667, 9571213, 10343219)
 names(expected) <- c("untreated1","untreated2","untreated3","untreated4","treated1","treated2","treated3")
+actual <- pasilla_expt[["libsize"]]
 test_that("Are the library sizes intact?", {
     expect_equal(expected, actual)
 })

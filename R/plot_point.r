@@ -179,31 +179,45 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     df_y_axis <- df_columns[2]
     colnames(df) <- c("first","second")
     model_test <- try(robustbase::lmrob(formula=second ~ first, data=df, method="SMDM"), silent=TRUE)
+    linear_model <- NULL
+    linear_model_summary <- NULL
+    linear_model_rsq <- NULL
+    linear_model_weights <- NULL
+    linear_model_intercept <- NULL
+    linear_model_slope <- NULL
     if (class(model_test) == "try-error") {
         model_test <- try(lm(formula=second ~ first, data=df), silent=TRUE)
+    } else {
+        linear_model <- model_test
+        linear_model_summary <- summary(linear_model)
+        linear_model_rsq <- linear_model_summary[["r.squared"]]
+        linear_model_weights <- stats::weights(linear_model, type="robustness", na.action=NULL)
+        linear_model_intercept <- stats::coef(linear_model_summary)[1]
+        linear_model_slope <- stats::coef(linear_model_summary)[2]
     }
     if (class(model_test) == "try-error") {
         model_test <- try(glm(formula=second ~ first, data=df), silent=TRUE)
+    } else {
+        linear_model <- model_test
+        linear_model_summary <- summary(linear_model)
+        linear_model_rsq <- linear_model_summary[["r.squared"]]
+        linear_model_weights <- stats::weights(linear_model, type="robustness", na.action=NULL)
+        linear_model_intercept <- stats::coef(linear_model_summary)[1]
+        linear_model_slope <- stats::coef(linear_model_summary)[2]
     }
+
     if (class(model_test) == "try-error") {
         message("Could not create a linear model of the data.")
         message("Going to perform a scatter plot without linear model.")
         plot <- plot_scatter(df)
         ret <- list(data=df, scatter=plot)
         return(ret)
-    } else {
-        linear_model <- model_test
     }
-    linear_model <- try(robustbase::lmrob(formula=second ~ first, data=df, method="SMDM"))
-    linear_model_summary <- summary(linear_model)
-    linear_model_rsq <- linear_model_summary$r.squared
-    linear_model_weights <- stats::weights(linear_model, type="robustness", na.action=NULL)
-    linear_model_intercept <- stats::coef(linear_model_summary)[1]
-    linear_model_slope <- stats::coef(linear_model_summary)[2]
-    first_median <- summary(df$first)[["Median"]]
-    second_median <- summary(df$second)[["Median"]]
-    first_mad <- stats::mad(df$first, na.rm=TRUE)
-    second_mad <- stats::mad(df$second, na.rm=TRUE)
+
+    first_median <- summary(df[["first"]])[["Median"]]
+    second_median <- summary(df[["second"]])[["Median"]]
+    first_mad <- stats::mad(df[["first"]], na.rm=TRUE)
+    second_mad <- stats::mad(df[["second"]], na.rm=TRUE)
     line_size <- size / 2
     first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +
@@ -280,12 +294,21 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     x_histogram <- plot_histogram(data.frame(df[, 1]), fillcolor="lightblue", color="blue")
     y_histogram <- plot_histogram(data.frame(df[, 2]), fillcolor="pink", color="red")
     both_histogram <- plot_multihistogram(df)
-    plots <- list(data=df, scatter=first_vs_second, x_histogram=x_histogram,
-                  y_histogram=y_histogram, both_histogram=both_histogram,
-                  correlation=correlation, lm_model=linear_model, lm_summary=linear_model_summary,
-                  lm_weights=linear_model_weights, lm_rsq=linear_model_rsq,
-                  first_median=first_median, first_mad=first_mad,
-                  second_median=second_median, second_mad=second_mad)
+    plots <- list(
+        "data" = df,
+        "scatter" = first_vs_second,
+        "x_histogram" = x_histogram,
+        "y_histogram" = y_histogram,
+        "both_histogram" = both_histogram,
+        "correlation" = correlation,
+        "lm_model" = linear_model,
+        "lm_summary" = linear_model_summary,
+        "lm_weights" = linear_model_weights,
+        "lm_rsq" = linear_model_rsq,
+        "first_median" = first_median,
+        "first_mad" = first_mad,
+        "second_median" = second_median,
+        "second_mad" = second_mad)
     return(plots)
 }
 
@@ -321,6 +344,8 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1, pval="adjpval",
                     size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
     hpgl_env <- environment()
+
+    aes_color = "(pval <= pval_cutoff)"
     if (pval == "adjpval") {
         pval_column <- "adj.P.Val"
         aes_color <- "(adjpval <= pval_cutoff)"
@@ -328,15 +353,19 @@ plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=
         pval_column <- "P.Value"
         aes_color <- "(pval <= pval_cutoff)"
     }
-    df <- data.frame("avg" = rowMeans(counts[rownames(de_genes),]),
+###    df <- data.frame("avg" = rowMeans(counts[rownames(de_genes),]),
+###                     "logfc" = de_genes[["logFC"]],
+###                     "pval" = de_genes[["P.Value"]],
+###                     "adjpval" = de_genes[[pval_column]])
+    df <- data.frame("avg" = de_genes[["AveExpr"]],
                      "logfc" = de_genes[["logFC"]],
                      "pval" = de_genes[["P.Value"]],
                      "adjpval" = de_genes[[pval_column]])
     df[["adjpval"]] <- as.numeric(format(df[["adjpval"]], scientific=FALSE))
     df[["pval"]] <- as.numeric(format(df[["pval"]], scientific=FALSE))
-    df$state <- ifelse(df[["adjpval"]] > pval_cutoff, "pinsig",
-                ifelse(df[["adjpval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
-                ifelse(df[["adjpval"]] <= pval_cutoff & df[["logfc"]] <= (-1 * logfc_cutoff), "downsig", "fcinsig")))
+    df[["state"]] <- ifelse(df[["adjpval"]] > pval_cutoff, "pinsig",
+                     ifelse(df[["adjpval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
+                     ifelse(df[["adjpval"]] <= pval_cutoff & df[["logfc"]] <= (-1 * logfc_cutoff), "downsig", "fcinsig")))
     num_pinsig <- sum(df[["state"]] == "pinsig")
     num_upsig <- sum(df[["state"]] == "upsig")
     num_downsig <- sum(df[["state"]] == "downsig")
@@ -346,6 +375,82 @@ plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=
         ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1), logfc_cutoff), color="red", size=(size / 2)) +
         ggplot2::geom_point(stat="identity", size=size, alpha=alpha, aes_string(shape="as.factor(state)", fill=aes_color)) +
         ggplot2::scale_shape_manual(name="state", values=c(21,22,23,24),
+                                    labels=c(
+                                        paste0("Down Sig.: ", num_downsig),
+                                        paste0("FC Insig.: ", num_fcinsig),
+                                        paste0("P Insig.: ", num_pinsig),
+                                        paste0("Up Sig.: ", num_upsig)),
+                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
+        ggplot2::scale_color_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
+        ggplot2::scale_fill_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
+        ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=3))) +
+        ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
+        ggplot2::xlab("Average Count (Millions of Reads)") +
+        ggplot2::ylab("log fold change") +
+        ggplot2::theme_bw()
+    if (!is.null(gvis_filename)) {
+        plot_gvis_ma(counts, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
+    }
+    return(plt)
+}
+
+#' Make a pretty MA plot from a DE tool (limma/deseq/edger/basic
+#'
+#' @param table  Df of linear-modelling, normalized counts by sample-type,
+#' @param expr_col Column showing the average expression across genes.
+#' @param fc_col Column showing the logFC for each gene.
+#' @param p_col Column containing the relevant p-values.
+#' @param alpha How transparent to make the dots.
+#' @param logfc_cutoff Fold change cutoff.
+#' @param pval Name of the pvalue column to use for cutoffs.
+#' @param size How big are the dots?
+#' @param tooltip_data Df of tooltip information for gvis.
+#' @param gvis_filename Filename to write a fancy html graph.
+#' @param ... More options for you!
+#' @return Ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
+#'     type across all sample types on the x-axis, and the log fold change between conditions on the
+#'     y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
+#'     googleVis graph if requested.
+#' @seealso \link{plot_gvis_ma} \link[limma]{toptable}
+#' \link[limma]{voom} \link{hpgl_voom}
+#' \link[limma]{lmFit} \link[limma]{makeContrasts}
+#' \link[limma]{contrasts.fit}
+#' @examples
+#' \dontrun{
+#' plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
+#' ## Currently this assumes that a variant of toptable was used which
+#' ## gives adjusted p-values.  This is not always the case and I should
+#' ## check for that, but I have not yet.
+#' }
+#' @export
+plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
+                       pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1,
+                       size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
+    hpgl_env <- environment()
+
+    aes_color = "(pval <= pval_cutoff)"
+
+###    df <- data.frame("avg" = rowMeans(counts[rownames(de_genes),]),
+###                     "logfc" = de_genes[["logFC"]],
+###                     "pval" = de_genes[["P.Value"]],
+###                     "adjpval" = de_genes[[pval_column]])
+    df <- data.frame("avg" = table[[expr_col]],
+                     "logfc" = table[[fc_col]],
+                     "pval" = table[[p_col]])
+
+    df[["pval"]] <- as.numeric(format(df[["pval"]], scientific=FALSE))
+    df[["state"]] <- ifelse(df[["pval"]] > pval_cutoff, "pinsig",
+                     ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
+                     ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] <= (-1 * logfc_cutoff), "downsig", "fcinsig")))
+    num_pinsig <- sum(df[["state"]] == "pinsig")
+    num_upsig <- sum(df[["state"]] == "upsig")
+    num_downsig <- sum(df[["state"]] == "downsig")
+    num_fcinsig <- sum(df[["state"]] == "fcinsig")
+    plt <- ggplot(df, aes_string(x="avg", y="logfc", color=aes_color),
+                           environment=hpgl_env) +
+        ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1), logfc_cutoff), color="red", size=(size / 2)) +
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha, aes_string(shape="as.factor(state)", fill=aes_color)) +
+    ggplot2::scale_shape_manual(name="state", values=c(21,22,23,24),
                                     labels=c(
                                         paste0("Down Sig.: ", num_downsig),
                                         paste0("FC Insig.: ", num_fcinsig),
@@ -572,6 +677,8 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' @param alpha How transparent to make the dots.
 #' @param size How big are the dots?
 #' @param gvis_filename Filename to write a fancy html graph.
+#' @param xaxis_column Column from the data to use on the x axis (logFC)
+#' @param yaxis_column Column from the data to use on the y axis (p-value)
 #' @param tooltip_data Df of tooltip information for gvis.
 #' @param ...  I love parameters!
 #' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to
@@ -589,22 +696,58 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' }
 #' @export
 plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
-                         fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6, ...) {
+                         fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6,
+                         xaxis_column="logFC", yaxis_column="P.Value", modify_y=TRUE, ...) {
     hpgl_env <- environment()
     low_vert_line <- 0.0 - fc_cutoff
     horiz_line <- -1 * log10(p_cutoff)
-    toptable_data$modified_p <- -1 * log10(toptable_data[["P.Value"]])  ## this should be parameterized
-    plt <- ggplot(toptable_data,
-                  aes_string(x="logFC", y="modified_p", color="(P.Value <= p_cutoff)"),
+
+    df <- data.frame("xaxis" = toptable_data[[xaxis_column]],
+                     "yaxis" = toptable_data[[yaxis_column]])
+    df[["logyaxis"]] <- -1 * log10(df[["yaxis"]])
+    rownames(df) <- rownames(toptable_data)
+    df[["state"]] <- ifelse(df[["yaxis"]] > p_cutoff, "pinsig",
+                     ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] >= fc_cutoff, "upsig",
+                     ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] <= (-1 * fc_cutoff), "downsig", "fcinsig")))
+    ##up_df <- df[ df[["xaxis"]] => 0, ]
+    ##down_df <- df[ df[["yaxis"]] < 0, ]
+    up_df[["state"]] <- ifelse(up_df[["yaxis"]] > p_cutoff, "pupinsig",
+                        ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] >= fc_cutoff, "upsig", "fcupinsig"))
+    ##num_pup_insig <- sum(up_df[["state"]] == "pupinsig")
+    ##num_up_sig <- sum(up_df[["state"]] == "upsig")
+    ##num_up_fcinsig <- sum(up_df[["state"]] == "fcupinsig")
+    ##down_df[["state"]] <- ifelse(down_df[["yaxis"]] > p_cutoff, "pdowninsig",
+    ##                      ifelse(down_df[["yaxis"]] <= p_cutoff & down_df[["xaxis"]] <= (-1 * fc_cutoff), "downsig", "fcdowninsig"))
+    ##num_pdown_insig <- sum(down_df[["state"]] == "pdowninsig")
+    ##num_down_sig <- sum(down_df[["state"]] == "downsig")
+    ##num_down_fcinsig <- sum(down_df[["state"]] == "fcdowninsig")
+
+    num_downsig <- sum(df[["state"]] == "downsig")
+    num_fcinsig <- sum(df[["state"]] == "fcinsig")
+    num_pinsig <- sum(df[["state"]] == "pinsig")
+    num_upsig <- sum(df[["state"]] == "upsig")
+    aes_color = "(yaxis > p_cutoff)"
+    plt <- ggplot(df, aes_string(x="xaxis", y="logyaxis", color=aes_color),
                   environment=hpgl_env) +
-        ggplot2::geom_hline(yintercept=horiz_line, color="black", size=size) +
-        ggplot2::geom_vline(xintercept=fc_cutoff, color="black", size=size) +
-        ggplot2::geom_vline(xintercept=low_vert_line, color="black", size=size) +
-        ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
-        ## theme(axis.text.x=element_text(angle=-90)) +
+        ggplot2::geom_hline(yintercept=horiz_line, color="black", size=(size / 2)) +
+        ggplot2::geom_vline(xintercept=fc_cutoff, color="black", size=(size / 2)) +
+        ggplot2::geom_vline(xintercept=low_vert_line, color="black", size=(size / 2)) +
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha, aes_string(shape="as.factor(state)", fill=aes_color)) +
         ggplot2::xlab("log fold change") +
         ggplot2::ylab("-log10(adjusted p value)") +
-        ggplot2::theme(legend.position="none")
+        ggplot2::scale_shape_manual(name="state", values=c(21,22,23,24),
+                                    labels=c(
+                                        paste0("Down Sig.: ", num_downsig),
+                                        paste0("FC Insig.: ", num_fcinsig),
+                                        paste0("P Insig.: ", num_pinsig),
+                                        paste0("Up Sig.: ", num_upsig)),
+                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
+        ggplot2::scale_color_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
+        ggplot2::scale_fill_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
+        ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=3))) +
+        ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
+        ggplot2::theme_bw()
+
     if (!is.null(gvis_filename)) {
         plot_gvis_volcano(toptable_data, fc_cutoff=fc_cutoff, p_cutoff=p_cutoff, tooltip_data=tooltip_data, filename=gvis_filename)
     }

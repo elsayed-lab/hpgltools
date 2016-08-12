@@ -1,3 +1,22 @@
+
+#' @export
+limma_ma <- function(output, table=NULL) {
+    counts <- NULL
+    de_genes <- NULL
+    pval <- NULL
+    output <- output[["limma"]]  ## Currently this only will work with the output from all_pairwise()
+    possible_tables <- names(output[["all_pairwise"]])
+    if (is.null(table)) {
+        table <- possible_tables[1]
+    } else if (is.numeric(table)) {
+        table <- possible_tables[table]
+    }
+
+    de_genes <- output[["all_tables"]][[table]]
+    plot <- plot_ma_de(table=de_genes, expr_col="AveExpr", fc_col="logFC", p_col="adj.P.Val")
+    return(plot)
+}
+
 #' Plot out 2 coefficients with respect to one another from limma.
 #'
 #' It can be nice to see a plot of two coefficients from a limma comparison with respect to one
@@ -33,8 +52,18 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
     if (!is.null(arglist[["qlimit"]])) {
         qlimit <- arglist[["qlimit"]]
     }
+    fc_column <- "limma_logfc"
+    if (!is.null(arglist[["fc_column"]])) {
+        fc_column <- arglist[["fc_column"]]
+    }
+    p_column <- "limma_adjp"
+    if (!is.null(arglist[["p_column"]])) {
+        p_column <- arglist[["p_column"]]
+    }
     coefficients <- output[["pairwise_comparisons"]][["coefficients"]]
     thenames <- colnames(coefficients)
+    message("This can do comparisons among the following columns in the limma result:")
+    message(toString(thenames))
     xname <- ""
     yname <- ""
     if (is.numeric(x)) {
@@ -51,20 +80,18 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
     coefficients <- output[["pairwise_comparisons"]][["coefficients"]]
     coefficients <- coefficients[, c(x, y)]
     maxvalue <- max(coefficients) + 1
-    plot <- plot_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
-                                gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                tooltip_data=tooltip_data, base_url=base_url,
-                                pretty_colors=FALSE, color_low=color_low, color_high=color_high, ...)
+    plot <- suppressMessages(plot_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
+                                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
+                                                 tooltip_data=tooltip_data, base_url=base_url,
+                                                 pretty_colors=FALSE, color_low=color_low, color_high=color_high))
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
     if (!is.null(toptable)) {
         theplot <- plot[["scatter"]] + ggplot2::theme_bw()
-        sig <- limma_subset(toptable, z=z)
-        sigup <- sig[["up"]]
-        sigdown <- sig[["down"]]
-        sigup <- sigup[sigup[["qvalue"]] <= qlimit, ]
-        sigdown <- sigdown[sigdown[["qvalue"]] <= qlimit, ]
+        sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
+        sigup <- sig[["up_genes"]]
+        sigdown <- sig[["down_genes"]]
         up_index <- rownames(coefficients) %in% rownames(sigup)
         down_index <- rownames(coefficients) %in% rownames(sigdown)
         up_df <- as.data.frame(coefficients[up_index, ])
@@ -247,14 +274,15 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
 #' }
 #' @export
 limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                           model_batch=TRUE, model_intercept=FALSE, extra_contrasts=NULL,
+                           model_batch=TRUE, model_intercept=TRUE, extra_contrasts=NULL,
                            alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
     arglist <- list(...)
     message("Starting limma pairwise comparison.")
     input_class <- class(input)[1]
     if (input_class == "expt") {
-        conditions <- input[["conditions"]]
-        batches <- input[["batches"]]
+        design <- Biobase::pData(input[["expressionset"]])
+        conditions <- design[["condition"]]
+        batches <- design[["batch"]]
         data <- Biobase::exprs(input[["expressionset"]])
         if (is.null(libsize)) {
             message("libsize was not specified, this parameter has profound effects on limma's result.")
@@ -262,6 +290,9 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
                 message("Using the libsize from expt$best_libsize.")
                 ## libsize = expt$norm_libsize
                 libsize <- input[["best_libsize"]]
+            } else if (!is.null(input[["libsize"]])) {
+                message("Using the libsize from expt$libsize.")
+                libsize <- input[["libsize"]]
             } else if (!is.null(input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
                 libsize <- colSums(data)
             } else {
@@ -287,7 +318,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
                               model_cond=model_cond,
                               model_intercept=model_intercept,
                               alt_model=alt_model)
-    fun_model <- fun_model[["model"]]
+    fun_model <- fun_model[["chosen_model"]]
 
     fun_voom <- NULL
     message("Limma step 1/6: choosing model.")
@@ -338,18 +369,12 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
     ## This will be important in 17 lines from now.
     ## Do the lmFit() using this model
-    message("limma step 3/6: running lmFit")
+    message("Limma step 3/6: running lmFit")
     fun_fit <- limma::lmFit(fun_voom, fun_model)
     ##fun_fit = lmFit(fun_voom)
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
     message("Limma step 4/6: making and fitting contrasts.")
     if (isTRUE(model_intercept)) {
-        contrasts <- "intercept"
-        identities <- NULL
-        contrast_string <- NULL
-        all_pairwise <- NULL
-        all_pairwise_fits <- fun_fit
-    } else {
         contrasts <- make_pairwise_contrasts(fun_model, conditions, extra_contrasts=extra_contrasts)
         all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]
         identities <- contrasts[["identities"]]
@@ -359,6 +384,12 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         ## This will first provide the relative abundances of each condition
         ## followed by the set of all pairwise comparisons.
         all_pairwise_fits <- limma::contrasts.fit(fun_fit, all_pairwise_contrasts)
+    } else {
+        contrasts <- "nointercept"
+        identities <- NULL
+        contrast_string <- NULL
+        all_pairwise <- NULL
+        all_pairwise_fits <- fun_fit
     }
     all_tables <- NULL
     message("Limma step 5/6: Running eBayes and topTable.")
@@ -370,9 +401,9 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     }
     message("Limma step 6/6: Writing limma outputs.")
     if (isTRUE(model_intercept)) {
-        limma_result <- all_tables
-    } else {
         limma_result <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
+    } else {
+        limma_result <- all_tables
     }
     result <- list(
         "all_pairwise" = all_pairwise,
@@ -448,46 +479,6 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
     }
     plots[["dataframe"]] <- df
     return(plots)
-}
-
-#' A quick and dirty way to pull the top/bottom genes from toptable().
-#'
-#' If neither n nor z is provided, it assumes you want 1.5 z-scores from the median.
-#'
-#' @param table Original data from limma.
-#' @param n Number of genes to keep.
-#' @param z Number of z-scores from the mean.
-#' @return Dataframe subset from toptable.
-#' @seealso \pkg{limma}
-#' @examples
-#' \dontrun{
-#'  subset = limma_subset(df, n=400)
-#'  subset = limma_subset(df, z=1.5)
-#' }
-#' @export
-limma_subset <- function(table, n=NULL, z=NULL) {
-    if (is.null(n) & is.null(z)) {
-        z <- 1.5
-    }
-    if (is.null(n)) {
-        out_summary <- summary(table$logFC)
-        out_mad <- stats::mad(table$logFC, na.rm=TRUE)
-        up_median_dist <- out_summary["Median"] + (out_mad * z)
-        down_median_dist <- out_summary["Median"] - (out_mad * z)
-
-        up_genes <- table[ which(table$logFC >= up_median_dist), ]
-        ## up_genes = subset(table, logFC >= up_median_dist)
-        down_genes <- table[ which(table$logFC <= down_median_dist), ]
-        ## down_genes = subset(table, logFC <= down_median_dist)
-    } else if (is.null(z)) {
-        upranked <- table[order(table$logFC, decreasing=TRUE), ]
-        up_genes <- head(upranked, n=n)
-        down_genes <- tail(upranked, n=n)
-    }
-    ret_list <- list(
-        "up" = up_genes,
-        "down" = down_genes)
-    return(ret_list)
 }
 
 #' Perform a simple experimental/control comparison.
@@ -698,9 +689,13 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
 write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
                        excel=FALSE, csv=FALSE, annot_df=NULL) {
     testdir <- dirname(workbook)
+
+    ## Figure out the number of genes if not provided
     if (n == 0) {
-        n <- dim(data[["coefficients"]])[1]
+        n <- nrow(data[["coefficients"]])
     }
+
+    ## If specific contrast(s) is/are not requested, get them all.
     if (is.null(coef)) {
         coef <- colnames(data[["contrasts"]])
     } else {
@@ -710,7 +705,7 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
     end <- length(coef)
     for (c in 1:end) {
         comparison <- coef[c]
-        message(paste0("limma step 6/6: ", c, "/", end, ": Printing table: ", comparison, "."))
+        message(paste0("Limma step 6/6: ", c, "/", end, ": Printing table: ", comparison, "."))
         data_table <- limma::topTable(data, adjust=adjust, n=n, coef=comparison)
         ## Reformat the numbers so they are not so obnoxious
         ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)

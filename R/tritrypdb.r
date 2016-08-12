@@ -8,115 +8,146 @@
 #' @param filepath Location of TriTrypDB gene information table.
 #' @param verbose  Whether or not to enable verbose output.
 #' @return Returns a dataframe of gene info.
-parse_gene_info_table <- function(filepath, verbose=FALSE) {
-
-    if (tools::file_ext(filepath) == 'gz') {
-        fp <- gzfile(filepath, open='rb')
-    } else {
-        fp <- file(filepath, open='r')
+parse_gene_info_table <- function(file, verbose=FALSE) {
+    ## Create empty vector to store dataframe rows
+    local_get_value <- function(x) {
+        return(gsub("^ ","", tail(unlist(strsplit(x, ": ")), n=1), fixed=TRUE))
     }
 
-    # Create empty vector to store dataframe rows
-    N <- 2e4
-    gene_ids <- c()
-    genes <- data.frame("chromosome"=rep(NA, N),
-                        "start"=rep(NA, N),
-                        "stop"=rep(NA, N),
-                        "strand"=rep("", N),
-                        "type"=rep("", N),
-                        "transcript_length"=rep(NA, N),
-                        "cds_length"=rep(NA, N),
-                        "pseudogene"=rep(NA, N),
-                        "description"=rep("", N),
-                        stringsAsFactors=FALSE)
+    N <- 1e5
+    go_rows <- data.frame("GO" = rep("", N),
+                          "ONTOLOGY" = rep("", N),
+                          "TERM" = rep("", N),
+                          "SOURCE" = rep("", N),
+                          "EVIDENCE" = rep("", N),
+                          stringsAsFactors = FALSE)
 
-    # Regular expression to extract location info
+    genedb <- data.frame("chromosome" = rep(NA, N),
+                         "start" = rep(NA, N),
+                         "stop" = rep(NA, N),
+                         "strand" = rep("", N),
+                         "type" = rep("", N),
+                         "transcript_length" = rep(NA, N),
+                         "cds_length" = rep(NA, N),
+                         "pseudogene" = rep(NA, N),
+                         "description" = rep("", N),
+                         "mweight" = rep("", N),
+                         "isopoint" = rep("", N),
+                         stringsAsFactors = FALSE)
+    ## Regular expression to extract location info
     location_regex <- '([0-9,]*) - ([0-9,]*) \\(([-+])\\)'
-
-    # Counter to keep track of row number
-    i <- 1
-    # Iterate through lines in file
-    while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
-        # Gene ID
-        if(grepl("^Gene ID", x)) {
-            gene_id <- .get_value(x)
+    gene_ids <- c()
+    go_gene_ids <- c()
+    gene_num <- 0
+    go_num <- 0
+    message("Using readr to read the txt file.")
+    read_vec <- readr::read_lines(file, progress=TRUE)
+    message("Starting to iterate over the txt file, this takes a long time.")
+    chromosome <- ""
+    seqid <- ""
+    for (i in 1:length(read_vec)) {
+        line <- read_vec[i]
+        if (grepl("^Gene ID", line)) {  ## Example: Gene ID: TcCLB.397923.10
+            gene_num <- gene_num + 1
+            gene_id <- local_get_value(line)
+            gene_ids[gene_num] <- gene_id
             if (verbose) {
-                print(sprintf('Processing gene %d: %s', i, gene_id))
+                if ((gene_num %% 100) == 0) {
+                    message(sprintf('Processing gene %d: %s', gene_num, gene_id))
+                }
             }
-        }
-
-        # Chromosome number
-        else if(grepl("^Chromosome", x)) {
-            if (grepl("^Chromosome: Not Assigned", x)) {
-                chromosome <- NA
+        } else if(grepl("^Molecular Weight", line)) { ## Example: Molecular Weight: 37091
+            if (grepl("^Molecular Weight: Not Assigned", line)) {
+                mweight <- NA
             } else {
-                chromosome <- as.numeric(.get_value(x))
+                mweight <- as.numeric(local_get_value(line))
             }
-        }
-
-        # Genomic location
-        else if (grepl("^Genomic Location:", x)) {
-            result <- unlist(regmatches(x, regexec(location_regex, x)))
+        } else if(grepl("^Isoelectric Point", line)) { ## Example: Isoelectric Point: 7.79
+            if (grepl("^Isoelectric Point: Not Assigned", line)) {
+                ipoint <- NA
+            } else {
+                ipoint <- as.numeric(local_get_value(line))
+            }
+        } else if (grepl("^Genomic Sequence ID", line)) { ## Example: Genomic Sequence ID: Tcruzi_56
+            ## Genomic Sequence ID serves as chromosome in some genomes.
+            ## And, since it comes before the Chromosome line, I will need a check in the chromosome assignment below.
+            seqid <- as.character(local_get_value(line))
+            ## message(paste0("Set seqid to ", seqid))
+        } else if (grepl("^Chromosome", line)) { ## Example: Chromosome: Not Assigned
+            if (grepl("^Chromosome: Not Assigned", line)) {
+                chromosome <- seqid
+            } else {
+                chromosome <- as.character(local_get_value(line))
+            }
+        } else if (grepl("^Genomic Location:", line)) { ## Example: Genomic location: Tcruzi_56: 2 - 586 (+)
+            result <- unlist(regmatches(line, regexec(location_regex, line)))
             gene_start <- as.numeric(gsub(",", "", result[2], fixed=TRUE))
             gene_stop  <- as.numeric(gsub(",", "", result[3], fixed=TRUE))
             strand <- result[4]
-        }
-        # Gene type
-        else if (grepl("^Gene Type", x)) {
-            gene_type <- .get_value(x)
-        }
-        # Product Description
-        else if (grepl("^Product Description", x)) {
-            description <- .get_value(x)
-        }
-        # Transcript length
-        else if (grepl("^Transcript Length", x)) {
-            transcript_length <- as.numeric(.get_value(x))
-        }
-        # CDS length
-        else if (grepl("^CDS Length", x)) {
-            val <- .get_value(x)
+        } else if (grepl("^Gene Type", line)) { ## Example: Gene type: protein coding
+            gene_type <- local_get_value(line)
+        } else if (grepl("^Product Description", line)) { ## Example: Product Description: mucin-associated surface protein (MASP), putative
+            description <- local_get_value(line)
+        } else if (grepl("^Transcript Length", line)) { ## Example: Transcript length: 585
+            transcript_length <- as.numeric(local_get_value(line))
+        } else if (grepl("^CDS Length", line)) { ## Example: CDS length: 585
+            val <- local_get_value(line)
             if (val == 'null') {
                 cds_length <- NA
             } else {
                 cds_length <- as.numeric(val)
             }
-        }
-        # Pseudogene
-        else if (grepl("^Is Pseudo:", x)) {
-            is_pseudo <- if(.get_value(x) == "Yes") TRUE else FALSE
-        }
-
-        # End of gene description
-        else if (grepl("^---", x)) {
-            # Skip gene if it is not assigned to a chromosome
+        } else if (grepl("^Is Pseudo:", line)) { ## Pseudogene
+            is_pseudo <- ifelse((local_get_value(line) == "Yes"), TRUE, FALSE)
+        } else if (grepl("^GO:", line)) { ## Gene ontology terms
+            go_num <- go_num + 1
+            go_gene_ids[go_num] <- gene_id
+            go_rows[go_num, ] <- c(head(unlist(strsplit(line, '\t')), 5))
+        ##} else if (grepl("^PFAM", line)) { ## PFAM IDs
+        ##    pfam_id <- unlist(strsplit(line, "\t"))[2]
+        ##    pfam_ids <- paste0(pfam_id, " ", pfam_ids)
+        } else if (grepl("^---", line)) {        ## End of a gene's description
+            ## message(paste0("Got to end of entry ", chromosome))
+            ## Skip gene if it is not assigned to a chromosome
             if (is.na(chromosome)) {
                 next
             }
+            ## Otherwise add row to dataframe
+            ## message("GOT HERE")
+            ## message("Adding elements:")
+            ##element <- c(chromosome, gene_start, gene_stop, strand,
+            ##             gene_type, transcript_length, cds_length, is_pseudo,
+            ##             description, mweight, ipoint, pfam_ids)
+            element <- c(chromosome, gene_start, gene_stop, strand,
+                         gene_type, transcript_length, cds_length, is_pseudo,
+                         description, mweight, ipoint)
+            ## print(element)
+            genedb[gene_num, ] <- element
+        }  ## END ELSE!
+    } ## End parsing the file
+    rm(read_vec)
 
-            # Otherwise add row to dataframe
-            genes[i,] <- c(chromosome, gene_start, gene_stop, strand,
-                          gene_type, transcript_length, cds_length, is_pseudo,
-                          description)
-            gene_ids[i] <- gene_id
-            i = i + 1
-        }
-    }
+    go_rows <- go_rows[1:go_num, ]
+    go_rows <- cbind("GID" = go_gene_ids,
+                     go_rows)
 
-    # close file pointer
-    close(fp)
-    # get ride of unallocated rows
-    genes <- genes[1:i-1,]
-    # use gene id as row name
-    rownames(genes) <- gene_ids
-    # fix numeric types
-    for (colname in c('chromosome', 'start', 'stop', 'transcript_length',
-                      'cds_length')) {
-        genes[,colname] <- as.numeric(genes[,colname])
+    ## get rid of unallocated rows
+    genedb <- genedb[1:gene_num, ]
+    ## use gene id as row name
+    rownames(genedb) <- gene_ids
+    ## fix numeric types
+    for (colname in c("start", "stop", "transcript_length", "cds_length")) {
+        genedb[, colname] <- as.numeric(genedb[, colname])
     }
-    # sort data frame
-    genes <- genes[with(genes, order(chromosome, start)),]
-    return(genes)
+    for (colname in c("chromosome", "description")) {
+        genedb[, colname] <- as.character(genedb[, colname])
+    }
+    ## sort data frame
+    genedb <- genedb[with(genedb, order(chromosome, start)),]
+    ret <- list(
+        "genes" = genedb,
+        "go" = go_rows)
+    return(ret)
 }
 
 #' TriTrypDB gene information table GO term parser
@@ -176,6 +207,90 @@ parse_gene_go_terms <- function (filepath, verbose=FALSE) {
 #
 # Parses a key: value string and returns the value
 #
-.get_value <- function(x) {
-    return(gsub(" ","", tail(unlist(strsplit(x, ': ')), n=1), fixed=TRUE))
+
+
+#' @export
+tritryp_downloads <- function(version="24", species="lmajor", strain="friedlin", dl_dir="organdb/tritryp", quiet=TRUE) {
+    files_downloaded <- 0
+    files_found <- 0
+
+    if (!file.exists(dl_dir)) {
+        dir.create(dl_dir, recursive=TRUE)
+    }
+
+    uc_species <- paste0(toupper(substr(species, 1, 1)), substr(species, 2, nchar(species)))
+    uc_strain <- paste0(toupper(substr(strain, 1, 1)), substr(strain, 2, nchar(strain)))
+    gff_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, ".gff")
+
+    gff_path <- paste0(dl_dir, "/", gff_filename)
+    gff_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/gff/data/", gff_filename)
+    if (file.exists(gff_path)) {
+        files_found <- files_found + 1
+    } else {
+        message(paste0("Downloading ", gff_url))
+        path <- try(download.file(url=gff_url, destfile=gff_path, quiet=quiet))
+        if (class(path) != "try-error") {
+            message("Finished downloading gff.")
+            files_downloaded <- files_downloaded + 1
+        } else {
+            message("Failed downloading gff.")
+        }
+    }
+
+    txt_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, "Gene.txt")
+    txt_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/txt/", txt_filename)
+    txt_path <- paste0(dl_dir, "/", txt_filename)
+    if (file.exists(txt_path)) {
+        files_found <- files_found + 1
+    } else {
+        message(paste0("Downloading ", txt_url))
+        path <- try(download.file(url=txt_url, destfile=txt_path, quiet=quiet))
+        if (class(path) != "try-error") {
+            message("Finished downloading txt file.")
+            files_downloaded <- files_downloaded + 1
+        } else {
+            message("Failed downloading txt file.")
+        }
+    }
+
+    fasta_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, "_Genome.fasta")
+    fasta_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/fasta/data/", fasta_filename)
+    fasta_path <- paste0(dl_dir, "/", fasta_filename)
+    if (file.exists(fasta_path)) {
+        files_found <- files_found + 1
+    } else {
+        message(paste0("Downloading ", fasta_url))
+        path <- try(download.file(url=fasta_url, destfile=fasta_path, quiet=quiet))
+        if (class(path) != "try-error") {
+            message("Finished downloading fasta file.")
+            files_downloaded <- files_downloaded + 1
+        } else {
+            message("Failed downloading fasta file.")
+        }
+    }
+
+    alias_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, "_GeneAliases.txt")
+    alias_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/txt/", alias_filename)
+    alias_path <- paste0(dl_dir, alias_filename)
+    if (file.exists(alias_path)) {
+        files_found <- files_found + 1
+    } else {
+        message(paste0("Downloading ", alias_url))
+        path <- try(download.file(url=alias_url, destfile=alias_path, quiet=TRUE))
+        if (class(path) != "try-error") {
+            message("Finished downloading alias file.")
+            files_downloaded <- files_downloaded + 1
+        } else {
+            message("Failed downloading alias file.")
+        }
+    }
+
+    ret <- list(
+        "gff" = gff_path,
+        "txt" = txt_path,
+        "genome" = fasta_path,
+        "aliases" = alias_path,
+        "found" = files_found,
+        "downloaded" = files_downloaded)
+    return(ret)
 }

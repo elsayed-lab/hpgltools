@@ -4,12 +4,12 @@
 \alias{parse_gene_info_table}
 \title{TriTrypDB gene information table parser}
 \usage{
-parse_gene_info_table(filepath, verbose = FALSE)
+parse_gene_info_table(file, verbose = FALSE)
 }
 \arguments{
-\item{filepath}{Location of TriTrypDB gene information table.}
-
 \item{verbose}{Whether or not to enable verbose output.}
+
+\item{filepath}{Location of TriTrypDB gene information table.}
 }
 \value{
 Returns a dataframe of gene info.

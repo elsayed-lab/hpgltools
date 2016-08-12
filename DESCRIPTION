@@ -19,11 +19,12 @@ Suggests:
     clusterProfiler, corpcor, corrplot, data.table, DESeq2, DESeq, directlabels, dplyr, DOSE,
     EDASeq, edgeR, fission, genbankr, genefilter, genomeIntervals, GenomicFeatures, GenomicRanges,
     ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools,
-    gridExtra, hash, Heatplus, Hmisc, igraph, IRanges, KEGGgraph, KEGGREST, knitcitations, lattice, limma,
-    matrixStats, motifRG, multtest, mygene, openxlsx, pasilla, pathview, plyr,
-    preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, rentrez, reshape2, RCurl, rGADEM,
-    Rgraphviz, robustbase, RUVSeq, reshape, rjson, robust, Rsamtools, rtracklayer, S4Vectors,
-    scales, seqinr, seqLogo, stringi, stringr, survJamda, sva, topGO, xtable, XVector
+    gridExtra, hash, Heatplus, Hmisc, igraph, inflection, IRanges, KEGGgraph, KEGGREST,
+    knitcitations, lattice, limma, matrixStats, motifRG, multtest, mygene, openxlsx, pander,
+    pasilla, pathview, plyr, preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, readr, rentrez,
+    reshape2, RCurl, rGADEM, Rgraphviz, robustbase, RUVSeq, reshape, rjson, robust, Rsamtools,
+    rtracklayer, S4Vectors, scales, seqinr, seqLogo, statmod, stringi, stringr, survJamda, sva,
+    topGO, xtable, XVector
 Imports:
     Biobase, knitr, ggplot2, magrittr, methods
 VignetteBuilder: knitr

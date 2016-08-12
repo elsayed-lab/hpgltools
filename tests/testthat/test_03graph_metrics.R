@@ -6,6 +6,8 @@ context("Is it possible to graph the various metrics with hpgltools?")
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
+## Uses these genes for quick tests
+test_genes <- c("FBgn0000014","FBgn0000008","FBgn0000017","FBgn0000018", "FBgn0000024")
 
 ## What graphs can we make!?
 
@@ -23,23 +25,24 @@ test_that("The non-zero genes is as expected?", {
     expect_equal(expected, actual)
 })
 
+## These tests have also been affected by the changed order of expressionsets.
 density_plot <- s_p(plot_density(pasilla_expt))$result
-actual <- head(density_plot[["data"]][["counts"]])
 expected <- c(92, 5, 4664, 583, 10, 1446)
+actual <- head(density_plot[["data"]][["counts"]])
 test_that("Density plot data is as expected?", {
     expect_equal(expected, actual)
 })
 
 hist_plot <- s_p(plot_histogram(data.frame(Biobase::exprs(pasilla_expt[["expressionset"]]))))[["result"]]
 actual <- head(hist_plot[["data"]][["values"]])
-expected <- c(92, 5, 4664, 583, 10, 1446)
+## The values of expected have not changed
 test_that("Histogram data is as expected?", {
     expect_equal(expected, actual)
 })
 
 box_plot <- s_p(plot_boxplot(pasilla_expt))[["result"]]
 actual <- head(box_plot[["data"]][["value"]])
-expected <- c(92, 5, 4664, 583, 10, 1446)
+## The values of expected have not changed
 test_that("Box plot data is as expected?", {
     expect_equal(expected, actual)
 })

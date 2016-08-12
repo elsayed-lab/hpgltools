@@ -135,6 +135,17 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
+    ## Check that the given design works with the data
+    ## Prune the design if necessary
+    ## Also take into account the fact that sometimes I change the case of hpgl<->HPGL
+    given_samples <- tolower(colnames(data))
+    colnames(data) <- given_samples
+    avail_samples <- tolower(rownames(design))
+    rownames(design) <- avail_samples
+    if (sum(given_samples %in% avail_samples) == length(given_samples)) {
+        design <- design[given_samples, ]
+    }
+
     if (is.null(plot_colors)) {
         plot_colors <- as.numeric(as.factor(design[[cond_column]]))
         plot_colors <- RColorBrewer::brewer.pal(12, "Dark2")[plot_colors]

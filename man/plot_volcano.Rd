@@ -5,7 +5,8 @@
 \title{Make a pretty Volcano plot!}
 \usage{
 plot_volcano(toptable_data, tooltip_data = NULL, gvis_filename = NULL,
-  fc_cutoff = 0.8, p_cutoff = 0.05, size = 2, alpha = 0.6, ...)
+  fc_cutoff = 0.8, p_cutoff = 0.05, size = 2, alpha = 0.6,
+  xaxis_column = "logFC", yaxis_column = "P.Value", modify_y = TRUE, ...)
 }
 \arguments{
 \item{toptable_data}{Dataframe from limma's toptable which includes log(fold change) and an
@@ -23,6 +24,10 @@ so I went with +/- 0.8 mostly arbitrarily as the default.}
 \item{size}{How big are the dots?}
 
 \item{alpha}{How transparent to make the dots.}
+
+\item{xaxis_column}{Column from the data to use on the x axis (logFC)}
+
+\item{yaxis_column}{Column from the data to use on the y axis (p-value)}
 
 \item{...}{I love parameters!}
 }

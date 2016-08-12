@@ -7,7 +7,8 @@
 hpgl_pathview(path_data, indir = "pathview_in", outdir = "pathview",
   pathway = "all", species = "lma", string_from = "LmjF",
   string_to = "LMJF", suffix = "_colored", second_from = NULL,
-  second_to = NULL, filenames = "id")
+  second_to = NULL, filenames = "id", fc_column = "limma_logfc",
+  format = "png")
 }
 \arguments{
 \item{path_data}{Some differentially expressed genes.}

@@ -40,36 +40,43 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
         message("Performing g:Profiler GO search.")
         go_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="GO"))
+        message(paste0("GO search found ", nrow(go_result), " hits."))
     }
     if (isTRUE(do_kegg)) {
         message("Performing g:Profiler KEGG search.")
         kegg_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                                 ordered_query=TRUE, src_filter="KEGG"))
+        message(paste0("KEGG search found ", nrow(kegg_result), " hits."))
     }
     if (isTRUE(do_reactome)) {
         message("Performing g:Profiler reactome.db search.")
         reactome_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                                     ordered_query=TRUE, src_filter="REAC"))
+        message(paste0("Reactome search found ", nrow(reactome_result), " hits."))
     }
     if (isTRUE(do_mi)) {
         message("Performing g:Profiler miRNA search.")
         mi_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="MI"))
+        message(paste0("miRNA search found ", nrow(mi_result), " hits."))
     }
     if (isTRUE(do_tf)) {
         message("Performing g:Profiler transcription-factor search.")
         tf_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="TF"))
+        message(paste0("transcription-factor search found ", nrow(tf_result), " hits."))
     }
     if (isTRUE(do_corum)) {
         message("Performing g:Profiler corum search.")
         corum_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                                  ordered_query=TRUE, src_filter="CORUM"))
+        message(paste0("corum search found ", nrow(corum_result), " hits."))
     }
     if (isTRUE(do_hp)) {
         message("Performing g:Profiler hp search.")
         hp_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="HP"))
+        message(paste0("hp search found ", nrow(hp_result), " hits."))
     }
     retlist <- list(
         "go" = go_result,
@@ -326,6 +333,161 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         "hp_subset" = plotting_hp_over
         )
     return(pval_plots)
+}
+
+write_gprofiler_data <- function(gprofiler_result, wb=NULL, filename="excel/gprofiler_result.xlsx", add_plots=TRUE, ...) {
+    arglist <- list(...)
+    if (is.null(table_style)) {
+        table_style <- "TableStyleMedium9"
+    }
+    if (is.null(wb)) {
+        wb <- openxlsx::createWorkbook(creator="atb")
+        hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
+    }
+
+    if (!is.null(gprofiler_result[["go"]])) {
+        new_row <- 1
+        sheet <- "GO"
+        openxlsx::addWorksheet(wb, sheetName=sheet)
+        go_data <- gprofiler_result[["go"]]
+        bp_data <- go_data[go_data[["domain"]]=="BP", ]
+        mf_data <- go_data[go_data[["domain"]]=="MF", ]
+        cc_data <- go_data[go_data[["domain"]]=="CC", ]
+
+        openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        new_row <- new_row + 1
+        openxlsx::writeDataTable(wb, sheet, x=bp_data, tableStyle=table_style, startRow=new_row)
+        ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+        if (isTRUE(add_plots)) {
+            a_plot <- gprofiler_result[["plots"]][["bpp_plot_over"]]
+            print(a_plot)
+            openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(bp_data) + 2, startRow=new_row, fileType="png", units="in")
+        }
+        new_row <- new_row + nrow(bp_data) + 2
+
+        openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        new_row <- new_row + 1
+        openxlsx::writeDataTable(wb, sheet, x=mf_data, tableStyle=table_style, startRow=new_row)
+        ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+        if (isTRUE(add_plots)) {
+            a_plot <- gprofiler_result[["plots"]][["mfp_plot_over"]]
+            print(a_plot)
+            openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(mf_data) + 2, startRow=new_row, fileType="png", units="in")
+        }
+        new_row <- new_row + nrow(mf_data) + 2
+
+        openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        new_row <- new_row + 1
+        openxlsx::writeDataTable(wb, sheet, x=cc_data, tableStyle=table_style, startRow=new_row)
+        ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+        if (isTRUE(add_plots)) {
+            a_plot <- gprofiler_result[["plots"]][["ccp_plot_over"]]
+            print(a_plot)
+            openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(cc_data) + 2, startRow=new_row, fileType="png", units="in")
+        }
+        new_row <- new_row + nrow(cc_data) + 2
+        openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
+    } ## End checking if go data is null
+
+    if (!is.null(gprofiler_result[["kegg"]])) {
+        new_row <- 1
+        sheet <- "KEGG"
+        openxlsx::addWorksheet(wb, sheetName=sheet)
+        kegg_data <- gprofiler_result[["kegg"]]
+        openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        new_row <- new_row + 1
+        openxlsx::writeDataTable(wb, sheet, x=kegg_data, tableStyle=table_style, startRow=new_row)
+        ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+        if (isTRUE(add_plots)) {
+            a_plot <- gprofiler_result[["plots"]][["kegg_plot_over"]]
+            print(a_plot)
+            openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(kegg_data) + 2, startRow=new_row, fileType="png", units="in")
+        }
+        new_row <- new_row + nrow(kegg_data) + 2
+    } ## End checking KEGG data
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
+
+    if (!is.null(gprofiler_result[["tf"]])) {
+        new_row <- 1
+        sheet <- "transcription_factor"
+        openxlsx::addWorksheet(wb, sheetName=sheet)
+        tf_data <- gprofiler_result[["tf"]]
+        openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        new_row <- new_row + 1
+        openxlsx::writeDataTable(wb, sheet, x=tf_data, tableStyle=table_style, startRow=new_row)
+        ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+        if (isTRUE(add_plots)) {
+            a_plot <- gprofiler_result[["plots"]][["tf_plot_over"]]
+            print(a_plot)
+            openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(tf_data) + 2, startRow=new_row, fileType="png", units="in")
+        }
+        new_row <- new_row + nrow(tf_data) + 2
+        openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
+    } ## End checking tf data
+
+    if (!is.null(gprofiler_result[["reactome"]])) {
+        new_row <- 1
+        sheet <- "reactome"
+        openxlsx::addWorksheet(wb, sheetName=sheet)
+        react_data <- gprofiler_result[["reactome"]]
+        openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        new_row <- new_row + 1
+        openxlsx::writeDataTable(wb, sheet, x=react_data, tableStyle=table_style, startRow=new_row)
+        ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+        if (isTRUE(add_plots)) {
+            a_plot <- gprofiler_result[["plots"]][["reactome_plot_over"]]
+            print(a_plot)
+            openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(react_data) + 2, startRow=new_row, fileType="png", units="in")
+        }
+        new_row <- new_row + nrow(react_data) + 2
+        openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
+    } ## End checking tf data
+
+
+    if (!is.null(gprofiler_result[["mi"]])) {
+        new_row <- 1
+        sheet <- "mirna"
+        openxlsx::addWorksheet(wb, sheetName=sheet)
+        react_data <- gprofiler_result[["mi"]]
+        openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        new_row <- new_row + 1
+        openxlsx::writeDataTable(wb, sheet, x=mi_data, tableStyle=table_style, startRow=new_row)
+        ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+        if (isTRUE(add_plots)) {
+            a_plot <- gprofiler_result[["plots"]][["mi_plot_over"]]
+            print(a_plot)
+            openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(mi_data) + 2, startRow=new_row, fileType="png", units="in")
+        }
+        new_row <- new_row + nrow(mi_data) + 2
+        openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
+    } ## End checking tf data
+
+    if (!is.null(gprofiler_result[["corum"]])) {
+        new_row <- 1
+        sheet <- "corum"
+        openxlsx::addWorksheet(wb, sheetName=sheet)
+        react_data <- gprofiler_result[["corum"]]
+        openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        new_row <- new_row + 1
+        openxlsx::writeDataTable(wb, sheet, x=corum_data, tableStyle=table_style, startRow=new_row)
+        ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+        if (isTRUE(add_plots)) {
+            a_plot <- gprofiler_result[["plots"]][["corum_plot_over"]]
+            print(a_plot)
+            openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(corum_data) + 2, startRow=new_row, fileType="png", units="in")
+        }
+        new_row <- new_row + nrow(corum_data) + 2
+        openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
+    } ## End checking tf data
+
 }
 
 ## EOF

@@ -27,7 +27,7 @@
 #'                                    string_to="_Spy_", filenames="pathname")
 #' }
 #' @export
-hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, filenames="id") {
+hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, filenames="id", fc_column="limma_logfc", format="png") {
     ## Please note that the KGML parser fails if other XML parsers are loaded into R
     ## eh = new.env(hash=TRUE, size=NA)
     ## There is a weird namespace conflict when using pathview, so I will reload it here
@@ -37,13 +37,13 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
     try(detach("package:KEGGgraph", unload=TRUE), silent=TRUE)
     try(detach("package:RamiGO", unload=TRUE), silent=TRUE)
     try(detach("package:graph", unload=TRUE), silent=TRUE)
-    require.auto("pathview")
+    library(pathview) ## I am not sure how else to avoid the error 'unable to load 'bods''
     ## If a table from limma was passed to this, just assume that one wants logFC
     ## Similar stanzas should probably be added for deseq/edger
     ## This is added because pathview() only works with dataframes/lists with only numbers.
     ## So it is wise to pull only the column of numbers one cares about.
-    if (!is.null(path_data$logFC)) {
-        tmp_data <- as.vector(path_data[, "logFC"])
+    if (!is.null(path_data[[fc_column]])) {
+        tmp_data <- as.vector(path_data[[fc_column]])
         names(tmp_data) <- rownames(path_data)
         path_data <- tmp_data
         rm(tmp_data)
@@ -92,27 +92,40 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
         limits <- c(limit_min, limit_max)
         print(paste("Here are some path gene examples: ", gene_examples, sep=""))
         print(paste("Here are your genes: ", head(names(path_data))), sep="")
-        pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
-                                     species=species, limit=list(gene=limits, cpd=limits),
-                                     map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix,
-                                     split.group=TRUE, expand.node=TRUE, kegg.native=TRUE,
-                                     map.symbol=TRUE, same.layer=FALSE, res=1200,
-                                     new.signature=FALSE, cex=0.05, key.pos="topright"))
+        if (format == "png") {
+            pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
+                                         species=species, limit=list(gene=limits, cpd=limits),
+                                         map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix,
+                                         split.group=TRUE, expand.node=TRUE, kegg.native=TRUE,
+                                         map.symbol=TRUE, same.layer=FALSE, res=1200,
+                                         new.signature=FALSE, cex=0.05, key.pos="topright"))
+        } else {
+            pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
+                                         species=species, limit=list(gene=limits, cpd=limits),
+                                         map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix,
+                                         split.group=TRUE, expand.node=TRUE, kegg.native=FALSE,
+                                         map.symbol=TRUE, same.layer=FALSE, res=1200,
+                                         new.signature=FALSE, cex=0.05, key.pos="topright"))
+        }
         if (class(pv) == "numeric") {
             colored_genes <- NULL
             newfile <- NULL
             up <- NULL
             down <- NULL
         } else {
+            filetype <- ".png"
+            if (format != "png") {
+                filetype <- ".pdf"
+            }
             colored_genes <- dim(pv$plot.data.gene)[1]
             ## "lma04070._proeff.png"
-            oldfile <- paste(path, ".", suffix, ".png", sep="")
+            oldfile <- paste(path, ".", suffix, filetype, sep="")
             ## An if-statement to see if the user prefers pathnames by kegg ID or pathway name
             ## Dr. McIver wants path names...
             if (filenames == "id") {
-                newfile <- paste(outdir,"/", path, suffix, ".png", sep="")
+                newfile <- paste(outdir,"/", path, suffix, filetype, sep="")
             } else {  ## If filenames is not 'id', put in the path name...
-                newfile <- paste(outdir, "/", path_name, suffix, ".png", sep="")
+                newfile <- paste(outdir, "/", path_name, suffix, filetype, sep="")
             }
             rename_try <- try(file.rename(from=oldfile, to=newfile), silent=TRUE)
             if (class(rename_try)[1] == 'try-error') {
@@ -150,6 +163,123 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
     }
     retdf <- retdf[with(retdf, order(up, down)), ]
     return(retdf)
+}
+
+#' Extract the set of geneIDs matching pathways for a given species.
+#'
+#' This uses KEGGREST to extract the mappings for all genes for a species and pathway or 'all'.
+#' Because downloading them takes a while, it will save the results to kegg_species.rda.  When run
+#' interactively, it will give some information regarding the number of genes observed in each
+#' pathway.
+#'
+#' @param pathway  Either a single pathway kegg id or 'all'.
+#' @param abbreviation  Optional 3 letter species kegg id.
+#' @param species  Stringified species name used to extract the 3 letter abbreviation.
+#' @param savefile  Filename to which to save the relevant data.
+#' @return Dataframe of the various kegg data for each pathway, 1 row/gene.
+#' @examples
+#'  \dontrun{
+#'   kegg_info <- get_kegg_genes(species="Canis familiaris")
+#'  }
+#' @export
+get_kegg_genes <- function(pathway="all", abbreviation=NULL, species="leishmania major", savefile=NULL) {
+    if (is.null(abbreviation) & is.null(species)) {
+        stop("This requires either a species or 3 letter kegg id.")
+    } else if (is.null(abbreviation)) {  ## Then the species was provided.
+        abbreviation <- kegg_get_orgn(species)
+        message(paste0("The abbreviation detected was: ", abbreviation))
+    }
+
+    result <- NULL
+    species <- gsub(pattern=" ", replacement="_", x=as.character(species))
+    savefile <- paste0("kegg_", species, ".rda.xz")
+    kegg_data <- NULL
+    if (file.exists(savefile)) {
+        message(paste0("Reading from the savefile, delete ", savefile, " to regenerate."))
+        result <- new.env()
+        load(savefile, envir=result)
+        result <- result[["result"]]
+    } else {
+        paths <- list()
+        if (pathway == "all") {
+            all_pathways <- unique(KEGGREST::keggLink("pathway", abbreviation))
+            paths <- all_pathways
+            paths <- gsub("path:", "", paths)
+            ## all_modules = unique(KEGGREST::keggLink("module", abbreviation))
+        } else if (class(pathway) == "list") {
+            paths <- pathway
+        } else {
+            paths[1] <- pathway
+        }
+        total_genes <- 0
+        result <- NULL
+        for (count in 1:length(paths)) {
+            path <- paths[count]
+            path_name <- KEGGREST::keggGet(path)
+            kegg_class <- path_name[[1]]$CLASS
+            if (is.null(kegg_class)) {
+                kegg_class <- ""
+            }
+            kegg_description <- path_name[[1]]$DESCRIPTION
+            if (is.null(kegg_description)) {
+                kegg_description <- ""
+            }
+            kegg_name <- path_name[[1]]$NAME
+            kegg_name <- gsub("(.*) - .*", "\\1", kegg_name)
+            kegg_name <- tolower(kegg_name)
+            kegg_name <- gsub(" ", "_", kegg_name)
+            ## RCurl is crap and fails sometimes for no apparent reason.
+            kegg_geneids <- try(KEGGREST::keggLink(paste("path", path, sep=":"))[, 2])
+            kegg_geneids <- gsub(pattern=paste0("^.*:"), replacement="", x=kegg_geneids)
+            kegg_subst <- get_kegg_sub(abbreviation)
+            tritryp_geneids <- kegg_geneids
+            total_genes <- total_genes + length(kegg_geneids)
+            patterns <- kegg_subst[["patterns"]]
+            replaces <- kegg_subst[["replaces"]]
+            message(paste0(count, "/", length(paths), ": Working on path: ", path, " which has ", length(kegg_geneids), " genes."))
+            for (r in 1:length(kegg_subst[["patterns"]])) {
+                tritryp_geneids <- gsub(pattern=patterns[r], replacement=replaces[r], x=tritryp_geneids)
+            }
+
+            for (s in 1:length(tritryp_geneids)) {
+                result <- rbind(result, data.frame(
+                                            "GID" = tritryp_geneids[s],
+                                            "KEGG_NAME" = kegg_name,
+                                            "KEGG_CLASS" = kegg_class,
+                                            "KEGG_DESCRIPTION" = kegg_description,
+                                            "KEGG" = path))
+            }
+        } ## End iterating over pathways
+        message(paste0("Total genes observed: ", total_genes))
+        save(result, file=savefile)
+    }
+    return(result)
+}
+
+#' Provide a set of simple substitutions to convert geneIDs from KEGG->TriTryDB
+#'
+#' This function should provide 2 character lists which, when applied sequentially, will result in a
+#' hopefully coherent set of mapped gene IDs matching the TriTypDB/KEGG specifications.
+#'
+#' @param species  3 letter abbreviation for a given kegg type
+#' @return  2 character lists containing the patterns and replace arguments for gsub(), order
+#'     matters!
+#' @export
+get_kegg_sub <- function(species="lma") {
+    patterns <- c()
+    replaces <- c()
+    if (species == "lma") {
+        patterns <- c("LmjF",  "LMJF", "_")
+        replaces <- c("LMJF_", "LmjF", ".")
+    } else if (species == "tcr") {
+        patterns <- c("^")
+        replaces <- c("TcCLB.")
+    }
+
+    ret <- list(
+        "patterns" = patterns,
+        "replaces" = replaces)
+    return(ret)
 }
 
 #' Use gostats() against kegg pathways.
@@ -228,7 +358,7 @@ kegg_get_orgn <- function(species="Leishmania", short=TRUE) {
 #' @return Dataframe including the filenames, percentages, nodes included, and differential nodes.
 #' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
 #' @export
-pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathdir="kegg_pathways", ...) {
+pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathdir="kegg_pathways", verbose=FALSE, ...) {
     arglist <- list(...)
     if (!file.exists(pathdir)) {
         dir.create(pathdir)
@@ -250,14 +380,17 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
     }
 
     percentages <- list()
+    path_ids <- list()
     filenames <- list()
     path_names <- list()
     diff_nodes <- list()
     path_nodes <- list()
+    last_path <- length(paths)
     for (count in 1:length(paths)) {
         path <- paths[count]
         path_name <- try(KEGGREST::keggGet(path), silent=TRUE)
         if (class(path_name) == "try-error") {
+            path_ids[count] <- NA
             path_names[count] <- NA
             filenames[count] <- NA
             percentages[count] <- NA
@@ -270,16 +403,22 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
             path_name <- gsub(" ", "_", path_name)
             path_names[count] <- path_name
             message(paste0("Extracting data for ", path, ": ", path_name, "."))
-            pct_diff <- pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
-                                                 pathdir=pathdir)
+            if (isTRUE(verbose)) {
+                pct_diff <- pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
+                                          pathdir=pathdir)
+            } else {
+                pct_diff <- sm(pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
+                                             pathdir=pathdir))
+            }
+            path_ids[count] <- path
             filenames[count] <- pct_diff[["filename"]]
             percentages[count] <- pct_diff[["percent"]]
             path_nodes[count] <- pct_diff[["all_nodes"]]
             diff_nodes[count] <- pct_diff[["diff_nodes"]]
-            message(paste0("The path: ", path_names[count], " was written to ", filenames[count], " and has ", percentages[count], "% diff."))
+            message(paste0(count, "/", last_path, ": The path: ", path_names[count], " was written to ", filenames[count], " and has ", percentages[count], "% diff."))
         }
     }
-    path_data <- as.data.frame(cbind(pathways, path_names, filenames, percentages, path_nodes, diff_nodes))
+    path_data <- as.data.frame(cbind(path_ids, path_names, filenames, percentages, path_nodes, diff_nodes))
     colnames(path_data) <- c("pathway","path_name","filename","percent","all_nodes","diff_nodes")
     path_data[["pathway"]] <- as.character(path_data[["pathway"]])
     path_data[["path_name"]] <- as.character(path_data[["path_name"]])
@@ -319,7 +458,7 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
         message("The file already exists, loading from it.")
         retrieved <- filename
     } else {
-        log <- capture.output(type="message", { retrieved <- try(suppressMessages(KEGGgraph::retrieveKGML(pathwayid=pathway, organism=organism, destfile=filename, method="internal")), silent=TRUE); })
+        retrieved <- try(sm(KEGGgraph::retrieveKGML(pathwayid=pathway, organism=organism, destfile=filename, method="internal")))
         if (class(retrieved) == "try-error") {
             retlist <- list(
                 "pathway" = pathway,
@@ -330,7 +469,33 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
             return(retlist)
         }
     }
-    parse_result <- KEGGgraph::parseKGML2Graph(filename, expandGenes=TRUE)
+    parse_result <- try(KEGGgraph::parseKGML2Graph(filename, expandGenes=TRUE))
+    if (class(parse_result) == "try-error") {
+        if (grepl(pattern="Document is empty", x=parse_result[[1]])) {
+            message("Deleting the empty file and trying again.")
+            file.remove(filename)
+            retrieved <- try(sm(KEGGgraph::retrieveKGML(pathwayid=pathway, organism=organism, destfile=filename, method="internal")))
+            parse_result <- try(KEGGgraph::parseKGML2Graph(filename, expandGenes=TRUE))
+            if (class(parse_result) == "try-error") {
+                retlist <- list(
+                    "pathway" = pathway,
+                    "filename" = "unavailable",
+                    "percent" = NA,
+                    "all_nodes" = NULL,
+                    "diff_nodes" = NULL)
+                return(retlist)
+            }
+        } else if (grepl(pattern="Start tag expected", x=parse_result[[1]])) {
+            message("This pathway does not have a complete specification.")
+            retlist <- list(
+                "pathway" = pathway,
+                "filename" = "unavailable",
+                "percent" = NA,
+                "all_nodes" = NULL,
+                "diff_nodes" = NULL)
+            return(retlist)
+        }
+    }
 
     all_keggids <- KEGGgraph::translateGeneID2KEGGID(all_ids, organism=organism)
     de_keggids <- KEGGgraph::translateGeneID2KEGGID(sig_ids, organism=organism)
@@ -350,31 +515,5 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
         "diff_nodes" = toString(found_nodes))
     return(retlist)
 }
-
-## play_kegggraph <- function() {
-##     library(KEGGgraph)
-##     map <- system.file("extdata/hsa04010.xml", package="KEGGgraph")
-##     mapkpathway <- parseKGML(map)
-##     mapkpathway
-##     map_graph <- KEGGpathway2Graph(mapkpathway, expandGenes=TRUE)
-##     map_nodes <- nodes(map_graph)
-##     map_edges <- KEGGgraph::edges(map_graph)
-##     node_data <- getKEGGnodeData(map_graph)
-##     library(Rgraphviz)
-##     mapped_graph <- subGraph(map_nodes, map_graph)
-##     mapped_graph
-##     outs <- sapply(edges(mapped_graph), length) > 0
-##     ins <- sapply(inEdges(mapped_graph), length) > 0
-##     ios <- outs | ins
-##     library("org.Hs.eg.db")
-##     io_gene_ids <- translateKEGGID2GeneID(names(ios))
-##     node_names <- sapply(mget(io_gene_ids, org.Hs.egSYMBOL, ifnotfound=NA), "[[",1)
-##     names(node_names) <- names(ios)
-##     nattrs <- list()
-##     nattrs$fillcolor <- Rgraphviz::makeNodeAttrs(mapped_graph, "lightgrey", list(orang=names(ios)[ios]))
-##     nattrs$label <- node_names
-##     plot(mapped_graph, "neato", nodeAttrs=nattrs, attrs=list(node=list(fillcolor="lightgreen", width=0.75, shape="ellipse"), edge=list(arrowsize=0.7)))
-##}
-
 
 ## EOF
