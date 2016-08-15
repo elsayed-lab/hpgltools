@@ -12,12 +12,12 @@ varpart <- function(expt, factors=c("condition","batch"), cpus=6, genes=20) {
     doParallel::registerDoParallel(cl)
     model_string <- paste0("~ ")
     for (fact in factors) {
-        model_string <- paste0(model_string, "(1|", fact, ") + ")
+        model_string <- paste0(model_string, " (1|", fact, ") + ")
     }
-    model_string <- gsub(pattern="+ ", replacement="", x=model_string)
+    model_string <- gsub(pattern="\\+ $", replacement="", x=model_string)
     my_model <- as.formula(model_string)
-    norm_par <- normalize_expt(expt, filter=TRUE)
-    data <- Biobase::exprs(norm_par[["expressionset"]])
+    norm <- sm(normalize_expt(expt, filter=TRUE))
+    data <- Biobase::exprs(norm[["expressionset"]])
     design <- expt[["design"]]
     my_fit <- variancePartition::fitExtractVarPartModel(data, my_model, design)
     my_sorted <- variancePartition::sortCols(my_fit)
