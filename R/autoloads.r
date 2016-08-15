@@ -1,3 +1,82 @@
+#' Grab a copy of all bioconductor packages and install them by type
+#'
+#' This uses jsonlite to get a copy of all bioconductor packages by name and then iterates through
+#' them with BiocInstaller to install all of them.  It performs a sleep between each installation in
+#' an attempt to avoid being obnoxious.  As a result, it will of a necessity take forever.
+#'
+#' @param release  Bioconductor release to use, should probably be adjusted to automatically find
+#'     it.
+#' @param mirror  Bioconductor mirror to use.
+#' @param base  Base directory on the mirror to download from.
+#' @param type  Type in the tree to use (software, annotation, or experiment)
+#' @param suppressUpdates  For BiocLite(), don't update?
+#' @param suppressAutoUpdate  For BiocLite(), don't update?
+#' @param force  Install if already installed?
+#' @return a number of packages installed
+#' @export
+bioc_all <- function(release="3.3", mirror="bioc.ism.ac.jp", base="packages", type="software",
+    suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
+    dl_url <- paste0("https://", mirror, "/", base, "/json/", release, "/tree.json")
+    ## message(paste0("DL: ", dl_url))
+    ## https://bioc.ism.ac.jp/packages/json/3.3/tree.json
+    pkg_list <- jsonlite::fromJSON(dl_url)
+    pkg_names <- pkg_list[["attr"]][["packageList"]]
+    software_names <- strsplit(x=pkg_names[[1]], split=",")[[1]]
+    annotation_names <- strsplit(x=pkg_names[[2]], split=",")[[1]]
+    experiment_names <- strsplit(x=pkg_names[[3]], split=",")[[1]]
+    ret <- 0
+    attempt <- function(pkg, update=suppress_updates, auto=suppress_auto, forceme=force) {
+        message(paste0("Installing: ", pkg))
+        if (isTRUE(forceme)) {
+            installedp <- sm(try(BiocInstaller::biocLite(pkg, ask=FALSE,
+                                                         suppressUpdates=update,
+                                                         suppressAutoUpdate=auto)))
+            if (class(installedp) != "try-error") {
+                ret <- 1
+            } else {
+                ret <- 0
+            }
+        } else {
+            if (isTRUE(pkg %in% .packages(all.available=TRUE))) {
+                message(paste0("Package ", pkg,  " is already installed."))
+                return(1)
+            } else {
+                installedp <- sm(try(BiocInstaller::biocLite(pkg, ask=FALSE,
+                                                             suppressUpdates=update,
+                                                             suppressAutoUpdate=auto)))
+                if (class(installedp) != "try-error") {
+                    ret <- 1
+                } else {
+                    ret <- 0
+                }
+            }
+        }
+        Sys.sleep(20)
+        return(ret)
+    } ## End attempt
+    if (type == "software") {
+        for (pkg in software_names) {
+            ret <- ret + attempt(pkg)
+        }
+    } else if (type == "annotation") {
+        for (pkg in annotation_names) {
+            ret <- ret + attempt(pkg)
+        }
+    } else if (type == "experiment") {
+        for (pkg in experiment_names) {
+            ret <- ret + attempt(pkg)
+        }
+    } else {
+        soft_num <- bioc_all(release=release, mirror=mirror, base=base, type="software")
+        ret <- ret + soft_num
+        anno_num <- bioc_all(release=release, mirror=mirror, base=base, type="annotation")
+        ret <- ret + anno_num
+        expt_num <- bioc_all(release=release, mirror=mirror, base=base, type="experiment")
+        ret <- ret + expt_num
+    }
+    return(ret)
+}
+
 #' Automatic loading and/or installing of packages.
 #'
 #' Load a library, install it first if necessary.
