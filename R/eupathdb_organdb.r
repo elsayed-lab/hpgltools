@@ -1,3 +1,8 @@
+get_ncbi_taxonid <- function(species="Leishmania major") {
+    taxid <- sm(taxize::get_eolid(sciname=species)[[1]])
+    return(taxid)
+}
+
 #' Create an OrganismDbi for a species at the TriTrypDb
 #'
 #' OrganismDbi instances are pretty neat, they pull together OrgDb and TxDb.  With any luck, this
@@ -195,7 +200,7 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, ou
             version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
             author = as.character(cfg[["author"]]),
             maintainer = as.character(cfg[["maintainer"]]),
-            tax_id = as.character(cfg[["tax_id"]]),
+            tax_id = as.character(cfg[["tax_id"]]),  ## Maybe use taxize for this and remove from the csv?
             genus = as.character(cfg[["genus"]]),
             species = paste0(as.character(cfg[["species"]]), ".", as.character(cfg[["strain"]])),
             outputDir = orgdb_pre,

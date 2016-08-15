@@ -4,6 +4,8 @@
 #'
 #' @param expt  Some data
 #' @param factors  Character list of columns in the experiment design to query
+#' @param cpus  Number cpus to use
+#' @param genes Number of genes to count
 #' @return partitions  List of plots and variance data frames
 varpart <- function(expt, factors=c("condition","batch"), cpus=6, genes=20) {
     cl <- parallel::makeCluster(cpus)  ## I am keeping 2 processors to myself, piss off, R.

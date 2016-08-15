@@ -10,6 +10,10 @@ varpart(expt, factors = c("condition", "batch"), cpus = 6, genes = 20)
 \item{expt}{Some data}
 
 \item{factors}{Character list of columns in the experiment design to query}
+
+\item{cpus}{Number cpus to use}
+
+\item{genes}{Number of genes to count}
 }
 \value{
 partitions  List of plots and variance data frames

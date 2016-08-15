@@ -471,7 +471,6 @@ u_plot <- function(plotted_us) {
 #' Gather information about principle components.
 #'
 #' Calculate some information useful for generating PCA plots.
-#'
 #' pca_information seeks to gather together interesting information
 #' to make principle component analyses easier, including: the results
 #' from (fast.)svd, a table of the r^2 values, a table of the

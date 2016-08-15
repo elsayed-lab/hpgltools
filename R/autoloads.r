@@ -14,7 +14,7 @@
 #' @param force  Install if already installed?
 #' @return a number of packages installed
 #' @export
-bioc_all <- function(release="3.3", mirror="bioc.ism.ac.jp", base="packages", type="software",
+bioc_all <- function(release="3.4", mirror="bioc.ism.ac.jp", base="packages", type="software",
     suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
     dl_url <- paste0("https://", mirror, "/", base, "/json/", release, "/tree.json")
     ## message(paste0("DL: ", dl_url))

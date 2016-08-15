@@ -4,7 +4,7 @@
 \alias{bioc_all}
 \title{Grab a copy of all bioconductor packages and install them by type}
 \usage{
-bioc_all(release = "3.3", mirror = "bioc.ism.ac.jp", base = "packages",
+bioc_all(release = "3.4", mirror = "bioc.ism.ac.jp", base = "packages",
   type = "software", suppress_updates = TRUE, suppress_auto = TRUE,
   force = FALSE)
 }
