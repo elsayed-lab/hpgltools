@@ -27,7 +27,13 @@
 #'                                    string_to="_Spy_", filenames="pathname")
 #' }
 #' @export
-hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pathway="all", species="lma", string_from="LmjF", string_to="LMJF", suffix="_colored", second_from=NULL, second_to=NULL, filenames="id", fc_column="limma_logfc", format="png") {
+hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
+                          pathway="all", species="lma", string_from="LmjF",
+                          string_to="LMJF", suffix="_colored", second_from=NULL,
+                          second_to=NULL, filenames="id", fc_column="limma_logfc",
+                          format="png") {
+    ## I have a fun new regex-generator which should replace string_to/second_to
+    
     ## Please note that the KGML parser fails if other XML parsers are loaded into R
     ## eh = new.env(hash=TRUE, size=NA)
     ## There is a weird namespace conflict when using pathview, so I will reload it here
@@ -90,8 +96,9 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview", pat
         limit_min <- -1.0 * max(limit_test)
         limit_max <- max(limit_test)
         limits <- c(limit_min, limit_max)
-        print(paste("Here are some path gene examples: ", gene_examples, sep=""))
-        print(paste("Here are your genes: ", head(names(path_data))), sep="")
+        example_string <- gsub(pattern=paste0(species, ":"), replace="", x=toString(head(gene_examples)))
+        message(paste0("Here are some path gene examples: ", example_string))
+        message(paste0("Here are your genes: ", toString(head(names(path_data)))))
         if (format == "png") {
             pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
                                          species=species, limit=list(gene=limits, cpd=limits),

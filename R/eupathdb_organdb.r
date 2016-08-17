@@ -330,6 +330,7 @@ make_txdb <- function(orgdb_info, cfg, gff=NULL, output_dir="organismdbi", ...) 
 #' @param cfg  Optional data frame
 #' @return Dataframe of configuration data, a few columns are required, run it with no args to see
 #'     which ones.
+#' @export
 get_eupath_config <- function(cfg=NULL) {
     cfg_data <- data.frame()
     if (is.null(cfg)) {

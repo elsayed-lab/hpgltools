@@ -1,3 +1,8 @@
+library(testthat)
+library(hpgltools)
+
+context("Cleaning up this mess.")
+
 de_removed <- file.remove("de_deseq.rda")
 ed_removed <- file.remove("de_edger.rda")
 ## li_removed <- file.remove("de_limma.rda")
@@ -9,4 +14,7 @@ plots_removed <- file.remove("Rplots.pdf")
 
 ## It annoys me greatly when something completes and doesn't add a newline, perhaps this will fix
 ## that.  Also, I would like to have something which counts the tests run.
+test_that("Did this finish?", {
+    expect_equal(1, 1)
+})
 message("Finished tests.")
