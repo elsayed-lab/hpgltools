@@ -407,12 +407,15 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
         paths <- pathways
     }
 
-    percentages <- list()
+    pct_nodes <- list()
+    pct_edges <- list()
     path_ids <- list()
     filenames <- list()
     path_names <- list()
     diff_nodes <- list()
     path_nodes <- list()
+    diff_edges <- list()
+    path_edges <- list()
     last_path <- length(paths)
     for (count in 1:length(paths)) {
         path <- paths[count]
