@@ -1,6 +1,6 @@
 library(testthat)
 library(hpgltools)
-cbcb <- s_p(library(cbcbSEQ))
+cbcb <- sm(library(cbcbSEQ))
 
 context("Does limma work with hpgltools?")
 
@@ -50,16 +50,16 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform log2/cpm/quantile/combatMod normalization
-hpgl_norm <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))[["result"]]
+hpgl_norm <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))
 
 ## If we made it this far, then the inputs to limma should agree.
-hpgl_limma_nointercept <- s_p(limma_pairwise(hpgl_norm, model_batch=TRUE, model_intercept=FALSE))[["result"]]
+hpgl_limma_nointercept <- sm(limma_pairwise(hpgl_norm, model_batch=TRUE, model_intercept=FALSE))
 hpgl_voom <- hpgl_limma_nointercept[["voom_result"]]
 hpgl_fit <- hpgl_limma_nointercept[["fit"]]
 hpgl_eb <- hpgl_limma_nointercept[["pairwise_comparisons"]]
 hpgl_table <- hpgl_limma_nointercept[["all_tables"]]
 
-hpgl_limma <- s_p(limma_pairwise(hpgl_norm))[["result"]]
+hpgl_limma <- sm(limma_pairwise(hpgl_norm))
 
 expected <- cbcb_v[["E"]]
 expected <- expected[sort(rownames(expected)), ]

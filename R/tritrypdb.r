@@ -204,13 +204,17 @@ parse_gene_go_terms <- function (filepath, verbose=FALSE) {
     return(go_rows)
 }
 
-#
-# Parses a key: value string and returns the value
-#
-
-
+#' Download the various data files from http://tritrypdb.org/
+#'
+#' The tritrypdb nicely makes their downloads standardized!
+#'
+#' @param version  What version of the tritrypdb to use?
+#' @param species  Human readable species to use.
+#' @param strain  Strain of the given species to download.
+#' @param dl_dir  Directory into which to download the various files.
+#' @param quiet  Print download progress?
 #' @export
-tritryp_downloads <- function(version="24", species="lmajor", strain="friedlin", dl_dir="organdb/tritryp", quiet=TRUE) {
+tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin", dl_dir="organdb/tritryp", quiet=TRUE) {
     files_downloaded <- 0
     files_found <- 0
 
@@ -294,3 +298,5 @@ tritryp_downloads <- function(version="24", species="lmajor", strain="friedlin",
         "downloaded" = files_downloaded)
     return(ret)
 }
+
+## EOF

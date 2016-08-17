@@ -35,7 +35,7 @@ default_norm <- function(expt, ...) {
         filter <- arglist[["filter"]]
     }
 
-    new <- normalize_expt(expt, norm=norm, convert=convert, filter=filter, ...)
+    new <- sm(normalize_expt(expt, norm=norm, convert=convert, filter=filter, ...))
     return(new)
 }
 

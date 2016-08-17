@@ -266,8 +266,17 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
         metadf <- extract_lengths(db=length_db, gene_list=gene_list)
     } else if (class(length_db)[[1]] == "TxDb") {
         metadf <- extract_lengths(db=length_db, gene_list=gene_list)
+    } else if (class(length_db)[[1]] == "data.frame") {
+        metadf <- length_db
     } else {
         stop("This requires either the name of a goseq supported species or an orgdb instance.")
+    }
+    ## Sometimes the column with gene lengths is named 'width'
+    ## In that case, fix it.
+    if (is.null(metadf[["width"]]) & is.null(metadf[["length"]])) {
+        stop("The length db needs to have a length or width column.")
+    } else if (is.null(metadf[["length"]])) { ## Then it is named 'width' and I want to rename it to length
+        colnames(metadf) <- gsub(x=colnames(metadf), pattern="width", replacement="length")
     }
     ## Now I should have the gene list and gene lengths
 
@@ -284,6 +293,8 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
         godf <- extract_go(go_db)
     } else if (class(go_db)[[1]] == "OrgDb") {
         godf <- extract_go(go_db)
+    } else if (class(go_db)[[1]] == "data.frame") {
+        godf <- go_db
     } else {
         message("Not sure what to do here.")
     }

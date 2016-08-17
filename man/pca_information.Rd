@@ -36,8 +36,6 @@ a list of fun pca information:
 }
 \description{
 Calculate some information useful for generating PCA plots.
-}
-\details{
 pca_information seeks to gather together interesting information
 to make principle component analyses easier, including: the results
 from (fast.)svd, a table of the r^2 values, a table of the
