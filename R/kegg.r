@@ -33,7 +33,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
                           second_to=NULL, filenames="id", fc_column="limma_logfc",
                           format="png") {
     ## I have a fun new regex-generator which should replace string_to/second_to
-    
+
     ## Please note that the KGML parser fails if other XML parsers are loaded into R
     ## eh = new.env(hash=TRUE, size=NA)
     ## There is a weird namespace conflict when using pathview, so I will reload it here
@@ -141,14 +141,30 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
             }
             data_low <- summary(path_data)[2]
             data_high <- summary(path_data)[3]
+            pathway_data <- as.data.frame(pv[["plot.data.gene"]])
+
+            total_mapped <- pathway_data[["all.mapped"]] != ""
+            total_pct_mapped <- signif(mean(total_mapped) * 100.0, 4)
+            unique_pathway <- pathway_data
+            rownames(unique_pathway) <- make.names(unique_pathway[["kegg.names"]], unique=TRUE)
+            unique_path_genes <- make.names(unique(unique_pathway[["kegg.names"]]))
+            unique_pathway <- unique_pathway[ unique_path_genes, ]
+            unique_mapped <- unique_pathway[["all.mapped"]] != ""
+            unique_pct_mapped <- signif(mean(unique_mapped) * 100.0, 4)
+
             numbers_in_plot <- as.numeric(pv$plot.data.gene$mol.data)
-            up <- sum(numbers_in_plot > data_high, na.rm=TRUE)
+            up <- sum(numbers_in_plot >= data_high, na.rm=TRUE)
             down <- sum(numbers_in_plot < data_low, na.rm=TRUE)
+
         }
         return_list[[path]]$file <- newfile
         return_list[[path]]$genes <- colored_genes
         return_list[[path]]$up <- up
         return_list[[path]]$down <- down
+        return_list[[path]][[total_nodes]] <- length(total_mapped)
+        return_list[[path]][[total_pct]] <- total_pct_mapped
+        return_list[[path]][[unique_nodes]] <- length(unique_mapped)
+        return_list[[path]][[unique_pct]] <- unique_pct_mapped
         message(paste0(count, "/", length(paths), ": Finished ", path_name))
     } ## End for loop
 
@@ -167,6 +183,11 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         retdf[path,]$file <- as.character(return_list[[path]]$file)
         retdf[path,]$up <- as.numeric(return_list[[path]]$up)
         retdf[path,]$down <- as.numeric(return_list[[path]]$down)
+        retdf[path,]$total_nodes <- as.numeric(return_list[[path]]$total_nodes)
+        retdf[path,]$total_pct <- as.numeric(return_list[[path]]$total_pct)
+        retdf[path,]$unique_nodes <- as.numeric(return_list[[path]]$unique_nodes)
+        retdf[path,]$unique_pct <- as.numeric(return_list[[path]]$unique_pct)
+
     }
     retdf <- retdf[with(retdf, order(up, down)), ]
     return(retdf)
