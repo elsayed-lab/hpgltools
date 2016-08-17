@@ -3,7 +3,6 @@
 export("%>%")
 export(all_ontology_searches)
 export(all_pairwise)
-export(autoloads_all)
 export(basic_pairwise)
 export(batch_counts)
 export(bioc_all)
