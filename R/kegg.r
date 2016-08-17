@@ -445,6 +445,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
 #' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
 #' @export
 pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pathdir="kegg_pathways", ...) {
+    warning("This function may not work, it seems to be missing some genes.")
     arglist <- list(...)
     if (!file.exists(pathdir)) {
         dir.create(pathdir)
@@ -501,18 +502,29 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
     de_keggids <- KEGGgraph::translateGeneID2KEGGID(sig_ids, organism=organism)
 
     possible_nodes <- KEGGgraph::nodes(parse_result)
-    is_differential <- possible_nodes %in% de_keggids
-    found_nodes <- possible_nodes[is_differential]
-    pct_diff <- signif(mean(is_differential) * 100.0, 4)
+    node_is_differential <- possible_nodes %in% de_keggids
+    found_nodes <- possible_nodes[node_is_differential]
+    possible_edges <- KEGGgraph::edges(parse_result)
+    edge_is_differential <- possible_edges %in% de_keggids
+    found_edges <- possible_edges[edge_is_differential]
+
+    pct_node_diff <- signif(mean(node_is_differential) * 100.0, 4)
+    pct_edge_diff <- signif(mean(edge_is_differential) * 100.0, 4)
+
     path_data <- KEGGREST::keggGet(pathwayid)
     path_name <- path_data[[1]][["NAME"]]
-    message(paste0(pct_diff, "% genes differentially expressed in pathway ", pathway, ": '", path_name, "'."))
+    message(paste0(pct_node_diff, "% nodes differentially expressed in pathway ", pathway, ": '", path_name, "'."))
+    message(paste0(pct_edge_diff, "% edges differentially expressed in pathway ", pathway, ": '", path_name, "'."))
     retlist <- list(
         "pathway" = pathway,
         "filename" = filename,
-        "percent" = pct_diff,
+        "percent_nodes" = pct_node_diff,
+        "percent_edges" = pct_edge_diff,
         "all_nodes" = toString(possible_nodes),
-        "diff_nodes" = toString(found_nodes))
+        "diff_nodes" = toString(found_nodes),
+        "all_edges" = toString(possible_edges),
+        "diff_edges" = toString(found_edges)
+    )
     return(retlist)
 }
 
