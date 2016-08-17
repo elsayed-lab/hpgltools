@@ -421,9 +421,12 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
             path_ids[count] <- NA
             path_names[count] <- NA
             filenames[count] <- NA
-            percentages[count] <- NA
+            pct_nodes[count] <- NA
+            pct_edges[count] <- NA
             path_nodes[count] <- NA
             diff_nodes[count] <- NA
+            path_edges[count] <- NA
+            diff_edges[count] <- NA
         } else {
             path_name <- path_name[[1]]$NAME
             path_name <- gsub("(.*) - .*", "\\1", path_name)
@@ -440,10 +443,13 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
             }
             path_ids[count] <- path
             filenames[count] <- pct_diff[["filename"]]
-            percentages[count] <- pct_diff[["percent"]]
+            pct_nodes[count] <- pct_diff[["percent_nodes"]]
+            pct_edges[count] <- pct_diff[["percent_edges"]]
             path_nodes[count] <- pct_diff[["all_nodes"]]
             diff_nodes[count] <- pct_diff[["diff_nodes"]]
-            message(paste0(count, "/", last_path, ": The path: ", path_names[count], " was written to ", filenames[count], " and has ", percentages[count], "% diff."))
+            path_edges[count] <- pct_diff[["all_edges"]]
+            diff_edges[count] <- pct_diff[["diff_edges"]]
+            message(paste0(count, "/", last_path, ": The path: ", path_names[count], " was written to ", filenames[count], " and has ", pct_nodes[count], "% nodesdiff ", pct_edges[count], "% edgesdiff."))
         }
     }
     path_data <- as.data.frame(cbind(path_ids, path_names, filenames, percentages, path_nodes, diff_nodes))
@@ -451,9 +457,12 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
     path_data[["pathway"]] <- as.character(path_data[["pathway"]])
     path_data[["path_name"]] <- as.character(path_data[["path_name"]])
     path_data[["filename"]] <- as.character(path_data[["filename"]])
-    path_data[["percent"]] <- as.numeric(path_data[["percent"]])
+    path_data[["pct_nodes"]] <- as.numeric(path_data[["pct_nodes"]])
+    path_data[["pct_edges"]] <- as.numeric(path_data[["pct_edges"]])
     path_data[["all_nodes"]] <- as.character(path_data[["all_nodes"]])
     path_data[["diff_nodes"]] <- as.character(path_data[["diff_nodes"]])
+    path_data[["all_edges"]] <- as.character(path_data[["all_edges"]])
+    path_data[["diff_edges"]] <- as.character(path_data[["diff_edges"]])
     return(path_data)
 }
 
