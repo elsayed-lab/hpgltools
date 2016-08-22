@@ -206,7 +206,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         retdf[path,"unique_mapped_pct"] <- try(as.numeric(return_list[[path]][["unique_mapped_pct"]]))
     }
     retdf <- retdf[with(retdf, order(up, down)), ]
-     return(retdf)
+    return(retdf)
 }
 
 #' Extract the set of geneIDs matching pathways for a given species.
