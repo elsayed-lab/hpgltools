@@ -8,11 +8,9 @@
 #' @param outdir Directory which will contain the colored images.
 #' @param pathway Perform the coloring for a specific pathway?
 #' @param species Kegg identifier for the species of interest.
-#' @param string_from Regex to help in renaming KEGG categories/gene names from one format to another.
-#' @param string_to Regex to help in renaming KEGG categories/gene names from one format to another.
+#' @param from_list Regex to help in renaming KEGG categories/gene names from one format to another.
+#' @param to_list Regex to help in renaming KEGG categories/gene names from one format to another.
 #' @param suffix Add a suffix to the completed, colored files.
-#' @param second_from Sometimes just one regex is not enough!
-#' @param second_to Sometimes just one regex is not enough!
 #' @param filenames Name the final files by id or name?
 #' @return A list of some information for every KEGG pathway downloaded/examined.  This information includes:
 #'   a. The filename of the final image for each pathway.
@@ -28,36 +26,46 @@
 #' }
 #' @export
 hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
-                          pathway="all", species="lma", string_from="LmjF",
-                          string_to="LMJF", suffix="_colored", second_from=NULL,
-                          second_to=NULL, filenames="id", fc_column="limma_logfc",
-                          format="png") {
+                          pathway="all", species="lma", from_list=NULL,
+                          to_list=NULL, suffix="_colored",
+                          filenames="id", fc_column="limma_logfc",
+                          format="png", verbose=TRUE) {
     ## I have a fun new regex-generator which should replace string_to/second_to
 
     ## Please note that the KGML parser fails if other XML parsers are loaded into R
     ## eh = new.env(hash=TRUE, size=NA)
     ## There is a weird namespace conflict when using pathview, so I will reload it here
-    try(detach("package:Rgraphviz", unload=TRUE), silent=TRUE)
-    try(detach("package:topGO", unload=TRUE), silent=TRUE)
-    try(detach("package:pathview", unload=TRUE), silent=TRUE)
-    try(detach("package:KEGGgraph", unload=TRUE), silent=TRUE)
-    try(detach("package:RamiGO", unload=TRUE), silent=TRUE)
-    try(detach("package:graph", unload=TRUE), silent=TRUE)
-    library(pathview) ## I am not sure how else to avoid the error 'unable to load 'bods''
+    tmp <- sm(try(detach("package:Rgraphviz", unload=TRUE), silent=TRUE))
+    tmp <- sm(try(detach("package:topGO", unload=TRUE), silent=TRUE))
+    tmp <- sm(try(detach("package:pathview", unload=TRUE), silent=TRUE))
+    tmp <- sm(try(detach("package:KEGGgraph", unload=TRUE), silent=TRUE))
+    tmp <- sm(try(detach("package:RamiGO", unload=TRUE), silent=TRUE))
+    tmp <- sm(try(detach("package:graph", unload=TRUE), silent=TRUE))
+    tmp <- sm(library(pathview)) ## I am not sure how else to avoid the error 'unable to load 'bods''
     ## If a table from limma was passed to this, just assume that one wants logFC
     ## Similar stanzas should probably be added for deseq/edger
     ## This is added because pathview() only works with dataframes/lists with only numbers.
     ## So it is wise to pull only the column of numbers one cares about.
-    if (!is.null(path_data[[fc_column]])) {
-        tmp_data <- as.vector(path_data[[fc_column]])
-        names(tmp_data) <- rownames(path_data)
-        path_data <- tmp_data
-        rm(tmp_data)
+    if (is.null(path_data[[fc_column]])) {
+        fc_column <- "logFC"
     }
+    if (is.null(path_data[[fc_column]])) {
+        stop("Unable to find the fold change column.")
+    }
+    tmp_data <- as.vector(path_data[[fc_column]])
+    names(tmp_data) <- rownames(path_data)
+    path_data <- tmp_data
+    rm(tmp_data)
     tmp_names <- names(path_data)
-    tmp_names <- gsub(string_from, string_to, tmp_names)
-    if (!is.null(second_from)) {
-        tmp_names <- gsub(second_from, second_to, tmp_names)
+    if (is.null(from_list)) {
+        substitutions <- get_kegg_sub(species)
+        from_list <- substitutions[["patterns"]]
+        to_list <- substitutions[["replaces"]]
+    }
+    for (sub_count in 1:length(from_list)) {
+        my_from <- from_list[[sub_count]]
+        my_to <- to_list[[sub_count]]
+        tmp_names <- gsub(pattern=my_from, replace=my_to, x=tmp_names, perl=TRUE)
     }
     ## tmp_names = gsub("\\.","_", tmp_names)
     names(path_data) <- tmp_names
@@ -83,7 +91,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
     }
     return_list <- list()
     for (count in 1:length(paths)) {
-        path <- paths[count]
+        path <- paths[[count]]
         path_name <- KEGGREST::keggGet(path)
         path_name <- path_name[[1]]$NAME
         path_name <- gsub("(.*) - .*", "\\1", path_name)
@@ -92,27 +100,29 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         ## RCurl is crap and fails sometimes for no apparent reason.
         gene_examples <- try(KEGGREST::keggLink(paste("path", path, sep=":"))[,2])
         ## limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
-        limit_test <- c(abs(min(path_data, na.rm=TRUE)), abs(max(path_data, na.rm=TRUE)))
+        limit_test <- c(abs(min(as.numeric(path_data), na.rm=TRUE)), abs(max(as.numeric(path_data), na.rm=TRUE)))
         limit_min <- -1.0 * max(limit_test)
         limit_max <- max(limit_test)
         limits <- c(limit_min, limit_max)
         example_string <- gsub(pattern=paste0(species, ":"), replace="", x=toString(head(gene_examples)))
-        message(paste0("Here are some path gene examples: ", example_string))
-        message(paste0("Here are your genes: ", toString(head(names(path_data)))))
+        if (isTRUE(verbose)) {
+            message(paste0("Here are some path gene examples: ", example_string))
+            message(paste0("Here are your genes: ", toString(head(names(path_data)))))
+        }
         if (format == "png") {
-            pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
+            pv <- sm(try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
                                          species=species, limit=list(gene=limits, cpd=limits),
                                          map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix,
                                          split.group=TRUE, expand.node=TRUE, kegg.native=TRUE,
                                          map.symbol=TRUE, same.layer=FALSE, res=1200,
-                                         new.signature=FALSE, cex=0.05, key.pos="topright"))
+                                         new.signature=FALSE, cex=0.05, key.pos="topright")))
         } else {
-            pv <- try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
+            pv <- sm(try(pathview::pathview(gene.data=path_data, kegg.dir=indir, pathway.id=path,
                                          species=species, limit=list(gene=limits, cpd=limits),
                                          map.null=TRUE, gene.idtype="KEGG", out.suffix=suffix,
                                          split.group=TRUE, expand.node=TRUE, kegg.native=FALSE,
                                          map.symbol=TRUE, same.layer=FALSE, res=1200,
-                                         new.signature=FALSE, cex=0.05, key.pos="topright"))
+                                         new.signature=FALSE, cex=0.05, key.pos="topright")))
         }
         if (class(pv) == "numeric") {
             colored_genes <- NULL
@@ -157,40 +167,46 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
             down <- sum(numbers_in_plot < data_low, na.rm=TRUE)
 
         }
-        return_list[[path]]$file <- newfile
-        return_list[[path]]$genes <- colored_genes
-        return_list[[path]]$up <- up
-        return_list[[path]]$down <- down
-        return_list[[path]][[total_nodes]] <- length(total_mapped)
-        return_list[[path]][[total_pct]] <- total_pct_mapped
-        return_list[[path]][[unique_nodes]] <- length(unique_mapped)
-        return_list[[path]][[unique_pct]] <- unique_pct_mapped
-        message(paste0(count, "/", length(paths), ": Finished ", path_name))
+        return_list[[path]][["file"]] <- newfile
+        return_list[[path]][["genes"]] <- toString(colored_genes)
+        return_list[[path]][["up"]] <- toString(up)
+        return_list[[path]][["down"]] <- toString(down)
+        return_list[[path]][["total_mapped_nodes"]] <- length(total_mapped)
+        return_list[[path]][["total_mapped_pct"]] <- total_pct_mapped
+        return_list[[path]][["unique_mapped_nodes"]] <- length(unique_mapped)
+        return_list[[path]][["unique_mapped_pct"]] <- unique_pct_mapped
+        if (isTRUE(verbose)) {
+            message(paste0(count, "/", length(paths), ": Finished ", path_name, " id: ", path, "."))
+        }
     } ## End for loop
 
     retdf <- data.frame(rep(NA, length(names(return_list))))
     rownames(retdf) <- names(return_list)
-    retdf$genes <- NA
-    retdf$up <- NA
-    retdf$down <- NA
-    colnames(retdf) <- c("file","genes","up","down")
+    retdf[["genes"]] <- NA
+    retdf[["up"]] <- NA
+    retdf[["down"]] <- NA
+    retdf[["total_mapped_nodes"]] <- NA
+    retdf[["total_mapped_pct"]] <- NA
+    retdf[["unique_mapped_nodes"]] <- NA
+    retdf[["unique_mapped_pct"]] <- NA
+    colnames(retdf) <- c("file","genes","up","down","total_mapped_nodes",
+                         "total_mapped_pct","unique_mapped_nodes","unique_mapped_pct")
     for (path in names(return_list)) {
-        if (is.null(return_list[[path]]$genes)) {
-            retdf[path,]$genes <- 0
+        if (is.null(return_list[[path]][["genes"]])) {
+            retdf[path,"genes"] <- 0
         } else {
-            retdf[path,]$genes <- as.numeric(return_list[[path]]$genes)
+            retdf[path,"genes"] <- as.numeric(return_list[[path]][["genes"]])
         }
-        retdf[path,]$file <- as.character(return_list[[path]]$file)
-        retdf[path,]$up <- as.numeric(return_list[[path]]$up)
-        retdf[path,]$down <- as.numeric(return_list[[path]]$down)
-        retdf[path,]$total_nodes <- as.numeric(return_list[[path]]$total_nodes)
-        retdf[path,]$total_pct <- as.numeric(return_list[[path]]$total_pct)
-        retdf[path,]$unique_nodes <- as.numeric(return_list[[path]]$unique_nodes)
-        retdf[path,]$unique_pct <- as.numeric(return_list[[path]]$unique_pct)
-
+        retdf[path,"file"] <- try(as.character(return_list[[path]][["file"]]))
+        retdf[path,"up"] <- try(as.numeric(return_list[[path]][["up"]]))
+        retdf[path,"down"] <- try(as.numeric(return_list[[path]][["down"]]))
+        retdf[path,"total_mapped_nodes"] <- try(as.numeric(return_list[[path]][["total_mapped_nodes"]]))
+        retdf[path,"total_mapped_pct"] <- try(as.numeric(return_list[[path]][["total_mapped_pct"]]))
+        retdf[path,"unique_mapped_nodes"] <- try(as.numeric(return_list[[path]][["unique_mapped_nodes"]]))
+        retdf[path,"unique_mapped_pct"] <- try(as.numeric(return_list[[path]][["unique_mapped_pct"]]))
     }
     retdf <- retdf[with(retdf, order(up, down)), ]
-    return(retdf)
+     return(retdf)
 }
 
 #' Extract the set of geneIDs matching pathways for a given species.
@@ -300,8 +316,8 @@ get_kegg_sub <- function(species="lma") {
         patterns <- c("LmjF",  "LMJF", "_")
         replaces <- c("LMJF_", "LmjF", ".")
     } else if (species == "tcr") {
-        patterns <- c("^")
-        replaces <- c("TcCLB.")
+        patterns <- c("TcCLB.")
+        replaces <- c("")
     }
 
     ret <- list(
