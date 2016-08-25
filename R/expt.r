@@ -186,20 +186,20 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         sample_ids <- as.character(sample_definitions[["sampleid"]])
         all_count_tables <- hpgl_read_files(sample_ids, filenames, ...)
     }
-
-    all_count_matrix <- as.matrix(all_count_tables)
-    rownames(all_count_matrix) <- gsub("^exon:", "", rownames(all_count_matrix))
-    rownames(all_count_matrix) <- make.names(gsub(":\\d+", "", rownames(all_count_matrix)), unique=TRUE)
-    ## Make sure that all columns have been filled in for every gene.
-    complete_index <- complete.cases(all_count_matrix)
-    all_count_matrix <- all_count_matrix[complete_index, ]
+    for (col in colnames(all_count_tables)) {
+        ## Ensure there are no stupid entries like target_id est_counts
+        all_count_tables[[col]] <- as.numeric(all_count_tables[[col]])
+    }
+    all_count_tables <- all_count_tables[complete.cases(all_count_tables), ]
+    rownames(all_count_tables) <- gsub("^exon:", "", rownames(all_count_tables))
+    rownames(all_count_tables) <- make.names(gsub(":\\d+", "", rownames(all_count_tables)), unique=TRUE)
 
     annotation <- NULL
     tooltip_data <- NULL
     if (is.null(gene_info)) {
         if (is.null(include_gff)) {
-            gene_info <- as.data.frame(rownames(all_count_matrix))
-            rownames(gene_info) <- rownames(all_count_matrix)
+            gene_info <- as.data.frame(rownames(all_count_tables))
+            rownames(gene_info) <- rownames(all_count_tables)
             colnames(gene_info) <- "name"
         } else {
             message("create_expt(): Reading annotation gff, this is slow.")
@@ -213,11 +213,11 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
 
     ## It turns out that loading the annotation information from orgdb/etc may not set the row names.
     ## Perhaps I should do that there, but I will add a check here, too.
-    if (sum(rownames(gene_info) %in% rownames(all_count_matrix)) == 0) {
+    if (sum(rownames(gene_info) %in% rownames(all_count_tables)) == 0) {
         if (!is.null(gene_info[["geneid"]])) {
             rownames(gene_info) <- gene_info[["geneid"]]
         }
-        if (sum(rownames(gene_info) %in% rownames(all_count_matrix)) == 0) {
+        if (sum(rownames(gene_info) %in% rownames(all_count_tables)) == 0) {
             warning("Even after changing the rownames in gene info, they do not match the count table.")
         }
     }
@@ -239,7 +239,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     ## There should no longer be blank columns in the annotation data.
     ## Maybe I will copy/move this to my annotation collection toys?
 
-    tmp_counts <- as.data.frame(all_count_matrix)
+    tmp_counts <- all_count_tables
     tmp_counts[["temporary_id_number"]] <- 1:nrow(tmp_counts)
     message("Bringing together the count matrix and gene information.")
     counts_and_annotations <- merge(tmp_counts, gene_info, by="row.names", all.x=TRUE)
@@ -247,7 +247,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     final_annotations <- as.data.frame(counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ])
     colnames(final_annotations) <- colnames(gene_info)
     rownames(final_annotations) <- counts_and_annotations[["Row.names"]]
-    final_counts <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_matrix) ]
+    final_counts <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_tables) ]
     rownames(final_counts) <- counts_and_annotations[["Row.names"]]
     rm(counts_and_annotations)
     rm(tmp_counts)
@@ -322,6 +322,17 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         save(list = c("expt"), file=paste(savefile, ".Rdata", sep=""))
     }
     return(expt)
+}
+
+get_expt_condcolors <- function(expt) {
+    new <- expt[["colors"]]
+    names(new) <- expt[["conditions"]]
+    new_unique <- NULL
+    for (i in 1:length(names(new))) {
+        name <- names(new)[[i]]
+        new_unique[name] <- new[[i]]
+    }
+    return(new_unique)
 }
 
 #' @export

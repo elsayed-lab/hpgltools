@@ -5,10 +5,9 @@
 \title{Print some data onto KEGG pathways.}
 \usage{
 hpgl_pathview(path_data, indir = "pathview_in", outdir = "pathview",
-  pathway = "all", species = "lma", string_from = "LmjF",
-  string_to = "LMJF", suffix = "_colored", second_from = NULL,
-  second_to = NULL, filenames = "id", fc_column = "limma_logfc",
-  format = "png")
+  pathway = "all", species = "lma", from_list = NULL, to_list = NULL,
+  suffix = "_colored", filenames = "id", fc_column = "limma_logfc",
+  format = "png", verbose = TRUE)
 }
 \arguments{
 \item{path_data}{Some differentially expressed genes.}
@@ -21,15 +20,11 @@ hpgl_pathview(path_data, indir = "pathview_in", outdir = "pathview",
 
 \item{species}{Kegg identifier for the species of interest.}
 
-\item{string_from}{Regex to help in renaming KEGG categories/gene names from one format to another.}
+\item{from_list}{Regex to help in renaming KEGG categories/gene names from one format to another.}
 
-\item{string_to}{Regex to help in renaming KEGG categories/gene names from one format to another.}
+\item{to_list}{Regex to help in renaming KEGG categories/gene names from one format to another.}
 
 \item{suffix}{Add a suffix to the completed, colored files.}
-
-\item{second_from}{Sometimes just one regex is not enough!}
-
-\item{second_to}{Sometimes just one regex is not enough!}
 
 \item{filenames}{Name the final files by id or name?}
 }

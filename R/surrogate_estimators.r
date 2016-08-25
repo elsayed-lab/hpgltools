@@ -74,6 +74,11 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
         }
     }
 
+    ## I use 'sva' as shorthand fairly often
+    if (estimate_type == "sva") {
+        estimate_type <- "sva_supervised"
+    }
+
     model_adjust <- NULL
     adjusted_counts <- NULL
     type_color <- NULL
@@ -82,7 +87,7 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
         message("Attempting sva supervised surrogate estimation.")
         type_color <- "red"
         supervised_sva <- sva::svaseq(mtrx, conditional_model, null_model, controls=control_likelihoods, n.sv=chosen_surrogates)
-        model_adjust <- as.matrix(supervised_sva$sv)
+        model_adjust <- as.matrix(supervised_sva[["sv"]])
         ## If only 1 surrogate is requested, this turns into a numeric list
     } else if (estimate_type == "svaseq") {
         found_surrogates <- sva::num.sv(mtrx, conditional_model)

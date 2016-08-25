@@ -91,6 +91,8 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     pca <- try(plot_pca(expt, title=pca_title, ...))
     message("Plotting a density plot.")
     density <- try(plot_density(expt, title=dens_title))
+    message("Printing a color to condition legend.")
+    legend <- try(plot_legend(pca$plot))
 
     qq_logs <- NULL
     qq_ratios <- NULL
@@ -120,6 +122,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
         "pcares" = pca$res,
         "pcavar" = pca$variance,
         "density" = density,
+        "legend" = legend,
         "qqlog" = qq_logs,
         "qqrat" = qq_ratios,
         "ma" = ma_plots)
@@ -127,6 +130,26 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     return(ret_data)
 }
 
+#' @export
+plot_legend <- function(stuff) {
+    plot <- NULL
+    if (class(stuff)[[1]] == "gg") {  ## Then assume it is a pca plot
+        plot <- stuff
+    } else {
+        plot <- plot_pca(stuff)[["plot"]]
+    }
+
+    tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(plot))
+    leg <- which(sapply(tmp[["grobs"]], function(x) x[["name"]]) == "guide-box")
+    legend <- tmp[["grobs"]][[leg]]
+    grid::grid.newpage()
+    grid::grid.draw(legend)
+    legend_plot <- grDevices::recordPlot()
+    ret <- list(
+        colors = plot[["data"]][, c("condition","batch","colors")],
+        plot = legend_plot)
+    return(ret)
+}
 
 ## I thought multiplot() was a part of ggplot(), but no, weird:
 ## http://stackoverflow.com/questions/24387376/r-wired-error-could-not-find-function-multiplot

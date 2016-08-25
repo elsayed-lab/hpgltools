@@ -20,10 +20,10 @@
 #' one_gene <- load_parasite_annotations(org, c("LmJF.01.0010"))
 #' }
 #' @export
-load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
+load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",
                                       ## fields=c("CHR", "GENENAME", "TXSTRAND",
                                       fields=NULL, sum_exons=FALSE) {
-                                      ## "TXSTART", "TXEND", "TYPE")) {
+    ## "TXSTART", "TXEND", "TYPE")) {
     keytype <- toupper(keytype)
     all_fields <- AnnotationDbi::columns(orgdb)
     if (is.null(fields)) {
@@ -40,7 +40,7 @@ load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
     }
     ## fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
 
-    ## Gene info
+    ## Gene IDs
     if (is.null(gene_ids)) {
         gene_ids <- try(AnnotationDbi::keys(orgdb, keytype=keytype))
         if (class(gene_ids) == "try-error") {
@@ -55,6 +55,7 @@ load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
         }
     }
     ## Note querying by "GENEID" will exclude noncoding RNAs
+
     transcript_length <- NULL
     gene_info <- AnnotationDbi::select(orgdb,
                                        keys=gene_ids,
@@ -77,6 +78,7 @@ load_parasite_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
         colnames(lengths) <- "transcript_length"
         gene_info <- merge(gene_info, lengths, by.x=keytype, by.y="row.names")
     }
+    rownames(gene_info) <- make.names(gene_info[[1]], unique=TRUE)
 
     retlist <- list(
         "genes" = gene_info,

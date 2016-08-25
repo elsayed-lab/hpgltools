@@ -207,10 +207,19 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                             filter=filter, annotations=annotations,
                             fasta=fasta, thresh=thresh, batch_step=batch_step,
                             min_samples=min_samples, p=p, A=A, k=k,
-                            ## cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
-                            cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
+                            cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
+                            ## cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
+
     final_libsize <- normalized[["libsize"]]
     final_data <- as.matrix(normalized[["count_table"]])
+
+    ## A recent update to Biobase adds a test in the function
+    ## assayDataElementReplace() which no longer allows one to just
+    ## replace an expressionset with a smaller version (low-filtered).
+    ## Instead, one must properly subset the object first, then replace.
+    ## While this is annoying, I suppose it is smart.
+    unfiltered_genes <- rownames(Biobase::exprs(current_exprs)) %in% rownames(final_data)
+    current_exprs <- current_exprs[unfiltered_genes, ]
     Biobase::exprs(current_exprs) <- final_data
 
     ## The original data structure contains the following slots:

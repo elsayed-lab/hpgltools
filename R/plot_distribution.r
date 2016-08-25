@@ -110,7 +110,7 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' @export
 plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
                          fill=NULL, title=NULL, scale=NULL, colors_by="condition") {  ## also position='stack'
-    plot_env <- environment()
+  plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
         design <- data[["design"]]

@@ -273,6 +273,7 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, ou
 make_txdb <- function(orgdb_info, cfg, gff=NULL, output_dir="organismdbi", ...) {
     arglist <- list(...)
 
+    destination <- output_dir
     chromosome_info <- orgdb_info[["chromosome_info"]]
     if (!is.null(gff)) {
         txdb <- GenomicFeatures::makeTxDbFromGFF(
@@ -285,7 +286,7 @@ make_txdb <- function(orgdb_info, cfg, gff=NULL, output_dir="organismdbi", ...) 
         )
     } else {
         requireNamespace("GenomicFeatures")
-        destination <- paste0(output_dir, "/txdb")
+        destination <- paste0(destination, "/txdb")
         db_version <- format(as.numeric(cfg[["db_version"]]), nsmall=1)
         maintainer <- as.character(cfg[["maintainer"]])
         author <- as.character(cfg[["author"]])

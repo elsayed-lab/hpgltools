@@ -738,6 +738,7 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0,
     wb <- openxlsx::createWorkbook(creator="hpgltools")
     ret <- list()
     summary_count <- 0
+    sheet_count <- 0
     for (according in according_to) {
         summary_count <- summary_count + 1
         ret[[according]] <- list()
@@ -820,8 +821,8 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     xls_summary_result <- write_xls(wb, data=summary, start_col=2, start_row=summary_start, sheet="number_changed_genes", title=summary_title)
     for (base_name in names(ups)) {
         table_count <- table_count + 1
-        up_name <- paste0("up_", according, "_", base_name)
-        down_name <- paste0("down_", according, "_", base_name)
+        up_name <- paste0("up_", table_count, according, "_", base_name)
+        down_name <- paste0("down_", table_count, according, "_", base_name)
         up_table <- ups[[table_count]]
         down_table <- downs[[table_count]]
         up_title <- up_titles[[table_count]]
