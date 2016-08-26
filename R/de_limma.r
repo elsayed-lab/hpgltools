@@ -1,6 +1,6 @@
 
 #' @export
-limma_ma <- function(output, table=NULL) {
+limma_ma <- function(output, table=NULL, p_col="adj.P.Val") {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
@@ -13,7 +13,7 @@ limma_ma <- function(output, table=NULL) {
     }
 
     de_genes <- output[["all_tables"]][[table]]
-    plot <- plot_ma_de(table=de_genes, expr_col="AveExpr", fc_col="logFC", p_col="adj.P.Val")
+    plot <- plot_ma_de(table=de_genes, expr_col="AveExpr", fc_col="logFC", p_col=p_col)
     return(plot)
 }
 
