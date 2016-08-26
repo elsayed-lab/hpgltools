@@ -24,7 +24,7 @@ disjunct_tab <- function(contrast_fit, coef1, coef2, ...) {
 #' @param conditions Factor of conditions in the experiment.
 #' @param batches Factor of batches in the experiment.
 #' @param model_cond Include condition in the model?  This is likely always true.
-#' @param model_batch Include batch in the model?
+#' @param model_batch Include batch in the model?  This may be true/false/"sva" or other methods supported by get_model_adjust().
 #' @param model_intercept Use an intercept model instead of cell means?
 #' @param extra_contrasts Optional extra contrasts beyone the pairwise comparisons.  This can be
 #'     pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or

@@ -17,7 +17,7 @@ all_pairwise(input, conditions = NULL, batches = NULL, model_cond = TRUE,
 
 \item{model_cond}{Include condition in the model?  This is likely always true.}
 
-\item{model_batch}{Include batch in the model?}
+\item{model_batch}{Include batch in the model?  This may be true/false/"sva" or other methods supported by get_model_adjust().}
 
 \item{model_intercept}{Use an intercept model instead of cell means?}
 
