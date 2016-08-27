@@ -54,9 +54,9 @@ bioc_all <- function(release="3.4", mirror="bioc.ism.ac.jp", base="packages", ty
                                                              suppressUpdates=update,
                                                              suppressAutoUpdate=auto)))
                 if (class(installedp) == "try-error") {
-                    fail <- append(failed, pkg)
+                    fail <- append(fail, pkg)
                 } else {
-                    suc <- append(succeeded, pkg)
+                    suc <- append(suc, pkg)
                 }
             }
         }
