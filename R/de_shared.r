@@ -278,7 +278,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
 combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
                               excel_sheet="combined_DE", keepers="all",
-                              include_basic=TRUE, add_plots=TRUE, plot_dim=6) {
+                              include_basic=TRUE, add_plots=TRUE, plot_dim=6, compare_plots=TRUE) {
     ## The ontology_shared function which creates multiple sheets works a bit differently
     ## It creates all the tables, then does a createWorkbook()
     ## Does a createWorkbook() / addWorksheet()
@@ -507,52 +507,54 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         count <- count + 1
 
         message("Writing summary information.")
-        ## Add a graph on the final sheet of how similar the result types were
-        comp_summary <- all_pairwise_result[["comparison"]][["comp"]]
-        comp_plot <- all_pairwise_result[["comparison"]][["heat"]]
-        de_summaries <- as.data.frame(de_summaries)
-        rownames(de_summaries) <- table_names
-        xls_result <- write_xls(wb, data=de_summaries, sheet="pairwise_summary",
-                                title="Summary of contrasts.")
-        new_row <- xls_result[["end_row"]] + 2
-        xls_result <- write_xls(wb, data=comp_summary, sheet="pairwise_summary",
-                                title="Pairwise correlation coefficients among differential expression tools.",
-                                start_row=new_row)
-        new_row <- xls_result[["end_row"]] + 2
-        message(paste0("Attempting to add the comparison plot to pairwise_summary at row: ", new_row + 1, " and column: ", 1))
-        print(comp_plot)
-        comp <- recordPlot()
-        openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                             startRow=new_row + 1, startCol=1, fileType="png", units="in")
-        logfc_comparisons <- compare_logfc_plots(combo)
-        logfc_names <- names(logfc_comparisons)
-        new_row <- new_row + 2
-        for (c in 1:length(logfc_comparisons)) {
-            new_row <- new_row + 32
-            le <- logfc_comparisons[[c]][["le"]]
-            ld <- logfc_comparisons[[c]][["ld"]]
-            de <- logfc_comparisons[[c]][["de"]]
-
-            tmpcol <- 1
-            openxlsx::writeData(wb, "pairwise_summary", x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
-                                startRow=new_row - 2, startCol=tmpcol)
-            openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
-            print(le)
+        if (isTRUE(compare_plots)) {
+            ## Add a graph on the final sheet of how similar the result types were
+            comp_summary <- all_pairwise_result[["comparison"]][["comp"]]
+            comp_plot <- all_pairwise_result[["comparison"]][["heat"]]
+            de_summaries <- as.data.frame(de_summaries)
+            rownames(de_summaries) <- table_names
+            xls_result <- write_xls(wb, data=de_summaries, sheet="pairwise_summary",
+                                    title="Summary of contrasts.")
+            new_row <- xls_result[["end_row"]] + 2
+            xls_result <- write_xls(wb, data=comp_summary, sheet="pairwise_summary",
+                                    title="Pairwise correlation coefficients among differential expression tools.",
+                                    start_row=new_row)
+            new_row <- xls_result[["end_row"]] + 2
+            message(paste0("Attempting to add the comparison plot to pairwise_summary at row: ", new_row + 1, " and column: ", 1))
+            print(comp_plot)
+            comp <- recordPlot()
             openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                 startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                                 startRow=new_row + 1, startCol=1, fileType="png", units="in")
+            logfc_comparisons <- compare_logfc_plots(combo)
+            logfc_names <- names(logfc_comparisons)
+            new_row <- new_row + 2
+            for (c in 1:length(logfc_comparisons)) {
+                new_row <- new_row + 32
+                le <- logfc_comparisons[[c]][["le"]]
+                ld <- logfc_comparisons[[c]][["ld"]]
+                de <- logfc_comparisons[[c]][["de"]]
 
-            tmpcol <- 8
-            openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. DESeq2)", startRow=new_row - 1, startCol=tmpcol)
-            print(ld)
-            openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                 startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                tmpcol <- 1
+                openxlsx::writeData(wb, "pairwise_summary", x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
+                                    startRow=new_row - 2, startCol=tmpcol)
+                openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
+                print(le)
+                openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                     startRow=new_row, startCol=tmpcol, fileType="png", units="in")
 
-            tmpcol <- 15
-            openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(DESeq2 vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
-            print(de)
-            openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                 startRow=new_row, startCol=tmpcol, fileType="png", units="in")
-        }
+                tmpcol <- 8
+                openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. DESeq2)", startRow=new_row - 1, startCol=tmpcol)
+                print(ld)
+                openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                     startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+
+                tmpcol <- 15
+                openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(DESeq2 vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
+                print(de)
+                openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                     startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+            }
+        } ## End if compare_plots is TRUE
         message("Performing save of the workbook.")
         openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     }
