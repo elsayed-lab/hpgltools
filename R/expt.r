@@ -419,6 +419,9 @@ set_expt_condition <- function(expt, fact, ids=NULL, ...) {
     arglist <- list(...)
     original_conditions <- expt[["conditions"]]
     original_length <- length(original_conditions)
+    new_expt <- expt  ## Explicitly copying expt to new_expt
+    ## because when I run this as a function call() it seems to be not properly setting the conditions
+    ## and I do not know why.
     if (!is.null(ids)) {
         ## Change specific id(s) to given condition(s).
         old_pdata <- Biobase::pData(expt[["expressionset"]])
@@ -429,24 +432,28 @@ set_expt_condition <- function(expt, fact, ids=NULL, ...) {
         new_pdata <- old_pdata
         new_pdata[["condition"]] <- as.factor(new_cond)
         Biobase::pData(expt[["expressionset"]]) <- new_pdata
-        expt[["conditions"]][ids] <- fact
-        expt[["design"]][["condition"]] <- new_cond
+        new_expt[["conditions"]][ids] <- fact
+        new_expt[["design"]][["condition"]] <- new_cond
     } else if (length(fact) == 1) {
         ## Assume it is a column in the design
         if (fact %in% colnames(expt[["design"]])) {
-            fact <- expt[["design"]][[fact]]
+            new_fact <- expt[["design"]][[fact]]
+            new_expt[["conditions"]] <- new_fact
+            Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
+            new_expt[["design"]][["condition"]] <- new_fact
         } else {
             stop("The provided factor is not in the design matrix.")
         }
     } else if (length(fact) != original_length) {
             stop("The new factor of conditions is not the same length as the original.")
     } else {
-        expt[["conditions"]] <- fact
-        Biobase::pData(expt[["expressionset"]])[["condition"]] <- fact
-        expt[["design"]][["condition"]] <- fact
+        new_expt[["conditions"]] <- fact
+        Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- fact
+        new_expt[["design"]][["condition"]] <- fact
     }
 
-    tmp_expt <- set_expt_colors(expt)
+    tmp_expt <- set_expt_colors(new_expt)
+    rm(new_expt)
     return(tmp_expt)
 }
 
