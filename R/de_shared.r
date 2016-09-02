@@ -275,7 +275,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
 #' pretty = combine_de_tables(big_result, table='t12_vs_t0')
 #' }
 #' @export
-combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
+combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
                               excel_sheet="combined_DE", keepers="all",
                               include_basic=TRUE, add_plots=TRUE, plot_dim=6, compare_plots=TRUE) {
@@ -288,6 +288,16 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     deseq <- all_pairwise_result[["deseq"]]
     edger <- all_pairwise_result[["edger"]]
     basic <- all_pairwise_result[["basic"]]
+
+    csv_basename <- NULL
+    if (!is.null(csv)) {
+        if (is.null(excel)) {
+            csv_basename <- "excel/csv_export"
+        } else {
+            csv_basename <- excel
+            csv_basename <- gsub(pattern="\\.xlsx", replacement="", x=csv_basename)
+        }
+    }
 
     wb <- NULL
     if (!is.null(excel)) {
@@ -483,6 +493,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             oddness = summary(ddd) ## until I did this I was getting errors I am guessing devtools::load_all() isn't clearing everything
             final_excel_title <- gsub(pattern='YYY', replacement=tab, x=excel_title)
             xls_result <- write_xls(data=ddd, wb=wb, sheet=tab, title=final_excel_title)
+            if (!is.null(csv)) {
+                csv_filename <- paste0(csv_basename, "_", tab, ".csv")
+                write.csv(x=ddd, file=csv_filename)
+            }
             if (isTRUE(add_plots)) {
                 plot_column <- xls_result[["end_col"]] + 2
                 message(paste0("Attempting to add a coefficient plot for ", names(combo)[[count]], " at column ", plot_column))
@@ -711,7 +725,7 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
 #' @export
 extract_significant_genes <- function(combined, according_to="all", fc=1.0,
                                       p=0.05, z=NULL, n=NULL, p_type="adj",
-                                      excel="excel/significant_genes.xlsx") {
+                                      excel="excel/significant_genes.xlsx", csv=NULL) {
     if (!is.null(combined[["plots"]])) {
         combined <- combined[["data"]]
     }
@@ -737,6 +751,7 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0,
     if (according_to == "all") {
         according_to <- c("limma","edger","deseq","basic")
     }
+
     wb <- openxlsx::createWorkbook(creator="hpgltools")
     ret <- list()
     summary_count <- 0
@@ -783,12 +798,12 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0,
             message("Not printing excel sheets for the significant genes.")
         } else {
             message(paste0("Printing significant genes to the file: ", excel))
-            xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according, summary_count=summary_count)
+            xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according, summary_count=summary_count, csv=csv)
             wb <- xlsx_ret[["workbook"]]
         }
     } ## End list of according_to's
     if (!is.null(excel)) {
-        openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
+        excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
     }
     return(ret)
 }
@@ -806,9 +821,19 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0,
 #' @return Return from write_xls.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx", according="limma", summary_count=1) {
+print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx", csv=NULL,
+                            according="limma", summary_count=1) {
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
+    }
+    csv_basename <- NULL
+    if (!is.null(csv)) {
+        if (is.null(excel)) {
+            csv_basename <- "excel/csv_export"
+        } else {
+            csv_basename <- excel
+            csv_basename <- gsub(pattern="\\.xlsx", replacement="", x=csv_basename)
+        }
     }
     ups <- upsdowns[["ups"]]
     downs <- upsdowns[["downs"]]
@@ -821,6 +846,10 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     num_tables <- length(names(ups))
     summary_start <- ((num_tables + 2) * summary_count) + 1
     xls_summary_result <- write_xls(wb, data=summary, start_col=2, start_row=summary_start, sheet="number_changed_genes", title=summary_title)
+    if (!is.null(csv)) {
+        csv_filename <- paste0(csv_basename, "_num_changed.csv")
+        write.csv(x=summary, file=csv_filename)
+    }
     for (base_name in names(ups)) {
         table_count <- table_count + 1
         up_name <- paste0("up_", table_count, according, "_", base_name)
@@ -833,7 +862,13 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
         xls_result <- write_xls(data=up_table, wb=wb, sheet=up_name, title=up_title)
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", down_name))
         xls_result <- write_xls(data=down_table, wb=wb, sheet=down_name, title=down_title)
-    }
+        if (!is.null(csv)) {
+            csv_filename <- paste0(csv_basename, "_", up_name, ".csv")
+            write.csv(x=up_table, file=csv_filename)
+            csv_filename <- paste0(csv_basename, "_", down_name, ".csv")
+            write.csv(x=down_table, file=csv_filename)
+        }
+    } ## End for each name in ups
     message("Writing changed genes summary on last sheet.")
     return(xls_result)
 }
