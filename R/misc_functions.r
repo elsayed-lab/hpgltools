@@ -63,6 +63,13 @@ s_p <- function(code) {
     return(retlist)
 }
 
+#' Silence, m...
+#'
+#' Some libraries/functions just won't shut up.  Ergo, silence, peasant!
+#' This is a simpler silence peasant.
+#'
+#' @param ... Some code to shut up.
+#' @return Whatever the code would have returned.
 #' @export
 sm <- function(...) {
     ret <- NULL
@@ -694,8 +701,7 @@ backup_file <- function(backup_file, backups=4) {
 #' @seealso \link{load} \link{save}
 #' @examples
 #' \dontrun{
-#' loadme()
-#' saveme()
+#'  ## loadme()
 #' }
 #' @export
 loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
@@ -719,7 +725,7 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #' @seealso \link{save} \link{pipe}
 #' @examples
 #' \dontrun{
-#' saveme()
+#'  ## saveme()
 #' }
 #' @export
 saveme <- function(directory="savefiles", backups=4, filename="Rdata.rda.xz") {

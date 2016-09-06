@@ -19,8 +19,7 @@ load its R environment.
 }
 \examples{
 \dontrun{
-loadme()
-saveme()
+ ## loadme()
 }
 }
 \seealso{

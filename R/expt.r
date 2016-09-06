@@ -324,17 +324,19 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     return(expt)
 }
 
-get_expt_condcolors <- function(expt) {
-    new <- expt[["colors"]]
-    names(new) <- expt[["conditions"]]
-    new_unique <- NULL
-    for (i in 1:length(names(new))) {
-        name <- names(new)[[i]]
-        new_unique[name] <- new[[i]]
-    }
-    return(new_unique)
-}
-
+#' Change the colors of an expt!
+#'
+#' After fiddling with conditions/batches, one might want to change the colors.
+#'
+#' @param expt  Expt to modify.
+#' @param colors  New color list.
+#' @param ids  Specific ids to change.
+#' @param ... Arguments passed along (likely colors)
+#' @return expt Send back the expt with some new metadata
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_colors(big_expt)  ## This will call rcolorbrewer again
+#' }
 #' @export
 set_expt_colors <- function(expt, colors=NULL, ids=NULL, ...) {
     arglist <- list(...)
@@ -387,7 +389,8 @@ set_expt_colors <- function(expt, colors=NULL, ids=NULL, ...) {
 #' @param batch New batch factor
 #' @param ... Arguments passed along (likely colors)
 #' @return expt Send back the expt with some new metadata
-#' #' \dontrun{
+#' @examples
+#' \dontrun{
 #'  expt = set_expt_factors(big_expt, condition="column", batch="another_column")
 #' }
 #' @export
@@ -411,8 +414,9 @@ set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
 #' @param factor Conditions to replace
 #' @param colors Reset the set of colors (Give a factor if you want to choose your own).
 #' @return expt Send back the expt with some new metadata
-#' #' \dontrun{
-#'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))")
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
 set_expt_condition <- function(expt, fact, ids=NULL, ...) {
@@ -457,17 +461,19 @@ set_expt_condition <- function(expt, fact, ids=NULL, ...) {
     return(tmp_expt)
 }
 
-#' Change the batches of an expt
+#' Change the batches of an expt.
 #'
 #' When exploring differential analyses, it might be useful to play with the conditions/batches of
 #' the experiment.  Use this to make that easier.
 #'
-#' @param expt Expt to modify
-#' @param factor Batches to replace
-
-#' @return expt Send back the expt with some new metadata
-#' #' \dontrun{
-#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
+#' @param expt  Expt to modify.
+#' @param factor  Batches to replace.
+#' @param ids  Specific samples to change.
+#' @param ...  Extra options are like spinach.
+#' @return  The original expt with some new metadata.
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
 set_expt_batch <- function(expt, fact, ids=NULL, ...) {
@@ -500,7 +506,8 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' @param expt Expt to modify
 #' @param colors colors to replace
 #' @return expt Send back the expt with some new metadata
-#' #' \dontrun{
+#' @examples
+#' \dontrun{
 #'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
 #' }
 #' @export

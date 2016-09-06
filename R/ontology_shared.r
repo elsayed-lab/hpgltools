@@ -97,8 +97,8 @@ extract_go <- function(db, metadf=NULL, keytype="ENTREZID") {
 #' @return something more sane (hopefully).
 #' @examples
 #' \dontrun{
-#'  goterms = GOTERM[ids]
-#'  sane_goterms = deparse_go_value(goterms)
+#'  ## goterms = GOTERM[ids]
+#'  ## sane_goterms = deparse_go_value(goterms)
 #' }
 #' @export
 deparse_go_value <- function(value) {

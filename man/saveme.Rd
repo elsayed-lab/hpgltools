@@ -22,7 +22,7 @@ This assumes you have pxz installed and >= 4 CPUs.
 }
 \examples{
 \dontrun{
-saveme()
+ ## saveme()
 }
 }
 \seealso{

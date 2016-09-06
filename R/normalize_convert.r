@@ -55,20 +55,18 @@ convert_counts <- function(data, convert="raw", ...) {
     return(counts)
 }
 
-#' Express a data frame of counts as reads per pattern per
-#' million(library).
+#' Express a data frame of counts as reads per pattern per million.
 #'
-#' This uses a sequence pattern rather than length to normalize sequence.  It is essentially rpkm
-#' but fancy pants.
+#' This uses a sequence pattern rather than length to normalize sequence.  It is essentially fancy pants rpkm.
 #'
 #' @param counts Read count matrix.
 #' @param genome Genome to search (fasta/BSgenome).
 #' @param ... Options I might pass from other functions are dropped into arglist.
-#' @return The 'RPseqM' counts
+#' @return The RPseqM counts
 #' @seealso \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
 #' @examples
 #' \dontrun{
-#' cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
+#'  cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
 #' }
 #' @export
 divide_seq <- function(counts, genome=NULL, ...) {

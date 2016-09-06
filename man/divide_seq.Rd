@@ -2,8 +2,7 @@
 % Please edit documentation in R/normalize_convert.r
 \name{divide_seq}
 \alias{divide_seq}
-\title{Express a data frame of counts as reads per pattern per
-million(library).}
+\title{Express a data frame of counts as reads per pattern per million.}
 \usage{
 divide_seq(counts, genome = NULL, ...)
 }
@@ -15,15 +14,14 @@ divide_seq(counts, genome = NULL, ...)
 \item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{
-The 'RPseqM' counts
+The RPseqM counts
 }
 \description{
-This uses a sequence pattern rather than length to normalize sequence.  It is essentially rpkm
-but fancy pants.
+This uses a sequence pattern rather than length to normalize sequence.  It is essentially fancy pants rpkm.
 }
 \examples{
 \dontrun{
-cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
+ cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
 }
 }
 \seealso{
