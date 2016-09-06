@@ -24,7 +24,7 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
     gene_list <- gene_list[complete.cases(gene_list)]  ## Translating to ENTREZIDs sometimes introduces NAs which messes up the following operations.
     for (c in 1:length(possible_types)) {
         ty <- possible_types[c]
-        chosen_column <- ids[c]
+        chosen_column <- possible_ids[c]
         test_string <- paste0("testing <- ", ty, "(tmpdb)")
         eval(parse(text=test_string))
         ## as.data.frame is not only base, but also biocgenerics!!!
