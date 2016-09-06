@@ -508,7 +508,7 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' @return expt Send back the expt with some new metadata
 #' @examples
 #' \dontrun{
-#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
+#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
 set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {

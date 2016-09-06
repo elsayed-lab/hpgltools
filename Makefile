@@ -3,14 +3,14 @@ export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
 all: clean reference check build test
 
-install: prereq document
+install: prereq roxygen
 	@echo "Performing R CMD INSTALL hpgltools"
 	@cd ../ && R CMD INSTALL hpgltools && cd hpgltools
 
 reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
 	@rm -f inst/doc/reference.pdf
-	@R CMD Rd2pdf . -o inst/doc/reference.pdf
+	@R CMD Rd2pdf . -o inst/doc/reference.pdf --no-preview
 
 check:
 	@echo "Performing check with R CMD check hpgltools"
@@ -29,18 +29,16 @@ roxygen:
 	@echo "Generating documentation with roxygen2::roxygenize()"
 	@Rscript -e "roxygen2::roxygenize()"
 
-document:
-	@echo "Generating documentation with devtools::document()"
-	@Rscript -e "devtools::document()"
-
 vignette:
 	@echo "Building vignettes with devtools::build_vignettes()"
 	@Rscript -e "devtools::build_vignettes()"
 
+document: roxygen vignette reference
+
 clean_vignette:
 	@rm -f inst/doc/* vignettes/*.rda vignettes/*.map vignettes/*.Rdata
 
-vt:	clean_vignette vignette install
+vt:	clean_vignette vignette reference install
 
 clean:
 	rm -rf hpgltools/
@@ -49,9 +47,6 @@ clean:
 	find . -type f -name '*.Rdata' -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name excel -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
-
-autoloads:
-	Rscript -e "library('hpgltools'); autoloads_all();"
 
 prereq:
 	Rscript -e "suppressMessages(source('http://bioconductor.org/biocLite.R'));\
@@ -64,3 +59,6 @@ update_bioc:
 
 update:
 	Rscript -e "source('http://bioconductor.org/biocLite.R'); biocLite(); library(BiocInstaller); biocValid()"
+
+install_bioconductor:
+	Rscript -e "library(hpgltools); bioc_all()"

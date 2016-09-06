@@ -36,5 +36,8 @@ the experiment.  Use this to make that easier.
 \dontrun{
  expt = set_expt_colors(big_expt)  ## This will call rcolorbrewer again
 }
+\dontrun{
+ expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
+}
 }
 
