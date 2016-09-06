@@ -32,15 +32,18 @@ packages used in this, perform:
 Download the package via 'git pull' or a zip or whatever, go
 into the hpgltools/ directory and perform:
 
-> make
 > make install
 
-The make command will rebuild the documentation strings, run check, build, create vignettes, and run
+If you wish to run some tests and (re)build the documentation:
+
+> make
+
+This rebuilds the documentation strings, runs check, build, create vignettes, and runs
 the tests.  make install does what it says on the tin.
 
 Instead, one may perform:
 
-> make prereq to install some datasets and helpers
+> make prereq
 
 or
 
