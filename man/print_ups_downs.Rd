@@ -5,7 +5,7 @@
 \title{Reprint the output from extract_significant_genes().}
 \usage{
 print_ups_downs(upsdowns, wb = NULL, excel = "excel/significant_genes.xlsx",
-  according = "limma", summary_count = 1)
+  csv = NULL, according = "limma", summary_count = 1)
 }
 \arguments{
 \item{upsdowns}{Output from extract_significant_genes().}
