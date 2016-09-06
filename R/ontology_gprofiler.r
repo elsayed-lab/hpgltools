@@ -466,7 +466,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         new_row <- 1
         sheet <- "mirna"
         openxlsx::addWorksheet(wb, sheetName=sheet)
-        react_data <- gprofiler_result[["mi"]]
+        mi_data <- gprofiler_result[["mi"]]
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -485,7 +485,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         new_row <- 1
         sheet <- "corum"
         openxlsx::addWorksheet(wb, sheetName=sheet)
-        react_data <- gprofiler_result[["corum"]]
+        corum_data <- gprofiler_result[["corum"]]
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
