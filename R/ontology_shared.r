@@ -23,7 +23,7 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
     metadf <- NULL
     gene_list <- gene_list[complete.cases(gene_list)]  ## Translating to ENTREZIDs sometimes introduces NAs which messes up the following operations.
     for (c in 1:length(possible_types)) {
-        ty <- types[c]
+        ty <- possible_types[c]
         chosen_column <- ids[c]
         test_string <- paste0("testing <- ", ty, "(tmpdb)")
         eval(parse(text=test_string))
