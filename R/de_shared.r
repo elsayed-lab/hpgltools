@@ -688,6 +688,7 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
     return(ret)
 }
 
+extract_siggenes <- function(...) { extract_significant_genes(...) }
 #' Extract the sets of genes which are significantly up/down regulated
 #' from the combined tables.
 #'
