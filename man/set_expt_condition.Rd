@@ -15,12 +15,14 @@ set_expt_condition(expt, fact, ids = NULL, ...)
 }
 \value{
 expt Send back the expt with some new metadata
-#' \dontrun{
- expt = set_expt_condition(big_expt, factor=c(some,stuff,here))")
-}
 }
 \description{
 When exploring differential analyses, it might be useful to play with the conditions/batches of
 the experiment.  Use this to make that easier.
+}
+\examples{
+\dontrun{
+ expt = set_expt_condition(big_expt, factor=c(some,stuff,here))
+}
 }
 

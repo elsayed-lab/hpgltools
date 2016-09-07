@@ -275,10 +275,10 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
 #' pretty = combine_de_tables(big_result, table='t12_vs_t0')
 #' }
 #' @export
-combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
+combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
                               excel_sheet="combined_DE", keepers="all",
-                              include_basic=TRUE, add_plots=TRUE, plot_dim=6) {
+                              include_basic=TRUE, add_plots=TRUE, plot_dim=6, compare_plots=TRUE) {
     ## The ontology_shared function which creates multiple sheets works a bit differently
     ## It creates all the tables, then does a createWorkbook()
     ## Does a createWorkbook() / addWorksheet()
@@ -288,6 +288,16 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     deseq <- all_pairwise_result[["deseq"]]
     edger <- all_pairwise_result[["edger"]]
     basic <- all_pairwise_result[["basic"]]
+
+    csv_basename <- NULL
+    if (!is.null(csv)) {
+        if (is.null(excel)) {
+            csv_basename <- "excel/csv_export"
+        } else {
+            csv_basename <- excel
+            csv_basename <- gsub(pattern="\\.xlsx", replacement="", x=csv_basename)
+        }
+    }
 
     wb <- NULL
     if (!is.null(excel)) {
@@ -483,6 +493,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             oddness = summary(ddd) ## until I did this I was getting errors I am guessing devtools::load_all() isn't clearing everything
             final_excel_title <- gsub(pattern='YYY', replacement=tab, x=excel_title)
             xls_result <- write_xls(data=ddd, wb=wb, sheet=tab, title=final_excel_title)
+            if (!is.null(csv)) {
+                csv_filename <- paste0(csv_basename, "_", tab, ".csv")
+                write.csv(x=ddd, file=csv_filename)
+            }
             if (isTRUE(add_plots)) {
                 plot_column <- xls_result[["end_col"]] + 2
                 message(paste0("Attempting to add a coefficient plot for ", names(combo)[[count]], " at column ", plot_column))
@@ -507,52 +521,54 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         count <- count + 1
 
         message("Writing summary information.")
-        ## Add a graph on the final sheet of how similar the result types were
-        comp_summary <- all_pairwise_result[["comparison"]][["comp"]]
-        comp_plot <- all_pairwise_result[["comparison"]][["heat"]]
-        de_summaries <- as.data.frame(de_summaries)
-        rownames(de_summaries) <- table_names
-        xls_result <- write_xls(wb, data=de_summaries, sheet="pairwise_summary",
-                                title="Summary of contrasts.")
-        new_row <- xls_result[["end_row"]] + 2
-        xls_result <- write_xls(wb, data=comp_summary, sheet="pairwise_summary",
-                                title="Pairwise correlation coefficients among differential expression tools.",
-                                start_row=new_row)
-        new_row <- xls_result[["end_row"]] + 2
-        message(paste0("Attempting to add the comparison plot to pairwise_summary at row: ", new_row + 1, " and column: ", 1))
-        print(comp_plot)
-        comp <- recordPlot()
-        openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                             startRow=new_row + 1, startCol=1, fileType="png", units="in")
-        logfc_comparisons <- compare_logfc_plots(combo)
-        logfc_names <- names(logfc_comparisons)
-        new_row <- new_row + 2
-        for (c in 1:length(logfc_comparisons)) {
-            new_row <- new_row + 32
-            le <- logfc_comparisons[[c]][["le"]]
-            ld <- logfc_comparisons[[c]][["ld"]]
-            de <- logfc_comparisons[[c]][["de"]]
-
-            tmpcol <- 1
-            openxlsx::writeData(wb, "pairwise_summary", x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
-                                startRow=new_row - 2, startCol=tmpcol)
-            openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
-            print(le)
+        if (isTRUE(compare_plots)) {
+            ## Add a graph on the final sheet of how similar the result types were
+            comp_summary <- all_pairwise_result[["comparison"]][["comp"]]
+            comp_plot <- all_pairwise_result[["comparison"]][["heat"]]
+            de_summaries <- as.data.frame(de_summaries)
+            rownames(de_summaries) <- table_names
+            xls_result <- write_xls(wb, data=de_summaries, sheet="pairwise_summary",
+                                    title="Summary of contrasts.")
+            new_row <- xls_result[["end_row"]] + 2
+            xls_result <- write_xls(wb, data=comp_summary, sheet="pairwise_summary",
+                                    title="Pairwise correlation coefficients among differential expression tools.",
+                                    start_row=new_row)
+            new_row <- xls_result[["end_row"]] + 2
+            message(paste0("Attempting to add the comparison plot to pairwise_summary at row: ", new_row + 1, " and column: ", 1))
+            print(comp_plot)
+            comp <- recordPlot()
             openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                 startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                                 startRow=new_row + 1, startCol=1, fileType="png", units="in")
+            logfc_comparisons <- compare_logfc_plots(combo)
+            logfc_names <- names(logfc_comparisons)
+            new_row <- new_row + 2
+            for (c in 1:length(logfc_comparisons)) {
+                new_row <- new_row + 32
+                le <- logfc_comparisons[[c]][["le"]]
+                ld <- logfc_comparisons[[c]][["ld"]]
+                de <- logfc_comparisons[[c]][["de"]]
 
-            tmpcol <- 8
-            openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. DESeq2)", startRow=new_row - 1, startCol=tmpcol)
-            print(ld)
-            openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                 startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                tmpcol <- 1
+                openxlsx::writeData(wb, "pairwise_summary", x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
+                                    startRow=new_row - 2, startCol=tmpcol)
+                openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
+                print(le)
+                openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                     startRow=new_row, startCol=tmpcol, fileType="png", units="in")
 
-            tmpcol <- 15
-            openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(DESeq2 vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
-            print(de)
-            openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                 startRow=new_row, startCol=tmpcol, fileType="png", units="in")
-        }
+                tmpcol <- 8
+                openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. DESeq2)", startRow=new_row - 1, startCol=tmpcol)
+                print(ld)
+                openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                     startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+
+                tmpcol <- 15
+                openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(DESeq2 vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
+                print(de)
+                openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                     startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+            }
+        } ## End if compare_plots is TRUE
         message("Performing save of the workbook.")
         openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     }
@@ -710,7 +726,7 @@ extract_siggenes <- function(...) { extract_significant_genes(...) }
 #' @export
 extract_significant_genes <- function(combined, according_to="all", fc=1.0,
                                       p=0.05, z=NULL, n=NULL, p_type="adj",
-                                      excel="excel/significant_genes.xlsx") {
+                                      excel="excel/significant_genes.xlsx", csv=NULL) {
     if (!is.null(combined[["plots"]])) {
         combined <- combined[["data"]]
     }
@@ -736,6 +752,7 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0,
     if (according_to == "all") {
         according_to <- c("limma","edger","deseq","basic")
     }
+
     wb <- openxlsx::createWorkbook(creator="hpgltools")
     ret <- list()
     summary_count <- 0
@@ -782,12 +799,12 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0,
             message("Not printing excel sheets for the significant genes.")
         } else {
             message(paste0("Printing significant genes to the file: ", excel))
-            xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according, summary_count=summary_count)
+            xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according, summary_count=summary_count, csv=csv)
             wb <- xlsx_ret[["workbook"]]
         }
     } ## End list of according_to's
     if (!is.null(excel)) {
-        openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
+        excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
     }
     return(ret)
 }
@@ -805,9 +822,19 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0,
 #' @return Return from write_xls.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx", according="limma", summary_count=1) {
+print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx", csv=NULL,
+                            according="limma", summary_count=1) {
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
+    }
+    csv_basename <- NULL
+    if (!is.null(csv)) {
+        if (is.null(excel)) {
+            csv_basename <- "excel/csv_export"
+        } else {
+            csv_basename <- excel
+            csv_basename <- gsub(pattern="\\.xlsx", replacement="", x=csv_basename)
+        }
     }
     ups <- upsdowns[["ups"]]
     downs <- upsdowns[["downs"]]
@@ -820,6 +847,10 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     num_tables <- length(names(ups))
     summary_start <- ((num_tables + 2) * summary_count) + 1
     xls_summary_result <- write_xls(wb, data=summary, start_col=2, start_row=summary_start, sheet="number_changed_genes", title=summary_title)
+    if (!is.null(csv)) {
+        csv_filename <- paste0(csv_basename, "_num_changed.csv")
+        write.csv(x=summary, file=csv_filename)
+    }
     for (base_name in names(ups)) {
         table_count <- table_count + 1
         up_name <- paste0("up_", table_count, according, "_", base_name)
@@ -832,7 +863,13 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
         xls_result <- write_xls(data=up_table, wb=wb, sheet=up_name, title=up_title)
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", down_name))
         xls_result <- write_xls(data=down_table, wb=wb, sheet=down_name, title=down_title)
-    }
+        if (!is.null(csv)) {
+            csv_filename <- paste0(csv_basename, "_", up_name, ".csv")
+            write.csv(x=up_table, file=csv_filename)
+            csv_filename <- paste0(csv_basename, "_", down_name, ".csv")
+            write.csv(x=down_table, file=csv_filename)
+        }
+    } ## End for each name in ups
     message("Writing changed genes summary on last sheet.")
     return(xls_result)
 }

@@ -72,7 +72,7 @@ goseq_table <- function(df, file=NULL) {
 #' @param add_plots Include some pvalue plots in the excel output?
 #' @return The result from openxlsx
 #' @export
-write_new_goseq_xlsx <- function(goseq, file="excel/goseq.xlsx", pval=0.1, add_plots=TRUE) {
+write_goseq_data <- function(goseq, file="excel/goseq.xlsx", pval=0.1, add_plots=TRUE) {
     excel_dir <- dirname(file)
     if (!file.exists(excel_dir)) {
         dir.create(excel_dir, recursive=TRUE)

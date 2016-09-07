@@ -2,23 +2,42 @@
 % Please edit documentation in R/expt.r
 \name{set_expt_colors}
 \alias{set_expt_colors}
-\title{Change the colors of an expt}
+\title{Change the colors of an expt!}
 \usage{
+set_expt_colors(expt, colors = TRUE, chosen_palette = "Dark2")
+
 set_expt_colors(expt, colors = TRUE, chosen_palette = "Dark2")
 }
 \arguments{
+\item{expt}{Expt to modify.}
+
+\item{colors}{New color list.}
+
+\item{ids}{Specific ids to change.}
+
+\item{...}{Arguments passed along (likely colors)}
+
 \item{expt}{Expt to modify}
 
 \item{colors}{colors to replace}
 }
 \value{
 expt Send back the expt with some new metadata
-#' \dontrun{
- expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
-}
+
+expt Send back the expt with some new metadata
 }
 \description{
+After fiddling with conditions/batches, one might want to change the colors.
+
 When exploring differential analyses, it might be useful to play with the conditions/batches of
 the experiment.  Use this to make that easier.
+}
+\examples{
+\dontrun{
+ expt = set_expt_colors(big_expt)  ## This will call rcolorbrewer again
+}
+\dontrun{
+ expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
+}
 }
 

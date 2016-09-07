@@ -335,11 +335,23 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     return(pval_plots)
 }
 
-write_gprofiler_data <- function(gprofiler_result, wb=NULL, filename="excel/gprofiler_result.xlsx", add_plots=TRUE, ...) {
+
+#' Write some excel results from a gprofiler search.
+#'
+#' Gprofiler is pretty awesome.  This function will attempt to write its results to an excel file.
+#'
+#' @param gprofiler_result  The result from simple_gprofiler().
+#' @param wb  Optional workbook object, if you wish to append to an existing workbook.
+#' @param excel  Excel file to which to write.
+#' @param add_plots  Add some pvalue plots?
+#' @export
+write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofiler_result.xlsx", add_plots=TRUE, ...) {
     arglist <- list(...)
-    if (is.null(table_style)) {
-        table_style <- "TableStyleMedium9"
+    table_style <- "TableStyleMedium9"
+    if (!is.null(arglist[["table_style"]])) {
+        table_style <- arglist[["TableStyleMedium9"]]
     }
+
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="atb")
         hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
@@ -454,7 +466,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, filename="excel/gpro
         new_row <- 1
         sheet <- "mirna"
         openxlsx::addWorksheet(wb, sheetName=sheet)
-        react_data <- gprofiler_result[["mi"]]
+        mi_data <- gprofiler_result[["mi"]]
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -473,7 +485,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, filename="excel/gpro
         new_row <- 1
         sheet <- "corum"
         openxlsx::addWorksheet(wb, sheetName=sheet)
-        react_data <- gprofiler_result[["corum"]]
+        corum_data <- gprofiler_result[["corum"]]
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -488,6 +500,10 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, filename="excel/gpro
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking tf data
 
+    if (!is.null(excel)) {
+        excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+    }
+    return(excel_ret)
 }
 
 ## EOF

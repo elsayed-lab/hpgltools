@@ -324,17 +324,19 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     return(expt)
 }
 
-get_expt_condcolors <- function(expt) {
-    new <- expt[["colors"]]
-    names(new) <- expt[["conditions"]]
-    new_unique <- NULL
-    for (i in 1:length(names(new))) {
-        name <- names(new)[[i]]
-        new_unique[name] <- new[[i]]
-    }
-    return(new_unique)
-}
-
+#' Change the colors of an expt!
+#'
+#' After fiddling with conditions/batches, one might want to change the colors.
+#'
+#' @param expt  Expt to modify.
+#' @param colors  New color list.
+#' @param ids  Specific ids to change.
+#' @param ... Arguments passed along (likely colors)
+#' @return expt Send back the expt with some new metadata
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_colors(big_expt)  ## This will call rcolorbrewer again
+#' }
 #' @export
 set_expt_colors <- function(expt, colors=NULL, ids=NULL, ...) {
     arglist <- list(...)
@@ -387,7 +389,8 @@ set_expt_colors <- function(expt, colors=NULL, ids=NULL, ...) {
 #' @param batch New batch factor
 #' @param ... Arguments passed along (likely colors)
 #' @return expt Send back the expt with some new metadata
-#' #' \dontrun{
+#' @examples
+#' \dontrun{
 #'  expt = set_expt_factors(big_expt, condition="column", batch="another_column")
 #' }
 #' @export
@@ -411,14 +414,18 @@ set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
 #' @param factor Conditions to replace
 #' @param colors Reset the set of colors (Give a factor if you want to choose your own).
 #' @return expt Send back the expt with some new metadata
-#' #' \dontrun{
-#'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))")
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
 set_expt_condition <- function(expt, fact, ids=NULL, ...) {
     arglist <- list(...)
     original_conditions <- expt[["conditions"]]
     original_length <- length(original_conditions)
+    new_expt <- expt  ## Explicitly copying expt to new_expt
+    ## because when I run this as a function call() it seems to be not properly setting the conditions
+    ## and I do not know why.
     if (!is.null(ids)) {
         ## Change specific id(s) to given condition(s).
         old_pdata <- Biobase::pData(expt[["expressionset"]])
@@ -429,38 +436,44 @@ set_expt_condition <- function(expt, fact, ids=NULL, ...) {
         new_pdata <- old_pdata
         new_pdata[["condition"]] <- as.factor(new_cond)
         Biobase::pData(expt[["expressionset"]]) <- new_pdata
-        expt[["conditions"]][ids] <- fact
-        expt[["design"]][["condition"]] <- new_cond
+        new_expt[["conditions"]][ids] <- fact
+        new_expt[["design"]][["condition"]] <- new_cond
     } else if (length(fact) == 1) {
         ## Assume it is a column in the design
         if (fact %in% colnames(expt[["design"]])) {
-            fact <- expt[["design"]][[fact]]
+            new_fact <- expt[["design"]][[fact]]
+            new_expt[["conditions"]] <- new_fact
+            Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
+            new_expt[["design"]][["condition"]] <- new_fact
         } else {
             stop("The provided factor is not in the design matrix.")
         }
     } else if (length(fact) != original_length) {
             stop("The new factor of conditions is not the same length as the original.")
     } else {
-        expt[["conditions"]] <- fact
-        Biobase::pData(expt[["expressionset"]])[["condition"]] <- fact
-        expt[["design"]][["condition"]] <- fact
+        new_expt[["conditions"]] <- fact
+        Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- fact
+        new_expt[["design"]][["condition"]] <- fact
     }
 
-    tmp_expt <- set_expt_colors(expt)
+    tmp_expt <- set_expt_colors(new_expt)
+    rm(new_expt)
     return(tmp_expt)
 }
 
-#' Change the batches of an expt
+#' Change the batches of an expt.
 #'
 #' When exploring differential analyses, it might be useful to play with the conditions/batches of
 #' the experiment.  Use this to make that easier.
 #'
-#' @param expt Expt to modify
-#' @param factor Batches to replace
-
-#' @return expt Send back the expt with some new metadata
-#' #' \dontrun{
-#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
+#' @param expt  Expt to modify.
+#' @param factor  Batches to replace.
+#' @param ids  Specific samples to change.
+#' @param ...  Extra options are like spinach.
+#' @return  The original expt with some new metadata.
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
 set_expt_batch <- function(expt, fact, ids=NULL, ...) {
@@ -493,8 +506,9 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' @param expt Expt to modify
 #' @param colors colors to replace
 #' @return expt Send back the expt with some new metadata
-#' #' \dontrun{
-#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
 set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {

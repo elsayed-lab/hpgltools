@@ -561,9 +561,9 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
 
     pca_variance <- round((positives ^ 2) / sum(positives ^2) * 100, 2)
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
-    print(xl)
+    ##print(xl)
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
-    print(yl)
+    ##print(yl)
 
     pca_data <- data.frame(
         "sampleid" = rownames(expt_design),
