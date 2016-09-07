@@ -204,7 +204,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
                                                             paste, collapse="\n"))
     }
     if (nrow(plotting_kegg_over) > 0) {
-        kegg_pval_plot <- plot_ontpval(plotting_kegg_over, ont="KEGG")
+        kegg_pval_plot <- plot_ontpval(plotting_kegg_over, ontology="KEGG")
     }
 
     plotting_reactome_over <- reactome_pval_plot <- NULL
@@ -225,7 +225,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
                                                             paste, collapse="\n"))
     }
     if (nrow(plotting_reactome_over) > 0) {
-        reactome_pval_plot <- plot_ontpval(plotting_reactome_over, ont="Reactome")
+        reactome_pval_plot <- plot_ontpval(plotting_reactome_over, ontology="Reactome")
     }
 
     plotting_tf_over <- tf_pval_plot <- NULL
@@ -246,7 +246,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
                                                           paste, collapse="\n"))
     }
     if (nrow(plotting_tf_over) > 0) {
-        tf_pval_plot <- plot_ontpval(plotting_tf_over, ont="TF")
+        tf_pval_plot <- plot_ontpval(plotting_tf_over, ontology="TF")
     }
 
     plotting_mi_over <- mi_pval_plot <- NULL
@@ -267,7 +267,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
                                                           paste, collapse="\n"))
     }
     if (nrow(plotting_mi_over) > 0) {
-        mi_pval_plot <- plot_ontpval(plotting_mi_over, ont="miRNAs")
+        mi_pval_plot <- plot_ontpval(plotting_mi_over, ontology="miRNAs")
     }
 
     plotting_corum_over <- corum_pval_plot <- NULL
@@ -288,7 +288,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
                                                              paste, collapse="\n"))
     }
     if (nrow(plotting_corum_over) > 0) {
-        corum_pval_plot <- plot_ontpval(plotting_corum_over, ont="corum")
+        corum_pval_plot <- plot_ontpval(plotting_corum_over, ontology="corum")
     }
 
     plotting_hp_over <- hp_pval_plot <- NULL
@@ -309,7 +309,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
                                                           paste, collapse="\n"))
     }
     if (nrow(plotting_hp_over) > 0) {
-        hp_pval_plot <- plot_ontpval(plotting_hp_over, ont="hp")
+        hp_pval_plot <- plot_ontpval(plotting_hp_over, ontology="hp")
     }
 
     pval_plots <- list(

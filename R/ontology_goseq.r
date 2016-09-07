@@ -463,7 +463,8 @@ gather_goseq_genes <- function(goseq_data, ontology=NULL, pval=0.1, include_all=
     cats <- rownames(categories)
     godf <- goseq_data[["godf"]]
     genes_per_ont <- function(cat) {
-        all_entries <- subset(godf, GO==cat)[["ID"]]
+        ## all_entries <- subset(godf, GO==cat)[["ID"]]
+        all_entries <- godf[, godf[["GO"]] == cat, ][["ID"]]
         entries_in_input <- input[ rownames(input) %in% all_entries, ]
         names <- toString(as.character(rownames(entries_in_input)))
         all <- toString(all_entries)

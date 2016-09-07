@@ -80,8 +80,7 @@ bioc_all <- function(release="3.4", mirror="bioc.ism.ac.jp", base="packages", ty
         annotation_installed <- bioc_all(release=release, mirror=mirror, base=base, type="annotation")
         installed <- list(
             "software" = software_installed,
-            "annotation" = annotation_installed,
-            "experiment" = experiment_installed)
+            "annotation" = annotation_installed)
     }
     return(installed)
 }

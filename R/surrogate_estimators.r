@@ -310,7 +310,6 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, do_catplots=FA
         if (isTRUE(do_catplots)) {
             if (!isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
                 ## ffpe has some requirements which do not install all the time.
-                autoloads_github()
                 require.auto("ffpe")
             }
             if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {

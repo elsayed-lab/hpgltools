@@ -1,3 +1,8 @@
+#' @export
+local_get_value <- function(x) {
+    return(gsub("^ ","", tail(unlist(strsplit(x, ": ")), n=1), fixed=TRUE))
+}
+
 #' TriTrypDB gene information table parser
 #'
 #' An example input file is the T. brucei Lister427 gene information table
@@ -10,10 +15,6 @@
 #' @return Returns a dataframe of gene info.
 parse_gene_info_table <- function(file, verbose=FALSE) {
     ## Create empty vector to store dataframe rows
-    local_get_value <- function(x) {
-        return(gsub("^ ","", tail(unlist(strsplit(x, ": ")), n=1), fixed=TRUE))
-    }
-
     N <- 1e5
     go_rows <- data.frame("GO" = rep("", N),
                           "ONTOLOGY" = rep("", N),
@@ -181,7 +182,7 @@ parse_gene_go_terms <- function (filepath, verbose=FALSE) {
     while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
         # Gene ID
         if(grepl("^Gene ID", x)) {
-            gene_id <- .get_value(x)
+            gene_id <- local_get_value(x)
             if (verbose) {
                 print(sprintf('Processing gene %d: %s', i, gene_id))
             }

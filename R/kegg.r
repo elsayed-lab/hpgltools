@@ -65,7 +65,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
     for (sub_count in 1:length(from_list)) {
         my_from <- from_list[[sub_count]]
         my_to <- to_list[[sub_count]]
-        tmp_names <- gsub(pattern=my_from, replace=my_to, x=tmp_names, perl=TRUE)
+        tmp_names <- gsub(pattern=my_from, replacement=my_to, x=tmp_names, perl=TRUE)
     }
     ## tmp_names = gsub("\\.","_", tmp_names)
     names(path_data) <- tmp_names
@@ -104,7 +104,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         limit_min <- -1.0 * max(limit_test)
         limit_max <- max(limit_test)
         limits <- c(limit_min, limit_max)
-        example_string <- gsub(pattern=paste0(species, ":"), replace="", x=toString(head(gene_examples)))
+        example_string <- gsub(pattern=paste0(species, ":"), replacement="", x=toString(head(gene_examples)))
         if (isTRUE(verbose)) {
             message(paste0("Here are some path gene examples: ", example_string))
             message(paste0("Here are your genes: ", toString(head(names(path_data)))))
@@ -471,16 +471,16 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
             message(paste0(count, "/", last_path, ": The path: ", path_names[count], " was written to ", filenames[count], " and has ", pct_nodes[count], "% nodesdiff ", pct_edges[count], "% edgesdiff."))
         }
     }
-    path_data <- as.data.frame(cbind(path_ids, path_names, filenames, percentages, path_nodes, diff_nodes))
+    path_data <- as.data.frame(cbind(path_ids, path_names, filenames, pct_nodes, pct_edges, path_nodes, diff_nodes, path_edges, diff_edges))
     colnames(path_data) <- c("pathway","path_name","filename","percent","all_nodes","diff_nodes")
     path_data[["pathway"]] <- as.character(path_data[["pathway"]])
     path_data[["path_name"]] <- as.character(path_data[["path_name"]])
     path_data[["filename"]] <- as.character(path_data[["filename"]])
     path_data[["pct_nodes"]] <- as.numeric(path_data[["pct_nodes"]])
     path_data[["pct_edges"]] <- as.numeric(path_data[["pct_edges"]])
-    path_data[["all_nodes"]] <- as.character(path_data[["all_nodes"]])
+    path_data[["all_nodes"]] <- as.character(path_data[["path_nodes"]])
     path_data[["diff_nodes"]] <- as.character(path_data[["diff_nodes"]])
-    path_data[["all_edges"]] <- as.character(path_data[["all_edges"]])
+    path_data[["all_edges"]] <- as.character(path_data[["path_edges"]])
     path_data[["diff_edges"]] <- as.character(path_data[["diff_edges"]])
     return(path_data)
 }

@@ -465,7 +465,7 @@ make_orgdb_info <- function(gff, txt, kegg=TRUE) {
 #'         appear on multiple lines.
 #' @export
 parse_go_terms <- function(filepath) {
-    if (file_ext(filepath) == 'gz') {
+    if (tools::file_ext(filepath) == 'gz') {
         fp = gzfile(filepath, open='rb')
     } else {
         fp = file(filepath, open='r')
@@ -486,7 +486,7 @@ parse_go_terms <- function(filepath) {
     while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
         # Gene ID
         if(grepl("^Gene ID", x)) {
-            gene_id = .get_value(x)
+            gene_id = local_get_value(x)
             i = i + 1
         }
 
@@ -525,7 +525,7 @@ parse_go_terms <- function(filepath) {
 #' @return Returns a dataframe where each line includes a gene/domain pairs.
 #' @export
 parse_interpro_domains <- function(filepath) {
-    if (file_ext(filepath) == 'gz') {
+    if (tools::file_ext(filepath) == 'gz') {
         fp = gzfile(filepath, open='rb')
     } else {
         fp = file(filepath, open='r')
@@ -547,7 +547,7 @@ parse_interpro_domains <- function(filepath) {
     while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
         # Gene ID
         if(grepl("^Gene ID", x)) {
-            gene_id = .get_value(x)
+            gene_id = local_get_value(x)
         }
 
         # Parse InterPro table

@@ -465,7 +465,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
         ggplot2::ylab("log fold change") +
         ggplot2::theme_bw()
     if (!is.null(gvis_filename)) {
-        plot_gvis_ma(counts, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
+        plot_gvis_ma(df, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
     }
     return(plt)
 }

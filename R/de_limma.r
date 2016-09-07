@@ -605,7 +605,7 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
     } else {
         an_ma_plot <- plot_ma(expt_voom[["E"]], cond_table)
     }
-    write_xls(cond_table, sheet, file=workbook, rowname="row.names")
+    write_xls(cond_table, sheet, file=workbook, rownames="row.names")
     ## upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
     upsignificant_table <- cond_table[ which(cond_table[["logFC"]] >= logfc_cutoff), ]
     ## downsignificant_table = subset(cond_table, logFC <= (-1 * logfc_cutoff))
