@@ -1,4 +1,3 @@
-
 #' Make a MA plot of some limma output with pretty colors and shapes
 #'
 #' Yay pretty colors and shapes!

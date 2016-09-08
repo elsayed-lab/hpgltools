@@ -61,3 +61,35 @@ test_that("Are the goseq results as expected (cc pvalues)?", {
 })
 
 ##}
+
+
+
+
+## Some testing of an interesting point by keith:
+## I've been trying to figure out why goseq is giving me a different gene/term mapping that the one I create myself.
+## I think I finally tracked it down to this:
+##    #Because GO is a directed graph, we need to get not just the genes associated with each ID,
+##    #but also those associated with its children.  GO2ALLEGS does this.
+## in: https://github.com/Bioconductor-mirror/goseq/blob/master/R/getgo.R
+##
+## I know you aren't really using goseq much these days, but I just wanted to run this by you.
+## Does this seem right to you?
+## The result is that goseq associates a bunch of genes with each go term which aren't actually directly associated with that term.
+## So when I think there are 25 genes that have the annotation "immune response", goseq will think there are 75.
+## This was not my understanding of how enrichment analysis works. Have I just been mistaken this whole time?
+## Keith
+
+## With that in mind, lets test some ontologies:
+
+
+```{r testing_ontologies_parents}
+library(GO.db)
+goont("GO:0005576")
+golev("GO:0005576")
+goont("GO:0048067")
+golev("GO:0048067")
+goont("GO:0016853")
+golev("GO:0016853")
+goont("GO:0042438")
+golev("GO:0042438")
+```
