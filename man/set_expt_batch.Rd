@@ -9,11 +9,11 @@ set_expt_batch(expt, fact, ids = NULL, ...)
 \arguments{
 \item{expt}{Expt to modify.}
 
+\item{fact}{Batches to replace using this factor.}
+
 \item{ids}{Specific samples to change.}
 
 \item{...}{Extra options are like spinach.}
-
-\item{factor}{Batches to replace.}
 }
 \value{
 The original expt with some new metadata.

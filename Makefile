@@ -27,7 +27,7 @@ test: install
 
 roxygen:
 	@echo "Generating documentation with roxygen2::roxygenize()"
-	@Rscript -e "roxygen2::roxygenize()"
+	@Rscript -e "suppressPackageStartupMessages(roxygen2::roxygenize())"
 
 vignette:
 	@echo "Building vignettes with devtools::build_vignettes()"
@@ -49,7 +49,7 @@ clean:
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
 
 prereq:
-	Rscript -e "suppressMessages(source('http://bioconductor.org/biocLite.R'));\
+	@Rscript -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
 bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr');\
 for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocLite(req) } };\
 ## hahaha looks like lisp!"

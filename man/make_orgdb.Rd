@@ -18,6 +18,8 @@ the user.}
 \item{kegg}{Attempt adding kegg data?}
 
 \item{output_dir}{Base output directory for the resulting packages.}
+
+\item{...}{Args to pass through.}
 }
 \value{
 List of the resulting package name(s) and whether they installed.

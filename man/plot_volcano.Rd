@@ -6,7 +6,7 @@
 \usage{
 plot_volcano(toptable_data, tooltip_data = NULL, gvis_filename = NULL,
   fc_cutoff = 0.8, p_cutoff = 0.05, size = 2, alpha = 0.6,
-  xaxis_column = "logFC", yaxis_column = "P.Value", modify_y = TRUE, ...)
+  xaxis_column = "logFC", yaxis_column = "P.Value", ...)
 }
 \arguments{
 \item{toptable_data}{Dataframe from limma's toptable which includes log(fold change) and an

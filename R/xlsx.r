@@ -8,6 +8,7 @@
 #' @param data Data frame to print.
 #' @param wb Workbook to which to write.
 #' @param sheet Name of the sheet to write.
+#' @param rownames  Include row names in the output?
 #' @param start_row First row of the sheet to write. Useful if writing multiple tables.
 #' @param start_col First column to write.
 #' @param ...  Set of extra arguments given to openxlsx.

@@ -4,6 +4,8 @@
 #'
 #' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
 #' @param table  Result from limma to use, left alone it chooses the first.
+#' @param expr_col  Column for the average data.
+#' @param fc_col  Column for logFC data.
 #' @param p_col  Column to use for p-value data.
 #' @return a plot!
 #' @seealso \link{plot_ma_de}
@@ -12,7 +14,7 @@
 #'   prettyplot <- limma_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-limma_ma <- function(output, table=NULL, p_col="adj.P.Val") {
+limma_ma <- function(output, table=NULL, p_col="adj.P.Val", expr_col="AveExpr", fc_col="logFC") {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
@@ -25,7 +27,7 @@ limma_ma <- function(output, table=NULL, p_col="adj.P.Val") {
     }
 
     de_genes <- output[["all_tables"]][[table]]
-    plot <- plot_ma_de(table=de_genes, expr_col="AveExpr", fc_col="logFC", p_col=p_col)
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col)
     return(plot)
 }
 

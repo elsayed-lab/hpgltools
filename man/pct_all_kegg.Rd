@@ -18,6 +18,8 @@ pct_all_kegg(all_ids, sig_ids, organism = "dme", pathways = "all",
 
 \item{pathdir}{Directory into which to copy downloaded pathway files.}
 
+\item{verbose}{Talky talky?}
+
 \item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{

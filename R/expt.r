@@ -324,228 +324,6 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     return(expt)
 }
 
-#' Change the colors of an expt!
-#'
-#' After fiddling with conditions/batches, one might want to change the colors.
-#'
-#' @param expt  Expt to modify.
-#' @param colors  New color list.
-#' @param ids  Specific ids to change.
-#' @param ... Arguments passed along (likely colors)
-#' @return expt Send back the expt with some new metadata
-#' @examples
-#' \dontrun{
-#'  expt = set_expt_colors(big_expt)  ## This will call rcolorbrewer again
-#' }
-#' @export
-set_expt_colors <- function(expt, colors=NULL, ids=NULL, ...) {
-    arglist <- list(...)
-    chosen_palette <- "Dark2"
-    if (!is.null(arglist[["chosen_palette"]])) {
-        chosen_palette <- arglist[["chosen_palette"]]
-    }
-    conditions <- expt[["conditions"]]
-    if (is.null(conditions) & !is.null(arglist[["conditions"]])) {
-        conditions <- arglist[["conditions"]]
-    } else if (is.null(conditions) & !is.null(expt[["design"]])) {
-        conditions <- expt[["design"]][["condition"]]
-    } else if (is.null(conditions)) {
-        warning("Unable to discern the number of conditions in the expt.")
-        warning("Choosing 1 color for each sample.")
-        conditions <- rownames(Biobase::pData(expt$expressionset))
-    }
-    num_conditions <- length(levels(as.factor(conditions)))
-    chosen_colors <- as.character(conditions)
-
-    if (is.null(colors)) {
-        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
-            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
-        mapping <- setNames(sample_colors, unique(chosen_colors))
-        chosen_colors <- mapping[chosen_colors]
-        expt[["colors"]] <- chosen_colors
-    } else if (class(colors) == "character" | class(colors) == "factor") {
-        current <- levels(as.factor(expt[["colors"]]))
-        if (length(current) == length(colors)) {
-            for (c in 1:length(current)) {
-                cur <- current[[c]]
-                new <- colors[[c]]
-                expt[["colors"]] <- gsub(pattern=cur, replacement=new, x=expt[["colors"]])
-            }
-        } else {
-                warning("The numbers of colors do not match, using ColorBrewer to generate colors.")
-                expt <- set_expt_colors(expt, colors=NULL)
-            }
-        }
-    return(expt)
-}
-
-#' Change the factors (condition and batch) of an expt
-#'
-#' When exploring differential analyses, it might be useful to play with the conditions/batches of
-#' the experiment.  Use this to make that easier.
-#'
-#' @param expt Expt to modify
-#' @param condition New condition factor
-#' @param batch New batch factor
-#' @param ... Arguments passed along (likely colors)
-#' @return expt Send back the expt with some new metadata
-#' @examples
-#' \dontrun{
-#'  expt = set_expt_factors(big_expt, condition="column", batch="another_column")
-#' }
-#' @export
-set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
-    arglist <- list(...)
-    if (!is.null(condition)) {
-        expt <- set_expt_condition(expt, fact=condition, ...)
-    }
-    if (!is.null(batch)) {
-        expt <- set_expt_batch(expt, fact=batch, ...)
-    }
-    return(expt)
-}
-
-#' Change the condition of an expt
-#'
-#' When exploring differential analyses, it might be useful to play with the conditions/batches of
-#' the experiment.  Use this to make that easier.
-#'
-#' @param expt Expt to modify
-#' @param factor Conditions to replace
-#' @param colors Reset the set of colors (Give a factor if you want to choose your own).
-#' @return expt Send back the expt with some new metadata
-#' @examples
-#' \dontrun{
-#'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))
-#' }
-#' @export
-set_expt_condition <- function(expt, fact, ids=NULL, ...) {
-    arglist <- list(...)
-    original_conditions <- expt[["conditions"]]
-    original_length <- length(original_conditions)
-    new_expt <- expt  ## Explicitly copying expt to new_expt
-    ## because when I run this as a function call() it seems to be not properly setting the conditions
-    ## and I do not know why.
-    if (!is.null(ids)) {
-        ## Change specific id(s) to given condition(s).
-        old_pdata <- Biobase::pData(expt[["expressionset"]])
-        old_cond <- as.character(old_pdata[["condition"]])
-        names(old_cond) <- rownames(old_pdata)
-        new_cond <- old_cond
-        new_cond[ids] <- fact
-        new_pdata <- old_pdata
-        new_pdata[["condition"]] <- as.factor(new_cond)
-        Biobase::pData(expt[["expressionset"]]) <- new_pdata
-        new_expt[["conditions"]][ids] <- fact
-        new_expt[["design"]][["condition"]] <- new_cond
-    } else if (length(fact) == 1) {
-        ## Assume it is a column in the design
-        if (fact %in% colnames(expt[["design"]])) {
-            new_fact <- expt[["design"]][[fact]]
-            new_expt[["conditions"]] <- new_fact
-            Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
-            new_expt[["design"]][["condition"]] <- new_fact
-        } else {
-            stop("The provided factor is not in the design matrix.")
-        }
-    } else if (length(fact) != original_length) {
-            stop("The new factor of conditions is not the same length as the original.")
-    } else {
-        new_expt[["conditions"]] <- fact
-        Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- fact
-        new_expt[["design"]][["condition"]] <- fact
-    }
-
-    tmp_expt <- set_expt_colors(new_expt)
-    rm(new_expt)
-    return(tmp_expt)
-}
-
-#' Change the batches of an expt.
-#'
-#' When exploring differential analyses, it might be useful to play with the conditions/batches of
-#' the experiment.  Use this to make that easier.
-#'
-#' @param expt  Expt to modify.
-#' @param factor  Batches to replace.
-#' @param ids  Specific samples to change.
-#' @param ...  Extra options are like spinach.
-#' @return  The original expt with some new metadata.
-#' @examples
-#' \dontrun{
-#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
-#' }
-#' @export
-set_expt_batch <- function(expt, fact, ids=NULL, ...) {
-    arglist <- list(...)
-    original_batches <- expt[["batches"]]
-    original_length <- length(original_batches)
-    if (length(fact) == 1) {
-        ## Assume it is a column in the design
-        if (fact %in% colnames(expt[["design"]])) {
-            fact <- expt[["design"]][[fact]]
-        } else {
-            stop("The provided factor is not in the design matrix.")
-        }
-    }
-
-    if (length(fact) != original_length) {
-        stop("The new factor of batches is not the same length as the original.")
-    }
-    expt[["batches"]] <- fact
-    Biobase::pData(expt[["expressionset"]])[["batch"]] <- fact
-    expt[["design"]][["batch"]] <- fact
-    return(expt)
-}
-
-#' Change the colors of an expt
-#'
-#' When exploring differential analyses, it might be useful to play with the conditions/batches of
-#' the experiment.  Use this to make that easier.
-#'
-#' @param expt Expt to modify
-#' @param colors colors to replace
-#' @return expt Send back the expt with some new metadata
-#' @examples
-#' \dontrun{
-#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
-#' }
-#' @export
-set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
-    num_conditions <- length(levels(as.factor(expt[["conditions"]])))
-    num_samples <- nrow(expt[["design"]])
-    sample_ids <- expt[["design"]][["sampleid"]]
-    chosen_colors <- expt[["conditions"]]
-
-    if (is.null(colors) | isTRUE(colors)) {
-        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
-            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
-        mapping <- setNames(sample_colors, unique(chosen_colors))
-        chosen_colors <- mapping[chosen_colors]
-    } else if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
-        chosen_colors <- sample_colors
-    } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
-        mapping <- setNames(sample_colors, unique(chosen_colors))
-        chosen_colors <- mapping[chosen_colors]
-    } else if (is.null(sample_colors)) {
-        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
-            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
-        mapping <- setNames(sample_colors, unique(chosen_colors))
-        chosen_colors <- mapping[chosen_colors]
-    } else {
-        warning("The number of colors provided does not match either the number of conditions nor samples.")
-        warning("Unsure of what to do, so choosing colors with RColorBrewer.")
-        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
-            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
-        mapping <- setNames(sample_colors, unique(chosen_colors))
-        chosen_colors <- mapping[chosen_colors]
-    }
-    names(chosen_colors) <- sample_ids
-
-    expt[["colors"]] <- chosen_colors
-    return(expt)
-}
-
 #' Extract a subset of samples following some rule(s) from an
 #' experiment class.
 #'
@@ -633,7 +411,6 @@ expt_subset <- function(expt, subset=NULL) {
     return(new_expt)
 }
 ## Because I am an idiot.
-# @export
 subset_expt <- function(...) {
     expt_subset(...)
 }
@@ -678,3 +455,214 @@ read_metadata <- function(file, ...) {
     }
     return(definitions)
 }
+
+#' Change the batches of an expt.
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt  Expt to modify.
+#' @param fact  Batches to replace using this factor.
+#' @param ids  Specific samples to change.
+#' @param ...  Extra options are like spinach.
+#' @return  The original expt with some new metadata.
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
+#' }
+#' @export
+set_expt_batch <- function(expt, fact, ids=NULL, ...) {
+    arglist <- list(...)
+    original_batches <- expt[["batches"]]
+    original_length <- length(original_batches)
+    if (length(fact) == 1) {
+        ## Assume it is a column in the design
+        if (fact %in% colnames(expt[["design"]])) {
+            fact <- expt[["design"]][[fact]]
+        } else {
+            stop("The provided factor is not in the design matrix.")
+        }
+    }
+
+    if (length(fact) != original_length) {
+        stop("The new factor of batches is not the same length as the original.")
+    }
+    expt[["batches"]] <- fact
+    Biobase::pData(expt[["expressionset"]])[["batch"]] <- fact
+    expt[["design"]][["batch"]] <- fact
+    return(expt)
+}
+
+#' Change the colors of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param colors colors to replace
+#' @param chosen_palette  I usually use Dark2 as the RColorBrewer palette.
+#' @return expt Send back the expt with some new metadata
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
+#' }
+#' @export
+set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
+    num_conditions <- length(levels(as.factor(expt[["conditions"]])))
+    num_samples <- nrow(expt[["design"]])
+    sample_ids <- expt[["design"]][["sampleid"]]
+    chosen_colors <- expt[["conditions"]]
+
+    if (is.null(colors) | isTRUE(colors)) {
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    } else if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
+        chosen_colors <- sample_colors
+    } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    } else if (is.null(sample_colors)) {
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    } else {
+        warning("The number of colors provided does not match either the number of conditions nor samples.")
+        warning("Unsure of what to do, so choosing colors with RColorBrewer.")
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    }
+    names(chosen_colors) <- sample_ids
+
+    expt[["colors"]] <- chosen_colors
+    return(expt)
+}
+##set_expt_colors <- function(expt, colors=NULL, ids=NULL, ...) {
+##    arglist <- list(...)
+##    chosen_palette <- "Dark2"
+##    if (!is.null(arglist[["chosen_palette"]])) {
+##        chosen_palette <- arglist[["chosen_palette"]]
+##    }
+##    conditions <- expt[["conditions"]]
+##    if (is.null(conditions) & !is.null(arglist[["conditions"]])) {
+##        conditions <- arglist[["conditions"]]
+##    } else if (is.null(conditions) & !is.null(expt[["design"]])) {
+##        conditions <- expt[["design"]][["condition"]]
+##    } else if (is.null(conditions)) {
+##        warning("Unable to discern the number of conditions in the expt.")
+##        warning("Choosing 1 color for each sample.")
+##        conditions <- rownames(Biobase::pData(expt$expressionset))
+##    }
+##    num_conditions <- length(levels(as.factor(conditions)))
+##    chosen_colors <- as.character(conditions)
+##    if (is.null(colors)) {
+##        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+##            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+##        mapping <- setNames(sample_colors, unique(chosen_colors))
+##        chosen_colors <- mapping[chosen_colors]
+##        expt[["colors"]] <- chosen_colors
+##    } else if (class(colors) == "character" | class(colors) == "factor") {
+##        current <- levels(as.factor(expt[["colors"]]))
+##        if (length(current) == length(colors)) {
+##            for (c in 1:length(current)) {
+##                cur <- current[[c]]
+##                new <- colors[[c]]
+##                expt[["colors"]] <- gsub(pattern=cur, replacement=new, x=expt[["colors"]])
+##            }
+##        } else {
+##                warning("The numbers of colors do not match, using ColorBrewer to generate colors.")
+##                expt <- set_expt_colors(expt, colors=NULL)
+##            }
+##        }
+##    return(expt)
+##}
+
+#' Change the condition of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param factor Conditions to replace
+#' @param colors Reset the set of colors (Give a factor if you want to choose your own).
+#' @param ids Specific sample IDs to change.
+#' @return expt Send back the expt with some new metadata
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))
+#' }
+#' @export
+set_expt_condition <- function(expt, fact, ids=NULL, ...) {
+    arglist <- list(...)
+    original_conditions <- expt[["conditions"]]
+    original_length <- length(original_conditions)
+    new_expt <- expt  ## Explicitly copying expt to new_expt
+    ## because when I run this as a function call() it seems to be not properly setting the conditions
+    ## and I do not know why.
+    if (!is.null(ids)) {
+        ## Change specific id(s) to given condition(s).
+        old_pdata <- Biobase::pData(expt[["expressionset"]])
+        old_cond <- as.character(old_pdata[["condition"]])
+        names(old_cond) <- rownames(old_pdata)
+        new_cond <- old_cond
+        new_cond[ids] <- fact
+        new_pdata <- old_pdata
+        new_pdata[["condition"]] <- as.factor(new_cond)
+        Biobase::pData(expt[["expressionset"]]) <- new_pdata
+        new_expt[["conditions"]][ids] <- fact
+        new_expt[["design"]][["condition"]] <- new_cond
+    } else if (length(fact) == 1) {
+        ## Assume it is a column in the design
+        if (fact %in% colnames(expt[["design"]])) {
+            new_fact <- expt[["design"]][[fact]]
+            new_expt[["conditions"]] <- new_fact
+            Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
+            new_expt[["design"]][["condition"]] <- new_fact
+        } else {
+            stop("The provided factor is not in the design matrix.")
+        }
+    } else if (length(fact) != original_length) {
+            stop("The new factor of conditions is not the same length as the original.")
+    } else {
+        new_expt[["conditions"]] <- fact
+        Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- fact
+        new_expt[["design"]][["condition"]] <- fact
+    }
+
+    tmp_expt <- set_expt_colors(new_expt)
+    rm(new_expt)
+    return(tmp_expt)
+}
+
+#' Change the factors (condition and batch) of an expt
+#'
+#' When exploring differential analyses, it might be useful to play with the conditions/batches of
+#' the experiment.  Use this to make that easier.
+#'
+#' @param expt Expt to modify
+#' @param condition New condition factor
+#' @param batch New batch factor
+#' @param ids Specific sample IDs to change.
+#' @param ... Arguments passed along (likely colors)
+#' @return expt Send back the expt with some new metadata
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_factors(big_expt, condition="column", batch="another_column")
+#' }
+#' @export
+set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
+    arglist <- list(...)
+    if (!is.null(condition)) {
+        expt <- set_expt_condition(expt, fact=condition, ...)
+    }
+    if (!is.null(batch)) {
+        expt <- set_expt_batch(expt, fact=batch, ...)
+    }
+    return(expt)
+}
+
+## EOF

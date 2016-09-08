@@ -706,12 +706,13 @@ backup_file <- function(backup_file, backups=4) {
 #' to save/load my R sessions relatively quickly. Thus this function uses my backup directory to
 #' load its R environment.
 #'
-#' @param dir Directory containing the RData.rda.xz file.
+#' @param directory Directory containing the RData.rda.xz file.
+#' @param filename  Filename to which to save.
 #' @return a bigger global environment
 #' @seealso \link{load} \link{save}
 #' @examples
 #' \dontrun{
-#'  ## loadme()
+#'  loadme()
 #' }
 #' @export
 loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
@@ -729,13 +730,14 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #' Thus this function uses pxz to compress the R session maximally and relatively fast.
 #' This assumes you have pxz installed and >= 4 CPUs.
 #'
-#' @param directory Directory to save the Rdata file.
-#' @param backups How many revisions?
+#' @param directory  Directory to save the Rdata file.
+#' @param backups  How many revisions?
+#' @param filename  Choose a filename.
 #' @return Command string used to save the global environment.
 #' @seealso \link{save} \link{pipe}
 #' @examples
 #' \dontrun{
-#'  ## saveme()
+#'  saveme()
 #' }
 #' @export
 saveme <- function(directory="savefiles", backups=4, filename="Rdata.rda.xz") {

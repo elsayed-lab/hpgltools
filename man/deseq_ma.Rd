@@ -4,7 +4,8 @@
 \alias{deseq_ma}
 \title{Make a MA plot of some deseq output with pretty colors and shapes}
 \usage{
-deseq_ma(output, table = NULL)
+deseq_ma(output, table = NULL, p_col = "qvalue", fc_col = "logFC",
+  expr_col = "logExpr")
 }
 \arguments{
 \item{output}{The result from all_pairwise(), which should be changed to handle other invocations too.}
@@ -12,6 +13,10 @@ deseq_ma(output, table = NULL)
 \item{table}{Result from deseq to use, left alone it chooses the first.}
 
 \item{p_col}{Column to use for p-value data.}
+
+\item{fc_col}{Column for logFC data.}
+
+\item{expr_col}{Column for the average data.}
 }
 \value{
 a plot!

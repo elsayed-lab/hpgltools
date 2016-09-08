@@ -9,6 +9,7 @@
 #' ids using the OrganismDbi interface.
 #'
 #' @param orgdb OrganismDb instance.
+#' @param include_go  Ask the Dbi for gene ontology information?
 #' @param gene_ids Gene identifiers for retrieving annotations.
 #' @param keytype mmm the key type used?
 #' @param fields Columns included in the output.
@@ -484,6 +485,7 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Gene identifiers for retrieving annotations.
 #' @param mapto Key to map the IDs against.
+#' @param keytype  Choose a keytype, this will yell if it doesn't like your choice.
 #' @return a table of gene information
 #' @seealso \link[AnnotationDbi]{select}
 #' @examples

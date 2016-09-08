@@ -823,6 +823,7 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0,
 #' @param upsdowns Output from extract_significant_genes().
 #' @param wb Workbook object to use for writing, or start a new one.
 #' @param excel Filename for writing the data.
+#' @param csv Write a csv instead/also?
 #' @param according Use limma, deseq, or edger for defining 'significant'.
 #' @param summary_count For spacing sequential tables one after another.
 #' @return Return from write_xls.

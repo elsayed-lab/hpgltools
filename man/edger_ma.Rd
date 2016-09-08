@@ -4,14 +4,19 @@
 \alias{edger_ma}
 \title{Make a MA plot of some limma output with pretty colors and shapes}
 \usage{
-edger_ma(output, table = NULL)
+edger_ma(output, table = NULL, fc_col = "logFC", p_col = "qvalue",
+  expr_col = "logCPM")
 }
 \arguments{
 \item{output}{The result from all_pairwise(), which should be changed to handle other invocations too.}
 
 \item{table}{Result from edger to use, left alone it chooses the first.}
 
+\item{fc_col}{Column for logFC data.}
+
 \item{p_col}{Column to use for p-value data.}
+
+\item{expr_col}{Column for the average data.}
 }
 \value{
 a plot!

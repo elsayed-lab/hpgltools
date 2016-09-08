@@ -13,6 +13,8 @@ orgdb_idmap(orgdb, gene_ids = NULL, mapto = c("ensembl"),
 \item{gene_ids}{Gene identifiers for retrieving annotations.}
 
 \item{mapto}{Key to map the IDs against.}
+
+\item{keytype}{Choose a keytype, this will yell if it doesn't like your choice.}
 }
 \value{
 a table of gene information

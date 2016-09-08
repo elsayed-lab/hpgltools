@@ -13,6 +13,8 @@ set_expt_factors(expt, condition = NULL, batch = NULL, ids = NULL, ...)
 
 \item{batch}{New batch factor}
 
+\item{ids}{Specific sample IDs to change.}
+
 \item{...}{Arguments passed along (likely colors)}
 }
 \value{

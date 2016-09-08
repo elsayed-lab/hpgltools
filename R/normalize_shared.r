@@ -212,8 +212,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                             filter=filter, annotations=annotations,
                             fasta=fasta, thresh=thresh, batch_step=batch_step,
                             min_samples=min_samples, p=p, A=A, k=k,
-                            cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
-                            ## cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
+                            ## cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
+                            cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
 
     final_libsize <- normalized[["libsize"]]
     final_data <- as.matrix(normalized[["count_table"]])

@@ -8,8 +8,6 @@ parse_interpro_domains(filepath)
 }
 \arguments{
 \item{filepath}{Location of TriTrypDB gene information table.}
-
-\item{verbose}{Whether or not to enable verbose output.}
 }
 \value{
 Returns a dataframe where each line includes a gene/domain pairs.

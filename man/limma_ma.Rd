@@ -4,7 +4,8 @@
 \alias{limma_ma}
 \title{Make a MA plot of some limma output with pretty colors and shapes}
 \usage{
-limma_ma(output, table = NULL, p_col = "adj.P.Val")
+limma_ma(output, table = NULL, p_col = "adj.P.Val", expr_col = "AveExpr",
+  fc_col = "logFC")
 }
 \arguments{
 \item{output}{The result from all_pairwise(), which should be changed to handle other invocations too.}
@@ -12,6 +13,10 @@ limma_ma(output, table = NULL, p_col = "adj.P.Val")
 \item{table}{Result from limma to use, left alone it chooses the first.}
 
 \item{p_col}{Column to use for p-value data.}
+
+\item{expr_col}{Column for the average data.}
+
+\item{fc_col}{Column for logFC data.}
 }
 \value{
 a plot!

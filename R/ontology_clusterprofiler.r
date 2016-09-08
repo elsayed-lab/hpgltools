@@ -7,7 +7,7 @@
 #' previous 'simple_clusterprofiler()' but using these new toys.
 #'
 #' @param sig_genes Dataframe of genes deemed 'significant.'
-#' @param universe Dataframe of all genes in the analysis, primarily for gse analyses.
+#' @param all_genes Dataframe of all genes in the analysis, primarily for gse analyses.
 #' @param orgdb Name of the orgDb used for gathering annotation data.
 #' @param orgdb_from Name of a key in the orgdb used to cross reference to entrez IDs.
 #' @param orgdb_to List of keys to grab from the orgdb for cross referencing ontologies.

@@ -7,9 +7,9 @@
 parse_gene_info_table(file, verbose = FALSE)
 }
 \arguments{
-\item{verbose}{Whether or not to enable verbose output.}
+\item{file}{Location of TriTrypDB gene information table.}
 
-\item{filepath}{Location of TriTrypDB gene information table.}
+\item{verbose}{Whether or not to enable verbose output.}
 }
 \value{
 Returns a dataframe of gene info.

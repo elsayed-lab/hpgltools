@@ -738,6 +738,7 @@ golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
 #' @param cluster The result from simple_clusterprofiler()
 #' @param topgo  Guess
 #' @param gostats  Yep, ditto
+#' @param gprofiler  woo hoo!
 #' @param file   the file to save the results.
 #' @param dated   date the excel file
 #' @param n   the number of ontology categories to include in each table.

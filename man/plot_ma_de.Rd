@@ -17,6 +17,8 @@ plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
 
 \item{p_col}{Column containing the relevant p-values.}
 
+\item{pval_cutoff}{Name of the pvalue column to use for cutoffs.}
+
 \item{alpha}{How transparent to make the dots.}
 
 \item{logfc_cutoff}{Fold change cutoff.}
@@ -28,8 +30,6 @@ plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
 \item{gvis_filename}{Filename to write a fancy html graph.}
 
 \item{...}{More options for you!}
-
-\item{pval}{Name of the pvalue column to use for cutoffs.}
 }
 \value{
 Ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by

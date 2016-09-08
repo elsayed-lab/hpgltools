@@ -335,7 +335,6 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     return(pval_plots)
 }
 
-
 #' Write some excel results from a gprofiler search.
 #'
 #' Gprofiler is pretty awesome.  This function will attempt to write its results to an excel file.
@@ -344,6 +343,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
 #' @param wb  Optional workbook object, if you wish to append to an existing workbook.
 #' @param excel  Excel file to which to write.
 #' @param add_plots  Add some pvalue plots?
+#' @param ... More options, not currently used I think.
 #' @export
 write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofiler_result.xlsx", add_plots=TRUE, ...) {
     arglist <- list(...)

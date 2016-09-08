@@ -7,7 +7,7 @@
 plot_legend(stuff)
 }
 \arguments{
-\item{This}{can take either a ggplot2 pca plot or some data from which to make one.}
+\item{stuff}{This can take either a ggplot2 pca plot or some data from which to make one.}
 }
 \value{
 A legend!

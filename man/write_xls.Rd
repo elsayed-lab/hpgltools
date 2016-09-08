@@ -14,6 +14,8 @@ write_xls(data, wb = NULL, sheet = "first", rownames = TRUE,
 
 \item{sheet}{Name of the sheet to write.}
 
+\item{rownames}{Include row names in the output?}
+
 \item{start_row}{First row of the sheet to write. Useful if writing multiple tables.}
 
 \item{start_col}{First column to write.}

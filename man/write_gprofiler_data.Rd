@@ -15,6 +15,8 @@ write_gprofiler_data(gprofiler_result, wb = NULL,
 \item{excel}{Excel file to which to write.}
 
 \item{add_plots}{Add some pvalue plots?}
+
+\item{...}{More options, not currently used I think.}
 }
 \description{
 Gprofiler is pretty awesome.  This function will attempt to write its results to an excel file.

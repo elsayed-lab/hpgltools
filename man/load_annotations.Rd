@@ -12,6 +12,8 @@ load_annotations(orgdb, gene_ids = NULL, include_go = FALSE,
 
 \item{gene_ids}{Gene identifiers for retrieving annotations.}
 
+\item{include_go}{Ask the Dbi for gene ontology information?}
+
 \item{keytype}{mmm the key type used?}
 
 \item{fields}{Columns included in the output.}

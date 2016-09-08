@@ -16,6 +16,8 @@ write_go_xls(goseq, cluster, topgo, gostats, gprofiler,
 
 \item{gostats}{Yep, ditto}
 
+\item{gprofiler}{woo hoo!}
+
 \item{file}{the file to save the results.}
 
 \item{dated}{date the excel file}

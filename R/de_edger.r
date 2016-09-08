@@ -4,6 +4,8 @@
 #'
 #' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
 #' @param table  Result from edger to use, left alone it chooses the first.
+#' @param expr_col  Column for the average data.
+#' @param fc_col  Column for logFC data.
 #' @param p_col  Column to use for p-value data.
 #' @return a plot!
 #' @seealso \link{plot_ma_de}
@@ -12,7 +14,7 @@
 #'   prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-edger_ma <- function(output, table=NULL) {
+edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue", expr_col="logCPM") {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL

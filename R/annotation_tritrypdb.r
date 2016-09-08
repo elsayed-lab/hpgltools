@@ -10,7 +10,7 @@ local_get_value <- function(x) {
 #' http://tritrypdb.org/common/downloads/Current_Release/TbruceiLister427/txt/data/TriTrypDB-5.0_TbruceiLister427Gene.txt
 #'
 #' @author Keith Hughitt
-#' @param filepath Location of TriTrypDB gene information table.
+#' @param file Location of TriTrypDB gene information table.
 #' @param verbose  Whether or not to enable verbose output.
 #' @return Returns a dataframe of gene info.
 parse_gene_info_table <- function(file, verbose=FALSE) {

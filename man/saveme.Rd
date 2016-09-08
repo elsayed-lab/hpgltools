@@ -10,6 +10,8 @@ saveme(directory = "savefiles", backups = 4, filename = "Rdata.rda.xz")
 \item{directory}{Directory to save the Rdata file.}
 
 \item{backups}{How many revisions?}
+
+\item{filename}{Choose a filename.}
 }
 \value{
 Command string used to save the global environment.
@@ -22,7 +24,7 @@ This assumes you have pxz installed and >= 4 CPUs.
 }
 \examples{
 \dontrun{
- ## saveme()
+ saveme()
 }
 }
 \seealso{

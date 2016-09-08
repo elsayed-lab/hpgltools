@@ -4,6 +4,8 @@
 #'
 #' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
 #' @param table  Result from deseq to use, left alone it chooses the first.
+#' @param expr_col  Column for the average data.
+#' @param fc_col  Column for logFC data.
 #' @param p_col  Column to use for p-value data.
 #' @return a plot!
 #' @seealso \link{plot_ma_de}
@@ -12,7 +14,7 @@
 #'   prettyplot <- limma_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-deseq_ma <- function(output, table=NULL) {
+deseq_ma <- function(output, table=NULL, p_col="qvalue", fc_col="logFC", expr_col="logExpr") {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
@@ -26,10 +28,9 @@ deseq_ma <- function(output, table=NULL) {
 
     de_genes <- output[["all_tables"]][[table]]
     de_genes[["logExpr"]] <- log(de_genes[["baseMean"]])
-    plot <- plot_ma_de(table=de_genes, expr_col="logExpr", fc_col="logFC", p_col="qvalue")
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col)
     return(plot)
 }
-
 
 #' Plot out 2 coefficients with respect to one another from deseq2.
 #'

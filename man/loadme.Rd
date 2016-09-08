@@ -7,7 +7,9 @@
 loadme(directory = "savefiles", filename = "Rdata.rda.xz")
 }
 \arguments{
-\item{dir}{Directory containing the RData.rda.xz file.}
+\item{directory}{Directory containing the RData.rda.xz file.}
+
+\item{filename}{Filename to which to save.}
 }
 \value{
 a bigger global environment
@@ -19,7 +21,7 @@ load its R environment.
 }
 \examples{
 \dontrun{
- ## loadme()
+ loadme()
 }
 }
 \seealso{

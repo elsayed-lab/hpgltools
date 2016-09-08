@@ -12,6 +12,10 @@ make_txdb(orgdb_info, cfg, gff = NULL, output_dir = "organismdbi", ...)
 \item{cfg}{Configuration data frame as per make_orgdb.}
 
 \item{gff}{File to read}
+
+\item{output_dir}{Place to put rda intermediates.}
+
+\item{...}{Extra arguments to pass through.}
 }
 \value{
 List of the resulting txDb package and whether it installed.

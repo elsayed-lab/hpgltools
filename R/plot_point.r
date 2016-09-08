@@ -402,7 +402,7 @@ plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=
 #' @param p_col Column containing the relevant p-values.
 #' @param alpha How transparent to make the dots.
 #' @param logfc_cutoff Fold change cutoff.
-#' @param pval Name of the pvalue column to use for cutoffs.
+#' @param pval_cutoff Name of the pvalue column to use for cutoffs.
 #' @param size How big are the dots?
 #' @param tooltip_data Df of tooltip information for gvis.
 #' @param gvis_filename Filename to write a fancy html graph.
@@ -697,7 +697,7 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' @export
 plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
                          fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6,
-                         xaxis_column="logFC", yaxis_column="P.Value", modify_y=TRUE, ...) {
+                         xaxis_column="logFC", yaxis_column="P.Value", ...) {
     hpgl_env <- environment()
     low_vert_line <- 0.0 - fc_cutoff
     horiz_line <- -1 * log10(p_cutoff)

@@ -4,17 +4,17 @@ library(hpgltools)
 context("Do the various ontology helper functions still work?")
 
 expected_term_result <- "adenyl ribonucleotide binding"
-actual_term_result <- s_p(as.character(goterm()))$result
+actual_term_result <- sm(as.character(goterm()))
 expected_syn_result <- "mitochondrial inheritance"
-actual_syn_result <- s_p(as.character(gosyn()))$result
+actual_syn_result <- sm(as.character(gosyn()))
 expected_sec_result <- c("GO:0000141", "GO:0030482")
-actual_sec_result <- s_p(as.character(gosec()))$result
+actual_sec_result <- sm(as.character(gosec()))
 expected_def_result <- "An assembly of actin filaments that are on the same axis but may be oriented with the same or opposite polarities and may be packed with different levels of tightness."
-actual_def_result <- s_p(as.character(godef()))$result
+actual_def_result <- sm(as.character(godef()))
 expected_ont_result <- c("CC","CC")
-actual_ont_result <- s_p(as.character(goont()))$result
+actual_ont_result <- sm(as.character(goont()))
 expected_level_result <- c("3", "3")
-actual_level_result <- s_p(as.character(golevel()))$result
+actual_level_result <- sm(as.character(golevel()))
 
 test_that("Are GO.db functions working?", {
     expect_equal(expected_term_result, actual_term_result)

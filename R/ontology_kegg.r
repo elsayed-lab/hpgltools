@@ -401,6 +401,7 @@ kegg_get_orgn <- function(species="Leishmania", short=TRUE) {
 #' @param organism KEGG organism identifier.
 #' @param pathways What pathways to look at?
 #' @param pathdir Directory into which to copy downloaded pathway files.
+#' @param verbose  Talky talky?
 #' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return Dataframe including the filenames, percentages, nodes included, and differential nodes.
 #' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}

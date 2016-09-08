@@ -14,6 +14,8 @@ print_ups_downs(upsdowns, wb = NULL, excel = "excel/significant_genes.xlsx",
 
 \item{excel}{Filename for writing the data.}
 
+\item{csv}{Write a csv instead/also?}
+
 \item{according}{Use limma, deseq, or edger for defining 'significant'.}
 
 \item{summary_count}{For spacing sequential tables one after another.}

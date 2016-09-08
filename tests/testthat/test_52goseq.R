@@ -62,9 +62,6 @@ test_that("Are the goseq results as expected (cc pvalues)?", {
 
 ##}
 
-
-
-
 ## Some testing of an interesting point by keith:
 ## I've been trying to figure out why goseq is giving me a different gene/term mapping that the one I create myself.
 ## I think I finally tracked it down to this:
@@ -79,17 +76,3 @@ test_that("Are the goseq results as expected (cc pvalues)?", {
 ## This was not my understanding of how enrichment analysis works. Have I just been mistaken this whole time?
 ## Keith
 
-## With that in mind, lets test some ontologies:
-
-
-```{r testing_ontologies_parents}
-library(GO.db)
-goont("GO:0005576")
-golev("GO:0005576")
-goont("GO:0048067")
-golev("GO:0048067")
-goont("GO:0016853")
-golev("GO:0016853")
-goont("GO:0042438")
-golev("GO:0042438")
-```
