@@ -185,7 +185,9 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     norm <- edgeR::estimateDisp(norm, design=fun_model, robust=TRUE)
     ##cond_fit <- edgeR::glmFit(norm, design=fun_model)
     cond_fit <- edgeR::glmQLFit(norm, design=fun_model, robust=TRUE)
-    apc <- make_pairwise_contrasts(fun_model, conditions, do_identities=FALSE)
+    apc <- make_pairwise_contrasts(fun_model, conditions,
+                                   extra_contrasts=extra_contrasts,
+                                   do_identities=FALSE)
 
     ## This section is convoluted because glmLRT only seems to take up to 7 contrasts at a time.
     ## As a result, I iterate through the set of possible contrasts one at a time and ask for each

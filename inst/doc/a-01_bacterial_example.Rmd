@@ -261,6 +261,5 @@ circos_suffix(cfgout=circos_test)
 [index.html](index.html)
 
 ```{r sysinfo, results='asis'}
-library('pander')
-pander(sessionInfo())
+pander::pander(sessionInfo())
 ```
