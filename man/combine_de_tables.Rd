@@ -15,6 +15,8 @@ combine_de_tables(all_pairwise_result, extra_annot = NULL, csv = NULL,
 
 \item{extra_annot}{Add some annotation information?}
 
+\item{csv}{On some computers (Edson!) printing to excel runs the machine oom for big data sets.}
+
 \item{excel}{Filename for the excel workbook, or null if not printed.}
 
 \item{excel_title}{Title for the excel sheet(s).  If it has the
@@ -30,6 +32,9 @@ certain contrasts in specific orders and orientations.}
 \item{add_plots}{Add plots to the end of the sheets with expression values?}
 
 \item{plot_dim}{Number of inches squared for the plot if added.}
+
+\item{compare_plots}{In an attempt to save memory when printing to excel, make it possible to
+exclude comparison plots in the summary sheet.}
 }
 \value{
 Table combining limma/edger/deseq outputs.

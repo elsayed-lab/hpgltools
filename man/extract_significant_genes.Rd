@@ -23,7 +23,11 @@ the deseq, edger, limma, basic, meta, or all.}
 
 \item{n}{Take the top/bottom-n genes.}
 
+\item{p_type}{use an adjusted p-value?}
+
 \item{excel}{Write the results to this excel file, or NULL.}
+
+\item{csv}{Write csv instead of xlsx when running OOM.}
 }
 \value{
 The set of up-genes, down-genes, and numbers therein.
