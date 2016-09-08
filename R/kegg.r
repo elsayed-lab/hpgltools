@@ -12,6 +12,9 @@
 #' @param to_list Regex to help in renaming KEGG categories/gene names from one format to another.
 #' @param suffix Add a suffix to the completed, colored files.
 #' @param filenames Name the final files by id or name?
+#' @param fc_column  What is the name of the fold-change column to extract?
+#' @param format  Format of the resulting images, I think only png really works well.
+#' @param verbose When on, this function is quite chatty.
 #' @return A list of some information for every KEGG pathway downloaded/examined.  This information includes:
 #'   a. The filename of the final image for each pathway.
 #'   b. The number of genes which were found in each pathway image.

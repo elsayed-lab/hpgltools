@@ -1,4 +1,17 @@
 
+#' Make a MA plot of some limma output with pretty colors and shapes
+#'
+#' Yay pretty colors and shapes!
+#'
+#' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
+#' @param table  Result from limma to use, left alone it chooses the first.
+#' @param p_col  Column to use for p-value data.
+#' @return a plot!
+#' @seealso \link{plot_ma_de}
+#' @examples
+#'  \dontrun{
+#'   prettyplot <- limma_ma(all_aprwise) ## [sic, I'm witty! and can speel]
+#' }
 #' @export
 limma_ma <- function(output, table=NULL, p_col="adj.P.Val") {
     counts <- NULL
@@ -375,7 +388,8 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
     message("Limma step 4/6: making and fitting contrasts.")
     if (isTRUE(model_intercept)) {
-        contrasts <- make_pairwise_contrasts(fun_model, conditions, extra_contrasts=extra_contrasts)
+        contrasts <- make_pairwise_contrasts(fun_model, conditions,
+                                             extra_contrasts=extra_contrasts)
         all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]
         identities <- contrasts[["identities"]]
         contrast_string <- contrasts[["contrast_string"]]
@@ -605,7 +619,7 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
     } else {
         an_ma_plot <- plot_ma(expt_voom[["E"]], cond_table)
     }
-    write_xls(cond_table, sheet, file=workbook, rownames="row.names")
+    xls_written <- write_xls(cond_table, sheet, file=workbook, rownames="row.names")
     ## upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
     upsignificant_table <- cond_table[ which(cond_table[["logFC"]] >= logfc_cutoff), ]
     ## downsignificant_table = subset(cond_table, logFC <= (-1 * logfc_cutoff))

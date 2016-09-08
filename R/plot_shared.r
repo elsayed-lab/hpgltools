@@ -130,6 +130,12 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     return(ret_data)
 }
 
+#' Scab the legend from a PCA plot and print it alone
+#'
+#' This way I can have a legend object to move about.
+#'
+#' @param This can take either a ggplot2 pca plot or some data from which to make one.
+#' @return A legend!
 #' @export
 plot_legend <- function(stuff) {
     plot <- NULL

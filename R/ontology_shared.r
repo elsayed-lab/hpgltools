@@ -436,6 +436,9 @@ plot_ontpval <- function(df, ontology="MF") {
 #' @param do_gostats Perform simple_gostats()?
 #' @param do_gprofiler Perform simple_gprofiler()?
 #' @param do_trees make topGO trees from the data?
+#' @param orgdb Provide an organismDbi/Orgdb to hold the various annotation data, in response to the
+#'     shift of clusterprofiler and friends towards using them.
+#' @param ...  Arguments to pass through in arglist.
 #' @return a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and
 #'     associated trees.
 #' @examples
@@ -451,6 +454,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
                                   goid_map="reference/go/id2go.map", gff_file=NULL, gff_type="gene",
                                   do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE,
                                   do_gostats=TRUE, do_gprofiler=TRUE, do_trees=FALSE, ...) {
+    arglist <- list(...)
     message("This function expects a list of de contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
     if (isTRUE(do_goseq) & is.null(gene_lengths)) {

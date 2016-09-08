@@ -1,3 +1,16 @@
+#' Make a MA plot of some limma output with pretty colors and shapes
+#'
+#' Yay pretty colors and shapes!
+#'
+#' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
+#' @param table  Result from edger to use, left alone it chooses the first.
+#' @param p_col  Column to use for p-value data.
+#' @return a plot!
+#' @seealso \link{plot_ma_de}
+#' @examples
+#'  \dontrun{
+#'   prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
+#' }
 #' @export
 edger_ma <- function(output, table=NULL) {
     counts <- NULL
@@ -23,12 +36,20 @@ edger_ma <- function(output, table=NULL) {
 #' This hopefully makes that easy.
 #'
 #' @param output Set of pairwise comparisons provided by edger_pairwise().
+#' @param toptable  The table to use for extracting the logfc values.
 #' @param x Name or number of the x-axis coefficient column to extract.
 #' @param y Name or number of the y-axis coefficient column to extract.
 #' @param gvis_filename Filename for plotting gvis interactive graphs of the data.
 #' @param gvis_trendline Add a trendline to the gvis plot?
+#' @param z  Make pretty colors for genes this number of z-scores from the median.
 #' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
 #' @param base_url Add a linkout to gvis plots to this base url.
+#' @param color_low  Color to use for low-logfc values.
+#' @param color_high  Color to use for high-logfc values.
+#' @param ... A few options may be added outside this scope and are left in the arglist, notably
+#'     qlimit, fc_column, p_column.  I need to make a consistent decision about how to handle these
+#'     not-always needed parameters, either always define them in the function body, or always put
+#'     them in arglist(...), doing a little of both is stupid.
 #' @return Ggplot2 plot showing the relationship between the two coefficients.
 #' @seealso \link{plot_linear_scatter} \link{edger_pairwise}
 #' @examples
@@ -125,6 +146,7 @@ edger_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param annot_df Annotation information to the data tables?
 #' @param force Force edgeR to accept inputs which it should not have to deal with.
+#' @param edger_method  I found a couple/few ways of doing edger in the manual, choose with this.
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #' @return List including the following information:
 #'   contrasts = The string representation of the contrasts performed.

@@ -20,6 +20,10 @@
 #' overwrite any arguments if you wish.  In our work, the most common normalization is:
 #' quantile(cpm(low-filter(data))).
 #'
+#' @param expt An expressionset containing expt object
+#' @param ... More options to pass to normalize_expt()
+#' @return The normalized expt
+#' @seealso \code{\link{normalize_expt}}
 #' @export
 default_norm <- function(expt, ...) {
     arglist <- list(...)

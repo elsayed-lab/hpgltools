@@ -263,10 +263,13 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
 #' @param excel_title Title for the excel sheet(s).  If it has the
 #'     string 'YYY', that will be replaced by the contrast name.
 #' @param excel_sheet Name the excel sheet.
+#' @param csv  On some computers (Edson!) printing to excel runs the machine oom for big data sets.
 #' @param keepers List of reformatted table names to explicitly keep
 #'     certain contrasts in specific orders and orientations.
 #' @param include_basic Include my stupid basic logFC tables?
 #' @param add_plots Add plots to the end of the sheets with expression values?
+#' @param compare_plots  In an attempt to save memory when printing to excel, make it possible to
+#'     exclude comparison plots in the summary sheet.
 #' @param plot_dim Number of inches squared for the plot if added.
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
@@ -704,6 +707,7 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
     return(ret)
 }
 
+
 extract_siggenes <- function(...) { extract_significant_genes(...) }
 #' Extract the sets of genes which are significantly up/down regulated
 #' from the combined tables.
@@ -720,7 +724,9 @@ extract_siggenes <- function(...) { extract_significant_genes(...) }
 #' @param p (Adjusted)p-value to define 'significant'.
 #' @param z Z-score to define 'significant'.
 #' @param n Take the top/bottom-n genes.
+#' @param p_type use an adjusted p-value?
 #' @param excel Write the results to this excel file, or NULL.
+#' @param csv Write csv instead of xlsx when running OOM.
 #' @return The set of up-genes, down-genes, and numbers therein.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
@@ -1343,6 +1349,9 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' @param model_batch Try to include batch in the model?
 #' @param model_cond Try to include condition in the model? (Yes!)
 #' @param model_intercept Use an intercept model instead of cell-means?
+#' @param intercept Choose an intercept for the model as opposed to 0.
+#' @param reverse  Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
+#'     to test.
 #' @param alt_model Use your own model.
 #' @param alt_string String describing an alternate model.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
@@ -1475,7 +1484,6 @@ choose_model <- function(conditions, batches, model_batch=TRUE,
         fun_string <- alt_string
         including <- "alt"
     }
-
 
     retlist <- list(
         "int_model" = int_model,
