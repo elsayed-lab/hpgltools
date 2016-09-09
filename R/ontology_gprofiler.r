@@ -34,50 +34,85 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
     } else {
         stop("Unable to get the set of gene ids.")
     }
-    go_result <- kegg_result <- reactome_result <- mi_result <- tf_result <- corum_result <- hp_result <- NULL
+
     ## Setting 'ordered_query' to TRUE, so rank these by p-value or FC or something
+    go_result <- data.frame()
     if (isTRUE(do_go)) {
         message("Performing g:Profiler GO search.")
         go_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="GO"))
+        if (class(go_result) == "try-error") {
+            go_result <- data.frame()
+        }
         message(paste0("GO search found ", nrow(go_result), " hits."))
     }
+
+    kegg_result <- data.frame()
     if (isTRUE(do_kegg)) {
         message("Performing g:Profiler KEGG search.")
         kegg_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                                 ordered_query=TRUE, src_filter="KEGG"))
+        if (class(kegg_result) == "try-error") {
+            kegg_result <- data.frame()
+        }
         message(paste0("KEGG search found ", nrow(kegg_result), " hits."))
     }
+
+    reactome_result <- data.frame()
     if (isTRUE(do_reactome)) {
         message("Performing g:Profiler reactome.db search.")
         reactome_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                                     ordered_query=TRUE, src_filter="REAC"))
+        if (class(reactome_result) == "try-error") {
+            reactome_result <- data.frame()
+        }
         message(paste0("Reactome search found ", nrow(reactome_result), " hits."))
     }
+
+    mi_result <- data.frame()
     if (isTRUE(do_mi)) {
         message("Performing g:Profiler miRNA search.")
         mi_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="MI"))
+        if (class(mi_result) == "try-error") {
+            mi_result <- data.frame()
+        }
         message(paste0("miRNA search found ", nrow(mi_result), " hits."))
     }
+
+    tf_result <- data.frame()
     if (isTRUE(do_tf)) {
         message("Performing g:Profiler transcription-factor search.")
         tf_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="TF"))
+        if (class(tf_result) == "try-error") {
+            tf_result <- data.frame()
+        }
         message(paste0("transcription-factor search found ", nrow(tf_result), " hits."))
     }
+
+    corum_result <- data.frame()
     if (isTRUE(do_corum)) {
         message("Performing g:Profiler corum search.")
         corum_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                                  ordered_query=TRUE, src_filter="CORUM"))
+        if (class(corum_result) == "try-error") {
+            corum_result <- data.frame()
+        }
         message(paste0("corum search found ", nrow(corum_result), " hits."))
     }
+
+    hp_result <- data.frame()
     if (isTRUE(do_hp)) {
         message("Performing g:Profiler hp search.")
         hp_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="HP"))
+        if (class(hp_result) == "try-error") {
+            hp_result <- data.frame()
+        }
         message(paste0("hp search found ", nrow(hp_result), " hits."))
     }
+
     retlist <- list(
         "go" = go_result,
         "kegg" = kegg_result,
@@ -119,7 +154,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
 
     plotting_mf_over <- mf_over
     mf_pval_plot_over <- NULL
-    if (is.null(mf_over)) {
+    if (is.null(mf_over) | nrow(mf_over) == 0) {
         plotting_mf_over <- NULL
     } else {
         plotting_mf_over[["score"]] <- plotting_mf_over[["recall"]]
@@ -142,7 +177,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
 
     plotting_bp_over <- bp_over
     bp_pval_plot_over <- NULL
-    if (is.null(bp_over)) {
+    if (is.null(bp_over) | nrow(bp_over) == 0) {
         plotting_bp_over <- NULL
     } else {
         plotting_bp_over[["score"]] <- plotting_bp_over[["recall"]]
@@ -165,7 +200,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
 
     plotting_cc_over <- cc_over
     cc_pval_plot_over <- NULL
-    if (is.null(cc_over)) {
+    if (is.null(cc_over) | nrow(cc_over) == 0) {
         plotting_cc_over <- NULL
     } else {
         plotting_cc_over[["score"]] <- plotting_cc_over[["recall"]]
@@ -187,7 +222,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_kegg_over <- kegg_pval_plot <- NULL
-    if (!is.null(kegg_result)) {
+    if (is.null(kegg_result) | nrow(kegg_result) == 0) {
+        plotting_kegg_over <- NULL
+    } else {
         plotting_kegg_over <- kegg_result
         plotting_kegg_over[["score"]] <- plotting_kegg_over[["recall"]]
         ## plotting_kegg_over <- subset(plotting_kegg_over, Term != "NULL")
@@ -208,7 +245,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_reactome_over <- reactome_pval_plot <- NULL
-    if (!is.null(reactome_result)) {
+    if (is.null(reactome_result) | nrow(reactome_result) == 0) {
+        plotting_reactome_over <- NULL
+    } else {
         plotting_reactome_over <- reactome_result
         plotting_reactome_over[["score"]] <- plotting_reactome_over[["recall"]]
         ## plotting_reactome_over <- subset(plotting_reactome_over, Term != "NULL")
@@ -229,7 +268,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_tf_over <- tf_pval_plot <- NULL
-    if (!is.null(tf_result)) {
+    if (is.null(tf_result) | nrow(tf_result) == 0) {
+        plotting_tf_over <- NULL
+    } else {
         plotting_tf_over <- tf_result
         plotting_tf_over[["score"]] <- plotting_tf_over$recall
         ## plotting_tf_over <- subset(plotting_tf_over, Term != "NULL")
@@ -250,7 +291,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_mi_over <- mi_pval_plot <- NULL
-    if (!is.null(mi_result)) {
+    if (is.null(mi_result) | nrow(mi_result) == 0) {
+        plotting_mi_over <- NULL
+    } else {
         plotting_mi_over <- mi_result
         plotting_mi_over[["score"]] <- plotting_mi_over[["recall"]]
         ## plotting_mi_over <- subset(plotting_mi_over, Term != "NULL")
@@ -271,7 +314,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_corum_over <- corum_pval_plot <- NULL
-    if (!is.null(corum_result)) {
+    if (is.null(corum_result) | nrow(corum_result) == 0) {
+        plotting_corum_over <- NULL
+    } else {
         plotting_corum_over <- corum_result
         plotting_corum_over[["score"]] <- plotting_corum_over[["recall"]]
         ## plotting_corum_over <- subset(plotting_corum_over, Term != "NULL")
@@ -292,7 +337,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_hp_over <- hp_pval_plot <- NULL
-    if (!is.null(hp_result)) {
+    if (is.null(hp_result) | nrow(hp_result) == 0) {
+        plotting_hp_over <- NULL
+    } else {
         plotting_hp_over <- hp_result
         plotting_hp_over[["score"]] <- plotting_hp_over[["recall"]]
         ## plotting_hp_over <- subset(plotting_hp_over, Term != "NULL")
