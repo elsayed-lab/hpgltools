@@ -211,8 +211,9 @@ translate_ids_querymany <- function(queries, from="ensembl", to="entrez", specie
 #' @param trymart Assumed mart name to use.
 #' @return Df of orthologs.
 #' @export
-biomart_orthologs <- function(gene_ids, first_species='hsapiens', second_species='mmusculus',
-                              host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL") {
+biomart_orthologs <- function(gene_ids, first_species="hsapiens", second_species="mmusculus",
+                              host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
+                              first_attributes="ensembl_gene_id", second_attributes=c("ensembl_gene_id", "hgnc_symbol")) {
     first_mart <- NULL
     first_mart <- try(biomaRt::useMart(biomart=trymart, host=host))
     if (class(first_mart) == 'try-error') {
@@ -246,16 +247,37 @@ biomart_orthologs <- function(gene_ids, first_species='hsapiens', second_species
     }
     second_dataset <- paste0(second_species, "_gene_ensembl")
     second_ensembl <- try(biomaRt::useDataset(second_dataset, mart=second_mart))
-    if (class(second_ensembl) == 'try-error') {
+    if (class(second_ensembl) == "try-error") {
         message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", second_ensembl, "."))
         datasets <- biomaRt::listDatasets(mart=second_mart)
         print(datasets)
         return(NULL)
     }
 
-    linked_genes <- biomaRt::getLDS(attributes=c('ensembl_gene_id','hgnc_symbol'), values=gene_ids,
-                                    mart=first_ensembl, attributesL=c('ensembl_gene_id'), martL=second_ensembl)
+    possible_first_attributes <- biomaRt::listAttributes(first_ensembl)
+    possible_second_attributes <- biomaRt::listAttributes(second_ensembl)
 
+    ## That is right, I had forgotten but it seems to me that no matter
+    ## what list of genes I give this stupid thing, it returns all genes.
+    linked_genes <- biomaRt::getLDS(attributes=first_attributes,
+                                    values=gene_ids,
+                                    mart=first_ensembl,
+                                    attributesL=second_attributes,
+                                    martL=second_ensembl)
+    kept_idx <- linked_genes[[1]] %in% gene_ids
+    kept_genes <- linked_genes[kept_idx, ]
+    new_colnames <- colnames(linked_genes)
+    new_colnames[[1]] <- first_species
+    second_position <- length(first_attributes) + 1
+    new_colnames[[second_position]] <- second_species
+    colnames(kept_genes) <- new_colnames
+    colnames(linked_genes) <- new_colnames
+
+    linked_genes <- list(
+        "all_gene_list" = linked_genes,
+        "linked_genes" = kept_genes,
+        "first_attribs" = possible_first_attributes,
+        "second_attribs" = possible_second_attributes)
     return(linked_genes)
 }
 
