@@ -572,16 +572,36 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                                      startRow=new_row, startCol=tmpcol, fileType="png", units="in")
             }
         } ## End if compare_plots is TRUE
+        retlist <- NULL
         message("Performing save of the workbook.")
-        openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
+        save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+        if (class(save_result == "try-error")) {
+            message("Saving xlsx failed.  Rerunning now with arguments to save to csv files.")
+            retlist <- combine_de_tables(all_pairwise_result,
+                                         extra_annot=extra_annot,
+                                         csv=excel,
+                                         excel=NULL,
+                                         excel_title=excel_title,
+                                         excel_sheet=excel_sheet,
+                                         keepers=keepers,
+                                         include_basic=include_basic,
+                                         add_plots=FALSE,
+                                         compare_plots=FALSE)
+        }
+    } ## End if !is.null(excel)
+
+    ret <- NULL
+    if (is.null(retlist)) {
+        ret <- list(
+            "data" = combo,
+            "limma_plots" = limma_plots,
+            "edger_plots" = edger_plots,
+            "deseq_plots" = deseq_plots,
+            "comp_plot" = comp,
+            "de_summay" = de_summaries)
+    } else {
+        ret <- retlist
     }
-    ret <- list(
-        "data" = combo,
-        "limma_plots" = limma_plots,
-        "edger_plots" = edger_plots,
-        "deseq_plots" = deseq_plots,
-        "comp_plot" = comp,
-        "de_summay" = de_summaries)
     return(ret)
 }
 

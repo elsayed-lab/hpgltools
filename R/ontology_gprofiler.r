@@ -39,6 +39,7 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
     go_result <- data.frame()
     if (isTRUE(do_go)) {
         message("Performing g:Profiler GO search.")
+        Sys.sleep(3)
         go_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="GO"))
         if (class(go_result) == "try-error") {
@@ -50,6 +51,7 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
     kegg_result <- data.frame()
     if (isTRUE(do_kegg)) {
         message("Performing g:Profiler KEGG search.")
+        Sys.sleep(3)
         kegg_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                                 ordered_query=TRUE, src_filter="KEGG"))
         if (class(kegg_result) == "try-error") {
@@ -61,6 +63,7 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
     reactome_result <- data.frame()
     if (isTRUE(do_reactome)) {
         message("Performing g:Profiler reactome.db search.")
+        Sys.sleep(3)
         reactome_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                                     ordered_query=TRUE, src_filter="REAC"))
         if (class(reactome_result) == "try-error") {
@@ -72,6 +75,7 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
     mi_result <- data.frame()
     if (isTRUE(do_mi)) {
         message("Performing g:Profiler miRNA search.")
+        Sys.sleep(3)
         mi_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="MI"))
         if (class(mi_result) == "try-error") {
@@ -83,6 +87,7 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
     tf_result <- data.frame()
     if (isTRUE(do_tf)) {
         message("Performing g:Profiler transcription-factor search.")
+        Sys.sleep(3)
         tf_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="TF"))
         if (class(tf_result) == "try-error") {
@@ -94,6 +99,7 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
     corum_result <- data.frame()
     if (isTRUE(do_corum)) {
         message("Performing g:Profiler corum search.")
+        Sys.sleep(3)
         corum_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                                  ordered_query=TRUE, src_filter="CORUM"))
         if (class(corum_result) == "try-error") {
@@ -105,6 +111,7 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
     hp_result <- data.frame()
     if (isTRUE(do_hp)) {
         message("Performing g:Profiler hp search.")
+        Sys.sleep(3)
         hp_result <- try(gProfileR::gprofiler(query=gene_ids, organism=species, significant=TRUE,
                                               ordered_query=TRUE, src_filter="HP"))
         if (class(hp_result) == "try-error") {
@@ -121,7 +128,7 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
         "tf" = tf_result,
         "corum" = corum_result,
         "hp" = hp_result)
-    retlist[["plots"]] <- plot_gprofiler_pval(retlist)
+    retlist[["plots"]] <- try(plot_gprofiler_pval(retlist))
     return(retlist)
 }
 
@@ -309,7 +316,8 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         plotting_mi_over[["term"]] <- as.character(lapply(strwrap(plotting_mi_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
     }
-    if (nrow(plotting_mi_over) > 0) {
+    print(summary(plotting_mi_over))
+    if (!is.null(plotting_mi_over) & nrow(plotting_mi_over) > 0) {
         mi_pval_plot <- plot_ontpval(plotting_mi_over, ontology="miRNAs")
     }
 
