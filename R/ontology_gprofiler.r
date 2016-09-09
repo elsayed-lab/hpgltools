@@ -178,8 +178,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         plotting_mf_over[["term"]] <- as.character(lapply(strwrap(plotting_mf_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
     }
-    if (nrow(plotting_mf_over) > 0) {
-        mf_pval_plot_over <- plot_ontpval(plotting_mf_over, ontology="MF")
+    mf_pval_plot_over <- try(plot_ontpval(plotting_mf_over, ontology="MF"), silent=TRUE)
+    if (class(mf_pval_plot_over) == "try-error") {
+        mf_pval_plot_over <- NULL
     }
 
     plotting_bp_over <- bp_over
@@ -201,8 +202,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         plotting_bp_over[["term"]] <- as.character(lapply(strwrap(plotting_bp_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
     }
-    if (nrow(plotting_bp_over) > 0) {
-        bp_pval_plot_over <- plot_ontpval(plotting_bp_over, ontology="BP")
+    bp_pval_plot_over <- try(plot_ontpval(plotting_bp_over, ontology="BP"), silent=TRUE)
+    if (class(bp_pval_plot_over) == "try-error") {
+        bp_pval_plot_over <- NULL
     }
 
     plotting_cc_over <- cc_over
@@ -224,8 +226,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         plotting_cc_over[["term"]] <- as.character(lapply(strwrap(plotting_cc_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
     }
-    if (nrow(plotting_cc_over) > 0) {
-        cc_pval_plot_over <- plot_ontpval(plotting_cc_over, ontology="CC")
+    cc_pval_plot_over <- try(plot_ontpval(plotting_cc_over, ontology="CC"), silent=TRUE)
+    if (class(cc_pval_plot_over) == "try-error") {
+        cc_pval_plot_over <- NULL
     }
 
     plotting_kegg_over <- kegg_pval_plot <- NULL
@@ -247,8 +250,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         plotting_kegg_over[["term"]] <- as.character(lapply(strwrap(plotting_kegg_over[["term"]], wrapped_width, simplify=FALSE),
                                                             paste, collapse="\n"))
     }
-    if (nrow(plotting_kegg_over) > 0) {
-        kegg_pval_plot <- plot_ontpval(plotting_kegg_over, ontology="KEGG")
+    kegg_pval_plot <- try(plot_ontpval(plotting_kegg_over, ontology="KEGG"), silent=TRUE)
+    if (class(kegg_pval_plot) == "try-error") {
+        kegg_pval_plot <- NULL
     }
 
     plotting_reactome_over <- reactome_pval_plot <- NULL
@@ -270,8 +274,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         plotting_reactome_over[["term"]] <- as.character(lapply(strwrap(plotting_reactome_over[["term"]], wrapped_width, simplify=FALSE),
                                                             paste, collapse="\n"))
     }
-    if (nrow(plotting_reactome_over) > 0) {
-        reactome_pval_plot <- plot_ontpval(plotting_reactome_over, ontology="Reactome")
+    reactome_pval_plot <- try(plot_ontpval(plotting_reactome_over, ontology="Reactome"), silent=TRUE)
+    if (class(reactome_pval_plot) == "try-error") {
+        reactome_pval_plot <- NULL
     }
 
     plotting_tf_over <- tf_pval_plot <- NULL
@@ -293,8 +298,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         plotting_tf_over[["term"]] <- as.character(lapply(strwrap(plotting_tf_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
     }
-    if (nrow(plotting_tf_over) > 0) {
-        tf_pval_plot <- plot_ontpval(plotting_tf_over, ontology="TF")
+    tf_pval_plot <- try(plot_ontpval(plotting_tf_over, ontology="TF"), silent=TRUE)
+    if (class(tf_pval_plot) == "try-error") {
+        tf_pval_plot <- NULL
     }
 
     plotting_mi_over <- mi_pval_plot <- NULL
@@ -316,9 +322,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         plotting_mi_over[["term"]] <- as.character(lapply(strwrap(plotting_mi_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
     }
-    print(summary(plotting_mi_over))
-    if (!is.null(plotting_mi_over) & nrow(plotting_mi_over) > 0) {
-        mi_pval_plot <- plot_ontpval(plotting_mi_over, ontology="miRNAs")
+    mi_pval_plot <- try(plot_ontpval(plotting_mi_over, ontology="miRNAs"), silent=TRUE)
+    if (class(mi_pval_plot) == "try-error") {
+        mi_pval_plot <- NULL
     }
 
     plotting_corum_over <- corum_pval_plot <- NULL
@@ -340,8 +346,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         plotting_corum_over[["term"]] <- as.character(lapply(strwrap(plotting_corum_over[["term"]], wrapped_width, simplify=FALSE),
                                                              paste, collapse="\n"))
     }
-    if (nrow(plotting_corum_over) > 0) {
-        corum_pval_plot <- plot_ontpval(plotting_corum_over, ontology="corum")
+    corum_pval_plot <- try(plot_ontpval(plotting_corum_over, ontology="corum"), silent=TRUE)
+    if (class(corum_pval_plot) == "try-error") {
+        corum_pval_plot <- NULL
     }
 
     plotting_hp_over <- hp_pval_plot <- NULL
@@ -363,8 +370,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         plotting_hp_over[["term"]] <- as.character(lapply(strwrap(plotting_hp_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
     }
-    if (nrow(plotting_hp_over) > 0) {
-        hp_pval_plot <- plot_ontpval(plotting_hp_over, ontology="hp")
+    hp_pval_plot <- try(plot_ontpval(plotting_hp_over, ontology="hp"), silent=TRUE)
+    if (class(hp_pval_plot) == "try-error") {
+        hp_pval_plot <- NULL
     }
 
     pval_plots <- list(
