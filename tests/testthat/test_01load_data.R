@@ -26,7 +26,7 @@ colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-pasilla_expt <- s_p(create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info))$result
+pasilla_expt <- sm(create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info))
 ## Recent changes to how my expressionsets are created mean that the order of genes is hard-set to the order of annotations
 ## in the annotation data and therefore _not_ the order of genes found in the count tables.
 actual <- as.matrix(Biobase::exprs(pasilla_expt[["expressionset"]]))

@@ -500,8 +500,29 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking tf data
 
+    excel_ret <- NULL
     if (!is.null(excel)) {
         excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+    }
+    if (class(excel_ret) == "try-error") {
+        ## In case of an error with zip(1) in making an excel file.
+        csvfile <- paste0(excel, "_gomf.csv")
+        write.csv(mf_data, file=csvfile)
+        csvfile <- paste0(excel, "_gobp.csv")
+        write.csv(bp_data, file=csvfile)
+        csvfile <- paste0(excel, "_gocc.csv")
+        write.csv(cc_data, file=csvfile)
+        csvfile <- paste0(excel, "_kegg.csv")
+        write.csv(kegg_data, file=csvfile)
+        csvfile <- paste0(excel, "_tf.csv")
+        write.csv(tf_data, file=csvfile)
+        csvfile <- paste0(excel, "_reactome.csv")
+        write.csv(reactome_data, file=csvfile)
+        csvfile <- paste0(excel, "_mi.csv")
+        write.csv(mi_data, file=csvfile)
+        csvfile <- paste0(excel, "_corum.csv")
+        write.csv(corum_data, file=csvfile)
+        excel_ret <- "csv"
     }
     return(excel_ret)
 }

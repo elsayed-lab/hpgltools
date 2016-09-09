@@ -1,6 +1,5 @@
 library(testthat)
 library(hpgltools)
-
 context("Do gProfiler searches work?")
 
 ## I want to do some much longer tests using goseq/clusterprofiler/topgo/gostats/gprofiler
@@ -12,9 +11,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
-    sig_genes <- s_p(get_sig_genes(table, column="untreated")$up_genes)$result
+    sig_genes <- sm(get_sig_genes(table, column="untreated")$up_genes)
 
-    gprofiler_result <- s_p(simple_gprofiler(sig_genes, species="dmelanogaster", first_col="untreated"))$result
+    gprofiler_result <- sm(simple_gprofiler(sig_genes, species="dmelanogaster", first_col="untreated"))
 
     expected_go <- c(2.75e-03, 6.20e-04, 1.98e-06, 1.47e-04, 5.24e-04, 3.11e-05)
     actual_go <- head(gprofiler_result[["go"]][["p.value"]])
@@ -24,10 +23,20 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     actual_bpplot_data <- head(gprofiler_result$plots$bpp_plot_over$data$pvalue)
     expected_ccplot_data <- NULL
     actual_ccplot_data <- head(gprofiler_result$plots$cp_plot_over$data$pvalue)
-    test_that("Does gprofiler return expected pvalues?", {
+
+    test_that("Does gprofiler return expected values?", {
         expect_equal(expected_go, actual_go, tolerance=0.1)
+    })
+
+    test_that("Does gprofiler return expected values? (mfpplot_data)", {
         expect_equal(expected_mfplot_data, actual_mfplot_data, tolerance=0.001)
-        expect_equal(expected_bpplot_data, actual_bpplot_data, tolerance=0.001)
+    })
+
+    test_that("Does gprofiler return expected values? (bppplot_data)", {
+        expect_equal(expected_bpplot_data, actual_bpplot_data, tolerance=0.002)
+    })
+
+    test_that("Does gprofiler return expected values? (ccpplot_data)", {
         expect_equal(expected_ccplot_data, actual_ccplot_data, tolerance=0.001)
     })
 }

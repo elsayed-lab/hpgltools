@@ -1,4 +1,4 @@
-## plot_misc.r:  Silly plots
+## plot_isc.r:  Silly plots
 
 #' Make spirographs!
 #'

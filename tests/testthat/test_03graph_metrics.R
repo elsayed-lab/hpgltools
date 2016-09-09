@@ -26,21 +26,21 @@ test_that("The non-zero genes is as expected?", {
 })
 
 ## These tests have also been affected by the changed order of expressionsets.
-density_plot <- s_p(plot_density(pasilla_expt))$result
+density_plot <- sm(plot_density(pasilla_expt))
 expected <- c(92, 5, 4664, 583, 10, 1446)
 actual <- head(density_plot[["data"]][["counts"]])
 test_that("Density plot data is as expected?", {
     expect_equal(expected, actual)
 })
 
-hist_plot <- s_p(plot_histogram(data.frame(Biobase::exprs(pasilla_expt[["expressionset"]]))))[["result"]]
+hist_plot <- sm(plot_histogram(data.frame(Biobase::exprs(pasilla_expt[["expressionset"]]))))
 actual <- head(hist_plot[["data"]][["values"]])
 ## The values of expected have not changed
 test_that("Histogram data is as expected?", {
     expect_equal(expected, actual)
 })
 
-box_plot <- s_p(plot_boxplot(pasilla_expt))[["result"]]
+box_plot <- sm(plot_boxplot(pasilla_expt))
 actual <- head(box_plot[["data"]][["value"]])
 ## The values of expected have not changed
 test_that("Box plot data is as expected?", {
@@ -48,7 +48,7 @@ test_that("Box plot data is as expected?", {
 })
 
 ## Ahh yes I changed the cbcb_filter options to match those from the cbcbSEQ vignette.
-norm <- s_p(normalize_expt(pasilla_expt, transform="log2", convert="cbcbcpm", norm="quant", filter=TRUE))[["result"]]
+norm <- sm(normalize_expt(pasilla_expt, transform="log2", convert="cbcbcpm", norm="quant", filter=TRUE))
 expected <- "recordedplot"  ## for all the heatmaps
 
 corheat_plot <- plot_corheat(norm)
@@ -69,14 +69,14 @@ test_that("sampleheat is a recorded plot?", {
     expect_equal(expected, actual)
 })
 
-smc_plot <- s_p(plot_sm(norm, method="pearson"))[["result"]]
+smc_plot <- sm(plot_sm(norm, method="pearson"))
 actual <- head(smc_plot[["data"]][["sm"]])
 expected <- c(0.9779550, 0.9822023, 0.9798571, 0.9816597, 0.9783356, 0.9805947)
 test_that("Is the normalized smc data expected?", {
     expect_equal(expected, actual, tolerance=0.004)
 })
 
-smd_plot <- s_p(plot_sm(norm, method="euclidean"))[["result"]]
+smd_plot <- sm(plot_sm(norm, method="euclidean"))
 actual <- head(smd_plot[["data"]][["sm"]])
 expected <- c(72.26, 64.90, 68.90, 65.68, 71.64, 67.65)
 test_that("Is the normalized smd data expected?", {
