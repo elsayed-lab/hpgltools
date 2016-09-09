@@ -319,7 +319,10 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     expt[["colors"]] <- chosen_colors
     names(expt[["colors"]]) <- rownames(sample_definitions)
     if (!is.null(savefile)) {
-        save(list = c("expt"), file=paste(savefile, ".Rdata", sep=""))
+        save_result <- try(save(list = c("expt"), file=paste(savefile, ".Rdata", sep="")))
+    }
+    if (class(save_result) == "try-error") {
+        warning("Saving the expt object failed, perhaps you do not have permissions?")
     }
     return(expt)
 }

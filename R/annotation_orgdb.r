@@ -3,6 +3,11 @@
 ## for example is not included in any import declarations and so I will likely
 ## re-call it with dplyr::tbl_df() -- or add it to the imports.
 
+#' @export
+load_parasite_annotations <- function(...) {
+    load_annotations(...)
+}
+
 #' Load organism annotation data (parasite).
 #'
 #' Creates a dataframe gene and transcript information for a given set of gene
@@ -18,7 +23,7 @@
 #' @seealso \link[AnnotationDbi]{select}
 #' @examples
 #' \dontrun{
-#' one_gene <- load_parasite_annotations(org, c("LmJF.01.0010"))
+#' one_gene <- load_annotations(org, c("LmJF.01.0010"))
 #' }
 #' @export
 load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",

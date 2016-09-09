@@ -20,18 +20,16 @@ varpart <- function(expt, factors=c("condition","batch"), cpus=6, genes=20) {
     norm <- sm(normalize_expt(expt, filter=TRUE))
     data <- Biobase::exprs(norm[["expressionset"]])
     design <- expt[["design"]]
-    my_fit <- variancePartition::fitExtractVarPartModel(data, my_model, design)
-    my_sorted <- variancePartition::sortCols(my_fit)
+    my_extract <- variancePartition::fitExtractVarPartModel(data, my_model, design)
+    my_sorted <- variancePartition::sortCols(my_extract)
     percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
     partition_plot <- variancePartition::plotVarPart(my_sorted)
-    colinearity_scores <- varPartition::colinearityScore(my_fit)
     parallel::stopCluster(cl)
     ret <- list(
         "percent_plot" = percent_plot,
         "partition_plot" = partition_plot,
         "sorted_df" = my_sorted,
-        "fitted_df" = my_fit,
-        "scores" = corlinearity_scores)
+        "fitted_df" = my_extract)
     return(ret)
 }
 
