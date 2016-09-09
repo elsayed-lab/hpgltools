@@ -29,7 +29,7 @@ ids using the OrganismDbi interface.
 }
 \examples{
 \dontrun{
-one_gene <- load_parasite_annotations(org, c("LmJF.01.0010"))
+one_gene <- load_annotations(org, c("LmJF.01.0010"))
 }
 }
 \seealso{
