@@ -6,7 +6,8 @@
 \usage{
 biomart_orthologs(gene_ids, first_species = "hsapiens",
   second_species = "mmusculus", host = "dec2015.archive.ensembl.org",
-  trymart = "ENSEMBL_MART_ENSEMBL")
+  trymart = "ENSEMBL_MART_ENSEMBL", first_attributes = "ensembl_gene_id",
+  second_attributes = c("ensembl_gene_id", "hgnc_symbol"))
 }
 \arguments{
 \item{gene_ids}{List of gene IDs to translate.}
