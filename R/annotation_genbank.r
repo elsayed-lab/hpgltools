@@ -62,7 +62,7 @@ gbk_annotations <- function(gbr) {
 #' @return A list containing the number of files downloaded and the character strings actually acquired
 #' @export
 download_gbk <- function(accessions, write=TRUE) {
-    N <- length(accession)
+    N <- length(accessions)
     nrequest <- N%/%400 + as.logical(N%%400)
     downloaded <- character(0)
     num_downloaded <- 0

@@ -845,7 +845,7 @@ CIRCOS=\"%s\"
     make_target_svg <- paste0(make_target_svg, ".svg")
     make_target_png <- gsub(pattern="\\.conf", replacement="", x=make_target)
     make_target_png <- paste0(make_target_png, ".png")
-    make_command <- paste0("bash $(cd circos && make ", make_target_svg, " 2>>make.out 1>&2 && make ", make_target_png, " 2>>make.out 1>&2)")
+    make_command <- paste0("cd circos && make ", make_target_svg, " 2>>make.out 1>&2 && make ", make_target_png, " 2>>make.out 1>&2")
     result <- system(make_command, show.output.on.console=FALSE)
     return(result)
 }

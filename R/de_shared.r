@@ -287,6 +287,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     ## Does a createWorkbook() / addWorksheet()
     ## Then a writeData() / writeDataTable() / print(plot) / insertPlot() / saveWorkbook()
     ## Lets try that here.
+    retlist <- NULL
+
     limma <- all_pairwise_result[["limma"]]
     deseq <- all_pairwise_result[["deseq"]]
     edger <- all_pairwise_result[["edger"]]
@@ -572,7 +574,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                                      startRow=new_row, startCol=tmpcol, fileType="png", units="in")
             }
         } ## End if compare_plots is TRUE
-        retlist <- NULL
         message("Performing save of the workbook.")
         save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
         if (class(save_result == "try-error")) {
