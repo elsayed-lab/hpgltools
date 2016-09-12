@@ -467,53 +467,54 @@ make_orgdb_info <- function(gff, txt, kegg=TRUE) {
 #'         appear on multiple lines.
 #' @export
 parse_go_terms <- function(filepath) {
+    fp <- NULL
     if (tools::file_ext(filepath) == 'gz') {
-        fp = gzfile(filepath, open='rb')
+        fp <- gzfile(filepath, open='rb')
     } else {
-        fp = file(filepath, open='r')
+        fp <- file(filepath, open='r')
     }
 
-    # Create empty vector to store dataframe rows
-    N = 1e5
-    gene_ids = c()
-    go_rows = data.frame(GO=rep("", N),
-                         ONTOLOGY=rep("", N), GO_TERM_NAME=rep("", N),
-                         SOURCE=rep("", N), EVIDENCE=rep("", N),
-                         stringsAsFactors=FALSE)
+    ## Create empty vector to store dataframe rows
+    N <- 1e5
+    gene_ids <- c()
+    go_rows <- data.frame(GO=rep("", N),
+                          ONTOLOGY=rep("", N), GO_TERM_NAME=rep("", N),
+                          SOURCE=rep("", N), EVIDENCE=rep("", N),
+                          stringsAsFactors=FALSE)
 
-    # Counter to keep track of row number
-    i = j = 1
+    ## Counter to keep track of row number
+    i <- j <- 1
 
-    # Iterate through lines in file
+    ## Iterate through lines in file
     while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
-        # Gene ID
+        ## Gene ID
         if(grepl("^Gene ID", x)) {
-            gene_id = local_get_value(x)
-            i = i + 1
+            gene_id <- local_get_value(x)
+            i <- i + 1
         }
 
-        # Gene Ontology terms
+        ## Gene Ontology terms
         else if (grepl("^GO:", x)) {
-            gene_ids[j] = gene_id
-            go_rows[j,] = c(head(unlist(strsplit(x, '\t')), 5))
+            gene_ids[j] <- gene_id
+            go_rows[j,] <- c(head(unlist(strsplit(x, '\t')), 5))
             j = j + 1
         }
     }
 
-    # get rid of unallocated rows
-    go_rows = go_rows[1:j-1,]
+    ## get rid of unallocated rows
+    go_rows <- go_rows[1:j-1,]
 
-    # drop unneeded columns
-    go_rows = go_rows[,c('GO', 'EVIDENCE')]
+    ## drop unneeded columns
+    go_rows <- go_rows[,c('GO', 'EVIDENCE')]
 
-    # add gene id column
-    go_rows = cbind(GID=gene_ids, go_rows)
+    ## add gene id column
+    go_rows <- cbind(GID=gene_ids, go_rows)
 
-    # close file pointer
+    ## close file pointer
     close(fp)
 
-    # TODO: Determine source of non-unique rows in the dataframe
-    # (May have to do with multiple types of evidence?)
+    ## TODO: Determine source of non-unique rows in the dataframe
+    ## (May have to do with multiple types of evidence?)
     return(unique(go_rows))
 }
 
@@ -524,65 +525,69 @@ parse_go_terms <- function(filepath) {
 #' @return Returns a dataframe where each line includes a gene/domain pairs.
 #' @export
 parse_interpro_domains <- function(filepath) {
+    fp <- NULL
     if (tools::file_ext(filepath) == 'gz') {
-        fp = gzfile(filepath, open='rb')
+        fp <- gzfile(filepath, open='rb')
     } else {
-        fp = file(filepath, open='r')
+        fp <- file(filepath, open='r')
     }
 
-    # Create empty vector to store dataframe rows
-    #N = 1e5
-    #gene_ids = c()
-    #interpro_rows = data.frame(GO=rep("", N),
-    #                     ONTOLOGY=rep("", N), GO_TERM_NAME=rep("", N),
-    #                     SOURCE=rep("", N), EVIDENCE=rep("", N),
-    #                     stringsAsFactors=FALSE)
+    ## Create empty vector to store dataframe rows
+    N <- 1e5
+    gene_ids <- c()
+    ##interpro_rows = data.frame(GO=rep("", N),
+    ##                     ONTOLOGY=rep("", N), GO_TERM_NAME=rep("", N),
+    ##                     SOURCE=rep("", N), EVIDENCE=rep("", N),
+    ##                     stringsAsFactors=FALSE)
 
-    # InterPro table columns
-    cols = c('name', 'interpro_id', 'primary_id', 'secondary_id', 'description',
+    ## InterPro table columns
+    cols <- c('name', 'interpro_id', 'primary_id', 'secondary_id', 'description',
              'start_min', 'end_min', 'evalue')
 
-    # Iterate through lines in file
+    ## Counter to keep track of row number
+    i <- j <- 1
+
+    ## Iterate through lines in file
     while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
-        # Gene ID
-        if(grepl("^Gene ID", x)) {
-            gene_id = local_get_value(x)
+        ## Gene ID
+        if (grepl("^Gene ID", x)) {
+            gene_ids[i] <- local_get_value(x)
+            i <- i + 1
         }
 
-        # Parse InterPro table
+        ## Parse InterPro table
         else if (grepl("TABLE: InterPro Domains", x)) {
-            # Skip column header row
-            trash = readLines(fp, n=1)
+            ## Skip column header row
+            trash <- readLines(fp, n=1)
 
-            # Continue reading until end of table
-            raw_table = ""
+            ## Continue reading until end of table
+            raw_table <- ""
 
-            entry = readLines(fp, n=1)
+            entry <- readLines(fp, n=1)
 
-            while(length(entry) != 0) {
+            while (length(entry) != 0) {
                 if (raw_table == "") {
-                    raw_table = entry
+                    raw_table <- entry
                 } else {
-                    raw_table = paste(raw_table, entry, sep='\n')
+                    raw_table <- paste(raw_table, entry, sep="\n")
                 }
-                entry = readLines(fp, n=1)
+                entry <- readLines(fp, n=1)
             }
 
-            # If table length is greater than 0, read ino
-            buffer = textConnection(raw_table)
+            ## If table length is greater than 0, read ino
+            buffer <- textConnection(raw_table)
 
-            interpro_table = read.delim(buffer, header=FALSE, col.names=cols)
+            interpro_table <- read.delim(buffer, header=FALSE, col.names=cols)
 
         }
     }
 
-    # add gene id column
-    go_rows = cbind(GID=gene_ids, go_rows)
+    ## add gene id column
+    go_rows <- cbind(GID=gene_ids, go_rows)
 
-    # close file pointer
+    ## close file pointer
     close(fp)
-
-    # TODO: Determine source of non-unique rows in the dataframe
+    ## TODO: Determine source of non-unique rows in the dataframe
     return(unique(go_rows))
 }
 

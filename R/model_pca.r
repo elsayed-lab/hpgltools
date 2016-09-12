@@ -82,17 +82,18 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' @param size_column use an experimental factor to size the glyphs of the plot
 #' @param ...  arglist from elipsis!
 #' @return a list containing the following:
-#'   pca = the result of fast.svd()
-#'   plot = ggplot2 pca_plot describing the principle component analysis of the samples.
-#'   table = a table of the PCA plot data
-#'   res = a table of the PCA res data
-#'   variance = a table of the PCA plot variance
-#' This makes use of cbcbSEQ and prints the table of variance by component.
+#'  \enumerate{
+#'   \item  pca = the result of fast.svd()
+#'   \item  plot = ggplot2 pca_plot describing the principle component analysis of the samples.
+#'   \item  table = a table of the PCA plot data
+#'   \item  res = a table of the PCA res data
+#'   \item  variance = a table of the PCA plot variance
+#'  }
 #' @seealso \code{\link{makeSVD}},
 #' \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 #' @examples
 #' \dontrun{
-#'  pca_plot = plot_pca(expt=expt)
+#'  pca_plot <- plot_pca(expt=expt)
 #'  pca_plot
 #' }
 #' @export

@@ -56,3 +56,4 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
     return(ret_list)
 }
 
+## EOF
