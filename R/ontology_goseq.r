@@ -308,9 +308,9 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
     merged_ids_lengths[is.na(merged_ids_lengths)] <- 0
     ## Not casing the next lines as character/numeric causes weird errors like 'names' attribute must be the same length as the vector
     de_vector <- as.vector(as.numeric(merged_ids_lengths[["DE"]]))
-    names(de_vector) <- as.character(merged_ids_lengths[["ID"]])
+    names(de_vector) <- make.names(as.character(merged_ids_lengths[["ID"]]), unique=TRUE)
     length_vector <- as.vector(as.numeric(merged_ids_lengths[["length"]]))
-    names(length_vector) <- as.character(merged_ids_lengths[["ID"]])
+    names(length_vector) <- make.names(as.character(merged_ids_lengths[["ID"]]), unique=TRUE)
 
     pwf_plot <- NULL
     pwf <- goseq::nullp(DEgenes=de_vector, bias.data=length_vector, plot.fit=doplot)

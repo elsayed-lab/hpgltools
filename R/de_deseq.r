@@ -117,22 +117,23 @@ deseq_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ## gvis_f
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
-    if (!is.null(toptable)) {
-        theplot <- plot[["scatter"]] + ggplot2::theme_bw()
-        sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
-        sigup <- sig[["up_genes"]]
-        sigdown <- sig[["down_genes"]]
-        up_index <- rownames(coefficients) %in% rownames(sigup)
-        down_index <- rownames(coefficients) %in% rownames(sigdown)
-        up_df <- as.data.frame(coefficients[up_index, ])
-        down_df <- as.data.frame(coefficients[down_index, ])
-        colnames(up_df) <- c("first", "second")
-        colnames(down_df) <- c("first", "second")
-        theplot <- theplot +
-            ggplot2::geom_point(data=up_df, colour=color_high) +
-            ggplot2::geom_point(data=down_df, colour=color_low)
-        plot[["scatter"]] <- theplot
-    }
+    ## I think the following was taken up by plot_linear_scatter and is not needed here anymore
+    ##if (!is.null(toptable)) {
+    ##    theplot <- plot[["scatter"]] + ggplot2::theme_bw()
+    ##    sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
+    ##    sigup <- sig[["up_genes"]]
+    ##    sigdown <- sig[["down_genes"]]
+    ##    up_index <- rownames(coefficients) %in% rownames(sigup)
+    ##    down_index <- rownames(coefficients) %in% rownames(sigdown)
+    ##    up_df <- as.data.frame(coefficients[up_index, ])
+    ##    down_df <- as.data.frame(coefficients[down_index, ])
+    ##    colnames(up_df) <- c("first", "second")
+    ##    colnames(down_df) <- c("first", "second")
+    ##    theplot <- theplot +
+    ##        ggplot2::geom_point(data=up_df, colour=color_high) +
+    ##        ggplot2::geom_point(data=down_df, colour=color_low)
+    ##    plot[["scatter"]] <- theplot
+    ##}
     plot[["df"]] <- coefficient_df
     return(plot)
 }

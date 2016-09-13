@@ -5,7 +5,7 @@
 \title{Make a MA plot of some limma output with pretty colors and shapes}
 \usage{
 limma_ma(output, table = NULL, p_col = "adj.P.Val", expr_col = "AveExpr",
-  fc_col = "logFC")
+  fc_col = "logFC", fc = 1)
 }
 \arguments{
 \item{output}{The result from all_pairwise(), which should be changed to handle other invocations too.}

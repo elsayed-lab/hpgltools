@@ -10,6 +10,7 @@
 #' @param trymart Biomart has become a circular dependency, this makes me sad, now to list the
 #'     marts, you need to have a mart loaded...
 #' @param include_lengths Also perform a search on structural elements in the genome?
+#' @param requested Set of requested columns
 #' @return Df of some (by default) human annotations.
 #' @examples
 #' \dontrun{
@@ -18,7 +19,10 @@
 #' @export
 get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                     host="dec2015.archive.ensembl.org",
-                                    trymart="ENSEMBL_MART_ENSEMBL", include_lengths=TRUE) {
+                                    trymart="ENSEMBL_MART_ENSEMBL",
+                                    gene_requests=c("ensembl_gene_id","ensembl_transcript_id","description","gene_biotype"),
+                                    length_requests=c("ensembl_transcript_id","cds_length","chromosome_name","strand","start_position","end_position"),
+                                    include_lengths=TRUE) {
     savefile <- paste0(species, "_biomart_annotations.rda")
     biomart_annotations <- NULL
     if (file.exists(savefile) & overwrite == FALSE) {
@@ -58,24 +62,23 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
     }
     ## The following was stolen from Laura's logs for human annotations.
     ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
-    biomart_annotation <- biomaRt::getBM(attributes=c("ensembl_gene_id", "ensembl_transcript_id",
-                                                    "description", "gene_biotype"),
-                                       mart=ensembl)
+    biomart_annotation <- biomaRt::getBM(attributes=gene_requests,
+                                         mart=ensembl)
     message("Finished downloading ensembl feature annotations.")
     biomart_annotations <- NULL
     if (isTRUE(include_lengths)) {
-        biomart_structure <- biomaRt::getBM(attributes=c("ensembl_transcript_id", "cds_length", "chromosome_name",
-                                                         "strand", "start_position", "end_position"),
+        biomart_structure <- biomaRt::getBM(attributes=length_requests,
                                             mart=ensembl)
         message("Finished downloading ensembl structure annotations.")
         biomart_annotations <- merge(biomart_annotation, biomart_structure,
                                      by.x="ensembl_transcript_id", by.y="ensembl_transcript_id",
                                      all.x=TRUE)
-        colnames(biomart_annotations) <- c("transcriptID", "geneID", "Description",
-                                           "Type", "length", "chromosome", "strand", "start", "end")
+        ## If you change gene_requests or length_requests, this will fail.
+        tt <- try(colnames(biomart_annotations) <- c("transcriptID", "geneID", "Description",
+                                                     "Type", "length", "chromosome", "strand", "start", "end"))
     } else {
         biomart_annotations <- biomart_annotation
-        colnames(biomart_annotations) <- c("geneID", "transcriptID", "Description", "Type")
+        tt <- try(colnames(biomart_annotations) <- c("geneID", "transcriptID", "Description", "Type"))
     }
     rownames(biomart_annotations) <- make.names(biomart_annotations[, "transcriptID"], unique=TRUE)
     ## In order for the return from this function to work with other functions in this, the rownames must be set.

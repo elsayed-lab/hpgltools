@@ -1,3 +1,136 @@
+#' Make a MA plot of some limma output with pretty colors and shapes
+#'
+#' Yay pretty colors and shapes!
+#'
+#' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
+#' @param table  Result from basic to use, left alone it chooses the first.
+#' @param expr_col  Column for the average data.
+#' @param fc_col  Column for logFC data.
+#' @param p_col  Column to use for p-value data.
+#' @return a plot!
+#' @seealso \link{plot_ma_de}
+#' @examples
+#'  \dontrun{
+#'   prettyplot <- basic_ma(all_aprwise) ## [sic, I'm witty! and can speel]
+#' }
+#' @export
+basic_ma <- function(output, table=NULL, fc_col="logFC", p_col="p", expr_col="numerator_median", fc=1, pval_cutoff=0.05) {
+    counts <- NULL
+    de_genes <- NULL
+    pval <- NULL
+    if (!is.null(output[["basic"]])) {
+        output <- output[["basic"]]
+    }
+    possible_tables <- names(output[["all_tables"]])
+    if (is.null(table)) {
+        table <- possible_tables[1]
+    } else if (is.numeric(table)) {
+        table <- possible_tables[table]
+    }
+
+    de_genes <- output[["all_tables"]][[table]]
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
+    return(plot)
+}
+
+#' Plot two coefficients with respect to one another from basic.
+#'
+#' It can be nice to see a plot of two coefficients from a basic comparison with respect to one another
+#' This hopefully makes that easy.
+#'
+#' @param output Set of pairwise comparisons provided by basic_pairwise().
+#' @param toptable  The table to use for extracting the logfc values.
+#' @param x Name or number of the x-axis coefficient column to extract.
+#' @param y Name or number of the y-axis coefficient column to extract.
+#' @param gvis_filename Filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline Add a trendline to the gvis plot?
+#' @param z  Make pretty colors for genes this number of z-scores from the median.
+#' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
+#' @param base_url Add a linkout to gvis plots to this base url.
+#' @param color_low  Color to use for low-logfc values.
+#' @param color_high  Color to use for high-logfc values.
+#' @param ... A few options may be added outside this scope and are left in the arglist, notably
+#'     qlimit, fc_column, p_column.  I need to make a consistent decision about how to handle these
+#'     not-always needed parameters, either always define them in the function body, or always put
+#'     them in arglist(...), doing a little of both is stupid.
+#' @return Ggplot2 plot showing the relationship between the two coefficients.
+#' @seealso \link{plot_linear_scatter} \link{basic_pairwise}
+#' @examples
+#' \dontrun{
+#'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' }
+#' @export
+basic_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
+                                      gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
+                                      tooltip_data=NULL, base_url=NULL,
+                                      color_low="#DD0000", color_high="#7B9F35", ...) {
+    arglist <- list(...)
+    qlimit <- 0.1
+    if (!is.null(arglist[["qlimit"]])) {
+        qlimit <- arglist[["qlimit"]]
+    }
+    fc_column <- "basic_logfc"
+    if (!is.null(arglist[["fc_column"]])) {
+        fc_column <- arglist[["fc_column"]]
+    }
+    p_column <- "basic_adjp"
+    if (!is.null(arglist[["p_column"]])) {
+        p_column <- arglist[["p_column"]]
+    }
+    thenames <- names(output[["conditions_table"]])
+    message("This can do comparisons among the following columns in the basic result:")
+    message(toString(thenames))
+    xname <- ""
+    yname <- ""
+    if (is.numeric(x)) {
+        xname <- thenames[[x]]
+    } else {
+        xname <- x
+    }
+    if (is.numeric(y)) {
+        yname <- thenames[[y]]
+    } else {
+        yname <- y
+    }
+
+    message(paste0("Actually comparing ", xname, " and ", yname, "."))
+    ## It looks like the lrt data structure is redundant, so I will test that by looking at the apparent
+    ## coefficients from lrt[[1]] and then repeating with lrt[[2]]
+    coefficient_df <- output[["medians"]]
+    coefficient_df <- coefficient_df[, c(xname, yname)]
+    if (max(coefficient_df) < 0) {
+        coefficient_df <- coefficient_df * -1.0
+    }
+
+    plot <- sm(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+                                   gvis_trendline=gvis_trendline, first=xname, second=yname,
+                                   tooltip_data=tooltip_data, base_url=base_url,
+                                   pretty_colors=FALSE, color_low=color_low, color_high=color_high))
+    maxvalue <- as.numeric(max(coefficient_df) + 1)
+    plot[["scatter"]] <- plot[["scatter"]] +
+        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
+        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
+    ## I think the following was taken up by plot_linear_scatter and is not needed here anymore
+    ##if (!is.null(toptable)) {
+    ##    theplot <- plot[["scatter"]] + ggplot2::theme_bw()
+    ##    sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
+    ##    sigup <- sig[["up_genes"]]
+    ##    sigdown <- sig[["down_genes"]]
+    ##    up_index <- rownames(coefficients) %in% rownames(sigup)
+    ##    down_index <- rownames(coefficients) %in% rownames(sigdown)
+    ##    up_df <- as.data.frame(coefficients[up_index, ])
+    ##    down_df <- as.data.frame(coefficients[down_index, ])
+    ##    colnames(up_df) <- c("first", "second")
+    ##    colnames(down_df) <- c("first", "second")
+    ##    theplot <- theplot +
+    ##        ggplot2::geom_point(data=up_df, colour=color_high) +
+    ##        ggplot2::geom_point(data=down_df, colour=color_low)
+    ##    plot[["scatter"]] <- theplot
+    ##}
+    plot[["df"]] <- coefficient_df
+    return(plot)
+}
+
 #' The simplest possible differential expression method.
 #'
 #' Perform a pairwise comparison among conditions which takes

@@ -17,7 +17,7 @@
 plot_bcv <- function(data) {
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        data <- Biobase::exprs(data$expressionset)
+        data <- Biobase::exprs(data[["expressionset"]])
     } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
@@ -27,9 +27,9 @@ plot_bcv <- function(data) {
     }
     data <- edgeR::DGEList(counts=data)
     edisp <- edgeR::estimateDisp(data)
-    avg_log_cpm <- edisp$AveLogCPM
+    avg_log_cpm <- edisp[["AveLogCPM"]]
     if (is.null(avg_log_cpm)) {
-        avg_log_cpm <- edgeR::aveLogCPM(edisp$counts, offset=edgeR::getOffset(edisp))
+        avg_log_cpm <- edgeR::aveLogCPM(edisp[["counts"]], offset=edgeR::getOffset(edisp))
     }
     disper <- edgeR::getDispersion(edisp)
     if (is.null(disper)) {
@@ -40,7 +40,7 @@ plot_bcv <- function(data) {
     }
     disp_df <- data.frame("A" = avg_log_cpm,
                           "disp" = sqrt(disper))
-    fitted_disp <- gplots::lowess(disp_df$A, disp_df$disp, f=0.5)
+    fitted_disp <- gplots::lowess(disp_df[["A"]], disp_df[["disp"]], f=0.5)
     f <- stats::approxfun(fitted_disp, rule=2)
     disp_plot <- ggplot(disp_df, aes_string(x="A", y="disp")) +
         ggplot2::geom_point() +
@@ -99,12 +99,12 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
     first_mad <- stats::mad(df[, 1])
     second_mad <- stats::mad(df[, 2])
     mydist <- sillydist(df[, 1], df[, 2], first_median, second_median)
-    mydist$x <- abs((mydist[, 1] - first_median) / abs(first_median))
-    mydist$y <- abs((mydist[, 2] - second_median) / abs(second_median))
-    mydist$x <- mydist$x / max(mydist$x)
-    mydist$y <- mydist$y / max(mydist$y)
-    mydist$dist <- mydist$x * mydist$y
-    mydist$dist <- mydist$dist / max(mydist$dist)
+    mydist[["x"]] <- abs((mydist[, 1] - first_median) / abs(first_median))
+    mydist[["y"]] <- abs((mydist[, 2] - second_median) / abs(second_median))
+    mydist[["x"]] <- mydist[["x"]] / max(mydist[["x"]])
+    mydist[["y"]] <- mydist[["y"]] / max(mydist[["y"]])
+    mydist[["dist"]] <- mydist[["x"]] * mydist[["y"]]
+    mydist[["dist"]] <- mydist[["dist"]] / max(mydist[["dist"]])
     line_size <- size / 2
     first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +
@@ -115,7 +115,7 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
         ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
         ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
         ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
-        ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist), alpha=0.6, size=size) +
+        ggplot2::geom_point(colour=grDevices::hsv(mydist[["dist"]], 1, mydist[["dist"]]), alpha=0.6, size=size) +
         ggplot2::theme(legend.position="none")
     if (!is.null(gvis_filename)) {
         plot_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)

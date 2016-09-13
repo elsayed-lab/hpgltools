@@ -6,7 +6,11 @@
 \usage{
 get_biomart_annotations(species = "hsapiens", overwrite = FALSE,
   do_save = TRUE, host = "dec2015.archive.ensembl.org",
-  trymart = "ENSEMBL_MART_ENSEMBL", include_lengths = TRUE)
+  trymart = "ENSEMBL_MART_ENSEMBL", gene_requests = c("ensembl_gene_id",
+  "ensembl_transcript_id", "description", "gene_biotype"),
+  length_requests = c("ensembl_transcript_id", "cds_length",
+  "chromosome_name", "strand", "start_position", "end_position"),
+  include_lengths = TRUE)
 }
 \arguments{
 \item{species}{Choose a species.}
@@ -21,6 +25,8 @@ get_biomart_annotations(species = "hsapiens", overwrite = FALSE,
 marts, you need to have a mart loaded...}
 
 \item{include_lengths}{Also perform a search on structural elements in the genome?}
+
+\item{requested}{Set of requested columns}
 }
 \value{
 Df of some (by default) human annotations.
