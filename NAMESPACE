@@ -3,7 +3,7 @@
 export("%>%")
 export(all_ontology_searches)
 export(all_pairwise)
-export(all_pairwise_parallel)
+export(all_pairwise_serial)
 export(basic_coefficient_scatter)
 export(basic_ma)
 export(basic_pairwise)
