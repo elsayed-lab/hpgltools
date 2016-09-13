@@ -186,6 +186,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         sample_ids <- as.character(sample_definitions[["sampleid"]])
         all_count_tables <- hpgl_read_files(sample_ids, filenames, ...)
     }
+
+    all_count_tables <- as.data.frame(all_count_tables)
     for (col in colnames(all_count_tables)) {
         ## Ensure there are no stupid entries like target_id est_counts
         all_count_tables[[col]] <- as.numeric(all_count_tables[[col]])
@@ -286,6 +288,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
                                exprs=as.matrix(final_counts),
                                phenoData=metadata,
                                featureData=feature_data)
+    notes(experiment) <- toString(notes)
 
     ## These entries in new_expt are intended to maintain a record of
     ## the transformation status of the data, thus if we now call

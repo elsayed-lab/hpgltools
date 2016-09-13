@@ -14,11 +14,13 @@
 #'   prettyplot <- limma_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-limma_ma <- function(output, table=NULL, p_col="adj.P.Val", expr_col="AveExpr", fc_col="logFC") {
+limma_ma <- function(output, table=NULL, p_col="adj.P.Val", expr_col="AveExpr", fc_col="logFC", fc=1) {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
-    output <- output[["limma"]]  ## Currently this only will work with the output from all_pairwise()
+    if (!is.null(output[["limma"]])) {
+        output <- output[["limma"]]
+    }
     possible_tables <- names(output[["all_pairwise"]])
     if (is.null(table)) {
         table <- possible_tables[1]
@@ -27,7 +29,7 @@ limma_ma <- function(output, table=NULL, p_col="adj.P.Val", expr_col="AveExpr", 
     }
 
     de_genes <- output[["all_tables"]][[table]]
-    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col)
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col, logfc_cutoff=fc)
     return(plot)
 }
 

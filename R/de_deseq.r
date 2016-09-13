@@ -14,11 +14,13 @@
 #'   prettyplot <- limma_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-deseq_ma <- function(output, table=NULL, p_col="qvalue", fc_col="logFC", expr_col="logExpr") {
+deseq_ma <- function(output, table=NULL, p_col="qvalue", fc_col="logFC", expr_col="logExpr", fc=1) {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
-    output <- output[["deseq"]]  ## Currently this only will work with the output from all_pairwise()
+    if (!is.null(output[["deseq"]])) {
+        output <- output[["deseq"]]
+    }
     possible_tables <- names(output[["all_tables"]])
     if (is.null(table)) {
         table <- possible_tables[1]
@@ -28,7 +30,7 @@ deseq_ma <- function(output, table=NULL, p_col="qvalue", fc_col="logFC", expr_co
 
     de_genes <- output[["all_tables"]][[table]]
     de_genes[["logExpr"]] <- log(de_genes[["baseMean"]])
-    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col)
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col, logfc_cutoff=fc)
     return(plot)
 }
 

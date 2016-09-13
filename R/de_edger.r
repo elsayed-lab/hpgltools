@@ -14,11 +14,13 @@
 #'   prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue", expr_col="logCPM") {
+edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue", expr_col="logCPM", fc=1) {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
-    output <- output[["edger"]]  ## Currently this only will work with the output from all_pairwise()
+    if (!is.null(output[["edger"]])) {
+        output <- output[["edger"]]
+    }
     possible_tables <- output[["contrasts"]][["names"]]
     if (is.null(table)) {
         table <- possible_tables[1]
@@ -28,7 +30,7 @@ edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue", expr_co
 
     de_genes <- output[["all_tables"]][[table]]
     pval <- "qvalue"
-    plot <- plot_ma_de(table=de_genes, expr_col="logCPM", fc_col="logFC", p_col="qvalue")
+    plot <- plot_ma_de(table=de_genes, expr_col="logCPM", fc_col="logFC", p_col="qvalue", logfc_cutoff=fc)
     return(plot)
 }
 
