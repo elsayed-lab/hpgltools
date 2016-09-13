@@ -444,7 +444,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["bpp_plot_over"]]
-            print(a_plot)
+            try(print(a_plot), silent=TRUE)
             ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(bp_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(bp_data) + 2
@@ -456,7 +456,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["mfp_plot_over"]]
-            print(a_plot)
+            try(print(a_plot), silent=TRUE)
             ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(mf_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(mf_data) + 2
@@ -468,7 +468,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["ccp_plot_over"]]
-            print(a_plot)
+            try(print(a_plot), silent=TRUE)
             ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(cc_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(cc_data) + 2
@@ -487,7 +487,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["kegg_plot_over"]]
-            print(a_plot)
+            try(print(a_plot), silent=TRUE)
             ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(kegg_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(kegg_data) + 2
@@ -506,7 +506,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["tf_plot_over"]]
-            print(a_plot)
+            try(print(a_plot), silent=TRUE)
             ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(tf_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(tf_data) + 2
@@ -525,7 +525,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["reactome_plot_over"]]
-            print(a_plot)
+            try(print(a_plot), silent=TRUE)
             ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(react_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(react_data) + 2
@@ -545,7 +545,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["mi_plot_over"]]
-            print(a_plot)
+            try(print(a_plot), silent=TRUE)
             ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(mi_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(mi_data) + 2
@@ -564,7 +564,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["corum_plot_over"]]
-            print(a_plot)
+            try(print(a_plot), silent=TRUE)
             ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(corum_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(corum_data) + 2
