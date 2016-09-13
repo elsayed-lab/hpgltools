@@ -87,3 +87,4 @@ actual <- pasilla_expt[["libsize"]]
 test_that("Are the library sizes intact?", {
     expect_equal(expected, actual)
 })
+

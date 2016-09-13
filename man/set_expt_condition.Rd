@@ -9,11 +9,9 @@ set_expt_condition(expt, fact, ids = NULL, ...)
 \arguments{
 \item{expt}{Expt to modify}
 
+\item{fact}{Conditions to replace}
+
 \item{ids}{Specific sample IDs to change.}
-
-\item{factor}{Conditions to replace}
-
-\item{colors}{Reset the set of colors (Give a factor if you want to choose your own).}
 }
 \value{
 expt Send back the expt with some new metadata

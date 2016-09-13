@@ -576,7 +576,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
         } ## End if compare_plots is TRUE
         message("Performing save of the workbook.")
         save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
-        if (class(save_result == "try-error")) {
+        if (class(save_result) == "try-error") {
             message("Saving xlsx failed.  Rerunning now with arguments to save to csv files.")
             retlist <- combine_de_tables(all_pairwise_result,
                                          extra_annot=extra_annot,

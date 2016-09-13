@@ -56,7 +56,6 @@ test_genoplotr <- function() {
     gba <- genbankr::GBAccession(acc1)
     acc2 <- "BX897700"
     tt <- download_gbk(acc2)
-    
     BH <- try(genoPlotR::read_dna_seg_from_file(paste0(acc1, ".gb")))
     BQ <- try(genoPlotR::read_dna_seg_from_file(paste0(acc2, ".gb")))
     ##BH_vs_BQ <- try(genoPlotR::read_comparison_from_blast("NC_005956_vs_NC_005955.blast"))

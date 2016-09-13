@@ -7,9 +7,9 @@
 download_gbk(accessions, write = TRUE)
 }
 \arguments{
-\item{write}{Write the files?  Otherwise return a list of the strings}
+\item{accessions}{An accession -- actually a set of them.}
 
-\item{accession}{An accession!}
+\item{write}{Write the files?  Otherwise return a list of the strings}
 }
 \value{
 A list containing the number of files downloaded and the character strings actually acquired

@@ -173,7 +173,10 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 
     df <- data.frame(df[, c(1, 2)])
     df <- df[complete.cases(df), ]
-    correlation <- cor.test(df[, 1], df[, 2], method=cormethod, exact=FALSE)
+    correlation <- try(cor.test(df[, 1], df[, 2], method=cormethod, exact=FALSE))
+    if (class(correlation) == "try-error") {
+        correlation <- NULL
+    }
     df_columns <- colnames(df)
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]

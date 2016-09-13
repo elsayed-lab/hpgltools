@@ -19,6 +19,10 @@ biomart_orthologs(gene_ids, first_species = "hsapiens",
 \item{host}{Ensembl server to query.}
 
 \item{trymart}{Assumed mart name to use.}
+
+\item{first_attributes}{Key(s) of the first database to use.}
+
+\item{second_attributes}{Key(s) of the second database to use.}
 }
 \value{
 Df of orthologs.

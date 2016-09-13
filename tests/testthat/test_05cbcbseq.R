@@ -202,3 +202,4 @@ hpgl_top <- hpgl_top[sort(rownames(hpgl_top)), ]
 test_that("Limma results, toptable.", {
     expect_equal(cbcb_top, hpgl_top)
 })
+

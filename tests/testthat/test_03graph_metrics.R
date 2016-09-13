@@ -116,3 +116,4 @@ expected <- c(0.06119973, 0.04514489, -0.53934612, -0.44395229, 0.69872704, 0.12
 test_that("Is the PCA PC2 as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
+

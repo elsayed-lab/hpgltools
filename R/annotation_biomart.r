@@ -209,6 +209,8 @@ translate_ids_querymany <- function(queries, from="ensembl", to="entrez", specie
 #' @param second_species Linnean species name for the second species.
 #' @param host Ensembl server to query.
 #' @param trymart Assumed mart name to use.
+#' @param first_attributes  Key(s) of the first database to use.
+#' @param second_attributes  Key(s) of the second database to use.
 #' @return Df of orthologs.
 #' @export
 biomart_orthologs <- function(gene_ids, first_species="hsapiens", second_species="mmusculus",

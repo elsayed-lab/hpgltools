@@ -590,8 +590,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
 #' the experiment.  Use this to make that easier.
 #'
 #' @param expt Expt to modify
-#' @param factor Conditions to replace
-#' @param colors Reset the set of colors (Give a factor if you want to choose your own).
+#' @param fact Conditions to replace
 #' @param ids Specific sample IDs to change.
 #' @return expt Send back the expt with some new metadata
 #' @examples

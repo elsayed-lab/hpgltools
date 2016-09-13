@@ -61,7 +61,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     if (!is.null(arglist[["low_to_zero"]])) {
         low_to_zero <- arglist[["low_to_zero"]]
     }
-    cpus <- 6
+    cpus <- 3
     if (!is.null(arglist[["cpus"]])) {
         cpus <- arglist[["cpus"]]
     }
@@ -160,13 +160,16 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         cl <- parallel::makeCluster(cpus)  ## I am keeping 2 processors to myself, piss off, R.
         doParallel::registerDoParallel(cl)
         batch_model <- as.formula("~ (1|batch)")
+        message("The function fitvarPartModel may take excessive memory, you have been warned.")
         batch_fit <- variancePartition::fitVarPartModel(as.data.frame(count_table), batch_model, design)
         count_table <- residuals(batch_fit)
+        rm(batch_fit)
         parallel::stopCluster(cl)
     } else if (batch == "ruvg") {
         message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.")
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
-        df <- data.frame(count_table)
+        df <- as.data.frame(count_table)
+        mtrx <- as.matrix(count_table)
         conditional_model <- model.matrix(~conditions, data=df)
         null_model <- conditional_model[,1]
         num_surrogates <- 0

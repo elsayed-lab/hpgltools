@@ -57,7 +57,7 @@ gbk_annotations <- function(gbr) {
 #'
 #' This takes and downloads genbank accessions
 #'
-#' @param accession An accession!
+#' @param accessions An accession -- actually a set of them.
 #' @param write  Write the files?  Otherwise return a list of the strings
 #' @return A list containing the number of files downloaded and the character strings actually acquired
 #' @export
