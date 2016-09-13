@@ -14,7 +14,7 @@
 #'   prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue", expr_col="logCPM", fc=1) {
+edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue", expr_col="logCPM", fc=1, pval_cutoff=0.05) {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
@@ -29,8 +29,7 @@ edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue", expr_co
     }
 
     de_genes <- output[["all_tables"]][[table]]
-    pval <- "qvalue"
-    plot <- plot_ma_de(table=de_genes, expr_col="logCPM", fc_col="logFC", p_col="qvalue", logfc_cutoff=fc)
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
     return(plot)
 }
 

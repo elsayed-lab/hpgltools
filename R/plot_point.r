@@ -429,44 +429,61 @@ plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=
 plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                        pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1,
                        size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
-    hpgl_env <- environment()
-
-    aes_color = "(pval <= pval_cutoff)"
-
-###    df <- data.frame("avg" = rowMeans(counts[rownames(de_genes),]),
-###                     "logfc" = de_genes[["logFC"]],
-###                     "pval" = de_genes[["P.Value"]],
-###                     "adjpval" = de_genes[[pval_column]])
+    ## Set up the data frame which will describe the plot
     df <- data.frame("avg" = table[[expr_col]],
                      "logfc" = table[[fc_col]],
                      "pval" = table[[p_col]])
-
     df[["pval"]] <- as.numeric(format(df[["pval"]], scientific=FALSE))
     df[["state"]] <- ifelse(df[["pval"]] > pval_cutoff, "pinsig",
                      ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
                      ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] <= (-1 * logfc_cutoff), "downsig", "fcinsig")))
+    df[["state"]] <- as.factor(df[["state"]])
+    ## Explicitly set the levels for the state column in case some of them are not defined.
+    levels(df[["state"]]) <- c("pinsig","upsig","downsig","fcinsig")
+    df[["pcut"]] <- df[["pval"]] <= pval_cutoff
+
     num_pinsig <- sum(df[["state"]] == "pinsig")
     num_upsig <- sum(df[["state"]] == "upsig")
     num_downsig <- sum(df[["state"]] == "downsig")
     num_fcinsig <- sum(df[["state"]] == "fcinsig")
-    plt <- ggplot(df, aes_string(x="avg", y="logfc", color=aes_color),
-                           environment=hpgl_env) +
+
+    ## Fill in 1 of each state to make ggplot2 not be stupid
+    df["tmp_pinsig",] <- c(0,0,0,"pinsig",FALSE)
+    df["tmp_upsig",] <- c(0,0,0,"upsig",FALSE)
+    df["tmp_downsig",] <- c(0,0,0,"downsig",FALSE)
+    df["tmp_fcinsig",] <- c(0,0,0,"fcinsig",FALSE)
+    df[[1]] <- as.numeric(df[[1]])
+    df[[2]] <- as.numeric(df[[2]])
+    df[[3]] <- as.numeric(df[[3]])
+    df[[4]] <- as.factor(df[[4]])
+    df[[5]] <- as.factor(df[[5]])
+
+    ## Set up the labels for the legend by significance.
+    state_shapes <- c(21,22,23,24)
+    names(state_shapes) <- c("downsig","fcinsig","pinsig","upsig")
+
+    plt <- ggplot(data=df,
+                  aes_string(x="avg",
+                             y="logfc",
+                             fill="as.factor(pcut)",
+                             colour="as.factor(pcut)",
+                             shape="as.factor(state)")) +
         ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1), logfc_cutoff), color="red", size=(size / 2)) +
-        ggplot2::geom_point(stat="identity", size=size, alpha=alpha, aes_string(shape="as.factor(state)", fill=aes_color)) +
-    ggplot2::scale_shape_manual(name="state", values=c(21,22,23,24),
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
+        ggplot2::scale_shape_manual(name="state", values=state_shapes,
                                     labels=c(
                                         paste0("Down Sig.: ", num_downsig),
                                         paste0("FC Insig.: ", num_fcinsig),
                                         paste0("P Insig.: ", num_pinsig),
                                         paste0("Up Sig.: ", num_upsig)),
-                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
-        ggplot2::scale_color_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
-        ggplot2::scale_fill_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
-        ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=3))) +
-        ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
-        ggplot2::xlab("Average Count (Millions of Reads)") +
-        ggplot2::ylab("log fold change") +
-        ggplot2::theme_bw()
+                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="black"))) +
+    ggplot2::scale_fill_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
+    ggplot2::scale_color_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
+##    ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
+    ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
+    ggplot2::xlab("Average Count (Millions of Reads)") +
+    ggplot2::ylab("log fold change") +
+    ggplot2::theme_bw()
     if (!is.null(gvis_filename)) {
         plot_gvis_ma(df, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
     }
