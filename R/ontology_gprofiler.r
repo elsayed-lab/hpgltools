@@ -27,6 +27,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
 
     plotting_mf_over <- mf_over
     mf_pval_plot_over <- NULL
+    message("mf")
     if (is.null(mf_over) | nrow(mf_over) == 0) {
         plotting_mf_over <- NULL
     } else {
@@ -51,6 +52,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
 
     plotting_bp_over <- bp_over
     bp_pval_plot_over <- NULL
+    message("bp")
     if (is.null(bp_over) | nrow(bp_over) == 0) {
         plotting_bp_over <- NULL
     } else {
@@ -75,6 +77,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
 
     plotting_cc_over <- cc_over
     cc_pval_plot_over <- NULL
+    message("cc")
     if (is.null(cc_over) | nrow(cc_over) == 0) {
         plotting_cc_over <- NULL
     } else {
@@ -122,6 +125,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_reactome_over <- reactome_pval_plot <- NULL
+    message("reactome")
     if (is.null(reactome_result) | nrow(reactome_result) == 0) {
         plotting_reactome_over <- NULL
     } else {
@@ -146,6 +150,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_tf_over <- tf_pval_plot <- NULL
+    message("tf")
     if (is.null(tf_result) | nrow(tf_result) == 0) {
         plotting_tf_over <- NULL
     } else {
@@ -170,6 +175,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_mi_over <- mi_pval_plot <- NULL
+    message("mi")
     if (is.null(mi_result) | nrow(mi_result) == 0) {
         plotting_mi_over <- NULL
     } else {
@@ -194,6 +200,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_corum_over <- corum_pval_plot <- NULL
+    message("corum")
     if (is.null(corum_result) | nrow(corum_result) == 0) {
         plotting_corum_over <- NULL
     } else {
@@ -218,6 +225,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     }
 
     plotting_hp_over <- hp_pval_plot <- NULL
+    message("hp")
     if (is.null(hp_result) | nrow(hp_result) == 0) {
         plotting_hp_over <- NULL
     } else {
