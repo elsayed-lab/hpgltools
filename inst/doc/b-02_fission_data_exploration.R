@@ -17,6 +17,18 @@ options(
     knitr.duplicate.label = "allow")
 ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
+rmd_file <- "b-02_fission_data_exploration.Rmd"
+
+## ----rendering, include=FALSE, eval=FALSE--------------------------------
+#  ## This block is used to render a document from within it.
+#  rmarkdown::render(rmd_file)
+#  
+#  rmarkdown::render(rmd_file, output_format="pdf_document", output_options=c("skip_html"))
+#  
+#  ## Or to save/load large Rdata files.
+#  hpgltools:::saveme()
+#  hpgltools:::loadme()
+#  rm(list=ls())
 
 ## ----setup, include=TRUE-------------------------------------------------
 ## These first 4 lines are not needed once hpgltools is installed.
@@ -26,8 +38,9 @@ set.seed(1)
 ## install_github("elsayed-lab/hpgltools")
 library(hpgltools)
 require.auto("fission")
-library(fission)
-data(fission)
+## I use the function 'sm()' to quiet loud functions.
+tt <- sm(library(fission))
+tt <- sm(data(fission))
 
 ## ----data_import---------------------------------------------------------
 ## Extract the meta data from the fission dataset
@@ -41,7 +54,7 @@ fission_data <- fission@assays$data$counts
 ## This will make an experiment superclass called 'expt' and it contains
 ## an ExpressionSet along with any arbitrary additional information one might want to include.
 ## Along the way it writes a Rdata file which is by default called 'expt.Rdata'
-fission_expt <- create_expt(meta, count_dataframe=fission_data)
+fission_expt <- create_expt(metadata=meta, count_dataframe=fission_data)
 
 ## ----norm_explore--------------------------------------------------------
 ## First make a bar plot of the library sizes in the experiment.
@@ -55,19 +68,19 @@ fis_nonzero
 
 ## ----pca-----------------------------------------------------------------
 ## Something in this is causing a build loop on travis...
-
-## I am no longer certain that code is maintained, what remains from it I might pull in to my own.
-## require.auto("kokrah/cbcbSEQ")  ## Install Kwame's cbcbSEQ
 ## Unsurprisingly, the raw data doesn't cluster well at all...
 fis_rawpca <- plot_pca(fission_expt, expt_labels=fission_expt$condition)
 fis_rawpca$plot
 ## So, normalize the data
-norm_expt <- normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm")
+norm_expt <- sm(normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm"))
 ## And try the pca again
 fis_normpca <- plot_pca(norm_expt, plot_labels="normal", title="normalized pca")
 fis_normpca$plot
 
-normbatch_expt <- normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm", batch="sva")
+summary(fis_normpca)
+
+## ----normalized_pca------------------------------------------------------
+normbatch_expt <- sm(normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm", batch="sva"))
 fis_normbatchpca <- plot_pca(normbatch_expt, title="Normalized PCA with batch effect correction.")
 fis_normbatchpca$plot
 ## ok, that caused the 0, 60, 15, and 30 minute samples to cluster nicely
@@ -85,21 +98,21 @@ fis_info$pca_cor
 fis_info$anova_p
 
 ## Try again with batch removed data
-batchnorm_expt <- normalize_expt(fission_expt, batch="limma", norm="quant", transform="log2", convert="cpm")
+batchnorm_expt <- sm(normalize_expt(fission_expt, batch="limma", norm="quant", transform="log2", convert="cpm"))
 fis_batchnormpca <- plot_pca(batchnorm_expt, plot_title="limma corrected pca")
 fis_batchnormpca$plot
 test_pca <- pca_information(batchnorm_expt, expt_factors=c("condition","batch","strain","minute"), num_components=6)
 
 ## ----distributions-------------------------------------------------------
-plot_boxplot(fission_expt)
-sf_expt <- normalize_expt(fission_expt, norm="sf")
-plot_boxplot(sf_expt)
-tm_expt <- normalize_expt(fission_expt, norm="tmm")
-plot_boxplot(tm_expt)
-rle_expt <- normalize_expt(fission_expt, norm="rle")
-plot_boxplot(rle_expt)
-up_expt <- normalize_expt(fission_expt, norm="upperquartile")
-plot_boxplot(up_expt)
+sm(plot_boxplot(fission_expt))
+sf_expt <- sm(normalize_expt(fission_expt, norm="sf"))
+sm(plot_boxplot(sf_expt))
+tm_expt <- sm(normalize_expt(fission_expt, norm="tmm"))
+sm(plot_boxplot(tm_expt))
+rle_expt <- sm(normalize_expt(fission_expt, norm="rle"))
+sm(plot_boxplot(rle_expt))
+up_expt <- sm(normalize_expt(fission_expt, norm="upperquartile"))
+sm(plot_boxplot(up_expt))
 
 plot_density(norm_expt)
 plot_density(sf_expt)
@@ -113,4 +126,14 @@ plot_corheat(norm_expt)
 plot_corheat(batchnorm_expt)
 plot_disheat(norm_expt)
 plot_disheat(batchnorm_expt)
+
+## ----variancePartition---------------------------------------------------
+test_varpart <- varpart(fission_expt)
+test_varpart$percent_plot
+test_varpart$partition_plot
+
+## Here, let us test the variance contributed by strain, time, and replicate.
+test_varpart <- varpart(fission_expt, factors=c("strain","minute","replicate"))
+test_varpart$percent_plot
+test_varpart$partition_plot
 

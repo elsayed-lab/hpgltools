@@ -1,6 +1,5 @@
 library(testthat)
 library(hpgltools)
-
 context("Does limma with combat work with hpgltools?")
 
 pasilla <- new.env()
@@ -12,7 +11,7 @@ counts <- limma[["counts"]]
 design <- limma[["design"]]
 
 ## Testing that hpgltools gets a similar result to cbcbSEQ using limma.
-cbcb <- s_p(library(cbcbSEQ))
+cbcb <- sm(library(cbcbSEQ))
 counts <- limma[["counts"]]
 design <- limma[["design"]]
 cbcb_qcounts <- cbcbSEQ::qNorm(counts)
@@ -28,7 +27,7 @@ test_that("Does cbcbSEQ give the same result for the initial pcRes call?", {
 cbcb_libsize <- cbcb_cpm[["lib.size"]]
 ## cbcb_combat <- cbcbSEQ::combatMod(cbcb_cpm, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE)
 ## oh yeah, cbcbSEQ's combatMod no longer works
-cbcb_hpgl_combat <- s_p(hpgl_combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE))[["result"]]
+cbcb_hpgl_combat <- sm(hpgl_combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE))
 ## Ok, here is a point where the cbcbSEQ vignette does not agree with its output.
 ## the return of cbcbSEQ::combatMod (if it worked) is a variable containing only 'bayesdata', not a list of bayesdata and info.
 

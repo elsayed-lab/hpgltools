@@ -35,7 +35,7 @@
 #' @export
 all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                          model_batch=TRUE, model_intercept=TRUE, extra_contrasts=NULL,
-                         alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
+                         alt_model=NULL, libsize=NULL, annot_df=NULL, parallel=TRUE, ...) {
     arglist <- list(...)
     surrogates <- 1
     if (!is.null(arglist[["surrogates"]])) {
@@ -60,31 +60,54 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         "deseq" = NULL,
         "edger" = NULL,
         "basic" = NULL)
-    cl <- parallel::makeCluster(4)
-    doParallel::registerDoParallel(cl)
-    requireNamespace("parallel")
-    res <- foreach(c=1:length(names(results)), .packages="hpgltools") %dopar% {
-        type <- names(results)[c]
-        results[[type]] <- do_pairwise(type,
-                                       input,
-                                       conditions=conditions,
-                                       batches=batches,
-                                       model_cond=model_cond,
-                                       model_batch=model_batch,
-                                       model_intercept=model_intercept,
-                                       extra_contrasts=extra_contrasts,
-                                       alt_model=alt_model,
-                                       libsize=libsize,
-                                       ##annot_df=annot_df, ...)
-                                       annot_df=annot_df)  ## For testing
-    }
-    parallel::stopCluster(cl)
-    for (r in 1:length(res)) {
-        a_result <- res[[r]]
-        type <- a_result[["type"]]
-        results[[type]] <- a_result
-    }
-    rm(res)
+    res <- NULL
+    if (isTRUE(parallel)) {
+        cl <- parallel::makeCluster(4)
+        doParallel::registerDoParallel(cl)
+        requireNamespace("parallel")
+        requireNamespace("doParallel")
+        requireNamespace("iterators")
+        requireNamespace("foreach")
+        res <- foreach(c=1:length(names(results)), .packages="hpgltools") %dopar% {
+            type <- names(results)[c]
+            results[[type]] <- do_pairwise(type,
+                                           input,
+                                           conditions=conditions,
+                                           batches=batches,
+                                           model_cond=model_cond,
+                                           model_batch=model_batch,
+                                           model_intercept=model_intercept,
+                                           extra_contrasts=extra_contrasts,
+                                           alt_model=alt_model,
+                                           libsize=libsize,
+                                           ##annot_df=annot_df, ...)
+                                           annot_df=annot_df)  ## For testing
+        }
+        parallel::stopCluster(cl)
+        for (r in 1:length(res)) {
+            a_result <- res[[r]]
+            type <- a_result[["type"]]
+            results[[type]] <- a_result
+        }
+        rm(res)
+        ## End performing parallel comparisons
+    } else {
+        for (type in names(results)) {
+            results[[type]] <- do_pairwise(type,
+                                           input,
+                                           conditions=conditions,
+                                           batches=batches,
+                                           model_cond=model_cond,
+                                           model_batch=model_batch,
+                                           model_intercept=model_intercept,
+                                           extra_contrasts=extra_contrasts,
+                                           alt_model=alt_model,
+                                           libsize=libsize,
+                                           ##annot_df=annot_df, ...)
+                                           annot_df=annot_df)  ## For testing
+        }
+    } ## End performing a serial comparison
+
     result_comparison <- compare_tables(limma=results[["limma"]],
                                         deseq=results[["deseq"]],
                                         edger=results[["edger"]],
@@ -92,92 +115,10 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                                         annot_df=annot_df, ...)
     ret <- list(
         "input" = input,
-        "limma" = limma_result,
-        "deseq" = deseq_result,
-        "edger" = edger_result,
-        "basic" = basic_result,
-        "comparison" = result_comparison)
-    return(ret)
-}
-
-#' Perform limma, DESeq2, EdgeR pairwise analyses.
-#'
-#' This takes an expt object, collects the set of all possible pairwise comparisons, sets up
-#' experimental models appropriate for the differential expression analyses, and performs them.
-#'
-#' @param input Dataframe/vector or expt class containing count tables, normalization state, etc.
-#' @param conditions Factor of conditions in the experiment.
-#' @param batches Factor of batches in the experiment.
-#' @param model_cond Include condition in the model?  This is likely always true.
-#' @param model_batch Include batch in the model?  This may be true/false/"sva" or other methods supported by get_model_adjust().
-#' @param model_intercept Use an intercept model instead of cell means?
-#' @param extra_contrasts Optional extra contrasts beyone the pairwise comparisons.  This can be
-#'     pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or
-#'     (E/D)/(C/B) then use this with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla =
-#'     (E-D)-A, de_vs_cb = (E-D)-(C-B)".
-#' @param alt_model Alternate model to use rather than just condition/batch.
-#' @param libsize Library size of the original data to help voom().
-#' @param annot_df Annotations to add to the result tables.
-#' @param ... Picks up extra arguments into arglist, currently only passed to write_limma().
-#' @return A list of limma, deseq, edger results.
-#' @examples
-#' \dontrun{
-#'  finished_comparison = eBayes(limma_output)
-#'  data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
-#' }
-#' @export
-all_pairwise_serial <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                         model_batch=TRUE, model_intercept=TRUE, extra_contrasts=NULL,
-                         alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
-    arglist <- list(...)
-    surrogates <- 1
-    if (!is.null(arglist[["surrogates"]])) {
-        surrogates <- arglist[["surrogates"]]
-    }
-    if (is.null(model_cond)) {
-        model_cond <- TRUE
-    }
-    if (is.null(model_batch)) {
-        model_batch <- FALSE
-    }
-    if (is.null(model_intercept)) {
-        model_intercept <- FALSE
-    }
-    if (class(model_batch) == 'character') {
-        params <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
-        model_batch <- params[["model_adjust"]]
-    }
-
-    results <- list(
-        "limma" = NULL,
-        "deseq" = NULL,
-        "edger" = NULL,
-        "basic" = NULL)
-    for (type in names(results)) {
-        results[[type]] <- do_pairwise(type,
-                                       input,
-                                       conditions=conditions,
-                                       batches=batches,
-                                       model_cond=model_cond,
-                                       model_batch=model_batch,
-                                       model_intercept=model_intercept,
-                                       extra_contrasts=extra_contrasts,
-                                       alt_model=alt_model,
-                                       libsize=libsize,
-                                       ## annot_df=annot_df, ...)
-                                       annot_df=annot_df)  ## For testing
-    }
-    result_comparison <- compare_tables(limma=results[["limma"]],
-                                        deseq=results[["deseq"]],
-                                        edger=results[["edger"]],
-                                        basic=results[["basic"]],
-                                        annot_df=annot_df, ...)
-    ret <- list(
-        "input" = input,
-        "limma" = limma_result,
-        "deseq" = deseq_result,
-        "edger" = edger_result,
-        "basic" = basic_result,
+        "limma" = results[["limma"]],
+        "deseq" = results[["deseq"]],
+        "edger" = results[["edger"]],
+        "basic" = results[["basic"]],
         "comparison" = result_comparison)
     return(ret)
 }

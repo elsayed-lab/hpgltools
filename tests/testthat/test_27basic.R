@@ -1,16 +1,15 @@
 library(testthat)
 library(hpgltools)
-
 context("Does the basic differential expression analysis work?")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-norm_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))[["result"]]
+norm_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))
 
-hpgl_pas_basic <- s_p(basic_pairwise(pasilla_expt))[["result"]]
-hpgl_basic <- s_p(basic_pairwise(norm_expt))[["result"]]
+hpgl_pas_basic <- sm(basic_pairwise(pasilla_expt))
+hpgl_basic <- sm(basic_pairwise(norm_expt))
 
 test_that("Does a non-normalized basic run equal a normalized basic run?", {
     expect_equal(hpgl_pas_basic[["all_tables"]][["untreated_vs_treated"]],

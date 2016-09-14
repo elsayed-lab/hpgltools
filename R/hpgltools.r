@@ -48,6 +48,10 @@
 #' @import graphics
 #' @import knitr
 #' @import magrittr
+#' @import doParallel
+#' @import iterators
+#' @import parallel
+#' @import foreach
 NULL
 
 #' Pipe operator
@@ -60,4 +64,16 @@ NULL
 #' @export
 #' @importFrom magrittr %>%
 #' @usage lhs \%>\% rhs
+NULL
+
+#' dopar
+#'
+#' Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
+#'
+#' @name %dopar%
+#' @rdname dopar
+#' @keywords internal
+#' @export
+#' @importFrom foreach %dopar%
+#' @usage lhs \%dopar\% rhs
 NULL
