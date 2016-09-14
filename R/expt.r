@@ -288,7 +288,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
                                exprs=as.matrix(final_counts),
                                phenoData=metadata,
                                featureData=feature_data)
-    notes(experiment) <- toString(notes)
+    Biobase::notes(experiment) <- toString(notes)
 
     ## These entries in new_expt are intended to maintain a record of
     ## the transformation status of the data, thus if we now call

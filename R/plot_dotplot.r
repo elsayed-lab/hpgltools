@@ -95,11 +95,11 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
         ggplot2::geom_dotplot(binaxis="y", stackdir="center", binpositions="all", colour="black", fill=factor_df[["fill"]])
 
     factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
-                                  ggplot2::aes_string(x="factor",
-                                                      y="svs",
-                                                      fill="condition",
-                                                      colour="condition",
-                                                      shape="shape")) +
+                                  aes_string(x="factor",
+                                             y="svs",
+                                             fill="condition",
+                                             colour="condition",
+                                             shape="shape")) +
         ggplot2::geom_point(size=5,
                             aes_string(shape="as.factor(shape)",
                                        colour="condition",
