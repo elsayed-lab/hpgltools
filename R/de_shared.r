@@ -1385,11 +1385,18 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
         eval_strings <- append(eval_strings, all_pairwise)
     }
     eval_names <- names(eval_strings)
+
+
     if (!is.null(extra_contrasts)) {
-        extra_eval_strings <- strsplit(extra_contrasts, "\\n")
+        extra_eval_strings <- strsplit(extra_contrasts, ",")
         extra_eval_names <- extra_eval_strings
         extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")
-        eval_strings <- append(eval_strings, extra_contrasts)
+        for (i in 1:length(extra_eval_strings)) {
+            extra_contrast <- paste0(extra_eval_strings[[i]], ", ")
+            eval_strings <- append(eval_strings, extra_contrast)
+            eval_names <- append(eval_names, extra_eval_names[[i]])
+        }
+        names(eval_strings) <- eval_names
     }
     ## for (f in 1:length(eval_strings)) {
     ##     eval_name = names(eval_strings[f])
@@ -1402,17 +1409,14 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
     for (f in 1:length(eval_strings)) {
         ## eval_name = names(eval_strings[f])
         eval_string <- paste0(eval_strings[f])
-        contrast_string <- paste(contrast_string, eval_string, sep="   ")
+        contrast_string <- paste(contrast_string, eval_string, sep=" ")
     }
     ## The final element of makeContrasts() is the design from voom()
-    contrast_string <- paste0(contrast_string, "levels=model)")
+    contrast_string <- paste0(contrast_string, " levels=model)")
     eval(parse(text=contrast_string))
     ## I like to change the column names of the contrasts because by default
     ## they are kind of obnoxious and too long to type
 
-    if (!is.null(extra_contrasts)) {
-        eval_names <- append(eval_names, extra_eval_names)
-    }
     colnames(all_pairwise_contrasts) <- eval_names
     result <- list(
         "all_pairwise_contrasts" = all_pairwise_contrasts,
