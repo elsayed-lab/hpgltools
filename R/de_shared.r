@@ -763,7 +763,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             }
             if (isTRUE(add_plots)) {
                 plot_column <- xls_result[["end_col"]] + 2
-                message(paste0("Attempting to add a coefficient plot for ", names(combo)[[count]], " at column ", plot_column))
+                message(paste0("Adding a coefficient plot for ", names(combo)[[count]], "."))
                 openxlsx::writeData(wb, tab, x="Limma expression coefficients", startRow=1, startCol=plot_column)
                 limma_plot <- limma_plots[[count]]
                 print(limma_plot)

@@ -69,7 +69,7 @@ write_xls <- function(data, wb=NULL, sheet="first", rownames=TRUE,
         ## print(paste0("TESTME: ", class(data[[col]])))
         if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' |
             class(data[[col]]) == 'factor' | class(data[[col]]) == 'AsIs') {
-            message(paste0("Converted ", col, " to characters."))
+            ## message(paste0("Converted ", col, " to characters."))
             data[[col]] <- as.character(data[[col]])
         }
     }
