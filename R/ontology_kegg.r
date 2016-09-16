@@ -474,18 +474,55 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
             diff_edges[count] <- pct_diff[["diff_edges"]]
             message(paste0(count, "/", last_path, ": The path: ", path_names[count], " was written to ", filenames[count], " and has ", pct_nodes[count], "% nodesdiff ", pct_edges[count], "% edgesdiff."))
         }
+    } ## End of the for() loop.
+    path_data <- data.frame()
+    for (c in 1:length(path_ids)) {
+        a_row <- list(
+            "pathway" = path_ids[[c]],
+            "path_name" = path_names[[c]],
+            "filename" = filenames[[c]],
+            "percent_nodes" = pct_nodes[[c]],
+            "percent_edges" = pct_edges[[c]],
+            "path_nodes" = path_nodes[[c]],
+            "diff_nodes" = diff_nodes[[c]],
+            "path_edges" = path_edges[[c]],
+            "diff_edges" = diff_edges[[c]])
+        ## Remove c(
+        a_row <- gsub(pattern="c\\(", replacement="", x=a_row)
+        ## Remove ),
+        a_row <- gsub(pattern="\\),", replacement="", x=a_row)
+        ## Remove "
+        a_row <- gsub(pattern="\"", replacement="", x=a_row)
+        ## Remove )
+        a_row <- gsub(pattern="\\)", replacement="", x=a_row)
+        ## Remove character(0
+        a_row <- gsub(pattern="character\\(0", replacement="", x=a_row)
+        ## Remove xxx: where xxx is the species abbreviation
+        a_row <- gsub(pattern=paste0(organism, ":"), replacement="", x=a_row)
+        ## Remove all commas
+        a_row <- gsub(pattern="\\,", replacement="", x=a_row)
+        ## Remove \n's
+        a_row <- gsub(pattern="\\\n", replacement="", x=a_row)
+        ## Get rid of excess space
+        a_row <- gsub(pattern=" +", replacement=" ", x=a_row)
+        for (k in 1:length(a_row)) {
+            a_row[[k]] <- toString(a_row[[k]])
+        }
+        a_row <- as.list(a_row)
+        names(a_row) <- c("pathway","path_name","filename","percent_nodes",
+                          "percent_edges","path_nodes","diff_nodes","path_edges","diff_edges")
+        a_row <- as.data.frame(a_row)
+        path_data <- rbind(path_data, a_row)
     }
-    path_data <- as.data.frame(cbind(path_ids, path_names, filenames, pct_nodes, pct_edges, path_nodes, diff_nodes, path_edges, diff_edges))
-    colnames(path_data) <- c("pathway","path_name","filename","percent","all_nodes","diff_nodes")
     path_data[["pathway"]] <- as.character(path_data[["pathway"]])
-    path_data[["path_name"]] <- as.character(path_data[["path_name"]])
-    path_data[["filename"]] <- as.character(path_data[["filename"]])
-    path_data[["pct_nodes"]] <- as.numeric(path_data[["pct_nodes"]])
-    path_data[["pct_edges"]] <- as.numeric(path_data[["pct_edges"]])
-    path_data[["all_nodes"]] <- as.character(path_data[["path_nodes"]])
+    path_data[["path_name"]] <- as.character(path_data[["filename"]])
+    path_data[["percent_nodes"]] <- as.numeric(as.character(path_data[["percent_nodes"]]))
+    path_data[["percent_edges"]] <- as.numeric(as.character(path_data[["percent_edges"]]))
+    path_data[["path_nodes"]] <- as.character(path_data[["path_nodes"]])
     path_data[["diff_nodes"]] <- as.character(path_data[["diff_nodes"]])
-    path_data[["all_edges"]] <- as.character(path_data[["path_edges"]])
+    path_data[["path_edges"]] <- as.character(path_data[["path_edges"]])
     path_data[["diff_edges"]] <- as.character(path_data[["diff_edges"]])
+
     return(path_data)
 }
 
@@ -505,7 +542,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
 #' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
 #' @export
 pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pathdir="kegg_pathways", ...) {
-    warning("This function may not work, it seems to be missing some genes.")
+    ## warning("This function may not work, it seems to be missing some genes.")
     arglist <- list(...)
     if (!file.exists(pathdir)) {
         dir.create(pathdir)
@@ -524,9 +561,12 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
             retlist <- list(
                 "pathway" = pathway,
                 "filename" = "unavailable",
-                "percent" = NA,
+                "percent_nodes" = NA,
+                "percent_edges" = NA,
                 "all_nodes" = NULL,
-                "diff_nodes" = NULL)
+                "diff_nodes" = NULL,
+                "all_edges" = NULL,
+                "diff_edges" = NULL)
             return(retlist)
         }
     }
@@ -541,9 +581,12 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
                 retlist <- list(
                     "pathway" = pathway,
                     "filename" = "unavailable",
-                    "percent" = NA,
+                    "percent_nodes" = NA,
+                    "percent_edges" = NA,
                     "all_nodes" = NULL,
-                    "diff_nodes" = NULL)
+                    "diff_nodes" = NULL,
+                    "all_edges" = NULL,
+                    "diff_edges" = NULL)
                 return(retlist)
             }
         } else if (grepl(pattern="Start tag expected", x=parse_result[[1]])) {
@@ -551,9 +594,12 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
             retlist <- list(
                 "pathway" = pathway,
                 "filename" = "unavailable",
-                "percent" = NA,
+                "percent_nodes" = NA,
+                "percent_edges" = NA,
                 "all_nodes" = NULL,
-                "diff_nodes" = NULL)
+                "diff_nodes" = NULL,
+                "all_edges" = NULL,
+                "diff_edges" = NULL)
             return(retlist)
         }
     }
