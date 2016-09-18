@@ -44,7 +44,7 @@ test_that("Can we extract the percent differentially expressed genes in one path
 })
 
 pathways <- c("00010", "00020", "00030", "00040","nonexistent", "00051")
-all_percentages <- pct_all_kegg(all_ids, sig_ids, pathways=pathways, organism="dme")
+all_percentages <- sm(pct_all_kegg(all_ids, sig_ids, pathways=pathways, organism="dme"))
 expected_percentages <- c(7.547, 9.302, 0.000, 13.040, NA, 3.704)
 actual_percentages <- all_percentages[["percent_nodes"]]
 test_that("Can we extract the percent differentially expressed genes from multiple pathways?", {

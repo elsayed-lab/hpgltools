@@ -117,23 +117,6 @@ deseq_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2, ## gvis_f
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
-    ## I think the following was taken up by plot_linear_scatter and is not needed here anymore
-    ##if (!is.null(toptable)) {
-    ##    theplot <- plot[["scatter"]] + ggplot2::theme_bw()
-    ##    sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
-    ##    sigup <- sig[["up_genes"]]
-    ##    sigdown <- sig[["down_genes"]]
-    ##    up_index <- rownames(coefficients) %in% rownames(sigup)
-    ##    down_index <- rownames(coefficients) %in% rownames(sigdown)
-    ##    up_df <- as.data.frame(coefficients[up_index, ])
-    ##    down_df <- as.data.frame(coefficients[down_index, ])
-    ##    colnames(up_df) <- c("first", "second")
-    ##    colnames(down_df) <- c("first", "second")
-    ##    theplot <- theplot +
-    ##        ggplot2::geom_point(data=up_df, colour=color_high) +
-    ##        ggplot2::geom_point(data=down_df, colour=color_low)
-    ##    plot[["scatter"]] <- theplot
-    ##}
     plot[["df"]] <- coefficient_df
     return(plot)
 }
@@ -360,6 +343,113 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         "all_tables" = result_list
     )
     return(ret_list)
+}
+
+#' Writes out the results of a deseq search using results()
+#'
+#' However, this will do a couple of things to make one's life easier:
+#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
+#' 2.  Write out the results() output for them in separate .csv files and/or sheets in excel
+#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+#'
+#' @param data Output from results().
+#' @param adjust Pvalue adjustment chosen.
+#' @param n Number of entries to report, 0 says do them all.
+#' @param coef Which coefficients/contrasts to report, NULL says do them all.
+#' @param workbook Excel filename into which to write the data.
+#' @param excel Write an excel workbook?
+#' @param csv Write out csv files of the tables?
+#' @param annot_df Optional data frame including annotation information to include with the tables.
+#' @return List of data frames comprising the toptable output for each coefficient, I also added a
+#'     qvalue entry to these toptable() outputs.
+#' @seealso \link[deseq]{toptable} \link{write_xls}
+#' @examples
+#' \dontrun{
+#'  finished_comparison = eBayes(deseq_output)
+#'  data_list = write_deseq(finished_comparison, workbook="excel/deseq_output.xls")
+#' }
+#' @export
+write_deseq <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/deseq.xls",
+                       excel=FALSE, csv=FALSE, annot_df=NULL) {
+    testdir <- dirname(workbook)
+
+    ## Figure out the number of genes if not provided
+    if (n == 0) {
+        n <- nrow(data[["coefficients"]])
+    }
+
+    ## If specific contrast(s) is/are not requested, get them all.
+    if (is.null(coef)) {
+        coef <- colnames(data[["contrasts"]])
+    } else {
+        coef <- as.character(coef)
+    }
+    return_data <- list()
+    end <- length(coef)
+    for (c in 1:end) {
+        comparison <- coef[c]
+        message(paste0("Deseq step 6/6: ", c, "/", end, ": Creating table: ", comparison, "."))
+        data_table <- deseq::topTable(data, adjust=adjust, n=n, coef=comparison)
+        ## Reformat the numbers so they are not so obnoxious
+        ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
+        ## data_table$AveExpr <- refnum(data_table$AveExpr, sci=FALSE)
+        ## data_table$t <- refnum(data_table$t, sci=FALSE)
+        ## data_table$P.Value <- refnum(data_table$P.Value)
+        ## data_table$adj.P.Val <- refnum(data_table$adj.P.Val)
+        ## data_table$B <- refnum(data_table$B, sci=FALSE)
+        data_table[["logFC"]] <- signif(x=as.numeric(data_table[["logFC"]]), digits=4)
+        data_table[["AveExpr"]] <- signif(x=as.numeric(data_table[["AveExpr"]]), digits=4)
+        data_table[["t"]] <- signif(x=as.numeric(data_table[["t"]]), digits=4)
+        data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
+        data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
+        data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
+        data_table[["qvalue"]] <- tryCatch(
+        {
+            ## as.numeric(format(signif(
+            ## suppressWarnings(qvalue::qvalue(
+            ## as.numeric(data_table$P.Value), robust=TRUE))$qvalues, 4),
+            ## scientific=TRUE))
+            ttmp <- as.numeric(data_table[["P.Value"]])
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
+            signif(x=ttmp, digits=4)
+            ## ttmp <- signif(ttmp, 4)
+            ## ttmp <- format(ttmp, scientific=TRUE)
+            ## ttmp
+        },
+        error=function(cond) {
+            message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+            return(1)
+        },
+        ##warning=function(cond) {
+        ##    message("There was a warning?")
+        ##    message(cond)
+        ##    return(1)
+        ##},
+        finally={
+        })
+        if (!is.null(annot_df)) {
+            data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
+            ###data_table = data_table[-1]
+        }
+        ## This write_xls runs out of memory annoyingly often
+        if (isTRUE(excel) | isTRUE(csv)) {
+            if (!file.exists(testdir)) {
+                dir.create(testdir)
+                message(paste0("Creating directory: ", testdir, " for writing excel/csv data."))
+            }
+        }
+        if (isTRUE(excel)) {
+            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwritefile=TRUE))
+        }
+        ## Therefore I will write a csv of each comparison, too
+        if (isTRUE(csv)) {
+            csv_filename <- gsub(".xls$", "", workbook)
+            csv_filename <- paste0(csv_filename, "_", comparison, ".csv")
+            write.csv(data_table, file=csv_filename)
+        }
+        return_data[[comparison]] <- data_table
+    }
+    return(return_data)
 }
 
 ## EOF

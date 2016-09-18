@@ -458,8 +458,8 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all", pathd
             path_names[count] <- path_name
             message(paste0("Extracting data for ", path, ": ", path_name, "."))
             if (isTRUE(verbose)) {
-                pct_diff <- pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
-                                          pathdir=pathdir)
+                pct_diff <- sm(pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
+                                             pathdir=pathdir))
             } else {
                 pct_diff <- sm(pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
                                              pathdir=pathdir))
@@ -556,7 +556,7 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
         message("The file already exists, loading from it.")
         retrieved <- filename
     } else {
-        retrieved <- try(sm(KEGGgraph::retrieveKGML(pathwayid=pathway, organism=organism, destfile=filename, method="internal")))
+        retrieved <- try(sm(KEGGgraph::retrieveKGML(pathwayid=pathway, organism=organism, destfile=filename, method="internal")), silent=TRUE)
         if (class(retrieved) == "try-error") {
             retlist <- list(
                 "pathway" = pathway,
