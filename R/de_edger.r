@@ -224,7 +224,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     end <- length(apc[["names"]])
     for (con in 1:length(apc[["names"]])) {
         name <- apc[["names"]][[con]]
-        message(paste0("EdgeR step 9/9: ", con, "/", end, ": Printing table: ", name, ".")) ## correct
+        message(paste0("EdgeR step 9/9: ", con, "/", end, ": Creating table: ", name, ".")) ## correct
         sc[[name]] <- gsub(pattern=",", replacement="", apc[["all_pairwise"]][[con]])
         tt <- parse(text=sc[[name]])
         ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=fun_model)")

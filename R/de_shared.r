@@ -647,10 +647,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             a <- a + 1
             message(paste0("Working on ", a, "/", keeper_len, ": ",  name))
             sheet_count <- sheet_count + 1
-            numerator <- keepers[[name]][[1]]
-            denominator <- keepers[[name]][[2]]
-            same_string <- paste0(numerator, "_vs_", denominator)
-            inverse_string <- paste0(denominator, "_vs_", numerator)
+            numerator <- keepers[[name]][1]
+            denominator <- keepers[[name]][2]
+            same_string <- numerator
+            inverse_string <- numerator
+            if (!is.na(denominator)) {
+                same_string <- paste0(numerator, "_vs_", denominator)
+                inverse_string <- paste0(denominator, "_vs_", numerator)
+            }
+
             dat <- NULL
             plt <- NULL
             summary <- NULL
@@ -671,7 +676,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 }
             }
             if (found > 0) {
-                message(paste0("Running create_combined_table with inverse=", do_inverse))
                 combined <- create_combined_table(limma, edger, deseq, basic, found_table, inverse=do_inverse,
                                                   annot_df=annot_df, include_basic=include_basic)
                 dat <- combined[["data"]]
@@ -680,13 +684,31 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 edger_plt <- NULL
                 deseq_plt <- NULL
                 if (isTRUE(do_inverse)) {
-                    limma_plt <- sm(limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL))[["scatter"]]
-                    edger_plt <- sm(edger_coefficient_scatter(edger, x=denominator, y=numerator, gvis_filename=NULL))[["scatter"]]
-                    deseq_plt <- sm(deseq_coefficient_scatter(deseq, x=denominator, y=numerator, gvis_filename=NULL))[["scatter"]]
+                    limma_try <- try(sm(limma_coefficient_scatter(limma, x=denominator, y=numerator, gvis_filename=NULL)), silent=TRUE)
+                    if (class(limma_try) == "list") {
+                        limma_plt <- limma_try[["scatter"]]
+                    }
+                    edger_try <- try(sm(edger_coefficient_scatter(edger, x=denominator, y=numerator, gvis_filename=NULL)), silent=TRUE)
+                    if (class(edger_try) == "list") {
+                        edger_plt <- edger_try[["scatter"]]
+                    }
+                    deseq_try <- try(sm(deseq_coefficient_scatter(deseq, x=denominator, y=numerator, gvis_filename=NULL)), silent=TRUE)
+                    if (class(deseq_try) == "list") {
+                        deseq_plt <- deseq_try[["scatter"]]
+                    }
                 } else {
-                    limma_plt <- sm(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
-                    edger_plt <- sm(edger_coefficient_scatter(edger, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
-                    deseq_plt <- sm(deseq_coefficient_scatter(deseq, x=numerator, y=denominator, gvis_filename=NULL))[["scatter"]]
+                    limma_try <- try(sm(limma_coefficient_scatter(limma, x=numerator, y=denominator, gvis_filename=NULL)), silent=TRUE)
+                    if (class(limma_try) == "list") {
+                        limma_plt <- limma_try[["scatter"]]
+                    }
+                    edger_try <- try(sm(edger_coefficient_scatter(edger, x=numerator, y=denominator, gvis_filename=NULL)), silent=TRUE)
+                    if (class(edger_try) == "list") {
+                        edger_plt <- edger_try[["scatter"]]
+                    }
+                    deseq_try <- try(sm(deseq_coefficient_scatter(deseq, x=numerator, y=denominator, gvis_filename=NULL)), silent=TRUE)
+                    if (class(deseq_try) == "list") {
+                        deseq_plt <- deseq_try[["scatter"]]
+                    }
                 }
             } ## End checking that we found the numerator/denominator
             else {
@@ -763,19 +785,21 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             }
             if (isTRUE(add_plots)) {
                 plot_column <- xls_result[["end_col"]] + 2
-                message(paste0("Adding a coefficient plot for ", names(combo)[[count]], "."))
+                message(paste0("Adding a limma coefficient plot for ", names(combo)[[count]], "."))
                 openxlsx::writeData(wb, tab, x="Limma expression coefficients", startRow=1, startCol=plot_column)
-                limma_plot <- limma_plots[[count]]
+                limma_plot <- limma_plots[count][[1]]
                 print(limma_plot)
                 openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
                                      startCol=plot_column, startRow=2, fileType="png", units="in")
                 openxlsx::writeData(wb, tab, x="EdgeR expression coefficients", startRow=33, startCol=plot_column)
-                edger_plot <- edger_plots[[count]]
+                message(paste0("Adding a edger coefficient plot for ", names(combo)[[count]], "."))
+                edger_plot <- edger_plots[count][[1]]
                 print(edger_plot)
                 openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
                                      startCol=plot_column, startRow=34, fileType="png", units="in")
                 openxlsx::writeData(wb, tab, x="DESeq2 expression coefficients", startRow=65, startCol=plot_column)
-                deseq_plot <- deseq_plots[[count]]
+                message(paste0("Adding a deseq coefficient plot for ", names(combo)[[count]], "."))
+                deseq_plot <- deseq_plots[count][[1]]
                 print(deseq_plot)
                 openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
                                      startCol=plot_column, startRow=66, fileType="png", units="in")
@@ -799,39 +823,39 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                                     start_row=new_row)
             new_row <- xls_result[["end_row"]] + 2
             message(paste0("Attempting to add the comparison plot to pairwise_summary at row: ", new_row + 1, " and column: ", 1))
-            print(comp_plot)
-            comp <- recordPlot()
-            openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                 startRow=new_row + 1, startCol=1, fileType="png", units="in")
-            logfc_comparisons <- compare_logfc_plots(combo)
-            logfc_names <- names(logfc_comparisons)
-            new_row <- new_row + 2
-            for (c in 1:length(logfc_comparisons)) {
-                new_row <- new_row + 32
-                le <- logfc_comparisons[[c]][["le"]]
-                ld <- logfc_comparisons[[c]][["ld"]]
-                de <- logfc_comparisons[[c]][["de"]]
-
-                tmpcol <- 1
-                openxlsx::writeData(wb, "pairwise_summary", x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
-                                    startRow=new_row - 2, startCol=tmpcol)
-                openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
-                print(le)
+            if (class(comp_plot) == "recordedplot") {
+                print(comp_plot)
                 openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                     startRow=new_row, startCol=tmpcol, fileType="png", units="in")
-
-                tmpcol <- 8
-                openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. DESeq2)", startRow=new_row - 1, startCol=tmpcol)
-                print(ld)
-                openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                     startRow=new_row, startCol=tmpcol, fileType="png", units="in")
-
-                tmpcol <- 15
-                openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(DESeq2 vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
-                print(de)
-                openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                     startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                                     startRow=new_row + 1, startCol=1, fileType="png", units="in")
             }
+            logfc_comparisons <- try(compare_logfc_plots(combo), silent=TRUE)
+            if (class(logfc_comparisons) != "try-error") {
+                logfc_names <- names(logfc_comparisons)
+                new_row <- new_row + 2
+                for (c in 1:length(logfc_comparisons)) {
+                    new_row <- new_row + 32
+                    le <- logfc_comparisons[[c]][["le"]]
+                    ld <- logfc_comparisons[[c]][["ld"]]
+                    de <- logfc_comparisons[[c]][["de"]]
+                    tmpcol <- 1
+                    openxlsx::writeData(wb, "pairwise_summary", x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
+                                        startRow=new_row - 2, startCol=tmpcol)
+                    openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
+                    print(le)
+                    openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                         startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                    tmpcol <- 8
+                    openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. DESeq2)", startRow=new_row - 1, startCol=tmpcol)
+                    print(ld)
+                    openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                         startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                    tmpcol <- 15
+                    openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(DESeq2 vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
+                    print(de)
+                    openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                         startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                }
+            } ## End checking if we could compare the logFC/P-values
         } ## End if compare_plots is TRUE
         message("Performing save of the workbook.")
         save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
@@ -927,14 +951,32 @@ compare_logfc_plots <- function(combined_tables) {
 create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inverse=FALSE,
                                   include_basic=TRUE, fc_cutoff=1, p_cutoff=0.05) {
     li <- li[["all_tables"]][[table_name]]
+    if (is.null(li)) {
+        li <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
+                         "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0, "limma_q" = 0)
+    }
+    de <- de[["all_tables"]][[table_name]]
+    if (is.null(de)) {
+        de <- data.frame("deseq_basemean" = 0, "deseq_logfc" = 0, "deseq_lfcse" = 0,
+                         "deseq_stat" = 0, "deseq_p" = 0, "deseq_adjp" = 0, "deseq_q" = 0)
+    }
+    ed <- ed[["all_tables"]][[table_name]]
+    if (is.null(ed)) {
+        ed <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
+                         "edger_p" = 0, "edger_adjp" = 0, "edger_q" = 0)
+    }
+    ba <- ba[["all_tables"]][[table_name]]
+    if (is.null(ba)) {
+        ba <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
+                         "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, adjp=0)
+    }
+
     colnames(li) <- c("limma_logfc","limma_ave","limma_t","limma_p","limma_adjp","limma_b","limma_q")
     li <- li[, c("limma_logfc","limma_ave","limma_t","limma_b","limma_p","limma_adjp","limma_q")]
-    de <- de[["all_tables"]][[table_name]]
     colnames(de) <- c("deseq_basemean","deseq_logfc","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")
     de <- de[, c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
-    ed <- ed[["all_tables"]][[table_name]]
     colnames(ed) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
-    ba <- ba[["all_tables"]][[table_name]]
+
     ba <- ba[, c("numerator_median","denominator_median","numerator_var","denominator_var", "logFC", "t", "p", "adjp")]
     colnames(ba) <- c("basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p", "basic_adjp")
 
@@ -1386,15 +1428,16 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
     }
     eval_names <- names(eval_strings)
 
-
     if (!is.null(extra_contrasts)) {
         extra_eval_strings <- strsplit(extra_contrasts, ",")
         extra_eval_names <- extra_eval_strings
         extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")
         for (i in 1:length(extra_eval_strings)) {
+            new_name <- extra_eval_names[[i]]
             extra_contrast <- paste0(extra_eval_strings[[i]], ", ")
             eval_strings <- append(eval_strings, extra_contrast)
-            eval_names <- append(eval_names, extra_eval_names[[i]])
+            eval_names <- append(eval_names, new_name)
+            all_pairwise[new_name] <- extra_contrast
         }
         names(eval_strings) <- eval_names
     }

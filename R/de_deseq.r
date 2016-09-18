@@ -295,7 +295,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             numerator <- condition_levels[d]
             comparison <- paste0(numerator, "_vs_", denominator)
             message(paste0("DESeq2 step 5/5: ", inner_count, "/",
-                           number_comparisons, ": Printing table: ", comparison))
+                           number_comparisons, ": Creating table: ", comparison))
             result <- as.data.frame(DESeq2::results(deseq_run,
                                                     contrast=c("condition", numerator, denominator),
                                                     format="DataFrame"))

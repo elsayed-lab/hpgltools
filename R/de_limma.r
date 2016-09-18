@@ -723,7 +723,7 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
     end <- length(coef)
     for (c in 1:end) {
         comparison <- coef[c]
-        message(paste0("Limma step 6/6: ", c, "/", end, ": Printing table: ", comparison, "."))
+        message(paste0("Limma step 6/6: ", c, "/", end, ": Creating table: ", comparison, "."))
         data_table <- limma::topTable(data, adjust=adjust, n=n, coef=comparison)
         ## Reformat the numbers so they are not so obnoxious
         ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
