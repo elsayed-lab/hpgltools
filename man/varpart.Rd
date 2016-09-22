@@ -4,10 +4,13 @@
 \alias{varpart}
 \title{Use variancePartition to gather some plots about a troubling dataset}
 \usage{
-varpart(expt, factors = c("condition", "batch"), cpus = 6, genes = 20)
+varpart(expt, predictor = "condition", factors = c("batch"), cpus = 6,
+  genes = 20, parallel = TRUE)
 }
 \arguments{
 \item{expt}{Some data}
+
+\item{predictor}{Non-categorical predictor factor with which to begin the model.}
 
 \item{factors}{Character list of columns in the experiment design to query}
 

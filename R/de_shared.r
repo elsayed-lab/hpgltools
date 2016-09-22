@@ -1032,7 +1032,6 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
 
     up_fc <- fc_cutoff
     down_fc <- -1 * fc_cutoff
-    message(paste0("The table is: ", table_name))
     summary_table_name <- table_name
     if (isTRUE(inverse)) {
         summary_table_name <- paste0(summary_table_name, "-inverted")

@@ -306,6 +306,7 @@ hpgl_norm <- function(data, ...) {
     original_libsize <- NULL
     annot <- NULL
     counts <- NULL
+    ## I never quite realized just how nice data.tables are.  To what extent can I refactor all of my data frame usage to them?
     if (data_class == 'expt') {
         original_counts <- data[["original_counts"]]
         original_libsizes <- data[["original_libsize"]]
@@ -322,8 +323,14 @@ hpgl_norm <- function(data, ...) {
         if (is.null(data)) {
             stop("The list provided contains no count_table.")
         }
-    } else if (data_class == "matrix" | data_class == "data.frame") {
+    } else if (data_class == "matrix" | data_class == "data.frame" | data_class == "data.table") {
         counts <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        ## In the case of data.tables, even if you set the rownames, the first column might still be rowname characters
+        ## I don't yet fully understand this, so I will add an explicit test here.
+        if (data_class == "data.table" & class(counts[[1]]) == "character") {
+            rownames(counts) <- make.names(counts[[1]], unique=TRUE)
+            counts <- counts[-1]
+        }
         design <- arglist[["design"]]
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -469,7 +476,6 @@ hpgl_norm <- function(data, ...) {
     }
 
     if (batch_step == 5) {
-        message("Performing batch correction at step 5.")
         count_table <- do_batch(count_table, ...)
     }
 

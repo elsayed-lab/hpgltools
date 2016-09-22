@@ -524,15 +524,15 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
             RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
         mapping <- setNames(sample_colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
-    } else if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
-        chosen_colors <- sample_colors
-    } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
-        mapping <- setNames(sample_colors, unique(chosen_colors))
+    } else if (!is.null(colors) & length(colors) == num_samples) {
+        chosen_colors <- colors
+    } else if (!is.null(colors) & length(colors) == num_conditions) {
+        mapping <- setNames(colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
-    } else if (is.null(sample_colors)) {
-        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
-            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
-        mapping <- setNames(sample_colors, unique(chosen_colors))
+    } else if (is.null(colors)) {
+        colors <- sm(grDevices::colorRampPalette(
+                                    RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
     } else {
         warning("The number of colors provided does not match either the number of conditions nor samples.")

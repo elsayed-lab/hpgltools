@@ -45,7 +45,7 @@ experimental models appropriate for the differential expression analyses, and pe
 \examples{
 \dontrun{
  finished_comparison = eBayes(limma_output)
- data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+ data_list = all_pairwise(expt)
 }
 }
 
