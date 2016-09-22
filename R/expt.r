@@ -64,8 +64,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         gff_type <- arglist[["include_type"]]
     }
     file_column <- "file"
-    if (!is.null(arglist(file_column)) {
-        file_column <- arglist(file_column)  ## Make it possible to have multiple count tables / sample in one sheet.
+    if (!is.null(arglist[["file_column"]])) {
+        file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count tables / sample in one sheet.
     }
 
     ## Read in the metadata from the provided data frame, csv, or xlsx.
