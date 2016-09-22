@@ -428,7 +428,15 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
     }
 
-    bp_data <- mf_data <- cc_data <- kegg_data <- tf_data <- react_data <- mi_data <- corum_data <- NULL
+    bp_data <- NULL
+    mf_data <- NULL
+    cc_data <- NULL
+    kegg_data <- NULL
+    tf_data <- NULL
+    react_data <- NULL
+    mi_data <- NULL
+    hp_data <- NULL
+    corum_data <- NULL
 
     if (!is.null(gprofiler_result[["go"]])) {
         new_row <- 1
@@ -493,8 +501,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
             ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(kegg_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(kegg_data) + 2
+        openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking KEGG data
-    openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
+
 
     if (!is.null(gprofiler_result[["tf"]])) {
         new_row <- 1
@@ -532,7 +541,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         }
         new_row <- new_row + nrow(react_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
-    } ## End checking tf data
+    } ## End checking reactome data
 
 
     if (!is.null(gprofiler_result[["mi"]])) {
@@ -552,7 +561,26 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         }
         new_row <- new_row + nrow(mi_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
-    } ## End checking tf data
+    } ## End checking mirna data
+
+    if (!is.null(gprofiler_result[["hp"]])) {
+        new_row <- 1
+        sheet <- "hp"
+        openxlsx::addWorksheet(wb, sheetName=sheet)
+        hp_data <- gprofiler_result[["hp"]]
+        openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        new_row <- new_row + 1
+        dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=hp_data, tableStyle=table_style, startRow=new_row))
+        ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+        if (isTRUE(add_plots)) {
+            a_plot <- gprofiler_result[["plots"]][["hp_plot_over"]]
+            try(print(a_plot), silent=TRUE)
+            ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(hp_data) + 2, startRow=new_row, fileType="png", units="in"))
+        }
+        new_row <- new_row + nrow(hp_data) + 2
+        openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
+    } ## End checking corum data
 
     if (!is.null(gprofiler_result[["corum"]])) {
         new_row <- 1
@@ -571,7 +599,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         }
         new_row <- new_row + nrow(corum_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
-    } ## End checking tf data
+    } ## End checking corum data
 
     excel_ret <- NULL
     if (!is.null(excel)) {
@@ -593,6 +621,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         write.csv(react_data, file=csvfile)
         csvfile <- paste0(excel, "_mi.csv")
         write.csv(mi_data, file=csvfile)
+        csvfile <- paste0(excel, "_hp.csv")
+        write.csv(hp_data, file=csvfile)
         csvfile <- paste0(excel, "_corum.csv")
         write.csv(corum_data, file=csvfile)
         excel_ret <- "csv"

@@ -63,10 +63,13 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     if (!is.null(arglist[["include_type"]])) {
         gff_type <- arglist[["include_type"]]
     }
+    file_column <- "file"
+    if (!is.null(arglist(file_column)) {
+        file_column <- arglist(file_column)  ## Make it possible to have multiple count tables / sample in one sheet.
+    }
 
     ## Read in the metadata from the provided data frame, csv, or xlsx.
     sample_definitions <- data.frame()
-
     file <- NULL
     meta_dataframe <- NULL
     if (class(metadata) == "character") { ## This is a filename containing the metadata
@@ -136,7 +139,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         all_count_tables <- count_dataframe
         testthat::expect_equal(colnames(all_count_tables), rownames(sample_definitions))
         ## If neither of these cases is true, start looking for the files in the processed_data/ directory
-    } else if (is.null(sample_definitions[["file"]])) {
+    } else if (is.null(sample_definitions[[file_column]])) {
         success <- 0
         ## Look for files organized by sample
         test_filenames <- paste0("processed_data/count_tables/",
@@ -436,6 +439,7 @@ read_metadata <- function(file, ...) {
     if (is.null(arglist[["header"]])) {
         arglist[["header"]] <- TRUE
     }
+
     if (tools::file_ext(file) == "csv") {
         definitions <- read.csv(file=file, comment.char="#",
                                 sep=arglist[["sep"]], header=arglist[["header"]])
