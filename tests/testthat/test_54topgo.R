@@ -9,12 +9,12 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
-    sig_genes <- s_p(get_sig_genes(table, column="untreated")$up_genes)$result
+    sig_genes <- sm(get_sig_genes(table, column="untreated")$up_genes)
 
     ## Use biomart's result to get the gene lengths etc.
-    dmel_annotations <- s_p(get_biomart_annotations(species="dmelanogaster"))$result
+    dmel_annotations <- sm(get_biomart_annotations(species="dmelanogaster"))
     ## And ontology cateogies.
-    dmel_ontologies <- s_p(get_biomart_ontologies(species="dmelanogaster"))$result
+    dmel_ontologies <- sm(get_biomart_ontologies(species="dmelanogaster"))
 
     ## Get the annotations ready to be recast as a gff file.
     dmel_annotations$strand <- ifelse(dmel_annotations$strand == "1", "+", "-")
@@ -29,8 +29,8 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ## And write the entries as a gff file.  This gff file may be used by clusterprofiler, topgo, and gostats.
     dmel_gff <- rtracklayer::export(object=dmel_granges, con=gff_file)
 
-    tp_result <- s_p(simple_topgo(sig_genes, gff=gff_file, goids_df=dmel_ontologies))$result
-    tp_trees <- s_p(topgo_trees(tp_result))$result
+    tp_result <- sm(simple_topgo(sig_genes, gff=gff_file, goids_df=dmel_ontologies))
+    tp_trees <- sm(topgo_trees(tp_result))
 
     ## There is some run-to-run variability in these searches.
     expected_tp_mf <- c("GO:0004252", "GO:0008236", "GO:0017171")

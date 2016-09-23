@@ -55,7 +55,7 @@ hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
 
 ## Check that normalization tools work similarly
 cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
-hpgl_quantile_data <- s_p(hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE))$result
+hpgl_quantile_data <- sm(hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE))
 hpgl_quantile <- hpgl_quantile_data[["count_table"]]
 expected <- cbcb_quantile[sort(rownames(cbcb_quantile)), ]
 actual <- hpgl_quantile[sort(rownames(hpgl_quantile)), ]
@@ -69,7 +69,7 @@ cbcb_qcpm <- cbcbSEQ::qNorm(cbcb_data)
 cbcb_edger_qcpm <- edgeR::cpm(cbcb_qcpm)
 cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
 expected <- cbcb_quantile[sort(rownames(cbcb_quantile)), ]
-hpgl_quantile <- s_p(hpgl_norm(pasilla_expt, norm="quant"))[["result"]]
+hpgl_quantile <- sm(hpgl_norm(pasilla_expt, norm="quant"))
 hpgl_quantile <- hpgl_quantile[["count_table"]]
 actual <- hpgl_quantile[sort(rownames(hpgl_quantile)), ]
 test_that("Are quantile() normalizations identical?", {
@@ -77,7 +77,7 @@ test_that("Are quantile() normalizations identical?", {
 })
 
 ## Check that cpm(quantile()) normalizations are identical
-hpgl_qcpm <- s_p(hpgl_norm(pasilla_expt, norm="quant", convert="cpm", filter_low=FALSE))[["result"]]
+hpgl_qcpm <- sm(hpgl_norm(pasilla_expt, norm="quant", convert="cpm", filter_low=FALSE))
 hpgl_qcpm <- hpgl_qcpm[["count_table"]]
 hpgl_qcpm <- hpgl_qcpm[sort(rownames(hpgl_qcpm)), ]
 expected <- cbcb_edger_qcpm
@@ -90,10 +90,10 @@ test_that("Are cpm(quantile()) conversions identical?", {
 ## There are a couple of ways to invoke these normalizations, so I will explicitly (and hopefully redundantly) invoke both
 cbcb_l2qcpm_data <- cbcbSEQ::log2CPM(cbcb_quantile)
 cbcb_l2qcpm <- cbcb_l2qcpm_data[["y"]]
-hpgl_l2qcpm_data <- s_p(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=FALSE))[["result"]]
+hpgl_l2qcpm_data <- sm(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=FALSE))
 hpgl_l2qcpm <- hpgl_l2qcpm_data[["count_table"]]
 hpgl_l2qcpm <- hpgl_l2qcpm[sort(rownames(hpgl_l2qcpm)), ]
-hpgl_l2qcpm_expt <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=FALSE))$result
+hpgl_l2qcpm_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=FALSE))
 hpgl_l2qcpm2 <- Biobase::exprs(hpgl_l2qcpm_expt[["expressionset"]])
 hpgl_l2qcpm2 <- hpgl_l2qcpm2[sort(rownames(hpgl_l2qcpm2)), ]
 expected <- cbcb_l2qcpm
@@ -144,7 +144,7 @@ test_model <- model.matrix(~condition)
 cbcb_voom <- cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize)
 hpgl_voom <- cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize)
 hpgl_voom2 <- hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
-hpgl_voom3 <- s_p(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))$result
+hpgl_voom3 <- sm(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))
 expected <- cbcb_voom
 actual <- hpgl_voom
 test_that("Do different voom() invocations end with the same result?", {
@@ -163,7 +163,7 @@ test_that("Does calling hpgltools::voom with hpgl-modified data return the same 
 
 ## To be extra-paranoid, make sure that the limma_pairwise() function invokes voom correctly.
 ## Note that this is where the data-ordering problems appear.
-hpgl_limma <- s_p(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, model_intercept=FALSE))$result
+hpgl_limma <- sm(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, model_intercept=FALSE))
 ## First check the voom result from limma_pairwise
 hpgl_limma_voom <- hpgl_limma$voom_result
 hpgl_limma_voom_e <- hpgl_limma$voom_result$E[order(rownames(hpgl_limma$voom_result$E)), ]
@@ -195,9 +195,9 @@ test_that("Limma results, eBayes.", {
     expect_equal(sort(cbcb_eb$F), sort(hpgl_eb$F))
 })
 
-cbcb_top <- s_p(limma::topTable(cbcb_eb, number=nrow(cbcb_eb)))[["result"]]
+cbcb_top <- sm(limma::topTable(cbcb_eb, number=nrow(cbcb_eb)))
 cbcb_top <- cbcb_top[sort(rownames(cbcb_top)), ]
-hpgl_top <- s_p(limma::topTable(hpgl_eb, number=nrow(cbcb_eb)))$result
+hpgl_top <- sm(limma::topTable(hpgl_eb, number=nrow(cbcb_eb)))
 hpgl_top <- hpgl_top[sort(rownames(hpgl_top)), ]
 test_that("Limma results, toptable.", {
     expect_equal(cbcb_top, hpgl_top)

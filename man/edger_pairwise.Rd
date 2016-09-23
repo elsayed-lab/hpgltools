@@ -34,6 +34,8 @@ de_vs_cb = (E-D)-(C-B),"}
 
 \item{force}{Force edgeR to accept inputs which it should not have to deal with.}
 
+\item{edger_method}{I found a couple/few ways of doing edger in the manual, choose with this.}
+
 \item{...}{The elipsis parameter is fed to write_edger() at the end.}
 }
 \value{

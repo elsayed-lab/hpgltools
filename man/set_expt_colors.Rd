@@ -10,15 +10,19 @@ set_expt_colors(expt, colors = TRUE, chosen_palette = "Dark2")
 \item{expt}{Expt to modify}
 
 \item{colors}{colors to replace}
+
+\item{chosen_palette}{I usually use Dark2 as the RColorBrewer palette.}
 }
 \value{
 expt Send back the expt with some new metadata
-#' \dontrun{
- expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
-}
 }
 \description{
 When exploring differential analyses, it might be useful to play with the conditions/batches of
 the experiment.  Use this to make that easier.
+}
+\examples{
+\dontrun{
+ expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
+}
 }
 

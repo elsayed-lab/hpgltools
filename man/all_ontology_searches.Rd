@@ -6,10 +6,10 @@
 \usage{
 all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
   z = NULL, fc = NULL, p = NULL, overwrite = FALSE,
-  species = "unsupported", goid_map = "reference/go/id2go.map",
-  gff_file = NULL, gff_type = "gene", do_goseq = TRUE,
-  do_cluster = TRUE, do_topgo = TRUE, do_gostats = TRUE,
-  do_gprofiler = TRUE, do_trees = FALSE)
+  species = "unsupported", orgdb = "org.Dm.eg.db",
+  goid_map = "reference/go/id2go.map", gff_file = NULL, gff_type = "gene",
+  do_goseq = TRUE, do_cluster = TRUE, do_topgo = TRUE,
+  do_gostats = TRUE, do_gprofiler = TRUE, do_trees = FALSE, ...)
 }
 \arguments{
 \item{de_out}{List of topTables comprising limma/deseq/edger outputs.}
@@ -30,6 +30,9 @@ all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
 
 \item{species}{Supported organism used by the tools.}
 
+\item{orgdb}{Provide an organismDbi/Orgdb to hold the various annotation data, in response to the
+shift of clusterprofiler and friends towards using them.}
+
 \item{goid_map}{Mapping file used by topGO, if it does not exist then goids_df creates it.}
 
 \item{gff_file}{gff file containing the annotations used by gff2genetable from clusterprofiler.}
@@ -47,6 +50,8 @@ all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
 \item{do_gprofiler}{Perform simple_gprofiler()?}
 
 \item{do_trees}{make topGO trees from the data?}
+
+\item{...}{Arguments to pass through in arglist.}
 }
 \value{
 a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and

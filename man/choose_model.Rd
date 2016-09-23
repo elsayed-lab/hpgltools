@@ -22,6 +22,11 @@ choose_model(conditions, batches, model_batch = TRUE, model_cond = TRUE,
 \item{alt_model}{Use your own model.}
 
 \item{alt_string}{String describing an alternate model.}
+
+\item{intercept}{Choose an intercept for the model as opposed to 0.}
+
+\item{reverse}{Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
+to test.}
 }
 \value{
 List including a model matrix and strings describing cell-means and intercept models.

@@ -17,8 +17,13 @@
 #'
 #' This just calls normalize expt with the most common arguments except log2 transformation, but
 #' that may be appended with 'transform=log2', so I don't feel bad.  Indeed, it will allow you to
-#' overwrite any arguments if you wish.
+#' overwrite any arguments if you wish.  In our work, the most common normalization is:
+#' quantile(cpm(low-filter(data))).
 #'
+#' @param expt An expressionset containing expt object
+#' @param ... More options to pass to normalize_expt()
+#' @return The normalized expt
+#' @seealso \code{\link{normalize_expt}}
 #' @export
 default_norm <- function(expt, ...) {
     arglist <- list(...)
@@ -209,8 +214,17 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                             min_samples=min_samples, p=p, A=A, k=k,
                             ## cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
                             cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
+
     final_libsize <- normalized[["libsize"]]
     final_data <- as.matrix(normalized[["count_table"]])
+
+    ## A recent update to Biobase adds a test in the function
+    ## assayDataElementReplace() which no longer allows one to just
+    ## replace an expressionset with a smaller version (low-filtered).
+    ## Instead, one must properly subset the object first, then replace.
+    ## While this is annoying, I suppose it is smart.
+    unfiltered_genes <- rownames(Biobase::exprs(current_exprs)) %in% rownames(final_data)
+    current_exprs <- current_exprs[unfiltered_genes, ]
     Biobase::exprs(current_exprs) <- final_data
 
     ## The original data structure contains the following slots:
@@ -292,6 +306,7 @@ hpgl_norm <- function(data, ...) {
     original_libsize <- NULL
     annot <- NULL
     counts <- NULL
+    ## I never quite realized just how nice data.tables are.  To what extent can I refactor all of my data frame usage to them?
     if (data_class == 'expt') {
         original_counts <- data[["original_counts"]]
         original_libsizes <- data[["original_libsize"]]
@@ -308,8 +323,14 @@ hpgl_norm <- function(data, ...) {
         if (is.null(data)) {
             stop("The list provided contains no count_table.")
         }
-    } else if (data_class == "matrix" | data_class == "data.frame") {
+    } else if (data_class == "matrix" | data_class == "data.frame" | data_class == "data.table") {
         counts <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        ## In the case of data.tables, even if you set the rownames, the first column might still be rowname characters
+        ## I don't yet fully understand this, so I will add an explicit test here.
+        if (data_class == "data.table" & class(counts[[1]]) == "character") {
+            rownames(counts) <- make.names(counts[[1]], unique=TRUE)
+            counts <- counts[-1]
+        }
         design <- arglist[["design"]]
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -455,7 +476,6 @@ hpgl_norm <- function(data, ...) {
     }
 
     if (batch_step == 5) {
-        message("Performing batch correction at step 5.")
         count_table <- do_batch(count_table, ...)
     }
 

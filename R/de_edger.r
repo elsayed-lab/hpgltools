@@ -1,9 +1,29 @@
+#' Make a MA plot of some limma output with pretty colors and shapes
+#'
+#' Yay pretty colors and shapes!
+#'
+#' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
+#' @param table  Result from edger to use, left alone it chooses the first.
+#' @param fc_col  Column for logFC data.
+#' @param p_col  Column to use for p-value data.
+#' @param expr_col  Column for the average data.
+#' @param fc  Fold change cutoff on the up and down defining significant.
+#' @param pval_cutoff  And the p-value cutoff.
+#' @return a plot!
+#' @seealso \link{plot_ma_de}
+#' @examples
+#'  \dontrun{
+#'   prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
+#' }
 #' @export
-edger_ma <- function(output, table=NULL) {
+edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue",
+                     expr_col="logCPM", fc=1, pval_cutoff=0.05) {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
-    output <- output[["edger"]]  ## Currently this only will work with the output from all_pairwise()
+    if (!is.null(output[["edger"]])) {
+        output <- output[["edger"]]
+    }
     possible_tables <- output[["contrasts"]][["names"]]
     if (is.null(table)) {
         table <- possible_tables[1]
@@ -12,8 +32,8 @@ edger_ma <- function(output, table=NULL) {
     }
 
     de_genes <- output[["all_tables"]][[table]]
-    pval <- "qvalue"
-    plot <- plot_ma_de(table=de_genes, expr_col="logCPM", fc_col="logFC", p_col="qvalue")
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
+                       p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
     return(plot)
 }
 
@@ -23,12 +43,20 @@ edger_ma <- function(output, table=NULL) {
 #' This hopefully makes that easy.
 #'
 #' @param output Set of pairwise comparisons provided by edger_pairwise().
+#' @param toptable  The table to use for extracting the logfc values.
 #' @param x Name or number of the x-axis coefficient column to extract.
 #' @param y Name or number of the y-axis coefficient column to extract.
 #' @param gvis_filename Filename for plotting gvis interactive graphs of the data.
 #' @param gvis_trendline Add a trendline to the gvis plot?
+#' @param z  Make pretty colors for genes this number of z-scores from the median.
 #' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
 #' @param base_url Add a linkout to gvis plots to this base url.
+#' @param color_low  Color to use for low-logfc values.
+#' @param color_high  Color to use for high-logfc values.
+#' @param ... A few options may be added outside this scope and are left in the arglist, notably
+#'     qlimit, fc_column, p_column.  I need to make a consistent decision about how to handle these
+#'     not-always needed parameters, either always define them in the function body, or always put
+#'     them in arglist(...), doing a little of both is stupid.
 #' @return Ggplot2 plot showing the relationship between the two coefficients.
 #' @seealso \link{plot_linear_scatter} \link{edger_pairwise}
 #' @examples
@@ -86,23 +114,23 @@ edger_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
-
-    if (!is.null(toptable)) {
-        theplot <- plot[["scatter"]] + ggplot2::theme_bw()
-        sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
-        sigup <- sig[["up_genes"]]
-        sigdown <- sig[["down_genes"]]
-        up_index <- rownames(coefficients) %in% rownames(sigup)
-        down_index <- rownames(coefficients) %in% rownames(sigdown)
-        up_df <- as.data.frame(coefficients[up_index, ])
-        down_df <- as.data.frame(coefficients[down_index, ])
-        colnames(up_df) <- c("first", "second")
-        colnames(down_df) <- c("first", "second")
-        theplot <- theplot +
-            ggplot2::geom_point(data=up_df, colour=color_high) +
-            ggplot2::geom_point(data=down_df, colour=color_low)
-        plot[["scatter"]] <- theplot
-    }
+    ## I think the following was taken up by plot_linear_scatter and is not needed here anymore
+    ##if (!is.null(toptable)) {
+    ##    theplot <- plot[["scatter"]] + ggplot2::theme_bw()
+    ##    sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
+    ##    sigup <- sig[["up_genes"]]
+    ##    sigdown <- sig[["down_genes"]]
+    ##    up_index <- rownames(coefficients) %in% rownames(sigup)
+    ##    down_index <- rownames(coefficients) %in% rownames(sigdown)
+    ##    up_df <- as.data.frame(coefficients[up_index, ])
+    ##    down_df <- as.data.frame(coefficients[down_index, ])
+    ##    colnames(up_df) <- c("first", "second")
+    ##    colnames(down_df) <- c("first", "second")
+    ##    theplot <- theplot +
+    ##        ggplot2::geom_point(data=up_df, colour=color_high) +
+    ##        ggplot2::geom_point(data=down_df, colour=color_low)
+    ##    plot[["scatter"]] <- theplot
+    ##}
     plot[["df"]] <- coefficient_df
     return(plot)
 }
@@ -125,6 +153,7 @@ edger_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param annot_df Annotation information to the data tables?
 #' @param force Force edgeR to accept inputs which it should not have to deal with.
+#' @param edger_method  I found a couple/few ways of doing edger in the manual, choose with this.
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #' @return List including the following information:
 #'   contrasts = The string representation of the contrasts performed.
@@ -185,7 +214,9 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     norm <- edgeR::estimateDisp(norm, design=fun_model, robust=TRUE)
     ##cond_fit <- edgeR::glmFit(norm, design=fun_model)
     cond_fit <- edgeR::glmQLFit(norm, design=fun_model, robust=TRUE)
-    apc <- make_pairwise_contrasts(fun_model, conditions, do_identities=FALSE)
+    apc <- make_pairwise_contrasts(fun_model, conditions,
+                                   extra_contrasts=extra_contrasts,
+                                   do_identities=FALSE)
 
     ## This section is convoluted because glmLRT only seems to take up to 7 contrasts at a time.
     ## As a result, I iterate through the set of possible contrasts one at a time and ask for each
@@ -197,7 +228,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     end <- length(apc[["names"]])
     for (con in 1:length(apc[["names"]])) {
         name <- apc[["names"]][[con]]
-        message(paste0("EdgeR step 9/9: ", con, "/", end, ": Printing table: ", name, ".")) ## correct
+        message(paste0("EdgeR step 9/9: ", con, "/", end, ": Creating table: ", name, ".")) ## correct
         sc[[name]] <- gsub(pattern=",", replacement="", apc[["all_pairwise"]][[con]])
         tt <- parse(text=sc[[name]])
         ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=fun_model)")
@@ -247,6 +278,113 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         "contrast_list" = contrast_list,
         "all_tables" = result_list)
     return(final)
+}
+
+#' Writes out the results of a edger search using topTags()
+#'
+#' However, this will do a couple of things to make one's life easier:
+#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
+#' 2.  Write out the results() output for them in separate .csv files and/or sheets in excel
+#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+#'
+#' @param data Output from topTags().
+#' @param adjust Pvalue adjustment chosen.
+#' @param n Number of entries to report, 0 says do them all.
+#' @param coef Which coefficients/contrasts to report, NULL says do them all.
+#' @param workbook Excel filename into which to write the data.
+#' @param excel Write an excel workbook?
+#' @param csv Write out csv files of the tables?
+#' @param annot_df Optional data frame including annotation information to include with the tables.
+#' @return List of data frames comprising the toptable output for each coefficient, I also added a
+#'     qvalue entry to these toptable() outputs.
+#' @seealso \link[edger]{toptable} \link{write_xls}
+#' @examples
+#' \dontrun{
+#'  finished_comparison = topTags(edger_output)
+#'  data_list = write_edger(finished_comparison, workbook="excel/edger_output.xls")
+#' }
+#' @export
+write_edger <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/edger.xls",
+                       excel=FALSE, csv=FALSE, annot_df=NULL) {
+    testdir <- dirname(workbook)
+
+    ## Figure out the number of genes if not provided
+    if (n == 0) {
+        n <- nrow(data[["coefficients"]])
+    }
+
+    ## If specific contrast(s) is/are not requested, get them all.
+    if (is.null(coef)) {
+        coef <- colnames(data[["contrasts"]])
+    } else {
+        coef <- as.character(coef)
+    }
+    return_data <- list()
+    end <- length(coef)
+    for (c in 1:end) {
+        comparison <- coef[c]
+        message(paste0("Edger step 6/6: ", c, "/", end, ": Creating table: ", comparison, "."))
+        data_table <- edger::topTable(data, adjust=adjust, n=n, coef=comparison)
+        ## Reformat the numbers so they are not so obnoxious
+        ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
+        ## data_table$AveExpr <- refnum(data_table$AveExpr, sci=FALSE)
+        ## data_table$t <- refnum(data_table$t, sci=FALSE)
+        ## data_table$P.Value <- refnum(data_table$P.Value)
+        ## data_table$adj.P.Val <- refnum(data_table$adj.P.Val)
+        ## data_table$B <- refnum(data_table$B, sci=FALSE)
+        data_table[["logFC"]] <- signif(x=as.numeric(data_table[["logFC"]]), digits=4)
+        data_table[["AveExpr"]] <- signif(x=as.numeric(data_table[["AveExpr"]]), digits=4)
+        data_table[["t"]] <- signif(x=as.numeric(data_table[["t"]]), digits=4)
+        data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
+        data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
+        data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
+        data_table[["qvalue"]] <- tryCatch(
+        {
+            ## as.numeric(format(signif(
+            ## suppressWarnings(qvalue::qvalue(
+            ## as.numeric(data_table$P.Value), robust=TRUE))$qvalues, 4),
+            ## scientific=TRUE))
+            ttmp <- as.numeric(data_table[["P.Value"]])
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
+            signif(x=ttmp, digits=4)
+            ## ttmp <- signif(ttmp, 4)
+            ## ttmp <- format(ttmp, scientific=TRUE)
+            ## ttmp
+        },
+        error=function(cond) {
+            message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+            return(1)
+        },
+        ##warning=function(cond) {
+        ##    message("There was a warning?")
+        ##    message(cond)
+        ##    return(1)
+        ##},
+        finally={
+        })
+        if (!is.null(annot_df)) {
+            data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
+            ###data_table = data_table[-1]
+        }
+        ## This write_xls runs out of memory annoyingly often
+        if (isTRUE(excel) | isTRUE(csv)) {
+            if (!file.exists(testdir)) {
+                dir.create(testdir)
+                message(paste0("Creating directory: ", testdir, " for writing excel/csv data."))
+            }
+        }
+        if (isTRUE(excel)) {
+            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwritefile=TRUE))
+        }
+        ## Therefore I will write a csv of each comparison, too
+        if (isTRUE(csv)) {
+            csv_filename <- gsub(".xls$", "", workbook)
+            csv_filename <- paste0(csv_filename, "_", comparison, ".csv")
+            write.csv(data_table, file=csv_filename)
+        }
+        return_data[[comparison]] <- data_table
+    }
+    return(return_data)
 }
 
 ## EOF

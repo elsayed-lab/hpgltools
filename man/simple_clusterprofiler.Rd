@@ -13,6 +13,8 @@ simple_clusterprofiler(sig_genes, all_genes, orgdb = "org.Dm.eg.db",
 \arguments{
 \item{sig_genes}{Dataframe of genes deemed 'significant.'}
 
+\item{all_genes}{Dataframe of all genes in the analysis, primarily for gse analyses.}
+
 \item{orgdb}{Name of the orgDb used for gathering annotation data.}
 
 \item{orgdb_from}{Name of a key in the orgdb used to cross reference to entrez IDs.}
@@ -38,8 +40,6 @@ simple_clusterprofiler(sig_genes, all_genes, orgdb = "org.Dm.eg.db",
 \item{kegg_id_column}{Column in the orgdb to use for cross referencing to KEGG.}
 
 \item{categories}{How many categories should be plotted in bar/dot plots?}
-
-\item{universe}{Dataframe of all genes in the analysis, primarily for gse analyses.}
 }
 \description{
 The new version of clusterProfiler has a bunch of new toys.  However, it is more stringent in

@@ -9,18 +9,20 @@ set_expt_condition(expt, fact, ids = NULL, ...)
 \arguments{
 \item{expt}{Expt to modify}
 
-\item{factor}{Conditions to replace}
+\item{fact}{Conditions to replace}
 
-\item{colors}{Reset the set of colors (Give a factor if you want to choose your own).}
+\item{ids}{Specific sample IDs to change.}
 }
 \value{
 expt Send back the expt with some new metadata
-#' \dontrun{
- expt = set_expt_condition(big_expt, factor=c(some,stuff,here))")
-}
 }
 \description{
 When exploring differential analyses, it might be useful to play with the conditions/batches of
 the experiment.  Use this to make that easier.
+}
+\examples{
+\dontrun{
+ expt = set_expt_condition(big_expt, factor=c(some,stuff,here))
+}
 }
 

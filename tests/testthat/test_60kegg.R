@@ -37,16 +37,16 @@ sig_up <- sm(get_sig_genes(all_genes, z=2)$up_genes)
 all_ids <- paste0("Dmel_", all_genes[["flybasecg"]])
 sig_ids <- paste0("Dmel_", sig_up[["flybasecg"]])
 
-pct_citrate <- sm(pct_kegg_diff(all_ids, sig_ids, organism="dme"))
+## Note, I split the result of this into percent_nodes and percent_edges
+pct_citrate <- pct_kegg_diff(all_ids, sig_ids, organism="dme")
 test_that("Can we extract the percent differentially expressed genes in one pathway?", {
-    expect_equal(19.67, pct_citrate$percent, tolerance=0.1)
+    expect_equal(18.75, pct_citrate$percent_nodes, tolerance=0.1)
 })
 
 pathways <- c("00010", "00020", "00030", "00040","nonexistent", "00051")
-all_percentages <- sm(sm(pct_all_kegg(all_ids, sig_ids, pathways=pathways, organism="dme")))
-
+all_percentages <- sm(pct_all_kegg(all_ids, sig_ids, pathways=pathways, organism="dme"))
 expected_percentages <- c(7.547, 9.302, 0.000, 13.040, NA, 3.704)
-actual_percentages <- all_percentages[["percent"]]
+actual_percentages <- all_percentages[["percent_nodes"]]
 test_that("Can we extract the percent differentially expressed genes from multiple pathways?", {
     expect_equal(expected_percentages, actual_percentages, tolerance=0.1)
 })
@@ -54,7 +54,7 @@ test_that("Can we extract the percent differentially expressed genes from multip
 ## Try testing out pathview
 mel_id <- kegg_get_orgn("melanogaster")
 rownames(sig_up) <- make.names(sig_up[["flybasecg"]], unique=TRUE)
-funkytown <- sm(hpgl_pathview(sig_up, fc_column="logFC", species="dme", string_from="CG", string_to="Dmel_CG"))
+funkytown <- sm(hpgl_pathview(sig_up, fc_column="logFC", species="dme", from_list=c("CG"), to_list=c("Dmel_CG")))
 
 unlink("kegg_pathways", recursive=TRUE)
 

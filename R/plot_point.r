@@ -17,7 +17,7 @@
 plot_bcv <- function(data) {
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        data <- Biobase::exprs(data$expressionset)
+        data <- Biobase::exprs(data[["expressionset"]])
     } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
@@ -27,9 +27,9 @@ plot_bcv <- function(data) {
     }
     data <- edgeR::DGEList(counts=data)
     edisp <- edgeR::estimateDisp(data)
-    avg_log_cpm <- edisp$AveLogCPM
+    avg_log_cpm <- edisp[["AveLogCPM"]]
     if (is.null(avg_log_cpm)) {
-        avg_log_cpm <- edgeR::aveLogCPM(edisp$counts, offset=edgeR::getOffset(edisp))
+        avg_log_cpm <- edgeR::aveLogCPM(edisp[["counts"]], offset=edgeR::getOffset(edisp))
     }
     disper <- edgeR::getDispersion(edisp)
     if (is.null(disper)) {
@@ -40,7 +40,7 @@ plot_bcv <- function(data) {
     }
     disp_df <- data.frame("A" = avg_log_cpm,
                           "disp" = sqrt(disper))
-    fitted_disp <- gplots::lowess(disp_df$A, disp_df$disp, f=0.5)
+    fitted_disp <- gplots::lowess(disp_df[["A"]], disp_df[["disp"]], f=0.5)
     f <- stats::approxfun(fitted_disp, rule=2)
     disp_plot <- ggplot(disp_df, aes_string(x="A", y="disp")) +
         ggplot2::geom_point() +
@@ -99,12 +99,12 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
     first_mad <- stats::mad(df[, 1])
     second_mad <- stats::mad(df[, 2])
     mydist <- sillydist(df[, 1], df[, 2], first_median, second_median)
-    mydist$x <- abs((mydist[, 1] - first_median) / abs(first_median))
-    mydist$y <- abs((mydist[, 2] - second_median) / abs(second_median))
-    mydist$x <- mydist$x / max(mydist$x)
-    mydist$y <- mydist$y / max(mydist$y)
-    mydist$dist <- mydist$x * mydist$y
-    mydist$dist <- mydist$dist / max(mydist$dist)
+    mydist[["x"]] <- abs((mydist[, 1] - first_median) / abs(first_median))
+    mydist[["y"]] <- abs((mydist[, 2] - second_median) / abs(second_median))
+    mydist[["x"]] <- mydist[["x"]] / max(mydist[["x"]])
+    mydist[["y"]] <- mydist[["y"]] / max(mydist[["y"]])
+    mydist[["dist"]] <- mydist[["x"]] * mydist[["y"]]
+    mydist[["dist"]] <- mydist[["dist"]] / max(mydist[["dist"]])
     line_size <- size / 2
     first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +
@@ -115,7 +115,7 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
         ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
         ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
         ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
-        ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist), alpha=0.6, size=size) +
+        ggplot2::geom_point(colour=grDevices::hsv(mydist[["dist"]], 1, mydist[["dist"]]), alpha=0.6, size=size) +
         ggplot2::theme(legend.position="none")
     if (!is.null(gvis_filename)) {
         plot_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
@@ -173,7 +173,10 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 
     df <- data.frame(df[, c(1, 2)])
     df <- df[complete.cases(df), ]
-    correlation <- cor.test(df[, 1], df[, 2], method=cormethod, exact=FALSE)
+    correlation <- try(cor.test(df[, 1], df[, 2], method=cormethod, exact=FALSE))
+    if (class(correlation) == "try-error") {
+        correlation <- NULL
+    }
     df_columns <- colnames(df)
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]
@@ -402,7 +405,7 @@ plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=
 #' @param p_col Column containing the relevant p-values.
 #' @param alpha How transparent to make the dots.
 #' @param logfc_cutoff Fold change cutoff.
-#' @param pval Name of the pvalue column to use for cutoffs.
+#' @param pval_cutoff Name of the pvalue column to use for cutoffs.
 #' @param size How big are the dots?
 #' @param tooltip_data Df of tooltip information for gvis.
 #' @param gvis_filename Filename to write a fancy html graph.
@@ -426,46 +429,63 @@ plot_ma <- function(counts, de_genes, pval_cutoff=0.05, alpha=0.4, logfc_cutoff=
 plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                        pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1,
                        size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
-    hpgl_env <- environment()
-
-    aes_color = "(pval <= pval_cutoff)"
-
-###    df <- data.frame("avg" = rowMeans(counts[rownames(de_genes),]),
-###                     "logfc" = de_genes[["logFC"]],
-###                     "pval" = de_genes[["P.Value"]],
-###                     "adjpval" = de_genes[[pval_column]])
+    ## Set up the data frame which will describe the plot
     df <- data.frame("avg" = table[[expr_col]],
                      "logfc" = table[[fc_col]],
                      "pval" = table[[p_col]])
-
     df[["pval"]] <- as.numeric(format(df[["pval"]], scientific=FALSE))
     df[["state"]] <- ifelse(df[["pval"]] > pval_cutoff, "pinsig",
                      ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
                      ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] <= (-1 * logfc_cutoff), "downsig", "fcinsig")))
+    df[["state"]] <- as.factor(df[["state"]])
+    ## Explicitly set the levels for the state column in case some of them are not defined.
+    levels(df[["state"]]) <- c("pinsig","upsig","downsig","fcinsig")
+    df[["pcut"]] <- df[["pval"]] <= pval_cutoff
+
     num_pinsig <- sum(df[["state"]] == "pinsig")
     num_upsig <- sum(df[["state"]] == "upsig")
     num_downsig <- sum(df[["state"]] == "downsig")
     num_fcinsig <- sum(df[["state"]] == "fcinsig")
-    plt <- ggplot(df, aes_string(x="avg", y="logfc", color=aes_color),
-                           environment=hpgl_env) +
+
+    ## Fill in 1 of each state to make ggplot2 not be stupid
+    df["tmp_pinsig",] <- c(0,0,0,"pinsig",FALSE)
+    df["tmp_upsig",] <- c(0,0,0,"upsig",FALSE)
+    df["tmp_downsig",] <- c(0,0,0,"downsig",FALSE)
+    df["tmp_fcinsig",] <- c(0,0,0,"fcinsig",FALSE)
+    df[[1]] <- as.numeric(df[[1]])
+    df[[2]] <- as.numeric(df[[2]])
+    df[[3]] <- as.numeric(df[[3]])
+    df[[4]] <- as.factor(df[[4]])
+    df[[5]] <- as.factor(df[[5]])
+
+    ## Set up the labels for the legend by significance.
+    state_shapes <- c(21,22,23,24)
+    names(state_shapes) <- c("downsig","fcinsig","pinsig","upsig")
+
+    plt <- ggplot(data=df,
+                  aes_string(x="avg",
+                             y="logfc",
+                             fill="as.factor(pcut)",
+                             colour="as.factor(pcut)",
+                             shape="as.factor(state)")) +
         ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1), logfc_cutoff), color="red", size=(size / 2)) +
-        ggplot2::geom_point(stat="identity", size=size, alpha=alpha, aes_string(shape="as.factor(state)", fill=aes_color)) +
-    ggplot2::scale_shape_manual(name="state", values=c(21,22,23,24),
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
+        ggplot2::scale_shape_manual(name="state", values=state_shapes,
                                     labels=c(
                                         paste0("Down Sig.: ", num_downsig),
                                         paste0("FC Insig.: ", num_fcinsig),
                                         paste0("P Insig.: ", num_pinsig),
                                         paste0("Up Sig.: ", num_upsig)),
-                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
-        ggplot2::scale_color_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
-        ggplot2::scale_fill_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
-        ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=3))) +
-        ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
-        ggplot2::xlab("Average Count (Millions of Reads)") +
-        ggplot2::ylab("log fold change") +
-        ggplot2::theme_bw()
+                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="black"))) +
+    ggplot2::scale_fill_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
+    ggplot2::scale_color_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
+##    ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
+    ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
+    ggplot2::xlab("Average Count (Millions of Reads)") +
+    ggplot2::ylab("log fold change") +
+    ggplot2::theme_bw()
     if (!is.null(gvis_filename)) {
-        plot_gvis_ma(counts, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
+        plot_gvis_ma(df, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
     }
     return(plt)
 }
@@ -697,7 +717,7 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' @export
 plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
                          fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6,
-                         xaxis_column="logFC", yaxis_column="P.Value", modify_y=TRUE, ...) {
+                         xaxis_column="logFC", yaxis_column="P.Value", ...) {
     hpgl_env <- environment()
     low_vert_line <- 0.0 - fc_cutoff
     horiz_line <- -1 * log10(p_cutoff)

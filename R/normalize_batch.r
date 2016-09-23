@@ -61,6 +61,10 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     if (!is.null(arglist[["low_to_zero"]])) {
         low_to_zero <- arglist[["low_to_zero"]]
     }
+    cpus <- 3
+    if (!is.null(arglist[["cpus"]])) {
+        cpus <- arglist[["cpus"]]
+    }
     ## These droplevels calls are required to avoid errors like 'confounded by batch'
     batches <- droplevels(as.factor(design[[batch1]]))
     conditions <- droplevels(as.factor(design[["condition"]]))
@@ -141,7 +145,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         df <- data.frame(count_table)
         mtrx <- as.matrix(df)
         conditional_model <- model.matrix(~conditions, data=df)
-        null_model <- conditional_model[,1]
+        null_model <- conditional_model[, 1]
         num_surrogates <- sva::num.sv(mtrx, conditional_model)
         svaseq_result <- sva::svaseq(mtrx, conditional_model, null_model, n.sv=num_surrogates)
         plot(svaseq_result$sv, pch=19, col="blue")
@@ -151,25 +155,44 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         beta <- (Hat %*% t(mtrx))
         P <- ncol(conditional_model)
         count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
+    } else if (batch == "varpart") {
+        message("Taking residuals from a linear mixed model as suggested by the variancePartition package.")
+        cl <- parallel::makeCluster(cpus)  ## I am keeping 2 processors to myself, piss off, R.
+        doParallel::registerDoParallel(cl)
+        batch_model <- as.formula("~ (1|batch)")
+        message("The function fitvarPartModel may take excessive memory, you have been warned.")
+        batch_fit <- variancePartition::fitVarPartModel(as.data.frame(count_table), batch_model, design)
+        count_table <- residuals(batch_fit)
+        rm(batch_fit)
+        parallel::stopCluster(cl)
     } else if (batch == "ruvg") {
         message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.")
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
-        ## As it stands I do not think this does anything useful
-        ##require.auto("RUVSeq")
+        df <- as.data.frame(count_table)
+        mtrx <- as.matrix(count_table)
         conditional_model <- model.matrix(~conditions, data=df)
-        y <- edgeR::DGEList(counts=count_table, group=conditions)
-        y <- edgeR::calcNormFactors(y, method="upperquartile")
-        y <- edgeR::estimateGLMCommonDisp(y, conditional_model)
-        y <- edgeR::estimateGLMTagwiseDisp(y, conditional_model)
-        fit <- edgeR::glmFit(y, conditional_model)
-        lrt <- edgeR::glmLRT(fit, coef=2)
-        controls <- rank(lrt$table$LR) <= 400
-        batch_ruv_emp <- RUVSeq::RUVg(count_table, controls, k=1)$W
-        X <- cbind(conditional_model, batch_ruv_emp)
-        Hat <- solve(t(X) %*% X) %*% t(X)
-        beta <- (Hat %*% t(mtrx))
-        P <- ncol(conditional_model)
-        count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
+        null_model <- conditional_model[,1]
+        num_surrogates <- 0
+        be_surrogates <- sva::num.sv(mtrx, conditional_model, method="be")
+        leek_surrogates <- sva::num.sv(mtrx, conditional_model, method="leek")
+        ruv_input <- edgeR::DGEList(counts=df, group=conditions)
+        ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
+        ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, conditional_model)
+        ruv_input_tag <- edgeR::estimateGLMTagwiseDisp(ruv_input_glm, conditional_model)
+        ruv_fit <- edgeR::glmFit(ruv_input_tag, conditional_model)
+        ## Use RUVSeq with empirical controls
+        ## The previous instance of ruv_input should work here, and the ruv_input_norm
+        ## Ditto for _glm and _tag, and indeed ruv_fit
+        ## Thus repeat the first 7 lines of the previous RUVSeq before anything changes.
+        ruv_lrt <- edgeR::glmLRT(ruv_fit, coef=2)
+        ruv_control_table <- ruv_lrt[["table"]]
+        ranked <- as.numeric(rank(ruv_control_table[["LR"]]))
+        bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
+        ruv_controls <- ranked <= bottom_third  ## what is going on here?!
+        ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets fail with 400 hard-set
+        chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model)
+        ruv_result <- RUVSeq::RUVg(mtrx, ruv_controls, k=chosen_surrogates)
+        count_table <- ruv_result[["normalizedCounts"]]
     } else {
         message("Did not recognize the batch correction, leaving the table alone.")
         message("Recognized batch corrections include: 'limma', 'combatmod', 'sva',")

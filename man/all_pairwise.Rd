@@ -6,7 +6,8 @@
 \usage{
 all_pairwise(input, conditions = NULL, batches = NULL, model_cond = TRUE,
   model_batch = TRUE, model_intercept = TRUE, extra_contrasts = NULL,
-  alt_model = NULL, libsize = NULL, annot_df = NULL, ...)
+  alt_model = NULL, libsize = NULL, annot_df = NULL, parallel = TRUE,
+  ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing count tables, normalization state, etc.}
@@ -17,7 +18,7 @@ all_pairwise(input, conditions = NULL, batches = NULL, model_cond = TRUE,
 
 \item{model_cond}{Include condition in the model?  This is likely always true.}
 
-\item{model_batch}{Include batch in the model?}
+\item{model_batch}{Include batch in the model?  This may be true/false/"sva" or other methods supported by get_model_adjust().}
 
 \item{model_intercept}{Use an intercept model instead of cell means?}
 
@@ -32,6 +33,8 @@ pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (
 
 \item{annot_df}{Annotations to add to the result tables.}
 
+\item{parallel}{Use dopar to run limma, deseq, edger, and basic simultaneously.}
+
 \item{...}{Picks up extra arguments into arglist, currently only passed to write_limma().}
 }
 \value{
@@ -44,7 +47,7 @@ experimental models appropriate for the differential expression analyses, and pe
 \examples{
 \dontrun{
  finished_comparison = eBayes(limma_output)
- data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+ data_list = all_pairwise(expt)
 }
 }
 

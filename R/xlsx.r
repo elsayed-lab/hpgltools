@@ -8,6 +8,7 @@
 #' @param data Data frame to print.
 #' @param wb Workbook to which to write.
 #' @param sheet Name of the sheet to write.
+#' @param rownames  Include row names in the output?
 #' @param start_row First row of the sheet to write. Useful if writing multiple tables.
 #' @param start_col First column to write.
 #' @param ...  Set of extra arguments given to openxlsx.
@@ -68,7 +69,7 @@ write_xls <- function(data, wb=NULL, sheet="first", rownames=TRUE,
         ## print(paste0("TESTME: ", class(data[[col]])))
         if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' |
             class(data[[col]]) == 'factor' | class(data[[col]]) == 'AsIs') {
-            message(paste0("Converted ", col, " to characters."))
+            ## message(paste0("Converted ", col, " to characters."))
             data[[col]] <- as.character(data[[col]])
         }
     }

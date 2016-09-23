@@ -1,3 +1,6 @@
+## Note to self, I think for future ggplot2 plots, I must start by creating the data frame
+## Then cast every column in it explicitly, and only then invoke ggplot(data=df ...)
+
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
 ## That likely means that I was supposed to have data in the
@@ -20,19 +23,21 @@
 #' @param ma   include pairwise ma plots
 #' @param ... extra parameters optionally fed to the various plots
 #' @return a loooong list of plots including the following:
-#'   nonzero = a ggplot2 plot of the non-zero genes vs library size
-#'   libsize = a ggplot2 bar plot of the library sizes
-#'   boxplot = a ggplot2 boxplot of the raw data
-#'   corheat = a recordPlot()ed pairwise correlation heatmap of the raw data
-#'   smc = a recordPlot()ed view of the standard median pairwise correlation of the raw data
-#'   disheat = a recordPlot()ed pairwise euclidean distance heatmap of the raw data
-#'   smd = a recordPlot()ed view of the standard median pairwise distance of the raw data
-#'   pcaplot = a recordPlot()ed PCA plot of the raw samples
-#'   pcatable = a table describing the relative contribution of condition/batch of the raw data
-#'   pcares =  a table describing the relative contribution of condition/batch of the raw data
-#'   pcavar = a table describing the variance of the raw data
-#'   qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
-#'   density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
+#' \enumerate{
+#'   \item nonzero = a ggplot2 plot of the non-zero genes vs library size
+#'   \item libsize = a ggplot2 bar plot of the library sizes
+#'   \item boxplot = a ggplot2 boxplot of the raw data
+#'   \item corheat = a recordPlot()ed pairwise correlation heatmap of the raw data
+#'   \item smc = a recordPlot()ed view of the standard median pairwise correlation of the raw data
+#'   \item disheat = a recordPlot()ed pairwise euclidean distance heatmap of the raw data
+#'   \item smd = a recordPlot()ed view of the standard median pairwise distance of the raw data
+#'   \item pcaplot = a recordPlot()ed PCA plot of the raw samples
+#'   \item pcatable = a table describing the relative contribution of condition/batch of the raw data
+#'   \item pcares =  a table describing the relative contribution of condition/batch of the raw data
+#'   \item pcavar = a table describing the variance of the raw data
+#'   \item qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
+#'   \item density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
+#' }
 #' @seealso \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
 #' \link[Biobase]{exprs} \link{hpgl_norm} \link{plot_nonzero} \link{plot_libsize}
 #' \link{plot_boxplot} \link{plot_corheat} \link{plot_sm} \link{plot_disheat}
@@ -91,6 +96,8 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     pca <- try(plot_pca(expt, title=pca_title, ...))
     message("Plotting a density plot.")
     density <- try(plot_density(expt, title=dens_title))
+    message("Printing a color to condition legend.")
+    legend <- try(plot_legend(pca$plot))
 
     qq_logs <- NULL
     qq_ratios <- NULL
@@ -120,6 +127,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
         "pcares" = pca$res,
         "pcavar" = pca$variance,
         "density" = density,
+        "legend" = legend,
         "qqlog" = qq_logs,
         "qqrat" = qq_ratios,
         "ma" = ma_plots)
@@ -127,6 +135,32 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     return(ret_data)
 }
 
+#' Scab the legend from a PCA plot and print it alone
+#'
+#' This way I can have a legend object to move about.
+#'
+#' @param stuff This can take either a ggplot2 pca plot or some data from which to make one.
+#' @return A legend!
+#' @export
+plot_legend <- function(stuff) {
+    plot <- NULL
+    if (class(stuff)[[1]] == "gg") {  ## Then assume it is a pca plot
+        plot <- stuff
+    } else {
+        plot <- plot_pca(stuff)[["plot"]]
+    }
+
+    tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(plot))
+    leg <- which(sapply(tmp[["grobs"]], function(x) x[["name"]]) == "guide-box")
+    legend <- tmp[["grobs"]][[leg]]
+    grid::grid.newpage()
+    grid::grid.draw(legend)
+    legend_plot <- grDevices::recordPlot()
+    ret <- list(
+        colors = plot[["data"]][, c("condition","batch","colors")],
+        plot = legend_plot)
+    return(ret)
+}
 
 ## I thought multiplot() was a part of ggplot(), but no, weird:
 ## http://stackoverflow.com/questions/24387376/r-wired-error-could-not-find-function-multiplot

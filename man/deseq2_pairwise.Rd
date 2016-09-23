@@ -22,6 +22,8 @@ deseq2_pairwise(input, conditions = NULL, batches = NULL,
 
 \item{extra_contrasts}{Provide extra contrasts here.}
 
+\item{model_intercept}{Use an intercept model?  DESeq seems to not be a fan of them.}
+
 \item{model_batch}{Is batch in the experimental model?}
 
 \item{annot_df}{Include some annotation information in the results?}

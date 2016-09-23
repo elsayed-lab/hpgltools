@@ -95,11 +95,11 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
         ggplot2::geom_dotplot(binaxis="y", stackdir="center", binpositions="all", colour="black", fill=factor_df[["fill"]])
 
     factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
-                                  ggplot2::aes_string(x="factor",
-                                                      y="svs",
-                                                      fill="condition",
-                                                      colour="condition",
-                                                      shape="shape")) +
+                                  aes_string(x="factor",
+                                             y="svs",
+                                             fill="condition",
+                                             colour="condition",
+                                             shape="shape")) +
         ggplot2::geom_point(size=5,
                             aes_string(shape="as.factor(shape)",
                                        colour="condition",
@@ -186,14 +186,18 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
 plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL, ...) {
     data_class <- class(data)[1]
     arglist <- list(...)
+    conditions <- NULL
     if (data_class == "expt") {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
-        data <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+        design <- data[["design"]]
+        colors <- data[["colors"]]
+        names <- data[["names"]]
+        conditions <- data[["conditions"]]
+        data <- Biobase::exprs(data[["expressionset"]])
+    } else if (data_class == "ExpressionSet") {
+        design <- Biobase::pData(data)
+        conditions <- Biobase::pData(data)[["conditions"]]
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -238,18 +242,35 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
         ylimit <- ylimit[[2]]
     }
 
+    if (is.null(conditions)) {
+        conditions <- colors
+    }
     sm_df <- data.frame(
         "sample" = rownames(properties),
         "sm" = prop_median,
+        "condition" = conditions,
         "color" = colors)
+    color_listing <- sm_df[, c("condition", "color")]
+    color_listing <- unique(color_listing)
+    color_list <- as.character(color_listing[["color"]])
+    names(color_list) <- as.character(color_listing[["condition"]])
 
     minval <- min(sm_df[["sm"]])
     maxval <- max(sm_df[["sm"]])
     my_binwidth <- (maxval - minval) / 40
 
-    sm_plot <- ggplot2::ggplot(sm_df, ggplot2::aes_string(x="sample", y="sm")) +
+    sm_plot <- ggplot2::ggplot(sm_df, aes_string(x="sample", y="sm", fill="condition")) +
         ggplot2::geom_hline(color="red", yintercept=ylimit, size=2) +
-        ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y", stackdir="center", binpositions="all", colour="black", fill=sm_df[["color"]], dotsize=2) +
+        ggplot2::geom_dotplot(binwidth=my_binwidth,
+                              binaxis="y",
+                              stackdir="center",
+                              binpositions="all",
+                              colour="black",
+                              dotsize=2,
+                              aes_string(fill="as.factor(condition)")) +
+        ggplot2::scale_fill_manual(name="Condition",
+                                   guide="legend",
+                                   values=color_list) +
         ggplot2::ylab(paste0("Standard Median ", method)) +
         ggplot2::xlab(paste0("Sample")) +
         ggplot2::ggtitle(title) +

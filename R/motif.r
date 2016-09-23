@@ -1,11 +1,12 @@
 #' run the rGADEM suite
 #'
-#' This is another function I started but never had cause to finish
-#' for the test sequences it works though
+#' This should provide a set of rGADEM results given an input file of sequences and a genome.
 #'
 #' @param inputfile Fasta or bed file containing sequences to search.
 #' @param genome BSgenome to read.
 #' @param ... Parameters for plotting the gadem result.
+#' @return A list containing slots for plots, the stdout output from gadem, the gadem result, set of
+#'     occurences of motif, and the returned set of motifs.
 #' @export
 simple_gadem <- function(inputfile, genome="BSgenome.Hsapiens.UCSC.hs19", ...) {
     arglist <- list(...)
@@ -111,6 +112,16 @@ simple_motifRG <- function(input_fasta, control_fasta, maximum=3,
 ##}
 
 
+#' Extract sequence flanking a set of annotations (generally coding sequences)
+#'
+#' Given a set of annotations and genome, one might want to get the set of adjacent sequences.
+#'
+#' @param bsgenome  Genome sequence
+#' @param annotation  Set of annotations
+#' @param distance  How far from each annotation is desired?
+#' @param type  What type of annotation is desired?
+#' @param prefix  Provide a prefix to the names to distinguish them from the existing annotations.
+#' @return  A list of sequences before and after each sequence.
 flanking_sequence <- function(bsgenome, annotation, distance=200, type='gene', prefix='') {
     if (class(annotation) == 'character') { ## Assume it is a filename to a gff file
         annotations <- gff2df(annotation, type=type)
@@ -142,7 +153,8 @@ flanking_sequence <- function(bsgenome, annotation, distance=200, type='gene', p
                                     name=S4Vectors::Rle(annotations[,name_key]))
     before_seq <- Biostrings::getSeq(bsgenome, before)
     after_seq <- Biostrings::getSeq(bsgenome, after)
-    retlist <- list(before=before_seq, after=after_seq)
+    retlist <- list("before" = before_seq,
+                    "after" = after_seq)
     return(retlist)
 }
 

@@ -12,6 +12,8 @@ edger_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
 \arguments{
 \item{output}{Set of pairwise comparisons provided by edger_pairwise().}
 
+\item{toptable}{The table to use for extracting the logfc values.}
+
 \item{x}{Name or number of the x-axis coefficient column to extract.}
 
 \item{y}{Name or number of the y-axis coefficient column to extract.}
@@ -20,9 +22,20 @@ edger_coefficient_scatter(output, toptable = NULL, x = 1, y = 2,
 
 \item{gvis_trendline}{Add a trendline to the gvis plot?}
 
+\item{z}{Make pretty colors for genes this number of z-scores from the median.}
+
 \item{tooltip_data}{Dataframe of gene annotations to be used in the gvis plot.}
 
 \item{base_url}{Add a linkout to gvis plots to this base url.}
+
+\item{color_low}{Color to use for low-logfc values.}
+
+\item{color_high}{Color to use for high-logfc values.}
+
+\item{...}{A few options may be added outside this scope and are left in the arglist, notably
+qlimit, fc_column, p_column.  I need to make a consistent decision about how to handle these
+not-always needed parameters, either always define them in the function body, or always put
+them in arglist(...), doing a little of both is stupid.}
 }
 \value{
 Ggplot2 plot showing the relationship between the two coefficients.

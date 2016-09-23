@@ -72,7 +72,7 @@ goseq_table <- function(df, file=NULL) {
 #' @param add_plots Include some pvalue plots in the excel output?
 #' @return The result from openxlsx
 #' @export
-write_new_goseq_xlsx <- function(goseq, file="excel/goseq.xlsx", pval=0.1, add_plots=TRUE) {
+write_goseq_data <- function(goseq, file="excel/goseq.xlsx", pval=0.1, add_plots=TRUE) {
     excel_dir <- dirname(file)
     if (!file.exists(excel_dir)) {
         dir.create(excel_dir, recursive=TRUE)
@@ -308,9 +308,9 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
     merged_ids_lengths[is.na(merged_ids_lengths)] <- 0
     ## Not casing the next lines as character/numeric causes weird errors like 'names' attribute must be the same length as the vector
     de_vector <- as.vector(as.numeric(merged_ids_lengths[["DE"]]))
-    names(de_vector) <- as.character(merged_ids_lengths[["ID"]])
+    names(de_vector) <- make.names(as.character(merged_ids_lengths[["ID"]]), unique=TRUE)
     length_vector <- as.vector(as.numeric(merged_ids_lengths[["length"]]))
-    names(length_vector) <- as.character(merged_ids_lengths[["ID"]])
+    names(length_vector) <- make.names(as.character(merged_ids_lengths[["ID"]]), unique=TRUE)
 
     pwf_plot <- NULL
     pwf <- goseq::nullp(DEgenes=de_vector, bias.data=length_vector, plot.fit=doplot)
@@ -463,7 +463,8 @@ gather_goseq_genes <- function(goseq_data, ontology=NULL, pval=0.1, include_all=
     cats <- rownames(categories)
     godf <- goseq_data[["godf"]]
     genes_per_ont <- function(cat) {
-        all_entries <- subset(godf, GO==cat)[["ID"]]
+        ## all_entries <- subset(godf, GO==cat)[["ID"]]
+        all_entries <- godf[, godf[["GO"]] == cat, ][["ID"]]
         entries_in_input <- input[ rownames(input) %in% all_entries, ]
         names <- toString(as.character(rownames(entries_in_input)))
         all <- toString(all_entries)

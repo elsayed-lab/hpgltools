@@ -4,15 +4,18 @@
 \alias{combine_de_tables}
 \title{Combine portions of deseq/limma/edger table output.}
 \usage{
-combine_de_tables(all_pairwise_result, extra_annot = NULL, excel = NULL,
+combine_de_tables(all_pairwise_result, extra_annot = NULL, csv = NULL,
+  excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
   excel_sheet = "combined_DE", keepers = "all", include_basic = TRUE,
-  add_plots = TRUE, plot_dim = 6)
+  add_plots = TRUE, plot_dim = 6, compare_plots = TRUE)
 }
 \arguments{
 \item{all_pairwise_result}{Output from all_pairwise().}
 
 \item{extra_annot}{Add some annotation information?}
+
+\item{csv}{On some computers (Edson!) printing to excel runs the machine oom for big data sets.}
 
 \item{excel}{Filename for the excel workbook, or null if not printed.}
 
@@ -29,6 +32,9 @@ certain contrasts in specific orders and orientations.}
 \item{add_plots}{Add plots to the end of the sheets with expression values?}
 
 \item{plot_dim}{Number of inches squared for the plot if added.}
+
+\item{compare_plots}{In an attempt to save memory when printing to excel, make it possible to
+exclude comparison plots in the summary sheet.}
 }
 \value{
 Table combining limma/edger/deseq outputs.

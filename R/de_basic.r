@@ -1,3 +1,122 @@
+#' Make a MA plot of some limma output with pretty colors and shapes
+#'
+#' Yay pretty colors and shapes!
+#'
+#' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
+#' @param table  Result from basic to use, left alone it chooses the first.
+#' @param fc_col  Column for logFC data.
+#' @param p_col  Column to use for p-value data.
+#' @param expr_col  Column for the average data.
+#' @param fc (log)fc cutoff on the up and down to define significance.
+#' @param pval_cutoff  p-value cutoff to define significance.
+#' @return a plot!
+#' @seealso \link{plot_ma_de}
+#' @examples
+#'  \dontrun{
+#'   prettyplot <- basic_ma(all_aprwise) ## [sic, I'm witty! and can speel]
+#' }
+#' @export
+basic_ma <- function(output, table=NULL, fc_col="logFC", p_col="p",
+                     expr_col="numerator_median", fc=1, pval_cutoff=0.05) {
+    counts <- NULL
+    de_genes <- NULL
+    pval <- NULL
+    if (!is.null(output[["basic"]])) {
+        output <- output[["basic"]]
+    }
+    possible_tables <- names(output[["all_tables"]])
+    if (is.null(table)) {
+        table <- possible_tables[1]
+    } else if (is.numeric(table)) {
+        table <- possible_tables[table]
+    }
+
+    de_genes <- output[["all_tables"]][[table]]
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
+    return(plot)
+}
+
+#' Plot two coefficients with respect to one another from basic.
+#'
+#' It can be nice to see a plot of two coefficients from a basic comparison with respect to one another
+#' This hopefully makes that easy.
+#'
+#' @param output Set of pairwise comparisons provided by basic_pairwise().
+#' @param toptable  The table to use for extracting the logfc values.
+#' @param x Name or number of the x-axis coefficient column to extract.
+#' @param y Name or number of the y-axis coefficient column to extract.
+#' @param gvis_filename Filename for plotting gvis interactive graphs of the data.
+#' @param gvis_trendline Add a trendline to the gvis plot?
+#' @param z  Make pretty colors for genes this number of z-scores from the median.
+#' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
+#' @param base_url Add a linkout to gvis plots to this base url.
+#' @param color_low  Color to use for low-logfc values.
+#' @param color_high  Color to use for high-logfc values.
+#' @param ... A few options may be added outside this scope and are left in the arglist, notably
+#'     qlimit, fc_column, p_column.  I need to make a consistent decision about how to handle these
+#'     not-always needed parameters, either always define them in the function body, or always put
+#'     them in arglist(...), doing a little of both is stupid.
+#' @return Ggplot2 plot showing the relationship between the two coefficients.
+#' @seealso \link{plot_linear_scatter} \link{basic_pairwise}
+#' @examples
+#' \dontrun{
+#'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
+#' }
+#' @export
+basic_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
+                                      gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
+                                      tooltip_data=NULL, base_url=NULL,
+                                      color_low="#DD0000", color_high="#7B9F35", ...) {
+    arglist <- list(...)
+    qlimit <- 0.1
+    if (!is.null(arglist[["qlimit"]])) {
+        qlimit <- arglist[["qlimit"]]
+    }
+    fc_column <- "basic_logfc"
+    if (!is.null(arglist[["fc_column"]])) {
+        fc_column <- arglist[["fc_column"]]
+    }
+    p_column <- "basic_adjp"
+    if (!is.null(arglist[["p_column"]])) {
+        p_column <- arglist[["p_column"]]
+    }
+    thenames <- names(output[["conditions_table"]])
+    message("This can do comparisons among the following columns in the basic result:")
+    message(toString(thenames))
+    xname <- ""
+    yname <- ""
+    if (is.numeric(x)) {
+        xname <- thenames[[x]]
+    } else {
+        xname <- x
+    }
+    if (is.numeric(y)) {
+        yname <- thenames[[y]]
+    } else {
+        yname <- y
+    }
+
+    message(paste0("Actually comparing ", xname, " and ", yname, "."))
+    ## It looks like the lrt data structure is redundant, so I will test that by looking at the apparent
+    ## coefficients from lrt[[1]] and then repeating with lrt[[2]]
+    coefficient_df <- output[["medians"]]
+    coefficient_df <- coefficient_df[, c(xname, yname)]
+    if (max(coefficient_df) < 0) {
+        coefficient_df <- coefficient_df * -1.0
+    }
+
+    plot <- sm(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+                                   gvis_trendline=gvis_trendline, first=xname, second=yname,
+                                   tooltip_data=tooltip_data, base_url=base_url,
+                                   pretty_colors=FALSE, color_low=color_low, color_high=color_high))
+    maxvalue <- as.numeric(max(coefficient_df) + 1)
+    plot[["scatter"]] <- plot[["scatter"]] +
+        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
+        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
+    plot[["df"]] <- coefficient_df
+    return(plot)
+}
+
 #' The simplest possible differential expression method.
 #'
 #' Perform a pairwise comparison among conditions which takes
@@ -218,6 +337,113 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
         all_tables=all_tables, medians=median_table,
         variances=variance_table)
     return(retlist)
+}
+
+#' Writes out the results of a basic search using basic_pairwise()
+#'
+#' However, this will do a couple of things to make one's life easier:
+#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
+#' 2.  Write out the results() output for them in separate .csv files and/or sheets in excel
+#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+#'
+#' @param data Table from basic_pairwise().
+#' @param adjust Pvalue adjustment chosen.
+#' @param n Number of entries to report, 0 says do them all.
+#' @param coef Which coefficients/contrasts to report, NULL says do them all.
+#' @param workbook Excel filename into which to write the data.
+#' @param excel Write an excel workbook?
+#' @param csv Write out csv files of the tables?
+#' @param annot_df Optional data frame including annotation information to include with the tables.
+#' @return List of data frames comprising the toptable output for each coefficient, I also added a
+#'     qvalue entry to these toptable() outputs.
+#' @seealso \link[basic]{toptable} \link{write_xls}
+#' @examples
+#' \dontrun{
+#'  finished_comparison = basic_comparison(basic_output)
+#'  data_list = write_basic(finished_comparison, workbook="excel/basic_output.xls")
+#' }
+#' @export
+write_basic <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/basic.xls",
+                       excel=FALSE, csv=FALSE, annot_df=NULL) {
+    testdir <- dirname(workbook)
+
+    ## Figure out the number of genes if not provided
+    if (n == 0) {
+        n <- nrow(data[["coefficients"]])
+    }
+
+    ## If specific contrast(s) is/are not requested, get them all.
+    if (is.null(coef)) {
+        coef <- colnames(data[["contrasts"]])
+    } else {
+        coef <- as.character(coef)
+    }
+    return_data <- list()
+    end <- length(coef)
+    for (c in 1:end) {
+        comparison <- coef[c]
+        message(paste0("Basic step 6/6: ", c, "/", end, ": Creating table: ", comparison, "."))
+        data_table <- basic::topTable(data, adjust=adjust, n=n, coef=comparison)
+        ## Reformat the numbers so they are not so obnoxious
+        ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
+        ## data_table$AveExpr <- refnum(data_table$AveExpr, sci=FALSE)
+        ## data_table$t <- refnum(data_table$t, sci=FALSE)
+        ## data_table$P.Value <- refnum(data_table$P.Value)
+        ## data_table$adj.P.Val <- refnum(data_table$adj.P.Val)
+        ## data_table$B <- refnum(data_table$B, sci=FALSE)
+        data_table[["logFC"]] <- signif(x=as.numeric(data_table[["logFC"]]), digits=4)
+        data_table[["AveExpr"]] <- signif(x=as.numeric(data_table[["AveExpr"]]), digits=4)
+        data_table[["t"]] <- signif(x=as.numeric(data_table[["t"]]), digits=4)
+        data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
+        data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
+        data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
+        data_table[["qvalue"]] <- tryCatch(
+        {
+            ## as.numeric(format(signif(
+            ## suppressWarnings(qvalue::qvalue(
+            ## as.numeric(data_table$P.Value), robust=TRUE))$qvalues, 4),
+            ## scientific=TRUE))
+            ttmp <- as.numeric(data_table[["P.Value"]])
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
+            signif(x=ttmp, digits=4)
+            ## ttmp <- signif(ttmp, 4)
+            ## ttmp <- format(ttmp, scientific=TRUE)
+            ## ttmp
+        },
+        error=function(cond) {
+            message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
+            return(1)
+        },
+        ##warning=function(cond) {
+        ##    message("There was a warning?")
+        ##    message(cond)
+        ##    return(1)
+        ##},
+        finally={
+        })
+        if (!is.null(annot_df)) {
+            data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
+            ###data_table = data_table[-1]
+        }
+        ## This write_xls runs out of memory annoyingly often
+        if (isTRUE(excel) | isTRUE(csv)) {
+            if (!file.exists(testdir)) {
+                dir.create(testdir)
+                message(paste0("Creating directory: ", testdir, " for writing excel/csv data."))
+            }
+        }
+        if (isTRUE(excel)) {
+            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwritefile=TRUE))
+        }
+        ## Therefore I will write a csv of each comparison, too
+        if (isTRUE(csv)) {
+            csv_filename <- gsub(".xls$", "", workbook)
+            csv_filename <- paste0(csv_filename, "_", comparison, ".csv")
+            write.csv(data_table, file=csv_filename)
+        }
+        return_data[[comparison]] <- data_table
+    }
+    return(return_data)
 }
 
 ## EOF

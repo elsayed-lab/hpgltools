@@ -1,10 +1,29 @@
-
+#' Make a MA plot of some limma output with pretty colors and shapes
+#'
+#' Yay pretty colors and shapes!
+#'
+#' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
+#' @param table  Result from limma to use, left alone it chooses the first.
+#' @param expr_col  Column for the average data.
+#' @param fc_col  Column for logFC data.
+#' @param p_col  Column to use for p-value data.
+#' @param fc  Fold-change to define 'significant'.
+#' @param pvalue_cutoff and p-value.
+#' @return a plot!
+#' @seealso \link{plot_ma_de}
+#' @examples
+#'  \dontrun{
+#'   prettyplot <- limma_ma(all_aprwise) ## [sic, I'm witty! and can speel]
+#' }
 #' @export
-limma_ma <- function(output, table=NULL) {
+limma_ma <- function(output, table=NULL, p_col="adj.P.Val",
+                     expr_col="AveExpr", fc_col="logFC", fc=1, pval_cutoff=0.05) {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
-    output <- output[["limma"]]  ## Currently this only will work with the output from all_pairwise()
+    if (!is.null(output[["limma"]])) {
+        output <- output[["limma"]]
+    }
     possible_tables <- names(output[["all_pairwise"]])
     if (is.null(table)) {
         table <- possible_tables[1]
@@ -13,7 +32,8 @@ limma_ma <- function(output, table=NULL) {
     }
 
     de_genes <- output[["all_tables"]][[table]]
-    plot <- plot_ma_de(table=de_genes, expr_col="AveExpr", fc_col="logFC", p_col="adj.P.Val")
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
+                       p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
     return(plot)
 }
 
@@ -87,22 +107,23 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
     plot[["scatter"]] <- plot[["scatter"]] +
         ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
         ggplot2::scale_y_continuous(limits=c(0, maxvalue))
-    if (!is.null(toptable)) {
-        theplot <- plot[["scatter"]] + ggplot2::theme_bw()
-        sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
-        sigup <- sig[["up_genes"]]
-        sigdown <- sig[["down_genes"]]
-        up_index <- rownames(coefficients) %in% rownames(sigup)
-        down_index <- rownames(coefficients) %in% rownames(sigdown)
-        up_df <- as.data.frame(coefficients[up_index, ])
-        down_df <- as.data.frame(coefficients[down_index, ])
-        colnames(up_df) <- c("first", "second")
-        colnames(down_df) <- c("first", "second")
-        theplot <- theplot +
-            ggplot2::geom_point(data=up_df, colour=color_high) +
-            ggplot2::geom_point(data=down_df, colour=color_low)
-        plot[["scatter"]] <- theplot
-    }
+    ## I think the following was taken up by plot_linear_scatter and is not needed here anymore
+    ##if (!is.null(toptable)) {
+    ##    theplot <- plot[["scatter"]] + ggplot2::theme_bw()
+    ##    sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
+    ##    sigup <- sig[["up_genes"]]
+    ##    sigdown <- sig[["down_genes"]]
+    ##    up_index <- rownames(coefficients) %in% rownames(sigup)
+    ##    down_index <- rownames(coefficients) %in% rownames(sigdown)
+    ##    up_df <- as.data.frame(coefficients[up_index, ])
+    ##    down_df <- as.data.frame(coefficients[down_index, ])
+    ##    colnames(up_df) <- c("first", "second")
+    ##    colnames(down_df) <- c("first", "second")
+    ##    theplot <- theplot +
+    ##        ggplot2::geom_point(data=up_df, colour=color_high) +
+    ##        ggplot2::geom_point(data=down_df, colour=color_low)
+    ##    plot[["scatter"]] <- theplot
+    ##}
     plot[["df"]] <- coefficients
     return(plot)
 }
@@ -375,7 +396,8 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
     message("Limma step 4/6: making and fitting contrasts.")
     if (isTRUE(model_intercept)) {
-        contrasts <- make_pairwise_contrasts(fun_model, conditions, extra_contrasts=extra_contrasts)
+        contrasts <- make_pairwise_contrasts(fun_model, conditions,
+                                             extra_contrasts=extra_contrasts)
         all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]
         identities <- contrasts[["identities"]]
         contrast_string <- contrasts[["contrast_string"]]
@@ -605,7 +627,7 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
     } else {
         an_ma_plot <- plot_ma(expt_voom[["E"]], cond_table)
     }
-    write_xls(cond_table, sheet, file=workbook, rowname="row.names")
+    xls_written <- write_xls(cond_table, sheet, file=workbook, rownames="row.names")
     ## upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
     upsignificant_table <- cond_table[ which(cond_table[["logFC"]] >= logfc_cutoff), ]
     ## downsignificant_table = subset(cond_table, logFC <= (-1 * logfc_cutoff))
@@ -705,7 +727,7 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
     end <- length(coef)
     for (c in 1:end) {
         comparison <- coef[c]
-        message(paste0("Limma step 6/6: ", c, "/", end, ": Printing table: ", comparison, "."))
+        message(paste0("Limma step 6/6: ", c, "/", end, ": Creating table: ", comparison, "."))
         data_table <- limma::topTable(data, adjust=adjust, n=n, coef=comparison)
         ## Reformat the numbers so they are not so obnoxious
         ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)

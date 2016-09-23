@@ -2,23 +2,29 @@
 % Please edit documentation in R/expt.r
 \name{set_expt_batch}
 \alias{set_expt_batch}
-\title{Change the batches of an expt}
+\title{Change the batches of an expt.}
 \usage{
 set_expt_batch(expt, fact, ids = NULL, ...)
 }
 \arguments{
-\item{expt}{Expt to modify}
+\item{expt}{Expt to modify.}
 
-\item{factor}{Batches to replace}
+\item{fact}{Batches to replace using this factor.}
+
+\item{ids}{Specific samples to change.}
+
+\item{...}{Extra options are like spinach.}
 }
 \value{
-expt Send back the expt with some new metadata
-#' \dontrun{
- expt = set_expt_batch(big_expt, factor=c(some,stuff,here))")
-}
+The original expt with some new metadata.
 }
 \description{
 When exploring differential analyses, it might be useful to play with the conditions/batches of
 the experiment.  Use this to make that easier.
+}
+\examples{
+\dontrun{
+ expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
+}
 }
 

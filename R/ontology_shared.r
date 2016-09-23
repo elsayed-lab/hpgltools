@@ -23,8 +23,9 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
     metadf <- NULL
     gene_list <- gene_list[complete.cases(gene_list)]  ## Translating to ENTREZIDs sometimes introduces NAs which messes up the following operations.
     for (c in 1:length(possible_types)) {
-        ty <- types[c]
-        chosen_column <- ids[c]
+        testing <- NULL
+        ty <- possible_types[c]
+        chosen_column <- possible_ids[c]
         test_string <- paste0("testing <- ", ty, "(tmpdb)")
         eval(parse(text=test_string))
         ## as.data.frame is not only base, but also biocgenerics!!!
@@ -60,29 +61,28 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
 #' @export
 extract_go <- function(db, metadf=NULL, keytype="ENTREZID") {
     keytype <- toupper(keytype)
-    possible_keytypes <- keytypes(db)
+    possible_keytypes <- AnnotationDbi::keytypes(db)
     godf <- data.frame()
     success <- FALSE
-    ids <- keys(x=db, keytype=keytype)
+    ids <- AnnotationDbi::keys(x=db, keytype=keytype)
     if ("GOID" %in% possible_keytypes) {
-        godf <- sm(select(x=db, keys=ids, keytype=keytype, columns=c("GOID")))
+        godf <- sm(AnnotationDbi::select(x=db, keys=ids, keytype=keytype, columns=c("GOID")))
         godf[["ID"]] <- godf[[1]]
         godf <- godf[, c("ID","GOID")]
         colnames(godf) <- c("ID","GO")
     } else if ("GO" %in% possible_keytypes) {
-        godf <- sm(select(x=db, keys=ids, keytype=keytype, columns=c("GO")))
+        godf <- sm(AnnotationDbi::select(x=db, keys=ids, keytype=keytype, columns=c("GO")))
         godf[["ID"]] <- godf[[1]]
         godf <- godf[, c("ID","GO")]
         colnames(godf) <- c("ID","GO")
     } else if ("GOALL" %in% possible_keytypes) {
-        godf <- sm(select(x=db, keys=ids, keytype=keytype, columns=c("GOALL")))
+        godf <- sm(AnnotationDbi::select(x=db, keys=ids, keytype=keytype, columns=c("GOALL")))
         godf[["ID"]] <- godf[[1]]
         godf <- godf[, c("ID","GO")]
         colnames(godf) <- c("ID","GO")
     }
     return(godf)
 }
-
 
 #' Extract more easily readable information from a GOTERM datum.
 #'
@@ -97,8 +97,8 @@ extract_go <- function(db, metadf=NULL, keytype="ENTREZID") {
 #' @return something more sane (hopefully).
 #' @examples
 #' \dontrun{
-#'  goterms = GOTERM[ids]
-#'  sane_goterms = deparse_go_value(goterms)
+#'  ## goterms = GOTERM[ids]
+#'  ## sane_goterms = deparse_go_value(goterms)
 #' }
 #' @export
 deparse_go_value <- function(value) {
@@ -359,17 +359,14 @@ gotest <- function(go) {
     mapply(gotst, go)
 }
 
-gather_genes_orgdb <- function(goseq_data, orgdb) {
+gather_genes_orgdb <- function(goseq_data, orgdb_go, orgdb_ensembl) {
     ## Since clusterprofiler no longer builds gomaps, I need to start understanding how to properly
     ## get this information from orgDBs
-    orgdb_go <- org.Mm.egGO2EG
-    orgdb_ensembl <- org.Mm.egENSEMBL
-    goseq_data = deseq_up_goseq
     ## all_ontologies <- mappedkeys(orgdb)
     ## all_mappings <- as.list(orgdb[all_ontologies])
-    my_table <- goseq_data$godata_interesting
+    my_table <- goseq_data[["godata_interesting"]]
     my_ontologies <- my_table[["category"]]
-    my_genes <- goseq_data$input$ensembl_gene
+    my_genes <- goseq_data[["input"]][["ensembl_gene"]]
 
     my_table[["entrez_ids"]] <- ""
     my_table[["ensembl_ids"]] <- ""
@@ -439,6 +436,9 @@ plot_ontpval <- function(df, ontology="MF") {
 #' @param do_gostats Perform simple_gostats()?
 #' @param do_gprofiler Perform simple_gprofiler()?
 #' @param do_trees make topGO trees from the data?
+#' @param orgdb Provide an organismDbi/Orgdb to hold the various annotation data, in response to the
+#'     shift of clusterprofiler and friends towards using them.
+#' @param ...  Arguments to pass through in arglist.
 #' @return a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and
 #'     associated trees.
 #' @examples
@@ -450,10 +450,11 @@ plot_ontpval <- function(df, ontology="MF") {
 #' }
 #' @export
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
-                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE, species="unsupported",
+                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE, species="unsupported", orgdb="org.Dm.eg.db",
                                   goid_map="reference/go/id2go.map", gff_file=NULL, gff_type="gene",
                                   do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE,
-                                  do_gostats=TRUE, do_gprofiler=TRUE, do_trees=FALSE) {
+                                  do_gostats=TRUE, do_gprofiler=TRUE, do_trees=FALSE, ...) {
+    arglist <- list(...)
     message("This function expects a list of de contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
     if (isTRUE(do_goseq) & is.null(gene_lengths)) {
@@ -462,6 +463,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
     if (isTRUE(do_cluster) & is.null(gff_file)) {
         stop("Performing a clusterprofiler search requires a gff file.")
     }
+    arglist <- list(...)
 
     goid_map <- get0('goid_map')
     if (is.null(goid_map)) {
@@ -514,8 +516,8 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
         }
 
         if (isTRUE(do_cluster)) {
-            cluster_up_ontology <- try(simple_clusterprofiler(up_genes, goids_df=goids, gff=gff_file))
-            cluster_down_ontology <- try(simple_clusterprofiler(down_genes, goids_df=goids, gff=gff_file))
+            cluster_up_ontology <- try(simple_clusterprofiler(up_genes, datum, orgdb=orgdb, ...))
+            cluster_down_ontology <- try(simple_clusterprofiler(down_genes, datum, orgdb=orgdb, ...))
             if (isTRUE(do_trees)) {
                 cluster_up_trees <- try(cluster_trees(up_genes, cluster_up_ontology, goid_map=goid_map, goids_df=goids))
                 cluster_down_trees <- try(cluster_trees(down_genes, cluster_down_ontology, goid_map=goid_map, goids_df=goids))
@@ -736,6 +738,7 @@ golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
 #' @param cluster The result from simple_clusterprofiler()
 #' @param topgo  Guess
 #' @param gostats  Yep, ditto
+#' @param gprofiler  woo hoo!
 #' @param file   the file to save the results.
 #' @param dated   date the excel file
 #' @param n   the number of ontology categories to include in each table.

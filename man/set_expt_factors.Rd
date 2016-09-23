@@ -13,16 +13,20 @@ set_expt_factors(expt, condition = NULL, batch = NULL, ids = NULL, ...)
 
 \item{batch}{New batch factor}
 
+\item{ids}{Specific sample IDs to change.}
+
 \item{...}{Arguments passed along (likely colors)}
 }
 \value{
 expt Send back the expt with some new metadata
-#' \dontrun{
- expt = set_expt_factors(big_expt, condition="column", batch="another_column")
-}
 }
 \description{
 When exploring differential analyses, it might be useful to play with the conditions/batches of
 the experiment.  Use this to make that easier.
+}
+\examples{
+\dontrun{
+ expt = set_expt_factors(big_expt, condition="column", batch="another_column")
+}
 }
 

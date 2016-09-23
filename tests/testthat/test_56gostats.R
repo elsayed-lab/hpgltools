@@ -9,12 +9,12 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
-    sig_genes <- s_p(get_sig_genes(table, column="untreated")$up_genes)$result
+    sig_genes <- sm(get_sig_genes(table, column="untreated")$up_genes)
 
     ## Use biomart's result to get the gene lengths etc.
-    dmel_annotations <- s_p(get_biomart_annotations(species="dmelanogaster"))$result
+    dmel_annotations <- sm(get_biomart_annotations(species="dmelanogaster"))
     ## And ontology cateogies.
-    dmel_ontologies <- s_p(get_biomart_ontologies(species="dmelanogaster"))$result
+    dmel_ontologies <- sm(get_biomart_ontologies(species="dmelanogaster"))
 
     ## Get the annotations ready to be recast as a gff file.
     dmel_annotations$strand <- ifelse(dmel_annotations$strand == "1", "+", "-")
@@ -26,7 +26,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     dmel <- as.data.frame(dmel_granges)
     dmel$ID <- dmel$geneID
 
-    gst_result <- s_p(simple_gostats(sig_genes, gff_df=dmel, goids_df=dmel_ontologies, gff_type="protein_coding"))$result
+    gst_result <- sm(simple_gostats(sig_genes, gff_df=dmel, goids_df=dmel_ontologies, gff_type="protein_coding"))
     ## There is some run-to-run variability in these ontology searches
     expected_gst_mf <- c("GO:0004252", "GO:0008236", "GO:0017171")
     actual_gst_mf <- head(gst_result$mf_over_enriched$GOMFID, n=3)

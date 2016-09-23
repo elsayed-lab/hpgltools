@@ -2,11 +2,10 @@ library(testthat)
 library(hpgltools)
 library(pasilla)
 data(pasillaGenes)
-
 context("Does pasilla load into hpgltools?")
 
 ## Try loading some annotation information for this species.
-gene_info <- s_p(get_biomart_annotations(species="dmelanogaster"))[["result"]]
+gene_info <- sm(get_biomart_annotations(species="dmelanogaster"))
 info_idx <- gene_info[["Type"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
 rownames(gene_info) <- make.names(gene_info[["geneID"]], unique=TRUE)
@@ -27,7 +26,7 @@ colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-pasilla_expt <- s_p(create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info))$result
+pasilla_expt <- sm(create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info))
 ## Recent changes to how my expressionsets are created mean that the order of genes is hard-set to the order of annotations
 ## in the annotation data and therefore _not_ the order of genes found in the count tables.
 actual <- as.matrix(Biobase::exprs(pasilla_expt[["expressionset"]]))
@@ -88,3 +87,4 @@ actual <- pasilla_expt[["libsize"]]
 test_that("Are the library sizes intact?", {
     expect_equal(expected, actual)
 })
+

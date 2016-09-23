@@ -38,15 +38,15 @@ normalize_counts <- function(data, design=NULL, norm="raw", ...) {
 This works with: expt, ExpressionSet, data.frame, and matrices.
 "))
     }
-    if (norm == "sf") {
+    if (norm == "sf2") {
         ## Size-factored normalization is a part of DESeq
         factors <- DESeq2::estimateSizeFactorsForMatrix(count_table)
         num_rows <- dim(count_table)[1]
         sf_counts <- count_table / do.call(rbind, rep(list(factors), num_rows))
         ##sf_counts = counts / (libsizes * factors)
         count_table <- as.matrix(sf_counts)
-        norm_performed <- "sf"
-    } else if (norm == "sf2") {
+        norm_performed <- "sf2"
+    } else if (norm == "sf") {
         original_cols <- colnames(count_table)
         conds <- design[["conditions"]]
         if (is.null(conds)) {
@@ -55,7 +55,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         cds <- DESeq::newCountDataSet(count_table, conditions=conds)
         factors <- BiocGenerics::estimateSizeFactors(cds)
         count_table <- BiocGenerics::counts(factors, normalized=TRUE)
-        norm_performed <- "sf2"
+        norm_performed <- "sf"
     } else if (norm == "vsd") {
         original_cols <- colnames(count_table)
         conds <- design[["conditions"]]
@@ -93,8 +93,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         count_table <- edgeR::DGEList(counts=count_table)
         norms <- edgeR::calcNormFactors(count_table, method="TMM")
         ## libsizes = count_table$samples$lib.size
-        factors <- norms$samples$norm.factors
-        counts <- norms$counts
+        factors <- norms[["samples"]][["norm.factors"]]
+        counts <- norms[["counts"]]
         tmm_counts <- counts / factors
         count_table <- as.matrix(tmm_counts)
         norm_performed <- "tmm"
@@ -103,8 +103,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         count_table <- edgeR::DGEList(counts=count_table)
         norms <- edgeR::calcNormFactors(count_table, method="upperquartile")
         ## libsizes = count_table$samples$lib.size
-        factors <- norms$samples$norm.factors
-        counts <- norms$counts
+        factors <- norms[["samples"]][["norm.factors"]]
+        counts <- norms[["counts"]]
         tmm_counts <- counts / factors
         count_table <- as.matrix(tmm_counts)
         norm_performed <- "upperquartile"
@@ -113,8 +113,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         count_table <- edgeR::DGEList(counts=count_table)
         norms <- edgeR::calcNormFactors(count_table, method="RLE")
         ## libsizes = count_table$samples$lib.size
-        factors <- norms$samples$norm.factors
-        counts <- norms$counts
+        factors <- norms[["samples"]][["norm.factors"]]
+        counts <- norms[["counts"]]
         tmm_counts <- counts / factors
         count_table <- as.matrix(tmm_counts)
         norm_performed <- "rle"
