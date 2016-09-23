@@ -17,10 +17,10 @@ colnames(metadata) <- c("condition", "batch")
 summarized <- DESeq2::DESeqDataSetFromMatrix(countData=counts,
                                              colData=metadata,
                                              design=~ batch + condition)
-dataset <- s_p(DESeq2::DESeqDataSet(se=summarized, design=~ batch + condition))$result
-deseq_sf <- s_p(DESeq2::estimateSizeFactors(dataset))$result
-deseq_disp <- s_p(DESeq2::estimateDispersions(deseq_sf))$result
-deseq_run <- s_p(DESeq2::nbinomWaldTest(deseq_disp))$result
+dataset <- sm(DESeq2::DESeqDataSet(se=summarized, design=~ batch + condition))
+deseq_sf <- sm(DESeq2::estimateSizeFactors(dataset))
+deseq_disp <- sm(DESeq2::estimateDispersions(deseq_sf))
+deseq_run <- sm(DESeq2::nbinomWaldTest(deseq_disp))
 deseq_result <- as.data.frame(DESeq2::results(deseq_run,
                                               contrast=c("condition", "treated", "untreated"),
                                               format="DataFrame"))

@@ -41,7 +41,7 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform the edgeR analysis in hpgltools
-hpgl_edger <- s_p(edger_pairwise(pasilla_expt))[["result"]]
+hpgl_edger <- sm(edger_pairwise(pasilla_expt))
 
 hpgl_result <- hpgl_edger[["all_tables"]][["untreated_vs_treated"]]
 hpgl_result[["logFC"]] <- hpgl_result[["logFC"]] * -1

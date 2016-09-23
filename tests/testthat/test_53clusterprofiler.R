@@ -9,13 +9,13 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     limma <- new.env()
     load("de_limma.rda", envir=limma)
     table <- limma$hpgl_table
-    sig_genes <- s_p(get_sig_genes(table, column="untreated")$up_genes)$result
+    sig_genes <- sm(get_sig_genes(table, column="untreated")$up_genes)
 
     ## Use biomart's result to get the gene lengths etc.
-    dmel_annotations <- s_p(get_biomart_annotations(species="dmelanogaster"))$result
+    dmel_annotations <- sm(get_biomart_annotations(species="dmelanogaster"))
     ## And ontology cateogies.
-    dmel_ontologies <- s_p(get_biomart_ontologies(species="dmelanogaster"))$result
-    dmel_cp <- s_p(simple_cp_orgdb(sig_genes, table, orgdb="org.Dm.eg.db", fc_column="untreated"))$result
+    dmel_ontologies <- sm(get_biomart_ontologies(species="dmelanogaster"))
+    dmel_cp <- sm(simple_cp_orgdb(sig_genes, table, orgdb="org.Dm.eg.db", fc_column="untreated"))
     ## message("Testing cluster profiler, this will probably take a while.")
     ## message("Since the last time I played with clusterprofiler, it looks like some pretty big changes have happened.")
     ## message("It is probably time to re-do my entire clusterprofiler analysis.\n")

@@ -66,7 +66,7 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform log2/cpm/quantile/combatMod normalization
-hpgl_norm <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))[["result"]]
+hpgl_norm <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))
 hpgl_qcpmcounts <- Biobase::exprs(hpgl_norm[["expressionset"]])
 expected <- cbcb_qcpmcounts
 expected <- expected[sort(rownames(expected)), ]
@@ -77,7 +77,9 @@ test_that("Do cbcbSEQ and hpgltools agree on the definition of log2(quantile(cpm
 })
 
 ## Getting log2(combat(cpm(quantile(counts))))
-hpgl_qcpmcombat <- s_p(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", batch="combatmod", low_to_zero=FALSE))[["result"]]
+hpgl_qcpmcombat <- sm(normalize_expt(pasilla_expt, transform="log2",
+                                     norm="quant", convert="cbcbcpm",
+                                     batch="combatmod", low_to_zero=FALSE))
 hpgl_combat <- Biobase::exprs(hpgl_qcpmcombat[["expressionset"]])
 ## cbcb_hpgl_combat <- hpgl_combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE)
 expected <- cbcb_hpgl_combat
@@ -89,7 +91,7 @@ test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts)
 })
 
 ## If we made it this far, then the inputs to limma should agree.
-hpgl_limma_combat_result <- s_p(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=FALSE))[["result"]]
+hpgl_limma_combat_result <- sm(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=FALSE))
 hpgl_voom <- hpgl_limma_combat_result[["voom_result"]]
 hpgl_fit <- hpgl_limma_combat_result[["fit"]]
 hpgl_eb <- hpgl_limma_combat_result[["pairwise_comparisons"]]
