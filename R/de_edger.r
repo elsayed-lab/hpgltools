@@ -4,9 +4,11 @@
 #'
 #' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
 #' @param table  Result from edger to use, left alone it chooses the first.
-#' @param expr_col  Column for the average data.
 #' @param fc_col  Column for logFC data.
 #' @param p_col  Column to use for p-value data.
+#' @param expr_col  Column for the average data.
+#' @param fc  Fold change cutoff on the up and down defining significant.
+#' @param pval_cutoff  And the p-value cutoff.
 #' @return a plot!
 #' @seealso \link{plot_ma_de}
 #' @examples
@@ -14,7 +16,8 @@
 #'   prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue", expr_col="logCPM", fc=1, pval_cutoff=0.05) {
+edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue",
+                     expr_col="logCPM", fc=1, pval_cutoff=0.05) {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
@@ -29,7 +32,8 @@ edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue", expr_co
     }
 
     de_genes <- output[["all_tables"]][[table]]
-    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
+                       p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
     return(plot)
 }
 

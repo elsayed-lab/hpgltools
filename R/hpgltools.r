@@ -22,6 +22,29 @@
 ## intervals for the logFC estimate. If you want the standard error itself you can get by dividing
 ## the logFC by the t statistic.
 
+#' Pipe operator
+#'
+#' Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
+#'
+#' @name %>%
+#' @rdname pipe
+#' @keywords internal
+#' @export
+#' @importFrom magrittr %>%
+#' @usage lhs \%>\% rhs
+NULL
+
+#' dopar
+#'
+#' Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
+#'
+#' @name %dopar%
+#' @rdname dopar
+#' @keywords internal
+#' @export
+#' @importFrom foreach %dopar%
+NULL
+
 #' hpgltools: a suite of tools to make our analyses easier
 #'
 #' This provides a series of helpers for working with sequencing data
@@ -48,32 +71,5 @@
 #' @import graphics
 #' @import knitr
 #' @import magrittr
-#' @import doParallel
-#' @import iterators
-#' @import parallel
 #' @import foreach
-NULL
-
-#' Pipe operator
-#'
-#' Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
-#'
-#' @name %>%
-#' @rdname pipe
-#' @keywords internal
-#' @export
-#' @importFrom magrittr %>%
-#' @usage lhs \%>\% rhs
-NULL
-
-#' dopar
-#'
-#' Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
-#'
-#' @name %dopar%
-#' @rdname dopar
-#' @keywords internal
-#' @export
-#' @importFrom foreach %dopar%
-#' @usage lhs \%dopar\% rhs
 NULL

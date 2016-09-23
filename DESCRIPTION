@@ -17,7 +17,7 @@ License: GPL-2 | file LICENSE
 Suggests:
     ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub, BiocGenerics, BiocInstaller, Biostrings,
     biomaRt, Category, clusterProfiler, corpcor, corrplot, data.table, DBI, DESeq2, DESeq, devtools,
-    directlabels, dplyr, doParallel, DOSE, EDASeq, edgeR, ffpe, fission, foreach, genbankr, genefilter,
+    directlabels, dplyr, doParallel, DOSE, EDASeq, edgeR, ffpe, fission, genbankr, genefilter,
     genomeIntervals, GenomeInfoDb, GenomicFeatures, genoPlotR, GenomicRanges, ggdendro, ggrepel,
     GO.db, googleVis, goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools, gridExtra, hash,
     Heatplus, Hmisc, igraph, inflection, IRanges, iterators, jsonlite, KEGGgraph, KEGGREST,
@@ -28,6 +28,6 @@ Suggests:
     statmod, stringi, stringr, survJamda, sva, taxize, testthat, topGO, variancePartition, xtable,
     XVector
 Imports:
-    Biobase, knitr, ggplot2, magrittr, methods
+    Biobase, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

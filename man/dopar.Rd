@@ -3,9 +3,6 @@
 \name{\%dopar\%}
 \alias{\%dopar\%}
 \title{dopar}
-\usage{
-lhs \%dopar\% rhs
-}
 \description{
 Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
 }

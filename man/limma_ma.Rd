@@ -5,7 +5,7 @@
 \title{Make a MA plot of some limma output with pretty colors and shapes}
 \usage{
 limma_ma(output, table = NULL, p_col = "adj.P.Val", expr_col = "AveExpr",
-  fc_col = "logFC", fc = 1)
+  fc_col = "logFC", fc = 1, pval_cutoff = 0.05)
 }
 \arguments{
 \item{output}{The result from all_pairwise(), which should be changed to handle other invocations too.}
@@ -17,6 +17,10 @@ limma_ma(output, table = NULL, p_col = "adj.P.Val", expr_col = "AveExpr",
 \item{expr_col}{Column for the average data.}
 
 \item{fc_col}{Column for logFC data.}
+
+\item{fc}{Fold-change to define 'significant'.}
+
+\item{pvalue_cutoff}{and p-value.}
 }
 \value{
 a plot!

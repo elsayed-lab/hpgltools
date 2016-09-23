@@ -4,9 +4,11 @@
 #'
 #' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
 #' @param table  Result from basic to use, left alone it chooses the first.
-#' @param expr_col  Column for the average data.
 #' @param fc_col  Column for logFC data.
 #' @param p_col  Column to use for p-value data.
+#' @param expr_col  Column for the average data.
+#' @param fc (log)fc cutoff on the up and down to define significance.
+#' @param pval_cutoff  p-value cutoff to define significance.
 #' @return a plot!
 #' @seealso \link{plot_ma_de}
 #' @examples
@@ -14,7 +16,8 @@
 #'   prettyplot <- basic_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-basic_ma <- function(output, table=NULL, fc_col="logFC", p_col="p", expr_col="numerator_median", fc=1, pval_cutoff=0.05) {
+basic_ma <- function(output, table=NULL, fc_col="logFC", p_col="p",
+                     expr_col="numerator_median", fc=1, pval_cutoff=0.05) {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL

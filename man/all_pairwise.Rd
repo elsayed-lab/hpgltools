@@ -33,6 +33,8 @@ pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (
 
 \item{annot_df}{Annotations to add to the result tables.}
 
+\item{parallel}{Use dopar to run limma, deseq, edger, and basic simultaneously.}
+
 \item{...}{Picks up extra arguments into arglist, currently only passed to write_limma().}
 }
 \value{

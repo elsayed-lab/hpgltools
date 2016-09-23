@@ -9,8 +9,9 @@
 #' @param host Ensembl hostname to use.
 #' @param trymart Biomart has become a circular dependency, this makes me sad, now to list the
 #'     marts, you need to have a mart loaded...
+#' @param gene_requests  Set of columns to query for description-ish annotations.
+#' @param length_requests Set of columns to query for location-ish annotations.
 #' @param include_lengths Also perform a search on structural elements in the genome?
-#' @param requested Set of requested columns
 #' @return Df of some (by default) human annotations.
 #' @examples
 #' \dontrun{

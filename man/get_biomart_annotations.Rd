@@ -24,9 +24,11 @@ get_biomart_annotations(species = "hsapiens", overwrite = FALSE,
 \item{trymart}{Biomart has become a circular dependency, this makes me sad, now to list the
 marts, you need to have a mart loaded...}
 
-\item{include_lengths}{Also perform a search on structural elements in the genome?}
+\item{gene_requests}{Set of columns to query for description-ish annotations.}
 
-\item{requested}{Set of requested columns}
+\item{length_requests}{Set of columns to query for location-ish annotations.}
+
+\item{include_lengths}{Also perform a search on structural elements in the genome?}
 }
 \value{
 Df of some (by default) human annotations.

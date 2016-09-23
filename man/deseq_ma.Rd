@@ -5,7 +5,7 @@
 \title{Make a MA plot of some deseq output with pretty colors and shapes}
 \usage{
 deseq_ma(output, table = NULL, p_col = "qvalue", fc_col = "logFC",
-  expr_col = "logExpr", fc = 1)
+  expr_col = "logExpr", fc = 1, pval_cutoff = 0.05)
 }
 \arguments{
 \item{output}{The result from all_pairwise(), which should be changed to handle other invocations too.}
@@ -17,6 +17,10 @@ deseq_ma(output, table = NULL, p_col = "qvalue", fc_col = "logFC",
 \item{fc_col}{Column for logFC data.}
 
 \item{expr_col}{Column for the average data.}
+
+\item{fc}{Fold-change cutoff for significant.}
+
+\item{pval_cutoff}{p-value cutoff ibid.}
 }
 \value{
 a plot!

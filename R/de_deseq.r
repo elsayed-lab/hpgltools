@@ -7,6 +7,8 @@
 #' @param expr_col  Column for the average data.
 #' @param fc_col  Column for logFC data.
 #' @param p_col  Column to use for p-value data.
+#' @param fc Fold-change cutoff for significant.
+#' @param pval_cutoff p-value cutoff ibid.
 #' @return a plot!
 #' @seealso \link{plot_ma_de}
 #' @examples
@@ -14,7 +16,8 @@
 #'   prettyplot <- limma_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-deseq_ma <- function(output, table=NULL, p_col="qvalue", fc_col="logFC", expr_col="logExpr", fc=1) {
+deseq_ma <- function(output, table=NULL, p_col="qvalue",
+                     fc_col="logFC", expr_col="logExpr", fc=1, pval_cutoff=0.05) {
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
@@ -30,7 +33,8 @@ deseq_ma <- function(output, table=NULL, p_col="qvalue", fc_col="logFC", expr_co
 
     de_genes <- output[["all_tables"]][[table]]
     de_genes[["logExpr"]] <- log(de_genes[["baseMean"]])
-    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col, logfc_cutoff=fc)
+    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
+                       p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
     return(plot)
 }
 

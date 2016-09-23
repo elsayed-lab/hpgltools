@@ -8,6 +8,8 @@ do_pairwise(type, ...)
 }
 \arguments{
 \item{type}{Which type of pairwise comparison to perform}
+
+\item{...}{The set of arguments intended for limma_pairwise(), edger_pairwise(), and friends.}
 }
 \value{
 The result from limma/deseq/edger/basic

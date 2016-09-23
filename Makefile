@@ -1,11 +1,11 @@
 VERSION=2016.02
 export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
-all: clean reference check build test
+all: clean roxygen reference check build test
 
 install: prereq roxygen
 	@echo "Performing R CMD INSTALL hpgltools"
-	@cd ../ && R CMD INSTALL hpgltools && cd hpgltools
+	@R CMD INSTALL .
 
 reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
@@ -14,16 +14,16 @@ reference:
 
 check:
 	@echo "Performing check with R CMD check hpgltools"
-	@cd ../ && export _R_CHECK_FORCE_SUGGESTS_=FALSE && R CMD check hpgltools --no-build-vignettes && cd hpgltools
+	@export _R_CHECK_FORCE_SUGGESTS_=FALSE && R CMD check . --no-build-vignettes
 
 build:
 	@echo "Performing build with R CMD build hpgltools"
-	@cd ../ && R CMD build hpgltools && cd hpgltools
+	@R CMD build .
 
 test: install
 	@rm -rf tests/testthat/*.rda tests/testthat/circos tests/testthat/*.pdf tests/testthat/*.Rdata test/testthat/*.map
 	@echo "Running run_tests.R"
-	@./run_tests.R
+	./run_tests.R
 
 roxygen:
 	@echo "Generating documentation with roxygen2::roxygenize()"

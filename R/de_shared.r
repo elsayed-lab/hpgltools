@@ -25,6 +25,7 @@
 #' @param alt_model Alternate model to use rather than just condition/batch.
 #' @param libsize Library size of the original data to help voom().
 #' @param annot_df Annotations to add to the result tables.
+#' @param parallel Use dopar to run limma, deseq, edger, and basic simultaneously.
 #' @param ... Picks up extra arguments into arglist, currently only passed to write_limma().
 #' @return A list of limma, deseq, edger results.
 #' @examples
@@ -1081,6 +1082,7 @@ disjunct_tab <- function(contrast_fit, coef1, coef2, ...) {
 #' I want to multithread my pairwise comparisons, this is the first step in doing so.
 #'
 #' @param type  Which type of pairwise comparison to perform
+#' @param ...  The set of arguments intended for limma_pairwise(), edger_pairwise(), and friends.
 #' @return The result from limma/deseq/edger/basic
 #' @export
 do_pairwise <- function(type, ...) {

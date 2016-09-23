@@ -17,6 +17,10 @@ edger_ma(output, table = NULL, fc_col = "logFC", p_col = "qvalue",
 \item{p_col}{Column to use for p-value data.}
 
 \item{expr_col}{Column for the average data.}
+
+\item{fc}{Fold change cutoff on the up and down defining significant.}
+
+\item{pval_cutoff}{And the p-value cutoff.}
 }
 \value{
 a plot!
