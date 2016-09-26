@@ -451,10 +451,10 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     num_fcinsig <- sum(df[["state"]] == "fcinsig")
 
     ## Fill in 1 of each state to make ggplot2 not be stupid
-    df["tmp_pinsig",] <- c(0, 0, 0, "pinsig", FALSE)
-    df["tmp_upsig",] <- c(0, 0, 0, "upsig", FALSE)
-    df["tmp_downsig",] <- c(0, 0, 0, "downsig", FALSE)
-    df["tmp_fcinsig",] <- c(0, 0, 0, "fcinsig", FALSE)
+    df["tmp_pinsig",] <- c(0, 0, 0, FALSE, "pinsig")
+    df["tmp_upsig",] <- c(0, 0, 0, FALSE, "upsig")
+    df["tmp_downsig",] <- c(0, 0, 0, FALSE, "downsig")
+    df["tmp_fcinsig",] <- c(0, 0, 0, FALSE, "fcinsig")
     df[[1]] <- as.numeric(df[[1]])
     df[[2]] <- as.numeric(df[[2]])
     df[[3]] <- as.numeric(df[[3]])
@@ -490,7 +490,10 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     if (!is.null(gvis_filename)) {
         plot_gvis_ma(df, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
     }
-    return(plt)
+    retlist <- list(
+        "plot" = plt,
+        "df" = df)
+    return(retlist)
 }
 
 #' Make a ggplot graph of the number of non-zero genes by sample.
@@ -721,38 +724,37 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
                          fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6,
                          xaxis_column="logFC", yaxis_column="P.Value", ...) {
-    warning("This has a bug because it doesn't take into account 0 elements of pinsig/upsig/etc")
-    hpgl_env <- environment()
     low_vert_line <- 0.0 - fc_cutoff
     horiz_line <- -1 * log10(p_cutoff)
 
     df <- data.frame("xaxis" = toptable_data[[xaxis_column]],
                      "yaxis" = toptable_data[[yaxis_column]])
-    df[["logyaxis"]] <- -1 * log10(df[["yaxis"]])
+    df[["logyaxis"]] <- -1.0 * log10(df[["yaxis"]])
     rownames(df) <- rownames(toptable_data)
     df[["state"]] <- ifelse(df[["yaxis"]] > p_cutoff, "pinsig",
                      ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] >= fc_cutoff, "upsig",
                      ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] <= (-1 * fc_cutoff), "downsig", "fcinsig")))
-    ##up_df <- df[ df[["xaxis"]] => 0, ]
-    ##down_df <- df[ df[["yaxis"]] < 0, ]
     up_df[["state"]] <- ifelse(up_df[["yaxis"]] > p_cutoff, "pupinsig",
                         ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] >= fc_cutoff, "upsig", "fcupinsig"))
-    ##num_pup_insig <- sum(up_df[["state"]] == "pupinsig")
-    ##num_up_sig <- sum(up_df[["state"]] == "upsig")
-    ##num_up_fcinsig <- sum(up_df[["state"]] == "fcupinsig")
-    ##down_df[["state"]] <- ifelse(down_df[["yaxis"]] > p_cutoff, "pdowninsig",
-    ##                      ifelse(down_df[["yaxis"]] <= p_cutoff & down_df[["xaxis"]] <= (-1 * fc_cutoff), "downsig", "fcdowninsig"))
-    ##num_pdown_insig <- sum(down_df[["state"]] == "pdowninsig")
-    ##num_down_sig <- sum(down_df[["state"]] == "downsig")
-    ##num_down_fcinsig <- sum(down_df[["state"]] == "fcdowninsig")
+    df[["pcut"]] <- df[["yaxis"]] <= p_cutoff
 
     num_downsig <- sum(df[["state"]] == "downsig")
     num_fcinsig <- sum(df[["state"]] == "fcinsig")
     num_pinsig <- sum(df[["state"]] == "pinsig")
     num_upsig <- sum(df[["state"]] == "upsig")
+
+    df["tmp_pinsig",] <- c(0, 0, 0, "pinsig", FALSE)
+    df["tmp_upsig",] <- c(0, 0, 0, "upsig", FALSE)
+    df["tmp_downsig",] <- c(0, 0, 0, "downsig", FALSE)
+    df["tmp_fcinsig",] <- c(0, 0, 0, "fcinsig", FALSE)
+    df[[1]] <- as.numeric(df[[1]])
+    df[[2]] <- as.numeric(df[[2]])
+    df[[3]] <- as.numeric(df[[3]])
+    df[[4]] <- as.factor(df[[4]])
+    df[[5]] <- as.factor(df[[5]])
+
     aes_color = "(yaxis > p_cutoff)"
-    plt <- ggplot(df, aes_string(x="xaxis", y="logyaxis", color=aes_color),
-                  environment=hpgl_env) +
+    plt <- ggplot(df, aes_string(x="xaxis", y="logyaxis", color=aes_color)) +
         ggplot2::geom_hline(yintercept=horiz_line, color="black", size=(size / 2)) +
         ggplot2::geom_vline(xintercept=fc_cutoff, color="black", size=(size / 2)) +
         ggplot2::geom_vline(xintercept=low_vert_line, color="black", size=(size / 2)) +
