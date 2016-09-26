@@ -440,26 +440,25 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                      ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
                      ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] <= (-1.0 * logfc_cutoff), "downsig",
                             "fcinsig")))
-
     df[["state"]] <- as.factor(df[["state"]])
+    levels(df[["state"]]) <- c("downsig","fcinsig", "pinsig", "upsig")
     ## Explicitly set the levels for the state column in case some of them are not defined.
-    ## levels(df[["state"]]) <- c("pinsig","upsig","downsig","fcinsig")
 
-    num_pinsig <- sum(df[["state"]] == "pinsig")
-    num_upsig <- sum(df[["state"]] == "upsig")
     num_downsig <- sum(df[["state"]] == "downsig")
     num_fcinsig <- sum(df[["state"]] == "fcinsig")
-
+    num_pinsig <- sum(df[["state"]] == "pinsig")
+    num_upsig <- sum(df[["state"]] == "upsig")
     ## Fill in 1 of each state to make ggplot2 not be stupid
-    df["tmp_pinsig",] <- c(0, 0, 0, FALSE, "pinsig")
-    df["tmp_upsig",] <- c(0, 0, 0, FALSE, "upsig")
     df["tmp_downsig",] <- c(0, 0, 0, FALSE, "downsig")
     df["tmp_fcinsig",] <- c(0, 0, 0, FALSE, "fcinsig")
-    df[[1]] <- as.numeric(df[[1]])
-    df[[2]] <- as.numeric(df[[2]])
-    df[[3]] <- as.numeric(df[[3]])
-    df[[4]] <- as.factor(df[[4]])
-    df[[5]] <- as.factor(df[[5]])
+    df["tmp_pinsig",] <- c(0, 0, 0, FALSE, "pinsig")
+    df["tmp_upsig",] <- c(0, 0, 0, FALSE, "upsig")
+
+    df[["avg"]] <- as.numeric(df[[1]])
+    df[["logfc"]] <- as.numeric(df[[2]])
+    df[["pval"]] <- as.numeric(df[[3]])
+    df[["pcut"]] <- as.factor(df[[4]])
+    df[["state"]] <- as.factor(df[[5]])
 
     ## Set up the labels for the legend by significance.
     state_shapes <- c(21,22,23,24)
