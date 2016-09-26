@@ -526,6 +526,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
 #' @param csv  On some computers (Edson!) printing to excel runs the machine oom for big data sets.
 #' @param keepers List of reformatted table names to explicitly keep
 #'     certain contrasts in specific orders and orientations.
+#' @param excludes List of columns and patterns to use for excluding genes.
 #' @param include_basic Include my stupid basic logFC tables?
 #' @param add_plots Add plots to the end of the sheets with expression values?
 #' @param compare_plots  In an attempt to save memory when printing to excel, make it possible to
@@ -536,11 +537,14 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
 #' @examples
 #' \dontrun{
 #' pretty = combine_de_tables(big_result, table='t12_vs_t0')
+#' pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")))
+#' pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")),
+#'                            excludes=list("description" = c("sno","rRNA")))
 #' }
 #' @export
 combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
-                              excel_sheet="combined_DE", keepers="all",
+                              excel_sheet="combined_DE", keepers="all", excludes=NULL,
                               include_basic=TRUE, add_plots=TRUE, plot_dim=6, compare_plots=TRUE) {
     ## The ontology_shared function which creates multiple sheets works a bit differently
     ## It creates all the tables, then does a createWorkbook()
@@ -677,8 +681,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 }
             }
             if (found > 0) {
-                combined <- create_combined_table(limma, edger, deseq, basic, found_table, inverse=do_inverse,
-                                                  annot_df=annot_df, include_basic=include_basic)
+                combined <- create_combined_table(limma, edger, deseq, basic,
+                                                  found_table, inverse=do_inverse,
+                                                  annot_df=annot_df, include_basic=include_basic,
+                                                  excludes=excludes)
                 dat <- combined[["data"]]
                 summary <- combined[["summary"]]
                 limma_plt <- NULL
@@ -732,7 +738,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             message(paste0("Working on table ", a, "/", names_length, ": ", tab))
             sheet_count <- sheet_count + 1
             combined <- create_combined_table(limma, edger, deseq, basic,
-                                         tab, annot_df=annot_df, include_basic=include_basic)
+                                              tab, annot_df=annot_df,
+                                              include_basic=include_basic, excludes=excludes)
             de_summaries <- rbind(de_summaries, combined[["summary"]])
             combo[[tab]] <- combined[["data"]]
             splitted <- strsplit(x=tab, split="_vs_")
@@ -756,7 +763,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             message(paste0("Choosing the first table: ", table))
         }
         combined <- create_combined_table(limma, edger, deseq, basic,
-                                          table, annot_df=annot_df, include_basic=include_basic)
+                                          table, annot_df=annot_df,
+                                          include_basic=include_basic, excludes=excludes)
         combo[[table]] <- combined[["data"]]
         splitted <- strsplit(x=tab, split="_vs_")
         de_summaries <- rbind(de_summaries, combined[["summary"]])
@@ -950,7 +958,7 @@ compare_logfc_plots <- function(combined_tables) {
 #'     genes were observed as up/down by output table.
 #' @export
 create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inverse=FALSE,
-                                  include_basic=TRUE, fc_cutoff=1, p_cutoff=0.05) {
+                                  include_basic=TRUE, fc_cutoff=1, p_cutoff=0.05, excludes=NULL) {
     li <- li[["all_tables"]][[table_name]]
     if (is.null(li)) {
         li <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
@@ -978,8 +986,10 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
     de <- de[, c("deseq_logfc","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_adjp","deseq_q")]
     colnames(ed) <- c("edger_logfc","edger_logcpm","edger_lr","edger_p","edger_adjp","edger_q")
 
-    ba <- ba[, c("numerator_median","denominator_median","numerator_var","denominator_var", "logFC", "t", "p", "adjp")]
-    colnames(ba) <- c("basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p", "basic_adjp")
+    ba <- ba[, c("numerator_median","denominator_median","numerator_var",
+                 "denominator_var", "logFC", "t", "p", "adjp")]
+    colnames(ba) <- c("basic_nummed","basic_denmed", "basic_numvar", "basic_denvar",
+                      "basic_logfc", "basic_t", "basic_p", "basic_adjp")
 
     comb <- merge(li, de, by="row.names")
     comb <- merge(comb, ed, by.x="Row.names", by.y="row.names")
@@ -990,9 +1000,19 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
     comb <- comb[-1]
     comb[is.na(comb)] <- 0
     if (isTRUE(include_basic)) {
-        comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q","basic_nummed","basic_denmed", "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p", "basic_adjp")]
+        comb <- comb[, c("limma_logfc", "deseq_logfc", "edger_logfc",
+                         "limma_adjp", "deseq_adjp", "edger_adjp",
+                         "limma_ave", "limma_t", "limma_p", "limma_b", "limma_q",
+                         "deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p", "deseq_q",
+                         "edger_logcpm", "edger_lr", "edger_p", "edger_q",
+                         "basic_nummed", "basic_denmed", "basic_numvar", "basic_denvar",
+                         "basic_logfc", "basic_t", "basic_p", "basic_adjp")]
     } else {
-        comb <- comb[, c("limma_logfc","deseq_logfc","edger_logfc","limma_adjp","deseq_adjp","edger_adjp","limma_ave","limma_t","limma_p","limma_b","limma_q","deseq_basemean","deseq_lfcse","deseq_stat","deseq_p","deseq_q", "edger_logcpm","edger_lr","edger_p","edger_q")]
+        comb <- comb[, c("limma_logfc", "deseq_logfc", "edger_logfc",
+                         "limma_adjp", "deseq_adjp", "edger_adjp",
+                         "limma_ave", "limma_t", "limma_p", "limma_b", "limma_q",
+                         "deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p", "deseq_q",
+                         "edger_logcpm","edger_lr","edger_p","edger_q")]
     }
     if (isTRUE(inverse)) {
         comb[["limma_logfc"]] <- comb[["limma_logfc"]] * -1
@@ -1021,7 +1041,7 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
     comb[["fc_var"]] <- format(x=comb[["fc_var"]], digits=4, scientific=TRUE)
     comb[["fc_varbymed"]] <- format(x=comb[["fc_varbymed"]], digits=4, scientific=TRUE)
     comb[["p_var"]] <- format(x=comb[["p_var"]], digits=4, scientific=TRUE)
-    comb$p_meta <- format(x=comb[["p_meta"]], digits=4, scientific=TRUE)
+    comb[["p_meta"]] <- format(x=comb[["p_meta"]], digits=4, scientific=TRUE)
     if (!is.null(annot_df)) {
         ## colnames(annot_df) <- gsub("[[:digit:]]", "", colnames(annot_df))
         colnames(annot_df) <- gsub("[[:punct:]]", "", colnames(annot_df))
@@ -1029,6 +1049,21 @@ create_combined_table <- function(li, ed, de, ba, table_name, annot_df=NULL, inv
         rownames(comb) <- comb[["Row.names"]]
         comb <- comb[-1]
         colnames(comb) <- make.names(tolower(colnames(comb)), unique=TRUE)
+    }
+
+    ## Exclude rows based on a list of unwanted columns/strings
+    if (!is.null(excludes)) {
+        for (colnum in 1:length(excludes)) {
+            col <- names(excludes)[colnum]
+            for (exclude_num in 1:length(excludes[[col]])) {
+                exclude <- excludes[[col]][exclude_num]
+                remove_column <- comb[[col]]
+                remove_idx <- grep(pattern=exclude, x=remove_column, perl=TRUE, invert=TRUE)
+                removed_num <- sum(as.numeric(remove_idx))
+                message(paste0("Removed ", removed_num, " genes using ", exclude, " as a string against column ", remove_column, "."))
+                comb <- comb[remove_idx, ]
+            }  ## End iterating through every string to exclude
+        }  ## End iterating through every element of the exclude list
     }
 
     up_fc <- fc_cutoff

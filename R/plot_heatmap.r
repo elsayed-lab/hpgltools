@@ -85,8 +85,8 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     if (data_class == "expt") {
         expt_design <- expt_data[["design"]]
         expt_colors <- expt_data[["colors"]]
-        if (!is.null(expt_names)) {
-            expt_names <- expt_data[["names"]]
+        if (is.null(expt_names)) {
+            expt_names <- expt_data[["expt_names"]]
         }
         expt_data <- Biobase::exprs(expt_data[["expressionset"]])
     } else if (data_class == "ExpressionSet") {
@@ -110,12 +110,17 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     }
     expt_colors <- as.character(expt_colors)
 
+    heatmap_data <- NULL
+    heatmap_colors <- NULL
     if (type == "correlation") {
         heatmap_data <- hpgl_cor(expt_data, method=method)
         heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
     } else if (type == "distance") {
         heatmap_data <- as.matrix(dist(t(expt_data)), method=method)
         heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "GnBu"))(100)
+    } else {
+        heatmap_colors <- gplots::redgreen(75)
+        heatmap_data <- as.matrix(expt_data)
     }
 
     ## Set the batch colors depending on # of observed batches
@@ -148,9 +153,10 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          linewidth=0.5, main=title,
                          col=rev(heatmap_colors))
     }
-    hpgl_heatmap_plot <- grDevices::recordPlot()
+    recorded_heatmap_plot <- grDevices::recordPlot()
     retlist <- list("map" = map,
-                    "plot" = hpgl_heatmap_plot)
+                    "plot" = recorded_heatmap_plot,
+                    "data" = heatmap_data)
     return(retlist)
 }
 
@@ -204,7 +210,6 @@ ggplot2_heatmap <- function(some_df) {
         zeroline = FALSE
     )
 }
-
 
 #' Make a heatmap.3 description of the similarity of the genes among samples.
 #'

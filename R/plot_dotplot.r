@@ -60,7 +60,6 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
 ###        ggplot2::scale_fill_manual(values=color_list) +
 ###        ggplot2::scale_shape_manual(values=21, guide=FALSE)
 
-
 #' Make a dotplot of known batches vs. SVs.
 #'
 #' This should make a quick df of the factors and surrogates and plot them.  Maybe it should be
@@ -260,13 +259,13 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     my_binwidth <- (maxval - minval) / 40
 
     sm_plot <- ggplot2::ggplot(sm_df, aes_string(x="sample", y="sm", fill="condition")) +
-        ggplot2::geom_hline(color="red", yintercept=ylimit, size=2) +
+        ggplot2::geom_hline(color="red", yintercept=ylimit, size=1) +
         ggplot2::geom_dotplot(binwidth=my_binwidth,
                               binaxis="y",
                               stackdir="center",
                               binpositions="all",
                               colour="black",
-                              dotsize=2,
+                              dotsize=1,
                               aes_string(fill="as.factor(condition)")) +
         ggplot2::scale_fill_manual(name="Condition",
                                    guide="legend",

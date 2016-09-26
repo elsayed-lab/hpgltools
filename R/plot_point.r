@@ -434,13 +434,16 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                      "logfc" = table[[fc_col]],
                      "pval" = table[[p_col]])
     df[["pval"]] <- as.numeric(format(df[["pval"]], scientific=FALSE))
+    df[["pcut"]] <- df[["pval"]] <= pval_cutoff
+
     df[["state"]] <- ifelse(df[["pval"]] > pval_cutoff, "pinsig",
                      ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
-                     ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] <= (-1 * logfc_cutoff), "downsig", "fcinsig")))
+                     ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] <= (-1.0 * logfc_cutoff), "downsig",
+                            "fcinsig")))
+
     df[["state"]] <- as.factor(df[["state"]])
     ## Explicitly set the levels for the state column in case some of them are not defined.
-    levels(df[["state"]]) <- c("pinsig","upsig","downsig","fcinsig")
-    df[["pcut"]] <- df[["pval"]] <= pval_cutoff
+    ## levels(df[["state"]]) <- c("pinsig","upsig","downsig","fcinsig")
 
     num_pinsig <- sum(df[["state"]] == "pinsig")
     num_upsig <- sum(df[["state"]] == "upsig")
@@ -448,10 +451,10 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     num_fcinsig <- sum(df[["state"]] == "fcinsig")
 
     ## Fill in 1 of each state to make ggplot2 not be stupid
-    df["tmp_pinsig",] <- c(0,0,0,"pinsig",FALSE)
-    df["tmp_upsig",] <- c(0,0,0,"upsig",FALSE)
-    df["tmp_downsig",] <- c(0,0,0,"downsig",FALSE)
-    df["tmp_fcinsig",] <- c(0,0,0,"fcinsig",FALSE)
+    df["tmp_pinsig",] <- c(0, 0, 0, "pinsig", FALSE)
+    df["tmp_upsig",] <- c(0, 0, 0, "upsig", FALSE)
+    df["tmp_downsig",] <- c(0, 0, 0, "downsig", FALSE)
+    df["tmp_fcinsig",] <- c(0, 0, 0, "fcinsig", FALSE)
     df[[1]] <- as.numeric(df[[1]])
     df[[2]] <- as.numeric(df[[2]])
     df[[3]] <- as.numeric(df[[3]])
@@ -468,7 +471,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                              fill="as.factor(pcut)",
                              colour="as.factor(pcut)",
                              shape="as.factor(state)")) +
-        ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1), logfc_cutoff), color="red", size=(size / 2)) +
+        ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1.0), logfc_cutoff), color="red", size=(size / 2)) +
         ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
         ggplot2::scale_shape_manual(name="state", values=state_shapes,
                                     labels=c(
@@ -479,7 +482,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                                     guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="black"))) +
     ggplot2::scale_fill_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
     ggplot2::scale_color_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
-##    ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
+    ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
     ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
     ggplot2::xlab("Average Count (Millions of Reads)") +
     ggplot2::ylab("log fold change") +
@@ -718,6 +721,7 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
                          fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6,
                          xaxis_column="logFC", yaxis_column="P.Value", ...) {
+    warning("This has a bug because it doesn't take into account 0 elements of pinsig/upsig/etc")
     hpgl_env <- environment()
     low_vert_line <- 0.0 - fc_cutoff
     horiz_line <- -1 * log10(p_cutoff)
