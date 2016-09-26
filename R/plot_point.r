@@ -479,7 +479,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                                         paste0("FC Insig.: ", num_fcinsig),
                                         paste0("P Insig.: ", num_pinsig),
                                         paste0("Up Sig.: ", num_upsig)),
-                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="black"))) +
+                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
     ggplot2::scale_fill_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
     ggplot2::scale_color_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
@@ -731,11 +731,10 @@ plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
                      "yaxis" = toptable_data[[yaxis_column]])
     df[["logyaxis"]] <- -1.0 * log10(df[["yaxis"]])
     rownames(df) <- rownames(toptable_data)
-    df[["state"]] <- ifelse(df[["yaxis"]] > p_cutoff, "pinsig",
-                     ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] >= fc_cutoff, "upsig",
-                     ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] <= (-1 * fc_cutoff), "downsig", "fcinsig")))
-    up_df[["state"]] <- ifelse(up_df[["yaxis"]] > p_cutoff, "pupinsig",
-                        ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] >= fc_cutoff, "upsig", "fcupinsig"))
+    df[["state"]] <- ifelse(toptable_data[[yaxis_column]] > p_cutoff, "pinsig",
+                     ifelse(toptable_data[[yaxis_column]] <= p_cutoff & toptable_data[[xaxis_column]] >= fc_cutoff, "upsig",
+                     ifelse(toptable_data[[yaxis_column]] <= p_cutoff & toptable_data[[xaxis_column]] <= (-1 * fc_cutoff),
+                            "downsig", "fcinsig")))
     df[["pcut"]] <- df[["yaxis"]] <= p_cutoff
 
     num_downsig <- sum(df[["state"]] == "downsig")
@@ -753,31 +752,37 @@ plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
     df[[4]] <- as.factor(df[[4]])
     df[[5]] <- as.factor(df[[5]])
 
-    aes_color = "(yaxis > p_cutoff)"
-    plt <- ggplot(df, aes_string(x="xaxis", y="logyaxis", color=aes_color)) +
+    state_shapes <- c(21,22,23,24)
+    names(state_shapes) <- c("downsig","fcinsig","pinsig","upsig")
+
+    plt <- ggplot(data=df,
+                  aes_string(x="xaxis",
+                             y="logyaxis",
+                             fill="as.factor(pcut)",
+                             colour="as.factor(pcut)",
+                             shape="as.factor(state)")) +
         ggplot2::geom_hline(yintercept=horiz_line, color="black", size=(size / 2)) +
         ggplot2::geom_vline(xintercept=fc_cutoff, color="black", size=(size / 2)) +
         ggplot2::geom_vline(xintercept=low_vert_line, color="black", size=(size / 2)) +
-        ggplot2::geom_point(stat="identity", size=size, alpha=alpha, aes_string(shape="as.factor(state)", fill=aes_color)) +
-        ggplot2::xlab("log fold change") +
-        ggplot2::ylab("-log10(adjusted p value)") +
-        ggplot2::scale_shape_manual(name="state", values=c(21,22,23,24),
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
+        ggplot2::scale_shape_manual(name="state", values=state_shapes,
                                     labels=c(
                                         paste0("Down Sig.: ", num_downsig),
                                         paste0("FC Insig.: ", num_fcinsig),
                                         paste0("P Insig.: ", num_pinsig),
                                         paste0("Up Sig.: ", num_upsig)),
                                     guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
-        ggplot2::scale_color_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
-        ggplot2::scale_fill_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
-        ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=3))) +
+        ggplot2::scale_fill_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
+        ggplot2::scale_color_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
+        ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
         ggplot2::theme_bw()
 
     if (!is.null(gvis_filename)) {
         plot_gvis_volcano(toptable_data, fc_cutoff=fc_cutoff, p_cutoff=p_cutoff, tooltip_data=tooltip_data, filename=gvis_filename)
     }
-    return(plt)
+    retlist <- list("plot" = plt, "df" = df)
+    return(retlist)
 }
 
 ## EOF
