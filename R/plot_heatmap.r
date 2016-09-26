@@ -23,9 +23,10 @@
 plot_corheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="pearson", expt_names=NULL,
                          batch_row="batch", title=NULL, ...) {
-    plot_heatmap(expt_data, expt_colors=expt_colors, expt_design=expt_design,
-                 method=method, expt_names=expt_names, type="correlation",
-                 batch_row=batch_row, title=title, ...)
+    map_list <- plot_heatmap(expt_data, expt_colors=expt_colors, expt_design=expt_design,
+                             method=method, expt_names=expt_names, type="correlation",
+                             batch_row=batch_row, title=title, ...)
+    return(map_list)
 }
 
 #' Make a heatmap.3 description of the distances (euclidean by default) between samples.
@@ -52,9 +53,10 @@ plot_corheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 plot_disheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="euclidean", expt_names=NULL,
                          batch_row="batch",  title=NULL, ...) {
-    plot_heatmap(expt_data, expt_colors=expt_colors, expt_design=expt_design,
-                 method=method, expt_names=expt_names, type="distance",
-                 batch_row=batch_row, title=title, ...)
+    map_list <- plot_heatmap(expt_data, expt_colors=expt_colors, expt_design=expt_design,
+                             method=method, expt_names=expt_names, type="distance",
+                             batch_row=batch_row, title=title, ...)
+    return(map_list)
 }
 
 #' Make a heatmap.3 plot, does the work for plot_disheat and plot_corheat.
@@ -129,22 +131,25 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         row_colors <- rep("darkgreen", length(expt_colors))
     }
 
+    map <- NULL
     if (type == "correlation") {
-        heatmap.3(heatmap_data, keysize=2, labRow=expt_names,
-                  labCol=expt_names, ColSideColors=expt_colors,
-                  RowSideColors=row_colors, margins=c(8,8),
-                  scale="none", trace="none",
-                  linewidth=0.5, main=title)
+        map <- heatmap.3(heatmap_data, keysize=2, labRow=expt_names,
+                         labCol=expt_names, ColSideColors=expt_colors,
+                         RowSideColors=row_colors, margins=c(8,8),
+                         scale="none", trace="none",
+                         linewidth=0.5, main=title)
     } else {
-        heatmap.3(heatmap_data, keysize=2, labRow=expt_names,
-                  labCol=expt_names, ColSideColors=expt_colors,
-                  RowSideColors=row_colors, margins=c(8,8),
-                  scale="none", trace="none",
-                  linewidth=0.5, main=title,
-                  col=rev(heatmap_colors))
+        map <- heatmap.3(heatmap_data, keysize=2, labRow=expt_names,
+                         labCol=expt_names, ColSideColors=expt_colors,
+                         RowSideColors=row_colors, margins=c(8,8),
+                         scale="none", trace="none",
+                         linewidth=0.5, main=title,
+                         col=rev(heatmap_colors))
     }
     hpgl_heatmap_plot <- grDevices::recordPlot()
-    return(hpgl_heatmap_plot)
+    retlist <- list("map" = map,
+                    "plot" = hpgl_heatmap_plot)
+    return(retlist)
 }
 
 plot_heatplus <- function(fundata) {
