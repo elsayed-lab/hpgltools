@@ -85,7 +85,9 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     if (data_class == "expt") {
         expt_design <- expt_data[["design"]]
         expt_colors <- expt_data[["colors"]]
-        expt_names <- expt_data[["names"]]
+        if (!is.null(expt_names)) {
+            expt_names <- expt_data[["names"]]
+        }
         expt_data <- Biobase::exprs(expt_data[["expressionset"]])
     } else if (data_class == "ExpressionSet") {
         expt_data <- Biobase::exprs(expt_data)
