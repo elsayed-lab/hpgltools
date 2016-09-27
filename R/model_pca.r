@@ -399,7 +399,9 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     if (is.null(plot_labels)) {
         plot_labels <- "repel"
     }
-    if (plot_labels == "normal") {
+    if (plot_labels == FALSE) {
+        message("Not putting labels on the plot.")
+    } else if (plot_labels == "normal") {
         pca_plot <- pca_plot +
             ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2", label="labels",
                                                    angle=45, size=4, vjust=2))

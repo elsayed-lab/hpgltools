@@ -51,9 +51,11 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     if (is.null(model_intercept)) {
         model_intercept <- FALSE
     }
+    null_model <- NULL
     if (class(model_batch) == 'character') {
         params <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
         model_batch <- params[["model_adjust"]]
+        null_model <- params[["null_model"]]
     }
 
     results <- list(
@@ -108,6 +110,16 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                                            annot_df=annot_df)  ## For testing
         }
     } ## End performing a serial comparison
+
+    ## Add in a little work to re-adjust the p-values in the situation where sva was used
+    if (!is.null(null_model)) {
+        ## This is from section 5 of the sva manual:  "Adjusting for surrogate values using the f.pvalue function
+        mod_sva <- cbind(model_cond, model_batch)
+        null_sva <- cbind(null_model, model_batch)
+        new_pvalues <- sva::f.pvalue(Biobase::exprs(input$expressionset), mod_sva, null_sva)
+        new_adjp <- p.adjust(new_pvalues)
+        ## Now I need to fill in the tables with these new values.
+    }
 
     result_comparison <- compare_tables(limma=results[["limma"]],
                                         deseq=results[["deseq"]],
@@ -200,6 +212,16 @@ choose_model <- function(conditions, batches, model_batch=TRUE,
             noint_string <- condbatch_noint_string
             including <- "condition+batch"
         }
+    } else if (class(model_batch) == "character") {
+        ## Then calculate the estimates using get_model_adjust
+        message("Extracting surrogate estimate from sva/ruv/pca and adding them to the model.")
+        model_batch_info <- get_model_adjust(input, estimate_type=model_batch)
+        model_batch <- model_batch_info[["model_adjust"]]
+        int_model <- stats::model.matrix(~ 0 + conditions + model_batch)
+        noint_model <- stats::model.matrix(~ conditions + model_batch)
+        int_string <- condbatch_int_string
+        noint_string <- condbatch_noint_string
+        including <- "condition+batchestimate"
     } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
         message("Including batch estimates from sva/ruv/pca in the model.")
         int_model <- stats::model.matrix(~ 0 + conditions + model_batch)
