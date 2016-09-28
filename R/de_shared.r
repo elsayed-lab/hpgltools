@@ -52,10 +52,12 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         model_intercept <- FALSE
     }
     null_model <- NULL
+    sv_model <- NULL
     if (class(model_batch) == 'character') {
         params <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
         model_batch <- params[["model_adjust"]]
         null_model <- params[["null_model"]]
+        sv_model <- model_batch
     }
 
     results <- list(
@@ -87,6 +89,8 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                                            annot_df=annot_df)  ## For testing
         }
         parallel::stopCluster(cl)
+        ## foreach returns the results in no particular order
+        ## Therefore, I will reorder the results now and ensure that they are happy.
         for (r in 1:length(res)) {
             a_result <- res[[r]]
             type <- a_result[["type"]]
@@ -112,13 +116,57 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
     } ## End performing a serial comparison
 
     ## Add in a little work to re-adjust the p-values in the situation where sva was used
-    if (!is.null(null_model)) {
+    if (!is.null(sv_model)) {
         ## This is from section 5 of the sva manual:  "Adjusting for surrogate values using the f.pvalue function
-        mod_sva <- cbind(model_cond, model_batch)
-        null_sva <- cbind(null_model, model_batch)
-        new_pvalues <- sva::f.pvalue(Biobase::exprs(input$expressionset), mod_sva, null_sva)
-        new_adjp <- p.adjust(new_pvalues)
-        ## Now I need to fill in the tables with these new values.
+        for (it from 1:length(results[["edger"]][["all_tables"]])) {
+            name <- names(results[["edger"]][["all_tables"]])[it]
+            namelst <- strsplit(x=name, split="_vs_")
+            first <- namelst[[1]][[1]]
+            second <- namelst[[1]][[2]]
+            ## I am going to need to extract the set of data for the samples in 'first' and 'second'
+            ## I will need to also extract the surrogates for those samples from sv_model
+            ## Then I rewrite null_model as the subset(null_model, samples included)
+            ## and rewrite sv_model as subset(sv_model, samples_included)
+            ## in that rewrite, there will just be conditions a, b where a and b are the subsets for first and second
+            ## Then the sv_model will be a for the first samples and b for the second
+            ## With that information, I should e able to feed sva::f.pvalue the appropriate information
+            ## for it to run properly.
+            ## The resulting pvalues will then be appropriate for backfilling the various tables
+            ## from edger/limma/deseq
+            samples_first_idx <- results[["limma"]][["conditions"]] == first
+            num_first <- sum(samples_first_idx)
+            samples_first <- Biobase::exprs(input[["expressionset"]])[, samples_first_idx]
+            samples_second_idx <- results[["limma"]][["conditions"]] == second
+            num_second <- sum(samples_second_idx)
+            samples_second <- Biobase::exprs(input[["expressionset"]])[, samples_second_idx]
+            included_samples <- cbind(samples_first, samples_second)
+            colnames(included_samples) <- c(rep("first", times=num_first), rep("second", times=num_second))
+            first_sva <- sv_model[samples_first_idx, ]
+            second_sva <- sv_model[samples_second_idx, ]
+            first_model <- append(rep(1, num_first), rep(0, num_second))
+            second_model <- append(rep(0, num_first), rep(1, num_second))
+            new_sv_model <- append(first_sva, second_sva)
+            new_model <- cbind(first_model, second_model, new_sv_model)
+            colnames(new_model) <- c("first","second","sv")
+            new_null <- cbind(rep(1, (num_first + num_second)), new_sv_model)
+            colnames(new_null) <- c("null", "sv")
+            new_pvalues <- sva::f.pvalue(included_samples, new_model, new_null)
+            new_adjp <- p.adjust(new_pvalues)
+            ## Now I need to fill in the tables with these new values.
+            limma_table_order <- rownames(results[["limma"]][["all_tables"]][[name]])
+            reordered_pvalues <- new_pvalues[limma_table_order]
+            reordered_adjp <- new_adjp[limma_table_order]
+            results[["limma"]][["all_tales"]][[name]][["P.Value"]] <- reordered_pvalues
+            results[["limma"]][["all_tales"]][[name]][["adj.P.Val"]] <- reordered_adjp
+            edger_table_order <- rownames(results[["edger"]][["all_tables"]][[name]])
+            reordered_pvalues <- new_pvalues[edger_table_order]
+            reordered_adjp <- new_adjp[edger_table_order]
+            results[["edger"]][["all_tales"]][[name]][["PValue"]] <- reordered_pvalues
+            results[["edger"]][["all_tales"]][[name]][["FDR"]] <- reordered_adjp
+            deseq_table_order <- rownames(results[["deseq"]][["all_tables"]][[name]])
+            results[["deseq"]][["all_tales"]][[name]][["P.Value"]] <- reordered_pvalues
+            results[["deseq"]][["all_tales"]][[name]][["adj.P.Val"]] <- reordered_adjp
+        }
     }
 
     result_comparison <- compare_tables(limma=results[["limma"]],

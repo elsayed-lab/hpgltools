@@ -286,8 +286,8 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             result <- as.data.frame(DESeq2::results(deseq_run,
                                                     contrast=c("condition", numerator, denominator),
                                                     format="DataFrame"))
-            result <- result[order(result$log2FoldChange),]
-            colnames(result) <- c("baseMean","logFC","lfcSE","stat","P.Value","adj.P.Val")
+            result <- result[order(result[["log2FoldChange"]]),]
+            colnames(result) <- c("baseMean", "logFC", "lfcSE", "stat", "P.Value", "adj.P.Val")
             ## From here on everything is the same.
             result[is.na(result[["P.Value"]]), "P.Value"] = 1 ## Some p-values come out as NA
             result[is.na(result[["adj.P.Val"]]), "adj.P.Val"] = 1 ## Some p-values come out as NA
@@ -298,25 +298,22 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             result[["P.Value"]] <- signif(x=as.numeric(result[["P.Value"]]), digits=4)
             result[["adj.P.Val"]] <- signif(x=as.numeric(result[["adj.P.Val"]]), digits=4)
 
-            result$qvalue <- tryCatch(
-            {
+            result[["qvalue"]] <- tryCatch({
                 ## Nested expressions are way too confusing for me
                 ttmp <- as.numeric(result[["P.Value"]])
                 ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
                 signif(x=ttmp, digits=4)
                 ## as.numeric(format(signif(qvalue::qvalue(as.numeric(result$P.Value), robust=TRUE)$qvalues, 4), scientific=TRUE))
-            },
-            error=function(cond) {
+            }, error=function(cond) {
                 message(paste0("The qvalue estimation failed for ", comparison, "."))
                 return(1)
-            },
+            }, finally={
+            })
             ##warning=function(cond) {
             ##    message("There was a warning?")
             ##    message(cond)
             ##    return(1)
             ##},
-            finally={
-            })
             result_name <- paste0(numerator, "_vs_", denominator)
             denominators[[result_name]] <- denominator
             numerators[[result_name]] <- numerator
@@ -339,6 +336,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         ## coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
     }
     ret_list <- list(
+        "model_string" = model_string,
         "run" = deseq_run,
         "denominators" = denominators,
         "numerators" = numerators,
@@ -407,8 +405,7 @@ write_deseq <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/dese
         data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
         data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
         data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
-        data_table[["qvalue"]] <- tryCatch(
-        {
+        data_table[["qvalue"]] <- tryCatch({
             ## as.numeric(format(signif(
             ## suppressWarnings(qvalue::qvalue(
             ## as.numeric(data_table$P.Value), robust=TRUE))$qvalues, 4),
@@ -419,18 +416,17 @@ write_deseq <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/dese
             ## ttmp <- signif(ttmp, 4)
             ## ttmp <- format(ttmp, scientific=TRUE)
             ## ttmp
-        },
-        error=function(cond) {
+        }, error=function(cond) {
             message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
             return(1)
-        },
+        }, finally={
+        })
         ##warning=function(cond) {
         ##    message("There was a warning?")
         ##    message(cond)
         ##    return(1)
         ##},
-        finally={
-        })
+
         if (!is.null(annot_df)) {
             data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
             ###data_table = data_table[-1]
