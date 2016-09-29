@@ -254,9 +254,9 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
     final_annotations <- as.data.frame(counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ])
     colnames(final_annotations) <- colnames(gene_info)
-    rownames(final_annotations) <- counts_and_annotations[["Row.names"]]
+    rownames(final_annotations) <- counts_and_annotations[["rownames"]]
     final_counts <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_tables) ]
-    rownames(final_counts) <- counts_and_annotations[["Row.names"]]
+    rownames(final_counts) <- counts_and_annotations[["rownames"]]
     rm(counts_and_annotations)
     rm(tmp_counts)
     rm(tmp_countsdt)
