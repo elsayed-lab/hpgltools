@@ -55,3 +55,6 @@ actual <- actual_df[test_genes, c("untreated1")]
 test_that("loge transformation gives expected values (why log10!?)?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
+
+message("\n")
+message("Finished 13norm_transform.R")

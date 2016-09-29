@@ -99,3 +99,6 @@ actual <- actual_df[test_genes, c("untreated1")]
 test_that("RLE normalization gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
+
+message("\n")
+message("Finished 12norm_normalize.R")

@@ -60,3 +60,6 @@ expected <- as.numeric(c("-0.108919503928491", "-0.570855719628606",
 test_that("Does the compare_surrogate stuff work?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
+
+message("\n")
+message("Finished 18norm_surrogates.R")

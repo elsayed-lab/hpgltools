@@ -81,3 +81,6 @@ actual <- unmolested[["libsize"]]
 test_that("Pasilla (un)normalized libsize?", {
     expect_equal(expected, actual)
 })
+
+message("\n")
+message("Finished 10norm_shared.R")

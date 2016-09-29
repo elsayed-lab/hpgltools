@@ -88,3 +88,5 @@ test_that("Are the library sizes intact?", {
     expect_equal(expected, actual)
 })
 
+message("\n")
+message("Finished 01load_data.R")

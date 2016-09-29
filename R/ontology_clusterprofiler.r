@@ -21,6 +21,8 @@
 #' @param kegg_organism Choose the 3 letter KEGG organism name here.
 #' @param kegg_id_column Column in the orgdb to use for cross referencing to KEGG.
 #' @param categories How many categories should be plotted in bar/dot plots?
+#' @return a list
+#' @export
 simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
                             orgdb_from="FLYBASE", orgdb_to=c("ENSEMBL","SYMBOL","ENTREZID"),
                             go_level=3, pcutoff=0.05, qcutoff=0.1, fc_column="logFC",

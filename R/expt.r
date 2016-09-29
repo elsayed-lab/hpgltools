@@ -244,10 +244,13 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     ## There should no longer be blank columns in the annotation data.
     ## Maybe I will copy/move this to my annotation collection toys?
 
-    tmp_counts <- all_count_tables
-    tmp_counts[["temporary_id_number"]] <- 1:nrow(tmp_counts)
+    tmp_countsdt <- data.table::as.data.table(all_count_tables)
+    tmp_countsdt[["temporary_id_number"]] <- 1:nrow(tmp_countsdt)
+    gene_infodt <- data.table::as.data.table(gene_info)
+    tmp_countsdt[["rownames"]] <- rownames(tmp_countsdt)
+    gene_infodt[["rownames"]] <- rownames(gene_infodt)
     message("Bringing together the count matrix and gene information.")
-    counts_and_annotations <- merge(tmp_counts, gene_info, by="row.names", all.x=TRUE)
+    counts_and_annotations <- merge(tmp_countsdt, gene_infodt, by="rownames", all.x=TRUE)
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
     final_annotations <- as.data.frame(counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ])
     colnames(final_annotations) <- colnames(gene_info)
@@ -256,6 +259,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     rownames(final_counts) <- counts_and_annotations[["Row.names"]]
     rm(counts_and_annotations)
     rm(tmp_counts)
+    rm(tmp_countsdt)
+    rm(gene_infodt)
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo

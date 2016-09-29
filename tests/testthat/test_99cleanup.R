@@ -17,4 +17,7 @@ plots_removed <- file.remove("Rplots.pdf")
 test_that("Did this finish?", {
     expect_equal(1, 1)
 })
-message("Finished tests.")
+
+message("\n")
+message("Finished 99cleanup.R")
+

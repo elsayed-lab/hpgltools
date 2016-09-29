@@ -41,6 +41,9 @@ simple_clusterprofiler(sig_genes, all_genes, orgdb = "org.Dm.eg.db",
 
 \item{categories}{How many categories should be plotted in bar/dot plots?}
 }
+\value{
+a list
+}
 \description{
 The new version of clusterProfiler has a bunch of new toys.  However, it is more stringent in
 terms of input in that it now explicitly expects to receive annotation data in terms of a orgdb

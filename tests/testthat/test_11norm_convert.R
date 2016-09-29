@@ -66,3 +66,6 @@ actual <- as.numeric(Biobase::exprs(pasilla_convert[["expressionset"]])[test_gen
 test_that("cp_seq_m works for ATG?", {
     expect_equal(expected, actual)
 })
+
+message("\n")
+message("Finished 11norm_convert.R")

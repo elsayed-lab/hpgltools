@@ -69,3 +69,6 @@ actual <- dim(Biobase::exprs(pasilla_filter[["expressionset"]]))
 test_that("simple filtering leaves behind the expected number of genes?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
+
+message("\n")
+message("Finished 14norm_filter.R")

@@ -64,12 +64,13 @@ NULL
 #' @docType package
 #' @name hpgltools
 #' @importFrom ggplot2 aes aes_string ggplot
-#' @import stats
-#' @import utils
-#' @import methods
+#' @import data.table
+#' @import foreach
 #' @import grDevices
 #' @import graphics
 #' @import knitr
 #' @import magrittr
-#' @import foreach
+#' @import methods
+#' @import stats
+#' @import utils
 NULL

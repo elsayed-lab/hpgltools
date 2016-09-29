@@ -108,3 +108,6 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ##    expect_equal(expected, actual, tolerance=0.0001)
     ##})
 }
+
+message("\n")
+message("Finished 15norm_batch.R")
