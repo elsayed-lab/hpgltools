@@ -14,7 +14,7 @@ snp_add_file <- function(sample, input_dir="preprocessing/outputs", file_suffix=
 #' I have some initial code for working with snps, but it seems that it will be getting more use, so
 #' make it testable etc.
 #'
-#' @param expt
+#' @param expt an expressionset from which to extract information.
 #' @return some stuff
 #' @export
 expt_snp <- function(expt,

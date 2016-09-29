@@ -8,6 +8,9 @@ expt_snp(expt, input_dir = "preprocessing/outputs",
   file_suffix = "_parsed_ratio.txt", bam_suffix = "_accepted_paired.bam",
   tolower = TRUE)
 }
+\arguments{
+\item{expt}{an expressionset from which to extract information.}
+}
 \value{
 some stuff
 }

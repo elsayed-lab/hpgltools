@@ -8,7 +8,7 @@ combine_de_tables(all_pairwise_result, extra_annot = NULL, csv = NULL,
   excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
   excel_sheet = "combined_DE", keepers = "all", excludes = NULL,
-  include_basic = TRUE, add_plots = TRUE, plot_dim = 6,
+  adjp = TRUE, include_basic = TRUE, add_plots = TRUE, plot_dim = 6,
   compare_plots = TRUE)
 }
 \arguments{

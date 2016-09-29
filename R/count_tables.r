@@ -16,8 +16,9 @@
 #'  count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
 #' }
 #' @export
-hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE, suffix=NULL, ...) {
+expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE, suffix=NULL, ...) {
     ## load first sample
+    arglist <- list(...)
     lower_filenames <- files
     dirs <- dirname(lower_filenames)
     low_files <- tolower(basename(files))
@@ -39,13 +40,15 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
     }
     ##count_table = read.table(files[1], header=header, ...)
     count_table <- try(read.table(files[1], header=header))
+    count_dt <- data.table::as.data.table(count_table)
     if (class(count_table)[1] == "try-error") {
         stop(paste0("There was an error reading: ", files[1]))
     }
-    message(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
-    colnames(count_table) <- c("ID", ids[1])
-    rownames(count_table) <- make.names(count_table[, "ID"], unique=TRUE)
-    count_table <- count_table[, -1, drop=FALSE]
+    message(paste0(files[1], " contains ", length(rownames(count_dt)), " rows."))
+    colnames(count_dt) <- c("rownames", ids[1])
+    ## Following lines not needed for data.table
+    ## rownames(count_table) <- make.names(count_table[, "ID"], unique=TRUE)
+    ## count_table <- count_table[, -1, drop=FALSE]
     ## iterate over and append remaining samples
     for (table in 2:length(files)) {
         if (file.exists(tolower(files[table]))) {
@@ -59,23 +62,28 @@ hpgl_read_files <- function(ids, files, header=FALSE, include_summary_rows=FALSE
         if (class(tmp_count)[1] == "try-error") {
             stop(paste0("There was an error reading: ", files[table]))
         }
-        colnames(tmp_count) <- c("ID", ids[table])
+        colnames(tmp_count) <- c("rownames", ids[table])
+        tmp_count <- data.table::as.data.table(tmp_count)
         ##tmp_count <- tmp_count[, c("ID", ids[table])]
-        rownames(tmp_count) <- make.names(tmp_count[, "ID"], unique=TRUE)
-        tmp_count <- tmp_count[, -1, drop=FALSE]
+        ##rownames(tmp_count) <- make.names(tmp_count[, "ID"], unique=TRUE)
+        ##tmp_count <- tmp_count[, -1, drop=FALSE]
         pre_merge <- length(rownames(tmp_count))
-        count_table <- merge(count_table, tmp_count, by.x="row.names", by.y="row.names", all.x=TRUE)
-        rownames(count_table) <- count_table[, "Row.names"]
-        count_table <- count_table[, -1, drop=FALSE]
-        post_merge <- length(rownames(count_table))
+        count_dt <- merge(count_dt, tmp_count, by="rownames", all.x=TRUE)
+        ## rownames(count_table) <- count_table[, "Row.names"]
+        ## count_table <- count_table[, -1, drop=FALSE]
+        ## post_merge <- length(rownames(count_table))
+        post_merge <- nrow(count_dt)
         message(paste0(files[table], " contains ", pre_merge, " rows and merges to ", post_merge, " rows."))
     }
-
+    count_table <- as.data.frame(count_dt)
+    rownames(count_table) <- count_table[["rownames"]]
+    count_table <- count_table[-1]
+    rm(count_dt)
     rm(tmp_count)
     ## set row and columns ids
     ## rownames(count_table) <- make.names(count_table$ID, unique=TRUE)
     ## count_table <- count_table[-1]
-    colnames(count_table) <- ids
+    ## colnames(count_table) <- ids
 
     ## remove summary fields added by HTSeq
     if (!include_summary_rows) {

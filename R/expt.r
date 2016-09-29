@@ -25,7 +25,7 @@
 #' @param ... More parameters are fun!
 #' @return  experiment an expressionset
 #' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData} \link[Biobase]{exprs}
-#' \link{hpgl_read_files} \link[hash]{as.list.hash}
+#' \link{expt_read_counts} \link[hash]{as.list.hash}
 #' @examples
 #' \dontrun{
 #' new_experiment = create_expt("some_csv_file.csv", color_hash)
@@ -185,9 +185,9 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
 
     ## At this point sample_definitions$file should be filled in no matter what
     if (is.null(all_count_tables)) {
-        filenames <- as.character(sample_definitions[["file"]])
+        filenames <- as.character(sample_definitions[[file_column]])
         sample_ids <- as.character(sample_definitions[["sampleid"]])
-        all_count_tables <- hpgl_read_files(sample_ids, filenames, ...)
+        all_count_tables <- expt_read_counts(sample_ids, filenames, ...)
     }
 
     all_count_tables <- as.data.frame(all_count_tables)
@@ -243,24 +243,29 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     }
     ## There should no longer be blank columns in the annotation data.
     ## Maybe I will copy/move this to my annotation collection toys?
-
     tmp_countsdt <- data.table::as.data.table(all_count_tables)
+    tmp_countsdt[["rownames"]] <- rownames(all_count_tables)
     tmp_countsdt[["temporary_id_number"]] <- 1:nrow(tmp_countsdt)
     gene_infodt <- data.table::as.data.table(gene_info)
-    tmp_countsdt[["rownames"]] <- rownames(tmp_countsdt)
-    gene_infodt[["rownames"]] <- rownames(gene_infodt)
+    gene_infodt[["rownames"]] <- rownames(gene_info)
+
     message("Bringing together the count matrix and gene information.")
     counts_and_annotations <- merge(tmp_countsdt, gene_infodt, by="rownames", all.x=TRUE)
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
-    final_annotations <- as.data.frame(counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ])
-    colnames(final_annotations) <- colnames(gene_info)
+    counts_and_annotations <- as.data.frame(counts_and_annotations)
+    final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_infodt) ]
     rownames(final_annotations) <- counts_and_annotations[["rownames"]]
-    final_counts <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_tables) ]
+    final_annotations <- final_annotations[-1]
+    ##colnames(final_annotations) <- colnames(gene_info)
+    ##rownames(final_annotations) <- counts_and_annotations[["rownames"]]
+    final_countsdt <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_tables) ]
+    final_counts <- as.data.frame(final_countsdt)
     rownames(final_counts) <- counts_and_annotations[["rownames"]]
+    ##final_counts <- final_counts[-1]
     rm(counts_and_annotations)
-    rm(tmp_counts)
     rm(tmp_countsdt)
     rm(gene_infodt)
+    rm(final_countsdt)
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
@@ -451,10 +456,10 @@ read_metadata <- function(file, ...) {
     } else if (tools::file_ext(file) == "xlsx") {
         ## xls = loadWorkbook(file, create=FALSE)
         ## tmp_definitions = readWorksheet(xls, 1)
-        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1, ...)
+        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1)
     } else if (tools::file_ext(file) == "xls") {
         ## This is not correct, but it is a start
-        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1, ...)
+        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1)
     } else {
         definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
     }
