@@ -709,7 +709,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     if (!is.null(extra_annot)) {
         annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
         rownames(annot_df) <- annot_df[["Row.names"]]
-        annot_df <- annot_df[-1]
+        annot_df <- annot_df[, -1, drop=FALSE]
     }
 
     combo <- list()
@@ -1089,7 +1089,7 @@ create_combined_table <- function(li, ed, de, ba,
     }
     comb <- as.data.frame(comb)
     rownames(comb) <- comb[["rownames"]]
-    comb <- comb[-1]
+    comb <- comb[, -1, drop=FALSE]
     rm(lidt)
     rm(dedt)
     rm(eddt)
@@ -1143,7 +1143,7 @@ create_combined_table <- function(li, ed, de, ba,
         colnames(annot_df) <- gsub("[[:punct:]]", "", colnames(annot_df))
         comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
         rownames(comb) <- comb[["Row.names"]]
-        comb <- comb[-1]
+        comb <- comb[, -1, drop=FALSE]
         colnames(comb) <- make.names(tolower(colnames(comb)), unique=TRUE)
     }
 
@@ -1163,7 +1163,7 @@ create_combined_table <- function(li, ed, de, ba,
     }
 
     up_fc <- fc_cutoff
-    down_fc <- -1 * fc_cutoff
+    down_fc <- -1.0 * fc_cutoff
     summary_table_name <- table_name
     if (isTRUE(inverse)) {
         summary_table_name <- paste0(summary_table_name, "-inverted")
@@ -1406,14 +1406,14 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
         up_idx <- as.numeric(up_genes[[column]]) >= fc
         up_genes <- up_genes[up_idx, ]
         if (fold == 'plusminus' | fold == 'log') {
-            message(paste0("Assuming the fold changes are on the log scale and so taking -1 * fc"))
+            message(paste0("Assuming the fold changes are on the log scale and so taking -1.0 * fc"))
             ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
-            down_idx <- as.numeric(down_genes[[column]]) <= (fc * -1)
+            down_idx <- as.numeric(down_genes[[column]]) <= (fc * -1.0)
             down_genes <- down_genes[down_idx, ]
         } else {
             message(paste0("Assuming the fold changes are on a ratio scale and so taking 1/fc"))
             ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
-            down_idx <- as.numeric(down_genes[[column]]) <= (1 / fc)
+            down_idx <- as.numeric(down_genes[[column]]) <= (1.0 / fc)
             down_genes <- down_genes[down_idx, ]
         }
         message(paste0("After fold change filter, the up genes table has ", dim(up_genes)[1], " genes."))
@@ -1802,8 +1802,8 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, semantic=c('mucin'
         if (class(tmpdf) == 'data.frame') {
             colnames(tmpdf) = c("ID", "members")
             tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
-            rownames(tab) <- tab$Row.names
-            tab <- tab[-1]
+            rownames(tab) <- tab[["Row.names"]]
+            tab <- tab[, -1, drop=FALSE]
             tab <- tab[count <= max_copies, ]
             for (string in semantic) {
                 idx <- grep(pattern=string, x=tab[, semantic_column])
@@ -1824,7 +1824,7 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, semantic=c('mucin'
             colnames(tmpdf) = c("ID","members")
             tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
             rownames(tab) <- tab[["Row.names"]]
-            tab <- tab[-1]
+            tab <- tab[, -1, drop=FALSE]
             tab <- tab[count <= max_copies, ]
             for (string in semantic) {
                 ## Is this next line correct?  shouldn't it be tab[, semantic_column]?

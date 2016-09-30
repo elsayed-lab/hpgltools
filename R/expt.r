@@ -255,13 +255,13 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     counts_and_annotations <- as.data.frame(counts_and_annotations)
     final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_infodt) ]
     rownames(final_annotations) <- counts_and_annotations[["rownames"]]
-    final_annotations <- final_annotations[-1]
+    final_annotations <- final_annotations[, -1, drop=FALSE]
     ##colnames(final_annotations) <- colnames(gene_info)
     ##rownames(final_annotations) <- counts_and_annotations[["rownames"]]
     final_countsdt <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_tables) ]
     final_counts <- as.data.frame(final_countsdt)
     rownames(final_counts) <- counts_and_annotations[["rownames"]]
-    ##final_counts <- final_counts[-1]
+    ##final_counts <- final_counts[, -1, drop=FALSE]
     rm(counts_and_annotations)
     rm(tmp_countsdt)
     rm(gene_infodt)

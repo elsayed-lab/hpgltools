@@ -77,12 +77,12 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
     }
     count_table <- as.data.frame(count_dt)
     rownames(count_table) <- count_table[["rownames"]]
-    count_table <- count_table[-1]
+    count_table <- count_table[, -1, drop=FALSE]
     rm(count_dt)
     rm(tmp_count)
     ## set row and columns ids
     ## rownames(count_table) <- make.names(count_table$ID, unique=TRUE)
-    ## count_table <- count_table[-1]
+    ## count_table <- count_table[, -1, drop=FALSE]
     ## colnames(count_table) <- ids
 
     ## remove summary fields added by HTSeq

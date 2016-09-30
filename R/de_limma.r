@@ -630,8 +630,8 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
     xls_written <- write_xls(cond_table, sheet, file=workbook, rownames="row.names")
     ## upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
     upsignificant_table <- cond_table[ which(cond_table[["logFC"]] >= logfc_cutoff), ]
-    ## downsignificant_table = subset(cond_table, logFC <= (-1 * logfc_cutoff))
-    downsignificant_table <- cond_table[ which(cond_table[["logFC"]] <= (-1 * logfc_cutoff)), ]
+    ## downsignificant_table = subset(cond_table, logFC <= (-1.0 * logfc_cutoff))
+    downsignificant_table <- cond_table[ which(cond_table[["logFC"]] <= (-1.0 * logfc_cutoff)), ]
     ## psignificant_table = subset(cond_table, adj.P.Val <= pvalue_cutoff)
     ## psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)
     psignificant_table <- cond_table[ which(cond_table[["P.Value"]] <= pvalue_cutoff), ]
@@ -768,7 +768,7 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
         })
         if (!is.null(annot_df)) {
             data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
-            ###data_table = data_table[-1]
+            ###data_table = data_table[, -1, drop=FALSE]
         }
         ## This write_xls runs out of memory annoyingly often
         if (isTRUE(excel) | isTRUE(csv)) {
