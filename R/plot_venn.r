@@ -1,4 +1,9 @@
-fun_venn_plot <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), factor=0.9) {
+plot_funn_venn <- function(...) {
+    plot_fun_venn(...)
+    ## har har I am so witty!
+}
+
+plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), factor=0.9) {
     venn_sets <- ones
     venn_intersect_label <- ""
     do_doubles <- FALSE
@@ -47,11 +52,11 @@ fun_venn_plot <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
     all_venn <- venneuler::venneuler(venn_sets)
     plot(all_venn)
 
-    center_x <- mean(all_venn$centers[, 1])
-    center_y <- mean(all_venn$centers[, 2])
+    center_x <- mean(all_venn[["centers"]][, 1])
+    center_y <- mean(all_venn[["centers"]][, 2])
 
-    text(center_x, center_y, venn_intersect_label)
-    all_centers <- all_venn$centers
+    text(center_x, center_y, paste0("all:", venn_intersect_label))
+    all_centers <- all_venn[["centers"]]
 
     ## To get a number placed at the edge of each region, I must
     ## find where on the unit circle the lm_center is with respect to the actual center in radians
@@ -68,6 +73,7 @@ fun_venn_plot <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
     edges_x <- list()
     edges_y <- list()
     for (i in (1:length(ones))) {
+        factor <- 0.98
         single <- ones[i]
         single_name <- names(single)
         single_value <- ones[[i]]
@@ -81,15 +87,16 @@ fun_venn_plot <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
         radii[[single_name]] <- single_radius
         single_x_add <- factor * single_radius * cos(single_angle)
         single_y_add <- factor * single_radius * sin(single_angle)
-        single_x_edge <- centers[single_name, "x"] + single_x_add
-        single_y_edge <- centers[single_name, "y"] + single_y_add
+        single_x_edge <- all_centers[single_name, "x"] + single_x_add
+        single_y_edge <- all_centers[single_name, "y"] + single_y_add
         edges_x[[single_name]] <- single_x_edge
         edges_y[[single_name]] <- single_y_edge
-        text(single_x_edge, single_y_edge, as.character(single_value))
+        text(single_x_edge, single_y_edge, paste0(single_name, ":", as.character(single_value)))
     }
 
     if (isTRUE(do_doubles)) {
         for (i in (1:length(twos))) {
+            factor <- 0.97
             double <- twos[i]
             double_name <- names(double)
             double_value <- twos[[i]]
@@ -106,12 +113,13 @@ fun_venn_plot <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
             middle_y_add <- factor * middle_radius * sin(middle_angle)
             middle_x_edge <- center_x + middle_x_add
             middle_y_edge <- center_y + middle_y_add
-            text(middle_x_edge, middle_y_edge, as.character(double_value))
+            text(middle_x_edge, middle_y_edge, paste0(double_name, ":", as.character(double_value)))
         }
     }
 
     if (isTRUE(do_triples)) {
         for (i in (1:length(threes))) {
+            factor <- 0.8
             triple <- threes[i]
             triple_name <- names(triple)
             triple_value <- threes[[i]]
@@ -128,12 +136,13 @@ fun_venn_plot <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
             middle_y_add <- factor * middle_radius * sin(middle_angle)
             middle_x_edge <- center_x + middle_x_add
             middle_y_edge <- center_y + middle_y_add
-            text(middle_x_edge, middle_y_edge, as.character(triple_value))
+            text(middle_x_edge, middle_y_edge, paste0(triple_name, ":", as.character(triple_value)))
         }
     }
 
     if (isTRUE(do_quads)) {
         for (i in (1:length(fours))) {
+            factor <- 0.7
             quad <- fours[i]
             quad_name <- names(quad)
             quad_value <- fours[[i]]
@@ -150,7 +159,7 @@ fun_venn_plot <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
             middle_y_add <- factor * middle_radius * sin(middle_angle)
             middle_x_edge <- center_x + middle_x_add
             middle_y_edge <- center_y + middle_y_add
-            text(middle_x_edge, middle_y_edge, as.character(triple_value))
+            text(middle_x_edge, middle_y_edge, paste0(quad_name, ":", as.character(triple_value)))
         }
     }
     retlist <- list(
