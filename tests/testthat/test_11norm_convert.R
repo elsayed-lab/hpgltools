@@ -1,6 +1,6 @@
 library(testthat)
 library(hpgltools)
-context("Are normalizations consistent over time (Conversions)?")
+context("11norm_convert.R: Are normalizations consistent over time (Conversions)?\n")
 
 ## This section is copy/pasted to all of these tests, that is dumb.
 datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
@@ -67,5 +67,4 @@ test_that("cp_seq_m works for ATG?", {
     expect_equal(expected, actual)
 })
 
-message("\n")
-message("Finished 11norm_convert.R")
+message("\nFinished 11norm_convert.R")

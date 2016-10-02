@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Is it possible to create OrganismDbi instances using TriTrypDB data?")
+context("41ann_organdb.R: Is it possible to create OrganismDbi instances using TriTrypDB data?\n")
 
 eupath_config <- get_eupath_config()
 
@@ -13,5 +12,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ##difficult <- sm(make_organismdbi(id="tcruzi_nonesmer"))
 }
 
-message("\n")
-message("Finished 41ann_organdb.R")
+message("\nFinished 41ann_organdb.R")

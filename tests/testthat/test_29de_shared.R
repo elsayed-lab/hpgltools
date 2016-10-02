@@ -1,6 +1,6 @@
 library(testthat)
 library(hpgltools)
-context("Do the combined differential expression searches work?")
+context("29de_shared.R: Do the combined differential expression searches work?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -143,5 +143,4 @@ test_that("Can we monitor changing significance (up_fc)?", {
     expect_equal(expected_head_down_fc, actual_head_down_fc)
 })
 
-message("\n")
-message("Finished 29de_shared.R")
+message("\nFinished 29de_shared.R")

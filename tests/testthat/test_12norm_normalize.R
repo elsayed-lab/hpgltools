@@ -1,6 +1,6 @@
 library(testthat)
 library(hpgltools)
-context("Are normalizations consistent over time? (Normalizations)")
+context("12norm_normalize.R: Are normalizations consistent over time? (Normalizations)\n")
 
 ## Note to self: Some recent changed to the creation of my expressionsets lead to changes in the order of the resulting data frames.
 ## This is intended to make it easier for me to keep track of what is happening to the data by forcing it into a consistent order.
@@ -100,5 +100,4 @@ test_that("RLE normalization gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-message("\n")
-message("Finished 12norm_normalize.R")
+message("\nFinished 12norm_normalize.R")

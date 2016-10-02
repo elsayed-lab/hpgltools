@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Does clusterProfiler work?")
+context("53gsea_clusterp.R: Does clusterProfiler work?\n")
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
@@ -38,5 +37,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ## })
 }
 
-message("\n")
-message("Finished 53gsea_clusterp.R")
+message("\nFinished 53gsea_clusterp.R")

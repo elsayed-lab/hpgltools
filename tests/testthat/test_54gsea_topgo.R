@@ -1,7 +1,7 @@
 library(testthat)
 library(hpgltools)
 
-context("Does topGO work?")
+context("54gsea_topgo.R: Does topGO work?\n")
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
@@ -53,5 +53,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     })
 }
 
-message("\n")
-message("Finished 54gsea_topgo.R")
+message("\nFinished 54gsea_topgo.R")

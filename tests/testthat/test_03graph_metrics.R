@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Is it possible to graph the various metrics with hpgltools?")
+context("03graph_metrics.R: Is it possible to graph the various metrics with hpgltools?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -117,5 +116,4 @@ test_that("Is the PCA PC2 as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-message("\n")
-message("Finished 03graph_metrics.R")
+message("\nFinished 03graph_metrics.R")

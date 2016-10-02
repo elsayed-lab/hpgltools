@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Cleaning up this mess.")
+context("99cleanup.R: Cleaning up this mess.\n")
 
 de_removed <- file.remove("de_deseq.rda")
 ed_removed <- file.remove("de_edger.rda")
@@ -18,6 +17,4 @@ test_that("Did this finish?", {
     expect_equal(1, 1)
 })
 
-message("\n")
-message("Finished 99cleanup.R")
-
+message("\nFinished 99cleanup.R")

@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Does GOstats work?")
+context("55gsea_gostats.R: Does GOstats work?\n")
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
@@ -41,5 +40,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     })
 }
 
-message("\n")
-message("Finished 55gsea_gostats.R")
+message("\nFinished 55gsea_gostats.R")

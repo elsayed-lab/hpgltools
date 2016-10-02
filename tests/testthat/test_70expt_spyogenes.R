@@ -3,7 +3,7 @@ library(hpgltools)
 library(pasilla)
 data(pasillaGenes)
 
-context("Does a small bacterial RNAseq experiment load?")
+context("70expt_spyogenes.R: Does a small bacterial RNAseq experiment load?\n")
 
 mgas_data <- new.env()
 cdm_data <- system.file("cdm_expt.rda", package="hpgltools")
@@ -95,5 +95,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     circos_made <- sm(circos_make(target="mgas"))
 }
 
-message("\n")
-message("Finished 70expt_spyogenes.R")
+message("\nFinished 70expt_spyogenes.R")

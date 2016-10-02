@@ -1,7 +1,7 @@
 library(testthat)
 library(hpgltools)
 
-context("Does goseq work?")
+context("52gsea_goseq.R: Does goseq work?\n")
 
 ## I want to do some much longer tests using goseq/clusterprofiler/topgo/gostats/gprofiler
 ## These will likely not work with Travis as they take forever.
@@ -76,5 +76,4 @@ test_that("Are the goseq results as expected (cc pvalues)?", {
 ## This was not my understanding of how enrichment analysis works. Have I just been mistaken this whole time?
 ## Keith
 
-message("\n")
-message("Finished 52gsea_goseq.R")
+message("\nFinished 52gsea_goseq.R")

@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Do the various ontology helper functions still work?")
+context("50gsea_ontshared.R: Do the various ontology helper functions still work?\n")
 
 expected_term_result <- "adenyl ribonucleotide binding"
 actual_term_result <- sm(as.character(goterm()))
@@ -32,5 +31,4 @@ test_that("Are GO.db functions working?", {
 ## if (!identical(Sys.getenv("TRAVIS"), "true")) {
 ## }
 
-message("\n")
-message("Finished 50gsea_ontshared.R")
+message("\nFinished 50gsea_ontshared.R")

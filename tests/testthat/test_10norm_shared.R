@@ -1,6 +1,6 @@
 library(testthat)
 library(hpgltools)
-context("Are normalizations consistent over time (Shared functions)?")
+context("10norm_shared.R: Are normalizations consistent over time (Shared functions)?\n")
 
 ## Note to self: Some recent changed to the creation of my expressionsets lead to changes in the order of the resulting data frames.
 ## This is intended to make it easier for me to keep track of what is happening to the data by forcing it into a consistent order.
@@ -82,5 +82,4 @@ test_that("Pasilla (un)normalized libsize?", {
     expect_equal(expected, actual)
 })
 
-message("\n")
-message("Finished 10norm_shared.R")
+message("\nFinished 10norm_shared.R")

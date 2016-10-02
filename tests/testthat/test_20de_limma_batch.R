@@ -1,8 +1,7 @@
 library(testthat)
 library(hpgltools)
 cbcb <- sm(library(cbcbSEQ))
-
-context("Does limma work with hpgltools?")
+context("20de_limma_batch.R: Does limma work with hpgltools?\n")
 
 ## This section is copy/pasted to all of these tests, that is dumb.
 datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
@@ -150,5 +149,4 @@ test_that("Do the intercept model results equal those from cell means?", {
 
 save(list=ls(), file="de_limma.rda")
 
-message("\n")
-message("Finished 20de_limma_batch.R")
+message("\nFinished 20de_limma_batch.R")

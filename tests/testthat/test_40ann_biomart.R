@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Does biomart function?")
+context("40ann_biomart.R: Does biomart function?\n")
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
@@ -43,5 +42,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     })
 }
 
-message("\n")
-message("Finished 40ann_biomart.R")
+message("\nFinished 40ann_biomart.R")
