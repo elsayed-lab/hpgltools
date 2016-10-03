@@ -74,5 +74,3 @@ NULL
 #' @import stats
 #' @import utils
 NULL
-
-options(error=traceback)

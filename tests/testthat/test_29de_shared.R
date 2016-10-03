@@ -1,5 +1,6 @@
 library(testthat)
 library(hpgltools)
+options(error=traceback)
 context("29de_shared.R: Do the combined differential expression searches work?\n")
 
 pasilla <- new.env()
