@@ -1244,6 +1244,16 @@ de_venns <- function(tables, adjp=FALSE, ...) {
         return(ddf)
     }
 
+    up_venneuler <- list()
+    up_venn_data <- list()
+    up_venn <- list()
+    up_venn_noweight <- list()
+    up_venn_weight <- list()
+    down_venneuler <- list()
+    down_venn_data <- list()
+    down_venn <- list()
+    down_venn_noweight <- list()
+    down_venn_weight <- list()
     for (i in 1:length(tables)) {
         table <- tables[[i]]
         table_name <- names(tables)[[i]]
@@ -1286,43 +1296,46 @@ de_venns <- function(tables, adjp=FALSE, ...) {
         up_twos <- c("d&e" = up_de, "d&l" = up_dl, "e&l" = up_el)
         up_threes <- c("d&e&l" = up_del)
         up_fun <- plot_fun_venn(ones=up_ones, twos=up_twos, threes=up_threes)
-        up_venneuler <- up_fun[["plot"]]
-        up_venn_data <- up_fun[["data"]]
-        up_venn <- Vennerable::Venn(SetNames = c("d", "e", "l"),
-                                    Weight = c(0, up_d, up_e, up_de,
-                                                up_l, up_dl, up_el,
-                                               up_del))
+        up_venneuler[[table_name]] <- up_fun[["plot"]]
+        up_venn_data[[table_name]] <- up_fun[["data"]]
+        tt <- sm(require.auto("hs229/Vennerable"))
+        up_venn[[table_name]] <- Vennerable::Venn(SetNames = c("d", "e", "l"),
+                                                  Weight = c(0, up_d, up_e, up_de,
+                                                             up_l, up_dl, up_el,
+                                                             up_del))
         Vennerable::plot(up_venn, doWeights=FALSE)
-        up_venn_noweight <- grDevices::recordPlot()
+        up_venn_noweight[[table_name]] <- grDevices::recordPlot()
         Vennerable::plot(up_venn, doWeights=TRUE)
-        up_venn_weight <- grDevices::recordPlot()
+        up_venn_weight[[table_name]] <- grDevices::recordPlot()
 
         down_ones <- c("d" = down_d, "e" = down_e, "l" = down_l)
         down_twos <- c("d&e" = down_de, "d&l" = down_dl, "e&l" = down_el)
         down_threes <- c("d&e&l" = down_del)
         down_fun <- plot_fun_venn(ones=down_ones, twos=down_twos, threes=down_threes)
-        down_venneuler <- down_fun[["plot"]]
-        down_venn_data <- down_fun[["data"]]
-        down_venn <- Vennerable::Venn(SetNames = c("d", "e", "l"),
-                                    Weight = c(0, down_d, down_e, down_de,
-                                                down_l, down_dl, down_el,
-                                               down_del))
+        down_venneuler[[table_name]] <- down_fun[["plot"]]
+        down_venn_data[[table_name]] <- down_fun[["data"]]
+        down_venn[[table_name]] <- Vennerable::Venn(SetNames = c("d", "e", "l"),
+                                                    Weight = c(0, down_d, down_e, down_de,
+                                                               down_l, down_dl, down_el,
+                                                               down_del))
         Vennerable::plot(down_venn, doWeights=FALSE)
-        down_venn_noweight <- grDevices::recordPlot()
+        down_venn_noweight[[table_name]] <- grDevices::recordPlot()
         Vennerable::plot(down_venn, doWeights=TRUE)
-        down_venn_weight <- grDevices::recordPlot()
+        down_venn_weight[[table_name]] <- grDevices::recordPlot()
 
-        retlist <- list(
-            "up_venneuler" = up_venneuler,
-            "up_noweight" = up_venn_noweight,
-            "up_weight" = up_venn_weight,
-            "up_data" = up_data,
-            "down_venneuler" = down_fun,
-            "down_noweight" = down_venn_noweight,
-            "down_weight" = down_venn_weight,
-            "down_data" = down_data)
-        return(retlist)
+    }
+    retlist <- list(
+        "up_venneuler" = up_venneuler,
+        "up_noweight" = up_venn_noweight,
+        "up_weight" = up_venn_weight,
+        "up_data" = up_data,
+        "down_venneuler" = down_fun,
+        "down_noweight" = down_venn_noweight,
+        "down_weight" = down_venn_weight,
+        "down_data" = down_data)
+    return(retlist)
 }
+
 
 #' Test for infected/control/beads -- a placebo effect?
 #' The goal is therefore to find responses different than beads

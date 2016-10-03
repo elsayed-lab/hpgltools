@@ -1,8 +1,21 @@
+#' @export
 plot_funn_venn <- function(...) {
     plot_fun_venn(...)
     ## har har I am so witty!
 }
 
+#' A quick wrapper around venneuler to help label stuff
+#'
+#' venneuler makes pretty venn diagrams, but no labels!
+#'
+#' @param ones  Character list of singletone categories
+#' @param twos  Character list of doubletone categories
+#' @param threes  Character list of tripletone categories
+#' @param fours  Character list of quad categories
+#' @param fives  Character list of quint categories
+#' @param factor Currently unused, but intended to change the radial distance to the label from the center of each circle.
+#' @return Two element list containing the venneuler data and the plot.
+#' @export
 plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), factor=0.9) {
     venn_sets <- ones
     venn_intersect_label <- ""
