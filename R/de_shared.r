@@ -718,6 +718,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     deseq_plots <- list()
     sheet_count <- 0
     de_summaries <- data.frame()
+
     if (class(keepers) == "list") {
         ## Then keep specific tables in specific orientations.
         a <- 0
@@ -735,7 +736,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 same_string <- paste0(numerator, "_vs_", denominator)
                 inverse_string <- paste0(denominator, "_vs_", numerator)
             }
-
             dat <- NULL
             plt <- NULL
             summary <- NULL
@@ -810,7 +810,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             table_names[[a]] <- summary[["table"]]
         }
         ## If you want all the tables in a dump
-    } else if (class(keepers) == "character" & keepers == "all") {
+    }
+
+    else if (class(keepers) == "character" & keepers == "all") {
         a <- 0
         names_length <- length(names(edger[["contrast_list"]]))
         table_names <- names(edger[["contrast_list"]])
@@ -832,7 +834,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
         }
 
         ## Or a single specific table
-    } else if (class(keepers) == "character") {
+    }
+
+    else if (class(keepers) == "character") {
         table <- keepers
         sheet_count <- sheet_count + 1
         if (table %in% names(edger[["contrast_list"]])) {
@@ -855,10 +859,13 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
         limma_plots[[name]] <- sm(limma_coefficient_scatter(limma, x=xname, y=yname))[["scatter"]]
         edger_plots[[name]] <- sm(edger_coefficient_scatter(edger, x=xname, y=yname))[["scatter"]]
         deseq_plots[[name]] <- sm(limma_coefficient_scatter(deseq, x=xname, y=yname))[["scatter"]]
-    } else {
+    }
+
+    else {
         stop("I don't know what to do with your specification of tables to keep.")
     }
 
+    venns <- list()
     comp <- NULL
     if (!is.null(excel)) {
         ## Starting a new counter of sheets.
@@ -878,15 +885,17 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 plot_column <- xls_result[["end_col"]] + 2
                 message(paste0("Adding venn plots for ", names(combo)[[count]], "."))
                 openxlsx::writeData(wb, tab, x="Venn of p-value up genes.", startRow=1, startCol=plot_column)
-                venn_list <- de_venns(ddd)
+                venn_list <- de_venn(ddd, adjp=adjp)
                 up_plot <- venn_list[["up_noweight"]]
                 print(up_plot)
                 openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
                                      startCol=plot_column, startRow=2, fileType="png", units="in")
                 openxlsx::writeData(wb, tab, x="Venn of p-value down genes.", startRow=1, startCol=plot_column + 4)
                 down_plot <- venn_list[["down_noweight"]]
+                print(down_plot)
                 openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
                                      startCol=plot_column + 4, startRow=2, fileType="png", units="in")
+                venns[[tab]] <- venn_list
 
                 ## Text on row 18, plots from 19-49 (30 rows)
                 message(paste0("Adding a limma coefficient plot for ", names(combo)[[count]], "."))
@@ -990,6 +999,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             "edger_plots" = edger_plots,
             "deseq_plots" = deseq_plots,
             "comp_plot" = comp,
+            "venns" = venns,
             "de_summay" = de_summaries)
     } else {
         ret <- retlist
@@ -1225,9 +1235,8 @@ create_combined_table <- function(li, ed, de, ba,
     return(ret)
 }
 
-de_venns <- function(tables, adjp=FALSE, ...) {
+de_venn <- function(table, adjp=FALSE, ...) {
     arglist <- list(...)
-    venn_list <- list()
     combine_tables <- function(d, e, l) {
         ddf <- as.data.frame(l[, "limma_logfc"])
         rownames(ddf) <- rownames(l)
@@ -1244,95 +1253,81 @@ de_venns <- function(tables, adjp=FALSE, ...) {
         return(ddf)
     }
 
-    up_venneuler <- list()
-    up_venn_data <- list()
-    up_venn <- list()
-    up_venn_noweight <- list()
-    up_venn_weight <- list()
-    down_venneuler <- list()
-    down_venn_data <- list()
-    down_venn <- list()
-    down_venn_noweight <- list()
-    down_venn_weight <- list()
-    for (i in 1:length(tables)) {
-        table <- tables[[i]]
-        table_name <- names(tables)[[i]]
-        limma_p <- "limma_p"
-        deseq_p <- "deseq_p"
-        edger_p <- "edger_p"
-        if (isTRUE(adjp)) {
-            limma_p <- "limma_adjp"
-            deseq_p <- "deseq_adjp"
-            edger_p <- "edger_adjp"
-        }
-
-        limma_sig <- sm(get_sig_genes(table, column="limma_logfc", p_column=limma_p))
-        edger_sig <- sm(get_sig_genes(table, column="edger_logfc", p_column=edger_p))
-        deseq_sig <- sm(get_sig_genes(table, column="deseq_logfc", p_column=deseq_p))
-        comp_up <- combine_tables(deseq_sig[["up_genes"]],
-                                  edger_sig[["up_genes"]],
-                                  limma_sig[["up_genes"]])
-        comp_down <- combine_tables(deseq_sig[["down_genes"]],
-                                    edger_sig[["down_genes"]],
-                                    limma_sig[["down_genes"]])
-
-        up_d <- sum(!is.na(comp_up[["deseq"]]) & is.na(comp_up[["edger"]]) & is.na(comp_up[["limma"]]))
-        up_e <- sum(is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & is.na(comp_up[["limma"]]))
-        up_l <- sum(is.na(comp_up[["deseq"]]) & is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
-        up_de <- sum(!is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & is.na(comp_up[["limma"]]))
-        up_dl <- sum(!is.na(comp_up[["deseq"]]) & is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
-        up_el <- sum(is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
-        up_del <- sum(!is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
-
-        down_d <- sum(!is.na(comp_down[["deseq"]]) & is.na(comp_down[["edger"]]) & is.na(comp_down[["limma"]]))
-        down_e <- sum(is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & is.na(comp_down[["limma"]]))
-        down_l <- sum(is.na(comp_down[["deseq"]]) & is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
-        down_de <- sum(!is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & is.na(comp_down[["limma"]]))
-        down_dl <- sum(!is.na(comp_down[["deseq"]]) & is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
-        down_el <- sum(is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
-        down_del <- sum(!is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
-
-        up_ones <- c("d" = up_d, "e" = up_e, "l" = up_l)
-        up_twos <- c("d&e" = up_de, "d&l" = up_dl, "e&l" = up_el)
-        up_threes <- c("d&e&l" = up_del)
-        up_fun <- plot_fun_venn(ones=up_ones, twos=up_twos, threes=up_threes)
-        up_venneuler[[table_name]] <- up_fun[["plot"]]
-        up_venn_data[[table_name]] <- up_fun[["data"]]
-        tt <- sm(require.auto("hs229/Vennerable"))
-        up_venn[[table_name]] <- Vennerable::Venn(SetNames = c("d", "e", "l"),
-                                                  Weight = c(0, up_d, up_e, up_de,
-                                                             up_l, up_dl, up_el,
-                                                             up_del))
-        Vennerable::plot(up_venn, doWeights=FALSE)
-        up_venn_noweight[[table_name]] <- grDevices::recordPlot()
-        Vennerable::plot(up_venn, doWeights=TRUE)
-        up_venn_weight[[table_name]] <- grDevices::recordPlot()
-
-        down_ones <- c("d" = down_d, "e" = down_e, "l" = down_l)
-        down_twos <- c("d&e" = down_de, "d&l" = down_dl, "e&l" = down_el)
-        down_threes <- c("d&e&l" = down_del)
-        down_fun <- plot_fun_venn(ones=down_ones, twos=down_twos, threes=down_threes)
-        down_venneuler[[table_name]] <- down_fun[["plot"]]
-        down_venn_data[[table_name]] <- down_fun[["data"]]
-        down_venn[[table_name]] <- Vennerable::Venn(SetNames = c("d", "e", "l"),
-                                                    Weight = c(0, down_d, down_e, down_de,
-                                                               down_l, down_dl, down_el,
-                                                               down_del))
-        Vennerable::plot(down_venn, doWeights=FALSE)
-        down_venn_noweight[[table_name]] <- grDevices::recordPlot()
-        Vennerable::plot(down_venn, doWeights=TRUE)
-        down_venn_weight[[table_name]] <- grDevices::recordPlot()
-
+    limma_p <- "limma_p"
+    deseq_p <- "deseq_p"
+    edger_p <- "edger_p"
+    if (isTRUE(adjp)) {
+        limma_p <- "limma_adjp"
+        deseq_p <- "deseq_adjp"
+        edger_p <- "edger_adjp"
     }
+
+    limma_sig <- sm(get_sig_genes(table, column="limma_logfc", p_column=limma_p))
+    edger_sig <- sm(get_sig_genes(table, column="edger_logfc", p_column=edger_p))
+    deseq_sig <- sm(get_sig_genes(table, column="deseq_logfc", p_column=deseq_p))
+    comp_up <- combine_tables(deseq_sig[["up_genes"]],
+                              edger_sig[["up_genes"]],
+                              limma_sig[["up_genes"]])
+    comp_down <- combine_tables(deseq_sig[["down_genes"]],
+                                edger_sig[["down_genes"]],
+                                limma_sig[["down_genes"]])
+
+    up_d <- sum(!is.na(comp_up[["deseq"]]) & is.na(comp_up[["edger"]]) & is.na(comp_up[["limma"]]))
+    up_e <- sum(is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & is.na(comp_up[["limma"]]))
+    up_l <- sum(is.na(comp_up[["deseq"]]) & is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
+    up_de <- sum(!is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & is.na(comp_up[["limma"]]))
+    up_dl <- sum(!is.na(comp_up[["deseq"]]) & is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
+    up_el <- sum(is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
+    up_del <- sum(!is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
+
+    down_d <- sum(!is.na(comp_down[["deseq"]]) & is.na(comp_down[["edger"]]) & is.na(comp_down[["limma"]]))
+    down_e <- sum(is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & is.na(comp_down[["limma"]]))
+    down_l <- sum(is.na(comp_down[["deseq"]]) & is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
+    down_de <- sum(!is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & is.na(comp_down[["limma"]]))
+    down_dl <- sum(!is.na(comp_down[["deseq"]]) & is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
+    down_el <- sum(is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
+    down_del <- sum(!is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
+
+    up_ones <- c("d" = up_d, "e" = up_e, "l" = up_l)
+    up_twos <- c("d&e" = up_de, "d&l" = up_dl, "e&l" = up_el)
+    up_threes <- c("d&e&l" = up_del)
+    up_fun <- plot_fun_venn(ones=up_ones, twos=up_twos, threes=up_threes)
+    up_venneuler <- up_fun[["plot"]]
+    up_venn_data <- up_fun[["data"]]
+    tt <- sm(require.auto("hs229/Vennerable"))
+    up_venn <- Vennerable::Venn(SetNames = c("d", "e", "l"),
+                                Weight = c(0, up_d, up_e, up_de,
+                                           up_l, up_dl, up_el,
+                                           up_del))
+    Vennerable::plot(up_venn, doWeights=FALSE)
+    up_venn_noweight <- grDevices::recordPlot()
+    Vennerable::plot(up_venn, doWeights=TRUE)
+    up_venn_weight <- grDevices::recordPlot()
+
+    down_ones <- c("d" = down_d, "e" = down_e, "l" = down_l)
+    down_twos <- c("d&e" = down_de, "d&l" = down_dl, "e&l" = down_el)
+    down_threes <- c("d&e&l" = down_del)
+    down_fun <- plot_fun_venn(ones=down_ones, twos=down_twos, threes=down_threes)
+    down_venneuler <- down_fun[["plot"]]
+    down_venn_data <- down_fun[["data"]]
+    down_venn <- Vennerable::Venn(SetNames = c("d", "e", "l"),
+                                  Weight = c(0, down_d, down_e, down_de,
+                                             down_l, down_dl, down_el,
+                                             down_del))
+    Vennerable::plot(down_venn, doWeights=FALSE)
+    down_venn_noweight <- grDevices::recordPlot()
+    Vennerable::plot(down_venn, doWeights=TRUE)
+    down_venn_weight <- grDevices::recordPlot()
+
     retlist <- list(
         "up_venneuler" = up_venneuler,
         "up_noweight" = up_venn_noweight,
         "up_weight" = up_venn_weight,
-        "up_data" = up_data,
+        "up_data" = comp_up,
         "down_venneuler" = down_fun,
         "down_noweight" = down_venn_noweight,
         "down_weight" = down_venn_weight,
-        "down_data" = down_data)
+        "down_data" = comp_down)
     return(retlist)
 }
 
