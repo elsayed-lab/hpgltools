@@ -119,7 +119,6 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
         }
     }
 
-
     ##for(i in 1:nrow(genes)) {
     ##    row <- genes[i,]
     ##    genename=row$Name

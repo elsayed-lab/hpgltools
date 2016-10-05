@@ -19,65 +19,130 @@
 #' @param min_groupsize What is the minimum ontology group's size?
 #' @param kegg_prefix Many KEGG ids need a prefix before they will cross reference.
 #' @param kegg_organism Choose the 3 letter KEGG organism name here.
-#' @param kegg_id_column Column in the orgdb to use for cross referencing to KEGG.
 #' @param categories How many categories should be plotted in bar/dot plots?
 #' @return a list
 #' @export
 simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
-                            orgdb_from="FLYBASE", orgdb_to=c("ENSEMBL","SYMBOL","ENTREZID"),
-                            go_level=3, pcutoff=0.05, qcutoff=0.1, fc_column="logFC",
-                            permutations=100, min_groupsize=5, kegg_prefix="Dmel_",
-                            kegg_organism="dme", kegg_id_column="FLYBASECG", categories=12) {
+###                            orgdb_from="FLYBASE", orgdb_to=c("ENSEMBL","SYMBOL","ENTREZID"),
+                                   orgdb_from="FLYBASE", orgdb_to="ENTREZID", internal=TRUE,
+                                   go_level=3, pcutoff=0.05, qcutoff=0.1, fc_column="logFC", updown="up",
+                                   permutations=100, min_groupsize=5, kegg_prefix="Dmel_", mings=5,
+                                   kegg_organism="dme", categories=12, parallel=TRUE) {
+    requireNamespace(package="clusterProfiler", quietly=TRUE)
     requireNamespace(orgdb)
     org <- loadNamespace(orgdb) ## put the orgDb instance into an environment
     org <- org[[orgdb]] ## Then extract it
     mapper_keys <- AnnotationDbi::keytypes(org)
     all_genenames <- rownames(all_genes)
+    orgdb_from <- toupper(orgdb_from)
+    orgdb_to <- toupper(orgdb_to)
     all_genes_df <- clusterProfiler::bitr(all_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
     sig_genenames <- rownames(sig_genes)
     sig_genes_df <- clusterProfiler::bitr(sig_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
-    universe <- AnnotationDbi::keys(org, keytype=orgdb_from)
+    universe <- AnnotationDbi::keys(org, keytype=orgdb_to)
     all_genes_df <- merge(all_genes, all_genes_df, by.x="row.names", by.y=orgdb_from)
     ## Rename the first column
     colnames(all_genes_df)[1] <- orgdb_from
     if (is.null(all_genes_df[[fc_column]])) {
         stop("The fold change column appears to provide no genes, try another column in the data set.")
     }
-    all_genes_df <- all_genes_df[ order(all_genes_df[[fc_column]], decreasing=TRUE), ]
+
+    ## Why did I do this? ## Ahh for the GSE analyses, they want ordered gene IDs
+    if (updown == "up") {
+        all_genes_df <- all_genes_df[ order(all_genes_df[[fc_column]], decreasing=TRUE), ]
+    } else {
+        all_genes_df <- all_genes_df[ order(all_genes_df[[fc_column]], decreasing=FALSE), ]
+    }
 
     message("Calculating GO groups.")
-    ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[["ENTREZID"]], OrgDb=org, ont="MF", level=go_level, readable=TRUE)
-    ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[["ENTREZID"]], OrgDb=org, ont="BP", level=go_level, readable=TRUE)
-    ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[["ENTREZID"]], OrgDb=org, ont="CC", level=go_level, readable=TRUE)
+    ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org, ont="MF", level=go_level, readable=TRUE)
+    ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org, ont="BP", level=go_level, readable=TRUE)
+    ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org, ont="CC", level=go_level, readable=TRUE)
     group_go <- list(
-        "MF" = summary(ggo_mf),
-        "BP" = summary(ggo_bp),
-        "CC" = summary(ggo_cc))
+        "MF" = as.data.frame(DOSE::summary(ggo_mf)),
+        "BP" = as.data.frame(DOSE::summary(ggo_bp)),
+        "CC" = as.data.frame(DOSE::summary(ggo_cc)))
 
     message("Calculating enriched GO groups.")
-    ego_all_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="MF",
-                                            pAdjustMethod="BH", pvalueCutoff=1.0, qvalueCutoff=1.0, readable=TRUE)
-    ego_sig_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="MF",
-                                            pAdjustMethod="BH", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, readable=TRUE)
-    ego_all_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="BP",
-                                            pAdjustMethod="BH", pvalueCutoff=1.0, qvalueCutoff=1.0, readable=TRUE)
-    ego_sig_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="BP",
-                                            pAdjustMethod="BH", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, readable=TRUE)
-    ego_all_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="CC",
-                                            pAdjustMethod="BH", pvalueCutoff=1.0, qvalueCutoff=1.0, readable=TRUE)
-    ego_sig_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[["ENTREZID"]], universe=universe, OrgDb=org, ont="CC",
-                                            pAdjustMethod="BH", pvalueCutoff=pcutoff, qvalueCutoff=qcutoff, readable=TRUE)
+    enrich_results <- list(
+        "all_mf" = NULL,
+        "sig_mf" = NULL,
+        "all_bp" = NULL,
+        "sig_bp" = NULL,
+        "all_cc" = NULL,
+        "sig_cc" = NULL)
+    ## While a nifty idea, doParallel will not work currently with this because I have insufficient
+    ## control over the life-cycle of the sqlite connections created by clusterProfiler
+    ## as a result, when one enrichGO() completes, it closes the sqlite connection and kills all the others.
+    ##if (isTRUE(parallel)) {
+    ##    cl <- parallel::makeCluster(6)
+    ##    doParallel::registerDoParallel(cl)
+    ##    requireNamespace("parallel")
+    ##    requireNamespace("doParallel")
+    ##    requireNamespace("iterators")
+    ##    requireNamespace("foreach")
+    ##    res <- foreach(c=1:length(names(enrich_results)), .packages=c("hpgltools","clusterProfiler")) %dopar% {
+    ##        result_name <- names(enrich_results)[[c]]
+    ##        name_split <- strsplit(x=result_name, split="_")
+    ##        enrich_type <- name_split[[1]][[1]]
+    ##        enrich_ont <- toupper(name_split[[1]][[2]])
+    ##        cutoff = 1.0
+    ##        if (enrich_type == "sig") {
+    ##            cutoff=pcutoff
+    ##        }
+    ##        results[[result_name]] <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], org,
+    ##                                                            universe=universe,
+    ##                                                            ont=enrich_ont,
+    ##                                                            minGSSize=mings,
+    ##                                                            pAdjustMethod="BH",
+    ##                                                            pvalueCutoff=cutoff,
+    ##                                                            readable=TRUE)
+    ##    }  ## End the %dopar% loop
+    ##    parallel::stopCluster(cl)
+    ##    for (r in 1:length(res)) {
+    ##        a_result <- res[[r]]
+    ##        type <- a_result[["type"]]
+    ##        enrich_results[[type]] <- a_result
+    ##    }
+    ##    rm(res)
+    ##} else {
+    ego_all_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                            OrgDb=org, ont="MF",
+                                            minGSSize=mings, pAdjustMethod="BH",
+                                            pvalueCutoff=1.0, readable=TRUE)
+    ego_sig_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                            OrgDb=org, ont="MF",
+                                            minGSSize=mings, pAdjustMethod="BH",
+                                            pvalueCutoff=pcutoff, readable=TRUE)
+    ego_all_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                            OrgDb=org, ont="BP",
+                                            minGSSize=mings, pAdjustMethod="BH",
+                                            pvalueCutoff=1.0, readable=TRUE)
+    ego_sig_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                            OrgDb=org, ont="BP",
+                                            minGSSize=mings, pAdjustMethod="BH",
+                                            pvalueCutoff=pcutoff, readable=TRUE)
+    ego_all_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                            OrgDb=org, ont="CC",
+                                            minGSSize=mings, pAdjustMethod="BH",
+                                            pvalueCutoff=1.0, readable=TRUE)
+    ego_sig_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                            OrgDb=org, ont="CC",
+                                            minGSSize=mings, pAdjustMethod="BH",
+                                            pvalueCutoff=pcutoff, readable=TRUE)
+    ##} ## End else if we should do a parallel search
+
     enrich_go <- list(
-        "MF_all" = summary(ego_all_mf),
-        "MF_sig" = summary(ego_sig_mf),
-        "BP_all" = summary(ego_all_bp),
-        "BP_sig" = summary(ego_sig_bp),
-        "CC_all" = summary(ego_all_cc),
-        "CC_sig" = summary(ego_sig_cc))
+        "MF_all" = as.data.frame(DOSE::summary(ego_all_mf)),
+        "MF_sig" = as.data.frame(DOSE::summary(ego_sig_mf)),
+        "BP_all" = as.data.frame(DOSE::summary(ego_all_bp)),
+        "BP_sig" = as.data.frame(DOSE::summary(ego_sig_bp)),
+        "CC_all" = as.data.frame(DOSE::summary(ego_all_cc)),
+        "CC_sig" = as.data.frame(DOSE::summary(ego_sig_cc)))
 
     message("Performing GSE analyses of gene lists (this is slow).")
     genelist <- as.vector(all_genes_df[[fc_column]])
-    names(genelist) <- all_genes_df[["ENTREZID"]]
+    names(genelist) <- all_genes_df[[orgdb_to]]
     gse_all_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
                                          nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
     gse_sig_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
@@ -91,43 +156,44 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     gse_sig_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
                                          nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
     gse_go <- list(
-        "MF_all" = summary(gse_all_mf),
-        "MF_sig" = summary(gse_sig_mf),
-        "BP_all" = summary(gse_all_bp),
-        "BP_sig" = summary(gse_sig_bp),
-        "CC_all" = summary(gse_all_cc),
-        "CC_sig" = summary(gse_sig_cc))
+        "MF_all" = as.data.frame(DOSE::summary(gse_all_mf)),
+        "MF_sig" = as.data.frame(DOSE::summary(gse_sig_mf)),
+        "BP_all" = as.data.frame(DOSE::summary(gse_all_bp)),
+        "BP_sig" = as.data.frame(DOSE::summary(gse_sig_bp)),
+        "CC_all" = as.data.frame(DOSE::summary(gse_all_cc)),
+        "CC_sig" = as.data.frame(DOSE::summary(gse_sig_cc)))
 
     message("Performing KEGG analyses.")
-    kegg_sig_ids <- paste0(kegg_prefix, sig_genes_df[[kegg_id_column]])
-    all_kegg <- clusterProfiler::enrichKEGG(gene=kegg_sig_ids, organism=kegg_organism,
-                                            pvalueCutoff=1.0)
-    Sys.sleep(3)
-    enrich_kegg <- clusterProfiler::enrichKEGG(gene=kegg_sig_ids, organism=kegg_organism, pvalueCutoff=pcutoff)
+    ## The help documentation _says_ this uses entrez gene ids, but looking at the environment
+    ## created by clusterProfiler belies this.
+    kegg_sig_ids <- sig_genes_df[[orgdb_from]]
+    all_kegg <- clusterProfiler::enrichKEGG(kegg_sig_ids, organism=kegg_organism, pvalueCutoff=1.0, use_internal_data=internal)
+    enrich_kegg <- clusterProfiler::enrichKEGG(gene=kegg_sig_ids, organism=kegg_organism, pvalueCutoff=pcutoff, use_internal_data=internal)
 
     kegg_genelist <- as.vector(all_genes_df[[fc_column]])
-    names(kegg_genelist) <- paste0(kegg_prefix, all_genes_df[[kegg_id_column]])
-    Sys.sleep(3)
+    names(kegg_genelist) <- all_genes_df[[orgdb_from]]
     gse_all_kegg <- clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
                                              nPerm=permutations, minGSSize=min_groupsize,
-                                             pvalueCutoff=1.0)
-    Sys.sleep(3)
+                                             pvalueCutoff=1.0, use_internal_data=internal)
     gse_sig_kegg <- clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
                                              nPerm=permutations, minGSSize=min_groupsize,
-                                             pvalueCutoff=pcutoff)
-    Sys.sleep(3)
-    gse_all_mkegg <- clusterProfiler::gseMKEGG(geneList=kegg_genelist, organism=kegg_organism,
-                                               pvalueCutoff=1.0)
-    Sys.sleep(3)
-    gse_sig_mkegg <- clusterProfiler::gseMKEGG(geneList=kegg_genelist, organism=kegg_organism,
-    pvalueCutoff=pcutoff)
+                                             pvalueCutoff=pcutoff, use_internal_data=internal)
+    gse_all_mkegg <- NULL
+    gse_sig_mkegg <- NULL
+    ## The following does not work anylonger with weird errors that I am not inclined to chase down.
+    ##Sys.sleep(3)
+    ##gse_all_mkegg <- clusterProfiler::gseMKEGG(geneList=kegg_genelist, organism=kegg_organism,
+    ##                                           pvalueCutoff=1.0)
+    ##Sys.sleep(3)
+    ##gse_sig_mkegg <- clusterProfiler::gseMKEGG(geneList=kegg_genelist, organism=kegg_organism,
+    ##pvalueCutoff=pcutoff)
     kegg_data <- list(
-        "kegg_all" <- summary(all_kegg),
-        "kegg_sig" <- summary(enrich_kegg),
-        "kegg_gse_all" <- summary(gse_all_kegg),
-        "kegg_gse_sig" <- summary(gse_sig_kegg),
-        "kegg_gsem_all" <- summary(gse_all_mkegg),
-        "kegg_gsem_sig" <- summary(gse_sig_mkegg))
+        "kegg_all" = as.data.frame(DOSE::summary(all_kegg)),
+        "kegg_sig" = as.data.frame(DOSE::summary(enrich_kegg)),
+        "kegg_gse_all" = as.data.frame(DOSE::summary(gse_all_kegg)),
+        "kegg_gse_sig" = as.data.frame(DOSE::summary(gse_sig_kegg)))
+##        "kegg_gsem_all" <- as.data.frame(summary(gse_all_mkegg)),
+##        "kegg_gsem_sig" <- as.data.frame(summary(gse_sig_mkegg)))
 
     message("Plotting results.")
     DOSE::enrichMap(ego_sig_mf)
@@ -221,7 +287,7 @@ simple_cp_enricher <- function(sig_genes, de_table, goids_df=NULL) {
     sig_genenames <- rownames(sig_genes)
     enriched <- clusterProfiler::enricher(sig_genenames, TERM2GENE=goids_df)
     retlist <- list(
-        "enriched" = summary(enriched))
+        "enriched" = as.data.frame(DOSE::summary(enriched)))
     return(retlist)
 }
 

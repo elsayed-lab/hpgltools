@@ -5,10 +5,11 @@
 \title{Perform the array of analyses in the 2016-04 version of clusterProfiler}
 \usage{
 simple_clusterprofiler(sig_genes, all_genes, orgdb = "org.Dm.eg.db",
-  orgdb_from = "FLYBASE", orgdb_to = c("ENSEMBL", "SYMBOL", "ENTREZID"),
+  orgdb_from = "FLYBASE", orgdb_to = "ENTREZID", internal = TRUE,
   go_level = 3, pcutoff = 0.05, qcutoff = 0.1, fc_column = "logFC",
-  permutations = 100, min_groupsize = 5, kegg_prefix = "Dmel_",
-  kegg_organism = "dme", kegg_id_column = "FLYBASECG", categories = 12)
+  updown = "up", permutations = 100, min_groupsize = 5,
+  kegg_prefix = "Dmel_", mings = 5, kegg_organism = "dme",
+  categories = 12, parallel = TRUE)
 }
 \arguments{
 \item{sig_genes}{Dataframe of genes deemed 'significant.'}
@@ -36,8 +37,6 @@ simple_clusterprofiler(sig_genes, all_genes, orgdb = "org.Dm.eg.db",
 \item{kegg_prefix}{Many KEGG ids need a prefix before they will cross reference.}
 
 \item{kegg_organism}{Choose the 3 letter KEGG organism name here.}
-
-\item{kegg_id_column}{Column in the orgdb to use for cross referencing to KEGG.}
 
 \item{categories}{How many categories should be plotted in bar/dot plots?}
 }

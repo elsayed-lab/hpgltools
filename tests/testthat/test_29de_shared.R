@@ -16,6 +16,7 @@ load("de_limma.rda", envir=limma)
 basic <- new.env()
 load("de_basic.rda", envir=basic)
 
+## The following lines should not be needed any longer.
 tt <- sm(library(iterators))
 tt <- sm(library(parallel))
 tt <- sm(library(doParallel)) ## this has %dopar%

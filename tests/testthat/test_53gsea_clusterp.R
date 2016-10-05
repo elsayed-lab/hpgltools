@@ -10,31 +10,43 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     table <- limma$hpgl_table
     sig_genes <- sm(get_sig_genes(table, column="untreated")$up_genes)
 
+    ## This information should be available through the annotation tests and passed here.
     ## Use biomart's result to get the gene lengths etc.
     dmel_annotations <- sm(get_biomart_annotations(species="dmelanogaster"))
     ## And ontology cateogies.
     dmel_ontologies <- sm(get_biomart_ontologies(species="dmelanogaster"))
-    ##dmel_cp <- sm(simple_cp_orgdb(sig_genes, table, orgdb="org.Dm.eg.db", fc_column="untreated"))
+
     dmel_cp <- sm(simple_clusterprofiler(sig_genes, table, orgdb="org.Dm.eg.db", fc_column="untreated"))
-    ## message("Testing cluster profiler, this will probably take a while.")
-    ## message("Since the last time I played with clusterprofiler, it looks like some pretty big changes have happened.")
-    ## message("It is probably time to re-do my entire clusterprofiler analysis.\n")
-    ## cp_result <- simple_clusterprofiler(sig_genes, gff=gff_file, goids=dmel_ontologies)
-    ## cp_result <- cp_result$result
-    ## expected_cp_mf <- c("GO:0004252", "GO:0008509", "GO:0008028", "GO:0046943", "GO:0005342", "GO:0008236")
-    ## actual_cp_mf <- head(cp_result$mf_interesting$ID)
-    ## expected_cp_bp <- c("GO:0006116", "GO:0006734", "GO:0032881", "GO:0070873", "GO:0006206", "GO:0006814")
-    ## actual_cp_bp <- head(cp_result$bp_interesting$ID)
-    ## expected_cp_cc <- c("GO:0016021", "GO:0031224", "GO:0000421", "GO:0045254", "GO:0044665", "GO:0009897")
-    ## actual_cp_cc <- head(cp_result$cc_interesting$ID)
-    ## expected_cp_mfp <- c(0.0001466297, 0.0003302495, 0.0003874293, 0.0004893901, 0.0007106647, 0.0010191967)
-    ## actual_cp_mfp <- head(cp_result$pvalue_plots$mfp_plot_over$data$pvalue)
-    ## test_that("Are the clusterprofiler interesting results as expected?", {
-    ##     expect_equal(expected_cp_mf, actual_cp_mf)
-    ##     expect_equal(expected_cp_bp, actual_cp_bp)
-    ##     expect_equal(expected_cp_cc, actual_cp_cc)
-    ##     expect_equal(expected_cp_mfp, actual_cp_mfp, tolerance=0.0001)
-    ## })
+
+    expected <- c("GO:0055085", "GO:0006811", "GO:0006820", "GO:0030001", "GO:0006030", "GO:0006812")
+    actual <- head(dmel_cp$enrich_go$BP_all$ID)
+    test_that("Does the set of BP_all have the expected IDs?", {
+        expect_equal(expected, actual)
+    })
+    expected <- c("GO:0055085", "GO:0006811")
+    actual <- dmel_cp$enrich_go$BP_sig$ID
+    test_that("Does the set of BP_sig have the expected IDs?", {
+        expect_equal(expected, actual)
+    })
+    expected <- c("GO:0016052", "GO:0019991", "GO:0034329", "GO:0035151", "GO:0035159", "GO:0044724")
+    actual <- head(dmel_cp$gse_go$BP_all$ID)
+    test_that("Does the set of BP_gsea_all have the expected IDs?", {
+        expect_equal(expected, actual)
+    })
+    expected <- c("dme00983", "dme00500", "dme00860", "dme00903", "dme00053", "dme00830")
+    actual <- head(dmel_cp$kegg_data$kegg_sig$ID)
+    test_that("Does the set of KEGG data have the expected IDs?", {
+        expect_equal(expected, actual)
+    })
+    expected <- "gg"
+    actual <- class(dmel_cp$plots$dot_all_bp)[[1]]
+    test_that("Did we get a valid dotplot for BP data?", {
+        expect_equal(expected, actual)
+    })
+    actual <- class(dmel_cp$plots$ego_all_bp)[[1]]
+    test_that("Did we get a valid barplot for BP data?", {
+        expect_equal(expected, actual)
+    })
 }
 
 message("\nFinished 53gsea_clusterp.R")
