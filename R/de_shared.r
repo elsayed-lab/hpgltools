@@ -34,7 +34,7 @@
 #'  data_list = all_pairwise(expt)
 #' }
 #' @export
-all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
+all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE, modify_p=FALSE,
                          model_batch=TRUE, model_intercept=TRUE, extra_contrasts=NULL,
                          alt_model=NULL, libsize=NULL, annot_df=NULL, parallel=TRUE, ...) {
     arglist <- list(...)
@@ -87,7 +87,7 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                                            libsize=libsize,
                                            ##annot_df=annot_df, ...)
                                            annot_df=annot_df)  ## For testing
-        }
+        } ## End foreach() %dopar% { }
         parallel::stopCluster(cl)
         ## foreach returns the results in no particular order
         ## Therefore, I will reorder the results now and ensure that they are happy.
@@ -115,69 +115,131 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
         }
     } ## End performing a serial comparison
 
+    original_pvalues <- NULL
     ## Add in a little work to re-adjust the p-values in the situation where sva was used
-    modify_p <- FALSE
-    if (!is.null(sv_model)) {
+    if (!is.null(sv_model) & isTRUE(modify_p)) {
+        original_pvalues <- data.table::data.table(rownames=rownames(results[["edger"]][["all_tables"]][[1]]))
+        message("Using the f.pvalue() function to modify the returned p-values of deseq/limma/edger.")
         ## This is from section 5 of the sva manual:  "Adjusting for surrogate values using the f.pvalue function
-        if (isTRUE(modify_p)) {
-            for (it in 1:length(results[["edger"]][["all_tables"]])) {
-                name <- names(results[["edger"]][["all_tables"]])[it]
-                namelst <- strsplit(x=name, split="_vs_")
-                first <- namelst[[1]][[1]]
-                second <- namelst[[1]][[2]]
-                ## I am going to need to extract the set of data for the samples in 'first' and 'second'
-                ## I will need to also extract the surrogates for those samples from sv_model
-                ## Then I rewrite null_model as the subset(null_model, samples included)
-                ## and rewrite sv_model as subset(sv_model, samples_included)
-                ## in that rewrite, there will just be conditions a, b where a and b are the subsets for first and second
-                ## Then the sv_model will be a for the first samples and b for the second
-                ## With that information, I should e able to feed sva::f.pvalue the appropriate information
-                ## for it to run properly.
-                ## The resulting pvalues will then be appropriate for backfilling the various tables
-                ## from edger/limma/deseq
-                samples_first_idx <- results[["limma"]][["conditions"]] == first
-                num_first <- sum(samples_first_idx)
-                samples_first <- Biobase::exprs(input[["expressionset"]])[, samples_first_idx]
-                samples_second_idx <- results[["limma"]][["conditions"]] == second
-                num_second <- sum(samples_second_idx)
-                samples_second <- Biobase::exprs(input[["expressionset"]])[, samples_second_idx]
-                included_samples <- cbind(samples_first, samples_second)
-                colnames(included_samples) <- c(rep("first", times=num_first), rep("second", times=num_second))
-                first_sva <- sv_model[samples_first_idx, ]
-                second_sva <- sv_model[samples_second_idx, ]
-                first_model <- append(rep(1, num_first), rep(0, num_second))
-                second_model <- append(rep(0, num_first), rep(1, num_second))
-                new_sv_model <- append(first_sva, second_sva)
-                new_model <- cbind(first_model, second_model, new_sv_model)
-                colnames(new_model) <- c("first","second","sv")
-                new_null <- cbind(rep(1, (num_first + num_second)), new_sv_model)
-                colnames(new_null) <- c("null", "sv")
-                new_pvalues <- sva::f.pvalue(included_samples, new_model, new_null)
+        ## The following chunk of code is longer and more complex than I would like.  This is because
+        ## f.pvalue() assumes a pairwise comparison of a data set containing only two experimental factors.
+        ## As a way to provide an example of _how_ to calculate appropriately corrected p-values for surrogate
+        ## factor adjusted models, this is great; but when dealing with actual data, it falls a bit short.
+        for (it in 1:length(results[["edger"]][["all_tables"]])) {
+            name <- names(results[["edger"]][["all_tables"]])[it]
+            message(paste0("Readjusting the p-values for comparison: ", name))
+            namelst <- strsplit(x=name, split="_vs_")
+            first <- namelst[[1]][[1]]  ## something like 'mutant'
+            second <- namelst[[1]][[2]]  ## something like 'wildtype', ergo the contrast was "mutant_vs_wildtype"
+            ## The comments that follow will use mutant and wildtype as examples
+
+            ## I am going to need to extract the set of data for the samples in 'first' and 'second'
+            ## I will need to also extract the surrogates for those samples from sv_model
+            ## Then I rewrite null_model as the subset(null_model, samples included)
+            ## and rewrite sv_model as subset(sv_model, samples_included)
+            ## in that rewrite, there will just be conditions a, b where a and b are the subsets for first and second
+            ## Then the sv_model will be a for the first samples and b for the second
+            ## With that information, I should e able to feed sva::f.pvalue the appropriate information
+            ## for it to run properly.
+            ## The resulting pvalues will then be appropriate for backfilling the various tables
+            ## from edger/limma/deseq
+
+            ## Get the samples from the limma comparison which are condition 'mutant'
+            samples_first_idx <- results[["limma"]][["conditions"]] == first
+            num_first <- sum(samples_first_idx)
+            ## Subset the expressionset and make a new matrix of only the 'mutant' samples
+            samples_first <- Biobase::exprs(input[["expressionset"]])[, samples_first_idx]
+            ## Repeat for the 'wildtype' samples, when finished the m columns for samples_first
+            ## 'mutant' and the n samples of samples_second will be 'wildtype'
+            samples_second_idx <- results[["limma"]][["conditions"]] == second
+            num_second <- sum(samples_second_idx)
+            samples_second <- Biobase::exprs(input[["expressionset"]])[, samples_second_idx]
+            ## Concatenate the 'mutant' and 'wildtype' samples by column
+            included_samples <- cbind(samples_first, samples_second)
+            ## Arbitrarily call them 'first' and 'second'
+            colnames(included_samples) <- c(rep("first", times=num_first), rep("second", times=num_second))
+            ## Do the same thing, but using the rows of the sva model adjustment
+            first_sva <- sv_model[samples_first_idx, ]
+            second_sva <- sv_model[samples_second_idx, ]
+            ## But instead of just appending them, I need a matrix of 0s and 1s identifying which
+            ## sv rows correspond to 'wildtype' and 'mutant'
+            first_model <- append(rep(1, num_first), rep(0, num_second))
+            second_model <- append(rep(0, num_first), rep(1, num_second))
+            ## Once I have them, make the subset model matrix with append and cbind
+            new_sv_model <- append(first_sva, second_sva)
+            new_model <- cbind(first_model, second_model, new_sv_model)
+            colnames(new_model) <- c("first","second","sv")
+            ## The sva f.pvalue requires a null model of the appropriate size, create that here.
+            new_null <- cbind(rep(1, (num_first + num_second)), new_sv_model)
+            ## And give its columns suitable names
+            colnames(new_null) <- c("null", "sv")
+            ## Now all the pieces are in place, call f.pvalue().
+            new_pvalues <- try(sva::f.pvalue(included_samples, new_model, new_null), silent=TRUE)
+            ## For strange non-pairwise contrasts, the f.pvalue() call is expected to fail.
+            if (class(new_pvalues) == "try-error") {
+                new_pvalues <- NULL
+                warning(paste0("Unable to adjust pvalues for: ", name))
+                warning("If this was not for an extra contrast, then this is a serious problem.")
+            } else {
+                ## Most of the time it should succeed, so do a BH adjustment of the new values.
                 new_adjp <- p.adjust(new_pvalues)
                 ## Now I need to fill in the tables with these new values.
+                ## This section is a little complex.  In brief, it pulls the appropriate
+                ## columns from each of the limma, edger, and deseq tables
+                ## copies them to a new data.table named 'original_pvalues', and
+                ## then replaces them with the just-calculated (adj)p-values.
+
+                ## Start with limma, make no assumptions about table return-order
                 limma_table_order <- rownames(results[["limma"]][["all_tables"]][[name]])
                 reordered_pvalues <- new_pvalues[limma_table_order]
                 reordered_adjp <- new_adjp[limma_table_order]
-                results[["limma"]][["all_tales"]][[name]][["P.Value"]] <- reordered_pvalues
-                results[["limma"]][["all_tales"]][[name]][["adj.P.Val"]] <- reordered_adjp
+                ## Create a temporary dt with the old p-values and merge it into original_pvalues.
+                tmpdt <- data.table::data.table(results[["limma"]][["all_tables"]][[name]][["P.Value"]])
+                tmpdt[["rownames"]] <- rownames(results[["limma"]][["all_tables"]][[name]])
+                ## Change the column name of the new data to reflect that it is from limma.
+                colnames(tmpdt) <- c(paste0("limma_", name), "rownames")
+                original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
+                ## Swap out the p-values and adjusted p-values.
+                results[["limma"]][["all_tables"]][[name]][["P.Value"]] <- reordered_pvalues
+                results[["limma"]][["all_tables"]][[name]][["adj.P.Val"]] <- reordered_adjp
+
+                ## Repeat the above verbatim, but for edger
                 edger_table_order <- rownames(results[["edger"]][["all_tables"]][[name]])
                 reordered_pvalues <- new_pvalues[edger_table_order]
                 reordered_adjp <- new_adjp[edger_table_order]
-                results[["edger"]][["all_tales"]][[name]][["PValue"]] <- reordered_pvalues
-                results[["edger"]][["all_tales"]][[name]][["FDR"]] <- reordered_adjp
+                tmpdt <- data.table::data.table(results[["edger"]][["all_tables"]][[name]][["PValue"]])
+                tmpdt[["rownames"]] <- rownames(results[["edger"]][["all_tables"]][[name]])
+                colnames(tmpdt) <- c(paste0("edger_", name), "rownames")
+                original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
+                results[["edger"]][["all_tables"]][[name]][["PValue"]] <- reordered_pvalues
+                results[["edger"]][["all_tables"]][[name]][["FDR"]] <- reordered_adjp
+
+                ## Ibid.
                 deseq_table_order <- rownames(results[["deseq"]][["all_tables"]][[name]])
-                results[["deseq"]][["all_tales"]][[name]][["P.Value"]] <- reordered_pvalues
-                results[["deseq"]][["all_tales"]][[name]][["adj.P.Val"]] <- reordered_adjp
-            }
-        }
-    }
+                tmpdt <- data.table::data.table(results[["deseq"]][["all_tables"]][[name]][["P.Value"]])
+                tmpdt[["rownames"]] <- rownames(results[["deseq"]][["all_tables"]][[name]])
+                colnames(tmpdt) <- c(paste0("deseq_", name), "rownames")
+                original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
+                results[["deseq"]][["all_tables"]][[name]][["P.Value"]] <- reordered_pvalues
+                results[["deseq"]][["all_tables"]][[name]][["adj.P.Val"]] <- reordered_adjp
+            } ## End checking that f.pvalue worked.
+        }  ## End foreach table
+        original_pvalues <- as.data.frame(original_pvalues)
+    } ## End checking if we should f-test modify the p-values
 
     result_comparison <- compare_tables(limma=results[["limma"]],
                                         deseq=results[["deseq"]],
                                         edger=results[["edger"]],
                                         basic=results[["basic"]],
                                         annot_df=annot_df, ...)
+    ## The first few elements of this list are being passed through into the return
+    ## So that if I use combine_tables() I can report in the resulting tables
+    ## some information about what was performed.
     ret <- list(
+        "model_cond" = model_cond,
+        "model_batch" = model_batch,
+        "extra_contrasts" = extra_contrasts,
+        "original_pvalues" = original_pvalues,
         "input" = input,
         "limma" = results[["limma"]],
         "deseq" = results[["deseq"]],
@@ -656,10 +718,25 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
         wb <- openxlsx::createWorkbook(creator="hpgltools")
     }
 
+    reminder_model_cond <- all_pairwise_result[["model_cond"]]
+    reminder_model_batch <- all_pairwise_result[["model_batch"]]
+    reminder_extra <- all_pairwise_result[["extra_contrasts"]]
+    reminder_string <- NULL
+    if (class(reminder_model_batch) == "matrix") {
+        reminder_string <- "The contrasts were performed with experimental condition and surrogates modeled with sva.  The p-values were therefore adjusted using an f-test as per the sva documentation."
+        message(reminder_string)
+    } else if (isTRUE(reminder_model_batch) & isTRUE(reminder_model_cond)) {
+        reminder_string <- "The contrasts were performed with experimental condition and batch in the model."
+    } else if (isTRUE(reminder_model_cond)) {
+        reminder_string <- "The contrasts were performed with only experimental condition in the model."
+    } else {
+        reminder_string <- "The contrasts were performed in a strange way, beware!"
+    }
     message("Writing a legend of columns.")
     legend <- data.frame(rbind(
-        c("The first ~3-10 columns:", "are annotation data taken from whatever annotation source we used."),
-        c("Next 6 columns", "The logFC and p-values reported by limma/edger/deseq2."),
+        c(reminder_string, ""),
+        c("The first ~3-10 columns of each sheet:", "are annotations provided by our chosen annotation source for this experiment."),
+        c("Next 6 columns", "The logFC and p-values reported by limma, edger, and deseq2."),
         c("limma_logfc", "The log2 fold change reported by limma."),
         c("deseq_logfc", "The log2 fold change reported by DESeq2."),
         c("edger_logfc", "The log2 fold change reported by edgeR."),
@@ -667,11 +744,11 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
         c("deseq_adjp", "The adjusted-p value reported by DESeq2."),
         c("edger_adjp", "The adjusted-p value reported by edgeR."),
         c("The next 5 columns", "Statistics generated by limma."),
-        c("limma_ave", "Average log2 expression observed by limma across _all_ samples."),
+        c("limma_ave", "Average log2 expression observed by limma across all samples."),
         c("limma_t", "T-statistic reported by limma given the log2FC and variances."),
         c("limma_p", "Derived from limma_t, the p-value asking 'is this logfc significant?'"),
         c("limma_b", "Use a Bayesian estimate to calculate log-odds significance instead of a student's test."),
-        c("limma_q", "A q-value correction of the p-value above."),
+        c("limma_q", "A q-value FDR adjustment of the p-value above."),
         c("The next 5 columns", "Statistics generated by DESeq2."),
         c("deseq_basemean", "Analagous to limma's ave column, the base mean of all samples according to DESeq2."),
         c("deseq_lfcse", "The standard error observed given the log2 fold change."),
@@ -698,7 +775,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
         c("fc_varbymed", "The ratio of the variance/median (closer to 0 means better agreement.)"),
         c("p_meta", "A meta-p-value of the mean p-values."),
         c("p_var", "Variance among the 3 p-values."),
-        c("The following columns", "3 plots showing the expression coefficients of limma, edgeR, and DESeq2 respectively.")
+        c("The following columns",
+          "3 plots showing the expression coefficients of limma, edgeR, and DESeq2 respectively."),
+        c("If this data was adjusted with sva, then check for a sheet 'original_pvalues' at the end.", "")
     ))
 
     colnames(legend) <- c("column name", "column definition")
@@ -974,6 +1053,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 }
             } ## End checking if we could compare the logFC/P-values
         } ## End if compare_plots is TRUE
+
+        if (!is.null(all_pairwise_result[["original_pvalues"]])) {
+            message("Appending a data frame of the original pvalues before sva messed with them.")
+            xls_result <- write_xls(wb, data=all_pairwise_result[["original_pvalues"]], sheet="original_pvalues",
+                                    title="Original pvalues for all contrasts before sva adjustment.",
+                                    start_row=1)
+        }
+
+
         message("Performing save of the workbook.")
         save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
         if (class(save_result) == "try-error") {
@@ -1352,13 +1440,13 @@ disjunct_tab <- function(contrast_fit, coef1, coef2, ...) {
 do_pairwise <- function(type, ...) {
     res <- NULL
     if (type == "limma") {
-        res <- limma_pairwise(...)
+        res <- try(limma_pairwise(...))
     } else if (type == "edger") {
-        res <- edger_pairwise(...)
+        res <- try(edger_pairwise(...))
     } else if (type == "deseq") {
-        res <- deseq2_pairwise(...)
+        res <- try(deseq2_pairwise(...))
     } else if (type == "basic") {
-        res <- basic_pairwise(...)
+        res <- try(basic_pairwise(...))
     }
     res[["type"]] <- type
     return(res)
