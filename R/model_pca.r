@@ -200,7 +200,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         "batch_int" = as.integer(as.factor(design[[batch_column]])),
         "PC1" = pca[["v"]][, 1],
         "PC2" = pca[["v"]][, 2],
-        "colors" = plot_colors,
+        "colors" = as.character(plot_colors),
         "labels" = label_list)
 
     if (!is.null(size_column)) {

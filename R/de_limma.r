@@ -26,9 +26,9 @@ limma_ma <- function(output, table=NULL, p_col="adj.P.Val",
     }
     possible_tables <- names(output[["all_pairwise"]])
     if (is.null(table)) {
-        table <- possible_tables[1]
+        table <- possible_tables[[1]]
     } else if (is.numeric(table)) {
-        table <- possible_tables[table]
+        table <- possible_tables[[table]]
     }
 
     de_genes <- output[["all_tables"]][[table]]

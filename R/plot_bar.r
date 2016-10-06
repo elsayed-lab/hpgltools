@@ -21,7 +21,9 @@
 #'  libsize_plot  ## ooo pretty bargraph
 #' }
 #' @export
-plot_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  yscale=NULL, ...) {
+plot_libsize <- function(data, colors=NULL,
+                         names=NULL, text=TRUE,
+                         title=NULL,  yscale=NULL, ...) {
     hpgl_env <- environment()
     arglist <- list(...)
     if (is.null(text)) {
@@ -30,8 +32,8 @@ plot_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
 
     ## In response to Keith's recent comment when there are more than 8 factors
     chosen_palette <- "Dark2"
-    if (!is.null(arglist$palette)) {
-        chosen_palette <- arglist$palette
+    if (!is.null(arglist[["palette"]])) {
+        chosen_palette <- arglist[["palette"]]
     }
 
     data_class <- class(data)[1]
@@ -53,30 +55,46 @@ plot_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
     if (is.null(colors)) {
         colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
     }
-    tmp <- data.frame(id=colnames(data),
-                      sum=colSums(data),
-                      colors=colors)
-    tmp$order <- factor(tmp$id, as.character(tmp$id))
-    libsize_plot <- ggplot2::ggplot(data=tmp, ggplot2::aes_string(x="order", y="sum"),
-                                    environment=hpgl_env, colour=colors) +
-        ggplot2::geom_bar(ggplot2::aes_string(x="order"), stat="identity", colour="black", fill=tmp$colors) +
+
+    colors <- as.character(colors)
+    libsize_df <- data.frame(id=colnames(data),
+                             sum=colSums(data),
+                             condition=design[["condition"]],
+                             colors=as.character(colors))
+    libsize_df[["order"]] <- factor(libsize_df[["id"]], as.character(libsize_df[["id"]]))
+
+    color_listing <- libsize_df[, c("condition","colors")]
+    color_listing <- unique(color_listing)
+    color_list <- as.character(color_listing[["colors"]])
+    names(color_list) <- as.character(color_listing[["condition"]])
+
+    libsize_plot <- ggplot2::ggplot(data=libsize_df, environment=hpgl_env, colour=colors,
+                                    aes_string(x="order",
+                                               y="sum")) +
+        ggplot2::geom_bar(stat="identity",
+                          colour="black",
+                          fill=libsize_df[["colors"]],
+                          aes_string(x="order")) +
         ggplot2::xlab("Sample ID") +
         ggplot2::ylab("Library size in (pseudo)counts.") +
         ggplot2::theme_bw() +
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=1.5, vjust=0.5))
+
     if (isTRUE(text)) {
-        ## ggplot2::geom_text(ggplot2::aes(data=tmp, label=prettyNum(sum, big.mark=",")),
-        ##                                 angle=90, size=3, color="white", hjust=1.2)
-        tmp$sum <- sprintf("%.2f", round(tmp$sum, 2))
-        libsize_plot <- libsize_plot + ggplot2::geom_text(
-                                           ggplot2::aes_string(x="order", label='prettyNum(as.character(tmp$sum), big.mark=",")'),
-                                           angle=90, size=4, color="white", hjust=1.2)
+        libsize_df[["sum"]] <- sprintf("%.2f", round(as.numeric(libsize_df[["sum"]]), 2))
+        ## newlabels <- prettyNum(as.character(libsize_df[["sum"]]), big.mark=",")
+        libsize_plot <- libsize_plot +
+            ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
+                               ggplot2::aes_string(parse=FALSE,
+                                                   x="order",
+                                                   label='prettyNum(as.character(libsize_df$sum), big.mark=",")'))
     }
+
     if (!is.null(title)) {
         libsize_plot <- libsize_plot + ggplot2::ggtitle(title)
     }
     if (is.null(yscale)) {
-        scale_difference <- max(as.numeric(tmp$sum)) / min(as.numeric(tmp$sum))
+        scale_difference <- max(as.numeric(libsize_df[["sum"]])) / min(as.numeric(libsize_df[["sum"]]))
         if (scale_difference > 10.0) {
             message("The scale difference between the smallest and largest
    libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")

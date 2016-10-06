@@ -555,20 +555,39 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     }
 
     shapes <- as.integer(as.factor(design[["batch"]]))
-    non_zero <- data.frame(
+    condition <- design[["condition"]]
+    batch <- design[["batch"]]
+    nz_df <- data.frame(
         "id" = colnames(data),
         "nonzero_genes" = colSums(data >= 1),
         "cpm" = colSums(data) * 1e-6,
-        "condition" = design[["condition"]],
-        "batch" = design[["batch"]])
+        "condition" = condition,
+        "batch" = batch,
+        "color" = as.character(colors))
 
-    non_zero_plot <- ggplot(data=non_zero, aes_string(x="cpm", y="nonzero_genes"), environment=hpgl_env, fill=colors, shape=shapes) +
-        ## geom_point(stat="identity", size=3, colour=hpgl_colors, pch=21) +
-        ggplot2::geom_point(aes_string(fill="colors"), colour="black", pch=21, stat="identity", size=3) +
-        ggplot2::scale_fill_manual(name="Condition", values=levels(as.factor(colors)), labels=levels(as.factor(design$condition))) +
+    color_listing <- nz_df[, c("condition","color")]
+    color_listing <- unique(color_listing)
+    color_list <- as.character(color_listing[["color"]])
+    names(color_list) <- as.character(color_listing[["condition"]])
+
+    non_zero_plot <- ggplot(data=nz_df,
+                            aes_string(x="cpm", y="nonzero_genes"),
+                            environment=hpgl_env) +
+        ggplot2::geom_point(size=3, shape=21,
+                            aes_string(colour="as.factor(condition)",
+                                       fill="as.factor(condition)")) +
+        ggplot2::geom_point(size=3, shape=21, colour="black", show.legend=FALSE,
+                            aes_string(fill="as.factor(condition)")) +
+        ggplot2::scale_color_manual(name="Condition",
+                                    guide="legend",
+                                    values=color_list) +
+        ggplot2::scale_fill_manual(name="Condition",
+                                   guide="legend",
+                                   values=color_list) +
         ggplot2::ylab("Number of non-zero genes observed.") +
         ggplot2::xlab("Observed CPM") +
         ggplot2::theme_bw()
+
     if (!is.null(labels)) {
         if (labels[[1]] == "fancy") {
             non_zero_plot <- non_zero_plot +

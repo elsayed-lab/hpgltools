@@ -175,6 +175,10 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE, 
             colnames(new_null) <- c("null", "sv")
             ## Now all the pieces are in place, call f.pvalue().
             new_pvalues <- try(sva::f.pvalue(included_samples, new_model, new_null), silent=TRUE)
+            ## For some things, f.pvalue returns NA, this is unacceptable.
+            na_pvalues_idx <- is.na(new_pvalues)
+            ## For the NaN pvalues, just set it to 1 under the assumption that something is fubar.
+            new_pvalues[na_pvalues_idx] <- 2.2E-16
             ## For strange non-pairwise contrasts, the f.pvalue() call is expected to fail.
             if (class(new_pvalues) == "try-error") {
                 new_pvalues <- NULL
@@ -182,7 +186,7 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE, 
                 warning("If this was not for an extra contrast, then this is a serious problem.")
             } else {
                 ## Most of the time it should succeed, so do a BH adjustment of the new values.
-                new_adjp <- p.adjust(new_pvalues)
+                new_adjp <- p.adjust(new_pvalues, method="BH")
                 ## Now I need to fill in the tables with these new values.
                 ## This section is a little complex.  In brief, it pulls the appropriate
                 ## columns from each of the limma, edger, and deseq tables
@@ -734,7 +738,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     }
     message("Writing a legend of columns.")
     legend <- data.frame(rbind(
-        c(reminder_string, ""),
+        c("", reminder_string),
         c("The first ~3-10 columns of each sheet:", "are annotations provided by our chosen annotation source for this experiment."),
         c("Next 6 columns", "The logFC and p-values reported by limma, edger, and deseq2."),
         c("limma_logfc", "The log2 fold change reported by limma."),
@@ -777,7 +781,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
         c("p_var", "Variance among the 3 p-values."),
         c("The following columns",
           "3 plots showing the expression coefficients of limma, edgeR, and DESeq2 respectively."),
-        c("If this data was adjusted with sva, then check for a sheet 'original_pvalues' at the end.", "")
+        c("", "If this data was adjusted with sva, then check for a sheet 'original_pvalues' at the end.")
     ))
 
     colnames(legend) <- c("column name", "column definition")
