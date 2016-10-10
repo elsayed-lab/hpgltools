@@ -551,18 +551,28 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
     chosen_colors <- expt[["conditions"]]
 
     if (is.null(colors) | isTRUE(colors)) {
-        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
-            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        sample_colors <- sm(grDevices::colorRampPalette(
+                                           RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
         mapping <- setNames(sample_colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
     } else if (!is.null(colors) & length(colors) == num_samples) {
         chosen_colors <- colors
     } else if (!is.null(colors) & length(colors) == num_conditions) {
-        mapping <- setNames(colors, unique(chosen_colors))
-        chosen_colors <- mapping[chosen_colors]
+        found_colors <- sum(names(colors) %in% chosen_colors)
+        ## In this case, we have every color accounted for in the set of conditions.
+        if (found_colors == num_conditions) {
+            mapping <- as.character(colors)
+            names(mapping) <- names(colors)
+            chosen_colors <- mapping[chosen_colors]
+        } else {
+            ## If we do not have every color accounted for in the set of conditions, let R decide on its own.
+            mapping <- setNames(colors, unique(chosen_colors))
+            chosen_colors <- mapping[chosen_colors]
+        }
     } else if (is.null(colors)) {
         colors <- sm(grDevices::colorRampPalette(
                                     RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        ## Check that all conditions are named in the color list:
         mapping <- setNames(colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
     } else {

@@ -143,8 +143,8 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         batch_color_assignments <- as.integer(as.factor(expt_design[[batch_row]]))
         row_colors <- RColorBrewer::brewer.pal(12, "Set3")[batch_color_assignments]
     } else {
-        ## If we just have 1 batch, make it... green!
-        row_colors <- rep("darkgreen", length(expt_colors))
+        ## If we just have 1 batch, make it... white (to disappear).
+        row_colors <- rep("white", length(expt_colors))
     }
 
     map <- NULL
