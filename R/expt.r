@@ -129,6 +129,10 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     }
     names(chosen_colors) <- sample_definitions[["sampleid"]]
 
+    ## Explicitly skip those samples which are "", null, or "undef" for the filename.
+    skippers <- (sample_definitions[[file_column]] == "" | is.null(sample_definitions[[file_column]]) | sample_definitions[[file_column]] == "undef")
+    sample_definitions <- sample_definitions[!skippers, ]
+
     ## Create a matrix of counts with columns as samples and rows as genes
     ## This may come from either a data frame/matrix, a list of files from the metadata
     ## or it can attempt to figure out the location of the files from the sample names.

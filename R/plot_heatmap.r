@@ -80,6 +80,19 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="pearson", expt_names=NULL,
                          type="correlation", batch_row="batch", title=NULL, ...) {
     arglist <- list(...)
+    margin_list <- c(12,9)
+    if (!is.null(arglist[["margin_list"]])) {
+        margin_list <- arglist[["margin_list"]]
+    }
+    chosen_palette <- "Dark2"
+    if (!is.null(arglist[["palette"]])) {
+        chosen_palette <- arglist[["palette"]]
+    }
+    keysize <- 2
+    if (!is.null(arglist[["keysize"]])) {
+        keysize <- arglist[["keysize"]]
+    }
+
     plot_env <- environment()
     data_class <- class(expt_data)[1]
     if (data_class == "expt") {
@@ -95,10 +108,6 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         expt_data <- as.data.frame(expt_data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
-    }
-    chosen_palette <- "Dark2"
-    if (!is.null(arglist[["palette"]])) {
-        chosen_palette <- arglist[["palette"]]
     }
 
     if (is.null(expt_colors)) {
@@ -140,15 +149,15 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 
     map <- NULL
     if (type == "correlation") {
-        map <- heatmap.3(heatmap_data, keysize=2, labRow=expt_names,
+        map <- heatmap.3(heatmap_data, keysize=keysize, labRow=expt_names,
                          labCol=expt_names, ColSideColors=expt_colors,
-                         RowSideColors=row_colors, margins=c(8,8),
+                         RowSideColors=row_colors, margins=margin_list,
                          scale="none", trace="none",
                          linewidth=0.5, main=title)
     } else {
-        map <- heatmap.3(heatmap_data, keysize=2, labRow=expt_names,
+        map <- heatmap.3(heatmap_data, keysize=keysize, labRow=expt_names,
                          labCol=expt_names, ColSideColors=expt_colors,
-                         RowSideColors=row_colors, margins=c(8,8),
+                         RowSideColors=row_colors, margins=margin_list,
                          scale="none", trace="none",
                          linewidth=0.5, main=title,
                          col=rev(heatmap_colors))
@@ -255,7 +264,7 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
 
 #' a minor change to heatmap.2 makes heatmap.3
 #'
-#' heamap.2 is the devil.
+#' heatmap.2 is the devil.
 #'
 #' @param x data
 #' @param Rowv add rows?

@@ -711,7 +711,6 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
 write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
                        excel=FALSE, csv=FALSE, annot_df=NULL) {
     testdir <- dirname(workbook)
-
     ## Figure out the number of genes if not provided
     if (n == 0) {
         n <- nrow(data[["coefficients"]])

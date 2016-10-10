@@ -19,6 +19,8 @@
 expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE, suffix=NULL, ...) {
     ## load first sample
     arglist <- list(...)
+    skippers <- (files == "" | files == "undef" | is.null(files))
+    files <- files[!skippers]
     lower_filenames <- files
     dirs <- dirname(lower_filenames)
     low_files <- tolower(basename(files))
