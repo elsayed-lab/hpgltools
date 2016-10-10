@@ -890,7 +890,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     return(ret)
 }
 
-
 #' Compare logFC values from limma and friends
 #'
 #' There are some peculiar discrepencies among these tools, what is up with that?
