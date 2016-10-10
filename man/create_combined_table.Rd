@@ -5,7 +5,8 @@
 \title{Given a limma, edger, and deseq table, combine them into one.}
 \usage{
 create_combined_table(li, ed, de, ba, table_name, annot_df = NULL,
-  inverse = FALSE, include_basic = TRUE, fc_cutoff = 1, p_cutoff = 0.05)
+  inverse = FALSE, adjp = TRUE, include_basic = TRUE, fc_cutoff = 1,
+  p_cutoff = 0.05, excludes = NULL)
 }
 \arguments{
 \item{li}{Limma output table.}

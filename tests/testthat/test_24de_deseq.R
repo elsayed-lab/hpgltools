@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Does DESeq2 work with hpgltools?")
+context("24de_deseq.R: Does DESeq2 work with hpgltools?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -77,3 +76,5 @@ test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise():
 })
 
 save(list=ls(), file="de_deseq.rda")
+
+message("\nFinished 24de_deseq.R")

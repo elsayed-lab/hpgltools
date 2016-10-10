@@ -25,7 +25,7 @@
 #' @param ... More parameters are fun!
 #' @return  experiment an expressionset
 #' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData} \link[Biobase]{exprs}
-#' \link{hpgl_read_files} \link[hash]{as.list.hash}
+#' \link{expt_read_counts} \link[hash]{as.list.hash}
 #' @examples
 #' \dontrun{
 #' new_experiment = create_expt("some_csv_file.csv", color_hash)
@@ -185,9 +185,9 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
 
     ## At this point sample_definitions$file should be filled in no matter what
     if (is.null(all_count_tables)) {
-        filenames <- as.character(sample_definitions[["file"]])
+        filenames <- as.character(sample_definitions[[file_column]])
         sample_ids <- as.character(sample_definitions[["sampleid"]])
-        all_count_tables <- hpgl_read_files(sample_ids, filenames, ...)
+        all_count_tables <- expt_read_counts(sample_ids, filenames, ...)
     }
 
     all_count_tables <- as.data.frame(all_count_tables)
@@ -243,19 +243,29 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     }
     ## There should no longer be blank columns in the annotation data.
     ## Maybe I will copy/move this to my annotation collection toys?
+    tmp_countsdt <- data.table::as.data.table(all_count_tables)
+    tmp_countsdt[["rownames"]] <- rownames(all_count_tables)
+    tmp_countsdt[["temporary_id_number"]] <- 1:nrow(tmp_countsdt)
+    gene_infodt <- data.table::as.data.table(gene_info)
+    gene_infodt[["rownames"]] <- rownames(gene_info)
 
-    tmp_counts <- all_count_tables
-    tmp_counts[["temporary_id_number"]] <- 1:nrow(tmp_counts)
     message("Bringing together the count matrix and gene information.")
-    counts_and_annotations <- merge(tmp_counts, gene_info, by="row.names", all.x=TRUE)
+    counts_and_annotations <- merge(tmp_countsdt, gene_infodt, by="rownames", all.x=TRUE)
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
-    final_annotations <- as.data.frame(counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_info) ])
-    colnames(final_annotations) <- colnames(gene_info)
-    rownames(final_annotations) <- counts_and_annotations[["Row.names"]]
-    final_counts <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_tables) ]
-    rownames(final_counts) <- counts_and_annotations[["Row.names"]]
+    counts_and_annotations <- as.data.frame(counts_and_annotations)
+    final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_infodt) ]
+    rownames(final_annotations) <- counts_and_annotations[["rownames"]]
+    final_annotations <- final_annotations[, -1, drop=FALSE]
+    ##colnames(final_annotations) <- colnames(gene_info)
+    ##rownames(final_annotations) <- counts_and_annotations[["rownames"]]
+    final_countsdt <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_tables) ]
+    final_counts <- as.data.frame(final_countsdt)
+    rownames(final_counts) <- counts_and_annotations[["rownames"]]
+    ##final_counts <- final_counts[, -1, drop=FALSE]
     rm(counts_and_annotations)
-    rm(tmp_counts)
+    rm(tmp_countsdt)
+    rm(gene_infodt)
+    rm(final_countsdt)
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
@@ -446,10 +456,10 @@ read_metadata <- function(file, ...) {
     } else if (tools::file_ext(file) == "xlsx") {
         ## xls = loadWorkbook(file, create=FALSE)
         ## tmp_definitions = readWorksheet(xls, 1)
-        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1, ...)
+        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1)
     } else if (tools::file_ext(file) == "xls") {
         ## This is not correct, but it is a start
-        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1, ...)
+        definitions <- XLConnect::read.xls(xlsFile=file, sheet=1)
     } else {
         definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
     }
@@ -514,7 +524,20 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' @return expt Send back the expt with some new metadata
 #' @examples
 #' \dontrun{
-#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
+#' unique(esmer_expt$design$conditions)
+#' # > "cl14_epi"  "clbr_epi"  "cl14_tryp" "clbr_tryp" "cl14_late" "clbr_late" "cl14_mid"  "clbr_mid"
+#' chosen_colors <- list(
+#'    "cl14_epi" = "#FF8D59",
+#'    "clbr_epi" = "#962F00",
+#'    "cl14_tryp" = "#D06D7F",
+#'    "clbr_tryp" = "#A4011F",
+#'    "cl14_late" = "#6BD35E",
+#'    "clbr_late" = "#1E7712",
+#'    "cl14_mid" = "#7280FF",
+#'    "clbr_mid" = "#000D7E")
+#' esmer_expt <- set_expt_colors(expt=esmer_expt, colors=chosen_colors)
+#' ## Or do it by sample (assuming you have 9 samples in groups of 3):
+#' expt = set_expt_colors(expt=esmer_expt, colors=c("red","red","red","geen","green","green","blue","blue","blue))
 #' }
 #' @export
 set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
@@ -551,45 +574,6 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
     expt[["colors"]] <- chosen_colors
     return(expt)
 }
-##set_expt_colors <- function(expt, colors=NULL, ids=NULL, ...) {
-##    arglist <- list(...)
-##    chosen_palette <- "Dark2"
-##    if (!is.null(arglist[["chosen_palette"]])) {
-##        chosen_palette <- arglist[["chosen_palette"]]
-##    }
-##    conditions <- expt[["conditions"]]
-##    if (is.null(conditions) & !is.null(arglist[["conditions"]])) {
-##        conditions <- arglist[["conditions"]]
-##    } else if (is.null(conditions) & !is.null(expt[["design"]])) {
-##        conditions <- expt[["design"]][["condition"]]
-##    } else if (is.null(conditions)) {
-##        warning("Unable to discern the number of conditions in the expt.")
-##        warning("Choosing 1 color for each sample.")
-##        conditions <- rownames(Biobase::pData(expt$expressionset))
-##    }
-##    num_conditions <- length(levels(as.factor(conditions)))
-##    chosen_colors <- as.character(conditions)
-##    if (is.null(colors)) {
-##        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
-##            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
-##        mapping <- setNames(sample_colors, unique(chosen_colors))
-##        chosen_colors <- mapping[chosen_colors]
-##        expt[["colors"]] <- chosen_colors
-##    } else if (class(colors) == "character" | class(colors) == "factor") {
-##        current <- levels(as.factor(expt[["colors"]]))
-##        if (length(current) == length(colors)) {
-##            for (c in 1:length(current)) {
-##                cur <- current[[c]]
-##                new <- colors[[c]]
-##                expt[["colors"]] <- gsub(pattern=cur, replacement=new, x=expt[["colors"]])
-##            }
-##        } else {
-##                warning("The numbers of colors do not match, using ColorBrewer to generate colors.")
-##                expt <- set_expt_colors(expt, colors=NULL)
-##            }
-##        }
-##    return(expt)
-##}
 
 #' Change the condition of an expt
 #'
@@ -672,6 +656,40 @@ set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
         expt <- set_expt_batch(expt, fact=batch, ...)
     }
     return(expt)
+}
+
+#' Change the sample names of an expt.
+#'
+#' Sometimes one does not like the hpgl identifiers, so provide a way to change them on-the-fly.
+#'
+#' @param expt Expt to modify
+#' @param newnames New names, currently only a character vector.
+#' @return expt Send back the expt with some new metadata
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_samplenames(expt, c("a","b","c","d","e","f"))
+#' }
+#' @export
+set_expt_samplenames <- function(expt, newnames) {
+    new_expt <- expt
+    oldnames <- rownames(new_expt[["design"]])
+    newnames <- make.unique(newnames)
+    newnote <- paste0("Sample names changed from: ", toString(oldnames), " to: ", toString(newnames), " at: ", date(), ".\n")
+    ## Things to modify include: batches, conditions
+    names(new_expt[["batches"]]) <- newnames
+    names(new_expt[["colors"]]) <- newnames
+    names(new_expt[["conditions"]]) <- newnames
+    newdesign <- new_expt[["design"]]
+    newdesign[["oldnames"]] <- rownames(newdesign)
+    rownames(newdesign) <- newnames
+    newdesign[["sampleid"]] <- newnames
+    new_expt[["design"]] <- newdesign
+    new_expressionset <- new_expt[["expressionset"]]
+    sampleNames(new_expressionset) <- newnames
+    new_expt[["expressionset"]] <- new_expressionset
+    names(new_expt[["libsize"]]) <- newnames
+    new_expt[["samplenames"]] <- newnames
+    return(new_expt)
 }
 
 ## EOF

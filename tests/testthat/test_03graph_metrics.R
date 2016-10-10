@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Is it possible to graph the various metrics with hpgltools?")
+context("03graph_metrics.R: Is it possible to graph the various metrics with hpgltools?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -52,13 +51,13 @@ norm <- sm(normalize_expt(pasilla_expt, transform="log2", convert="cbcbcpm", nor
 expected <- "recordedplot"  ## for all the heatmaps
 
 corheat_plot <- plot_corheat(norm)
-actual <- class(corheat_plot)
+actual <- class(corheat_plot$plot)
 test_that("corheat is a recorded plot?", {
     expect_equal(expected, actual)
 })
 
 disheat_plot <- plot_disheat(norm)
-actual <- class(disheat_plot)
+actual <- class(disheat_plot$plot)
 test_that("disheat is a recorded plot?", {
     expect_equal(expected, actual)
 })
@@ -117,3 +116,4 @@ test_that("Is the PCA PC2 as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
+message("\nFinished 03graph_metrics.R")

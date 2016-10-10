@@ -291,7 +291,8 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
 #' @export
 simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
                              second_col="limma_logfc", do_go=TRUE, do_kegg=TRUE,
-                             do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE, do_corum=TRUE, do_hp=TRUE) {
+                             do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE,
+                             do_corum=TRUE, do_hp=TRUE) {
     ## Assume for the moment a limma-ish data frame
     gene_list <- NULL
     if (!is.null(de_genes[[first_col]])) {

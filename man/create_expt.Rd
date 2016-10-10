@@ -56,6 +56,6 @@ new_experiment = create_expt("some_csv_file.csv", color_hash)
 }
 \seealso{
 \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData} \link[Biobase]{exprs}
-\link{hpgl_read_files} \link[hash]{as.list.hash}
+\link{expt_read_counts} \link[hash]{as.list.hash}
 }
 

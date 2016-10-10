@@ -403,7 +403,7 @@ plot_ontpval <- function(df, ontology="MF") {
         ggplot2::geom_bar(stat="identity") +
         ggplot2::coord_flip() +
         ggplot2::scale_x_discrete(name=y_name) +
-##        ggplot2::aes_string(fill="pvalue") +
+        ## ggplot2::aes_string(fill="pvalue") +
         ggplot2::scale_fill_continuous(low="red", high="blue") +
         ggplot2::theme(text=ggplot2::element_text(size=10)) +
         ggplot2::theme_bw()

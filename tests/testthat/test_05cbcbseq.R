@@ -5,7 +5,7 @@ tt <- sm(library(edgeR))
 data(pasillaGenes)
 num_installed <- require.auto("kokrah/cbcbSEQ")
 cbcb <- sm(library(cbcbSEQ))
-context("Compare cbcbSEQ output to hpgltools.")
+context("05cbcbseq.R: Compare cbcbSEQ output to hpgltools.\n")
 ## This test is intended to compare Kwame Okrah/Hector Corrada Bravo's cbcbSEQ output
 ## against that received from this.  hpgltools is a derivative of it, therefore it should
 ## provide identical results when called in a similar fashion.
@@ -202,3 +202,5 @@ hpgl_top <- hpgl_top[sort(rownames(hpgl_top)), ]
 test_that("Limma results, toptable.", {
     expect_equal(cbcb_top, hpgl_top)
 })
+
+message("\nFinished 05cbcbseq.R")

@@ -430,33 +430,38 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                        pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1,
                        size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
     ## Set up the data frame which will describe the plot
-    df <- data.frame("avg" = table[[expr_col]],
-                     "logfc" = table[[fc_col]],
-                     "pval" = table[[p_col]])
-    df[["pval"]] <- as.numeric(format(df[["pval"]], scientific=FALSE))
-    df[["state"]] <- ifelse(df[["pval"]] > pval_cutoff, "pinsig",
-                     ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] >= logfc_cutoff, "upsig",
-                     ifelse(df[["pval"]] <= pval_cutoff & df[["logfc"]] <= (-1 * logfc_cutoff), "downsig", "fcinsig")))
-    df[["state"]] <- as.factor(df[["state"]])
-    ## Explicitly set the levels for the state column in case some of them are not defined.
-    levels(df[["state"]]) <- c("pinsig","upsig","downsig","fcinsig")
-    df[["pcut"]] <- df[["pval"]] <= pval_cutoff
+    df <- data.frame(
+        "avg" = c(0, 0, 0, 0),
+        "logfc" = c(0, 0, 0, 0),
+        "pval" = c(0, 0, 0, 0),
+        "pcut" = c(FALSE, FALSE, FALSE, FALSE),
+        "state" = c("downsig", "fcinsig", "pinsig", "upsig"), stringsAsFactors=TRUE)
 
-    num_pinsig <- sum(df[["state"]] == "pinsig")
-    num_upsig <- sum(df[["state"]] == "upsig")
-    num_downsig <- sum(df[["state"]] == "downsig")
-    num_fcinsig <- sum(df[["state"]] == "fcinsig")
+    newdf <- data.frame("avg" = table[[expr_col]],
+                        "logfc" = table[[fc_col]],
+                        "pval" = table[[p_col]])
+    newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific=FALSE))
+    newdf[["pcut"]] <- newdf[["pval"]] <= pval_cutoff
+    newdf[["state"]] <- ifelse(newdf[["pval"]] > pval_cutoff, "pinsig",
+                        ifelse(newdf[["pval"]] <= pval_cutoff & newdf[["logfc"]] >= logfc_cutoff, "upsig",
+                        ifelse(newdf[["pval"]] <= pval_cutoff & newdf[["logfc"]] <= (-1.0 * logfc_cutoff), "downsig",
+                               "fcinsig")))
+    newdf[["state"]] <- as.factor(newdf[["state"]])
+    df <- rbind(df, newdf)
+    rm(newdf)
 
+    ## Subtract one from each value because I filled in a fake value of each category to start.
+    num_downsig <- sum(df[["state"]] == "downsig") - 1
+    num_fcinsig <- sum(df[["state"]] == "fcinsig") - 1
+    num_pinsig <- sum(df[["state"]] == "pinsig") - 1
+    num_upsig <- sum(df[["state"]] == "upsig") - 1
     ## Fill in 1 of each state to make ggplot2 not be stupid
-    df["tmp_pinsig",] <- c(0,0,0,"pinsig",FALSE)
-    df["tmp_upsig",] <- c(0,0,0,"upsig",FALSE)
-    df["tmp_downsig",] <- c(0,0,0,"downsig",FALSE)
-    df["tmp_fcinsig",] <- c(0,0,0,"fcinsig",FALSE)
-    df[[1]] <- as.numeric(df[[1]])
-    df[[2]] <- as.numeric(df[[2]])
-    df[[3]] <- as.numeric(df[[3]])
-    df[[4]] <- as.factor(df[[4]])
-    df[[5]] <- as.factor(df[[5]])
+
+    df[["avg"]] <- as.numeric(df[[1]])
+    df[["logfc"]] <- as.numeric(df[[2]])
+    df[["pval"]] <- as.numeric(df[[3]])
+    df[["pcut"]] <- as.factor(df[[4]])
+    df[["state"]] <- as.factor(df[[5]])
 
     ## Set up the labels for the legend by significance.
     state_shapes <- c(21,22,23,24)
@@ -468,7 +473,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                              fill="as.factor(pcut)",
                              colour="as.factor(pcut)",
                              shape="as.factor(state)")) +
-        ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1), logfc_cutoff), color="red", size=(size / 2)) +
+        ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1.0), logfc_cutoff), color="red", size=(size / 2)) +
         ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
         ggplot2::scale_shape_manual(name="state", values=state_shapes,
                                     labels=c(
@@ -476,10 +481,10 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                                         paste0("FC Insig.: ", num_fcinsig),
                                         paste0("P Insig.: ", num_pinsig),
                                         paste0("Up Sig.: ", num_upsig)),
-                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="black"))) +
+                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
     ggplot2::scale_fill_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
     ggplot2::scale_color_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
-##    ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
+    ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
     ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
     ggplot2::xlab("Average Count (Millions of Reads)") +
     ggplot2::ylab("log fold change") +
@@ -487,7 +492,14 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     if (!is.null(gvis_filename)) {
         plot_gvis_ma(df, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
     }
-    return(plt)
+    retlist <- list(
+        "num_downsig" = num_downsig,
+        "num_fcinsig" = num_fcinsig,
+        "num_pinsig" = num_pinsig,
+        "num_upsig" = num_upsig,
+        "plot" = plt,
+        "df" = df)
+    return(retlist)
 }
 
 #' Make a ggplot graph of the number of non-zero genes by sample.
@@ -543,20 +555,39 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     }
 
     shapes <- as.integer(as.factor(design[["batch"]]))
-    non_zero <- data.frame(
+    condition <- design[["condition"]]
+    batch <- design[["batch"]]
+    nz_df <- data.frame(
         "id" = colnames(data),
         "nonzero_genes" = colSums(data >= 1),
         "cpm" = colSums(data) * 1e-6,
-        "condition" = design[["condition"]],
-        "batch" = design[["batch"]])
+        "condition" = condition,
+        "batch" = batch,
+        "color" = as.character(colors))
 
-    non_zero_plot <- ggplot(data=non_zero, aes_string(x="cpm", y="nonzero_genes"), environment=hpgl_env, fill=colors, shape=shapes) +
-        ## geom_point(stat="identity", size=3, colour=hpgl_colors, pch=21) +
-        ggplot2::geom_point(aes_string(fill="colors"), colour="black", pch=21, stat="identity", size=3) +
-        ggplot2::scale_fill_manual(name="Condition", values=levels(as.factor(colors)), labels=levels(as.factor(design$condition))) +
+    color_listing <- nz_df[, c("condition","color")]
+    color_listing <- unique(color_listing)
+    color_list <- as.character(color_listing[["color"]])
+    names(color_list) <- as.character(color_listing[["condition"]])
+
+    non_zero_plot <- ggplot(data=nz_df,
+                            aes_string(x="cpm", y="nonzero_genes"),
+                            environment=hpgl_env) +
+        ggplot2::geom_point(size=3, shape=21,
+                            aes_string(colour="as.factor(condition)",
+                                       fill="as.factor(condition)")) +
+        ggplot2::geom_point(size=3, shape=21, colour="black", show.legend=FALSE,
+                            aes_string(fill="as.factor(condition)")) +
+        ggplot2::scale_color_manual(name="Condition",
+                                    guide="legend",
+                                    values=color_list) +
+        ggplot2::scale_fill_manual(name="Condition",
+                                   guide="legend",
+                                   values=color_list) +
         ggplot2::ylab("Number of non-zero genes observed.") +
         ggplot2::xlab("Observed CPM") +
         ggplot2::theme_bw()
+
     if (!is.null(labels)) {
         if (labels[[1]] == "fancy") {
             non_zero_plot <- non_zero_plot +
@@ -718,60 +749,67 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
                          fc_cutoff=0.8, p_cutoff=0.05, size=2, alpha=0.6,
                          xaxis_column="logFC", yaxis_column="P.Value", ...) {
-    hpgl_env <- environment()
     low_vert_line <- 0.0 - fc_cutoff
     horiz_line <- -1 * log10(p_cutoff)
 
+    df <- data.frame(
+        "xaxis" = c(0, 0, 0, 0),
+        "yaxis" = c(0, 0, 0, 0),
+        "logyaxis" = c(0, 0, 0, 0),
+        "pcut" = c(FALSE, FALSE, FALSE, FALSE),
+        "state" = c("downsig", "fcinsig", "pinsig", "upsig"), stringsAsFactors=TRUE)
+
     df <- data.frame("xaxis" = toptable_data[[xaxis_column]],
                      "yaxis" = toptable_data[[yaxis_column]])
-    df[["logyaxis"]] <- -1 * log10(df[["yaxis"]])
-    rownames(df) <- rownames(toptable_data)
-    df[["state"]] <- ifelse(df[["yaxis"]] > p_cutoff, "pinsig",
-                     ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] >= fc_cutoff, "upsig",
-                     ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] <= (-1 * fc_cutoff), "downsig", "fcinsig")))
-    ##up_df <- df[ df[["xaxis"]] => 0, ]
-    ##down_df <- df[ df[["yaxis"]] < 0, ]
-    up_df[["state"]] <- ifelse(up_df[["yaxis"]] > p_cutoff, "pupinsig",
-                        ifelse(df[["yaxis"]] <= p_cutoff & df[["xaxis"]] >= fc_cutoff, "upsig", "fcupinsig"))
-    ##num_pup_insig <- sum(up_df[["state"]] == "pupinsig")
-    ##num_up_sig <- sum(up_df[["state"]] == "upsig")
-    ##num_up_fcinsig <- sum(up_df[["state"]] == "fcupinsig")
-    ##down_df[["state"]] <- ifelse(down_df[["yaxis"]] > p_cutoff, "pdowninsig",
-    ##                      ifelse(down_df[["yaxis"]] <= p_cutoff & down_df[["xaxis"]] <= (-1 * fc_cutoff), "downsig", "fcdowninsig"))
-    ##num_pdown_insig <- sum(down_df[["state"]] == "pdowninsig")
-    ##num_down_sig <- sum(down_df[["state"]] == "downsig")
-    ##num_down_fcinsig <- sum(down_df[["state"]] == "fcdowninsig")
+    df[["logyaxis"]] <- -1.0 * log10(df[["yaxis"]])
+    df[["pcut"]] <- df[["yaxis"]] <= p_cutoff
+    df[["state"]] <- ifelse(toptable_data[[yaxis_column]] > p_cutoff, "pinsig",
+                     ifelse(toptable_data[[yaxis_column]] <= p_cutoff & toptable_data[[xaxis_column]] >= fc_cutoff, "upsig",
+                     ifelse(toptable_data[[yaxis_column]] <= p_cutoff & toptable_data[[xaxis_column]] <= (-1 * fc_cutoff),
+                            "downsig", "fcinsig")))
 
-    num_downsig <- sum(df[["state"]] == "downsig")
-    num_fcinsig <- sum(df[["state"]] == "fcinsig")
-    num_pinsig <- sum(df[["state"]] == "pinsig")
-    num_upsig <- sum(df[["state"]] == "upsig")
-    aes_color = "(yaxis > p_cutoff)"
-    plt <- ggplot(df, aes_string(x="xaxis", y="logyaxis", color=aes_color),
-                  environment=hpgl_env) +
+    num_downsig <- sum(df[["state"]] == "downsig") - 1
+    num_fcinsig <- sum(df[["state"]] == "fcinsig") - 1
+    num_pinsig <- sum(df[["state"]] == "pinsig") - 1
+    num_upsig <- sum(df[["state"]] == "upsig") - 1
+
+    df[["xaxis"]] <- as.numeric(df[[1]])
+    df[["yaxis"]] <- as.numeric(df[[2]])
+    df[["logyaxis"]] <- as.numeric(df[[3]])
+    df[["pcut"]] <- as.factor(df[[4]])
+    df[["state"]] <- as.factor(df[[5]])
+
+    state_shapes <- c(21,22,23,24)
+    names(state_shapes) <- c("downsig","fcinsig","pinsig","upsig")
+
+    plt <- ggplot(data=df,
+                  aes_string(x="xaxis",
+                             y="logyaxis",
+                             fill="as.factor(pcut)",
+                             colour="as.factor(pcut)",
+                             shape="as.factor(state)")) +
         ggplot2::geom_hline(yintercept=horiz_line, color="black", size=(size / 2)) +
         ggplot2::geom_vline(xintercept=fc_cutoff, color="black", size=(size / 2)) +
         ggplot2::geom_vline(xintercept=low_vert_line, color="black", size=(size / 2)) +
-        ggplot2::geom_point(stat="identity", size=size, alpha=alpha, aes_string(shape="as.factor(state)", fill=aes_color)) +
-        ggplot2::xlab("log fold change") +
-        ggplot2::ylab("-log10(adjusted p value)") +
-        ggplot2::scale_shape_manual(name="state", values=c(21,22,23,24),
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
+        ggplot2::scale_shape_manual(name="state", values=state_shapes,
                                     labels=c(
                                         paste0("Down Sig.: ", num_downsig),
                                         paste0("FC Insig.: ", num_fcinsig),
                                         paste0("P Insig.: ", num_pinsig),
                                         paste0("Up Sig.: ", num_upsig)),
                                     guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
-        ggplot2::scale_color_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
-        ggplot2::scale_fill_manual(values=c("FALSE"="darkred","TRUE"="darkblue")) +
-        ggplot2::guides(fill=ggplot2::guide_legend(override.aes=list(size=3))) +
+        ggplot2::scale_fill_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
+        ggplot2::scale_color_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
+        ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
         ggplot2::theme_bw()
 
     if (!is.null(gvis_filename)) {
         plot_gvis_volcano(toptable_data, fc_cutoff=fc_cutoff, p_cutoff=p_cutoff, tooltip_data=tooltip_data, filename=gvis_filename)
     }
-    return(plt)
+    retlist <- list("plot" = plt, "df" = df)
+    return(retlist)
 }
 
 ## EOF

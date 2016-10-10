@@ -1,6 +1,6 @@
 library(testthat)
 library(hpgltools)
-context("Does the basic differential expression analysis work?")
+context("27de_basic: Does the basic differential expression analysis work?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -31,3 +31,5 @@ test_that("Do we get the values for treated and untreated samples?", {
 })
 
 save(list=ls(), file="de_basic.rda")
+
+message("\nFinished 27de_basic.R")

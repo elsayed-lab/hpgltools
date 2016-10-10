@@ -1,6 +1,6 @@
 library(testthat)
 library(hpgltools)
-context("Do gProfiler searches work?")
+context("56gsea_gprofiler.R: Do gProfiler searches work?\n")
 
 ## I want to do some much longer tests using goseq/clusterprofiler/topgo/gostats/gprofiler
 ## These will likely not work with Travis as they take forever.
@@ -40,3 +40,5 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected_ccplot_data, actual_ccplot_data, tolerance=0.001)
     })
 }
+
+message("\nFinished 56gsea_gprofiler.R")

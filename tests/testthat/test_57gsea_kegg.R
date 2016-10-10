@@ -2,7 +2,7 @@ library(testthat)
 library(hpgltools)
 library(pasilla)
 data(pasillaGenes)
-context("Do KEGGREST and pathview work?")
+context("57gsea_kegg.R: Do KEGGREST and pathview work?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -58,4 +58,4 @@ funkytown <- sm(hpgl_pathview(sig_up, fc_column="logFC", species="dme", from_lis
 
 unlink("kegg_pathways", recursive=TRUE)
 
-
+message("\nFinished 57gsea_kegg.R")

@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Does edgeR work with hpgltools?")
+context("26de_edger.R: Does edgeR work with hpgltools?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -84,3 +83,5 @@ test_that("Is the hpgl pairwise similar to edgeR's default method (fdr)?", {
 })
 
 save(list=ls(), file="de_edger.rda")
+
+message("\nFinished 26de_edger.R")

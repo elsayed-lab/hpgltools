@@ -1,7 +1,6 @@
 library(testthat)
 library(hpgltools)
-
-context("Does biomart function?")
+context("40ann_biomart.R: Does biomart function?\n")
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
@@ -42,3 +41,5 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected_linkage, actual_linkage)
     })
 }
+
+message("\nFinished 40ann_biomart.R")

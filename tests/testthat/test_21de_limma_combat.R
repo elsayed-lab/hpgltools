@@ -1,6 +1,6 @@
 library(testthat)
 library(hpgltools)
-context("Does limma with combat work with hpgltools?")
+context("21de_limma_combat.R: Does limma with combat work with hpgltools?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -180,3 +180,5 @@ test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
 })
 
 save(list=ls(), file="de_limma_combat.rda")
+
+message("\nFinished 21de_limma_combat.R")
