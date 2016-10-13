@@ -274,6 +274,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     final <- list(
         "model" = fun_model,
         "contrasts" = apc,
+        "contrasts_performed" = names(apc[["names"]]),
         "lrt" = lrt_list,
         "contrast_list" = contrast_list,
         "all_tables" = result_list)

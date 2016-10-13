@@ -236,13 +236,16 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     message("Basic step 2/3: Performing comparisons.")
     num_comparisons <- sum(1:lenminus)
 
+    contrasts_performed <- c()
     for (c in 1:lenminus) {
         c_name <- types[c]
         nextc <- c + 1
         for (d in nextc:length(types)) {
             num_done <- num_done + 1
             d_name <- types[d]
-            message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons, ": Performing log2 subtraction: ", d_name, "_vs_", c_name))
+            contrast <- paste0(d_name, "_vs_", c_name)
+            contrasts_performed <- append(contrast, contrasts_performed)
+            message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons, ": Performing log2 subtraction: ", contrast))
             division <- data.frame(
                 median_table[, d] - median_table[, c])
             comparison_name <- paste0(d_name, "_vs_", c_name)
@@ -332,10 +335,14 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     message("Basic: Returning tables.")
     names(all_tables) <- colnames(comparisons)
     retlist <- list(
-        input_data=data, conditions_table=table(conditions),
-        conditions=conditions, all_pairwise=comparisons,
-        all_tables=all_tables, medians=median_table,
-        variances=variance_table)
+        "input_data" = data,
+        "conditions_table" = table(conditions),
+        "conditions" = conditions,
+        "all_pairwise" = comparisons,
+        "all_tables" = all_tables,
+        "medians" = median_table,
+        "contrasts_performed" = contrasts_performed,
+        "variances" = variance_table)
     return(retlist)
 }
 

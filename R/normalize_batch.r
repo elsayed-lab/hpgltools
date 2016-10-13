@@ -70,6 +70,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     conditions <- droplevels(as.factor(design[["condition"]]))
 
     message("Note to self:  If you get an error like 'x contains missing values'; I think this means that the data has too many 0's and needs to have a better low-count filter applied.")
+    message("Note to self:  I keep forgetting this, but the most common batch correction performed in Dr. El-Sayed's lab is implemented here as 'limmaresid'.")
 
     num_low <- sum(count_table < 1 & count_table > 0)
     if (num_low > 0) {
@@ -82,6 +83,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     if (isTRUE(batch)) {
         batch <- "limma"
     }
+
     if (batch == "limma") {
         if (is.null(batch2)) {
             ## A reminder of removeBatchEffect usage
@@ -98,6 +100,9 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         batch_voom <- limma::voom(data.frame(count_table), batch_model, normalize.method="quantile", plot=FALSE)
         batch_fit <- limma::lmFit(batch_voom, design=batch_model)
         count_table <- residuals(batch_fit, batch_voom[["E"]])
+        ## Make sure to change this soon to take into account whether we are working on the log or non-log scale.
+        ## Perhaps switch out the call from limma::voom to my own voom -- though I think I would prefer to use their copy and have a check
+        ## that way if they change something important I will pick up on it.
     } else if (batch == "combatmod") {
         ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches, mod=conditions, noScale=noscale, ...)
         message("batch_counts: Using a modified cbcbSEQ combatMod for batch correction.")

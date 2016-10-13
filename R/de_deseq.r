@@ -274,6 +274,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     ## The following is an attempted simplification of the contrast formulae
     number_comparisons <- sum(1:(length(condition_levels) - 1))
     inner_count <- 0
+    contrasts <- c()
     for (c in 1:(length(condition_levels) - 1)) {
         denominator <- condition_levels[c]
         nextc <- c + 1
@@ -281,6 +282,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
             inner_count <- inner_count + 1
             numerator <- condition_levels[d]
             comparison <- paste0(numerator, "_vs_", denominator)
+            contrasts <- append(comparison, contrasts)
             message(paste0("DESeq2 step 5/5: ", inner_count, "/",
                            number_comparisons, ": Creating table: ", comparison))
             result <- as.data.frame(DESeq2::results(deseq_run,
@@ -335,6 +337,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         message(paste0("Collected coefficients for: ", coef))
         ## coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
     }
+
     ret_list <- list(
         "model_string" = model_string,
         "run" = deseq_run,
@@ -342,6 +345,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         "numerators" = numerators,
         "conditions" = conditions,
         "coefficients" = coefficient_list,
+        "contrasts_performed" = contrasts,
         "all_tables" = result_list
     )
     return(ret_list)

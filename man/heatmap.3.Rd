@@ -154,6 +154,6 @@ heatmap.3(x, Rowv = TRUE, Colv = if (symm) "Rowv" else TRUE,
 a heatmap!
 }
 \description{
-heamap.2 is the devil.
+heatmap.2 is the devil.
 }
 

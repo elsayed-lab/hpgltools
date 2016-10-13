@@ -31,6 +31,19 @@ limma_ma <- function(output, table=NULL, p_col="adj.P.Val",
         table <- possible_tables[[table]]
     }
 
+    revname <- strsplit(x=table, split="_vs_")
+    revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
+
+    if (!(table %in% possible_tables)) {
+        ## Perhaps the name was reversed?
+        if (revname %in% possible_tables) {
+            message("Trey you doofus, you reversed the name of the table.")
+            table <- revname
+        } else {
+            stop("Unable to find the table in the set of possible tables.")
+        }
+    }
+
     de_genes <- output[["all_tables"]][[table]]
     plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
                        p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
@@ -427,6 +440,9 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     } else {
         limma_result <- all_tables
     }
+    all_table_names <- names(limma_result)
+    contrast_table_idx <- grepl(pattern="_vs_", x=all_table_names)
+    contrasts_performed <- all_table_names[contrast_table_idx]
     result <- list(
         "all_pairwise" = all_pairwise,
         "all_tables" = limma_result,
@@ -443,6 +459,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         "pairwise_comparisons" = all_pairwise_comparisons,
         "single_table" = all_tables,
         "voom_design" = fun_design,
+        "contrasts_performed" = contrasts_performed,
         "voom_result" = fun_voom)
     return(result)
 }

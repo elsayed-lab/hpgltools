@@ -196,4 +196,20 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
 
 }
 
+plot_updown <- function() {
+
+    up$time <- factor(up$time, levels=c("header1", "metac_v_4amast", "4_v_24amast", "24_v_48amast", "48_v_72amast"))
+    down$time <- factor(down$time, levels=c("header1", "metac_v_4amast", "4_v_24amast", "24_v_48amast", "48_v_72amast"))
+
+    ggplot() +
+        geom_bar(data = up, aes(x=rev(time), y=value, fill=variable), stat = "identity") +
+        geom_bar(data = down, aes(x=rev(time), y=value, fill=variable), stat = "identity") +
+        scale_fill_manual(values=c("purple4", "plum1", "orchid", "dodgerblue", "lightcyan", "lightskyblue")) + 
+        scale_y_continuous(breaks=seq(-5000,5000,1000)) + coord_flip() +
+        scale_x_discrete(breaks=NULL) + theme_bw() +
+        theme(panel.grid.minor = element_blank()) +
+        theme(legend.position="none")
+
+}
+
 ## EOF  Damners I don't have many bar plots, do I?

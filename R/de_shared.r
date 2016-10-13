@@ -34,9 +34,12 @@
 #'  data_list = all_pairwise(expt)
 #' }
 #' @export
-all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE, modify_p=FALSE,
-                         model_batch=TRUE, model_intercept=TRUE, extra_contrasts=NULL,
-                         alt_model=NULL, libsize=NULL, annot_df=NULL, parallel=TRUE, ...) {
+all_pairwise <- function(input, conditions=NULL,
+                         batches=NULL, model_cond=TRUE,
+                         modify_p=FALSE, model_batch=TRUE,
+                         model_intercept=TRUE, extra_contrasts=NULL,
+                         alt_model=NULL, libsize=NULL,
+                         annot_df=NULL, parallel=TRUE, ...) {
     arglist <- list(...)
     surrogates <- 1
     if (!is.null(arglist[["surrogates"]])) {
@@ -231,11 +234,17 @@ all_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE, 
         original_pvalues <- as.data.frame(original_pvalues)
     } ## End checking if we should f-test modify the p-values
 
-    result_comparison <- compare_tables(limma=results[["limma"]],
-                                        deseq=results[["deseq"]],
-                                        edger=results[["edger"]],
-                                        basic=results[["basic"]],
-                                        annot_df=annot_df, ...)
+    result_comparison <- list()
+    if (class(results[["limma"]]) == "list" &
+        class(results[["deseq"]]) == "list" &
+        class(results[["edger"]]) == "list" &
+        class(results[["basic"]]) == "list") {
+        result_comparison <- compare_tables(limma=results[["limma"]],
+                                            deseq=results[["deseq"]],
+                                            edger=results[["edger"]],
+                                            basic=results[["basic"]],
+                                            annot_df=annot_df, ...)
+    }
     ## The first few elements of this list are being passed through into the return
     ## So that if I use combine_tables() I can report in the resulting tables
     ## some information about what was performed.
@@ -625,10 +634,12 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
     comparison_df <- as.matrix(comparison_df)
     colnames(comparison_df) <- names(deseq)
     heat_colors <- grDevices::colorRampPalette(c("white","black"))
-    comparison_heatmap <- try(heatmap.3(comparison_df, scale="none", trace="none",
-                                        linewidth=0.5, keysize=2, margins=c(8,8),
-                                        col=heat_colors, dendrogram="none", Rowv=FALSE,
-                                        Colv=FALSE, main="Compare DE tools"), silent=TRUE)
+    comparison_heatmap <- try(heatmap.3(comparison_df, scale="none",
+                                        trace="none", keysize=1.0,
+                                        linewidth=0.5, margins=c(9,9),
+                                        col=heat_colors, dendrogram="none",
+                                        Rowv=FALSE, Colv=FALSE,
+                                        main="Compare DE tools"), silent=TRUE)
     heat <- NULL
     if (class(comparison_heatmap) != 'try-error') {
         heat <- recordPlot()
@@ -698,6 +709,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     deseq <- all_pairwise_result[["deseq"]]
     edger <- all_pairwise_result[["edger"]]
     basic <- all_pairwise_result[["basic"]]
+
+    ## If any of the tools failed, then we cannot plot stuff with confidence.
+    if (class(limma) == "try-error" |
+        class(deseq) == "try-error" |
+        class(edger) == "try-error" |
+        class(basic) == "try-error") {
+        add_plots <- FALSE
+        compare_plots <- FALSE
+    }
 
     csv_basename <- NULL
     if (!is.null(csv)) {
@@ -825,7 +845,20 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             found <- 0
             found_table <- NULL
             do_inverse <- NULL
-            for (tab in names(edger[["contrast_list"]])) {
+
+            contrasts_performed <- NULL
+            if (class(limma) != "try-error") {
+                contrasts_performed <- limma[["contrasts_performed"]]
+            } else if (class(edger) != "try-error") {
+                contrasts_performed <- edger[["contrasts_performed"]]
+            } else if (class(deseq) != "try-error") {
+                contrasts_performed <- deseq[["contrasts_performed"]]
+            } else if (class(basic) != "try-error") {
+                contrasts_performed <- basic[["contrasts_performed"]]
+            } else {
+                stop("None of the DE tools appear to have worked.")
+            }
+            for (tab in limma[["contrasts_performed"]]) {
                 if (tab == same_string) {
                     do_inverse <- FALSE
                     found <- found + 1
@@ -837,6 +870,18 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                     found_table <- inverse_string
                     message(paste0("Found inverse table with ", inverse_string))
                 }
+            }
+            if (class(limma) == "try-error") {
+                limma <- NULL
+            }
+            if (class(deseq) == "try-error") {
+                deseq <- NULL
+            }
+            if (class(edger) == "try-error") {
+                edger <- NULL
+            }
+            if (class(basic) == "try-error") {
+                basic <- NULL
             }
             if (found > 0) {
                 combined <- create_combined_table(limma, edger, deseq, basic,
@@ -883,7 +928,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 }
             } ## End checking that we found the numerator/denominator
             else {
-                stop(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
+                warning(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
             }
             combo[[name]] <- dat
             limma_plots[[name]] <- limma_plt
@@ -968,7 +1013,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 plot_column <- xls_result[["end_col"]] + 2
                 message(paste0("Adding venn plots for ", names(combo)[[count]], "."))
                 openxlsx::writeData(wb, tab, x="Venn of p-value up genes.", startRow=1, startCol=plot_column)
-                venn_list <- de_venn(ddd, adjp=adjp)
+                venn_list <- try(de_venn(ddd, adjp=adjp), silent=TRUE)
                 up_plot <- venn_list[["up_noweight"]]
                 print(up_plot)
                 openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
@@ -1456,6 +1501,12 @@ do_pairwise <- function(type, ...) {
     return(res)
 }
 
+#' Alias for extract_significant_genes because I am dumb.
+#'
+#' @param ... The parameters for extract_significant_genes()
+#' @return  It should return a reminder for me to remember my function names or change them to
+#'     something not stupid.
+#' @export
 extract_siggenes <- function(...) { extract_significant_genes(...) }
 #' Extract the sets of genes which are significantly up/down regulated
 #' from the combined tables.
@@ -1478,9 +1529,12 @@ extract_siggenes <- function(...) { extract_significant_genes(...) }
 #' @return The set of up-genes, down-genes, and numbers therein.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-extract_significant_genes <- function(combined, according_to="all", fc=1.0,
-                                      p=0.05, z=NULL, n=NULL, p_type="adj",
-                                      excel="excel/significant_genes.xlsx", csv=NULL) {
+extract_significant_genes <- function(combined, according_to="all",
+                                      fc=1.0, p=0.05,
+                                      z=NULL, n=NULL,
+                                      p_type="adj", csv=NULL,
+                                      excel="excel/significant_genes.xlsx",
+                                      sig_bar=TRUE, siglfc_cutoffs=c(1,2)) {
     if (!is.null(combined[["plots"]])) {
         combined <- combined[["data"]]
     }
@@ -1535,6 +1589,15 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0,
             up_titles[[table_name]] <- up_title
             down_title <- paste0("Table SXXX: Genes deemed significantly down in ", table_name, " with", title_append, " according to ", according)
             down_titles[[table_name]] <- down_title
+
+            ready <- FALSE
+            if (isTRUE(sig_bar) & isTRUE(ready)) {
+                sig_bar_plot <- plot_significant_bar(combined,
+                                                     fc_cutoffs=siglfc_cutoffs,
+                                                     p=p,
+                                                     p_column=p_column,
+                                                     fc_column=fc_column)
+            }
         } ## End extracting significant genes for loop
 
         change_counts <- cbind(change_counts_up, change_counts_down)
