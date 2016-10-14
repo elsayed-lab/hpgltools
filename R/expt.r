@@ -529,7 +529,6 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' @examples
 #' \dontrun{
 #' unique(esmer_expt$design$conditions)
-#' # > "cl14_epi"  "clbr_epi"  "cl14_tryp" "clbr_tryp" "cl14_late" "clbr_late" "cl14_mid"  "clbr_mid"
 #' chosen_colors <- list(
 #'    "cl14_epi" = "#FF8D59",
 #'    "clbr_epi" = "#962F00",
@@ -540,8 +539,6 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #'    "cl14_mid" = "#7280FF",
 #'    "clbr_mid" = "#000D7E")
 #' esmer_expt <- set_expt_colors(expt=esmer_expt, colors=chosen_colors)
-#' ## Or do it by sample (assuming you have 9 samples in groups of 3):
-#' expt = set_expt_colors(expt=esmer_expt, colors=c("red","red","red","geen","green","green","blue","blue","blue))
 #' }
 #' @export
 set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {

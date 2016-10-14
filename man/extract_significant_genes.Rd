@@ -8,7 +8,7 @@ from the combined tables.}
 extract_significant_genes(combined, according_to = "all", fc = 1,
   p = 0.05, z = NULL, n = NULL, p_type = "adj", csv = NULL,
   excel = "excel/significant_genes.xlsx", sig_bar = TRUE,
-  siglfc_cutoffs = c(1, 2))
+  siglfc_cutoffs = c(0, 1, 2))
 }
 \arguments{
 \item{combined}{Output from combine_de_tables().}
