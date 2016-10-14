@@ -283,9 +283,10 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     }  ## End for each c
 
     ## Because of the way I made tvalues/pvalues into a list
-    ## If only 1 comparison was performed, the resulting data structure never gets coerced into a data frame
-    ## therefore I am performing this check which, if a single comparison was done, adds a second column,
-    ## performs the coercion, then strips it away.  This is probably a stupid way of doing what I want.
+    ## If only 1 comparison was performed, the resulting data structure never gets coerced into a
+    ## data frame therefore I am performing this check which, if a single comparison was done, adds
+    ## a second column, performs the coercion, then strips it away.  This is probably a stupid way
+    ## of doing what I want.
     if (num_done == 1) {
         tvalues <- cbind(tvalues, t_data)
         pvalues <- cbind(pvalues, p_data)
@@ -312,13 +313,14 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
         numer_denom <- strsplit(x=colname, split="_vs_")[[1]]
         numerator <- numer_denom[1]
         denominator <- numer_denom[2]
-        fc_table <- data.frame(numerator_median=median_table[[numerator]],
-                               denominator_median=median_table[[denominator]],
-                               numerator_var=variance_table[[numerator]],
-                               denominator_var=variance_table[[denominator]],
-                               t=t_column,
-                               p=p_column,
-                               logFC=fc_column)
+        fc_table <- data.frame(
+            "numerator_median" = median_table[[numerator]],
+            "denominator_median" = median_table[[denominator]],
+            "numerator_var" = variance_table[[numerator]],
+            "denominator_var" = variance_table[[denominator]],
+            "t" = t_column,
+            "p" = p_column,
+            "logFC" = fc_column)
         fc_table[["adjp"]] <- stats::p.adjust(as.numeric(fc_table[["p"]]), method="BH")
 
         fc_table[["numerator_median"]] <- signif(x=fc_table[["numerator_median"]], digits=4)

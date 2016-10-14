@@ -454,41 +454,43 @@ choose_dataset <- function(input, force=FALSE, ...) {
         ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
         ## violation of its stated preferred/demanded input.  There are of course ways around this
         ## but one should not take them lightly, perhaps never.
-        if (!is.null(input[["state"]][["normalization"]])) {
+
+        if (isTRUE(force)) {
+            ## Setting force to TRUE allows one to round the data to fool edger into accepting it
+            ## This is a pretty terrible thing to do
+            warning("About to round the data, this is a")
+            warning("pretty terrible thing to do.")
+            warning("But if you, like me, want to see")
+            warning("what happens when you put")
+            warning("non-standard data into deseq,")
+            warning("then here you go.")
+            data <- round(data)
+            less_than <- data < 0
+            data[less_than] <- 0
+        } else if (!is.null(input[["state"]][["normalization"]])) {
             ## These if statements may be insufficient to check for the appropriate input for deseq.
-            if (isTRUE(force)) {
-                ## Setting force to TRUE allows one to round the data to fool edger into accepting it
-                ## This is a pretty terrible thing to do
-                warning("About to round the data, this is a")
-                warning("pretty terrible thing to do.")
-                warning("But if you, like me, want to see")
-                warning("what happens when you put")
-                warning("non-standard data into deseq,")
-                warning("then here you go.")
-                data <- round(data)
-                data[ data < 0] <- 0
-            } else if (input[["state"]][["normalization"]] != "raw" |
-                       (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
-                ## This makes use of the fact that the order of operations in the normalization function is static.
-                ## filter->normalization->convert->batch->transform.
-                ## Thus, if the normalized state is not raw, we can look back either to the filtered or original data
-                ## The same is true for the transformation state.
-                if (input[["state"]][["filter"]] == "raw") {
-                    message("EdgeR/DESeq expect raw data as input, reverting to the count filtered data.")
-                    data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
-                    if (is.null(data)) {
-                        data <- input[["normalized"]][["intermediate_counts"]][["original"]]
-                    }
-                } else {
-                    message("EdgeR/DESeq expect raw data as input, reverting to the original expressionset.")
-                    data <- Biobase::exprs(input[["original_expressionset"]])
+            data <- input[["original_expressionset"]]
+        } else if (input[["state"]][["normalization"]] != "raw" |
+                   (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
+            ## This makes use of the fact that the order of operations in the normalization function is static.
+            ## filter->normalization->convert->batch->transform.
+            ## Thus, if the normalized state is not raw, we can look back either to the filtered or original data
+            ## The same is true for the transformation state.
+            if (input[["state"]][["filter"]] == "raw") {
+                message("EdgeR/DESeq expect raw data as input, reverting to the count filtered data.")
+                data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
+                if (is.null(data)) {
+                    data <- input[["normalized"]][["intermediate_counts"]][["original"]]
                 }
             } else {
-                message("The data should be suitable for EdgeR/DESeq.")
-                message("If EdgeR/DESeq freaks out, check the state of the count table and ensure that it is in integer counts.")
+                message("EdgeR/DESeq expect raw data as input, reverting to the original expressionset.")
+                data <- Biobase::exprs(input[["original_expressionset"]])
             }
-            ## End testing if normalization has been performed
+        } else {
+            message("The data should be suitable for EdgeR/DESeq.")
+            message("If EdgeR/DESeq freaks out, check the state of the count table and ensure that it is in integer counts.")
         }
+        ## End testing if normalization has been performed
     } else {
         data <- as.data.frame(input)
     }
@@ -845,6 +847,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             found <- 0
             found_table <- NULL
             do_inverse <- NULL
+            limma_plt <- NULL
+            edger_plt <- NULL
+            deseq_plt <- NULL
 
             contrasts_performed <- NULL
             if (class(limma) != "try-error") {
@@ -890,9 +895,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                                                   include_basic=include_basic, excludes=excludes)
                 dat <- combined[["data"]]
                 summary <- combined[["summary"]]
-                limma_plt <- NULL
-                edger_plt <- NULL
-                deseq_plt <- NULL
                 if (isTRUE(do_inverse)) {
                     limma_try <- try(sm(limma_coefficient_scatter(limma, x=denominator,
                                                                   y=numerator, gvis_filename=NULL)), silent=TRUE)
@@ -1529,12 +1531,16 @@ extract_siggenes <- function(...) { extract_significant_genes(...) }
 #' @return The set of up-genes, down-genes, and numbers therein.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-extract_significant_genes <- function(combined, according_to="all",
+extract_significant_genes <- function(combined,
+                                      according_to="all",
                                       fc=1.0, p=0.05,
-                                      z=NULL, n=NULL,
-                                      p_type="adj", csv=NULL,
+                                      z=NULL,
+                                      n=NULL,
+                                      p_type="adj",
+                                      csv=NULL,
                                       excel="excel/significant_genes.xlsx",
-                                      sig_bar=TRUE, siglfc_cutoffs=c(1,2)) {
+                                      sig_bar=TRUE,
+                                      siglfc_cutoffs=c(0,1,2)) {
     if (!is.null(combined[["plots"]])) {
         combined <- combined[["data"]]
     }
@@ -1562,6 +1568,17 @@ extract_significant_genes <- function(combined, according_to="all",
     }
 
     wb <- openxlsx::createWorkbook(creator="hpgltools")
+
+    message("Writing a legend of columns.")
+    legend <- data.frame(rbind(
+        c("This excel workbook contains the set of significant up/down genes by contrast", ""),
+        c("Below are a series of bar plots describing the numbers of significant genes.", "")
+        ))
+
+    colnames(legend) <- c("column name", "column definition")
+    xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+                            title="Columns used in the following tables.")
+
     ret <- list()
     summary_count <- 0
     sheet_count <- 0
@@ -1589,15 +1606,6 @@ extract_significant_genes <- function(combined, according_to="all",
             up_titles[[table_name]] <- up_title
             down_title <- paste0("Table SXXX: Genes deemed significantly down in ", table_name, " with", title_append, " according to ", according)
             down_titles[[table_name]] <- down_title
-
-            ready <- FALSE
-            if (isTRUE(sig_bar) & isTRUE(ready)) {
-                sig_bar_plot <- plot_significant_bar(combined,
-                                                     fc_cutoffs=siglfc_cutoffs,
-                                                     p=p,
-                                                     p_column=p_column,
-                                                     fc_column=fc_column)
-            }
         } ## End extracting significant genes for loop
 
         change_counts <- cbind(change_counts_up, change_counts_down)
@@ -1620,6 +1628,45 @@ extract_significant_genes <- function(combined, according_to="all",
             wb <- xlsx_ret[["workbook"]]
         }
     } ## End list of according_to's
+
+    if (isTRUE(sig_bar)) {
+        ## This needs to be changed to get_sig_genes()
+        sig_bar_plots <- plot_significant_bar(combined, fc_cutoffs=siglfc_cutoffs,
+                                              p=p, z=z, p_type=p_type, fc_column=fc_column)
+        plot_row <- 1
+        plot_col <- 1
+        message(paste0("Adding significance bar plots."))
+
+        text_row <- plot_row + length(legend) + 3
+        plot_row <- text_row + 1
+
+        openxlsx::writeData(wb, "legend",
+                            x="Significant limma genes.",
+                            startRow=text_row, startCol=plot_col)
+        print(sig_bar_plots[["limma"]])
+        openxlsx::insertPlot(wb, "legend", width=9, height=6,
+                             startRow=plot_row, startCol=plot_col,
+                             fileType="png", units="in")
+
+        plot_col <- plot_col + 10
+        openxlsx::writeData(wb, "legend",
+                            x="Significant deseq genes.",
+                            startRow=text_row, startCol=plot_col)
+        print(sig_bar_plots[["deseq"]])
+        openxlsx::insertPlot(wb, "legend", width=9, height=6,
+                             startRow=plot_row, startCol=plot_col,
+                             fileType="png", units="in")
+
+        plot_col <- plot_col + 10
+        openxlsx::writeData(wb, "legend",
+                            x="Significant edger genes.",
+                            startRow=text_row, startCol=plot_col)
+        print(sig_bar_plots[["edger"]])
+        openxlsx::insertPlot(wb, "legend", width=9, height=6,
+                             startRow=plot_row, startCol=plot_col,
+                             fileType="png", units="in")
+    } ## End if we want significance bar plots
+
     if (!is.null(excel)) {
         excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
     }

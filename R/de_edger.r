@@ -247,8 +247,7 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         }
         res[["PValue"]] <- signif(x=as.numeric(res[["PValue"]]), digits=4)
         res[["FDR"]] <- signif(x=as.numeric(res[["FDR"]]), digits=4)
-        res[["qvalue"]] <- tryCatch(
-        {
+        res[["qvalue"]] <- tryCatch({
             ##as.numeric(format(signif(
             ##    suppressWarnings(qvalue::qvalue(
             ##        as.numeric(res$PValue), robust=TRUE))$qvalues, 4),
@@ -262,11 +261,6 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             message(paste0("The qvalue estimation failed for ", name, "."))
             return(1)
         },
-        ##warning=function(cond) {
-        ##    message("There was a warning?")
-        ##    message(cond)
-        ##    return(1)
-        ##},
         finally={
         })
         result_list[[name]] <- res
@@ -339,28 +333,15 @@ write_edger <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/edge
         data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
         data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
         data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
-        data_table[["qvalue"]] <- tryCatch(
-        {
-            ## as.numeric(format(signif(
-            ## suppressWarnings(qvalue::qvalue(
-            ## as.numeric(data_table$P.Value), robust=TRUE))$qvalues, 4),
-            ## scientific=TRUE))
+        data_table[["qvalue"]] <- tryCatch({
             ttmp <- as.numeric(data_table[["P.Value"]])
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
-            ## ttmp <- signif(ttmp, 4)
-            ## ttmp <- format(ttmp, scientific=TRUE)
-            ## ttmp
         },
         error=function(cond) {
             message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
             return(1)
         },
-        ##warning=function(cond) {
-        ##    message("There was a warning?")
-        ##    message(cond)
-        ##    return(1)
-        ##},
         finally={
         })
         if (!is.null(annot_df)) {
