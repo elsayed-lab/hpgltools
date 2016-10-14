@@ -170,14 +170,42 @@ deseq_pairwise <- function(...) {
 deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                             alt_model=NULL, extra_contrasts=NULL, model_intercept=FALSE,
                             model_batch=TRUE, annot_df=NULL, force=FALSE, ...) {
-    arglist <- list(...)
     message("Starting DESeq2 pairwise comparisons.")
+    arglist <- list(...)
+    if (!is.null(arglist[["conditions"]])) {
+        conditions <- arglist[["conditions"]]
+    }
+    if (!is.null(arglist[["batches"]])) {
+        batches <- arglist[["batches"]]
+    }
+    if (!is.null(arglist[["model_cond"]])) {
+        model_cond <- arglist[["model_cond"]]
+    }
+    if (!is.null(arglist[["alt_model"]])) {
+        alt_model <- arglist[["alt_model"]]
+    }
+    if (!is.null(arglist[["extra_contrasts"]])) {
+        extra_contrasts <- arglist[["extra_contrasts"]]
+    }
+    if (!is.null(arglist[["model_intercept"]])) {
+        model_intercept <- arglist[["model_intercept"]]
+    }
+    if (!is.null(arglist[["model_batch"]])) {
+        model_batch <- arglist[["model_batch"]]
+    }
+    if (!is.null(arglist[["annot_df"]])) {
+        annot_df <- arglist[["annot_df"]]
+    }
+    if (!is.null(arglist[["force"]])) {
+        force <- arglist[["force"]]
+    }
+
     input_data <- choose_dataset(input, force=force)
     design <- Biobase::pData(input[["expressionset"]])
     conditions <- design[["condition"]]
     batches <- design[["batch"]]
     data <- input_data[["data"]]
-
+    print(head(data))
     condition_table <- table(conditions)
     condition_levels <- levels(as.factor(conditions))
     batch_levels <- levels(as.factor(batches))
@@ -186,6 +214,9 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     summarized <- NULL
     ## Moving the size-factor estimation into this if(){} block in order to accomodate sva-ish batch estimation in the model
     deseq_sf <- NULL
+    if (isTRUE(force)) {
+        message("WATCH OUT FORCE IS ON")
+    }
 
     model_choice <- choose_model(conditions, batches,
                                  model_batch=model_batch,
@@ -195,36 +226,36 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     ## choose_model should now take all of the following into account
     ## Therefore the following 8 or so lines should not be needed any longer.
     model_string <- NULL
-    ## I keep forgetting that deseq wants the thing you care about last in the list of the model string.
-    if (model_including == "batch") {
-        model_string <- "~ condition"
-    } else if (model_including == "condition+batch") {
-        model_string <- "~ batch + condition"
-    } else {
-        model_string <- "~ condition"
-    }
-
+    column_data <- Biobase::pData(input[["expressionset"]])
     if (isTRUE(model_batch) & isTRUE(model_cond)) {
         message("DESeq2 step 1/5: Including batch and condition in the deseq model.")
         ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
         ## conditions and batch in this context is information taken from pData()
-        column_data <- Biobase::pData(input[["expressionset"]])
+        model_string <- "~ batch + condition"
+        column_data[["condition"]] <- as.factor(column_data[["condition"]])
+        column_data[["batch"]] <- as.factor(column_data[["batch"]])
+        message("TESTME: HERE1")
+        print(head(data))
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                     colData=design,
-                                                     ##design=~ batch_levels + condition_levels)
+                                                     colData=column_data,
                                                      design=as.formula(model_string))
+        message("TESTME: HERE2")
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
+        message("TESTME: HERE3")
     } else if (isTRUE(model_batch)) {
         message("DESeq2 step 1/5: Including only batch in the deseq model.")
+        model_string <- "~ batch "
+        column_data[["batch"]] <- as.factor(column_data[["batch"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                     colData=Biobase::pData(input$expressionset),
+                                                     colData=column_data,
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     } else if (class(model_batch) == 'numeric') {
         message("DESeq2 step 1/5: Including batch estimates from sva/ruv/pca in the deseq model.")
         model_string <- "~ condition"
+        column_data[["condition"]] <- as.factor(column_data[["condition"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                     colData=Biobase::pData(input$expressionset),
+                                                     colData=column_data,
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
         dataset$SV1 <- model_batch
@@ -232,8 +263,9 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     } else if (class(model_batch) == 'matrix') {
         message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
         model_string <- "~ condition"
+        column_data[["condition"]] <- as.factor(column_data[["condition"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                     colData=Biobase::pData(input$expressionset),
+                                                     colData=column_data,
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
         formula_string <- "as.formula(~ "
@@ -248,8 +280,9 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     } else {
         message("DESeq2 step 1/5: Including only condition in the deseq model.")
         model_string <- "~ condition"
+        column_data[["condition"]] <- as.factor(column_data[["condition"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                     colData=Biobase::pData(input$expressionset),
+                                                     colData=column_data,
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     }
@@ -311,11 +344,6 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                 return(1)
             }, finally={
             })
-            ##warning=function(cond) {
-            ##    message("There was a warning?")
-            ##    message(cond)
-            ##    return(1)
-            ##},
             result_name <- paste0(numerator, "_vs_", denominator)
             denominators[[result_name]] <- denominator
             numerators[[result_name]] <- numerator

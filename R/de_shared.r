@@ -34,7 +34,7 @@
 #'  data_list = all_pairwise(expt)
 #' }
 #' @export
-all_pairwise <- function(input, conditions=NULL,
+all_pairwise <- function(input=NULL, conditions=NULL,
                          batches=NULL, model_cond=TRUE,
                          modify_p=FALSE, model_batch=TRUE,
                          model_intercept=TRUE, extra_contrasts=NULL,
@@ -76,10 +76,10 @@ all_pairwise <- function(input, conditions=NULL,
         requireNamespace("doParallel")
         requireNamespace("iterators")
         requireNamespace("foreach")
-        res <- foreach(c=1:length(names(results)), .packages="hpgltools") %dopar% {
+        res <- foreach(c=1:length(names(results)), .packages=c("hpgltools")) %dopar% {
             type <- names(results)[c]
             results[[type]] <- do_pairwise(type,
-                                           input,
+                                           input=input,
                                            conditions=conditions,
                                            batches=batches,
                                            model_cond=model_cond,
@@ -88,10 +88,10 @@ all_pairwise <- function(input, conditions=NULL,
                                            extra_contrasts=extra_contrasts,
                                            alt_model=alt_model,
                                            libsize=libsize,
-                                           ##annot_df=annot_df, ...)
-                                           annot_df=annot_df)  ## For testing
+                                           annot_df=annot_df, ...)
         } ## End foreach() %dopar% { }
         parallel::stopCluster(cl)
+        message("Finished running DE analyses, collecting outputs.")
         ## foreach returns the results in no particular order
         ## Therefore, I will reorder the results now and ensure that they are happy.
         for (r in 1:length(res)) {
@@ -104,7 +104,7 @@ all_pairwise <- function(input, conditions=NULL,
     } else {
         for (type in names(results)) {
             results[[type]] <- do_pairwise(type,
-                                           input,
+                                           input=input,
                                            conditions=conditions,
                                            batches=batches,
                                            model_cond=model_cond,
@@ -113,8 +113,7 @@ all_pairwise <- function(input, conditions=NULL,
                                            extra_contrasts=extra_contrasts,
                                            alt_model=alt_model,
                                            libsize=libsize,
-                                           ##annot_df=annot_df, ...)
-                                           annot_df=annot_df)  ## For testing
+                                           annot_df=annot_df, ...)
         }
     } ## End performing a serial comparison
 
@@ -443,30 +442,26 @@ choose_dataset <- function(input, force=FALSE, ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
     ## I think I would like to make this function smarter so that it will remove the log2 from transformed data.
-
+    data <- NULL
+    warn_user <- 0
     if (input_class == "expt") {
         conditions <- input[["conditions"]]
         batches <- input[["batches"]]
         data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
-
         ## As I understand it, EdgeR fits a binomial distribution
         ## and expects data as integer counts, not floating point nor a log2 transformation
         ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
         ## violation of its stated preferred/demanded input.  There are of course ways around this
-        ## but one should not take them lightly, perhaps never.
-
+        ## but one should not take them lightly, or ever.
         if (isTRUE(force)) {
             ## Setting force to TRUE allows one to round the data to fool edger into accepting it
             ## This is a pretty terrible thing to do
-            warning("About to round the data, this is a")
-            warning("pretty terrible thing to do.")
-            warning("But if you, like me, want to see")
-            warning("what happens when you put")
-            warning("non-standard data into deseq,")
-            warning("then here you go.")
+            message("About to round the data, this is a pretty terrible thing to do. But if you,
+like me, want to see what happens when you put non-standard data into deseq, then here you go.")
             data <- round(data)
             less_than <- data < 0
             data[less_than] <- 0
+            warn_user <- 1
         } else if (!is.null(input[["state"]][["normalization"]])) {
             ## These if statements may be insufficient to check for the appropriate input for deseq.
             data <- input[["original_expressionset"]]
@@ -498,6 +493,9 @@ choose_dataset <- function(input, force=FALSE, ...) {
         "conditions" = conditions,
         "batches" = batches,
         "data" = data)
+    if (warn_user == 1) {
+        warning("This data was inappropriately forced into integers.")
+    }
     return(retlist)
 }
 
@@ -1489,6 +1487,8 @@ disjunct_tab <- function(contrast_fit, coef1, coef2, ...) {
 #' @return The result from limma/deseq/edger/basic
 #' @export
 do_pairwise <- function(type, ...) {
+    arglist <- list(...)
+    print(summary(arglist))
     res <- NULL
     if (type == "limma") {
         res <- try(limma_pairwise(...))

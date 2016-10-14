@@ -137,10 +137,9 @@ basic_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
 #' stupid_de <- basic_pairwise(expt)
 #' }
 #' @export
-basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
+basic_pairwise <- function(input, design=NULL, force=FALSE) {
     message("Starting basic pairwise comparison.")
     input_class <- class(input)[1]
-    arglist <- list(...)
     norm <- "quant"
     if (!is.null(arglist[["norm"]])) {
         norm <- arglist[["norm"]]

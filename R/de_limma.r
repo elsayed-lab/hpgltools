@@ -309,8 +309,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
 #' @export
 limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                            model_batch=TRUE, model_intercept=TRUE, extra_contrasts=NULL,
-                           alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
-    arglist <- list(...)
+                           alt_model=NULL, libsize=NULL, annot_df=NULL) {
     message("Starting limma pairwise comparison.")
     input_class <- class(input)[1]
     if (input_class == "expt") {

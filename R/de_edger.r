@@ -174,6 +174,35 @@ edger_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
 edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
                           model_batch=TRUE, model_intercept=TRUE, alt_model=NULL,
                           extra_contrasts=NULL, annot_df=NULL, force=FALSE, edger_method="default", ...) {
+        arglist <- list(...)
+    if (!is.null(arglist[["conditions"]])) {
+        conditions <- arglist[["conditions"]]
+    }
+    if (!is.null(arglist[["batches"]])) {
+        batches <- arglist[["batches"]]
+    }
+    if (!is.null(arglist[["model_cond"]])) {
+        model_cond <- arglist[["model_cond"]]
+    }
+    if (!is.null(arglist[["alt_model"]])) {
+        alt_model <- arglist[["alt_model"]]
+    }
+    if (!is.null(arglist[["extra_contrasts"]])) {
+        extra_contrasts <- arglist[["extra_contrasts"]]
+    }
+    if (!is.null(arglist[["model_intercept"]])) {
+        model_intercept <- arglist[["model_intercept"]]
+    }
+    if (!is.null(arglist[["model_batch"]])) {
+        model_batch <- arglist[["model_batch"]]
+    }
+    if (!is.null(arglist[["annot_df"]])) {
+        annot_df <- arglist[["annot_df"]]
+    }
+    if (!is.null(arglist[["force"]])) {
+        force <- arglist[["force"]]
+    }
+
     message("Starting edgeR pairwise comparisons.")
     input_data <- choose_dataset(input, force=force)
     design <- Biobase::pData(input[["expressionset"]])
