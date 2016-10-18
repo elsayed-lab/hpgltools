@@ -347,6 +347,11 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     return(expt)
 }
 
+#' An alias to expt_subset, because it is stupid to have something start with verbs and others start with nouns.
+#' @export
+subset_expt <- function(...) {
+    expt_subset(...)
+}
 #' Extract a subset of samples following some rule(s) from an
 #' experiment class.
 #'

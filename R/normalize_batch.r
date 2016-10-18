@@ -171,7 +171,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         rm(batch_fit)
         parallel::stopCluster(cl)
     } else if (batch == "ruvg") {
-        message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.")
+        message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals).")
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
         df <- as.data.frame(count_table)
         mtrx <- as.matrix(count_table)
