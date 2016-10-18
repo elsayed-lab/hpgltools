@@ -4,7 +4,7 @@
 \alias{edger_pairwise}
 \title{Set up a model matrix and set of contrasts to do pairwise comparisons using EdgeR.}
 \usage{
-edger_pairwise(input, conditions = NULL, batches = NULL,
+edger_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, model_batch = TRUE, model_intercept = TRUE,
   alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
   force = FALSE, edger_method = "default", ...)

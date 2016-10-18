@@ -109,7 +109,10 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
                                          null_model,
                                          n.sv=found_surrogates)
         } else {
-            svaseq_result <- sva::svaseq(mtrx, conditional_model, null_model, n.sv=found_surrogates)
+            svaseq_result <- sva::svaseq(mtrx,
+                                         conditional_model,
+                                         null_model,
+                                         n.sv=found_surrogates)
         }
         surrogate_result <- svaseq_result
         model_adjust <- as.matrix(svaseq_result[["sv"]])

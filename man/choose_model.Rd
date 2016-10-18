@@ -4,9 +4,9 @@
 \alias{choose_model}
 \title{Try out a few experimental models and return a likely working option.}
 \usage{
-choose_model(conditions, batches, model_batch = TRUE, model_cond = TRUE,
-  model_intercept = TRUE, alt_model = NULL, alt_string = NULL,
-  intercept = 0, reverse = FALSE)
+choose_model(input, conditions, batches, model_batch = TRUE,
+  model_cond = TRUE, model_intercept = TRUE, alt_model = NULL,
+  alt_string = NULL, intercept = 0, reverse = FALSE)
 }
 \arguments{
 \item{conditions}{Factor of conditions in the putative model.}

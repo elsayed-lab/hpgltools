@@ -67,6 +67,10 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     if (!is.null(arglist[["file_column"]])) {
         file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count tables / sample in one sheet.
     }
+    round <- FALSE
+    if (!is.null(arglist[["round"]])) {
+        round <- arglist[["round"]]
+    }
 
     ## Read in the metadata from the provided data frame, csv, or xlsx.
     sample_definitions <- data.frame()
@@ -271,6 +275,13 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     rm(gene_infodt)
     rm(final_countsdt)
 
+    ## If the user requests input of non-int counts, fix that here.
+    if (isTRUE(round)) {
+        final_counts <- round(final_counts)
+        less_than <- final_counts < 0
+        final_counts[less_than] <- 0
+    }
+
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
     ## I can do df[["bob"]]) or df[, "bob"] to get the column bob
@@ -312,7 +323,11 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     ## normalize_expt() it should change these.
     ## Therefore, if we call a function like DESeq() which requires
     ## non-log2 counts, we can check these values and convert accordingly
-    expt <- expt_subset(experiment)
+
+    expt <- expt_subset(experiment) ## I think this is spurious now.
+    expt[["original_expressionset"]] <- experiment
+    expt[["original_metadata"]] <- Biobase::pData(experiment)
+
     expt[["title"]] <- title
     expt[["notes"]] <- toString(notes)
     expt[["design"]] <- sample_definitions
@@ -332,6 +347,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     expt[["batches"]] <- droplevels(as.factor(sample_definitions[, "batch"]))
     expt[["batches"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=expt[["batches"]])
     names(expt[["batches"]]) <- rownames(sample_definitions)
+    expt[["original_metadata"]] <- metadata
     expt[["original_libsize"]] <- colSums(Biobase::exprs(experiment))
     names(expt[["original_libsize"]]) <- rownames(sample_definitions)
     expt[["libsize"]] <- expt[["original_libsize"]]
@@ -370,21 +386,23 @@ subset_expt <- function(...) {
 #' }
 #' @export
 expt_subset <- function(expt, subset=NULL) {
+    starting_expressionset <- NULL
+    starting_metadata <- NULL
     if (class(expt)[[1]] == "ExpressionSet") {
-        original_expressionset <- expt
-        original_metadata <- Biobase::pData(original_expressionset)
+        starting_expressionset <- expt
+        starting_metadata <- Biobase::pData(starting_expressionset)
     } else if (class(expt)[[1]] == "expt") {
-        original_expressionset <- expt[["expressionset"]]
-        original_metadata <- Biobase::pData(expt[["expressionset"]])
+        starting_expressionset <- expt[["expressionset"]]
+        starting_metadata <- Biobase::pData(expt[["expressionset"]])
     } else {
         stop("expt is neither an expt nor ExpressionSet")
     }
 
     note_appended <- NULL
     if (is.null(subset)) {
-        subset_design <- original_metadata
+        subset_design <- starting_metadata
     } else {
-        r_expression <- paste("subset(original_metadata,", subset, ")")
+        r_expression <- paste("subset(starting_metadata,", subset, ")")
         subset_design <- eval(parse(text=r_expression))
         ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
         note_appended <- paste0("Subsetted with ", subset, " on ", date(), ".\n")
@@ -394,20 +412,22 @@ expt_subset <- function(expt, subset=NULL) {
     }
     subset_design <- as.data.frame(subset_design)
     ## This is to get around stupidity with respect to needing all factors to be in a DESeqDataSet
-    original_ids <- rownames(original_metadata)
+    starting_ids <- rownames(starting_metadata)
     subset_ids <- rownames(subset_design)
-    subset_positions <- original_ids %in% subset_ids
-    original_colors <- expt[["colors"]]
-    subset_colors <- original_colors[subset_positions]
-    original_conditions <- expt[["conditions"]]
-    subset_conditions <- original_conditions[subset_positions, drop=TRUE]
-    original_batches <- expt[["batches"]]
-    subset_batches <- original_batches[subset_positions, drop=TRUE]
+    subset_positions <- starting_ids %in% subset_ids
+    starting_colors <- expt[["colors"]]
+    subset_colors <- starting_colors[subset_positions]
+    starting_conditions <- expt[["conditions"]]
+    subset_conditions <- starting_conditions[subset_positions, drop=TRUE]
+    starting_batches <- expt[["batches"]]
+    subset_batches <- starting_batches[subset_positions, drop=TRUE]
     original_libsize <- expt[["original_libsize"]]
-    subset_libsize <- original_libsize[subset_positions, drop=TRUE]
-    subset_expressionset <- original_expressionset[, subset_positions]
-    first_expressionset <- original_expressionset[["original_expressionset"]]
-    subset_first_expressionset <- first_expressionset[, subset_positions]
+    subset_original_libsize <- original_libsize[subset_positions, drop=TRUE]
+    current_libsize <- expt[["libsize"]]
+    subset_current_libsize <- current_libsize[subset_positions, drop=TRUE]
+    subset_expressionset <- starting_expressionset[, subset_positions]
+    original_expressionset <- expt[["original_expressionset"]]
+    subset_original_expressionset <- original_expressionset[, subset_positions]
 
     notes <- expt[["notes"]]
     if (!is.null(note_appended)) {
@@ -425,7 +445,6 @@ expt_subset <- function(expt, subset=NULL) {
         "title" = expt[["title"]],
         "notes" = toString(notes),
         "initial_metadata" = subset_design,
-        "original_expressionset" = subset_first_expressionset,
         "expressionset" = subset_expressionset,
         "design" = subset_design,
         "conditions" = subset_conditions,
@@ -433,8 +452,9 @@ expt_subset <- function(expt, subset=NULL) {
         "samplenames" = subset_ids,
         "colors" = subset_colors,
         "state" = expt[["state"]],
-        "original_libsize" = original_libsize,
-        "libsize" = subset_libsize)
+        "original_expressionset" = subset_original_expressionset,
+        "original_libsize" = subset_original_libsize,
+        "libsize" = subset_current_libsize)
     class(new_expt) <- "expt"
     return(new_expt)
 }

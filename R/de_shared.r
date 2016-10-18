@@ -56,7 +56,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     }
     null_model <- NULL
     sv_model <- NULL
-    if (class(model_batch) == 'character') {
+    if (class(model_batch) == "character") {
         params <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
         model_batch <- params[["model_adjust"]]
         null_model <- params[["null_model"]]
@@ -119,7 +119,12 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 
     original_pvalues <- NULL
     ## Add in a little work to re-adjust the p-values in the situation where sva was used
-    if (!is.null(sv_model) & isTRUE(modify_p)) {
+    ## For the moment, DO NOT DO THIS BECAUSE YOU ARE TOO STUPID
+    ## Only perform this f adjustment if you modify the data without making limma/deseq/edger aware of the modified model.
+    ## Ergo, if we feed sv_model to this function, then by definition, we do not want to use this function.
+    ## Instead, the opposite is true
+    modified_data <- FALSE  ## Thus we will use modified_data (soon) to note if the data was modified by sva.
+    if (is.null(sv_model) & isTRUE(modified_data)) {
         original_pvalues <- data.table::data.table(rownames=rownames(results[["edger"]][["all_tables"]][[1]]))
         message("Using the f.pvalue() function to modify the returned p-values of deseq/limma/edger.")
         ## This is from section 5 of the sva manual:  "Adjusting for surrogate values using the f.pvalue function
@@ -278,7 +283,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' @param alt_model Use your own model.
 #' @param alt_string String describing an alternate model.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
-choose_model <- function(conditions, batches, model_batch=TRUE,
+choose_model <- function(input, conditions, batches, model_batch=TRUE,
                          model_cond=TRUE, model_intercept=TRUE,
                          alt_model=NULL, alt_string=NULL,
                          intercept=0, reverse=FALSE) {
@@ -289,21 +294,34 @@ choose_model <- function(conditions, batches, model_batch=TRUE,
     ## It would be much smarter to generate the models in the following if() {} blocks
     ## But I have it in my head to eventually compare results using different models.
     cond_int_string <- "~ 0 + condition"
-    cond_int_model <- stats::model.matrix(~ 0 + conditions)
+    cond_int_model <- stats::model.matrix(~ 0 + conditions, contrasts.arg=list(conditions="contr.treatment"))
     batch_int_string <- "~ 0 + batch"
-    batch_int_model <- try(stats::model.matrix(~ 0 + batches), silent=TRUE)
+    batch_int_model <- try(stats::model.matrix(~ 0 + batches, contrasts.arg=list(batches="contr.treatment")),
+                           silent=TRUE)
     condbatch_int_string <- "~ 0 + condition + batch"
-    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches), silent=TRUE)
+    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
+                                                   contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                               silent=TRUE)
     batchcond_int_string <- "~ 0 + batch + condition"
-    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions), silent=TRUE)
+    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions,
+                                                   contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                               silent=TRUE)
     cond_noint_string <- "~ condition"
-    cond_noint_model <- try(stats::model.matrix(~ conditions), silent=TRUE)
+    cond_noint_model <- try(stats::model.matrix(~ conditions,
+                                                contrasts.arg=list(conditions="contr.treatment")),
+                            silent=TRUE)
     batch_noint_string <- "~ batch"
-    batch_noint_model <- try(stats::model.matrix(~ batches), silent=TRUE)
+    batch_noint_model <- try(stats::model.matrix(~ batches,
+                                                 contrasts.arg=list(batches="contr.treatment")),
+                             silent=TRUE)
     condbatch_noint_string <- "~ condition + batch"
-    condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches), silent=TRUE)
+    condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches,
+                                                     contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                                 silent=TRUE)
     batchcond_noint_string <- "~ batch + condition"
-    batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions), silent=TRUE)
+    batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions,
+                                                     contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                                 silent=TRUE)
     noint_model <- NULL
     int_model <- NULL
     noint_string <- NULL
@@ -342,15 +360,19 @@ choose_model <- function(conditions, batches, model_batch=TRUE,
         message("Extracting surrogate estimate from sva/ruv/pca and adding them to the model.")
         model_batch_info <- get_model_adjust(input, estimate_type=model_batch)
         model_batch <- model_batch_info[["model_adjust"]]
-        int_model <- stats::model.matrix(~ 0 + conditions + model_batch)
-        noint_model <- stats::model.matrix(~ conditions + model_batch)
+        int_model <- stats::model.matrix(~ 0 + conditions + model_batch,
+                                         contrasts.arg=list(conditions="contr.sum"))
+        noint_model <- stats::model.matrix(~ conditions + model_batch,
+                                           contrasts.arg=list(conditions="contr.sum"))
         int_string <- condbatch_int_string
         noint_string <- condbatch_noint_string
         including <- "condition+batchestimate"
     } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
         message("Including batch estimates from sva/ruv/pca in the model.")
-        int_model <- stats::model.matrix(~ 0 + conditions + model_batch)
-        noint_model <- stats::model.matrix(~ conditions + model_batch)
+        int_model <- stats::model.matrix(~ 0 + conditions + model_batch,
+                                         contrasts.arg=list(conditions="contr.sum"))
+        noint_model <- stats::model.matrix(~ conditions + model_batch,
+                                           contrasts.arg=list(conditions="contr.sum"))
         int_string <- condbatch_int_string
         noint_string <- condbatch_noint_string
         including <- "condition+batchestimate"
@@ -438,7 +460,152 @@ choose_model <- function(conditions, batches, model_batch=TRUE,
 #' @param force Force non-standard data
 #' @param ... More options for future expansion
 #' @return List the data, conditions, and batches in the data.
-choose_dataset <- function(input, force=FALSE, ...) {
+choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
+    arglist <- list(...)
+    result <- NULL
+    if (choose_for == "limma") {
+        result <- choose_limma_dataset(input, force=force, ...)
+    } else if (choose_for == "basic") {
+        result <- choose_basic_dataset(input, force=force, ...)
+    } else if (choose_for == "edger") {
+        result <- choose_binom_dataset(input, force=force, ...)
+    } else if (choose_for == "deseq") {
+        result <- choose_binom_dataset(input, force=force, ...)
+    } else {
+        message("Unknown tool for which to choose a data set.")
+        result <- list(
+            "conditions" = input[["design"]][["condition"]],
+            "batches" = input[["design"]][["batch"]],
+            "data" = as.data.frame(Biobase::exprs(input[["expressionset"]])))
+    }
+    return(result)
+}
+
+choose_basic_dataset <- function(input, force=FALSE, ...) {
+    arglist <- list(...)
+    warn_user <- 0
+    conditions <- input[["conditions"]]
+    batches <- input[["batches"]]
+    data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+    ## In the case of the basic analysis, I want to make sure that the data is
+    ## filtered, converted, etc...
+    tran_state <- input[["state"]][["transform"]]
+    ## Note that voom will take care of this for us.
+    if (is.null(tran_state)) {
+        tran_state <- "raw"
+    }
+    conv_state <- input[["state"]][["conversion"]]
+    ## Note that voom takes care of this for us.
+    if (is.null(conv_state)) {
+        conv_state <- "raw"
+    }
+    norm_state <- input[["state"]][["normalization"]]
+    if (is.null(norm_state)) {
+        norm_state <- "raw"
+    }
+    filt_state <- input[["state"]][["filter"]]
+    if (is.null(filt_state)) {
+        filt_state <- "raw"
+    }
+
+    ready <- input
+    if (isTRUE(force)) {
+        message("Leaving the data alone, regardless of normalization state.")
+    } else {
+        if (conv_state == "raw") {
+            ready <- sm(normalize_expt(ready, convert="cpm"))
+        }
+        if (norm_state == "raw") {
+            ready <- sm(normalize_expt(ready, norm="quant"))
+        }
+    }
+    ## No matter what we do, it must be logged.
+    if (tran_state == "raw") {
+        ready <- sm(normalize_expt(ready, transform="log2"))
+    }
+    data <- as.data.frame(Biobase::exprs(ready[["expressionset"]]))
+    rm(ready)
+    retlist <- list(
+        "conditions" = conditions,
+        "batches" = batches,
+        "data" = data)
+    return(retlist)
+}
+
+choose_limma_dataset <- function(input, force=FALSE, ...) {
+    arglist <- list(...)
+    input_class <- class(input)[1]
+    data <- NULL
+    warn_user <- 0
+    libsize <- NULL
+    ## #### Old note alert!:
+    ## I sort of have the opposite problem for limma as for edger/deseq
+    ## It under-performs them when provided with non-normalized data.
+    ## Therefore the force option will have opposite effects here.
+    ## If force is on, leave the numbers alone.
+    ## #### New note:
+    ## It turns out, a more careful examination of how normalization affects the results,
+    ## the above seems only to be true if the following are true:
+    ## 1.  There are >2-3k features(genes/transcripts) with a full range of count values.
+    ## 2.  One does not attempt to use sva, or at least one uses sva before messing with the normalization state.
+    ## 2a. #2 primarily applies if one is using quantile normalization, it looks like tmm/rle does not have
+    ##     so profound an effect, and this effect is tightly bound with the state of #1 -- in other words, if
+    ##     one has nice dense data with low->high counts in an even distribution, then quantile+sva might be ok.
+    ##     But if that is not true, then one should expect a poo-show result.
+    ## For these reasons I am telling this function to revert to non-normalized data unless force is on, just like
+    ## I do for edger/deseq.  I think to help this, I will add a parameter which allows one to to turn on/off normalization
+    ## at the voom() step.
+
+    if (input_class == "expt") {
+        conditions <- input[["conditions"]]
+        batches <- input[["batches"]]
+        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+
+        tran_state <- input[["state"]][["transform"]]
+        ## Note that voom will take care of this for us.
+        if (is.null(tran_state)) {
+            tran_state <- "raw"
+        }
+        conv_state <- input[["state"]][["conversion"]]
+        ## Note that voom takes care of this for us.
+        if (is.null(conv_state)) {
+            conv_state <- "raw"
+        }
+        norm_state <- input[["state"]][["normalization"]]
+        if (is.null(norm_state)) {
+            norm_state <- "raw"
+        }
+        filt_state <- input[["state"]][["filter"]]
+        if (is.null(filt_state)) {
+            filt_state <- "raw"
+        }
+
+        ready <- input
+        if (isTRUE(force)) {
+            message("Leaving the data alone, regardless of normalization state.")
+        } else if (filt_state == "raw" & norm_state == "raw" & conv_state == "raw" & tran_state == "raw") {
+            message("Nothing has been done to the data, filtering it, leaving it alone.")
+            data <- Biobase::exprs(input[["expressionset"]])
+        } else if (filt_state == "raw" & norm_state != "raw" & conv_state != "raw" & tran_state != "raw") {
+            message("A bunch of stuff has been done to the data, but not filtering.")
+            message("Reverting to raw data.")
+            data <- Biobase::exprs(input[["original_expressionset"]])
+        } else if (filt_state != "raw" & norm_state == "raw") {
+            message("This data has been filtered and left non-normalized.")
+            message("Passing it as-is to limma.")
+        }
+    } else {
+        data <- as.data.frame(input)
+    }
+    retlist <- list(
+        "libsize" = libsize,
+        "conditions" = conditions,
+        "batches" = batches,
+        "data" = data)
+    return(retlist)
+}
+
+choose_binom_dataset <- function(input, force=FALSE, ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
     ## I think I would like to make this function smarter so that it will remove the log2 from transformed data.
@@ -453,8 +620,28 @@ choose_dataset <- function(input, force=FALSE, ...) {
         ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
         ## violation of its stated preferred/demanded input.  There are of course ways around this
         ## but one should not take them lightly, or ever.
+        tran_state <- input[["state"]][["transform"]]
+        if (is.null(tran_state)) {
+            tran_state <- "raw"
+        }
+        conv_state <- input[["state"]][["conversion"]]
+        if (is.null(conv_state)) {
+            conv_state <- "raw"
+        }
+        norm_state <- input[["state"]][["normalization"]]
+        if (is.null(norm_state)) {
+            norm_state <- "raw"
+        }
+        filt_state <- input[["state"]][["filter"]]
+        if (is.null(filt_state)) {
+            filt_state <- "raw"
+        }
+        if (norm_state == "round") {
+            norm_state <- "raw"
+        }
+
         if (isTRUE(force)) {
-            ## Setting force to TRUE allows one to round the data to fool edger into accepting it
+            ## Setting force to TRUE allows one to round the data to fool edger/deseq into accepting it
             ## This is a pretty terrible thing to do
             message("About to round the data, this is a pretty terrible thing to do. But if you,
 like me, want to see what happens when you put non-standard data into deseq, then here you go.")
@@ -462,24 +649,18 @@ like me, want to see what happens when you put non-standard data into deseq, the
             less_than <- data < 0
             data[less_than] <- 0
             warn_user <- 1
-        } else if (!is.null(input[["state"]][["normalization"]])) {
+        } else if (norm_state != "raw" & tran_state != "raw" & conv_state != "raw") {
             ## These if statements may be insufficient to check for the appropriate input for deseq.
-            data <- input[["original_expressionset"]]
-        } else if (input[["state"]][["normalization"]] != "raw" |
-                   (!is.null(input[["state"]][["transform"]]) & input[["state"]][["transform"]] != "raw")) {
+            data <- Biobase::exprs(input[["original_expressionset"]])
+        } else if (norm_state != "raw" | tran_state != "raw") {
             ## This makes use of the fact that the order of operations in the normalization function is static.
             ## filter->normalization->convert->batch->transform.
             ## Thus, if the normalized state is not raw, we can look back either to the filtered or original data
             ## The same is true for the transformation state.
-            if (input[["state"]][["filter"]] == "raw") {
-                message("EdgeR/DESeq expect raw data as input, reverting to the count filtered data.")
-                data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
-                if (is.null(data)) {
-                    data <- input[["normalized"]][["intermediate_counts"]][["original"]]
-                }
-            } else {
-                message("EdgeR/DESeq expect raw data as input, reverting to the original expressionset.")
-                data <- Biobase::exprs(input[["original_expressionset"]])
+            message("EdgeR/DESeq expect raw data as input, reverting to the count filtered data.")
+            data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
+            if (is.null(data)) {
+                data <- input[["normalized"]][["intermediate_counts"]][["original"]]
             }
         } else {
             message("The data should be suitable for EdgeR/DESeq.")
@@ -635,7 +816,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
     colnames(comparison_df) <- names(deseq)
     heat_colors <- grDevices::colorRampPalette(c("white","black"))
     comparison_heatmap <- try(heatmap.3(comparison_df, scale="none",
-                                        trace="none", keysize=1.0,
+                                        trace="none", keysize=1.5,
                                         linewidth=0.5, margins=c(9,9),
                                         col=heat_colors, dendrogram="none",
                                         Rowv=FALSE, Colv=FALSE,
@@ -747,8 +928,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     reminder_extra <- all_pairwise_result[["extra_contrasts"]]
     reminder_string <- NULL
     if (class(reminder_model_batch) == "matrix") {
-        reminder_string <- "The contrasts were performed with experimental condition and surrogates modeled with sva.  The p-values were therefore adjusted using an f-test as per the sva documentation."
-        message(reminder_string)
+        ## This is currently not true, ths pvalues are only modified if we modify the data.
+        ## reminder_string <- "The contrasts were performed with surrogates modeled with sva.  The p-values were therefore adjusted using an experimental f-test as per the sva documentation."
+        ##message(reminder_string)
     } else if (isTRUE(reminder_model_batch) & isTRUE(reminder_model_cond)) {
         reminder_string <- "The contrasts were performed with experimental condition and batch in the model."
     } else if (isTRUE(reminder_model_cond)) {
@@ -1014,16 +1196,18 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 message(paste0("Adding venn plots for ", names(combo)[[count]], "."))
                 openxlsx::writeData(wb, tab, x="Venn of p-value up genes.", startRow=1, startCol=plot_column)
                 venn_list <- try(de_venn(ddd, adjp=adjp), silent=TRUE)
-                up_plot <- venn_list[["up_noweight"]]
-                print(up_plot)
-                openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
-                                     startCol=plot_column, startRow=2, fileType="png", units="in")
-                openxlsx::writeData(wb, tab, x="Venn of p-value down genes.", startRow=1, startCol=plot_column + 4)
-                down_plot <- venn_list[["down_noweight"]]
-                print(down_plot)
-                openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
-                                     startCol=plot_column + 4, startRow=2, fileType="png", units="in")
-                venns[[tab]] <- venn_list
+                if (class(venn_list) != "try-error") {
+                    up_plot <- venn_list[["up_noweight"]]
+                    print(up_plot)
+                    openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
+                                         startCol=plot_column, startRow=2, fileType="png", units="in")
+                    openxlsx::writeData(wb, tab, x="Venn of p-value down genes.", startRow=1, startCol=plot_column + 4)
+                    down_plot <- venn_list[["down_noweight"]]
+                    print(down_plot)
+                    openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
+                                         startCol=plot_column + 4, startRow=2, fileType="png", units="in")
+                    venns[[tab]] <- venn_list
+                }
 
                 ## Text on row 18, plots from 19-49 (30 rows)
                 message(paste0("Adding a limma coefficient plot for ", names(combo)[[count]], "."))
@@ -1488,7 +1672,6 @@ disjunct_tab <- function(contrast_fit, coef1, coef2, ...) {
 #' @export
 do_pairwise <- function(type, ...) {
     arglist <- list(...)
-    print(summary(arglist))
     res <- NULL
     if (type == "limma") {
         res <- try(limma_pairwise(...))

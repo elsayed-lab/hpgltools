@@ -22,6 +22,15 @@ transform_counts <- function(count_table, transform="raw",
         counts <- list(count_table=count_table, libsize=libsize)
         return(counts)
     }
+    ## Also short-circuit it if we are asked to round the data.
+    if (transform == "round") {
+        count_table <- round(count_table)
+        less_than <- count_table < 0
+        count_table[less_than] <- 0
+        libsize <- colSums(count_table)
+        counts <- list(count_table=count_table, libsize=libsize)
+        return(counts)
+    }
 
     ## If we are performing a transformation, then the minimum value I want is 1 before performing the logn
     less_zero <- sum(count_table < 0)

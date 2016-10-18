@@ -137,59 +137,27 @@ basic_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
 #' stupid_de <- basic_pairwise(expt)
 #' }
 #' @export
-basic_pairwise <- function(input, design=NULL, force=FALSE) {
+basic_pairwise <- function(input=NULL, design=NULL,
+                           force=FALSE, ...) {
+    arglist <- list(...)
+    if (!is.null(arglist[["input"]])) {
+        input <- arglist[["input"]]
+    }
+    if (!is.null(arglist[["design"]])) {
+        conditions <- arglist[["design"]]
+    }
+    if (!is.null(arglist[["force"]])) {
+        batches <- arglist[["force"]]
+    }
     message("Starting basic pairwise comparison.")
-    input_class <- class(input)[1]
-    norm <- "quant"
-    if (!is.null(arglist[["norm"]])) {
-        norm <- arglist[["norm"]]
-    }
-    convert <- "cbcbcpm"
-    if (!is.null(arglist[["convert"]])) {
-        convert <- arglist[["convert"]]
-    }
-    transform <- "log2"
-    if (!is.null(arglist[["transform"]])) {
-        transform <- arglist[["transform"]]
-    }
-    filter <- FALSE
-    if (!is.null(arglist[["filter"]])) {
-        filter <- arglist[["filter"]]
-    }
+    input_data <- choose_basic_dataset(input, force=force)
+    design <- Biobase::pData(input[["expressionset"]])
+    conditions <- input_data[["conditions"]]
+    batches <- input_data[["batches"]]
+    data <- input_data[["data"]]
 
-    if (input_class == 'expt') {
-        design <- Biobase::pData(input[["expressionset"]])
-        conditions <- design[["condition"]]
-        conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=conditions)
-        batches <- design[["batch"]]
-        batches <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=batches)
-        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
-        if (!is.null(input[["state"]])) {
-            if (isTRUE(force)) {
-                message("The force option was applied, maybe going to modify normalization applied.")
-            }
-
-            if (input[["state"]][["normalization"]] == "raw" &
-                       input[["state"]][["conversion"]] == "raw" &
-                       input[["state"]][["transform"]] == "raw") {
-                message("This basic pairwise function assumes log2, converted, normalized counts, normalizing now.")
-                input <- suppressMessages(normalize_expt(input, norm=norm,
-                                                         convert=convert,
-                                                         transform=transform,
-                                                         filter=filter))
-                data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
-            } else if (input[["state"]][["transform"]] == "raw") {
-                message("This basic pairwise function assumes log2 counts, transforming now.")
-                data <- suppressMessages(transform_counts(data, transform="log2")[["count_table"]])
-            } else {
-                message("The data appears to have been at least transformed, leaving it alone.")
-            }
-        } else {  ## There is no 'state' associated with this data.
-            message("Cannot tell if this data has been normalized, leaving it alone.")
-        }
-    } else {
-        data <- as.data.frame(input)
-    }
+    conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=conditions)
+    batches <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=batches)
     types <- levels(as.factor(conditions))
     num_conds <- length(types)
     ## These will be filled with num_conds columns and numRows(input) rows.
@@ -244,7 +212,7 @@ basic_pairwise <- function(input, design=NULL, force=FALSE) {
             d_name <- types[d]
             contrast <- paste0(d_name, "_vs_", c_name)
             contrasts_performed <- append(contrast, contrasts_performed)
-            message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons, ": Performing log2 subtraction: ", contrast))
+            message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons, ": Performing log2 subtraction: ", contrast, "."))
             division <- data.frame(
                 median_table[, d] - median_table[, c])
             comparison_name <- paste0(d_name, "_vs_", c_name)
@@ -284,7 +252,7 @@ basic_pairwise <- function(input, design=NULL, force=FALSE) {
     ## Because of the way I made tvalues/pvalues into a list
     ## If only 1 comparison was performed, the resulting data structure never gets coerced into a
     ## data frame therefore I am performing this check which, if a single comparison was done, adds
-    ## a second column, performs the coercion, then strips it away.  This is probably a stupid way
+    ## a second column, performs the coercion, then strips it away.  This is a stupid way
     ## of doing what I want.
     if (num_done == 1) {
         tvalues <- cbind(tvalues, t_data)

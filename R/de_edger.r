@@ -171,10 +171,16 @@ edger_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
 #'  pretend = edger_pairwise(data, conditions, batches)
 #' }
 #' @export
-edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                          model_batch=TRUE, model_intercept=TRUE, alt_model=NULL,
-                          extra_contrasts=NULL, annot_df=NULL, force=FALSE, edger_method="default", ...) {
-        arglist <- list(...)
+edger_pairwise <- function(input=NULL, conditions=NULL,
+                           batches=NULL, model_cond=TRUE,
+                           model_batch=TRUE, model_intercept=TRUE,
+                           alt_model=NULL, extra_contrasts=NULL,
+                           annot_df=NULL, force=FALSE,
+                           edger_method="default", ...) {
+    arglist <- list(...)
+    if (!is.null(arglist[["input"]])) {
+        input <- arglist[["input"]]
+    }
     if (!is.null(arglist[["conditions"]])) {
         conditions <- arglist[["conditions"]]
     }
@@ -184,17 +190,17 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     if (!is.null(arglist[["model_cond"]])) {
         model_cond <- arglist[["model_cond"]]
     }
+    if (!is.null(arglist[["model_batch"]])) {
+        model_batch <- arglist[["model_batch"]]
+    }
+    if (!is.null(arglist[["model_intercept"]])) {
+        model_intercept <- arglist[["model_intercept"]]
+    }
     if (!is.null(arglist[["alt_model"]])) {
         alt_model <- arglist[["alt_model"]]
     }
     if (!is.null(arglist[["extra_contrasts"]])) {
         extra_contrasts <- arglist[["extra_contrasts"]]
-    }
-    if (!is.null(arglist[["model_intercept"]])) {
-        model_intercept <- arglist[["model_intercept"]]
-    }
-    if (!is.null(arglist[["model_batch"]])) {
-        model_batch <- arglist[["model_batch"]]
     }
     if (!is.null(arglist[["annot_df"]])) {
         annot_df <- arglist[["annot_df"]]
@@ -202,15 +208,21 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     if (!is.null(arglist[["force"]])) {
         force <- arglist[["force"]]
     }
-
+    if (!is.null(arglist[["edger_method"]])) {
+        edger_method <- arglist[["edger_method"]]
+    }
+    test_type <- "lrt"
+    if (!is.null(arglist[["test_type"]])) {
+        test_type <- arglist[["test_type"]]
+    }
     message("Starting edgeR pairwise comparisons.")
-    input_data <- choose_dataset(input, force=force)
+    input_data <- choose_binom_dataset(input, force=force)
     design <- Biobase::pData(input[["expressionset"]])
-    conditions <- design[["condition"]]
-    batches <- design[["batch"]]
+    conditions <- input_data[["conditions"]]
+    batches <- input_data[["batches"]]
     data <- input_data[["data"]]
 
-    fun_model <- choose_model(conditions, batches,
+    fun_model <- choose_model(input, conditions, batches,
                               model_batch=model_batch,
                               model_cond=model_cond,
                               model_intercept=model_intercept,
@@ -224,25 +236,32 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     raw <- edgeR::DGEList(counts=data, group=conditions)
     message("EdgeR step 1/9: normalizing data.")
     norm <- edgeR::calcNormFactors(raw)
-    ##message("EdgeR step 2/9: Estimating the common dispersion.")
-    ##disp_norm <- edgeR::estimateCommonDisp(norm)
-    ##message("EdgeR step 3/9: Estimating dispersion across genes.")
-    ##tagdisp_norm <- edgeR::estimateTagwiseDisp(disp_norm)
-    ##message("EdgeR step 4/9: Estimating GLM Common dispersion.")
-    ##glm_norm <- edgeR::estimateGLMCommonDisp(tagdisp_norm, fun_model)
-    ##message("EdgeR step 5/9: Estimating GLM Trended dispersion.")
-    ##glm_trended <- edgeR::estimateGLMTrendedDisp(glm_norm, fun_model)
-    ##message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
-    ##glm_tagged <- edgeR::estimateGLMTagwiseDisp(glm_trended, fun_model)
-    ##message("EdgeR step 7/9: Running glmFit.")
-    ##cond_fit <- edgeR::glmFit(glm_tagged, design=fun_model)
-    ##message("EdgeR step 8/9: Making pairwise contrasts.")
-    ##apc <- make_pairwise_contrasts(fun_model, conditions, do_identities=FALSE)
+    final_norm <- NULL
+    if (edger_method == "default") {
+        message("EdgeR steps 2 through 6/9: All in one!")
+        final_norm <- edgeR::estimateDisp(norm, design=fun_model, robust=TRUE)
+    } else {
+        message("EdgeR step 2/9: Estimating the common dispersion.")
+        disp_norm <- edgeR::estimateCommonDisp(norm)
+        message("EdgeR step 3/9: Estimating dispersion across genes.")
+        tagdisp_norm <- edgeR::estimateTagwiseDisp(disp_norm)
+        message("EdgeR step 4/9: Estimating GLM Common dispersion.")
+        glm_norm <- edgeR::estimateGLMCommonDisp(tagdisp_norm, fun_model)
+        message("EdgeR step 5/9: Estimating GLM Trended dispersion.")
+        glm_trended <- edgeR::estimateGLMTrendedDisp(glm_norm, fun_model)
+        message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
+        final_norm <- edgeR::estimateGLMTagwiseDisp(glm_trended, fun_model)
+    }
+    cond_fit <- NULL
+    if (test_type == "lrt") {
+        message("EdgeR step 7/9: Running glmFit, switch to glmQLFit by changing the argument 'test_type'.")
+        cond_fit <- edgeR::glmFit(final_norm, design=fun_model, robust=TRUE)
+    } else {
+        message("EdgeR step 7/9: Running glmQLFit, switch to glmFit by changing the argument 'test_type'.")
+        cond_fit <- edgeR::glmQLFit(final_norm, design=fun_model, robust=TRUE)
+    }
 
-    ## Try this instead:
-    norm <- edgeR::estimateDisp(norm, design=fun_model, robust=TRUE)
-    ##cond_fit <- edgeR::glmFit(norm, design=fun_model)
-    cond_fit <- edgeR::glmQLFit(norm, design=fun_model, robust=TRUE)
+    message("EdgeR step 8/9: Making pairwise contrasts.")
     apc <- make_pairwise_contrasts(fun_model, conditions,
                                    extra_contrasts=extra_contrasts,
                                    do_identities=FALSE)
@@ -263,8 +282,12 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=fun_model)")
         eval(parse(text=ctr_string))
         contrast_list[[name]] <- tt
-        ##lrt_list[[name]] <- edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
-        lrt_list[[name]] <- edgeR::glmQLFTest(cond_fit, contrast=contrast_list[[name]])
+        lrt_list[[name]] <- NULL
+        if (test_type == "lrt") {
+            lrt_list[[name]] <- edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
+        } else {
+            lrt_list[[name]] <- edgeR::glmQLFTest(cond_fit, contrast=contrast_list[[name]])
+        }
         res <- edgeR::topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")
         res <- as.data.frame(res)
         res[["logFC"]] <- signif(x=as.numeric(res[["logFC"]]), digits=4)
@@ -277,11 +300,6 @@ edger_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         res[["PValue"]] <- signif(x=as.numeric(res[["PValue"]]), digits=4)
         res[["FDR"]] <- signif(x=as.numeric(res[["FDR"]]), digits=4)
         res[["qvalue"]] <- tryCatch({
-            ##as.numeric(format(signif(
-            ##    suppressWarnings(qvalue::qvalue(
-            ##        as.numeric(res$PValue), robust=TRUE))$qvalues, 4),
-            ##scientific=TRUE))
-            ## ok I admit it, I am not smart enough for nested expressions
             ttmp <- as.numeric(res[["PValue"]])
             ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
             format(x=ttmp, digits=4, scientific=TRUE)
