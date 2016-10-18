@@ -20,19 +20,6 @@
 #' @return List including the adjustments for a model matrix, a modified count table, and 3 plots of
 #'     the known batch, surrogates, and batch/surrogate.
 #' @export
-
-
-        warn <- NULL
-        n <- ncol(dat)
-        m <- nrow(dat)
-        H <- mod %*% solve(t(mod) %*% mod) %*% t(mod)
-        res <- dat - t(H %*% t(dat))
-        uu <- svd(res)
-        ndf <- min(m, n) - ceiling(sum(diag(H)))
-        dstat <- uu$d[1:ndf]^2/sum(uu$d[1:ndf]^2)
-        dstat0 <- matrix(0, nrow = B, ncol = ndf)
-
-
 get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="be", ...) {
     arglist <- list(...)
     ## Gather all the likely pieces we can use

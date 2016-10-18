@@ -2,7 +2,7 @@
 % Please edit documentation in R/de_edger.r
 \name{edger_ma}
 \alias{edger_ma}
-\title{Yay pretty colors and shapes!}
+\title{Make a MA plot of some limma output with pretty colors and shapes}
 \usage{
 edger_ma(output, table = NULL, fc_col = "logFC", p_col = "qvalue",
   expr_col = "logCPM", fc = 1, pval_cutoff = 0.05)
