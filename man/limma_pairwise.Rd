@@ -4,10 +4,10 @@
 \alias{limma_pairwise}
 \title{Set up a model matrix and set of contrasts for pairwise comparisons using voom/limma.}
 \usage{
-limma_pairwise(input, conditions = NULL, batches = NULL,
+limma_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, model_batch = TRUE, model_intercept = TRUE,
-  extra_contrasts = NULL, alt_model = NULL, libsize = NULL,
-  annot_df = NULL, ...)
+  alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
+  libsize = NULL, force = FALSE, ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing count tables, normalization state, etc.}
@@ -23,18 +23,18 @@ limma_pairwise(input, conditions = NULL, batches = NULL,
 \item{model_intercept}{Perform a cell-means or intercept model? A little more difficult for me to
 understand.  I have tested and get the same answer either way.}
 
+\item{alt_model}{Separate model matrix instead of the normal condition/batch.}
+
 \item{extra_contrasts}{Some extra contrasts to add to the list.
 This can be pretty neat, lets say one has conditions A,B,C,D,E
 and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 de_vs_cb = (E-D)-(C-B),"}
 
-\item{alt_model}{Separate model matrix instead of the normal condition/batch.}
+\item{annot_df}{Data frame for annotations.}
 
 \item{libsize}{I've recently figured out that libsize is far more important than I previously
 realized.  Play with it here.}
-
-\item{annot_df}{Data frame for annotations.}
 
 \item{...}{Use the elipsis parameter to feed options to write_limma().}
 }

@@ -167,11 +167,15 @@ deseq_pairwise <- function(...) {
 #' pretend = deseq2_pairwise(data, conditions, batches)
 #' }
 #' @export
-deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                            alt_model=NULL, extra_contrasts=NULL, model_intercept=FALSE,
-                            model_batch=TRUE, annot_df=NULL, force=FALSE, ...) {
-    message("Starting DESeq2 pairwise comparisons.")
+deseq2_pairwise <- function(input=NULL, conditions=NULL,
+                            batches=NULL, model_cond=TRUE,
+                            model_batch=TRUE, model_intercept=FALSE,
+                            alt_model=NULL, extra_contrasts=NULL,
+                            annot_df=NULL, force=FALSE, ...) {
     arglist <- list(...)
+    if (!is.null(arglist[["input"]])) {
+        input <- arglist[["input"]]
+    }
     if (!is.null(arglist[["conditions"]])) {
         conditions <- arglist[["conditions"]]
     }
@@ -181,17 +185,17 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     if (!is.null(arglist[["model_cond"]])) {
         model_cond <- arglist[["model_cond"]]
     }
+    if (!is.null(arglist[["model_batch"]])) {
+        model_batch <- arglist[["model_batch"]]
+    }
+    if (!is.null(arglist[["model_intercept"]])) {
+        model_intercept <- arglist[["model_intercept"]]
+    }
     if (!is.null(arglist[["alt_model"]])) {
         alt_model <- arglist[["alt_model"]]
     }
     if (!is.null(arglist[["extra_contrasts"]])) {
         extra_contrasts <- arglist[["extra_contrasts"]]
-    }
-    if (!is.null(arglist[["model_intercept"]])) {
-        model_intercept <- arglist[["model_intercept"]]
-    }
-    if (!is.null(arglist[["model_batch"]])) {
-        model_batch <- arglist[["model_batch"]]
     }
     if (!is.null(arglist[["annot_df"]])) {
         annot_df <- arglist[["annot_df"]]
@@ -199,13 +203,12 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     if (!is.null(arglist[["force"]])) {
         force <- arglist[["force"]]
     }
-
-    input_data <- choose_dataset(input, force=force)
+    message("Starting DESeq2 pairwise comparisons.")
+    input_data <- choose_binom_dataset(input, force=force)
     design <- Biobase::pData(input[["expressionset"]])
-    conditions <- design[["condition"]]
-    batches <- design[["batch"]]
+    conditions <- input_data[["conditions"]]
+    batches <- input_data[["batches"]]
     data <- input_data[["data"]]
-    print(head(data))
     condition_table <- table(conditions)
     condition_levels <- levels(as.factor(conditions))
     batch_levels <- levels(as.factor(batches))
@@ -214,11 +217,8 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
     summarized <- NULL
     ## Moving the size-factor estimation into this if(){} block in order to accomodate sva-ish batch estimation in the model
     deseq_sf <- NULL
-    if (isTRUE(force)) {
-        message("WATCH OUT FORCE IS ON")
-    }
 
-    model_choice <- choose_model(conditions, batches,
+    model_choice <- choose_model(input, conditions, batches,
                                  model_batch=model_batch,
                                  model_cond=model_cond,
                                  alt_model=alt_model)
@@ -234,14 +234,10 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
         model_string <- "~ batch + condition"
         column_data[["condition"]] <- as.factor(column_data[["condition"]])
         column_data[["batch"]] <- as.factor(column_data[["batch"]])
-        message("TESTME: HERE1")
-        print(head(data))
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=column_data,
                                                      design=as.formula(model_string))
-        message("TESTME: HERE2")
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
-        message("TESTME: HERE3")
     } else if (isTRUE(model_batch)) {
         message("DESeq2 step 1/5: Including only batch in the deseq model.")
         model_string <- "~ batch "
@@ -250,7 +246,7 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                                                      colData=column_data,
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
-    } else if (class(model_batch) == 'numeric') {
+    } else if (class(model_batch) == "numeric") {
         message("DESeq2 step 1/5: Including batch estimates from sva/ruv/pca in the deseq model.")
         model_string <- "~ condition"
         column_data[["condition"]] <- as.factor(column_data[["condition"]])
@@ -258,9 +254,9 @@ deseq2_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRU
                                                      colData=column_data,
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
-        dataset$SV1 <- model_batch
+        dataset[["SV1"]] <- model_batch
         DESeq2::design(dataset) <- as.formula(~ SV1 + condition)
-    } else if (class(model_batch) == 'matrix') {
+    } else if (class(model_batch) == "matrix") {
         message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
         model_string <- "~ condition"
         column_data[["condition"]] <- as.factor(column_data[["condition"]])

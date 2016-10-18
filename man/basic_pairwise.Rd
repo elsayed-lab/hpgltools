@@ -4,7 +4,7 @@
 \alias{basic_pairwise}
 \title{The simplest possible differential expression method.}
 \usage{
-basic_pairwise(input, design = NULL, force = FALSE, ...)
+basic_pairwise(input = NULL, design = NULL, force = FALSE, ...)
 }
 \arguments{
 \item{input}{Count table by sample.}

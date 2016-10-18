@@ -253,6 +253,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
         "conversion" = normalized[["actions"]][["conversion"]],
         "batch" = normalized[["actions"]][["batch"]],
         "transform" = normalized[["actions"]][["transform"]])
+    print(new_state)
     new_expt[["state"]] <- new_state
 
     ## My concept of the 'best library size' comes from Kwame's work where the libsize was kept after performing
@@ -472,7 +473,13 @@ hpgl_norm <- function(data, ...) {
         transformed_counts <- transform_counts(count_table, ...)
         ## transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
         count_table <- transformed_counts[["count_table"]]
-        transform_performed <- transform
+        print(transform)
+        if (transform == "round") {
+            transform_performed <- "raw"
+            transform <- "raw"
+        } else {
+            transform_performed <- transform
+        }
     }
 
     if (batch_step == 5) {
