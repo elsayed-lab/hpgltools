@@ -571,7 +571,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
     num_samples <- nrow(expt[["design"]])
     sample_ids <- expt[["design"]][["sampleid"]]
     chosen_colors <- expt[["conditions"]]
-
+    sample_colors <- NULL
     if (is.null(colors) | isTRUE(colors)) {
         sample_colors <- sm(grDevices::colorRampPalette(
                                            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
@@ -726,6 +726,80 @@ set_expt_samplenames <- function(expt, newnames) {
     names(new_expt[["libsize"]]) <- newnames
     new_expt[["samplenames"]] <- newnames
     return(new_expt)
+}
+
+#'  Print a string describing what happened to this data.
+#'
+#' @export
+what_happened <- function(expt=NULL, transform="raw", convert="raw", norm="raw", filter="raw", batch="raw") {
+    if (!is.null(expt)) {
+        transform <- expt[["state"]][["transform"]]
+        if (is.null(transform)) {
+            transform <- "raw"
+        }
+        batch <- expt[["state"]][["batch"]]
+        if (is.null(batch)) {
+            batch <- "raw"
+        }
+        convert <- expt[["state"]][["conversion"]]
+        if (is.null(convert)) {
+            convert <- "raw"
+        }
+        norm <- expt[["state"]][["normalization"]]
+        if (is.null(norm)) {
+            norm <- "raw"
+        }
+        filter <- expt[["state"]][["filter"]]
+        if (is.null(filter)) {
+            filter <- "raw"
+        }
+    }
+    ## Short circuit if nothing was done.
+    if (transform == "raw" & batch == "raw" &
+        convert == "raw" & norm == "raw" &
+        filter == "raw") {
+        what <- "raw(data)"
+        return(what)
+    }
+
+    what <- ""
+    if (transform != "raw") {
+        what <- paste0(what, transform, '(')
+    }
+    if (batch != "raw") {
+        if (isTRUE(batch)) {
+            what <- paste0(what, 'batch-correct(')
+        } else {
+            what <- paste0(what, batch, '(')
+        }
+    }
+    if (convert != "raw") {
+        what <- paste0(what, convert, '(')
+    }
+    if (norm != "raw") {
+        what <- paste0(what, norm, '(')
+    }
+    if (filter != "raw") {
+        what <- paste0(what, filter, '(')
+    }
+    what <- paste0(what, 'data')
+    if (transform != 'raw') {
+        what <- paste0(what, ')')
+    }
+    if (batch != "raw") {
+        what <- paste0(what, ')')
+    }
+    if (convert != "raw") {
+        what <- paste0(what, ')')
+    }
+    if (norm != "raw") {
+        what <- paste0(what, ')')
+    }
+    if (filter != "raw") {
+        what <- paste0(what, ')')
+    }
+
+    return(what)
 }
 
 ## EOF

@@ -220,12 +220,15 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE) {
     return(result)
 }
 
-write_pretty_counts <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
-                                convert="cpm", transform="log2", model_batch="sva", filter=TRUE) {
+#' Make pretty xlsx files of count data.
+#'
+#' @export
+write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
+                       convert="cpm", transform="log2", batch="sva", filter="cbcb") {
     wb <- openxlsx::createWorkbook(creator="hpgltools")
     plot_dim <- 6
     plot_cols <- floor(plot_dim * 1.5)
-    plot_rows <- ceil(plot_dim * 0.8)
+    plot_rows <- ceiling(plot_dim * 5.0)
     new_row <- 1
     new_col <- 1
 
@@ -233,131 +236,155 @@ write_pretty_counts <- function(expt, excel="excel/pretty_counts.xlsx", norm="qu
     ## Write an introduction to this foolishness.
     message("Writing the legend.")
     sheet <- "legend"
-    legend <- data.frame(rbind(
-        c("This excel workbook the following worksheets:", ""),
-        c("1.", "This sheet, including the experimental design."),
-        c("2.", "The raw counts and annotation data on worksheet 'raw_data'."),
-        c("3.", "Some graphs describing the distribution of raw data in worksheet 'raw_plots'."),
-        c("4.", paste0("The counts normalized with: ", transform, "(", convert, "(", norm, "(", batch, "(", filter, "(counts))))) on 'norm_data'.")),
-        c("5.", "Some graphs describing the distribution of the normalized data on 'norm_plots'."),
-        c("6.", "The median normalized counts by condition factor on 'median_data'.")))
-    colnames(legend) <- c("sheet", "sheet definition")
+    norm_state <- paste0(transform, "(", convert, "(", norm, "(", batch, "(", filter, "(counts)))))")
+    legend <- data.frame(
+        "sheet" = c("This excel workbook the following worksheets:", "1.", "2.", "3.", "4.", "5.", "6."),
+        "sheet_definition" = c("", "This sheet, including the experimental design.",
+                               "The raw counts and annotation data on worksheet 'raw_data'.",
+                               "Some graphs describing the distribution of raw data in worksheet 'raw_plots'.",
+                               paste0("The counts normalized with: ", norm_state),
+                               "Some graphs describing the distribution of the normalized data on 'norm_plots'.",
+                               "The median normalized counts by condition factor on 'median_data'."))
     xls_result <- write_xls(wb, data=legend, sheet=sheet, rownames=FALSE,
                             title="Columns used in the following tables.")
     rows_down <- nrow(legend)
-    new_row <- new_row + rows_down + 1
-    annot <- Biobase::fData(expt[["expressionset"]])
-    xls_result <- write_xls(wb, data=annot, start_row=new_row, sheet=sheet, start_col=1, title="Experimental Design.")
+    new_row <- new_row + rows_down + 3
+    annot <- Biobase::pData(expt[["expressionset"]])
+    xls_result <- write_xls(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
+                            sheet=sheet, start_col=1, title="Experimental Design.")
 
 
     ## Write the raw read data and gene annotations
     message("Writing the raw reads.")
     sheet <- "raw_reads"
     new_row <- 1
+    new_col <- 1
     reads <- Biobase::exprs(expt[["expressionset"]])
-    info <- Biobase::pData(expt[["expressionset"]])
+    info <- Biobase::fData(expt[["expressionset"]])
     read_info <- merge(reads, info, by="row.names")
-    xls_result <- write_xls(wb, data=read_info, start_row=new_row, start_col=new_col, sheet=sheet, title="Raw Reads.")
+    xls_result <- write_xls(data=read_info, wb=wb, sheet=sheet, rownames=FALSE,
+                            start_row=new_row, start_col=new_col, title="Raw Reads.")
 
 
     ## Write some graphs for the raw data
-    message("Writing the raw reads.")
+    message("Graphing the raw reads.")
     sheet <- "raw_graphs"
-    metrics <- graph_metrics(expt[["expressionset"]], qq=TRUE)
+    newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
+    metrics <- sm(graph_metrics(expt, qq=TRUE))
     ## Start with library sizes.
     openxlsx::writeData(wb, sheet=sheet, x="Legend.", startRow=new_row, startCol=new_col)
-    openxlsx::writeData(wb, sheet=sheet, x="Raw library sizes.", startRow=new_row, startCol=new_col + plot_cols + 1)
-    openxlsx::writeData(wb, sheet=sheet, x="Non-zero genes.", startRow=new_row, startCol=new_col + plot_cols + 1)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw library sizes.", startRow=new_row, startCol=new_col)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Non-zero genes.", startRow=new_row, startCol=new_col)
     new_row <- new_row + 1
-    new_plot <- metrics[["legend"]]
+    new_col <- 1
+    new_plot <- metrics[["legend"]][["plot"]]
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- new_col + plot_cols + 1
     new_plot <- metrics[["libsize"]]
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     ## Same row, non-zero plot
     new_col <- new_col + plot_cols + 1
-    new_plot <- metrics[["non_zero"]]
+    new_plot <- metrics[["nonzero"]]
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- new_col + plot_cols + 1
 
     ## Visualize distributions
-    new_row <- new_row + plot_rows + 1
+    new_row <- new_row + plot_rows + 2
     new_col <- 1
     openxlsx::writeData(wb, sheet=sheet, x="Raw data density plot.", startRow=new_row, startCol=new_col)
-    openxlsx::writeData(wb, sheet=sheet, x="Raw Boxplot.", startRow=new_row, startCol=new_col + plot_cols + 1)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw Boxplot.", startRow=new_row, startCol=new_col)
+    new_col <- 1
     new_plot <- metrics[["density"]]
     print(new_plot)
+    new_row <- new_row + 1
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_plot <- metrics[["boxplot"]]
     new_col <- new_col + plot_cols + 1
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- 1
 
     ## Move down next set of rows, heatmaps
-    new_row <- new_row + plot_rows + 1
+    new_row <- new_row + plot_rows + 2
     new_col <- 1
     openxlsx::writeData(wb, sheet=sheet, x="Raw correlation heatmap.", startRow=new_row, startCol=new_col)
-    openxlsx::writeData(wb, sheet=sheet, x="Raw distance heatmap.", startRow=new_row, startCol=new_col + plot_cols + 1)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw distance heatmap.", startRow=new_row, startCol=new_col)
+    new_col <- 1
+    new_row <- new_row + 1
     new_plot <- metrics[["corheat"]]
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_plot <- metrics[["disheat"]]
     new_col <- new_col + plot_cols + 1
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- 1
 
     ## SM plots
-    new_row <- new_row + plot_rows + 1
+    new_row <- new_row + plot_rows + 2
     new_col <- 1
     openxlsx::writeData(wb, sheet=sheet, x="Raw standard median correlation.", startRow=new_row, startCol=new_col)
-    openxlsx::writeData(wb, sheet=sheet, x="Raw standard distance correlation.", startRow=new_row, startCol=new_col + plot_cols + 1)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw standard distance correlation.", startRow=new_row, startCol=new_col)
+    new_col <- 1
+    new_row <- new_row + 1
     new_plot <- metrics[["smc"]]
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_plot <- metrics[["smd"]]
     new_col <- new_col + plot_cols + 1
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- 1
 
     ## PCA and qq_log
-    new_row <- new_row + plot_rows + 1
+    new_row <- new_row + plot_rows + 2
     new_col <- 1
     openxlsx::writeData(wb, sheet=sheet, x="Raw PCA.", startRow=new_row, startCol=new_col)
-    openxlsx::writeData(wb, sheet=sheet, x="Raw QQ, log scale.", startRow=new_row, startCol=new_col + plot_cols + 1)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw QQ, log scale.", startRow=new_row, startCol=new_col)
+    new_col <- 1
     new_plot <- metrics[["pcaplot"]]
+    new_row <- new_row + 1
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_plot <- metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- 1
 
     ## PCA table
-    new_row <- new_row + plot_rows + 1
+    new_row <- new_row + plot_rows + 2
     new_col <- 1
     openxlsx::writeData(wb, sheet=sheet, x="Raw PCA res.", startRow=new_row, startCol=new_col)
-    xls_result <- write_xls(data=metrics[["pcares"]], wb=wb, sheet="raw_graphs")
-    new_col <- xls_result[["end_col"]] + 2
-    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA table.", startRow=new_row, startCol=new_col)
-    xls_result <- write_xls(data=metrics[["pcatable"]], wb=wb, sheet="raw_graphs")
+    new_row <- new_row + 1
+    xls_result <- write_xls(data=metrics[["pcares"]], wb=wb, rownames=FALSE,
+                            sheet=sheet, start_col=new_col, start_row=new_row)
+    new_col <- xls_result[["end_col"]] + 6
+    new_row <- new_row - 1
+    openxlsx::writeData(wb, sheet, "Raw PCA table.", startRow=new_row, startCol=new_col)
+    new_row <- new_row + 1
+    xls_result <- write_xls(data=metrics[["pcatable"]], wb=wb, rownames=FALSE,
+                            sheet=sheet, start_row=new_row, start_col=new_col)
 
 
     ## Move on to the next sheet, normalized data
@@ -365,111 +392,134 @@ write_pretty_counts <- function(expt, excel="excel/pretty_counts.xlsx", norm="qu
     sheet <- "norm_data"
     new_col <- 1
     new_row <- 1
-    norm <- normalize_expt(expt=expt, transform=transform, norm=norm, convert=convert, batch=batch, filter=filter, ...)
-    reads <- Biobase::exprs(norm[["expressionset"]])
-    info <- Biobase::pData(norm[["expressionset"]])
+    norm_data <- sm(normalize_expt(expt=expt, transform=transform, norm=norm, convert=convert, batch=batch, filter=filter))
+    reads <- Biobase::exprs(norm_data[["expressionset"]])
+    info <- Biobase::fData(norm_data[["expressionset"]])
     read_info <- merge(reads, info, by="row.names")
-    xls_result <- write_xls(wb, data=read_info, start_row=new_row, start_col=new_col, sheet=sheet, title="Raw Reads.")
+    title <- what_happened(norm_data)
+    xls_result <- write_xls(wb=wb, data=read_info, rownames=FALSE,
+                            start_row=new_row, start_col=new_col, sheet=sheet, title=title)
 
 
     ## Graphs of the normalized data
-    message("Writing the normalized graphs.")
+    message("Graphing the normalized reads.")
     sheet <- "norm_graphs"
-    metrics <- graph_metrics(norm[["expressionset"]], qq=TRUE)
+    newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
+    norm_metrics <- sm(graph_metrics(norm_data, qq=TRUE))
     ## Start with library sizes.
-    openxlsx::writeData(wb, sheet=sheet, x="Legend.", startRow=new_row, startCol=new_col)
-    openxlsx::writeData(wb, sheet=sheet, x="Raw library sizes.", startRow=new_row, startCol=new_col + plot_cols + 1)
-    openxlsx::writeData(wb, sheet=sheet, x="Non-zero genes.", startRow=new_row, startCol=new_col + plot_cols + 1)
-    new_row <- new_row + 1
-    new_plot <- metrics[["legend"]]
-    print(new_plot)
-    openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+    openxlsx::writeData(wb, sheet, "Legend.", startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
-    new_plot <- metrics[["libsize"]]
+    openxlsx::writeData(wb, sheet, "Raw library sizes.", startRow=new_row, startCol=new_col)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Non-zero genes.", startRow=new_row, startCol=new_col)
+    new_col <- 1
+    new_row <- new_row + 1
+    new_plot <- norm_metrics[["legend"]][["plot"]]
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
+    new_col <- new_col + plot_cols + 1
+    new_plot <- norm_metrics[["libsize"]]
+    print(new_plot)
+    openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     ## Same row, non-zero plot
     new_col <- new_col + plot_cols + 1
-    new_plot <- metrics[["non_zero"]]
+    new_plot <- norm_metrics[["nonzero"]]
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- new_col + plot_cols + 1
 
     ## Visualize distributions
-    new_row <- new_row + plot_rows + 1
+    new_row <- new_row + plot_rows + 2
     new_col <- 1
     openxlsx::writeData(wb, sheet=sheet, x="Raw data density plot.", startRow=new_row, startCol=new_col)
-    openxlsx::writeData(wb, sheet=sheet, x="Raw Boxplot.", startRow=new_row, startCol=new_col + plot_cols + 1)
-    new_plot <- metrics[["density"]]
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw Boxplot.", startRow=new_row, startCol=new_col)
+    new_col <- 1
+    new_plot <- norm_metrics[["density"]]
     print(new_plot)
+    new_row <- new_row + 1
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
-    new_plot <- metrics[["boxplot"]]
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
+    new_plot <- norm_metrics[["boxplot"]]
     new_col <- new_col + plot_cols + 1
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- 1
 
     ## Move down next set of rows, heatmaps
-    new_row <- new_row + plot_rows + 1
+    new_row <- new_row + plot_rows + 2
     new_col <- 1
     openxlsx::writeData(wb, sheet=sheet, x="Raw correlation heatmap.", startRow=new_row, startCol=new_col)
-    openxlsx::writeData(wb, sheet=sheet, x="Raw distance heatmap.", startRow=new_row, startCol=new_col + plot_cols + 1)
-    new_plot <- metrics[["corheat"]]
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw distance heatmap.", startRow=new_row, startCol=new_col)
+    new_col <- 1
+    new_plot <- norm_metrics[["corheat"]]
     print(new_plot)
+    new_row <- new_row + 1
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
-    new_plot <- metrics[["disheat"]]
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
+    new_plot <- norm_metrics[["disheat"]]
     new_col <- new_col + plot_cols + 1
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- 1
 
     ## SM plots
-    new_row <- new_row + plot_rows + 1
+    new_row <- new_row + plot_rows + 2
     new_col <- 1
     openxlsx::writeData(wb, sheet=sheet, x="Raw standard median correlation.", startRow=new_row, startCol=new_col)
-    openxlsx::writeData(wb, sheet=sheet, x="Raw standard distance correlation.", startRow=new_row, startCol=new_col + plot_cols + 1)
-    new_plot <- metrics[["smc"]]
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw standard distance correlation.", startRow=new_row, startCol=new_col)
+    new_col <- 1
+    new_plot <- norm_metrics[["smc"]]
     print(new_plot)
+    new_row <- new_row + 1
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
-    new_plot <- metrics[["smd"]]
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
+    new_plot <- norm_metrics[["smd"]]
     new_col <- new_col + plot_cols + 1
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- 1
 
     ## PCA and qq_log
-    new_row <- new_row + plot_rows + 1
+    new_row <- new_row + plot_rows + 2
     new_col <- 1
     openxlsx::writeData(wb, sheet=sheet, x="Raw PCA.", startRow=new_row, startCol=new_col)
-    openxlsx::writeData(wb, sheet=sheet, x="Raw QQ, log scale.", startRow=new_row, startCol=new_col + plot_cols + 1)
-    new_plot <- metrics[["pcaplot"]]
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw QQ, log scale.", startRow=new_row, startCol=new_col)
+    new_col <- 1
+    new_plot <- norm_metrics[["pcaplot"]]
     print(new_plot)
+    new_row <- new_row + 1
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
-    new_plot <- metrics[["qqlog"]]
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
+    new_plot <- norm_metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
     print(new_plot)
     openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=plot_column, startRow=new_row, fileType="png", units="in")
+                         startCol=new_col, startRow=new_row, fileType="png", units="in")
     new_col <- 1
 
     ## PCA table
-    new_row <- new_row + plot_rows + 1
+    new_row <- new_row + plot_rows + 2
     new_col <- 1
-    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA res.", startRow=new_row, startCol=new_col)
-    xls_result <- write_xls(data=metrics[["pcares"]], wb=wb, sheet="raw_graphs")
-    new_col <- xls_result[["end_col"]] + 2
-    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA table.", startRow=new_row, startCol=new_col)
-    xls_result <- write_xls(data=metrics[["pcatable"]], wb=wb, sheet="raw_graphs")
+    openxlsx::writeData(wb, sheet=sheet, x="Norm PCA res.", startRow=new_row, startCol=new_col)
+    new_row <- new_row + 1
+    xls_result <- write_xls(data=norm_metrics[["pcares"]], wb=wb, rownames=FALSE,
+                            sheet=sheet, start_col=new_col, start_row=new_row)
+    new_col <- xls_result[["end_col"]] + 6
+    new_row <- new_row - 1
+    openxlsx::writeData(wb, sheet=sheet, x="Norm PCA table.", startRow=new_row, startCol=new_col)
+    new_row <- new_row + 1
+    xls_result <- write_xls(data=norm_metrics[["pcatable"]], wb=wb, sheet=sheet,
+                            rownames=FALSE, start_col=new_col, start_row=new_row)
 
 
     ## Give a median-by-factor accounting of the data
@@ -477,9 +527,10 @@ write_pretty_counts <- function(expt, excel="excel/pretty_counts.xlsx", norm="qu
     sheet <- "median_data"
     new_col <- 1
     new_row <- 1
-    median_data <- median_by_factor(Biobase::exprs(norm[["expressionset"]]), norm[["condition"]])
+    median_data <- median_by_factor(Biobase::exprs(norm_data[["expressionset"]]), norm_data[["condition"]])
     median_data <- merge(median_data, info, by="row.names")
-    xls_result <- write_xls(wb, data=median_data, start_row=new_row, start_col=new_col, sheet=sheet, title="Median Reads by factor.")
+    xls_result <- write_xls(wb, data=median_data, start_row=new_row, start_col=new_col,
+                            rownames=FALSE, sheet=sheet, title="Median Reads by factor.")
 
 
     ## Save the result

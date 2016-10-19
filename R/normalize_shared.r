@@ -109,46 +109,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     }
 
     message("This function will replace the expt$expressionset slot with:")
-    if (transform != "raw") {
-        type <- paste0(type, transform, '(')
-    }
-    if (batch != "raw") {
-        if (isTRUE(batch)) {
-            type <- paste0(type, 'batch-correct(')
-        } else {
-            type <- paste0(type, batch, '(')
-        }
-    }
-    if (convert != "raw") {
-        type <- paste0(type, convert, '(')
-    }
-    if (norm != "raw") {
-        type <- paste0(type, norm, '(')
-    }
-    if (filter != "raw") {
-        if (isTRUE(filter)) {
-            type <- paste0(type, 'filter(')
-        } else {
-            type <- paste0(type, filter, '(')
-        }
-    }
-    type <- paste0(type, 'data')
-    if (transform != 'raw') {
-        type <- paste0(type, ')')
-    }
-    if (batch != "raw") {
-        type <- paste0(type, ')')
-    }
-    if (convert != "raw") {
-        type <- paste0(type, ')')
-    }
-    if (norm != "raw") {
-        type <- paste0(type, ')')
-    }
-    if (filter != "raw") {
-        type <- paste0(type, ')')
-    }
-    message(type)
+    operations <- what_happened(transform=transform, batch=batch, convert=convert, norm=norm, filter=filter)
+    message(operations)
     message("It backs up the current data into a slot named:
  expt$backup_expressionset. It will also save copies of each step along the way
  in expt$normalized with the corresponding libsizes. Keep the libsizes in mind
@@ -194,6 +156,9 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     }
     if (convert == "cpm" & transform == "tmm") {
         warning("Cpm and tmm perform similar purposes. They should not be applied to the same data.")
+    }
+    if (norm == "quant" & isTRUE(grepl(x=batch, pattern="sva"))) {
+        warning("Quantile normalization and sva do not always play well together.")
     }
     new_expt[["backup_expressionset"]] <- new_expt[["expressionset"]]
     current_data <- Biobase::exprs(current_exprs)
@@ -253,7 +218,6 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
         "conversion" = normalized[["actions"]][["conversion"]],
         "batch" = normalized[["actions"]][["batch"]],
         "transform" = normalized[["actions"]][["transform"]])
-    print(new_state)
     new_expt[["state"]] <- new_state
 
     ## My concept of the 'best library size' comes from Kwame's work where the libsize was kept after performing
@@ -473,7 +437,6 @@ hpgl_norm <- function(data, ...) {
         transformed_counts <- transform_counts(count_table, ...)
         ## transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
         count_table <- transformed_counts[["count_table"]]
-        print(transform)
         if (transform == "round") {
             transform_performed <- "raw"
             transform <- "raw"

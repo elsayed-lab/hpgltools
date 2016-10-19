@@ -1717,13 +1717,10 @@ extract_siggenes <- function(...) { extract_significant_genes(...) }
 extract_significant_genes <- function(combined,
                                       according_to="all",
                                       fc=1.0, p=0.05,
-                                      z=NULL,
-                                      n=NULL,
+                                      z=NULL, n=NULL,
                                       p_type="adj",
-                                      csv=NULL,
-                                      excel="excel/significant_genes.xlsx",
-                                      sig_bar=TRUE,
-                                      siglfc_cutoffs=c(0,1,2)) {
+                                      csv=NULL, excel="excel/significant_genes.xlsx",
+                                      sig_bar=TRUE, siglfc_cutoffs=c(0,1,2)) {
     if (!is.null(combined[["plots"]])) {
         combined <- combined[["data"]]
     }

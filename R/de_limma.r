@@ -527,11 +527,16 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                               logged=loggedp, converted=convertedp)
     } else if (which_voom == "limma_weighted") {
         message("Limma step 2/6: running limma::voomWithQualityWeights().")
-        fun_voom <- limma::voomWithQualityWeights(counts=data, design=fun_model, lib.size=libsize,
-                                                  normalize.method=voom_norm, plot=TRUE,
-                                                  span=0.5, var.design=NULL, method="genebygene",
-                                                  maxiter=50, tol=1E-10, trace=FALSE, replace.weights=TRUE,
-                                                  col=NULL)
+        fun_voom <- try(limma::voomWithQualityWeights(counts=data, design=fun_model, lib.size=libsize,
+                                                      normalize.method=voom_norm, plot=TRUE,
+                                                      span=0.5, var.design=NULL, method="genebygene",
+                                                      maxiter=50, tol=1E-10, trace=FALSE, replace.weights=TRUE,
+                                                      col=NULL))
+        if (class(fun_voom) == "try-error") {
+            message("voomWithQualityWeights failed, falling back to voom.")
+            fun_voom <- limma::voom(counts=data, design=fun_model, lib.size=libsize,
+                                    normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
+            }
     } else {
         message("Limma step 2/6: running limma::voom().")
         fun_voom <- limma::voom(counts=data, design=fun_model, lib.size=libsize,

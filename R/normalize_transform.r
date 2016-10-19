@@ -13,7 +13,7 @@
 #' filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
 #' }
 #' @export
-transform_counts <- function(count_table, transform="raw",
+transform_counts <- function(count_table, design=NULL, transform="raw",
                              base=NULL, ...) {
     arglist <- list(...)
     ## Short circuit this if we are going with raw data.
@@ -29,6 +29,28 @@ transform_counts <- function(count_table, transform="raw",
         count_table[less_than] <- 0
         libsize <- colSums(count_table)
         counts <- list(count_table=count_table, libsize=libsize)
+        return(counts)
+    }
+    if (transform == "voom") {
+        libsize <- colSums(count_table)
+        model_choice <- choose_model(count_table, design[["condition"]],
+                                     design[["batch"]])
+        fun_model <- model_choice[["chosen_model"]]
+        voomed <- limma::voom(counts=count_table, design=fun_model)
+        counts <- list(count_table=voomed[["E"]], libsize=libsize)
+        return(counts)
+    }
+    if (transform == "voomweight") {
+        libsize <- colSums(count_table)
+        model_choice <- choose_model(count_table, design[["condition"]],
+                                     design[["batch"]])
+        fun_model <- model_choice[["chosen_model"]]
+        voomed <- try(limma::voomWithQualityWeights(counts=count_table, design=fun_model))
+        if (class(voomed) == "try-error") {
+            warning("voomwithqualityweights failed.  Falling back to voom.")
+            voomed <- limma::voom(counts=count_table, design=fun_model)
+        }
+        counts <- list(count_table=voomed[["E"]], libsize=libsize)
         return(counts)
     }
 

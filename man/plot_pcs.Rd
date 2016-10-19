@@ -5,7 +5,7 @@
 \title{A quick and dirty PCA plotter of arbitrary components against one another.}
 \usage{
 plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
-  design = NULL, plot_title = NULL, plot_labels = NULL, plot_size = 5,
+  design = NULL, plot_title = TRUE, plot_labels = NULL, plot_size = 5,
   size_column = NULL, ...)
 }
 \arguments{

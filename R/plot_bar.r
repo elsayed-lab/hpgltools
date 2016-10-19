@@ -135,26 +135,13 @@ plot_rpm = function(input,
 
         for(i in 1:nrow(genes_on_chr)) {
             row = genes_on_chr[i,]
-            genename=row$Name
+            genename=row[["Name"]]
             output_file=paste("~/riboseq/coverage/", mychr, "/", genename, ".svg", sep="")
             svg(filename=output_file, height=2, width=8)
-            plot_rpm(rpms, start=row$start, end=row$end, strand=row$strand, output=output_file, name=row$Name)
+            plot_rpm(rpms, start=row[["start"]], end=row[["end"]], strand=row[["strand"]], output=output_file, name=row[["Name"]])
             dev.off()
         }
     }
-
-    ##for(i in 1:nrow(genes)) {
-    ##    row <- genes[i,]
-    ##    genename=row$Name
-    ##    chromosome_number =
-    ##        output_file=paste("~/riboseq/rpm/", genename, ".svg", sep="")
-    ##    svg(file=output_file, height=2, width=6)
-    ##    plot_rpm(rpms, st=row$start, en=row$end, strand=row$strand, output=output_file, name=row$name)
-    ##    dev.off()
-    ##}
-    ##dev.new(height=2, width=6)
-    ##plot_rpm(rpms, st=2000, en=20000, strand="+", output=test, name=row$Name)
-    ##dev.off()
 
     mychr = gsub("\\.\\d+$", "", name, perl=TRUE)
     plotted_start = start - padding
@@ -166,7 +153,7 @@ plot_rpm = function(input,
     region_idx <- input[["chromosome"]] == mychr & input[["position"]] >= plotted_start & input[["position"]] <= plotted_end
     rpm_region <- rpm_region[region_idx, ]
     rpm_region = rpm_region[,-1]
-    rpm_region$log = log2(rpm_region$rpm + 1)
+    rpm_region[["log"]] = log2(rpm_region[["rpm"]] + 1)
 
     ## pre_start = subset(rpm_region, position < my_start)
     start_idx <- rpm_region[["position"]] < my_start
@@ -223,7 +210,7 @@ plot_significant_bar <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
         ## This is a bit weird and circuituous
         ## The most common caller of this function is in fact extract_significant_genes
         fc_sig <- sm(extract_significant_genes(table_list, fc=fc,
-                                               p=p, z=n, n=NULL, excel=NULL,
+                                               p=p, z=z, n=NULL, excel=NULL,
                                                p_type=p_type, sig_bar=FALSE))
 
         table_length <- length(fc_sig[["limma"]][["ups"]])
