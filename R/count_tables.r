@@ -177,6 +177,7 @@ concatenate_runs <- function(expt, column='replicate') {
 median_by_factor <- function(data, fact) {
     medians <- data.frame("ID"=rownames(data))
     rownames(medians) = rownames(data)
+    fact <- as.factor(fact)
     for (type in levels(fact)) {
         columns <- grep(pattern=type, fact)
         med <- matrixStats::rowMedians(data[, columns])
@@ -392,7 +393,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     sheet <- "norm_data"
     new_col <- 1
     new_row <- 1
-    norm_data <- sm(normalize_expt(expt=expt, transform=transform, norm=norm, convert=convert, batch=batch, filter=filter))
+    norm_data <- normalize_expt(expt=expt, transform=transform, norm=norm, convert=convert, batch=batch, filter=filter)
     reads <- Biobase::exprs(norm_data[["expressionset"]])
     info <- Biobase::fData(norm_data[["expressionset"]])
     read_info <- merge(reads, info, by="row.names")

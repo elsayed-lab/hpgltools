@@ -211,7 +211,7 @@ plot_significant_bar <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
         ## The most common caller of this function is in fact extract_significant_genes
         fc_sig <- sm(extract_significant_genes(table_list, fc=fc,
                                                p=p, z=z, n=NULL, excel=NULL,
-                                               p_type=p_type, sig_bar=FALSE))
+                                               p_type=p_type, sig_bar=FALSE, ma=FALSE))
 
         table_length <- length(fc_sig[["limma"]][["ups"]])
         fc_name <- paste0("fc_", fc)
@@ -245,9 +245,9 @@ plot_significant_bar <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
     up_max_limma <- up_max_deseq <- up_max_edger <- numeric()  ## The number of genes FC > 4
     down_max_limma <- down_max_deseq <- down_max_edger <- numeric()  ## The number of genes FC < -4
     ##  The bar graph looks like
-    ######### #### #  <-- Total width is the number of all >0FC genes
-    ##      ^    ^------- Total >0FC - the smallest set >2FC
-    ##      |------------ Total >0FC - the set >1FC
+    ######### #### #  <-- Total width is the number of all >1FC genes
+    ##      ^    ^------- Total >0FC - the set between 4FC and 2FC
+    ##      |------------ Total >0FC - the smallest set >4FC
 
     ups_limma <- ups_edger <- ups_deseq <- list()
     downs_limma <- downs_edger <- downs_deseq <- list()
@@ -256,19 +256,29 @@ plot_significant_bar <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
     baby_bear <- fc_names[[3]]  ## And the smallest grouping
     for (t in 1:table_length) {
         table_name <- names(sig_lists_limma_up[[1]])[t]
+        ## > 0 lfc
         everything_up <- sig_lists_limma_up[[papa_bear]][[table_name]]
+        ## > 1 lfc
         mid_up <- sig_lists_limma_up[[mama_bear]][[table_name]]
+        ## > 2 lfc
         exclusive_up <- sig_lists_limma_up[[baby_bear]][[table_name]]
+        ## < 0 lfc
         everything_down <- sig_lists_limma_down[[papa_bear]][[table_name]]
+        ## < 1 lfc
         mid_down <- sig_lists_limma_down[[mama_bear]][[table_name]]
+        ## < 2 lfc
         exclusive_down <- sig_lists_limma_down[[baby_bear]][[table_name]]
 
+        ## Ah, I think the problem is that by calculating the numbers a,b,c
+        ## It is stacking them and so I am getting a final bar of the sum of a,b,c
         up_all_limma[[table_name]] <- everything_up
         down_all_limma[[table_name]] <- everything_down
-        up_mid_limma[[table_name]] <- everything_up - exclusive_up
-        down_mid_limma[[table_name]] <- everything_down - exclusive_down
-        up_max_limma[[table_name]] <- everything_up - mid_up
-        down_max_limma[[table_name]] <- everything_down - mid_down
+        up_mid_limma[[table_name]] <- mid_up - exclusive_up
+        down_mid_limma[[table_name]] <- mid_down - exclusive_down
+        up_max_limma[[table_name]] <- exclusive_up
+        down_max_limma[[table_name]] <- exclusive_down
+        up_all_limma[[table_name]] <- up_all_limma[[table_name]] - up_mid_limma[[table_name]] - up_max_limma[[table_name]]
+        down_all_limma[[table_name]] <- down_all_limma[[table_name]] - down_mid_limma[[table_name]] - down_max_limma[[table_name]]
 
         table_name <- names(sig_lists_deseq_up[[1]])[t]
         everything_up <- sig_lists_deseq_up[[papa_bear]][[table_name]]
@@ -280,10 +290,12 @@ plot_significant_bar <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
 
         up_all_deseq[[table_name]] <- everything_up
         down_all_deseq[[table_name]] <- everything_down
-        up_mid_deseq[[table_name]] <- everything_up - exclusive_up
-        down_mid_deseq[[table_name]] <- everything_down - exclusive_down
-        up_max_deseq[[table_name]] <- everything_up - mid_up
-        down_max_deseq[[table_name]] <- everything_down - mid_down
+        up_mid_deseq[[table_name]] <- mid_up - exclusive_up
+        down_mid_deseq[[table_name]] <- mid_down - exclusive_down
+        up_max_deseq[[table_name]] <- exclusive_up
+        down_max_deseq[[table_name]] <- exclusive_down
+        up_all_deseq[[table_name]] <- up_all_deseq[[table_name]] - up_mid_deseq[[table_name]] - up_max_deseq[[table_name]]
+        down_all_deseq[[table_name]] <- down_all_deseq[[table_name]] - down_mid_deseq[[table_name]] - down_max_deseq[[table_name]]
 
         table_name <- names(sig_lists_edger_up[[1]])[t]
         everything_up <- sig_lists_edger_up[[papa_bear]][[table_name]]
@@ -295,10 +307,13 @@ plot_significant_bar <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
 
         up_all_edger[[table_name]] <- everything_up
         down_all_edger[[table_name]] <- everything_down
-        up_mid_edger[[table_name]] <- everything_up - exclusive_up
-        down_mid_edger[[table_name]] <- everything_down - exclusive_down
-        up_max_edger[[table_name]] <- everything_up - mid_up
-        down_max_edger[[table_name]] <- everything_down - mid_down
+        up_mid_edger[[table_name]] <- mid_up - exclusive_up
+        down_mid_edger[[table_name]] <- mid_down - exclusive_down
+        up_max_edger[[table_name]] <- exclusive_up
+        down_max_edger[[table_name]] <- exclusive_down
+        up_all_edger[[table_name]] <- up_all_edger[[table_name]] - up_mid_edger[[table_name]] - up_max_edger[[table_name]]
+        down_all_edger[[table_name]] <- down_all_edger[[table_name]] - down_mid_edger[[table_name]] - down_max_edger[[table_name]]
+
     }
 
     comparisons <- names(sig_lists_limma_up[[1]])
@@ -324,7 +339,7 @@ plot_significant_bar <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
         ggplot2::scale_y_continuous(breaks=seq(maximum * -1, maximum, (maximum / 5))) +
         ggplot2::coord_flip() +
         ggplot2::theme_bw() +
-        ggplot2::theme(panel.grid.minor=element_blank()) +
+        ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +
         ggplot2::theme(legend.position="none")
 
     comparisons <- names(sig_lists_deseq_up[[1]])
@@ -350,7 +365,7 @@ plot_significant_bar <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
         ggplot2::scale_y_continuous(breaks=seq(maximum * -1, maximum, (maximum / 5))) +
         ggplot2::coord_flip() +
         ggplot2::theme_bw() +
-        ggplot2::theme(panel.grid.minor=element_blank()) +
+        ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +
         ggplot2::theme(legend.position="none")
 
     comparisons <- names(sig_lists_edger_up[[1]])
@@ -376,7 +391,7 @@ plot_significant_bar <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
         ggplot2::scale_y_continuous(breaks=seq(maximum * -1, maximum, (maximum / 5))) +
         ggplot2::coord_flip() +
         ggplot2::theme_bw() +
-        ggplot2::theme(panel.grid.minor=element_blank()) +
+        ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +
         ggplot2::theme(legend.position="none")
 
     retlist <- list(

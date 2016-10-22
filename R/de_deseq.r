@@ -24,18 +24,37 @@ deseq_ma <- function(output, table=NULL, p_col="qvalue",
     if (!is.null(output[["deseq"]])) {
         output <- output[["deseq"]]
     }
-    possible_tables <- names(output[["all_tables"]])
-    if (is.null(table)) {
-        table <- possible_tables[1]
-    } else if (is.numeric(table)) {
-        table <- possible_tables[table]
+    if (!is.null(output[["all_pairwise"]])) {
+        possible_tables <- names(output[["all_tables"]])
+        if (is.null(table)) {
+            table <- possible_tables[1]
+        } else if (is.numeric(table)) {
+            table <- possible_tables[table]
+        }
+        revname <- strsplit(x=table, split="_vs_")
+        revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
+        if (!(table %in% possible_tables)) {
+            ## Perhaps the name was reversed?
+            if (revname %in% possible_tables) {
+            message("Trey you doofus, you reversed the name of the table.")
+            table <- revname
+            } else {
+            stop("Unable to find the table in the set of possible tables.")
+            }
+        }
+        ## End checking if this is an all-pairwise result
+    } else {
+        ## Then this should be the result of combining a pairwise result
+        de_genes <- output[["data"]][[table]]
+        de_genes <- de_genes[, c(expr_col, fc_col, p_col)]
     }
 
-    de_genes <- output[["all_tables"]][[table]]
-    de_genes[["logExpr"]] <- log(de_genes[["baseMean"]])
-    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
-                       p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
-    return(plot)
+    ## de_genes <- output[["all_tables"]][[table]]
+    ##  I think I need this!! ## de_genes[["logExpr"]] <- log(de_genes[["baseMean"]])
+    de_genes[[expr_col]] <- log1p(de_genes[[expr_col]])
+    ma_material <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
+                              p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
+    return(ma_material)
 }
 
 #' Plot out 2 coefficients with respect to one another from deseq2.
@@ -218,11 +237,21 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ## Moving the size-factor estimation into this if(){} block in order to accomodate sva-ish batch estimation in the model
     deseq_sf <- NULL
 
+    ## A caveat because this is a point of confusion
+    ## choose_model() returns a few models, including intercept and non-intercept versions
+    ## of the same things.  However, if model_batch is passed as something like 'sva', then
+    ## it will gather surrogate estimates from sva and friends and return those estimates.
     model_choice <- choose_model(input, conditions, batches,
                                  model_batch=model_batch,
                                  model_cond=model_cond,
-                                 alt_model=alt_model)
+                                 model_intercept=FALSE,
+                                 alt_model=alt_model, ...)
     model_including <- model_choice[["including"]]
+    if (class(model_choice[["model_batch"]]) == "matrix") {
+        ## The SV matrix from sva/ruv/etc are put into the model batch slot of the return from choose_model.
+        ## Use them here if appropriate
+        model_batch <- model_choice[["model_batch"]]
+    }
     ## choose_model should now take all of the following into account
     ## Therefore the following 8 or so lines should not be needed any longer.
     model_string <- NULL
@@ -246,16 +275,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                                                      colData=column_data,
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
-    } else if (class(model_batch) == "numeric") {
-        message("DESeq2 step 1/5: Including batch estimates from sva/ruv/pca in the deseq model.")
-        model_string <- "~ condition"
-        column_data[["condition"]] <- as.factor(column_data[["condition"]])
-        summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                     colData=column_data,
-                                                     design=as.formula(model_string))
-        dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
-        dataset[["SV1"]] <- model_batch
-        DESeq2::design(dataset) <- as.formula(~ SV1 + condition)
     } else if (class(model_batch) == "matrix") {
         message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
         model_string <- "~ condition"
@@ -264,15 +283,39 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                                                      colData=column_data,
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
-        formula_string <- "as.formula(~ "
-        for (count in 1:ncol(model_batch)) {
-            colname <- paste0("SV", count)
-            dataset[[colname]] <- model_batch[, 1]
-            formula_string <- paste0(formula_string, " ", colname, " + ")
+        passed <- FALSE
+        num_sv <- ncol(model_batch)
+        try_sv <- function(data, num_sv) {
+            passed <- FALSE
+            formula_string <- "as.formula(~ "
+            for (count in 1:num_sv) {
+                colname <- paste0("SV", count)
+                dataset[[colname]] <- model_batch[, 1]
+                formula_string <- paste0(formula_string, " ", colname, " + ")
+            }
+            formula_string <- paste0(formula_string, "condition)")
+            new_formula <- eval(parse(text=formula_string))
+            DESeq2::design(dataset) <- new_formula
+            data_model <- stats::model.matrix.default(DESeq2::design(dataset), data = as.data.frame(dataset@colData))
+            model_columns <- ncol(data_model)
+            model_rank <- qr(data_model)[["rank"]]
+            if (model_rank < model_columns) {
+                message(paste0("Including ", num_sv, " will fail because the resulting model is too low rank."))
+                num_sv <- num_sv - 1
+                message(paste0("Trying again with ", num_sv, " surrogates."))
+                message("You should consider rerunning the pairwise comparison with the number of surrogates explicitly stated with the option surrogates=number.")
+                ret <- try_sv(data, num_sv)
+            } else {
+                ## If we get here, then the number of surrogates should work with DESeq2.
+                ## Perhaps I should re-calculate the variables with the specific number of variables.
+                return(data)
+            }
         }
-        formula_string <- paste0(formula_string, "condition)")
-        new_formula <- eval(parse(text=formula_string))
-        DESeq2::design(dataset) <- new_formula
+        tmp_dataset <- dataset
+        new_dataset <- try_sv(tmp_dataset, num_sv)
+        dataset <- new_dataset
+        rm(tmp_dataset)
+        rm(new_dataset)
     } else {
         message("DESeq2 step 1/5: Including only condition in the deseq model.")
         model_string <- "~ condition"
@@ -358,7 +401,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         coef_name <- paste0("condition", coef)
         coefficient_list[[coef]] <- as.data.frame(
             DESeq2::results(deseq_run, contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
-        message(paste0("Collected coefficients for: ", coef))
         ## coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
     }
 

@@ -92,6 +92,22 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     }  else {
         sample_definitions <- read_metadata(file, ...)
     }
+    sample_columns <- colnames(sample_definitions)
+    found_condition <- "condition" %in% sample_columns
+    found_batch <- "batch" %in% sample_columns
+    found_sample <- "sample" %in% sample_columns
+    if (!isTRUE(found_condition)) {
+        message("Did not find the condition column in the sample sheet.")
+        message("Was it perhaps saved as a .xls?")
+    }
+    if (!isTRUE(found_sample)) {
+        message("Did not find the sample column in the sample sheet.")
+        message("Was it perhaps saved as a .xls?")
+    }
+    if (!isTRUE(found_batch)) {
+        message("Did not find the batch column in the sample sheet.")
+        message("Was it perhaps saved as a .xls?")
+    }
 
     ## Double-check that there is a usable condition column
     ## This is also an instance of simplifying subsetting, identical to
@@ -458,10 +474,6 @@ expt_subset <- function(expt, subset=NULL) {
     class(new_expt) <- "expt"
     return(new_expt)
 }
-## Because I am an idiot.
-subset_expt <- function(...) {
-    expt_subset(...)
-}
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -721,7 +733,7 @@ set_expt_samplenames <- function(expt, newnames) {
     newdesign[["sampleid"]] <- newnames
     new_expt[["design"]] <- newdesign
     new_expressionset <- new_expt[["expressionset"]]
-    sampleNames(new_expressionset) <- newnames
+    Biobase::sampleNames(new_expressionset) <- newnames
     new_expt[["expressionset"]] <- new_expressionset
     names(new_expt[["libsize"]]) <- newnames
     new_expt[["samplenames"]] <- newnames

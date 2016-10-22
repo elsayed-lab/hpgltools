@@ -6,8 +6,8 @@
 from the combined tables.}
 \usage{
 extract_significant_genes(combined, according_to = "all", fc = 1,
-  p = 0.05, z = NULL, n = NULL, p_type = "adj", csv = NULL,
-  excel = "excel/significant_genes.xlsx", sig_bar = TRUE,
+  p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, ma = TRUE,
+  p_type = "adj", csv = NULL, excel = "excel/significant_genes.xlsx",
   siglfc_cutoffs = c(0, 1, 2))
 }
 \arguments{

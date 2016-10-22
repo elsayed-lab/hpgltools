@@ -41,7 +41,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
                          alt_model=NULL, libsize=NULL,
                          annot_df=NULL, parallel=TRUE, ...) {
     arglist <- list(...)
-    surrogates <- 1
+    surrogates <- "be"
     if (!is.null(arglist[["surrogates"]])) {
         surrogates <- arglist[["surrogates"]]
     }
@@ -57,9 +57,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     null_model <- NULL
     sv_model <- NULL
     if (class(model_batch) == "character") {
-        params <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
-        model_batch <- params[["model_adjust"]]
-        null_model <- params[["null_model"]]
+        model_params <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
+        model_batch <- model_params[["model_adjust"]]
+        null_model <- model_params[["null_model"]]
         sv_model <- model_batch
     }
 
@@ -286,7 +286,12 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 choose_model <- function(input, conditions, batches, model_batch=TRUE,
                          model_cond=TRUE, model_intercept=TRUE,
                          alt_model=NULL, alt_string=NULL,
-                         intercept=0, reverse=FALSE) {
+                         intercept=0, reverse=FALSE, ...) {
+    arglist <- list(...)
+    surrogates <- "be"
+    if (!is.null(arglist[["surrogates"]])) {
+        surrogates <- arglist[["surrogates"]]
+    }
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
     ## Make a model matrix which will have one entry for
@@ -358,21 +363,23 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
     } else if (class(model_batch) == "character") {
         ## Then calculate the estimates using get_model_adjust
         message("Extracting surrogate estimate from sva/ruv/pca and adding them to the model.")
-        model_batch_info <- get_model_adjust(input, estimate_type=model_batch)
+        model_batch_info <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
+        ## Changing model_batch from 'sva' to the resulting matrix.
+        ## Hopefully this will simplify things later for me.
         model_batch <- model_batch_info[["model_adjust"]]
-        int_model <- stats::model.matrix(~ 0 + conditions + model_batch,
-                                         contrasts.arg=list(conditions="contr.sum"))
-        noint_model <- stats::model.matrix(~ conditions + model_batch,
-                                           contrasts.arg=list(conditions="contr.sum"))
+        int_model <- stats::model.matrix(~ 0 + conditions + model_batch)
+                                         ## contrasts.arg=list(conditions="contr.sum"))
+        noint_model <- stats::model.matrix(~ conditions + model_batch)
+                                           ## contrasts.arg=list(conditions="contr.sum"))
         int_string <- condbatch_int_string
         noint_string <- condbatch_noint_string
         including <- "condition+batchestimate"
     } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
         message("Including batch estimates from sva/ruv/pca in the model.")
-        int_model <- stats::model.matrix(~ 0 + conditions + model_batch,
-                                         contrasts.arg=list(conditions="contr.sum"))
-        noint_model <- stats::model.matrix(~ conditions + model_batch,
-                                           contrasts.arg=list(conditions="contr.sum"))
+        int_model <- stats::model.matrix(~ 0 + conditions + model_batch)
+                                           ## contrasts.arg=list(conditions="contr.sum"))
+        noint_model <- stats::model.matrix(~ conditions + model_batch)
+                                           ## contrasts.arg=list(conditions="contr.sum"))
         int_string <- condbatch_int_string
         noint_string <- condbatch_noint_string
         including <- "condition+batchestimate"
@@ -447,6 +454,7 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
         "noint_string" = noint_string,
         "chosen_model" = chosen_model,
         "chosen_string" = chosen_string,
+        "model_batch" = model_batch,
         "including" = including)
     return(retlist)
 }
@@ -1716,11 +1724,11 @@ extract_siggenes <- function(...) { extract_significant_genes(...) }
 #' @export
 extract_significant_genes <- function(combined,
                                       according_to="all",
-                                      fc=1.0, p=0.05,
-                                      z=NULL, n=NULL,
+                                      fc=1.0, p=0.05, sig_bar=TRUE,
+                                      z=NULL, n=NULL, ma=TRUE,
                                       p_type="adj",
                                       csv=NULL, excel="excel/significant_genes.xlsx",
-                                      sig_bar=TRUE, siglfc_cutoffs=c(0,1,2)) {
+                                      siglfc_cutoffs=c(0,1,2)) {
     if (!is.null(combined[["plots"]])) {
         combined <- combined[["data"]]
     }
@@ -1728,6 +1736,7 @@ extract_significant_genes <- function(combined,
     trimmed_down <- list()
     up_titles <- list()
     down_titles <- list()
+    sig_list <- list()
     title_append <- ""
     if (!is.null(fc)) {
         title_append <- paste0(title_append, " log2fc><", fc)
@@ -1765,6 +1774,7 @@ extract_significant_genes <- function(combined,
     for (according in according_to) {
         summary_count <- summary_count + 1
         ret[[according]] <- list()
+        ma_plots <- list()
         change_counts_up <- list()
         change_counts_down <- list()
         for (table_name in names(combined[["data"]])) {
@@ -1775,6 +1785,34 @@ extract_significant_genes <- function(combined,
             p_column <- paste0(according, "_adjp")
             if (p_type != "adj") {
                 p_column <- paste0(according, "_p")
+            }
+            if (isTRUE(ma)) {
+                single_ma <- NULL
+                if (according == "limma") {
+                    single_ma <- limma_ma(output=combined, table=table_name,
+                                          p_col=p_column, fc_col=fc_column, expr_col="limma_ave",
+                                          fc=fc, p=p)
+                    single_ma <- single_ma[["plot"]]
+                } else if (according == "deseq") {
+                    single_ma <- deseq_ma(output=combined, table=table_name,
+                                          p_col=p_column, fc_col=fc_column, expr_col="deseq_basemean",
+                                          fc=fc, p=p)
+                    single_ma <- single_ma[["plot"]]
+                } else if (according == "edger") {
+                    single_ma <- edger_ma(output=combined, table=table_name,
+                                          p_col=p_column, fc_col=fc_column, expr_col="edger_logcpm",
+                                          fc=fc, p=p)
+                    single_ma <- single_ma[["plot"]]
+                } else if (according == "basic") {
+                    ## single_ma <- basic_ma(output=combined, table=table_name,
+                    ## p_col=p_column, fc_col=fc_column, expr_col="edger_logcpm",
+                    ## fc=fc, p=p)
+                    ## single_ma <- single_ma[["plot"]]
+                    single_ma <- NULL
+                } else {
+                    message("Do not know this according type.")
+                }
+                ma_plots[[table_name]] <- single_ma
             }
             trimming <- get_sig_genes(table, fc=fc, p=p, z=z, n=n,
                                       column=fc_column, p_column=p_column)
@@ -1793,22 +1831,25 @@ extract_significant_genes <- function(combined,
         ## xls_result <- write_xls(data=change_counts, sheet="number_changed_genes", file=sig_table,
         ##                         title=summary_title,
         ##                         overwrite_file=TRUE, newsheet=TRUE)
+
         ret[[according]] <- list(
             "ups" = trimmed_up,
             "downs" = trimmed_down,
             "counts" = change_counts,
             "up_titles" = up_titles,
             "down_titles" = down_titles,
-            "counts_title" = summary_title)
+            "counts_title" = summary_title,
+            "ma_plots" = ma_plots)
         if (is.null(excel)) {
             message("Not printing excel sheets for the significant genes.")
         } else {
             message(paste0("Printing significant genes to the file: ", excel))
-            xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according, summary_count=summary_count, csv=csv)
+            xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according, summary_count=summary_count, csv=csv, ma=ma)
             wb <- xlsx_ret[["workbook"]]
         }
     } ## End list of according_to's
 
+    sig_bar_plots <- NULL
     if (isTRUE(sig_bar)) {
         ## This needs to be changed to get_sig_genes()
         sig_bar_plots <- plot_significant_bar(combined, fc_cutoffs=siglfc_cutoffs,
@@ -1828,7 +1869,7 @@ extract_significant_genes <- function(combined,
                              startRow=plot_row, startCol=plot_col,
                              fileType="png", units="in")
 
-        plot_col <- plot_col + 10
+        plot_col <- plot_col + 12
         openxlsx::writeData(wb, "legend",
                             x="Significant deseq genes.",
                             startRow=text_row, startCol=plot_col)
@@ -1837,7 +1878,7 @@ extract_significant_genes <- function(combined,
                              startRow=plot_row, startCol=plot_col,
                              fileType="png", units="in")
 
-        plot_col <- plot_col + 10
+        plot_col <- plot_col + 12
         openxlsx::writeData(wb, "legend",
                             x="Significant edger genes.",
                             startRow=text_row, startCol=plot_col)
@@ -1846,10 +1887,12 @@ extract_significant_genes <- function(combined,
                              startRow=plot_row, startCol=plot_col,
                              fileType="png", units="in")
     } ## End if we want significance bar plots
+    ret[["sig_bar_plots"]] <- sig_bar_plots
 
     if (!is.null(excel)) {
         excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
     }
+
     return(ret)
 }
 
@@ -2005,7 +2048,7 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 #' to avoid potential human erors(sic) by having a function generate
 #' all contrasts.
 #'
-#' @param model Model describing the conditions/batches/etc in the experiment.
+#' @param  Model describing the conditions/batches/etc in the experiment.
 #' @param conditions Factor of conditions in the experiment.
 #' @param do_identities Include all the identity strings? Limma can
 #'     use this information while edgeR can not.
@@ -2229,7 +2272,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
 print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx", csv=NULL,
-                            according="limma", summary_count=1) {
+                            according="limma", summary_count=1, ma=FALSE) {
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
     }
@@ -2248,6 +2291,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     down_titles <- upsdowns[["down_titles"]]
     summary <- upsdowns[["counts"]]
     summary_title <- upsdowns[["counts_title"]]
+    ma_plots <- upsdowns[["ma_plots"]]
     table_count <- 0
     summary_count <- summary_count - 1
     num_tables <- length(names(ups))
@@ -2267,6 +2311,16 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
         down_title <- down_titles[[table_count]]
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", up_name))
         xls_result <- write_xls(data=up_table, wb=wb, sheet=up_name, title=up_title)
+        if (isTRUE(ma)) {
+            ma_row <- 1
+            ma_col <- xls_result[["end_col"]] + 1
+            is_basic <- try(print(ma_plots[[1]]), silent=TRUE)
+            ## The above will fail if this was a basic analysis, because I don't do ma plots on them.
+            if (class(is_basic) != "try-error") {
+                openxlsx::insertPlot(wb, up_name, width=6, height=6,
+                                     startCol=ma_col, startRow=ma_row, fileType="png", units="in")
+            }
+        }
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", down_name))
         xls_result <- write_xls(data=down_table, wb=wb, sheet=down_name, title=down_title)
         if (!is.null(csv)) {

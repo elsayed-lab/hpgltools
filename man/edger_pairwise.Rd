@@ -7,7 +7,7 @@
 edger_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, model_batch = TRUE, model_intercept = TRUE,
   alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
-  force = FALSE, edger_method = "default", ...)
+  force = FALSE, edger_method = "long", ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}

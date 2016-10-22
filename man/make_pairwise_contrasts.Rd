@@ -8,8 +8,6 @@ make_pairwise_contrasts(model, conditions, do_identities = TRUE,
   do_pairwise = TRUE, extra_contrasts = NULL)
 }
 \arguments{
-\item{model}{Model describing the conditions/batches/etc in the experiment.}
-
 \item{conditions}{Factor of conditions in the experiment.}
 
 \item{do_identities}{Include all the identity strings? Limma can
@@ -19,6 +17,8 @@ use this information while edgeR can not.}
 need to be set to FALSE, but just in case.}
 
 \item{extra_contrasts}{Optional string of extra contrasts to include.}
+
+\item{Model}{describing the conditions/batches/etc in the experiment.}
 }
 \value{
 List including the following information:

@@ -1,4 +1,4 @@
-#' Take gene/exon lengths from a suitable data source (gff/TxDb/OrganismDbi)
+' Take gene/exon lengths from a suitable data source (gff/TxDb/OrganismDbi)
 #'
 #' Primarily goseq, but also other tools on occasion require a set of gene IDs and lengths.
 #' This function is resposible for pulling that data from either a gff, or TxDb/OrganismDbi.
@@ -397,16 +397,23 @@ gather_genes_orgdb <- function(goseq_data, orgdb_go, orgdb_ensembl) {
 #' @return Ggplot2 plot of pvalues vs. ontology.
 #' @seealso \link[goseq]{goseq} \pkg{ggplot2}
 #' @export
-plot_ontpval <- function(df, ontology="MF") {
+plot_ontpval <- function(df, ontology="MF", fontsize=16) {
     y_name <- paste("Enriched ", ontology, " categories.", sep="")
-    pvalue_plot <- ggplot2::ggplot(df, ggplot2::aes_string(x="term", y="score", fill="pvalue")) +
+    ## This is very confusing, see the end of: http://docs.ggplot2.org/current/geom_bar.html
+    ## for the implementation.
+    reorder_size <- function(x) {
+        new_fact <- factor(x[["term"]], levels=x[["term"]])
+        return(new_fact)
+    }
+    pvalue_plot <- ggplot(df, aes_string(x="reorder_size(df)", y="score", fill="pvalue")) +
         ggplot2::geom_bar(stat="identity") +
-        ggplot2::coord_flip() +
         ggplot2::scale_x_discrete(name=y_name) +
+        ggplot2::scale_y_discrete(name="Score") +
         ## ggplot2::aes_string(fill="pvalue") +
         ggplot2::scale_fill_continuous(low="red", high="blue") +
         ggplot2::theme(text=ggplot2::element_text(size=10)) +
-        ggplot2::theme_bw()
+        ggplot2::coord_flip() +
+        ggplot2::theme_bw(base_size=fontsize)
     return(pvalue_plot)
 }
 

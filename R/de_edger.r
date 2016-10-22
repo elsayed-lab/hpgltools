@@ -24,17 +24,34 @@ edger_ma <- function(output, table=NULL, fc_col="logFC", p_col="qvalue",
     if (!is.null(output[["edger"]])) {
         output <- output[["edger"]]
     }
-    possible_tables <- output[["contrasts"]][["names"]]
-    if (is.null(table)) {
-        table <- possible_tables[1]
-    } else if (is.numeric(table)) {
-        table <- possible_tables[table]
+    if (!is.null(output[["all_pairwise"]])) {
+        possible_tables <- output[["contrasts"]][["names"]]
+        if (is.null(table)) {
+            table <- possible_tables[1]
+        } else if (is.numeric(table)) {
+            table <- possible_tables[table]
+        }
+        revname <- strsplit(x=table, split="_vs_")
+        revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
+        if (!(table %in% possible_tables)) {
+            ## Perhaps the name was reversed?
+            if (revname %in% possible_tables) {
+            message("Trey you doofus, you reversed the name of the table.")
+            table <- revname
+            } else {
+            stop("Unable to find the table in the set of possible tables.")
+            }
+        }
+        ## End checking if this is an all-pairwise result
+    } else {
+        ## Then this should be the result of combining a pairwise result
+        de_genes <- output[["data"]][[table]]
+        de_genes <- de_genes[, c(expr_col, fc_col, p_col)]
     }
 
-    de_genes <- output[["all_tables"]][[table]]
-    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
-                       p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
-    return(plot)
+    ma_material <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
+                              p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
+    return(ma_material)
 }
 
 #' Plot two coefficients with respect to one another from edgeR.
@@ -176,7 +193,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
                            model_batch=TRUE, model_intercept=TRUE,
                            alt_model=NULL, extra_contrasts=NULL,
                            annot_df=NULL, force=FALSE,
-                           edger_method="default", ...) {
+                           edger_method="long", ...) {
     arglist <- list(...)
     if (!is.null(arglist[["input"]])) {
         input <- arglist[["input"]]
@@ -222,12 +239,16 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     batches <- input_data[["batches"]]
     data <- input_data[["data"]]
 
-    fun_model <- choose_model(input, conditions, batches,
-                              model_batch=model_batch,
-                              model_cond=model_cond,
-                              model_intercept=model_intercept,
-                              alt_model=alt_model)
-    fun_model <- fun_model[["chosen_model"]]
+    model_choice <- choose_model(input, conditions, batches,
+                                 model_batch=model_batch,
+                                 model_cond=model_cond,
+                                 model_intercept=model_intercept,
+                                 alt_model=alt_model, ...)
+    model_including <- model_choice[["including"]]
+    if (class(model_choice[["model_batch"]]) == "matrix") {
+        model_batch <- model_choice[["model_batch"]]
+    }
+    model_data <- model_choice[["chosen_model"]]
 
     ## I have a strong sense that the most recent version of edgeR changed its dispersion estimate code
     ## Here is a note from the user's guide, which may have been there previously and I merely did not notice:
@@ -237,32 +258,32 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     message("EdgeR step 1/9: normalizing data.")
     norm <- edgeR::calcNormFactors(raw)
     final_norm <- NULL
-    if (edger_method == "default") {
+    if (edger_method == "short") {
         message("EdgeR steps 2 through 6/9: All in one!")
-        final_norm <- edgeR::estimateDisp(norm, design=fun_model, robust=TRUE)
+        final_norm <- edgeR::estimateDisp(norm, design=model_data, robust=TRUE)
     } else {
         message("EdgeR step 2/9: Estimating the common dispersion.")
         disp_norm <- edgeR::estimateCommonDisp(norm)
         message("EdgeR step 3/9: Estimating dispersion across genes.")
         tagdisp_norm <- edgeR::estimateTagwiseDisp(disp_norm)
         message("EdgeR step 4/9: Estimating GLM Common dispersion.")
-        glm_norm <- edgeR::estimateGLMCommonDisp(tagdisp_norm, fun_model)
+        glm_norm <- edgeR::estimateGLMCommonDisp(tagdisp_norm, model_data)
         message("EdgeR step 5/9: Estimating GLM Trended dispersion.")
-        glm_trended <- edgeR::estimateGLMTrendedDisp(glm_norm, fun_model)
+        glm_trended <- edgeR::estimateGLMTrendedDisp(glm_norm, model_data)
         message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
-        final_norm <- edgeR::estimateGLMTagwiseDisp(glm_trended, fun_model)
+        final_norm <- edgeR::estimateGLMTagwiseDisp(glm_trended, model_data)
     }
     cond_fit <- NULL
     if (test_type == "lrt") {
         message("EdgeR step 7/9: Running glmFit, switch to glmQLFit by changing the argument 'test_type'.")
-        cond_fit <- edgeR::glmFit(final_norm, design=fun_model, robust=TRUE)
+        cond_fit <- edgeR::glmFit(final_norm, design=model_data, robust=TRUE)
     } else {
         message("EdgeR step 7/9: Running glmQLFit, switch to glmFit by changing the argument 'test_type'.")
-        cond_fit <- edgeR::glmQLFit(final_norm, design=fun_model, robust=TRUE)
+        cond_fit <- edgeR::glmQLFit(final_norm, design=model_data, robust=TRUE)
     }
 
     message("EdgeR step 8/9: Making pairwise contrasts.")
-    apc <- make_pairwise_contrasts(fun_model, conditions,
+    apc <- make_pairwise_contrasts(model_data, conditions,
                                    extra_contrasts=extra_contrasts,
                                    do_identities=FALSE)
 
@@ -279,7 +300,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
         message(paste0("EdgeR step 9/9: ", con, "/", end, ": Creating table: ", name, ".")) ## correct
         sc[[name]] <- gsub(pattern=",", replacement="", apc[["all_pairwise"]][[con]])
         tt <- parse(text=sc[[name]])
-        ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=fun_model)")
+        ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=model_data)")
         eval(parse(text=ctr_string))
         contrast_list[[name]] <- tt
         lrt_list[[name]] <- NULL
@@ -313,7 +334,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
         result_list[[name]] <- res
     } ## End for loop
     final <- list(
-        "model" = fun_model,
+        "model" = model_data,
         "contrasts" = apc,
         "contrasts_performed" = names(apc[["names"]]),
         "lrt" = lrt_list,

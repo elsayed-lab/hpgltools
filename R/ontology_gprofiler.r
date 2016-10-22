@@ -12,7 +12,7 @@
 #' @return List of MF/BP/CC pvalue plots.
 #' @seealso \pkg{topgo} \code{clusterProfiler}
 #' @export
-plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5, ...) {
+plot_gprofiler_pval <- function(gp_result, wrapped_width=30, cutoff=0.1, n=30, group_minsize=5, scorer="recall", ...) {
     go_result <- gp_result[["go"]]
     kegg_result <- gp_result[["kegg"]]
     reactome_result <- gp_result[["reactome"]]
@@ -21,244 +21,289 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
     corum_result <- gp_result[["corum"]]
     hp_result <- gp_result[["hp"]]
 
+    kept_columns <- c("p.value", "term.size", "query.size", "overlap.size", "recall", "precision", "term.id", "term.name", "relative.depth")
+    old_options <- options(scipen=4)
+    mf_over[["p.value"]] <- as.numeric(format(x=mf_over[["p.value"]], digits=3, scientific=TRUE))
+    bp_over[["p.value"]] <- as.numeric(format(x=bp_over[["p.value"]], digits=3, scientific=TRUE))
+    cc_over[["p.value"]] <- as.numeric(format(x=cc_over[["p.value"]], digits=3, scientific=TRUE))
     mf_over <- go_result[go_result[["domain"]] == "MF", ]
+    mf_over <- mf_over[, kept_columns]
     bp_over <- go_result[go_result[["domain"]] == "BP", ]
+    bp_over <- bp_over[, kept_columns]
     cc_over <- go_result[go_result[["domain"]] == "CC", ]
+    cc_over <- cc_over[, kept_columns]
 
     plotting_mf_over <- mf_over
     mf_pval_plot_over <- NULL
-    message("mf")
     if (is.null(mf_over) | nrow(mf_over) == 0) {
         plotting_mf_over <- NULL
     } else {
-        plotting_mf_over[["score"]] <- plotting_mf_over[["recall"]]
-        ## plotting_mf_over <- subset(plotting_mf_over, Term != "NULL")
+        ## First set the order of the table to be something most descriptive.
+        ## For the moment, we want that to be the score.
+        plotting_mf_over[["score"]] <- plotting_mf_over[[scorer]]
+        new_order <- order(plotting_mf_over[["score"]], decreasing=FALSE)
+        plotting_mf_over <- plotting_mf_over[new_order, ]
+        ## Drop anything with no term name
         plotting_mf_over <- plotting_mf_over[plotting_mf_over[["term.name"]] != "NULL", ]
-        ## plotting_mf_over <- subset(plotting_mf_over, Pvalue <= cutoff)
+        ## Drop anything outside of our pvalue cutoff
         plotting_mf_over <- plotting_mf_over[plotting_mf_over[["p.value"]] <= cutoff, ]
-        ## plotting_mf_over <- subset(plotting_mf_over, Size >= group_minsize)
+        ## Drop anything with fewer than x genes in the group
         plotting_mf_over <- plotting_mf_over[plotting_mf_over[["query.size"]] >= group_minsize, ]
-        plotting_mf_over <- plotting_mf_over[order(plotting_mf_over[["p.value"]]), ]
-        plotting_mf_over <- head(plotting_mf_over, n=n)
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
+        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        plotting_mf_over <- tail(plotting_mf_over, n=n)
         plotting_mf_over <- plotting_mf_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_mf_over) <- c("term", "pvalue", "score")
         plotting_mf_over[["term"]] <- as.character(lapply(strwrap(plotting_mf_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
+        mf_pval_plot_over <- try(plot_ontpval(plotting_mf_over, ontology="MF"), silent=TRUE)
     }
-    mf_pval_plot_over <- try(plot_ontpval(plotting_mf_over, ontology="MF"), silent=TRUE)
-    if (class(mf_pval_plot_over) == "try-error") {
+    if (class(mf_pval_plot_over)[[1]] == "try-error") {
         mf_pval_plot_over <- NULL
     }
 
     plotting_bp_over <- bp_over
     bp_pval_plot_over <- NULL
-    message("bp")
     if (is.null(bp_over) | nrow(bp_over) == 0) {
         plotting_bp_over <- NULL
     } else {
-        plotting_bp_over[["score"]] <- plotting_bp_over[["recall"]]
-        ## plotting_bp_over <- subset(plotting_bp_over, Term != "NULL")
+        ## First set the order of the table to be something most descriptive.
+        ## For the moment, we want that to be the score.
+        plotting_bp_over[["score"]] <- plotting_bp_over[[scorer]]
+        new_order <- order(plotting_bp_over[["score"]], decreasing=FALSE)
+        plotting_bp_over <- plotting_bp_over[new_order, ]
+        ## Drop anything with no term name
         plotting_bp_over <- plotting_bp_over[plotting_bp_over[["term.name"]] != "NULL", ]
-        ## plotting_bp_over <- subset(plotting_bp_over, Pvalue <= cutoff)
+        ## Drop anything outside of our pvalue cutoff
         plotting_bp_over <- plotting_bp_over[plotting_bp_over[["p.value"]] <= cutoff, ]
-        ## plotting_bp_over <- subset(plotting_bp_over, Size >= group_minsize)
+        ## Drop anything with fewer than x genes in the group
         plotting_bp_over <- plotting_bp_over[plotting_bp_over[["query.size"]] >= group_minsize, ]
-        plotting_bp_over <- plotting_bp_over[order(plotting_bp_over[["p.value"]]), ]
-        plotting_bp_over <- head(plotting_bp_over, n=n)
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
+        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        plotting_bp_over <- tail(plotting_bp_over, n=n)
         plotting_bp_over <- plotting_bp_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_bp_over) <- c("term", "pvalue", "score")
         plotting_bp_over[["term"]] <- as.character(lapply(strwrap(plotting_bp_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
+        bp_pval_plot_over <- try(plot_ontpval(plotting_bp_over, ontology="BP"), silent=TRUE)
     }
-    bp_pval_plot_over <- try(plot_ontpval(plotting_bp_over, ontology="BP"), silent=TRUE)
-    if (class(bp_pval_plot_over) == "try-error") {
+    if (class(bp_pval_plot_over)[[1]] == "try-error") {
         bp_pval_plot_over <- NULL
     }
 
     plotting_cc_over <- cc_over
     cc_pval_plot_over <- NULL
-    message("cc")
     if (is.null(cc_over) | nrow(cc_over) == 0) {
         plotting_cc_over <- NULL
     } else {
-        plotting_cc_over[["score"]] <- plotting_cc_over[["recall"]]
-        ## plotting_cc_over <- subset(plotting_cc_over, Term != "NULL")
+        ## First set the order of the table to be something most descriptive.
+        ## For the moment, we want that to be the score.
+        plotting_cc_over[["score"]] <- plotting_cc_over[[scorer]]
+        new_order <- order(plotting_cc_over[["score"]], decreasing=FALSE)
+        plotting_cc_over <- plotting_cc_over[new_order, ]
+        ## Drop anything with no term name
         plotting_cc_over <- plotting_cc_over[plotting_cc_over[["term.name"]] != "NULL", ]
-        ## plotting_cc_over <- subset(plotting_cc_over, Pvalue <= cutoff)
+        ## Drop anything outside of our pvalue cutoff
         plotting_cc_over <- plotting_cc_over[plotting_cc_over[["p.value"]] <= cutoff, ]
-        ## plotting_cc_over <- subset(plotting_cc_over, Size >= group_minsize)
+        ## Drop anything with fewer than x genes in the group
         plotting_cc_over <- plotting_cc_over[plotting_cc_over[["query.size"]] >= group_minsize, ]
-        plotting_cc_over <- plotting_cc_over[order(plotting_cc_over[["p.value"]]), ]
-        plotting_cc_over <- head(plotting_cc_over, n=n)
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
+        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        plotting_cc_over <- tail(plotting_cc_over, n=n)
         plotting_cc_over <- plotting_cc_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_cc_over) <- c("term", "pvalue", "score")
         plotting_cc_over[["term"]] <- as.character(lapply(strwrap(plotting_cc_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
+        cc_pval_plot_over <- try(plot_ontpval(plotting_cc_over, ontology="CC"), silent=TRUE)
     }
-    cc_pval_plot_over <- try(plot_ontpval(plotting_cc_over, ontology="CC"), silent=TRUE)
-    if (class(cc_pval_plot_over) == "try-error") {
+    if (class(cc_pval_plot_over)[[1]] == "try-error") {
         cc_pval_plot_over <- NULL
     }
 
-    plotting_kegg_over <- kegg_pval_plot <- NULL
+    plotting_kegg_over <- kegg_result
+    kegg_pval_plot_over <- NULL
     if (is.null(kegg_result) | nrow(kegg_result) == 0) {
         plotting_kegg_over <- NULL
     } else {
-        plotting_kegg_over <- kegg_result
-        plotting_kegg_over[["score"]] <- plotting_kegg_over[["recall"]]
-        ## plotting_kegg_over <- subset(plotting_kegg_over, Term != "NULL")
+        ## First set the order of the table to be something most descriptive.
+        ## For the moment, we want that to be the score.
+        plotting_kegg_over[["score"]] <- plotting_kegg_over[[scorer]]
+        new_order <- order(plotting_kegg_over[["score"]], decreasing=FALSE)
+        plotting_kegg_over <- plotting_kegg_over[new_order, ]
+        ## Drop anything with no term name
         plotting_kegg_over <- plotting_kegg_over[plotting_kegg_over[["term.name"]] != "NULL", ]
-        ## plotting_kegg_over <- subset(plotting_kegg_over, Pvalue <= cutoff)
+        ## Drop anything outside of our pvalue cutoff
         plotting_kegg_over <- plotting_kegg_over[plotting_kegg_over[["p.value"]] <= cutoff, ]
-        ## plotting_kegg_over <- subset(plotting_kegg_over, Size >= group_minsize)
+        ## Drop anything with fewer than x genes in the group
         plotting_kegg_over <- plotting_kegg_over[plotting_kegg_over[["query.size"]] >= group_minsize, ]
-        plotting_kegg_over <- plotting_kegg_over[order(plotting_kegg_over[["p.value"]]), ]
-        plotting_kegg_over <- head(plotting_kegg_over, n=n)
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
+        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        plotting_kegg_over <- tail(plotting_kegg_over, n=n)
         plotting_kegg_over <- plotting_kegg_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_kegg_over) <- c("term", "pvalue", "score")
         plotting_kegg_over[["term"]] <- as.character(lapply(strwrap(plotting_kegg_over[["term"]], wrapped_width, simplify=FALSE),
-                                                            paste, collapse="\n"))
+                                                          paste, collapse="\n"))
+        kegg_pval_plot_over <- try(plot_ontpval(plotting_kegg_over, ontology="KEGG"), silent=TRUE)
     }
-    kegg_pval_plot <- try(plot_ontpval(plotting_kegg_over, ontology="KEGG"), silent=TRUE)
-    if (class(kegg_pval_plot) == "try-error") {
-        kegg_pval_plot <- NULL
+    if (class(kegg_pval_plot_over)[[1]] == "try-error") {
+        kegg_pval_plot_over <- NULL
     }
 
-    plotting_reactome_over <- reactome_pval_plot <- NULL
-    message("reactome")
+    plotting_reactome_over <- reactome_result
+    reactome_pval_plot_over <- NULL
     if (is.null(reactome_result) | nrow(reactome_result) == 0) {
         plotting_reactome_over <- NULL
     } else {
-        plotting_reactome_over <- reactome_result
-        plotting_reactome_over[["score"]] <- plotting_reactome_over[["recall"]]
-        ## plotting_reactome_over <- subset(plotting_reactome_over, Term != "NULL")
+        ## First set the order of the table to be something most descriptive.
+        ## For the moment, we want that to be the score.
+        plotting_reactome_over[["score"]] <- plotting_reactome_over[[scorer]]
+        new_order <- order(plotting_reactome_over[["score"]], decreasing=FALSE)
+        plotting_reactome_over <- plotting_reactome_over[new_order, ]
+        ## Drop anything with no term name
         plotting_reactome_over <- plotting_reactome_over[plotting_reactome_over[["term.name"]] != "NULL", ]
-        ## plotting_reactome_over <- subset(plotting_reactome_over, Pvalue <= cutoff)
+        ## Drop anything outside of our pvalue cutoff
         plotting_reactome_over <- plotting_reactome_over[plotting_reactome_over[["p.value"]] <= cutoff, ]
-        ## plotting_reactome_over <- subset(plotting_reactome_over, Size >= group_minsize)
+        ## Drop anything with fewer than x genes in the group
         plotting_reactome_over <- plotting_reactome_over[plotting_reactome_over[["query.size"]] >= group_minsize, ]
-        plotting_reactome_over <- plotting_reactome_over[order(plotting_reactome_over[["p.value"]]), ]
-        plotting_reactome_over <- head(plotting_reactome_over, n=n)
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
+        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        plotting_reactome_over <- tail(plotting_reactome_over, n=n)
         plotting_reactome_over <- plotting_reactome_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_reactome_over) <- c("term", "pvalue", "score")
         plotting_reactome_over[["term"]] <- as.character(lapply(strwrap(plotting_reactome_over[["term"]], wrapped_width, simplify=FALSE),
-                                                            paste, collapse="\n"))
-    }
-    reactome_pval_plot <- try(plot_ontpval(plotting_reactome_over, ontology="Reactome"), silent=TRUE)
-    if (class(reactome_pval_plot) == "try-error") {
-        reactome_pval_plot <- NULL
-    }
-
-    plotting_tf_over <- tf_pval_plot <- NULL
-    message("tf")
-    if (is.null(tf_result) | nrow(tf_result) == 0) {
-        plotting_tf_over <- NULL
-    } else {
-        plotting_tf_over <- tf_result
-        plotting_tf_over[["score"]] <- plotting_tf_over$recall
-        ## plotting_tf_over <- subset(plotting_tf_over, Term != "NULL")
-        plotting_tf_over <- plotting_tf_over[plotting_tf_over[["term.name"]] != "NULL", ]
-        ## plotting_tf_over <- subset(plotting_tf_over, Pvalue <= cutoff)
-        plotting_tf_over <- plotting_tf_over[plotting_tf_over[["p.value"]] <= cutoff, ]
-        ## plotting_tf_over <- subset(plotting_tf_over, Size >= group_minsize)
-        plotting_tf_over <- plotting_tf_over[plotting_tf_over[["query.size"]] >= group_minsize, ]
-        plotting_tf_over <- plotting_tf_over[order(plotting_tf_over[["p.value"]]), ]
-        plotting_tf_over <- head(plotting_tf_over, n=n)
-        plotting_tf_over <- plotting_tf_over[, c("term.name", "p.value", "recall")]
-        colnames(plotting_tf_over) <- c("term", "pvalue", "score")
-        plotting_tf_over[["term"]] <- as.character(lapply(strwrap(plotting_tf_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
+        reactome_pval_plot_over <- try(plot_ontpval(plotting_reactome_over, ontology="Reactome"), silent=TRUE)
     }
-    tf_pval_plot <- try(plot_ontpval(plotting_tf_over, ontology="TF"), silent=TRUE)
-    if (class(tf_pval_plot) == "try-error") {
-        tf_pval_plot <- NULL
+    if (class(reactome_pval_plot_over)[[1]] == "try-error") {
+        reactome_pval_plot_over <- NULL
     }
 
-    plotting_mi_over <- mi_pval_plot <- NULL
-    message("mi")
+    plotting_mi_over <- mi_result
+    mi_pval_plot_over <- NULL
     if (is.null(mi_result) | nrow(mi_result) == 0) {
         plotting_mi_over <- NULL
     } else {
-        plotting_mi_over <- mi_result
-        plotting_mi_over[["score"]] <- plotting_mi_over[["recall"]]
-        ## plotting_mi_over <- subset(plotting_mi_over, Term != "NULL")
+        ## First set the order of the table to be something most descriptive.
+        ## For the moment, we want that to be the score.
+        plotting_mi_over[["score"]] <- plotting_mi_over[[scorer]]
+        new_order <- order(plotting_mi_over[["score"]], decreasing=FALSE)
+        plotting_mi_over <- plotting_mi_over[new_order, ]
+        ## Drop anything with no term name
         plotting_mi_over <- plotting_mi_over[plotting_mi_over[["term.name"]] != "NULL", ]
-        ## plotting_mi_over <- subset(plotting_mi_over, Pvalue <= cutoff)
+        ## Drop anything outside of our pvalue cutoff
         plotting_mi_over <- plotting_mi_over[plotting_mi_over[["p.value"]] <= cutoff, ]
-        ## plotting_mi_over <- subset(plotting_mi_over, Size >= group_minsize)
+        ## Drop anything with fewer than x genes in the group
         plotting_mi_over <- plotting_mi_over[plotting_mi_over[["query.size"]] >= group_minsize, ]
-        plotting_mi_over <- plotting_mi_over[order(plotting_mi_over[["p.value"]]), ]
-        plotting_mi_over <- head(plotting_mi_over, n=n)
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
+        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        plotting_mi_over <- tail(plotting_mi_over, n=n)
         plotting_mi_over <- plotting_mi_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_mi_over) <- c("term", "pvalue", "score")
         plotting_mi_over[["term"]] <- as.character(lapply(strwrap(plotting_mi_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
+        mi_pval_plot_over <- try(plot_ontpval(plotting_mi_over, ontology="miRNA"), silent=TRUE)
     }
-    mi_pval_plot <- try(plot_ontpval(plotting_mi_over, ontology="miRNAs"), silent=TRUE)
-    if (class(mi_pval_plot) == "try-error") {
-        mi_pval_plot <- NULL
+    if (class(mi_pval_plot_over)[[1]] == "try-error") {
+        mi_pval_plot_over <- NULL
     }
 
-    plotting_corum_over <- corum_pval_plot <- NULL
-    message("corum")
+    plotting_tf_over <- tf_result
+    tf_pval_plot_over <- NULL
+    if (is.null(tf_result) | nrow(tf_result) == 0) {
+        plotting_tf_over <- NULL
+    } else {
+        ## First set the order of the table to be something most descriptive.
+        ## For the moment, we want that to be the score.
+        plotting_tf_over[["score"]] <- plotting_tf_over[[scorer]]
+        new_order <- order(plotting_tf_over[["score"]], decreasing=FALSE)
+        plotting_tf_over <- plotting_tf_over[new_order, ]
+        ## Drop anything with no term name
+        plotting_tf_over <- plotting_tf_over[plotting_tf_over[["term.name"]] != "NULL", ]
+        ## Drop anything outside of our pvalue cutoff
+        plotting_tf_over <- plotting_tf_over[plotting_tf_over[["p.value"]] <= cutoff, ]
+        ## Drop anything with fewer than x genes in the group
+        plotting_tf_over <- plotting_tf_over[plotting_tf_over[["query.size"]] >= group_minsize, ]
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
+        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        plotting_tf_over <- tail(plotting_tf_over, n=n)
+        plotting_tf_over <- plotting_tf_over[, c("term.name", "p.value", "recall")]
+        colnames(plotting_tf_over) <- c("term", "pvalue", "score")
+        plotting_tf_over[["term"]] <- as.character(lapply(strwrap(plotting_tf_over[["term"]], wrapped_width, simplify=FALSE),
+                                                          paste, collapse="\n"))
+        tf_pval_plot_over <- try(plot_ontpval(plotting_tf_over, ontology="Transcription factors"), silent=TRUE)
+    }
+    if (class(tf_pval_plot_over)[[1]] == "try-error") {
+        tf_pval_plot_over <- NULL
+    }
+
+    plotting_corum_over <- corum_result
+    corum_pval_plot_over <- NULL
     if (is.null(corum_result) | nrow(corum_result) == 0) {
         plotting_corum_over <- NULL
     } else {
-        plotting_corum_over <- corum_result
-        plotting_corum_over[["score"]] <- plotting_corum_over[["recall"]]
-        ## plotting_corum_over <- subset(plotting_corum_over, Term != "NULL")
+        ## First set the order of the table to be something most descriptive.
+        ## For the moment, we want that to be the score.
+        plotting_corum_over[["score"]] <- plotting_corum_over[[scorer]]
+        new_order <- order(plotting_corum_over[["score"]], decreasing=FALSE)
+        plotting_corum_over <- plotting_corum_over[new_order, ]
+        ## Drop anything with no term name
         plotting_corum_over <- plotting_corum_over[plotting_corum_over[["term.name"]] != "NULL", ]
-        ## plotting_corum_over <- subset(plotting_corum_over, Pvalue <= cutoff)
+        ## Drop anything outside of our pvalue cutoff
         plotting_corum_over <- plotting_corum_over[plotting_corum_over[["p.value"]] <= cutoff, ]
-        ## plotting_corum_over <- subset(plotting_corum_over, Size >= group_corumnsize)
+        ## Drop anything with fewer than x genes in the group
         plotting_corum_over <- plotting_corum_over[plotting_corum_over[["query.size"]] >= group_minsize, ]
-        plotting_corum_over <- plotting_corum_over[order(plotting_corum_over[["p.value"]]), ]
-        plotting_corum_over <- head(plotting_corum_over, n=n)
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
+        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        plotting_corum_over <- tail(plotting_corum_over, n=n)
         plotting_corum_over <- plotting_corum_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_corum_over) <- c("term", "pvalue", "score")
         plotting_corum_over[["term"]] <- as.character(lapply(strwrap(plotting_corum_over[["term"]], wrapped_width, simplify=FALSE),
-                                                             paste, collapse="\n"))
+                                                          paste, collapse="\n"))
+        corum_pval_plot_over <- try(plot_ontpval(plotting_corum_over, ontology="Corum"), silent=TRUE)
     }
-    corum_pval_plot <- try(plot_ontpval(plotting_corum_over, ontology="corum"), silent=TRUE)
-    if (class(corum_pval_plot) == "try-error") {
-        corum_pval_plot <- NULL
+    if (class(corum_pval_plot_over)[[1]] == "try-error") {
+        corum_pval_plot_over <- NULL
     }
 
-    plotting_hp_over <- hp_pval_plot <- NULL
-    message("hp")
+    plotting_hp_over <- hp_result
+    hp_pval_plot_over <- NULL
     if (is.null(hp_result) | nrow(hp_result) == 0) {
         plotting_hp_over <- NULL
     } else {
-        plotting_hp_over <- hp_result
-        plotting_hp_over[["score"]] <- plotting_hp_over[["recall"]]
-        ## plotting_hp_over <- subset(plotting_hp_over, Term != "NULL")
+        ## First set the order of the table to be something most descriptive.
+        ## For the moment, we want that to be the score.
+        plotting_hp_over[["score"]] <- plotting_hp_over[[scorer]]
+        new_order <- order(plotting_hp_over[["score"]], decreasing=FALSE)
+        plotting_hp_over <- plotting_hp_over[new_order, ]
+        ## Drop anything with no term name
         plotting_hp_over <- plotting_hp_over[plotting_hp_over[["term.name"]] != "NULL", ]
-        ## plotting_hp_over <- subset(plotting_hp_over, Pvalue <= cutoff)
+        ## Drop anything outside of our pvalue cutoff
         plotting_hp_over <- plotting_hp_over[plotting_hp_over[["p.value"]] <= cutoff, ]
-        ## plotting_hp_over <- subset(plotting_hp_over, Size >= group_hpnsize)
+        ## Drop anything with fewer than x genes in the group
         plotting_hp_over <- plotting_hp_over[plotting_hp_over[["query.size"]] >= group_minsize, ]
-        plotting_hp_over <- plotting_hp_over[order(plotting_hp_over[["p.value"]]), ]
-        plotting_hp_over <- head(plotting_hp_over, n=n)
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
+        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        plotting_hp_over <- tail(plotting_hp_over, n=n)
         plotting_hp_over <- plotting_hp_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_hp_over) <- c("term", "pvalue", "score")
         plotting_hp_over[["term"]] <- as.character(lapply(strwrap(plotting_hp_over[["term"]], wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
+        hp_pval_plot_over <- try(plot_ontpval(plotting_hp_over, ontology="Human pathology"), silent=TRUE)
     }
-    hp_pval_plot <- try(plot_ontpval(plotting_hp_over, ontology="hp"), silent=TRUE)
-    if (class(hp_pval_plot) == "try-error") {
-        hp_pval_plot <- NULL
+    if (class(hp_pval_plot_over)[[1]] == "try-error") {
+        hp_pval_plot_over <- NULL
     }
 
     pval_plots <- list(
         "mfp_plot_over" = mf_pval_plot_over,
         "bpp_plot_over" = bp_pval_plot_over,
         "ccp_plot_over" = cc_pval_plot_over,
-        "kegg_plot_over" = kegg_pval_plot,
-        "reactome_plot_over" = reactome_pval_plot,
-        "mi_plot_over" = mi_pval_plot,
-        "tf_plot_over" = tf_pval_plot,
-        "corum_plot_over" = corum_pval_plot,
-        "hp_plot_over" = hp_pval_plot,
+        "kegg_plot_over" = kegg_pval_plot_over,
+        "reactome_plot_over" = reactome_pval_plot_over,
+        "mi_plot_over" = mi_pval_plot_over,
+        "tf_plot_over" = tf_pval_plot_over,
+        "corum_plot_over" = corum_pval_plot_over,
+        "hp_plot_over" = hp_pval_plot_over,
         "mf_subset_over" = plotting_mf_over,
         "bp_subset_over" = plotting_bp_over,
         "cc_subset_over" = plotting_cc_over,
@@ -268,7 +313,8 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=20, cutoff=0.1, n=12, g
         "tf_subset" = plotting_tf_over,
         "corum_subset" = plotting_corum_over,
         "hp_subset" = plotting_hp_over
-        )
+    )
+    new_options <- options(old_options)
     return(pval_plots)
 }
 
@@ -417,7 +463,8 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
 #' @param add_plots  Add some pvalue plots?
 #' @param ... More options, not currently used I think.
 #' @export
-write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofiler_result.xlsx", add_plots=TRUE, ...) {
+write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofiler_result.xlsx",
+                                 add_plots=TRUE, height=15, width=10, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
     if (!is.null(arglist[["table_style"]])) {
@@ -439,7 +486,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     hp_data <- NULL
     corum_data <- NULL
 
-    if (!is.null(gprofiler_result[["go"]])) {
+    if (!is.null(gprofiler_result[["go"]]) & nrow(gprofiler_result[["go"]]) > 0) {
         new_row <- 1
         sheet <- "GO"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -456,7 +503,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["bpp_plot_over"]]
             try(print(a_plot), silent=TRUE)
-            ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(bp_data) + 2, startRow=new_row, fileType="png", units="in"))
+            ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
+                                            startCol=ncol(bp_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(bp_data) + 2
 
@@ -468,7 +516,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["mfp_plot_over"]]
             try(print(a_plot), silent=TRUE)
-            ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(mf_data) + 2, startRow=new_row, fileType="png", units="in"))
+            ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
+                                            startCol=ncol(mf_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(mf_data) + 2
 
@@ -480,13 +529,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["ccp_plot_over"]]
             try(print(a_plot), silent=TRUE)
-            ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(cc_data) + 2, startRow=new_row, fileType="png", units="in"))
+            ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
+                                            startCol=ncol(cc_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(cc_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking if go data is null
 
-    if (!is.null(gprofiler_result[["kegg"]])) {
+    if (!is.null(gprofiler_result[["kegg"]]) & nrow(gprofiler_result[["kegg"]]) > 0) {
         new_row <- 1
         sheet <- "KEGG"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -499,14 +549,15 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["kegg_plot_over"]]
             try(print(a_plot), silent=TRUE)
-            ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(kegg_data) + 2, startRow=new_row, fileType="png", units="in"))
+            ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
+                                            startCol=ncol(kegg_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(kegg_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking KEGG data
 
 
-    if (!is.null(gprofiler_result[["tf"]])) {
+    if (!is.null(gprofiler_result[["tf"]]) & nrow(gprofiler_result[["tf"]]) > 0) {
         new_row <- 1
         sheet <- "transcription_factor"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -519,13 +570,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["tf_plot_over"]]
             try(print(a_plot), silent=TRUE)
-            ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(tf_data) + 2, startRow=new_row, fileType="png", units="in"))
+            ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
+                                            startCol=ncol(tf_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(tf_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking tf data
 
-    if (!is.null(gprofiler_result[["reactome"]])) {
+    if (!is.null(gprofiler_result[["reactome"]]) & nrow(gprofiler_result[["reactome"]]) > 0) {
         new_row <- 1
         sheet <- "reactome"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -538,14 +590,15 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["reactome_plot_over"]]
             try(print(a_plot), silent=TRUE)
-            ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(react_data) + 2, startRow=new_row, fileType="png", units="in"))
+            ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
+                                            startCol=ncol(react_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(react_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking reactome data
 
 
-    if (!is.null(gprofiler_result[["mi"]])) {
+    if (!is.null(gprofiler_result[["mi"]]) & nrow(gprofiler_result[["mi"]]) > 0) {
         new_row <- 1
         sheet <- "mirna"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -558,13 +611,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["mi_plot_over"]]
             try(print(a_plot), silent=TRUE)
-            ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(mi_data) + 2, startRow=new_row, fileType="png", units="in"))
+            ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
+                                            startCol=ncol(mi_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(mi_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking mirna data
 
-    if (!is.null(gprofiler_result[["hp"]])) {
+    if (!is.null(gprofiler_result[["hp"]]) & nrow(gprofiler_result[["hp"]]) > 0) {
         new_row <- 1
         sheet <- "hp"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -577,13 +631,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["hp_plot_over"]]
             try(print(a_plot), silent=TRUE)
-            ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(hp_data) + 2, startRow=new_row, fileType="png", units="in"))
+            ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
+                                            startCol=ncol(hp_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(hp_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking corum data
 
-    if (!is.null(gprofiler_result[["corum"]])) {
+    if (!is.null(gprofiler_result[["corum"]]) & nrow(gprofiler_result[["corum"]]) > 0) {
         new_row <- 1
         sheet <- "corum"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -596,7 +651,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["plots"]][["corum_plot_over"]]
             try(print(a_plot), silent=TRUE)
-            ins <- try(openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(corum_data) + 2, startRow=new_row, fileType="png", units="in"))
+            ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
+                                            startCol=ncol(corum_data) + 2, startRow=new_row, fileType="png", units="in"))
         }
         new_row <- new_row + nrow(corum_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")

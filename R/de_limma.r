@@ -21,33 +21,42 @@ limma_ma <- function(output, table=NULL, p_col="adj.P.Val",
     counts <- NULL
     de_genes <- NULL
     pval <- NULL
+    alt_p_col <- "limma_adjp"
+    alt_fc_col <- "limma_logfc"
+    alt_expr_col <- "limma_ave"
     if (!is.null(output[["limma"]])) {
         output <- output[["limma"]]
     }
-    possible_tables <- names(output[["all_pairwise"]])
-    if (is.null(table)) {
-        table <- possible_tables[[1]]
-    } else if (is.numeric(table)) {
-        table <- possible_tables[[table]]
-    }
-
-    revname <- strsplit(x=table, split="_vs_")
-    revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
-
-    if (!(table %in% possible_tables)) {
-        ## Perhaps the name was reversed?
-        if (revname %in% possible_tables) {
+    if (!is.null(output[["all_pairwise"]])) {
+        possible_tables <- names(output[["all_pairwise"]])
+        if (is.null(table)) {
+            table <- possible_tables[[1]]
+        } else if (is.numeric(table)) {
+            table <- possible_tables[[table]]
+        }
+        revname <- strsplit(x=table, split="_vs_")
+        revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
+        if (!(table %in% possible_tables)) {
+            ## Perhaps the name was reversed?
+            if (revname %in% possible_tables) {
             message("Trey you doofus, you reversed the name of the table.")
             table <- revname
-        } else {
+            } else {
             stop("Unable to find the table in the set of possible tables.")
+            }
         }
+        de_genes <- output[["all_tables"]][[table]]
+        ## End checking if this is an all-pairwise result
+    } else {
+        ## Then this should be the result of combining a pairwise result
+        de_genes <- output[["data"]][[table]]
+        de_genes <- de_genes[, c(expr_col, fc_col, p_col)]
     }
 
-    de_genes <- output[["all_tables"]][[table]]
-    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
-                       p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
-    return(plot)
+    ##de_genes <- output[["all_tables"]][[table]]
+    ma_material <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
+                               p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
+    return(ma_material)
 }
 
 #' Plot out 2 coefficients with respect to one another from limma.
@@ -430,7 +439,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     if (!is.null(arglist[["voom_norm"]])) {
         voom_norm <- arglist[["voom_norm"]]
     }
-    which_voom <- "limma_weighted"  ## or limma
+    which_voom <- "limma"  ## limma, limma_weighted, hpgl, or hpgl_weighted are possible
     if (!is.null(arglist[["which_voom"]])) {
         which_voom <- arglist[["which_voom"]]
     }
@@ -471,7 +480,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                               model_batch=model_batch,
                               model_cond=model_cond,
                               model_intercept=model_intercept,
-                              alt_model=alt_model)
+                              alt_model=alt_model, ...)
     fun_model <- fun_model[["chosen_model"]]
 
     fun_voom <- NULL
@@ -511,7 +520,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
 
     fun_voom <- NULL
     if (which_voom == "hpgl_weighted") {
-        message("Limma step 2/6: running hpgl_voomweighted().")
+        message("Limma step 2/6: running hpgl_voomweighted(), switch with the argument 'which_voom'.")
         fun_voom <- hpgl_voomweighted(data, fun_model,
                               libsize=libsize,
                               voom_norm=voom_norm,
@@ -522,11 +531,11 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                               logged=loggedp,
                               converted=convertedp)
     } else if (which_voom == "hpgl") {
-        message("Limma step 2/6: running hpgl_voom().")
+        message("Limma step 2/6: running hpgl_voom(), switch with the argument 'which_voom'.")
         fun_voom <- hpgl_voom(data, fun_model, libsize=libsize,
                               logged=loggedp, converted=convertedp)
     } else if (which_voom == "limma_weighted") {
-        message("Limma step 2/6: running limma::voomWithQualityWeights().")
+        message("Limma step 2/6: running limma::voomWithQualityWeights(), switch with the argument 'which_voom'.")
         fun_voom <- try(limma::voomWithQualityWeights(counts=data, design=fun_model, lib.size=libsize,
                                                       normalize.method=voom_norm, plot=TRUE,
                                                       span=0.5, var.design=NULL, method="genebygene",
@@ -538,7 +547,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                                     normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
             }
     } else {
-        message("Limma step 2/6: running limma::voom().")
+        message("Limma step 2/6: running limma::voom(), switch with the argument 'which_voom'.")
         fun_voom <- limma::voom(counts=data, design=fun_model, lib.size=libsize,
                                 normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
     }
