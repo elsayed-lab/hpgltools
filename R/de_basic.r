@@ -315,6 +315,62 @@ basic_pairwise <- function(input=NULL, design=NULL,
     return(retlist)
 }
 
+choose_basic_dataset <- function(input, force=FALSE, ...) {
+    arglist <- list(...)
+    warn_user <- 0
+    conditions <- input[["conditions"]]
+    batches <- input[["batches"]]
+    data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+    tran_state <- input[["state"]][["transform"]]
+    if (is.null(tran_state)) {
+        tran_state <- "raw"
+    }
+    conv_state <- input[["state"]][["conversion"]]
+    ## Note that voom takes care of this for us.
+    if (is.null(conv_state)) {
+        conv_state <- "raw"
+    }
+    norm_state <- input[["state"]][["normalization"]]
+    if (is.null(norm_state)) {
+        norm_state <- "raw"
+    }
+    filt_state <- input[["state"]][["filter"]]
+    if (is.null(filt_state)) {
+        filt_state <- "raw"
+    }
+
+    ready <- input
+    if (isTRUE(force)) {
+        message("Leaving the data alone, regardless of normalization state.")
+    } else {
+        if (filt_state == "raw") {
+            message("Basic step 0/3: Filtering data.")
+            ready <- sm(normalize_expt(ready, filter="cbcb"))
+        }
+        if (norm_state == "raw") {
+            message("Basic step 0/3: Normalizing data.")
+            ready <- sm(normalize_expt(ready, norm="quant"))
+        }
+        if (conv_state == "raw") {
+            message("Basic step 0/3: Converting data.")
+            ready <- sm(normalize_expt(ready, convert="cbcbcpm"))
+        }
+
+    }
+    ## No matter what we do, it must be logged.
+    if (tran_state == "raw") {
+        message("Basic step 0/3: Transforming data.")
+        ready <- sm(normalize_expt(ready, transform="log2"))
+    }
+    data <- as.data.frame(Biobase::exprs(ready[["expressionset"]]))
+    rm(ready)
+    retlist <- list(
+        "conditions" = conditions,
+        "batches" = batches,
+        "data" = data)
+    return(retlist)
+}
+
 #' Writes out the results of a basic search using basic_pairwise()
 #'
 #' However, this will do a couple of things to make one's life easier:
@@ -373,29 +429,14 @@ write_basic <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/basi
         data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
         data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
         data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
-        data_table[["qvalue"]] <- tryCatch(
-        {
-            ## as.numeric(format(signif(
-            ## suppressWarnings(qvalue::qvalue(
-            ## as.numeric(data_table$P.Value), robust=TRUE))$qvalues, 4),
-            ## scientific=TRUE))
+        data_table[["qvalue"]] <- tryCatch({
             ttmp <- as.numeric(data_table[["P.Value"]])
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
-            ## ttmp <- signif(ttmp, 4)
-            ## ttmp <- format(ttmp, scientific=TRUE)
-            ## ttmp
-        },
-        error=function(cond) {
+        }, error=function(cond) {
             message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
             return(1)
-        },
-        ##warning=function(cond) {
-        ##    message("There was a warning?")
-        ##    message(cond)
-        ##    return(1)
-        ##},
-        finally={
+        }, finally={
         })
         if (!is.null(annot_df)) {
             data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")

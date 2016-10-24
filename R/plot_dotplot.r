@@ -44,10 +44,6 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
 ## 3. The initial aes needs to have a mapping for the same color, fill, shape, etc.
 ## 4. Lay down a geom/scale for every element to change.
 
-###    factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
-###                                  aes_string(x="factor", y="svs",
-###                                             fill="condition", colour="condition",
-###                                             shape="shape")) +
 ###        ggplot2::geom_point(size=5,
 ###                            aes_string(shape="as.factor(shape)",
 ###                                       colour="condition",
@@ -203,8 +199,8 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     }
 
     chosen_palette <- "Dark2"
-    if (!is.null(arglist$palette)) {
-        chosen_palette <- arglist$palette
+    if (!is.null(arglist[["palette"]])) {
+        chosen_palette <- arglist[["palette"]]
     }
 
     if (is.null(names)) {

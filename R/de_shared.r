@@ -489,65 +489,6 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
     return(result)
 }
 
-choose_basic_dataset <- function(input, force=FALSE, ...) {
-    arglist <- list(...)
-    warn_user <- 0
-    conditions <- input[["conditions"]]
-    batches <- input[["batches"]]
-    data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
-    ## In the case of the basic analysis, I want to make sure that the data is
-    ## filtered, converted, etc...
-    tran_state <- input[["state"]][["transform"]]
-    ## Note that voom will take care of this for us.
-    if (is.null(tran_state)) {
-        tran_state <- "raw"
-    }
-    conv_state <- input[["state"]][["conversion"]]
-    ## Note that voom takes care of this for us.
-    if (is.null(conv_state)) {
-        conv_state <- "raw"
-    }
-    norm_state <- input[["state"]][["normalization"]]
-    if (is.null(norm_state)) {
-        norm_state <- "raw"
-    }
-    filt_state <- input[["state"]][["filter"]]
-    if (is.null(filt_state)) {
-        filt_state <- "raw"
-    }
-
-    ready <- input
-    if (isTRUE(force)) {
-        message("Leaving the data alone, regardless of normalization state.")
-    } else {
-        if (filt_state == "raw") {
-            message("Filtering data.")
-            ready <- sm(normalize_expt(ready, filter=TRUE))
-        }
-        if (norm_state == "raw") {
-            message("Normalizing data.")
-            ready <- sm(normalize_expt(ready, norm="quant"))
-        }
-        if (conv_state == "raw") {
-            message("Converting data.")
-            ready <- sm(normalize_expt(ready, convert="cbcbcpm"))
-        }
-
-    }
-    ## No matter what we do, it must be logged.
-    if (tran_state == "raw") {
-        message("Transforming data.")
-        ready <- sm(normalize_expt(ready, transform="log2"))
-    }
-    data <- as.data.frame(Biobase::exprs(ready[["expressionset"]]))
-    rm(ready)
-    retlist <- list(
-        "conditions" = conditions,
-        "batches" = batches,
-        "data" = data)
-    return(retlist)
-}
-
 choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
@@ -1774,15 +1715,17 @@ extract_significant_genes <- function(combined,
 
     wb <- openxlsx::createWorkbook(creator="hpgltools")
 
-    message("Writing a legend of columns.")
-    legend <- data.frame(rbind(
-        c("This excel workbook contains the set of significant up/down genes by contrast", ""),
-        c("Below are a series of bar plots describing the numbers of significant genes.", "")
+    if (!is.null(excel)) {
+        message("Writing a legend of columns.")
+        legend <- data.frame(rbind(
+            c("This excel workbook contains the set of significant up/down genes by contrast", ""),
+            c("Below are a series of bar plots describing the numbers of significant genes.", "")
         ))
 
-    colnames(legend) <- c("column name", "column definition")
-    xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
-                            title="Columns used in the following tables.")
+        colnames(legend) <- c("column name", "column definition")
+        xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+                                title="Columns used in the following tables.")
+    }
 
     ret <- list()
     summary_count <- 0
@@ -1866,9 +1809,9 @@ extract_significant_genes <- function(combined,
     } ## End list of according_to's
 
     sig_bar_plots <- NULL
-    if (isTRUE(sig_bar)) {
+    if (!is.null(excel) & isTRUE(sig_bar)) {
         ## This needs to be changed to get_sig_genes()
-        sig_bar_plots <- plot_significant_bar(combined, fc_cutoffs=siglfc_cutoffs,
+        sig_bar_plots <- significant_barplots(combined, fc_cutoffs=siglfc_cutoffs,
                                               p=p, z=z, p_type=p_type, fc_column=fc_column)
         plot_row <- 1
         plot_col <- 1
@@ -2413,6 +2356,132 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, semantic=c('mucin'
         }
     }
     return(de_list)
+}
+
+significant_barplots <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
+                                 fc_column="limma_logfc", p_type="adj",
+                                 p=0.05, z=NULL, order=NULL, ...) {
+    arglist <- list(...)
+    sig_lists_up <- list(
+        "limma" = list(),
+        "edger" = list(),
+        "deseq" = list())
+    sig_lists_down <- list(
+        "limma" = list(),
+        "edger" = list(),
+        "deseq" = list())
+    plots <- list(
+        "limma" = NULL,
+        "edger" = NULL,
+        "deseq" = NULL)
+    tables_up <- list(
+        "limma" = NULL,
+        "edger" = NULL,
+        "deseq" = NULL)
+    tables_down <- list(
+        "limma" = NULL,
+        "edger" = NULL,
+        "deseq" = NULL)
+    table_length <- 0
+    fc_names <- c()
+    for (type in c("limma", "edger", "deseq")) {
+
+        for (fc in fc_cutoffs) {
+            ## This is a bit weird and circuituous
+            ## The most common caller of this function is in fact extract_significant_genes
+            fc_sig <- sm(extract_significant_genes(table_list, fc=fc,
+                                                   p=p, z=z, n=NULL, excel=NULL,
+                                                   p_type=p_type, sig_bar=FALSE, ma=FALSE))
+            table_length <- length(fc_sig[[type]][["ups"]])
+            fc_name <- paste0("fc_", fc)
+            fc_names <- append(fc_names, fc_name)
+
+            for (tab in 1:table_length) { ## The table names are shared across methods and ups/downs
+                table_name <- names(fc_sig[[type]][["ups"]])[tab]
+                tables_up <- nrow(fc_sig[[type]][["ups"]][[table_name]])
+                tables_down <- nrow(fc_sig[[type]][["downs"]][[table_name]])
+
+                sig_lists_up[[type]][[fc_name]][[table_name]] <- table_up
+                sig_lists_down[[type]][[fc_name]][[table_name]] <- table_down
+
+            } ## End iterating through every table
+        } ## End querying all fc cutoffs
+        ## Now we need to collate the data and make the bars
+
+        up_all <- numeric() ## The number of all genes FC > 0
+        down_all <- numeric()  ## The number of all genes FC < 0
+        up_mid <- numeric()  ## The number of genes 2<FC<4 (by default)
+        down_mid <- numeric()  ## The number of genes -2>FC>-4
+        up_max <- numeric()  ## The number of genes FC > 4
+        down_max <- numeric()  ## The number of genes FC < -4
+        ##  The bar graph looks like
+        ## ######### #### #  <-- Total width is the number of all >1FC genes
+        ##         ^    ^------- Total >0FC - the set between 4FC and 2FC
+        ##         |------------ Total >0FC - the smallest set >4FC
+
+        ups <- list()
+        downs <- list()
+        papa_bear <- fc_names[[1]]  ## Because it is the largest grouping
+        mama_bear <- fc_names[[2]]  ## The middle grouping
+        baby_bear <- fc_names[[3]]  ## And the smallest grouping
+        for (t in 1:table_length) {
+            table_name <- names(sig_lists_up[[type]][[1]])[t]
+            ## > 0 lfc
+            everything_up <- sig_lists_up[[type]][[papa_bear]][[table_name]]
+            ## > 1 lfc
+            mid_up <- sig_lists_up[[type]][[mama_bear]][[table_name]]
+            ## > 2 lfc
+            exclusive_up <- sig_lists_up[[type]][[baby_bear]][[table_name]]
+            ## < 0 lfc
+            everything_down <- sig_lists_down[[type]][[papa_bear]][[table_name]]
+            ## < 1 lfc
+            mid_down <- sig_lists_down[[type]][[mama_bear]][[table_name]]
+            ## < 2 lfc
+            exclusive_down <- sig_lists_down[[type]][[baby_bear]][[table_name]]
+
+            ## Ah, I think the problem is that by calculating the numbers a,b,c
+            ## It is stacking them and so I am getting a final bar of the sum of a,b,c
+            up_all[[type]][[table_name]] <- everything_up
+            down_all[[type]][[table_name]] <- everything_down
+            up_mid[[type]][[table_name]] <- mid_up - exclusive_up
+            down_mid[[type]][[table_name]] <- mid_down - exclusive_down
+            up_max[[type]][[table_name]] <- exclusive_up
+            down_max[[type]][[table_name]] <- exclusive_down
+            up_all[[type]][[table_name]] <- up_all[[type]][[table_name]] - up_mid[[type]][[table_name]] - up_max[[type]][[table_name]]
+            down_all[[type]][[table_name]] <- down_all[[type]][[table_name]] - down_mid[[type]][[table_name]] - down_max[[type]][[table_name]]
+        } ## End for 1:table_length
+
+        ## Prepare the tables for plotting.
+        comparisons <- names(sig_lists_up[[type]][[1]])
+        up <- cbind(comparisons, up_max[[type]], up_mid[[type]], up_all[[type]])
+        down <- cbind(comparisons, down_max[[type]], down_mid[[type]], down_all[[type]])
+        up <- as.data.frame(up)
+        down <- as.data.frame(down)
+        colnames(up) <- c("comparisons","up_max","up_mid","up_all")
+        colnames(down) <- c("comparisons","down_max","down_mid","down_all")
+        up <- reshape2::melt(up, id.var="comparisons")
+        down <- reshape2::melt(down, id.var="comparisons")
+        up[["comparisons"]] <- factor(up[["comparisons"]], levels=comparisons)
+        down[["comparisons"]] <- factor(down[["comparisons"]], levels=comparisons)
+        up[["value"]] <- as.numeric(up[["value"]])
+        down[["value"]] <- as.numeric(down[["value"]]) * -1
+        tables_up[[type]] <- up
+        tables_down[[type]] <- down
+
+        plots[[type]] <- significant_barplots(up, down, ...)
+    } ## End iterating over the 3 types, limma/deseq/edger
+
+    retlist <- list(
+        "limma_up_table" = tables_up[["limma"]],
+        "limma_down_table"= tables_down[["limma"]],
+        "limma" = plots[["limma"]],
+        "deseq_up_table" = tables_up[["deseq"]],
+        "deseq_down_table"= tables_down[["deseq"]],
+        "deseq" = plots[["deseq"]],
+        "edger_up_table" = tables_up[["edger"]],
+        "edger_down_table"= tables_down[["edger"]],
+        "edger" = plots[["edger"]])
+    return(retlist)
 }
 
 ## EOF

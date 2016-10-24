@@ -103,7 +103,30 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     }
     if (filter == FALSE) {
         filter <- "raw"
+    } else if (isTRUE(filter)) {
+        filter <- "cbcb"
     }
+    if (convert == FALSE) {
+        convert <- "raw"
+    } else if (isTRUE(convert)) {
+        convert <- "cbcbcpm"
+    }
+    if (norm == FALSE) {
+        norm <- "raw"
+    } else if (isTRUE(norm)) {
+        norm <- "tmm"
+    }
+    if (transform == FALSE) {
+        transform <- "raw"
+    } else if (isTRUE(transform)) {
+        transform <- "log2"
+    }
+    if (batch == FALSE) {
+        batch <- "raw"
+    } else if (isTRUE(batch)) {
+        batch <- "sva"
+    }
+
     if (is.null(new_expt[["original_expressionset"]])) {
         new_expt[["original_expressionset"]] = new_expt[["expressionset"]]
     }

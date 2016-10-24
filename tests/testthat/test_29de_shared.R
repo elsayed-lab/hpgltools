@@ -17,31 +17,29 @@ basic <- new.env()
 load("de_basic.rda", envir=basic)
 
 ## The following lines should not be needed any longer.
-normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))
-hpgl_result <- sm(all_pairwise(normalized_expt, model_batch=TRUE, which_voom="hpgl", parallel=FALSE))
+normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=TRUE))
+hpgl_result <- sm(all_pairwise(normalized_expt, model_batch=TRUE, which_voom="hpgl", parallel=FALSE, edger_method="short"))
 
 previous_deseq <- deseq$hpgl_deseq$all_tables[["untreated_vs_treated"]]
-previous_edger <- edger$hpgl_edger$all_tables[["untreated_vs_treated"]]
-previous_limma <- limma$hpgl_limma$all_tables[["untreated_vs_treated"]]
-previous_basic <- basic$hpgl_basic$all_tables[["untreated_vs_treated"]]
-
-this_deseq <- hpgl_result$deseq$all_tables$untreated_vs_treated
-this_edger <- hpgl_result$edger$all_tables$untreated_vs_treated
-this_limma <- hpgl_result$limma$all_tables$untreated_vs_treated
-this_basic <- hpgl_result$basic$all_tables$untreated_vs_treated
-
+this_deseq <- hpgl_result$deseq$all_tables[["untreated_vs_treated"]]
 test_that("Do we get similar results to previous DE runs: (DESeq2)?", {
     expect_equal(previous_deseq, this_deseq)
 })
 
+previous_edger <- edger$hpgl_edger$all_tables[["untreated_vs_treated"]]
+this_edger <- hpgl_result$edger$all_tables[["untreated_vs_treated"]]
 test_that("Do we get similar results to previous DE runs: (edgeR)?", {
     expect_equal(previous_edger, this_edger)
 })
 
+previous_limma <- limma$hpgl_limma$all_tables[["untreated_vs_treated"]]
+this_limma <- hpgl_result$limma$all_tables[["untreated_vs_treated"]]
 test_that("Do we get similar results to previous DE runs: (limma)?", {
     expect_equal(previous_limma, this_limma)
 })
 
+previous_basic <- basic$hpgl_pasilla_basic$all_tables[["untreated_vs_treated"]]
+this_basic <- hpgl_result$basic$all_tables[["untreated_vs_treated"]]
 test_that("Do we get similar results to previous DE runs: (basic)?", {
     expect_equal(previous_basic, this_basic)
 })
@@ -72,7 +70,7 @@ test_that("Are the comparisons between DE tools sufficiently similar? (deseq/bas
 })
 
 combined_table <- sm(combine_de_tables(hpgl_result, excel=NULL))
-expected_size <- c(10153,42)
+expected_size <- c(7526, 42)
 actual_size <- dim(combined_table$data[[1]])
 test_that("Has the untreated/treated combined table been filled in?", {
     expect_equal(expected_size, actual_size)

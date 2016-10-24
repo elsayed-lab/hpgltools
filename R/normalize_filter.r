@@ -28,6 +28,9 @@ filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
     } else if (tolower(filter) == "kovera") {
         type <- 'kofa'
     }
+    if (isTRUE(filter)) {
+        filer <- "cbcb"
+    }
     filtered_counts <- NULL
     if (filter == "cbcb") {
         filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,

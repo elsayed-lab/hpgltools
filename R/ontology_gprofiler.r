@@ -23,15 +23,15 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30, cutoff=0.1, n=30, g
 
     kept_columns <- c("p.value", "term.size", "query.size", "overlap.size", "recall", "precision", "term.id", "term.name", "relative.depth")
     old_options <- options(scipen=4)
-    mf_over[["p.value"]] <- as.numeric(format(x=mf_over[["p.value"]], digits=3, scientific=TRUE))
-    bp_over[["p.value"]] <- as.numeric(format(x=bp_over[["p.value"]], digits=3, scientific=TRUE))
-    cc_over[["p.value"]] <- as.numeric(format(x=cc_over[["p.value"]], digits=3, scientific=TRUE))
     mf_over <- go_result[go_result[["domain"]] == "MF", ]
     mf_over <- mf_over[, kept_columns]
     bp_over <- go_result[go_result[["domain"]] == "BP", ]
     bp_over <- bp_over[, kept_columns]
     cc_over <- go_result[go_result[["domain"]] == "CC", ]
     cc_over <- cc_over[, kept_columns]
+    mf_over[["p.value"]] <- as.numeric(format(x=mf_over[["p.value"]], digits=3, scientific=TRUE))
+    bp_over[["p.value"]] <- as.numeric(format(x=bp_over[["p.value"]], digits=3, scientific=TRUE))
+    cc_over[["p.value"]] <- as.numeric(format(x=cc_over[["p.value"]], digits=3, scientific=TRUE))
 
     plotting_mf_over <- mf_over
     mf_pval_plot_over <- NULL
