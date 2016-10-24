@@ -2,8 +2,7 @@
 % Please edit documentation in R/ontology_shared.r
 \name{extract_lengths}
 \alias{extract_lengths}
-\title{Primarily goseq, but also other tools on occasion require a set of gene IDs and lengths.
-This function is resposible for pulling that data from either a gff, or TxDb/OrganismDbi.}
+\title{Take gene/exon lengths from a suitable data source (gff/TxDb/OrganismDbi)}
 \usage{
 extract_lengths(db = NULL, gene_list = NULL,
   type = "GenomicFeatures::transcripts", id = "TXID",

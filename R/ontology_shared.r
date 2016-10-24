@@ -1,4 +1,4 @@
-' Take gene/exon lengths from a suitable data source (gff/TxDb/OrganismDbi)
+#' Take gene/exon lengths from a suitable data source (gff/TxDb/OrganismDbi)
 #'
 #' Primarily goseq, but also other tools on occasion require a set of gene IDs and lengths.
 #' This function is resposible for pulling that data from either a gff, or TxDb/OrganismDbi.
