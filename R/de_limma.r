@@ -444,7 +444,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
         which_voom <- arglist[["which_voom"]]
     }
     message("Starting limma pairwise comparison.")
-    input_data <- choose_limma_dataset(input, force=force)
+    input_data <- choose_limma_dataset(input, force=force, which_voom=which_voom)
     design <- Biobase::pData(input[["expressionset"]])
     conditions <- design[["condition"]]
     batches <- design[["batch"]]

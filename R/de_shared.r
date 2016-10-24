@@ -520,15 +520,23 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
     if (isTRUE(force)) {
         message("Leaving the data alone, regardless of normalization state.")
     } else {
-        if (conv_state == "raw") {
-            ready <- sm(normalize_expt(ready, convert="cpm"))
+        if (filt_state == "raw") {
+            message("Filtering data.")
+            ready <- sm(normalize_expt(ready, filter=TRUE))
         }
         if (norm_state == "raw") {
+            message("Normalizing data.")
             ready <- sm(normalize_expt(ready, norm="quant"))
         }
+        if (conv_state == "raw") {
+            message("Converting data.")
+            ready <- sm(normalize_expt(ready, convert="cbcbcpm"))
+        }
+
     }
     ## No matter what we do, it must be logged.
     if (tran_state == "raw") {
+        message("Transforming data.")
         ready <- sm(normalize_expt(ready, transform="log2"))
     }
     data <- as.data.frame(Biobase::exprs(ready[["expressionset"]]))
@@ -540,7 +548,7 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
     return(retlist)
 }
 
-choose_limma_dataset <- function(input, force=FALSE, ...) {
+choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
     data <- NULL
@@ -589,18 +597,26 @@ choose_limma_dataset <- function(input, force=FALSE, ...) {
         }
 
         ready <- input
+        data <- Biobase::exprs(input[["expressionset"]])
         if (isTRUE(force)) {
             message("Leaving the data alone, regardless of normalization state.")
-        } else if (filt_state == "raw" & norm_state == "raw" & conv_state == "raw" & tran_state == "raw") {
-            message("Nothing has been done to the data, filtering it, leaving it alone.")
-            data <- Biobase::exprs(input[["expressionset"]])
-        } else if (filt_state == "raw" & norm_state != "raw" & conv_state != "raw" & tran_state != "raw") {
-            message("A bunch of stuff has been done to the data, but not filtering.")
-            message("Reverting to raw data.")
-            data <- Biobase::exprs(input[["original_expressionset"]])
-        } else if (filt_state != "raw" & norm_state == "raw") {
-            message("This data has been filtered and left non-normalized.")
-            message("Passing it as-is to limma.")
+            retlist <- list(
+                "libsize" = libsize,
+                "conditions" = conditions,
+                "batches" = batches,
+                "data" = data)
+            return(retlist)
+        }
+
+        ## If we are using limma::voom*, then make sure we do things the limma way.
+        ## If we use the hpgltools::hpgl_voom*, let the freak flags fly.
+        if (grepl(pattern="limma", x=which_voom)) {
+            ## Limma's voom requires we return log2(cpm()) to base 10.
+            ## Otherwise it should accept pretty much anything.
+            message("Using limma's voom, returning to base 10.")
+            if (tran_state == "log2") {
+                data <- 2 ^ data
+            }
         }
     } else {
         data <- as.data.frame(input)

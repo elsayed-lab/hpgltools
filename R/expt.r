@@ -78,31 +78,39 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     meta_dataframe <- NULL
     if (class(metadata) == "character") { ## This is a filename containing the metadata
         file <- metadata
-    } else if (class(metadata) == "data.frame") {
+    } else if (class(metadata) == "data.frame") {  ## A data frame of metadata was passed.
         meta_dataframe <- metadata
     } else {
         stop("This requires either a file or meta data.frame.")
     }
+    ## The two primary inputs for metadata are a csv/xlsx file or a dataframe, check for them here.
     if (is.null(meta_dataframe) & is.null(file)) {
         stop("This requires either a csv file or dataframe of metadata describing the samples.")
     } else if (is.null(file)) {
+        ## punctuation is the devil
         sample_definitions <- meta_dataframe
         colnames(sample_definitions) <- tolower(colnames(sample_definitions))
         colnames(sample_definitions) <- gsub("[[:punct:]]", "", colnames(sample_definitions))
     }  else {
         sample_definitions <- read_metadata(file, ...)
     }
+    ## Check that condition and batch have been filled in.
     sample_columns <- colnames(sample_definitions)
     found_condition <- "condition" %in% sample_columns
     found_batch <- "batch" %in% sample_columns
-    found_sample <- "sample" %in% sample_columns
+    sample_column <- NULL
+    ## The sample ID column should have the word 'sample' in it, otherwise this will fail.
+    found_sample <- grepl(pattern="sample", x=sample_columns)
     if (!isTRUE(found_condition)) {
         message("Did not find the condition column in the sample sheet.")
         message("Was it perhaps saved as a .xls?")
     }
-    if (!isTRUE(found_sample)) {
+    if (sum(found_sample) == 0) {
         message("Did not find the sample column in the sample sheet.")
         message("Was it perhaps saved as a .xls?")
+    } else {
+        ## Take the first column with the word 'sample' in it as the sampleid column
+        sample_column <- sample_columns[found_sample][[1]]
     }
     if (!isTRUE(found_batch)) {
         message("Did not find the batch column in the sample sheet.")
@@ -116,30 +124,39 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     ## difference between the concept of 'row' and 'column' I should probably use the [, column] or
     ## [row, ] method to reinforce my weak neurons.
     if (is.null(sample_definitions[["condition"]])) {
+        ## type and stage are commonly used, and before I was consistent about always having condition, they were a proxy for it.
         sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]], sample_definitions[["stage"]], sep="_"))
     }
+    ## Extract out the condition names as a factor
     condition_names <- unique(sample_definitions[["condition"]])
     if (is.null(condition_names)) {
         warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
     }
+    ## Condition and Batch are not allowed to be numeric, so if they are just numbers, prefix them with 'c' and 'b' respectively.
     sample_definitions[["condition"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=sample_definitions[["condition"]])
     sample_definitions[["batch"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=sample_definitions[["batch"]])
 
     ## Make sure we have a viable set of colors for plots
+    ## First figure out how many conditions we have
     chosen_colors <- as.character(sample_definitions[["condition"]])
     num_conditions <- length(condition_names)
+    ## And also the number of samples
     num_samples <- nrow(sample_definitions)
     if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
+        ## Thus if we have a numer of colors == the number of samples, set each sample with its own color
         chosen_colors <- sample_colors
     } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
+        ## If instead there are colors == number of conditions, set them appropriately.
         mapping <- setNames(sample_colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
     } else if (is.null(sample_colors)) {
+        ## If nothing is provided, let RColorBrewer do it.
         sample_colors <- suppressWarnings(grDevices::colorRampPalette(
             RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
         mapping <- setNames(sample_colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
     } else {
+        ## If none of the above are true, then warn the user and let RColorBrewer do it.
         warning("The number of colors provided does not match either the number of conditions nor samples.")
         warning("Unsure of what to do, so choosing colors with RColorBrewer.")
         sample_colors <- suppressWarnings(grDevices::colorRampPalette(
@@ -147,11 +164,17 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         mapping <- setNames(sample_colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
     }
-    names(chosen_colors) <- sample_definitions[["sampleid"]]
+    ## Set the color names
+    names(chosen_colors) <- sample_definitions[[sample_column]]
 
     ## Explicitly skip those samples which are "", null, or "undef" for the filename.
-    skippers <- (sample_definitions[[file_column]] == "" | is.null(sample_definitions[[file_column]]) | sample_definitions[[file_column]] == "undef")
-    sample_definitions <- sample_definitions[!skippers, ]
+    skippers <- (sample_definitions[[file_column]] == "" |
+                 is.null(sample_definitions[[file_column]]) |
+                 sample_definitions[[file_column]] == "undef")
+    if (length(skippers) > 0) {
+        ## If there is nothing to skip, do not try.
+        sample_definitions <- sample_definitions[!skippers, ]
+    }
 
     ## Create a matrix of counts with columns as samples and rows as genes
     ## This may come from either a data frame/matrix, a list of files from the metadata
@@ -165,22 +188,24 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         ## If neither of these cases is true, start looking for the files in the processed_data/ directory
     } else if (is.null(sample_definitions[[file_column]])) {
         success <- 0
+        ## There are two main organization schemes I have used in the past, the following
+        ## checks for both in case I forgot to put a file column in the metadata.
         ## Look for files organized by sample
         test_filenames <- paste0("processed_data/count_tables/",
-                                 as.character(sample_definitions[['sampleid']]), "/",
+                                 as.character(sample_definitions[[sample_column]]), "/",
                                  file_prefix,
-                                 as.character(sample_definitions[["sampleid"]]),
+                                 as.character(sample_definitions[[sample_column]]),
                                  file_suffix)
         num_found <- sum(file.exists(test_filenames))
         if (num_found == num_samples) {
             success <- success + 1
-            sample_definitions[["file"]] <- test_filenames
+            sample_definitions[[file_column]] <- test_filenames
         } else {
             lower_test_filenames <- tolower(test_filenames)
             num_found <- sum(file.exists(lower_test_filenames))
             if (num_found == num_samples) {
                 success <- success + 1
-                sample_definitions[["file"]] <- lower_test_filenames
+                sample_definitions[[file_column]] <- lower_test_filenames
             }
         }
         if (success == 0) {
@@ -188,17 +213,17 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
             test_filenames <- paste0("processed_data/count_tables/",
                                      tolower(as.character(sample_definitions[["type"]])), "/",
                                      tolower(as.character(sample_definitions[["stage"]])), "/",
-                                     sample_definitions[["sampleid"]], file_suffix)
+                                     sample_definitions[[sample_column]], file_suffix)
             num_found <- sum(file.exists(test_filenames))
             if (num_found == num_samples) {
                 success <- success + 1
-                sample_definitions[["file"]] <- test_filenames
+                sample_definitions[[file_column]] <- test_filenames
             } else {
                 test_filenames <- tolower(test_filenames)
                 num_found <- sum(file.exists(test_filenames))
                 if (num_found == num_samples) {
                     success <- success + 1
-                    sample_definitions[["file"]] <- test_filenames
+                    sample_definitions[[file_column]] <- test_filenames
                 }
             }
         } ## tried by type
@@ -207,36 +232,44 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         }
     }
 
-    ## At this point sample_definitions$file should be filled in no matter what
+    ## At this point sample_definitions$file should be filled in no matter what;
+    ## so read the files.
     if (is.null(all_count_tables)) {
         filenames <- as.character(sample_definitions[[file_column]])
-        sample_ids <- as.character(sample_definitions[["sampleid"]])
+        sample_ids <- as.character(sample_definitions[[sample_column]])
         all_count_tables <- expt_read_counts(sample_ids, filenames, ...)
     }
 
+    ## Recast the data as a data.frame and make sure everything is numeric
     all_count_tables <- as.data.frame(all_count_tables)
     for (col in colnames(all_count_tables)) {
         ## Ensure there are no stupid entries like target_id est_counts
         all_count_tables[[col]] <- as.numeric(all_count_tables[[col]])
     }
+    ## I have had a couple data sets with incomplete counts, get rid of those rows before moving on.
     all_count_tables <- all_count_tables[complete.cases(all_count_tables), ]
+    ## Features like exon:alicethegene-1 are annoying and entirely too common in TriTrypDB data
     rownames(all_count_tables) <- gsub("^exon:", "", rownames(all_count_tables))
     rownames(all_count_tables) <- make.names(gsub(":\\d+", "", rownames(all_count_tables)), unique=TRUE)
 
+    ## Try a couple different ways of getting gene-level annotations into the expressionset.
     annotation <- NULL
     tooltip_data <- NULL
     if (is.null(gene_info)) {
+        ## Including, if all else fails, just grabbing the gene names from the count tables.
         if (is.null(include_gff)) {
             gene_info <- as.data.frame(rownames(all_count_tables))
             rownames(gene_info) <- rownames(all_count_tables)
             colnames(gene_info) <- "name"
         } else {
+            ## Or reading a gff file.
             message("create_expt(): Reading annotation gff, this is slow.")
             annotation <- gff2df(gff=include_gff, type=gff_type)
             tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
             gene_info <- annotation
         }
     } else if (class(gene_info) == "list" & !is.null(gene_info[["genes"]])) {
+        ## In this case, it is using the output of reading a OrgDB instance
         gene_info <- as.data.frame(gene_info[["genes"]])
     }
 
@@ -269,11 +302,14 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     ## Maybe I will copy/move this to my annotation collection toys?
     tmp_countsdt <- data.table::as.data.table(all_count_tables)
     tmp_countsdt[["rownames"]] <- rownames(all_count_tables)
+    ## This temporary id number will be used to ensure that the order of features in everything
+    ## will remain consistent, as we will call order() using it later.
     tmp_countsdt[["temporary_id_number"]] <- 1:nrow(tmp_countsdt)
     gene_infodt <- data.table::as.data.table(gene_info)
     gene_infodt[["rownames"]] <- rownames(gene_info)
 
     message("Bringing together the count matrix and gene information.")
+    ## The method here is to create a data.table of the counts and annotation data, merge them, then split them apart.
     counts_and_annotations <- merge(tmp_countsdt, gene_infodt, by="rownames", all.x=TRUE)
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
     counts_and_annotations <- as.data.frame(counts_and_annotations)
@@ -308,17 +344,15 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     if (is.null(sample_definitions[["batch"]])) {
         sample_definitions[["batch"]] <- "unknown"
     }
-    if (is.null(sample_definitions[["intercounts"]])) {
-        sample_definitions[["intercounts"]] <- "unknown"
-    }
     if (is.null(sample_definitions[["file"]])) {
         sample_definitions[["file"]] <- "null"
     }
 
-    ## Adding this so that deseq does not complain about characters when calling DESeqDataSetFromMatrix()
+    ## Adding these so that deseq does not complain about characters when calling DESeqDataSetFromMatrix()
     sample_definitions[["condition"]] <- as.factor(sample_definitions[["condition"]])
     sample_definitions[["batch"]] <- as.factor(sample_definitions[["batch"]])
 
+    ## Finally, create the ExpressionSet using the counts, annotations, and metadata.
     requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
     metadata <- methods::new("AnnotatedDataFrame",
                              sample_definitions)
@@ -340,16 +374,20 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     ## Therefore, if we call a function like DESeq() which requires
     ## non-log2 counts, we can check these values and convert accordingly
 
+    ## Now that the expressionset has been created, pack it into an expt object so that I can keep backups etc.
     expt <- expt_subset(experiment) ## I think this is spurious now.
     expt[["original_expressionset"]] <- experiment
     expt[["original_metadata"]] <- Biobase::pData(experiment)
 
+    ## I only leared fairly recently that there is quite a bit of redundancy between my expt and ExpressionSets.
+    ## I do not mind this.
     expt[["title"]] <- title
     expt[["notes"]] <- toString(notes)
     expt[["design"]] <- sample_definitions
     expt[["annotation"]] <- annotation
     expt[["gff_file"]] <- include_gff
     expt[["tooltip"]] <- tooltip_data
+    ## the 'state' slot in the expt is used to keep track of how the data is modified over time.
     starting_state <- list(
         "lowfilter" = "raw",
         "normalization" = "raw",
@@ -357,19 +395,26 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         "batch" = "raw",
         "transform" = "raw")
     expt[["state"]] <- starting_state
+    ## Just in case there are condition names which are not used.
     expt[["conditions"]] <- droplevels(as.factor(sample_definitions[, "condition"]))
+    ## This might be redundant, but it ensures that no all-numeric conditions exist.
     expt[["conditions"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=expt[["conditions"]])
     names(expt[["conditions"]]) <- rownames(sample_definitions)
+    ## Ditto for batches
     expt[["batches"]] <- droplevels(as.factor(sample_definitions[, "batch"]))
     expt[["batches"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=expt[["batches"]])
     names(expt[["batches"]]) <- rownames(sample_definitions)
+    ## Keep a backup of the metadata in case we do semantic filtering or somesuch.
     expt[["original_metadata"]] <- metadata
+    ## Keep a backup of the library sizes for limma.
     expt[["original_libsize"]] <- colSums(Biobase::exprs(experiment))
     names(expt[["original_libsize"]]) <- rownames(sample_definitions)
     expt[["libsize"]] <- expt[["original_libsize"]]
     names(expt[["libsize"]]) <- rownames(sample_definitions)
+    ## Save the chosen colors
     expt[["colors"]] <- chosen_colors
     names(expt[["colors"]]) <- rownames(sample_definitions)
+    ## Save an rdata file of the expressionset.
     if (!is.null(savefile)) {
         save_result <- try(save(list = c("expt"), file=paste(savefile, ".Rdata", sep="")))
     }
@@ -507,10 +552,12 @@ read_metadata <- function(file, ...) {
 
     colnames(definitions) <- tolower(colnames(definitions))
     colnames(definitions) <- gsub("[[:punct:]]", "", colnames(definitions))
-    rownames(definitions) <- make.names(definitions[["sampleid"]], unique=TRUE)
+    rownames(definitions) <- make.names(definitions[[sample_column]], unique=TRUE)
     ## "no visible binding for global variable 'sampleid'"  ## hmm sample.id is a column from the csv file.
     ## tmp_definitions <- subset(tmp_definitions, sampleid != "")
-    empty_samples <- which(definitions[, "sampleid"] == "" | is.na(definitions[, "sampleid"]) | grepl(pattern="^#", x=definitions[, "sampleid"]))
+    empty_samples <- which(definitions[, sample_column] == "" |
+                           is.na(definitions[, sample_column]) |
+                           grepl(pattern="^#", x=definitions[, sample_column]))
     if (length(empty_samples) > 0) {
         definitions <- definitions[-empty_samples, ]
     }

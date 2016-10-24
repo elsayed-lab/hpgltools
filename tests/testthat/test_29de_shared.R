@@ -17,13 +17,8 @@ basic <- new.env()
 load("de_basic.rda", envir=basic)
 
 ## The following lines should not be needed any longer.
-tt <- sm(library(iterators))
-tt <- sm(library(parallel))
-tt <- sm(library(doParallel)) ## this has %dopar%
-tt <- sm(library(foreach))  ## doParallel requires this
-
 normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm"))
-hpgl_result <- sm(all_pairwise(normalized_expt, model_batch=TRUE))
+hpgl_result <- sm(all_pairwise(normalized_expt, model_batch=TRUE, which_voom="hpgl", parallel=FALSE))
 
 previous_deseq <- deseq$hpgl_deseq$all_tables[["untreated_vs_treated"]]
 previous_edger <- edger$hpgl_edger$all_tables[["untreated_vs_treated"]]
