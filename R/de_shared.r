@@ -1823,24 +1823,27 @@ extract_significant_genes <- function(combined,
         openxlsx::writeData(wb, "legend",
                             x="Significant limma genes.",
                             startRow=text_row, startCol=plot_col)
+        plot_row <- plot_row + 1
         print(sig_bar_plots[["limma"]])
         openxlsx::insertPlot(wb, "legend", width=9, height=6,
                              startRow=plot_row, startCol=plot_col,
                              fileType="png", units="in")
 
-        plot_col <- plot_col + 12
+        plot_row <- plot_row + 30
         openxlsx::writeData(wb, "legend",
                             x="Significant deseq genes.",
                             startRow=text_row, startCol=plot_col)
+        plot_row <- plot_row + 1
         print(sig_bar_plots[["deseq"]])
         openxlsx::insertPlot(wb, "legend", width=9, height=6,
                              startRow=plot_row, startCol=plot_col,
                              fileType="png", units="in")
 
-        plot_col <- plot_col + 12
+        plot_row <- plot_row + 30
         openxlsx::writeData(wb, "legend",
                             x="Significant edger genes.",
                             startRow=text_row, startCol=plot_col)
+        plot_row <- plot_row + 1
         print(sig_bar_plots[["edger"]])
         openxlsx::insertPlot(wb, "legend", width=9, height=6,
                              startRow=plot_row, startCol=plot_col,
