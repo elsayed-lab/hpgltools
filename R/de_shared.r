@@ -286,12 +286,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 choose_model <- function(input, conditions, batches, model_batch=TRUE,
                          model_cond=TRUE, model_intercept=TRUE,
                          alt_model=NULL, alt_string=NULL,
-                         intercept=0, reverse=FALSE, ...) {
+                         intercept=0, reverse=FALSE,
+                         surrogates="be", ...) {
     arglist <- list(...)
-    surrogates <- "be"
-    if (!is.null(arglist[["surrogates"]])) {
-        surrogates <- arglist[["surrogates"]]
-    }
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
     ## Make a model matrix which will have one entry for
@@ -554,14 +551,15 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
         if (grepl(pattern="limma", x=which_voom)) {
             ## Limma's voom requires we return log2(cpm()) to base 10.
             ## Otherwise it should accept pretty much anything.
-            message("Using limma's voom, returning to base 10.")
             if (tran_state == "log2") {
+                message("Using limma's voom, returning to base 10.")
                 data <- 2 ^ data
             }
         }
     } else {
         data <- as.data.frame(input)
     }
+    head(data)
     retlist <- list(
         "libsize" = libsize,
         "conditions" = conditions,
@@ -857,12 +855,25 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     basic <- all_pairwise_result[["basic"]]
 
     ## If any of the tools failed, then we cannot plot stuff with confidence.
-    if (class(limma) == "try-error" |
-        class(deseq) == "try-error" |
-        class(edger) == "try-error" |
-        class(basic) == "try-error") {
+    if (class(limma) == "try-error") {
         add_plots <- FALSE
         compare_plots <- FALSE
+        message("Limma had an error.  Not adding plots.")
+    }
+    if (class(deseq) == "try-error") {
+        add_plots <- FALSE
+        compare_plots <- FALSE
+        message("DESeq2 had an error.  Not adding plots.")
+    }
+    if (class(edger) == "try-error") {
+        add_plots <- FALSE
+        compare_plots <- FALSE
+        message("edgeR had an error.  Not adding plots.")
+    }
+    if (class(basic) == "try-error") {
+        add_plots <- FALSE
+        compare_plots <- FALSE
+        message("Basic had an error.  Not adding plots.")
     }
 
     csv_basename <- NULL
@@ -1587,8 +1598,8 @@ de_venn <- function(table, adjp=FALSE, ...) {
                                            up_del))
     Vennerable::plot(up_venn, doWeights=FALSE)
     up_venn_noweight <- grDevices::recordPlot()
-    Vennerable::plot(up_venn, doWeights=TRUE)
-    up_venn_weight <- grDevices::recordPlot()
+    ##Vennerable::plot(up_venn, doWeights=TRUE)
+    ##up_venn_weight <- grDevices::recordPlot()
 
     down_ones <- c("d" = down_d, "e" = down_e, "l" = down_l)
     down_twos <- c("d&e" = down_de, "d&l" = down_dl, "e&l" = down_el)
@@ -1602,17 +1613,17 @@ de_venn <- function(table, adjp=FALSE, ...) {
                                              down_del))
     Vennerable::plot(down_venn, doWeights=FALSE)
     down_venn_noweight <- grDevices::recordPlot()
-    Vennerable::plot(down_venn, doWeights=TRUE)
-    down_venn_weight <- grDevices::recordPlot()
+    ##Vennerable::plot(down_venn, doWeights=TRUE)
+    ##down_venn_weight <- grDevices::recordPlot()
 
     retlist <- list(
         "up_venneuler" = up_venneuler,
         "up_noweight" = up_venn_noweight,
-        "up_weight" = up_venn_weight,
+      ##  "up_weight" = up_venn_weight,
         "up_data" = comp_up,
         "down_venneuler" = down_fun,
         "down_noweight" = down_venn_noweight,
-        "down_weight" = down_venn_weight,
+      ##  "down_weight" = down_venn_weight,
         "down_data" = comp_down)
     return(retlist)
 }
@@ -1817,12 +1828,12 @@ extract_significant_genes <- function(combined,
         plot_col <- 1
         message(paste0("Adding significance bar plots."))
 
-        text_row <- plot_row + length(legend) + 3
-        plot_row <- text_row + 1
+        plot_row <- plot_row + length(legend) + 3
+        plot_row <- plot_row + 1
 
         openxlsx::writeData(wb, "legend",
                             x="Significant limma genes.",
-                            startRow=text_row, startCol=plot_col)
+                            startRow=plot_row, startCol=plot_col)
         plot_row <- plot_row + 1
         print(sig_bar_plots[["limma"]])
         openxlsx::insertPlot(wb, "legend", width=9, height=6,
@@ -1832,7 +1843,7 @@ extract_significant_genes <- function(combined,
         plot_row <- plot_row + 30
         openxlsx::writeData(wb, "legend",
                             x="Significant deseq genes.",
-                            startRow=text_row, startCol=plot_col)
+                            startRow=plot_row, startCol=plot_col)
         plot_row <- plot_row + 1
         print(sig_bar_plots[["deseq"]])
         openxlsx::insertPlot(wb, "legend", width=9, height=6,
@@ -1842,7 +1853,7 @@ extract_significant_genes <- function(combined,
         plot_row <- plot_row + 30
         openxlsx::writeData(wb, "legend",
                             x="Significant edger genes.",
-                            startRow=text_row, startCol=plot_col)
+                            startRow=plot_row, startCol=plot_col)
         plot_row <- plot_row + 1
         print(sig_bar_plots[["edger"]])
         openxlsx::insertPlot(wb, "legend", width=9, height=6,
@@ -2401,22 +2412,34 @@ significant_barplots <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
 
             for (tab in 1:table_length) { ## The table names are shared across methods and ups/downs
                 table_name <- names(fc_sig[[type]][["ups"]])[tab]
-                tables_up <- nrow(fc_sig[[type]][["ups"]][[table_name]])
-                tables_down <- nrow(fc_sig[[type]][["downs"]][[table_name]])
+                t_up <- nrow(fc_sig[[type]][["ups"]][[table_name]])
+                t_down <- nrow(fc_sig[[type]][["downs"]][[table_name]])
 
-                sig_lists_up[[type]][[fc_name]][[table_name]] <- table_up
-                sig_lists_down[[type]][[fc_name]][[table_name]] <- table_down
+                sig_lists_up[[type]][[fc_name]][[table_name]] <- t_up
+                sig_lists_down[[type]][[fc_name]][[table_name]] <- t_down
 
             } ## End iterating through every table
         } ## End querying all fc cutoffs
         ## Now we need to collate the data and make the bars
 
-        up_all <- numeric() ## The number of all genes FC > 0
-        down_all <- numeric()  ## The number of all genes FC < 0
-        up_mid <- numeric()  ## The number of genes 2<FC<4 (by default)
-        down_mid <- numeric()  ## The number of genes -2>FC>-4
-        up_max <- numeric()  ## The number of genes FC > 4
-        down_max <- numeric()  ## The number of genes FC < -4
+        up_all <- list("limma" = numeric(),
+                       "deseq" = numeric(),
+                       "edger" = numeric())## The number of all genes FC > 0
+        down_all <- list("limma" = numeric(),
+                         "deseq" = numeric(),
+                         "edger" = numeric())## The number of all genes FC < 0
+        up_mid <- list("limma" = numeric(),
+                       "deseq" = numeric(),
+                       "edger" = numeric())## The number of genes 2<FC<4 (by default)
+        down_mid <- list("limma" = numeric(),
+                         "deseq" = numeric(),
+                         "edger" = numeric())## The number of genes -2>FC>-4
+        up_max <- list("limma" = numeric(),
+                       "deseq" = numeric(),
+                       "edger" = numeric())## The number of genes FC > 4
+        down_max <- list("limma" = numeric(),
+                         "deseq" = numeric(),
+                         "edger" = numeric())  ## The number of genes FC < -4
         ##  The bar graph looks like
         ## ######### #### #  <-- Total width is the number of all >1FC genes
         ##         ^    ^------- Total >0FC - the set between 4FC and 2FC
@@ -2452,18 +2475,29 @@ significant_barplots <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
             down_max[[type]][[table_name]] <- exclusive_down
             up_all[[type]][[table_name]] <- up_all[[type]][[table_name]] - up_mid[[type]][[table_name]] - up_max[[type]][[table_name]]
             down_all[[type]][[table_name]] <- down_all[[type]][[table_name]] - down_mid[[type]][[table_name]] - down_max[[type]][[table_name]]
+
+            up_terminal <- up_all[[type]][[table_name]] + up_mid[[type]][[table_name]] + up_max[[type]][[table_name]]
+            down_terminal <- down_all[[type]][[table_name]] + down_mid[[type]][[table_name]] + down_max[[type]][[table_name]]
+            up_middle <- up_terminal - up_max[[type]][[table_name]]
+            down_middle <- down_terminal - down_max[[type]][[table_name]]
+            up_min <- up_terminal - up_mid[[type]][[table_name]]
+            down_min <- down_terminal - down_mid[[type]][[table_name]]
         } ## End for 1:table_length
 
         ## Prepare the tables for plotting.
         comparisons <- names(sig_lists_up[[type]][[1]])
-        up <- cbind(comparisons, up_max[[type]], up_mid[[type]], up_all[[type]])
-        down <- cbind(comparisons, down_max[[type]], down_mid[[type]], down_all[[type]])
+        ##up <- cbind(comparisons, up_max[[type]], up_mid[[type]], up_all[[type]])
+        up <- cbind(comparisons, up_all[[type]], up_mid[[type]], up_max[[type]])
+        ##down <- cbind(comparisons, down_max[[type]], down_mid[[type]], down_all[[type]])
+        down <- cbind(comparisons, down_all[[type]], down_mid[[type]], down_max[[type]])
         up <- as.data.frame(up)
         down <- as.data.frame(down)
-        colnames(up) <- c("comparisons","up_max","up_mid","up_all")
-        colnames(down) <- c("comparisons","down_max","down_mid","down_all")
+        colnames(up) <- c("comparisons","up_all","up_mid","up_max")
+        colnames(down) <- c("comparisons","down_all","down_mid","down_max")
         up <- reshape2::melt(up, id.var="comparisons")
         down <- reshape2::melt(down, id.var="comparisons")
+        ##up <- up[with(up, order(variable, decreasing=TRUE)), ]
+        ##down <- down[with(down, order(variable, decreasing=TRUE)), ]
         up[["comparisons"]] <- factor(up[["comparisons"]], levels=comparisons)
         down[["comparisons"]] <- factor(down[["comparisons"]], levels=comparisons)
         up[["value"]] <- as.numeric(up[["value"]])
@@ -2471,7 +2505,7 @@ significant_barplots <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
         tables_up[[type]] <- up
         tables_down[[type]] <- down
 
-        plots[[type]] <- significant_barplots(up, down, ...)
+        plots[[type]] <- plot_significant_bar(up, down) ##, ...)
     } ## End iterating over the 3 types, limma/deseq/edger
 
     retlist <- list(

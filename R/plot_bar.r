@@ -189,7 +189,15 @@ plot_rpm = function(input,
 
 }
 
-plot_significant_bar <- function(ups, downs, color_list=c("purple4", "plum1", "orchid", "dodgerblue", "lightcyan", "lightskyblue")) {
+plot_significant_bar <- function(ups, downs,
+                                 color_list=c("lightcyan", "plum1", ## The light colors
+                                              "lightskyblue", "orchid", ## The mid colors
+                                              "dodgerblue", "purple4"), ## And the darks
+                                 name_list=c("up_all", "down_all",
+                                             "up_mid", "down_mid",
+                                             "up_max", "down_max")) {
+    names(color_list) <- name_list
+    ##c("purple4", "plum1", "orchid", "dodgerblue", "lightcyan", "lightskyblue"))
     sigbar_plot <- ggplot() +
         ggplot2::geom_bar(data=ups, stat="identity",
                           aes_string(x="comparisons", y="value", fill="variable")) +

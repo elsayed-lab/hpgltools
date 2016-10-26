@@ -25,17 +25,22 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
     ## Gather all the likely pieces we can use
     design <- expt[["design"]]
     data <- as.data.frame(Biobase::exprs(expt[["expressionset"]]))
-    mtrx <- as.matrix(data)
-    l2_data <- NULL
+    base10_mtrx <- as.matrix(data)
+    log2_mtrx <- NULL
+
+    ## An important caveat!!
+    ## sva assumes pre-logged data while svaseq performs a log() in it.
 
     ## control type is to help empirical.controls
     control_type <- "norm"
     if (expt[["state"]][["transform"]] == "raw") {
-        l2_data <- transform_counts(count_table=data, transform="log2")[["count_table"]]
-        control_type <- "counts"
-    } else {
-        l2_data <- data
+        log2_mtrx <- as.matrix(transform_counts(count_table=data, transform="log2")[["count_table"]])
+        base10_mtrx <- as.matrix(data)
+    } else if (expt[["state"]][["transform"]] == "log2") {
+        log2_mtrx <- as.matrix(data)
+        base10_mtrx <- as.matrix(2 ^ data)
     }
+
     conditions <- droplevels(as.factor(design[["condition"]]))
     batches <- droplevels(as.factor(design[["batch"]]))
     conditional_model <- model.matrix(~ conditions, data=data)
@@ -45,11 +50,15 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
         message("No estimate nor method to find surrogates was provided. Assuming you want 1 surrogate variable.")
     } else {
         if (class(surrogates) == "character") {
+            ## num.sv assumes log scale.
             if (surrogates != "be" & surrogates != "leek") {
                 message("A string was provided, but it was neither 'be' nor 'leek', assuming 'be'.")
-                chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model)
+                chosen_surrogates <- sva::num.sv(dat=log2_mtrx,
+                                                 mod=conditional_model)
             } else {
-                chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model, method=surrogates)
+                chosen_surrogates <- sva::num.sv(dat=log2_mtrx,
+                                                 mod=conditional_model,
+                                                 method=surrogates)
             }
             message(paste0("The ", surrogates, " method chose ", chosen_surrogates, " surrogate variable(s)."))
         } else if (class(surrogates) == "numeric") {
@@ -58,9 +67,11 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
         }
     }
 
-    modified_mtrx <- mtrx + 0.5
+    ## modified_mtrx <- mtrx + 0.5
+    ## empirical controls can take either log or base 10 scale depending on 'control_type'
+    ## I am setting this to 'norm' and therefore will use log scale
     ## Despite setting control_type to 'counts', it still gives stupid errors sometimes
-    control_likelihoods <- try(sva::empirical.controls(dat=modified_mtrx,
+    control_likelihoods <- try(sva::empirical.controls(dat=base10_mtrx,
                                                        mod=conditional_model,
                                                        mod0=null_model,
                                                        n.sv=chosen_surrogates,
@@ -91,7 +102,8 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
     if (estimate_type == "sva_supervised") {
         message("Attempting sva supervised surrogate estimation.")
         type_color <- "red"
-        supervised_sva <- sva::svaseq(mtrx,
+        ## svaseq assumes base 10 data and will do a lot inside it.
+        supervised_sva <- sva::svaseq(base10_mtrx,
                                       conditional_model,
                                       null_model,
                                       controls=control_likelihoods,
@@ -100,32 +112,25 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
         surrogate_result <- supervised_sva
         ## If only 1 surrogate is requested, this turns into a numeric list
     } else if (estimate_type == "svaseq") {
-        found_surrogates <- sva::num.sv(mtrx, conditional_model)
+        found_surrogates <- sva::num.sv(log2_mtrx, conditional_model)
         message("This ignores the surrogates parameter and uses the be method to estimate surrogates.")
         type_color <- "dodgerblue"
-        if (min(rowSums(mtrx)) == 0) {
-            svaseq_result <- sva::svaseq(modified_mtrx,
-                                         conditional_model,
-                                         null_model,
-                                         n.sv=found_surrogates)
-        } else {
-            svaseq_result <- sva::svaseq(mtrx,
-                                         conditional_model,
-                                         null_model,
-                                         n.sv=found_surrogates)
-        }
+        svaseq_result <- sva::svaseq(base10_mtrx,
+                                     conditional_model,
+                                     null_model,
+                                     n.sv=found_surrogates)
         surrogate_result <- svaseq_result
         model_adjust <- as.matrix(svaseq_result[["sv"]])
     } else if (estimate_type == "sva_unsupervised") {
         message("Attempting sva unsupervised surrogate estimation.")
         type_color <- "blue"
         if (min(rowSums(mtrx)) == 0) {
-            unsupervised_sva_batch <- sva::svaseq(modified_mtrx,
+            unsupervised_sva_batch <- sva::svaseq(base10_mtrx,
                                                   conditional_model,
                                                   null_model,
                                                   n.sv=chosen_surrogates)
         } else {
-            unsupervised_sva_batch <- sva::svaseq(mtrx,
+            unsupervised_sva_batch <- sva::svaseq(base10_mtrx,
                                                   conditional_model,
                                                   null_model,
                                                   n.sv=chosen_surrogates)
@@ -135,26 +140,28 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
     } else if (estimate_type == "pca") {
         message("Attempting pca surrogate estimation.")
         type_color <- "green"
-        data_vs_means <- as.matrix(l2_data - rowMeans(l2_data))
+        data_vs_means <- as.matrix(log2_mtrx - rowMeans(log2_mtrx))
         svd_result <- corpcor::fast.svd(data_vs_means)
         surrogate_result <- svd_result
         model_adjust <- as.matrix(svd_result[["v"]][, 1:chosen_surrogates])
     } else if (estimate_type == "ruv_supervised") {
         message("Attempting ruvseq supervised surrogate estimation.")
         type_color <- "black"
-        surrogate_estimate <- sva::num.sv(dat=mtrx, mod=conditional_model)
+        surrogate_estimate <- sva::num.sv(dat=log2_mtrx, mod=conditional_model)
         if (min(rowSums(mtrx)) == 0) {
-            control_likelihoods <- sva::empirical.controls(dat=modified_mtrx,
+            control_likelihoods <- sva::empirical.controls(dat=log2_mtrx,
                                                            mod=conditional_model,
                                                            mod0=null_model,
                                                            n.sv=surrogate_estimate)
         } else {
-            control_likelihoods <- sva::empirical.controls(dat=mtrx,
+            control_likelihoods <- sva::empirical.controls(dat=log2_mtrx,
                                                            mod=conditional_model,
                                                            mod0=null_model,
                                                            n.sv=surrogate_estimate)
         }
-        ruv_result <- RUVSeq::RUVg(mtrx, cIdx=as.logical(control_likelihoods), k=chosen_surrogates)
+        ruv_result <- RUVSeq::RUVg(base10_mtrx,
+                                   cIdx=as.logical(control_likelihoods),
+                                   k=chosen_surrogates)
         surrogate_result <- ruv_result
         returned_counts <- ruv_result[["normalizedCounts"]]
         model_adjust <- as.matrix(ruv_result[["W"]])
@@ -199,13 +206,13 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
         ## If given nothing to work with, use supervised sva
         message(paste0("Did not understand ", estimate_type, ", assuming supervised sva."))
         if (min(rowSums(mtrx)) == 0) {
-            supervised_sva <- sva::svaseq(mtrx,
+            supervised_sva <- sva::svaseq(base10_mtrx,
                                           conditional_model,
                                           null_model,
                                           controls=control_likelihoods,
                                           n.sv=chosen_surrogates)
         } else {
-            supervised_sva <- sva::svaseq(modified_mtrx,
+            supervised_sva <- sva::svaseq(base10_mtrx,
                                           conditional_model,
                                           null_model,
                                           controls=control_likelihoods,

@@ -480,7 +480,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                               model_batch=model_batch,
                               model_cond=model_cond,
                               model_intercept=model_intercept,
-                              alt_model=alt_model, ...)
+                              alt_model=alt_model)##, ...)
     fun_model <- fun_model[["chosen_model"]]
 
     fun_voom <- NULL
