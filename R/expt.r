@@ -94,17 +94,14 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     }  else {
         sample_definitions <- read_metadata(file, ...)
     }
+
+    colnames(sample_definitions) <- tolower(colnames(sample_definitions))
+    colnames(sample_definitions) <- gsub("[[:punct:]]", "", colnames(sample_definitions))
     ## Check that condition and batch have been filled in.
     sample_columns <- colnames(sample_definitions)
-    found_condition <- "condition" %in% sample_columns
-    found_batch <- "batch" %in% sample_columns
     sample_column <- NULL
     ## The sample ID column should have the word 'sample' in it, otherwise this will fail.
     found_sample <- grepl(pattern="sample", x=sample_columns)
-    if (!isTRUE(found_condition)) {
-        message("Did not find the condition column in the sample sheet.")
-        message("Was it perhaps saved as a .xls?")
-    }
     if (sum(found_sample) == 0) {
         message("Did not find the sample column in the sample sheet.")
         message("Was it perhaps saved as a .xls?")
@@ -112,6 +109,39 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         ## Take the first column with the word 'sample' in it as the sampleid column
         sample_column <- sample_columns[found_sample][[1]]
     }
+    rownames(sample_definitions) <- make.names(sample_definitions[[sample_column]], unique=TRUE)
+    empty_samples <- which(sample_definitions[, sample_column] == "" |
+                           is.na(sample_definitions[, sample_column]) |
+                           grepl(pattern="^#", x=sample_definitions[, sample_column]))
+    if (length(empty_samples) > 0) {
+        sample_definitions <- sample_definitions[-empty_samples, ]
+    }
+    ## The folks at Biobase, <sarcasm>in their infinite wisdom</sarcasm> have changed new("AnnotatedDataFrame") so that if a column has the same information
+    ## as the rownames(), then one gets the following error:  new("AnnotatedDataFrame", ttt), which is utter BS.
+    ## Ergo, if I have my sample IDs as the rownames _and_ as a column titled 'sampleid', it will now fail to create the ExpressionSet.  Go put down your fasces.
+    ## In any event, I can therefore either remove the sampleid column or change it in some way.
+    sample_definitions[[sample_column]] <- paste0("s", sample_definitions[[sample_column]])
+    sample_columns_to_remove <- NULL
+    for (col in 1:length(colnames(sample_definitions))) {
+        sum_na <- sum(is.na(sample_definitions[[col]]))
+        sum_null <- sum(is.null(sample_definitions[[col]]))
+        sum_empty <- sum_na + sum_null
+        if (sum_empty ==  nrow(sample_definitions)) {
+            ## This column is empty.
+            sample_columns_to_remove <- append(sample_columns_to_remove, col)
+        }
+    }
+    if (length(sample_columns_to_remove) > 0) {
+        sample_definitions <- sample_definitions[-sample_columns_to_remove]
+    }
+
+    ## Now check for columns named condition and batch
+    found_condition <- "condition" %in% sample_columns
+    if (!isTRUE(found_condition)) {
+        message("Did not find the condition column in the sample sheet.")
+        message("Was it perhaps saved as a .xls?")
+    }
+    found_batch <- "batch" %in% sample_columns
     if (!isTRUE(found_batch)) {
         message("Did not find the batch column in the sample sheet.")
         message("Was it perhaps saved as a .xls?")
@@ -170,6 +200,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     ## Explicitly skip those samples which are "", null, or "undef" for the filename.
     skippers <- (sample_definitions[[file_column]] == "" |
                  is.null(sample_definitions[[file_column]]) |
+                 is.na(sample_definitions[[file_column]]) |
                  sample_definitions[[file_column]] == "undef")
     if (length(skippers) > 0) {
         ## If there is nothing to skip, do not try.
@@ -354,12 +385,10 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
 
     ## Finally, create the ExpressionSet using the counts, annotations, and metadata.
     requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
-    metadata <- methods::new("AnnotatedDataFrame",
-                             sample_definitions)
+    metadata <- methods::new("AnnotatedDataFrame", sample_definitions)
     Biobase::sampleNames(metadata) <- colnames(final_counts)
 
-    feature_data <- methods::new("AnnotatedDataFrame",
-                                 final_annotations)
+    feature_data <- methods::new("AnnotatedDataFrame", final_annotations)
     Biobase::featureNames(feature_data) <- rownames(final_counts)
 
     experiment <- methods::new("ExpressionSet",
@@ -548,18 +577,6 @@ read_metadata <- function(file, ...) {
         definitions <- XLConnect::read.xls(xlsFile=file, sheet=1)
     } else {
         definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
-    }
-
-    colnames(definitions) <- tolower(colnames(definitions))
-    colnames(definitions) <- gsub("[[:punct:]]", "", colnames(definitions))
-    rownames(definitions) <- make.names(definitions[[sample_column]], unique=TRUE)
-    ## "no visible binding for global variable 'sampleid'"  ## hmm sample.id is a column from the csv file.
-    ## tmp_definitions <- subset(tmp_definitions, sampleid != "")
-    empty_samples <- which(definitions[, sample_column] == "" |
-                           is.na(definitions[, sample_column]) |
-                           grepl(pattern="^#", x=definitions[, sample_column]))
-    if (length(empty_samples) > 0) {
-        definitions <- definitions[-empty_samples, ]
     }
     return(definitions)
 }

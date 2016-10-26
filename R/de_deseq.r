@@ -246,6 +246,10 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                                  model_cond=model_cond,
                                  model_intercept=FALSE,
                                  alt_model=alt_model, ...)
+    ##model_choice <- choose_model(input, conditions, batches,
+    ##                             model_batch=model_batch,
+    ##                             model_cond=model_cond,
+    ##                             alt_model=alt_model)
     model_including <- model_choice[["including"]]
     if (class(model_choice[["model_batch"]]) == "matrix") {
         ## The SV matrix from sva/ruv/etc are put into the model batch slot of the return from choose_model.

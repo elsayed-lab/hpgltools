@@ -26,7 +26,7 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
     design <- expt[["design"]]
     data <- as.data.frame(Biobase::exprs(expt[["expressionset"]]))
     base10_mtrx <- as.matrix(data)
-    log2_mtrx <- NULL
+    log2_mtrx <- as.matrix(data)
 
     ## An important caveat!!
     ## sva assumes pre-logged data while svaseq performs a log() in it.
@@ -53,10 +53,10 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
             ## num.sv assumes log scale.
             if (surrogates != "be" & surrogates != "leek") {
                 message("A string was provided, but it was neither 'be' nor 'leek', assuming 'be'.")
-                chosen_surrogates <- sva::num.sv(dat=log2_mtrx,
+                chosen_surrogates <- sva::num.sv(dat=base10_mtrx,
                                                  mod=conditional_model)
             } else {
-                chosen_surrogates <- sva::num.sv(dat=log2_mtrx,
+                chosen_surrogates <- sva::num.sv(dat=base10_mtrx,
                                                  mod=conditional_model,
                                                  method=surrogates)
             }
@@ -112,7 +112,7 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
         surrogate_result <- supervised_sva
         ## If only 1 surrogate is requested, this turns into a numeric list
     } else if (estimate_type == "svaseq") {
-        found_surrogates <- sva::num.sv(log2_mtrx, conditional_model)
+        found_surrogates <- sva::num.sv(base10_mtrx, conditional_model)
         message("This ignores the surrogates parameter and uses the be method to estimate surrogates.")
         type_color <- "dodgerblue"
         svaseq_result <- sva::svaseq(base10_mtrx,
@@ -124,7 +124,7 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
     } else if (estimate_type == "sva_unsupervised") {
         message("Attempting sva unsupervised surrogate estimation.")
         type_color <- "blue"
-        if (min(rowSums(mtrx)) == 0) {
+        if (min(rowSums(base10_mtrx)) == 0) {
             unsupervised_sva_batch <- sva::svaseq(base10_mtrx,
                                                   conditional_model,
                                                   null_model,
@@ -147,14 +147,14 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
     } else if (estimate_type == "ruv_supervised") {
         message("Attempting ruvseq supervised surrogate estimation.")
         type_color <- "black"
-        surrogate_estimate <- sva::num.sv(dat=log2_mtrx, mod=conditional_model)
-        if (min(rowSums(mtrx)) == 0) {
-            control_likelihoods <- sva::empirical.controls(dat=log2_mtrx,
+        surrogate_estimate <- sva::num.sv(dat=base10_mtrx, mod=conditional_model)
+        if (min(rowSums(base10_mtrx)) == 0) {
+            control_likelihoods <- sva::empirical.controls(dat=base10_mtrx,
                                                            mod=conditional_model,
                                                            mod0=null_model,
                                                            n.sv=surrogate_estimate)
         } else {
-            control_likelihoods <- sva::empirical.controls(dat=log2_mtrx,
+            control_likelihoods <- sva::empirical.controls(dat=base10_mtrx,
                                                            mod=conditional_model,
                                                            mod0=null_model,
                                                            n.sv=surrogate_estimate)
@@ -176,7 +176,7 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
         ruv_fit <- edgeR::glmFit(ruv_input_tag, conditional_model)
         ruv_res <- residuals(ruv_fit, type="deviance")
         surrogate_result <- ruv_res
-        ruv_normalized <- EDASeq::betweenLaneNormalization(mtrx, which="upper")  ## This also gets mad if you pass it a df and not matrix
+        ruv_normalized <- EDASeq::betweenLaneNormalization(base10_mtrx, which="upper")  ## This also gets mad if you pass it a df and not matrix
         controls <- rep(TRUE, dim(data)[1])
         ruv_result <- RUVSeq::RUVr(ruv_normalized, controls, k=chosen_surrogates, ruv_res)
         model_adjust <- as.matrix(ruv_result[["W"]])
@@ -198,14 +198,14 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
         bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
         ruv_controls <- ranked <= bottom_third  ## what is going on here?!
         ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets fail with 400 hard-set
-        ruv_result <- RUVSeq::RUVg(mtrx, ruv_controls, k=chosen_surrogates)
+        ruv_result <- RUVSeq::RUVg(base10_mtrx, ruv_controls, k=chosen_surrogates)
         surrogate_result <- ruv_result
         model_adjust <- as.matrix(ruv_result[["W"]])
     } else {
         type_color <- "black"
         ## If given nothing to work with, use supervised sva
         message(paste0("Did not understand ", estimate_type, ", assuming supervised sva."))
-        if (min(rowSums(mtrx)) == 0) {
+        if (min(rowSums(base10_mtrx)) == 0) {
             supervised_sva <- sva::svaseq(base10_mtrx,
                                           conditional_model,
                                           null_model,
@@ -224,9 +224,9 @@ get_model_adjust <- function(expt, estimate_type="sva_supervised", surrogates="b
 
     new_model <- cbind(conditional_model, model_adjust)
     data_modifier <- solve(t(new_model) %*% new_model) %*% t(new_model)
-    transformation <- (data_modifier %*% t(mtrx))
+    transformation <- (data_modifier %*% t(base10_mtrx))
     conds <- ncol(conditional_model)
-    new_counts <- mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*% transformation[-c(1:conds), ])
+    new_counts <- base10_mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*% transformation[-c(1:conds), ])
 
     plotbatch <- as.integer(batches)
     plotcond <- as.numeric(conditions)

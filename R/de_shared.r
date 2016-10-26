@@ -1297,7 +1297,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             "deseq_plots" = deseq_plots,
             "comp_plot" = comp,
             "venns" = venns,
-            "de_summay" = de_summaries)
+            "de_summary" = de_summaries)
     } else {
         ret <- retlist
     }
@@ -1697,8 +1697,19 @@ extract_significant_genes <- function(combined,
                                       p_type="adj",
                                       csv=NULL, excel="excel/significant_genes.xlsx",
                                       siglfc_cutoffs=c(0,1,2)) {
-    if (!is.null(combined[["plots"]])) {
-        combined <- combined[["data"]]
+    num_tables <- 0
+    table_names <- NULL
+    all_tables <- NULL
+    if (!is.null(combined[["data"]])) {
+        ## Then this is the result of combine_de_tables()
+        num_tables <- length(names(combined[["data"]]))
+        table_names <- names(combined[["data"]])
+        all_tables <- combined[["data"]]
+    } else {
+        ## Then this is the result of all_pairwise()
+        num_tables <- length(combined[["contrasts"]])
+        table_names <- combined[["contrasts"]]
+        all_tables <- combined[["all_tables"]]
     }
     trimmed_up <- list()
     trimmed_down <- list()
@@ -1718,16 +1729,16 @@ extract_significant_genes <- function(combined,
     if (!is.null(n)) {
         title_append <- paste0(title_append, " top|bottom n=", n)
     }
-    num_tables <- length(names(combined))
+
     table_count <- 0
     if (according_to == "all") {
         according_to <- c("limma","edger","deseq","basic")
     }
 
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-
-    if (!is.null(excel)) {
+    wb <- NULL
+    if (class(excel) == "character") {
         message("Writing a legend of columns.")
+        wb <- openxlsx::createWorkbook(creator="hpgltools")
         legend <- data.frame(rbind(
             c("This excel workbook contains the set of significant up/down genes by contrast", ""),
             c("Below are a series of bar plots describing the numbers of significant genes.", "")
@@ -1747,10 +1758,10 @@ extract_significant_genes <- function(combined,
         ma_plots <- list()
         change_counts_up <- list()
         change_counts_down <- list()
-        for (table_name in names(combined[["data"]])) {
+        for (table_name in table_names) {
             table_count <- table_count + 1
-            message(paste0("Writing excel data sheet ", table_count, "/", num_tables))
-            table <- combined[["data"]][[table_name]]
+            message(paste0("Writing excel data sheet ", table_count, "/", num_tables, ": ", table_name))
+            table <- all_tables[[table_name]]
             fc_column <- paste0(according, "_logfc")
             p_column <- paste0(according, "_adjp")
             if (p_type != "adj") {
@@ -2372,9 +2383,9 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, semantic=c('mucin'
     return(de_list)
 }
 
-significant_barplots <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
+significant_barplots <- function(combined, fc_cutoffs=c(0,1,2),
                                  fc_column="limma_logfc", p_type="adj",
-                                 p=0.05, z=NULL, order=NULL, ...) {
+                                 p=0.05, z=NULL, order=NULL, maximum=NULL, ...) {
     arglist <- list(...)
     sig_lists_up <- list(
         "limma" = list(),
@@ -2398,14 +2409,15 @@ significant_barplots <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
         "deseq" = NULL)
     table_length <- 0
     fc_names <- c()
+
     for (type in c("limma", "edger", "deseq")) {
 
         for (fc in fc_cutoffs) {
             ## This is a bit weird and circuituous
             ## The most common caller of this function is in fact extract_significant_genes
-            fc_sig <- sm(extract_significant_genes(table_list, fc=fc,
-                                                   p=p, z=z, n=NULL, excel=NULL,
-                                                   p_type=p_type, sig_bar=FALSE, ma=FALSE))
+            fc_sig <- sm(extract_significant_genes(combined, fc=fc,
+                                                p=p, z=z, n=NULL, excel=NULL,
+                                                p_type=p_type, sig_bar=FALSE, ma=FALSE))
             table_length <- length(fc_sig[[type]][["ups"]])
             fc_name <- paste0("fc_", fc)
             fc_names <- append(fc_names, fc_name)
@@ -2454,15 +2466,12 @@ significant_barplots <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
             table_name <- names(sig_lists_up[[type]][[1]])[t]
             ## > 0 lfc
             everything_up <- sig_lists_up[[type]][[papa_bear]][[table_name]]
+            everything_down <- sig_lists_down[[type]][[papa_bear]][[table_name]]
             ## > 1 lfc
             mid_up <- sig_lists_up[[type]][[mama_bear]][[table_name]]
+            mid_down <- sig_lists_down[[type]][[mama_bear]][[table_name]]
             ## > 2 lfc
             exclusive_up <- sig_lists_up[[type]][[baby_bear]][[table_name]]
-            ## < 0 lfc
-            everything_down <- sig_lists_down[[type]][[papa_bear]][[table_name]]
-            ## < 1 lfc
-            mid_down <- sig_lists_down[[type]][[mama_bear]][[table_name]]
-            ## < 2 lfc
             exclusive_down <- sig_lists_down[[type]][[baby_bear]][[table_name]]
 
             ## Ah, I think the problem is that by calculating the numbers a,b,c
@@ -2504,8 +2513,7 @@ significant_barplots <- function(table_list, fc_cutoffs=c(0,1,2), maximum=7000,
         down[["value"]] <- as.numeric(down[["value"]]) * -1
         tables_up[[type]] <- up
         tables_down[[type]] <- down
-
-        plots[[type]] <- plot_significant_bar(up, down) ##, ...)
+        plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
     } ## End iterating over the 3 types, limma/deseq/edger
 
     retlist <- list(

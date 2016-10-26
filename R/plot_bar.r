@@ -167,7 +167,7 @@ plot_rpm = function(input,
 
     eval(substitute(
         expr = {
-            stupid = aes(y=0,yend=0,x=my_start,xend=my_end)
+            stupid = aes(y=0, yend=0, x=my_start, xend=my_end)
         },
         env = list(my_start=my_start, my_end=my_end)))
 
@@ -189,19 +189,54 @@ plot_rpm = function(input,
 
 }
 
-plot_significant_bar <- function(ups, downs,
+plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
                                  color_list=c("lightcyan", "plum1", ## The light colors
                                               "lightskyblue", "orchid", ## The mid colors
                                               "dodgerblue", "purple4"), ## And the darks
                                  name_list=c("up_all", "down_all",
                                              "up_mid", "down_mid",
                                              "up_max", "down_max")) {
+    choose_max <- function(u, d) {
+        ## m is the maximum found in the ups/downs
+        m <- 0
+        ## which is extracted from ups and downs
+        um <- max(as.numeric(u))
+        dm <- max(as.numeric(d))
+        ## choose the maximum by which is biggest!
+        if (um >= dm) {
+            m <- um
+        } else {
+            m <- dm
+        }
+        ## Figure out the number of digits in the number
+        digits <- nchar(as.character(m))
+        ## And the number of zeroes in it.
+        num_zeroes <- digits - 1.0
+        ## Add 1 to the first digit
+        first_digit <- as.numeric(strsplit(x=as.character(m), split="")[[1]][[1]]) + 1.0
+        ## And set maximum to that number * 10 to the number of zeroes.
+        maximum <- first_digit * (10 ^ num_zeroes)
+        return(maximum)
+    }
+
+    up_sums <- list()
+    down_sums <- list()
+    comp_names <- ups[ ups[["variable"]] == "up_all", ][["comparisons"]]
+    for (comp in 1:length(comp_names)) {
+        comp_name <- comp_names[[comp]]
+        up_sums[[comp_name]] <- sum(as.numeric(ups[ ups[["comparisons"]] == comp_name, ][["value"]]))
+        down_sums[[comp_name]] <- sum(as.numeric(downs[ downs[["comparisons"]] == comp_name, ][["value"]])) * -1.0
+    }
+
+    if (is.null(maximum)) {
+        maximum <- choose_max(up_sums, down_sums)
+    }
+
     names(color_list) <- name_list
-    ##c("purple4", "plum1", "orchid", "dodgerblue", "lightcyan", "lightskyblue"))
     sigbar_plot <- ggplot() +
         ggplot2::geom_bar(data=ups, stat="identity",
                           aes_string(x="comparisons", y="value", fill="variable")) +
-        ggplot2::geom_bar(data = downs, stat="identity",
+        ggplot2::geom_bar(data=downs, stat="identity",
                           aes_string(x="comparisons", y="value", fill="variable")) +
         ggplot2::scale_fill_manual(values=color_list) +
         ggplot2::scale_y_continuous(breaks=seq(maximum * -1, maximum, (maximum / 5))) +
@@ -209,6 +244,17 @@ plot_significant_bar <- function(ups, downs,
         ggplot2::theme_bw() +
         ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +
         ggplot2::theme(legend.position="none")
+
+    if (isTRUE(text)) {
+        for (comp in 1:length(comp_names)) {
+            comp_name <- comp_names[[comp]]
+            upstring <- as.character(up_sums[[comp_name]])
+            downstring <- as.character(down_sums[[comp_name]])
+            sigbar_plot = sigbar_plot +
+                ggplot2::annotate("text", x=comp, y=maximum, label=upstring, angle=-90) +
+                ggplot2::annotate("text", x=comp, y=maximum * -1, label=downstring, angle=90)
+        }
+    }
     return(sigbar_plot)
 }
 
