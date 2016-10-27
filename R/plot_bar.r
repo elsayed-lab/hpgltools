@@ -21,7 +21,9 @@
 #'  libsize_plot  ## ooo pretty bargraph
 #' }
 #' @export
-plot_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  yscale=NULL, ...) {
+plot_libsize <- function(data, colors=NULL,
+                         names=NULL, text=TRUE,
+                         title=NULL,  yscale=NULL, ...) {
     hpgl_env <- environment()
     arglist <- list(...)
     if (is.null(text)) {
@@ -30,8 +32,8 @@ plot_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
 
     ## In response to Keith's recent comment when there are more than 8 factors
     chosen_palette <- "Dark2"
-    if (!is.null(arglist$palette)) {
-        chosen_palette <- arglist$palette
+    if (!is.null(arglist[["palette"]])) {
+        chosen_palette <- arglist[["palette"]]
     }
 
     data_class <- class(data)[1]
@@ -53,30 +55,46 @@ plot_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
     if (is.null(colors)) {
         colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
     }
-    tmp <- data.frame(id=colnames(data),
-                      sum=colSums(data),
-                      colors=colors)
-    tmp$order <- factor(tmp$id, as.character(tmp$id))
-    libsize_plot <- ggplot2::ggplot(data=tmp, ggplot2::aes_string(x="order", y="sum"),
-                                    environment=hpgl_env, colour=colors) +
-        ggplot2::geom_bar(ggplot2::aes_string(x="order"), stat="identity", colour="black", fill=tmp$colors) +
+
+    colors <- as.character(colors)
+    libsize_df <- data.frame(id=colnames(data),
+                             sum=colSums(data),
+                             condition=design[["condition"]],
+                             colors=as.character(colors))
+    libsize_df[["order"]] <- factor(libsize_df[["id"]], as.character(libsize_df[["id"]]))
+
+    color_listing <- libsize_df[, c("condition","colors")]
+    color_listing <- unique(color_listing)
+    color_list <- as.character(color_listing[["colors"]])
+    names(color_list) <- as.character(color_listing[["condition"]])
+
+    libsize_plot <- ggplot2::ggplot(data=libsize_df, environment=hpgl_env, colour=colors,
+                                    aes_string(x="order",
+                                               y="sum")) +
+        ggplot2::geom_bar(stat="identity",
+                          colour="black",
+                          fill=libsize_df[["colors"]],
+                          aes_string(x="order")) +
         ggplot2::xlab("Sample ID") +
         ggplot2::ylab("Library size in (pseudo)counts.") +
         ggplot2::theme_bw() +
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=1.5, vjust=0.5))
+
     if (isTRUE(text)) {
-        ## ggplot2::geom_text(ggplot2::aes(data=tmp, label=prettyNum(sum, big.mark=",")),
-        ##                                 angle=90, size=3, color="white", hjust=1.2)
-        tmp$sum <- sprintf("%.2f", round(tmp$sum, 2))
-        libsize_plot <- libsize_plot + ggplot2::geom_text(
-                                           ggplot2::aes_string(x="order", label='prettyNum(as.character(tmp$sum), big.mark=",")'),
-                                           angle=90, size=4, color="white", hjust=1.2)
+        libsize_df[["sum"]] <- sprintf("%.2f", round(as.numeric(libsize_df[["sum"]]), 2))
+        ## newlabels <- prettyNum(as.character(libsize_df[["sum"]]), big.mark=",")
+        libsize_plot <- libsize_plot +
+            ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
+                               ggplot2::aes_string(parse=FALSE,
+                                                   x="order",
+                                                   label='prettyNum(as.character(libsize_df$sum), big.mark=",")'))
     }
+
     if (!is.null(title)) {
         libsize_plot <- libsize_plot + ggplot2::ggtitle(title)
     }
     if (is.null(yscale)) {
-        scale_difference <- max(as.numeric(tmp$sum)) / min(as.numeric(tmp$sum))
+        scale_difference <- max(as.numeric(libsize_df[["sum"]])) / min(as.numeric(libsize_df[["sum"]]))
         if (scale_difference > 10.0) {
             message("The scale difference between the smallest and largest
    libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
@@ -96,7 +114,13 @@ plot_libsize <- function(data, colors=NULL, names=NULL, text=TRUE, title=NULL,  
     return(libsize_plot)
 }
 
-plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start=1000, end=2000, strand=1, padding=100) {
+plot_rpm = function(input,
+                    output="~/riboseq/01.svg",
+                    name="LmjF.01.0010",
+                    start=1000,
+                    end=2000,
+                    strand=1,
+                    padding=100) {
     head(genes)
     genes = genes[,c(2,3,5,11)]
     for(ch in 1:36) {
@@ -111,27 +135,13 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
 
         for(i in 1:nrow(genes_on_chr)) {
             row = genes_on_chr[i,]
-            genename=row$Name
+            genename=row[["Name"]]
             output_file=paste("~/riboseq/coverage/", mychr, "/", genename, ".svg", sep="")
             svg(filename=output_file, height=2, width=8)
-            plot_rpm(rpms, start=row$start, end=row$end, strand=row$strand, output=output_file, name=row$Name)
+            plot_rpm(rpms, start=row[["start"]], end=row[["end"]], strand=row[["strand"]], output=output_file, name=row[["Name"]])
             dev.off()
         }
     }
-
-
-    ##for(i in 1:nrow(genes)) {
-    ##    row <- genes[i,]
-    ##    genename=row$Name
-    ##    chromosome_number =
-    ##        output_file=paste("~/riboseq/rpm/", genename, ".svg", sep="")
-    ##    svg(file=output_file, height=2, width=6)
-    ##    plot_rpm(rpms, st=row$start, en=row$end, strand=row$strand, output=output_file, name=row$name)
-    ##    dev.off()
-    ##}
-    ##dev.new(height=2, width=6)
-    ##plot_rpm(rpms, st=2000, en=20000, strand="+", output=test, name=row$Name)
-    ##dev.off()
 
     mychr = gsub("\\.\\d+$", "", name, perl=TRUE)
     plotted_start = start - padding
@@ -143,7 +153,7 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
     region_idx <- input[["chromosome"]] == mychr & input[["position"]] >= plotted_start & input[["position"]] <= plotted_end
     rpm_region <- rpm_region[region_idx, ]
     rpm_region = rpm_region[,-1]
-    rpm_region$log = log2(rpm_region$rpm + 1)
+    rpm_region[["log"]] = log2(rpm_region[["rpm"]] + 1)
 
     ## pre_start = subset(rpm_region, position < my_start)
     start_idx <- rpm_region[["position"]] < my_start
@@ -157,7 +167,7 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
 
     eval(substitute(
         expr = {
-            stupid = aes(y=0,yend=0,x=my_start,xend=my_end)
+            stupid = aes(y=0, yend=0, x=my_start, xend=my_end)
         },
         env = list(my_start=my_start, my_end=my_end)))
 
@@ -177,6 +187,75 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
         ggplot2::theme_bw()
     plot(my_plot)
 
+}
+
+plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
+                                 color_list=c("lightcyan", "plum1", ## The light colors
+                                              "lightskyblue", "orchid", ## The mid colors
+                                              "dodgerblue", "purple4"), ## And the darks
+                                 name_list=c("up_all", "down_all",
+                                             "up_mid", "down_mid",
+                                             "up_max", "down_max")) {
+    choose_max <- function(u, d) {
+        ## m is the maximum found in the ups/downs
+        m <- 0
+        ## which is extracted from ups and downs
+        um <- max(as.numeric(u))
+        dm <- max(as.numeric(d))
+        ## choose the maximum by which is biggest!
+        if (um >= dm) {
+            m <- um
+        } else {
+            m <- dm
+        }
+        ## Figure out the number of digits in the number
+        digits <- nchar(as.character(m))
+        ## And the number of zeroes in it.
+        num_zeroes <- digits - 1.0
+        ## Add 1 to the first digit
+        first_digit <- as.numeric(strsplit(x=as.character(m), split="")[[1]][[1]]) + 1.0
+        ## And set maximum to that number * 10 to the number of zeroes.
+        maximum <- first_digit * (10 ^ num_zeroes)
+        return(maximum)
+    }
+
+    up_sums <- list()
+    down_sums <- list()
+    comp_names <- ups[ ups[["variable"]] == "up_all", ][["comparisons"]]
+    for (comp in 1:length(comp_names)) {
+        comp_name <- comp_names[[comp]]
+        up_sums[[comp_name]] <- sum(as.numeric(ups[ ups[["comparisons"]] == comp_name, ][["value"]]))
+        down_sums[[comp_name]] <- sum(as.numeric(downs[ downs[["comparisons"]] == comp_name, ][["value"]])) * -1.0
+    }
+
+    if (is.null(maximum)) {
+        maximum <- choose_max(up_sums, down_sums)
+    }
+
+    names(color_list) <- name_list
+    sigbar_plot <- ggplot() +
+        ggplot2::geom_bar(data=ups, stat="identity",
+                          aes_string(x="comparisons", y="value", fill="variable")) +
+        ggplot2::geom_bar(data=downs, stat="identity",
+                          aes_string(x="comparisons", y="value", fill="variable")) +
+        ggplot2::scale_fill_manual(values=color_list) +
+        ggplot2::scale_y_continuous(breaks=seq(maximum * -1, maximum, (maximum / 5))) +
+        ggplot2::coord_flip() +
+        ggplot2::theme_bw() +
+        ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +
+        ggplot2::theme(legend.position="none")
+
+    if (isTRUE(text)) {
+        for (comp in 1:length(comp_names)) {
+            comp_name <- comp_names[[comp]]
+            upstring <- as.character(up_sums[[comp_name]])
+            downstring <- as.character(down_sums[[comp_name]])
+            sigbar_plot = sigbar_plot +
+                ggplot2::annotate("text", x=comp, y=maximum, label=upstring, angle=-90) +
+                ggplot2::annotate("text", x=comp, y=maximum * -1, label=downstring, angle=90)
+        }
+    }
+    return(sigbar_plot)
 }
 
 ## EOF  Damners I don't have many bar plots, do I?

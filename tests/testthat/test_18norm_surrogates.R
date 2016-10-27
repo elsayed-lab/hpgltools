@@ -2,8 +2,7 @@ library(testthat)
 library(hpgltools)
 library(pasilla)
 data(pasillaGenes)
-
-context("Do surrogate estimators provide expected outputs?")
+context("18norm_surrogates.R: Do surrogate estimators provide expected outputs?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -60,3 +59,5 @@ expected <- as.numeric(c("-0.108919503928491", "-0.570855719628606",
 test_that("Does the compare_surrogate stuff work?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
+
+message("\nFinished 18norm_surrogates.R")

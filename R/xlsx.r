@@ -21,10 +21,10 @@
 #'  xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
 #' }
 #' @export
-write_xls <- function(data, wb=NULL, sheet="first", rownames=TRUE,
+write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
                       start_row=1, start_col=1, ...) {
     arglist <- list(...)
-    if (class(data) == 'matrix') {
+    if (class(data) == "matrix" | class(data) == "character") {
         data <- as.data.frame(data)
     }
     if (is.null(wb)) {
@@ -35,19 +35,27 @@ write_xls <- function(data, wb=NULL, sheet="first", rownames=TRUE,
         stop("A workbook was passed to this, but the format is not understood.")
     }
 
-    newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-    if (class(newsheet) == 'try-error') {
-        if (grepl(pattern="too long", x=newsheet[1])) {
-            message("The sheet name was too long for Excel, truncating it by removing vowels.")
-            sheet <- gsub(pattern="a|e|i|o|u", replacement="", x=sheet)
-            newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-            if (class(newsheet) == 'try-error') {
-                message("hmph, still too long, truncating to 30 characters.")
-                sheet <- substr(sheet, start=1, stop=30)
-                newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
+    newsheet <- NULL
+    current_sheets <- names(wb@.xData$worksheets)
+    if (sheet %in% current_sheets) {
+        message(paste0("The sheet: ", sheet, " is in ", toString(current_sheets), "."))
+    } else {
+        newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
+        if (class(newsheet) == 'try-error') {
+            if (grepl(pattern="already exists")) {
+                message("The sheet already exists.")
+            } else if (grepl(pattern="too long", x=newsheet[1])) {
+                message("The sheet name was too long for Excel, truncating it by removing vowels.")
+                sheet <- gsub(pattern="a|e|i|o|u", replacement="", x=sheet)
+                newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
+                if (class(newsheet) == 'try-error') {
+                    message("hmph, still too long, truncating to 30 characters.")
+                    sheet <- substr(sheet, start=1, stop=30)
+                    newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
+                }
+            } else {
+                message(paste0("Unknown error: ", newsheet))
             }
-        } else {
-            message(paste0("The sheet ", sheet, " already exists, it will get overwritten"))
         }
     }
     hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
@@ -55,7 +63,7 @@ write_xls <- function(data, wb=NULL, sheet="first", rownames=TRUE,
     new_col <- start_col
     ##print(paste0("GOT HERE openxlswrite, title? ", arglist$title))
     if (!is.null(arglist[["title"]])) {
-        openxlsx::writeData(wb, sheet, x=arglist[["title"]], startRow=new_row)
+        openxlsx::writeData(wb, sheet, arglist[["title"]], startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
     }
@@ -64,7 +72,10 @@ write_xls <- function(data, wb=NULL, sheet="first", rownames=TRUE,
     ## and it appears to me to be called oddly and causing problems
     ## I hacked the writeDataTable() function in openxlsx and sent a bug report.
     ## Another way to trip this up is for a column in the table to be of class 'list'
+    wtf_stupid <- 0
     for (col in colnames(data)) {
+        wtf_stupid <- wtf_stupid + 1
+        colnames(data)[wtf_stupid] <- paste0(colnames(data)[wtf_stupid], "_", wtf_stupid)
         ## data[[col]] <- as.character(data[[col]])
         ## print(paste0("TESTME: ", class(data[[col]])))
         if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' |
@@ -73,18 +84,23 @@ write_xls <- function(data, wb=NULL, sheet="first", rownames=TRUE,
             data[[col]] <- as.character(data[[col]])
         }
     }
-    openxlsx::writeDataTable(wb, sheet, x=data, tableStyle="TableStyleMedium9",
-                             startRow=new_row, rowNames=rownames, startCol=new_col)
+    obnoxious <- colnames(data)
+    obnoxious <- tolower(obnoxious)
+    obnoxious <- make.names(obnoxious, unique=TRUE)
+    colnames(data) <- obnoxious
+    wtf <- try(openxlsx::writeDataTable(wb, sheet, data, startCol=new_col,
+                                        startRow=new_row, tableStyle="TableStyleMedium9",
+                                        rowNames=TRUE, colNames=TRUE))
     new_row <- new_row + nrow(data) + 2
     ## Set the column lengths, hard set the first to 20,
     ## then try to set it to auto if the length is not too long.
     for (col in 1:ncol(data)) {
         if (col == 1) {
-            openxlsx::setColWidths(wb, sheet=sheet, widths=20, cols=col)
-        } else if (max(nchar(data[[col]]), na.rm=TRUE) > 30) {
-            openxlsx::setColWidths(wb, sheet=sheet, widths=30, cols=col)
+            openxlsx::setColWidths(wb, sheet, col, 20)
+        } else if (max(nchar(as.character(data[[col]])), na.rm=TRUE) > 30) {
+            openxlsx::setColWidths(wb, sheet, col, 30)
         } else {
-            openxlsx::setColWidths(wb, sheet=sheet, widths="auto", cols=col)
+            openxlsx::setColWidths(wb, sheet, col, "auto")
         }
     }
     end_col <- ncol(data) + 1

@@ -8,7 +8,7 @@ simple_topgo(de_genes, goid_map = "id2go.map", goids_df = NULL,
   pvals = NULL, limitby = "fisher", limit = 0.1, signodes = 100,
   sigforall = TRUE, numchar = 300, selector = "topDiffGenes",
   pval_column = "adj.P.Val", overwrite = FALSE, densities = FALSE,
-  pval_plots = TRUE, ...)
+  pval_plots = TRUE, parallel = FALSE, ...)
 }
 \arguments{
 \item{de_genes}{Data frame of differentially expressed genes, containing IDs any other columns.}

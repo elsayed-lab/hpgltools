@@ -22,7 +22,17 @@ the experiment.  Use this to make that easier.
 }
 \examples{
 \dontrun{
- expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
+unique(esmer_expt$design$conditions)
+chosen_colors <- list(
+   "cl14_epi" = "#FF8D59",
+   "clbr_epi" = "#962F00",
+   "cl14_tryp" = "#D06D7F",
+   "clbr_tryp" = "#A4011F",
+   "cl14_late" = "#6BD35E",
+   "clbr_late" = "#1E7712",
+   "cl14_mid" = "#7280FF",
+   "clbr_mid" = "#000D7E")
+esmer_expt <- set_expt_colors(expt=esmer_expt, colors=chosen_colors)
 }
 }
 

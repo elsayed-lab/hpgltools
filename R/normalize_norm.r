@@ -76,14 +76,14 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         colnames(count_table) <- count_colnames
         norm_performed <- "quant"
     } else if (norm == "qsmooth") {
-        count_table <- qsmooth::qsmooth(count_table, groups=design$condition, plot=TRUE)
+        count_table <- qsmooth::qsmooth(count_table, groups=design[["condition"]], plot=TRUE)
         norm_performed <- "qsmooth"
     } else if (norm == "qshrink") {
-        count_table <- hpgl_qshrink(exprs=count_table, groups=design$condition,
+        count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
                                     plot=TRUE)
         norm_performed <- "qshrink"
     } else if (norm == "qshrink_median") {
-        count_table <- hpgl_qshrink(exprs=count_table, groups=design$condition,
+        count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
                                     plot=TRUE, refType="median",
                                     groupLoc="median", window=50)
         norm_performed <- "qshrink_median"

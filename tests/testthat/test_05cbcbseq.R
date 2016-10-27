@@ -5,7 +5,7 @@ tt <- sm(library(edgeR))
 data(pasillaGenes)
 num_installed <- require.auto("kokrah/cbcbSEQ")
 cbcb <- sm(library(cbcbSEQ))
-context("Compare cbcbSEQ output to hpgltools.")
+context("05cbcbseq.R: Compare cbcbSEQ output to hpgltools.\n")
 ## This test is intended to compare Kwame Okrah/Hector Corrada Bravo's cbcbSEQ output
 ## against that received from this.  hpgltools is a derivative of it, therefore it should
 ## provide identical results when called in a similar fashion.
@@ -163,7 +163,7 @@ test_that("Does calling hpgltools::voom with hpgl-modified data return the same 
 
 ## To be extra-paranoid, make sure that the limma_pairwise() function invokes voom correctly.
 ## Note that this is where the data-ordering problems appear.
-hpgl_limma <- sm(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, model_intercept=FALSE))
+hpgl_limma <- sm(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, model_intercept=FALSE, which_voom="hpgl"))
 ## First check the voom result from limma_pairwise
 hpgl_limma_voom <- hpgl_limma$voom_result
 hpgl_limma_voom_e <- hpgl_limma$voom_result$E[order(rownames(hpgl_limma$voom_result$E)), ]
@@ -202,3 +202,5 @@ hpgl_top <- hpgl_top[sort(rownames(hpgl_top)), ]
 test_that("Limma results, toptable.", {
     expect_equal(cbcb_top, hpgl_top)
 })
+
+message("\nFinished 05cbcbseq.R")

@@ -44,10 +44,6 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
 ## 3. The initial aes needs to have a mapping for the same color, fill, shape, etc.
 ## 4. Lay down a geom/scale for every element to change.
 
-###    factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
-###                                  aes_string(x="factor", y="svs",
-###                                             fill="condition", colour="condition",
-###                                             shape="shape")) +
 ###        ggplot2::geom_point(size=5,
 ###                            aes_string(shape="as.factor(shape)",
 ###                                       colour="condition",
@@ -59,7 +55,6 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
 ###        ggplot2::scale_color_manual(values=color_list) +
 ###        ggplot2::scale_fill_manual(values=color_list) +
 ###        ggplot2::scale_shape_manual(values=21, guide=FALSE)
-
 
 #' Make a dotplot of known batches vs. SVs.
 #'
@@ -204,8 +199,8 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     }
 
     chosen_palette <- "Dark2"
-    if (!is.null(arglist$palette)) {
-        chosen_palette <- arglist$palette
+    if (!is.null(arglist[["palette"]])) {
+        chosen_palette <- arglist[["palette"]]
     }
 
     if (is.null(names)) {
@@ -260,13 +255,13 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     my_binwidth <- (maxval - minval) / 40
 
     sm_plot <- ggplot2::ggplot(sm_df, aes_string(x="sample", y="sm", fill="condition")) +
-        ggplot2::geom_hline(color="red", yintercept=ylimit, size=2) +
+        ggplot2::geom_hline(color="red", yintercept=ylimit, size=1) +
         ggplot2::geom_dotplot(binwidth=my_binwidth,
                               binaxis="y",
                               stackdir="center",
                               binpositions="all",
                               colour="black",
-                              dotsize=2,
+                              dotsize=1,
                               aes_string(fill="as.factor(condition)")) +
         ggplot2::scale_fill_manual(name="Condition",
                                    guide="legend",

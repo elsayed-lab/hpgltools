@@ -4,9 +4,9 @@
 \alias{deseq2_pairwise}
 \title{Set up model matrices contrasts and do pairwise comparisons of all conditions using DESeq2.}
 \usage{
-deseq2_pairwise(input, conditions = NULL, batches = NULL,
-  model_cond = TRUE, alt_model = NULL, extra_contrasts = NULL,
-  model_intercept = FALSE, model_batch = TRUE, annot_df = NULL,
+deseq2_pairwise(input = NULL, conditions = NULL, batches = NULL,
+  model_cond = TRUE, model_batch = TRUE, model_intercept = FALSE,
+  alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
   force = FALSE, ...)
 }
 \arguments{
@@ -18,13 +18,13 @@ deseq2_pairwise(input, conditions = NULL, batches = NULL,
 
 \item{model_cond}{Is condition in the experimental model?}
 
-\item{alt_model}{Provide an arbitrary model here.}
-
-\item{extra_contrasts}{Provide extra contrasts here.}
+\item{model_batch}{Is batch in the experimental model?}
 
 \item{model_intercept}{Use an intercept model?  DESeq seems to not be a fan of them.}
 
-\item{model_batch}{Is batch in the experimental model?}
+\item{alt_model}{Provide an arbitrary model here.}
+
+\item{extra_contrasts}{Provide extra contrasts here.}
 
 \item{annot_df}{Include some annotation information in the results?}
 

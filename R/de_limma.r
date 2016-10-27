@@ -1,131 +1,43 @@
-#' Make a MA plot of some limma output with pretty colors and shapes
-#'
-#' Yay pretty colors and shapes!
-#'
-#' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
-#' @param table  Result from limma to use, left alone it chooses the first.
-#' @param expr_col  Column for the average data.
-#' @param fc_col  Column for logFC data.
-#' @param p_col  Column to use for p-value data.
-#' @param fc  Fold-change to define 'significant'.
-#' @param pvalue_cutoff and p-value.
-#' @return a plot!
-#' @seealso \link{plot_ma_de}
-#' @examples
-#'  \dontrun{
-#'   prettyplot <- limma_ma(all_aprwise) ## [sic, I'm witty! and can speel]
-#' }
-#' @export
-limma_ma <- function(output, table=NULL, p_col="adj.P.Val",
-                     expr_col="AveExpr", fc_col="logFC", fc=1, pval_cutoff=0.05) {
-    counts <- NULL
-    de_genes <- NULL
-    pval <- NULL
-    if (!is.null(output[["limma"]])) {
-        output <- output[["limma"]]
-    }
-    possible_tables <- names(output[["all_pairwise"]])
-    if (is.null(table)) {
-        table <- possible_tables[1]
-    } else if (is.numeric(table)) {
-        table <- possible_tables[table]
-    }
+hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="none",
+                            plot=TRUE, span=0.5, var.design=NULL, method="genebygene",
+                            maxiter=50, tol=1E-10, trace=FALSE, replace.weights=TRUE,
+                            col=NULL, ...) {
 
-    de_genes <- output[["all_tables"]][[table]]
-    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col,
-                       p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
-    return(plot)
-}
-
-#' Plot out 2 coefficients with respect to one another from limma.
-#'
-#' It can be nice to see a plot of two coefficients from a limma comparison with respect to one
-#' another. This hopefully makes that easy.
-#'
-#' @param output Set of pairwise comparisons provided by limma_pairwise().
-#' @param toptable Use this to get up/downs and color them on the scatter plot.
-#' @param x Name or number of the x-axis coefficient column to extract.
-#' @param y Name or number of the y-axis coefficient column to extract
-#' @param gvis_filename Filename for plotting gvis interactive graphs of the data.
-#' @param gvis_trendline Add a trendline to the gvis plot?
-#' @param z How far from the median to color the plot red and green.
-#' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
-#' @param base_url Basename for gvis plots.
-#' @param color_low Color for the ups.
-#' @param color_high Color for the downs.
-#' @param ... More parameters to make you happy!
-#' @return Ggplot2 plot showing the relationship between the two coefficients.
-#' @seealso \link{plot_linear_scatter} \link{limma_pairwise}
-#' @examples
-#' \dontrun{
-#'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-#' }
-#' @export
-limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
-                                      gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
-                                      tooltip_data=NULL, base_url=NULL,
-                                      color_low="#DD0000", color_high="#7B9F35", ...) {
-    ##  If taking a limma_pairwise output, then this lives in
-    ##  output$pairwise_comparisons$coefficients
-    arglist <- list(...)
-    qlimit <- 0.1
-    if (!is.null(arglist[["qlimit"]])) {
-        qlimit <- arglist[["qlimit"]]
+    if (isTRUE(plot)) {
+        oldpar <- par(mfrow = c(1, 2))
+        on.exit(par(oldpar))
     }
-    fc_column <- "limma_logfc"
-    if (!is.null(arglist[["fc_column"]])) {
-        fc_column <- arglist[["fc_column"]]
+    v1 <- hpgl_voom(data, model=fun_model, libsize=libsize,
+                   normalize.method = normalize.method,
+                   plot=TRUE, span=span, ...)
+    aw <- try(limma::arrayWeights(v1, design=fun_model, method=method, maxiter=maxiter,
+                                  tol=tol, var.design=var.design))
+    if (class(aw) == "try-error") {
+        message("arrayWeights failed, returning the voom result.")
+        return(v1)
     }
-    p_column <- "limma_adjp"
-    if (!is.null(arglist[["p_column"]])) {
-        p_column <- arglist[["p_column"]]
+    v <- hpgl_voom(data, model=fun_model, weights=aw, libsize=libsize,
+                   normalize.method=normalize.method, plot=TRUE, span=span, ...)
+    aw <- arrayWeights(v, design=fun_model, method=method, maxiter=maxiter,
+                       tol=tol, trace=trace, var.design=var.design)
+    wts <- asMatrixWeights(aw, dim(v)) * v[["weights"]]
+    attr(wts, "arrayweights") <- NULL
+    if (plot) {
+        barplot(aw, names = 1:length(aw), main = "Sample-specific weights",
+                ylab = "Weight", xlab = "Sample", col = col)
+        abline(h = 1, col = 2, lty = 2)
+        voom_barplot <- grDevices::recordPlot()
     }
-    coefficients <- output[["pairwise_comparisons"]][["coefficients"]]
-    thenames <- colnames(coefficients)
-    message("This can do comparisons among the following columns in the limma result:")
-    message(toString(thenames))
-    xname <- ""
-    yname <- ""
-    if (is.numeric(x)) {
-        xname <- thenames[[x]]
-    } else {
-        xname <- x
+    if (replace.weights) {
+        v[["weights"]] <- wts
+        v[["sample.weights"]] <- aw
+        v[["barplot"]] <- voom_barplot
+        v[["first_iter"]] <- v1
+        return(v)
     }
-    if (is.numeric(y)) {
-        yname <- thenames[[y]]
-    } else {
-        yname <- y
+    else {
+        return(wts)
     }
-    message(paste0("Actually comparing ", xname, " and ", yname, "."))
-    coefficients <- output[["pairwise_comparisons"]][["coefficients"]]
-    coefficients <- coefficients[, c(x, y)]
-    maxvalue <- max(coefficients) + 1
-    plot <- suppressMessages(plot_linear_scatter(df=coefficients, loess=TRUE, gvis_filename=gvis_filename,
-                                                 gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                                 tooltip_data=tooltip_data, base_url=base_url,
-                                                 pretty_colors=FALSE, color_low=color_low, color_high=color_high))
-    plot[["scatter"]] <- plot[["scatter"]] +
-        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
-        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
-    ## I think the following was taken up by plot_linear_scatter and is not needed here anymore
-    ##if (!is.null(toptable)) {
-    ##    theplot <- plot[["scatter"]] + ggplot2::theme_bw()
-    ##    sig <- get_sig_genes(toptable, z=z, column=fc_column, p_column=p_column)
-    ##    sigup <- sig[["up_genes"]]
-    ##    sigdown <- sig[["down_genes"]]
-    ##    up_index <- rownames(coefficients) %in% rownames(sigup)
-    ##    down_index <- rownames(coefficients) %in% rownames(sigdown)
-    ##    up_df <- as.data.frame(coefficients[up_index, ])
-    ##    down_df <- as.data.frame(coefficients[down_index, ])
-    ##    colnames(up_df) <- c("first", "second")
-    ##    colnames(down_df) <- c("first", "second")
-    ##    theplot <- theplot +
-    ##        ggplot2::geom_point(data=up_df, colour=color_high) +
-    ##        ggplot2::geom_point(data=down_df, colour=color_low)
-    ##    plot[["scatter"]] <- theplot
-    ##}
-    plot[["df"]] <- coefficients
-    return(plot)
 }
 
 #' A slight modification of limma's voom().
@@ -155,12 +67,49 @@ limma_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
 #'  funkytown = hpgl_voom(samples, model)
 #' }
 #' @export
-hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=FALSE, converted=FALSE) {
+hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
+                      normalize.method="none", span=0.5,
+                      stupid=FALSE, logged=FALSE, converted=FALSE, ...) {
+    arglist <- list(...)
+    ## Going to attempt to as closely as possible dovetail the original implementation.
+    ## I think at this point, my implementation is the same as the original with the exception
+    ## of a couple of tests to check that the data is not fubar and I think my plot is prettier.
+    counts <- dataframe
     out <- list()
+    if (is(counts, "DGEList")) {
+        out[["genes"]] <- counts[["genes"]]
+        out[["targets"]] <- counts[["samples"]]
+        if (is.null(model) &&
+            diff(range(as.numeric(counts[["sample"]][["group"]]))) > 0) {
+            model <- model.matrix(~group, data = counts[["samples"]])
+        }
+        if (is.null(libsize)) {
+            libsize <- with(counts[["samples"]], libsize * norm.factors)
+        }
+        counts <- counts[["counts"]]
+    } else {
+        isExpressionSet <- suppressPackageStartupMessages(is(counts, "ExpressionSet"))
+        if (isExpressionSet) {
+            if (length(Biobase::fData(counts))) {
+                out[["genes"]] <- Biobase::fData(counts)
+            }
+            if (length(Biobase::pData(counts))) {
+                out[["targets"]] <- Biobase::pData(counts)
+            }
+            counts <- Biobase::exprs(counts)
+        } else {
+            counts <- as.matrix(counts)
+        }
+    }
+    if (is.null(model)) {
+        design <- matrix(1, ncol(counts), 1)
+        rownames(model) <- colnames(counts)
+        colnames(model) <- "GrandMean"
+    }
     if (is.null(libsize)) {
         libsize <- colSums(dataframe, na.rm=TRUE)
     }
-    if (converted == 'cpm') {
+    if (converted == "cpm") {
         converted <- TRUE
     }
     if (!isTRUE(converted)) {
@@ -177,7 +126,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
             warning("This data appears to not be logged, the lmfit will do weird things.")
         }
     } else {
-        if (max(dataframe) < 400) {
+        if (max(dataframe) < 200) {
             warning("This data says it was not logged, but the maximum counts seem small.")
             warning("If it really was log2 transformed, then we are about to double-log it and that would be very bad.")
         }
@@ -185,12 +134,9 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
         dataframe <- log2(dataframe)
     }
     dataframe <- as.matrix(dataframe)
+    dataframe <- limma::normalizeBetweenArrays(dataframe, method=normalize.method)
 
-    if (is.null(model)) {
-        model <- matrix(1, ncol(dataframe), 1)
-        rownames(model) <- colnames(dataframe)
-        colnames(model) <- "GrandMean"
-    }
+
     linear_fit <- limma::lmFit(dataframe, model, method="ls")
     if (is.null(linear_fit[["Amean"]])) {
         linear_fit[["Amean"]] <- rowMeans(dataframe, na.rm=TRUE)
@@ -229,16 +175,19 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
             ## for those replicates I will have no usable coefficients, so
             ## I say set them to 1 and leave them alone.
             linear_fit[["coefficients"]][is.na(linear_fit[["coefficients"]])] <- 1
-            fitted.values <- linear_fit[["coefficients"]] %*% t(linear_fit[["design"]])
+            fitted.values <- linear_fit[["coefficients"]] %*%
+                t(linear_fit[["design"]])
         }
     } else if (linear_fit[["rank"]] < ncol(linear_fit[["design"]])) {
         j <- linear_fit[["pivot"]][1:linear_fit[["rank"]]]
-        fitted.values <- linear_fit[["coefficients"]][, j, drop=FALSE] %*% t(linear_fit[["design"]][, j, drop=FALSE])
+        fitted.values <- linear_fit[["coefficients"]][, j, drop=FALSE] %*%
+            t(linear_fit[["design"]][, j, drop=FALSE])
     } else {
-        fitted.values <- linear_fit[["coefficients"]] %*% t(linear_fit[["design"]])
+        fitted.values <- linear_fit[["coefficients"]] %*%
+            t(linear_fit[["design"]])
     }
     fitted.cpm <- 2 ^ fitted.values
-    fitted.count <- 1e-06 * t(t(fitted.cpm) * (libsize + 1))
+    fitted.count <- 1e-06 * t(t(fitted.cpm) * (libsize + 1.0))
     fitted.logcount <- log2(fitted.count)
     w <- 1 / f(fitted.logcount) ^ 4
     dim(w) <- dim(fitted.logcount)
@@ -294,38 +243,79 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL, stupid=FALSE, logged=
 #' pretend = balanced_pairwise(data, conditions, batches)
 #' }
 #' @export
-limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE,
-                           model_batch=TRUE, model_intercept=TRUE, extra_contrasts=NULL,
-                           alt_model=NULL, libsize=NULL, annot_df=NULL, ...) {
+limma_pairwise <- function(input=NULL, conditions=NULL,
+                           batches=NULL, model_cond=TRUE,
+                           model_batch=TRUE, model_intercept=TRUE,
+                           alt_model=NULL, extra_contrasts=NULL,
+                           annot_df=NULL, libsize=NULL,
+                           force=FALSE, ...) {
     arglist <- list(...)
-    message("Starting limma pairwise comparison.")
-    input_class <- class(input)[1]
-    if (input_class == "expt") {
-        design <- Biobase::pData(input[["expressionset"]])
-        conditions <- design[["condition"]]
-        batches <- design[["batch"]]
-        data <- Biobase::exprs(input[["expressionset"]])
-        if (is.null(libsize)) {
-            message("libsize was not specified, this parameter has profound effects on limma's result.")
-            if (!is.null(input[["best_libsize"]])) {
-                message("Using the libsize from expt$best_libsize.")
-                ## libsize = expt$norm_libsize
-                libsize <- input[["best_libsize"]]
-            } else if (!is.null(input[["libsize"]])) {
-                message("Using the libsize from expt$libsize.")
-                libsize <- input[["libsize"]]
-            } else if (!is.null(input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
-                libsize <- colSums(data)
-            } else {
-                message("Using the libsize from expt$normalized$intermediate_counts$normalization$libsize")
-                libsize <- input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]]
-            }
-        } else {
-            message("libsize was specified.  This parameter has profound effects on limma's result.")
-        }
-    } else {  ## Not an expt class, data frame or matrix
-        data <- as.data.frame(input)
+    if (!is.null(arglist[["input"]])) {
+        input <- arglist[["input"]]
     }
+    if (!is.null(arglist[["conditions"]])) {
+        conditions <- arglist[["conditions"]]
+    }
+    if (!is.null(arglist[["batches"]])) {
+        batches <- arglist[["batches"]]
+    }
+    if (!is.null(arglist[["model_cond"]])) {
+        model_cond <- arglist[["model_cond"]]
+    }
+    if (!is.null(arglist[["model_batch"]])) {
+        model_batch <- arglist[["model_batch"]]
+    }
+    if (!is.null(arglist[["model_intercept"]])) {
+        model_intercept <- arglist[["model_intercept"]]
+    }
+    if (!is.null(arglist[["alt_model"]])) {
+        alt_model <- arglist[["alt_model"]]
+    }
+    if (!is.null(arglist[["extra_contrasts"]])) {
+        extra_contrasts <- arglist[["extra_contrasts"]]
+    }
+    if (!is.null(arglist[["annot_df"]])) {
+        annot_df <- arglist[["annot_df"]]
+    }
+    if (!is.null(arglist[["force"]])) {
+        force <- arglist[["force"]]
+    }
+    if (!is.null(arglist[["libsize"]])) {
+        libsize <- arglist[["libsize"]]
+    }
+    voom_norm <- "none"  ## a normalize.method supported by limma.
+    if (!is.null(arglist[["voom_norm"]])) {
+        voom_norm <- arglist[["voom_norm"]]
+    }
+    which_voom <- "limma"  ## limma, limma_weighted, hpgl, or hpgl_weighted are possible
+    if (!is.null(arglist[["which_voom"]])) {
+        which_voom <- arglist[["which_voom"]]
+    }
+    message("Starting limma pairwise comparison.")
+    input_data <- choose_limma_dataset(input, force=force, which_voom=which_voom)
+    design <- Biobase::pData(input[["expressionset"]])
+    conditions <- design[["condition"]]
+    batches <- design[["batch"]]
+    data <- input_data[["data"]]
+
+    if (is.null(libsize)) {
+        message("libsize was not specified, this parameter has profound effects on limma's result.")
+        if (!is.null(input[["best_libsize"]])) {
+            message("Using the libsize from expt$best_libsize.")
+            libsize <- input[["best_libsize"]]
+        } else if (!is.null(input[["libsize"]])) {
+            message("Using the libsize from expt$libsize.")
+            libsize <- input[["libsize"]]
+        } else if (!is.null(input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
+            libsize <- colSums(data)
+        } else {
+            message("Using the libsize from expt$normalized$intermediate_counts$normalization$libsize")
+            libsize <- input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]]
+        }
+    } else {
+        message("libsize was specified.  This parameter has profound effects on limma's result.")
+    }
+
     if (is.null(libsize)) {
         libsize <- colSums(data)
     }
@@ -334,16 +324,20 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
 
-    fun_model <- choose_model(conditions, batches,
+    fun_model <- choose_model(input, conditions, batches,
                               model_batch=model_batch,
                               model_cond=model_cond,
                               model_intercept=model_intercept,
-                              alt_model=alt_model)
+                              alt_model=alt_model)##, ...)
     fun_model <- fun_model[["chosen_model"]]
 
     fun_voom <- NULL
     message("Limma step 1/6: choosing model.")
     ## voom() it, taking into account whether the data has been log2 transformed.
+
+    ##  Leaving the following here for the moment, but I think it will no longer be needed.
+    ##  Instead, I am checking the data state before passing it to this function with the
+    ##  choose_limma_dataset() call above.
     loggedp <- input[["state"]][["transform"]]
     if (is.null(loggedp)) {
         message("I don't know if this data is logged, testing if it is integer.")
@@ -353,12 +347,13 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             loggedp <- TRUE
         }
     } else {
-        if (loggedp == "raw") {
-            loggedp <- FALSE
-        } else {
+        if (grepl(pattern="log", x=loggedp)) {
             loggedp <- TRUE
+        } else {
+            loggedp <- FALSE
         }
     }
+
     convertedp = input[["state"]][["conversion"]]
     if (is.null(convertedp)) {
         message("I cannot determine if this data has been converted, assuming no.")
@@ -370,13 +365,44 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
             convertedp <- TRUE
         }
     }
-    ##fun_voom = voom(data, fun_model)
-    ##fun_voom = hpgl_voom(data, fun_model, libsize=libsize)
-    ##fun_voom = voomMod(data, fun_model, lib.size=libsize)
-    message("Limma step 2/6: running voom")
-    fun_voom <- hpgl_voom(data, fun_model, libsize=libsize, logged=loggedp, converted=convertedp)
+
+    fun_voom <- NULL
+    if (which_voom == "hpgl_weighted") {
+        message("Limma step 2/6: running hpgl_voomweighted(), switch with the argument 'which_voom'.")
+        fun_voom <- hpgl_voomweighted(data, fun_model,
+                              libsize=libsize,
+                              voom_norm=voom_norm,
+                              span=0.5, var.design=NULL,
+                              method="genebygene",
+                              maxiter=50, tol=1E-10,
+                              trace=FALSE, replace.weights=TRUE, col=NULL,
+                              logged=loggedp,
+                              converted=convertedp)
+    } else if (which_voom == "hpgl") {
+        message("Limma step 2/6: running hpgl_voom(), switch with the argument 'which_voom'.")
+        fun_voom <- hpgl_voom(data, fun_model, libsize=libsize,
+                              logged=loggedp, converted=convertedp)
+    } else if (which_voom == "limma_weighted") {
+        message("Limma step 2/6: running limma::voomWithQualityWeights(), switch with the argument 'which_voom'.")
+        fun_voom <- try(limma::voomWithQualityWeights(counts=data, design=fun_model, lib.size=libsize,
+                                                      normalize.method=voom_norm, plot=TRUE,
+                                                      span=0.5, var.design=NULL, method="genebygene",
+                                                      maxiter=50, tol=1E-10, trace=FALSE, replace.weights=TRUE,
+                                                      col=NULL))
+        if (class(fun_voom) == "try-error") {
+            message("voomWithQualityWeights failed, falling back to voom.")
+            fun_voom <- limma::voom(counts=data, design=fun_model, lib.size=libsize,
+                                    normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
+            }
+    } else {
+        message("Limma step 2/6: running limma::voom(), switch with the argument 'which_voom'.")
+        fun_voom <- limma::voom(counts=data, design=fun_model, lib.size=libsize,
+                                normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
+    }
+
     one_replicate <- FALSE
     if (is.null(fun_voom)) {
+        ## Apparently voom returns null where there is only 1 replicate.
         message("voom returned null, I am not sure what will happen.")
         one_replicate <- TRUE
         fun_voom <- data
@@ -385,15 +411,9 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         fun_design <- fun_voom[["design"]]
     }
 
-    ## Extract the design created by voom()
-    ## This is interesting because each column of the design will have a prefix string 'macb' before the
-    ## condition/batch string, so for the case of clbr_tryp_batch_C it will look like: macbclbr_tryp_batch_C
-    ## This will be important in 17 lines from now.
     ## Do the lmFit() using this model
-    message("Limma step 3/6: running lmFit")
-    fun_fit <- limma::lmFit(fun_voom, fun_model)
-    ##fun_fit = lmFit(fun_voom)
-    ## The following three tables are used to quantify the relative contribution of each batch to the sample condition.
+    message("Limma step 3/6: running lmFit.")
+    fun_fit <- limma::lmFit(fun_voom, fun_model, robust=TRUE)
     message("Limma step 4/6: making and fitting contrasts.")
     if (isTRUE(model_intercept)) {
         contrasts <- make_pairwise_contrasts(fun_model, conditions,
@@ -418,7 +438,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     if (isTRUE(one_replicate)) {
         all_pairwise_comparisons <- all_pairwise_fits[["coefficients"]]
     } else {
-        all_pairwise_comparisons <- limma::eBayes(all_pairwise_fits)
+        all_pairwise_comparisons <- limma::eBayes(all_pairwise_fits, robust=TRUE)
         all_tables <- try(limma::topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
     }
     message("Limma step 6/6: Writing limma outputs.")
@@ -427,6 +447,9 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
     } else {
         limma_result <- all_tables
     }
+    all_table_names <- names(limma_result)
+    contrast_table_idx <- grepl(pattern="_vs_", x=all_table_names)
+    contrasts_performed <- all_table_names[contrast_table_idx]
     result <- list(
         "all_pairwise" = all_pairwise,
         "all_tables" = limma_result,
@@ -443,6 +466,7 @@ limma_pairwise <- function(input, conditions=NULL, batches=NULL, model_cond=TRUE
         "pairwise_comparisons" = all_pairwise_comparisons,
         "single_table" = all_tables,
         "voom_design" = fun_design,
+        "contrasts_performed" = contrasts_performed,
         "voom_result" = fun_voom)
     return(result)
 }
@@ -630,8 +654,8 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
     xls_written <- write_xls(cond_table, sheet, file=workbook, rownames="row.names")
     ## upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
     upsignificant_table <- cond_table[ which(cond_table[["logFC"]] >= logfc_cutoff), ]
-    ## downsignificant_table = subset(cond_table, logFC <= (-1 * logfc_cutoff))
-    downsignificant_table <- cond_table[ which(cond_table[["logFC"]] <= (-1 * logfc_cutoff)), ]
+    ## downsignificant_table = subset(cond_table, logFC <= (-1.0 * logfc_cutoff))
+    downsignificant_table <- cond_table[ which(cond_table[["logFC"]] <= (-1.0 * logfc_cutoff)), ]
     ## psignificant_table = subset(cond_table, adj.P.Val <= pvalue_cutoff)
     ## psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)
     psignificant_table <- cond_table[ which(cond_table[["P.Value"]] <= pvalue_cutoff), ]
@@ -711,7 +735,6 @@ simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="s
 write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
                        excel=FALSE, csv=FALSE, annot_df=NULL) {
     testdir <- dirname(workbook)
-
     ## Figure out the number of genes if not provided
     if (n == 0) {
         n <- nrow(data[["coefficients"]])
@@ -742,33 +765,20 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
         data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
         data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
         data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
-        data_table[["qvalue"]] <- tryCatch(
-        {
-            ## as.numeric(format(signif(
-            ## suppressWarnings(qvalue::qvalue(
-            ## as.numeric(data_table$P.Value), robust=TRUE))$qvalues, 4),
-            ## scientific=TRUE))
+        data_table[["qvalue"]] <- tryCatch({
             ttmp <- as.numeric(data_table[["P.Value"]])
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
-            ## ttmp <- signif(ttmp, 4)
-            ## ttmp <- format(ttmp, scientific=TRUE)
-            ## ttmp
         },
         error=function(cond) {
             message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
             return(1)
         },
-        ##warning=function(cond) {
-        ##    message("There was a warning?")
-        ##    message(cond)
-        ##    return(1)
-        ##},
         finally={
         })
         if (!is.null(annot_df)) {
             data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
-            ###data_table = data_table[-1]
+            ###data_table = data_table[, -1, drop=FALSE]
         }
         ## This write_xls runs out of memory annoyingly often
         if (isTRUE(excel) | isTRUE(csv)) {

@@ -7,8 +7,9 @@
 combine_de_tables(all_pairwise_result, extra_annot = NULL, csv = NULL,
   excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
-  excel_sheet = "combined_DE", keepers = "all", include_basic = TRUE,
-  add_plots = TRUE, plot_dim = 6, compare_plots = TRUE)
+  excel_sheet = "combined_DE", keepers = "all", excludes = NULL,
+  adjp = TRUE, include_basic = TRUE, add_plots = TRUE, plot_dim = 6,
+  compare_plots = TRUE)
 }
 \arguments{
 \item{all_pairwise_result}{Output from all_pairwise().}
@@ -26,6 +27,8 @@ string 'YYY', that will be replaced by the contrast name.}
 
 \item{keepers}{List of reformatted table names to explicitly keep
 certain contrasts in specific orders and orientations.}
+
+\item{excludes}{List of columns and patterns to use for excluding genes.}
 
 \item{include_basic}{Include my stupid basic logFC tables?}
 
@@ -46,6 +49,9 @@ limma/DESeq2/EdgeR on a table-by-table basis.
 \examples{
 \dontrun{
 pretty = combine_de_tables(big_result, table='t12_vs_t0')
+pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")))
+pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")),
+                           excludes=list("description" = c("sno","rRNA")))
 }
 }
 \seealso{

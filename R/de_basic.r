@@ -1,122 +1,3 @@
-#' Make a MA plot of some limma output with pretty colors and shapes
-#'
-#' Yay pretty colors and shapes!
-#'
-#' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
-#' @param table  Result from basic to use, left alone it chooses the first.
-#' @param fc_col  Column for logFC data.
-#' @param p_col  Column to use for p-value data.
-#' @param expr_col  Column for the average data.
-#' @param fc (log)fc cutoff on the up and down to define significance.
-#' @param pval_cutoff  p-value cutoff to define significance.
-#' @return a plot!
-#' @seealso \link{plot_ma_de}
-#' @examples
-#'  \dontrun{
-#'   prettyplot <- basic_ma(all_aprwise) ## [sic, I'm witty! and can speel]
-#' }
-#' @export
-basic_ma <- function(output, table=NULL, fc_col="logFC", p_col="p",
-                     expr_col="numerator_median", fc=1, pval_cutoff=0.05) {
-    counts <- NULL
-    de_genes <- NULL
-    pval <- NULL
-    if (!is.null(output[["basic"]])) {
-        output <- output[["basic"]]
-    }
-    possible_tables <- names(output[["all_tables"]])
-    if (is.null(table)) {
-        table <- possible_tables[1]
-    } else if (is.numeric(table)) {
-        table <- possible_tables[table]
-    }
-
-    de_genes <- output[["all_tables"]][[table]]
-    plot <- plot_ma_de(table=de_genes, expr_col=expr_col, fc_col=fc_col, p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff)
-    return(plot)
-}
-
-#' Plot two coefficients with respect to one another from basic.
-#'
-#' It can be nice to see a plot of two coefficients from a basic comparison with respect to one another
-#' This hopefully makes that easy.
-#'
-#' @param output Set of pairwise comparisons provided by basic_pairwise().
-#' @param toptable  The table to use for extracting the logfc values.
-#' @param x Name or number of the x-axis coefficient column to extract.
-#' @param y Name or number of the y-axis coefficient column to extract.
-#' @param gvis_filename Filename for plotting gvis interactive graphs of the data.
-#' @param gvis_trendline Add a trendline to the gvis plot?
-#' @param z  Make pretty colors for genes this number of z-scores from the median.
-#' @param tooltip_data Dataframe of gene annotations to be used in the gvis plot.
-#' @param base_url Add a linkout to gvis plots to this base url.
-#' @param color_low  Color to use for low-logfc values.
-#' @param color_high  Color to use for high-logfc values.
-#' @param ... A few options may be added outside this scope and are left in the arglist, notably
-#'     qlimit, fc_column, p_column.  I need to make a consistent decision about how to handle these
-#'     not-always needed parameters, either always define them in the function body, or always put
-#'     them in arglist(...), doing a little of both is stupid.
-#' @return Ggplot2 plot showing the relationship between the two coefficients.
-#' @seealso \link{plot_linear_scatter} \link{basic_pairwise}
-#' @examples
-#' \dontrun{
-#'  pretty = coefficient_scatter(limma_data, x="wt", y="mut")
-#' }
-#' @export
-basic_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
-                                      gvis_filename=NULL, gvis_trendline=TRUE, z=1.5,
-                                      tooltip_data=NULL, base_url=NULL,
-                                      color_low="#DD0000", color_high="#7B9F35", ...) {
-    arglist <- list(...)
-    qlimit <- 0.1
-    if (!is.null(arglist[["qlimit"]])) {
-        qlimit <- arglist[["qlimit"]]
-    }
-    fc_column <- "basic_logfc"
-    if (!is.null(arglist[["fc_column"]])) {
-        fc_column <- arglist[["fc_column"]]
-    }
-    p_column <- "basic_adjp"
-    if (!is.null(arglist[["p_column"]])) {
-        p_column <- arglist[["p_column"]]
-    }
-    thenames <- names(output[["conditions_table"]])
-    message("This can do comparisons among the following columns in the basic result:")
-    message(toString(thenames))
-    xname <- ""
-    yname <- ""
-    if (is.numeric(x)) {
-        xname <- thenames[[x]]
-    } else {
-        xname <- x
-    }
-    if (is.numeric(y)) {
-        yname <- thenames[[y]]
-    } else {
-        yname <- y
-    }
-
-    message(paste0("Actually comparing ", xname, " and ", yname, "."))
-    ## It looks like the lrt data structure is redundant, so I will test that by looking at the apparent
-    ## coefficients from lrt[[1]] and then repeating with lrt[[2]]
-    coefficient_df <- output[["medians"]]
-    coefficient_df <- coefficient_df[, c(xname, yname)]
-    if (max(coefficient_df) < 0) {
-        coefficient_df <- coefficient_df * -1.0
-    }
-
-    plot <- sm(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
-                                   gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                   tooltip_data=tooltip_data, base_url=base_url,
-                                   pretty_colors=FALSE, color_low=color_low, color_high=color_high))
-    maxvalue <- as.numeric(max(coefficient_df) + 1)
-    plot[["scatter"]] <- plot[["scatter"]] +
-        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
-        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
-    plot[["df"]] <- coefficient_df
-    return(plot)
-}
-
 #' The simplest possible differential expression method.
 #'
 #' Perform a pairwise comparison among conditions which takes
@@ -137,60 +18,27 @@ basic_coefficient_scatter <- function(output, toptable=NULL, x=1, y=2,
 #' stupid_de <- basic_pairwise(expt)
 #' }
 #' @export
-basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
-    message("Starting basic pairwise comparison.")
-    input_class <- class(input)[1]
+basic_pairwise <- function(input=NULL, design=NULL,
+                           force=FALSE, ...) {
     arglist <- list(...)
-    norm <- "quant"
-    if (!is.null(arglist[["norm"]])) {
-        norm <- arglist[["norm"]]
+    if (!is.null(arglist[["input"]])) {
+        input <- arglist[["input"]]
     }
-    convert <- "cbcbcpm"
-    if (!is.null(arglist[["convert"]])) {
-        convert <- arglist[["convert"]]
+    if (!is.null(arglist[["design"]])) {
+        conditions <- arglist[["design"]]
     }
-    transform <- "log2"
-    if (!is.null(arglist[["transform"]])) {
-        transform <- arglist[["transform"]]
+    if (!is.null(arglist[["force"]])) {
+        batches <- arglist[["force"]]
     }
-    filter <- FALSE
-    if (!is.null(arglist[["filter"]])) {
-        filter <- arglist[["filter"]]
-    }
+    message("Starting basic pairwise comparison.")
+    input_data <- choose_basic_dataset(input, force=force)
+    design <- Biobase::pData(input[["expressionset"]])
+    conditions <- input_data[["conditions"]]
+    batches <- input_data[["batches"]]
+    data <- input_data[["data"]]
 
-    if (input_class == 'expt') {
-        design <- Biobase::pData(input[["expressionset"]])
-        conditions <- design[["condition"]]
-        conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=conditions)
-        batches <- design[["batch"]]
-        batches <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=batches)
-        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
-        if (!is.null(input[["state"]])) {
-            if (isTRUE(force)) {
-                message("The force option was applied, maybe going to modify normalization applied.")
-            }
-
-            if (input[["state"]][["normalization"]] == "raw" &
-                       input[["state"]][["conversion"]] == "raw" &
-                       input[["state"]][["transform"]] == "raw") {
-                message("This basic pairwise function assumes log2, converted, normalized counts, normalizing now.")
-                input <- suppressMessages(normalize_expt(input, norm=norm,
-                                                         convert=convert,
-                                                         transform=transform,
-                                                         filter=filter))
-                data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
-            } else if (input[["state"]][["transform"]] == "raw") {
-                message("This basic pairwise function assumes log2 counts, transforming now.")
-                data <- suppressMessages(transform_counts(data, transform="log2")[["count_table"]])
-            } else {
-                message("The data appears to have been at least transformed, leaving it alone.")
-            }
-        } else {  ## There is no 'state' associated with this data.
-            message("Cannot tell if this data has been normalized, leaving it alone.")
-        }
-    } else {
-        data <- as.data.frame(input)
-    }
+    conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=conditions)
+    batches <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=batches)
     types <- levels(as.factor(conditions))
     num_conds <- length(types)
     ## These will be filled with num_conds columns and numRows(input) rows.
@@ -236,13 +84,16 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     message("Basic step 2/3: Performing comparisons.")
     num_comparisons <- sum(1:lenminus)
 
+    contrasts_performed <- c()
     for (c in 1:lenminus) {
         c_name <- types[c]
         nextc <- c + 1
         for (d in nextc:length(types)) {
             num_done <- num_done + 1
             d_name <- types[d]
-            message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons, ": Performing log2 subtraction: ", d_name, "_vs_", c_name))
+            contrast <- paste0(d_name, "_vs_", c_name)
+            contrasts_performed <- append(contrast, contrasts_performed)
+            message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons, ": Performing log2 subtraction: ", contrast, "."))
             division <- data.frame(
                 median_table[, d] - median_table[, c])
             comparison_name <- paste0(d_name, "_vs_", c_name)
@@ -280,9 +131,10 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     }  ## End for each c
 
     ## Because of the way I made tvalues/pvalues into a list
-    ## If only 1 comparison was performed, the resulting data structure never gets coerced into a data frame
-    ## therefore I am performing this check which, if a single comparison was done, adds a second column,
-    ## performs the coercion, then strips it away.  This is probably a stupid way of doing what I want.
+    ## If only 1 comparison was performed, the resulting data structure never gets coerced into a
+    ## data frame therefore I am performing this check which, if a single comparison was done, adds
+    ## a second column, performs the coercion, then strips it away.  This is a stupid way
+    ## of doing what I want.
     if (num_done == 1) {
         tvalues <- cbind(tvalues, t_data)
         pvalues <- cbind(pvalues, p_data)
@@ -309,13 +161,14 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
         numer_denom <- strsplit(x=colname, split="_vs_")[[1]]
         numerator <- numer_denom[1]
         denominator <- numer_denom[2]
-        fc_table <- data.frame(numerator_median=median_table[[numerator]],
-                               denominator_median=median_table[[denominator]],
-                               numerator_var=variance_table[[numerator]],
-                               denominator_var=variance_table[[denominator]],
-                               t=t_column,
-                               p=p_column,
-                               logFC=fc_column)
+        fc_table <- data.frame(
+            "numerator_median" = median_table[[numerator]],
+            "denominator_median" = median_table[[denominator]],
+            "numerator_var" = variance_table[[numerator]],
+            "denominator_var" = variance_table[[denominator]],
+            "t" = t_column,
+            "p" = p_column,
+            "logFC" = fc_column)
         fc_table[["adjp"]] <- stats::p.adjust(as.numeric(fc_table[["p"]]), method="BH")
 
         fc_table[["numerator_median"]] <- signif(x=fc_table[["numerator_median"]], digits=4)
@@ -332,10 +185,70 @@ basic_pairwise <- function(input, design=NULL, force=FALSE, ...) {
     message("Basic: Returning tables.")
     names(all_tables) <- colnames(comparisons)
     retlist <- list(
-        input_data=data, conditions_table=table(conditions),
-        conditions=conditions, all_pairwise=comparisons,
-        all_tables=all_tables, medians=median_table,
-        variances=variance_table)
+        "input_data" = data,
+        "conditions_table" = table(conditions),
+        "conditions" = conditions,
+        "all_pairwise" = comparisons,
+        "all_tables" = all_tables,
+        "medians" = median_table,
+        "contrasts_performed" = contrasts_performed,
+        "variances" = variance_table)
+    return(retlist)
+}
+
+choose_basic_dataset <- function(input, force=FALSE, ...) {
+    arglist <- list(...)
+    warn_user <- 0
+    conditions <- input[["conditions"]]
+    batches <- input[["batches"]]
+    data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+    tran_state <- input[["state"]][["transform"]]
+    if (is.null(tran_state)) {
+        tran_state <- "raw"
+    }
+    conv_state <- input[["state"]][["conversion"]]
+    ## Note that voom takes care of this for us.
+    if (is.null(conv_state)) {
+        conv_state <- "raw"
+    }
+    norm_state <- input[["state"]][["normalization"]]
+    if (is.null(norm_state)) {
+        norm_state <- "raw"
+    }
+    filt_state <- input[["state"]][["filter"]]
+    if (is.null(filt_state)) {
+        filt_state <- "raw"
+    }
+
+    ready <- input
+    if (isTRUE(force)) {
+        message("Leaving the data alone, regardless of normalization state.")
+    } else {
+        if (filt_state == "raw") {
+            message("Basic step 0/3: Filtering data.")
+            ready <- sm(normalize_expt(ready, filter="cbcb"))
+        }
+        if (norm_state == "raw") {
+            message("Basic step 0/3: Normalizing data.")
+            ready <- sm(normalize_expt(ready, norm="quant"))
+        }
+        if (conv_state == "raw") {
+            message("Basic step 0/3: Converting data.")
+            ready <- sm(normalize_expt(ready, convert="cbcbcpm"))
+        }
+
+    }
+    ## No matter what we do, it must be logged.
+    if (tran_state == "raw") {
+        message("Basic step 0/3: Transforming data.")
+        ready <- sm(normalize_expt(ready, transform="log2"))
+    }
+    data <- as.data.frame(Biobase::exprs(ready[["expressionset"]]))
+    rm(ready)
+    retlist <- list(
+        "conditions" = conditions,
+        "batches" = batches,
+        "data" = data)
     return(retlist)
 }
 
@@ -397,29 +310,14 @@ write_basic <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/basi
         data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
         data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
         data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
-        data_table[["qvalue"]] <- tryCatch(
-        {
-            ## as.numeric(format(signif(
-            ## suppressWarnings(qvalue::qvalue(
-            ## as.numeric(data_table$P.Value), robust=TRUE))$qvalues, 4),
-            ## scientific=TRUE))
+        data_table[["qvalue"]] <- tryCatch({
             ttmp <- as.numeric(data_table[["P.Value"]])
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
-            ## ttmp <- signif(ttmp, 4)
-            ## ttmp <- format(ttmp, scientific=TRUE)
-            ## ttmp
-        },
-        error=function(cond) {
+        }, error=function(cond) {
             message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
             return(1)
-        },
-        ##warning=function(cond) {
-        ##    message("There was a warning?")
-        ##    message(cond)
-        ##    return(1)
-        ##},
-        finally={
+        }, finally={
         })
         if (!is.null(annot_df)) {
             data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")

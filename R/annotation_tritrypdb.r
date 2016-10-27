@@ -355,9 +355,11 @@ make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb
         save(orgdb_info, file=savefile)
     }
 
+    message("Starting make_orgdb.")
     orgdb_result <- make_orgdb(orgdb_info, id=id, cfg=cfg_line, output_dir=output_dir, kegg=kegg)
     orgdb_package <- orgdb_result[["package_name"]]
-    txdb_result <- make_txdb(orgdb_info, id=id, cfg=cfg_line, gff=files[["gff"]], output_dir=output_dir)
+    message("Starting make_txdb")
+    txdb_result <- make_txdb(orgdb_info, cfg=cfg_line, gff=files[["gff"]], output_dir=output_dir)
     txdb_package <- txdb_result[["package_name"]]
 
     graph_data <- list(
@@ -510,7 +512,10 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, ou
     assumed_dir <- paste0(orgdb_pre, "/", orgdb_pkg_name)
 
     if (file.exists(assumed_dir)) {
-        unlink(x=assumed_dir, recursive=TRUE)
+        try(unlink(x=orgdb_pre, recursive=TRUE), silent=TRUE)
+        try(unlink(x=orgdb_sqlite_name), silent=TRUE)
+        try(dir.create(orgdb_pre, recursive=TRUE), silent=TRUE)
+
     }
     orgdb_dir <- NULL
     if (isTRUE(kegg)) {
@@ -518,33 +523,33 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, ou
         kegg_info <- get_kegg_genes(species=kegg_species)
         kegg_info[["GID"]] <- as.character(kegg_info[["GID"]])
         orgdb_dir <- AnnotationForge::makeOrgPackage(
-            gene_info = gene_info,
-            chromosome = chr_info,
-            go = go_info,
-            kegg_info = kegg_info,
-            type = gene_types,
-            version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
-            author = as.character(cfg[["author"]]),
-            maintainer = as.character(cfg[["maintainer"]]),
-            tax_id = as.character(cfg[["tax_id"]]),  ## Maybe use taxize for this and remove from the csv?
-            genus = as.character(cfg[["genus"]]),
-            species = paste0(as.character(cfg[["species"]]), ".", as.character(cfg[["strain"]])),
-            outputDir = orgdb_pre,
-            goTable = "go")
+                                          gene_info = gene_info,
+                                          chromosome = chr_info,
+                                          go = go_info,
+                                          kegg_info = kegg_info,
+                                          type = gene_types,
+                                          version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
+                                          author = as.character(cfg[["author"]]),
+                                          maintainer = as.character(cfg[["maintainer"]]),
+                                          tax_id = as.character(cfg[["tax_id"]]),  ## Maybe use taxize for this and remove from the csv?
+                                          genus = as.character(cfg[["genus"]]),
+                                          species = paste0(as.character(cfg[["species"]]), ".", as.character(cfg[["strain"]])),
+                                          outputDir = orgdb_pre,
+                                          goTable = "go")
     } else {
         orgdb_dir <- AnnotationForge::makeOrgPackage(
-            gene_info = gene_info,
-            chromosome = chr_info,
-            go = go_info,
-            type = gene_types,
-            version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
-            author = as.character(cfg[["author"]]),
-            maintainer = as.character(cfg[["maintainer"]]),
-            tax_id = as.character(cfg[["tax_id"]]),
-            genus = as.character(cfg[["genus"]]),
-            species = paste0(as.character(cfg[["species"]]), ".", as.character(cfg[["strain"]])),
-            outputDir = orgdb_pre,
-            goTable = "go")
+                                          gene_info = gene_info,
+                                          chromosome = chr_info,
+                                          go = go_info,
+                                          type = gene_types,
+                                          version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
+                                          author = as.character(cfg[["author"]]),
+                                          maintainer = as.character(cfg[["maintainer"]]),
+                                          tax_id = as.character(cfg[["tax_id"]]),
+                                          genus = as.character(cfg[["genus"]]),
+                                          species = paste0(as.character(cfg[["species"]]), ".", as.character(cfg[["strain"]])),
+                                          outputDir = orgdb_pre,
+                                          goTable = "go")
     }
 
     orgdb_dir <- pkg_cleaner(orgdb_dir)
@@ -569,33 +574,38 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, ou
 #' Much like make_orgdb() above, this uses the same data to generate a TxDb object.
 #'
 #' @param orgdb_info  List of data frames generated by make_orgdb_info().
-#' @param cfg  Configuration data frame as per make_orgdb.
+#' @param cfg_line  Configuration data frame as per make_orgdb.
 #' @param gff  File to read
 #' @param output_dir  Place to put rda intermediates.
 #' @param ...   Extra arguments to pass through.
 #' @return List of the resulting txDb package and whether it installed.
 #' @export
-make_txdb <- function(orgdb_info, cfg, gff=NULL, output_dir="organismdbi", ...) {
+make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir="organismdbi", ...) {
     arglist <- list(...)
 
     destination <- output_dir
     chromosome_info <- orgdb_info[["chromosome_info"]]
-    if (!is.null(gff)) {
+    package_name <- NULL
+    if (!is.null(gff) & isTRUE(from_gff)) {
         txdb <- GenomicFeatures::makeTxDbFromGFF(
             file=gff,
             format='gff3',
             chrominfo=chromosome_info,
             ## exonRankAttributeName=NA,
-            dataSource=paste0(cfg[["db_name"]], "_", cfg[["db_version"]]),
-            organism=paste0(cfg[["genus"]], " ", cfg[["species"]])
-        )
+            dataSource=paste0(cfg_line[["db_name"]], "_", cfg_line[["db_version"]]),
+            organism=paste0(cfg_line[["genus"]], " ", cfg_line[["species"]]))
+        package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
+                                cfg_line[["strain"]], ".", cfg_line[["db_name"]],
+                                cfg_line[["db_version"]])
     } else {
         requireNamespace("GenomicFeatures")
         destination <- paste0(destination, "/txdb")
-        db_version <- format(as.numeric(cfg[["db_version"]]), nsmall=1)
-        maintainer <- as.character(cfg[["maintainer"]])
-        author <- as.character(cfg[["author"]])
-        package_name <- paste0("TxDb.", cfg[["shortname"]], ".", cfg[["strain"]], ".", cfg[["db_name"]], cfg[["db_version"]])
+        db_version <- format(as.numeric(cfg_line[["db_version"]]), nsmall=1)
+        maintainer <- as.character(cfg_line[["maintainer"]])
+        author <- as.character(cfg_line[["author"]])
+        package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
+                                cfg_line[["strain"]], ".", cfg_line[["db_name"]],
+                                cfg_line[["db_version"]])
 
         if (file.exists(destination)) {
             unlink(x=destination, recursive=TRUE)
@@ -608,8 +618,7 @@ make_txdb <- function(orgdb_info, cfg, gff=NULL, output_dir="organismdbi", ...) 
             author=author,
             destDir=destination,
             license="Artistic-2.0",
-            pkgname=package_name
-        )
+            pkgname=package_name)
         ## What in the flying hell means 'Error in cpSubsCon(src[k], destname) : UNRESOLVED SYMBOLS:
         ## Line 5 : @umd.edu>, atb <atb@u'
         ## The entire person/author/maintainer system in R is utterly stupid.
@@ -617,7 +626,8 @@ make_txdb <- function(orgdb_info, cfg, gff=NULL, output_dir="organismdbi", ...) 
 
     install_dir <- paste0(destination, "/", package_name)
     install_dir <- pkg_cleaner(install_dir)
-    if (cfg[["strain"]] == "CLBrenerNon-Esmeraldo-like") {
+    ## Things with '-' are problematic.
+    if (cfg_line[["strain"]] == "CLBrenerNon-Esmeraldo-like") {
         install_dir <- sm(pkg_cleaner(install_dir, removal="Non-Esmeraldo", replace="NonEsmeraldo"))
     }
     result <- devtools::install(install_dir)

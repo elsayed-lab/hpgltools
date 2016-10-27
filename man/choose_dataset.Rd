@@ -4,7 +4,7 @@
 \alias{choose_dataset}
 \title{Choose a suitable data set for Edger/DESeq}
 \usage{
-choose_dataset(input, force = FALSE, ...)
+choose_dataset(input, choose_for = "limma", force = FALSE, ...)
 }
 \arguments{
 \item{input}{Expt input.}

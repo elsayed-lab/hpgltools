@@ -4,8 +4,9 @@
 \alias{hpgl_voom}
 \title{A slight modification of limma's voom().}
 \usage{
-hpgl_voom(dataframe, model = NULL, libsize = NULL, stupid = FALSE,
-  logged = FALSE, converted = FALSE)
+hpgl_voom(dataframe, model = NULL, libsize = NULL,
+  normalize.method = "none", span = 0.5, stupid = FALSE, logged = FALSE,
+  converted = FALSE, ...)
 }
 \arguments{
 \item{dataframe}{Dataframe of sample counts which have been normalized and log transformed.}
