@@ -440,6 +440,9 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     newdf <- data.frame("avg" = table[[expr_col]],
                         "logfc" = table[[fc_col]],
                         "pval" = table[[p_col]])
+    if (max(newdf[["avg"]]) > 1000) {  ## Then this is not on the log scale
+        newdf[["avg"]] <- log(newdf[["avg"]])
+    }
     newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific=FALSE))
     newdf[["pcut"]] <- newdf[["pval"]] <= pval_cutoff
     newdf[["state"]] <- ifelse(newdf[["pval"]] > pval_cutoff, "pinsig",
@@ -486,7 +489,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     ggplot2::scale_color_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
     ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
-    ggplot2::xlab("Average Count (Millions of Reads)") +
+    ggplot2::xlab("Average Counts") +
     ggplot2::ylab("log fold change") +
     ggplot2::theme_bw()
     if (!is.null(gvis_filename)) {
