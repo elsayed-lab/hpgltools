@@ -198,13 +198,15 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     names(chosen_colors) <- sample_definitions[[sample_column]]
 
     ## Explicitly skip those samples which are "", null, or "undef" for the filename.
-    skippers <- (sample_definitions[[file_column]] == "" |
-                 is.null(sample_definitions[[file_column]]) |
-                 is.na(sample_definitions[[file_column]]) |
-                 sample_definitions[[file_column]] == "undef")
-    if (length(skippers) > 0) {
-        ## If there is nothing to skip, do not try.
-        sample_definitions <- sample_definitions[!skippers, ]
+    if (is.null(count_dataframe)) {
+        skippers <- (sample_definitions[[file_column]] == "" |
+                     is.null(sample_definitions[[file_column]]) |
+                     is.na(sample_definitions[[file_column]]) |
+                     sample_definitions[[file_column]] == "undef")
+        if (length(skippers) > 0) {
+            ## If there is nothing to skip, do not try.
+            sample_definitions <- sample_definitions[!skippers, ]
+        }
     }
 
     ## Create a matrix of counts with columns as samples and rows as genes

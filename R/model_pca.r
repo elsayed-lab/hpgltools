@@ -601,8 +601,13 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         "prop_var" = component_variance,
         "cumulative_prop_var" = cumulative_pc_variance)
     for (component in expt_factors) {
+        print(component)
         ##comp <- factor(as.character(expt_design[, component]), exclude=FALSE)
         comp <- expt_design[[component]]
+        if (is.null(comp)) {
+            message(paste0("The given component is not in the design: ", comp))
+            next
+        }
         column <- apply(v, 2, factor_rsquared, fact=comp)
         component_rsquared_table[[component]] <- column
     }

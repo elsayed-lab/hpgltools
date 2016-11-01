@@ -44,7 +44,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                             batches=NULL, model_cond=TRUE,
                             model_batch=TRUE, model_intercept=FALSE,
                             alt_model=NULL, extra_contrasts=NULL,
-                            annot_df=NULL, force=FALSE, ...) {
+                            annot_df=NULL, force=FALSE,
+                            deseq_method="long", ...) {
     arglist <- list(...)
     if (!is.null(arglist[["input"]])) {
         input <- arglist[["input"]]
@@ -75,6 +76,9 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     }
     if (!is.null(arglist[["force"]])) {
         force <- arglist[["force"]]
+    }
+    if (!is.null(arglist[["deseq_method"]])) {
+        deseq_method <- arglist[["deseq_method"]]
     }
     message("Starting DESeq2 pairwise comparisons.")
     input_data <- choose_binom_dataset(input, force=force)
@@ -135,12 +139,13 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     } else if (class(model_batch) == "matrix") {
         message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
-        model_string <- "~ condition"
+        ##model_string <- "~ condition"
+        cond_model_string <- "~ condition"
         column_data[["condition"]] <- as.factor(column_data[["condition"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=column_data,
-                                                     design=as.formula(model_string))
-        dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
+                                                     design=as.formula(cond_model_string))
+        dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(cond_model_string))
         passed <- FALSE
         num_sv <- ncol(model_batch)
         try_sv <- function(data, num_sv) {
@@ -148,7 +153,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
             formula_string <- "as.formula(~ "
             for (count in 1:num_sv) {
                 colname <- paste0("SV", count)
-                dataset[[colname]] <- model_batch[, 1]
+                dataset[[colname]] <- model_batch[, count]
                 formula_string <- paste0(formula_string, " ", colname, " + ")
             }
             formula_string <- paste0(formula_string, "condition)")
@@ -183,16 +188,22 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                                                      design=as.formula(model_string))
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     }
-    ## If making a model ~0 + condition -- then must set betaPrior=FALSE
-    ## dataset = DESeqDataSet(se=summarized, design=~ 0 + condition)
-    message("DESeq2 step 2/5: Estimate size factors.")
-    deseq_sf <- DESeq2::estimateSizeFactors(dataset)
-    message("DESeq2 step 3/5: Estimate dispersions.")
-    deseq_disp <- DESeq2::estimateDispersions(deseq_sf, quiet=TRUE)
-    ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
-    message("DESeq2 step 4/5: nbinomWaldTest.")
-    ## deseq_run <- DESeq2::DESeq(deseq_disp)
-    deseq_run = DESeq2::nbinomWaldTest(deseq_disp, quiet=TRUE)
+
+    deseq_run <- NULL
+    if (deseq_method == "short") {
+        message("DESeq steps 2-4 in one shot.")
+        deseq_run <- DESeq2::DESeq(dataset)
+    } else {
+        ## If making a model ~0 + condition -- then must set betaPrior=FALSE
+        message("DESeq2 step 2/5: Estimate size factors.")
+        deseq_sf <- DESeq2::estimateSizeFactors(dataset)
+        message("DESeq2 step 3/5: Estimate dispersions.")
+        deseq_disp <- DESeq2::estimateDispersions(deseq_sf, fitType="parametric")
+        ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
+        message("DESeq2 step 4/5: nbinomWaldTest.")
+        ## deseq_run <- DESeq2::DESeq(deseq_disp)
+        deseq_run = DESeq2::nbinomWaldTest(deseq_disp, quiet=TRUE)
+    }
     ## possible options:  betaPrior=TRUE, betaPriorVar, modelMatrix=NULL
     ## modelMatrixType, maxit=100, useOptim=TRUE useT=FALSE df useQR=TRUE
     ## deseq_run = DESeq2::nbinomLRT(deseq_disp)

@@ -15,29 +15,28 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
     gprofiler_result <- sm(simple_gprofiler(sig_genes, species="dmelanogaster", first_col="untreated"))
 
-    expected_go <- c(2.75e-03, 6.20e-04, 1.98e-06, 1.47e-04, 5.24e-04, 3.11e-05)
-    actual_go <- head(gprofiler_result[["go"]][["p.value"]])
-    expected_mfplot_data <- c(1.54e-06, 7.20e-06, 1.30e-05, 1.55e-05, 1.64e-05, 7.70e-05)
-    actual_mfplot_data <- head(gprofiler_result$plots$mfp_plot_over$data$pvalue)
-    expected_bpplot_data <- c(0.00062, 0.00275)
-    actual_bpplot_data <- head(gprofiler_result$plots$bpp_plot_over$data$pvalue)
-    expected_ccplot_data <- NULL
-    actual_ccplot_data <- head(gprofiler_result$plots$cp_plot_over$data$pvalue)
-
+    expected <- c(6.57e-03, 1.62e-05, 2.80e-02, 8.38e-05, 1.37e-04, 1.10e-04)
+    actual <- head(gprofiler_result[["go"]][["p.value"]])
     test_that("Does gprofiler return expected values?", {
-        expect_equal(expected_go, actual_go, tolerance=0.1)
+        expect_equal(expected, actual, tolerance=0.1)
     })
 
+    expected <- c(0.0264, 0.0214, 0.0187, 0.0183, 0.0471, 0.0145)
+    actual <- head(gprofiler_result$plots$mfp_plot_over$data$pvalue)
     test_that("Does gprofiler return expected values? (mfpplot_data)", {
-        expect_equal(expected_mfplot_data, actual_mfplot_data, tolerance=0.001)
+        expect_equal(expected, actual, tolerance=0.001)
     })
 
+    expected <- c(0.01120, 0.02110, 0.00186, 0.02640, 0.01160, 0.00222)
+    actual <- head(gprofiler_result$plots$bpp_plot_over$data$pvalue)
     test_that("Does gprofiler return expected values? (bppplot_data)", {
-        expect_equal(expected_bpplot_data, actual_bpplot_data, tolerance=0.002)
+        expect_equal(expected, actual, tolerance=0.002)
     })
 
+    expected <- NULL
+    actual <- head(gprofiler_result$plots$cp_plot_over$data$pvalue)
     test_that("Does gprofiler return expected values? (ccpplot_data)", {
-        expect_equal(expected_ccplot_data, actual_ccplot_data, tolerance=0.001)
+        expect_equal(expected, actual, tolerance=0.001)
     })
 }
 

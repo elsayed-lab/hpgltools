@@ -193,9 +193,9 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
                                  color_list=c("lightcyan", "plum1", ## The light colors
                                               "lightskyblue", "orchid", ## The mid colors
                                               "dodgerblue", "purple4"), ## And the darks
-                                 name_list=c("up_all", "down_all",
-                                             "up_mid", "down_mid",
-                                             "up_max", "down_max")) {
+                                 name_list=c("a_up_inner", "a_down_inner",
+                                             "b_up_middle", "b_down_middle",
+                                             "c_up_outer", "c_down_outer")) {
     choose_max <- function(u, d) {
         ## m is the maximum found in the ups/downs
         m <- 0
@@ -221,7 +221,7 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
 
     up_sums <- list()
     down_sums <- list()
-    comp_names <- ups[ ups[["variable"]] == "up_all", ][["comparisons"]]
+    comp_names <- ups[ ups[["variable"]] == "a_up_inner", ][["comparisons"]]
     for (comp in 1:length(comp_names)) {
         comp_name <- comp_names[[comp]]
         up_sums[[comp_name]] <- sum(as.numeric(ups[ ups[["comparisons"]] == comp_name, ][["value"]]))

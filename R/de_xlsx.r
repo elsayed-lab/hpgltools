@@ -46,6 +46,20 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     edger <- all_pairwise_result[["edger"]]
     basic <- all_pairwise_result[["basic"]]
 
+    make_equate <- function(lm_model) {
+        coefficients <- summary(lm_model)[["coefficients"]]
+        int <- signif(x=coefficients["(Intercept)", 1], digits=3)
+        m <- signif(x=coefficients["first", 1], digits=3)
+        ret <- NULL
+        if (as.numeric(int) >= 0) {
+            ret <- paste0("y = ", m, "x + ", int)
+        } else {
+            int <- int * -1
+            ret <- paste0("y = ", m, "x - ", int)
+        }
+        return(ret)
+    }
+
     ## If any of the tools failed, then we cannot plot stuff with confidence.
     if (class(limma) == "try-error") {
         add_plots <- FALSE
@@ -244,38 +258,38 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 dat <- combined[["data"]]
                 summary <- combined[["summary"]]
                 if (isTRUE(do_inverse)) {
-                    limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma", x=denominator, y=numerator)))
+                    limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma", x=denominator, y=numerator)), silent=TRUE)
                     if (class(limma_try) == "list") {
                         limma_plt <- limma_try
                     } else {
                         limma_plt <- NULL
                     }
-                    edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger", x=denominator, y=numerator)))
+                    edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger", x=denominator, y=numerator)), silent=TRUE)
                     if (class(edger_try) == "list") {
                         edger_plt <- edger_try
                     } else {
                         edger_plt <- NULL
                     }
-                    deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq", x=denominator, y=numerator)))
+                    deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq", x=denominator, y=numerator)), silent=TRUE)
                     if (class(deseq_try) == "list") {
                         deseq_plt <- deseq_try
                     } else {
                         deseq_plt <- NULL
                     }
                 } else {
-                    limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma", x=numerator, y=denominator)))
+                    limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma", x=numerator, y=denominator)), silent=TRUE)
                     if (class(limma_try) == "list") {
                         limma_plt <- limma_try
                     } else {
                         limma_plt <- NULL
                     }
-                    edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger", x=numerator, y=denominator)))
+                    edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger", x=numerator, y=denominator)), silent=TRUE)
                     if (class(edger_try) == "list") {
                         edger_plt <- edger_try
                     } else {
                         edger_plt <- NULL
                     }
-                    deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq", x=numerator, y=denominator)))
+                    deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq", x=numerator, y=denominator)), silent=TRUE)
                     if (class(deseq_try) == "list") {
                         deseq_plt <- deseq_try
                     } else {
@@ -345,7 +359,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
         deseq_plots[[name]] <- sm(extract_coefficient_scatter(deseq, type="deseq", x=xname, y=yname))
     } else {
         stop("I don't know what to do with your specification of tables to keep.")
-    }
+    } ## End different types of things to keep.
+
 
     venns <- list()
     comp <- NULL
@@ -370,54 +385,58 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 venn_list <- try(de_venn(ddd, adjp=adjp), silent=TRUE)
                 if (class(venn_list) != "try-error") {
                     up_plot <- venn_list[["up_noweight"]]
-                    print(up_plot)
-                    openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
-                                         startCol=plot_column, startRow=2, fileType="png", units="in")
+                    tt <- try(print(up_plot))
+                    tt <- try(openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
+                                                   startCol=plot_column, startRow=2, fileType="png",
+                                                   units="in"))
                     openxlsx::writeData(wb, tab, x="Venn of p-value down genes.", startRow=1, startCol=plot_column + 4)
                     down_plot <- venn_list[["down_noweight"]]
-                    print(down_plot)
-                    openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
-                                         startCol=plot_column + 4, startRow=2, fileType="png", units="in")
+                    tt <- try(print(down_plot))
+                    tt <- try(openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
+                                                   startCol=plot_column + 4, startRow=2, fileType="png",
+                                                   units="in"))
                     venns[[tab]] <- venn_list
                 }
 
-                make_equate <- function(lm_model) {
-                    coefficients <- summary(lm_model)[["coefficients"]]
-                    int <- signif(x=coefficients["(Intercept)",  1], digits=3)
-                    m <- signif(x=coefficients["first",  1], digits=3)
-                    ret <- paste0("y = ",  m, "x + ", int)
-                    return(ret)
-                }
                 ## Text on row 18, plots from 19-49 (30 rows)
                 plt <- limma_plots[count][[1]]
-                printme <- paste0("Limma expression coefficients for ", names(combo)[[count]], "; R^2: ",
-                                  signif(x=plt[["lm_rsq"]], digits=3), "; equation: ",
-                                  make_equate(plt[["lm_model"]]))
-                message(printme)
-                openxlsx::writeData(wb, tab, x=printme, startRow=18, startCol=plot_column)
-                print(plt[["scatter"]])
-                openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
-                                     startCol=plot_column, startRow=19, fileType="png", units="in")
+                if (class(plt) != "try-error" & !is.null(plt)) {
+                    printme <- paste0("Limma expression coefficients for ", names(combo)[[count]], "; R^2: ",
+                                      signif(x=plt[["lm_rsq"]], digits=3), "; equation: ",
+                                      make_equate(plt[["lm_model"]]))
+                    message(printme)
+                    openxlsx::writeData(wb, tab, x=printme, startRow=18, startCol=plot_column)
+                    tt <- try(print(plt[["scatter"]]))
+                    tt <- try(openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
+                                                   startCol=plot_column, startRow=19, fileType="png",
+                                                   units="in"))
+                }
                 ## Text on row 50, plots from 51-81
                 plt <- edger_plots[count][[1]] ##FIXME this is suspicious
-                printme <- paste0("Edger expression coefficients for ", names(combo)[[count]], "; R^2: ",
-                                  signif(plt[["lm_rsq"]], digits=3), "; equation: ",
-                                  make_equate(plt[["lm_model"]]))
-                message(printme)
-                openxlsx::writeData(wb, tab, x=printme, startRow=50, startCol=plot_column)
-                print(plt[["scatter"]])
-                openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
-                                     startCol=plot_column, startRow=51, fileType="png", units="in")
+                if (class(plt) != "try-error" & !is.null(plt)) {
+                    printme <- paste0("Edger expression coefficients for ", names(combo)[[count]], "; R^2: ",
+                                      signif(plt[["lm_rsq"]], digits=3), "; equation: ",
+                                      make_equate(plt[["lm_model"]]))
+                    message(printme)
+                    openxlsx::writeData(wb, tab, x=printme, startRow=50, startCol=plot_column)
+                    tt <- try(print(plt[["scatter"]]))
+                    tt <- try(openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
+                                                   startCol=plot_column, startRow=51, fileType="png",
+                                                   units="in"))
+                }
                 ## Text on 81, plots 82-112
                 plt <- deseq_plots[count][[1]]
-                printme <- paste0("DESeq2 expression coefficients for ", names(combo)[[count]], "; R^2: ",
-                                  signif(plt[["lm_rsq"]], digits=3), "; equation: ",
-                                  make_equate(plt[["lm_model"]]))
-                message(printme)
-                openxlsx::writeData(wb, tab, x=printme, startRow=81, startCol=plot_column)
-                print(plt[["scatter"]])
-                openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
-                                     startCol=plot_column, startRow=82, fileType="png", units="in")
+                if (class(plt) != "try-error" & !is.null(plt)) {
+                    printme <- paste0("DESeq2 expression coefficients for ", names(combo)[[count]], "; R^2: ",
+                                      signif(plt[["lm_rsq"]], digits=3), "; equation: ",
+                                      make_equate(plt[["lm_model"]]))
+                    message(printme)
+                    openxlsx::writeData(wb, tab, x=printme, startRow=81, startCol=plot_column)
+                    tt <- try(print(plt[["scatter"]]))
+                    tt <- try(openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
+                                                   startCol=plot_column, startRow=82, fileType="png",
+                                                   units="in"))
+                }
             }
         }  ## End for loop
         count <- count + 1
@@ -438,9 +457,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             new_row <- xls_result[["end_row"]] + 2
             message(paste0("Attempting to add the comparison plot to pairwise_summary at row: ", new_row + 1, " and column: ", 1))
             if (class(comp_plot) == "recordedplot") {
-                print(comp_plot)
-                openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                     startRow=new_row + 1, startCol=1, fileType="png", units="in")
+                tt <- try(print(comp_plot))
+                tt <- try(openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                               startRow=new_row + 1, startCol=1, fileType="png", units="in"))
             }
             logfc_comparisons <- try(compare_logfc_plots(combo), silent=TRUE)
             if (class(logfc_comparisons) != "try-error") {
@@ -455,19 +474,22 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                     openxlsx::writeData(wb, "pairwise_summary", x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
                                         startRow=new_row - 2, startCol=tmpcol)
                     openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
-                    print(le)
-                    openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                         startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                    tt <- try(print(le))
+                    tt <- try(openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                                   startRow=new_row, startCol=tmpcol, fileType="png",
+                                                   units="in"))
                     tmpcol <- 8
                     openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(Limma vs. DESeq2)", startRow=new_row - 1, startCol=tmpcol)
-                    print(ld)
-                    openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                         startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                    tt <- try(print(ld))
+                    tt <- try(openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                                   startRow=new_row, startCol=tmpcol, fileType="png",
+                                                   units="in"))
                     tmpcol <- 15
                     openxlsx::writeData(wb, "pairwise_summary", x="Log2FC(DESeq2 vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
-                    print(de)
-                    openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                                         startRow=new_row, startCol=tmpcol, fileType="png", units="in")
+                    tt <- try(print(de))
+                    tt <- try(openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
+                                                   startRow=new_row, startCol=tmpcol, fileType="png",
+                                                   units="in"))
                 }
             } ## End checking if we could compare the logFC/P-values
         } ## End if compare_plots is TRUE
@@ -882,30 +904,30 @@ extract_significant_genes <- function(combined,
                             x="Significant limma genes.",
                             startRow=plot_row, startCol=plot_col)
         plot_row <- plot_row + 1
-        print(sig_bar_plots[["limma"]])
-        openxlsx::insertPlot(wb, "legend", width=9, height=6,
+        tt <- try(print(sig_bar_plots[["limma"]]))
+        tt <- try(openxlsx::insertPlot(wb, "legend", width=9, height=6,
                              startRow=plot_row, startCol=plot_col,
-                             fileType="png", units="in")
+                             fileType="png", units="in"))
 
         plot_row <- plot_row + 30
         openxlsx::writeData(wb, "legend",
                             x="Significant deseq genes.",
                             startRow=plot_row, startCol=plot_col)
         plot_row <- plot_row + 1
-        print(sig_bar_plots[["deseq"]])
-        openxlsx::insertPlot(wb, "legend", width=9, height=6,
-                             startRow=plot_row, startCol=plot_col,
-                             fileType="png", units="in")
+        tt <- try(print(sig_bar_plots[["deseq"]]))
+        tt <- try(openxlsx::insertPlot(wb, "legend", width=9, height=6,
+                                       startRow=plot_row, startCol=plot_col,
+                                       fileType="png", units="in"))
 
         plot_row <- plot_row + 30
         openxlsx::writeData(wb, "legend",
                             x="Significant edger genes.",
                             startRow=plot_row, startCol=plot_col)
         plot_row <- plot_row + 1
-        print(sig_bar_plots[["edger"]])
-        openxlsx::insertPlot(wb, "legend", width=9, height=6,
-                             startRow=plot_row, startCol=plot_col,
-                             fileType="png", units="in")
+        tt <- try(print(sig_bar_plots[["edger"]]))
+        tt <- try(openxlsx::insertPlot(wb, "legend", width=9, height=6,
+                                       startRow=plot_row, startCol=plot_col,
+                                       fileType="png", units="in"))
     } ## End if we want significance bar plots
     ret[["sig_bar_plots"]] <- sig_bar_plots
 
@@ -976,8 +998,8 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
             is_basic <- try(print(ma_plots[[base_name]]), silent=TRUE)
             ## The above will fail if this was a basic analysis, because I don't do ma plots on them.
             if (class(is_basic) != "try-error") {
-                openxlsx::insertPlot(wb, up_name, width=6, height=6,
-                                     startCol=ma_col, startRow=ma_row, fileType="png", units="in")
+                tt <- try(openxlsx::insertPlot(wb, up_name, width=6, height=6,
+                                               startCol=ma_col, startRow=ma_row, fileType="png", units="in"))
             }
         }
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", down_name))

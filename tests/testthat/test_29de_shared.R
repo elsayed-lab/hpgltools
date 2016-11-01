@@ -1,6 +1,5 @@
 library(testthat)
 library(hpgltools)
-options(error=traceback)
 context("29de_shared.R: Do the combined differential expression searches work?\n")
 
 pasilla <- new.env()
@@ -140,45 +139,86 @@ test_that("Can we monitor changing significance (up_fc)?", {
 
 ## It is strange, when using an interactive session, the following tests complete without problem
 ## However, when I use make test they fail with "File does not exist."
-##if (identical(Sys.getenv("FUNKYTOWN"), "true")) {
-    ## Ensure that the excel table printer is printing excel tables
-    test_keepers <- list("treatment" = c("treated","untreated"))
-    combined_excel <- sm(combine_de_tables(hpgl_result, excel="test_excel.xlsx", keepers=test_keepers))
-    ## We previously checked that we can successfully combine tables, let us now ensure that plots get created etc.
-    ## Check that there are some venn plots in the excel workbook:
-    expected <- "recordedplot"
-    actual <- class(combined_excel[["venns"]][["treatment"]][["up_noweight"]])
-    test_that("Are venn plots getting generated for the excel sheets?", {
-        expect_equal(expected, actual)
-    })
-    expected <- "gg"
-    actual <- class(combined_excel$limma_plots$treatment)[[1]]
-    test_that("Do we get a pretty limma scatter plot?", {
-        expect_equal(expected, actual)
-    })
-    actual <- class(combined_excel$deseq_plots$treatment)[[1]]
-    test_that("Do we get a pretty deseq scatter plot?", {
-        expect_equal(expected, actual)
-    })
-    actual <- class(combined_excel$edger_plots$treatment)[[1]]
-    test_that("Do we get a pretty edger scatter plot?", {
-        expect_equal(expected, actual)
-    })
-    expected <- c("transcriptid", "geneid", "description", "type",
-                  "length", "chromosome", "strand", "start",
-                  "end", "limma_logfc", "deseq_logfc", "edger_logfc",
-                  "limma_adjp", "deseq_adjp", "edger_adjp", "limma_ave",
-                  "limma_t", "limma_p", "limma_b", "limma_q",
-                  "deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p",
-                  "deseq_q", "edger_logcpm", "edger_lr", "edger_p",
-                  "edger_q", "basic_nummed", "basic_denmed", "basic_numvar",
-                  "basic_denvar", "basic_logfc", "basic_t", "basic_p",
-                  "basic_adjp", "fc_meta", "fc_var", "fc_varbymed",
-                  "p_meta", "p_var")
-    actual <- colnames(combined_excel$data$treatment)
-    test_that("Do we get expected columns from the excel sheet?", {
-        expect_equal(expected, actual)
-    })
-}
 
-message("\nFinished 29de_shared.R")
+## Ensure that the excel table printer is printing excel tables
+test_keepers <- list("treatment" = c("treated","untreated"))
+combined_excel <- sm(combine_de_tables(hpgl_result, excel="test_excel.xlsx", keepers=test_keepers))
+test_that("Does combine_de_tables create an excel file?", {
+    expect_true(file.exists("test_excel.xlsx"))
+})
+
+## We previously checked that we can successfully combine tables, let us now ensure that plots get created etc.
+## Check that there are some venn plots in the excel workbook:
+expected <- "recordedplot"
+actual <- class(combined_excel[["venns"]][["treatment"]][["up_noweight"]])
+test_that("Are venn plots getting generated for the excel sheets?", {
+    expect_equal(expected, actual)
+})
+
+expected <- "gg"
+actual <- class(combined_excel$limma_plots$treatment$scatter)[[1]]
+test_that("Do we get a pretty limma scatter plot?", {
+    expect_equal(expected, actual)
+})
+
+actual <- class(combined_excel$deseq_plots$treatment$scatter)[[1]]
+test_that("Do we get a pretty deseq scatter plot?", {
+    expect_equal(expected, actual)
+})
+
+actual <- class(combined_excel$edger_plots$treatment$scatter)[[1]]
+test_that("Do we get a pretty edger scatter plot?", {
+    expect_equal(expected, actual)
+})
+
+expected <- c("transcriptid", "geneid", "description", "type",
+              "length", "chromosome", "strand", "start",
+              "end", "limma_logfc", "deseq_logfc", "edger_logfc",
+              "limma_adjp", "deseq_adjp", "edger_adjp", "limma_ave",
+              "limma_t", "limma_p", "limma_b", "limma_q",
+              "deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p",
+              "deseq_q", "edger_logcpm", "edger_lr", "edger_p",
+              "edger_q", "basic_nummed", "basic_denmed", "basic_numvar",
+              "basic_denvar", "basic_logfc", "basic_t", "basic_p",
+              "basic_adjp", "fc_meta", "fc_var", "fc_varbymed",
+              "p_meta", "p_var")
+actual <- colnames(combined_excel$data$treatment)
+test_that("Do we get expected columns from the excel sheet?", {
+    expect_equal(expected, actual)
+})
+
+## Test that we can extract the significant genes and get pretty graphs
+significant_excel <- sm(extract_significant_genes(combined_excel, excel="test_excel_sig.xlsx"))
+test_that("Does combine_de_tables create an excel file?", {
+    expect_true(file.exists("test_excel_sig.xlsx"))
+})
+
+## How many significant up genes did limma find?
+actual <- dim(significant_excel$limma$ups$treatment)
+expected <- c(94, 42)
+test_that("Is the number of significant genes as expected? (limma)", {
+    expect_equal(expected, actual)
+})
+
+actual <- dim(significant_excel$deseq$ups$treatment)
+expected <- c(51, 42)
+test_that("Is the number of significant genes as expected? (deseq)", {
+    expect_equal(expected, actual)
+})
+
+actual <- dim(significant_excel$edger$ups$treatment)
+expected <- c(109, 42)
+test_that("Is the number of significant genes as expected? (edger)", {
+    expect_equal(expected, actual)
+})
+
+actual <- class(significant_excel$sig_bar_plots$limma)[[1]]
+expected <- "gg"
+test_that("Are the significance bar plots generated? (limma)",  {
+    expect_equal(expected, actual)
+})
+
+tt <- file.remove("test_excel.xlsx")
+tt <- file.remove("test_excel_sig.xlsx")
+
+("\nFinished 29de_shared.R")

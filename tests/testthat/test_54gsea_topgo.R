@@ -40,31 +40,32 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     }
 
     ## There is some run-to-run variability in these searches.
-    expected_tp_mf <- c("GO:0004252", "GO:0008236", "GO:0017171")
+    expected_tp_mf <- c("GO:0003824", "GO:0019840", "GO:0005044")
     actual_tp_mf <- head(tp_result$tables$mf_interesting$GO.ID, n=3)
     test_that("Are the topGO interesting results expected (MF GOIDs)?", {
         expect_equal(expected_tp_mf, actual_tp_mf)
     })
-    expected_tp_bp <- c("GO:0006811", "GO:0055085", "GO:0055114")
+
+    expected_tp_bp <- c("GO:0044699", "GO:0044710", "GO:0050896")
     actual_tp_bp <- head(tp_result$tables$bp_interesting$GO.ID, n=3)
     test_that("Are the topGO interesting results expected (BP GOIDs)?", {
         expect_equal(expected_tp_bp, actual_tp_bp)
     })
-    expected_tp_cc <- c("GO:0016021", "GO:0031224", "GO:0016020")
+
+    expected_tp_cc <- c("GO:0000421", "GO:0044665", "GO:0005776")
     actual_tp_cc <- head(tp_result$tables$cc_interesting$GO.ID, n=3)
     test_that("Are the topGO interesting results expected (CC GOIDs)?", {
         expect_equal(expected_tp_cc, actual_tp_cc)
     })
 
-
     tp_trees <- sm(topgo_trees(tp_result))
-    expected_tree_mf_nodes <- c("GO:0001071", "GO:0003674", "GO:0003700")
+    expected_tree_mf_nodes <- c("GO:0000166", "GO:0001071", "GO:0001871")
     actual_tree_mf_nodes <-  head(tp_trees$mf_fisher_nodes$dag@nodes, n=3)
     test_that("Are the topGO interesting results as expected? (MF trees)?", {
         expect_equal(expected_tree_mf_nodes, actual_tree_mf_nodes)
     })
 
-    expected_tp_mfp <- c("GO:0004252", "GO:0008236", "GO:0017171")
+    expected_tp_mfp <- c("GO:0003824", "GO:0019840", "GO:0005044")
     actual_tp_mfp <- head(tp_result$pvalue_plots$mfp_plot_over$data$GO.ID, n=3)
     test_that("Are the topGO interesting results as expected? (MF pval)?", {
         expect_equal(expected_tp_mfp, actual_tp_mfp)

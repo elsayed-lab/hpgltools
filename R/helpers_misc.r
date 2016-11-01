@@ -771,5 +771,15 @@ ymxb_print <- function(model) {
     return(ret)
 }
 
-## EOF
+rex <- function(display=NULL) {
+    home <- Sys.getenv("HOME")
+    if (is.null(display)) {
+        display <- read.table(paste0(home, "/.displays/last"))[1, 1]
+    }
+    auth <- paste0(home, "/.Xauthority")
+    result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
+    X11(display=display)
+    return(NULL)
+}
 
+## EOF

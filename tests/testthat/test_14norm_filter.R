@@ -63,7 +63,7 @@ test_that("cv filtering leaves behind the expected number of genes?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-expected <- c(9784, 7)
+expected <- c(10153, 7)
 pasilla_filter <- sm(normalize_expt(pasilla_expt, filter="simple"))
 actual <- dim(Biobase::exprs(pasilla_filter[["expressionset"]]))
 test_that("simple filtering leaves behind the expected number of genes?", {

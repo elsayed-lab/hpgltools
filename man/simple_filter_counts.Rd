@@ -4,7 +4,7 @@
 \alias{simple_filter_counts}
 \title{Filter low-count genes from a data set only using a simple threshold and number of samples.}
 \usage{
-simple_filter_counts(count_table, threshold = 2, min_samples = 2)
+simple_filter_counts(count_table, threshold = 2)
 }
 \arguments{
 \item{count_table}{Data frame of (pseudo)counts by sample.}

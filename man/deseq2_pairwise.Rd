@@ -7,7 +7,7 @@
 deseq2_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, model_batch = TRUE, model_intercept = FALSE,
   alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
-  force = FALSE, ...)
+  force = FALSE, deseq_method = "long", ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}

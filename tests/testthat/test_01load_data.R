@@ -26,7 +26,7 @@ colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-pasilla_expt <- sm(create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info))
+pasilla_expt <- create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info)
 ## Recent changes to how my expressionsets are created mean that the order of genes is hard-set to the order of annotations
 ## in the annotation data and therefore _not_ the order of genes found in the count tables.
 actual <- as.matrix(Biobase::exprs(pasilla_expt[["expressionset"]]))
@@ -63,7 +63,7 @@ test_that("Was the annotation information imported into the expressionset? (stat
 })
 
 ## Test that the expt has a design which makes sense.
-expected <- c("untreated1","untreated2","untreated3","untreated4","treated1","treated2","treated3")
+expected <- c("suntreated1","suntreated2","suntreated3","suntreated4","streated1","streated2","streated3")
 actual <- as.character(pasilla_expt[["design"]][["sampleid"]])
 test_that("Is the experimental design maintained for samples?", {
     expect_equal(expected, actual)
