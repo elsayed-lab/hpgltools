@@ -114,13 +114,20 @@ plot_libsize <- function(data, colors=NULL,
     return(libsize_plot)
 }
 
-plot_rpm = function(input,
-                    output="~/riboseq/01.svg",
-                    name="LmjF.01.0010",
-                    start=1000,
-                    end=2000,
-                    strand=1,
-                    padding=100) {
+#' Make relatively pretty bar plots of coverage in a genome.
+#'
+#' This was written for ribosome profiling coverage / gene.
+#' It should however, work for any data with little or no modification.
+#'
+#' @param input  Coverage / position filename.
+#' @param output  Output image filename.
+#' @param name  Gene name to print at the bottom of the plot.
+#' @param start  Relative to 0, where is the gene's start codon.
+#' @param end  Relative to 0, where is the gene's stop codon.
+#' @param strand  Is this on the + or - strand? (+1/-1)
+#' @param padding  How much space to provide on the sides?
+plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010",
+                    start=1000, end=2000, strand=1, padding=100) {
     head(genes)
     genes = genes[,c(2,3,5,11)]
     for(ch in 1:36) {
@@ -189,13 +196,20 @@ plot_rpm = function(input,
 
 }
 
+#' Make a bar plot of the numbers of significant genes by contrast.
+#' These plots are quite difficult to describe.
+#'
+#' @param ups  Set of up-regulated genes.
+#' @param downs  Set of down-regulated genes.
+#' @param maximum  Maximum/minimum number of genes to display.
+#' @param text  Add text at the ends of the bars describing the number of genes >/< 0 fc.
+#' @param color_list  Set of colors to use for the bars.
+#' @param name_list  Categories associated with aforementioned colors.
 plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
-                                 color_list=c("lightcyan", "plum1", ## The light colors
-                                              "lightskyblue", "orchid", ## The mid colors
-                                              "dodgerblue", "purple4"), ## And the darks
-                                 name_list=c("a_up_inner", "a_down_inner",
-                                             "b_up_middle", "b_down_middle",
-                                             "c_up_outer", "c_down_outer")) {
+                                 color_list=c("lightcyan", "lightskyblue", "dodgerblue",
+                                                 "plum1", "orchid", "purple4"),
+                                 color_names=c("a_up_inner", "b_up_middle", "c_up_outer",
+                                                  "a_down_inner", "b_down_middle", "c_down_outer")) {
     choose_max <- function(u, d) {
         ## m is the maximum found in the ups/downs
         m <- 0
@@ -232,14 +246,16 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
         maximum <- choose_max(up_sums, down_sums)
     }
 
-    names(color_list) <- name_list
+    ## Try to ensure that ggplot orders my colors and bars in the specific order I want.
+    ## holy ass crackers this is annoying and difficult to get correct,  as the ordering is (to my eyes) arbitrary.
+    names(color_list) <- color_names
+    levels(ups[["variable"]]) <- c("c_up_outer", "b_up_middle", "a_up_inner")
+    levels(downs[["variable"]]) <- c("c_down_outer", "b_down_middle", "a_down_inner")
+
     sigbar_plot <- ggplot() +
-        ggplot2::geom_bar(data=ups, stat="identity",
-                          aes_string(x="comparisons", y="value", fill="variable")) +
-        ggplot2::geom_bar(data=downs, stat="identity",
-                          aes_string(x="comparisons", y="value", fill="variable")) +
-        ggplot2::scale_fill_manual(values=color_list) +
-        ggplot2::scale_y_continuous(breaks=seq(maximum * -1, maximum, (maximum / 5))) +
+        ggplot2::geom_col(data=ups, aes_string(x="comparisons", y="value", fill="variable")) +
+        ggplot2::geom_col(data=downs, aes_string(x="comparisons", y="value", fill="variable")) +
+        ggplot2::scale_fill_manual(values=c("a_up_inner"="lightcyan", "b_up_middle"="lightskyblue", "c_up_outer"="dodgerblue", "a_down_inner"="plum1", "b_down_middle"="orchid", "c_down_outer"="purple4")) +
         ggplot2::coord_flip() +
         ggplot2::theme_bw() +
         ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +

@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("29de_shared.R: Do the combined differential expression searches work?\n")
@@ -68,14 +69,14 @@ test_that("Are the comparisons between DE tools sufficiently similar? (deseq/bas
     expect_gt(db, 0.68)
 })
 
-combined_table <- sm(combine_de_tables(hpgl_result, excel=NULL))
+combined_table <- sm(combine_de_tables(hpgl_result, excel=FALSE))
 expected <- c(7526, 42)
 actual <- dim(combined_table$data[[1]])
 test_that("Has the untreated/treated combined table been filled in?", {
     expect_equal(expected, actual)
 })
 
-sig_tables <- sm(extract_significant_genes(combined_table, according_to="all", excel=NULL))
+sig_tables <- sm(extract_significant_genes(combined_table, according_to="all", excel=FALSE))
 expected <- 118
 actual <- nrow(sig_tables[["limma"]][["ups"]][[1]])
 test_that("Are the limma significant ups expected?", {
@@ -218,7 +219,66 @@ test_that("Are the significance bar plots generated? (limma)",  {
     expect_equal(expected, actual)
 })
 
+## Check to make sure that if we specify a direction for the comparison, that it is maintained.
+forward_keepers <- list("treatment" = c("treated","untreated"))
+reverse_keepers <- list("treatment" = c("untreated","treated"))
+reverse_combined_excel <- sm(combine_de_tables(hpgl_result, keepers=reverse_keepers, excel=FALSE))
+forward_combined_excel <- sm(combine_de_tables(hpgl_result, keepers=forward_keepers, excel=FALSE))
+forward_fold_changes <- forward_combined_excel$data$treatment$limma_logfc
+expected <- sort(forward_fold_changes)
+actual <- sort(reverse_combined_excel$data$treatment$limma_logfc * -1)
+test_that("When we reverse a combined_de_tables(), we get reversed results? (limma)", {
+    expect_equal(expected, actual)
+})
+
+expected <- sort(forward_combined_excel$data$treatment$edger_logfc)
+actual <- sort(reverse_combined_excel$data$treatment$edger_logfc * -1)
+test_that("When we reverse a combined_de_tables(), we get reversed results? (edger)", {
+    expect_equal(expected, actual)
+})
+
+expected <- sort(forward_combined_excel$data$treatment$deseq_logfc)
+actual <- sort(reverse_combined_excel$data$treatment$deseq_logfc * -1)
+test_that("When we reverse a combined_de_tables(), we get reversed results? (deseq)", {
+    expect_equal(expected, actual)
+})
+
+expected <- sort(forward_combined_excel$data$treatment$basic_logfc)
+actual <- sort(reverse_combined_excel$data$treatment$basic_logfc * -1)
+test_that("When we reverse a combined_de_tables(), we get reversed results? (basic)", {
+    expect_equal(expected, actual)
+})
+
+expected <- sort(forward_combined_excel$data$treatment$limma_adjp)
+actual <- sort(reverse_combined_excel$data$treatment$limma_adjp)
+test_that("When we reverse a combined_de_tables(), we get appropriate p-values? (limma)", {
+    expect_equal(expected, actual)
+})
+
+expected <- sort(forward_combined_excel$data$treatment$edger_adjp)
+actual <- sort(reverse_combined_excel$data$treatment$edger_adjp)
+test_that("When we reverse a combined_de_tables(), we get appropriate p-values? (edger)", {
+    expect_equal(expected, actual)
+})
+
+expected <- sort(forward_combined_excel$data$treatment$deseq_adjp)
+actual <- sort(reverse_combined_excel$data$treatment$deseq_adjp)
+test_that("When we reverse a combined_de_tables(), we get appropriate p-values? (deseq)", {
+    expect_equal(expected, actual)
+})
+
+## Make sure that MA plots from combined tables are putting the logFCs in the right direction
+forward_plot <- extract_de_ma(forward_combined_excel, type="limma")
+reverse_plot <- extract_de_ma(reverse_combined_excel, type="limma")
+expected <- sort(forward_plot$df$logfc)
+actual <- sort(reverse_plot$df$logfc * -1)
+test_that("Plotting an MA plot from a combined DE table provides logFCs in the correct orientation?", {
+    expect_equal(expected, actual)
+})
+
 tt <- file.remove("test_excel.xlsx")
 tt <- file.remove("test_excel_sig.xlsx")
 
-("\nFinished 29de_shared.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 29de_shared.R in ", elapsed,  " seconds."))

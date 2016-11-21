@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 
@@ -72,4 +73,6 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     })
 }
 
-message("\nFinished 54gsea_topgo.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 54gsea_topgo.R in ", elapsed,  " seconds."))

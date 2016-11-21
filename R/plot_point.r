@@ -317,6 +317,10 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 
 #' Make a pretty MA plot from a DE tool (limma/deseq/edger/basic
 #'
+#' Because I can never remember, the following from wikipedia: "An MA plot is an application of a
+#' Bland–Altman plot for visual representation of two channel DNA microarray gene expression data
+#' which has been transformed onto the M (log ratios) and A (mean average) scale."
+#'
 #' @param table  Df of linear-modelling, normalized counts by sample-type,
 #' @param expr_col Column showing the average expression across genes.
 #' @param fc_col Column showing the logFC for each gene.
@@ -345,7 +349,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' }
 #' @export
 plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
-                       pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1,
+                       pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1, label_numbers=TRUE,
                        size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
     ## Set up the data frame which will describe the plot
     arglist <- list(...)
@@ -378,17 +382,17 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     ## One might note that I am pre-filling in this data frame with 4 blank entries.
     ## This is to make absolutely certain that ggplot will not re-order my damn categories.
     df <- data.frame(
-        "avg" = c(0, 0, 0, 0),
-        "logfc" = c(0, 0, 0, 0),
-        "pval" = c(0, 0, 0, 0),
-        "pcut" = c(FALSE, FALSE, FALSE, FALSE),
-        "state" = c("downsig", "fcinsig", "pinsig", "upsig"), stringsAsFactors=TRUE)
+        "avg" = c(0, 0, 0),
+        "logfc" = c(0, 0, 0),
+        "pval" = c(0, 0, 0),
+        "pcut" = c(FALSE, FALSE, FALSE),
+        "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors=TRUE)
 
     ## Extract the information of interest from my original table
     newdf <- data.frame("avg" = table[[expr_col]],
                         "logfc" = table[[fc_col]],
                         "pval" = table[[p_col]])
-
+    rownames(newdf) <- rownames(table)
     ## Check if the data is on a log or base10 scale, if the latter, then convert it.
     if (max(newdf[["avg"]]) > 1000) {
         newdf[["avg"]] <- log(newdf[["avg"]])
@@ -397,19 +401,18 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     ## Set up the state of significant/insiginificant vs. p-value and/or fold-change.
     newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific=FALSE))
     newdf[["pcut"]] <- newdf[["pval"]] <= pval_cutoff
-    newdf[["state"]] <- ifelse(newdf[["pval"]] > pval_cutoff, "pinsig",
-                        ifelse(newdf[["pval"]] <= pval_cutoff & newdf[["logfc"]] >= logfc_cutoff, "upsig",
-                        ifelse(newdf[["pval"]] <= pval_cutoff & newdf[["logfc"]] <= (-1.0 * logfc_cutoff), "downsig",
-                               "fcinsig")))
+    newdf[["state"]] <- ifelse(newdf[["pval"]] > pval_cutoff, "c_insig",
+                        ifelse(newdf[["pval"]] <= pval_cutoff & newdf[["logfc"]] >= logfc_cutoff, "a_upsig",
+                        ifelse(newdf[["pval"]] <= pval_cutoff & newdf[["logfc"]] <= (-1.0 * logfc_cutoff), "b_downsig",
+                               "c_insig")))
     newdf[["state"]] <- as.factor(newdf[["state"]])
     df <- rbind(df, newdf)
     rm(newdf)
 
     ## Subtract one from each value because I filled in a fake value of each category to start.
-    num_downsig <- sum(df[["state"]] == "downsig") - 1
-    num_fcinsig <- sum(df[["state"]] == "fcinsig") - 1
-    num_pinsig <- sum(df[["state"]] == "pinsig") - 1
-    num_upsig <- sum(df[["state"]] == "upsig") - 1
+    num_downsig <- sum(df[["state"]] == "b_downsig") - 1
+    num_insig <- sum(df[["state"]] == "c_insig") - 1
+    num_upsig <- sum(df[["state"]] == "a_upsig") - 1
 
     ## Make double-certain that my states are only factors or numbers where necessary.
     df[["avg"]] <- as.numeric(df[[1]])
@@ -420,8 +423,8 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
 
     ## Set up the labels for the legend by significance.
     ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
-    state_shapes <- c(21,22,23,24)
-    names(state_shapes) <- c("downsig","fcinsig","pinsig","upsig")
+    state_shapes <- c(24, 25, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig","c_insig")
 
     ## make the plot!
     plt <- ggplot(data=df,
@@ -431,19 +434,24 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                              fill="as.factor(pcut)",
                              colour="as.factor(pcut)",
                              shape="as.factor(state)")) +
-        ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1.0), logfc_cutoff), color="red", size=(size / 2)) +
-        ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
+        ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1.0), logfc_cutoff), color="red", size=(size / 3)) +
+        ggplot2::geom_point(stat="identity", size=size, alpha=alpha)
+    if (isTRUE(label_numbers)) {
+        plt <- plt +
         ## The following scale_shape_manual() sets the labels of the legend on the right side.
-        ggplot2::scale_shape_manual(name="state", values=state_shapes,
+        ggplot2::scale_shape_manual(name="State", values=state_shapes,
                                     labels=c(
+                                        paste0("Up Sig.: ", num_upsig),
                                         paste0("Down Sig.: ", num_downsig),
-                                        paste0("FC Insig.: ", num_fcinsig),
-                                        paste0("P Insig.: ", num_pinsig),
-                                        paste0("Up Sig.: ", num_upsig)),
-                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
+                                        paste0("Insig.: ", num_insig)),
+                                    guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey")))
+    }
+    plt <- plt +
         ## Set the colors of the significant/insignificant points.
-        ggplot2::scale_fill_manual(name="as.factor(pcut)", values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
-        ggplot2::scale_color_manual(name="as.factor(pcut)", values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
+        ggplot2::scale_fill_manual(name="as.factor(pcut)",
+                                   values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
+        ggplot2::scale_color_manual(name="as.factor(pcut)",
+                                    values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
         ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
         ggplot2::xlab("Average Counts") +
@@ -462,10 +470,9 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
 
     ## Return the plot, some numbers, and the data frame used to make the plot so that I may check my work.
     retlist <- list(
-        "num_downsig" = num_downsig,
-        "num_fcinsig" = num_fcinsig,
-        "num_pinsig" = num_pinsig,
         "num_upsig" = num_upsig,
+        "num_downsig" = num_downsig,
+        "num_insig" = num_insig,
         "plot" = plt,
         "df" = df)
     return(retlist)
@@ -480,10 +487,16 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
 #' @param ids Set of ids which must be in the rownames of df to recolor
 #' @param color Chosen color for the new points.
 #' @return prettier plot.
-recolor_points <- function(plot, df, ids, color="red") {
+recolor_points <- function(plot, df, ids, color="red", ...) {
+    arglist <- list(...)
+    alpha <- 0.3
+    if (!is.null(arglist[["alpha"]])) {
+        alpha <- arglist[["alpha"]]
+    }
+
     point_index <- rownames(df) %in% ids
     newdf <- df[ point_index, ]
-    newplot <- plot + ggplot2::geom_point(data=newdf,  colour=color)
+    newplot <- plot + ggplot2::geom_point(data=newdf,  colour=color, fill=color, alpha=alpha)
     return(newplot)
 }
 
@@ -509,6 +522,7 @@ recolor_points <- function(plot, df, ids, color="red") {
 #' }
 #' @export
 plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL, ...) {
+    arglist <- list(...)
     hpgl_env <- environment()
     names <- NULL
     data_class <- class(data)[1]
@@ -520,7 +534,8 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
-        data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        ## some functions prefer matrix, so I am keeping this explicit for the moment
+        data <- as.data.frame(data)
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
@@ -616,7 +631,8 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
     } else if (data_class == 'ExpressionSet') {
         data <- Biobase::exprs(data)
     } else if (data_class == 'matrix' | data_class == 'data.frame') {
-        data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        ## some functions prefer matrix, so I am keeping this explicit for the moment
+        data <- as.data.frame(data)
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
@@ -749,8 +765,10 @@ plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
     df[["logyaxis"]] <- -1.0 * log10(df[["yaxis"]])
     df[["pcut"]] <- df[["yaxis"]] <= p_cutoff
     df[["state"]] <- ifelse(toptable_data[[yaxis_column]] > p_cutoff, "pinsig",
-                     ifelse(toptable_data[[yaxis_column]] <= p_cutoff & toptable_data[[xaxis_column]] >= fc_cutoff, "upsig",
-                     ifelse(toptable_data[[yaxis_column]] <= p_cutoff & toptable_data[[xaxis_column]] <= (-1 * fc_cutoff),
+                     ifelse(toptable_data[[yaxis_column]] <= p_cutoff &
+                            toptable_data[[xaxis_column]] >= fc_cutoff, "upsig",
+                     ifelse(toptable_data[[yaxis_column]] <= p_cutoff &
+                            toptable_data[[xaxis_column]] <= (-1 * fc_cutoff),
                             "downsig", "fcinsig")))
 
     num_downsig <- sum(df[["state"]] == "downsig") - 1

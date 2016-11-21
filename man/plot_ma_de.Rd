@@ -5,8 +5,9 @@
 \title{Make a pretty MA plot from a DE tool (limma/deseq/edger/basic}
 \usage{
 plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
-  pval_cutoff = 0.05, alpha = 0.4, logfc_cutoff = 1, size = 2,
-  tooltip_data = NULL, gvis_filename = NULL, ...)
+  pval_cutoff = 0.05, alpha = 0.4, logfc_cutoff = 1,
+  label_numbers = TRUE, size = 2, tooltip_data = NULL,
+  gvis_filename = NULL, ...)
 }
 \arguments{
 \item{table}{Df of linear-modelling, normalized counts by sample-type,}
@@ -38,7 +39,9 @@ Ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized coun
     googleVis graph if requested.
 }
 \description{
-Make a pretty MA plot from a DE tool (limma/deseq/edger/basic
+Because I can never remember, the following from wikipedia: "An MA plot is an application of a
+Bland–Altman plot for visual representation of two channel DNA microarray gene expression data
+which has been transformed onto the M (log ratios) and A (mean average) scale."
 }
 \examples{
 \dontrun{

@@ -54,7 +54,7 @@
 #' @export
 graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL, qq=NULL, ma=NULL, ...) {
     ## First gather the necessary data for the various plots.
-    old_options <- options(scipen=999)
+    old_options <- options(scipen=10)
     ##old_options <- options(device = function(...) {
     ##    .Call("R_GD_nullDevice", PACKAGE = "grDevices")
     ##})

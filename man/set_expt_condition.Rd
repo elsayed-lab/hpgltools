@@ -4,7 +4,7 @@
 \alias{set_expt_condition}
 \title{Change the condition of an expt}
 \usage{
-set_expt_condition(expt, fact, ids = NULL, ...)
+set_expt_condition(expt, fact = NULL, ids = NULL, ...)
 }
 \arguments{
 \item{expt}{Expt to modify}

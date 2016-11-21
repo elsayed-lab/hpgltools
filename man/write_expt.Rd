@@ -5,7 +5,8 @@
 \title{Make pretty xlsx files of count data.}
 \usage{
 write_expt(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
-  convert = "cpm", transform = "log2", batch = "sva", filter = "cbcb")
+  violin = FALSE, convert = "cpm", transform = "log2", batch = "sva",
+  filter = "cbcb")
 }
 \description{
 Make pretty xlsx files of count data.

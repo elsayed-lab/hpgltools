@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("40ann_biomart.R: Does biomart function?\n")
@@ -42,4 +43,6 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     })
 }
 
-message("\nFinished 40ann_biomart.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 40ann_biomart.R in ", elapsed,  " seconds."))

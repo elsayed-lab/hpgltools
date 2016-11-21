@@ -62,116 +62,6 @@ goseq_table <- function(df, file=NULL) {
     return(df)
 }
 
-#' Make a pretty table of goseq data in excel.
-#'
-#' It is my intention to make a function like this for each ontology tool in my repetoire
-#'
-#' @param goseq A set of results from simple_goseq().
-#' @param file An excel file to which to write some pretty results.
-#' @param pval Choose a cutoff for reporting by p-value.
-#' @param add_plots Include some pvalue plots in the excel output?
-#' @return The result from openxlsx
-#' @export
-write_goseq_data <- function(goseq, file="excel/goseq.xlsx", pval=0.1, add_plots=TRUE) {
-    excel_dir <- dirname(file)
-    if (!file.exists(excel_dir)) {
-        dir.create(excel_dir, recursive=TRUE)
-    }
-
-    ## Pull out the relevant portions of the goseq data
-    ## For this I am using the same (arbitrary) rules as in gather_goseq_genes()
-    goseq_mf <- goseq[["mf_subset"]]
-    goseq_mf <- goseq_mf[ goseq_mf[["over_represented_pvalue"]] <= pval, ]
-    goseq_mf_genes <- gather_goseq_genes(goseq, ontology="MF", pval=pval)
-    mf_genes <- as.data.frame(goseq_mf_genes)
-    rownames(mf_genes) <- rownames(goseq_mf_genes)
-    goseq_mf <- merge(goseq_mf, mf_genes, by="row.names")
-    rownames(goseq_mf) <- goseq_mf[["Row.names"]]
-    goseq_mf <- goseq_mf[-1]
-
-    goseq_bp <- goseq[["bp_subset"]]
-    goseq_bp <- goseq_bp[ goseq_bp[["over_represented_pvalue"]] <= pval, ]
-    goseq_bp_genes <- gather_goseq_genes(goseq, ontology="BP", pval=pval)
-    bp_genes <- as.data.frame(goseq_bp_genes)
-    rownames(bp_genes) <- rownames(goseq_bp_genes)
-    goseq_bp <- merge(goseq_bp, bp_genes, by="row.names")
-    rownames(goseq_bp) <- goseq_bp[["Row.names"]]
-    goseq_bp <- goseq_bp[-1]
-
-    goseq_cc <- goseq[["cc_subset"]]
-    goseq_cc <- goseq_cc[ goseq_cc[["over_represented_pvalue"]] <= pval, ]
-    goseq_cc_genes <- gather_goseq_genes(goseq, ontology="CC", pval=pval)
-    cc_genes <- as.data.frame(goseq_cc_genes)
-    rownames(cc_genes) <- rownames(goseq_cc_genes)
-    goseq_cc <- merge(goseq_cc, cc_genes, by="row.names")
-    rownames(goseq_cc) <- goseq_cc[["Row.names"]]
-    goseq_cc <- goseq_cc[-1]
-
-    goseq_mf <- goseq_mf[, c(7,1,6,2,8,10,9,4,5)]
-    goseq_bp <- goseq_bp[, c(7,1,6,2,8,10,9,4,5)]
-    goseq_cc <- goseq_cc[, c(7,1,6,2,8,10,9,4,5)]
-    colnames(goseq_mf) <- c("Ontology","Category","Term","Over p-value", "Q-value",
-                            "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.")
-    colnames(goseq_bp) <- c("Ontology","Category","Term","Over p-value", "Q-value",
-                            "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.")
-    colnames(goseq_cc) <- c("Ontology","Category","Term","Over p-value", "Q-value",
-                            "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.")
-
-    wb <- openxlsx::createWorkbook(creator="atb")
-    hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
-    ## This stanza will be repeated so I am just incrementing the new_row
-
-    new_row <- 1
-    sheet <- "BP"
-    openxlsx::addWorksheet(wb, sheetName=sheet)
-    openxlsx::writeData(wb, sheet, "BP Results from goseq.", startRow=new_row)
-    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
-    new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=goseq_bp, tableStyle="TableStyleMedium9", startRow=new_row)
-    ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
-    if (isTRUE(add_plots)) {
-        a_plot <- goseq[["pvalue_plots"]][["bpp_plot_over"]]
-        print(a_plot)
-        openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(goseq_bp) + 2, startRow=new_row, fileType="png", units="in")
-    }
-    openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
-    new_row <- new_row + nrow(goseq_bp) + 2
-
-
-    new_row <- 1
-    sheet <- "MF"
-    openxlsx::addWorksheet(wb, sheetName=sheet)
-    openxlsx::writeData(wb, sheet, "MF Results from goseq.", startRow=new_row)
-    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
-    new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=goseq_mf, tableStyle="TableStyleMedium9", startRow=new_row)
-    if (isTRUE(add_plots)) {
-        a_plot <- goseq[["pvalue_plots"]][["mfp_plot_over"]]
-        print(a_plot)
-        openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(goseq_mf) + 2, startRow=new_row, fileType="png", units="in")
-    }
-    openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
-    new_row <- new_row + nrow(goseq_mf) + 2
-
-    new_row <- 1
-    sheet <- "CC"
-    openxlsx::addWorksheet(wb, sheetName=sheet)
-    openxlsx::writeData(wb, sheet, "CC Results from goseq.", startRow=new_row)
-    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
-    new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=goseq_cc, tableStyle="TableStyleMedium9", startRow=new_row)
-    if (isTRUE(add_plots)) {
-        a_plot <- goseq[["pvalue_plots"]][["ccp_plot_over"]]
-        print(a_plot)
-        openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(goseq_cc) + 2, startRow=new_row, fileType="png", units="in")
-    }
-    openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
-    new_row <- new_row + nrow(goseq_cc) + 2
-
-    res <- openxlsx::saveWorkbook(wb, file, overwrite=TRUE)
-    return(res)
-}
-
 #' Perform a simplified goseq analysis.
 #'
 #' goseq can be pretty difficult to get set up for non-supported organisms.  This attempts to make
@@ -263,9 +153,10 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
     } else if (class(length_db)[[1]] == "OrgDb") {
         stop("OrgDb objects contain links to other databases, but sadly are missing gene lengths.")
     } else if (class(length_db)[[1]] == "OrganismDb" | class(length_db)[[1]] == "AnnotationDbi") {
+        ## metadf <- extract_lengths(db=length_db, gene_list=gene_list, ...)
         metadf <- extract_lengths(db=length_db, gene_list=gene_list)
     } else if (class(length_db)[[1]] == "TxDb") {
-        metadf <- extract_lengths(db=length_db, gene_list=gene_list)
+        metadf <- extract_lengths(db=length_db, gene_list=gene_list, ...)
     } else if (class(length_db)[[1]] == "data.frame") {
         metadf <- length_db
     } else {
@@ -464,7 +355,11 @@ gather_goseq_genes <- function(goseq_data, ontology=NULL, pval=0.1, include_all=
     godf <- goseq_data[["godf"]]
     genes_per_ont <- function(cat) {
         ## all_entries <- subset(godf, GO==cat)[["ID"]]
-        all_entries <- godf[, godf[["GO"]] == cat, ][["ID"]]
+        colnames(godf) <- c("ID", "GO")
+        godf <- godf[complete.cases(godf), ]
+        found_idx <- godf[["GO"]] == cat
+        foundlings <- godf[found_idx, ]
+        all_entries <- foundlings[["ID"]]
         entries_in_input <- input[ rownames(input) %in% all_entries, ]
         names <- toString(as.character(rownames(entries_in_input)))
         all <- toString(all_entries)
@@ -477,200 +372,6 @@ gather_goseq_genes <- function(goseq_data, ontology=NULL, pval=0.1, include_all=
     gene_df <- data.table::rbindlist(gene_list)
     rownames(gene_df) <- cats
     return(gene_df)
-}
-
-#' Make a pvalue plot from goseq data.
-#'
-#' With minor changes, it is possible to push the goseq results into a clusterProfiler-ish pvalue
-#' plot.  This handles those changes and returns the ggplot results.
-#'
-#' @param goterms Some data from goseq!
-#' @param wrapped_width Number of characters before wrapping to help legibility.
-#' @param cutoff Pvalue cutoff for the plot.
-#' @param n How many groups to include?
-#' @param mincat Minimum size of the category for inclusion.
-#' @param level Levels of the ontology tree to use.
-#' @return Plots!
-#' @seealso \link[goseq]{goseq} \pkg{clusterProfiler} \code{\link{plot_ontpval}}
-#' @export
-plot_goseq_pval <- function(goterms, wrapped_width=20, cutoff=0.1, n=10, mincat=10, level=NULL) {
-    ## The following supports stuff like level='level > 3 & level < 6'
-    if (!is.null(level)) {
-        keepers <- data.frame()
-        message("Getting all go levels.  This takes a moment.")
-        mf_go <- golevel_df(ont="MF")
-        bp_go <- golevel_df(ont="BP")
-        cc_go <- golevel_df(ont="CC")
-        message("Finished getting go levels.")
-        if (class(level) == 'numeric') {
-            stmt <- paste0("subset(mf_go, level == ", level, ")")
-            mf_go <- eval(parse(text=stmt))
-            stmt <- paste0("subset(bp_go, level == ", level, ")")
-            bp_go <- eval(parse(text=stmt))
-            stmt <- paste0("subset(cc_go, level == ", level, ")")
-            cc_go <- eval(parse(text=stmt))
-        } else {
-            stmt <- paste0("subset(mf_go, ", level, ")")
-            mf_go <- eval(parse(text=stmt))
-            stmt <- paste0("subset(bp_go, ", level, ")")
-            bp_go <- eval(parse(text=stmt))
-            stmt <- paste0("subset(cc_go, ", level, ")")
-            cc_go <- eval(parse(text=stmt))
-        }
-        keepers <- rbind(keepers, mf_go)
-        keepers <- rbind(keepers, bp_go)
-        keepers <- rbind(keepers, cc_go)
-        message("Extracting the goterms in your chosen level.")
-        goterms <- merge(goterms, keepers, by.x="category", by.y="GO")
-    }
-    ## TODO: Replace the subset calls with the less noxious which calls.
-    plotting_mf <- subset(goterms, complete.cases(goterms))
-    plotting_mf[["score"]] <- plotting_mf[["numDEInCat"]] / plotting_mf[["numInCat"]]
-    plotting_mf <- plotting_mf[ plotting_mf[["ontology"]] == "MF", ]
-    plotting_mf <- plotting_mf[ plotting_mf[["term"]] != "NULL", ]
-    plotting_mf <- plotting_mf[ plotting_mf[["over_represented_pvalue"]] <= cutoff, ]
-    plotting_mf <- plotting_mf[ plotting_mf[["numInCat"]] > mincat, ]
-    plotting_mf <- plotting_mf[order(plotting_mf[["over_represented_pvalue"]]),]
-    plotting_mf <- head(plotting_mf, n=n)
-    plotting_mf <- plotting_mf[, c("term","over_represented_pvalue","score")]
-    plotting_mf[["term"]] <- as.character(lapply(strwrap(plotting_mf[["term"]], wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    colnames(plotting_mf) <- c("term","pvalue","score")
-    mf_pval_plot <- plot_ontpval(plotting_mf, ontology="MF")
-
-    plotting_bp <- subset(goterms, complete.cases(goterms))
-    plotting_bp[["score"]] <- plotting_bp[["numDEInCat"]] / plotting_bp[["numInCat"]]
-    plotting_bp <- plotting_bp[ plotting_bp[["ontology"]] == "BP", ]
-    plotting_bp <- plotting_bp[ plotting_bp[["term"]] != "NULL", ]
-    plotting_bp <- plotting_bp[ plotting_bp[["over_represented_pvalue"]] <= cutoff, ]
-    plotting_bp <- plotting_bp[ plotting_bp[["numInCat"]] > mincat, ]
-    plotting_bp <- plotting_bp[order(plotting_bp[["over_represented_pvalue"]]),]
-    plotting_bp <- head(plotting_bp, n=n)
-    plotting_bp <- plotting_bp[, c("term","over_represented_pvalue","score")]
-    colnames(plotting_bp) <- c("term","pvalue","score")
-    plotting_bp[["term"]] <- as.character(lapply(strwrap(plotting_bp[["term"]], wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    bp_pval_plot <- plot_ontpval(plotting_bp, ontology="BP")
-
-    plotting_cc <- subset(goterms, complete.cases(goterms))
-    plotting_cc[["score"]] <- plotting_cc[["numDEInCat"]] / plotting_cc[["numInCat"]]
-    plotting_cc <- plotting_cc[ plotting_cc[["ontology"]] == "CC", ]
-    plotting_cc <- plotting_cc[ plotting_cc[["term"]] != "NULL", ]
-    plotting_cc <- plotting_cc[ plotting_cc[["over_represented_pvalue"]] <= cutoff, ]
-    plotting_cc <- plotting_cc[ plotting_cc[["numInCat"]] > mincat, ]
-    plotting_cc <- plotting_cc[order(plotting_cc[["over_represented_pvalue"]]),]
-    plotting_cc <- head(plotting_cc, n=n)
-    plotting_cc <- plotting_cc[, c("term","over_represented_pvalue","score")]
-    colnames(plotting_cc) <- c("term","pvalue","score")
-    plotting_cc[["term"]] <- as.character(lapply(strwrap(plotting_cc[["term"]], wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    cc_pval_plot <- plot_ontpval(plotting_cc, ontology="CC")
-
-    pval_plots <- list(
-        "mfp_plot_over" = mf_pval_plot,
-        "bpp_plot_over" = bp_pval_plot,
-        "ccp_plot_over" = cc_pval_plot,
-        "mf_subset_over" = plotting_mf,
-        "bp_subset_over" = plotting_bp,
-        "cc_subset_over" = plotting_cc)
-    return(pval_plots)
-}
-
-#' Make fun trees a la topgo from goseq data.
-#'
-#' This seeks to force goseq data into a format suitable for topGO and then use its tree plotting
-#' function to make it possible to see significantly increased ontology trees.
-#'
-#' @param de_genes Some differentially expressed genes.
-#' @param godata Data from goseq.
-#' @param goid_map File to save go id mapping.
-#' @param score_limit Score limit for the coloring.
-#' @param goids_df Mapping of IDs to GO in the Ramigo expected format.
-#' @param overwrite Overwrite the trees?
-#' @param selector Function for choosing genes.
-#' @param pval_column Column to acquire pvalues.
-#' @return A plot!
-#' @seealso \pkg{Ramigo}
-#' @export
-goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
-                        score_limit=0.01, goids_df=NULL, overwrite=FALSE,
-                        selector="topDiffGenes", pval_column="adj.P.Val") {
-    mapping <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
-    geneID2GO <- topGO::readMappings(file=goid_map)
-    annotated_genes <- names(geneID2GO)
-    if (is.null(de_genes[["ID"]])) {
-        de_genes[["ID"]] <- make.names(rownames(de_genes), unique=TRUE)
-    }
-    interesting_genes <- factor(annotated_genes %in% de_genes[["ID"]])
-    names(interesting_genes) <- annotated_genes
-
-    if (is.null(de_genes[[pval_column]])) {
-        mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-    } else {
-        pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
-        names(pvals) <- rownames(de_genes)
-        requireNamespace("topGO")
-        attachNamespace("topGO")
-        mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
-                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata <- new("topGOdata", description="BP", ontology="BP", allGenes=pvals,
-                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=pvals,
-                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-    }
-
-    enriched_ids <- godata$alldata[["category"]]
-    enriched_scores <- godata$alldata[["over_represented_pvalue"]]
-    names(enriched_scores) <- enriched_ids
-
-    mf_avail_nodes <- as.list(mf_GOdata@graph@nodes)
-    names(mf_avail_nodes) <- mf_GOdata@graph@nodes
-    mf_nodes <- enriched_scores[names(enriched_scores) %in% names(mf_avail_nodes)]
-    mf_included <- length(which(mf_nodes <= score_limit))
-    mf_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_nodes, useInfo="all",
-                                                               sigForAll=TRUE, firstSigNodes=mf_included,
-                                                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(mf_tree_data) == 'try-error') {
-        message("There was an error generating the MF tree.")
-        mf_tree <- NULL
-    } else {
-        mf_tree <- recordPlot()
-    }
-
-    bp_avail_nodes <- as.list(bp_GOdata@graph@nodes)
-    names(bp_avail_nodes) <- bp_GOdata@graph@nodes
-    bp_nodes <- enriched_scores[names(enriched_scores) %in% names(bp_avail_nodes)]
-    bp_included <- length(which(bp_nodes <= score_limit))
-    bp_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_nodes, useInfo="all",
-                                                               sigForAll=TRUE, firstSigNodes=bp_included,
-                                                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(bp_tree_data) == 'try-error') {
-        message("There was an error generating the BP tree.")
-        bp_tree <- NULL
-    } else {
-        bp_tree <- recordPlot()
-    }
-
-    cc_avail_nodes <- as.list(cc_GOdata@graph@nodes)
-    names(cc_avail_nodes) <- cc_GOdata@graph@nodes
-    cc_nodes <- enriched_scores[names(enriched_scores) %in% names(cc_avail_nodes)]
-    cc_included <- length(which(cc_nodes <= score_limit))
-    cc_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_nodes, useInfo="all",
-                                                               sigForAll=TRUE, firstSigNodes=cc_included,
-                                                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(cc_tree_data) == 'try-error') {
-        message("There was an error generating the CC tree.")
-        cc_tree <- NULL
-    } else {
-        cc_tree <- recordPlot()
-    }
-    trees <- list(
-        "MF_over" = mf_tree,
-        "BP_over" = bp_tree,
-        "CC_over" = cc_tree,
-        "MF_overdata" = mf_tree_data,
-        "BP_overdata" = bp_tree_data,
-        "CC_overdata" = cc_tree_data)
-    return(trees)
 }
 
 ## EOF

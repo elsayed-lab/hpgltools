@@ -1,5 +1,9 @@
-## This is for the moment just a code dump of some arbitrarily chosen kmeans clustering stuff
-## Fill this in asap with real code for Ginger's search of gene sets which have similar profiles over time.
+
+#' This is for the moment just a code dump of some arbitrarily chosen kmeans clustering stuff
+#'
+#' Fill this in asap with real code for Ginger's search of gene sets which have similar profiles over time.
+#'
+#' @param gene_ids  A set of gene IDs to query.
 kmeans_testing <- function(gene_ids=get0("gene_ids")) {
     procyclic_bins  <- data.frame()
     id_count <- 0

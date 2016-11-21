@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("13norm_transform.R: Are normalizations consistent over time (Tranformations)?\n")
@@ -57,3 +58,6 @@ test_that("loge transformation gives expected values (why log10!?)?", {
 })
 
 message("\nFinished 13norm_transform.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 13norm_transform.R in ", elapsed,  " seconds."))

@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("55gsea_gostats.R: Does GOstats work?\n")
@@ -46,4 +47,6 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     })
 }
 
-message("\nFinished 55gsea_gostats.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 55gsea_gostats.R in ", elapsed,  " seconds."))

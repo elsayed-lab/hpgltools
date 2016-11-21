@@ -283,6 +283,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' @param alt_model Use your own model.
 #' @param alt_string String describing an alternate model.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
+#' @export
 choose_model <- function(input, conditions, batches, model_batch=TRUE,
                          model_cond=TRUE, model_intercept=TRUE,
                          alt_model=NULL, alt_string=NULL,
@@ -465,6 +466,7 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
 #' @param force Force non-standard data
 #' @param ... More options for future expansion
 #' @return List the data, conditions, and batches in the data.
+#' @export
 choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
     arglist <- list(...)
     result <- NULL
@@ -486,18 +488,21 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
     return(result)
 }
 
+#' A sanity check that a given set of data is suitable for analysis by limma.
+#'
+#' Take an expt and poke at it to ensure that it will not result in troubled limma results.
+#'
+#' @param input Expressionset containing expt object.
+#' @param force Ingore warnings and use the provided data asis.
+#' @param which_voom  Choose between limma'svoom, voomWithQualityWeights, or the hpgl equivalents.
+#' @param ... Extra arguments passed to arglist.
+#' @return dataset suitable for limma analysis
 choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
     data <- NULL
     warn_user <- 0
     libsize <- NULL
-    ## #### Old note alert!:
-    ## I sort of have the opposite problem for limma as for edger/deseq
-    ## It under-performs them when provided with non-normalized data.
-    ## Therefore the force option will have opposite effects here.
-    ## If force is on, leave the numbers alone.
-    ## #### New note:
     ## It turns out, a more careful examination of how normalization affects the results,
     ## the above seems only to be true if the following are true:
     ## 1.  There are >2-3k features(genes/transcripts) with a full range of count values.
@@ -568,6 +573,14 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     return(retlist)
 }
 
+#' A sanity check that a given set of data is suitable for analysis by edgeR or DESeq2.
+#'
+#' Take an expt and poke at it to ensure that it will not result in troubled results.
+#'
+#' @param input Expressionset containing expt object.
+#' @param force Ignore every warning and just use this data.
+#' @param ... Extra arguments passed to arglist.
+#' @return dataset suitable for limma analysis
 choose_binom_dataset <- function(input, force=FALSE, ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
@@ -924,9 +937,9 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
             down_genes <- down_genes[down_idx, ]
         } else {
             ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
-            up_idx <- as.numeric(up_genes[[column]]) > 1.0
+            up_idx <- as.numeric(up_genes[[column]]) >= 1.0
             up_genes <- up_genes[up_idx, ]
-            down_idx <- as.numeric(down_genes[[column]]) < 1.0
+            down_idx <- as.numeric(down_genes[[column]]) <= -1.0
             down_genes <- down_genes[down_idx, ]
         }
         message(paste0("After (adj)p filter, the up genes table has ", dim(up_genes)[1], " genes."))
@@ -1078,7 +1091,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
     lenminus <- length(identities) - 1
     for (c in 1:lenminus) {
         c_name <- names(identities[c])
-        nextc <- c+1
+        nextc <- c + 1
         for (d in nextc:length(identities)) {
             d_name <- names(identities[d])
             minus_string <- paste(d_name, "_vs_", c_name, sep="")
@@ -1159,51 +1172,85 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 #'     semantic strings for removal.
 #' @return Smaller list of up/down genes.
 #' @export
-semantic_copynumber_filter <- function(de_list, max_copies=2, semantic=c('mucin','sialidase','RHS','MASP','DGF'), semantic_column='1.tooltip') {
-    count <- 0
-    for (table in de_list[["ups"]]) {
-        count <- count + 1
-        tab <- de_list[["ups"]][[count]]
-        table_name <- names(de_list[["ups"]])[[count]]
+semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
+                                       semantic=c('mucin','sialidase','RHS','MASP','DGF'),
+                                       semantic_column='1.tooltip') {
+    removed_up <- list()
+    removed_down <- list()
+    table_type <- "significance"
+    if (!is.null(de_list[["data"]])) {
+        table_type <- "combined"
+    }
+
+    table_list <- NULL
+    up_to_down <- 0
+    if (table_type == "combined") {
+        table_list <- de_list[["data"]]
+    } else {
+        table_list <- c(de_list[["ups"]], de_list[["downs"]])
+        up_to_down <- length(de_list[["ups"]])
+    }
+
+    removed <- list()
+    for (count in 1:length(table_list)) {
+        tab <- table_list[[count]]
+        table_name <- names(table_list)[[count]]
+        removed[[table_name]] <- list()
         message(paste0("Working on ", table_name))
-        file <- paste0("singletons/gene_counts/up_", table_name, ".fasta.out.count")
-        tmpdf <- try(read.table(file), silent=TRUE)
-        if (class(tmpdf) == 'data.frame') {
-            colnames(tmpdf) = c("ID", "members")
-            tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
-            rownames(tab) <- tab[["Row.names"]]
-            tab <- tab[, -1, drop=FALSE]
-            tab <- tab[count <= max_copies, ]
-            for (string in semantic) {
-                idx <- grep(pattern=string, x=tab[, semantic_column])
-                tab <- tab[-idx]
+        if (isTRUE(use_files)) {
+            file <- ""
+            if (table_type == "combined") {
+                file <- paste0("singletons/gene_counts/", table_name, ".fasta.out.count")
+            } else {
+                file <- paste0("singletons/gene_counts/up_", table_name, ".fasta.out.count")
             }
-            de_list[["ups"]][[count]] <- tab
+            tmpdf <- try(read.table(file), silent=TRUE)
+            if (class(tmpdf) == 'data.frame') {
+                colnames(tmpdf) = c("ID", "members")
+                tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
+                rownames(tab) <- tab[["Row.names"]]
+                tab <- tab[, -1, drop=FALSE]
+                tab <- tab[count <= max_copies, ]
+            }
+        }  ## End using empirically defined groups of multi-gene families.
+        for (string in semantic) {
+            idx <- grep(pattern=string, x=tab[, semantic_column])
+            num_removed <- length(idx)
+            removed[[table_name]][[string]] <- num_removed
+            if (num_removed > 0) {
+                tab <- tab[-idx, ]
+                message(paste0("Removing entries with string ", string,
+                               ", found ", num_removed, "; table has ", nrow(tab),  " rows left."))
+            } else {
+                message("Found no entries of type ", string, ".")
+            }
+        }
+        if (table_type == "combined") {
+            de_list[["data"]][[count]] <- tab
+        } else {
+            if (count <= up_to_down) {
+                de_list[["ups"]][[count]] <- tab
+            } else {
+                de_list[["downs"]][[count]] <- tab
+            }
         }
     }
-    count <- 0
-    for (table in de_list[["downs"]]) {
-        count <- count + 1
-        tab <- de_list[["downs"]][[count]]
-        table_name <- names(de_list[["downs"]])[[count]]
-        message(paste0("Working on ", table_name))
-        file <- paste0("singletons/gene_counts/down_", table_name, ".fasta.out.count")
-        tmpdf <- try(read.table(file), silent=TRUE)
-        if (class(tmpdf) == 'data.frame') {
-            colnames(tmpdf) = c("ID","members")
-            tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
-            rownames(tab) <- tab[["Row.names"]]
-            tab <- tab[, -1, drop=FALSE]
-            tab <- tab[count <= max_copies, ]
-            for (string in semantic) {
-                ## Is this next line correct?  shouldn't it be tab[, semantic_column]?
-                ## idx <- grep(pattern=string, x=tab[[, semantic_column]])
-                idx <- grep(pattern=string, x=tab[, semantic_column])
-                tab <- tab[-idx]
+    if (table_type == "significance") {
+        new_removed <- list()
+        for (count in 1:length(removed)) {
+            old_name <- names(removed)[[count]]
+            new_name <- NULL
+            if (count <= up_to_down) {
+                new_name <- paste0("up_", old_name)
+            } else {
+                new_name <- paste0("down_", old_name)
             }
-            de_list[["downs"]][[count]] <- tab
+            new_removed[[new_name]] <- removed[[old_name]]
         }
+        removed <- new_removed
+        rm(new_removed)
     }
+    de_list[["removed"]] <- removed
     return(de_list)
 }
 

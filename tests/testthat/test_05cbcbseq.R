@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 library(pasilla)
@@ -203,4 +204,6 @@ test_that("Limma results, toptable.", {
     expect_equal(cbcb_top, hpgl_top)
 })
 
-message("\nFinished 05cbcbseq.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 05cbcbseq.R in ", elapsed, " seconds."))

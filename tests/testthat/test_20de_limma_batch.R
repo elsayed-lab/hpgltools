@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 cbcb <- sm(library(cbcbSEQ))
@@ -164,4 +165,6 @@ test_that("Do the intercept model results equal those from cell means?", {
 
 save(list=ls(), file="de_limma.rda")
 
-message("\nFinished 20de_limma_batch.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 20de_limma_batch.R in ", elapsed,  " seconds."))

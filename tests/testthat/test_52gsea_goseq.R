@@ -1,13 +1,12 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 
 context("52gsea_goseq.R: Does goseq work?\n")
-
 ## I want to do some much longer tests using goseq/clusterprofiler/topgo/gostats/gprofiler
 ## These will likely not work with Travis as they take forever.
 ## I am not however, certain how to use skip_on_travis(), so I printed it and am copying the
 ## useful bits here.
-
 
 ##if (!identical(Sys.getenv("TRAVIS"), "true")) {
 limma <- new.env()
@@ -42,19 +41,19 @@ test_that("Are the goseq interesting results as expected (bp categories)?", {
 ##    expect_equal(expected, actual)
 ##})
 
-expected <- c(0.1430595, 0.3750000, 0.1732283, 0.1307420, 0.2280702, 0.2000000)
+expected <- c(0.2727273, 0.2857143, 0.3000000, 0.3000000, 0.3157895, 0.3333333)
 actual <- head(goseq_result$pvalue_plots$mfp_plot_over$data$score)
 test_that("Are the goseq results as expected (mf pvalues)?", {
     expect_equal(expected, actual, tolerance=0.000001)
 })
 
-expected <- c(0.1684492, 0.1533181, 0.2777778, 0.2692308, 0.4615385, 0.4117647)
+expected <- c(0.375, 0.375, 0.400, 0.400, 0.400, 0.400)
 actual <- head(goseq_result$pvalue_plots$bpp_plot_over$data$score)
 test_that("Are the goseq results as expected (bp pvalues)?", {
     expect_equal(expected, actual, tolerance=0.000001)
 })
 
-expected <- c(0.2340426, 0.3125000, 0.1421801, 0.1797753, 0.3636364, 0.1666667)
+expected <- c(0.1421801, 0.1551724, 0.1562500, 0.1666667, 0.1739130, 0.1797753)
 actual <- head(goseq_result$pvalue_plots$ccp_plot_over$data$score)
 test_that("Are the goseq results as expected (cc pvalues)?", {
     expect_equal(expected, actual, tolerance=0.01)
@@ -76,4 +75,6 @@ test_that("Are the goseq results as expected (cc pvalues)?", {
 ## This was not my understanding of how enrichment analysis works. Have I just been mistaken this whole time?
 ## Keith
 
-message("\nFinished 52gsea_goseq.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 52gsea_goseq.R in ", elapsed,  " seconds."))

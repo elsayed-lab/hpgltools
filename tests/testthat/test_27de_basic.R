@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("27de_basic: Does the basic differential expression analysis work?\n")
@@ -36,4 +37,6 @@ test_that("Do we get the values for treated and untreated samples?", {
 
 save(list=ls(), file="de_basic.rda")
 
-message("\nFinished 27de_basic.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 27de_basic.R in ", elapsed,  " seconds."))

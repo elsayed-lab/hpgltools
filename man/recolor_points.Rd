@@ -4,7 +4,7 @@
 \alias{recolor_points}
 \title{Quick point-recolorizer given an existing plot, df, list of rownames to recolor, and a color}
 \usage{
-recolor_points(plot, df, ids, color = "red")
+recolor_points(plot, df, ids, color = "red", ...)
 }
 \arguments{
 \item{plot}{geom_point based plot}

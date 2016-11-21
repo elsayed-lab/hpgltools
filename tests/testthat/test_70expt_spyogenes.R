@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 library(pasilla)
@@ -49,6 +50,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     mgas_data <- sm(gbk2txdb(accession="AE009949"))
     expected <- 1895017
     actual <- GenomicRanges::width(mgas_data$seq)  ## This fails on travis?
+    actual_width <- actual
     test_that("Can I extract the chromosome sequence from a genbank file? (widths)", {
         expect_equal(expected, actual)
     })
@@ -60,7 +62,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     })
 
     expected <- c("dnaA", "dnaN", NA, "pth", "trcF", NA)
-    actual <- head(actual_exons$gene)
+    actual <- head(as.data.frame(mgas_data$gene)$gene)
     test_that("Can I extract the chromosome sequence from a genbank file? (gene names)", {
         expect_equal(expected, actual)
     })
@@ -96,4 +98,6 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     circos_made <- sm(circos_make(target="mgas"))
 }
 
-message("\nFinished 70expt_spyogenes.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 70expt_spyogenes.R in ", elapsed,  " seconds."))

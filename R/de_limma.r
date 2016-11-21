@@ -1,3 +1,22 @@
+#' A minor change to limma's voom with quality weights to attempt to address some corner cases.
+#'
+#' This copies the logic employed in hpgl_voom().  I suspect one should not use it.
+#'
+#' @param data  Some data!
+#' @param fun_model  A model for voom() and arrayWeights()
+#' @param normalize.method  Passed to voom()
+#' @param plot  Do the plot of mean variance.
+#' @param span  yes
+#' @param var.design maybe
+#' @param method kitty!
+#' @param maxiter 50 is good
+#' @param tol I have no tolerances.
+#' @param trace no trace for you.
+#' @param replace.weights  Replace the weights?
+#' @param col yay columns
+#' @param ... more arguments!
+#' @return a voom return
+#' @export
 hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="none",
                             plot=TRUE, span=0.5, var.design=NULL, method="genebygene",
                             maxiter=50, tol=1E-10, trace=FALSE, replace.weights=TRUE,

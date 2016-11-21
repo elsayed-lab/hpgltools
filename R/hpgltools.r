@@ -74,8 +74,3 @@ NULL
 #' @import stats
 #' @import utils
 NULL
-
-mwarn <- function(text) {
-    message(text)
-    warning(text)
-}

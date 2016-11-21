@@ -44,35 +44,6 @@ tryCatch.W.E <- function(expr) {
     return(ret)
 }
 
-#' Silence, peasant!
-#'
-#' Some libraries/functions just won't shut up.  Ergo, silence, peasant!
-#' This function uses 2 invocations of capture.output and a try(silent=TRUE) to capture the strings
-#' of the outputs from the given expression in 'output', and the messages in 'message'.  The result
-#' of the expression goes into 'result.'  If there is an error in the expression, it is returned as
-#' a try-error object which may therefore be inspected as needed.
-#'
-#' @param code Some code to shut up.
-#' @return List of the output log, message log, and result of the expression.
-#' @export
-s_p <- function(code) {
-    warnings <- NULL
-    output_log <- NULL
-    message_log <- NULL
-    result <- NULL
-    output_log <- capture.output(type="output", {
-        message_log <- capture.output(type="message", {
-            result <- try(code)
-        })
-    })
-    retlist <- list(
-        "output" = output_log,
-        "message" = message_log,
-        "warnings" = warnings,
-        "result" = result)
-    return(retlist)
-}
-
 #' Silence, m...
 #'
 #' Some libraries/functions just won't shut up.  Ergo, silence, peasant!
@@ -762,6 +733,7 @@ saveme <- function(directory="savefiles", backups=4, filename="Rdata.rda.xz") {
 #'
 #' @param model Model to print from glm/lm/robustbase.
 #' @return a string representation of that model.
+#' @export
 ymxb_print <- function(model) {
     intercept <- round(coefficients(model)[1], 2)
     x_name <- names(coefficients(model)[-1])
@@ -771,12 +743,22 @@ ymxb_print <- function(model) {
     return(ret)
 }
 
-rex <- function(display=NULL) {
+#' Resets the display and xauthority variables to the new computer I am using so that plot() works.
+#'
+#' This function assumes a line in the .profile which writes the DISPLAY variable to
+#' ${HOME}/.displays/$(hostname).last
+#'
+#' @param display DISPLAY variable to use,  if NULL it looks in ~/.displays/$(host).last
+#'
+#' @export
+rex <- function(display=":0") {
     home <- Sys.getenv("HOME")
+    host <- Sys.info()[["nodename"]]
     if (is.null(display)) {
-        display <- read.table(paste0(home, "/.displays/last"))[1, 1]
+        display <- read.table(paste0(home, "/.displays/", host, ".last"))[1, 1]
     }
     auth <- paste0(home, "/.Xauthority")
+    message(paste0("Setting display to: ", display))
     result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
     X11(display=display)
     return(NULL)

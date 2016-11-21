@@ -1,8 +1,3 @@
-#' @export
-local_get_value <- function(x) {
-    return(gsub("^ ","", tail(unlist(strsplit(x, ": ")), n=1), fixed=TRUE))
-}
-
 #' TriTrypDB gene information table parser
 #'
 #' An example input file is the T. brucei Lister427 gene information table
@@ -13,6 +8,7 @@ local_get_value <- function(x) {
 #' @param file Location of TriTrypDB gene information table.
 #' @param verbose  Whether or not to enable verbose output.
 #' @return Returns a dataframe of gene info.
+#' @export
 parse_gene_info_table <- function(file, verbose=FALSE) {
     ## Create empty vector to store dataframe rows
     N <- 1e5
@@ -306,6 +302,7 @@ tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin",
 #'
 #' @param species  Human readable species name
 #' @return potential NCBI taxon IDs
+#' @export
 get_ncbi_taxonid <- function(species="Leishmania major") {
     taxid <- taxize::get_eolid(sciname=species)[[1]]
     return(taxid)

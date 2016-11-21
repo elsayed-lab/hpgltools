@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("24de_deseq.R: Does DESeq2 work with hpgltools?\n")
@@ -77,4 +78,6 @@ test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise():
 
 save(list=ls(), file="de_deseq.rda")
 
-message("\nFinished 24de_deseq.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 24de_deseq.R in ", elapsed,  " seconds."))

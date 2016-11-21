@@ -48,7 +48,9 @@ plot_spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
     return(spiro)
 }
 
-## 3,7,1 should give the classic 7 leaf clover
+#' Make hypotrochoid plots!
+#'
+#' 3,7,1 should give the classic 7 leaf clover
 plot_hypotrochoid <- function(radius_a=7, radius_b=1, dist_b=5, revolutions=7, increments=6480) {
     points <- seq(0, revolutions * increments)
     radians <- points / (2 * pi)
@@ -78,6 +80,9 @@ plot_hypotrochoid <- function(radius_a=7, radius_b=1, dist_b=5, revolutions=7, i
     return(image)
 }
 
+#' Make epitrochoid plots!
+#'
+#' 7, 2, 6, 7 should give a pretty result.
 plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6, revolutions=7, increments=6480) {
     points <- seq(0, revolutions * increments)
     radians <- points / (2 * pi)

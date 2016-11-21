@@ -93,3 +93,5 @@ download_gbk <- function(accessions, write=TRUE) {
         "strings" = strings)
     return(retlist)
 }
+
+## EOF

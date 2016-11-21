@@ -1,3 +1,6 @@
+#' Add a new snp table to a set of comparisons for clustering.
+#'
+#' This is used by expt_snp to read input files and relatively quickly merge them.
 snp_add_file <- function(sample, input_dir="preprocessing/outputs", file_suffix="_parsed_ratio.txt") {
     tmp_dt <- as.data.table(read.table(paste0(input_dir, "/", sample, file_suffix)))
     rownames(tmp_dt) <- tmp_dt[["V1"]]
@@ -100,5 +103,6 @@ expt_snp <- function(expt,
     }
     new_dt <- as.data.table(new_dt)
     new_dt[["rownames"]] <- snp_dt[["rownames"]]
-
 }
+
+## EOF

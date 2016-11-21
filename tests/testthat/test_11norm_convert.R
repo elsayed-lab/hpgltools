@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("11norm_convert.R: Are normalizations consistent over time (Conversions)?\n")
@@ -67,4 +68,6 @@ test_that("cp_seq_m works for ATG?", {
     expect_equal(expected, actual)
 })
 
-message("\nFinished 11norm_convert.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 11norm_convert.R in ", elapsed, " seconds."))

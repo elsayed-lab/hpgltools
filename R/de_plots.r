@@ -101,6 +101,21 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
     return(ma_material)
 }
 
+#' Perform a coefficient scatter plot of a limma/deseq/edger/basic table.
+#'
+#' Plot the gene abundances for two coefficients in a differential expression comparison.
+#' By default, genes past 1.5 z scores from the mean are colored red/green.
+#'
+#' @param output  Result from the de_ family of functions, all_pairwise, or combine_de_tables().
+#' @param toptable  Chosen table to query for abundances.
+#' @param type  Query limma, deseq, edger, or basic outputs.
+#' @param x  The x-axis column to use, either a number of name.
+#' @param y  The y-axis column to use.
+#' @param z  Define the range of genes to color (FIXME: extend this to p-value and fold-change).
+#' @param color_low  Color for the genes less than the mean.
+#' @param color_high  Color for the genes greater than the mean.
+#' @param ...  More arguments are passed to arglist.
+#' @export
 extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1, y=2, z=1.5,
                                         color_low="#DD0000", color_high="#7B9F35", ...) {
     arglist <- list(...)
@@ -210,6 +225,15 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     return(plot)
 }
 
+#' Create venn diagrams describing how well deseq/limma/edger agree.
+#'
+#' The sets of genes provided by limma and friends would ideally always agree,  but they do not.
+#' Use this to see out how much the (dis)agree.
+#'
+#' @param table Which table to query?
+#' @param adjp  Use adjusted p-values
+#' @param ... More arguments are passed to arglist.
+#' @export
 de_venn <- function(table, adjp=FALSE, ...) {
     arglist <- list(...)
     combine_tables <- function(d, e, l) {
@@ -402,7 +426,25 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
     return(retlist)
 }
 
-significant_barplots <- function(combined, fc_cutoffs=c(0,1,2),
+#' Given the set of significant genes from combine_de_tables(), provide a view of how many are
+#' significant up/down.
+#'
+#' These plots are pretty annoying, and I am certain that this function is not well written, but it
+#' provides a series of bar plots which show the number of genes/contrast which are up and down
+#' given a set of fold changes and p-value.
+#'
+#' @param combined  Result from combine_de_tables and/or extract_significant_genes().
+#' @param fc_cutoffs  Choose 3 fold changes to define the queries.  0, 1, 2 mean greater/less than 0
+#'     followed by 2 fold and 4 fold cutoffs.
+#' @param fc_column  The column in the master-table to use for FC cutoffs.
+#' @param p_type  Adjusted or not?
+#' @param p  Chosen p-value cutoff.
+#' @param z  Choose instead a z-score cutoff.
+#' @param order  Choose a specific order for the plots.
+#' @param maximum  Set a specific limit on the number of genes on the x-axis.
+#' @param ...  More arguments are passed to arglist.
+#' @export
+significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
                                  fc_column="limma_logfc", p_type="adj",
                                  p=0.05, z=NULL, order=NULL, maximum=NULL, ...) {
     arglist <- list(...)
@@ -429,14 +471,16 @@ significant_barplots <- function(combined, fc_cutoffs=c(0,1,2),
     table_length <- 0
     fc_names <- c()
 
+    uplist <- list()
+    downlist <- list()
     for (type in c("limma", "edger", "deseq")) {
 
         for (fc in fc_cutoffs) {
             ## This is a bit weird and circuituous
             ## The most common caller of this function is in fact extract_significant_genes
-            fc_sig <- sm(extract_significant_genes(combined, fc=fc,
-                                                p=p, z=z, n=NULL, excel=NULL,
-                                                p_type=p_type, sig_bar=FALSE, ma=FALSE))
+            fc_sig <- extract_significant_genes(combined, fc=fc,
+                                                p=p, z=z, n=NULL, excel=FALSE,
+                                                p_type=p_type, sig_bar=FALSE, ma=FALSE)
             table_length <- length(fc_sig[[type]][["ups"]])
             fc_name <- paste0("fc_", fc)
             fc_names <- append(fc_names, fc_name)
@@ -476,8 +520,6 @@ significant_barplots <- function(combined, fc_cutoffs=c(0,1,2),
         ##         ^    ^------- Total >0FC - the set between 4FC and 2FC
         ##         |------------ Total >0FC - the smallest set >4FC
 
-        ups <- list()
-        downs <- list()
         papa_bear <- fc_names[[1]]  ## Because it is the largest grouping
         mama_bear <- fc_names[[2]]  ## The middle grouping
         baby_bear <- fc_names[[3]]  ## And the smallest grouping
@@ -516,6 +558,7 @@ significant_barplots <- function(combined, fc_cutoffs=c(0,1,2),
         up <- cbind(comparisons, up_all[[type]], up_mid[[type]], up_max[[type]])
         up <- as.data.frame(up)
         colnames(up) <- c("comparisons","a_up_inner","b_up_middle","c_up_outer")
+        uplist[[type]] <- up
         up <- reshape2::melt(up, id.var="comparisons")
         up[["comparisons"]] <- factor(up[["comparisons"]], levels=comparisons)
         up[["variable"]] <- factor(up[["variable"]],  levels=c("a_up_inner","b_up_middle","c_up_outer"))
@@ -524,16 +567,26 @@ significant_barplots <- function(combined, fc_cutoffs=c(0,1,2),
         down <- cbind(comparisons, down_all[[type]], down_mid[[type]], down_max[[type]])
         down <- as.data.frame(down)
         colnames(down) <- c("comparisons","a_down_inner","b_down_middle","c_down_outer")
+        downlist[[type]] <- down
+        colnames(down) <- c("comparisons","a_down_inner","b_down_middle","c_down_outer")
         down <- reshape2::melt(down, id.var="comparisons")
         down[["comparisons"]] <- factor(down[["comparisons"]], levels=comparisons)
-        down[["variable"]] <- factor(down[["variable"]],  levels=c("a_down_inner","b_down_middle","c_down_outer"))
+        ##        down[["variable"]] <- factor(down[["variable"]],
+        ##        levels=c("a_down_inner","b_down_middle","c_down_outer"))
+        down[["variable"]] <- factor(down[["variable"]],
+                                     levels=c("c_down_outer","b_down_middle","a_down_inner"))
+        up[["variable"]] <- factor(up[["variable"]],
+                                   levels=c("c_up_outer","b_up_middle","a_up_inner"))
         down[["value"]] <- as.numeric(down[["value"]]) * -1
         tables_up[[type]] <- up
         tables_down[[type]] <- down
-        plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
+        plots[[type]] <- plot_significant_bar(up, down, maximum=maximum)
+        ##plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
     } ## End iterating over the 3 types, limma/deseq/edger
 
     retlist <- list(
+        "ups" = uplist,
+        "downs" = downlist,
         "limma_up_table" = tables_up[["limma"]],
         "limma_down_table"= tables_down[["limma"]],
         "limma" = plots[["limma"]],

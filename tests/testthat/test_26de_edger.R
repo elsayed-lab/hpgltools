@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("26de_edger.R: Does edgeR work with hpgltools?\n")
@@ -84,4 +85,6 @@ test_that("Is the hpgl pairwise similar to edgeR's default method (fdr)?", {
 
 save(list=ls(), file="de_edger.rda")
 
-message("\nFinished 26de_edger.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 26de_edger.R in ", elapsed,  " seconds."))
