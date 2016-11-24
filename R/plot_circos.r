@@ -817,7 +817,7 @@ circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
 #' @param circos Location of circos.  I have a copy in home/bin/circos and use that sometimes.
 #' @return a kitten
 #' @export
-circos_make <- function(target="", output="circos/Makefile", circos="/usr/bin/circos") {
+circos_make <- function(target="", output="circos/Makefile", circos="circos") {
     circos_dir <- dirname(output)
     if (!file.exists(circos_dir)) {
         message(paste0("The circos directory does not exist, creating: ", circos_dir))
@@ -846,7 +846,7 @@ CIRCOS=\"%s\"
     make_target_png <- gsub(pattern="\\.conf", replacement="", x=make_target)
     make_target_png <- paste0(make_target_png, ".png")
     make_command <- paste0("cd circos && make ", make_target_svg, " 2>>make.out 1>&2 && make ", make_target_png, " 2>>make.out 1>&2")
-    result <- system(make_command, show.output.on.console=FALSE)
+    result <- system(make_command) ##, show.output.on.console=FALSE)
     return(result)
 }
 
