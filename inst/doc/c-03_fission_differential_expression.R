@@ -50,16 +50,16 @@ fun_data <- expt_subset(fission_expt, subset="condition=='wt.120'|condition=='wt
 fun_norm <- sm(normalize_expt(fun_data, batch="limma", norm="quant", transform="log2", convert="cpm"))
 
 ## ----simple_limma--------------------------------------------------------
-limma_comparison <- sm(limma_pairwise(fun_norm))
-names(limma_comparison$all_tables)
+fission_comparison <- sm(all_pairwise(fun_data))
+names(fission_comparison$all_tables)
 summary(limma_comparison$all_tables$wt.30_vs_wt.120)
-scatter_wt_mut <- limma_coefficient_scatter(limma_comparison, x="wt.30", y="wt.120", gvis_filename=NULL)
+scatter_wt_mut <- extract_coefficient_scatter(limma_comparison, type="limma", x="wt.30", y="wt.120", gvis_filename=NULL)
 scatter_wt_mut$scatter
 scatter_wt_mut$both_histogram
-ma_wt_mut <- limma_ma(limma_comparison)
-ma_wt_mut
+ma_wt_mut <- extract_de_ma(limma_comparison, type="limma")
+ma_wt_mut$plot
 ## So sad
-ma_wt_mut <- limma_ma(limma_comparison, p_col="P.Value", fc=0.5)
+ma_wt_mut <- extract_de_ma(limma_comparison, p_col="P.Value", fc=0.5)
 ma_wt_mut
 
 ## ----simple_deseq2-------------------------------------------------------

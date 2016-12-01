@@ -17,7 +17,7 @@ output:
     collapsed: false
     smooth_scroll: false
 vignette: >
-  %\VignetteIndexEntry{hpgltools_examples}
+  %\VignetteIndexEntry{a-01_bacterial_example}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

@@ -17,7 +17,7 @@ output:
     collapsed: false
     smooth_scroll: false
 vignette: >
-  %\VignetteIndexEntry{fission_plots}
+  %\VignetteIndexEntry{d-04_pasilla}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
