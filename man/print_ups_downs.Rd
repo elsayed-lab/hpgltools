@@ -19,6 +19,8 @@ print_ups_downs(upsdowns, wb = NULL, excel = "excel/significant_genes.xlsx",
 \item{according}{Use limma, deseq, or edger for defining 'significant'.}
 
 \item{summary_count}{For spacing sequential tables one after another.}
+
+\item{ma}{Include ma plots?}
 }
 \value{
 Return from write_xls.

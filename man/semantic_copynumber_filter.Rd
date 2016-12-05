@@ -15,6 +15,8 @@ up/down with a column expressing approximate count numbers.}
 \item{max_copies}{Keep only those genes with <= n putative
 copies.}
 
+\item{use_files}{Use a set of sequence alignments to define the copy numbers?}
+
 \item{semantic}{Set of strings with gene names to exclude.}
 
 \item{semantic_column}{Column in the DE table used to find the

@@ -3,6 +3,11 @@
 ## for example is not included in any import declarations and so I will likely
 ## re-call it with dplyr::tbl_df() -- or add it to the imports.
 
+#' I see no reason to have load_host_annotations and load_parasite_annotations.
+#'
+#' Thus I am making them both into aliases to load_annotations.
+#'
+#' @param ... Arguments to be passed to load_annotations.
 #' @export
 load_parasite_annotations <- function(...) {
     load_annotations(...)

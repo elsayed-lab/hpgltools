@@ -104,7 +104,7 @@ fis_batchnormpca$plot
 test_pca <- pca_information(batchnorm_expt, expt_factors=c("condition","batch","strain","minute"), num_components=6)
 
 ## ----distributions-------------------------------------------------------
-fision_boxplot <- sm(plot_boxplot(fission_expt))
+fission_boxplot <- sm(plot_boxplot(fission_expt))
 fission_boxplot
 sf_expt <- sm(normalize_expt(fission_expt, norm="sf"))
 fission_boxplot <- sm(plot_boxplot(sf_expt))
@@ -140,12 +140,15 @@ fission_dis <- plot_disheat(batchnorm_expt)
 fission_dis$plot
 
 ## ----variancePartition---------------------------------------------------
-test_varpart <- varpart(fission_expt)
+test_varpart <- varpart(fission_expt, predictor=NULL, factors=c("condition","batch"))
 test_varpart$percent_plot
 test_varpart$partition_plot
 
 ## Here, let us test the variance contributed by strain, time, and replicate.
-test_varpart <- varpart(fission_expt, factors=c("strain","minute","replicate"))
+test_varpart <- varpart(fission_expt, predictor=NULL, factors=c("condition", "strain", "minute", "replicate"))
 test_varpart$percent_plot
 test_varpart$partition_plot
+
+## ----sysinfo, results='asis'---------------------------------------------
+pander::pander(sessionInfo())
 

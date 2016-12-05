@@ -14,6 +14,8 @@ make_txdb(orgdb_info, cfg_line, gff = NULL, from_gff = FALSE,
 
 \item{gff}{File to read}
 
+\item{from_gff}{Use a gff file?}
+
 \item{output_dir}{Place to put rda intermediates.}
 
 \item{...}{Extra arguments to pass through.}

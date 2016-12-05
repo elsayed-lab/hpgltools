@@ -466,6 +466,10 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
 }
 
 #' An alias to expt_subset, because it is stupid to have something start with verbs and others start with nouns.
+#'
+#' This just calls expt_subset.
+#'
+#' @param ...  All arguments are passed to expt_subset.
 #' @export
 subset_expt <- function(...) {
     expt_subset(...)
@@ -715,6 +719,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
 #' @param expt Expt to modify
 #' @param fact Conditions to replace
 #' @param ids Specific sample IDs to change.
+#' @param ...  Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
 #' @examples
 #' \dontrun{
@@ -824,8 +829,16 @@ set_expt_samplenames <- function(expt, newnames) {
     return(new_expt)
 }
 
-#'  Print a string describing what happened to this data.
+#' Print a string describing what happened to this data.
 #'
+#' Sometimes it is nice to have a string like: log2(cpm(data)) describing what happened to the data.
+#'
+#' @param expt  The expressionset.
+#' @param transform  How was it transformed?
+#' @param convert  How was it converted?
+#' @param norm  How was it normalized?
+#' @param filter  How was it filtered?
+#' @param batch  How was it batch-corrected?
 #' @export
 what_happened <- function(expt=NULL, transform="raw", convert="raw", norm="raw", filter="raw", batch="raw") {
     if (!is.null(expt)) {

@@ -6,6 +6,9 @@
 \usage{
 mdesc_table(table = "Locus2GO")
 }
+\arguments{
+\item{table}{Choose a table to query.}
+}
 \description{
 This at least in theory is only used by get_microbesonline,  but if one needs a quick and dirty SQL query
 it might prove useful.

@@ -8,19 +8,17 @@ extract_de_ma(pairwise, type = "edger", table = NULL, fc = 1,
   pval_cutoff = 0.05, ...)
 }
 \arguments{
+\item{pairwise}{The result from all_pairwise(), which should be changed to handle other invocations too.}
+
+\item{type}{Type of table to use: deseq, edger, limma, basic.}
+
 \item{table}{Result from edger to use, left alone it chooses the first.}
 
-\item{fc}{Fold change cutoff on the up and down defining significant.}
+\item{fc}{Cutoff for log2(fold-change) significant.}
 
-\item{pval_cutoff}{And the p-value cutoff.}
+\item{pval_cutoff}{Cutoff to define 'significant' by p-value.}
 
-\item{output}{The result from all_pairwise(), which should be changed to handle other invocations too.}
-
-\item{fc_col}{Column for logFC data.}
-
-\item{p_col}{Column to use for p-value data.}
-
-\item{expr_col}{Column for the average data.}
+\item{...}{Extra arguments are passed to arglist.}
 }
 \value{
 a plot!

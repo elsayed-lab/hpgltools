@@ -204,7 +204,7 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010",
 #' @param maximum  Maximum/minimum number of genes to display.
 #' @param text  Add text at the ends of the bars describing the number of genes >/< 0 fc.
 #' @param color_list  Set of colors to use for the bars.
-#' @param name_list  Categories associated with aforementioned colors.
+#' @param color_names  Categories associated with aforementioned colors.
 plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
                                  color_list=c("lightcyan", "lightskyblue", "dodgerblue",
                                                  "plum1", "orchid", "purple4"),

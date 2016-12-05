@@ -3,21 +3,22 @@
 #' This hopefully makes it easy to compare the outputs from
 #' limma/DESeq2/EdgeR on a table-by-table basis.
 #'
-#' @param all_pairwise_result Output from all_pairwise().
-#' @param extra_annot Add some annotation information?
-#' @param excel Filename for the excel workbook, or null if not printed.
-#' @param excel_title Title for the excel sheet(s).  If it has the
-#'     string 'YYY', that will be replaced by the contrast name.
-#' @param excel_sheet Name the excel sheet.
+#' @param all_pairwise_result  Output from all_pairwise().
+#' @param extra_annot  Add some annotation information?
 #' @param csv  On some computers (Edson!) printing to excel runs the machine oom for big data sets.
-#' @param keepers List of reformatted table names to explicitly keep
+#' @param excel  Filename for the excel workbook, or null if not printed.
+#' @param excel_title  Title for the excel sheet(s).  If it has the
+#'     string 'YYY', that will be replaced by the contrast name.
+#' @param excel_sheet  Name the excel sheet.
+#' @param keepers  List of reformatted table names to explicitly keep
 #'     certain contrasts in specific orders and orientations.
-#' @param excludes List of columns and patterns to use for excluding genes.
-#' @param include_basic Include my stupid basic logFC tables?
-#' @param add_plots Add plots to the end of the sheets with expression values?
+#' @param adjp  Perhaps you do not want the adjusted p-values for plotting?
+#' @param excludes  List of columns and patterns to use for excluding genes.
+#' @param include_basic  Include my stupid basic logFC tables?
+#' @param add_plots  Add plots to the end of the sheets with expression values?
+#' @param plot_dim  Number of inches squared for the plot if added.
 #' @param compare_plots  In an attempt to save memory when printing to excel, make it possible to
 #'     exclude comparison plots in the summary sheet.
-#' @param plot_dim Number of inches squared for the plot if added.
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
 #' @examples
@@ -549,16 +550,18 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
 #' tools and formalizes some column names to make them a little more
 #' consistent.
 #'
-#' @param li Limma output table.
-#' @param ed Edger output table.
-#' @param de Deseq2 output table.
-#' @param ba Basic output table.
-#' @param table_name Name of the table to merge.
-#' @param annot_df Add some annotation information?
-#' @param inverse Invert the fold changes?
-#' @param include_basic Include the basic table?
-#' @param fc_cutoff Preferred logfoldchange cutoff.
-#' @param p_cutoff Preferred pvalue cutoff.
+#' @param li  Limma output table.
+#' @param ed  Edger output table.
+#' @param de  Deseq2 output table.
+#' @param ba  Basic output table.
+#' @param table_name  Name of the table to merge.
+#' @param annot_df  Add some annotation information?
+#' @param inverse  Invert the fold changes?
+#' @param adjp  Use adjusted p-values?
+#' @param include_basic  Include the basic table?
+#' @param fc_cutoff  Preferred logfoldchange cutoff.
+#' @param p_cutoff  Preferred pvalue cutoff.
+#' @param excludes  Set of genes to exclude from the output.
 #' @return List containing a) Dataframe containing the merged
 #'     limma/edger/deseq/basic tables, and b) A summary of how many
 #'     genes were observed as up/down by output table.
@@ -748,16 +751,19 @@ extract_siggenes <- function(...) { extract_significant_genes(...) }
 #' have the largest fold changes, lowest p-values, fall outside a
 #' z-score, or are at the top/bottom of the ranked list.
 #'
-#' @param combined Output from combine_de_tables().
-#' @param according_to What tool(s) decide 'significant?'  One may use
-#'     the deseq, edger, limma, basic, meta, or all.
-#' @param fc Log fold change to define 'significant'.
-#' @param p (Adjusted)p-value to define 'significant'.
-#' @param z Z-score to define 'significant'.
-#' @param n Take the top/bottom-n genes.
-#' @param p_type use an adjusted p-value?
-#' @param excel Write the results to this excel file, or NULL.
-#' @param csv Write csv instead of xlsx when running OOM.
+#' @param combined  Output from combine_de_tables().
+#' @param according_to  What tool(s) decide 'significant?'  One may use
+#'        the deseq, edger, limma, basic, meta, or all.
+#' @param fc  Log fold change to define 'significant'.
+#' @param p  (Adjusted)p-value to define 'significant'.
+#' @param sig_bar  Add bar plots describing various cutoffs of 'significant'?
+#' @param z  Z-score to define 'significant'.
+#' @param n  Take the top/bottom-n genes.
+#' @param ma  Add ma plots to the sheets of 'up' genes?
+#' @param p_type  use an adjusted p-value?
+#' @param csv  Write csv instead of xlsx when running OOM.
+#' @param excel  Write the results to this excel file, or NULL.
+#' @param siglfc_cutoffs  Set of cutoffs used to define levels of 'significant.'
 #' @return The set of up-genes, down-genes, and numbers therein.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
@@ -1042,12 +1048,13 @@ extract_significant_genes <- function(combined,
 #' I found myself needing to reprint these excel sheets because I
 #' added some new information. This shortcuts that process for me.
 #'
-#' @param upsdowns Output from extract_significant_genes().
-#' @param wb Workbook object to use for writing, or start a new one.
-#' @param excel Filename for writing the data.
-#' @param csv Write a csv instead/also?
-#' @param according Use limma, deseq, or edger for defining 'significant'.
-#' @param summary_count For spacing sequential tables one after another.
+#' @param upsdowns  Output from extract_significant_genes().
+#' @param wb  Workbook object to use for writing, or start a new one.
+#' @param excel  Filename for writing the data.
+#' @param csv  Write a csv instead/also?
+#' @param according  Use limma, deseq, or edger for defining 'significant'.
+#' @param summary_count  For spacing sequential tables one after another.
+#' @param ma  Include ma plots?
 #' @return Return from write_xls.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export

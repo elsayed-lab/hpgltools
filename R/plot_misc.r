@@ -51,7 +51,13 @@ plot_spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
 #' Make hypotrochoid plots!
 #'
 #' 3,7,1 should give the classic 7 leaf clover
-plot_hypotrochoid <- function(radius_a=7, radius_b=1, dist_b=5, revolutions=7, increments=6480) {
+#'
+#' @param radius_a  Radius of the major circle
+#' @param radius_b  And the smaller circle.
+#' @param dist_b between b and the drawing point.
+#' @param revolutions  How many times to revolve through the spirograph.
+#' @param increments  How many dots to lay down while writing.
+plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1, revolutions=7, increments=6480) {
     points <- seq(0, revolutions * increments)
     radians <- points / (2 * pi)
     getx <- function(t) {
@@ -83,6 +89,12 @@ plot_hypotrochoid <- function(radius_a=7, radius_b=1, dist_b=5, revolutions=7, i
 #' Make epitrochoid plots!
 #'
 #' 7, 2, 6, 7 should give a pretty result.
+#'
+#' @param radius_a  Radius of the major circle
+#' @param radius_b  And the smaller circle.
+#' @param dist_b between b and the drawing point.
+#' @param revolutions  How many times to revolve through the spirograph.
+#' @param increments  How many dots to lay down while writing.
 plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6, revolutions=7, increments=6480) {
     points <- seq(0, revolutions * increments)
     radians <- points / (2 * pi)

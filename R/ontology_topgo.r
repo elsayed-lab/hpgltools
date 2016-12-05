@@ -12,10 +12,11 @@
 #' @param sigforall Provide the significance for all nodes?
 #' @param numchar Character limit for the table of results.
 #' @param selector Function name for choosing genes to include.
+#' @param pval_column Column from which to acquire scores.
 #' @param overwrite Yeah I do not remember this one either.
 #' @param densities Densities, yeah, the densities...
 #' @param pval_plots Include pvalue plots of the results a la clusterprofiler?
-#' @param pval_column Column from which to acquire scores.
+#' @param parallel  Perform some operations in parallel to speed this up?
 #' @param ... Other options which I do not remember right now!
 #' @return Big list including the various outputs from topgo
 #' @export

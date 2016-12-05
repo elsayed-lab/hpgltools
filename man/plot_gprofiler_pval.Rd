@@ -18,6 +18,8 @@ plot_gprofiler_pval(gp_result, wrapped_width = 30, cutoff = 0.1, n = 30,
 
 \item{group_minsize}{Minimum ontology group size to include.}
 
+\item{scorer}{Which column to use for scoring the data.}
+
 \item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{

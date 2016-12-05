@@ -8,7 +8,7 @@
 #' @param type Function name used for extracting data from TxDb objects.
 #' @param id Column from the resulting data structure to extract gene IDs.
 #' @param possible_types Character list of types I have previously used.
-#' @param possible_ids Corresponding IDs for the above types.
+#' @param ...  More arguments are passed to arglist.
 #' @return Dataframe containing 2 columns: ID, length
 #' @export
 extract_lengths <- function(db=NULL, gene_list=NULL,
@@ -16,6 +16,7 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
                             possible_types=c("GenomicFeatures::genes",
                                     "GenomicFeatures::cds",
                                     "GenomicFeatures::transcripts"), ...) {
+    arglist <- list(...)
     ## The 3 ids correspond to the columns produced by genes/cds/transcripts respectively which contain the IDs
     ## If one is overwritten, the other should be, too
     tmpdb <- db

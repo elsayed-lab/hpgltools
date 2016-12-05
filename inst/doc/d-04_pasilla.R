@@ -96,3 +96,6 @@ norm_metrics$disheat
 norm_metrics$smd
 norm_metrics$pcaplot
 
+## ----sysinfo, results='asis'---------------------------------------------
+pander::pander(sessionInfo())
+

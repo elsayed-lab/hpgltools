@@ -10,6 +10,8 @@ plot_ontpval(df, ontology = "MF", fontsize = 16)
 \item{df}{Some data from topgo/goseq/clusterprofiler.}
 
 \item{ontology}{Ontology to plot (MF,BP,CC).}
+
+\item{fontsize}{Fiddling with the font size may make some plots more readable.}
 }
 \value{
 Ggplot2 plot of pvalues vs. ontology.

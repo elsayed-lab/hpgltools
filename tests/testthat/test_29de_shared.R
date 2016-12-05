@@ -150,23 +150,21 @@ test_that("Does combine_de_tables create an excel file?", {
 
 ## We previously checked that we can successfully combine tables, let us now ensure that plots get created etc.
 ## Check that there are some venn plots in the excel workbook:
-expected <- "recordedplot"
-actual <- class(combined_excel[["venns"]][["treatment"]][["up_noweight"]])
-test_that("Are venn plots getting generated for the excel sheets?", {
-    expect_equal(expected, actual)
-})
+##expected <- "recordedplot"
+##actual <- class(combined_excel[["venns"]][["treatment"]][["up_noweight"]])
+##test_that("Are venn plots getting generated for the excel sheets?", {
+##    expect_equal(expected, actual)
+##})
 
 expected <- "gg"
 actual <- class(combined_excel$limma_plots$treatment$scatter)[[1]]
 test_that("Do we get a pretty limma scatter plot?", {
     expect_equal(expected, actual)
 })
-
 actual <- class(combined_excel$deseq_plots$treatment$scatter)[[1]]
 test_that("Do we get a pretty deseq scatter plot?", {
     expect_equal(expected, actual)
 })
-
 actual <- class(combined_excel$edger_plots$treatment$scatter)[[1]]
 test_that("Do we get a pretty edger scatter plot?", {
     expect_equal(expected, actual)

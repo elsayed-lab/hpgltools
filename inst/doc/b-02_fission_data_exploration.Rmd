@@ -4,14 +4,17 @@ author: "atb abelew@gmail.com"
 date: "`r Sys.Date()`"
 output:
  html_document:
-  theme: cosmo
-  highlight: tango
+  code_download: true
+  code_folding: show
+  fig_caption: true
   fig_height: 7
   fig_width: 7
-  fig_caption: true
-  code_folding: show
+  highlight: default
+  keep_md: false
+  mode: selfcontained
+  number_sections: true
   self_contained: true
-  keep_md: true
+  theme: readable
   toc: true
   toc_float:
     collapsed: false
@@ -192,7 +195,7 @@ We have some tools which provide visualizations of the distribution of
 the data:
 
 ```{r distributions}
-fision_boxplot <- sm(plot_boxplot(fission_expt))
+fission_boxplot <- sm(plot_boxplot(fission_expt))
 fission_boxplot
 sf_expt <- sm(normalize_expt(fission_expt, norm="sf"))
 fission_boxplot <- sm(plot_boxplot(sf_expt))
@@ -239,14 +242,20 @@ fission_dis$plot
 A new toy I have been introduced to is variancePartition, let us try that with this data.
 
 ```{r variancePartition}
-test_varpart <- varpart(fission_expt)
+test_varpart <- varpart(fission_expt, predictor=NULL, factors=c("condition","batch"))
 test_varpart$percent_plot
 test_varpart$partition_plot
 
 ## Here, let us test the variance contributed by strain, time, and replicate.
-test_varpart <- varpart(fission_expt, factors=c("strain","minute","replicate"))
+test_varpart <- varpart(fission_expt, predictor=NULL, factors=c("condition", "strain", "minute", "replicate"))
 test_varpart$percent_plot
 test_varpart$partition_plot
 ```
 
 YAY!
+
+[index.html](index.html)
+
+```{r sysinfo, results='asis'}
+pander::pander(sessionInfo())
+```

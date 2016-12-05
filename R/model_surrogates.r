@@ -12,13 +12,14 @@
 #' or whatever).  Finally, it prints a couple of the plots shown by Leek in his document.
 #' In other words, this is entirely derivative of someone much smarter than me.
 #'
-#' @param expt Raw experiment object
-#' @param estimate_type One of sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
-#'     ruv_residuals, or pca.
-#' @param surrogates Choose a method for getting the number of surrogates, be or leek.
-#' @param ... Parameters fed to arglist.
+#' @param data  Expt or data frame to manipulate.
+#' @param design  If the data is not an expt, provide the experimental design here.
+#' @param estimate_type  One of sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
+#'        ruv_residuals, or pca.
+#' @param surrogates  Choose a method for getting the number of surrogates, be, leek, or a number.
+#' @param ...  Parameters fed to arglist.
 #' @return List including the adjustments for a model matrix, a modified count table, and 3 plots of
-#'     the known batch, surrogates, and batch/surrogate.
+#'        the known batch, surrogates, and batch/surrogate.
 #' @export
 get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates="be", ...) {
     arglist <- list(...)

@@ -6,7 +6,10 @@
 \usage{
 plot_heatplus(fundata)
 }
+\arguments{
+\item{fundata}{A data frame to plot.}
+}
 \description{
-Potential replacement for heatmap.2 based plots.
+Heatplus is an interesting tool, I have a few examples of using it and intend to include them here.
 }
 

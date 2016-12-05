@@ -15,17 +15,18 @@ deseq_pairwise <- function(...) {
 #'
 #' Invoking DESeq2 is confusing, this should help.
 #'
-#' @param input Dataframe/vector or expt class containing data, normalization state, etc.
-#' @param conditions Factor of conditions in the experiment.
-#' @param batches Factor of batches in the experiment.
-#' @param alt_model Provide an arbitrary model here.
-#' @param extra_contrasts Provide extra contrasts here.
-#' @param model_cond Is condition in the experimental model?
-#' @param model_batch Is batch in the experimental model?
+#' @param input  Dataframe/vector or expt class containing data, normalization state, etc.
+#' @param conditions  Factor of conditions in the experiment.
+#' @param batches  Factor of batches in the experiment.
+#' @param model_cond  Is condition in the experimental model?
+#' @param model_batch  Is batch in the experimental model?
 #' @param model_intercept  Use an intercept model?  DESeq seems to not be a fan of them.
-#' @param annot_df Include some annotation information in the results?
-#' @param force Force deseq to accept data which likely violates its assumptions.
-#' @param ... triple dots!  Options are passed to arglist.
+#' @param alt_model  Provide an arbitrary model here.
+#' @param extra_contrasts  Provide extra contrasts here.
+#' @param annot_df  Include some annotation information in the results?
+#' @param force  Force deseq to accept data which likely violates its assumptions.
+#' @param deseq_method  The DESeq2 manual shows a few ways to invoke it, I make 2 of them available here.
+#' @param ...  Triple dots!  Options are passed to arglist.
 #' @return List including the following information:
 #'   run = the return from calling DESeq()
 #'   denominators = list of denominators in the contrasts

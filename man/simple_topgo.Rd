@@ -39,6 +39,8 @@ simple_topgo(de_genes, goid_map = "id2go.map", goids_df = NULL,
 
 \item{pval_plots}{Include pvalue plots of the results a la clusterprofiler?}
 
+\item{parallel}{Perform some operations in parallel to speed this up?}
+
 \item{...}{Other options which I do not remember right now!}
 }
 \value{

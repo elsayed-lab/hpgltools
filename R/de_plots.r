@@ -2,13 +2,12 @@
 #'
 #' Yay pretty colors and shapes!
 #'
-#' @param output  The result from all_pairwise(), which should be changed to handle other invocations too.
+#' @param pairwise  The result from all_pairwise(), which should be changed to handle other invocations too.
+#' @param type  Type of table to use: deseq, edger, limma, basic.
 #' @param table  Result from edger to use, left alone it chooses the first.
-#' @param fc_col  Column for logFC data.
-#' @param p_col  Column to use for p-value data.
-#' @param expr_col  Column for the average data.
-#' @param fc  Fold change cutoff on the up and down defining significant.
-#' @param pval_cutoff  And the p-value cutoff.
+#' @param fc  Cutoff for log2(fold-change) significant.
+#' @param pval_cutoff  Cutoff to define 'significant' by p-value.
+#' @param ...  Extra arguments are passed to arglist.
 #' @return a plot!
 #' @seealso \link{plot_ma_de}
 #' @examples
@@ -26,7 +25,7 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
         expr_col <- "logCPM"
         p_col <- "FDR"
     } else if (type == "deseq") {
-        expr_col <- "logExpr"
+        expr_col <- "baseMean"  ## This column will need to be changed from base 10 to log scale.
         p_col <- "adj.P.Val"
     } else if (type == "limma") {
         expr_col <- "AveExpr"
@@ -84,20 +83,27 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
     }
 
     if (is.numeric(table)) {
-        table <- possible_tables[[table]]
+        the_table <- possible_tables[[table]]
+    } else {
+        the_table <- table
+        revname <- strsplit(x=table, split="_vs_")
+        revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
+        if (!(table %in% possible_tables) & revname %in% possible_tables) {
+            message("Trey you doofus, you reversed the name of the table.")
+            the_table <- revname
+        } else if (!(table %in% possible_tables) & !(revname %in% possible_tables)) {
+            stop("Unable to find the table in the set of possible tables.")
+        }
     }
-    revname <- strsplit(x=table, split="_vs_")
-    revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
-    if (!(table %in% possible_tables) & revname %in% possible_tables) {
-        message("Trey you doofus, you reversed the name of the table.")
-        table <- revname
-    } else if (!(table %in% possible_tables) & !(revname %in% possible_tables)) {
-        stop("Unable to find the table in the set of possible tables.")
+    the_table <- all_tables[[the_table]]
+    ## DESeq2 returns the median values as base 10, but we are using log2 (or log10?)
+    if (type == "deseq") {
+        the_table[["log_basemean"]] <- log2(x=the_table[[expr_col]] + 1.0)
+        expr_col <- "log_basemean"
     }
-    the_table <- all_tables[[table]]
 
     ma_material <- plot_ma_de(table=the_table, expr_col=expr_col, fc_col=fc_col,
-                              p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff, ...)
+                              p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff) ##, ...)
     return(ma_material)
 }
 
