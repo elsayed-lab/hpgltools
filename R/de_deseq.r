@@ -193,13 +193,30 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     deseq_run <- NULL
     if (deseq_method == "short") {
         message("DESeq steps 2-4 in one shot.")
-        deseq_run <- DESeq2::DESeq(dataset)
+        deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric"))
+        if (class(deseq_run) == "try-error") {
+            deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"))
+            if (class(deseq_run) == "try-error") {
+                warning("Neither the default(parametric) nor mean fitting worked.  Something is very wrong.")
+            } else {
+                message("Using a mean fitting seems to have worked.  You may be able to ignore the previous error.")
+            }
+        }
     } else {
         ## If making a model ~0 + condition -- then must set betaPrior=FALSE
         message("DESeq2 step 2/5: Estimate size factors.")
         deseq_sf <- DESeq2::estimateSizeFactors(dataset)
         message("DESeq2 step 3/5: Estimate dispersions.")
-        deseq_disp <- DESeq2::estimateDispersions(deseq_sf, fitType="parametric")
+        deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="parametric"))
+        if (class(deseq_disp) == "try-error") {
+            message("Trying a mean fitting.")
+            deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="mean"))
+            if (class(deseq_disp) == "try-error") {
+                warning("Neither the default(parametric) nor mean fitting worked.  Something is very wrong.")
+            } else {
+                message("Using a mean fitting seems to have worked.  You may be able to ignore the previous error.")
+            }
+        }
         ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
         message("DESeq2 step 4/5: nbinomWaldTest.")
         ## deseq_run <- DESeq2::DESeq(deseq_disp)

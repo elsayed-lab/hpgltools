@@ -668,7 +668,12 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         "sampleid" = rownames(expt_design))
     rownames(factor_df) <- rownames(expt_design)
     for (fact in expt_factors) {
-        factor_df[fact] <- as.numeric(as.factor(as.character(expt_design[, fact])))
+        if (!is.null(expt_design[[fact]])) {
+            factor_df[[fact]] <- as.numeric(as.factor(as.character(expt_design[, fact])))
+        } else {
+            message(paste0("The column ", fact, " seems to be missing from the design."))
+            message(paste0("The available columns are: ", toString(colnames(expt_design)), "."))
+        }
     }
     factor_df <- factor_df[, -1, drop=FALSE]
     ## fit_one = data.frame()
