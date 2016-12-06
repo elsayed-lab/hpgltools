@@ -75,8 +75,11 @@ download_gbk <- function(accessions, write=TRUE) {
         }
 
         URL <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=",
-                      paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
-        scanned <- try(scan(file=URL, what="", sep="\n", quiet=TRUE))
+                     paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
+
+        dl_file <- paste0(accessions[1], ".gb")
+        data <- try(download.file(url=URL, destfile=dl_file, method="wget"))
+        scanned <- try(scan(file=dl_file, what="", sep="\n"))
         if (class(scanned) != "try-error") {
             downloaded <- c(downloaded, scanned)
             num_downloaded <- num_downloaded + 1
@@ -93,3 +96,5 @@ download_gbk <- function(accessions, write=TRUE) {
         "strings" = strings)
     return(retlist)
 }
+
+## EOF

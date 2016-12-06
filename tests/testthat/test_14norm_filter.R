@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("14norm_filter.R: Are normalizations consistent over time (Filtering)?\n")
@@ -63,11 +64,13 @@ test_that("cv filtering leaves behind the expected number of genes?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-expected <- c(9784, 7)
+expected <- c(10153, 7)
 pasilla_filter <- sm(normalize_expt(pasilla_expt, filter="simple"))
 actual <- dim(Biobase::exprs(pasilla_filter[["expressionset"]]))
 test_that("simple filtering leaves behind the expected number of genes?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-message("\nFinished 14norm_filter.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 14norm_filter.R in ", elapsed,  " seconds."))

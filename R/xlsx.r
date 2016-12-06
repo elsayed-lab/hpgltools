@@ -90,7 +90,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     colnames(data) <- obnoxious
     wtf <- try(openxlsx::writeDataTable(wb, sheet, data, startCol=new_col,
                                         startRow=new_row, tableStyle="TableStyleMedium9",
-                                        rowNames=TRUE, colNames=TRUE))
+                                        rowNames=rownames, colNames=TRUE))
     new_row <- new_row + nrow(data) + 2
     ## Set the column lengths, hard set the first to 20,
     ## then try to set it to auto if the length is not too long.
@@ -110,4 +110,3 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
         "end_col" = end_col)
     return(ret)
 }
-

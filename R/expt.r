@@ -32,7 +32,8 @@
 #' ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
-create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_colors=NULL, title=NULL, notes=NULL,
+create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
+                        sample_colors=NULL, title=NULL, notes=NULL,
                         include_type="all", include_gff=NULL,
                         savefile="expt", low_files=FALSE, ...) {
     arglist <- list(...)  ## pass stuff like sep=, header=, etc here
@@ -120,7 +121,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     ## as the rownames(), then one gets the following error:  new("AnnotatedDataFrame", ttt), which is utter BS.
     ## Ergo, if I have my sample IDs as the rownames _and_ as a column titled 'sampleid', it will now fail to create the ExpressionSet.  Go put down your fasces.
     ## In any event, I can therefore either remove the sampleid column or change it in some way.
-    sample_definitions[[sample_column]] <- paste0("s", sample_definitions[[sample_column]])
+    ##sample_definitions[[sample_column]] <- paste0("s", sample_definitions[[sample_column]])
     sample_columns_to_remove <- NULL
     for (col in 1:length(colnames(sample_definitions))) {
         sum_na <- sum(is.na(sample_definitions[[col]]))
@@ -166,45 +167,16 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
     sample_definitions[["condition"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=sample_definitions[["condition"]])
     sample_definitions[["batch"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=sample_definitions[["batch"]])
 
-    ## Make sure we have a viable set of colors for plots
-    ## First figure out how many conditions we have
-    chosen_colors <- as.character(sample_definitions[["condition"]])
-    num_conditions <- length(condition_names)
-    ## And also the number of samples
-    num_samples <- nrow(sample_definitions)
-    if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
-        ## Thus if we have a numer of colors == the number of samples, set each sample with its own color
-        chosen_colors <- sample_colors
-    } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
-        ## If instead there are colors == number of conditions, set them appropriately.
-        mapping <- setNames(sample_colors, unique(chosen_colors))
-        chosen_colors <- mapping[chosen_colors]
-    } else if (is.null(sample_colors)) {
-        ## If nothing is provided, let RColorBrewer do it.
-        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
-            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
-        mapping <- setNames(sample_colors, unique(chosen_colors))
-        chosen_colors <- mapping[chosen_colors]
-    } else {
-        ## If none of the above are true, then warn the user and let RColorBrewer do it.
-        warning("The number of colors provided does not match either the number of conditions nor samples.")
-        warning("Unsure of what to do, so choosing colors with RColorBrewer.")
-        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
-            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
-        mapping <- setNames(sample_colors, unique(chosen_colors))
-        chosen_colors <- mapping[chosen_colors]
-    }
-    ## Set the color names
-    names(chosen_colors) <- sample_definitions[[sample_column]]
-
     ## Explicitly skip those samples which are "", null, or "undef" for the filename.
-    skippers <- (sample_definitions[[file_column]] == "" |
-                 is.null(sample_definitions[[file_column]]) |
-                 is.na(sample_definitions[[file_column]]) |
-                 sample_definitions[[file_column]] == "undef")
-    if (length(skippers) > 0) {
-        ## If there is nothing to skip, do not try.
-        sample_definitions <- sample_definitions[!skippers, ]
+    if (is.null(count_dataframe)) {
+        skippers <- (sample_definitions[[file_column]] == "" |
+                     is.null(sample_definitions[[file_column]]) |
+                     is.na(sample_definitions[[file_column]]) |
+                     sample_definitions[[file_column]] == "undef")
+        if (length(skippers) > 0) {
+            ## If there is nothing to skip, do not try.
+            sample_definitions <- sample_definitions[!skippers, ]
+        }
     }
 
     ## Create a matrix of counts with columns as samples and rows as genes
@@ -325,10 +297,18 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
             ## This column is empty.
             columns_to_remove <- append(columns_to_remove, col)
         }
+        ## While we are looping through the columns,
+        ## Make certain that no columns in gene_info are lists or factors.
+        if (class(gene_info[[col]]) == "factor" |
+            class(gene_info[[col]]) == "AsIs" |
+            class(gene_info[[col]]) == "list") {
+            gene_info[[col]] <- as.character(gene_info[[col]])
+        }
     }
     if (length(columns_to_remove) > 0) {
         gene_info <- gene_info[-columns_to_remove]
     }
+
     ## There should no longer be blank columns in the annotation data.
     ## Maybe I will copy/move this to my annotation collection toys?
     tmp_countsdt <- data.table::as.data.table(all_count_tables)
@@ -364,6 +344,38 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
         less_than <- final_counts < 0
         final_counts[less_than] <- 0
     }
+
+    ## I moved the color choices to this area pretty late in the process to make sure that there was time to remove unused samples.
+    ## Make sure we have a viable set of colors for plots
+    ## First figure out how many conditions we have
+    chosen_colors <- as.character(sample_definitions[["condition"]])
+    num_conditions <- length(condition_names)
+    ## And also the number of samples
+    num_samples <- nrow(sample_definitions)
+    if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
+        ## Thus if we have a numer of colors == the number of samples, set each sample with its own color
+        chosen_colors <- sample_colors
+    } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
+        ## If instead there are colors == number of conditions, set them appropriately.
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    } else if (is.null(sample_colors)) {
+        ## If nothing is provided, let RColorBrewer do it.
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    } else {
+        ## If none of the above are true, then warn the user and let RColorBrewer do it.
+        warning("The number of colors provided does not match either the number of conditions nor samples.")
+        warning("Unsure of what to do, so choosing colors with RColorBrewer.")
+        sample_colors <- suppressWarnings(grDevices::colorRampPalette(
+            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        mapping <- setNames(sample_colors, unique(chosen_colors))
+        chosen_colors <- mapping[chosen_colors]
+    }
+    ## Set the color names
+    names(chosen_colors) <- sample_definitions[[sample_column]]
 
     ## Perhaps I do not understand something about R's syntactic sugar
     ## Given a data frame with columns bob, jane, alice -- but not foo
@@ -454,6 +466,10 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL, sample_c
 }
 
 #' An alias to expt_subset, because it is stupid to have something start with verbs and others start with nouns.
+#'
+#' This just calls expt_subset.
+#'
+#' @param ...  All arguments are passed to expt_subset.
 #' @export
 subset_expt <- function(...) {
     expt_subset(...)
@@ -653,6 +669,14 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
                                            RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
         mapping <- setNames(sample_colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
+    } else if (class(colors) == "list") {
+        ## In this instance, we are changing specific colors to the provided colors.
+        chosen_colors <- expt[["colors"]]
+        for (snum in 1:length(names(colors))) {
+            sampleid <- names(colors)[snum]
+            sample_color <- colors[[snum]]
+            chosen_colors[[sampleid]] <- sample_color
+        }
     } else if (!is.null(colors) & length(colors) == num_samples) {
         chosen_colors <- colors
     } else if (!is.null(colors) & length(colors) == num_conditions) {
@@ -695,13 +719,14 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
 #' @param expt Expt to modify
 #' @param fact Conditions to replace
 #' @param ids Specific sample IDs to change.
+#' @param ...  Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
-set_expt_condition <- function(expt, fact, ids=NULL, ...) {
+set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
     arglist <- list(...)
     original_conditions <- expt[["conditions"]]
     original_length <- length(original_conditions)
@@ -804,8 +829,16 @@ set_expt_samplenames <- function(expt, newnames) {
     return(new_expt)
 }
 
-#'  Print a string describing what happened to this data.
+#' Print a string describing what happened to this data.
 #'
+#' Sometimes it is nice to have a string like: log2(cpm(data)) describing what happened to the data.
+#'
+#' @param expt  The expressionset.
+#' @param transform  How was it transformed?
+#' @param convert  How was it converted?
+#' @param norm  How was it normalized?
+#' @param filter  How was it filtered?
+#' @param batch  How was it batch-corrected?
 #' @export
 what_happened <- function(expt=NULL, transform="raw", convert="raw", norm="raw", filter="raw", batch="raw") {
     if (!is.null(expt)) {

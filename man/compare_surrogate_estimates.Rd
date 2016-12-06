@@ -4,7 +4,8 @@
 \alias{compare_surrogate_estimates}
 \title{Perform a comparison of the surrogate estimators demonstrated by Jeff Leek.}
 \usage{
-compare_surrogate_estimates(expt, extra_factors = NULL, do_catplots = FALSE)
+compare_surrogate_estimates(expt, extra_factors = NULL, do_catplots = FALSE,
+  surrogates = "be")
 }
 \arguments{
 \item{expt}{Experiment containing a design and other information.}
@@ -13,6 +14,8 @@ compare_surrogate_estimates(expt, extra_factors = NULL, do_catplots = FALSE)
 the data.}
 
 \item{do_catplots}{Include the catplots?  They don't make a lot of sense yet, so probably no.}
+
+\item{surrogates}{Use 'be' or 'leek' surrogate estimates, or choose a number.}
 }
 \value{
 List of the results.

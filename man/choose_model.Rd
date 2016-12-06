@@ -10,6 +10,8 @@ choose_model(input, conditions, batches, model_batch = TRUE,
   ...)
 }
 \arguments{
+\item{input}{Input data used to make the model.}
+
 \item{conditions}{Factor of conditions in the putative model.}
 
 \item{batches}{Factor of batches in the putative model.}
@@ -28,6 +30,10 @@ choose_model(input, conditions, batches, model_batch = TRUE,
 
 \item{reverse}{Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
 to test.}
+
+\item{surrogates}{Number of or method used to choose the number of surrogate variables.}
+
+\item{...}{Further options are passed to arglist.}
 }
 \value{
 List including a model matrix and strings describing cell-means and intercept models.

@@ -20,6 +20,7 @@ normalize_counts <- function(data, design=NULL, norm="raw", ...) {
     ## I set norm_libsize at the bottom of the function
     ## but perhaps instead I should be using these libsizes?
     data_class <- class(data)[1]
+    norm_performed <- "raw"
     if (data_class == "expt") {
         design <- data[["design"]]
         count_table <- Biobase::exprs(data[["expressionset"]])

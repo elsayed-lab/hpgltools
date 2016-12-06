@@ -12,6 +12,8 @@ biomart_orthologs(gene_ids, first_species = "hsapiens",
 \arguments{
 \item{gene_ids}{List of gene IDs to translate.}
 
+\item{first_species}{Linnean species name for one species.}
+
 \item{second_species}{Linnean species name for the second species.}
 
 \item{host}{Ensembl server to query.}
@@ -21,8 +23,6 @@ biomart_orthologs(gene_ids, first_species = "hsapiens",
 \item{first_attributes}{Key(s) of the first database to use.}
 
 \item{second_attributes}{Key(s) of the second database to use.}
-
-\item{first_speciesde}{Linnean species name for one species.}
 }
 \value{
 Df of orthologs.

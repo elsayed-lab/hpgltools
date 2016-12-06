@@ -169,6 +169,11 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     return(retlist)
 }
 
+#' Potential replacement for heatmap.2 based plots.
+#'
+#' Heatplus is an interesting tool, I have a few examples of using it and intend to include them here.
+#'
+#' @param fundata   A data frame to plot.
 plot_heatplus <- function(fundata) {
     heatmap_data <- hpgl_cor(fundata)
     heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
@@ -177,10 +182,13 @@ plot_heatplus <- function(fundata) {
     ret <- grDevices::recordPlot()
 }
 
-## Taken from https://plot.ly/ggplot2/ggdendro-dendrograms/
-## Check out the following link for a neat dendrogram library.
-## http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning
-
+#' Taken from https://plot.ly/ggplot2/ggdendro-dendrograms/
+#'
+#' Check out the following link for a neat dendrogram library.
+#' http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning
+#'
+#' @param some_df  A data frame to heatmap using ggplot2.
+#' @return putatively a heatmap!
 ggplot2_heatmap <- function(some_df) {
     x <- as.matrix(scale(some_df))
     dd.col <- as.dendrogram(hclust(dist(x)))
@@ -807,3 +815,4 @@ heatmap.3 <- function (x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
     invisible(retval)
 }
 
+## EOF

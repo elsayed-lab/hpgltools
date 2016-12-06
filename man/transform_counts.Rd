@@ -8,7 +8,9 @@ transform_counts(count_table, design = NULL, transform = "raw",
   base = NULL, ...)
 }
 \arguments{
-\item{count_table}{A matrix of count data}
+\item{count_table}{A matrix of count data.}
+
+\item{design}{Sometimes the design is also required.}
 
 \item{transform}{A type of transformation to perform: log2/log10/log}
 

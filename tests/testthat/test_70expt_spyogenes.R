@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 library(pasilla)
@@ -15,16 +16,13 @@ mgas_expt <- sm(create_expt(count_dataframe=mgas_data$cdm_counts,
                              gene_info=mgas_data$gene_info))
 rm(mgas_data)
 
-expected_gene_names <- c("dnaA", "dnaN", "M5005_Spy_0003", "ychF", "pth", "trcF")
-actual_gene_names <- head(Biobase::fData(mgas_expt$expressionset)$Name)
+expected <- c("dnaA", "dnaN", "M5005_Spy_0003", "ychF", "pth", "trcF")
+actual <- head(Biobase::fData(mgas_expt$expressionset)$Name)
 test_that("Did the gene information load?", {
-    expect_equal(expected_gene_names, actual_gene_names)
+    expect_equal(expected, actual)
 })
 
 mgas_norm <- sm(normalize_expt(mgas_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=TRUE, batch="combat_scale", low_to_zero=TRUE))
-test_that("Are the expt notes and state maintained?", {
-    expect_match(object=mgas_norm$notes, regexp="log2\\(combat_scale\\(cbcbcpm\\(quant\\(filter\\(data\\)\\)\\)\\)\\)")
-})
 
 test_that("Is the filter state maintained?", {
     expect_equal("cbcb", mgas_norm$state$filter)
@@ -50,34 +48,39 @@ mgas_pairwise <- sm(all_pairwise(mgas_expt))
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
     mgas_data <- sm(gbk2txdb(accession="AE009949"))
-    actual_width <- GenomicRanges::width(mgas_data$seq)  ## This fails on travis?
-    expected_width <- 1895017
-    actual_exons <- as.data.frame(mgas_data$exons)
-    expected_num_exons <- 1845
-    actual_num_exons <- nrow(actual_exons)
-    expected_gene_names <- c("dnaA", "dnaN", NA, "pth", "trcF", NA)
-    actual_gene_names <- head(actual_exons$gene)
-
-    test_that("Can I extract the chromosome sequence from a genbank file?", {
-        expect_equal(expected_width, actual_width)
-        expect_equal(expected_num_exons, actual_num_exons)
-        expect_equal(expected_gene_names, actual_gene_names)
+    expected <- 1895017
+    actual <- GenomicRanges::width(mgas_data$seq)  ## This fails on travis?
+    actual_width <- actual
+    test_that("Can I extract the chromosome sequence from a genbank file? (widths)", {
+        expect_equal(expected, actual)
     })
 
-    actual_microbe_ids <- sm(as.character(get_microbesonline_ids("pyogenes MGAS5005")))
-    expected_microbe_ids <- c("293653", "Streptococcus pyogenes MGAS5005")
+    expected <- c(1845, 17)
+    actual <- dim(as.data.frame(mgas_data$exons))
+    test_that("Can I extract the chromosome sequence from a genbank file? (exons)", {
+        expect_equal(expected, actual)
+    })
+
+    expected <- c("dnaA", "dnaN", NA, "pth", "trcF", NA)
+    actual <- head(as.data.frame(mgas_data$gene)$gene)
+    test_that("Can I extract the chromosome sequence from a genbank file? (gene names)", {
+        expect_equal(expected, actual)
+    })
+
+    expected <- c("293653", "Streptococcus pyogenes MGAS5005")
+    actual <- sm(as.character(get_microbesonline_ids("pyogenes MGAS5005")))
     test_that("Can I get data from microbesonline?", {
-        expect_equal(expected_microbe_ids, actual_microbe_ids)
+        expect_equal(expected, actual)
     })
 
-    mgas_df <- sm(get_microbesonline_annotation(expected_microbe_ids[[1]])[[1]])
+    mgas_df <- sm(get_microbesonline_annotation(expected[[1]])[[1]])
     mgas_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df$sysName)
-
     rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
-    actual_mgas_names <- as.character(head(mgas_df$name))
-    expected_mgas_names <- c("dnaA","dnaN","M5005_Spy_0003","M5005_Spy_0004","pth","trcF")
+
+    expected <- c("dnaA","dnaN","M5005_Spy_0003","M5005_Spy_0004","pth","trcF")
+    actual <- as.character(head(mgas_df$name))
     test_that("Did the mgas annotations download?", {
-        expect_equal(expected_mgas_names, actual_mgas_names)
+        expect_equal(expected, actual)
     })
 
     ## Plot the coefficients of latelog glucose
@@ -95,4 +98,6 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     circos_made <- sm(circos_make(target="mgas"))
 }
 
-message("\nFinished 70expt_spyogenes.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 70expt_spyogenes.R in ", elapsed,  " seconds."))

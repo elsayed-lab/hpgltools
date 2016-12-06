@@ -10,6 +10,14 @@ expt_snp(expt, input_dir = "preprocessing/outputs",
 }
 \arguments{
 \item{expt}{an expressionset from which to extract information.}
+
+\item{input_dir}{Directory to scan for snps output files.}
+
+\item{file_suffix}{What to add on the end of the files for the resulting output.}
+
+\item{bam_suffix}{How do we find the bam files?}
+
+\item{tolower}{Lowercase stuff like 'HPGL'?}
 }
 \value{
 some stuff

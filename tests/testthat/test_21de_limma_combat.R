@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("21de_limma_combat.R: Does limma with combat work with hpgltools?\n")
@@ -194,4 +195,6 @@ test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
 
 save(list=ls(), file="de_limma_combat.rda")
 
-message("\nFinished 21de_limma_combat.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 21de_limma_combat.R in ", elapsed,  " seconds."))

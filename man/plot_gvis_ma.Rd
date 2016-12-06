@@ -4,14 +4,12 @@
 \alias{plot_gvis_ma}
 \title{Make an html version of an MA plot: M(log ratio of conditions) / A(mean average).}
 \usage{
-plot_gvis_ma(counts, degenes, tooltip_data = NULL,
-  filename = "html/gvis_ma_plot.html", base_url = "", ...)
+plot_gvis_ma(df, tooltip_data = NULL, filename = "html/gvis_ma_plot.html",
+  base_url = "", ...)
 }
 \arguments{
-\item{counts}{Df of counts which have been normalized counts by sample-type, which is to say the
+\item{df}{Data frame of counts which have been normalized counts by sample-type, which is to say the
 output from voom/voomMod/hpgl_voom().}
-
-\item{degenes}{Df from toptable or its friends containing p-values.}
 
 \item{tooltip_data}{Df of tooltip information (gene names, etc).}
 
@@ -23,7 +21,7 @@ output from voom/voomMod/hpgl_voom().}
 }
 \value{
 NULL, but along the way an html file is generated which contains a googleVis MA plot.
-    See plot_ma() for details.
+    See plot_de_ma() for details.
 }
 \description{
 A fun snippet from wikipedia: "In many microarray gene expression experiments, an underlying
@@ -34,11 +32,11 @@ statistical analysis. If the median line is not straight, the data should be nor
 }
 \examples{
 \dontrun{
- plot_gvis_ma(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
-                   base_url="http://yeastgenome.org/accession?")
+ plot_gvis_ma(df, filename="html/fun_ma_plot.html",
+              base_url="http://yeastgenome.org/accession?")
 }
 }
 \seealso{
-\link{plot_ma}
+\link{plot_ma_de}
 }
 

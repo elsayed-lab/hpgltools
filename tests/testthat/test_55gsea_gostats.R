@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("55gsea_gostats.R: Does GOstats work?\n")
@@ -27,17 +28,25 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
     gst_result <- sm(simple_gostats(sig_genes, gff_df=dmel, goids_df=dmel_ontologies, gff_type="protein_coding"))
     ## There is some run-to-run variability in these ontology searches
-    expected_gst_mf <- c("GO:0004252", "GO:0008236", "GO:0017171")
-    actual_gst_mf <- head(gst_result$mf_over_enriched$GOMFID, n=3)
-    expected_gst_bp <- c("GO:0006811", "GO:0055085", "GO:0055114")
-    actual_gst_bp <- head(gst_result$bp_over_enriched$GOBPID, n=3)
-    expected_gst_cc <- c("GO:0016021", "GO:0031224", "GO:0016020")
-    actual_gst_cc <- head(gst_result$cc_over_enriched$GOCCID, n=3)
-    test_that("Are the GOstats interesting results as expected?", {
-        expect_equal(expected_gst_mf, actual_gst_mf)
-        expect_equal(expected_gst_bp, actual_gst_bp)
-        expect_equal(expected_gst_cc, actual_gst_cc)
+    expected <- c("GO:0003824", "GO:0019840", "GO:0005044")
+    actual <- head(gst_result$mf_over_enriched$GOMFID, n=3)
+    test_that("Are the GOstats interesting results as expected? (MF)", {
+        expect_equal(expected, actual)
+    })
+
+    expected <- c("GO:0044699", "GO:0044710", "GO:0050896")
+    actual <- head(gst_result$bp_over_enriched$GOBPID, n=3)
+    test_that("Are the GOstats interesting results as expected? (BP)", {
+        expect_equal(expected, actual)
+    })
+
+    expected <- c("GO:0000421", "GO:0044665", "GO:0005776")
+    actual <- head(gst_result$cc_over_enriched$GOCCID, n=3)
+    test_that("Are the GOstats interesting results as expected? (CC)", {
+        expect_equal(expected, actual)
     })
 }
 
-message("\nFinished 55gsea_gostats.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 55gsea_gostats.R in ", elapsed,  " seconds."))

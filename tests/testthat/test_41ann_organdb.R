@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("41ann_organdb.R: Is it possible to create OrganismDbi instances using TriTrypDB data?\n")
@@ -13,3 +14,6 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
 }
 
 message("\nFinished 41ann_organdb.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 41ann_organdb.R in ", elapsed,  " seconds."))

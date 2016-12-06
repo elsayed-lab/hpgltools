@@ -15,11 +15,17 @@ hpgl_voom(dataframe, model = NULL, libsize = NULL,
 
 \item{libsize}{Size of the libraries (usually provided by edgeR).}
 
+\item{normalize.method}{Normalization method used in voom().}
+
+\item{span}{The span used in voom().}
+
 \item{stupid}{Cheat when the resulting matrix is not solvable?}
 
 \item{logged}{Is the input data is known to be logged?}
 
 \item{converted}{Is the input data is known to be cpm converted?}
+
+\item{...}{Extra arguments are passed to arglist.}
 }
 \value{
 EList containing the following information:

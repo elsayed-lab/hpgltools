@@ -1,3 +1,23 @@
+#' A minor change to limma's voom with quality weights to attempt to address some corner cases.
+#'
+#' This copies the logic employed in hpgl_voom().  I suspect one should not use it.
+#'
+#' @param data  Some data!
+#' @param fun_model  A model for voom() and arrayWeights()
+#' @param libsize  Library sizes passed to voom().
+#' @param normalize.method  Passed to voom()
+#' @param plot  Do the plot of mean variance?
+#' @param span  yes
+#' @param var.design maybe
+#' @param method kitty!
+#' @param maxiter 50 is good
+#' @param tol I have no tolerance.
+#' @param trace no trace for you.
+#' @param replace.weights  Replace the weights?
+#' @param col yay columns!
+#' @param ... more arguments!
+#' @return a voom return
+#' @export
 hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="none",
                             plot=TRUE, span=0.5, var.design=NULL, method="genebygene",
                             maxiter=50, tol=1E-10, trace=FALSE, replace.weights=TRUE,
@@ -18,9 +38,9 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
     }
     v <- hpgl_voom(data, model=fun_model, weights=aw, libsize=libsize,
                    normalize.method=normalize.method, plot=TRUE, span=span, ...)
-    aw <- arrayWeights(v, design=fun_model, method=method, maxiter=maxiter,
-                       tol=tol, trace=trace, var.design=var.design)
-    wts <- asMatrixWeights(aw, dim(v)) * v[["weights"]]
+    aw <- limma::arrayWeights(v, design=fun_model, method=method, maxiter=maxiter,
+                              tol=tol, trace=trace, var.design=var.design)
+    wts <- limma::asMatrixWeights(aw, dim(v)) * v[["weights"]]
     attr(wts, "arrayweights") <- NULL
     if (plot) {
         barplot(aw, names = 1:length(aw), main = "Sample-specific weights",
@@ -34,8 +54,7 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
         v[["barplot"]] <- voom_barplot
         v[["first_iter"]] <- v1
         return(v)
-    }
-    else {
+    } else {
         return(wts)
     }
 }
@@ -49,12 +68,15 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
 #' rather than throwing an unhelpful error.  Also, the Elist output gets a 'plot' slot which
 #' contains the plot rather than just printing it.
 #'
-#' @param dataframe Dataframe of sample counts which have been normalized and log transformed.
-#' @param model Experimental model defining batches/conditions/etc.
-#' @param libsize Size of the libraries (usually provided by edgeR).
-#' @param stupid Cheat when the resulting matrix is not solvable?
-#' @param logged Is the input data is known to be logged?
-#' @param converted Is the input data is known to be cpm converted?
+#' @param dataframe  Dataframe of sample counts which have been normalized and log transformed.
+#' @param model  Experimental model defining batches/conditions/etc.
+#' @param libsize  Size of the libraries (usually provided by edgeR).
+#' @param normalize.method  Normalization method used in voom().
+#' @param span  The span used in voom().
+#' @param stupid  Cheat when the resulting matrix is not solvable?
+#' @param logged  Is the input data is known to be logged?
+#' @param converted  Is the input data is known to be cpm converted?
+#' @param ...  Extra arguments are passed to arglist.
 #' @return EList containing the following information:
 #'   E = The normalized data
 #'   weights = The weights of said data
@@ -211,32 +233,33 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
 #' @param model_cond Include condition in the model?
 #' @param model_batch Include batch in the model? This is hopefully TRUE.
 #' @param model_intercept Perform a cell-means or intercept model? A little more difficult for me to
-#'     understand.  I have tested and get the same answer either way.
+#'  understand.  I have tested and get the same answer either way.
 #' @param extra_contrasts Some extra contrasts to add to the list.
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param alt_model Separate model matrix instead of the normal condition/batch.
-#' @param libsize I've recently figured out that libsize is far more important than I previously
-#'     realized.  Play with it here.
 #' @param annot_df Data frame for annotations.
+#' @param libsize I've recently figured out that libsize is far more important than I previously
+#'  realized.  Play with it here.
+#' @param force  Force data which may not be appropriate for limma into it?
 #' @param ... Use the elipsis parameter to feed options to write_limma().
 #' @return List including the following information:
-#'   macb = the mashing together of condition/batch so you can look at it
-#'   macb_model = The result of calling model.matrix(~0 + macb)
-#'   macb_fit =  The result of calling lmFit(data, macb_model)
-#'   voom_result = The result from voom()
-#'   voom_design = The design from voom (redundant from voom_result, but convenient)
-#'   macb_table = A table of the number of times each condition/batch pairing happens
-#'   cond_table = A table of the number of times each condition appears (the denominator for the identities)
-#'   batch_table = How many times each batch appears
-#'   identities = The list of strings defining each condition by itself
-#'   all_pairwise = The list of strings defining all the pairwise contrasts
-#'   contrast_string = The string making up the makeContrasts() call
-#'   pairwise_fits = The result from calling contrasts.fit()
-#'   pairwise_comparisons = The result from eBayes()
-#'   limma_result = The result from calling write_limma()
+#'  macb = the mashing together of condition/batch so you can look at it
+#'  macb_model = The result of calling model.matrix(~0 + macb)
+#'  macb_fit =  The result of calling lmFit(data, macb_model)
+#'  voom_result = The result from voom()
+#'  voom_design = The design from voom (redundant from voom_result, but convenient)
+#'  macb_table = A table of the number of times each condition/batch pairing happens
+#'  cond_table = A table of the number of times each condition appears (the denominator for the identities)
+#'  batch_table = How many times each batch appears
+#'  identities = The list of strings defining each condition by itself
+#'  all_pairwise = The list of strings defining all the pairwise contrasts
+#'  contrast_string = The string making up the makeContrasts() call
+#'  pairwise_fits = The result from calling contrasts.fit()
+#'  pairwise_comparisons = The result from eBayes()
+#'  limma_result = The result from calling write_limma()
 #' @seealso \link{write_limma}
 #' @examples
 #' \dontrun{
@@ -442,17 +465,20 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
         all_tables <- try(limma::topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
     }
     message("Limma step 6/6: Writing limma outputs.")
+    limma_identities <- NULL
+    limma_tables <- NULL
     if (isTRUE(model_intercept)) {
-        limma_result <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
+        limma_results <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
+        limma_identities <- limma_results[["identities"]]
+        limma_tables <- limma_results[["contrasts"]]
     } else {
-        limma_result <- all_tables
+        limma_tables <- all_tables
     }
-    all_table_names <- names(limma_result)
-    contrast_table_idx <- grepl(pattern="_vs_", x=all_table_names)
-    contrasts_performed <- all_table_names[contrast_table_idx]
+    contrasts_performed <- names(limma_tables)
     result <- list(
         "all_pairwise" = all_pairwise,
-        "all_tables" = limma_result,
+        "all_tables" = limma_tables,
+        "identity_tables" = limma_identities,
         "batches" = batches,
         "batches_table" = batch_table,
         "conditions" = conditions,
@@ -527,187 +553,6 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
     return(plots)
 }
 
-#' Perform a simple experimental/control comparison.
-#'
-#' This is a function written primarily to provide examples for how to use limma.
-#' It does the following:
-#' 1.  Makes a model matrix using condition/batch
-#' 2.  Optionally uses sva's combat (from cbcbSEQ)  3.  Runs voom/lmfit
-#' 4.  Sets the first element of the design to "changed" and the second to "control".
-#' 5.  Performs a makeContrasts() of changed - control.  6.  Fits them
-#' 7.  Makes histograms of the two elements of the contrast, cor.tests() them,
-#' makes a histogram of the p-values, ma-plot, volcano-plot, writes out the results in
-#' an excel sheet, pulls the up/down significant and p-value significant (maybe this should be
-#' replaced with write_limma()? 8.  And returns a list containining these data and plots.
-#' Currently this assumes that a variant of toptable was used which gives adjusted p-values.  This
-#' is not always the case and I should check for that, but I have not yet.
-#'
-#' @param subset Experimental subset with two conditions to compare.
-#' @param workbook Excel workbook to which to write.
-#' @param sheet Excel worksheet to which to write.
-#' @param basename Url to which to send click evens in clicky volcano/ma plots.
-#' @param batch Whether or not to include batch in limma's model.
-#' @param combat Whether or not to use combatMod().
-#' @param combat_noscale Whether or not to include combat_noscale (makes combat a little less heavy-handed).
-#' @param pvalue_cutoff P-value definition of 'significant.'
-#' @param logfc_cutoff Fold-change cutoff of significance. 0.6 on the low end and therefore 1.6 on the high.
-#' @param tooltip_data Text descriptions of genes if one wants google graphs.
-#' @param ... More parameters!
-#' @return A list containing the following pieces:
-#'   amean_histogram = a histogram of the mean values between the two conditions
-#'   coef_amean_cor = a correlation test between the mean values and coefficients (this should be a p-value of 1)
-#'   coefficient_scatter = a scatter plot of condition 2 on the y axis and condition 1 on x
-#'   coefficient_x = a histogram of the x axis
-#'   coefficient_y = a histogram of the y axis
-#'   coefficient_both = a histogram of both
-#'   coefficient_lm = a description of the line described by y=slope(y/x)+b where
-#'   coefficient_lmsummary = the r-squared and such information for the linear model
-#'   coefficient_weights = the weights against the linear model, higher weights mean closer to the line
-#'   comparisons = the result from eBayes()
-#'   contrasts = the result from contrasts.fit()
-#'   contrast_histogram = a histogram of the coefficients
-#'   downsignificant = a subset from toptable() of the 'down-regulated' genes (< 1 Z from the mean)
-#'   fit = the result from lmFit(voom_result)
-#'   ma_plot = an ma plot using the voom$E data and p-values
-#'   psignificant = a subset from toptable() of all genes with p-values <= pvalue_cutoff
-#'   pvalue_histogram = a histogram of all the p-values
-#'   table = everything from toptable()
-#'   upsignificant = a subset from toptable() of 'up-regulated' genes (> 1 Z from the mean)
-#'   volcano_plot = a volcano plot of x/y
-#'   voom_data = the result from calling voom()
-#'   voom_plot = a plot from voom(), redunant with voom_data
-#' @seealso \link{plot_gvis_ma} \link[limma]{toptable}
-#' \link[limma]{voom} \link{hpgl_voom}
-#' \link[limma]{lmFit} \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
-#' @examples
-#' \dontrun{
-#'  model = model.matrix(~ 0 + subset$conditions)
-#'  simple_comparison(subset, model)
-#' }
-#' @export
-simple_comparison <- function(subset, workbook="simple_comparison.xls", sheet="simple_comparison",
-                              basename=NA, batch=TRUE, combat=FALSE, combat_noscale=TRUE,
-                              pvalue_cutoff=0.05, logfc_cutoff=0.6, tooltip_data=NULL,
-                              ...) {
-    condition_model <- stats::model.matrix(~ 0 + subset[["condition"]])
-    if (length(levels(subset[["batch"]])) == 1) {
-        message("There is only one batch! I can only include condition in the model.")
-        condbatch_model <- stats::model.matrix(~ 0 + subset[["condition"]])
-    } else {
-        condbatch_model <- stats::model.matrix(~ 0 + subset[["condition"]] + subset[["batch"]])
-    }
-    if (isTRUE(batch)) {
-        model <- condbatch_model
-    } else {
-        model <- condition_model
-    }
-    expt_data <- as.data.frame(Biobase::exprs(subset[["expressionset"]]))
-    if (combat) {
-        ## expt_data = ComBat(expt_data, subset$batches, condition_model)
-        expt_data <- hpgl_combatMod(expt_data, subset[["batches"]], subset[["conditions"]])
-    }
-    expt_voom <- hpgl_voom(expt_data, model, libsize=subset[["original_libsize"]],
-                           logged=subset[["transform"]], converted=subset[["convert"]])
-    lf <- limma::lmFit(expt_voom)
-    colnames(lf[["coefficients"]])
-    coefficient_scatter <- plot_linear_scatter(lf[["coefficients"]])
-    colnames(lf[["design"]])[1] <- "changed"
-    colnames(lf[["coefficients"]])[1] <- "changed"
-    colnames(lf[["design"]])[2] <- "control"
-    colnames(lf[["coefficients"]])[2] <- "control"
-    ## Now make sure there are no weird characters in the column names...
-    if (length(colnames(lf[["design"]])) >= 3) {
-        for (counter in 3:length(colnames(lf[["design"]]))) {
-            oldname <- colnames(lf[["design"]])[counter]
-            newname <- gsub("\\$","_", oldname, perl=TRUE)
-            colnames(lf[["design"]])[counter] <- newname
-            colnames(lf[["coefficients"]])[counter] <- newname
-        }
-    }
-    contrast_matrix <- limma::makeContrasts(changed_v_control="changed-control", levels=lf[["design"]])
-    ## contrast_matrix = limma::makeContrasts(changed_v_control=changed-control, levels=lf$design)
-    cond_contrasts <- limma::contrasts.fit(lf, contrast_matrix)
-    hist_df <- data.frame(values=cond_contrasts[["coefficients"]])
-    contrast_histogram <- plot_histogram(hist_df)
-    hist_df <- data.frame("values" = cond_contrasts[["Amean"]])
-    amean_histogram <- plot_histogram(hist_df, fillcolor="pink", color="red")
-    coef_amean_cor <- stats::cor.test(cond_contrasts[["coefficients"]], cond_contrasts[["Amean"]], exact=FALSE)
-    cond_comparison <- limma::eBayes(cond_contrasts)
-    hist_df <- data.frame(values=cond_comparison[["p.value"]])
-    pvalue_histogram <- plot_histogram(hist_df, fillcolor="lightblue", color="blue")
-    cond_table <- limma::topTable(cond_comparison, number=nrow(expt_voom[["E"]]),
-                                  coef="changed_v_control", sort.by="logFC")
-    if (!is.na(basename)) {
-        vol_gvis_filename <- paste(basename, "volplot.html", sep="_")
-        a_volcano_plot <- plot_volcano(cond_table, gvis_filename=vol_gvis_filename,
-                                       tooltip_data=tooltip_data)
-    } else {
-        a_volcano_plot <- plot_volcano(cond_table)
-    }
-    if (!is.na(basename)) {
-        ma_gvis_filename <- paste(basename, "maplot.html", sep="_")
-        an_ma_plot <- plot_ma(expt_voom[["E"]], cond_table, gvis_filename=ma_gvis_filename,
-                              tooltip_data=tooltip_data)
-    } else {
-        an_ma_plot <- plot_ma(expt_voom[["E"]], cond_table)
-    }
-    xls_written <- write_xls(cond_table, sheet, file=workbook, rownames="row.names")
-    ## upsignificant_table = subset(cond_table, logFC >=  logfc_cutoff)
-    upsignificant_table <- cond_table[ which(cond_table[["logFC"]] >= logfc_cutoff), ]
-    ## downsignificant_table = subset(cond_table, logFC <= (-1.0 * logfc_cutoff))
-    downsignificant_table <- cond_table[ which(cond_table[["logFC"]] <= (-1.0 * logfc_cutoff)), ]
-    ## psignificant_table = subset(cond_table, adj.P.Val <= pvalue_cutoff)
-    ## psignificant_table = subset(cond_table, P.Value <= pvalue_cutoff)
-    psignificant_table <- cond_table[ which(cond_table[["P.Value"]] <= pvalue_cutoff), ]
-
-    message("The model looks like:")
-    message(model)
-    message("The mean:variance trend follows")
-    plot(expt_voom[["plot"]])
-    message("Drawing a scatterplot of the genes.")
-    message("The following statistics describe the relationship between:")
-    print(coefficient_scatter[["scatter"]])
-    message(paste("Setting the column:", colnames(lf[["design"]])[2], "to control"))
-    message(paste("Setting the column:", colnames(lf[["design"]])[1], "to changed"))
-    message("Performing contrasts of the experimental - control.")
-    message("Taking a histogram of the subtraction values.")
-    print(contrast_histogram)
-    message("Taking a histogram of the mean values across samples.")
-    message("The subtraction values should not be related to the mean values.")
-    print(coef_amean_cor)
-    message("Making a table of the data including p-values and F-statistics.")
-    message("Taking a histogram of the p-values.")
-    print(pvalue_histogram)
-    message("Printing a volcano plot of this data.")
-    message("Printing an maplot of this data.")
-    message(paste("Writing excel sheet:", sheet))
-
-    return_info <- list(
-        "amean_histogram" = amean_histogram,
-        "coef_amean_cor" = coef_amean_cor,
-        "coefficient_scatter" = coefficient_scatter$scatter,
-        "coefficient_x" = coefficient_scatter$x_histogram,
-        "coefficient_y" = coefficient_scatter$y_histogram,
-        "coefficient_both" = coefficient_scatter$both_histogram,
-        "coefficient_lm" = coefficient_scatter$lm_model,
-        "coefficient_lmsummary" = coefficient_scatter$lm_summary,
-        "coefficient_weights" = coefficient_scatter$lm_weights,
-        "comparisons" = cond_comparison,
-        "contrasts" = cond_contrasts,
-        "contrast_histogram" = contrast_histogram,
-        "downsignificant" = downsignificant_table,
-        "fit" = lf,
-        "ma_plot" = an_ma_plot,
-        "psignificant" = psignificant_table,
-        "pvalue_histogram" = pvalue_histogram,
-        "table" = cond_table,
-        "upsignificant" = upsignificant_table,
-        "volcano_plot" = a_volcano_plot,
-        "voom_data" = expt_voom,
-        "voom_plot" = expt_voom$plot)
-    return(return_info)
-}
-
 #' Writes out the results of a limma search using toptable().
 #'
 #' However, this will do a couple of things to make one's life easier:
@@ -746,19 +591,14 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
     } else {
         coef <- as.character(coef)
     }
+    return_identities <- list()
     return_data <- list()
     end <- length(coef)
     for (c in 1:end) {
         comparison <- coef[c]
         message(paste0("Limma step 6/6: ", c, "/", end, ": Creating table: ", comparison, "."))
         data_table <- limma::topTable(data, adjust=adjust, n=n, coef=comparison)
-        ## Reformat the numbers so they are not so obnoxious
-        ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
-        ## data_table$AveExpr <- refnum(data_table$AveExpr, sci=FALSE)
-        ## data_table$t <- refnum(data_table$t, sci=FALSE)
-        ## data_table$P.Value <- refnum(data_table$P.Value)
-        ## data_table$adj.P.Val <- refnum(data_table$adj.P.Val)
-        ## data_table$B <- refnum(data_table$B, sci=FALSE)
+        ## Take a moment to prettily format the numbers in the table.
         data_table[["logFC"]] <- signif(x=as.numeric(data_table[["logFC"]]), digits=4)
         data_table[["AveExpr"]] <- signif(x=as.numeric(data_table[["AveExpr"]]), digits=4)
         data_table[["t"]] <- signif(x=as.numeric(data_table[["t"]]), digits=4)
@@ -796,9 +636,16 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
             csv_filename <- paste0(csv_filename, "_", comparison, ".csv")
             write.csv(data_table, file=csv_filename)
         }
-        return_data[[comparison]] <- data_table
-    }
-    return(return_data)
+        if (grepl(pattern="_vs_", x=comparison)) {
+            return_data[[comparison]] <- data_table
+        } else {
+            return_identities[[comparison]] <- data_table
+        }
+    } ## End iterating over every table from limma.
+    retlist <- list(
+        "identities" = return_identities,
+        "contrasts" = return_data)
+    return(retlist)
 }
 
 ## EOF

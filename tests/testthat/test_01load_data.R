@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 library(pasilla)
@@ -88,4 +89,6 @@ test_that("Are the library sizes intact?", {
     expect_equal(expected, actual)
 })
 
-message("\nFinished 01load_data.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 01load_data.R in ", elapsed,  " seconds."))

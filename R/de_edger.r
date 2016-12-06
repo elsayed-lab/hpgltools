@@ -108,16 +108,48 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
         message("EdgeR steps 2 through 6/9: All in one!")
         final_norm <- edgeR::estimateDisp(norm, design=model_data, robust=TRUE)
     } else {
+        state <- TRUE
         message("EdgeR step 2/9: Estimating the common dispersion.")
-        disp_norm <- edgeR::estimateCommonDisp(norm)
-        message("EdgeR step 3/9: Estimating dispersion across genes.")
-        tagdisp_norm <- edgeR::estimateTagwiseDisp(disp_norm)
-        message("EdgeR step 4/9: Estimating GLM Common dispersion.")
-        glm_norm <- edgeR::estimateGLMCommonDisp(tagdisp_norm, model_data)
-        message("EdgeR step 5/9: Estimating GLM Trended dispersion.")
-        glm_trended <- edgeR::estimateGLMTrendedDisp(glm_norm, model_data)
-        message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
-        final_norm <- edgeR::estimateGLMTagwiseDisp(glm_trended, model_data)
+        disp_norm <- try(edgeR::estimateCommonDisp(norm))
+        if (class(disp_norm) == "try-error") {
+            warning("estimateCommonDisp() failed.  Trying again with estimateDisp().")
+            state <- FALSE
+        }
+        if (isTRUE(state)) {
+            message("EdgeR step 3/9: Estimating dispersion across genes.")
+            tagdisp_norm <- try(edgeR::estimateTagwiseDisp(disp_norm))
+            if (class(tagdisp_norm) == "try-error") {
+                warning("estimateTagwiseDisp() failed.  Trying again with estimateDisp().")
+                state <- FALSE
+            }
+        }
+        if (isTRUE(state)) {
+            message("EdgeR step 4/9: Estimating GLM Common dispersion.")
+            glm_norm <- try(edgeR::estimateGLMCommonDisp(tagdisp_norm, model_data))
+            if (class(glm_norm) == "try-error") {
+                warning("estimateGLMCommonDisp() failed.  Trying again with estimateDisp().")
+                state <- FALSE
+            }
+        }
+        if (isTRUE(state)) {
+            message("EdgeR step 5/9: Estimating GLM Trended dispersion.")
+            glm_trended <- try(edgeR::estimateGLMTrendedDisp(glm_norm, model_data))
+            if (class(glm_trended) == "try-error") {
+                warning("estimateGLMTrendedDisp() failed.  Trying again with estimateDisp().")
+                state <- FALSE
+            }
+        }
+        if (isTRUE(state)) {
+            message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
+            final_norm <- try(edgeR::estimateGLMTagwiseDisp(glm_trended, model_data))
+            if (class(final_norm) == "try-error") {
+                warning("estimateGLMTagwiseDisp() failed.  Trying again with estimateDisp.()")
+                state <- FALSE
+            }
+        }
+        if (!isTRUE(state)) {
+            final_norm <- edgeR::estimateDisp(norm, design=model_data, robust=TRUE)
+        }
     }
     cond_fit <- NULL
     if (test_type == "lrt") {

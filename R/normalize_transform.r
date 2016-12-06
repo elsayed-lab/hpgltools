@@ -3,10 +3,11 @@
 #' the add argument is only important if the data was previously cpm'd because that does a +1, thus
 #' this will avoid a double+1 on the data.
 #'
-#' @param count_table  A matrix of count data
+#' @param count_table  A matrix of count data.
+#' @param design  Sometimes the design is also required.
 #' @param transform   A type of transformation to perform: log2/log10/log
 #' @param base   for other log scales
-#' @param ... Options I might pass from other functions are dropped into arglist.
+#' @param ...  Options I might pass from other functions are dropped into arglist.
 #' @return dataframe of logx(counts)
 #' @examples
 #' \dontrun{
@@ -79,6 +80,17 @@ transform_counts <- function(count_table, design=NULL, transform="raw",
  Recognized transformations include: 'log2', 'log10', 'log'
 ")
     }
+
+    ## As a final check, remove any NaNs produced due to some shenanigans.
+    num_before <- nrow(count_table)
+    nans <- rowSums(is.nan(x=count_table))
+    if (sum(nans) > 0) {
+        nans <- nans == 0
+        count_table <- count_table[nans, ]
+        message(sprintf("Removing %d NaN containing rows (%d remaining).",
+                        num_before - nrow(count_table), nrow(count_table)))
+    }
+
     libsize <- colSums(count_table)
     counts <- list(
         "count_table" = count_table,

@@ -54,7 +54,7 @@ bioc_all <- function(release="3.4", mirror="bioc.ism.ac.jp", base="packages", ty
                 alr <- append(alr, pkg)
                 sleep <- 0
             } else {
-                installedp <- sm(try(BiocInstaller::biocLite(pkg, ask=FALSE,
+                installedp <- try(sm(BiocInstaller::biocLite(pkg, ask=FALSE,
                                                              suppressUpdates=update,
                                                              suppressAutoUpdate=auto)))
                 if (class(installedp) == "try-error") {

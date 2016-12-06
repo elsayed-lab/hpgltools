@@ -12,21 +12,22 @@
 #' This takes an expt object, collects the set of all possible pairwise comparisons, sets up
 #' experimental models appropriate for the differential expression analyses, and performs them.
 #'
-#' @param input Dataframe/vector or expt class containing count tables, normalization state, etc.
-#' @param conditions Factor of conditions in the experiment.
-#' @param batches Factor of batches in the experiment.
-#' @param model_cond Include condition in the model?  This is likely always true.
-#' @param model_batch Include batch in the model?  This may be true/false/"sva" or other methods supported by get_model_adjust().
-#' @param model_intercept Use an intercept model instead of cell means?
-#' @param extra_contrasts Optional extra contrasts beyone the pairwise comparisons.  This can be
-#'     pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or
-#'     (E/D)/(C/B) then use this with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla =
-#'     (E-D)-A, de_vs_cb = (E-D)-(C-B)".
-#' @param alt_model Alternate model to use rather than just condition/batch.
-#' @param libsize Library size of the original data to help voom().
-#' @param annot_df Annotations to add to the result tables.
-#' @param parallel Use dopar to run limma, deseq, edger, and basic simultaneously.
-#' @param ... Picks up extra arguments into arglist, currently only passed to write_limma().
+#' @param input  Dataframe/vector or expt class containing count tables, normalization state, etc.
+#' @param conditions  Factor of conditions in the experiment.
+#' @param batches  Factor of batches in the experiment.
+#' @param model_cond  Include condition in the model?  This is likely always true.
+#' @param modify_p  Depending on how it is used, sva may require an f-state modification of the p-values.
+#' @param model_batch  Include batch in the model?  This may be true/false/"sva" or other methods supported by          get_model_adjust().
+#' @param model_intercept  Use an intercept model instead of cell means?
+#' @param extra_contrasts  Optional extra contrasts beyone the pairwise comparisons.  This can be
+#'        pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or
+#'        (E/D)/(C/B) then use this with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla =
+#'        (E-D)-A, de_vs_cb = (E-D)-(C-B)".
+#' @param alt_model  Alternate model to use rather than just condition/batch.
+#' @param libsize  Library size of the original data to help voom().
+#' @param annot_df  Annotations to add to the result tables.
+#' @param parallel  Use dopar to run limma, deseq, edger, and basic simultaneously.
+#' @param ...  Picks up extra arguments into arglist, currently only passed to write_limma().
 #' @return A list of limma, deseq, edger results.
 #' @examples
 #' \dontrun{
@@ -272,17 +273,21 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' consistent and useful model for all for them.  This does not try to do multi-factor, interacting,
 #' nor dependent variable models, if you want those do them yourself and pass them off as alt_model.
 #'
-#' @param conditions Factor of conditions in the putative model.
-#' @param batches Factor of batches in the putative model.
-#' @param model_batch Try to include batch in the model?
-#' @param model_cond Try to include condition in the model? (Yes!)
-#' @param model_intercept Use an intercept model instead of cell-means?
-#' @param intercept Choose an intercept for the model as opposed to 0.
+#' @param input  Input data used to make the model.
+#' @param conditions  Factor of conditions in the putative model.
+#' @param batches  Factor of batches in the putative model.
+#' @param model_batch  Try to include batch in the model?
+#' @param model_cond  Try to include condition in the model? (Yes!)
+#' @param model_intercept  Use an intercept model instead of cell-means?
+#' @param alt_model  Use your own model.
+#' @param alt_string  String describing an alternate model.
+#' @param intercept  Choose an intercept for the model as opposed to 0.
 #' @param reverse  Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
 #'     to test.
-#' @param alt_model Use your own model.
-#' @param alt_string String describing an alternate model.
+#' @param surrogates  Number of or method used to choose the number of surrogate variables.
+#' @param ...  Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
+#' @export
 choose_model <- function(input, conditions, batches, model_batch=TRUE,
                          model_cond=TRUE, model_intercept=TRUE,
                          alt_model=NULL, alt_string=NULL,
@@ -461,10 +466,12 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
 #' The _pairwise family of functions all demand data in specific formats.
 #' This tries to make that consistent.
 #'
-#' @param input Expt input.
-#' @param force Force non-standard data
-#' @param ... More options for future expansion
+#' @param input  Expt input.
+#' @param force  Force non-standard data?
+#' @param choose_for  One of limma, deseq, edger, or basic.  Defines the requested data state.
+#' @param ...  More options for future expansion.
 #' @return List the data, conditions, and batches in the data.
+#' @export
 choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
     arglist <- list(...)
     result <- NULL
@@ -486,18 +493,21 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
     return(result)
 }
 
+#' A sanity check that a given set of data is suitable for analysis by limma.
+#'
+#' Take an expt and poke at it to ensure that it will not result in troubled limma results.
+#'
+#' @param input Expressionset containing expt object.
+#' @param force Ingore warnings and use the provided data asis.
+#' @param which_voom  Choose between limma'svoom, voomWithQualityWeights, or the hpgl equivalents.
+#' @param ... Extra arguments passed to arglist.
+#' @return dataset suitable for limma analysis
 choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
     data <- NULL
     warn_user <- 0
     libsize <- NULL
-    ## #### Old note alert!:
-    ## I sort of have the opposite problem for limma as for edger/deseq
-    ## It under-performs them when provided with non-normalized data.
-    ## Therefore the force option will have opposite effects here.
-    ## If force is on, leave the numbers alone.
-    ## #### New note:
     ## It turns out, a more careful examination of how normalization affects the results,
     ## the above seems only to be true if the following are true:
     ## 1.  There are >2-3k features(genes/transcripts) with a full range of count values.
@@ -568,6 +578,14 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     return(retlist)
 }
 
+#' A sanity check that a given set of data is suitable for analysis by edgeR or DESeq2.
+#'
+#' Take an expt and poke at it to ensure that it will not result in troubled results.
+#'
+#' @param input Expressionset containing expt object.
+#' @param force Ignore every warning and just use this data.
+#' @param ... Extra arguments passed to arglist.
+#' @return dataset suitable for limma analysis
 choose_binom_dataset <- function(input, force=FALSE, ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
@@ -845,12 +863,20 @@ compare_logfc_plots <- function(combined_tables) {
 }
 
 #' Test for infected/control/beads -- a placebo effect?
+#'
 #' The goal is therefore to find responses different than beads
 #' The null hypothesis is (H0): (infected == uninfected) || (infected == beads)
 #' The alt hypothesis is (HA): (infected != uninfected) && (infected != beads)
-disjunct_tab <- function(contrast_fit, coef1, coef2, ...) {
+#'
+#' @param contrast_fit  The result of lmFit.
+#' @param coef1  The first coefficient to query.
+#' @param coef2  And the second.
+#' @param ...  Extra arguments are passed to arglist, but basically ignored.
+disjunct_pvalues <- function(contrast_fit, coef1, coef2, ...) {
+    arglist <- list(...)
     stat <- BiocGenerics::pmin(abs(contrast_fit[, coef1]), abs(contrast_fit[, coef2]))
     pval <- BiocGenerics::pmax(contrast_fit$p.val[, coef1], contrast_fit$p.val[, coef2])
+    return(pval)
 }
 
 #' Generalize pairwise comparisons
@@ -924,9 +950,9 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
             down_genes <- down_genes[down_idx, ]
         } else {
             ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
-            up_idx <- as.numeric(up_genes[[column]]) > 1.0
+            up_idx <- as.numeric(up_genes[[column]]) >= 1.0
             up_genes <- up_genes[up_idx, ]
-            down_idx <- as.numeric(down_genes[[column]]) < 1.0
+            down_idx <- as.numeric(down_genes[[column]]) <= -1.0
             down_genes <- down_genes[down_idx, ]
         }
         message(paste0("After (adj)p filter, the up genes table has ", dim(up_genes)[1], " genes."))
@@ -1029,19 +1055,19 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 #' to avoid potential human erors(sic) by having a function generate
 #' all contrasts.
 #'
-#' @param  Model describing the conditions/batches/etc in the experiment.
-#' @param conditions Factor of conditions in the experiment.
-#' @param do_identities Include all the identity strings? Limma can
-#'     use this information while edgeR can not.
+#' @param model  Describe the conditions/batches/etc in the experiment.
+#' @param conditions  Factor of conditions in the experiment.
+#' @param do_identities  Include all the identity strings? Limma can
+#'  use this information while edgeR can not.
 #' @param do_pairwise Include all pairwise strings? This shouldn't
-#'     need to be set to FALSE, but just in case.
+#'  need to be set to FALSE, but just in case.
 #' @param extra_contrasts Optional string of extra contrasts to include.
 #' @return List including the following information:
-#'   all_pairwise_contrasts = the result from makeContrasts(...)
-#'   identities = the string identifying each condition alone
-#'   all_pairwise = the string identifying each pairwise comparison alone
-#'   contrast_string = the string passed to R to call makeContrasts(...)
-#'   names = the names given to the identities/contrasts
+#'  all_pairwise_contrasts = the result from makeContrasts(...)
+#'  identities = the string identifying each condition alone
+#'  all_pairwise = the string identifying each pairwise comparison alone
+#'  contrast_string = the string passed to R to call makeContrasts(...)
+#'  names = the names given to the identities/contrasts
 #' @seealso \link[limma]{makeContrasts}
 #' @examples
 #' \dontrun{
@@ -1078,7 +1104,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
     lenminus <- length(identities) - 1
     for (c in 1:lenminus) {
         c_name <- names(identities[c])
-        nextc <- c+1
+        nextc <- c + 1
         for (d in nextc:length(identities)) {
             d_name <- names(identities[d])
             minus_string <- paste(d_name, "_vs_", c_name, sep="")
@@ -1150,60 +1176,95 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 #' these genes, our sequence based removal methods fail and so this
 #' just excludes them by name.
 #'
-#' @param de_list List of sets of genes deemed significantly
-#'     up/down with a column expressing approximate count numbers.
-#' @param max_copies Keep only those genes with <= n putative
-#'     copies.
-#' @param semantic Set of strings with gene names to exclude.
-#' @param semantic_column Column in the DE table used to find the
-#'     semantic strings for removal.
+#' @param de_list  List of sets of genes deemed significantly
+#'  up/down with a column expressing approximate count numbers.
+#' @param max_copies  Keep only those genes with <= n putative
+#'  copies.
+#' @param use_files  Use a set of sequence alignments to define the copy numbers?
+#' @param semantic  Set of strings with gene names to exclude.
+#' @param semantic_column  Column in the DE table used to find the
+#'  semantic strings for removal.
 #' @return Smaller list of up/down genes.
 #' @export
-semantic_copynumber_filter <- function(de_list, max_copies=2, semantic=c('mucin','sialidase','RHS','MASP','DGF'), semantic_column='1.tooltip') {
-    count <- 0
-    for (table in de_list[["ups"]]) {
-        count <- count + 1
-        tab <- de_list[["ups"]][[count]]
-        table_name <- names(de_list[["ups"]])[[count]]
+semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
+                                       semantic=c('mucin','sialidase','RHS','MASP','DGF'),
+                                       semantic_column='1.tooltip') {
+    removed_up <- list()
+    removed_down <- list()
+    table_type <- "significance"
+    if (!is.null(de_list[["data"]])) {
+        table_type <- "combined"
+    }
+
+    table_list <- NULL
+    up_to_down <- 0
+    if (table_type == "combined") {
+        table_list <- de_list[["data"]]
+    } else {
+        table_list <- c(de_list[["ups"]], de_list[["downs"]])
+        up_to_down <- length(de_list[["ups"]])
+    }
+
+    removed <- list()
+    for (count in 1:length(table_list)) {
+        tab <- table_list[[count]]
+        table_name <- names(table_list)[[count]]
+        removed[[table_name]] <- list()
         message(paste0("Working on ", table_name))
-        file <- paste0("singletons/gene_counts/up_", table_name, ".fasta.out.count")
-        tmpdf <- try(read.table(file), silent=TRUE)
-        if (class(tmpdf) == 'data.frame') {
-            colnames(tmpdf) = c("ID", "members")
-            tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
-            rownames(tab) <- tab[["Row.names"]]
-            tab <- tab[, -1, drop=FALSE]
-            tab <- tab[count <= max_copies, ]
-            for (string in semantic) {
-                idx <- grep(pattern=string, x=tab[, semantic_column])
-                tab <- tab[-idx]
+        if (isTRUE(use_files)) {
+            file <- ""
+            if (table_type == "combined") {
+                file <- paste0("singletons/gene_counts/", table_name, ".fasta.out.count")
+            } else {
+                file <- paste0("singletons/gene_counts/up_", table_name, ".fasta.out.count")
             }
-            de_list[["ups"]][[count]] <- tab
+            tmpdf <- try(read.table(file), silent=TRUE)
+            if (class(tmpdf) == 'data.frame') {
+                colnames(tmpdf) = c("ID", "members")
+                tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
+                rownames(tab) <- tab[["Row.names"]]
+                tab <- tab[, -1, drop=FALSE]
+                tab <- tab[count <= max_copies, ]
+            }
+        }  ## End using empirically defined groups of multi-gene families.
+        for (string in semantic) {
+            idx <- grep(pattern=string, x=tab[, semantic_column])
+            num_removed <- length(idx)
+            removed[[table_name]][[string]] <- num_removed
+            if (num_removed > 0) {
+                tab <- tab[-idx, ]
+                message(paste0("Removing entries with string ", string,
+                               ", found ", num_removed, "; table has ", nrow(tab),  " rows left."))
+            } else {
+                message("Found no entries of type ", string, ".")
+            }
+        }
+        if (table_type == "combined") {
+            de_list[["data"]][[count]] <- tab
+        } else {
+            if (count <= up_to_down) {
+                de_list[["ups"]][[count]] <- tab
+            } else {
+                de_list[["downs"]][[count]] <- tab
+            }
         }
     }
-    count <- 0
-    for (table in de_list[["downs"]]) {
-        count <- count + 1
-        tab <- de_list[["downs"]][[count]]
-        table_name <- names(de_list[["downs"]])[[count]]
-        message(paste0("Working on ", table_name))
-        file <- paste0("singletons/gene_counts/down_", table_name, ".fasta.out.count")
-        tmpdf <- try(read.table(file), silent=TRUE)
-        if (class(tmpdf) == 'data.frame') {
-            colnames(tmpdf) = c("ID","members")
-            tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
-            rownames(tab) <- tab[["Row.names"]]
-            tab <- tab[, -1, drop=FALSE]
-            tab <- tab[count <= max_copies, ]
-            for (string in semantic) {
-                ## Is this next line correct?  shouldn't it be tab[, semantic_column]?
-                ## idx <- grep(pattern=string, x=tab[[, semantic_column]])
-                idx <- grep(pattern=string, x=tab[, semantic_column])
-                tab <- tab[-idx]
+    if (table_type == "significance") {
+        new_removed <- list()
+        for (count in 1:length(removed)) {
+            old_name <- names(removed)[[count]]
+            new_name <- NULL
+            if (count <= up_to_down) {
+                new_name <- paste0("up_", old_name)
+            } else {
+                new_name <- paste0("down_", old_name)
             }
-            de_list[["downs"]][[count]] <- tab
+            new_removed[[new_name]] <- removed[[old_name]]
         }
+        removed <- new_removed
+        rm(new_removed)
     }
+    de_list[["removed"]] <- removed
     return(de_list)
 }
 

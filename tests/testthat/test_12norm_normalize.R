@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("12norm_normalize.R: Are normalizations consistent over time? (Normalizations)\n")
@@ -100,4 +101,6 @@ test_that("RLE normalization gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-message("\nFinished 12norm_normalize.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 12norm_normalize.R in ", elapsed, " seconds."))

@@ -4,20 +4,23 @@ author: "atb abelew@gmail.com"
 date: "`r Sys.Date()`"
 output:
  html_document:
-  theme: cosmo
-  highlight: tango
+  code_download: true
+  code_folding: show
+  fig_caption: true
   fig_height: 7
   fig_width: 7
-  fig_caption: true
-  code_folding: show
+  highlight: default
+  keep_md: false
+  mode: selfcontained
+  number_sections: true
   self_contained: true
-  keep_md: true
+  theme: readable
   toc: true
   toc_float:
     collapsed: false
     smooth_scroll: false
 vignette: >
-  %\VignetteIndexEntry{hpgltools_examples}
+  %\VignetteIndexEntry{a-01_bacterial_example}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -99,13 +102,15 @@ load(data_file, envir=cdm)
 rm(data_file)
 
 ls()
-## 2 variables should exist now: rmd_file in case I want to knitr this file, cdm which is a list including the data required to make an expressionset.
+```
 
-## expt <- create_expt(metadata='filename.xlsx', gene_info=annotation_data)
+Two variables should exist now: rmd_file in case I want to knitr this file, cdm which is a list
+including the data required to make an expressionset.  Using this information, I can create an
+expressionset.
+
+```{r create_expt}
 expt <- create_expt(count_dataframe=cdm$cdm_counts, metadata=cdm$cdm_metadata, gene_info=cdm$gene_info)
-## The gff information is in 'annotations'
-## The experiment is in most_v0M1
-## Here is the meta-data! (well, the first 6 lines anyway).
+
 knitr::kable(head(expt$design))
 summary(expt)
 ```
@@ -134,11 +139,20 @@ following slots:
 * original_libsize:        the library sizes before normalization
 * columns:                 A backup of the sample names
 
+The primary reason I created the expt object was that I did not fully understand how expressionSets
+worked.  From my perspective, the documentation was rather opaque and therefore I decided to create
+a simpler version of the expressionset.  As I learned how to manipulate S4 classes more efficiently,
+I gradually began to realize that they are not so bad.  Nonetheless, I found it nice to be able to
+keep some extra state information with my expressionsets, along with a backup copy in case of
+mistakes, and some easier ways to extract information like conditions/batches/colors/etc.  Thus my
+*expt() functions grew into wrappers to call the native functions for manipulating expressionsets.
+
 # Raw metrics
 
-One possibility would be to examine the data in its unmolested state:
+With the above in mind, once we have the various metadata and count data loaded into memory, a most
+common next step is examine the data before molesting it:
 
-```{r graph_original, show.fig="hide"}
+```{r graph_original, show.fig='hide'}
 raw_metrics <- sm(graph_metrics(expt, qq=TRUE))
 ```
 
@@ -194,16 +208,21 @@ experimental design.
 Once we have a smaller data set, we can more easily use PCA to see how
 the sample separate.
 
-```{r subset_data}
+```{r subset_data, fig.show='hide'}
 head(expt$design)
 ## elt stands for: "early/late in thy"
 batch_a <- expt_subset(expt, subset="batch=='a'")
 batch_b <- expt_subset(expt, subset="batch=='b'")
 
-a_metrics <- graph_metrics(batch_a)
-a_metrics$pcaplot
-b_metrics <- graph_metrics(batch_b)
+
 b_metrics$pcaplot
+```
+a_metrics <- graph_metrics(batch_a)
+b_metrics <- graph_metrics(batch_b)
+a_metrics$pcaplot
+
+```{r view_subsets}
+
 ```
 
 # Normalizing data
@@ -300,7 +319,7 @@ zip(1) program to properly merge.  If that happens, one may either remove some(o
 and/or have it print csv versions of the same tables.
 
 ```{r combine_test}
-spyogenes_tables <- sm(combine_de_tables(spyogenes_de))
+spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE))
 summary(spyogenes_tables)
 ```
 
@@ -309,7 +328,7 @@ including z-score vs. the distribution of logFC; a logFC cutoff, (ajusted)p-valu
 top/bottom n genes.
 
 ```{r sig_genes_test}
-spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables))
+spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables, excel=FALSE))
 knitr::kable(head(spyogenes_sig$limma$ups[[1]]))
 ```
 
@@ -321,24 +340,25 @@ this particular organism.
 Much(all) of the following is taken from the material in tests/testthat/test_70mga.R
 
 ```{r circos}
-microbe_ids <- as.character(get_microbesonline_ids("pyogenes MGAS5005"))
+microbe_ids <- as.character(sm(get_microbesonline_ids("pyogenes MGAS5005")))
 mgas_df <- sm(get_microbesonline_annotation(microbe_ids[[1]])[[1]])
 mgas_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df$sysName)
 rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
 
 ## First make a template configuration
-circos_test <- sm(circos_prefix())
+circos_test <- circos_prefix()
 ## Fill it in with the data for s.pyogenes
-circos_kary <- sm(circos_karyotype("mgas", length=1895017))
+circos_kary <- circos_karyotype("mgas", length=1895017)
 ## Fill in the gene category annotations by gene-strand
-circos_plus <- sm(circos_plus_minus(mgas_df, circos_test))
+circos_plus <- circos_plus_minus(mgas_df, circos_test)
 
-circos_limma_hist <- sm(circos_hist(spyogenes_de$limma$all_tables[[1]], mgas_df, circos_test, outer=circos_plus))
-circos_deseq_hist <- sm(circos_hist(spyogenes_de$deseq$all_tables[[1]], mgas_df, circos_test, outer=circos_limma_hist))
-circos_edger_hist <- sm(circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df, circos_test, outer=circos_deseq_hist))
+circos_limma_hist <- circos_hist(spyogenes_de$limma$all_tables[[1]], mgas_df, circos_test, outer=circos_plus)
+circos_deseq_hist <- circos_hist(spyogenes_de$deseq$all_tables[[1]], mgas_df, circos_test, outer=circos_limma_hist)
+circos_edger_hist <- circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df, circos_test, outer=circos_deseq_hist)
 circos_suffix(cfgout=circos_test)
-circos_made <- sm(circos_make(target="mgas"))
+circos_made <- circos_make(target="mgas")
 ## For some reason this fails weirdly when not run interactively.
+getwd()
 ```
 
 ![circos result](circos/mgas.svg)

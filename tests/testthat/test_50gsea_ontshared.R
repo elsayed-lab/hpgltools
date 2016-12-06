@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("50gsea_ontshared.R: Do the various ontology helper functions still work?\n")
@@ -31,4 +32,6 @@ test_that("Are GO.db functions working?", {
 ## if (!identical(Sys.getenv("TRAVIS"), "true")) {
 ## }
 
-message("\nFinished 50gsea_ontshared.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 50gsea_ontshared.R in ", elapsed,  " seconds."))

@@ -8,15 +8,15 @@
 #' @param type Function name used for extracting data from TxDb objects.
 #' @param id Column from the resulting data structure to extract gene IDs.
 #' @param possible_types Character list of types I have previously used.
-#' @param possible_ids Corresponding IDs for the above types.
+#' @param ...  More arguments are passed to arglist.
 #' @return Dataframe containing 2 columns: ID, length
 #' @export
 extract_lengths <- function(db=NULL, gene_list=NULL,
                             type = "GenomicFeatures::transcripts", id="TXID",
                             possible_types=c("GenomicFeatures::genes",
                                     "GenomicFeatures::cds",
-                                    "GenomicFeatures::transcripts"),
-                            possible_ids=c("GENEID", "CDSID", "TXID")) {
+                                    "GenomicFeatures::transcripts"), ...) {
+    arglist <- list(...)
     ## The 3 ids correspond to the columns produced by genes/cds/transcripts respectively which contain the IDs
     ## If one is overwritten, the other should be, too
     tmpdb <- db
@@ -25,11 +25,13 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
     for (c in 1:length(possible_types)) {
         testing <- NULL
         ty <- possible_types[c]
-        chosen_column <- possible_ids[c]
         test_string <- paste0("testing <- ", ty, "(tmpdb)")
         eval(parse(text=test_string))
         ## as.data.frame is not only base, but also biocgenerics!!!
         test_meta <- BiocGenerics::as.data.frame(testing)
+        possible_columns <- colnames(test_meta)
+        ##chosen_column <- possible_ids[c]
+        chosen_column <- possible_columns[length(possible_columns)]
         overlap <- gene_list %in% test_meta[[chosen_column]]
         message(paste0("Testing ", ty, " with column ", chosen_column, " an overlap of ", sum(overlap), " was observed out of ", length(gene_list), " genes."))
         message(paste0("Actually using type ", type, " consider one of the above if that is not good enough."))
@@ -359,9 +361,14 @@ gotest <- function(go) {
     mapply(gotst, go)
 }
 
+#' Use the orgdb instances from clusterProfiler to gather annotation data for GO.
+#'
+#' Since clusterprofiler no longer builds gomaps, I need to start understanding how to properly get information from orgDBs.
+#'
+#' @param goseq_data  Some data from goseq and friends.
+#' @param orgdb_go  The orgDb instance with GO data.
+#' @param orgdb_ensembl  The orgDb instance with ensembl data.
 gather_genes_orgdb <- function(goseq_data, orgdb_go, orgdb_ensembl) {
-    ## Since clusterprofiler no longer builds gomaps, I need to start understanding how to properly
-    ## get this information from orgDBs
     ## all_ontologies <- mappedkeys(orgdb)
     ## all_mappings <- as.list(orgdb[all_ontologies])
     my_table <- goseq_data[["godata_interesting"]]
@@ -386,35 +393,6 @@ gather_genes_orgdb <- function(goseq_data, orgdb_go, orgdb_ensembl) {
         }
     }
     return(my_table)
-}
-
-#' Make a pvalue plot from a df of IDs, scores, and p-values.
-#'
-#' This function seeks to make generating pretty pvalue plots as shown by clusterprofiler easier.
-#'
-#' @param df Some data from topgo/goseq/clusterprofiler.
-#' @param ontology  Ontology to plot (MF,BP,CC).
-#' @return Ggplot2 plot of pvalues vs. ontology.
-#' @seealso \link[goseq]{goseq} \pkg{ggplot2}
-#' @export
-plot_ontpval <- function(df, ontology="MF", fontsize=16) {
-    y_name <- paste("Enriched ", ontology, " categories.", sep="")
-    ## This is very confusing, see the end of: http://docs.ggplot2.org/current/geom_bar.html
-    ## for the implementation.
-    reorder_size <- function(x) {
-        new_fact <- factor(x[["term"]], levels=x[["term"]])
-        return(new_fact)
-    }
-    pvalue_plot <- ggplot(df, aes_string(x="reorder_size(df)", y="score", fill="pvalue")) +
-        ggplot2::geom_bar(stat="identity") +
-        ggplot2::scale_x_discrete(name=y_name) +
-        ggplot2::scale_y_discrete(name="Score") +
-        ## ggplot2::aes_string(fill="pvalue") +
-        ggplot2::scale_fill_continuous(low="red", high="blue") +
-        ggplot2::theme(text=ggplot2::element_text(size=10)) +
-        ggplot2::coord_flip() +
-        ggplot2::theme_bw(base_size=fontsize)
-    return(pvalue_plot)
 }
 
 #' Perform ontology searches given the results of a differential expression analysis.

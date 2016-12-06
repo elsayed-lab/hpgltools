@@ -2,10 +2,10 @@
 % Please edit documentation in R/model_varpartition.r
 \name{varpart}
 \alias{varpart}
-\title{Use variancePartition to gather some plots about a troubling dataset}
+\title{Use variancePartition to try and understand where the variance lies in a data set.}
 \usage{
 varpart(expt, predictor = "condition", factors = c("batch"), cpus = 6,
-  genes = 20, parallel = TRUE)
+  genes = 40, parallel = TRUE)
 }
 \arguments{
 \item{expt}{Some data}
@@ -16,12 +16,14 @@ varpart(expt, predictor = "condition", factors = c("batch"), cpus = 6,
 
 \item{cpus}{Number cpus to use}
 
-\item{genes}{Number of genes to count}
+\item{genes}{Number of genes to count.}
+
+\item{parallel}{use doParallel?}
 }
 \value{
 partitions  List of plots and variance data frames
 }
 \description{
-variancePartition is the newest toy introduced by Hector
+variancePartition is the newest toy introduced by Hector.
 }
 

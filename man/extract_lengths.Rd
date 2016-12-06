@@ -7,8 +7,7 @@
 extract_lengths(db = NULL, gene_list = NULL,
   type = "GenomicFeatures::transcripts", id = "TXID",
   possible_types = c("GenomicFeatures::genes", "GenomicFeatures::cds",
-  "GenomicFeatures::transcripts"), possible_ids = c("GENEID", "CDSID",
-  "TXID"))
+  "GenomicFeatures::transcripts"), ...)
 }
 \arguments{
 \item{db}{Object containing data, if it is a string then a filename is assumed to a gff file.}
@@ -21,7 +20,7 @@ extract_lengths(db = NULL, gene_list = NULL,
 
 \item{possible_types}{Character list of types I have previously used.}
 
-\item{possible_ids}{Corresponding IDs for the above types.}
+\item{...}{More arguments are passed to arglist.}
 }
 \value{
 Dataframe containing 2 columns: ID, length

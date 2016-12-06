@@ -7,7 +7,7 @@
 deseq2_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, model_batch = TRUE, model_intercept = FALSE,
   alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
-  force = FALSE, ...)
+  force = FALSE, deseq_method = "long", ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}
@@ -30,7 +30,9 @@ deseq2_pairwise(input = NULL, conditions = NULL, batches = NULL,
 
 \item{force}{Force deseq to accept data which likely violates its assumptions.}
 
-\item{...}{triple dots!  Options are passed to arglist.}
+\item{deseq_method}{The DESeq2 manual shows a few ways to invoke it, I make 2 of them available here.}
+
+\item{...}{Triple dots!  Options are passed to arglist.}
 }
 \value{
 List including the following information:
