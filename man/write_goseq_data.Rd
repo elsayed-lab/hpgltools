@@ -10,11 +10,19 @@ write_goseq_data(goseq, excel = "excel/goseq.xlsx", wb = NULL, pval = 0.1,
 \arguments{
 \item{goseq}{A set of results from simple_goseq().}
 
+\item{excel}{An excel file to which to write some pretty results.}
+
+\item{wb}{Workbook object to write to.}
+
 \item{pval}{Choose a cutoff for reporting by p-value.}
 
 \item{add_plots}{Include some pvalue plots in the excel output?}
 
-\item{file}{An excel file to which to write some pretty results.}
+\item{height}{Height of included plots.}
+
+\item{width}{and their width.}
+
+\item{...}{Extra arguments are passed to arglist.}
 }
 \value{
 The result from openxlsx

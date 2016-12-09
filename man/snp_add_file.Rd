@@ -7,6 +7,13 @@
 snp_add_file(sample, input_dir = "preprocessing/outputs",
   file_suffix = "_parsed_ratio.txt")
 }
+\arguments{
+\item{sample}{A text snp summary for 1 sample.}
+
+\item{input_dir}{Location of the data.}
+
+\item{file_suffix}{Suffix to use when finding the file(s).}
+}
 \description{
 This is used by expt_snp to read input files and relatively quickly merge them.
 }

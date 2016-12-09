@@ -4,20 +4,23 @@ author: "atb abelew@gmail.com"
 date: "`r Sys.Date()`"
 output:
  html_document:
-  theme: cosmo
-  highlight: tango
+  code_download: true
+  code_folding: show
+  fig_caption: true
   fig_height: 7
   fig_width: 7
-  fig_caption: true
-  code_folding: show
+  highlight: default
+  keep_md: false
+  mode: selfcontained
+  number_sections: true
   self_contained: true
-  keep_md: true
+  theme: readable
   toc: true
   toc_float:
     collapsed: false
     smooth_scroll: false
 vignette: >
-  %\VignetteIndexEntry{fission_plots}
+  %\VignetteIndexEntry{d-04_pasilla}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -171,3 +174,8 @@ norm_metrics$smd
 norm_metrics$pcaplot
 ```
 
+[index.html](index.html)
+
+```{r sysinfo, results='asis'}
+pander::pander(sessionInfo())
+```

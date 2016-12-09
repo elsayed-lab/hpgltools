@@ -7,6 +7,17 @@
 plot_epitrochoid(radius_a = 7, radius_b = 2, dist_b = 6,
   revolutions = 7, increments = 6480)
 }
+\arguments{
+\item{radius_a}{Radius of the major circle}
+
+\item{radius_b}{And the smaller circle.}
+
+\item{dist_b}{between b and the drawing point.}
+
+\item{revolutions}{How many times to revolve through the spirograph.}
+
+\item{increments}{How many dots to lay down while writing.}
+}
 \description{
 7, 2, 6, 7 should give a pretty result.
 }

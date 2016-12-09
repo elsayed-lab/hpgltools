@@ -41,6 +41,8 @@ topgo_trees(tg, score_limit = 0.01, sigforall = TRUE,
 \item{do_bp_weight_tree}{Add the bp weighted tree?}
 
 \item{do_cc_weight_tree}{Add the guess}
+
+\item{parallel}{Perform operations in parallel to speed this up?}
 }
 \value{
 Big list including the various outputs from topgo.

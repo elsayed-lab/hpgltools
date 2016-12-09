@@ -209,7 +209,7 @@ translate_ids_querymany <- function(queries, from="ensembl", to="entrez", specie
 #' attempts to alleviate some of that frustration.
 #'
 #' @param gene_ids List of gene IDs to translate.
-#' @param first_speciesde Linnean species name for one species.
+#' @param first_species Linnean species name for one species.
 #' @param second_species Linnean species name for the second species.
 #' @param host Ensembl server to query.
 #' @param trymart Assumed mart name to use.

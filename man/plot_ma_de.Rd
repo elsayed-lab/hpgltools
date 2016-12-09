@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_point.r
 \name{plot_ma_de}
 \alias{plot_ma_de}
-\title{Make a pretty MA plot from a DE tool (limma/deseq/edger/basic}
+\title{Make a pretty MA plot from one of limma, deseq, edger, or basic.}
 \usage{
 plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
   pval_cutoff = 0.05, alpha = 0.4, logfc_cutoff = 1,
@@ -23,6 +23,8 @@ plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
 \item{alpha}{How transparent to make the dots.}
 
 \item{logfc_cutoff}{Fold change cutoff.}
+
+\item{label_numbers}{Show how many genes were 'significant', 'up', and 'down'?}
 
 \item{size}{How big are the dots?}
 

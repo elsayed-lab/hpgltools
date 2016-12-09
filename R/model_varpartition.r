@@ -30,7 +30,8 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @param predictor  Non-categorical predictor factor with which to begin the model.
 #' @param factors  Character list of columns in the experiment design to query
 #' @param cpus  Number cpus to use
-#' @param genes Number of genes to count
+#' @param genes  Number of genes to count.
+#' @param parallel  use doParallel?
 #' @return partitions  List of plots and variance data frames
 #' @export
 varpart <- function(expt, predictor="condition", factors=c("batch"), cpus=6, genes=40, parallel=TRUE) {

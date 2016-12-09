@@ -3,9 +3,13 @@
 #' It is my intention to make a function like this for each ontology tool in my repetoire
 #'
 #' @param goseq A set of results from simple_goseq().
-#' @param file An excel file to which to write some pretty results.
+#' @param excel An excel file to which to write some pretty results.
+#' @param wb  Workbook object to write to.
 #' @param pval Choose a cutoff for reporting by p-value.
 #' @param add_plots Include some pvalue plots in the excel output?
+#' @param height  Height of included plots.
+#' @param width and their width.
+#' @param ... Extra arguments are passed to arglist.
 #' @return The result from openxlsx
 #' @export
 write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL,
@@ -154,6 +158,8 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL,
 #' @param wb  Optional workbook object, if you wish to append to an existing workbook.
 #' @param excel  Excel file to which to write.
 #' @param add_plots  Add some pvalue plots?
+#' @param height  Height of included plots?
+#' @param width  And their width.
 #' @param ... More options, not currently used I think.
 #' @export
 write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofiler_result.xlsx",

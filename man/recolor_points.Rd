@@ -7,13 +7,15 @@
 recolor_points(plot, df, ids, color = "red", ...)
 }
 \arguments{
-\item{plot}{geom_point based plot}
+\item{plot}{Geom_point based plot}
 
 \item{df}{Data frame used to create the plot}
 
 \item{ids}{Set of ids which must be in the rownames of df to recolor}
 
 \item{color}{Chosen color for the new points.}
+
+\item{...}{Extra arguments are passed to arglist.}
 }
 \value{
 prettier plot.

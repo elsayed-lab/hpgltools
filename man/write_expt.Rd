@@ -8,7 +8,27 @@ write_expt(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   violin = FALSE, convert = "cpm", transform = "log2", batch = "sva",
   filter = "cbcb")
 }
+\arguments{
+\item{expt}{An expressionset to print.}
+
+\item{excel}{Filename to write.}
+
+\item{norm}{Normalization to perform.}
+
+\item{violin}{Include violin plots?}
+
+\item{convert}{Conversion to perform.}
+
+\item{transform}{Transformation.}
+
+\item{batch}{Batch correction.}
+
+\item{filter}{Filtering method.}
+}
+\value{
+A big honking excel file.
+}
 \description{
-Make pretty xlsx files of count data.
+Some folks love excel for looking at this data.  ok.
 }
 

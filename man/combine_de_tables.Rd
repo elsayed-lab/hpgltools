@@ -30,6 +30,8 @@ certain contrasts in specific orders and orientations.}
 
 \item{excludes}{List of columns and patterns to use for excluding genes.}
 
+\item{adjp}{Perhaps you do not want the adjusted p-values for plotting?}
+
 \item{include_basic}{Include my stupid basic logFC tables?}
 
 \item{add_plots}{Add plots to the end of the sheets with expression values?}

@@ -16,7 +16,9 @@ varpart(expt, predictor = "condition", factors = c("batch"), cpus = 6,
 
 \item{cpus}{Number cpus to use}
 
-\item{genes}{Number of genes to count}
+\item{genes}{Number of genes to count.}
+
+\item{parallel}{use doParallel?}
 }
 \value{
 partitions  List of plots and variance data frames

@@ -3,7 +3,7 @@ cache: packages
 bioc_required: true
 warnings_are_errors: false
 
-  - sudo apt-get -qq update && apt-cache search libgsl
+  - sudo apt-get -qq update
   - sudo apt-get -y install $(apt-cache search r-bioc | awk '{print $1}')
 
 script:
@@ -18,5 +18,9 @@ env:
     - R_CHECK_ARGS="--no-build-vignettes --no-manual"
     - _R_CHECK_TIMINGS_="0"
 
-cache:
+cache: 
   timeout: 1000
+
+r_github_packages:
+  - cran/survival
+  - cran/Hmisc

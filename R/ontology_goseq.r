@@ -139,6 +139,9 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
     de_genelist[["DE"]] <- 1
     colnames(de_genelist) <- c("ID","DE")
 
+    id_xref <- de_genelist[["ID"]] %in% go_db[["ID"]]
+    message(paste0("Found ", sum(id_xref), " genes from the de_genes in the go_db."))
+    
     ## Database of lengths may be a gff file, TxDb, or OrganismDb
     metadf <- NULL
     if (class(length_db)[[1]] == "character")  {  ## Then this should be either a gff file or species name.

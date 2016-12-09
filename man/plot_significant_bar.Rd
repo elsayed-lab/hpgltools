@@ -21,7 +21,7 @@ plot_significant_bar(ups, downs, maximum = NULL, text = TRUE,
 
 \item{color_list}{Set of colors to use for the bars.}
 
-\item{name_list}{Categories associated with aforementioned colors.}
+\item{color_names}{Categories associated with aforementioned colors.}
 }
 \description{
 Make a bar plot of the numbers of significant genes by contrast.

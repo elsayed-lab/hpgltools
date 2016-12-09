@@ -12,6 +12,8 @@ set_expt_condition(expt, fact = NULL, ids = NULL, ...)
 \item{fact}{Conditions to replace}
 
 \item{ids}{Specific sample IDs to change.}
+
+\item{...}{Extra arguments are given to arglist.}
 }
 \value{
 expt Send back the expt with some new metadata

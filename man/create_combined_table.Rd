@@ -23,11 +23,15 @@ create_combined_table(li, ed, de, ba, table_name, annot_df = NULL,
 
 \item{inverse}{Invert the fold changes?}
 
+\item{adjp}{Use adjusted p-values?}
+
 \item{include_basic}{Include the basic table?}
 
 \item{fc_cutoff}{Preferred logfoldchange cutoff.}
 
 \item{p_cutoff}{Preferred pvalue cutoff.}
+
+\item{excludes}{Set of genes to exclude from the output.}
 }
 \value{
 List containing a) Dataframe containing the merged

@@ -20,15 +20,21 @@ the deseq, edger, limma, basic, meta, or all.}
 
 \item{p}{(Adjusted)p-value to define 'significant'.}
 
+\item{sig_bar}{Add bar plots describing various cutoffs of 'significant'?}
+
 \item{z}{Z-score to define 'significant'.}
 
 \item{n}{Take the top/bottom-n genes.}
+
+\item{ma}{Add ma plots to the sheets of 'up' genes?}
 
 \item{p_type}{use an adjusted p-value?}
 
 \item{csv}{Write csv instead of xlsx when running OOM.}
 
 \item{excel}{Write the results to this excel file, or NULL.}
+
+\item{siglfc_cutoffs}{Set of cutoffs used to define levels of 'significant.'}
 }
 \value{
 The set of up-genes, down-genes, and numbers therein.

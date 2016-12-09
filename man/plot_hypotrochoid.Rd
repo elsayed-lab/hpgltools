@@ -4,8 +4,19 @@
 \alias{plot_hypotrochoid}
 \title{Make hypotrochoid plots!}
 \usage{
-plot_hypotrochoid(radius_a = 7, radius_b = 1, dist_b = 5,
+plot_hypotrochoid(radius_a = 3, radius_b = 7, dist_b = 1,
   revolutions = 7, increments = 6480)
+}
+\arguments{
+\item{radius_a}{Radius of the major circle}
+
+\item{radius_b}{And the smaller circle.}
+
+\item{dist_b}{between b and the drawing point.}
+
+\item{revolutions}{How many times to revolve through the spirograph.}
+
+\item{increments}{How many dots to lay down while writing.}
 }
 \description{
 3,7,1 should give the classic 7 leaf clover

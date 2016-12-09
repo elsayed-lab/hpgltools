@@ -94,6 +94,8 @@ get_microbesonline_annotation <- function(ids="160490", species=NULL) {
 #'
 #' This at least in theory is only used by get_microbesonline,  but if one needs a quick and dirty SQL query
 #' it might prove useful.
+#'
+#' @param table  Choose a table to query.
 mdesc_table <- function(table="Locus2GO") {
     db_driver <- DBI::dbDriver("MySQL")
     connection <- DBI::dbConnect(db_driver, user="guest", password="guest", host="pub.microbesonline.org", dbname="genomics")

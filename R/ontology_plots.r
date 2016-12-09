@@ -20,8 +20,9 @@ plot_topgo_densities <- function(godata, table) {
 #'
 #' This function seeks to make generating pretty pvalue plots as shown by clusterprofiler easier.
 #'
-#' @param df Some data from topgo/goseq/clusterprofiler.
+#' @param df  Some data from topgo/goseq/clusterprofiler.
 #' @param ontology  Ontology to plot (MF,BP,CC).
+#' @param fontsize  Fiddling with the font size may make some plots more readable.
 #' @return Ggplot2 plot of pvalues vs. ontology.
 #' @seealso \link[goseq]{goseq} \pkg{ggplot2}
 #' @export
@@ -370,16 +371,19 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gro
 #' The p-value plots from clusterProfiler are pretty, this sets the gprofiler data into a format
 #' suitable for plotting in that fashion and returns the resulting plots of significant ontologies.
 #'
-#' @param gp_result Some data from gProfiler.
+#' @param gp_result  Some data from gProfiler.
 #' @param wrapped_width  Maximum width of the text names.
-#' @param cutoff P-value cutoff for the plots.
-#' @param n Maximum number of ontologies to include.
-#' @param group_minsize Minimum ontology group size to include.
-#' @param ... Options I might pass from other functions are dropped into arglist.
+#' @param cutoff  P-value cutoff for the plots.
+#' @param n  Maximum number of ontologies to include.
+#' @param group_minsize  Minimum ontology group size to include.
+#' @param scorer  Which column to use for scoring the data.
+#' @param ...  Options I might pass from other functions are dropped into arglist.
 #' @return List of MF/BP/CC pvalue plots.
 #' @seealso \pkg{topgo} \code{clusterProfiler}
 #' @export
-plot_gprofiler_pval <- function(gp_result, wrapped_width=30, cutoff=0.1, n=30, group_minsize=5, scorer="recall", ...) {
+plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
+                                cutoff=0.1, n=30,
+                                group_minsize=5, scorer="recall", ...) {
     go_result <- gp_result[["go"]]
     kegg_result <- gp_result[["kegg"]]
     reactome_result <- gp_result[["reactome"]]
@@ -897,21 +901,22 @@ cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", g
 #'
 #' The tree printing functionality of topGO is pretty cool, but difficult to get set correctly.
 #'
-#' @param tg Data from simple_topgo().
-#' @param score_limit Score limit to decide whether to add to the tree.
-#' @param sigforall Add scores to the tree?
-#' @param do_mf_fisher_tree Add the fisher score molecular function tree?
-#' @param do_bp_fisher_tree Add the fisher biological process tree?
-#' @param do_cc_fisher_tree Add the fisher cellular component tree?
-#' @param do_mf_ks_tree Add the ks molecular function tree?
-#' @param do_bp_ks_tree Add the ks biological process tree?
-#' @param do_cc_ks_tree Add the ks cellular component tree?
-#' @param do_mf_el_tree Add the el molecular function tree?
-#' @param do_bp_el_tree Add the el biological process tree?
-#' @param do_cc_el_tree Add the el cellular component tree?
-#' @param do_mf_weight_tree Add the weight mf tree?
-#' @param do_bp_weight_tree Add the bp weighted tree?
-#' @param do_cc_weight_tree Add the guess
+#' @param tg  Data from simple_topgo().
+#' @param score_limit  Score limit to decide whether to add to the tree.
+#' @param sigforall  Add scores to the tree?
+#' @param do_mf_fisher_tree  Add the fisher score molecular function tree?
+#' @param do_bp_fisher_tree  Add the fisher biological process tree?
+#' @param do_cc_fisher_tree  Add the fisher cellular component tree?
+#' @param do_mf_ks_tree  Add the ks molecular function tree?
+#' @param do_bp_ks_tree  Add the ks biological process tree?
+#' @param do_cc_ks_tree  Add the ks cellular component tree?
+#' @param do_mf_el_tree  Add the el molecular function tree?
+#' @param do_bp_el_tree  Add the el biological process tree?
+#' @param do_cc_el_tree  Add the el cellular component tree?
+#' @param do_mf_weight_tree  Add the weight mf tree?
+#' @param do_bp_weight_tree  Add the bp weighted tree?
+#' @param do_cc_weight_tree  Add the guess
+#' @param parallel  Perform operations in parallel to speed this up?
 #' @return Big list including the various outputs from topgo.
 #' @export
 topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=TRUE,

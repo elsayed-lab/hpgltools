@@ -233,6 +233,17 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE) {
 
 #' Make pretty xlsx files of count data.
 #'
+#' Some folks love excel for looking at this data.  ok.
+#'
+#' @param expt  An expressionset to print.
+#' @param excel  Filename to write.
+#' @param norm  Normalization to perform.
+#' @param violin  Include violin plots?
+#' @param convert  Conversion to perform.
+#' @param transform  Transformation.
+#' @param batch  Batch correction.
+#' @param filter  Filtering method.
+#' @return  A big honking excel file.
 #' @export
 write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", violin=FALSE,
                        convert="cpm", transform="log2", batch="sva", filter="cbcb") {

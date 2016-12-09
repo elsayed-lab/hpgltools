@@ -22,6 +22,8 @@ simple_clusterprofiler(sig_genes, all_genes, orgdb = "org.Dm.eg.db",
 
 \item{orgdb_to}{List of keys to grab from the orgdb for cross referencing ontologies.}
 
+\item{internal}{Used by the 'use_internal_data' flag.}
+
 \item{go_level}{How deep into the ontology tree should this dive for over expressed categories.}
 
 \item{pcutoff}{P-value cutoff for 'significant' analyses.}
@@ -30,15 +32,21 @@ simple_clusterprofiler(sig_genes, all_genes, orgdb = "org.Dm.eg.db",
 
 \item{fc_column}{When extracting vectors of all genes, what column should be used?}
 
+\item{updown}{Include the less than expected ontologies?}
+
 \item{permutations}{How many permutations for GSEA-ish analyses?}
 
-\item{min_groupsize}{What is the minimum ontology group's size?}
+\item{min_groupsize}{Minimum size of an ontology before it is included.}
 
 \item{kegg_prefix}{Many KEGG ids need a prefix before they will cross reference.}
+
+\item{mings}{What is the minimum ontology group's size?}
 
 \item{kegg_organism}{Choose the 3 letter KEGG organism name here.}
 
 \item{categories}{How many categories should be plotted in bar/dot plots?}
+
+\item{parallel}{Perform slow operations in parallel?}
 }
 \value{
 a list

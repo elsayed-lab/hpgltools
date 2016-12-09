@@ -6,44 +6,45 @@
 #' the case, then a normalization method such as LOESS should be applied to the data before
 #' statistical analysis. If the median line is not straight, the data should be normalized.
 #'
-#' @param counts Df of counts which have been normalized counts by sample-type, which is to say the
+#' @param df Data frame of counts which have been normalized counts by sample-type, which is to say the
 #'     output from voom/voomMod/hpgl_voom().
-#' @param degenes Df from toptable or its friends containing p-values.
 #' @param tooltip_data Df of tooltip information (gene names, etc).
 #' @param filename Filename to write a fancy html graph.
 #' @param base_url String with a basename used for generating URLs for clicking dots on the graph.
 #' @param ... more options are more options!
 #' @return NULL, but along the way an html file is generated which contains a googleVis MA plot.
-#'     See plot_ma() for details.
-#' @seealso \link{plot_ma}
+#'     See plot_de_ma() for details.
+#' @seealso \link{plot_ma_de}
 #' @examples
 #' \dontrun{
-#'  plot_gvis_ma(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
-#'                    base_url="http://yeastgenome.org/accession?")
+#'  plot_gvis_ma(df, filename="html/fun_ma_plot.html",
+#'               base_url="http://yeastgenome.org/accession?")
 #' }
 #' @export
-plot_gvis_ma <- function(counts, degenes, tooltip_data=NULL, filename="html/gvis_ma_plot.html", base_url="", ...) {
+plot_gvis_ma <- function(df, tooltip_data=NULL, filename="html/gvis_ma_plot.html", base_url="", ...) {
     gvis_chartid <- gsub("\\.html$", "", basename(filename))
-    gvis_df <- data.frame(AvgExp=rowMeans(counts[rownames(degenes),]), LogFC=degenes$logFC, AdjPVal=degenes$adj.P.Val)
+    gvis_df <- data.frame("AvgExp" = df[["avg"]],
+                          "LogFC" = df[["logfc"]],
+                          "AdjPVal" = df[["pval"]])
     ## gvis_sig = subset(gvis_df, AdjPVal <= 0.05)
-    gvis_sig <- gvis_df[ which(gvis_df$AdjPVal <= 0.05), ]
-    gvis_sig <- gvis_sig[,c(1,2)]
+    gvis_sig <- gvis_df[ which(gvis_df[["AdjPVal"]] <= 0.05), ]
+    gvis_sig <- gvis_sig[, c(1, 2)]
     gvis_sig <- merge(gvis_sig, tooltip_data, by="row.names")
-    rownames(gvis_sig) <- gvis_sig$Row.names
-    gvis_sig <- gvis_sig[-1]
+    rownames(gvis_sig) <- gvis_sig[["Row.names"]]
+    gvis_sig <- gvis_sig[, -1]
     colnames(gvis_sig) <- c("AvgExp","Significant","sig.tooltip")
     ## gvis_nonsig = subset(gvis_df, AdjPVal > 0.05)
-    gvis_nonsig <- gvis_df[ which(gvis_df$AdjPVal > 0.05), ]
-    gvis_nonsig <- gvis_nonsig[,c(1,2)]
+    gvis_nonsig <- gvis_df[ which(gvis_df[["AdjPVal"]] > 0.05), ]
+    gvis_nonsig <- gvis_nonsig[, c(1, 2)]
     gvis_nonsig <- merge(gvis_nonsig, tooltip_data, by="row.names")
-    rownames(gvis_nonsig) <- gvis_nonsig$Row.names
-    gvis_nonsig <- gvis_nonsig[-1]
+    rownames(gvis_nonsig) <- gvis_nonsig[["Row.names"]]
+    gvis_nonsig <- gvis_nonsig[, -1]
     colnames(gvis_nonsig) <- c("AvgExp","NonSignificant","nsig.tooltip")
     gvis_final_df <- merge(gvis_df, gvis_nonsig, by="row.names", all.x=TRUE)
     gvis_final_df <- merge(gvis_final_df, gvis_sig, by.x="Row.names", by.y="row.names", all.x=TRUE)
-    rownames(gvis_final_df) <- gvis_final_df$Row.names
-    gvis_final_df <- gvis_final_df[,c(2,6,7,9,10)]
-    colnames(gvis_final_df) <- c("AvgExp","NonSignificant","nsig.tooltip","Significant","sig.tooltip")
+    rownames(gvis_final_df) <- gvis_final_df[["Row.names"]]
+    gvis_final_df <- gvis_final_df[, c(2, 6, 7, 9, 10)]
+    colnames(gvis_final_df) <- c("AvgExp", "NonSignificant", "nsig.tooltip", "Significant", "sig.tooltip")
     ma_json_ids <- rjson::toJSON(row.names(gvis_final_df))
     ma_jscode <- paste("
  var IDs=", ma_json_ids, "

@@ -226,7 +226,9 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
 #'     look like? Hopefully this function answers that question.
 #'
 #' @param data  Original count table, may be an expt/expressionset or df/matrix.
-#' @param conditions
+#' @param adjust  Surrogates with which to adjust the data.
+#' @param design  Experimental design if it is not included in the expressionset.
+#' @return A data frame of adjusted counts.
 #' @export
 counts_from_surrogates <- function(data, adjust, design=NULL) {
     base10_mtrx <- NULL

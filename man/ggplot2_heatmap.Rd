@@ -2,14 +2,17 @@
 % Please edit documentation in R/plot_heatmap.r
 \name{ggplot2_heatmap}
 \alias{ggplot2_heatmap}
-\title{Taken from https://plot.ly/ggplot2/ggdendro-dendrograms/
-Check out the following link for a neat dendrogram library.
-http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning}
+\title{Taken from https://plot.ly/ggplot2/ggdendro-dendrograms/}
 \usage{
 ggplot2_heatmap(some_df)
 }
+\arguments{
+\item{some_df}{A data frame to heatmap using ggplot2.}
+}
+\value{
+putatively a heatmap!
+}
 \description{
-Taken from https://plot.ly/ggplot2/ggdendro-dendrograms/
 Check out the following link for a neat dendrogram library.
 http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning
 }

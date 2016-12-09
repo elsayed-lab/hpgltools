@@ -17,6 +17,10 @@ write_gprofiler_data(gprofiler_result, wb = NULL,
 
 \item{add_plots}{Add some pvalue plots?}
 
+\item{height}{Height of included plots?}
+
+\item{width}{And their width.}
+
 \item{...}{More options, not currently used I think.}
 }
 \description{

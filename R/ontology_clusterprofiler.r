@@ -6,24 +6,27 @@
 #' functions in the near future.  This function is an initial pass at making something similar to my
 #' previous 'simple_clusterprofiler()' but using these new toys.
 #'
-#' @param sig_genes Dataframe of genes deemed 'significant.'
-#' @param all_genes Dataframe of all genes in the analysis, primarily for gse analyses.
-#' @param orgdb Name of the orgDb used for gathering annotation data.
-#' @param orgdb_from Name of a key in the orgdb used to cross reference to entrez IDs.
-#' @param orgdb_to List of keys to grab from the orgdb for cross referencing ontologies.
-#' @param go_level How deep into the ontology tree should this dive for over expressed categories.
-#' @param pcutoff P-value cutoff for 'significant' analyses.
-#' @param qcutoff Q-value cutoff for 'significant' analyses.
-#' @param fc_column When extracting vectors of all genes, what column should be used?
-#' @param permutations How many permutations for GSEA-ish analyses?
-#' @param min_groupsize What is the minimum ontology group's size?
-#' @param kegg_prefix Many KEGG ids need a prefix before they will cross reference.
-#' @param kegg_organism Choose the 3 letter KEGG organism name here.
-#' @param categories How many categories should be plotted in bar/dot plots?
+#' @param sig_genes  Dataframe of genes deemed 'significant.'
+#' @param all_genes  Dataframe of all genes in the analysis, primarily for gse analyses.
+#' @param orgdb  Name of the orgDb used for gathering annotation data.
+#' @param orgdb_from  Name of a key in the orgdb used to cross reference to entrez IDs.
+#' @param orgdb_to  List of keys to grab from the orgdb for cross referencing ontologies.
+#' @param internal  Used by the 'use_internal_data' flag.
+#' @param go_level  How deep into the ontology tree should this dive for over expressed categories.
+#' @param pcutoff  P-value cutoff for 'significant' analyses.
+#' @param qcutoff  Q-value cutoff for 'significant' analyses.
+#' @param fc_column  When extracting vectors of all genes, what column should be used?
+#' @param updown  Include the less than expected ontologies?
+#' @param permutations  How many permutations for GSEA-ish analyses?
+#' @param min_groupsize  Minimum size of an ontology before it is included.
+#' @param kegg_prefix  Many KEGG ids need a prefix before they will cross reference.
+#' @param mings  What is the minimum ontology group's size?
+#' @param kegg_organism  Choose the 3 letter KEGG organism name here.
+#' @param categories  How many categories should be plotted in bar/dot plots?
+#' @param parallel  Perform slow operations in parallel?
 #' @return a list
 #' @export
 simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
-###                            orgdb_from="FLYBASE", orgdb_to=c("ENSEMBL","SYMBOL","ENTREZID"),
                                    orgdb_from="FLYBASE", orgdb_to="ENTREZID", internal=TRUE,
                                    go_level=3, pcutoff=0.05, qcutoff=0.1, fc_column="logFC", updown="up",
                                    permutations=100, min_groupsize=5, kegg_prefix="Dmel_", mings=5,

@@ -8,6 +8,8 @@ make_pairwise_contrasts(model, conditions, do_identities = TRUE,
   do_pairwise = TRUE, extra_contrasts = NULL)
 }
 \arguments{
+\item{model}{Describe the conditions/batches/etc in the experiment.}
+
 \item{conditions}{Factor of conditions in the experiment.}
 
 \item{do_identities}{Include all the identity strings? Limma can
@@ -17,16 +19,14 @@ use this information while edgeR can not.}
 need to be set to FALSE, but just in case.}
 
 \item{extra_contrasts}{Optional string of extra contrasts to include.}
-
-\item{Model}{describing the conditions/batches/etc in the experiment.}
 }
 \value{
 List including the following information:
-  all_pairwise_contrasts = the result from makeContrasts(...)
-  identities = the string identifying each condition alone
-  all_pairwise = the string identifying each pairwise comparison alone
-  contrast_string = the string passed to R to call makeContrasts(...)
-  names = the names given to the identities/contrasts
+ all_pairwise_contrasts = the result from makeContrasts(...)
+ identities = the string identifying each condition alone
+ all_pairwise = the string identifying each pairwise comparison alone
+ contrast_string = the string passed to R to call makeContrasts(...)
+ names = the names given to the identities/contrasts
 }
 \description{
 In order to have uniformly consistent pairwise contrasts, I decided

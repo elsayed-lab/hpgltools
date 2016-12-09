@@ -18,7 +18,9 @@ all_pairwise(input = NULL, conditions = NULL, batches = NULL,
 
 \item{model_cond}{Include condition in the model?  This is likely always true.}
 
-\item{model_batch}{Include batch in the model?  This may be true/false/"sva" or other methods supported by get_model_adjust().}
+\item{modify_p}{Depending on how it is used, sva may require an f-state modification of the p-values.}
+
+\item{model_batch}{Include batch in the model?  This may be true/false/"sva" or other methods supported by          get_model_adjust().}
 
 \item{model_intercept}{Use an intercept model instead of cell means?}
 

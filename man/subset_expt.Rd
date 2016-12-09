@@ -6,7 +6,10 @@
 \usage{
 subset_expt(...)
 }
+\arguments{
+\item{...}{All arguments are passed to expt_subset.}
+}
 \description{
-An alias to expt_subset, because it is stupid to have something start with verbs and others start with nouns.
+This just calls expt_subset.
 }
 

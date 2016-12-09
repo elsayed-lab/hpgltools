@@ -10,8 +10,6 @@ simple_filter_counts(count_table, threshold = 2)
 \item{count_table}{Data frame of (pseudo)counts by sample.}
 
 \item{threshold}{Lower threshold of counts for each gene.}
-
-\item{min_samples}{Minimum number of samples.}
 }
 \value{
 Dataframe of counts without the low-count genes.

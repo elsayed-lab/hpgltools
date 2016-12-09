@@ -4,16 +4,17 @@
 #'
 #' @param data  Some data!
 #' @param fun_model  A model for voom() and arrayWeights()
+#' @param libsize  Library sizes passed to voom().
 #' @param normalize.method  Passed to voom()
-#' @param plot  Do the plot of mean variance.
+#' @param plot  Do the plot of mean variance?
 #' @param span  yes
 #' @param var.design maybe
 #' @param method kitty!
 #' @param maxiter 50 is good
-#' @param tol I have no tolerances.
+#' @param tol I have no tolerance.
 #' @param trace no trace for you.
 #' @param replace.weights  Replace the weights?
-#' @param col yay columns
+#' @param col yay columns!
 #' @param ... more arguments!
 #' @return a voom return
 #' @export
@@ -37,9 +38,9 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
     }
     v <- hpgl_voom(data, model=fun_model, weights=aw, libsize=libsize,
                    normalize.method=normalize.method, plot=TRUE, span=span, ...)
-    aw <- arrayWeights(v, design=fun_model, method=method, maxiter=maxiter,
-                       tol=tol, trace=trace, var.design=var.design)
-    wts <- asMatrixWeights(aw, dim(v)) * v[["weights"]]
+    aw <- limma::arrayWeights(v, design=fun_model, method=method, maxiter=maxiter,
+                              tol=tol, trace=trace, var.design=var.design)
+    wts <- limma::asMatrixWeights(aw, dim(v)) * v[["weights"]]
     attr(wts, "arrayweights") <- NULL
     if (plot) {
         barplot(aw, names = 1:length(aw), main = "Sample-specific weights",
@@ -53,8 +54,7 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
         v[["barplot"]] <- voom_barplot
         v[["first_iter"]] <- v1
         return(v)
-    }
-    else {
+    } else {
         return(wts)
     }
 }
@@ -68,12 +68,15 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
 #' rather than throwing an unhelpful error.  Also, the Elist output gets a 'plot' slot which
 #' contains the plot rather than just printing it.
 #'
-#' @param dataframe Dataframe of sample counts which have been normalized and log transformed.
-#' @param model Experimental model defining batches/conditions/etc.
-#' @param libsize Size of the libraries (usually provided by edgeR).
-#' @param stupid Cheat when the resulting matrix is not solvable?
-#' @param logged Is the input data is known to be logged?
-#' @param converted Is the input data is known to be cpm converted?
+#' @param dataframe  Dataframe of sample counts which have been normalized and log transformed.
+#' @param model  Experimental model defining batches/conditions/etc.
+#' @param libsize  Size of the libraries (usually provided by edgeR).
+#' @param normalize.method  Normalization method used in voom().
+#' @param span  The span used in voom().
+#' @param stupid  Cheat when the resulting matrix is not solvable?
+#' @param logged  Is the input data is known to be logged?
+#' @param converted  Is the input data is known to be cpm converted?
+#' @param ...  Extra arguments are passed to arglist.
 #' @return EList containing the following information:
 #'   E = The normalized data
 #'   weights = The weights of said data
@@ -230,32 +233,33 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
 #' @param model_cond Include condition in the model?
 #' @param model_batch Include batch in the model? This is hopefully TRUE.
 #' @param model_intercept Perform a cell-means or intercept model? A little more difficult for me to
-#'     understand.  I have tested and get the same answer either way.
+#'  understand.  I have tested and get the same answer either way.
 #' @param extra_contrasts Some extra contrasts to add to the list.
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param alt_model Separate model matrix instead of the normal condition/batch.
-#' @param libsize I've recently figured out that libsize is far more important than I previously
-#'     realized.  Play with it here.
 #' @param annot_df Data frame for annotations.
+#' @param libsize I've recently figured out that libsize is far more important than I previously
+#'  realized.  Play with it here.
+#' @param force  Force data which may not be appropriate for limma into it?
 #' @param ... Use the elipsis parameter to feed options to write_limma().
 #' @return List including the following information:
-#'   macb = the mashing together of condition/batch so you can look at it
-#'   macb_model = The result of calling model.matrix(~0 + macb)
-#'   macb_fit =  The result of calling lmFit(data, macb_model)
-#'   voom_result = The result from voom()
-#'   voom_design = The design from voom (redundant from voom_result, but convenient)
-#'   macb_table = A table of the number of times each condition/batch pairing happens
-#'   cond_table = A table of the number of times each condition appears (the denominator for the identities)
-#'   batch_table = How many times each batch appears
-#'   identities = The list of strings defining each condition by itself
-#'   all_pairwise = The list of strings defining all the pairwise contrasts
-#'   contrast_string = The string making up the makeContrasts() call
-#'   pairwise_fits = The result from calling contrasts.fit()
-#'   pairwise_comparisons = The result from eBayes()
-#'   limma_result = The result from calling write_limma()
+#'  macb = the mashing together of condition/batch so you can look at it
+#'  macb_model = The result of calling model.matrix(~0 + macb)
+#'  macb_fit =  The result of calling lmFit(data, macb_model)
+#'  voom_result = The result from voom()
+#'  voom_design = The design from voom (redundant from voom_result, but convenient)
+#'  macb_table = A table of the number of times each condition/batch pairing happens
+#'  cond_table = A table of the number of times each condition appears (the denominator for the identities)
+#'  batch_table = How many times each batch appears
+#'  identities = The list of strings defining each condition by itself
+#'  all_pairwise = The list of strings defining all the pairwise contrasts
+#'  contrast_string = The string making up the makeContrasts() call
+#'  pairwise_fits = The result from calling contrasts.fit()
+#'  pairwise_comparisons = The result from eBayes()
+#'  limma_result = The result from calling write_limma()
 #' @seealso \link{write_limma}
 #' @examples
 #' \dontrun{
@@ -461,17 +465,20 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
         all_tables <- try(limma::topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
     }
     message("Limma step 6/6: Writing limma outputs.")
+    limma_identities <- NULL
+    limma_tables <- NULL
     if (isTRUE(model_intercept)) {
-        limma_result <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
+        limma_results <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
+        limma_identities <- limma_results[["identities"]]
+        limma_tables <- limma_results[["contrasts"]]
     } else {
-        limma_result <- all_tables
+        limma_tables <- all_tables
     }
-    all_table_names <- names(limma_result)
-    contrast_table_idx <- grepl(pattern="_vs_", x=all_table_names)
-    contrasts_performed <- all_table_names[contrast_table_idx]
+    contrasts_performed <- names(limma_tables)
     result <- list(
         "all_pairwise" = all_pairwise,
-        "all_tables" = limma_result,
+        "all_tables" = limma_tables,
+        "identity_tables" = limma_identities,
         "batches" = batches,
         "batches_table" = batch_table,
         "conditions" = conditions,
@@ -584,19 +591,14 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
     } else {
         coef <- as.character(coef)
     }
+    return_identities <- list()
     return_data <- list()
     end <- length(coef)
     for (c in 1:end) {
         comparison <- coef[c]
         message(paste0("Limma step 6/6: ", c, "/", end, ": Creating table: ", comparison, "."))
         data_table <- limma::topTable(data, adjust=adjust, n=n, coef=comparison)
-        ## Reformat the numbers so they are not so obnoxious
-        ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
-        ## data_table$AveExpr <- refnum(data_table$AveExpr, sci=FALSE)
-        ## data_table$t <- refnum(data_table$t, sci=FALSE)
-        ## data_table$P.Value <- refnum(data_table$P.Value)
-        ## data_table$adj.P.Val <- refnum(data_table$adj.P.Val)
-        ## data_table$B <- refnum(data_table$B, sci=FALSE)
+        ## Take a moment to prettily format the numbers in the table.
         data_table[["logFC"]] <- signif(x=as.numeric(data_table[["logFC"]]), digits=4)
         data_table[["AveExpr"]] <- signif(x=as.numeric(data_table[["AveExpr"]]), digits=4)
         data_table[["t"]] <- signif(x=as.numeric(data_table[["t"]]), digits=4)
@@ -634,9 +636,16 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
             csv_filename <- paste0(csv_filename, "_", comparison, ".csv")
             write.csv(data_table, file=csv_filename)
         }
-        return_data[[comparison]] <- data_table
-    }
-    return(return_data)
+        if (grepl(pattern="_vs_", x=comparison)) {
+            return_data[[comparison]] <- data_table
+        } else {
+            return_identities[[comparison]] <- data_table
+        }
+    } ## End iterating over every table from limma.
+    retlist <- list(
+        "identities" = return_identities,
+        "contrasts" = return_data)
+    return(retlist)
 }
 
 ## EOF

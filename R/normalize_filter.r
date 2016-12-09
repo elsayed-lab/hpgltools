@@ -90,7 +90,6 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2) {
 #'
 #' @param count_table Data frame of (pseudo)counts by sample.
 #' @param threshold Lower threshold of counts for each gene.
-#' @param min_samples Minimum number of samples.
 #' @return Dataframe of counts without the low-count genes.
 #' @examples
 #' \dontrun{

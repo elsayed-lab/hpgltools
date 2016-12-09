@@ -8,6 +8,13 @@ counts_from_surrogates(data, adjust, design = NULL)
 }
 \arguments{
 \item{data}{Original count table, may be an expt/expressionset or df/matrix.}
+
+\item{adjust}{Surrogates with which to adjust the data.}
+
+\item{design}{Experimental design if it is not included in the expressionset.}
+}
+\value{
+A data frame of adjusted counts.
 }
 \description{
 Given an initial set of counts and a series of surrogates, what would the resulting count table

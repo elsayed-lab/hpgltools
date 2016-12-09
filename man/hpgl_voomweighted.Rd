@@ -14,9 +14,11 @@ hpgl_voomweighted(data, fun_model, libsize = NULL,
 
 \item{fun_model}{A model for voom() and arrayWeights()}
 
+\item{libsize}{Library sizes passed to voom().}
+
 \item{normalize.method}{Passed to voom()}
 
-\item{plot}{Do the plot of mean variance.}
+\item{plot}{Do the plot of mean variance?}
 
 \item{span}{yes}
 
@@ -26,13 +28,13 @@ hpgl_voomweighted(data, fun_model, libsize = NULL,
 
 \item{maxiter}{50 is good}
 
-\item{tol}{I have no tolerances.}
+\item{tol}{I have no tolerance.}
 
 \item{trace}{no trace for you.}
 
 \item{replace.weights}{Replace the weights?}
 
-\item{col}{yay columns}
+\item{col}{yay columns!}
 
 \item{...}{more arguments!}
 }

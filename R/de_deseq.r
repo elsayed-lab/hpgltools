@@ -15,17 +15,18 @@ deseq_pairwise <- function(...) {
 #'
 #' Invoking DESeq2 is confusing, this should help.
 #'
-#' @param input Dataframe/vector or expt class containing data, normalization state, etc.
-#' @param conditions Factor of conditions in the experiment.
-#' @param batches Factor of batches in the experiment.
-#' @param alt_model Provide an arbitrary model here.
-#' @param extra_contrasts Provide extra contrasts here.
-#' @param model_cond Is condition in the experimental model?
-#' @param model_batch Is batch in the experimental model?
+#' @param input  Dataframe/vector or expt class containing data, normalization state, etc.
+#' @param conditions  Factor of conditions in the experiment.
+#' @param batches  Factor of batches in the experiment.
+#' @param model_cond  Is condition in the experimental model?
+#' @param model_batch  Is batch in the experimental model?
 #' @param model_intercept  Use an intercept model?  DESeq seems to not be a fan of them.
-#' @param annot_df Include some annotation information in the results?
-#' @param force Force deseq to accept data which likely violates its assumptions.
-#' @param ... triple dots!  Options are passed to arglist.
+#' @param alt_model  Provide an arbitrary model here.
+#' @param extra_contrasts  Provide extra contrasts here.
+#' @param annot_df  Include some annotation information in the results?
+#' @param force  Force deseq to accept data which likely violates its assumptions.
+#' @param deseq_method  The DESeq2 manual shows a few ways to invoke it, I make 2 of them available here.
+#' @param ...  Triple dots!  Options are passed to arglist.
 #' @return List including the following information:
 #'   run = the return from calling DESeq()
 #'   denominators = list of denominators in the contrasts
@@ -192,13 +193,30 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     deseq_run <- NULL
     if (deseq_method == "short") {
         message("DESeq steps 2-4 in one shot.")
-        deseq_run <- DESeq2::DESeq(dataset)
+        deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric"))
+        if (class(deseq_run) == "try-error") {
+            deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"))
+            if (class(deseq_run) == "try-error") {
+                warning("Neither the default(parametric) nor mean fitting worked.  Something is very wrong.")
+            } else {
+                message("Using a mean fitting seems to have worked.  You may be able to ignore the previous error.")
+            }
+        }
     } else {
         ## If making a model ~0 + condition -- then must set betaPrior=FALSE
         message("DESeq2 step 2/5: Estimate size factors.")
         deseq_sf <- DESeq2::estimateSizeFactors(dataset)
         message("DESeq2 step 3/5: Estimate dispersions.")
-        deseq_disp <- DESeq2::estimateDispersions(deseq_sf, fitType="parametric")
+        deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="parametric"))
+        if (class(deseq_disp) == "try-error") {
+            message("Trying a mean fitting.")
+            deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="mean"))
+            if (class(deseq_disp) == "try-error") {
+                warning("Neither the default(parametric) nor mean fitting worked.  Something is very wrong.")
+            } else {
+                message("Using a mean fitting seems to have worked.  You may be able to ignore the previous error.")
+            }
+        }
         ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
         message("DESeq2 step 4/5: nbinomWaldTest.")
         ## deseq_run <- DESeq2::DESeq(deseq_disp)

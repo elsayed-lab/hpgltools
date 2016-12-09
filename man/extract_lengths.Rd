@@ -20,7 +20,7 @@ extract_lengths(db = NULL, gene_list = NULL,
 
 \item{possible_types}{Character list of types I have previously used.}
 
-\item{possible_ids}{Corresponding IDs for the above types.}
+\item{...}{More arguments are passed to arglist.}
 }
 \value{
 Dataframe containing 2 columns: ID, length

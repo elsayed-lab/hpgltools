@@ -315,23 +315,24 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     return(plots)
 }
 
-#' Make a pretty MA plot from a DE tool (limma/deseq/edger/basic
+#' Make a pretty MA plot from one of limma, deseq, edger, or basic.
 #'
 #' Because I can never remember, the following from wikipedia: "An MA plot is an application of a
 #' Bland–Altman plot for visual representation of two channel DNA microarray gene expression data
 #' which has been transformed onto the M (log ratios) and A (mean average) scale."
 #'
 #' @param table  Df of linear-modelling, normalized counts by sample-type,
-#' @param expr_col Column showing the average expression across genes.
-#' @param fc_col Column showing the logFC for each gene.
-#' @param p_col Column containing the relevant p-values.
-#' @param alpha How transparent to make the dots.
-#' @param logfc_cutoff Fold change cutoff.
-#' @param pval_cutoff Name of the pvalue column to use for cutoffs.
-#' @param size How big are the dots?
-#' @param tooltip_data Df of tooltip information for gvis.
-#' @param gvis_filename Filename to write a fancy html graph.
-#' @param ... More options for you!
+#' @param expr_col  Column showing the average expression across genes.
+#' @param fc_col  Column showing the logFC for each gene.
+#' @param p_col  Column containing the relevant p-values.
+#' @param pval_cutoff  Name of the pvalue column to use for cutoffs.
+#' @param alpha  How transparent to make the dots.
+#' @param logfc_cutoff  Fold change cutoff.
+#' @param label_numbers  Show how many genes were 'significant', 'up', and 'down'?
+#' @param size  How big are the dots?
+#' @param tooltip_data  Df of tooltip information for gvis.
+#' @param gvis_filename  Filename to write a fancy html graph.
+#' @param ...  More options for you!
 #' @return Ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
 #'     type across all sample types on the x-axis, and the log fold change between conditions on the
 #'     y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
@@ -454,13 +455,13 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                                     values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
         ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
-        ggplot2::xlab("Average Counts") +
-        ggplot2::ylab("log fold change") +
+        ggplot2::xlab("Average log2(Counts)") +
+        ggplot2::ylab("log2(fold change)") +
         ggplot2::theme_bw()
 
     ## Make a gvis plot if requested.
     if (!is.null(gvis_filename)) {
-        plot_gvis_ma(df, de_genes, tooltip_data=tooltip_data, filename=gvis_filename, ...)
+        plot_gvis_ma(df, tooltip_data=tooltip_data, filename=gvis_filename, ...)
     }
 
     ## Recolor a family of genes if requested.
@@ -482,10 +483,11 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
 #'
 #' This function should make it easy to color a family of genes in any of the point plots.
 #'
-#' @param plot geom_point based plot
-#' @param df Data frame used to create the plot
-#' @param ids Set of ids which must be in the rownames of df to recolor
-#' @param color Chosen color for the new points.
+#' @param plot  Geom_point based plot
+#' @param df  Data frame used to create the plot
+#' @param ids  Set of ids which must be in the rownames of df to recolor
+#' @param color  Chosen color for the new points.
+#' @param ...  Extra arguments are passed to arglist.
 #' @return prettier plot.
 recolor_points <- function(plot, df, ids, color="red", ...) {
     arglist <- list(...)
