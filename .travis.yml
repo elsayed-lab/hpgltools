@@ -6,7 +6,7 @@ warnings_are_errors: false
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get -y install $(apt-cache search r-bioc | awk '{print $1}')
+  - sudo apt-get -y install $(apt-cache search r-bioc | awk '{print $1}' | grep -v "ebimage")
 
 script:
   - make install
