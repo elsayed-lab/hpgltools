@@ -1,8 +1,10 @@
 language: r
+sudo: required
 cache: packages
 bioc_required: true
 warnings_are_errors: false
 
+before_install:
   - sudo apt-get -qq update
   - sudo apt-get -y install $(apt-cache search r-bioc | awk '{print $1}')
 
