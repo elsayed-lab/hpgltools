@@ -34,7 +34,7 @@ test_that("Did orgdb give useful ID mappings? (entrez)", {
 })
 
 limma_result <- limma$hpgl_limma
-all_genes <- limma_result$all_tables[[3]]
+all_genes <- limma_result[["all_tables"]][["untreated_vs_treated"]]
 all_genes <- merge(x=all_genes, y=mapping, by.x="row.names", by.y="flybase", all.x=TRUE)
 sig_up <- sm(get_sig_genes(all_genes, z=2)$up_genes)
 all_ids <- paste0("Dmel_", all_genes[["flybasecg"]])
@@ -72,7 +72,6 @@ actual <- head(funkytown$unique_mapped_nodes)
 test_that("Did pathview work? (unique mapped nodes)", {
     expect_equal(expected, actual, tolerance=0.1)
 })
-
 
 unlink("kegg_pathways", recursive=TRUE)
 
