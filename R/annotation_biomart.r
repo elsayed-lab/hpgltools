@@ -76,10 +76,12 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
                                      all.x=TRUE)
         ## If you change gene_requests or length_requests, this will fail.
         tt <- try(colnames(biomart_annotations) <- c("transcriptID", "geneID", "Description",
-                                                     "Type", "length", "chromosome", "strand", "start", "end"))
+                                                     "Type", "length", "chromosome", "strand",
+                                                     "start", "end"))
     } else {
         biomart_annotations <- biomart_annotation
-        tt <- try(colnames(biomart_annotations) <- c("geneID", "transcriptID", "Description", "Type"))
+        tt <- try(colnames(biomart_annotations) <- c("geneID", "transcriptID",
+                                                     "Description", "Type"))
     }
     rownames(biomart_annotations) <- make.names(biomart_annotations[, "transcriptID"], unique=TRUE)
     ## In order for the return from this function to work with other functions in this, the rownames must be set.
@@ -195,8 +197,9 @@ translate_ids_querymany <- function(queries, from="ensembl", to="entrez", specie
         to <- "ensembl.gene"
     }
 
-    one_way <- mygene::queryMany(queries, scopes=from_field, fields=c("uniprot","ensembl.gene","entrezgene", "go"), species=species)
-    print(head(one_way))
+    one_way <- mygene::queryMany(queries, scopes=from_field,
+                                 fields=c("uniprot","ensembl.gene","entrezgene", "go"),
+                                 species=species, returnall=TRUE)
     queries <- as.data.frame(queries)
     ret <- merge(queries, one_way, by.x="queries", by.y="query", all.x=TRUE)
     return(ret)
@@ -219,7 +222,8 @@ translate_ids_querymany <- function(queries, from="ensembl", to="entrez", specie
 #' @export
 biomart_orthologs <- function(gene_ids, first_species="hsapiens", second_species="mmusculus",
                               host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
-                              first_attributes="ensembl_gene_id", second_attributes=c("ensembl_gene_id", "hgnc_symbol")) {
+                              first_attributes="ensembl_gene_id",
+                              second_attributes=c("ensembl_gene_id", "hgnc_symbol")) {
     first_mart <- NULL
     first_mart <- try(biomaRt::useMart(biomart=trymart, host=host))
     if (class(first_mart) == 'try-error') {

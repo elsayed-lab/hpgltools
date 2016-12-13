@@ -33,7 +33,8 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
         ##chosen_column <- possible_ids[c]
         chosen_column <- possible_columns[length(possible_columns)]
         overlap <- gene_list %in% test_meta[[chosen_column]]
-        message(paste0("Testing ", ty, " with column ", chosen_column, " an overlap of ", sum(overlap), " was observed out of ", length(gene_list), " genes."))
+        message(paste0("Testing ", ty, " with column ", chosen_column, " an overlap of ",
+                       sum(overlap), " was observed out of ", length(gene_list), " genes."))
         message(paste0("Actually using type ", type, " consider one of the above if that is not good enough."))
     }
     test_string <- paste0("testing <- ", type, "(tmpdb)")
@@ -435,10 +436,11 @@ gather_genes_orgdb <- function(goseq_data, orgdb_go, orgdb_ensembl) {
 #' }
 #' @export
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
-                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE, species="unsupported", orgdb="org.Dm.eg.db",
-                                  goid_map="reference/go/id2go.map", gff_file=NULL, gff_type="gene",
-                                  do_goseq=TRUE, do_cluster=TRUE, do_topgo=TRUE,
-                                  do_gostats=TRUE, do_gprofiler=TRUE, do_trees=FALSE, ...) {
+                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE, species="unsupported",
+                                  orgdb="org.Dm.eg.db", goid_map="reference/go/id2go.map",
+                                  gff_file=NULL, gff_type="gene", do_goseq=TRUE, do_cluster=TRUE,
+                                  do_topgo=TRUE, do_gostats=TRUE, do_gprofiler=TRUE,
+                                  do_trees=FALSE, ...) {
     arglist <- list(...)
     message("This function expects a list of de contrast tables and some annotation information.")
     message("The annotation information would be gene lengths and ontology ids")
