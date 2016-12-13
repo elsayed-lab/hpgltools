@@ -93,7 +93,8 @@ basic_pairwise <- function(input=NULL, design=NULL,
             d_name <- types[d]
             contrast <- paste0(d_name, "_vs_", c_name)
             contrasts_performed <- append(contrast, contrasts_performed)
-            message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons, ": Performing log2 subtraction: ", contrast, "."))
+            message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons,
+                           ": Performing log2 subtraction: ", contrast, "."))
             division <- data.frame(
                 median_table[, d] - median_table[, c])
             comparison_name <- paste0(d_name, "_vs_", c_name)

@@ -2,17 +2,19 @@
 #'
 #' Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
 #'
-#' @param de_genes guess!
-#' @param species an organism supported by gprofiler
-#' @param first_col where to search for the order of 'significant' first
-#' @param second_col if that fails, try some where else.
-#' @param do_go Perform GO search?
-#' @param do_kegg Perform KEGG search?
-#' @param do_reactome Perform reactome search?
-#' @param do_mi Do miRNA search?
-#' @param do_tf Search for transcription factors?
-#' @param do_corum Do corum search?
-#' @param do_hp Do the hp search?
+#' @param de_genes Guess!  The set of differentially expressed/interesting genes.
+#' @param species  Organism supported by gprofiler.
+#' @param first_col  First place used to define the order of 'significant'.
+#' @param second_col  If that fails, try a second column.
+#' @param do_go  Perform GO search?
+#' @param do_kegg  Perform KEGG search?
+#' @param do_reactome  Perform reactome search?
+#' @param do_mi  Do miRNA search?
+#' @param do_tf  Search for transcription factors?
+#' @param do_corum  Do corum search?
+#' @param do_hp  Do the hp search?
+#' @param significant  Only return the statistically significant hits?
+#' @param pseudo_gsea  Is the data in a ranked order by significance?
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @export
 simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",

@@ -75,7 +75,8 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
         ## count_table <- count_table[, -1, drop=FALSE]
         ## post_merge <- length(rownames(count_table))
         post_merge <- nrow(count_dt)
-        message(paste0(files[table], " contains ", pre_merge, " rows and merges to ", post_merge, " rows."))
+        message(paste0(files[table], " contains ", pre_merge,
+                       " rows and merges to ", post_merge, " rows."))
     }
     count_table <- as.data.frame(count_dt)
     rownames(count_table) <- count_table[["rownames"]]
@@ -240,13 +241,13 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE) {
 #' @param norm  Normalization to perform.
 #' @param violin  Include violin plots?
 #' @param convert  Conversion to perform.
-#' @param transform  Transformation.
-#' @param batch  Batch correction.
-#' @param filter  Filtering method.
-#' @return  A big honking excel file.
+#' @param transform  Transformation used.
+#' @param batch  Batch correction applied.
+#' @param filter  Filtering method used.
+#' @return  A big honking excel file and a list including the dataframes and images created.
 #' @export
 write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", violin=FALSE,
-                       convert="cpm", transform="log2", batch="fsva", filter="cbcb") {
+                       convert="cpm", transform="log2", batch="sva", filter="cbcb") {
     wb <- openxlsx::createWorkbook(creator="hpgltools")
     plot_dim <- 6
     plot_cols <- floor(plot_dim * 1.5)

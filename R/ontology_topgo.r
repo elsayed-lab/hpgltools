@@ -202,18 +202,24 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
         ## We have collected all the data sets, close the 3-cpu cluster.
         parallel::stopCluster(cl)
     } else {
-        godata_fisher_result[["MF"]] <- new("topGOdata", ontology="MF", allGenes=fisher_interesting_genes,
+        godata_fisher_result[["MF"]] <- new("topGOdata", ontology="MF",
+                                            allGenes=fisher_interesting_genes,
                                             annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        godata_fisher_result[["BP"]] <- new("topGOdata", ontology="BP", allGenes=fisher_interesting_genes,
+        godata_fisher_result[["BP"]] <- new("topGOdata", ontology="BP",
+                                            allGenes=fisher_interesting_genes,
                                             annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        godata_fisher_result[["CC"]] <- new("topGOdata", ontology="CC", allGenes=fisher_interesting_genes,
+        godata_fisher_result[["CC"]] <- new("topGOdata", ontology="CC",
+                                            allGenes=fisher_interesting_genes,
                                             annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        godata_ks_result[["MF"]] <- new("topGOdata", description="MF", ontology="MF", allGenes=ks_interesting_genes,
-                                        geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        godata_ks_result[["BP"]] <- new("topGOdata", description="BP", ontology="BP", allGenes=ks_interesting_genes,
-                                        geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        godata_ks_result[["CC"]] <- new("topGOdata", description="CC", ontology="CC", allGenes=ks_interesting_genes,
-                                        geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+        godata_ks_result[["MF"]] <- new("topGOdata", description="MF", ontology="MF",
+                                        allGenes=ks_interesting_genes, geneSel=get(selector),
+                                        annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+        godata_ks_result[["BP"]] <- new("topGOdata", description="BP", ontology="BP",
+                                        allGenes=ks_interesting_genes, geneSel=get(selector),
+                                        annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+        godata_ks_result[["CC"]] <- new("topGOdata", description="CC", ontology="CC",
+                                        allGenes=ks_interesting_genes, geneSel=get(selector),
+                                        annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
 
         test_stat <- new("classicCount", testStatistic=topGO::GOFisherTest, name="Fisher test")
         sig_fisher_result[["MF"]] <- topGO::getSigGroups(godata_fisher_result[["MF"]], test_stat)
@@ -325,7 +331,8 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
 #' @param orderby Which of the available columns to order the table by?
 #' @param ranksof Which of the available columns are used to rank the data?
 #' @export
-topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, orderby="classic", ranksof="classic") {
+topgo_tables <- function(result, limit=0.1, limitby="fisher",
+                         numchar=300, orderby="classic", ranksof="classic") {
     ## The following if statement could be replaced by get(limitby)
     ## But I am leaving it as a way to ensure that no shenanigans ensue
     mf_allRes <- bp_allRes <- cc_allRes <- mf_interesting <- bp_interesting <- cc_interesting <- NULL
@@ -686,7 +693,9 @@ hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
         xlab <- "Gene's rank"
     }
     group <- as.integer(names(allS) %in% groupMembers)
-    xx <- data.frame(score=allS, group = factor(group, labels=paste(c("complementary", whichGO), "  (", table(group), ")", sep="")))
+    xx <- data.frame(score=allS, group = factor(group,
+                                                labels=paste(c("complementary", whichGO),
+                                                             "  (", table(group), ")", sep="")))
     plot = lattice::densityplot( ~ score | group, data=xx, layout=c(1,2), xlab=xlab)
     return(plot)
 }

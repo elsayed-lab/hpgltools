@@ -484,8 +484,8 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
         comparison <- names(de_out[c])
         message(paste("Performing ontology search of:", comparison, sep=""))
         updown_genes <- get_sig_genes(datum, n=n, z=z, fc=fc, p=p)
-        up_genes <- updown_genes$up_genes
-        down_genes <- updown_genes$down_genes
+        up_genes <- updown_genes[["up_genes"]]
+        down_genes <- updown_genes[["down_genes"]]
 
         goseq_up_ontology <- goseq_up_trees <- goseq_down_ontology <- goseq_down_trees <- NULL
         cluster_up_ontology <- cluster_up_trees <- cluster_down_ontology <- cluster_down_trees <- NULL
@@ -497,8 +497,10 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
             goseq_up_ontology <- try(simple_goseq(up_genes, lengths=gene_lengths, goids_df=goids))
             goseq_down_ontology <- try(simple_goseq(down_genes, lengths=gene_lengths, goids_df=goids))
             if (isTRUE(do_trees)) {
-                goseq_up_trees <- try(goseq_trees(up_genes, goseq_up_ontology, goid_map=goid_map, goids_df=goids, overwrite=overwrite))
-                goseq_down_trees <- try(goseq_trees(down_genes, goseq_down_ontology, goid_map=goid_map, goids_df=goids))
+                goseq_up_trees <- try(goseq_trees(up_genes, goseq_up_ontology, goid_map=goid_map,
+                                                  goids_df=goids, overwrite=overwrite))
+                goseq_down_trees <- try(goseq_trees(down_genes, goseq_down_ontology,
+                                                    goid_map=goid_map, goids_df=goids))
             }
         }
 
@@ -506,8 +508,10 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
             cluster_up_ontology <- try(simple_clusterprofiler(up_genes, datum, orgdb=orgdb, ...))
             cluster_down_ontology <- try(simple_clusterprofiler(down_genes, datum, orgdb=orgdb, ...))
             if (isTRUE(do_trees)) {
-                cluster_up_trees <- try(cluster_trees(up_genes, cluster_up_ontology, goid_map=goid_map, goids_df=goids))
-                cluster_down_trees <- try(cluster_trees(down_genes, cluster_down_ontology, goid_map=goid_map, goids_df=goids))
+                cluster_up_trees <- try(cluster_trees(up_genes, cluster_up_ontology,
+                                                      goid_map=goid_map, goids_df=goids))
+                cluster_down_trees <- try(cluster_trees(down_genes, cluster_down_ontology,
+                                                        goid_map=goid_map, goids_df=goids))
             }
         }
 
@@ -627,38 +631,28 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
         downers <- down_list[[cluster_count]]
         if (isTRUE(do_goseq)) {
             message(paste0(cluster_count, "/", names_length, ": Starting goseq"))
-            up_goseq[[name]] <- try(simple_goseq(de_genes=uppers,
-                                                 ...))
-            down_goseq[[name]] <- try(simple_goseq(de_genes=downers,
-                                                   ...))
+            up_goseq[[name]] <- try(simple_goseq(de_genes=uppers, ...))
+            down_goseq[[name]] <- try(simple_goseq(de_genes=downers, ...))
         }
         if (isTRUE(do_cluster)) {
             message(paste0(cluster_count, "/", names_length, ": Starting clusterprofiler"))
-            up_cluster[[name]] <- try(simple_clusterprofiler(uppers,
-                                                             ...))
-            down_cluster[[name]] <- try(simple_clusterprofiler(downers,
-                                                               ...))
+            up_cluster[[name]] <- try(simple_clusterprofiler(uppers, ...))
+            down_cluster[[name]] <- try(simple_clusterprofiler(downers, ...))
         }
         if (isTRUE(do_topgo)) {
             message(paste0(cluster_count, "/", names_length, ": Starting topgo"))
-            up_topgo[[name]] <- try(simple_topgo(de_genes=uppers,
-                                                 ...))
-            down_topgo[[name]] <- try(simple_topgo(de_genes=downers,
-                                                   ...))
+            up_topgo[[name]] <- try(simple_topgo(de_genes=uppers, ...))
+            down_topgo[[name]] <- try(simple_topgo(de_genes=downers, ...))
         }
         if (isTRUE(do_gostats)) {
             message(paste0(cluster_count, "/", names_length, ": Starting gostats"))
-            up_gostats[[name]] <- try(simple_gostats(uppers,
-                                                     ...))
-            down_gostats[[name]] <- try(simple_gostats(downers,
-                                                       ...))
+            up_gostats[[name]] <- try(simple_gostats(uppers, ...))
+            down_gostats[[name]] <- try(simple_gostats(downers, ...))
         }
         if (isTRUE(do_gprofiler)) {
             message(paste0(cluster_count, "/", names_length, ": starting gprofiler."))
-            up_gprofiler[[name]] <- try(simple_gprofiler(uppers,
-                                                         ...))
-            down_gprofiler[[name]] <- try(simple_gprofiler(downers,
-                                                           ...))
+            up_gprofiler[[name]] <- try(simple_gprofiler(uppers, ...))
+            down_gprofiler[[name]] <- try(simple_gprofiler(downers, ...))
         }
     }
 
@@ -702,13 +696,13 @@ golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
             level <- level + 1
             GO <- try(clusterProfiler:::getGOLevel(ont, level), silent=TRUE)
             if (class(GO) != 'character') {
-                golevels$level <- as.numeric(golevels$level)
+                golevels[["level"]] <- as.numeric(golevels[["level"]])
                 save(golevels, file=savefile, compress="xz")
                 return (golevels)
             } else {
                 tmpdf <- as.data.frame(cbind(GO, level))
                 ## This (hopefully) ensures that each GO id is added only once, and gets the highest possible level.
-                new_go <- tmpdf[unique(tmpdf$GO, golevels$GO),]
+                new_go <- tmpdf[unique(tmpdf[["GO"]], golevels[["GO"]]),]
                 golevels <- rbind(golevels, new_go)
             }
         }
@@ -765,80 +759,92 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
     }
 
     ## Massage the goseq tables to match Najib's request
-    goseq_mf <- head(goseq$mf_subset, n=n)
-    goseq_bp <- head(goseq$bp_subset, n=n)
-    goseq_cc <- head(goseq$cc_subset, n=n)
+    goseq_mf <- head(goseq[["mf_subset"]], n=n)
+    goseq_bp <- head(goseq[["bp_subset"]], n=n)
+    goseq_cc <- head(goseq[["cc_subset"]], n=n)
     goseq_mf <- goseq_mf[, c(7,1,6,2,4,5,8)]
     goseq_bp <- goseq_bp[, c(7,1,6,2,4,5,8)]
     goseq_cc <- goseq_cc[, c(7,1,6,2,4,5,8)]
-    colnames(goseq_mf) <- c("Ontology","Category","Term","Over p-value", "Num. DE", "Num. in cat.", "Q-value")
-    colnames(goseq_bp) <- c("Ontology","Category","Term","Over p-value", "Num. DE", "Num. in cat.", "Q-value")
-    colnames(goseq_cc) <- c("Ontology","Category","Term","Over p-value", "Num. DE", "Num. in cat.", "Q-value")
+    colnames(goseq_mf) <- c("Ontology", "Category", "Term", "Over p-value",
+                            "Num. DE", "Num. in cat.", "Q-value")
+    colnames(goseq_bp) <- c("Ontology", "Category", "Term", "Over p-value",
+                            "Num. DE", "Num. in cat.", "Q-value")
+    colnames(goseq_cc) <- c("Ontology", "Category", "Term", "Over p-value",
+                            "Num. DE", "Num. in cat.", "Q-value")
 
     ## Massage the clusterProfiler tables similarly
-    cluster_mf <- head(as.data.frame(cluster$mf_all@result), n=n)
-    cluster_bp <- head(as.data.frame(cluster$bp_all@result), n=n)
-    cluster_cc <- head(as.data.frame(cluster$cc_all@result), n=n)
-    cluster_mf$geneID <- gsub(cluster_mf$geneID, pattern="/", replacement=" ")
-    cluster_bp$geneID <- gsub(cluster_bp$geneID, pattern="/", replacement=" ")
-    cluster_cc$geneID <- gsub(cluster_cc$geneID, pattern="/", replacement=" ")
-    cluster_mf$ontology <- "MF"
-    cluster_bp$ontology <- "BP"
-    cluster_cc$ontology <- "CC"
-    cluster_mf <- cluster_mf[,c(10,1,2,5,3,4,6,7,9,8)]
-    cluster_bp <- cluster_bp[,c(10,1,2,5,3,4,6,7,9,8)]
-    cluster_cc <- cluster_cc[,c(10,1,2,5,3,4,6,7,9,8)]
-    colnames(cluster_mf) <- c("Ontology","Category","Term","Over p-value","Gene ratio",
-                              "BG ratio","Adj. p-value","Q-value","Count","Genes")
-    colnames(cluster_bp) <- c("Ontology","Category","Term","Over p-value","Gene ratio",
-                              "BG ratio","Adj. p-value","Q-value","Count","Genes")
-    colnames(cluster_cc) <- c("Ontology","Category","Term","Over p-value","Gene ratio",
-                              "BG ratio","Adj. p-value","Q-value","Count","Genes")
+    cluster_mf <- head(as.data.frame(cluster[["mf_all"]]@result), n=n)
+    cluster_bp <- head(as.data.frame(cluster[["bp_all"]]@result), n=n)
+    cluster_cc <- head(as.data.frame(cluster[["cc_all"]]@result), n=n)
+    cluster_mf[["geneID"]] <- gsub(cluster_mf[["geneID"]], pattern="/", replacement=" ")
+    cluster_bp[["geneID"]] <- gsub(cluster_bp[["geneID"]], pattern="/", replacement=" ")
+    cluster_cc[["geneID"]] <- gsub(cluster_cc[["geneID"]], pattern="/", replacement=" ")
+    cluster_mf[["ontology"]] <- "MF"
+    cluster_bp[["ontology"]] <- "BP"
+    cluster_cc[["ontology"]] <- "CC"
+    cluster_mf <- cluster_mf[,c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
+    cluster_bp <- cluster_bp[,c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
+    cluster_cc <- cluster_cc[,c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
+    colnames(cluster_mf) <- c("Ontology", "Category", "Term", "Over p-value", "Gene ratio",
+                              "BG ratio", "Adj. p-value", "Q-value", "Count", "Genes")
+    colnames(cluster_bp) <- c("Ontology", "Category", "Term", "Over p-value", "Gene ratio",
+                              "BG ratio", "Adj. p-value", "Q-value", "Count", "Genes")
+    colnames(cluster_cc) <- c("Ontology", "Category", "Term", "Over p-value", "Gene ratio",
+                              "BG ratio", "Adj. p-value", "Q-value", "Count", "Genes")
 
     ## Now do the topgo data
-    topgo_mf <- head(topgo$tables$mf_interesting, n=n)
-    topgo_bp <- head(topgo$tables$bp_interesting, n=n)
-    topgo_cc <- head(topgo$tables$cc_interesting, n=n)
-    topgo_mf <- topgo_mf[,c(2,1,11,6,7,8,9,10,4,3,5)]
-    topgo_bp <- topgo_bp[,c(2,1,11,6,7,8,9,10,4,3,5)]
-    topgo_cc <- topgo_cc[,c(2,1,11,6,7,8,9,10,4,3,5)]
-    colnames(topgo_mf) <- c("Ontology","Category","Term","Fisher p-value","Q-value","KS score",
-                            "EL score","Weight score","Num. DE","Num. in cat.","Exp. in cat.")
-    colnames(topgo_bp) <- c("Ontology","Category","Term","Fisher p-value","Q-value","KS score",
-                            "EL score","Weight score","Num. DE","Num. in cat.","Exp. in cat.")
-    colnames(topgo_cc) <- c("Ontology","Category","Term","Fisher p-value","Q-value","KS score",
-                            "EL score","Weight score","Num. DE","Num. in cat.","Exp. in cat.")
+    topgo_mf <- head(topgo[["tables"]][["mf_interesting"]], n=n)
+    topgo_bp <- head(topgo[["tables"]][["bp_interesting"]], n=n)
+    topgo_cc <- head(topgo[["tables"]][["cc_interesting"]], n=n)
+    topgo_mf <- topgo_mf[,c(2, 1, 11, 6, 7, 8, 9, 10, 4, 3, 5)]
+    topgo_bp <- topgo_bp[,c(2, 1, 11, 6, 7, 8, 9, 10, 4, 3, 5)]
+    topgo_cc <- topgo_cc[,c(2, 1, 11, 6, 7, 8, 9, 10, 4, 3, 5)]
+    colnames(topgo_mf) <- c("Ontology", "Category", "Term", "Fisher p-value", "Q-value", "KS score",
+                            "EL score", "Weight score", "Num. DE", "Num. in cat.", "Exp. in cat.")
+    colnames(topgo_bp) <- c("Ontology", "Category", "Term", "Fisher p-value", "Q-value", "KS score",
+                            "EL score", "Weight score", "Num. DE", "Num. in cat.", "Exp. in cat.")
+    colnames(topgo_cc) <- c("Ontology", "Category", "Term", "Fisher p-value", "Q-value", "KS score",
+                            "EL score", "Weight score", "Num. DE", "Num. in cat.", "Exp. in cat.")
 
     ## And the gostats data
-    gostats_mf <- head(gostats$mf_over_all, n=n)
-    gostats_bp <- head(gostats$bp_over_all, n=n)
-    gostats_cc <- head(gostats$cc_over_all, n=n)
-    gostats_mf$t <- gsub(gostats_mf$Term, pattern=".*\">(.*)</a>", replacement="\\1")
-    gostats_bp$t <- gsub(gostats_bp$Term, pattern=".*\">(.*)</a>", replacement="\\1")
-    gostats_cc$t <- gsub(gostats_cc$Term, pattern=".*\">(.*)</a>", replacement="\\1")
-    gostats_mf$Term <- gsub(gostats_mf$Term, pattern="<a href=\"(.*)\">.*", replacement="\\1")
-    gostats_bp$Term <- gsub(gostats_bp$Term, pattern="<a href=\"(.*)\">.*", replacement="\\1")
-    gostats_cc$Term <- gsub(gostats_cc$Term, pattern="<a href=\"(.*)\">.*", replacement="\\1")
-    gostats_mf$ont <- "MF"
-    gostats_bp$ont <- "BP"
-    gostats_cc$ont <- "CC"
-    gostats_mf <- gostats_mf[,c(10,1,9,2,5,6,3,4,8,7)]
-    gostats_bp <- gostats_bp[,c(10,1,9,2,5,6,3,4,8,7)]
-    gostats_cc <- gostats_cc[,c(10,1,9,2,5,6,3,4,8,7)]
-    colnames(gostats_mf) <- c("Ontology","Category","Term","Fisher p-value","Num. DE",
-                              "Num. in cat.","Odds ratio","Exp. in cat.","Q-value","Link")
-    colnames(gostats_bp) <- c("Ontology","Category","Term","Fisher p-value","Num. DE",
-                              "Num. in cat.","Odds ratio","Exp. in cat.","Q-value","Link")
-    colnames(gostats_cc) <- c("Ontology","Category","Term","Fisher p-value","Num. DE",
-                              "Num. in cat.","Odds ratio","Exp. in cat.","Q-value","Link")
+    gostats_mf <- head(gostats[["mf_over_all"]], n=n)
+    gostats_bp <- head(gostats[["bp_over_all"]], n=n)
+    gostats_cc <- head(gostats[["cc_over_all"]], n=n)
+    gostats_mf[["t"]] <- gsub(gostats_mf[["Term"]], pattern=".*\">(.*)</a>", replacement="\\1")
+    gostats_bp[["t"]] <- gsub(gostats_bp[["Term"]], pattern=".*\">(.*)</a>", replacement="\\1")
+    gostats_cc[["t"]] <- gsub(gostats_cc[["Term"]], pattern=".*\">(.*)</a>", replacement="\\1")
+    gostats_mf[["Term"]] <- gsub(gostats_mf[["Term"]], pattern="<a href=\"(.*)\">.*", replacement="\\1")
+    gostats_bp[["Term"]] <- gsub(gostats_bp[["Term"]], pattern="<a href=\"(.*)\">.*", replacement="\\1")
+    gostats_cc[["Term"]] <- gsub(gostats_cc[["Term"]], pattern="<a href=\"(.*)\">.*", replacement="\\1")
+    gostats_mf[["ont"]] <- "MF"
+    gostats_bp[["ont"]] <- "BP"
+    gostats_cc[["ont"]] <- "CC"
+    gostats_mf <- gostats_mf[,c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
+    gostats_bp <- gostats_bp[,c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
+    gostats_cc <- gostats_cc[,c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
+    colnames(gostats_mf) <- c("Ontology", "Category", "Term", "Fisher p-value", "Num. DE",
+                              "Num. in cat.", "Odds ratio", "Exp. in cat.", "Q-value", "Link")
+    colnames(gostats_bp) <- c("Ontology", "Category", "Term", "Fisher p-value", "Num. DE",
+                              "Num. in cat.", "Odds ratio", "Exp. in cat.", "Q-value", "Link")
+    colnames(gostats_cc) <- c("Ontology", "Category", "Term", "Fisher p-value", "Num. DE",
+                              "Num. in cat.", "Odds ratio", "Exp. in cat.", "Q-value", "Link")
 
-    lst <- list(goseq_mf=goseq_mf, goseq_bp=goseq_bp, goseq_cc=goseq_cc,
-                cluster_mf=cluster_mf, cluster_bp=cluster_bp, cluster_cc=cluster_cc,
-                topgo_mf=topgo_mf, topgo_bp=topgo_bp, topgo_cc=topgo_cc,
-                gostats_mf=gostats_mf, gostats_bp=gostats_bp, gostats_cc=gostats_cc)
+    lst <- list("goseq_mf" = goseq_mf,
+                "goseq_bp" = goseq_bp,
+                "goseq_cc" = goseq_cc,
+                "cluster_mf" = cluster_mf,
+                "cluster_bp" = cluster_bp,
+                "cluster_cc" = cluster_cc,
+                "topgo_mf" = topgo_mf,
+                "topgo_bp" = topgo_bp,
+                "topgo_cc" = topgo_cc,
+                "gostats_mf" = gostats_mf,
+                "gostats_bp" = gostats_bp,
+                "gostats_cc" = gostats_cc)
     ## require.auto("awalker89/openxlsx")
     wb <- openxlsx::createWorkbook(creator="atb")
-    hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
+    hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT",
+                                 textDecoration="bold", border="Bottom", fontSize="30")
 
     ## This stanza will be repeated so I am just incrementing the new_row
     new_row <- 1
@@ -846,12 +852,12 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
     openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$goseq_mf, tableStyle="TableStyleMedium9", startRow=new_row)
-    new_row <- new_row + nrow(lst$goseq_mf) + 2
+    openxlsx::writeDataTable(wb, sheet, x=lst[["goseq_mf"]], tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row <- new_row + nrow(lst[["goseq_mf"]]) + 2
     openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$goseq_cc, tableStyle="TableStyleMedium9", startRow=new_row)
+    openxlsx::writeDataTable(wb, sheet, x=lst[["goseq_cc"]], tableStyle="TableStyleMedium9", startRow=new_row)
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
 
     new_row <- 1
@@ -860,17 +866,17 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
     openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$cluster_bp, tableStyle="TableStyleMedium9", startRow=new_row)
-    new_row <- new_row + nrow(lst$cluster_bp) + 2
+    openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_bp"]], tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row <- new_row + nrow(lst[["cluster_bp"]]) + 2
     openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$cluster_mf, tableStyle="TableStyleMedium9", startRow=new_row)
-    new_row <- new_row + nrow(lst$cluster_mf) + 2
+    openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_mf"]], tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row <- new_row + nrow(lst[["cluster_mf"]]) + 2
     openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$cluster_cc, tableStyle="TableStyleMedium9", startRow=new_row)
+    openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_cc"]], tableStyle="TableStyleMedium9", startRow=new_row)
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
 
     new_row <- 1
@@ -879,17 +885,17 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
     openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$topgo_bp, tableStyle="TableStyleMedium9", startRow=new_row)
-    new_row <- new_row + nrow(lst$topgo_bp) + 2
+    openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_bp"]], tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row <- new_row + nrow(lst[["topgo_bp"]]) + 2
     openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$topgo_mf, tableStyle="TableStyleMedium9", startRow=new_row)
-    new_row <- new_row + nrow(lst$topgo_mf) + 2
+    openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_mf"]], tableStyle="TableStyleMedium9", startRow=new_row)
+    new_row <- new_row + nrow(lst[["topgo_mf"]]) + 2
     openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$topgo_cc, tableStyle="TableStyleMedium9", startRow=new_row)
+    openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_cc"]], tableStyle="TableStyleMedium9", startRow=new_row)
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:11, widths="auto")
 
     new_row <- 1
@@ -898,28 +904,28 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
     openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$gostats_bp, tableStyle="TableStyleMedium9", startRow=new_row)
-    links <- lst$gostats_bp$Link
+    openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_bp"]], tableStyle="TableStyleMedium9", startRow=new_row)
+    links <- lst[["gostats_bp"]][["Link"]]
     class(links) <- 'hyperlink'
-    names(links) <- lst$gostats_bp$Category
+    names(links) <- lst[["gostats_bp"]][["Category"]]
     openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
-    new_row <- new_row + nrow(lst$gostats_bp) + 2
+    new_row <- new_row + nrow(lst[["gostats_bp"]]) + 2
     openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$gostats_mf, tableStyle="TableStyleMedium9", startRow=new_row)
-    links <- lst$gostats_mf$Link
+    openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_mf"]], tableStyle="TableStyleMedium9", startRow=new_row)
+    links <- lst[["gostats_mf"]][["Link"]]
     class(links) <- 'hyperlink'
-    names(links) <- lst$gostats_mf$Category
+    names(links) <- lst[["gostats_mf"]][["Category"]]
     openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
-    new_row <- new_row + nrow(lst$gostats_mf) + 2
+    new_row <- new_row + nrow(lst[["gostats_mf"]]) + 2
     openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
-    openxlsx::writeDataTable(wb, sheet, x=lst$gostats_cc, tableStyle="TableStyleMedium9", startRow=new_row)
-    links <- lst$gostats_cc$Link
+    openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_cc"]], tableStyle="TableStyleMedium9", startRow=new_row)
+    links <- lst[["gostats_cc"]][["Link"]]
     class(links) <- 'hyperlink'
-    names(links) <- lst$gostats_cc$Category
+    names(links) <- lst[["gostats_cc"]][["Category"]]
     openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
 
@@ -1137,14 +1143,17 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["goseq_bp"]], tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["goseq_bp"]],
+                                     tableStyle=table_style, startRow=new_row)
             ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_goseq"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$goseq_bp) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["goseq_bp"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(up_stuff$goseq_bp) + 2
+            new_row <- new_row + nrow(up_stuff[["goseq_bp"]]) + 2
         }
 
         ## write goseq MF data
@@ -1152,13 +1161,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$goseq_mf, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["goseq_mf"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_goseq"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$goseq_mf) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["goseq_mf"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(up_stuff$goseq_mf) + 2
+            new_row <- new_row + nrow(up_stuff[["goseq_mf"]]) + 2
         }
 
         ## write goseq CC data
@@ -1166,11 +1178,14 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$goseq_cc, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["goseq_cc"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_goseq"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$goseq_cc) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["goseq_cc"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
             openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
         }
@@ -1185,13 +1200,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$cluster_bp, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["cluster_bp"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_cluster"]][[name]][["pvalue_plots"]][["bp_all_barplot"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$cluster_bp) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["cluster_bp"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(up_stuff$cluster_bp) + 2
+            new_row <- new_row + nrow(up_stuff[["cluster_bp"]]) + 2
         }
 
         ## Write clusterprofiler MF data
@@ -1199,13 +1217,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$cluster_mf, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["cluster_mf"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_cluster"]][[name]][["pvalue_plots"]][["mf_all_barplot"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$cluster_mf) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["cluster_mf"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(up_stuff$cluster_mf) + 2
+            new_row <- new_row + nrow(up_stuff[["cluster_mf"]]) + 2
         }
 
         ## Write clusterprofiler CC data
@@ -1213,11 +1234,14 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$cluster_cc, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["cluster_cc"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_cluster"]][[name]][["pvalue_plots"]][["cc_all_barplot"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$cluster_cc) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["cluster_cc"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
         }
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
@@ -1232,13 +1256,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$topgo_bp, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["topgo_bp"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_topgo"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$topgo_bp) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["topgo_bp"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(up_stuff$topgo_bp) + 2
+            new_row <- new_row + nrow(up_stuff[["topgo_bp"]]) + 2
         }
 
         ## write topgo MF results
@@ -1246,13 +1273,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$topgo_mf, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["topgo_mf"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_topgo"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$topgo_mf) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["topgo_mf"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(up_stuff$topgo_mf) + 2
+            new_row <- new_row + nrow(up_stuff[["topgo_mf"]]) + 2
         }
 
         ## and cc
@@ -1260,11 +1290,14 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$topgo_cc, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["topgo_cc"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_topgo"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$topgo_cc) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["topgo_cc"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
             openxlsx::setColWidths(wb, sheet=sheet, cols=2:11, widths="auto")
         }
@@ -1279,53 +1312,62 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$gostats_bp, tableStyle=table_style, startRow=new_row)
-            links <- up_stuff$gostats_bp$Link
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_bp"]],
+                                     tableStyle=table_style, startRow=new_row)
+            links <- up_stuff[["gostats_bp"]][["Link"]]
             class(links) <- 'hyperlink'
-            names(links) <- up_stuff$gostats_bp$Category
+            names(links) <- up_stuff[["gostats_bp"]][["Category"]]
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_gostats"]][[name]][["pvalue_plots"]][["bp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$gostats_bp) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["gostats_bp"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(up_stuff$gostats_bp) + 2
+            new_row <- new_row + nrow(up_stuff[["gostats_bp"]]) + 2
         }
 
         ## and mf
         if (!is.null(up_stuff[["gostats_mf"]])) {
             openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
             message("The previous line was a warning about overwriting existing data because of a link.")
-            new_row <- new_row + nrow(up_stuff$gostats_bp) + 2
+            new_row <- new_row + nrow(up_stuff[["gostats_bp"]]) + 2
             openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$gostats_mf, tableStyle=table_style, startRow=new_row)
-            links <- up_stuff$gostats_mf$Link
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_mf"]],
+                                     tableStyle=table_style, startRow=new_row)
+            links <- up_stuff[["gostats_mf"]][["Link"]]
             class(links) <- 'hyperlink'
-            names(links) <- up_stuff$gostats_mf$Category
+            names(links) <- up_stuff[["gostats_mf"]][["Category"]]
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_gostats"]][[name]][["pvalue_plots"]][["mf_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$gostats_mf) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["gostats_mf"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(up_stuff$gostats_mf) + 2
+            new_row <- new_row + nrow(up_stuff[["gostats_mf"]]) + 2
         }
 
         ## and cc
         if (!is.null(up_stuff[["gostats_cc"]])) {
             openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
-            new_row <- new_row + nrow(up_stuff$gostats_mf) + 2
+            new_row <- new_row + nrow(up_stuff[["gostats_mf"]]) + 2
             openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$gostats_cc, tableStyle=table_style, startRow=new_row)
-            links <- up_stuff$gostats_cc$Link
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_cc"]],
+                                     tableStyle=table_style, startRow=new_row)
+            links <- up_stuff[["gostats_cc"]][["Link"]]
             class(links) <- 'hyperlink'
-            names(links) <- up_stuff$gostats_cc$Category
+            names(links) <- up_stuff[["gostats_cc"]][["Category"]]
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_gostats"]][[name]][["pvalue_plots"]][["cc_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$gostats_cc) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["gostats_cc"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
             openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
         }
@@ -1340,14 +1382,17 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gprofiler_bp"]], tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gprofiler_bp"]],
+                                     tableStyle=table_style, startRow=new_row)
             ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_gprofiler"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$gprofiler_bp) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["gprofiler_bp"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(up_stuff$gprofiler_bp) + 2
+            new_row <- new_row + nrow(up_stuff[["gprofiler_bp"]]) + 2
         }
 
         ## write gprofiler MF data
@@ -1355,13 +1400,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$gprofiler_mf, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gprofiler_mf"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_gprofiler"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$gprofiler_mf) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["gprofiler_mf"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(up_stuff$gprofiler_mf) + 2
+            new_row <- new_row + nrow(up_stuff[["gprofiler_mf"]]) + 2
         }
 
         ## write gprofiler CC data
@@ -1369,11 +1417,14 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             cnew_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=up_stuff$gprofiler_cc, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gprofiler_cc"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_gprofiler"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(up_stuff$gprofiler_cc) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(up_stuff[["gprofiler_cc"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
             openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
         }
@@ -1384,7 +1435,8 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         res <- openxlsx::saveWorkbook(wb, up_filename, overwrite=TRUE)
 
         wb <- openxlsx::createWorkbook(creator="atb")
-        hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
+        hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold",
+                                     border="Bottom", fontSize="30")
         ## This stanza will be repeated so I am just incrementing the new_row
 
         ## Starting with goseq
@@ -1397,13 +1449,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$goseq_bp, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["goseq_bp"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_goseq"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$goseq_bp) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["goseq_bp"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(down_stuff$goseq_bp) + 2
+            new_row <- new_row + nrow(down_stuff[["goseq_bp"]]) + 2
         }
 
         ## Goseq down MF data
@@ -1411,13 +1466,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$goseq_mf, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["goseq_mf"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_goseq"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$goseq_mf) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["goseq_mf"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(down_stuff$goseq_mf) + 2
+            new_row <- new_row + nrow(down_stuff[["goseq_mf"]]) + 2
         }
 
         ## Goseq down CC data
@@ -1425,11 +1483,14 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$goseq_cc, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["goseq_cc"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_goseq"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$goseq_cc) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["goseq_cc"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
         }
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -1444,13 +1505,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$cluster_bp, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["cluster_bp"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_cluster"]][[name]][["pvalue_plots"]][["bp_all_barplot"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$cluster_bp) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["cluster_bp"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(down_stuff$cluster_bp) + 2
+            new_row <- new_row + nrow(down_stuff[["cluster_bp"]]) + 2
         }
 
         ## cp down mf
@@ -1458,13 +1522,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$cluster_mf, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["cluster_mf"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_cluster"]][[name]][["pvalue_plots"]][["mf_all_barplot"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$cluster_mf) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["cluster_mf"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(down_stuff$cluster_mf) + 2
+            new_row <- new_row + nrow(down_stuff[["cluster_mf"]]) + 2
         }
 
         ## cp down cc
@@ -1472,11 +1539,14 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$cluster_cc, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["cluster_cc"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
-                a_plot <- kept_ontology[["down_cluster"]][[name]]$cc_all_barplot
+                a_plot <- kept_ontology[["down_cluster"]][[name]][["cc_all_barplot"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$cluster_cc) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["cluster_cc"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
         }
 
@@ -1491,13 +1561,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$topgo_bp, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["topgo_bp"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_topgo"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$topgo_bp) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["topgo_bp"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(down_stuff$topgo_bp) + 2
+            new_row <- new_row + nrow(down_stuff[["topgo_bp"]]) + 2
         }
 
         ## tp down mf
@@ -1505,13 +1578,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$topgo_mf, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["topgo_mf"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_topgo"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$topgo_mf) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["topgo_mf"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(down_stuff$topgo_mf) + 2
+            new_row <- new_row + nrow(down_stuff[["topgo_mf"]]) + 2
         }
 
         ## tp down cc
@@ -1519,11 +1595,14 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$topgo_cc, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["topgo_cc"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_topgo"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$topgo_cc) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["topgo_cc"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
         }
 
@@ -1538,17 +1617,20 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$gostats_bp, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gostats_bp"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_gostats"]][[name]][["pvalue_plots"]][["bp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$gostats_bp) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["gostats_bp"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            links <- down_stuff$gostats_bp$Link
+            links <- down_stuff[["gostats_bp"]][["Link"]]
             class(links) <- 'hyperlink'
-            names(links) <- down_stuff$gostats_bp$Category
+            names(links) <- down_stuff[["gostats_bp"]][["Category"]]
             openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
-            new_row <- new_row + nrow(down_stuff$gostats_bp) + 2
+            new_row <- new_row + nrow(down_stuff[["gostats_bp"]]) + 2
         }
 
         ## gs down mf
@@ -1556,17 +1638,20 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$gostats_mf, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gostats_mf"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_gostats"]][[name]][["pvalue_plots"]][["mf_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$gostats_mf) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["gostats_mf"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            links <- down_stuff$gostats_mf$Link
+            links <- down_stuff[["gostats_mf"]][["Link"]]
             class(links) <- 'hyperlink'
-            names(links) <- down_stuff$gostats_mf$Category
+            names(links) <- down_stuff[["gostats_mf"]][["Category"]]
             openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
-            new_row <- new_row + nrow(down_stuff$gostats_mf) + 2
+            new_row <- new_row + nrow(down_stuff[["gostats_mf"]]) + 2
         }
 
         ## gs down cc
@@ -1574,15 +1659,18 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$gostats_cc, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gostats_cc"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_gostats"]][[name]][["pvalue_plots"]][["cc_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$gostats_cc) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["gostats_cc"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            links <- down_stuff$gostats_cc$Link
+            links <- down_stuff[["gostats_cc"]][["Link"]]
             class(links) <- 'hyperlink'
-            names(links) <- down_stuff$gostats_cc$Category
+            names(links) <- down_stuff[["gostats_cc"]][["Category"]]
             openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
         }
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
@@ -1602,9 +1690,11 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_gprofiler"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$gprofiler_bp) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["gprofiler_bp"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(down_stuff$gprofiler_bp) + 2
+            new_row <- new_row + nrow(down_stuff[["gprofiler_bp"]]) + 2
         }
 
         ## write gprofiler MF data
@@ -1612,13 +1702,16 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$gprofiler_mf, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gprofiler_mf"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_gprofiler"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$gprofiler_mf) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["gprofiler_mf"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
-            new_row <- new_row + nrow(down_stuff$gprofiler_mf) + 2
+            new_row <- new_row + nrow(down_stuff[["gprofiler_mf"]]) + 2
         }
 
         ## write gprofiler CC data
@@ -1626,11 +1719,14 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
             openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
             new_row <- new_row + 1
-            openxlsx::writeDataTable(wb, sheet, x=down_stuff$gprofiler_cc, tableStyle=table_style, startRow=new_row)
+            openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gprofiler_cc"]],
+                                     tableStyle=table_style, startRow=new_row)
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["down_gprofiler"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
                 print(a_plot)
-                openxlsx::insertPlot(wb, sheet, width=6, height=6, startCol=ncol(down_stuff$gprofiler_cc) + 2, startRow=new_row, fileType="png", units="in")
+                openxlsx::insertPlot(wb, sheet, width=6, height=6,
+                                     startCol=ncol(down_stuff[["gprofiler_cc"]]) + 2,
+                                     startRow=new_row, fileType="png", units="in")
             }
             openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
         }
@@ -1660,54 +1756,57 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 compare_go_searches <- function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NULL) {
     goseq_mf_data <- goseq_bp_data <- goseq_cc_data <- NULL
     if (!is.null(goseq)) {
-        goseq_mf_data <- goseq$mf_subset[,c("category","over_represented_pvalue")]
-        goseq_bp_data <- goseq$bp_subset[,c("category","over_represented_pvalue")]
-        goseq_cc_data <- goseq$cc_subset[,c("category","over_represented_pvalue")]
-        colnames(goseq_mf_data) <- c("goseq_id","goseq_pvalue")
-        colnames(goseq_bp_data) <- c("goseq_id","goseq_pvalue")
-        colnames(goseq_cc_data) <- c("goseq_id","goseq_pvalue")
+        goseq_mf_data <- goseq[["mf_subset"]][, c("category", "over_represented_pvalue")]
+        goseq_bp_data <- goseq[["bp_subset"]][, c("category", "over_represented_pvalue")]
+        goseq_cc_data <- goseq[["cc_subset"]][, c("category", "over_represented_pvalue")]
+        colnames(goseq_mf_data) <- c("goseq_id", "goseq_pvalue")
+        colnames(goseq_bp_data) <- c("goseq_id", "goseq_pvalue")
+        colnames(goseq_cc_data) <- c("goseq_id", "goseq_pvalue")
     }
     cluster_mf_data <- cluster_bp_data <- cluster_cc_data <- NULL
     if (!is.null(cluster)) {
-        cluster_mf_data <- as.data.frame(summary(cluster$mf_all))[,c("ID","pvalue")]
-        cluster_bp_data <- as.data.frame(summary(cluster$bp_all))[,c("ID","pvalue")]
-        cluster_cc_data <- as.data.frame(summary(cluster$cc_all))[,c("ID","pvalue")]
-        colnames(cluster_mf_data) <- c("cluster_id","cluster_pvalue")
-        colnames(cluster_bp_data) <- c("cluster_id","cluster_pvalue")
-        colnames(cluster_cc_data) <- c("cluster_id","cluster_pvalue")
+        cluster_mf_data <- as.data.frame(summary(cluster[["mf_all"]]))[, c("ID", "pvalue")]
+        cluster_bp_data <- as.data.frame(summary(cluster[["bp_all"]]))[, c("ID", "pvalue")]
+        cluster_cc_data <- as.data.frame(summary(cluster[["cc_all"]]))[, c("ID", "pvalue")]
+        colnames(cluster_mf_data) <- c("cluster_id", "cluster_pvalue")
+        colnames(cluster_bp_data) <- c("cluster_id", "cluster_pvalue")
+        colnames(cluster_cc_data) <- c("cluster_id", "cluster_pvalue")
     }
     topgo_mf_data <- topgo_bp_data <- topgo_cc_data <- NULL
     if (!is.null(topgo)) {
-        topgo_mf_data <- topgo$tables$mf[,c("GO.ID","fisher","KS","EL","weight")]
-        topgo_bp_data <- topgo$tables$bp[,c("GO.ID","fisher","KS","EL","weight")]
-        topgo_cc_data <- topgo$tables$cc[,c("GO.ID","fisher","KS","EL","weight")]
-        colnames(topgo_mf_data) <- c("topgo_id","topgo_fisher_pvalue","topgo_el_pvalue","topgo_ks_pvalue","topgo_weight_pvalue")
-        colnames(topgo_bp_data) <- c("topgo_id","topgo_fisher_pvalue","topgo_el_pvalue","topgo_ks_pvalue","topgo_weight_pvalue")
-        colnames(topgo_cc_data) <- c("topgo_id","topgo_fisher_pvalue","topgo_el_pvalue","topgo_ks_pvalue","topgo_weight_pvalue")
+        topgo_mf_data <- topgo[["tables"]][["mf"]][, c("GO.ID", "fisher", "KS", "EL", "weight")]
+        topgo_bp_data <- topgo[["tables"]][["bp"]][, c("GO.ID", "fisher", "KS", "EL", "weight")]
+        topgo_cc_data <- topgo[["tables"]][["cc"]][, c("GO.ID", "fisher", "KS", "EL", "weight")]
+        colnames(topgo_mf_data) <- c("topgo_id", "topgo_fisher_pvalue",
+                                     "topgo_el_pvalue", "topgo_ks_pvalue", "topgo_weight_pvalue")
+        colnames(topgo_bp_data) <- c("topgo_id", "topgo_fisher_pvalue",
+                                     "topgo_el_pvalue", "topgo_ks_pvalue", "topgo_weight_pvalue")
+        colnames(topgo_cc_data) <- c("topgo_id" ,"topgo_fisher_pvalue",
+                                     "topgo_el_pvalue","topgo_ks_pvalue","topgo_weight_pvalue")
     }
     gostats_mf_data <- gostats_bp_data <- gostats_cc_data <- NULL
     if (!is.null(gostats)) {
-        gostats_mf_data <- gostats$mf_over_all[,c("GOMFID","Pvalue")]
-        gostats_bp_data <- gostats$bp_over_all[,c("GOBPID","Pvalue")]
-        gostats_cc_data <- gostats$cc_over_all[,c("GOCCID","Pvalue")]
-        colnames(gostats_mf_data) <- c("gostats_id","gostats_pvalue")
-        colnames(gostats_bp_data) <- c("gostats_id","gostats_pvalue")
-        colnames(gostats_cc_data) <- c("gostats_id","gostats_pvalue")
+        gostats_mf_data <- gostats[["mf_over_all"]][, c("GOMFID", "Pvalue")]
+        gostats_bp_data <- gostats[["bp_over_all"]][, c("GOBPID", "Pvalue")]
+        gostats_cc_data <- gostats[["cc_over_all"]][, c("GOCCID", "Pvalue")]
+        colnames(gostats_mf_data) <- c("gostats_id", "gostats_pvalue")
+        colnames(gostats_bp_data) <- c("gostats_id", "gostats_pvalue")
+        colnames(gostats_cc_data) <- c("gostats_id", "gostats_pvalue")
     }
     ## Now combine them...
     all_mf <- merge(goseq_mf_data, cluster_mf_data, by.x="goseq_id", by.y="cluster_id", all.x=TRUE, all.y=TRUE)
     all_mf <- merge(all_mf, topgo_mf_data, by.x="goseq_id", by.y="topgo_id", all.x=TRUE, all.y=TRUE)
     all_mf <- merge(all_mf, gostats_mf_data, by.x="goseq_id", by.y="gostats_id", all.x=TRUE, all.y=TRUE)
-    rownames(all_mf) <- all_mf$goseq_id
+    rownames(all_mf) <- all_mf[["goseq_id"]]
     all_mf <- all_mf[-1]
     all_mf[is.na(all_mf)] <- 1
-    all_mf$goseq_pvalue <- 1 - as.numeric(all_mf$goseq_pvalue)
-    all_mf$cluster_pvalue <- 1 - as.numeric(all_mf$cluster_pvalue)
-    all_mf$topgo_fisher_pvalue <- 1 - as.numeric(all_mf$topgo_fisher_pvalue)
-    all_mf$topgo_el_pvalue <- 1 - as.numeric(all_mf$topgo_el_pvalue)
-    all_mf$topgo_ks_pvalue <- 1 - as.numeric(all_mf$topgo_ks_pvalue)
-    all_mf$topgo_weight_pvalue <- 1 - as.numeric(all_mf$topgo_weight_pvalue)
-    all_mf$gostats_pvalue <- 1 - as.numeric(all_mf$gostats_pvalue)
+    all_mf[["goseq_pvalue"]] <- 1 - as.numeric(all_mf[["goseq_pvalue"]])
+    all_mf[["cluster_pvalue"]] <- 1 - as.numeric(all_mf[["cluster_pvalue"]])
+    all_mf[["topgo_fisher_pvalue"]] <- 1 - as.numeric(all_mf[["topgo_fisher_pvalue"]])
+    all_mf[["topgo_el_pvalue"]] <- 1 - as.numeric(all_mf[["topgo_el_pvalue"]])
+    all_mf[["topgo_ks_pvalue"]] <- 1 - as.numeric(all_mf[["topgo_ks_pvalue"]])
+    all_mf[["topgo_weight_pvalue"]] <- 1 - as.numeric(all_mf[["topgo_weight_pvalue"]])
+    all_mf[["gostats_pvalue"]] <- 1 - as.numeric(all_mf[["gostats_pvalue"]])
     all_mf[is.na(all_mf)] <- 0
     message(cor(all_mf))
     mf_summary <- rowSums(all_mf)
@@ -1716,16 +1815,16 @@ compare_go_searches <- function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NU
     all_bp <- merge(goseq_bp_data, cluster_bp_data, by.x="goseq_id", by.y="cluster_id", all.x=TRUE, all.y=TRUE)
     all_bp <- merge(all_bp, topgo_bp_data, by.x="goseq_id", by.y="topgo_id", all.x=TRUE, all.y=TRUE)
     all_bp <- merge(all_bp, gostats_bp_data, by.x="goseq_id", by.y="gostats_id", all.x=TRUE, all.y=TRUE)
-    rownames(all_bp) <- all_bp$goseq_id
+    rownames(all_bp) <- all_bp[["goseq_id"]]
     all_bp <- all_bp[-1]
     all_bp[is.na(all_bp)] <- 1
-    all_bp$goseq_pvalue <- 1 - as.numeric(all_bp$goseq_pvalue)
-    all_bp$cluster_pvalue <- 1 - as.numeric(all_bp$cluster_pvalue)
-    all_bp$topgo_fisher_pvalue <- 1 - as.numeric(all_bp$topgo_fisher_pvalue)
-    all_bp$topgo_el_pvalue <- 1 - as.numeric(all_bp$topgo_el_pvalue)
-    all_bp$topgo_ks_pvalue <- 1 - as.numeric(all_bp$topgo_ks_pvalue)
-    all_bp$topgo_weight_pvalue <- 1 - as.numeric(all_bp$topgo_weight_pvalue)
-    all_bp$gostats_pvalue <- 1 - as.numeric(all_bp$gostats_pvalue)
+    all_bp[["goseq_pvalue"]] <- 1 - as.numeric(all_bp[["goseq_pvalue"]])
+    all_bp[["cluster_pvalue"]] <- 1 - as.numeric(all_bp[["cluster_pvalue"]])
+    all_bp[["topgo_fisher_pvalue"]] <- 1 - as.numeric(all_bp[["topgo_fisher_pvalue"]])
+    all_bp[["topgo_el_pvalue"]] <- 1 - as.numeric(all_bp[["topgo_el_pvalue"]])
+    all_bp[["topgo_ks_pvalue"]] <- 1 - as.numeric(all_bp[["topgo_ks_pvalue"]])
+    all_bp[["topgo_weight_pvalue"]] <- 1 - as.numeric(all_bp[["topgo_weight_pvalue"]])
+    all_bp[["gostats_pvalue"]] <- 1 - as.numeric(all_bp[["gostats_pvalue"]])
     all_bp[is.na(all_bp)] <- 0
     message(cor(all_bp))
     bp_summary <- rowSums(all_bp)
@@ -1734,16 +1833,16 @@ compare_go_searches <- function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NU
     all_cc <- merge(goseq_cc_data, cluster_cc_data, by.x="goseq_id", by.y="cluster_id", all.x=TRUE, all.y=TRUE)
     all_cc <- merge(all_cc, topgo_cc_data, by.x="goseq_id", by.y="topgo_id", all.x=TRUE, all.y=TRUE)
     all_cc <- merge(all_cc, gostats_cc_data, by.x="goseq_id", by.y="gostats_id", all.x=TRUE, all.y=TRUE)
-    rownames(all_cc) <- all_cc$goseq_id
+    rownames(all_cc) <- all_cc[["goseq_id"]]
     all_cc <- all_cc[-1]
     all_cc[is.na(all_cc)] <- 1
-    all_cc$goseq_pvalue <- 1 - as.numeric(all_cc$goseq_pvalue)
-    all_cc$cluster_pvalue <- 1 - as.numeric(all_cc$cluster_pvalue)
-    all_cc$topgo_fisher_pvalue <- 1 - as.numeric(all_cc$topgo_fisher_pvalue)
-    all_cc$topgo_el_pvalue <- 1 - as.numeric(all_cc$topgo_el_pvalue)
-    all_cc$topgo_ks_pvalue <- 1 - as.numeric(all_cc$topgo_ks_pvalue)
-    all_cc$topgo_weight_pvalue <- 1 - as.numeric(all_cc$topgo_weight_pvalue)
-    all_cc$gostats_pvalue <- 1 - as.numeric(all_cc$gostats_pvalue)
+    all_cc[["goseq_pvalue"]] <- 1 - as.numeric(all_cc[["goseq_pvalue"]])
+    all_cc[["cluster_pvalue"]] <- 1 - as.numeric(all_cc[["cluster_pvalue"]])
+    all_cc[["topgo_fisher_pvalue"]] <- 1 - as.numeric(all_cc[["topgo_fisher_pvalue"]])
+    all_cc[["topgo_el_pvalue"]] <- 1 - as.numeric(all_cc[["topgo_el_pvalue"]])
+    all_cc[["topgo_ks_pvalue"]] <- 1 - as.numeric(all_cc[["topgo_ks_pvalue"]])
+    all_cc[["topgo_weight_pvalue"]] <- 1 - as.numeric(all_cc[["topgo_weight_pvalue"]])
+    all_cc[["gostats_pvalue"]] <- 1 - as.numeric(all_cc[["gostats_pvalue"]])
     all_cc[is.na(all_cc)] <- 0
     message(cor(all_cc))
     cc_summary <- rowSums(all_cc)

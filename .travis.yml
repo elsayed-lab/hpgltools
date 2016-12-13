@@ -28,7 +28,7 @@ before_install:
 
 script:
   - make install
-  - make test
+##  - make test
 
 notifications:
   email: false

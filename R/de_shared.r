@@ -1042,7 +1042,8 @@ make_exampledata <- function (ngenes=1000, columns=5) {
     m <- t(sapply(seq_len(ngenes),
                   function(i) sapply(1:columns,
                                      function(j) rnbinom(1,
-                                                         mu = true_sf[j] * ifelse(conds[j] == "A", q0A[i], q0B[i]),
+                                                         mu = true_sf[j] * ifelse(conds[j] == "A",
+                                                                                  q0A[i], q0B[i]),
                                                          size = 1/0.2))))
     rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
     example <- DESeq::newCountDataSet(m, conds)
@@ -1128,7 +1129,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
     if (!is.null(extra_contrasts)) {
         extra_eval_strings <- strsplit(extra_contrasts, ",")
         extra_eval_names <- extra_eval_strings
-        extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")
+        extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings[[1]],
+                                                            "^(\\s*)(\\w+)=.*$", "$2")
         for (i in 1:length(extra_eval_strings)) {
             new_name <- extra_eval_names[[i]]
             extra_contrast <- paste0(extra_eval_strings[[i]], ", ")

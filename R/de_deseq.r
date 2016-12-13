@@ -160,7 +160,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
             formula_string <- paste0(formula_string, "condition)")
             new_formula <- eval(parse(text=formula_string))
             DESeq2::design(dataset) <- new_formula
-            data_model <- stats::model.matrix.default(DESeq2::design(dataset), data = as.data.frame(dataset@colData))
+            data_model <- stats::model.matrix.default(DESeq2::design(dataset),
+                                                      data = as.data.frame(dataset@colData))
             model_columns <- ncol(data_model)
             model_rank <- qr(data_model)[["rank"]]
             if (model_rank < model_columns) {
@@ -264,7 +265,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                 ttmp <- as.numeric(result[["P.Value"]])
                 ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
                 signif(x=ttmp, digits=4)
-                ## as.numeric(format(signif(qvalue::qvalue(as.numeric(result$P.Value), robust=TRUE)$qvalues, 4), scientific=TRUE))
             }, error=function(cond) {
                 message(paste0("The qvalue estimation failed for ", comparison, "."))
                 return(1)
@@ -288,7 +288,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         coef_name <- paste0("condition", coef)
         coefficient_list[[coef]] <- as.data.frame(
             DESeq2::results(deseq_run, contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
-        ## coefficient_list[[denominator]] = as.data.frame(results(deseq_run, contrast=as.numeric(denominator_name == resultsNames(deseq_run))))
     }
 
     ret_list <- list(

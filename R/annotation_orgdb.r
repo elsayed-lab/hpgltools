@@ -47,7 +47,8 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
 
     if (sum(fields %in% all_fields) != length(fields)) {
         message(toString(fields %in% all_fields))
-        stop(paste0("Some of the fields requested are not in the available, we do have the following ", toString(all_fields)))
+        stop(paste0("Some requested fields are not available.  The following were found: ",
+                    toString(all_fields)))
     }
     ## fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
 

@@ -37,7 +37,8 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
     mart <- NULL
     mart <- try(biomaRt::useMart(biomart=trymart, host=host))
     if (class(mart) == 'try-error') {
-        message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ", host, " ", trymart, "."))
+        message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ",
+                       host, " ", trymart, "."))
         marts <- biomaRt::listMarts(host=host)
         mart_names <- as.character(marts[[1]])
         message(paste0("The available marts are: "))
@@ -140,7 +141,8 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
     mart <- NULL
     mart <- try(biomaRt::useMart(biomart=trymart, host=host))
     if (class(mart) == "try-error") {
-        message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ", host, " ", trymart, "."))
+        message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ",
+                       host, " ", trymart, "."))
         marts <- biomaRt::listMarts(host=host)
         mart_names <- as.character(marts[[1]])
         message(paste0("The available marts are: "))
@@ -150,7 +152,8 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
     }
     ensembl <- biomaRt::useDataset(dataset, mart=mart)
     if (class(ensembl) == 'try-error') {
-        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", dataset, "."))
+        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ",
+                       dataset, "."))
         datasets <- biomaRt::listDatasets(mart=mart)
         print(datasets)
         return(NULL)
@@ -227,7 +230,8 @@ biomart_orthologs <- function(gene_ids, first_species="hsapiens", second_species
     first_mart <- NULL
     first_mart <- try(biomaRt::useMart(biomart=trymart, host=host))
     if (class(first_mart) == 'try-error') {
-        message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ", host, " ", trymart, "."))
+        message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ",
+                       host, " ", trymart, "."))
         first_marts <- biomaRt::listMarts(host=host)
         first_mart_names <- as.character(first_marts[[1]])
         message(paste0("The available first_marts are: "))
@@ -238,7 +242,8 @@ biomart_orthologs <- function(gene_ids, first_species="hsapiens", second_species
     first_dataset <- paste0(first_species, "_gene_ensembl")
     first_ensembl <- try(biomaRt::useDataset(first_dataset, mart=first_mart))
     if (class(first_ensembl) == 'try-error') {
-        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", first_ensembl, "."))
+        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ",
+                       first_ensembl, "."))
         datasets <- biomaRt::listDatasets(mart=first_mart)
         print(datasets)
         return(NULL)
@@ -247,7 +252,8 @@ biomart_orthologs <- function(gene_ids, first_species="hsapiens", second_species
     second_mart <- NULL
     second_mart <- try(biomaRt::useMart(biomart=trymart, host=host))
     if (class(second_mart) == 'try-error') {
-        message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ", host, " ", trymart, "."))
+        message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ",
+                       host, " ", trymart, "."))
         second_marts <- biomaRt::listMarts(host=host)
         second_mart_names <- as.character(second_marts[[1]])
         message(paste0("The available second_marts are: "))
@@ -258,7 +264,8 @@ biomart_orthologs <- function(gene_ids, first_species="hsapiens", second_species
     second_dataset <- paste0(second_species, "_gene_ensembl")
     second_ensembl <- try(biomaRt::useDataset(second_dataset, mart=second_mart))
     if (class(second_ensembl) == "try-error") {
-        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", second_ensembl, "."))
+        message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ",
+                       second_ensembl, "."))
         datasets <- biomaRt::listDatasets(mart=second_mart)
         print(datasets)
         return(NULL)
