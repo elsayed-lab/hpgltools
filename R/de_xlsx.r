@@ -928,7 +928,11 @@ extract_significant_genes <- function(combined,
             down_titles[[table_name]] <- down_title
         } ## End extracting significant genes for loop
 
-        change_counts <- cbind(change_counts_up, change_counts_down)
+        change_counts <- as.data.frame(cbind(change_counts_up, change_counts_down))
+        ## Found on http://stackoverflow.com/questions/2851015/convert-data-frame-columns-from-factors-to-characters
+        ## A quick and somewhat dirty way to coerce columns to a given type from lists etc.
+        ## I am not sure I am a fan, but it certainly is concise.
+        change_counts[] <- lapply(change_counts, as.numeric)
         summary_title <- paste0("Counting the number of changed genes by contrast according to ", according, " with ", title_append)
         ## xls_result <- write_xls(data=change_counts, sheet="number_changed", file=sig_table,
         ##                         title=summary_title,
@@ -946,7 +950,8 @@ extract_significant_genes <- function(combined,
             message("Not printing excel sheets for the significant genes.")
         } else {
             message(paste0("Printing significant genes to the file: ", excel))
-            xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according, summary_count=summary_count, csv=csv, ma=ma)
+            xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according,
+                                        summary_count=summary_count, csv=csv, ma=ma)
             ## wb <- xlsx_ret[["workbook"]]
         }
     } ## End list of according_to's
@@ -1077,14 +1082,15 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     downs <- upsdowns[["downs"]]
     up_titles <- upsdowns[["up_titles"]]
     down_titles <- upsdowns[["down_titles"]]
-    summary <- upsdowns[["counts"]]
+    summary <- as.data.frame(upsdowns[["counts"]])
     summary_title <- upsdowns[["counts_title"]]
     ma_plots <- upsdowns[["ma_plots"]]
     table_count <- 0
     summary_count <- summary_count - 1
     num_tables <- length(names(ups))
     summary_start <- ((num_tables + 2) * summary_count) + 1
-    xls_summary_result <- write_xls(wb, data=summary, start_col=1, start_row=summary_start, sheet="number_changed", title=summary_title)
+    xls_summary_result <- write_xls(wb=wb, data=summary, start_col=1, start_row=summary_start,
+                                    sheet="number_changed", title=summary_title)
     if (!is.null(csv)) {
         csv_filename <- paste0(csv_basename, "_num_changed.csv")
         write.csv(x=summary, file=csv_filename)

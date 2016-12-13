@@ -58,7 +58,8 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
             }
         }
     }
-    hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
+    hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold",
+                                 border="Bottom", fontSize="30")
     new_row <- start_row
     new_col <- start_col
     ##print(paste0("GOT HERE openxlswrite, title? ", arglist$title))
@@ -68,8 +69,8 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
         new_row <- new_row + 1
     }
 
-    ## I might have run into a bug in openxlsx, in WorkbookClass.R there is a call to is.nan() for a data.frame
-    ## and it appears to me to be called oddly and causing problems
+    ## I might have run into a bug in openxlsx, in WorkbookClass.R there is a call to is.nan()
+    ## for a data.frame and it appears to me to be called oddly and causing problems
     ## I hacked the writeDataTable() function in openxlsx and sent a bug report.
     ## Another way to trip this up is for a column in the table to be of class 'list'
     wtf_stupid <- 0

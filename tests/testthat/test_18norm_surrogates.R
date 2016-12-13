@@ -16,6 +16,8 @@ expected <- c(0.32640488, 0.35743450, 0.29314922, 0.32047629, 0.59410327,
               0.06839857, 0.24567374, 0.12108913, 0.05248206, 0.14380313,
               0.60234550, 0.64364278, 0.24317391, 0.31576815, 0.05750947, 0.20018519)
 actual <- abs(as.numeric(pasilla_svasup[["model_adjust"]]))
+print(expected)
+print(actual)
 test_that("Have the sva supervised model adjustments stayed the same? (leek estimation)", {
     expect_equal(expected, actual, tolerance=0.000001)
 })
