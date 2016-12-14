@@ -241,12 +241,18 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
         base10_mtrx <- as.matrix(data)
     }
     conditional_model <- model.matrix(~ conditions, data=my_design)
+
     new_model <- conditional_model
     ## Explicitly append columns of the adjust matrix to the conditional model.
-    for (col in 1:ncol(adjust)) {
-        new_model <- cbind(new_model, adjust[[col]])
-    }
     ## new_model <- cbind(conditional_model, adjust)
+    new_colnames <- colnames(conditional_model)
+    for (col in 1:ncol(adjust)) {
+        new_model <- cbind(new_model, adjust[, col])
+        new_colname <- paste0("sv", col)
+        new_colnames <- append(new_colnames, new_colname)
+    }
+    colnames(new_model) <- new_colnames
+
     data_modifier <- solve(t(new_model) %*% new_model) %*% t(new_model)
     transformation <- (data_modifier %*% t(base10_mtrx))
     conds <- ncol(conditional_model)
