@@ -253,10 +253,18 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
     }
     colnames(new_model) <- new_colnames
 
-    data_modifier <- solve(t(new_model) %*% new_model) %*% t(new_model)
+    ##data_modifier <- try(solve(t(new_model) %*% new_model) %*% t(new_model))
+    data_solve <- try(solve(t(new_model) %*% new_model))
+    if (class(data_solve) == "try-error") {
+        message("Data modification by the model failed.")
+        message("Leaving counts untouched.")
+        return(base10_mtrx)
+    }
+    data_modifier <- data_solve %*% t(new_model)
     transformation <- (data_modifier %*% t(base10_mtrx))
     conds <- ncol(conditional_model)
-    new_counts <- base10_mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*% transformation[-c(1:conds), ])
+    new_counts <- base10_mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*%
+                                  transformation[-c(1:conds), ])
     return(new_counts)
 }
 
