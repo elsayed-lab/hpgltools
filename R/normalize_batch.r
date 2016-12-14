@@ -155,12 +155,6 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         svaseq_result <- sm(sva::svaseq(mtrx, conditional_model, null_model, n.sv=num_surrogates))
         ## Replacing this with the function counts_from_surrogates, but leaving it here for now.
         count_table <- counts_from_surrogates(mtrx, svaseq_result[["sv"]], design=design)
-        ## The following was taken from: https://www.biostars.org/p/121489/
-        ##X <- cbind(conditional_model, svaseq_result$sv)
-        ##Hat <- solve(t(X) %*% X) %*% t(X)
-        ##beta <- (Hat %*% t(mtrx))
-        ##P <- ncol(conditional_model)
-        ##count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
     } else if (batch == "varpart") {
         message("Taking residuals from a linear mixed model as suggested by the variancePartition package.")
         cl <- parallel::makeCluster(cpus)
@@ -247,7 +241,12 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
         base10_mtrx <- as.matrix(data)
     }
     conditional_model <- model.matrix(~ conditions, data=my_design)
-    new_model <- cbind(conditional_model, adjust)
+    new_model <- conditional_model
+    ## Explicitly append columns of the adjust matrix to the conditional model.
+    for (col in 1:ncol(adjust)) {
+        new_model <- cbind(new_model, adjust[[col]])
+    }
+    ## new_model <- cbind(conditional_model, adjust)
     data_modifier <- solve(t(new_model) %*% new_model) %*% t(new_model)
     transformation <- (data_modifier %*% t(base10_mtrx))
     conds <- ncol(conditional_model)

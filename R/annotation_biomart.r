@@ -108,6 +108,7 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #' @param host Ensembl hostname to use.
 #' @param trymart Default mart to try, newer marts use a different notation.
 #' @param secondtry The newer mart name.
+#' @param dl_rows  List of rows from the final biomart object to download.
 #' @return Df of geneIDs and GOIDs.
 #' @seealso \link[biomaRt]{getBM}
 #' @examples
@@ -117,7 +118,7 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #' @export
 get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                  host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
-                                 secondtry="_gene") {
+                                 secondtry="_gene", dl_rows=c("ensembl_gene_id", "go_accession")) {
     secondtry <- paste0(species, secondtry)
     go_annotations <- NULL
 
@@ -137,9 +138,8 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
         biomart_go <- fresh[["biomart_go"]]
         return(biomart_go)
     }
-    dataset <- paste0(species, "_gene_ensembl")
-    mart <- NULL
-    mart <- try(biomaRt::useMart(biomart=trymart, host=host))
+
+    mart <- try(biomaRt::useMart(biomart=trymart, host=host), silent=TRUE)
     if (class(mart) == "try-error") {
         message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ",
                        host, " ", trymart, "."))
@@ -150,18 +150,30 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
         message("Trying the first one.")
         mart <- biomaRt::useMart(biomart=marts[[1,1]], host=host)
     }
-    ensembl <- biomaRt::useDataset(dataset, mart=mart)
+
+    dataset <- paste0(species, "_gene_ensembl")
+    ensembl <- try(biomaRt::useDataset(dataset, mart=mart), silent=TRUE)
     if (class(ensembl) == 'try-error') {
         message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ",
                        dataset, "."))
         datasets <- biomaRt::listDatasets(mart=mart)
-        print(datasets)
-        return(NULL)
+        try_again <- paste0(species, "_eg_gene")
+        message(paste0("Trying instead to use the dataset: ", try_again))
+        ensembl <- biomaRt::useDataset(try_again, mart=mart)
+        if (class(ensembl)[[1]] == "Mart") {
+            message("That seems to have worked, extracting the resulting annotations.")
+        } else {
+            message("The second attempt failed as well, the following are the available datasets:")
+            print(datasets)
+            return(NULL)
+        }
     }
-    biomart_go <- biomaRt::getBM(attributes = c("ensembl_gene_id","go_id"), mart=ensembl)
+    biomart_go <- biomaRt::getBM(attributes=dl_rows, mart=ensembl)
     message(paste0("Finished downloading ensembl go annotations, saving to ", savefile, "."))
 
-    colnames(biomart_go) <- c("ID","GO")
+    if (length(colnames(biomart_go)) == 2) {
+        colnames(biomart_go) <- c("ID","GO")
+    }
     if (isTRUE(do_save)) {
         message(paste0("Saving ontologies to ", savefile, "."))
         save(list=ls(pattern="biomart_go"), file=savefile)
