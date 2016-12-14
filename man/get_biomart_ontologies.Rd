@@ -7,7 +7,8 @@
 get_biomart_ontologies(species = "hsapiens", overwrite = FALSE,
   do_save = TRUE, host = "dec2015.archive.ensembl.org",
   trymart = "ENSEMBL_MART_ENSEMBL", secondtry = "_gene",
-  dl_rows = c("ensembl_gene_id", "go_accession"))
+  dl_rows = c("ensembl_gene_id", "go_accession"),
+  dl_rowsv2 = c("ensembl_gene_id", "go_id"))
 }
 \arguments{
 \item{species}{Species to query.}

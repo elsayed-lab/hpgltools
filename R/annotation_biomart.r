@@ -118,7 +118,8 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #' @export
 get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                  host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
-                                 secondtry="_gene", dl_rows=c("ensembl_gene_id", "go_accession")) {
+                                 secondtry="_gene", dl_rows=c("ensembl_gene_id", "go_accession"),
+                                 dl_rowsv2=c("ensembl_gene_id", "go_id")) {
     secondtry <- paste0(species, secondtry)
     go_annotations <- NULL
 
@@ -168,7 +169,15 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
             return(NULL)
         }
     }
-    biomart_go <- biomaRt::getBM(attributes=dl_rows, mart=ensembl)
+
+    biomart_go <- try(biomaRt::getBM(attributes=dl_rows, mart=ensembl), silent=TRUE)
+    if (class(biomart_go) == "try-error") {
+        biomart_go <- try(biomaRt::getBM(attributes=dl_rowsv2, mart=ensembl), silent=TRUE)
+    }
+    if (class(biomart_go) == "try-error") {
+        message("Unable to download annotation data.")
+        return(NULL)
+    }
     message(paste0("Finished downloading ensembl go annotations, saving to ", savefile, "."))
 
     if (length(colnames(biomart_go)) == 2) {
