@@ -254,7 +254,7 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
     colnames(new_model) <- new_colnames
 
     ##data_modifier <- try(solve(t(new_model) %*% new_model) %*% t(new_model))
-    data_solve <- try(solve(t(new_model) %*% new_model))
+    data_solve <- try(solve(t(new_model) %*% new_model), silent=TRUE)
     if (class(data_solve) == "try-error") {
         message("Data modification by the model failed.")
         message("Leaving counts untouched.")
