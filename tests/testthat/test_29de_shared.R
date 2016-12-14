@@ -140,6 +140,10 @@ test_that("Can we monitor changing significance (up_fc)?", {
 
 ## It is strange, when using an interactive session, the following tests complete without problem
 ## However, when I use make test they fail with "File does not exist."
+message("")
+message("One should expect insertImage() errors shortly when not run in an interactive R session.")
+message("This is because openxlsx is confused about where to place its printed pictures.")
+message("The images should still be in the returned objects and the excel files get created.")
 
 ## Ensure that the excel table printer is printing excel tables
 test_keepers <- list("treatment" = c("treated","untreated"))

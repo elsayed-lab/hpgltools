@@ -85,8 +85,8 @@ plot_libsize <- function(data, colors=NULL,
         ## newlabels <- prettyNum(as.character(libsize_df[["sum"]]), big.mark=",")
         libsize_plot <- libsize_plot +
             ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
-                               ggplot2::aes_string(parse=FALSE,
-                                                   x="order",
+                               ## ggplot2::aes_string(parse=FALSE,
+                               ggplot2::aes_string(x="order",
                                                    label='prettyNum(as.character(libsize_df$sum), big.mark=",")'))
     }
 

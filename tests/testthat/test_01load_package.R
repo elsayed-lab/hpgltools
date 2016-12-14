@@ -14,4 +14,4 @@ test_that("Did the vignettes install?", {
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end - start), digits=1)
-message(paste0("\nFinished 01load_data.R in ", elapsed,  " seconds."))
+message(paste0("\nFinished 01load_package.R in ", elapsed,  " seconds."))

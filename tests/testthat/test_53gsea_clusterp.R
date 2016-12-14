@@ -8,6 +8,7 @@ limma <- new.env()
 load("de_limma.rda", envir=limma)
 table <- limma$hpgl_table
 sig_genes <- sm(get_sig_genes(table, column="untreated")$up_genes)
+tt <- sm(require.auto("org.Dm.eg.db"))
 
 ## This information should be available through the annotation tests and passed here.
 ## Use biomart's result to get the gene lengths etc.
