@@ -42,17 +42,17 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     ## Interestingly, these bitr calls fail on travis but work fine on my system.
     ## It looks like the version on travis does not require the orgdb.
     all_genes_df <- try(clusterProfiler::bitr(all_genenames, fromType=orgdb_from,
-                                              toType=orgdb_to, OrgDb=org), silent=TRUE)
+                                              toType=orgdb_to, OrgDb=org))
     if (class(all_genes_df) == "try-error") {
         all_genes_df <- try(clusterProfiler::bitr(all_genenames, fromType=orgdb_from,
-                                                  toType=orgdb_to), silent=TRUE)
+                                                  toType=orgdb_to))
     }
     sig_genenames <- rownames(sig_genes)
     sig_genes_df <- try(clusterProfiler::bitr(sig_genenames, fromType=orgdb_from,
-                                              toType=orgdb_to, OrgDb=org), silent=TRUE)
+                                              toType=orgdb_to, OrgDb=org))
     if (class(sig_genes_df) == "try-error") {
         sig_genes_df <- try(clusterProfiler::bitr(sig_genenames, fromType=orgdb_from,
-                                                  toType=orgdb_to), silent=TRUE)
+                                                  toType=orgdb_to))
     }
     universe <- AnnotationDbi::keys(org, keytype=orgdb_to)
     all_genes_df <- merge(all_genes, all_genes_df, by.x="row.names", by.y=orgdb_from)
