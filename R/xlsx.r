@@ -41,24 +41,36 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
         message(paste0("The sheet: ", sheet, " is in ", toString(current_sheets), "."))
     } else {
         newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-        if (class(newsheet) == 'try-error') {
-            if (grepl(pattern="already exists")) {
+        if (class(newsheet) == "try-error") {
+            if (grepl(pattern="already exists", x=newsheet[1])) {
                 message("The sheet already exists.")
+                tt <- openxlsx::removeWorksheet(wb, sheet)
+                newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
             } else if (grepl(pattern="too long", x=newsheet[1])) {
                 message("The sheet name was too long for Excel, truncating it by removing vowels.")
                 sheet <- gsub(pattern="a|e|i|o|u", replacement="", x=sheet)
                 newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-                if (class(newsheet) == 'try-error') {
-                    message("hmph, still too long, truncating to 30 characters.")
-                    sheet <- substr(sheet, start=1, stop=30)
-                    newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
+                if (class(newsheet) == "try-error") {
+                    if (grepl(pattern="already exists", x=newsheet[1])) {
+                        tt <- openxlsx::removeWorksheet(wb, sheet)
+                        newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
+                    } else if (grepl(pattern="too long", x=newsheet[1])) {
+                        message("hmph, still too long, truncating to 30 characters.")
+                        sheet <- substr(sheet, start=1, stop=30)
+                        newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
+                        if (grepl(pattern="already exists", x=newsheet[1])) {
+                            tt <- openxlsx::removeWorksheet(wb, sheet)
+                            newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
+                        }
+                    }
                 }
             } else {
                 message(paste0("Unknown error: ", newsheet))
             }
         }
     }
-    hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold", border="Bottom", fontSize="30")
+    hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold",
+                                 border="Bottom", fontSize="30")
     new_row <- start_row
     new_col <- start_col
     ##print(paste0("GOT HERE openxlswrite, title? ", arglist$title))
@@ -68,16 +80,14 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
         new_row <- new_row + 1
     }
 
-    ## I might have run into a bug in openxlsx, in WorkbookClass.R there is a call to is.nan() for a data.frame
-    ## and it appears to me to be called oddly and causing problems
+    ## I might have run into a bug in openxlsx, in WorkbookClass.R there is a call to is.nan()
+    ## for a data.frame and it appears to me to be called oddly and causing problems
     ## I hacked the writeDataTable() function in openxlsx and sent a bug report.
     ## Another way to trip this up is for a column in the table to be of class 'list'
     wtf_stupid <- 0
     for (col in colnames(data)) {
         wtf_stupid <- wtf_stupid + 1
         colnames(data)[wtf_stupid] <- paste0(colnames(data)[wtf_stupid], "_", wtf_stupid)
-        ## data[[col]] <- as.character(data[[col]])
-        ## print(paste0("TESTME: ", class(data[[col]])))
         if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' |
             class(data[[col]]) == 'factor' | class(data[[col]]) == 'AsIs') {
             ## message(paste0("Converted ", col, " to characters."))
@@ -106,7 +116,75 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     end_col <- ncol(data) + 1
     ret <- list(
         "workbook" = wb,
+        "sheet" = sheet,
         "end_row" = new_row,
         "end_col" = end_col)
     return(ret)
 }
+
+#' An attempt to improve the behaivor of openxlsx's plot inserter.
+#'
+#' The functions provided by openxlsx for adding plots to xlsx files are quite
+#' nice, but they can be a little annoying.  This attempt to catch some corner cases
+#' and potentially save an extra svg-version of each plot inserted.
+#'
+#' @param plot  The plot provided
+#' @param wb  Workbook to which to write.
+#' @param sheet  Name or number of the sheet to which to add the plot.
+#' @param width  Plot width in the sheet.
+#' @param height  Plot height in the sheet.
+#' @param res  Resolution of the png image inserted into the sheet.
+#' @param plotname  Prefix of the pdf file created.
+#' @param savedir  Directory to which to save pdf copies of the plots.
+#' @param start_row  Row on which to place the plot in the sheet.
+#' @param start_col  Column on which to place the plot in the sheet.
+#' @param file_type  Currently this only does pngs, but perhaps I will parameterize this.
+#' @param units  Units for the png plotter.
+#' @return  A list containing the result of the tryCatch{} used to invoke the plot prints.
+#' @seealso \pkg{openxlsx}
+#' @examples
+#'  \dontrun{
+#'   fun_plot <- plot_pca(stuff)$plot
+#'   try_results <- xlsx_plot_png(fun_plot)
+#' }
+#' @export
+xlsx_plot_png <- function(plot, wb=NULL, sheet=1, width=6, height=6, res=90,
+                          plotname="plot", savedir="saved_plots",
+                          start_row=1, start_col=1, file_type="png", units="in") {
+    ## arglist <- list(...)
+    if (is.null(wb)) {
+        wb <- openxlsx::createWorkbook(creator="hpgltools")
+    } else if (class(wb)[[1]] == "list") { ## In case the return from write_xls() was passed to write_xls()
+        wb <- wb[["workbook"]]
+    } else if (class(wb)[[1]] != "Workbook") {
+        stop("A workbook was passed to this, but the format is not understood.")
+    }
+    high_quality <- paste0(savedir, "/", plotname, ".pdf")
+    print_ret <- NULL
+    if (!is.null(savedir)) {
+        if (!file.exists(savedir)) {
+            dir.create(savedir, recursive=TRUE)
+        }
+        high_quality <- paste0(savedir, "/", sheet, "_", plotname, ".pdf")
+        ## message(paste0("Attempting to write high-quality plot at: ", high_quality, "."))
+        pdf_ret <- try(pdf(file=high_quality))
+        print_ret <- try(print(plot), silent=TRUE)
+        dev.off()
+    }
+    fileName <- tempfile(pattern = "figureImage", fileext = paste0(".", file_type))
+    png_ret <- try(png(filename=fileName, res=res, width=width, height=height, units=units))
+    print_ret <- try(print(plot), silent=TRUE)
+    dev.off()
+    insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=fileName, width=width,
+                                     height=height, startRow=start_row, startCol=start_col,
+                                     units=units, dpi=res))
+    if (class(insert_ret) == "try-error") {
+        message(paste0("There was an error inserting the image at: ", fileName))
+    }
+    ret <- list(
+        "print" = print_ret,
+        "openxlsx" = insert_ret)
+    return(ret)
+}
+
+## EOF

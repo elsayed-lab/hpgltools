@@ -81,11 +81,14 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
             gene_start <- as.numeric(gsub(",", "", result[2], fixed=TRUE))
             gene_stop  <- as.numeric(gsub(",", "", result[3], fixed=TRUE))
             strand <- result[4]
-        } else if (grepl("^Gene Type", line)) { ## Example: Gene type: protein coding
+        } else if (grepl("^Gene Type", line)) {
+            ## Example: Gene type: protein coding
             gene_type <- local_get_value(line)
-        } else if (grepl("^Product Description", line)) { ## Example: Product Description: mucin-associated surface protein (MASP), putative
+        } else if (grepl("^Product Description", line)) {
+            ## Example: Product Description: mucin-associated surface protein (MASP), putative
             description <- local_get_value(line)
-        } else if (grepl("^Transcript Length", line)) { ## Example: Transcript length: 585
+        } else if (grepl("^Transcript Length", line)) {
+            ## Example: Transcript length: 585
             transcript_length <- as.numeric(local_get_value(line))
         } else if (grepl("^CDS Length", line)) { ## Example: CDS length: 585
             val <- local_get_value(line)
@@ -180,7 +183,7 @@ parse_gene_go_terms <- function (filepath, verbose=FALSE) {
         if(grepl("^Gene ID", x)) {
             gene_id <- local_get_value(x)
             if (verbose) {
-                print(sprintf('Processing gene %d: %s', i, gene_id))
+                message(sprintf('Processing gene %d: %s', i, gene_id))
             }
             i <- i + 1
         }
@@ -211,7 +214,8 @@ parse_gene_go_terms <- function (filepath, verbose=FALSE) {
 #' @param dl_dir  Directory into which to download the various files.
 #' @param quiet  Print download progress?
 #' @export
-tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin", dl_dir="organdb/tritryp", quiet=TRUE) {
+tritryp_downloads <- function(version="27", species="lmajor",
+                              strain="friedlin", dl_dir="organdb/tritryp", quiet=TRUE) {
     files_downloaded <- 0
     files_found <- 0
 
@@ -224,7 +228,8 @@ tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin",
     gff_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, ".gff")
 
     gff_path <- paste0(dl_dir, "/", gff_filename)
-    gff_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/gff/data/", gff_filename)
+    gff_url <- paste0("http://tritrypdb.org/common/downloads/release-", version,
+                      "/", uc_species, uc_strain, "/gff/data/", gff_filename)
     if (file.exists(gff_path)) {
         files_found <- files_found + 1
     } else {
@@ -239,7 +244,8 @@ tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin",
     }
 
     txt_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, "Gene.txt")
-    txt_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/txt/", txt_filename)
+    txt_url <- paste0("http://tritrypdb.org/common/downloads/release-", version,
+                      "/", uc_species, uc_strain, "/txt/", txt_filename)
     txt_path <- paste0(dl_dir, "/", txt_filename)
     if (file.exists(txt_path)) {
         files_found <- files_found + 1
@@ -255,7 +261,8 @@ tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin",
     }
 
     fasta_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, "_Genome.fasta")
-    fasta_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/fasta/data/", fasta_filename)
+    fasta_url <- paste0("http://tritrypdb.org/common/downloads/release-", version,
+                        "/", uc_species, uc_strain, "/fasta/data/", fasta_filename)
     fasta_path <- paste0(dl_dir, "/", fasta_filename)
     if (file.exists(fasta_path)) {
         files_found <- files_found + 1
@@ -271,7 +278,8 @@ tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin",
     }
 
     alias_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, "_GeneAliases.txt")
-    alias_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/txt/", alias_filename)
+    alias_url <- paste0("http://tritrypdb.org/common/downloads/release-", version,
+                        "/", uc_species, uc_strain, "/txt/", alias_filename)
     alias_path <- paste0(dl_dir, alias_filename)
     if (file.exists(alias_path)) {
         files_found <- files_found + 1
@@ -439,7 +447,8 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
         message(paste0("moving orgdb: ", mv_cmd))
         system(mv_cmd)
         ## Collect the text files in the new package and remove all -like instances in them
-        find_cmd <- paste0("sed -i 's/", removal, "/", replace, "/g' $(find ", new_dir, " -type f | grep -v sqlite)")
+        find_cmd <- paste0("sed -i 's/", removal, "/", replace,
+                           "/g' $(find ", new_dir, " -type f | grep -v sqlite)")
         message(paste0("rewriting orgdb files: ", find_cmd))
         system(find_cmd)
 
@@ -457,7 +466,9 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
         orgdb_dir <- new_dir
         new_pkg_name <- gsub(pattern=removal, replacement=replace, x=sqlite_basename)
         ## Update the orgdb sqlite file to reflect the new name
-        final_sqlite_cmd <- paste0("chmod +w ", new_sqlite, " ; sqlite3 ", new_sqlite, " \"UPDATE metadata SET value='", new_pkg_name, "' WHERE name='SPECIES';\" ; chmod -w ", new_sqlite)
+        final_sqlite_cmd <- paste0("chmod +w ", new_sqlite, " ; sqlite3 ", new_sqlite,
+                                   " \"UPDATE metadata SET value='", new_pkg_name,
+                                   "' WHERE name='SPECIES';\" ; chmod -w ", new_sqlite)
         message(paste0("rewriting sqlite db:", final_sqlite_cmd))
         system(final_sqlite_cmd)
     }
@@ -484,7 +495,8 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
 #' @param ... Args to pass through.
 #' @return List of the resulting package name(s) and whether they installed.
 #' @export
-make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, output_dir="organismdbi", ...) {
+make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
+                       kegg=TRUE, output_dir="organismdbi", ...) {
     arglist=list(...)
     orgdb_pre <- paste0(output_dir, "/orgdb")
     if (!file.exists(orgdb_pre)) {
@@ -528,7 +540,8 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, ou
                                           version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
                                           author = as.character(cfg[["author"]]),
                                           maintainer = as.character(cfg[["maintainer"]]),
-                                          tax_id = as.character(cfg[["tax_id"]]),  ## Maybe use taxize for this and remove from the csv?
+                                          ## Maybe use taxize for this and remove from the csv?
+                                          tax_id = as.character(cfg[["tax_id"]]),
                                           genus = as.character(cfg[["genus"]]),
                                           species = paste0(as.character(cfg[["species"]]), ".", as.character(cfg[["strain"]])),
                                           outputDir = orgdb_pre,

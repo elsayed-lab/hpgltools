@@ -34,14 +34,14 @@ test_that("Did orgdb give useful ID mappings? (entrez)", {
 })
 
 limma_result <- limma$hpgl_limma
-all_genes <- limma_result$all_tables[[3]]
+all_genes <- limma_result[["all_tables"]][["untreated_vs_treated"]]
 all_genes <- merge(x=all_genes, y=mapping, by.x="row.names", by.y="flybase", all.x=TRUE)
 sig_up <- sm(get_sig_genes(all_genes, z=2)$up_genes)
 all_ids <- paste0("Dmel_", all_genes[["flybasecg"]])
 sig_ids <- paste0("Dmel_", sig_up[["flybasecg"]])
 
 ## Note, I split the result of this into percent_nodes and percent_edges
-pct_citrate <- sm(pct_kegg_diff(all_ids, sig_ids, organism="dme"))
+pct_citrate <- sm(pct_kegg_diff(all_ids, sig_ids, organism="dme", pathway="00500"))
 expected <- 6.1
 actual <- pct_citrate$percent_nodes
 test_that("Can we extract the percent differentially expressed genes in one pathway?", {
@@ -59,7 +59,8 @@ test_that("Can we extract the percent differentially expressed genes from multip
 ## Try testing out pathview
 mel_id <- kegg_get_orgn("melanogaster")
 rownames(sig_up) <- make.names(sig_up[["flybasecg"]], unique=TRUE)
-funkytown <- sm(hpgl_pathview(sig_up, fc_column="logFC", species="dme", from_list=c("CG"), to_list=c("Dmel_CG")))
+funkytown <- sm(hpgl_pathview(sig_up, fc_column="logFC", species="dme",
+                              from_list=c("CG"), to_list=c("Dmel_CG")))
 
 expected <- c(22, 34, 5, 3, 12, 106)
 actual <- head(funkytown$total_mapped_nodes)
@@ -72,7 +73,6 @@ actual <- head(funkytown$unique_mapped_nodes)
 test_that("Did pathview work? (unique mapped nodes)", {
     expect_equal(expected, actual, tolerance=0.1)
 })
-
 
 unlink("kegg_pathways", recursive=TRUE)
 

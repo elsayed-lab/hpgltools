@@ -925,9 +925,10 @@ do_pairwise <- function(type, ...) {
 #' @export
 get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
                           column="logFC", fold="plusminus", p_column="adj.P.Val") {
-    if (is.null(z) & is.null(n) & is.null(fc)) {
-        message("No n, z, nor fc provided, setting z to 1.")
-        z <- 1
+    if (is.null(z) & is.null(n) & is.null(fc) & is.null(p)) {
+        message("No n, z, p, nor fc provided, setting p to 0.05 and fc to 1.0.")
+        p <- 0.05
+        fc <- 1.0
     }
     up_genes <- table
     down_genes <- table
@@ -1042,7 +1043,8 @@ make_exampledata <- function (ngenes=1000, columns=5) {
     m <- t(sapply(seq_len(ngenes),
                   function(i) sapply(1:columns,
                                      function(j) rnbinom(1,
-                                                         mu = true_sf[j] * ifelse(conds[j] == "A", q0A[i], q0B[i]),
+                                                         mu = true_sf[j] * ifelse(conds[j] == "A",
+                                                                                  q0A[i], q0B[i]),
                                                          size = 1/0.2))))
     rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
     example <- DESeq::newCountDataSet(m, conds)
@@ -1128,7 +1130,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
     if (!is.null(extra_contrasts)) {
         extra_eval_strings <- strsplit(extra_contrasts, ",")
         extra_eval_names <- extra_eval_strings
-        extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings[[1]], "^(\\s*)(\\w+)=.*$", "$2")
+        extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings[[1]],
+                                                            "^(\\s*)(\\w+)=.*$", "$2")
         for (i in 1:length(extra_eval_strings)) {
             new_name <- extra_eval_names[[i]]
             extra_contrast <- paste0(extra_eval_strings[[i]], ", ")

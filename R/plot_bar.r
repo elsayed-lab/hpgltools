@@ -85,8 +85,8 @@ plot_libsize <- function(data, colors=NULL,
         ## newlabels <- prettyNum(as.character(libsize_df[["sum"]]), big.mark=",")
         libsize_plot <- libsize_plot +
             ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
-                               ggplot2::aes_string(parse=FALSE,
-                                                   x="order",
+                               ## ggplot2::aes_string(parse=FALSE,
+                               ggplot2::aes_string(x="order",
                                                    label='prettyNum(as.character(libsize_df$sum), big.mark=",")'))
     }
 
@@ -126,14 +126,14 @@ plot_libsize <- function(data, colors=NULL,
 #' @param end  Relative to 0, where is the gene's stop codon.
 #' @param strand  Is this on the + or - strand? (+1/-1)
 #' @param padding  How much space to provide on the sides?
-plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010",
+plot_rpm = function(input, workdir="images", output="01.svg", name="LmjF.01.0010",
                     start=1000, end=2000, strand=1, padding=100) {
     head(genes)
-    genes = genes[,c(2,3,5,11)]
+    genes = genes[,c(2, 3, 5, 11)]
     for(ch in 1:36) {
         mychr = paste("LmjF.", sprintf("%02d", ch), sep="")
-        print(mychr)
-        table_path = paste("~/riboseq/coverage/", mychr, "/testme.txt.cov.gz", sep="")
+        message(mychr)
+        table_path = paste0(workdir, "/coverage/", mychr, "/testme.txt.cov.gz")
 
         rpms = read.table(table_path)
         colnames(rpms) = c("chromosome","position","rpm")
@@ -143,9 +143,10 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010",
         for(i in 1:nrow(genes_on_chr)) {
             row = genes_on_chr[i,]
             genename=row[["Name"]]
-            output_file=paste("~/riboseq/coverage/", mychr, "/", genename, ".svg", sep="")
+            output_file=paste0(workdir, "/coverage/", mychr, "/", genename, ".svg")
             svg(filename=output_file, height=2, width=8)
-            plot_rpm(rpms, start=row[["start"]], end=row[["end"]], strand=row[["strand"]], output=output_file, name=row[["Name"]])
+            plot_res <- plot_rpm(rpms, start=row[["start"]], end=row[["end"]],
+                                 strand=row[["strand"]], output=output_file, name=row[["Name"]])
             dev.off()
         }
     }
@@ -157,7 +158,9 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010",
     my_end = end
     ## These are good chances to use %>% I guess
     ## rpm_region = subset(input, chromosome==mychr & position >= plotted_start & position <= plotted_end)
-    region_idx <- input[["chromosome"]] == mychr & input[["position"]] >= plotted_start & input[["position"]] <= plotted_end
+    region_idx <- input[["chromosome"]] == mychr &
+        input[["position"]] >= plotted_start &
+        input[["position"]] <= plotted_end
     rpm_region <- rpm_region[region_idx, ]
     rpm_region = rpm_region[,-1]
     rpm_region[["log"]] = log2(rpm_region[["rpm"]] + 1)

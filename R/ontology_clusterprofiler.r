@@ -58,9 +58,12 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     }
 
     message("Calculating GO groups.")
-    ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org, ont="MF", level=go_level, readable=TRUE)
-    ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org, ont="BP", level=go_level, readable=TRUE)
-    ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org, ont="CC", level=go_level, readable=TRUE)
+    ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org,
+                                       ont="MF", level=go_level, readable=TRUE)
+    ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org,
+                                       ont="BP", level=go_level, readable=TRUE)
+    ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org,
+                                       ont="CC", level=go_level, readable=TRUE)
     group_go <- list(
         "MF" = as.data.frame(DOSE::summary(ggo_mf)),
         "BP" = as.data.frame(DOSE::summary(ggo_bp)),
@@ -74,41 +77,6 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
         "sig_bp" = NULL,
         "all_cc" = NULL,
         "sig_cc" = NULL)
-    ## While a nifty idea, doParallel will not work currently with this because I have insufficient
-    ## control over the life-cycle of the sqlite connections created by clusterProfiler
-    ## as a result, when one enrichGO() completes, it closes the sqlite connection and kills all the others.
-    ##if (isTRUE(parallel)) {
-    ##    cl <- parallel::makeCluster(6)
-    ##    doParallel::registerDoParallel(cl)
-    ##    requireNamespace("parallel")
-    ##    requireNamespace("doParallel")
-    ##    requireNamespace("iterators")
-    ##    requireNamespace("foreach")
-    ##    res <- foreach(c=1:length(names(enrich_results)), .packages=c("hpgltools","clusterProfiler")) %dopar% {
-    ##        result_name <- names(enrich_results)[[c]]
-    ##        name_split <- strsplit(x=result_name, split="_")
-    ##        enrich_type <- name_split[[1]][[1]]
-    ##        enrich_ont <- toupper(name_split[[1]][[2]])
-    ##        cutoff = 1.0
-    ##        if (enrich_type == "sig") {
-    ##            cutoff=pcutoff
-    ##        }
-    ##        results[[result_name]] <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], org,
-    ##                                                            universe=universe,
-    ##                                                            ont=enrich_ont,
-    ##                                                            minGSSize=mings,
-    ##                                                            pAdjustMethod="BH",
-    ##                                                            pvalueCutoff=cutoff,
-    ##                                                            readable=TRUE)
-    ##    }  ## End the %dopar% loop
-    ##    parallel::stopCluster(cl)
-    ##    for (r in 1:length(res)) {
-    ##        a_result <- res[[r]]
-    ##        type <- a_result[["type"]]
-    ##        enrich_results[[type]] <- a_result
-    ##    }
-    ##    rm(res)
-    ##} else {
     ego_all_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
                                             OrgDb=org, ont="MF",
                                             minGSSize=mings, pAdjustMethod="BH",
@@ -147,17 +115,23 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     genelist <- as.vector(all_genes_df[[fc_column]])
     names(genelist) <- all_genes_df[[orgdb_to]]
     gse_all_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
-                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
+                                         nPerm=permutations, minGSSize=min_groupsize,
+                                         pvalueCutoff=1.0)
     gse_sig_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
-                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
+                                         nPerm=permutations, minGSSize=min_groupsize,
+                                         pvalueCutoff=pcutoff)
     gse_all_bp <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
-                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
+                                         nPerm=permutations, minGSSize=min_groupsize,
+                                         pvalueCutoff=1.0)
     gse_sig_bp <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
-                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
+                                         nPerm=permutations, minGSSize=min_groupsize,
+                                         pvalueCutoff=pcutoff)
     gse_all_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
-                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=1.0)
+                                         nPerm=permutations, minGSSize=min_groupsize,
+                                         pvalueCutoff=1.0)
     gse_sig_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
-                                         nPerm=permutations, minGSSize=min_groupsize, pvalueCutoff=pcutoff)
+                                         nPerm=permutations, minGSSize=min_groupsize,
+                                         pvalueCutoff=pcutoff)
     gse_go <- list(
         "MF_all" = as.data.frame(DOSE::summary(gse_all_mf)),
         "MF_sig" = as.data.frame(DOSE::summary(gse_sig_mf)),
@@ -170,8 +144,10 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     ## The help documentation _says_ this uses entrez gene ids, but looking at the environment
     ## created by clusterProfiler belies this.
     kegg_sig_ids <- sig_genes_df[[orgdb_from]]
-    all_kegg <- clusterProfiler::enrichKEGG(kegg_sig_ids, organism=kegg_organism, pvalueCutoff=1.0, use_internal_data=internal)
-    enrich_kegg <- clusterProfiler::enrichKEGG(gene=kegg_sig_ids, organism=kegg_organism, pvalueCutoff=pcutoff, use_internal_data=internal)
+    all_kegg <- clusterProfiler::enrichKEGG(kegg_sig_ids, organism=kegg_organism,
+                                            pvalueCutoff=1.0, use_internal_data=internal)
+    enrich_kegg <- clusterProfiler::enrichKEGG(gene=kegg_sig_ids, organism=kegg_organism,
+                                               pvalueCutoff=pcutoff, use_internal_data=internal)
 
     kegg_genelist <- as.vector(all_genes_df[[fc_column]])
     names(kegg_genelist) <- all_genes_df[[orgdb_from]]
@@ -199,24 +175,45 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
 ##        "kegg_gsem_sig" <- as.data.frame(summary(gse_sig_mkegg)))
 
     message("Plotting results.")
-    DOSE::enrichMap(ego_sig_mf)
-    map_sig_mf <- recordPlot()
-    DOSE::enrichMap(ego_sig_bp)
-    map_sig_bp <- recordPlot()
-    DOSE::enrichMap(ego_sig_cc)
-    map_sig_cc <- recordPlot()
-    DOSE::cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist)
-    net_sig_mf <- recordPlot()
-    DOSE::cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist)
-    net_sig_bp <- recordPlot()
-    DOSE::cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist)
-    net_sig_cc <- recordPlot()
+    map_sig_mf <- map_sig_bp <- map_sig_cc <- NULL
+    tt <- try(DOSE::enrichMap(ego_sig_mf))
+    if (class(tt) != "try-error") {
+        map_sig_mf <- recordPlot()
+    }
+    tt <- try(DOSE::enrichMap(ego_sig_bp))
+    if (class(tt) != "try-error") {
+        map_sig_bp <- recordPlot()
+    }
+    tt <- try(DOSE::enrichMap(ego_sig_cc))
+    if (class(tt) != "try-error") {
+        map_sig_cc <- recordPlot()
+    }
+    net_sig_mf <- net_sig_bp <- net_sig_cc <- NULL
+    tt <- try(DOSE::cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist))
+    if (class(tt) != "try-error") {
+        net_sig_mf <- recordPlot()
+    }
+    tt <- try(DOSE::cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist))
+    if (class(tt) != "try-error") {
+        net_sig_bp <- recordPlot()
+    }
+    tt <- try(DOSE::cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist))
+    if (class(tt) != "try-error") {
+        net_sig_cc <- recordPlot()
+    }
+    tree_sig_mf <- tree_sig_bp <- tree_sig_cc <- NULL
     tree_mf <- try(clusterProfiler::plotGOgraph(ego_sig_mf), silent=TRUE)
-    tree_sig_mf <- recordPlot()
+    if (class(tree_mf) != "try-error") {
+        tree_sig_mf <- recordPlot()
+    }
     tree_bp <- try(clusterProfiler::plotGOgraph(ego_sig_bp), silent=TRUE)
-    tree_sig_bp <- recordPlot()
+    if (class(tree_bp) != "try-error") {
+        tree_sig_bp <- recordPlot()
+    }
     tree_cc <- try(clusterProfiler::plotGOgraph(ego_sig_cc), silent=TRUE)
-    tree_sig_cc <- recordPlot()
+    if (class(tree_cc) != "try-error") {
+        tree_sig_cc <- recordPlot()
+    }
 
     plotlist <- list(
         "ggo_mf_bar" = barplot(ggo_mf, drop=TRUE, showCategory=categories),

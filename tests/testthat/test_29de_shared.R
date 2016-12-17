@@ -17,8 +17,10 @@ basic <- new.env()
 load("de_basic.rda", envir=basic)
 
 ## The following lines should not be needed any longer.
-normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=TRUE))
-hpgl_result <- sm(all_pairwise(normalized_expt, model_batch=TRUE, which_voom="hpgl", parallel=FALSE, edger_method="short"))
+normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant",
+                                     convert="cbcbcpm", filter=TRUE))
+hpgl_result <- sm(all_pairwise(normalized_expt, model_batch=TRUE, which_voom="hpgl",
+                               edger_method="short"))
 
 expected <- deseq$hpgl_deseq$all_tables[["untreated_vs_treated"]]
 actual <- hpgl_result$deseq$all_tables[["untreated_vs_treated"]]
@@ -138,9 +140,6 @@ test_that("Can we monitor changing significance (up_fc)?", {
     expect_equal(expected, actual, tolerance=0.02)
 })
 
-## It is strange, when using an interactive session, the following tests complete without problem
-## However, when I use make test they fail with "File does not exist."
-
 ## Ensure that the excel table printer is printing excel tables
 test_keepers <- list("treatment" = c("treated","untreated"))
 combined_excel <- sm(combine_de_tables(hpgl_result, excel="test_excel.xlsx", keepers=test_keepers))
@@ -150,11 +149,11 @@ test_that("Does combine_de_tables create an excel file?", {
 
 ## We previously checked that we can successfully combine tables, let us now ensure that plots get created etc.
 ## Check that there are some venn plots in the excel workbook:
-##expected <- "recordedplot"
-##actual <- class(combined_excel[["venns"]][["treatment"]][["up_noweight"]])
-##test_that("Are venn plots getting generated for the excel sheets?", {
-##    expect_equal(expected, actual)
-##})
+## expected <- "recordedplot"
+## actual <- class(combined_excel[["venns"]][["treatment"]][["up_noweight"]])
+## test_that("Are venn plots getting generated for the excel sheets?", {
+##     expect_equal(expected, actual)
+## })
 
 expected <- "gg"
 actual <- class(combined_excel$limma_plots$treatment$scatter)[[1]]

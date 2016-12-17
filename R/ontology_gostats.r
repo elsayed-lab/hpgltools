@@ -68,7 +68,8 @@ simple_gostats <- function(de_genes, gff, goids_df, universe_merge="id", second_
     }
 
     annotation <- annotation[annotation$type == gff_type, ]
-    message(paste0("simple_gostats(): the current annotations has: ", nrow(annotation), " rows and ", ncol(annotation), " columns."))
+    message(paste0("simple_gostats(): the current annotations has: ", nrow(annotation),
+                   " rows and ", ncol(annotation), " columns."))
     annotation[, universe_merge] <- make.names(annotation[, universe_merge], unique=TRUE)
     if (universe_merge %in% names(annotation)) {
         universe <- annotation[, c(universe_merge, "width")]

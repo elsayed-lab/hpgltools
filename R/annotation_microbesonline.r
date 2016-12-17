@@ -11,7 +11,8 @@
 get_microbesonline_ids <- function(name, exact=FALSE) {
     requireNamespace("RMySQL")
     db_driver <- DBI::dbDriver("MySQL")
-    connection <- DBI::dbConnect(db_driver, user="guest", password="guest", host="pub.microbesonline.org", dbname="genomics")
+    connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
+                                 host="pub.microbesonline.org", dbname="genomics")
     query <- "SELECT taxonomyId, shortName FROM Taxonomy WHERE shortName "
     if (isTRUE(exact)) {
         query <- paste0(query, "= '", name, "'")
@@ -37,7 +38,8 @@ get_microbesonline_ids <- function(name, exact=FALSE) {
 #' @export
 get_microbesonline_name <- function(id) {
     db_driver <- DBI::dbDriver("MySQL")
-    connection <- DBI::dbConnect(db_driver, user="guest", password="guest", host="pub.microbesonline.org", dbname="genomics")
+    connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
+                                 host="pub.microbesonline.org", dbname="genomics")
     query <- paste0("SELECT shortName FROM Taxonomy WHERE taxonomyId = '", id, "'")
     result <- DBI::dbSendQuery(connection, query)
     result_df <- DBI::fetch(result, n=-1)
@@ -98,7 +100,8 @@ get_microbesonline_annotation <- function(ids="160490", species=NULL) {
 #' @param table  Choose a table to query.
 mdesc_table <- function(table="Locus2GO") {
     db_driver <- DBI::dbDriver("MySQL")
-    connection <- DBI::dbConnect(db_driver, user="guest", password="guest", host="pub.microbesonline.org", dbname="genomics")
+    connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
+                                 host="pub.microbesonline.org", dbname="genomics")
     query <- paste0("DESCRIBE TABLE ", table)
     result <- DBI::dbSendQuery(connection, query)
     result_df <- DBI::fetch(result, n=-1)
@@ -114,7 +117,8 @@ mdesc_table <- function(table="Locus2GO") {
 #' @param taxonid Which species to query.
 get_loci_go <- function(taxonid="160490") {
     db_driver <- DBI::dbDriver("MySQL")
-    connection <- DBI::dbConnect(db_driver, user="guest", password="guest", host="pub.microbesonline.org", dbname="genomics")
+    connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
+                                 host="pub.microbesonline.org", dbname="genomics")
     ## cheese and crackers their database is entirely too complex and poorly documented.
     query <- paste0("SELECT L.locusId, G.goID, T.acc_synonym FROM genomics.Scaffold S, genomics.term_synonym T, genomics.Locus L, genomics.Locus2Go G where S.TaxonomyId = '",
                     taxonid, "' and S.isGenomic = 1 and S.scaffoldId = L.scaffoldId  and G.locusId = L.locusId and T.term_id = G.goID")

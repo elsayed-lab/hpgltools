@@ -7,16 +7,16 @@
 simple_gprofiler(de_genes, species = "hsapiens", first_col = "logFC",
   second_col = "limma_logfc", do_go = TRUE, do_kegg = TRUE,
   do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE, do_corum = TRUE,
-  do_hp = TRUE)
+  do_hp = TRUE, significant = TRUE, pseudo_gsea = TRUE)
 }
 \arguments{
-\item{de_genes}{guess!}
+\item{de_genes}{Guess!  The set of differentially expressed/interesting genes.}
 
-\item{species}{an organism supported by gprofiler}
+\item{species}{Organism supported by gprofiler.}
 
-\item{first_col}{where to search for the order of 'significant' first}
+\item{first_col}{First place used to define the order of 'significant'.}
 
-\item{second_col}{if that fails, try some where else.}
+\item{second_col}{If that fails, try a second column.}
 
 \item{do_go}{Perform GO search?}
 
@@ -31,6 +31,10 @@ simple_gprofiler(de_genes, species = "hsapiens", first_col = "logFC",
 \item{do_corum}{Do corum search?}
 
 \item{do_hp}{Do the hp search?}
+
+\item{significant}{Only return the statistically significant hits?}
+
+\item{pseudo_gsea}{Is the data in a ranked order by significance?}
 }
 \value{
 a list of results for go, kegg, reactome, and a few more.

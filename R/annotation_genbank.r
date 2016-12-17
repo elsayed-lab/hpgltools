@@ -46,7 +46,10 @@ gbk_annotations <- function(gbr) {
     genes <- AnnotationDbi::keys(gbr)
     keytypes <- AnnotationDbi::keytypes(gbr)
     columns <- AnnotationDbi::columns(gbr)
-    lengths <- AnnotationDbi::select(gbr, columns=c("CDSNAME", "CDSCHROM","CDSEND","CDSSTART","CDSSTRAND","CDSID", "TXNAME"), keys=genes, keytype="GENEID")
+    lengths <- AnnotationDbi::select(gbr,
+                                     columns=c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
+                                               "CDSSTRAND", "CDSID", "TXNAME"),
+                                     keys=genes, keytype="GENEID")
     lengths[["length"]] <- abs(lengths[["CDSSTART"]] - lengths[["CDSEND"]])
     granges <- GenomicFeatures::transcripts(gbr)
     return(granges)

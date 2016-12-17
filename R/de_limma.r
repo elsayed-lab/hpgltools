@@ -410,8 +410,8 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
         fun_voom <- try(limma::voomWithQualityWeights(counts=data, design=fun_model, lib.size=libsize,
                                                       normalize.method=voom_norm, plot=TRUE,
                                                       span=0.5, var.design=NULL, method="genebygene",
-                                                      maxiter=50, tol=1E-10, trace=FALSE, replace.weights=TRUE,
-                                                      col=NULL))
+                                                      maxiter=50, tol=1E-10, trace=FALSE,
+                                                      replace.weights=TRUE, col=NULL))
         if (class(fun_voom) == "try-error") {
             message("voomWithQualityWeights failed, falling back to voom.")
             fun_voom <- limma::voom(counts=data, design=fun_model, lib.size=libsize,
@@ -462,7 +462,8 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
         all_pairwise_comparisons <- all_pairwise_fits[["coefficients"]]
     } else {
         all_pairwise_comparisons <- limma::eBayes(all_pairwise_fits, robust=TRUE)
-        all_tables <- try(limma::topTable(all_pairwise_comparisons, number=nrow(all_pairwise_comparisons)))
+        all_tables <- try(limma::topTable(all_pairwise_comparisons,
+                                          number=nrow(all_pairwise_comparisons)))
     }
     message("Limma step 6/6: Writing limma outputs.")
     limma_identities <- NULL

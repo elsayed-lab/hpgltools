@@ -3,7 +3,7 @@ library(testthat)
 library(hpgltools)
 library(pasilla)
 data(pasillaGenes)
-context("01load_data.R: Does pasilla load into hpgltools?\n")
+context("02load_data.R: Does pasilla load into hpgltools?\n")
 
 ## Try loading some annotation information for this species.
 gene_info <- sm(get_biomart_annotations(species="dmelanogaster"))
@@ -91,4 +91,4 @@ test_that("Are the library sizes intact?", {
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end - start), digits=1)
-message(paste0("\nFinished 01load_data.R in ", elapsed,  " seconds."))
+message(paste0("\nFinished 02load_data.R in ", elapsed,  " seconds."))

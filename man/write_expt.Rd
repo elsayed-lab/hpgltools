@@ -19,14 +19,14 @@ write_expt(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 
 \item{convert}{Conversion to perform.}
 
-\item{transform}{Transformation.}
+\item{transform}{Transformation used.}
 
-\item{batch}{Batch correction.}
+\item{batch}{Batch correction applied.}
 
-\item{filter}{Filtering method.}
+\item{filter}{Filtering method used.}
 }
 \value{
-A big honking excel file.
+A big honking excel file and a list including the dataframes and images created.
 }
 \description{
 Some folks love excel for looking at this data.  ok.

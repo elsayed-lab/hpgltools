@@ -96,10 +96,11 @@ goseq_table <- function(df, file=NULL) {
 #' @seealso \pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
 #' @export
 simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
-                             adjust=0.1, pvalue=0.1, qvalue=0.1, length_keytype="transcripts", go_keytype="ENTREZID",
-                             goseq_method="Wallenius", padjust_method="BH",
-                             bioc_length_db="ensGene",
-                             ...) {
+                         adjust=0.1, pvalue=0.1, qvalue=0.1,
+                         length_keytype="transcripts", go_keytype="ENTREZID",
+                         goseq_method="Wallenius", padjust_method="BH",
+                         bioc_length_db="ensGene",
+                         ...) {
     arglist <- list(...)
 
     minimum_interesting <- 1
@@ -141,11 +142,12 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
 
     id_xref <- de_genelist[["ID"]] %in% go_db[["ID"]]
     message(paste0("Found ", sum(id_xref), " genes from the de_genes in the go_db."))
-    
+
     ## Database of lengths may be a gff file, TxDb, or OrganismDb
     metadf <- NULL
     if (class(length_db)[[1]] == "character")  {  ## Then this should be either a gff file or species name.
-        if (grepl(pattern="\\.gff", x=length_db, perl=TRUE) | grepl(pattern="\\.gtf", x=length_db, perl=TRUE)) { ## gff file
+        if (grepl(pattern="\\.gff", x=length_db, perl=TRUE) |
+            grepl(pattern="\\.gtf", x=length_db, perl=TRUE)) { ## gff file
             txdb <- GenomicFeatures::makeTxDbFromGFF(length_db)
             metadf <- extract_lengths(db=txdb, gene_list=gene_list)
         } else {  ## Then species name
@@ -176,7 +178,8 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
 
     godf <- data.frame()
     if (class(go_db) == "character") {  ## A text table or species name
-        if (grepl(pattern="\\.csv", x=go_db, perl=TRUE) | grepl(pattern="\\.tab", x=go_db, perl=TRUE)) { ## table
+        if (grepl(pattern="\\.csv", x=go_db, perl=TRUE) |
+            grepl(pattern="\\.tab", x=go_db, perl=TRUE)) { ## table
             godf <- read.table(go_db, ...)
             colnames(godf) <- c("ID","GO")
         } else {  ## Assume species name
@@ -243,9 +246,11 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
         godata_interesting <- subset(godata, godata[["over_represented_pvalue"]] <= pvalue)
         padjust_method <- "none"
     } else {  ## There is a requested pvalue adjustment
-        godata_interesting <- subset(godata, stats::p.adjust(godata[["over_represented_pvalue"]], method=padjust_method) <= adjust)
+        godata_interesting <- subset(godata, stats::p.adjust(godata[["over_represented_pvalue"]],
+                                                             method=padjust_method) <= adjust)
         if (dim(godata_interesting)[1] < minimum_interesting) {
-            message(paste("simple_goseq(): There are no genes with an adj.p<", adjust, " using: ", padjust_method, ".", sep=""))
+            message(paste("simple_goseq(): There are no genes with an adj.p<", adjust, " using: ",
+                          padjust_method, ".", sep=""))
             message(sprintf("simple_goseq(): Providing genes with raw pvalue<%s", pvalue))
             godata_interesting <- subset(godata, godata[["over_represented_pvalue"]] <= pvalue)
             padjust_method <- "none"
@@ -269,15 +274,18 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
 
     mf_interesting <- godata_interesting[godata_interesting[["ontology"]] == "MF", ]
     rownames(mf_interesting) <- mf_interesting[["category"]]
-    mf_interesting <- mf_interesting[, c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
+    mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue", "term")]
     ##bp_interesting <- subset(godata_interesting, ontology == "BP")
     bp_interesting <- godata_interesting[godata_interesting[["ontology"]] == "BP", ]
     rownames(bp_interesting) <- bp_interesting[["category"]]
-    bp_interesting <- bp_interesting[ ,c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
+    bp_interesting <- bp_interesting[ ,c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue", "term")]
     ##cc_interesting <- subset(godata_interesting, ontology == "CC")
     cc_interesting <- godata_interesting[godata_interesting[["ontology"]] == "CC", ]
     rownames(cc_interesting) <- cc_interesting[["category"]]
-    cc_interesting <- cc_interesting[, c("ontology","numDEInCat","numInCat","over_represented_pvalue","qvalue","term")]
+    cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue", "term")]
 
     pval_plots <- list(
         "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
@@ -334,7 +342,8 @@ gather_goseq_genes <- function(goseq_data, ontology=NULL, pval=0.1, include_all=
         retlist <- list()
         message("No ontology provided, performing all.")
         for (type in c("MF","BP","CC")) {
-            retlist[[type]] <- gather_goseq_genes(goseq_data, ontology=type, pval=pval, include_all=include_all, ...)
+            retlist[[type]] <- gather_goseq_genes(goseq_data, ontology=type,
+                                                  pval=pval, include_all=include_all, ...)
         }
         return(retlist)
     } else if (ontology == "MF") {
@@ -347,7 +356,8 @@ gather_goseq_genes <- function(goseq_data, ontology=NULL, pval=0.1, include_all=
         retlist <- list()
         message("No ontology provided, performing all.")
         for (type in c("MF","BP","CC")) {
-            retlist[[type]] <- gather_goseq_genes(goseq_data, ontology=type, pval=pval, include_all=include_all, ...)
+            retlist[[type]] <- gather_goseq_genes(goseq_data, ontology=type,
+                                                  pval=pval, include_all=include_all, ...)
         }
         return(retlist)
     }

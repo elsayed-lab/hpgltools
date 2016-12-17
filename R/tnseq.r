@@ -21,8 +21,7 @@ tnseq_saturation <- function(file) {
     data_plot <- plot_histogram(log2_data_list, bins=500)
     data_plot <- data_plot + ggplot2::scale_x_continuous(limits=c(0,6)) +
         ggplot2::scale_y_continuous(limits=c(0,2))
-    print(sprintf("The maximum value is: %s ", max_reads))
-    print(summary(data_list))
+    message(sprintf("The maximum value is: %s ", max_reads))
     raw <- table(unlist(data_list))
     num_zeros <- raw[as.numeric(names(raw)) == 0]
     num_gt_ones <- raw[as.numeric(names(raw)) >= 1]

@@ -44,7 +44,8 @@ plot_gvis_ma <- function(df, tooltip_data=NULL, filename="html/gvis_ma_plot.html
     gvis_final_df <- merge(gvis_final_df, gvis_sig, by.x="Row.names", by.y="row.names", all.x=TRUE)
     rownames(gvis_final_df) <- gvis_final_df[["Row.names"]]
     gvis_final_df <- gvis_final_df[, c(2, 6, 7, 9, 10)]
-    colnames(gvis_final_df) <- c("AvgExp", "NonSignificant", "nsig.tooltip", "Significant", "sig.tooltip")
+    colnames(gvis_final_df) <- c("AvgExp", "NonSignificant", "nsig.tooltip",
+                                 "Significant", "sig.tooltip")
     ma_json_ids <- rjson::toJSON(row.names(gvis_final_df))
     ma_jscode <- paste("
  var IDs=", ma_json_ids, "
@@ -60,7 +61,8 @@ plot_gvis_ma <- function(df, tooltip_data=NULL, filename="html/gvis_ma_plot.html
                          title="MA Plot!",
                          gvis.listener.jscode=ma_jscode,
                          axisTitlesPosition="out")
-    hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(as.data.frame(gvis_final_df), chartid=gvis_chartid, options=gvis_options)
+    hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(as.data.frame(gvis_final_df),
+                                                          chartid=gvis_chartid, options=gvis_options)
     print(hpgl_gvis_scatterchart, file=filename)
 }
 
@@ -89,7 +91,8 @@ plot_gvis_ma <- function(df, tooltip_data=NULL, filename="html/gvis_ma_plot.html
 #' }
 #' @export
 plot_gvis_volcano <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
-                                  tooltip_data=NULL, filename="html/gvis_vol_plot.html", base_url="", ...) {
+                              tooltip_data=NULL, filename="html/gvis_vol_plot.html",
+                              base_url="", ...) {
     gvis_raw_df <- toptable_data[,c("logFC", "modified_p", "P.Value")]
     if (!is.null(tooltip_data)) {
         gvis_raw_df <- merge(gvis_raw_df, tooltip_data, by="row.names")
@@ -125,7 +128,8 @@ plot_gvis_volcano <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
                          title="Volcano Plot!",
                          gvis.listener.jscode=vol_jscode,
                          axisTitlesPosition="out")
-    hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
+    hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(as.data.frame(gvis_df),
+                                                          chartid=gvis_chartid, options=gvis_options)
     print(hpgl_gvis_scatterchart, file=filename)
 }
 
@@ -147,7 +151,8 @@ plot_gvis_volcano <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
 #'               base_url="http://yeastgenome.org/accession?")
 #' }
 #' @export
-plot_gvis_scatter <- function(df, tooltip_data=NULL, filename="html/gvis_scatter.html", base_url="", trendline=NULL) {
+plot_gvis_scatter <- function(df, tooltip_data=NULL, filename="html/gvis_scatter.html",
+                              base_url="", trendline=NULL) {
     gvis_df <- df
     gvis_df <- merge(gvis_df, tooltip_data, by="row.names", all.x=TRUE)
     rownames(gvis_df) <- gvis_df$Row.names
@@ -173,7 +178,8 @@ plot_gvis_scatter <- function(df, tooltip_data=NULL, filename="html/gvis_scatter
                              trendlines=trendline_string,
                              axisTitlesPosition="out")
     }
-    hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(as.data.frame(gvis_df), chartid=gvis_chartid, options=gvis_options)
+    hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(as.data.frame(gvis_df),
+                                                          chartid=gvis_chartid, options=gvis_options)
     print(hpgl_gvis_scatterchart, file=filename)
 }
 

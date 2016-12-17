@@ -8,34 +8,29 @@ context("56gsea_gprofiler.R: Do gProfiler searches work?\n")
 ## I am not however, certain how to use skip_on_travis(), so I printed it and am copying the
 ## useful bits here.
 ## Run your tests here
-limma <- new.env()
-load("de_limma.rda", envir=limma)
-table <- limma$hpgl_table
-sig_genes <- sm(get_sig_genes(table, column="untreated")$up_genes)
+load("gsea_siggenes.rda")
 
-gprofiler_result <- sm(simple_gprofiler(sig_genes, species="dmelanogaster", first_col="untreated"))
+gprofiler_result <- sm(simple_gprofiler(z_sig_genes, species="dmelanogaster", first_col="untreated"))
 
-expected <- c(6.57e-03, 1.62e-05, 2.80e-02, 8.38e-05, 1.37e-04, 1.10e-04)
-actual <- head(gprofiler_result[["go"]][["p.value"]])
+expected <- c(2.44e-07, 4.08e-07, 3.69e-06, 1.62e-05, 1.62e-05, 2.13e-05)
+actual <- head(sort(gprofiler_result[["go"]][["p.value"]]))
 test_that("Does gprofiler return expected values?", {
     expect_equal(expected, actual, tolerance=0.1)
 })
 
-expected <- c(0.0264, 0.0214, 0.0187, 0.0183, 0.0471, 0.0145)
-actual <- head(gprofiler_result$plots$mfp_plot_over$data$pvalue)
+expected <- c(1.62e-05, 1.46e-03, 4.42e-03, 4.80e-03, 7.72e-03, 9.59e-03)
+actual <- head(sort(gprofiler_result$plots$mfp_plot_over$data$pvalue))
 test_that("Does gprofiler return expected values? (mfpplot_data)", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
 ## When I run this in an interactive session it works.
 ## But when I run it with make test,  no!  WTF!?
-expected <- c(0.021100, 0.001860, 0.026400, 0.011600, 0.002220, 0.000746)
-actual <- head(gprofiler_result$plots$bpp_plot_over$data$pvalue)
+expected <- c(2.44e-07, 4.08e-07, 3.69e-06, 1.62e-05, 2.13e-05, 2.56e-05)
+actual <- head(sort(gprofiler_result$plots$bpp_plot_over$data$pvalue))
 test_that("Does gprofiler return expected values? (bppplot_data)", {
     expect_equal(expected, actual, tolerance=0.03)
 })
-##print(actual)
-##print(expected)
 
 expected <- NULL
 actual <- head(gprofiler_result$plots$cp_plot_over$data$pvalue)

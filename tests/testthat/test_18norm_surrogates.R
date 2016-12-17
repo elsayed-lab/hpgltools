@@ -5,11 +5,12 @@ library(pasilla)
 data(pasillaGenes)
 context("18norm_surrogates.R: Do surrogate estimators provide expected outputs?\n")
 
+if (!identical(Sys.getenv("TRAVIS"), "true")) {
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-pasilla_svasup <- sm(get_model_adjust(pasilla_expt, estimate_type="sva_supervised",  surrogates="leek"))
+pasilla_svasup <- sm(get_model_adjust(pasilla_expt, estimate_type="sva_supervised", surrogates="leek"))
 expected <- c(0.32640488, 0.35743450, 0.29314922, 0.32047629, 0.59410327,
               0.29067607, 0.37364107, 0.78321891, 0.40191262, 0.37760230,
               0.06839857, 0.24567374, 0.12108913, 0.05248206, 0.14380313,
@@ -102,3 +103,4 @@ test_that("Does the compare_surrogate stuff work?", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end - start), digits=1)
 message(paste0("\nFinished 18norm_surrogates.R in ", elapsed,  " seconds."))
+}

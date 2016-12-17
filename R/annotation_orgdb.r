@@ -47,7 +47,8 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
 
     if (sum(fields %in% all_fields) != length(fields)) {
         message(toString(fields %in% all_fields))
-        stop(paste0("Some of the fields requested are not in the available, we do have the following ", toString(all_fields)))
+        stop(paste0("Some requested fields are not available.  The following were found: ",
+                    toString(all_fields)))
     }
     ## fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
 
@@ -161,8 +162,8 @@ load_host_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
                                      host="www.ensembl.org", biomart_dataset)
     biomart <- biomaRt::useDataset(biomart_dataset, mart=ensembl_mart)
     biomart_genes <- biomaRt::getBM(attributes=c("ensembl_gene_id", "gene_biotype"), mart=biomart)
-    gene_info$type <- biomart_genes$gene_biotype[match(gene_info$gene_id,
-                                                       biomart_genes$ensembl_gene_id)]
+    gene_info[["type"]] <- biomart_genes$gene_biotype[match(gene_info$gene_id,
+                                                            biomart_genes$ensembl_gene_id)]
     return(gene_info)
 }
 
@@ -282,7 +283,7 @@ kegg_to_ensembl <- function(kegg_ids) {
     ## query gene ids 10 at a time (max allowed)
     result <- c()
     for (x in split(kegg_ids, ceiling(seq_along(kegg_ids) / 3))) {
-        print(x)
+        ## print(x)
         query <- KEGGREST::keggGet(x)
         for (item in query) {
             dblinks <- item$DBLINKS
@@ -540,5 +541,82 @@ orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="genei
     colnames(gene_info) <- tolower(colnames(gene_info))
     return(gene_info)
 }
+
+make_organ <- function (txdb, keytype=NA, orgdb=NA) {
+    if (class(txdb) != "TxDb") {
+        stop("'txdb' must be A TxDb object")
+    }
+    if (class(orgdb) != "OrgDb" && !is.na(orgdb)) {
+        stop("'orgdb' must be an OrgDb object or NA")
+    }
+    if (!isSingleStringOrNA(keytype)) {
+        stop("'keytype' must be a single string or NA")
+    }
+    txdbName <- makePackageName(txdb)
+    assign(txdbName, txdb, .GlobalEnv)
+    taxId <- taxonomyId(txdb)
+    if (is.na(orgdb)) {
+        orgdbName <- sm(OrganismDbi:::.taxIdToOrgDbName(taxId))
+        if (length(orgdbName) > 1) {
+            message(paste0("Multiple orgDbs returned: ", toString(orgdbName), ", using the first."))
+            orgdbName <- orgdbName[[1]]
+        }
+        ## orgdb <- OrganismDbi:::.taxIdToOrgDb(taxId)  ## The source of the error is here
+        orgdb <- mytaxIdToOrgDb(taxId)  ## The source of the error is here
+        assign(orgdbName, orgdb, .GlobalEnv)
+    } else {
+        org <- metadata(orgdb)[metadata(orgdb)$name == "ORGANISM", 2]
+        org <- sub(" ", "_", org)
+        orgdbName <- paste0("org.", org, ".db")
+        orgdb <- orgdb
+        assign(orgdbName, orgdb, .GlobalEnv)
+    }
+    if (is.na(keytype)) {
+        geneKeyType <- chooseCentralOrgPkgSymbol(orgdb)
+    } else {
+        geneKeyType <- keytype
+    }
+    graphData <- list(join1 = setNames(object = c("GOID", "GO"),
+                                       nm = c("GO.db", orgdbName)),
+                      join2 = setNames(object = c(geneKeyType, "GENEID"),
+                                       nm = c(orgdbName, txdbName)))
+    organism <- organism(txdb)
+    gd <- OrganismDbi:::.mungeGraphData(graphData)
+    OrganismDbi:::.testGraphData(gd)
+    allDeps <- unique(as.vector(gd[, 1:2]))
+    biocPkgNames <- OrganismDbi:::.biocAnnPackages()
+    deps <- allDeps[allDeps %in% biocPkgNames]
+    resources <- OrganismDbi:::.gentlyExtractDbFiles(gd, deps)
+    fkeys <- OrganismDbi:::.extractPkgsAndCols(gd)
+    OrganismDbi:::.testKeys(fkeys)
+    graphInfo <- list(graphData = gd, resources = resources)
+    OrganismDbi:::OrganismDb(graphInfo = graphInfo)
+}
+
+mytaxIdToOrgDb <- function (taxid) {
+    ## packageTaxIds <- .packageTaxIds()
+    packageTaxIds <- NULL
+    if (taxid %in% names(packageTaxIds)) {
+        pkg <- packageTaxIds[names(packageTaxIds) %in% taxid]
+        nmspc <- loadNamespace(pkg)
+        res <- get(pkg, nmspc)
+    } else {
+        loadNamespace("AnnotationHub")
+        ah <- AnnotationHub::AnnotationHub()
+        ah <- subset(ah, ah$rdataclass == "OrgDb")
+        mc <- mcols(ah)[, "taxonomyid", drop = FALSE]
+        AHID <- rownames(mc[mc$taxonomyid == taxid, , drop = FALSE])
+        if (!length(AHID)) {
+            message("No organismdbi exists for this taxonomy id.")
+        } else if (length(AHID) > 1) {
+            message("There is more than one AHID for this taxon, taking the first.")
+            res <- ah[[ AHID[[1]] ]]
+        } else {
+            res <- ah[[AHID]]
+        }
+    }
+    res
+}
+
 
 ## EOF

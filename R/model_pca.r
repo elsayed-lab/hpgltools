@@ -210,7 +210,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         warning("There is only one condition, but more than one batch.   Going to run pcRes with the batch information.")
         pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], batch=design[, batch_column])
     } else if (length(levels(included_batches)) == 1) {
-        print("There is just one batch in this data.")
+        message("There is just one batch in this data.")
         pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, cond_column])
     } else {
         pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, cond_column], batch=design[, batch_column])
@@ -601,7 +601,7 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         "prop_var" = component_variance,
         "cumulative_prop_var" = cumulative_pc_variance)
     for (component in expt_factors) {
-        print(component)
+        message(component)
         ##comp <- factor(as.character(expt_design[, component]), exclude=FALSE)
         comp <- expt_design[[component]]
         if (is.null(comp)) {
