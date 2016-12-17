@@ -39,9 +39,21 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     all_genenames <- rownames(all_genes)
     orgdb_from <- toupper(orgdb_from)
     orgdb_to <- toupper(orgdb_to)
-    all_genes_df <- clusterProfiler::bitr(all_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
+    ## Interestingly, these bitr calls fail on travis but work fine on my system.
+    ## It looks like the version on travis does not require the orgdb.
+    all_genes_df <- try(clusterProfiler::bitr(all_genenames, fromType=orgdb_from,
+                                              toType=orgdb_to, OrgDb=org), silent=TRUE)
+    if (class(all_genes_df) == "try-error") {
+        all_genes_df <- try(clusterProfiler::bitr(all_genenames, fromType=orgdb_from,
+                                                  toType=orgdb_to), silent=TRUE)
+    }
     sig_genenames <- rownames(sig_genes)
-    sig_genes_df <- clusterProfiler::bitr(sig_genenames, fromType=orgdb_from, toType=orgdb_to, OrgDb=org)
+    sig_genes_df <- try(clusterProfiler::bitr(sig_genenames, fromType=orgdb_from,
+                                              toType=orgdb_to, OrgDb=org), silent=TRUE)
+    if (class(sig_genes_df) == "try-error") {
+        sig_genes_df <- try(clusterProfiler::bitr(sig_genenames, fromType=orgdb_from,
+                                                  toType=orgdb_to), silent=TRUE)
+    }
     universe <- AnnotationDbi::keys(org, keytype=orgdb_to)
     all_genes_df <- merge(all_genes, all_genes_df, by.x="row.names", by.y=orgdb_from)
     ## Rename the first column
