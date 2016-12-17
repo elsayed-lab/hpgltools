@@ -240,7 +240,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #' @param adjp  Use adjusted p-values
 #' @param ... More arguments are passed to arglist.
 #' @export
-de_venn <- function(table, adjp=FALSE, ...) {
+de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
     arglist <- list(...)
     combine_tables <- function(d, e, l) {
         ddf <- as.data.frame(l[, "limma_logfc"])
@@ -267,9 +267,9 @@ de_venn <- function(table, adjp=FALSE, ...) {
         edger_p <- "edger_adjp"
     }
 
-    limma_sig <- sm(get_sig_genes(table, column="limma_logfc", p_column=limma_p))
-    edger_sig <- sm(get_sig_genes(table, column="edger_logfc", p_column=edger_p))
-    deseq_sig <- sm(get_sig_genes(table, column="deseq_logfc", p_column=deseq_p))
+    limma_sig <- sm(get_sig_genes(table, column="limma_logfc", p_column=limma_p, p=p))
+    edger_sig <- sm(get_sig_genes(table, column="edger_logfc", p_column=edger_p, p=p))
+    deseq_sig <- sm(get_sig_genes(table, column="deseq_logfc", p_column=deseq_p, p=p))
     comp_up <- combine_tables(deseq_sig[["up_genes"]],
                               edger_sig[["up_genes"]],
                               limma_sig[["up_genes"]])
@@ -296,42 +296,43 @@ de_venn <- function(table, adjp=FALSE, ...) {
     up_ones <- c("d" = up_d, "e" = up_e, "l" = up_l)
     up_twos <- c("d&e" = up_de, "d&l" = up_dl, "e&l" = up_el)
     up_threes <- c("d&e&l" = up_del)
-    up_fun <- plot_fun_venn(ones=up_ones, twos=up_twos, threes=up_threes)
-    up_venneuler <- up_fun[["plot"]]
-    up_venn_data <- up_fun[["data"]]
-    tt <- sm(require.auto("hs229/Vennerable"))
+    up_fun <- up_venneuler <- up_venn_data <- NULL
+    if (isTRUE(euler)) {
+        tt <- sm(require.auto("venneuler"))
+        up_fun <- plot_fun_venn(ones=up_ones, twos=up_twos, threes=up_threes)
+        up_venneuler <- up_fun[["plot"]]
+        up_venn_data <- up_fun[["data"]]
+    }
+    tt <- sm(require.auto("js229/Vennerable"))
     up_venn <- Vennerable::Venn(SetNames = c("d", "e", "l"),
                                 Weight = c(0, up_d, up_e, up_de,
                                            up_l, up_dl, up_el,
                                            up_del))
     Vennerable::plot(up_venn, doWeights=FALSE)
     up_venn_noweight <- grDevices::recordPlot()
-    ##Vennerable::plot(up_venn, doWeights=TRUE)
-    ##up_venn_weight <- grDevices::recordPlot()
 
     down_ones <- c("d" = down_d, "e" = down_e, "l" = down_l)
     down_twos <- c("d&e" = down_de, "d&l" = down_dl, "e&l" = down_el)
     down_threes <- c("d&e&l" = down_del)
-    down_fun <- plot_fun_venn(ones=down_ones, twos=down_twos, threes=down_threes)
-    down_venneuler <- down_fun[["plot"]]
-    down_venn_data <- down_fun[["data"]]
+    down_fun <- down_venneuler <- down_venn_data <- NULL
+    if (isTRUE(euler)) {
+        down_fun <- plot_fun_venn(ones=down_ones, twos=down_twos, threes=down_threes)
+        down_venneuler <- down_fun[["plot"]]
+        down_venn_data <- down_fun[["data"]]
+    }
     down_venn <- Vennerable::Venn(SetNames = c("d", "e", "l"),
                                   Weight = c(0, down_d, down_e, down_de,
                                              down_l, down_dl, down_el,
                                              down_del))
     Vennerable::plot(down_venn, doWeights=FALSE)
     down_venn_noweight <- grDevices::recordPlot()
-    ##Vennerable::plot(down_venn, doWeights=TRUE)
-    ##down_venn_weight <- grDevices::recordPlot()
 
     retlist <- list(
         "up_venneuler" = up_venneuler,
         "up_noweight" = up_venn_noweight,
-      ##  "up_weight" = up_venn_weight,
         "up_data" = comp_up,
         "down_venneuler" = down_fun,
         "down_noweight" = down_venn_noweight,
-      ##  "down_weight" = down_venn_weight,
         "down_data" = comp_down)
     return(retlist)
 }

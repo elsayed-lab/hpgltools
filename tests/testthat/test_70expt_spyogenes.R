@@ -12,8 +12,8 @@ load(cdm_data, envir=mgas_data)
 rm(cdm_data)
 
 mgas_expt <- sm(create_expt(count_dataframe=mgas_data$cdm_counts,
-                             metadata=mgas_data$cdm_metadata,
-                             gene_info=mgas_data$gene_info))
+                            metadata=mgas_data$cdm_metadata,
+                            gene_info=mgas_data$gene_info))
 rm(mgas_data)
 
 expected <- c("dnaA", "dnaN", "M5005_Spy_0003", "ychF", "pth", "trcF")
@@ -22,7 +22,9 @@ test_that("Did the gene information load?", {
     expect_equal(expected, actual)
 })
 
-mgas_norm <- sm(normalize_expt(mgas_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=TRUE, batch="combat_scale", low_to_zero=TRUE))
+mgas_norm <- sm(normalize_expt(mgas_expt, transform="log2", norm="quant",
+                               convert="cbcbcpm", filter=TRUE,
+                               batch="combat_scale", low_to_zero=TRUE))
 
 test_that("Is the filter state maintained?", {
     expect_equal("cbcb", mgas_norm$state$filter)
@@ -85,14 +87,13 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
     ## Plot the coefficients of latelog glucose
     glucose_table <- mgas_pairwise$limma$all_tables$mga1_ll_cg
-    fructose_table <- mgas_pairwise$limma$all_tables$mga1_ll_cf
     wtvmga_glucose <- mgas_pairwise$limma$all_tables$wt_ll_cg_vs_mga1_ll_cg
 
     circos_test <- sm(circos_prefix())
     circos_kary <- sm(circos_karyotype("mgas", length=actual_width))
     circos_plus <- sm(circos_plus_minus(mgas_df, circos_test))
     circos_hist_ll_cg <- sm(circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus))
-    circos_heat_ll_cf <- sm(circos_heatmap(fructose_table, mgas_df, circos_test, outer=circos_hist_ll_cg))
+    circos_heat_ll_cf <- sm(circos_heatmap(glucose_table, mgas_df, circos_test, outer=circos_hist_ll_cg))
     circos_tile_wtmga <- sm(circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf))
     circos_suffix(cfgout=circos_test)
     circos_made <- sm(circos_make(target="mgas"))

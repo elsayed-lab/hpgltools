@@ -175,24 +175,45 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
 ##        "kegg_gsem_sig" <- as.data.frame(summary(gse_sig_mkegg)))
 
     message("Plotting results.")
-    DOSE::enrichMap(ego_sig_mf)
-    map_sig_mf <- recordPlot()
-    DOSE::enrichMap(ego_sig_bp)
-    map_sig_bp <- recordPlot()
-    DOSE::enrichMap(ego_sig_cc)
-    map_sig_cc <- recordPlot()
-    DOSE::cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist)
-    net_sig_mf <- recordPlot()
-    DOSE::cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist)
-    net_sig_bp <- recordPlot()
-    DOSE::cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist)
-    net_sig_cc <- recordPlot()
+    map_sig_mf <- map_sig_bp <- map_sig_cc <- NULL
+    tt <- try(DOSE::enrichMap(ego_sig_mf))
+    if (class(tt) != "try-error") {
+        map_sig_mf <- recordPlot()
+    }
+    tt <- try(DOSE::enrichMap(ego_sig_bp))
+    if (class(tt) != "try-error") {
+        map_sig_bp <- recordPlot()
+    }
+    tt <- try(DOSE::enrichMap(ego_sig_cc))
+    if (class(tt) != "try-error") {
+        map_sig_cc <- recordPlot()
+    }
+    net_sig_mf <- net_sig_bp <- net_sig_cc <- NULL
+    tt <- try(DOSE::cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist))
+    if (class(tt) != "try-error") {
+        net_sig_mf <- recordPlot()
+    }
+    tt <- try(DOSE::cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist))
+    if (class(tt) != "try-error") {
+        net_sig_bp <- recordPlot()
+    }
+    tt <- try(DOSE::cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist))
+    if (class(tt) != "try-error") {
+        net_sig_cc <- recordPlot()
+    }
+    tree_sig_mf <- tree_sig_bp <- tree_sig_cc <- NULL
     tree_mf <- try(clusterProfiler::plotGOgraph(ego_sig_mf), silent=TRUE)
-    tree_sig_mf <- recordPlot()
+    if (class(tree_mf) != "try-error") {
+        tree_sig_mf <- recordPlot()
+    }
     tree_bp <- try(clusterProfiler::plotGOgraph(ego_sig_bp), silent=TRUE)
-    tree_sig_bp <- recordPlot()
+    if (class(tree_bp) != "try-error") {
+        tree_sig_bp <- recordPlot()
+    }
     tree_cc <- try(clusterProfiler::plotGOgraph(ego_sig_cc), silent=TRUE)
-    tree_sig_cc <- recordPlot()
+    if (class(tree_cc) != "try-error") {
+        tree_sig_cc <- recordPlot()
+    }
 
     plotlist <- list(
         "ggo_mf_bar" = barplot(ggo_mf, drop=TRUE, showCategory=categories),

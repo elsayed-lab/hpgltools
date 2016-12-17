@@ -3,6 +3,11 @@
 #' Biomart is an amazing resource of information, but using it is a bit annoying.  This function
 #' hopes to alleviate some common headaches.
 #'
+#' Tested in test_40ann_biomart.R
+#' This goes to some lengths to find the relevant tables in biomart.  But biomart is incredibly
+#' complex and one should carefully inspect the output if it fails to see if there are more
+#' appropriate marts, datasets, and columns to download.
+#'
 #' @param species Choose a species.
 #' @param overwrite Overwite an existing save file?
 #' @param do_save Create a savefile of annotations for future runs?
@@ -36,7 +41,7 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
     }
     mart <- NULL
     mart <- try(biomaRt::useMart(biomart=trymart, host=host))
-    if (class(mart) == 'try-error') {
+    if (class(mart) == "try-error") {
         message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ",
                        host, " ", trymart, "."))
         marts <- biomaRt::listMarts(host=host)
@@ -54,7 +59,7 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
         if (class(ensembl) == "try-error") {
             message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", dataset, "."))
             datasets <- biomaRt::listDatasets(mart=mart)
-            print(datasets)
+            message(toString(datasets))
             return(NULL)
         } else {
             message(paste0("Successfully loaded from the ", second_dataset, " database."))
@@ -165,7 +170,7 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
             message("That seems to have worked, extracting the resulting annotations.")
         } else {
             message("The second attempt failed as well, the following are the available datasets:")
-            print(datasets)
+            message(toString(datasets))
             return(NULL)
         }
     }
@@ -266,7 +271,7 @@ biomart_orthologs <- function(gene_ids, first_species="hsapiens", second_species
         message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ",
                        first_ensembl, "."))
         datasets <- biomaRt::listDatasets(mart=first_mart)
-        print(datasets)
+        message(toString(datasets))
         return(NULL)
     }
 
@@ -288,7 +293,7 @@ biomart_orthologs <- function(gene_ids, first_species="hsapiens", second_species
         message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ",
                        second_ensembl, "."))
         datasets <- biomaRt::listDatasets(mart=second_mart)
-        print(datasets)
+        message(toString(datasets))
         return(NULL)
     }
 

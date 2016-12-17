@@ -283,7 +283,7 @@ kegg_to_ensembl <- function(kegg_ids) {
     ## query gene ids 10 at a time (max allowed)
     result <- c()
     for (x in split(kegg_ids, ceiling(seq_along(kegg_ids) / 3))) {
-        print(x)
+        ## print(x)
         query <- KEGGREST::keggGet(x)
         for (item in query) {
             dblinks <- item$DBLINKS

@@ -7,7 +7,7 @@
 #' @export
 plot_topgo_densities <- function(godata, table) {
     ret <- list()
-    for (id in table$GO.ID) {
+    for (id in table[["GO.ID"]]) {
         message(id)
         print(hpgl_GroupDensity(godata, id, ranks=TRUE))
         added_plot <- recordPlot()

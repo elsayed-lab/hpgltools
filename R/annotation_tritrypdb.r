@@ -183,7 +183,7 @@ parse_gene_go_terms <- function (filepath, verbose=FALSE) {
         if(grepl("^Gene ID", x)) {
             gene_id <- local_get_value(x)
             if (verbose) {
-                print(sprintf('Processing gene %d: %s', i, gene_id))
+                message(sprintf('Processing gene %d: %s', i, gene_id))
             }
             i <- i + 1
         }

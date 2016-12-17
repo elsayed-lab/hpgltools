@@ -7,8 +7,11 @@ eupath_config <- get_eupath_config()
 
 expected <- 27
 actual <- eupath_config["lmajor_friedlin", ][["db_version"]]  ## Pull the db version for lmajor.
-expect_equal(expected, actual)
+test_that("Do we maintain the lmajor data for creating organismdbi objects?", {
+    expect_equal(expected, actual)
+})
 
+message("Testing organismdbi stuff takes _foever_!  skipping it.")
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ##difficult <- sm(make_organismdbi(id="tcruzi_nonesmer"))
 }

@@ -925,9 +925,10 @@ do_pairwise <- function(type, ...) {
 #' @export
 get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
                           column="logFC", fold="plusminus", p_column="adj.P.Val") {
-    if (is.null(z) & is.null(n) & is.null(fc)) {
-        message("No n, z, nor fc provided, setting z to 1.")
-        z <- 1
+    if (is.null(z) & is.null(n) & is.null(fc) & is.null(p)) {
+        message("No n, z, p, nor fc provided, setting p to 0.05 and fc to 1.0.")
+        p <- 0.05
+        fc <- 1.0
     }
     up_genes <- table
     down_genes <- table

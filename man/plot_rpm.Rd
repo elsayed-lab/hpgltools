@@ -4,8 +4,9 @@
 \alias{plot_rpm}
 \title{Make relatively pretty bar plots of coverage in a genome.}
 \usage{
-plot_rpm(input, output = "~/riboseq/01.svg", name = "LmjF.01.0010",
-  start = 1000, end = 2000, strand = 1, padding = 100)
+plot_rpm(input, workdir = "images", output = "01.svg",
+  name = "LmjF.01.0010", start = 1000, end = 2000, strand = 1,
+  padding = 100)
 }
 \arguments{
 \item{input}{Coverage / position filename.}

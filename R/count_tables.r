@@ -254,6 +254,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     plot_rows <- ceiling(plot_dim * 5.0)
     new_row <- 1
     new_col <- 1
+    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
 
     ## Write an introduction to this foolishness.
     message("Writing the legend.")
@@ -301,20 +302,29 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     new_col <- 1
     legend_plot <- metrics[["legend"]][["plot"]]
-    tt <- try(print(legend_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(legend_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(legend_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="legend", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
     libsize_plot <- metrics[["libsize"]]
-    tt <- try(print(libsize_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(libsize_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                               startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(libsize_plot, wb=wb, sheet=sheet, width=plot_dim, height=plot,
+                                start_col=new_col, start_row=new_row,
+                                plotname="libsize", savedir=excel_basename)
     ## Same row, non-zero plot
     new_col <- new_col + plot_cols + 1
     nonzero_plot <- metrics[["nonzero"]]
-    tt <- try(print(nonzero_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(nonzero_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(nonzero_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="nonzero", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
 
     ## Visualize distributions
@@ -327,15 +337,21 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
                         startRow=new_row, startCol=new_col)
     new_col <- 1
     density_plot <- metrics[["density"]]
-    tt <- try(print(density_plot))
     new_row <- new_row + 1
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(density_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(density_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="density", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
     boxplot_plot <- metrics[["boxplot"]]
-    tt <- try(print(boxplot_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(boxplot_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(boxplot_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="boxplot", savedir=excel_basename)
     new_col <- 1
 
     ## Move down next set of rows, heatmaps
@@ -349,14 +365,20 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     new_row <- new_row + 1
     corheat_plot <- metrics[["corheat"]]
-    tt <- try(print(corheat_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(corheat_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(corheat_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="corheat", savedir=excel_basename)
     disheat_plot <- metrics[["disheat"]]
     new_col <- new_col + plot_cols + 1
-    tt <- try(print(disheat_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                         startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(disheat_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                      startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(disheat_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="disheat", savedir=excel_basename)
     new_col <- 1
 
     ## SM plots
@@ -370,14 +392,20 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     new_row <- new_row + 1
     smc_plot <- metrics[["smc"]]
-    tt <- try(print(smc_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(smc_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(smc_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="smc", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
     smd_plot <- metrics[["smd"]]
-    tt <- try(print(smd_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(smd_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(smd_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="smd", savedir=excel_basename)
     new_col <- 1
 
     ## PCA, PCA(l2cpm) and qq_log
@@ -391,21 +419,30 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     new_row <- new_row + 1
     pca_plot <- metrics[["pcaplot"]]
-    tt <- try(print(pca_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(pca_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                               startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(pca_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="pcaplot", savedir=excel_basename)
     tmp_data <- sm(normalize_expt(expt, transform="log2", convert="cpm"))
     rspca_plot <- plot_pca(tmp_data)[["plot"]]
     rm(tmp_data)
     new_col <- new_col + plot_cols + 1
-    tt <- try(print(rspca_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(rspca_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(rspca_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="norm_pcaplot", savedir=excel_basename)
     qq_plot <- metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
-    tt <- try(print(qq_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(qq_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(qq_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="qqlog", savedir=excel_basename)
     new_col <- 1
 
     violin_plot <- NULL
@@ -417,17 +454,23 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
             violin_plot <- varpart_raw[["partition_plot"]]
             new_row <- new_row + plot_rows + 2
             new_col <- 1
-            tt <- try(print(violin_plot))
-            tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                           startCol=new_col, startRow=new_row, fileType="png",
-                                           units="in"))
+            ## tt <- try(print(violin_plot))
+            ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+            ##                               startCol=new_col, startRow=new_row, fileType="png",
+            ##                               units="in"))
+            try_result <- xlsx_plot_png(violin_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                        height=plot_dim, start_col=new_col, start_row=new_row,
+                                        plotname="violin", savedir=excel_basename)
             new_col <- new_col + plot_cols + 1
 
             pct_plot <- varpart_raw[["percent_plot"]]
-            tt <- try(print(pct_plot))
-            tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                           startCol=new_col, startRow=new_row, fileType="png",
-                                           units="in"))
+            ## tt <- try(print(pct_plot))
+            ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+            ##                               startCol=new_col, startRow=new_row, fileType="png",
+            ##                               units="in"))
+            try_result <- xlsx_plot_png(pct_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                        height=plot_dim, start_col=new_col, start_row=new_row,
+                                        plotname="pctvar", savedir=excel_basename)
         }
     }
 
@@ -473,20 +516,28 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     new_row <- new_row + 1
     new_plot <- norm_metrics[["legend"]][["plot"]]
-    tt <- try(print(new_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(new_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(new_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row)
     new_col <- new_col + plot_cols + 1
     nlibsize_plot <- norm_metrics[["libsize"]]
-    tt <- try(print(nlibsize_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(nlibsize_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(nlibsize_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="nlibsize", savedir=excel_basename)
     ## Same row, non-zero plot
     new_col <- new_col + plot_cols + 1
     nnzero_plot <- norm_metrics[["nonzero"]]
-    tt <- try(print(nnzero_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(nnzero_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(nnzero_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="nnzero", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
 
     ## Visualize distributions
@@ -499,15 +550,21 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
                         startRow=new_row, startCol=new_col)
     new_col <- 1
     ndensity_plot <- norm_metrics[["density"]]
-    tt <- try(print(ndensity_plot))
     new_row <- new_row + 1
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(ndensity_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(ndensity_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="ndensity", savedir=excel_basename)
     nboxplot_plot <- norm_metrics[["boxplot"]]
     new_col <- new_col + plot_cols + 1
-    tt <- try(print(nboxplot_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(nboxplot_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(nboxplot_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="nboxplot", savedir=excel_basename)
     new_col <- 1
 
     ## Move down next set of rows, heatmaps
@@ -520,15 +577,21 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
                         startRow=new_row, startCol=new_col)
     new_col <- 1
     ncorheat_plot <- norm_metrics[["corheat"]]
-    tt <- try(print(ncorheat_plot))
     new_row <- new_row + 1
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(ncorheat_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(ncorheat_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="ncorheat", savedir=excel_basename)
     ndisheat_plot <- norm_metrics[["disheat"]]
     new_col <- new_col + plot_cols + 1
-    tt <- try(print(ndisheat_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(ndisheat_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(ndisheat_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="ndisheat", savedir=excel_basename)
     new_col <- 1
 
     ## SM plots
@@ -541,15 +604,21 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
                         startRow=new_row, startCol=new_col)
     new_col <- 1
     nsmc_plot <- norm_metrics[["smc"]]
-    tt <- try(print(nsmc_plot))
     new_row <- new_row + 1
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(nsmc_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(nsmc_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="nsmc", savedir=excel_basename)
     nsmd_plot <- norm_metrics[["smd"]]
     new_col <- new_col + plot_cols + 1
-    tt <- try(print(nsmd_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(nsmd_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(nsmd_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="nsmd", savedir=excel_basename)
     new_col <- 1
 
     ## PCA and qq_log
@@ -562,34 +631,49 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
                         startRow=new_row, startCol=new_col)
     new_col <- 1
     npca_plot <- norm_metrics[["pcaplot"]]
-    tt <- try(print(npca_plot))
     new_row <- new_row + 1
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(npca_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                               startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(npca_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="npcaplot", savedir=excel_basename)
+
     nqq_plot <- norm_metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
-    tt <- try(print(new_plot))
-    tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                   startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    ## tt <- try(print(new_plot))
+    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
+    try_result <- xlsx_plot_png(nqq_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="nqqplot", savedir=excel_basename)
     new_col <- 1
 
     ## Violin plots
+    nvarpart_plot <- NULL
+    npct_plot <- NULL
     if (isTRUE(violin)) {
         varpart_norm <- try(varpart(norm_data, predictor=NULL, factors=c("condition", "batch")))
         if (class(varpart_norm) != "try-error") {
             nvarpart_plot <- varpart_norm[["partition_plot"]]
             new_row <- new_row + plot_rows + 2
             new_col <- 1
-            tt <- try(print(nvarpart_plot))
-            tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                           startCol=new_col, startRow=new_row, fileType="png",
-                                           units="in"))
+            ## tt <- try(print(nvarpart_plot))
+            ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+            ##                                startCol=new_col, startRow=new_row, fileType="png",
+            ##                                units="in"))
+            try_result <- xlsx_plot_png(nvarpart_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                        height=plot_dim, start_col=new_col, start_row=new_row,
+                                        plotname="nqqplot", savedir=excel_basename)
             new_col <- new_col + plot_cols + 1
             npct_plot <- varpart_norm[["percent_plot"]]
-            tt <- try(print(npct_plot))
-            tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-                                           startCol=new_col, startRow=new_row, fileType="png",
-                                           units="in"))
+            ## tt <- try(print(npct_plot))
+            ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
+            ##                                startCol=new_col, startRow=new_row, fileType="png",
+            ##                               units="in"))
+            try_result <- xlsx_plot_png(npct_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                        height=plot_dim, start_col=new_col, start_row=new_row,
+                                        plotname="npctplot", savedir=excel_basname)
         }
     }
 
