@@ -45,14 +45,14 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
                                               toType=orgdb_to, OrgDb=org))
     if (class(all_genes_df) == "try-error") {
         all_genes_df <- try(clusterProfiler::bitr(all_genenames, fromType=orgdb_from,
-                                                  toType=orgdb_to))
+                                                  toType=orgdb_to, annoDb=orgdb))
     }
     sig_genenames <- rownames(sig_genes)
     sig_genes_df <- try(clusterProfiler::bitr(sig_genenames, fromType=orgdb_from,
                                               toType=orgdb_to, OrgDb=org))
     if (class(sig_genes_df) == "try-error") {
         sig_genes_df <- try(clusterProfiler::bitr(sig_genenames, fromType=orgdb_from,
-                                                  toType=orgdb_to))
+                                                  toType=orgdb_to, annoDb=orgdb))
     }
     universe <- AnnotationDbi::keys(org, keytype=orgdb_to)
     all_genes_df <- merge(all_genes, all_genes_df, by.x="row.names", by.y=orgdb_from)
