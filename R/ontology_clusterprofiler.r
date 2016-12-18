@@ -41,16 +41,19 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     orgdb_to <- toupper(orgdb_to)
     ## Interestingly, these bitr calls fail on travis but work fine on my system.
     ## It looks like the version on travis does not require the orgdb.
+    old_or_new <- "old"
     all_genes_df <- try(clusterProfiler::bitr(all_genenames, fromType=orgdb_from,
                                               toType=orgdb_to, OrgDb=org))
     if (class(all_genes_df) == "try-error") {
+        old_or_new <- "new"
         all_genes_df <- try(clusterProfiler::bitr(all_genenames, fromType=orgdb_from,
                                                   toType=orgdb_to, annoDb=orgdb))
     }
     sig_genenames <- rownames(sig_genes)
-    sig_genes_df <- try(clusterProfiler::bitr(sig_genenames, fromType=orgdb_from,
-                                              toType=orgdb_to, OrgDb=org))
-    if (class(sig_genes_df) == "try-error") {
+    if (old_or_new == "new") {
+        sig_genes_df <- try(clusterProfiler::bitr(sig_genenames, fromType=orgdb_from,
+                                                  toType=orgdb_to, OrgDb=org))
+    } else {
         sig_genes_df <- try(clusterProfiler::bitr(sig_genenames, fromType=orgdb_from,
                                                   toType=orgdb_to, annoDb=orgdb))
     }
@@ -70,12 +73,22 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     }
 
     message("Calculating GO groups.")
-    ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org,
-                                       ont="MF", level=go_level, readable=TRUE)
-    ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org,
-                                       ont="BP", level=go_level, readable=TRUE)
-    ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org,
-                                       ont="CC", level=go_level, readable=TRUE)
+    ggo_mf <- ggo_bp <- ggo_cc <- NULL
+    if (old_or_new == "new") {
+        ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org,
+                                           ont="MF", level=go_level, readable=TRUE)
+        ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org,
+                                           ont="BP", level=go_level, readable=TRUE)
+        ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org,
+                                           ont="CC", level=go_level, readable=TRUE)
+    } else {
+        ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], annoDb=orgdb,
+                                           ont="MF", level=go_level, readable=TRUE)
+        ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], annoDb=orgdb,
+                                           ont="BP", level=go_level, readable=TRUE)
+        ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], annoDb=orgdb,
+                                           ont="CC", level=go_level, readable=TRUE)
+    }
     group_go <- list(
         "MF" = as.data.frame(DOSE::summary(ggo_mf)),
         "BP" = as.data.frame(DOSE::summary(ggo_bp)),
@@ -89,30 +102,58 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
         "sig_bp" = NULL,
         "all_cc" = NULL,
         "sig_cc" = NULL)
-    ego_all_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
-                                            OrgDb=org, ont="MF",
-                                            minGSSize=mings, pAdjustMethod="BH",
-                                            pvalueCutoff=1.0, readable=TRUE)
-    ego_sig_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
-                                            OrgDb=org, ont="MF",
-                                            minGSSize=mings, pAdjustMethod="BH",
-                                            pvalueCutoff=pcutoff, readable=TRUE)
-    ego_all_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
-                                            OrgDb=org, ont="BP",
-                                            minGSSize=mings, pAdjustMethod="BH",
-                                            pvalueCutoff=1.0, readable=TRUE)
-    ego_sig_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
-                                            OrgDb=org, ont="BP",
-                                            minGSSize=mings, pAdjustMethod="BH",
-                                            pvalueCutoff=pcutoff, readable=TRUE)
-    ego_all_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
-                                            OrgDb=org, ont="CC",
-                                            minGSSize=mings, pAdjustMethod="BH",
-                                            pvalueCutoff=1.0, readable=TRUE)
-    ego_sig_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
-                                            OrgDb=org, ont="CC",
-                                            minGSSize=mings, pAdjustMethod="BH",
-                                            pvalueCutoff=pcutoff, readable=TRUE)
+    ego_all_mf <- ego_sig_mf <- ego_all_bp <- ego_sig_bp <- ego_all_cc <- ego_sig_cc <- NULL
+    if (old_or_new == "new") {
+        ego_all_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                OrgDb=org, ont="MF",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=1.0, readable=TRUE)
+        ego_sig_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                OrgDb=org, ont="MF",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=pcutoff, readable=TRUE)
+        ego_all_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                OrgDb=org, ont="BP",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=1.0, readable=TRUE)
+        ego_sig_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                OrgDb=org, ont="BP",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=pcutoff, readable=TRUE)
+        ego_all_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                OrgDb=org, ont="CC",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=1.0, readable=TRUE)
+        ego_sig_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                OrgDb=org, ont="CC",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=pcutoff, readable=TRUE)
+    } else {
+        ego_all_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                annoDb=orgdb, ont="MF",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=1.0, readable=TRUE)
+        ego_sig_mf <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                annoDb=orgdb, ont="MF",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=pcutoff, readable=TRUE)
+        ego_all_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                annoDb=orgdb, ont="BP",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=1.0, readable=TRUE)
+        ego_sig_bp <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                annoDb=orgdb, ont="BP",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=pcutoff, readable=TRUE)
+        ego_all_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                annoDb=orgdb, ont="CC",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=1.0, readable=TRUE)
+        ego_sig_cc <- clusterProfiler::enrichGO(gene=sig_genes_df[[orgdb_to]], universe=universe,
+                                                annoDb=orgdb, ont="CC",
+                                                minGSSize=mings, pAdjustMethod="BH",
+                                                pvalueCutoff=pcutoff, readable=TRUE)
+    }
     ##} ## End else if we should do a parallel search
 
     enrich_go <- list(
@@ -126,24 +167,46 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     message("Performing GSE analyses of gene lists (this is slow).")
     genelist <- as.vector(all_genes_df[[fc_column]])
     names(genelist) <- all_genes_df[[orgdb_to]]
-    gse_all_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
-                                         nPerm=permutations, minGSSize=min_groupsize,
-                                         pvalueCutoff=1.0)
-    gse_sig_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
-                                         nPerm=permutations, minGSSize=min_groupsize,
-                                         pvalueCutoff=pcutoff)
-    gse_all_bp <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
-                                         nPerm=permutations, minGSSize=min_groupsize,
-                                         pvalueCutoff=1.0)
-    gse_sig_bp <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
-                                         nPerm=permutations, minGSSize=min_groupsize,
-                                         pvalueCutoff=pcutoff)
-    gse_all_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
-                                         nPerm=permutations, minGSSize=min_groupsize,
-                                         pvalueCutoff=1.0)
-    gse_sig_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
-                                         nPerm=permutations, minGSSize=min_groupsize,
-                                         pvalueCutoff=pcutoff)
+    gse_all_mf <- gse_sig_mf <- gse_all_bp <- gse_sig_bp <- gse_all_cc <- gse_sig_cc <- NULL
+    if (old_or_new == "new") {
+        gse_all_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=1.0)
+        gse_sig_mf <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=pcutoff)
+        gse_all_bp <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=1.0)
+        gse_sig_bp <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=pcutoff)
+        gse_all_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=1.0)
+        gse_sig_cc <- clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=pcutoff)
+    } else {
+        gse_all_mf <- clusterProfiler::gseGO(geneList=genelist, annoDb=orgdb, ont="MF",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=1.0)
+        gse_sig_mf <- clusterProfiler::gseGO(geneList=genelist, annoDb=orgdb, ont="MF",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=pcutoff)
+        gse_all_bp <- clusterProfiler::gseGO(geneList=genelist, annoDb=orgdb, ont="BP",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=1.0)
+        gse_sig_bp <- clusterProfiler::gseGO(geneList=genelist, annoDb=orgdb, ont="BP",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=pcutoff)
+        gse_all_cc <- clusterProfiler::gseGO(geneList=genelist, annoDb=orgdb, ont="CC",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=1.0)
+        gse_sig_cc <- clusterProfiler::gseGO(geneList=genelist, annoDb=orgdb, ont="CC",
+                                             nPerm=permutations, minGSSize=min_groupsize,
+                                             pvalueCutoff=pcutoff)
+    }
     gse_go <- list(
         "MF_all" = as.data.frame(DOSE::summary(gse_all_mf)),
         "MF_sig" = as.data.frame(DOSE::summary(gse_sig_mf)),
