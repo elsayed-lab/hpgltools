@@ -82,11 +82,11 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
         ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], OrgDb=org,
                                            ont="CC", level=go_level, readable=TRUE)
     } else {
-        ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], annoDb=orgdb,
+        ggo_mf <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]],
                                            ont="MF", level=go_level, readable=TRUE)
-        ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], annoDb=orgdb,
+        ggo_bp <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]],
                                            ont="BP", level=go_level, readable=TRUE)
-        ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]], annoDb=orgdb,
+        ggo_cc <- clusterProfiler::groupGO(gene=sig_genes_df[[orgdb_to]],
                                            ont="CC", level=go_level, readable=TRUE)
     }
     group_go <- list(
