@@ -41,11 +41,11 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     orgdb_to <- toupper(orgdb_to)
     ## Interestingly, these bitr calls fail on travis but work fine on my system.
     ## It looks like the version on travis does not require the orgdb.
-    old_or_new <- "old"
+    old_or_new <- "new"
     all_genes_df <- try(clusterProfiler::bitr(all_genenames, fromType=orgdb_from,
                                               toType=orgdb_to, OrgDb=org))
     if (class(all_genes_df) == "try-error") {
-        old_or_new <- "new"
+        old_or_new <- "old"
         all_genes_df <- try(clusterProfiler::bitr(all_genenames, fromType=orgdb_from,
                                                   toType=orgdb_to, annoDb=orgdb))
     }
