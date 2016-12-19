@@ -273,9 +273,6 @@ test_that("Plotting an MA plot from a combined DE table provides logFCs in the c
     expect_equal(expected, actual)
 })
 
-tt <- file.remove("test_excel.xlsx")
-tt <- file.remove("test_excel_sig.xlsx")
-
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 29de_shared.R in ", elapsed,  " seconds."))

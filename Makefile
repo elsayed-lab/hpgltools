@@ -23,7 +23,7 @@ build:
 test: install
 	@rm -rf tests/testthat/*.rda tests/testthat/circos tests/testthat/*.pdf tests/testthat/*.Rdata test/testthat/*.map
 	@echo "Running run_tests.R"
-	tests/testthat.R
+	cd tests && ./testthat.R && cd ..
 
 roxygen:
 	@echo "Generating documentation with roxygen2::roxygenize()"

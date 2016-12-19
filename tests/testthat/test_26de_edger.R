@@ -86,5 +86,5 @@ test_that("Is the hpgl pairwise similar to edgeR's default method (fdr)?", {
 save(list=ls(), file="de_edger.rda")
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 26de_edger.R in ", elapsed,  " seconds."))

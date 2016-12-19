@@ -196,5 +196,5 @@ test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
 save(list=ls(), file="de_limma_combat.rda")
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 21de_limma_combat.R in ", elapsed,  " seconds."))

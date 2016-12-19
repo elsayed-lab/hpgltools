@@ -82,5 +82,5 @@ test_that("Do we get a consistent top set of z-scored up genes?", {
 save(list=ls(), file="gsea_siggenes.rda")
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 51gsea_siggenes.R in ", elapsed,  " seconds."))

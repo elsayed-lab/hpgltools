@@ -33,5 +33,5 @@ test_that("Are GO.db functions working?", {
 ## }
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 50gsea_ontshared.R in ", elapsed,  " seconds."))

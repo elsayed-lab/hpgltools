@@ -85,5 +85,5 @@ test_that("Are the goseq results as expected (cc pvalues)?", {
 ## Keith
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 52gsea_goseq.R in ", elapsed,  " seconds."))

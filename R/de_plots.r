@@ -308,7 +308,8 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
                                 Weight = c(0, up_d, up_e, up_de,
                                            up_l, up_dl, up_el,
                                            up_del))
-    Vennerable::plot(up_venn, doWeights=FALSE)
+    up_res <- Vennerable::plot(up_venn, doWeights=FALSE)
+    ##up_res <- plot(up_venn, doWeights=FALSE)
     up_venn_noweight <- grDevices::recordPlot()
 
     down_ones <- c("d" = down_d, "e" = down_e, "l" = down_l)
@@ -324,14 +325,15 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
                                   Weight = c(0, down_d, down_e, down_de,
                                              down_l, down_dl, down_el,
                                              down_del))
-    Vennerable::plot(down_venn, doWeights=FALSE)
+    down_res <- Vennerable::plot(down_venn, doWeights=FALSE)
+    ##down_res <- plot(down_venn, doWeights=FALSE)
     down_venn_noweight <- grDevices::recordPlot()
 
     retlist <- list(
-        "up_venneuler" = up_venneuler,
+        "up_venneuler" = up_venn,
         "up_noweight" = up_venn_noweight,
         "up_data" = comp_up,
-        "down_venneuler" = down_fun,
+        "down_venneuler" = down_venn,
         "down_noweight" = down_venn_noweight,
         "down_data" = comp_down)
     return(retlist)

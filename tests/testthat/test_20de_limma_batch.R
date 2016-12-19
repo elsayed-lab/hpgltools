@@ -166,5 +166,5 @@ test_that("Do the intercept model results equal those from cell means?", {
 save(list=ls(), file="de_limma.rda")
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 20de_limma_batch.R in ", elapsed,  " seconds."))

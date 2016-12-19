@@ -72,5 +72,5 @@ test_that("simple filtering leaves behind the expected number of genes?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 14norm_filter.R in ", elapsed,  " seconds."))

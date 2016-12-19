@@ -14,6 +14,8 @@ plots_removed <- file.remove("Rplots.pdf")
 map_removed <- file.remove("id2go.map")
 gff_removed <- file.remove("dmel.gff")
 
+xlsx_table_removed <- file.remove("test_excel.xlsx")
+xlsx_sig_semoved <- file.remove("test_excel_sig.xlsx")
 
 remove_directories <- c("organdb", "pathview", "pathview_in", "circos", "test_excel", "test_excel_sig")
 for (dir in remove_directories) {
@@ -26,5 +28,5 @@ for (dir in remove_directories) {
 ## that.  Also, I would like to have something which counts the tests run.
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 99cleanup.R in ", elapsed,  " seconds."))

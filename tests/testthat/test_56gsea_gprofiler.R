@@ -39,5 +39,5 @@ test_that("Does gprofiler return expected values? (ccpplot_data)", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 56gsea_gprofiler.R in ", elapsed,  " seconds."))
