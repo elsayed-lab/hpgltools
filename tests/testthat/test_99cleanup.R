@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("99cleanup.R: Cleaning up this mess.\n")
@@ -14,15 +15,16 @@ map_removed <- file.remove("id2go.map")
 gff_removed <- file.remove("dmel.gff")
 
 
-directory_removed <- file.remove("organdb", recursive=TRUE)
-directory_removed <- file.remove("pathview", recursive=TRUE)
-directory_removed <- file.remove("pathview_in", recursive=TRUE)
-
+remove_directories <- c("organdb", "pathview", "pathview_in", "circos", "test_excel", "test_excel_sig")
+for (dir in remove_directories) {
+    if (file.exists(dir)) {
+        directory_removed <- unlink(dir, recursive=TRUE)
+    }
+}
 
 ## It annoys me greatly when something completes and doesn't add a newline, perhaps this will fix
 ## that.  Also, I would like to have something which counts the tests run.
-test_that("Did this finish?", {
-    expect_equal(1, 1)
-})
 
-message("\nFinished 99cleanup.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end - start), digits=1)
+message(paste0("\nFinished 99cleanup.R in ", elapsed,  " seconds."))

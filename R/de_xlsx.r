@@ -113,8 +113,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     reminder_string <- NULL
     if (class(reminder_model_batch) == "matrix") {
         ## This is currently not true, ths pvalues are only modified if we modify the data.
-        ## reminder_string <- "The contrasts were performed with surrogates modeled with sva.  The p-values were therefore adjusted using an experimental f-test as per the sva documentation."
-        ##message(reminder_string)
+        ## reminder_string <- "The contrasts were performed with surrogates modeled with sva.
+        ## The p-values were therefore adjusted using an experimental f-test as per the sva documentation."
+        ## message(reminder_string)
     } else if (isTRUE(reminder_model_batch) & isTRUE(reminder_model_cond)) {
         reminder_string <- "The contrasts were performed with experimental condition and batch in the model."
     } else if (isTRUE(reminder_model_cond)) {
@@ -268,38 +269,50 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 dat <- combined[["data"]]
                 summary <- combined[["summary"]]
                 if (isTRUE(do_inverse)) {
-                    limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma", x=denominator, y=numerator)), silent=TRUE)
+                    limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma",
+                                                                    x=denominator,
+                                                                    y=numerator)), silent=TRUE)
                     if (class(limma_try) == "list") {
                         limma_plt <- limma_try
                     } else {
                         limma_plt <- NULL
                     }
-                    edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger", x=denominator, y=numerator)), silent=TRUE)
+                    edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger",
+                                                                    x=denominator,
+                                                                    y=numerator)), silent=TRUE)
                     if (class(edger_try) == "list") {
                         edger_plt <- edger_try
                     } else {
                         edger_plt <- NULL
                     }
-                    deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq", x=denominator, y=numerator)), silent=TRUE)
+                    deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq",
+                                                                    x=denominator,
+                                                                    y=numerator)), silent=TRUE)
                     if (class(deseq_try) == "list") {
                         deseq_plt <- deseq_try
                     } else {
                         deseq_plt <- NULL
                     }
                 } else {
-                    limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma", x=numerator, y=denominator)), silent=TRUE)
+                    limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma",
+                                                                    x=numerator,
+                                                                    y=denominator)), silent=TRUE)
                     if (class(limma_try) == "list") {
                         limma_plt <- limma_try
                     } else {
                         limma_plt <- NULL
                     }
-                    edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger", x=numerator, y=denominator)), silent=TRUE)
+                    edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger",
+                                                                    x=numerator,
+                                                                    y=denominator)), silent=TRUE)
                     if (class(edger_try) == "list") {
                         edger_plt <- edger_try
                     } else {
                         edger_plt <- NULL
                     }
-                    deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq", x=numerator, y=denominator)), silent=TRUE)
+                    deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq",
+                                                                    x=numerator,
+                                                                    y=denominator)), silent=TRUE)
                     if (class(deseq_try) == "list") {
                         deseq_plt <- deseq_try
                     } else {
@@ -1025,7 +1038,8 @@ extract_significant_genes <- function(combined,
         plot_col <- 1
         message(paste0("Adding significance bar plots."))
 
-        plot_row <- plot_row + nrow(change_counts) + 3
+        num_tables <- length(according_to)
+        plot_row <- plot_row + ((nrow(change_counts) + 1) * num_tables)
         ## I know it is silly to set the row in this very explicit fashion, but I want to make clear the fact that the table
         ## has a title, a set of headings, a length corresponding to the number of contrasts,  and then the new stuff should be added.
 
@@ -1053,6 +1067,8 @@ extract_significant_genes <- function(combined,
             return(summary_table)
         }
 
+        ## I messed up something here.  The plots and tables
+        ## at this point should start 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
         openxlsx::writeData(wb, "number_changed",
                             x="Significant limma genes.",
                             startRow=plot_row, startCol=plot_col)
@@ -1063,7 +1079,7 @@ extract_significant_genes <- function(combined,
         ##                      fileType="png", units="in"))
         try_result <- xlsx_plot_png(sig_bar_plots[["limma"]], wb=wb, sheet="number_changed",
                                     plotname="sigbar_limma", savedir=excel_basename,
-                                    width=9, height=9, start_row=plot_row, start_col=plot_col)
+                                    width=9, height=6, start_row=plot_row, start_col=plot_col)
 
         summary_row <- plot_row
         summary_col <- plot_col + 11
@@ -1082,7 +1098,7 @@ extract_significant_genes <- function(combined,
         ##                                fileType="png", units="in"))
         try_result <- xlsx_plot_png(sig_bar_plots[["deseq"]], wb=wb, sheet="number_changed",
                                     plotname="sigbar_deseq", savedir=excel_basename,
-                                    width=9, height=9, start_row=plot_row, start_col=plot_col)
+                                    width=9, height=6, start_row=plot_row, start_col=plot_col)
         summary_row <- plot_row
         summary_col <- plot_col + 11
         deseq_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["deseq"]], sig_bar_plots[["downs"]][["deseq"]])
@@ -1100,7 +1116,7 @@ extract_significant_genes <- function(combined,
         ##                                fileType="png", units="in"))
         try_result <- xlsx_plot_png(sig_bar_plots[["edger"]], wb=wb, sheet="number_changed",
                                     plotname="sibar_edger", savedir=excel_basename,
-                                    width=9, height=9, start_row=plot_row, start_col=plot_col)
+                                    width=9, height=6, start_row=plot_row, start_col=plot_col)
         summary_row <- plot_row
         summary_col <- plot_col + 11
         edger_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["edger"]], sig_bar_plots[["downs"]][["edger"]])

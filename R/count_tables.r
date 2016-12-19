@@ -175,8 +175,9 @@ concatenate_runs <- function(expt, column='replicate') {
 #'  compressed = hpgltools:::median_by_factor(data, experiment$condition)
 #' }
 #' @export
-median_by_factor <- function(data, fact) {
+median_by_factor <- function(data) {
     medians <- data.frame("ID"=rownames(data))
+    data <- as.matrix(data)
     rownames(medians) = rownames(data)
     fact <- as.factor(fact)
     for (type in levels(fact)) {
@@ -313,7 +314,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     ## tt <- try(print(libsize_plot))
     ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
     ##                               startCol=new_col, startRow=new_row, fileType="png", units="in"))
-    try_result <- xlsx_plot_png(libsize_plot, wb=wb, sheet=sheet, width=plot_dim, height=plot,
+    try_result <- xlsx_plot_png(libsize_plot, wb=wb, sheet=sheet, width=plot_dim, height=plot_dim,
                                 start_col=new_col, start_row=new_row,
                                 plotname="libsize", savedir=excel_basename)
     ## Same row, non-zero plot

@@ -172,7 +172,11 @@ xlsx_plot_png <- function(plot, wb=NULL, sheet=1, width=6, height=6, res=90,
         dev.off()
     }
     fileName <- tempfile(pattern = "figureImage", fileext = paste0(".", file_type))
-    png_ret <- try(png(filename=fileName, res=res, width=width, height=height, units=units))
+    png_ret <- try(png(filename=fileName,
+                       width=width,
+                       height=height,
+                       units=units,
+                       res=res))
     print_ret <- try(print(plot), silent=TRUE)
     dev.off()
     insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=fileName, width=width,

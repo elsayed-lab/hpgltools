@@ -16,7 +16,6 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ##difficult <- sm(make_organismdbi(id="tcruzi_nonesmer"))
 }
 
-message("\nFinished 41ann_organdb.R")
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end - start), digits=1)
 message(paste0("\nFinished 41ann_organdb.R in ", elapsed,  " seconds."))

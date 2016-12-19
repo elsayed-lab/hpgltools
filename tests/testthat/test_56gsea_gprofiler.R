@@ -21,7 +21,7 @@ test_that("Does gprofiler return expected values?", {
 expected <- c(1.62e-05, 1.46e-03, 4.42e-03, 4.80e-03, 7.72e-03, 9.59e-03)
 actual <- head(sort(gprofiler_result$plots$mfp_plot_over$data$pvalue))
 test_that("Does gprofiler return expected values? (mfpplot_data)", {
-    expect_equal(expected, actual, tolerance=0.001)
+    expect_equal(expected, actual, tolerance=0.01)
 })
 
 ## When I run this in an interactive session it works.
