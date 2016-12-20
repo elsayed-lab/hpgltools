@@ -4,7 +4,8 @@
 \alias{set_expt_colors}
 \title{Change the colors of an expt}
 \usage{
-set_expt_colors(expt, colors = TRUE, chosen_palette = "Dark2")
+set_expt_colors(expt, colors = TRUE, chosen_palette = "Dark2",
+  change_by = "condition")
 }
 \arguments{
 \item{expt}{Expt to modify}
@@ -12,6 +13,8 @@ set_expt_colors(expt, colors = TRUE, chosen_palette = "Dark2")
 \item{colors}{colors to replace}
 
 \item{chosen_palette}{I usually use Dark2 as the RColorBrewer palette.}
+
+\item{change_by}{Assuming a list is passed, cross reference by condition or sample?}
 }
 \value{
 expt Send back the expt with some new metadata

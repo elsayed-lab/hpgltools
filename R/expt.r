@@ -639,9 +639,10 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' When exploring differential analyses, it might be useful to play with the conditions/batches of
 #' the experiment.  Use this to make that easier.
 #'
-#' @param expt Expt to modify
-#' @param colors colors to replace
+#' @param expt  Expt to modify
+#' @param colors  colors to replace
 #' @param chosen_palette  I usually use Dark2 as the RColorBrewer palette.
+#' @param change_by  Assuming a list is passed, cross reference by condition or sample?
 #' @return expt Send back the expt with some new metadata
 #' @examples
 #' \dontrun{

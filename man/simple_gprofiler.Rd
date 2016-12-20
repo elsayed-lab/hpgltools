@@ -4,13 +4,13 @@
 \alias{simple_gprofiler}
 \title{Run searches against the web service g:Profiler.}
 \usage{
-simple_gprofiler(de_genes, species = "hsapiens", first_col = "logFC",
+simple_gprofiler(sig_genes, species = "hsapiens", first_col = "logFC",
   second_col = "limma_logfc", do_go = TRUE, do_kegg = TRUE,
   do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE, do_corum = TRUE,
   do_hp = TRUE, significant = TRUE, pseudo_gsea = TRUE)
 }
 \arguments{
-\item{de_genes}{Guess!  The set of differentially expressed/interesting genes.}
+\item{sig_genes}{Guess!  The set of differentially expressed/interesting genes.}
 
 \item{species}{Organism supported by gprofiler.}
 
