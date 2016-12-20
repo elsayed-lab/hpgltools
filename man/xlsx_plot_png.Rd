@@ -4,13 +4,11 @@
 \alias{xlsx_plot_png}
 \title{An attempt to improve the behaivor of openxlsx's plot inserter.}
 \usage{
-xlsx_plot_png(plot, wb = NULL, sheet = 1, width = 6, height = 6,
+xlsx_plot_png(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
   res = 90, plotname = "plot", savedir = "saved_plots", start_row = 1,
   start_col = 1, file_type = "png", units = "in")
 }
 \arguments{
-\item{plot}{The plot provided}
-
 \item{wb}{Workbook to which to write.}
 
 \item{sheet}{Name or number of the sheet to which to add the plot.}
@@ -32,6 +30,8 @@ xlsx_plot_png(plot, wb = NULL, sheet = 1, width = 6, height = 6,
 \item{file_type}{Currently this only does pngs, but perhaps I will parameterize this.}
 
 \item{units}{Units for the png plotter.}
+
+\item{plot}{The plot provided}
 }
 \value{
 A list containing the result of the tryCatch{} used to invoke the plot prints.

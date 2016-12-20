@@ -2,7 +2,7 @@
 #'
 #' This will attempt to make it easier to run topgo on a set of genes.
 #'
-#' @param de_genes Data frame of differentially expressed genes, containing IDs any other columns.
+#' @param sig_genes Data frame of differentially expressed genes, containing IDs any other columns.
 #' @param goid_map File containing mappings of genes to goids in the format expected by topgo.
 #' @param goids_df Data frame of the goids which may be used to make the goid_map.
 #' @param pvals Set of pvalues in the DE data which may be used to improve the topgo results.
@@ -20,7 +20,7 @@
 #' @param ... Other options which I do not remember right now!
 #' @return Big list including the various outputs from topgo
 #' @export
-simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
+simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
                          pvals=NULL, limitby="fisher", limit=0.1, signodes=100,
                          sigforall=TRUE, numchar=300, selector="topDiffGenes",
                          pval_column="adj.P.Val", overwrite=FALSE, densities=FALSE,
@@ -40,17 +40,17 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
     gomap_info <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO <- topGO::readMappings(file=goid_map)
     annotated_genes <- names(geneID2GO)
-    if (is.null(de_genes[["ID"]])) {
-        de_genes[["ID"]] <- make.names(rownames(de_genes), unique=TRUE)
+    if (is.null(sig_genes[["ID"]])) {
+        sig_genes[["ID"]] <- make.names(rownames(sig_genes), unique=TRUE)
     }
-    fisher_interesting_genes <- as.factor(as.integer(annotated_genes %in% de_genes[["ID"]]))
+    fisher_interesting_genes <- as.factor(as.integer(annotated_genes %in% sig_genes[["ID"]]))
     names(fisher_interesting_genes) <- annotated_genes
-    ks_interesting_genes <- as.integer(!annotated_genes %in% de_genes[["ID"]])
-    if (!is.null(de_genes[[pval_column]])) {
+    ks_interesting_genes <- as.integer(!annotated_genes %in% sig_genes[["ID"]])
+    if (!is.null(sig_genes[[pval_column]])) {
         ## I think this needs to include the entire gene universe, not only the set of x differentially expressed genes
         ## Making this an explicit as.vector(as.numeric()) because it turns out the values from DESeq are characters.
-        pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
-        names(pvals) <- rownames(de_genes)
+        pvals <- as.vector(as.numeric(sig_genes[[pval_column]]))
+        names(pvals) <- rownames(sig_genes)
         for (p in 1:length(pvals)) {
             name <- names(pvals)[p]
             ks_interesting_genes[[name]] <- pvals[p]
@@ -472,7 +472,7 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
     return(new_go)
 }
 
-hpgl_topdiffgenes <- function(scores, df=get0("de_genes"), direction="up") {
+hpgl_topdiffgenes <- function(scores, df=get0("sig_genes"), direction="up") {
     ## Testing parameters
     ##scores = pvals
     ##df = epi_cl14clbr_high

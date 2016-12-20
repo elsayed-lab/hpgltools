@@ -5,7 +5,7 @@
 #' integers. As a result, I am going to have this function take a gff file in order to get the go
 #' ids and gene ids on the same page.
 #'
-#' @param de_genes Input list of differentially expressed genes.
+#' @param sig_genes Input list of differentially expressed genes.
 #' @param gff Annotation information for this genome.
 #' @param goids_df Set of GOids, as before in the format ID/GO.
 #' @param universe_merge Column from which to create the universe of genes.
@@ -20,7 +20,7 @@
 #' @return List of returns from GSEABase, Category, etc.
 #' @seealso \pkg{GSEABase} \pkg{Category}
 #' @export
-simple_gostats <- function(de_genes, gff, goids_df, universe_merge="id", second_merge_try="locus_tag",
+simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second_merge_try="locus_tag",
                            species="fun", pcutoff=0.10, direction="over", conditional=FALSE,
                            categorysize=NULL, gff_type="cds", ...) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should)
@@ -83,17 +83,17 @@ simple_gostats <- function(de_genes, gff, goids_df, universe_merge="id", second_
     ## This section is a little odd
     ## The goal is to collect a consistent set of numeric gene IDs
     ## In addition, one must cross reference those IDs consistently with the universe of all genes.
-    ## Thus in a few linues I will be doing a merge of all genes against the de_genes and another merge
+    ## Thus in a few linues I will be doing a merge of all genes against the sig_genes and another merge
     ## of the gene<->go mappings, finally extracting the portions of the resulting dataframe into a format suitable for
     ## casting as a GOFrame/GOAllFrame
     colnames(universe) <- c("geneid","width")
     universe$id <- rownames(universe)
     universe <- universe[complete.cases(universe), ]
 
-    if (is.null(de_genes$ID)) {
-        de_genes$ID <- rownames(de_genes)
+    if (is.null(sig_genes$ID)) {
+        sig_genes$ID <- rownames(sig_genes)
     }
-    universe_cross_de <- merge(universe, de_genes, by.x="geneid", by.y="ID")
+    universe_cross_de <- merge(universe, sig_genes, by.x="geneid", by.y="ID")
     degenes_ids <- universe_cross_de$id
     universe_ids <- universe$id
     ## Sometimes I have the columns set to 'ID','GO' -- others I have 'ORF','GO'

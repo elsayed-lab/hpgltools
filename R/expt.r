@@ -658,7 +658,7 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' esmer_expt <- set_expt_colors(expt=esmer_expt, colors=chosen_colors)
 #' }
 #' @export
-set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
+set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by="condition") {
     num_conditions <- length(levels(as.factor(expt[["conditions"]])))
     num_samples <- nrow(expt[["design"]])
     sample_ids <- expt[["design"]][["sampleid"]]
@@ -670,27 +670,23 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
         mapping <- setNames(sample_colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
     } else if (class(colors) == "list") {
-        ## In this instance, we are changing specific colors to the provided colors.
-        chosen_colors <- expt[["colors"]]
-        for (snum in 1:length(names(colors))) {
-            sampleid <- names(colors)[snum]
-            sample_color <- colors[[snum]]
-            chosen_colors[[sampleid]] <- sample_color
-        }
-    } else if (!is.null(colors) & length(colors) == num_samples) {
-        chosen_colors <- colors
-    } else if (!is.null(colors) & length(colors) == num_conditions) {
-        found_colors <- sum(names(colors) %in% chosen_colors)
-        ## In this case, we have every color accounted for in the set of conditions.
-        if (found_colors == num_conditions) {
+        if (change_by == "condition") {
+            ## In this case, we have every color accounted for in the set of conditions.
             mapping <- as.character(colors)
             names(mapping) <- names(colors)
             chosen_colors <- mapping[chosen_colors]
-        } else {
-            ## If we do not have every color accounted for in the set of conditions, let R decide on its own.
-            mapping <- setNames(colors, unique(chosen_colors))
-            chosen_colors <- mapping[chosen_colors]
+        } else if (change_by == "sample") {
+            ## This is changing them by sample id.
+            ## In this instance, we are changing specific colors to the provided colors.
+            chosen_colors <- expt[["colors"]]
+            for (snum in 1:length(names(colors))) {
+                sampleid <- names(colors)[snum]
+                sample_color <- colors[[snum]]
+                chosen_colors[[sampleid]] <- sample_color
+            }
         }
+        chosen_idx <- complete.cases(chosen_colors)
+        chosen_colors <- chosen_colors[chosen_idx]
     } else if (is.null(colors)) {
         colors <- sm(grDevices::colorRampPalette(
                                     RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))

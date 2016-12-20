@@ -68,7 +68,7 @@ goseq_table <- function(df, file=NULL) {
 #' that process a bit simpler as well as give some standard outputs which should be similar to those
 #' returned by clusterprofiler/topgo/gostats/gprofiler.
 #'
-#' @param de_genes Data frame of differentially expressed genes, containing IDs etc.
+#' @param sig_genes Data frame of differentially expressed genes, containing IDs etc.
 #' @param go_db Database of go to gene mappings (OrgDb/OrganismDb)
 #' @param length_db Database of gene lengths (gff/TxDb)
 #' @param doplot Include pwf plots?
@@ -95,7 +95,7 @@ goseq_table <- function(df, file=NULL) {
 #'   and ccp_plot
 #' @seealso \pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
 #' @export
-simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
+simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1,
                          length_keytype="transcripts", go_keytype="ENTREZID",
                          goseq_method="Wallenius", padjust_method="BH",
@@ -113,24 +113,24 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
     gene_ids <- NULL
     final_keytype <- NULL
     goids_df <- NULL
-    ## de_genes may be a list, character list, or data frame.
+    ## sig_genes may be a list, character list, or data frame.
     gene_list <- NULL
-    if (class(de_genes) == "character") { ## Then this is a character list of gene ids
-        gene_list <- de_genes
-    } else if (class(de_genes) == "list") {
-        gene_list <- names(de_genes)
-    } else if (class(de_genes) == "data.frame") {
-        if (is.null(rownames(de_genes)) & is.null(de_genes[["ID"]])) {
+    if (class(sig_genes) == "character") { ## Then this is a character list of gene ids
+        gene_list <- sig_genes
+    } else if (class(sig_genes) == "list") {
+        gene_list <- names(sig_genes)
+    } else if (class(sig_genes) == "data.frame") {
+        if (is.null(rownames(sig_genes)) & is.null(sig_genes[["ID"]])) {
             stop("This requires a set of gene IDs either from the rownames or a column named 'ID'.")
-        } else if (!is.null(de_genes[["ID"]])) {
+        } else if (!is.null(sig_genes[["ID"]])) {
             ## Use a column named 'ID' first because a bunch of annotation databases use ENTREZ IDs which are just integers, which of course is not allowed by data frame row names.
             message("Using the ID column from your table rather than the row names.")
-            gene_list <- de_genes[["ID"]]
-        } else if (!is.null(rownames(de_genes))) {
+            gene_list <- sig_genes[["ID"]]
+        } else if (!is.null(rownames(sig_genes))) {
             message("Using the row names of your table.")
-            gene_list <- rownames(de_genes)
+            gene_list <- rownames(sig_genes)
         } else {
-            gene_list <- de_genes[["ID"]]
+            gene_list <- sig_genes[["ID"]]
         }
     } else {
         stop("Not sure how to handle your set of gene ids.")
@@ -141,7 +141,7 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
     colnames(de_genelist) <- c("ID","DE")
 
     id_xref <- de_genelist[["ID"]] %in% go_db[["ID"]]
-    message(paste0("Found ", sum(id_xref), " genes from the de_genes in the go_db."))
+    message(paste0("Found ", sum(id_xref), " genes from the sig_genes in the go_db."))
 
     ## Database of lengths may be a gff file, TxDb, or OrganismDb
     metadf <- NULL
@@ -292,7 +292,7 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
         "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
         "ccp_plot_over" = pvalue_plots[["ccp_plot_over"]])
 
-    return_list <- list("input" = de_genes,
+    return_list <- list("input" = sig_genes,
                         "pwf" = pwf,
                         "pwf_plot" = pwf_plot,
                         "alldata" = godata,
@@ -331,7 +331,7 @@ simple_goseq <- function(de_genes, go_db, length_db, doplot=TRUE,
 #' @seealso \link{simple_goseq} \code{\link[clusterProfiler]{buildGOmap}},
 #' @examples
 #' \dontrun{
-#'  data = simple_goseq(de_genes=limma_output, lengths=annotation_df, goids=goids_df)
+#'  data = simple_goseq(sig_genes=limma_output, lengths=annotation_df, goids=goids_df)
 #'  genes_in_cats = gather_genes(data, ont='BP')
 #' }
 #' @export
