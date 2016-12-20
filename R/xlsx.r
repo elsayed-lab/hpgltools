@@ -73,9 +73,8 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
                                  border="Bottom", fontSize="30")
     new_row <- start_row
     new_col <- start_col
-    ##print(paste0("GOT HERE openxlswrite, title? ", arglist$title))
     if (!is.null(arglist[["title"]])) {
-        openxlsx::writeData(wb, sheet, arglist[["title"]], startRow=new_row)
+        xl_result <- openxlsx::writeData(wb, sheet, arglist[["title"]], startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
     }
@@ -90,7 +89,6 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
         colnames(data)[wtf_stupid] <- paste0(colnames(data)[wtf_stupid], "_", wtf_stupid)
         if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' |
             class(data[[col]]) == 'factor' | class(data[[col]]) == 'AsIs') {
-            ## message(paste0("Converted ", col, " to characters."))
             data[[col]] <- as.character(data[[col]])
         }
     }
@@ -148,7 +146,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
 #'   try_results <- xlsx_plot_png(fun_plot)
 #' }
 #' @export
-xlsx_plot_png <- function(plot, wb=NULL, sheet=1, width=6, height=6, res=90,
+xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
                           plotname="plot", savedir="saved_plots",
                           start_row=1, start_col=1, file_type="png", units="in") {
     ## arglist <- list(...)
@@ -166,9 +164,8 @@ xlsx_plot_png <- function(plot, wb=NULL, sheet=1, width=6, height=6, res=90,
             dir.create(savedir, recursive=TRUE)
         }
         high_quality <- paste0(savedir, "/", sheet, "_", plotname, ".pdf")
-        ## message(paste0("Attempting to write high-quality plot at: ", high_quality, "."))
         pdf_ret <- try(pdf(file=high_quality))
-        print_ret <- try(print(plot), silent=TRUE)
+        print_ret <- try(plot(a_plot), silent=TRUE)
         dev.off()
     }
     fileName <- tempfile(pattern = "figureImage", fileext = paste0(".", file_type))
@@ -177,7 +174,7 @@ xlsx_plot_png <- function(plot, wb=NULL, sheet=1, width=6, height=6, res=90,
                        height=height,
                        units=units,
                        res=res))
-    print_ret <- try(print(plot), silent=TRUE)
+    print_ret <- try(plog(a_plot), silent=TRUE)
     dev.off()
     insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=fileName, width=width,
                                      height=height, startRow=start_row, startCol=start_col,

@@ -406,33 +406,17 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 ## Text on row 1, plots from 2-17 (15 rows)
                 plot_column <- xls_result[["end_col"]] + 2
                 message(paste0("Adding venn plots for ", names(combo)[[count]], "."))
-                openxlsx::writeData(wb, sheetname, x="Venn of p-value up genes.", startRow=1, startCol=plot_column)
+                xl_result <- openxlsx::writeData(wb, sheetname, x="Venn of p-value up genes.", startRow=1, startCol=plot_column)
                 venn_list <- try(de_venn(ddd, adjp=adjp), silent=TRUE)
                 if (class(venn_list) != "try-error") {
                     up_plot <- venn_list[["up_noweight"]]
-                    ## plotfile <- paste0(tempfile(), ".png")
-                    ## png(filename=plotfile, res=90)
-                    ## tt <- try(print(up_plot))
-                    ## tt <- try(openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
-                    ##                                startCol=plot_column, startRow=2, fileType="png",
-                    ##                                units="in"))
-                    ## dev.off()
-                    ## unlink(plotfile)
                     try_result <- xlsx_plot_png(up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2),
                                                 height=(plot_dim / 2), start_col=plot_column,
                                                 plotname="upvenn", savedir=excel_basename,
                                                 start_row=2)
-                    openxlsx::writeData(wb, sheetname, x="Venn of p-value down genes.", startRow=1,
-                                        startCol=plot_column + 4)
+                    xl_result <- openxlsx::writeData(wb, sheetname, x="Venn of p-value down genes.", startRow=1,
+                                                     startCol=plot_column + 4)
                     down_plot <- venn_list[["down_noweight"]]
-                    ## plotfile <- paste0(tempfile(), ".png")
-                    ## png(filename=plotfile, res=90)
-                    ## tt <- try(print(down_plot))
-                    ## tt <- try(openxlsx::insertPlot(wb, tab, width=(plot_dim / 2), height=(plot_dim / 2),
-                    ##                                startCol=plot_column + 4, startRow=2, fileType="png",
-                    ##                                units="in"))
-                    ## dev.off()
-                    ## unlink(plotfile)
                     try_result <- xlsx_plot_png(down_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2),
                                                 height=(plot_dim / 2), start_col=plot_column + 4,
                                                 plotname="downvenn", savedir=excel_basename,
@@ -447,15 +431,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                                       signif(x=plt[["lm_rsq"]], digits=3), "; equation: ",
                                       make_equate(plt[["lm_model"]]))
                     message(printme)
-                    openxlsx::writeData(wb, sheetname, x=printme, startRow=18, startCol=plot_column)
-                    ## plotfile <- paste0(tempfile(), ".png")
-                    ## png(filename=plotfile, res=90)
-                    ## tt <- try(print(plt[["scatter"]]))
-                    ## tt <- try(openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
-                    ##                                startCol=plot_column, startRow=19, fileType="png",
-                    ##                                units="in"))
-                    ## dev.off()
-                    ## unlink(plotfile)
+                    xl_result <- openxlsx::writeData(wb, sheetname, x=printme, startRow=18, startCol=plot_column)
                     try_result <- xlsx_plot_png(plt[["scatter"]], wb=wb, sheet=sheetname, width=plot_dim,
                                                 height=plot_dim, start_col=plot_column,
                                                 plotname="lmscatter", savedir=excel_basename,
@@ -468,15 +444,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                                       signif(plt[["lm_rsq"]], digits=3), "; equation: ",
                                       make_equate(plt[["lm_model"]]))
                     message(printme)
-                    openxlsx::writeData(wb, sheetname, x=printme, startRow=50, startCol=plot_column)
-                    ## plotfile <- paste0(tempfile(), ".png")
-                    ## png(filename=plotfile, res=90)
-                    ## tt <- try(print(plt[["scatter"]]))
-                    ## tt <- try(openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
-                    ##                                startCol=plot_column, startRow=51, fileType="png",
-                    ##                                units="in"))
-                    ## dev.off()
-                    ## unlink(plotfile)
+                    xl_result <- openxlsx::writeData(wb, sheetname, x=printme, startRow=50, startCol=plot_column)
                     try_result <- xlsx_plot_png(plt[["scatter"]], wb=wb, sheet=sheetname, width=plot_dim,
                                                 height=plot_dim, start_col=plot_column,
                                                 plotname="edscatter", savedir=excel_basename,
@@ -489,15 +457,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                                       signif(plt[["lm_rsq"]], digits=3), "; equation: ",
                                       make_equate(plt[["lm_model"]]))
                     message(printme)
-                    openxlsx::writeData(wb, sheetname, x=printme, startRow=81, startCol=plot_column)
-                    ## plotfile <- paste0(tempfile(), ".png")
-                    ## png(filename=plotfile, res=90)
-                    ## tt <- try(print(plt[["scatter"]]))
-                    ## tt <- try(openxlsx::insertPlot(wb, tab, width=plot_dim, height=plot_dim,
-                    ##                                startCol=plot_column, startRow=82, fileType="png",
-                    ##                                units="in"))
-                    ## dev.off()
-                    ## unlink(plotfile)
+                    xl_result <- openxlsx::writeData(wb, sheetname, x=printme, startRow=81, startCol=plot_column)
                     try_result <- xlsx_plot_png(plt[["scatter"]], wb=wb, sheet=sheetname, width=plot_dim,
                                                 height=plot_dim, start_col=plot_column,
                                                 plotname="descatter", savedir=excel_basename,
@@ -524,9 +484,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             new_row <- xls_result[["end_row"]] + 2
             message(paste0("Attempting to add the comparison plot to pairwise_summary at row: ", new_row + 1, " and column: ", 1))
             if (class(comp_plot) == "recordedplot") {
-                ## tt <- try(print(comp_plot))
-                ## tt <- try(openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                ##                                startRow=new_row + 1, startCol=1, fileType="png", units="in"))
                 try_result <- xlsx_plot_png(comp_plot, wb=wb, sheet=sheetname,
                                             plotname="pairwise_summary", savedir=excel_basename,
                                             start_row=new_row + 1, start_col=1)
@@ -541,31 +498,19 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                     ld <- logfc_comparisons[[c]][["ld"]]
                     de <- logfc_comparisons[[c]][["de"]]
                     tmpcol <- 1
-                    openxlsx::writeData(wb, sheetname, x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
-                                        startRow=new_row - 2, startCol=tmpcol)
-                    openxlsx::writeData(wb, sheetname, x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
-                    ## tt <- try(print(le))
-                    ## tt <- try(openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                    ##                                startRow=new_row, startCol=tmpcol, fileType="png",
-                    ##                               units="in"))
+                    xl_result <- openxlsx::writeData(wb, sheetname, x=paste0("Comparing DE tools for the comparison of: ", logfc_names[c]),
+                                                     startRow=new_row - 2, startCol=tmpcol)
+                    xl_result <- openxlsx::writeData(wb, sheetname, x="Log2FC(Limma vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
                     try_result <- xlsx_plot_png(le, wb=wb, sheet="pairwise_summary",
                                                 plotname="compare_le", savedir=excel_basename,
                                                 start_row=new_row, start_col=tmpcol)
                     tmpcol <- 8
-                    openxlsx::writeData(wb, sheetname, x="Log2FC(Limma vs. DESeq2)", startRow=new_row - 1, startCol=tmpcol)
-                    ## tt <- try(print(ld))
-                    ## tt <- try(openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                    ##                                startRow=new_row, startCol=tmpcol, fileType="png",
-                    ##                                units="in"))
+                    xl_result <- openxlsx::writeData(wb, sheetname, x="Log2FC(Limma vs. DESeq2)", startRow=new_row - 1, startCol=tmpcol)
                     try_result <- xlsx_plot_png(ld, wb=wb, sheet=sheetname,
                                                 plotname="compare_ld", savedir=excel_basename,
                                                 start_row=new_row, start_col=tmpcol)
                     tmpcol <- 15
-                    openxlsx::writeData(wb, sheetname, x="Log2FC(DESeq2 vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
-                    ## tt <- try(print(de))
-                    ## tt <- try(openxlsx::insertPlot(wb, "pairwise_summary", width=6, height=6,
-                    ##                                startRow=new_row, startCol=tmpcol, fileType="png",
-                    ##                                units="in"))
+                    xl_result <- openxlsx::writeData(wb, sheetname, x="Log2FC(DESeq2 vs. EdgeR)", startRow=new_row - 1, startCol=tmpcol)
                     try_result <- xlsx_plot_png(de, wb=wb, sheet=sheetname,
                                                 plotname="compare_ld", savedir=excel_basename,
                                                 start_row=new_row, start_col=tmpcol)
@@ -1069,14 +1014,10 @@ extract_significant_genes <- function(combined,
 
         ## I messed up something here.  The plots and tables
         ## at this point should start 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
-        openxlsx::writeData(wb, "number_changed",
-                            x="Significant limma genes.",
-                            startRow=plot_row, startCol=plot_col)
+        xl_result <- openxlsx::writeData(wb, "number_changed",
+                                         x="Significant limma genes.",
+                                         startRow=plot_row, startCol=plot_col)
         plot_row <- plot_row + 1
-        ## tt <- try(print(sig_bar_plots[["limma"]]))
-        ## tt <- try(openxlsx::insertPlot(wb, "number_changed", width=9, height=6,
-        ##                      startRow=plot_row, startCol=plot_col,
-        ##                      fileType="png", units="in"))
         try_result <- xlsx_plot_png(sig_bar_plots[["limma"]], wb=wb, sheet="number_changed",
                                     plotname="sigbar_limma", savedir=excel_basename,
                                     width=9, height=6, start_row=plot_row, start_col=plot_col)
@@ -1088,14 +1029,10 @@ extract_significant_genes <- function(combined,
                                        rownames=TRUE, start_row=summary_row, start_col=summary_col)
 
         plot_row <- plot_row + 30
-        openxlsx::writeData(wb, "number_changed",
-                            x="Significant deseq genes.",
-                            startRow=plot_row, startCol=plot_col)
+        xl_result <- openxlsx::writeData(wb, "number_changed",
+                                         x="Significant deseq genes.",
+                                         startRow=plot_row, startCol=plot_col)
         plot_row <- plot_row + 1
-        ## tt <- try(print(sig_bar_plots[["deseq"]]))
-        ## tt <- try(openxlsx::insertPlot(wb, "number_changed", width=9, height=6,
-        ##                                startRow=plot_row, startCol=plot_col,
-        ##                                fileType="png", units="in"))
         try_result <- xlsx_plot_png(sig_bar_plots[["deseq"]], wb=wb, sheet="number_changed",
                                     plotname="sigbar_deseq", savedir=excel_basename,
                                     width=9, height=6, start_row=plot_row, start_col=plot_col)
@@ -1106,14 +1043,10 @@ extract_significant_genes <- function(combined,
                                        rownames=TRUE, start_row=summary_row, start_col=summary_col)
 
         plot_row <- plot_row + 30
-        openxlsx::writeData(wb, "number_changed",
-                            x="Significant edger genes.",
-                            startRow=plot_row, startCol=plot_col)
+        xl_result <- openxlsx::writeData(wb, "number_changed",
+                                         x="Significant edger genes.",
+                                         startRow=plot_row, startCol=plot_col)
         plot_row <- plot_row + 1
-        ## tt <- try(print(sig_bar_plots[["edger"]]))
-        ## tt <- try(openxlsx::insertPlot(wb, "number_changed", width=9, height=6,
-        ##                                startRow=plot_row, startCol=plot_col,
-        ##                                fileType="png", units="in"))
         try_result <- xlsx_plot_png(sig_bar_plots[["edger"]], wb=wb, sheet="number_changed",
                                     plotname="sibar_edger", savedir=excel_basename,
                                     width=9, height=6, start_row=plot_row, start_col=plot_col)
@@ -1194,12 +1127,6 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
         if (isTRUE(ma)) {
             ma_row <- 1
             ma_col <- xls_result[["end_col"]] + 1
-            ## is_basic <- try(print(ma_plots[[base_name]]), silent=TRUE)
-            ## The above will fail if this was a basic analysis, because I don't do ma plots on them.
-            ## if (class(is_basic) != "try-error") {
-            ##     tt <- try(openxlsx::insertPlot(wb, up_name, width=6, height=6,
-            ##                                    startCol=ma_col, startRow=ma_row, fileType="png", units="in"))
-            ## }
             if (!is.null(ma_plots[[base_name]])) {
                 try_result <- xlsx_plot_png(ma_plots[[base_name]], wb=wb, sheet=up_name,
                                             plotname="ma", savedir=excel_basename,
