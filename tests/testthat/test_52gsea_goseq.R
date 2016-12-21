@@ -11,7 +11,8 @@ context("52gsea_goseq.R: Does goseq work?\n")
 ##if (!identical(Sys.getenv("TRAVIS"), "true")) {
 load("gsea_siggenes.rda")
 
-goseq_result <- sm(simple_goseq(de_genes=fcp_sig_genes, length_db=dmel_lengths, go_db=dmel_ontologies))
+goseq_result <- sm(simple_goseq(sig_genes=fcp_sig_genes,
+                                length_db=dmel_lengths, go_db=dmel_ontologies))
 
 expected <- 53
 actual <- nrow(goseq_result$mf_interesting)

@@ -3,24 +3,25 @@ library(testthat)
 library(hpgltools)
 context("99cleanup.R: Cleaning up this mess.\n")
 
-de_removed <- file.remove("de_deseq.rda")
-ed_removed <- file.remove("de_edger.rda")
-li_removed <- file.remove("de_limma.rda")
-ba_removed <- file.remove("de_basic.rda")
+de_removed <- try(file.remove("de_deseq.rda"))
+ed_removed <- try(file.remove("de_edger.rda"))
+li_removed <- try(file.remove("de_limma.rda"))
+ba_removed <- try(file.remove("de_basic.rda"))
 
-limma_combat_removed <- file.remove("de_limma_combat.rda")
-pasilla_removed <- file.remove("pasilla.Rdata")
-plots_removed <- file.remove("Rplots.pdf")
-map_removed <- file.remove("id2go.map")
-gff_removed <- file.remove("dmel.gff")
+limma_combat_removed <- try(file.remove("de_limma_combat.rda"))
+pasilla_removed <- try(file.remove("pasilla.Rdata"))
+plots_removed <- try(file.remove("Rplots.pdf"))
+map_removed <- try(file.remove("id2go.map"))
+gff_removed <- try(file.remove("dmel.gff"))
+gb_removed <- try(file.remove("AE009949.gb"))
 
-xlsx_table_removed <- file.remove("test_excel.xlsx")
-xlsx_sig_semoved <- file.remove("test_excel_sig.xlsx")
+xlsx_table_removed <- try(file.remove("test_excel.xlsx"))
+xlsx_sig_semoved <- try(file.remove("test_excel_sig.xlsx"))
 
 remove_directories <- c("organdb", "pathview", "pathview_in", "circos", "test_excel", "test_excel_sig")
 for (dir in remove_directories) {
     if (file.exists(dir)) {
-        directory_removed <- unlink(dir, recursive=TRUE)
+        directory_removed <- try(unlink(dir, recursive=TRUE))
     }
 }
 

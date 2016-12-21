@@ -3,13 +3,19 @@
 #' Let us admit it, sometimes biomart is a pain.  It also does not have easily accessible data for
 #' microbes.  Genbank does!
 #'
+#' Tested in test_40ann_biomartgenbank.R
+#' This just sets some defaults for the genbankr service in order to facilitate downloading
+#' genomes and such from genbank and dumping them into a local txdb instance.
+#'
 #' @param accession Accession to download and import
+#' @param savetxdb  Save a txdb package from this?
 #' @return List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
 #' @export
-gbk2txdb <- function(accession="AE009949") {
+gbk2txdb <- function(accession="AE009949", savetxdb=FALSE) {
     gbk <- NULL
-    if (file.exists(paste0(accession, ".gb"))) {
-        gbk <- genbankr::import(accession)
+    input_file <- paste0(accession, ".gb")
+    if (file.exists(input_file)) {
+        gbk <- genbankr::import(input_file)
         ## The file exists, read it
     } else {
         tt <- sm(require.auto("rentrez"))
@@ -23,6 +29,9 @@ gbk2txdb <- function(accession="AE009949") {
     exons <- genbankr::exons(gbk)
     intergenic <- genbankr::intergenic(gbk)
     cds <- genbankr::cds(gbk)
+    if (isTRUE(savetxdb)) {
+        message("The genbankr txdb objects are incomplete.  This does not work.")
+    }
     ret <- list(
         "others" = others,
         "exons" = exons,
@@ -38,6 +47,11 @@ gbk2txdb <- function(accession="AE009949") {
 #'
 #' Maybe this should get pulled into the previous function?
 #'
+#' Tested in test_40ann_biomartgenbank.R
+#' This function should provide a quick reminder of how to use the AnnotationDbi select function
+#' if it does nothing else.  It also (hopefully helpfully) returns a granges object containing
+#' the essential information one might want for printing out a gff or whatever.
+#'
 #' @param gbr TxDb object to poke at.
 #' @return Granges data
 #' @export
@@ -46,27 +60,30 @@ gbk_annotations <- function(gbr) {
     genes <- AnnotationDbi::keys(gbr)
     keytypes <- AnnotationDbi::keytypes(gbr)
     columns <- AnnotationDbi::columns(gbr)
-    lengths <- AnnotationDbi::select(gbr,
-                                     columns=c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
-                                               "CDSSTRAND", "CDSID", "TXNAME"),
-                                     keys=genes, keytype="GENEID")
+    lengths <- sm(AnnotationDbi::select(gbr,
+                                        columns=c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
+                                                  "CDSSTRAND", "CDSID", "TXNAME"),
+                                        keys=genes, keytype="GENEID"))
     lengths[["length"]] <- abs(lengths[["CDSSTART"]] - lengths[["CDSEND"]])
     granges <- GenomicFeatures::transcripts(gbr)
     return(granges)
 }
 
-
-#' A genbank accession downloader scurrilously stolen from ape
+#' A genbank accession downloader scurrilously stolen from ape.
 #'
-#' This takes and downloads genbank accessions
+#' This takes and downloads genbank accessions.
+#'
+#' Tested in test_40ann_biomartgenbank.R
+#' In this function I stole the same functionality from the ape package and set a few defaults
+#' so that it hopefully fails less often.
 #'
 #' @param accessions An accession -- actually a set of them.
 #' @param write  Write the files?  Otherwise return a list of the strings
 #' @return A list containing the number of files downloaded and the character strings actually acquired
 #' @export
-download_gbk <- function(accessions, write=TRUE) {
+download_gbk <- function(accessions="AE009949", write=TRUE) {
     N <- length(accessions)
-    nrequest <- N%/%400 + as.logical(N%%400)
+    nrequest <- N %/% 400 + as.logical(N%%400)
     downloaded <- character(0)
     num_downloaded <- 0
     strings <- list()
@@ -81,7 +98,7 @@ download_gbk <- function(accessions, write=TRUE) {
                      paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
 
         dl_file <- paste0(accessions[1], ".gb")
-        data <- try(download.file(url=URL, destfile=dl_file, method="wget"))
+        data <- try(download.file(url=URL, destfile=dl_file, method="wget", quiet=TRUE))
         scanned <- try(scan(file=dl_file, what="", sep="\n"))
         if (class(scanned) != "try-error") {
             downloaded <- c(downloaded, scanned)

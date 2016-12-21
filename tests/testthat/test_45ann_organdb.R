@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("41ann_organdb.R: Is it possible to create OrganismDbi instances using TriTrypDB data?\n")
+context("45ann_organdb.R: Is it possible to create OrganismDbi instances using TriTrypDB data?\n")
 
 eupath_config <- get_eupath_config()
 
@@ -18,4 +18,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 41ann_organdb.R in ", elapsed,  " seconds."))
+message(paste0("\nFinished 45ann_organdb.R in ", elapsed,  " seconds."))

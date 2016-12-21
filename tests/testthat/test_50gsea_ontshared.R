@@ -16,12 +16,22 @@ actual_ont_result <- sm(as.character(goont()))
 expected_level_result <- c("3", "3")
 actual_level_result <- sm(as.character(golevel()))
 
-test_that("Are GO.db functions working?", {
+test_that("Are GO.db functions working (term)?", {
     expect_equal(expected_term_result, actual_term_result)
+})
+test_that("Are GO.db functions working (synonym)?", {
     expect_equal(expected_syn_result, actual_syn_result)
+})
+test_that("Are GO.db functions working (secondary)?", {
     expect_equal(expected_sec_result, actual_sec_result)
+})
+test_that("Are GO.db functions working (definition)?", {
     expect_equal(expected_def_result, actual_def_result)
+})
+test_that("Are GO.db functions working (ontology)?", {
     expect_equal(expected_ont_result, actual_ont_result)
+})
+test_that("Are GO.db functions working (level)?", {
     expect_equal(expected_level_result, actual_level_result)
 })
 

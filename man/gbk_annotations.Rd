@@ -15,4 +15,10 @@ Granges data
 \description{
 Maybe this should get pulled into the previous function?
 }
+\details{
+Tested in test_40ann_biomartgenbank.R
+This function should provide a quick reminder of how to use the AnnotationDbi select function
+if it does nothing else.  It also (hopefully helpfully) returns a granges object containing
+the essential information one might want for printing out a gff or whatever.
+}
 
