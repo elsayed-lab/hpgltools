@@ -30,7 +30,7 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL,
     }
 
     if (class(excel) == "character") {
-        message("Writing a legend of columns.")
+        message("Writing a sheet containing the legend.")
         wb <- openxlsx::createWorkbook(creator="hpgltools")
         legend <- data.frame(rbind(
             c("Ontology", "Which portion of the ontology tree is being examined?  Molecular Function, Biological Process, or Cellular Component."),
