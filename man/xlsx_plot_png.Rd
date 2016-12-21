@@ -6,7 +6,7 @@
 \usage{
 xlsx_plot_png(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
   res = 90, plotname = "plot", savedir = "saved_plots", start_row = 1,
-  start_col = 1, file_type = "png", units = "in")
+  start_col = 1, file_type = "png", units = "in", ...)
 }
 \arguments{
 \item{wb}{Workbook to which to write.}

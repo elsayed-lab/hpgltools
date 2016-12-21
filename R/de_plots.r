@@ -330,10 +330,10 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
     down_venn_noweight <- grDevices::recordPlot()
 
     retlist <- list(
-        "up_venneuler" = up_venn,
+        "up_venn" = up_venn,
         "up_noweight" = up_venn_noweight,
         "up_data" = comp_up,
-        "down_venneuler" = down_venn,
+        "down_venn" = down_venn,
         "down_noweight" = down_venn_noweight,
         "down_data" = comp_down)
     return(retlist)

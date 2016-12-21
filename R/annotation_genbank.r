@@ -99,7 +99,7 @@ download_gbk <- function(accessions="AE009949", write=TRUE) {
 
         dl_file <- paste0(accessions[1], ".gb")
         data <- try(download.file(url=URL, destfile=dl_file, method="wget", quiet=TRUE))
-        scanned <- try(scan(file=dl_file, what="", sep="\n"))
+        scanned <- try(scan(file=dl_file, what="", sep="\n", quiet=TRUE))
         if (class(scanned) != "try-error") {
             downloaded <- c(downloaded, scanned)
             num_downloaded <- num_downloaded + 1

@@ -407,20 +407,20 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 plot_column <- xls_result[["end_col"]] + 2
                 message(paste0("Adding venn plots for ", names(combo)[[count]], "."))
                 xl_result <- openxlsx::writeData(wb, sheetname, x="Venn of p-value up genes.", startRow=1, startCol=plot_column)
-                venn_list <- try(de_venn(ddd, adjp=adjp), silent=TRUE)
+                venn_list <- try(de_venn(ddd, adjp=adjp))
                 if (class(venn_list) != "try-error") {
-                    up_plot <- venn_list[["up_noweight"]]
+                    up_plot <- venn_list[["up_venn"]]
                     try_result <- xlsx_plot_png(up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2),
                                                 height=(plot_dim / 2), start_col=plot_column,
                                                 plotname="upvenn", savedir=excel_basename,
-                                                start_row=2)
+                                                start_row=2, doWeights=FALSE)
                     xl_result <- openxlsx::writeData(wb, sheetname, x="Venn of p-value down genes.", startRow=1,
                                                      startCol=plot_column + 4)
-                    down_plot <- venn_list[["down_noweight"]]
+                    down_plot <- venn_list[["down_venn"]]
                     try_result <- xlsx_plot_png(down_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2),
                                                 height=(plot_dim / 2), start_col=plot_column + 4,
                                                 plotname="downvenn", savedir=excel_basename,
-                                                start_row=2)
+                                                start_row=2, doWeights=FALSE)
                     venns[[tab]] <- venn_list
                 }
 

@@ -148,8 +148,13 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
 #' @export
 xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
                           plotname="plot", savedir="saved_plots",
-                          start_row=1, start_col=1, file_type="png", units="in") {
-    ## arglist <- list(...)
+                          start_row=1, start_col=1, file_type="png", units="in", ...) {
+    arglist <- list(...)
+    if (!is.null(arglist[["doWeights"]])) {
+        requireNamespace(package="Vennerable")
+        library("Vennerable")
+    }
+
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
     } else if (class(wb)[[1]] == "list") { ## In case the return from write_xls() was passed to write_xls()
@@ -158,14 +163,24 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
         stop("A workbook was passed to this, but the format is not understood.")
     }
     high_quality <- paste0(savedir, "/", plotname, ".pdf")
-    print_ret <- NULL
+    pdf_print_ret <- png_print_ret <- NULL
     if (!is.null(savedir)) {
         if (!file.exists(savedir)) {
             dir.create(savedir, recursive=TRUE)
         }
         high_quality <- paste0(savedir, "/", sheet, "_", plotname, ".pdf")
         pdf_ret <- try(pdf(file=high_quality))
-        print_ret <- try(plot(a_plot), silent=TRUE)
+        ## I do not understand why some images are plot()ed while others
+        ## seem to need to be print()ed.  Adding a try to attempt
+        ## to work around this concern.
+        if (class(a_plot)[[1]] == "Venn") {
+            pdf_print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
+        } else {
+            pdf_print_ret <- try(plot(a_plot, ...))
+        }
+        if (class(pdf_print_ret)[[1]] == "try-error") {
+            a_plot
+        }
         dev.off()
     }
     fileName <- tempfile(pattern = "figureImage", fileext = paste0(".", file_type))
@@ -174,7 +189,15 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
                        height=height,
                        units=units,
                        res=res))
-    print_ret <- try(plog(a_plot), silent=TRUE)
+
+    if (class(a_plot)[[1]] == "Venn") {
+        pdf_print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
+    } else {
+        png_print_ret <- try(plot(a_plot, ...))
+    }
+    if (class(png_print_ret)[[1]] == "try-error") {
+        a_plot
+    }
     dev.off()
     insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=fileName, width=width,
                                      height=height, startRow=start_row, startCol=start_col,
@@ -183,7 +206,8 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
         message(paste0("There was an error inserting the image at: ", fileName))
     }
     ret <- list(
-        "print" = print_ret,
+        "png_print" = png_print_ret,
+        "pdf_print" = pdf_print_ret,
         "openxlsx" = insert_ret)
     return(ret)
 }

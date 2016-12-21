@@ -68,7 +68,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual)
     })
 
-    grabbed_accession <- download_gbk()
+    grabbed_accession <- sm(download_gbk())
     actual <- grabbed_accession[["strings"]][[1]]
     expected <- "LOCUS       AE009949             1895017 bp    DNA     circular BCT 31-JAN-2014"
     test_that("I downloaded an accession using download_gbk()?", {
