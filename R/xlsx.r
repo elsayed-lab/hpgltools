@@ -176,10 +176,10 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
         if (class(a_plot)[[1]] == "Venn") {
             pdf_print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
         } else {
-            pdf_print_ret <- try(plot(a_plot, ...))
+            pdf_print_ret <- try(print(a_plot))
         }
         if (class(pdf_print_ret)[[1]] == "try-error") {
-            a_plot
+            pdf_print_ret <- try(plot(a_plot, ...))
         }
         dev.off()
     }
@@ -193,10 +193,10 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     if (class(a_plot)[[1]] == "Venn") {
         pdf_print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
     } else {
-        png_print_ret <- try(plot(a_plot, ...))
+        png_print_ret <- try(print(a_plot))
     }
     if (class(png_print_ret)[[1]] == "try-error") {
-        a_plot
+        png_print_ret <- try(plot(a_plot, ...))
     }
     dev.off()
     insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=fileName, width=width,

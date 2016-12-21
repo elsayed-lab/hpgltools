@@ -162,6 +162,8 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
                                 size=2, loess=FALSE, identity=FALSE, gvis_trendline=NULL,
                                 first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE,
                                 color_high=NULL, color_low=NULL, ...) {
+    ## At this time, one might expect arglist to contain
+    ## z, p, fc, n and these will therefore be passed to get_sig_genes()
     arglist <- list(...)
     hpgl_env <- environment()
     if (isTRUE(color_high)) {
@@ -239,7 +241,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
         ## If you want to color the above or below identity line points, then you will need subsets to define them
         tmpdf <- df
         tmpdf[["ratio"]] <- tmpdf[, 2] - tmpdf[, 1]
-        subset_points <- suppressMessages(get_sig_genes(tmpdf, column="ratio", ...))
+        subset_points <- sm(get_sig_genes(tmpdf, column="ratio", ...))
         high_subset <- subset_points[["up_genes"]]
         low_subset <- subset_points[["down_genes"]]
         original_df <- tmpdf

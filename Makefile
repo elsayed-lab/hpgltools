@@ -1,4 +1,4 @@
-VERSION=2016.02
+VERSION=2016.12
 export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
 all: clean roxygen reference check build test
