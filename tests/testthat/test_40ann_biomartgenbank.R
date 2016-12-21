@@ -35,6 +35,7 @@ test_that("Does queryMany return sensible outputs?", {
 })
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
+
     test_genes <- head(rownames(sig_genes))
     linkage_test <- biomart_orthologs(test_genes, first_species="dmelanogaster",
                                       second_species="mmusculus",
@@ -48,7 +49,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected_linkage, actual_linkage)
     })
 
-    gbk2txdb_test <- gbk2txdb()
+    gbk2txdb_test <- sm(gbk2txdb())
     expected <- 1895017
     actual <- GenomicRanges::width(gbk2txdb_test[["seq"]])
     test_that("The genbank txdb S.pyogenes genome's size is correct?", {

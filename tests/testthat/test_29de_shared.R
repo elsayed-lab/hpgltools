@@ -142,7 +142,7 @@ test_that("Can we monitor changing significance (up_fc)?", {
 
 ## Ensure that the excel table printer is printing excel tables
 test_keepers <- list("treatment" = c("treated","untreated"))
-combined_excel <- combine_de_tables(hpgl_result, excel="test_excel.xlsx", keepers=test_keepers)
+combined_excel <- sm(combine_de_tables(hpgl_result, excel="test_excel.xlsx", keepers=test_keepers))
 test_that("Does combine_de_tables create an excel file?", {
     expect_true(file.exists("test_excel.xlsx"))
 })
@@ -186,7 +186,7 @@ test_that("Do we get expected columns from the excel sheet?", {
 })
 
 ## Test that we can extract the significant genes and get pretty graphs
-significant_excel <- extract_significant_genes(combined_excel, excel="test_excel_sig.xlsx")
+significant_excel <- sm(extract_significant_genes(combined_excel, excel="test_excel_sig.xlsx"))
 test_that("Does combine_de_tables create an excel file?", {
     expect_true(file.exists("test_excel_sig.xlsx"))
 })
