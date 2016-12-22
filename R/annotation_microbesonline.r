@@ -44,6 +44,7 @@ get_microbesonline_ids <- function(name="Escherichia", exact=FALSE) {
 #' @return Dataframe of ids and names.
 #' @export
 get_microbesonline_name <- function(id=316385) {
+    requireNamespace("RMySQL")
     db_driver <- DBI::dbDriver("MySQL")
     connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
                                  host="pub.microbesonline.org", dbname="genomics")
@@ -124,18 +125,25 @@ mdesc_table <- function(table="Locus2Go") {
 
 #' Extract the set of GO categories by microbesonline locus
 #'
-#' The microbesonline is such a fantastic resource, it is a bit of a shame that it is such a pain to query.
+#' The microbesonline is such a fantastic resource, it is a bit of a shame that it is such a pain
+#' to query.
+#'
+#' Tested in test_42ann_microbes.R
+#' I am not 100% certain that this is giving me the full correct set of gene ontology accessions.
+#' At the very least, it does return a large number of them, which is a start.
 #'
 #' @param taxonid Which species to query.
+#' @export
 get_loci_go <- function(taxonid="160490") {
+    requireNamespace("RMySQL")
     db_driver <- DBI::dbDriver("MySQL")
     connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
                                  host="pub.microbesonline.org", dbname="genomics")
     ## cheese and crackers their database is entirely too complex and poorly documented.
-    query <- paste0("SELECT L.locusId, G.goID, T.acc_synonym FROM
-     genomics.Scaffold S, genomics.term_synonym T, genomics.Locus L, genomics.Locus2Go G
+    query <- paste0("SELECT L.locusId, G.goID, T.acc_synonym, A.acc FROM
+     genomics.term A, genomics.Scaffold S, genomics.term_synonym T, genomics.Locus L, genomics.Locus2Go G
      where S.TaxonomyId = '", taxonid, "' and S.isGenomic = 1 and S.scaffoldId = L.scaffoldId
-       and G.locusId = L.locusId and T.term_id = G.goID")
+       and G.locusId = L.locusId and T.term_id = G.goID and A.id = G.goID")
     result <- DBI::dbSendQuery(connection, query)
     result_df <- DBI::fetch(result, n=-1)
     clear <- DBI::dbClearResult(result)
