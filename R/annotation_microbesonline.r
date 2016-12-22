@@ -4,11 +4,15 @@
 #' KEGG's and similarly annoying.  Though I haven't figured out how the tables interact, a query to
 #' get ids is simple enough.
 #'
+#' Tested in test_42ann_microbes.R
+#' This function sets the defaults required for getting a quick and dirty connection to the public
+#' microbesonline database and returning the ids associated with a given name.
+#'
 #' @param name Text string containing some part of the species name of interest.
 #' @param exact Use an exact species name?
 #' @return Dataframe of ids and names.
 #' @export
-get_microbesonline_ids <- function(name, exact=FALSE) {
+get_microbesonline_ids <- function(name="Escherichia", exact=FALSE) {
     requireNamespace("RMySQL")
     db_driver <- DBI::dbDriver("MySQL")
     connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
@@ -33,10 +37,13 @@ get_microbesonline_ids <- function(name, exact=FALSE) {
 #' KEGG's and similarly annoying.  Though I haven't figured out how the tables interact, a query to
 #' get ids is simple enough.
 #'
+#' Tested in test_42ann_microbesonline.R
+#' This is essentially covered in get_micrboesonline_ids(), but this works too.
+#'
 #' @param id Text string containing some part of the species name of interest.
 #' @return Dataframe of ids and names.
 #' @export
-get_microbesonline_name <- function(id) {
+get_microbesonline_name <- function(id=316385) {
     db_driver <- DBI::dbDriver("MySQL")
     connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
                                  host="pub.microbesonline.org", dbname="genomics")
@@ -52,6 +59,10 @@ get_microbesonline_name <- function(id) {
 #'
 #' Like I said, the microbesonline mysqldb is rather more complex than I prefer.  This shortcuts
 #' that process and just grabs a tsv copy of everything and loads it into a dataframe.
+#'
+#' Tested in test_70expt_spyogenes.R
+#' There is so much awesome information in microbesonline, but damn is it annoying to download.
+#' This function makes that rather easier, or so I hope at least.
 #'
 #' @param ids List of ids to query.
 #' @param species Species name(s) to use instead.
@@ -98,11 +109,12 @@ get_microbesonline_annotation <- function(ids="160490", species=NULL) {
 #' it might prove useful.
 #'
 #' @param table  Choose a table to query.
-mdesc_table <- function(table="Locus2GO") {
+mdesc_table <- function(table="Locus2Go") {
     db_driver <- DBI::dbDriver("MySQL")
     connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
                                  host="pub.microbesonline.org", dbname="genomics")
-    query <- paste0("DESCRIBE TABLE ", table)
+    query <- paste0("DESCRIBE ", table)
+    message(query)
     result <- DBI::dbSendQuery(connection, query)
     result_df <- DBI::fetch(result, n=-1)
     clear <- DBI::dbClearResult(result)
@@ -120,8 +132,10 @@ get_loci_go <- function(taxonid="160490") {
     connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
                                  host="pub.microbesonline.org", dbname="genomics")
     ## cheese and crackers their database is entirely too complex and poorly documented.
-    query <- paste0("SELECT L.locusId, G.goID, T.acc_synonym FROM genomics.Scaffold S, genomics.term_synonym T, genomics.Locus L, genomics.Locus2Go G where S.TaxonomyId = '",
-                    taxonid, "' and S.isGenomic = 1 and S.scaffoldId = L.scaffoldId  and G.locusId = L.locusId and T.term_id = G.goID")
+    query <- paste0("SELECT L.locusId, G.goID, T.acc_synonym FROM
+     genomics.Scaffold S, genomics.term_synonym T, genomics.Locus L, genomics.Locus2Go G
+     where S.TaxonomyId = '", taxonid, "' and S.isGenomic = 1 and S.scaffoldId = L.scaffoldId
+       and G.locusId = L.locusId and T.term_id = G.goID")
     result <- DBI::dbSendQuery(connection, query)
     result_df <- DBI::fetch(result, n=-1)
     clear <- DBI::dbClearResult(result)

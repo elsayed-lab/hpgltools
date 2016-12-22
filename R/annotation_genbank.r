@@ -3,7 +3,7 @@
 #' Let us admit it, sometimes biomart is a pain.  It also does not have easily accessible data for
 #' microbes.  Genbank does!
 #'
-#' Tested in test_40ann_biomartgenbank.R
+#' Tested in test_40ann_biomartgenbank.R and test_70expt_spyogenes.R
 #' This just sets some defaults for the genbankr service in order to facilitate downloading
 #' genomes and such from genbank and dumping them into a local txdb instance.
 #'
