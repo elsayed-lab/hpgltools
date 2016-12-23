@@ -46,6 +46,20 @@ List including the following information:
 \description{
 Invoking DESeq2 is confusing, this should help.
 }
+\details{
+Tested in test_24de_deseq.R
+Like the other _pairwise() functions, this attempts to perform all pairwise contrasts in the
+provided data set.  The details are of course slightly different when using DESeq2.  Thus, this
+uses the function choose_binom_dataset() to try to ensure that the incoming data is appropriate
+for DESeq2 (if one normalized the data, it will attempt to revert to raw counts, for example).
+It continues on to extract the conditions and batches in the data, choose an appropriate
+experimental model, and run the DESeq analyses as described in the manual.  It defaults to using
+an experimental batch factor, but will accept a string like 'sva' instead, in which case it will
+use sva to estimate the surrogates, and append them to the experimental design.  The deseq_method
+parameter may be used to apply different DESeq2 code paths as outlined in the manual.  If you
+want to play with non-standard data, the force argument will round the data and shoe-horn it into
+DESeq2.
+}
 \examples{
 \dontrun{
 pretend = deseq2_pairwise(data, conditions, batches)

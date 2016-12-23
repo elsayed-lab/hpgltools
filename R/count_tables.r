@@ -1,7 +1,12 @@
 #' Read a bunch of count tables and create a usable data frame from them.
 #'
-#' It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
-#' It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.
+#' It is worth noting that this function has some logic intended for the elsayed lab's data
+#' storage structure. It shouldn't interfere with other usages, but it attempts to take into
+#' account different ways the data might be stored.
+#'
+#' Used primarily in create_expt()
+#' This is responsible for reading count tables given a list of filenames.  It tries to take into
+#' account upper/lowercase filenames and uses data.table to speed things along.
 #'
 #' @param ids List of experimental ids.
 #' @param files List of files to read.
@@ -108,6 +113,8 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
 #' the experimental design to identify those replicates and sum the counts into a single column in
 #' the count tables.
 #'
+#' Untested as of 2016-12-01, but used in a couple of projects where sequencing runs got repeated.
+#'
 #' @param expt Experiment class containing the requisite metadata and count tables.
 #' @param column Column of the design matrix used to specify which samples are replicates.
 #' @return Expt with the concatenated counts, new design matrix, batches, conditions, etc.
@@ -167,6 +174,8 @@ concatenate_runs <- function(expt, column='replicate') {
 #' of the conditions.  This will just iterate through the levels of a factor describing the columns,
 #' extract them, calculate the median, and add that as a new column in a separate data frame.
 #'
+#' Used in write_expt() as well as a few random collaborations.
+#'
 #' @param data Data frame, presumably of counts.
 #' @param fact Factor describing the columns in the data.
 #' @return Data frame of the medians.
@@ -175,7 +184,7 @@ concatenate_runs <- function(expt, column='replicate') {
 #'  compressed = hpgltools:::median_by_factor(data, experiment$condition)
 #' }
 #' @export
-median_by_factor <- function(data) {
+median_by_factor <- function(data, fact) {
     medians <- data.frame("ID"=rownames(data))
     data <- as.matrix(data)
     rownames(medians) = rownames(data)
@@ -203,6 +212,9 @@ median_by_factor <- function(data) {
 #' Count the number of features(genes) greater than x in a data set.
 #'
 #' Sometimes I am asked how many genes have >= x counts.  Well, here you go.
+#'
+#' Untested as of 2016-12-01 but used with Lucia.  I think it would be interesting to iterate
+#' this function from small to large cutoffs and plot how the number of kept genes decreases.
 #'
 #' @param data  A dataframe/exprs/matrix/whatever of counts.
 #' @param cutoff  Minimum number of counts.
@@ -236,6 +248,15 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE) {
 #' Make pretty xlsx files of count data.
 #'
 #' Some folks love excel for looking at this data.  ok.
+#'
+#' Tested in test_03graph_metrics.R
+#' This performs the following:  Writes the raw data, graphs the raw data, normalizes the data,
+#' writes it, graphs it, and does a median-by-condition and prints that.  I replaced the openxlsx
+#' function which writes images into xlsx files with one which does not require an opening of a
+#' pre-existing plotter.  Instead it (optionally)opens a pdf device, prints the plot to it, opens a
+#' png device, prints to that, and inserts the resulting png file.  Thus it sacrifices some
+#' flexibility for a hopefully more consistent behaivor.  In addition, one may use the pdfs as
+#' a set of images importable into illustrator or whatever.
 #'
 #' @param expt  An expressionset to print.
 #' @param excel  Filename to write.

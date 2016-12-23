@@ -21,7 +21,7 @@ test_that("Can we use GO.db with Orgdb to extract gene ontology information?", {
     expect_equal(expected, actual)
 })
 
-orgdb_kegg <- load_kegg_mapping(org.Dm.eg.db, columns="PATH", keytype="ENTREZID")
+orgdb_kegg <- sm(load_kegg_mapping(org.Dm.eg.db, columns="PATH", keytype="ENTREZID"))
 actual <- head(orgdb_kegg$PATH)
 expected <- c("00310", "00903", "01100", "00280", "00562", "00640")
 test_that("Can we extract KEGG data from Orgdb?", {

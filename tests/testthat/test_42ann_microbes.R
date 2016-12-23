@@ -3,8 +3,7 @@ library(testthat)
 library(hpgltools)
 context("42ann_microbes.R: May I used microbesonline?\n")
 
-ids <- get_microbesonline_ids()
-
+ids <- sm(get_microbesonline_ids())
 actual <- head(sort(ids$shortName))
 expected <- c("Escherichia albertii TW07627", "Escherichia coli",
               "Escherichia coli 'BL21-Gold(DE3)pLysS AG'", "Escherichia coli 101-1",
@@ -19,7 +18,7 @@ test_that("Do we get an expected set of microbesonline IDs?", {
     expect_equal(expected, actual)
 })
 
-shortname <- get_microbesonline_name()
+shortname <- sm(get_microbesonline_name())
 actual <- shortname$shortName
 expected <- "Escherichia coli str. K-12 substr. DH10B"
 test_that("Do we get the correct E. coli strain name?", {
@@ -27,7 +26,7 @@ test_that("Do we get the correct E. coli strain name?", {
 })
 
 ## The default is 160490, an E. coli strain.
-go_ids <- get_loci_go()
+go_ids <- sm(get_loci_go())
 actual <- head(sort(unique(go_ids[["acc"]])))
 expected <- c("GO:0000015", "GO:0000062", "GO:0000074",
               "GO:0000105", "GO:0000150", "GO:0000154")

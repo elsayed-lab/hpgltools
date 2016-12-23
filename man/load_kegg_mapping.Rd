@@ -4,7 +4,8 @@
 \alias{load_kegg_mapping}
 \title{Creates a gene/KEGG mapping dataframe.}
 \usage{
-load_kegg_mapping(orgdb, gene_ids, keytype = "ENSEMBL")
+load_kegg_mapping(orgdb, gene_ids = NULL, keytype = "ENSEMBL",
+  columns = c("KEGG_PATH"))
 }
 \arguments{
 \item{orgdb}{OrganismDb instance.}
@@ -18,6 +19,10 @@ Df of kegg mappings
 }
 \description{
 In much the same way AnnotationDbi provides GO data, it also provides KEGG data.
+}
+\details{
+Tested in test_45ann_organdb.R
+Perhaps this function should be merged with the GO above?
 }
 \examples{
 \dontrun{

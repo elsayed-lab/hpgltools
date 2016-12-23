@@ -4,7 +4,7 @@
 \alias{mdesc_table}
 \title{Get the description of a microbesonline genomics table}
 \usage{
-mdesc_table(table = "Locus2GO")
+mdesc_table(table = "Locus2Go")
 }
 \arguments{
 \item{table}{Choose a table to query.}

@@ -24,8 +24,14 @@ expt_read_counts(ids, files, header = FALSE, include_summary_rows = FALSE,
 Data frame of count tables.
 }
 \description{
-It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
-It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.
+It is worth noting that this function has some logic intended for the elsayed lab's data
+storage structure. It shouldn't interfere with other usages, but it attempts to take into
+account different ways the data might be stored.
+}
+\details{
+Used primarily in create_expt()
+This is responsible for reading count tables given a list of filenames.  It tries to take into
+account upper/lowercase filenames and uses data.table to speed things along.
 }
 \examples{
 \dontrun{

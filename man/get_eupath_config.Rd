@@ -17,4 +17,10 @@ Dataframe of configuration data, a few columns are required, run it with no args
 This function uses some data copied into inst/ to decide some parameters used for generating the
 various packages generated here.
 }
+\details{
+Tested in test_46ann_tritrypdb.R
+This function is sort of stupid and perhaps will be removed.  I keep a small csv file of some
+TriTrypDB specific metadata, things like data base version number, URL schemes, etc.
+This reads that and extracts the relevant information.
+}
 

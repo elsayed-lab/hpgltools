@@ -19,6 +19,9 @@ On occasion we have multiple technical replicates of a sequencing run.  This can
 the experimental design to identify those replicates and sum the counts into a single column in
 the count tables.
 }
+\details{
+Untested as of 2016-12-01, but used in a couple of projects where sequencing runs got repeated.
+}
 \examples{
 \dontrun{
  compressed = concatenate_runs(expt)

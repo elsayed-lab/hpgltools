@@ -27,6 +27,10 @@ deseq_result <- as.data.frame(DESeq2::results(deseq_run,
 
 ## Performing DESeq2 analysis using hpgltools.
 hpgl_deseq <- sm(deseq2_pairwise(pasilla_expt, model_batch=TRUE))
+hpgl_deseq_written <- write_deseq(hpgl_deseq, excel="deseq.xlsx")
+test_that("Can I write a deseq2 table?", {
+    expect_true(file.exists("deseq.xlsx"))
+})
 
 ## Note that running the all_pairwise family of functions results in arbitrarily chosen x/y which may be
 ## the opposite of what you actually want.

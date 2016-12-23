@@ -1144,3 +1144,82 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     } ## End for each name in ups
     return(xls_result)
 }
+
+#' Writes out the results of a single pairwise comparison.
+#'
+#' However, this will do a couple of things to make one's life easier:
+#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
+#' 2.  Write out the results() output for them in separate .csv files and/or sheets in excel
+#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+#'
+#' Tested in test_24deseq.R
+#' Rewritten in 2016-12 looking to simplify combine_de_tables().  That function is far too big,
+#' This should become a template for that.
+#'
+#' @param data Output from results().
+#' @param adjust Pvalue adjustment chosen.
+#' @param n Number of entries to report, 0 says do them all.
+#' @param coef Which coefficients/contrasts to report, NULL says do them all.
+#' @param excel Write an excel workbook?
+#' @param annot_df Optional data frame including annotation information to include with the tables.
+#' @return List of data frames comprising the toptable output for each coefficient, I also added a
+#'     qvalue entry to these toptable() outputs.
+#' @seealso \link[deseq]{toptable} \link{write_xls}
+#' @examples
+#' \dontrun{
+#'  finished_comparison = eBayes(deseq_output)
+#'  data_list = write_deseq(finished_comparison, workbook="excel/deseq_output.xls")
+#' }
+#' @export
+write_de_table <- function(data, type="limma", ...) {
+    arglist <- list(...)
+    excel <- arglist[["excel"]]
+    if (is.null(excel)) {
+        excel <- "table.xlsx"
+    }
+    testdir <- dirname(excel)
+    n <- arglist[["n"]]
+    if (is.null(n)) {
+        n <- 0
+    }
+    coef <- arglist[["coef"]]
+    if (is.null(coef)) {
+        coef <- data[["contrasts_performed"]]
+    } else {
+        coef <- as.character(coef)
+    }
+
+    ## Figure out the number of genes if not provided
+    if (n == 0) {
+        n <- nrow(data[["coefficients"]])
+    }
+
+    wb <- NULL
+    if (!is.null(excel) & excel != FALSE) {
+        excel_dir <- dirname(excel)
+        if (!file.exists(excel_dir)) {
+            dir.create(excel_dir, recursive=TRUE)
+        }
+        if (file.exists(excel)) {
+            message(paste0("Deleting the file ", excel, " before writing the tables."))
+            file.remove(excel)
+        }
+        wb <- openxlsx::createWorkbook(creator="hpgltools")
+    }
+
+    return_data <- list()
+    end <- length(coef)
+    for (c in 1:end) {
+        comparison <- coef[c]
+        message(paste0("Writing ", c, "/", end, ": table: ", comparison, "."))
+        table <- data[["all_tables"]][[c]]
+
+        written <- try(write_xls(data=table, wb=wb, sheet=comparison,
+                                 title=paste0(type, " results for: ", comparison, ".")))
+    }
+
+    save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+    return(save_result)
+}
+
+## EOF

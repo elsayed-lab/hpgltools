@@ -31,4 +31,14 @@ A big honking excel file and a list including the dataframes and images created.
 \description{
 Some folks love excel for looking at this data.  ok.
 }
+\details{
+Tested in test_03graph_metrics.R
+This performs the following:  Writes the raw data, graphs the raw data, normalizes the data,
+writes it, graphs it, and does a median-by-condition and prints that.  I replaced the openxlsx
+function which writes images into xlsx files with one which does not require an opening of a
+pre-existing plotter.  Instead it (optionally)opens a pdf device, prints the plot to it, opens a
+png device, prints to that, and inserts the resulting png file.  Thus it sacrifices some
+flexibility for a hopefully more consistent behaivor.  In addition, one may use the pdfs as
+a set of images importable into illustrator or whatever.
+}
 

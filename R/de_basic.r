@@ -258,4 +258,24 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
     return(retlist)
 }
 
+#' Writes out the results of a basic search using write_de_table()
+#'
+#' Looking to provide a single interface for writing tables from basic and friends.
+#'
+#' Tested in test_24deseq.R
+#'
+#' @param data  Output from deseq_pairwise()
+#' @param ...  Options for writing the xlsx file.
+#' @seealso \link[deseq]{toptable} \link{write_xls}
+#' @examples
+#' \dontrun{
+#'  finished_comparison <- basic_pairwise(expressionset)
+#'  data_list <- write_basic(finished_comparison)
+#' }
+#' @export
+write_basic <- function(data, ...) {
+    result <- write_de_table(data, type="basic", ...)
+    return(result)
+}
+
 ## EOF
