@@ -43,4 +43,7 @@ The _pairwise family of functions all demand an experimental model.  This tries 
 consistent and useful model for all for them.  This does not try to do multi-factor, interacting,
 nor dependent variable models, if you want those do them yourself and pass them off as alt_model.
 }
+\details{
+Invoked by the _pairwise() functions.
+}
 

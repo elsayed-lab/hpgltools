@@ -18,9 +18,10 @@ all_pairwise(input = NULL, conditions = NULL, batches = NULL,
 
 \item{model_cond}{Include condition in the model?  This is likely always true.}
 
-\item{modify_p}{Depending on how it is used, sva may require an f-state modification of the p-values.}
+\item{modify_p}{Depending on how it is used, sva may require a modification of the p-values.}
 
-\item{model_batch}{Include batch in the model?  This may be true/false/"sva" or other methods supported by          get_model_adjust().}
+\item{model_batch}{Include batch in the model?  This may be true/false/"sva" or other methods
+supported by get_model_adjust().}
 
 \item{model_intercept}{Use an intercept model instead of cell means?}
 
@@ -45,6 +46,11 @@ A list of limma, deseq, edger results.
 \description{
 This takes an expt object, collects the set of all possible pairwise comparisons, sets up
 experimental models appropriate for the differential expression analyses, and performs them.
+}
+\details{
+Tested in test_29de_shared.R
+This runs limma_pairwise(), deseq_pairwise(), edger_pairwise(), basic_pairwise() each in turn.
+It collects the results and does some simple comparisons among them.
 }
 \examples{
 \dontrun{

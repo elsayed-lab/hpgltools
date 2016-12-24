@@ -15,6 +15,8 @@ map_removed <- try(file.remove("id2go.map"))
 gff_removed <- try(file.remove("dmel.gff"))
 gb_removed <- try(file.remove("AE009949.gb"))
 deseq_removed <- try(file.remove("deseq.xlsx"))
+basic_removed <- try(file.remove("basic.xlsx"))
+limma_removed <- try(file.remove("limma.xlsx"))
 
 xlsx_table_removed <- try(file.remove("test_excel.xlsx"))
 xlsx_sig_semoved <- try(file.remove("test_excel_sig.xlsx"))

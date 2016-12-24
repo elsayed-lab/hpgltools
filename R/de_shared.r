@@ -12,12 +12,17 @@
 #' This takes an expt object, collects the set of all possible pairwise comparisons, sets up
 #' experimental models appropriate for the differential expression analyses, and performs them.
 #'
+#' Tested in test_29de_shared.R
+#' This runs limma_pairwise(), deseq_pairwise(), edger_pairwise(), basic_pairwise() each in turn.
+#' It collects the results and does some simple comparisons among them.
+#'
 #' @param input  Dataframe/vector or expt class containing count tables, normalization state, etc.
 #' @param conditions  Factor of conditions in the experiment.
 #' @param batches  Factor of batches in the experiment.
 #' @param model_cond  Include condition in the model?  This is likely always true.
-#' @param modify_p  Depending on how it is used, sva may require an f-state modification of the p-values.
-#' @param model_batch  Include batch in the model?  This may be true/false/"sva" or other methods supported by          get_model_adjust().
+#' @param modify_p  Depending on how it is used, sva may require a modification of the p-values.
+#' @param model_batch  Include batch in the model?  This may be true/false/"sva" or other methods
+#'        supported by get_model_adjust().
 #' @param model_intercept  Use an intercept model instead of cell means?
 #' @param extra_contrasts  Optional extra contrasts beyone the pairwise comparisons.  This can be
 #'        pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or
@@ -121,36 +126,39 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     original_pvalues <- NULL
     ## Add in a little work to re-adjust the p-values in the situation where sva was used
     ## For the moment, DO NOT DO THIS BECAUSE YOU ARE TOO STUPID
-    ## Only perform this f adjustment if you modify the data without making limma/deseq/edger aware of the modified model.
-    ## Ergo, if we feed sv_model to this function, then by definition, we do not want to use this function.
+    ## Only perform this f adjustment if you modify the data without making
+    ## limma/deseq/edger aware of the modified model.  Ergo, if we feed sv_model to this
+    ## function, then by definition, we do not want to use this function.
     ## Instead, the opposite is true
-    modified_data <- FALSE  ## Thus we will use modified_data (soon) to note if the data was modified by sva.
+    modified_data <- FALSE  ## Thus we will use modified_data to note the data was modified by sva.
     if (is.null(sv_model) & isTRUE(modified_data)) {
         original_pvalues <- data.table::data.table(rownames=rownames(results[["edger"]][["all_tables"]][[1]]))
         message("Using the f.pvalue() function to modify the returned p-values of deseq/limma/edger.")
-        ## This is from section 5 of the sva manual:  "Adjusting for surrogate values using the f.pvalue function
-        ## The following chunk of code is longer and more complex than I would like.  This is because
-        ## f.pvalue() assumes a pairwise comparison of a data set containing only two experimental factors.
-        ## As a way to provide an example of _how_ to calculate appropriately corrected p-values for surrogate
-        ## factor adjusted models, this is great; but when dealing with actual data, it falls a bit short.
+        ## This is from section 5 of the sva manual:  "Adjusting for surrogate values using the
+        ## f.pvalue function. The following chunk of code is longer and more complex than I would
+        ## like. This is because f.pvalue() assumes a pairwise comparison of a data set containing
+        ## only two experimental factors. As a way to provide an example of _how_ to calculate
+        ## appropriately corrected p-values for surrogate factor adjusted models, this is great;
+        ## but when dealing with actual data, it falls a bit short.
         for (it in 1:length(results[["edger"]][["all_tables"]])) {
             name <- names(results[["edger"]][["all_tables"]])[it]
             message(paste0("Readjusting the p-values for comparison: ", name))
             namelst <- strsplit(x=name, split="_vs_")
-            first <- namelst[[1]][[1]]  ## something like 'mutant'
-            second <- namelst[[1]][[2]]  ## something like 'wildtype', ergo the contrast was "mutant_vs_wildtype"
+            ## something like 'mutant'
+            first <- namelst[[1]][[1]]
+            ## something like 'wildtype', ergo the contrast was "mutant_vs_wildtype"
+            second <- namelst[[1]][[2]]
             ## The comments that follow will use mutant and wildtype as examples
 
             ## I am going to need to extract the set of data for the samples in 'first' and 'second'
             ## I will need to also extract the surrogates for those samples from sv_model
-            ## Then I rewrite null_model as the subset(null_model, samples included)
-            ## and rewrite sv_model as subset(sv_model, samples_included)
-            ## in that rewrite, there will just be conditions a, b where a and b are the subsets for first and second
-            ## Then the sv_model will be a for the first samples and b for the second
-            ## With that information, I should e able to feed sva::f.pvalue the appropriate information
-            ## for it to run properly.
-            ## The resulting pvalues will then be appropriate for backfilling the various tables
-            ## from edger/limma/deseq
+            ## Then I rewrite null_model as the subset(null_model, samples included) and rewrite
+            ## sv_model as subset(sv_model, samples_included) in that rewrite, there will just be
+            ## conditions a, b where a and b are the subsets for first and second. Then the
+            ## sv_model will be a for the first samples and b for the second. With that
+            ## information, I should e able to feed sva::f.pvalue the appropriate information
+            ## for it to run properly. The resulting pvalues will then be appropriate for
+            ## backfilling the various tables from edger/limma/deseq.
 
             ## Get the samples from the limma comparison which are condition 'mutant'
             samples_first_idx <- results[["limma"]][["conditions"]] == first
@@ -165,7 +173,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
             ## Concatenate the 'mutant' and 'wildtype' samples by column
             included_samples <- cbind(samples_first, samples_second)
             ## Arbitrarily call them 'first' and 'second'
-            colnames(included_samples) <- c(rep("first", times=num_first), rep("second", times=num_second))
+            colnames(included_samples) <- c(rep("first", times=num_first),
+                                            rep("second", times=num_second))
             ## Do the same thing, but using the rows of the sva model adjustment
             first_sva <- sv_model[samples_first_idx, ]
             second_sva <- sv_model[samples_second_idx, ]
@@ -273,6 +282,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' consistent and useful model for all for them.  This does not try to do multi-factor, interacting,
 #' nor dependent variable models, if you want those do them yourself and pass them off as alt_model.
 #'
+#' Invoked by the _pairwise() functions.
+#'
 #' @param input  Input data used to make the model.
 #' @param conditions  Factor of conditions in the putative model.
 #' @param batches  Factor of batches in the putative model.
@@ -301,17 +312,21 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
     ## It would be much smarter to generate the models in the following if() {} blocks
     ## But I have it in my head to eventually compare results using different models.
     cond_int_string <- "~ 0 + condition"
-    cond_int_model <- stats::model.matrix(~ 0 + conditions, contrasts.arg=list(conditions="contr.treatment"))
+    cond_int_model <- stats::model.matrix(~ 0 + conditions,
+                                          contrasts.arg=list(conditions="contr.treatment"))
     batch_int_string <- "~ 0 + batch"
-    batch_int_model <- try(stats::model.matrix(~ 0 + batches, contrasts.arg=list(batches="contr.treatment")),
+    batch_int_model <- try(stats::model.matrix(~ 0 + batches,
+                                               contrasts.arg=list(batches="contr.treatment")),
                            silent=TRUE)
     condbatch_int_string <- "~ 0 + condition + batch"
     condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
-                                                   contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                                                   contrasts.arg=list(conditions="contr.treatment",
+                                                                      batches="contr.treatment")),
                                silent=TRUE)
     batchcond_int_string <- "~ 0 + batch + condition"
     batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions,
-                                                   contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                                                   contrasts.arg=list(conditions="contr.treatment",
+                                                                      batches="contr.treatment")),
                                silent=TRUE)
     cond_noint_string <- "~ condition"
     cond_noint_model <- try(stats::model.matrix(~ conditions,
@@ -323,11 +338,13 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
                              silent=TRUE)
     condbatch_noint_string <- "~ condition + batch"
     condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches,
-                                                     contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                                                     contrasts.arg=list(conditions="contr.treatment",
+                                                                        batches="contr.treatment")),
                                  silent=TRUE)
     batchcond_noint_string <- "~ batch + condition"
     batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions,
-                                                     contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                                                     contrasts.arg=list(conditions="contr.treatment",
+                                                                        batches="contr.treatment")),
                                  silent=TRUE)
     noint_model <- NULL
     int_model <- NULL
@@ -410,8 +427,8 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
     tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
     tmpnames <- gsub("-", "", tmpnames)
     tmpnames <- gsub("+", "", tmpnames)
-    ## The next lines ensure that conditions/batches which are all numeric will not cause weird errors for contrasts
-    ## Ergo, if a condition is something like '111', now it will be 'c111'
+    ## The next lines ensure that conditions/batches which are all numeric will not cause weird
+    ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
     ## Similarly, a batch '01' will be 'b01'
     tmpnames <- gsub("^conditions(\\d+)$", replacement="c\\1", x=tmpnames)
     tmpnames <- gsub("^batches(\\d+)$", replacement="b\\1", x=tmpnames)
@@ -423,8 +440,8 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
     tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
     tmpnames <- gsub("-", "", tmpnames)
     tmpnames <- gsub("+", "", tmpnames)
-    ## The next lines ensure that conditions/batches which are all numeric will not cause weird errors for contrasts
-    ## Ergo, if a condition is something like '111', now it will be 'c111'
+    ## The next lines ensure that conditions/batches which are all numeric will not cause weird
+    ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
     ## Similarly, a batch '01' will be 'b01'
     tmpnames <- gsub("conditions^(\\d+)$", replacement="c\\1", x=tmpnames)
     tmpnames <- gsub("batches^(\\d+)$", replacement="b\\1", x=tmpnames)
@@ -465,6 +482,8 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
 #'
 #' The _pairwise family of functions all demand data in specific formats.
 #' This tries to make that consistent.
+#'
+#' Invoked by _pairwise().
 #'
 #' @param input  Expt input.
 #' @param force  Force non-standard data?
@@ -508,17 +527,19 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     data <- NULL
     warn_user <- 0
     libsize <- NULL
-    ## It turns out, a more careful examination of how normalization affects the results,
-    ## the above seems only to be true if the following are true:
+    ## It turns out, a more careful examination of how normalization affects the results, the above
+    ## seems only to be true if the following are true:
     ## 1.  There are >2-3k features(genes/transcripts) with a full range of count values.
-    ## 2.  One does not attempt to use sva, or at least one uses sva before messing with the normalization state.
-    ## 2a. #2 primarily applies if one is using quantile normalization, it looks like tmm/rle does not have
-    ##     so profound an effect, and this effect is tightly bound with the state of #1 -- in other words, if
-    ##     one has nice dense data with low->high counts in an even distribution, then quantile+sva might be ok.
-    ##     But if that is not true, then one should expect a poo-show result.
-    ## For these reasons I am telling this function to revert to non-normalized data unless force is on, just like
-    ## I do for edger/deseq.  I think to help this, I will add a parameter which allows one to to turn on/off normalization
-    ## at the voom() step.
+    ## 2.  One does not attempt to use sva, or at least one uses sva before messing with the
+    ##     normalization state.
+    ## 2a. #2 primarily applies if one is using quantile normalization, it looks like tmm/rle
+    ##     does not have so profound an effect, and this effect is tightly bound with the state of
+    ##     #1 -- in other words, if one has nice dense data with low->high counts in an even
+    ##     distribution, then quantile+sva might be ok. But if that is not true, then one should
+    ##     expect a poo-show result.
+    ## For these reasons I am telling this function to revert to non-normalized data unless force
+    ## is on, just like I do for edger/deseq.  I think to help this, I will add a parameter which
+    ## allows one to to turn on/off normalization at the voom() step.
 
     if (input_class == "expt") {
         conditions <- input[["conditions"]]
@@ -589,7 +610,8 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 choose_binom_dataset <- function(input, force=FALSE, ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
-    ## I think I would like to make this function smarter so that it will remove the log2 from transformed data.
+    ## I think I would like to make this function smarter so that it will remove the log2 from
+    ## transformed data.
     data <- NULL
     warn_user <- 0
     if (input_class == "expt") {
@@ -634,10 +656,10 @@ like me, want to see what happens when you put non-standard data into deseq, the
             ## These if statements may be insufficient to check for the appropriate input for deseq.
             data <- Biobase::exprs(input[["original_expressionset"]])
         } else if (norm_state != "raw" | tran_state != "raw") {
-            ## This makes use of the fact that the order of operations in the normalization function is static.
-            ## filter->normalization->convert->batch->transform.
-            ## Thus, if the normalized state is not raw, we can look back either to the filtered or original data
-            ## The same is true for the transformation state.
+            ## This makes use of the fact that the order of operations in the normalization
+            ## function is static. filter->normalization->convert->batch->transform.
+            ## Thus, if the normalized state is not raw, we can look back either to the filtered
+            ## or original data. The same is true for the transformation state.
             message("EdgeR/DESeq expect raw data as input, reverting to the count filtered data.")
             data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
             if (is.null(data)) {

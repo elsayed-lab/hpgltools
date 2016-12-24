@@ -2,6 +2,19 @@
 #'
 #' This function performs the set of possible pairwise comparisons using EdgeR.
 #'
+#' Tested in test_26de_edger.R
+#' Like the other _pairwise() functions, this attempts to perform all pairwise contrasts in the
+#' provided data set.  The details are of course slightly different when using EdgeR.  Thus, this
+#' uses the function choose_binom_dataset() to try to ensure that the incoming data is appropriate
+#' for EdgeR (if one normalized the data, it will attempt to revert to raw counts, for example).
+#' It continues on to extract the conditions and batches in the data, choose an appropriate
+#' experimental model, and run the EdgeR analyses as described in the manual.  It defaults to using
+#' an experimental batch factor, but will accept a string like 'sva' instead, in which case it will
+#' use sva to estimate the surrogates, and append them to the experimental design.  The edger_method
+#' parameter may be used to apply different EdgeR code paths as outlined in the manual.  If you
+#' want to play with non-standard data, the force argument will round the data and shoe-horn it into
+#' EdgeR.
+#'
 #' @param input Dataframe/vector or expt class containing data, normalization state, etc.
 #' @param conditions Factor of conditions in the experiment.
 #' @param batches Factor of batches in the experiment.
@@ -225,7 +238,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
 #'
 #' Looking to provide a single interface for writing tables from edger and friends.
 #'
-#' Tested in test_24deseq.R
+#' Tested in test_26edger.R
 #'
 #' @param data  Output from deseq_pairwise()
 #' @param ...  Options for writing the xlsx file.

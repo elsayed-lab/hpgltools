@@ -22,4 +22,7 @@ List the data, conditions, and batches in the data.
 The _pairwise family of functions all demand data in specific formats.
 This tries to make that consistent.
 }
+\details{
+Invoked by _pairwise().
+}
 

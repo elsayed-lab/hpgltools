@@ -2,43 +2,25 @@
 % Please edit documentation in R/de_deseq.r
 \name{write_deseq}
 \alias{write_deseq}
-\title{Writes out the results of a deseq search using results()}
+\title{Writes out the results of a deseq search using write_de_table()}
 \usage{
-write_deseq(data, adjust = "fdr", n = 0, coef = NULL,
-  workbook = "excel/deseq.xls", excel = FALSE, csv = FALSE,
-  annot_df = NULL)
+write_deseq(data, ...)
 }
 \arguments{
-\item{data}{Output from results().}
+\item{data}{Output from deseq_pairwise()}
 
-\item{adjust}{Pvalue adjustment chosen.}
-
-\item{n}{Number of entries to report, 0 says do them all.}
-
-\item{coef}{Which coefficients/contrasts to report, NULL says do them all.}
-
-\item{workbook}{Excel filename into which to write the data.}
-
-\item{excel}{Write an excel workbook?}
-
-\item{csv}{Write out csv files of the tables?}
-
-\item{annot_df}{Optional data frame including annotation information to include with the tables.}
-}
-\value{
-List of data frames comprising the toptable output for each coefficient, I also added a
-    qvalue entry to these toptable() outputs.
+\item{...}{Options for writing the xlsx file.}
 }
 \description{
-However, this will do a couple of things to make one's life easier:
-1.  Make a list of the output, one element for each comparison of the contrast matrix
-2.  Write out the results() output for them in separate .csv files and/or sheets in excel
-3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+Looking to provide a single interface for writing tables from deseq and friends.
+}
+\details{
+Tested in test_24deseq.R
 }
 \examples{
 \dontrun{
- finished_comparison = eBayes(deseq_output)
- data_list = write_deseq(finished_comparison, workbook="excel/deseq_output.xls")
+ finished_comparison = deseq_pairwise(expressionset)
+ data_list = write_deseq(finished_comparison)
 }
 }
 \seealso{

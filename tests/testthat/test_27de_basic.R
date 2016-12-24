@@ -35,6 +35,11 @@ test_that("Do we get the values for treated and untreated samples?", {
     expect_equal(expected_logfc, actual_logfc, tolerance=0.001)
 })
 
+basic_written <- sm(write_basic(hpgl_norm_basic, excel="basic.xlsx"))
+test_that("Is it possible to write the results of a basic analysis?", {
+    expect_true(file.exists("test_basic.xlsx"))
+})
+
 save(list=ls(), file="de_basic.rda")
 
 end <- as.POSIXlt(Sys.time())
