@@ -19,31 +19,6 @@ pp <- function(file) {
     png(filename=file, width=9, height=9, units="in", res=180)
 }
 
-#' We want to catch *and* save both errors and warnings, and in the case of
-#' a warning, also keep the computed result.
-#'
-#' This was taken from:http://r.789695.n4.nabble.com/How-to-catch-both-warnings-and-errors-td3073597.html
-#' and http://tolstoy.newcastle.edu.au/R/help/04/06/0217.html
-#'
-#' @title tryCatch both warnings and errors
-#' @param expr an expression to try
-#' @return a list with 'value' and 'warning', where
-#'  'value' may be an error caught.
-#' @author Martin Maechler
-tryCatch.W.E <- function(expr) {
-    W <- NULL
-    w.handler <- function(w){ # warning handler
-        W <<- w
-        invokeRestart("muffleWarning")
-    }
-    ret <- list(
-        "value" = withCallingHandlers(tryCatch(expr,
-                                               error = function(e) e),
-                                      warning = w.handler),
-        "warning" = W)
-    return(ret)
-}
-
 #' Silence, m...
 #'
 #' Some libraries/functions just won't shut up.  Ergo, silence, peasant!
@@ -90,7 +65,9 @@ get_genelengths <- function(gff, type="gene", key="ID", ...) {
     ret <- ret[, c(key, "width")]
     colnames(ret) <- c("ID", "width")
     if (dim(ret)[1] == 0) {
-        stop(paste0("No genelengths were found.  Perhaps you are using the wrong 'type' or 'key' arguments, type is: ", type, ", key is: ", key))
+        stop(paste0("No genelengths were found. ",
+                    "Perhaps you are using the wrong 'type' or 'key' arguments, type is: ",
+                    type, ", key is: ", key))
     }
     return(ret)
 }
@@ -439,8 +416,8 @@ gff2irange <- function(gff, type=NULL) {
     } else {
         ret <- annotations
     }
-    ## The call to as.data.frame must be specified with the GenomicRanges namespace, otherwise one gets an error about
-    ## no method to coerce an S4 class to a vector.
+    ## The call to as.data.frame must be specified with the GenomicRanges namespace,
+    ## otherwise one gets an error about no method to coerce an S4 class to a vector.
     if (!is.null(type)) {
         index <- ret[, "type"] == type
         ret <- ret[index, ]
@@ -720,9 +697,11 @@ saveme <- function(directory="savefiles", backups=4, filename="Rdata.rda.xz") {
     message(paste0("The savefile is: ", savefile))
     backup_file(savefile, backups=backups)
     ## The following save strings work:
-    ## save_string <- paste0("save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file='", savefile, "')")
-    ## save_string <- paste0("con <- base::pipe(paste0('pigz -p8 > ", savefile, "'), 'wb');\n save(list=ls(all.names=TRUE, envir=globalenv(), envir=globalenv(), file=con);\n close(con)")
-    save_string <- paste0("con <- base::pipe(paste0('pxz -T4 > ", savefile, "'), 'wb');\n save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n close(con)")
+    save_string <- paste0("con <- pipe(paste0('pxz -T4 > ",
+                          savefile,
+                          "'), 'wb');\n",
+                          "save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n",
+                          "close(con)")
     message(paste0("The save string is: ", save_string))
     eval(parse(text=save_string))
 }

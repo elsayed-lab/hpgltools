@@ -28,9 +28,10 @@
 #' @export
 simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
                                    orgdb_from="FLYBASE", orgdb_to="ENTREZID", internal=TRUE,
-                                   go_level=3, pcutoff=0.05, qcutoff=0.1, fc_column="logFC", updown="up",
-                                   permutations=100, min_groupsize=5, kegg_prefix="Dmel_", mings=5,
-                                   kegg_organism="dme", categories=12, parallel=TRUE) {
+                                   go_level=3, pcutoff=0.05, qcutoff=0.1, fc_column="logFC",
+                                   updown="up", permutations=100, min_groupsize=5,
+                                   kegg_prefix="Dmel_", mings=5, kegg_organism="dme", categories=12,
+                                   parallel=TRUE) {
     requireNamespace(package="clusterProfiler", quietly=TRUE)
     requireNamespace(orgdb)
     org <- loadNamespace(orgdb) ## put the orgDb instance into an environment
@@ -61,7 +62,7 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
     all_genes_df <- merge(all_genes, all_genes_df, by.x="row.names", by.y=orgdb_from)
     ## Rename the first column
     colnames(all_genes_df)[1] <- orgdb_from
-    if (is.null(all_genes_df[[fc_column]])) {
+    if (is.null(sig_genes[[fc_column]])) {
         stop("The fold change column appears to provide no genes, try another column in the data set.")
     }
 
@@ -234,20 +235,12 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
                                              pvalueCutoff=pcutoff, use_internal_data=internal)
     gse_all_mkegg <- NULL
     gse_sig_mkegg <- NULL
-    ## The following does not work anylonger with weird errors that I am not inclined to chase down.
-    ##Sys.sleep(3)
-    ##gse_all_mkegg <- clusterProfiler::gseMKEGG(geneList=kegg_genelist, organism=kegg_organism,
-    ##                                           pvalueCutoff=1.0)
-    ##Sys.sleep(3)
-    ##gse_sig_mkegg <- clusterProfiler::gseMKEGG(geneList=kegg_genelist, organism=kegg_organism,
-    ##pvalueCutoff=pcutoff)
+
     kegg_data <- list(
         "kegg_all" = as.data.frame(DOSE::summary(all_kegg)),
         "kegg_sig" = as.data.frame(DOSE::summary(enrich_kegg)),
         "kegg_gse_all" = as.data.frame(DOSE::summary(gse_all_kegg)),
         "kegg_gse_sig" = as.data.frame(DOSE::summary(gse_sig_kegg)))
-##        "kegg_gsem_all" <- as.data.frame(summary(gse_all_mkegg)),
-##        "kegg_gsem_sig" <- as.data.frame(summary(gse_sig_mkegg)))
 
     message("Plotting results.")
     map_sig_mf <- map_sig_bp <- map_sig_cc <- NULL

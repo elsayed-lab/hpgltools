@@ -1,12 +1,3 @@
-## An F-test only does inf==uninf && inf==bead
-## So the solution is to separately perform the two subtests and subset for the set of genes for which both are true.
-## However, if you do that, the f-statistics are a little screwey, but there are a few ways to handle it:
-## Perform the two separate tests and perform the following combination of the stat and p-value:
-##    stat = min(|inf-uninf|, |inf-bead|)  (logFC)
-##    ^^pval^^ = max(pval(inf-uninf), pval(inf-beads))
-##    adj.pval = p.adjust(^^pval^^, method='BH')
-## ReportingTools hwriter
-
 #' Perform limma, DESeq2, EdgeR pairwise analyses.
 #'
 #' This takes an expt object, collects the set of all possible pairwise comparisons, sets up
@@ -1212,7 +1203,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 #' @return Smaller list of up/down genes.
 #' @export
 semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
-                                       semantic=c('mucin','sialidase','RHS','MASP','DGF'),
+                                       semantic=c('mucin','sialidase','RHS','MASP','DGF','GP63'),
                                        semantic_column='1.tooltip') {
     removed_up <- list()
     removed_down <- list()

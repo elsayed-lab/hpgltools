@@ -25,14 +25,16 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
                          sigforall=TRUE, numchar=300, selector="topDiffGenes",
                          pval_column="adj.P.Val", overwrite=FALSE, densities=FALSE,
                          pval_plots=TRUE, parallel=FALSE, ...) {
-### Some neat ideas from the topGO documentation:
-### geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
-### A variant of these operations make it possible to give topGO scores so that
-### a larger array of tests may be performed
-### x <- topDiffGenes(geneList)
-### sum(x) ## the number of selected genes
-### If we do something like above to give scores to all the 'DEgenes', then we set up the GOdata object like this:
-### mf_GOdata = new("topGOdata", description="something", ontology="BP", allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO, gene2GO=geneID2GO, nodeSize=2)
+    ## Some neat ideas from the topGO documentation:
+    ## geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
+    ## A variant of these operations make it possible to give topGO scores so that
+    ## a larger array of tests may be performed
+    ## x <- topDiffGenes(geneList)
+    ## sum(x) ## the number of selected genes
+    ## If we do something like above to give scores to all the 'DEgenes', then we set up the
+    ## GOdata object like this: mf_GOdata = new("topGOdata", description="something", ontology="BP",
+    ##      allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO,
+    ##      gene2GO=geneID2GO, nodeSize=2)
     ## The following library invocation is in case it was unloaded for pathview
     requireNamespace("topGO")
     require.auto("Hmisc")
@@ -47,8 +49,9 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
     names(fisher_interesting_genes) <- annotated_genes
     ks_interesting_genes <- as.integer(!annotated_genes %in% sig_genes[["ID"]])
     if (!is.null(sig_genes[[pval_column]])) {
-        ## I think this needs to include the entire gene universe, not only the set of x differentially expressed genes
-        ## Making this an explicit as.vector(as.numeric()) because it turns out the values from DESeq are characters.
+        ## I think this needs to include the entire gene universe, not only the set of x
+        ## differentially expressed genes, making this an explicit as.vector(as.numeric())
+        ## because it turns out the values from DESeq are characters.
         pvals <- as.vector(as.numeric(sig_genes[[pval_column]]))
         names(pvals) <- rownames(sig_genes)
         for (p in 1:length(pvals)) {
@@ -237,11 +240,12 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
         sig_el_result[["BP"]] <- topGO::getSigGroups(godata_ks_result[["BP"]], test_stat)
         sig_el_result[["CC"]] <- topGO::getSigGroups(godata_ks_result[["CC"]], test_stat)
         ## I think the following lines were in error, and they should be using the ks test data.
-###        sig_el_result[["mf"]] <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
-###        sig_el_result[["bp"]] <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
-###        sig_el_result[["cc"]] <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
+        ## sig_el_result[["mf"]] <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
+        ## sig_el_result[["bp"]] <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
+        ## sig_el_result[["cc"]] <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
 
-        test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest, name="Fisher test", sigRatio="ratio")
+        test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest,
+                         name="Fisher test", sigRatio="ratio")
         sig_weight_result[["MF"]] <- topGO::getSigGroups(godata_fisher_result[["MF"]], test_stat)
         sig_weight_result[["BP"]] <- topGO::getSigGroups(godata_fisher_result[["BP"]], test_stat)
         sig_weight_result[["CC"]] <- topGO::getSigGroups(godata_fisher_result[["CC"]], test_stat)
@@ -295,7 +299,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
         "cc_weight" = sig_weight_result[["CC"]])
 
     tables <- try(topgo_tables(results, limitby=limitby, limit=limit), silent=TRUE)
-    if (class(tables)[1] == 'try-error') {
+    if (class(tables)[1] == "try-error") {
         tables <- NULL
     }
 
@@ -360,7 +364,7 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher",
         mf_allRes <- try(topGO::GenTable(result$fmf_godata, classic=result$mf_fisher, KS=result$mf_ks,
                                          EL=result$mf_el, weight=result$mf_weight, orderBy=orderby,
                                          ranksOf=ranksof, topNodes=mf_topnodes, numChar=numchar))
-        if (class(mf_allRes) != 'try-error') {
+        if (class(mf_allRes) != "try-error") {
             mf_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result$mf_fisher))$qvalues)
             mf_allRes <- merge(mf_allRes, mf_qvalues, by.x="GO.ID", by.y="row.names")
             mf_allRes$classic <- as.numeric(mf_allRes$classic)
@@ -379,7 +383,7 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher",
         bp_allRes <- try(topGO::GenTable(result$fbp_godata, classic=result$bp_fisher, KS=result$bp_ks,
                                          EL=result$bp_el, weight=result$bp_weight, orderBy=orderby,
                                          ranksOf=ranksof, topNodes=bp_topnodes, numChar=numchar))
-        if (class(bp_allRes) != 'try-error') {
+        if (class(bp_allRes) != "try-error") {
             bp_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result$bp_fisher))$qvalues)
             bp_allRes <- merge(bp_allRes, bp_qvalues, by.x="GO.ID", by.y="row.names", all.x=TRUE)
             bp_allRes$classic <- as.numeric(bp_allRes$classic)
@@ -398,7 +402,7 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher",
         cc_allRes <- try(topGO::GenTable(result$fcc_godata, classic=result$cc_fisher, KS=result$cc_ks,
                                          EL=result$cc_el, weight=result$cc_weight, orderBy=orderby,
                                          ranksOf=ranksof, topNodes=cc_topnodes, numChar=numchar))
-        if (class(cc_allRes) != 'try-error') {
+        if (class(cc_allRes) != "try-error") {
             cc_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result$cc_fisher))$qvalues)
             cc_allRes <- merge(cc_allRes, cc_qvalues, by.x="GO.ID", by.y="row.names")
             cc_allRes$classic <- as.numeric(cc_allRes$classic)
@@ -680,7 +684,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
 #' @return plot of group densities.
 hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     groupMembers <- try(topGO::genesInTerm(object, whichGO)[[1]])
-    if (class(groupMembers)[1] == 'try-error') {
+    if (class(groupMembers)[1] == "try-error") {
         return(NULL)
     }
     allS <- topGO::geneScore(object, use.names = TRUE)

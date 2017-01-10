@@ -23,9 +23,9 @@
 simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second_merge_try="locus_tag",
                            species="fun", pcutoff=0.10, direction="over", conditional=FALSE,
                            categorysize=NULL, gff_type="cds", ...) {
-    ## The import(gff) is being used for this primarily because it uses integers for the rownames and because it (should)
-    ## contain every gene in the 'universe' used by GOstats, as much it ought to be pretty much
-    ## perfect.
+    ## The import(gff) is being used for this primarily because it uses integers for the rownames
+    ## and because it (should) contain every gene in the 'universe' used by GOstats, as much it
+    ## ought to be pretty much perfect.
     arglist = list(...)
     if (!is.null(arglist[["gff_df"]])) {
         annotation <- arglist[["gff_df"]]
@@ -36,8 +36,9 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
     colnames(annotation) <- gsub(pattern="length", replacement="width", x=colnames(annotation))
 
     ## This is similar to logic in ontology_goseq and is similarly problematic.
-    ## Some gff files I use have all the annotation data in the type called 'gene', others use 'CDS', others use 'exon'
-    ## I need a robust method of finding the correct feature type to call upon.
+    ## Some gff files I use have all the annotation data in the type called 'gene', others
+    ## use 'CDS', others use 'exon'. I need a robust method of finding the correct feature type
+    ## to call upon.
 
     ## I think there might be a weird environment collision occuring which is causing
     ## some gostats functionality to fail when functions are called using Category:: explicitly.
@@ -61,13 +62,15 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
     ## library("GSEABase")
     ## library("GOstats")
     ## library("AnnotationDbi")
-    message(paste0("simple_gostats(): gff_type is: ", gff_type, ". Change that if there are bad merges."))
+    message(paste0("simple_gostats(): gff_type is: ", gff_type,
+                   ". Change that if there are bad merges."))
     types <- c("cds","gene","exon","protein_coding")
     for (type in types) {
-        message(paste0("simple_gostats(): type ", type, " has ", sum(annotation$type == type), " annotations."))
+        message(paste0("simple_gostats(): type ", type, " has ",
+                       sum(annotation[["type"]] == type), " annotations."))
     }
 
-    annotation <- annotation[annotation$type == gff_type, ]
+    annotation <- annotation[annotation[["type"]] == gff_type, ]
     message(paste0("simple_gostats(): the current annotations has: ", nrow(annotation),
                    " rows and ", ncol(annotation), " columns."))
     annotation[, universe_merge] <- make.names(annotation[, universe_merge], unique=TRUE)
@@ -83,30 +86,30 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
     ## This section is a little odd
     ## The goal is to collect a consistent set of numeric gene IDs
     ## In addition, one must cross reference those IDs consistently with the universe of all genes.
-    ## Thus in a few linues I will be doing a merge of all genes against the sig_genes and another merge
-    ## of the gene<->go mappings, finally extracting the portions of the resulting dataframe into a format suitable for
-    ## casting as a GOFrame/GOAllFrame
-    colnames(universe) <- c("geneid","width")
-    universe$id <- rownames(universe)
+    ## Thus in a few linues I will be doing a merge of all genes against the sig_genes and
+    ## another merge of the gene<->go mappings, finally extracting the portions of the resulting
+    ## dataframe into a format suitable for casting as a GOFrame/GOAllFrame.
+    colnames(universe) <- c("geneid", "width")
+    universe[["id"]] <- rownames(universe)
     universe <- universe[complete.cases(universe), ]
 
-    if (is.null(sig_genes$ID)) {
-        sig_genes$ID <- rownames(sig_genes)
+    if (is.null(sig_genes[["ID"]])) {
+        sig_genes[["ID"]] <- rownames(sig_genes)
     }
     universe_cross_de <- merge(universe, sig_genes, by.x="geneid", by.y="ID")
-    degenes_ids <- universe_cross_de$id
-    universe_ids <- universe$id
+    degenes_ids <- universe_cross_de[["id"]]
+    universe_ids <- universe[["id"]]
     ## Sometimes I have the columns set to 'ID','GO' -- others I have 'ORF','GO'
     ## FIXME!  This should be standardized.
-    colnames(goids_df) <- c("ID","GO")
+    colnames(goids_df) <- c("ID", "GO")
     gostats_go <- merge(universe, goids_df, by.x="geneid", by.y="ID")
     if (nrow(gostats_go) == 0) {
         stop("simple_gostats(): The merging of the universe vs. goids failed.")
     }
     if (ncol(gostats_go) == 5) {
-        colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id", "ID")
+        colnames(gostats_go) <- c("sysName", "width", "frame.gene_id", "frame.go_id", "ID")
     } else if (ncol(gostats_go) == 4) {
-        colnames(gostats_go) <- c("sysName","width", "frame.gene_id", "frame.go_id")
+        colnames(gostats_go) <- c("sysName", "width", "frame.gene_id", "frame.go_id")
     } else {
         stop("Cannot set the columns for the gostats df.")
     }
@@ -178,10 +181,10 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
     bp_under_table <- GOstats::summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
     cc_under_table <- GOstats::summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
     if (!is.null(dim(mf_over_table))) {
-        mf_over_table$qvalue <- tryCatch(
+        mf_over_table[["qvalue"]] <- tryCatch(
         {
-            ttmp <- as.numeric(mf_over_table$Pvalue)
-            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            ttmp <- as.numeric(mf_over_table[["Pvalue"]])
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
         },
         error=function(cond) {
@@ -191,10 +194,10 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         })
     }
     if (!is.null(dim(bp_over_table))) {
-        bp_over_table$qvalue <- tryCatch(
+        bp_over_table[["qvalue"]] <- tryCatch(
         {
-            ttmp <- as.numeric(bp_over_table$Pvalue)
-            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            ttmp <- as.numeric(bp_over_table[["Pvalue"]])
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
         },
         error=function(cond) {
@@ -204,10 +207,10 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         })
     }
     if (!is.null(dim(cc_over_table))) {
-        cc_over_table$qvalue <- tryCatch(
+        cc_over_table[["qvalue"]] <- tryCatch(
         {
-            ttmp <- as.numeric(cc_over_table$Pvalue)
-            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            ttmp <- as.numeric(cc_over_table[["Pvalue"]])
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
         },
         error=function(cond) {
@@ -217,10 +220,10 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         })
     }
     if (!is.null(dim(mf_under_table))) {
-        mf_under_table$qvalue <- tryCatch(
+        mf_under_table[["qvalue"]] <- tryCatch(
         {
-            ttmp <- as.numeric(mf_under_table$Pvalue)
-            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            ttmp <- as.numeric(mf_under_table[["Pvalue"]])
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
         },
         error=function(cond) {
@@ -230,10 +233,10 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         })
     }
     if (!is.null(dim(bp_under_table))) {
-        bp_under_table$qvalue <- tryCatch(
+        bp_under_table[["qvalue"]] <- tryCatch(
         {
-            ttmp <- as.numeric(bp_under_table$Pvalue)
-            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            ttmp <- as.numeric(bp_under_table[["Pvalue"]])
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
         },
         error=function(cond) {
@@ -243,10 +246,10 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         })
     }
     if (!is.null(dim(cc_under_table))) {
-        cc_under_table$qvalue <- tryCatch(
+        cc_under_table[["qvalue"]] <- tryCatch(
         {
-            ttmp <- as.numeric(cc_under_table$Pvalue)
-            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)$qvalues
+            ttmp <- as.numeric(cc_under_table[["Pvalue"]])
+            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
         },
         error=function(cond) {
@@ -272,42 +275,42 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         cc_under_sig <- GOstats::summary(cc_under, categorySize=categorysize)
     }
     if (!is.null(dim(mf_over_sig))) {
-        mf_over_sig$definition <- try(godef(mf_over_sig$GOMFID), silent=TRUE)
+        mf_over_sig[["definition"]] <- try(godef(mf_over_sig[["GOMFID"]]), silent=TRUE)
     } else {
         mf_over_sig <- NULL
     }
     if (!is.null(dim(bp_over_sig))) {
-        bp_over_sig$definition <- try(godef(bp_over_sig$GOBPID), silent=TRUE)
+        bp_over_sig[["definition"]] <- try(godef(bp_over_sig[["GOBPID"]]), silent=TRUE)
     } else {
         bp_over_sig <- NULL
     }
     if (!is.null(dim(cc_over_sig))) {
-        cc_over_sig$definition <- try(godef(cc_over_sig$GOCCID), silent=TRUE)
+        cc_over_sig[["definition"]] <- try(godef(cc_over_sig[["GOCCID"]]), silent=TRUE)
     } else {
         bp_over_sig <- NULL
     }
     if (!is.null(dim(mf_under_sig))) {
-        mf_under_sig$definition <- try(godef(mf_under_sig$GOMFID), silent=TRUE)
+        mf_under_sig[["definition"]] <- try(godef(mf_under_sig[["GOMFID"]]), silent=TRUE)
     } else {
         mf_under_sig <- NULL
     }
     if (!is.null(dim(bp_under_sig))) {
-        bp_under_sig$definition <- try(godef(bp_under_sig$GOBPID), silent=TRUE)
+        bp_under_sig[["definition"]] <- try(godef(bp_under_sig[["GOBPID"]]), silent=TRUE)
     } else {
         bp_under_sig <- NULL
     }
     if (!is.null(dim(cc_under_sig))) {
-        cc_under_sig$definition <- try(godef(cc_under_sig$GOCCID), silent=TRUE)
+        cc_under_sig[["definition"]] <- try(godef(cc_under_sig[["GOCCID"]]), silent=TRUE)
     } else {
         bp_under_sig <- NULL
     }
 
-    gostats_p_mf_over <- try(plot_histogram(mf_over_table$Pvalue, bins=20), silent=TRUE)
-    gostats_p_mf_under <- try(plot_histogram(mf_under_table$Pvalue, bins=20), silent=TRUE)
-    gostats_p_bp_over <- try(plot_histogram(bp_over_table$Pvalue, bins=20), silent=TRUE)
-    gostats_p_bp_under <- try(plot_histogram(bp_under_table$Pvalue, bins=20), silent=TRUE)
-    gostats_p_cc_over <- try(plot_histogram(cc_over_table$Pvalue, bins=20), silent=TRUE)
-    gostats_p_cc_under <- try(plot_histogram(cc_under_table$Pvalue, bins=20), silent=TRUE)
+    gostats_p_mf_over <- try(plot_histogram(mf_over_table[["Pvalue"]], bins=20), silent=TRUE)
+    gostats_p_mf_under <- try(plot_histogram(mf_under_table[["Pvalue"]], bins=20), silent=TRUE)
+    gostats_p_bp_over <- try(plot_histogram(bp_over_table[["Pvalue"]], bins=20), silent=TRUE)
+    gostats_p_bp_under <- try(plot_histogram(bp_under_table[["Pvalue"]], bins=20), silent=TRUE)
+    gostats_p_cc_over <- try(plot_histogram(cc_over_table[["Pvalue"]], bins=20), silent=TRUE)
+    gostats_p_cc_under <- try(plot_histogram(cc_under_table[["Pvalue"]], bins=20), silent=TRUE)
 
     ret_list <- list(
         "mf_over_all" = mf_over_table,

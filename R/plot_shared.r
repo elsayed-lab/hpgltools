@@ -52,7 +52,8 @@
 #' ## good luck, you are going to be waiting a while for the ma plots to print!
 #' }
 #' @export
-graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL, qq=NULL, ma=NULL, ...) {
+graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL,
+                          qq=NULL, ma=NULL, ...) {
     ## First gather the necessary data for the various plots.
     old_options <- options(scipen=10)
     ##old_options <- options(device = function(...) {
