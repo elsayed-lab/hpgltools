@@ -12,7 +12,7 @@
 #' @param ... Extra arguments are passed to arglist.
 #' @return The result from openxlsx
 #' @export
-write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL,
+write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees=TRUE,
                              pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
@@ -28,6 +28,10 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL,
         wb <- openxlsx::createWorkbook(creator="atb")
         hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold",
                                      border="Bottom", fontSize="30")
+    }
+    pval_column <- "limma_adjp"
+    if (!is.null(arglist[["pval_column"]])) {
+        pval_column <- arglist[["pval_column"]]
     }
 
     if (class(excel) == "character") {
@@ -47,7 +51,31 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL,
         colnames(legend) <- c("column name", "column definition")
         xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
                                 title="Columns used in the following tables.")
+        summary_row <- nrow(legend) + 5
+        summary_df <- data.frame(rbind(
+            c("Queried BP ontologies", nrow(godata[["bp_subset"]])),
+            c("Significant BP ontologies", nrow(godata[["bp_interesting"]])),
+            c("Queried MF ontologies", nrow(godata[["mf_subset"]])),
+            c("Significant MF ontologies", nrow(godata[["mf_interesting"]])),
+            c("Queried CC ontologies", nrow(godata[["cc_subset"]])),
+            c("Significant CC ontologies", nrow(godata[["cc_interesting"]]))))
+        colnames(summary_df) <- c("Ontology type", "Number found")
+        xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
+                                title="Summary of the goseq search.", start_row=1, start_col=4)
+        if (isTRUE(add_plots)) {
+            printme <- "Histogram of observed ontology (adjusted) p-values by goseq."
+            xl_result <- openxlsx::writeData(wb, "legend", x=printme,
+                                             startRow=summary_row - 1, startCol=1)
+            plot_try <- xlsx_plot_png(goseq[["pvalue_histogram"]], wb=wb, sheet="legend",
+                                      start_col=1, start_row=summary_row, plotname="p_histogram",
+                                      savedir=excel_basename)
+        }
     }  ## End making sure that an excel is desired.
+
+    trees <- NULL
+    if (isTRUE(add_trees)) {
+        trees <- goseq_trees(goseq, pval_column=pval_column)
+    }
 
     ## Pull out the relevant portions of the goseq data
     ## For this I am using the same (arbitrary) rules as in gather_goseq_genes()
@@ -112,6 +140,11 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL,
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(goseq_bp) + 2, start_row=new_row,
                                   plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["BP_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["BP_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(goseq_bp) + 2, start_row=80, res=210,
+                                      plotname="bp_trees", savedir=excel_basename)
+        }
     }
     new_row <- new_row + nrow(goseq_bp) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
@@ -134,6 +167,11 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL,
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(goseq_mf) + 2, start_row=new_row,
                                   plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["MF_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["MF_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(goseq_bp) + 2, start_row=80, res=210,
+                                      plotname="mf_trees", savedir=excel_basename)
+        }
     }
     new_row <- new_row + nrow(goseq_mf) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
@@ -155,7 +193,12 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL,
         ##                     fileType="png", units="in")
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(goseq_cc) + 2, start_row=new_row,
-                                  plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
+                                  plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["CC_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["CC_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(goseq_bp) + 2, start_row=80, res=210,
+                                      plotname="cc_trees", savedir=excel_basename)
+        }
     }
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
     openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)

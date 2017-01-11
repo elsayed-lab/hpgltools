@@ -74,8 +74,9 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     new_row <- start_row
     new_col <- start_col
     if (!is.null(arglist[["title"]])) {
-        xl_result <- openxlsx::writeData(wb, sheet, arglist[["title"]], startRow=new_row)
-        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        xl_result <- openxlsx::writeData(wb, sheet, arglist[["title"]],
+                                         startRow=new_row, startCol=new_col)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, new_col)
         new_row <- new_row + 1
     }
 

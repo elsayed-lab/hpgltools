@@ -216,11 +216,12 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
     }
     godata <- goseq::goseq(pwf, gene2cat=godf, use_genes_without_cat=TRUE, method=goseq_method)
 
-    goseq_p <- try(plot_histogram(godata$over_represented_pvalue, bins=20))
-    goseq_p_second <- sort(unique(table(goseq_p[["data"]])), decreasing=TRUE)[2]
+    goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins=50))
+    ## goseq_p_second <- sort(unique(table(goseq_p[["data"]])), decreasing=TRUE)[2]
+    goseq_p_nearzero <- table(goseq_p[["data"]])[[1]]
     ## Set the y scale to 2x the second highest number
     ## (assuming always that the highest is a p-value of 1)
-    goseq_y_limit <- goseq_p_second * 2
+    goseq_y_limit <- goseq_p_nearzero * 2
     goseq_p <- goseq_p + ggplot2::scale_y_continuous(limits=c(0, goseq_y_limit))
     message("simple_goseq(): Calculating q-values")
     qdata <- godata[["over_represented_pvalue"]]

@@ -705,12 +705,14 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
 #' @return A plot!
 #' @seealso \pkg{Ramigo}
 #' @export
-goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
-                        score_limit=0.01, goids_df=NULL, overwrite=FALSE,
+goseq_trees <- function(godata, goid_map="id2go.map",
+                        score_limit=0.01, overwrite=FALSE,
                         selector="topDiffGenes", pval_column="adj.P.Val") {
+    goids_df <- godata[["godf"]]
     mapping <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO <- topGO::readMappings(file=goid_map)
     annotated_genes <- names(geneID2GO)
+    de_genes <- godata[["input"]]
     if (is.null(de_genes[["ID"]])) {
         de_genes[["ID"]] <- make.names(rownames(de_genes), unique=TRUE)
     }
@@ -718,61 +720,67 @@ goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
     names(interesting_genes) <- annotated_genes
 
     if (is.null(de_genes[[pval_column]])) {
-        mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes, annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata <- new("topGOdata", ontology="BP", allGenes=interesting_genes, annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata <- new("topGOdata", ontology="CC", allGenes=interesting_genes, annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+        mf_GOdata <- sm(new("topGOdata", ontology="MF", allGenes=interesting_genes,
+                            annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO))
+        bp_GOdata <- sm(new("topGOdata", ontology="BP", allGenes=interesting_genes,
+                            annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO))
+        cc_GOdata <- sm(new("topGOdata", ontology="CC", allGenes=interesting_genes,
+                            annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO))
     } else {
         pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
         names(pvals) <- rownames(de_genes)
-        requireNamespace("topGO")
-        attachNamespace("topGO")
-        mf_GOdata <- new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
-                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        bp_GOdata <- new("topGOdata", description="BP", ontology="BP", allGenes=pvals,
-                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=pvals,
-                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+        tt <- try(sm(requireNamespace("topGO")), silent=TRUE)
+        tt <- try(sm(attachNamespace("topGO")), silent=TRUE)
+        mf_GOdata <- sm(new("topGOdata", description="MF", ontology="MF", allGenes=pvals,
+                            geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO))
+        bp_GOdata <- sm(new("topGOdata", description="BP", ontology="BP", allGenes=pvals,
+                            geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO))
+        cc_GOdata <- sm(new("topGOdata", description="CC", ontology="CC", allGenes=pvals,
+                            geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO))
     }
 
-    enriched_ids <- godata$alldata[["category"]]
-    enriched_scores <- godata$alldata[["over_represented_pvalue"]]
+    enriched_ids <- godata[["alldata"]][["category"]]
+    enriched_scores <- godata[["alldata"]][["over_represented_pvalue"]]
     names(enriched_scores) <- enriched_ids
 
+    ## Print the actual tree here for the molecular function data.
     mf_avail_nodes <- as.list(mf_GOdata@graph@nodes)
     names(mf_avail_nodes) <- mf_GOdata@graph@nodes
     mf_nodes <- enriched_scores[names(enriched_scores) %in% names(mf_avail_nodes)]
     mf_included <- length(which(mf_nodes <= score_limit))
-    mf_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_nodes, useInfo="all",
-                                                               sigForAll=TRUE, firstSigNodes=mf_included,
-                                                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(mf_tree_data) == 'try-error') {
+    mf_tree_data <- try(sm(topGO::showSigOfNodes(mf_GOdata, mf_nodes, useInfo="all",
+                                                 sigForAll=TRUE, firstSigNodes=mf_included,
+                                                 useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    if (class(mf_tree_data) == "try-error") {
         message("There was an error generating the MF tree.")
         mf_tree <- NULL
     } else {
         mf_tree <- recordPlot()
     }
 
+    ## Print the biological process tree
     bp_avail_nodes <- as.list(bp_GOdata@graph@nodes)
     names(bp_avail_nodes) <- bp_GOdata@graph@nodes
     bp_nodes <- enriched_scores[names(enriched_scores) %in% names(bp_avail_nodes)]
     bp_included <- length(which(bp_nodes <= score_limit))
-    bp_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(bp_GOdata, bp_nodes, useInfo="all",
-                                                               sigForAll=TRUE, firstSigNodes=bp_included,
-                                                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(bp_tree_data) == 'try-error') {
+    bp_tree_data <- try(sm(topGO::showSigOfNodes(bp_GOdata, bp_nodes, useInfo="all",
+                                                 sigForAll=TRUE, firstSigNodes=bp_included,
+                                                 useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    if (class(bp_tree_data) == "try-error") {
         message("There was an error generating the BP tree.")
         bp_tree <- NULL
     } else {
         bp_tree <- recordPlot()
     }
 
+    ## And the cellular component tree
     cc_avail_nodes <- as.list(cc_GOdata@graph@nodes)
     names(cc_avail_nodes) <- cc_GOdata@graph@nodes
     cc_nodes <- enriched_scores[names(enriched_scores) %in% names(cc_avail_nodes)]
     cc_included <- length(which(cc_nodes <= score_limit))
-    cc_tree_data <- try(suppressWarnings(topGO::showSigOfNodes(cc_GOdata, cc_nodes, useInfo="all",
-                                                               sigForAll=TRUE, firstSigNodes=cc_included,
-                                                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    cc_tree_data <- try(sm(topGO::showSigOfNodes(cc_GOdata, cc_nodes, useInfo="all",
+                                                 sigForAll=TRUE, firstSigNodes=cc_included,
+                                                 useFullNames=TRUE, plotFunction=hpgl_GOplot)))
     if (class(cc_tree_data) == 'try-error') {
         message("There was an error generating the CC tree.")
         cc_tree <- NULL
@@ -810,7 +818,7 @@ goseq_trees <- function(de_genes, godata, goid_map="reference/go/id2go.map",
 #' ctrees <- cluster_trees(genes, cluster_data)
 #' }
 #' @export
-cluster_trees <- function(de_genes, cpdata, goid_map="reference/go/id2go.map", goids_df=NULL,
+cluster_trees <- function(de_genes, cpdata, goid_map="id2go.map", goids_df=NULL,
                           score_limit=0.2, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Val") {
     de_genes <- cpdata$de_genes
     make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
@@ -1146,7 +1154,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
 #' @seealso \pkg{topGO}
 #' @export
 gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under,
-                          cc_under, goid_map="reference/go/id2go.map", score_limit=0.01,
+                          cc_under, goid_map="id2go.map", score_limit=0.01,
                           goids_df=NULL, overwrite=FALSE, selector="topDiffGenes",
                           pval_column="adj.P.Val") {
     make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
