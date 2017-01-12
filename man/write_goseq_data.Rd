@@ -4,8 +4,9 @@
 \alias{write_goseq_data}
 \title{Make a pretty table of goseq data in excel.}
 \usage{
-write_goseq_data(goseq, excel = "excel/goseq.xlsx", wb = NULL, pval = 0.1,
-  add_plots = TRUE, height = 15, width = 10, ...)
+write_goseq_data(goseq, excel = "excel/goseq.xlsx", wb = NULL,
+  add_trees = TRUE, pval = 0.1, add_plots = TRUE, height = 15,
+  width = 10, ...)
 }
 \arguments{
 \item{goseq}{A set of results from simple_goseq().}
@@ -13,6 +14,8 @@ write_goseq_data(goseq, excel = "excel/goseq.xlsx", wb = NULL, pval = 0.1,
 \item{excel}{An excel file to which to write some pretty results.}
 
 \item{wb}{Workbook object to write to.}
+
+\item{add_trees}{Include topgoish ontology trees?}
 
 \item{pval}{Choose a cutoff for reporting by p-value.}
 

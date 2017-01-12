@@ -127,7 +127,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
 #' nice, but they can be a little annoying.  This attempt to catch some corner cases
 #' and potentially save an extra svg-version of each plot inserted.
 #'
-#' @param plot  The plot provided
+#' @param a_plot  The plot provided
 #' @param wb  Workbook to which to write.
 #' @param sheet  Name or number of the sheet to which to add the plot.
 #' @param width  Plot width in the sheet.

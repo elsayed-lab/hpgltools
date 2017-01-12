@@ -499,9 +499,9 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
             goseq_up_ontology <- try(simple_goseq(up_genes, lengths=gene_lengths, goids_df=goids))
             goseq_down_ontology <- try(simple_goseq(down_genes, lengths=gene_lengths, goids_df=goids))
             if (isTRUE(do_trees)) {
-                goseq_up_trees <- try(goseq_trees(up_genes, goseq_up_ontology, goid_map=goid_map,
+                goseq_up_trees <- try(goseq_trees(goseq_up_ontology, goid_map=goid_map,
                                                   goids_df=goids, overwrite=overwrite))
-                goseq_down_trees <- try(goseq_trees(down_genes, goseq_down_ontology,
+                goseq_down_trees <- try(goseq_trees(goseq_down_ontology,
                                                     goid_map=goid_map, goids_df=goids))
             }
         }

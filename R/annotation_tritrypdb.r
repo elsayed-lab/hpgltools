@@ -592,7 +592,6 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
 #' @return List of the resulting txDb package and whether it installed.
 #' @export
 make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir="organismdbi", ...) {
-
     ## Sections of this were stolen from GenomicFeatures
     ## because it hates me.
     arglist <- list(...)
@@ -651,7 +650,7 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
         str(symvals)
         stop("'symvals' contains duplicated symbols")
     }
-    is_OK <- sapply(symvals, isSingleString)
+    is_OK <- sapply(symvals, S4Vectors::isSingleString)
     if (!all(is_OK)) {
         bad_syms <- paste(names(is_OK)[!is_OK], collapse=", ")
         stop("values for symbols ", bad_syms, " are not single strings")
@@ -661,8 +660,9 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
                                        originDir=template_path,
                                        symbolValues=symvals,
                                        unlink=TRUE)
-    db_path <- file.path(destination, pkgname, "inst", "extdata", paste(pkgname, "sqlite", sep="."))
-    obj <- saveDb(txdb, file=db_path)
+    db_path <- file.path(destination, package_name, "inst", "extdata",
+                         paste(package_name, "sqlite", sep="."))
+    obj <- AnnotationDbi::saveDb(txdb, file=db_path)
 
     install_dir <- paste0(destination, "/", package_name)
     install_dir <- pkg_cleaner(install_dir)

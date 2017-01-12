@@ -243,6 +243,8 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #'
 #' @param table Which table to query?
 #' @param adjp  Use adjusted p-values
+#' @param euler  Perform a euler plot
+#' @param p  p-value cutoff, I forget what for right now.
 #' @param ... More arguments are passed to arglist.
 #' @export
 de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {

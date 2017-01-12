@@ -11,6 +11,8 @@ plot_rpm(input, workdir = "images", output = "01.svg",
 \arguments{
 \item{input}{Coverage / position filename.}
 
+\item{workdir}{Where to put the resulting images.}
+
 \item{output}{Output image filename.}
 
 \item{name}{Gene name to print at the bottom of the plot.}

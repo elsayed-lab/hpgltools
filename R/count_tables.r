@@ -610,7 +610,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
             npct_plot <- varpart_norm[["percent_plot"]]
             try_result <- xlsx_plot_png(npct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="npctplot", savedir=excel_basname)
+                                        plotname="npctplot", savedir=excel_basename)
         }
     }
 

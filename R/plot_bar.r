@@ -120,6 +120,7 @@ plot_libsize <- function(data, colors=NULL,
 #' It should however, work for any data with little or no modification.
 #'
 #' @param input  Coverage / position filename.
+#' @param workdir  Where to put the resulting images.
 #' @param output  Output image filename.
 #' @param name  Gene name to print at the bottom of the plot.
 #' @param start  Relative to 0, where is the gene's start codon.

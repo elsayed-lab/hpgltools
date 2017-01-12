@@ -1157,14 +1157,12 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
 #' This should become a template for that.
 #'
 #' @param data Output from results().
-#' @param adjust Pvalue adjustment chosen.
-#' @param n Number of entries to report, 0 says do them all.
-#' @param coef Which coefficients/contrasts to report, NULL says do them all.
-#' @param excel Write an excel workbook?
-#' @param annot_df Optional data frame including annotation information to include with the tables.
+#' @param type  Which DE tool to write.
+#' @param ...  Parameters passed downstream, dumped into arglist and passed, notably the number
+#'         of genes (n), the coefficient column (coef)
 #' @return List of data frames comprising the toptable output for each coefficient, I also added a
 #'     qvalue entry to these toptable() outputs.
-#' @seealso \link[deseq]{toptable} \link{write_xls}
+#' @seealso \link{write_xls}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = eBayes(deseq_output)

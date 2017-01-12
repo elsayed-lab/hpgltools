@@ -4,20 +4,15 @@
 \alias{goseq_trees}
 \title{Make fun trees a la topgo from goseq data.}
 \usage{
-goseq_trees(de_genes, godata, goid_map = "reference/go/id2go.map",
-  score_limit = 0.01, goids_df = NULL, overwrite = FALSE,
-  selector = "topDiffGenes", pval_column = "adj.P.Val")
+goseq_trees(godata, goid_map = "id2go.map", score_limit = 0.01,
+  overwrite = FALSE, selector = "topDiffGenes", pval_column = "adj.P.Val")
 }
 \arguments{
-\item{de_genes}{Some differentially expressed genes.}
-
 \item{godata}{Data from goseq.}
 
 \item{goid_map}{File to save go id mapping.}
 
 \item{score_limit}{Score limit for the coloring.}
-
-\item{goids_df}{Mapping of IDs to GO in the Ramigo expected format.}
 
 \item{overwrite}{Overwrite the trees?}
 

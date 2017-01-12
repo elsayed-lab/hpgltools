@@ -9,15 +9,10 @@ write_de_table(data, type = "limma", ...)
 \arguments{
 \item{data}{Output from results().}
 
-\item{adjust}{Pvalue adjustment chosen.}
+\item{type}{Which DE tool to write.}
 
-\item{n}{Number of entries to report, 0 says do them all.}
-
-\item{coef}{Which coefficients/contrasts to report, NULL says do them all.}
-
-\item{excel}{Write an excel workbook?}
-
-\item{annot_df}{Optional data frame including annotation information to include with the tables.}
+\item{...}{Parameters passed downstream, dumped into arglist and passed, notably the number
+of genes (n), the coefficient column (coef)}
 }
 \value{
 List of data frames comprising the toptable output for each coefficient, I also added a
@@ -41,6 +36,6 @@ This should become a template for that.
 }
 }
 \seealso{
-\link[deseq]{toptable} \link{write_xls}
+\link{write_xls}
 }
 

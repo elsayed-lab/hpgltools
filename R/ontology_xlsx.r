@@ -5,6 +5,7 @@
 #' @param goseq A set of results from simple_goseq().
 #' @param excel An excel file to which to write some pretty results.
 #' @param wb  Workbook object to write to.
+#' @param add_trees  Include topgoish ontology trees?
 #' @param pval Choose a cutoff for reporting by p-value.
 #' @param add_plots Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
@@ -53,12 +54,12 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
                                 title="Columns used in the following tables.")
         summary_row <- nrow(legend) + 5
         summary_df <- data.frame(rbind(
-            c("Queried BP ontologies", nrow(godata[["bp_subset"]])),
-            c("Significant BP ontologies", nrow(godata[["bp_interesting"]])),
-            c("Queried MF ontologies", nrow(godata[["mf_subset"]])),
-            c("Significant MF ontologies", nrow(godata[["mf_interesting"]])),
-            c("Queried CC ontologies", nrow(godata[["cc_subset"]])),
-            c("Significant CC ontologies", nrow(godata[["cc_interesting"]]))))
+            c("Queried BP ontologies", nrow(goseq[["bp_subset"]])),
+            c("Significant BP ontologies", nrow(goseq[["bp_interesting"]])),
+            c("Queried MF ontologies", nrow(goseq[["mf_subset"]])),
+            c("Significant MF ontologies", nrow(goseq[["mf_interesting"]])),
+            c("Queried CC ontologies", nrow(goseq[["cc_subset"]])),
+            c("Significant CC ontologies", nrow(goseq[["cc_interesting"]]))))
         colnames(summary_df) <- c("Ontology type", "Number found")
         xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
                                 title="Summary of the goseq search.", start_row=1, start_col=4)

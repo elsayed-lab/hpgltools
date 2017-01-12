@@ -694,11 +694,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
 #' This seeks to force goseq data into a format suitable for topGO and then use its tree plotting
 #' function to make it possible to see significantly increased ontology trees.
 #'
-#' @param de_genes Some differentially expressed genes.
 #' @param godata Data from goseq.
 #' @param goid_map File to save go id mapping.
 #' @param score_limit Score limit for the coloring.
-#' @param goids_df Mapping of IDs to GO in the Ramigo expected format.
 #' @param overwrite Overwrite the trees?
 #' @param selector Function for choosing genes.
 #' @param pval_column Column to acquire pvalues.

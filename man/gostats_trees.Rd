@@ -5,9 +5,8 @@
 \title{Take gostats data and print it on a tree as topGO does.}
 \usage{
 gostats_trees(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under, cc_under,
-  goid_map = "reference/go/id2go.map", score_limit = 0.01,
-  goids_df = NULL, overwrite = FALSE, selector = "topDiffGenes",
-  pval_column = "adj.P.Val")
+  goid_map = "id2go.map", score_limit = 0.01, goids_df = NULL,
+  overwrite = FALSE, selector = "topDiffGenes", pval_column = "adj.P.Val")
 }
 \arguments{
 \item{de_genes}{Some differentially expressed genes.}

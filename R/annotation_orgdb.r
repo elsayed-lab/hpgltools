@@ -162,9 +162,10 @@ load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
 #' Tested in test_45ann_organdb.R
 #' Perhaps this function should be merged with the GO above?
 #'
-#' @param orgdb OrganismDb instance.
-#' @param gene_ids Identifiers of the genes to retrieve annotations.
-#' @param keytype the keytype, damn I really need to read this code
+#' @param orgdb  OrganismDb instance.
+#' @param gene_ids  Identifiers of the genes to retrieve annotations.
+#' @param keytype  The keytype, eg. the primary key used to query the orgdb.
+#' @param columns  Columns to extract.
 #' @return Df of kegg mappings
 #' @seealso \link[AnnotationDbi]{select}
 #' @examples
@@ -174,7 +175,7 @@ load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
 #' @export
 load_kegg_mapping <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("KEGG_PATH")) {
     if (is.null(gene_ids)) {
-        gene_ids <- keys(orgdb)
+        gene_ids <- AnnotationDbi::keys(orgdb)
     }
     kegg_mapping <- try(dplyr::tbl_df(AnnotationDbi::select(orgdb, keys=gene_ids,
                             keytype=keytype,
@@ -584,12 +585,12 @@ make_organ <- function (txdb, keytype=NA, orgdb=NA) {
     if (class(orgdb) != "OrgDb" && !is.na(orgdb)) {
         stop("'orgdb' must be an OrgDb object or NA")
     }
-    if (!isSingleStringOrNA(keytype)) {
+    if (!S4Vectors::isSingleStringOrNA(keytype)) {
         stop("'keytype' must be a single string or NA")
     }
-    txdbName <- makePackageName(txdb)
+    txdbName <- GenomicFeatures::makePackageName(txdb)
     assign(txdbName, txdb, .GlobalEnv)
-    taxId <- taxonomyId(txdb)
+    taxId <- AnnotationDbi::taxonomyId(txdb)
     if (is.na(orgdb)) {
         orgdbName <- sm(OrganismDbi:::.taxIdToOrgDbName(taxId))
         if (length(orgdbName) > 1) {
@@ -600,14 +601,14 @@ make_organ <- function (txdb, keytype=NA, orgdb=NA) {
         orgdb <- mytaxIdToOrgDb(taxId)  ## The source of the error is here
         assign(orgdbName, orgdb, .GlobalEnv)
     } else {
-        org <- metadata(orgdb)[metadata(orgdb)$name == "ORGANISM", 2]
+        org <- S4Vectors::metadata(orgdb)[S4Vectors::metadata(orgdb)$name == "ORGANISM", 2]
         org <- sub(" ", "_", org)
         orgdbName <- paste0("org.", org, ".db")
         orgdb <- orgdb
         assign(orgdbName, orgdb, .GlobalEnv)
     }
     if (is.na(keytype)) {
-        geneKeyType <- chooseCentralOrgPkgSymbol(orgdb)
+        geneKeyType <- AnnotationDbi::chooseCentralOrgPkgSymbol(orgdb)
     } else {
         geneKeyType <- keytype
     }
@@ -639,7 +640,7 @@ mytaxIdToOrgDb <- function (taxid) {
         loadNamespace("AnnotationHub")
         ah <- AnnotationHub::AnnotationHub()
         ah <- subset(ah, ah$rdataclass == "OrgDb")
-        mc <- mcols(ah)[, "taxonomyid", drop = FALSE]
+        mc <- S4Vectors::mcols(ah)[, "taxonomyid", drop = FALSE]
         AHID <- rownames(mc[mc$taxonomyid == taxid, , drop = FALSE])
         if (!length(AHID)) {
             message("No organismdbi exists for this taxonomy id.")

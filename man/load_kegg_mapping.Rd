@@ -12,7 +12,9 @@ load_kegg_mapping(orgdb, gene_ids = NULL, keytype = "ENSEMBL",
 
 \item{gene_ids}{Identifiers of the genes to retrieve annotations.}
 
-\item{keytype}{the keytype, damn I really need to read this code}
+\item{keytype}{The keytype, eg. the primary key used to query the orgdb.}
+
+\item{columns}{Columns to extract.}
 }
 \value{
 Df of kegg mappings
