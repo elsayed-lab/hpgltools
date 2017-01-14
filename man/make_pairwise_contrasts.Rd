@@ -33,6 +33,9 @@ In order to have uniformly consistent pairwise contrasts, I decided
 to avoid potential human erors(sic) by having a function generate
 all contrasts.
 }
+\details{
+Invoked by the _pairwise() functions.
+}
 \examples{
 \dontrun{
  pretend = make_pairwise_contrasts(model, conditions)

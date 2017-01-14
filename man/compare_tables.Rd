@@ -32,6 +32,9 @@ and choices about what makes a meaningful set of differentially.
 expressed genes.  This seeks to provide a quick and dirty metric
 describing the degree to which they (dis)agree.
 }
+\details{
+Invoked by all_pairwise().
+}
 \examples{
 \dontrun{
  l = limma_pairwise(expt)

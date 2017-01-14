@@ -15,4 +15,7 @@ Some plots
 \description{
 There are some peculiar discrepencies among these tools, what is up with that?
 }
+\details{
+Invoked by combine_de_tables() in order to compare the results.
+}
 

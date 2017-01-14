@@ -32,4 +32,7 @@ coding sequences are divergent, but the UTRs nearly identical.  For
 these genes, our sequence based removal methods fail and so this
 just excludes them by name.
 }
+\details{
+Currently untested, used for Trypanosome analyses primarily, thus the default strings.
+}
 

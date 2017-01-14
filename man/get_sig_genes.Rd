@@ -36,4 +36,7 @@ z-score from median FC) and use them to extract the set of genes
 which are defined as 'differentially expressed.'  If no criteria
 are provided, it arbitrarily chooses all genes outside of 1-z.
 }
+\details{
+Tested in test_29de_shared.R
+}
 
