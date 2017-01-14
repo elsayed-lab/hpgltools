@@ -594,6 +594,8 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 #'
 #' Take an expt and poke at it to ensure that it will not result in troubled results.
 #'
+#' Invoked by deseq_pairwise() and edger_pairwise().
+#'
 #' @param input Expressionset containing expt object.
 #' @param force Ignore every warning and just use this data.
 #' @param ... Extra arguments passed to arglist.
@@ -681,6 +683,8 @@ like me, want to see what happens when you put non-standard data into deseq, the
 #' expressed genes.  This seeks to provide a quick and dirty metric
 #' describing the degree to which they (dis)agree.
 #'
+#' Invoked by all_pairwise().
+#'
 #' @param limma Data from limma_pairwise().
 #' @param deseq Data from deseq2_pairwise().
 #' @param edger Data from edger_pairwise().
@@ -734,37 +738,37 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         d <- data.frame(deseq[[comp]])
         b <- data.frame(basic[[comp]])
         le <- merge(l, e, by.x="row.names", by.y="row.names")
-        le <- le[,c("logFC.x","logFC.y")]
+        le <- le[,c("logFC.x", "logFC.y")]
         colnames(le) <- c("limma logFC", "edgeR logFC")
         lec <- stats::cor.test(x=le[, 1], y=le[, 2])[["estimate"]]
         les <- plot_scatter(le) + ggplot2::labs(title=paste0(comp, ": limma vs. edgeR.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         ld <- merge(l, d, by.x="row.names", by.y="row.names")
-        ld <- ld[, c("logFC.x","logFC.y")]
+        ld <- ld[, c("logFC.x", "logFC.y")]
         colnames(ld) <- c("limma logFC", "DESeq2 logFC")
         ldc <- stats::cor.test(ld[,1], ld[,2])[["estimate"]]
         lds <- plot_scatter(ld) + ggplot2::labs(title=paste0(comp, ": limma vs. DESeq2.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         lb <- merge(l, b, by.x="row.names", by.y="row.names")
-        lb <- lb[, c("logFC.x","logFC.y")]
+        lb <- lb[, c("logFC.x", "logFC.y")]
         colnames(lb) <- c("limma logFC", "basic logFC")
         lbc <- stats::cor.test(lb[,1], lb[,2])[["estimate"]]
         lbs <- plot_scatter(lb) + ggplot2::labs(title=paste0(comp, ": limma vs. basic.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         ed <- merge(e, d, by.x="row.names", by.y="row.names")
-        ed <- ed[, c("logFC.x","logFC.y")]
+        ed <- ed[, c("logFC.x", "logFC.y")]
         colnames(ed) <- c("edgeR logFC", "DESeq2 logFC")
         edc <- stats::cor.test(ed[,1], ed[,2])[["estimate"]]
         eds <- plot_scatter(ed) + ggplot2::labs(title=paste0(comp, ": edgeR vs. DESeq2.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         eb <- merge(e, b, by.x="row.names", by.y="row.names")
-        eb <- eb[, c("logFC.x","logFC.y")]
+        eb <- eb[, c("logFC.x", "logFC.y")]
         colnames(eb) <- c("edgeR logFC", "basic logFC")
         ebc <- stats::cor.test(eb[,1], eb[,2])[["estimate"]]
         ebs <- plot_scatter(eb) + ggplot2::labs(title=paste0(comp, ": edgeR vs. basic.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         db <- merge(d, b, by.x="row.names", by.y="row.names")
-        db <- db[, c("logFC.x","logFC.y")]
+        db <- db[, c("logFC.x", "logFC.y")]
         colnames(db) <- c("DESeq2 logFC", "basic logFC")
         dbc <- stats::cor.test(db[,1], db[,2])[["estimate"]]
         dbs <- plot_scatter(db) +
@@ -816,7 +820,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
                                         Rowv=FALSE, Colv=FALSE,
                                         main="Compare DE tools"), silent=TRUE)
     heat <- NULL
-    if (class(comparison_heatmap) != 'try-error') {
+    if (class(comparison_heatmap) != "try-error") {
         heat <- recordPlot()
     }
     ret <- list(
@@ -840,6 +844,8 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
 #' Compare logFC values from limma and friends
 #'
 #' There are some peculiar discrepencies among these tools, what is up with that?
+#'
+#' Invoked by combine_de_tables() in order to compare the results.
 #'
 #' @param combined_tables The combined tables from limma et al.
 #' @return Some plots
@@ -896,6 +902,8 @@ disjunct_pvalues <- function(contrast_fit, coef1, coef2, ...) {
 #'
 #' I want to multithread my pairwise comparisons, this is the first step in doing so.
 #'
+#' Used to make parallel operations easier.
+#'
 #' @param type  Which type of pairwise comparison to perform
 #' @param ...  The set of arguments intended for limma_pairwise(), edger_pairwise(), and friends.
 #' @return The result from limma/deseq/edger/basic
@@ -922,6 +930,8 @@ do_pairwise <- function(type, ...) {
 #' z-score from median FC) and use them to extract the set of genes
 #' which are defined as 'differentially expressed.'  If no criteria
 #' are provided, it arbitrarily chooses all genes outside of 1-z.
+#'
+#' Tested in test_29de_shared.R
 #'
 #' @param table Table from limma/edger/deseq.
 #' @param n Rank-order top/bottom number of genes to take.
@@ -1026,49 +1036,13 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
     return(ret)
 }
 
-#' Small hack of limma's exampleData() to allow for arbitrary data set
-#' sizes.
-#'
-#' exampleData has a set number of genes/samples it creates. This
-#' relaxes that restriction.
-#'
-#' @param ngenes How many genes in the fictional data set?
-#' @param columns How many samples in this data set?
-#' @return Matrix of pretend counts.
-#' @seealso \pkg{limma}
-#' @examples
-#' \dontrun{
-#'  pretend = make_exampledata()
-#' }
-#' @export
-make_exampledata <- function (ngenes=1000, columns=5) {
-    q0 <- stats::rexp(ngenes, rate = 1/250)
-    is_DE <- stats::runif(ngenes) < 0.3
-    lfc <- stats::rnorm(ngenes, sd = 2)
-    q0A <- ifelse(is_DE, q0 * 2^(lfc / 2), q0)
-    q0B <- ifelse(is_DE, q0 * 2^(-lfc / 2), q0)
-    ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
-    true_sf <- abs(stats::rnorm(columns, mean=1, sd=0.4))
-    cond_types <- ceiling(sqrt(columns))
-    ##    conds <- c("A", "A", "B", "B", "B")
-    ##x <- sample( LETTERS[1:4], 10000, replace=TRUE, prob=c(0.1, 0.2, 0.65, 0.05) )
-    conds <- sample(LETTERS[1:cond_types], columns, replace=TRUE)
-    m <- t(sapply(seq_len(ngenes),
-                  function(i) sapply(1:columns,
-                                     function(j) rnbinom(1,
-                                                         mu = true_sf[j] * ifelse(conds[j] == "A",
-                                                                                  q0A[i], q0B[i]),
-                                                         size = 1/0.2))))
-    rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
-    example <- DESeq::newCountDataSet(m, conds)
-    return(example)
-}
-
 #' Run makeContrasts() with all pairwise comparisons.
 #'
 #' In order to have uniformly consistent pairwise contrasts, I decided
 #' to avoid potential human erors(sic) by having a function generate
 #' all contrasts.
+#'
+#' Invoked by the _pairwise() functions.
 #'
 #' @param model  Describe the conditions/batches/etc in the experiment.
 #' @param conditions  Factor of conditions in the experiment.
@@ -1154,12 +1128,6 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
         }
         names(eval_strings) <- eval_names
     }
-    ## for (f in 1:length(eval_strings)) {
-    ##     eval_name = names(eval_strings[f])
-    ##     message(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
-    ##     eval(parse(text=as.character(eval_strings[f])))
-    ## }
-    ## Now we have bob=(somestuff) in memory in R's environment
     ## Add them to makeContrasts()
     contrast_string <- paste0("all_pairwise_contrasts = limma::makeContrasts(")
     for (f in 1:length(eval_strings)) {
@@ -1191,6 +1159,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 #' coding sequences are divergent, but the UTRs nearly identical.  For
 #' these genes, our sequence based removal methods fail and so this
 #' just excludes them by name.
+#'
+#' Currently untested, used for Trypanosome analyses primarily, thus the default strings.
 #'
 #' @param de_list  List of sets of genes deemed significantly
 #'  up/down with a column expressing approximate count numbers.

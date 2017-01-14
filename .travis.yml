@@ -8,6 +8,9 @@ cache:
   apt: true
   timeout: 1000
 
+deploy:
+  skip_cleanup: true
+
 env:
   global:
     - R_CHECK_ARGS="--no-build-vignettes --no-manual"
@@ -22,9 +25,9 @@ addons:
     packages:
       - r-recommended
 
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get -y install $(apt-cache search r-bioc | awk '{print $1}' | grep -v "ebimage")
+##before_install:
+##  - sudo apt-get -qq update
+##  - sudo apt-get -y install $(apt-cache search r-bioc | awk '{print $1}' | grep -v "ebimage")
 
 script:
   - make install

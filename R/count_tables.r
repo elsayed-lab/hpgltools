@@ -168,6 +168,44 @@ concatenate_runs <- function(expt, column='replicate') {
     return(final_expt)
 }
 
+#' Small hack of limma's exampleData() to allow for arbitrary data set
+#' sizes.
+#'
+#' exampleData has a set number of genes/samples it creates. This
+#' relaxes that restriction.
+#'
+#' @param ngenes How many genes in the fictional data set?
+#' @param columns How many samples in this data set?
+#' @return Matrix of pretend counts.
+#' @seealso \pkg{limma}
+#' @examples
+#' \dontrun{
+#'  pretend = make_exampledata()
+#' }
+#' @export
+make_exampledata <- function (ngenes=1000, columns=5) {
+    q0 <- stats::rexp(ngenes, rate = 1/250)
+    is_DE <- stats::runif(ngenes) < 0.3
+    lfc <- stats::rnorm(ngenes, sd = 2)
+    q0A <- ifelse(is_DE, q0 * 2^(lfc / 2), q0)
+    q0B <- ifelse(is_DE, q0 * 2^(-lfc / 2), q0)
+    ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
+    true_sf <- abs(stats::rnorm(columns, mean=1, sd=0.4))
+    cond_types <- ceiling(sqrt(columns))
+    ##    conds <- c("A", "A", "B", "B", "B")
+    ##x <- sample( LETTERS[1:4], 10000, replace=TRUE, prob=c(0.1, 0.2, 0.65, 0.05) )
+    conds <- sample(LETTERS[1:cond_types], columns, replace=TRUE)
+    m <- t(sapply(seq_len(ngenes),
+                  function(i) sapply(1:columns,
+                                     function(j) rnbinom(1,
+                                                         mu = true_sf[j] * ifelse(conds[j] == "A",
+                                                                                  q0A[i], q0B[i]),
+                                                         size = 1/0.2))))
+    rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
+    example <- DESeq::newCountDataSet(m, conds)
+    return(example)
+}
+
 #' Create a data frame of the medians of rows by a given factor in the data.
 #'
 #' This assumes of course that (like expressionsets) there are separate columns for each replicate
