@@ -25,9 +25,9 @@ addons:
     packages:
       - r-recommended
 
-##before_install:
-##  - sudo apt-get -qq update
-##  - sudo apt-get -y install $(apt-cache search r-bioc | awk '{print $1}' | grep -v "ebimage")
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get -y install $(apt-cache search r-bioc | awk '{print $1}' | grep -v "ebimage")
 
 script:
   - make install
