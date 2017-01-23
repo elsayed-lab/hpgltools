@@ -148,7 +148,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
 #' }
 #' @export
 xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
-                          plotname="plot", savedir="saved_plots",
+                          plotname="plot", savedir="saved_plots", fancy_type="pdf",
                           start_row=1, start_col=1, file_type="png", units="in", ...) {
     arglist <- list(...)
     if (!is.null(arglist[["doWeights"]])) {
@@ -163,14 +163,26 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     } else if (class(wb)[[1]] != "Workbook") {
         stop("A workbook was passed to this, but the format is not understood.")
     }
-    high_quality <- paste0(savedir, "/", plotname, ".pdf")
-    pdf_print_ret <- png_print_ret <- NULL
+    high_quality <- paste0(savedir, "/", plotname, ".", fancy_type)
+    fancy_print_ret <- png_print_ret <- NULL
     if (!is.null(savedir)) {
         if (!file.exists(savedir)) {
             dir.create(savedir, recursive=TRUE)
         }
         high_quality <- paste0(savedir, "/", sheet, "_", plotname, ".pdf")
-        pdf_ret <- try(pdf(file=high_quality))
+        if (fancy_type == "pdf") {
+            fancy_ret <- try(pdf(file=high_quality))
+        } else if (fancy_type == "ps") {
+            fancy_ret <- try(ps(file=high_quality))
+        } else if (fancy_type == "svg") {
+            fancy_ret <- try(svg(file=high_quality))
+        } else if (fancy_type == "emf") {
+            fancy_ret <- try(devEMF(file=high_quality))
+        } else {  ## Default to pdf
+            high_quality_renamed <- gsub(pattern="\\..*$", replacement="\\.pdf", x=high_quality)
+            fancy_ret <- try(pdf(file=high_quality_renamed))
+        }
+
         ## I do not understand why some images are plot()ed while others
         ## seem to need to be print()ed.  Adding a try to attempt
         ## to work around this concern.

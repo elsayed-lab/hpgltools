@@ -924,6 +924,82 @@ do_pairwise <- function(type, ...) {
     return(res)
 }
 
+get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE, least=FALSE) {
+    if (is.null(z) & is.null(n)) {
+        n <- 100
+    }
+
+    ## Extract the coefficent df
+    if (type == "edger") {
+        ## In this case of edger, this can be a little tricky.
+        ## I should probably therefore improve the returns from edger_pairwise()
+        coefficient_df <- datum[["lrt"]][[1]][["coefficients"]]
+        if (max(coefficient_df) <= 0) {
+            coefficient_df <- coefficient_df * -1.0
+        }
+        ## There are a couple of extraneous columns in this table.
+        removers <- c("b","z")
+        keepers <- !(colnames(coefficient_df) %in% removers)
+        coefficient_df <- coefficient_df[, keepers]
+    } else if (type == "limma") {
+        coefficient_df <- datum[["pairwise_comparisons"]][["coefficients"]]
+        all_coefficients <- colnames(coefficient_df)
+        keepers <- !grepl(pattern="_vs_", x=all_coefficients)
+        coefficient_df <- coefficient_df[, keepers]
+    } else if (type == "deseq") {
+        coefficient_df <- NULL
+        coef_names <- names(datum[["coefficients"]])
+        coef_rows <- rownames(datum[["coefficients"]][[1]])
+        coef_list <- NULL
+        for (contrast_num in 1:length(coef_names)) {
+            name <- coef_names[[contrast_num]]
+            tmpdf <- datum[["coefficients"]][[name]]
+            tmpdf[["new"]] <- log2(as.numeric(tmpdf[["baseMean"]])) + tmpdf[["log2FoldChange"]]
+            if (contrast_num == 1) {
+                coefficient_df <- as.data.frame(tmpdf[["new"]])
+                coefficient_df <- as.matrix(coefficient_df)
+            } else {
+                coefficient_df <- cbind(coefficient_df, tmpdf[["new"]])
+            }
+        }
+        coefficient_df <- as.data.frame(coefficient_df)
+        colnames(coefficient_df) <- coef_names
+        rownames(coefficient_df) <- coef_rows
+    } else if (type == "basic") {
+        coefficient_df <- datum[["medians"]]
+    }
+
+    abundant_list <- list()
+    coefficient_df <- as.data.frame(coefficient_df)
+    coefficients <- colnames(coefficient_df)
+    coefficient_rows <- rownames(coefficient_df)
+    coef_ordered <- NULL
+    for (coef in coefficients) {
+        if (isTRUE(least)) {
+            coef_ordered <- coefficient_df[order(coefficient_df[[coef]], decreasing=FALSE), ][[coef]]
+        } else {
+            coef_ordered <- coefficient_df[order(coefficient_df[[coef]], decreasing=TRUE), ][[coef]]
+        }
+        names(coef_ordered) <- coefficient_rows
+        kept_rows <- NULL
+        if (is.null(n)) {  ## Then do it on a z-score
+            tmp_summary <- summary(coef_ordered)
+            tmp_mad <- stats::mad(as.numeric(coef_ordered, na.rm=TRUE))
+            tmp_up_median_dist <- tmp_summary["Median"] + (tmp_mad * z)
+            tmp_down_median_dist <- tmp_summary["Median"] - (tmp_mad * z)
+            if (isTRUE(least)) {
+                kept_rows <- coef_ordered[coef_ordered <= tmp_down_median_dist]
+            } else {
+                kept_rows <- coef_ordered[coef_ordered >= tmp_up_median_dist]
+            }
+            abundant_list[[coef]] <- kept_rows
+        } else {  ## Then do it in a number of rows
+            abundant_list[[coef]] <- head(coef_ordered, n=n)
+        }
+    }
+    return(abundant_list)
+}
+
 #' Get a set of up/down differentially expressed genes.
 #'
 #' Take one or more criteria (fold change, rank order, (adj)p-value,
@@ -1172,8 +1248,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 #'  semantic strings for removal.
 #' @return Smaller list of up/down genes.
 #' @export
-semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
-                                       semantic=c('mucin','sialidase','RHS','MASP','DGF','GP63'),
+semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, invert=FALSE,
+                                       semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
                                        semantic_column='1.tooltip') {
     removed_up <- list()
     removed_down <- list()
@@ -1205,7 +1281,7 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
                 file <- paste0("singletons/gene_counts/up_", table_name, ".fasta.out.count")
             }
             tmpdf <- try(read.table(file), silent=TRUE)
-            if (class(tmpdf) == 'data.frame') {
+            if (class(tmpdf) == "data.frame") {
                 colnames(tmpdf) = c("ID", "members")
                 tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
                 rownames(tab) <- tab[["Row.names"]]
@@ -1213,44 +1289,66 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
                 tab <- tab[count <= max_copies, ]
             }
         }  ## End using empirically defined groups of multi-gene families.
+
+        tab_list <- tmp_tab <- NULL
         for (string in semantic) {
-            idx <- grep(pattern=string, x=tab[, semantic_column])
+            idx <- grep(pattern=string, x=tab[, semantic_column], invert=invert)
             num_removed <- length(idx)
             removed[[table_name]][[string]] <- num_removed
             if (num_removed > 0) {
-                tab <- tab[-idx, ]
-                message(paste0("Removing entries with string ", string,
-                               ", found ", num_removed, "; table has ", nrow(tab),  " rows left."))
+                tmp_tab <- tab[-idx, ]
+                type <- "Removed"
+                if (isTRUE(invert)) {
+                    type <- "Kept"
+                    tab_list[[string]] <- tmp_tab
+                }
+                message(paste0(type, " entries with string ", string,
+                               ", found ", num_removed, "; table has ",
+                               nrow(tmp_tab),  " rows left."))
             } else {
                 message("Found no entries of type ", string, ".")
             }
         }
         if (table_type == "combined") {
-            de_list[["data"]][[count]] <- tab
+            if (isTRUE(invert)) {
+                de_list[["data"]][[count]] <- tab_list
+            } else {
+                de_list[["data"]][[count]] <- tab
+            }
         } else {
             if (count <= up_to_down) {
-                de_list[["ups"]][[count]] <- tab
+                if (isTRUE(invert)) {
+                    de_list[["ups"]][[count]] <- tab_list
+                } else {
+                    de_list[["ups"]][[count]] <- tab
+                }
             } else {
-                de_list[["downs"]][[count]] <- tab
+                if (isTRUE(invert)) {
+                    de_list[["downs"]][[count]] <- tab_list
+                } else {
+                    de_list[["downs"]][[count]] <- tab
+                }
             }
         }
     }
-    if (table_type == "significance") {
-        new_removed <- list()
-        for (count in 1:length(removed)) {
-            old_name <- names(removed)[[count]]
-            new_name <- NULL
-            if (count <= up_to_down) {
-                new_name <- paste0("up_", old_name)
-            } else {
-                new_name <- paste0("down_", old_name)
+    if (!isTRUE(invert)) {
+        if (table_type == "significance") {
+            new_removed <- list()
+            for (count in 1:length(removed)) {
+                old_name <- names(removed)[[count]]
+                new_name <- NULL
+                if (count <= up_to_down) {
+                    new_name <- paste0("up_", old_name)
+                } else {
+                    new_name <- paste0("down_", old_name)
+                }
+                new_removed[[new_name]] <- removed[[old_name]]
             }
-            new_removed[[new_name]] <- removed[[old_name]]
+            removed <- new_removed
+            rm(new_removed)
         }
-        removed <- new_removed
-        rm(new_removed)
+        de_list[["removed"]] <- removed
     }
-    de_list[["removed"]] <- removed
     return(de_list)
 }
 

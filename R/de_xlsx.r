@@ -751,6 +751,76 @@ create_combined_table <- function(li, ed, de, ba,
     return(ret)
 }
 
+#' Extract the sets of genes which are significantly more abundant than the rest.
+#'
+#' Given the output of something_pairwise(), pull out the genes for each contrast
+#' which are the most/least abundant.  This is in contrast to extract_significant_genes().
+#' That function seeks out the most changed, statistically significant genes.
+#'
+#' @param combined  Output from combine_de_tables().
+#' @param according_to  What tool(s) define 'most?'  One may use deseq, edger, limma, basic, all.
+#' @param n  How many genes to pull?
+#' @param z  Instead take the distribution of abundances and pull those past the given z score.
+#' @param unique  One might want the subset of unique genes in the top-n which are unique in the set
+#'   of available conditions.  This will attempt to provide that.
+#' @param least  Instead of the most abundant, do the least.
+#' @param excel  Excel file to write.
+#' @return  The set of most/least abundant genes by contrast/tool.
+#' @export
+extract_abundant_genes <- function(pairwise, according_to="all", n=100, z=NULL, unique=FALSE,
+                                   least=FALSE, excel="excel/abundant_genes.xlsx") {
+    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+    abundant_lists <- list()
+    final_list <- list()
+
+    data <- NULL
+    if (according_to == "all") {
+        according_to <- c("limma", "deseq", "edger", "basic")
+    }
+
+    for (type in according_to) {
+        datum <- pairwise[[type]]
+        abundant_lists[[type]] <- get_abundant_genes(datum, type=type, n=n, z=z,
+                                                     unique=unique, least=least)
+    }
+
+    wb <- NULL
+    excel_basename <- NULL
+    if (class(excel) == "character") {
+        message("Writing a legend of columns.")
+        excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+        wb <- openxlsx::createWorkbook(creator="hpgltools")
+        legend <- data.frame(rbind(
+            c("The first ~3-10 columns of each sheet:", "are annotations provided by our chosen annotation source for this experiment."),
+            c("Next column", "The most/least abundant genes.")))
+        colnames(legend) <- c("column name", "column definition")
+        xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+                                title="Columns used in the following tables.")
+    }
+
+    ## Now make the excel sheet for each method/coefficient
+    for (according in names(abundant_lists)) {
+        for (coef in names(abundant_lists[[according]])) {
+            sheetname <- paste0(according, "_", coef)
+            annotations <- Biobase::fData(pairwise[["input"]][["expressionset"]])
+            abundances <- abundant_lists[[according]][[coef]]
+            kept_annotations <- names(abundant_lists[[according]][[coef]])
+            kept_idx <- rownames(annotations) %in% kept_annotations
+            kept_annotations <- annotations[kept_idx, ]
+            kept_annotations <- cbind(kept_annotations, abundances)
+            final_list[[according]][[coef]] <- kept_annotations
+            title <- paste0("Table SXXX: Abundant genes in ", coef, " according to ", according, ".")
+            xls_result <- write_xls(data=kept_annotations, wb=wb, sheet=sheetname, title=title)
+        }
+    }
+
+    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+    ret <- list(
+        "with_annotations" = final_list,
+        "abundances" = abundant_lists)
+    return(ret)
+}
+
 #' Alias for extract_significant_genes because I am dumb.
 #'
 #' @param ... The parameters for extract_significant_genes()
