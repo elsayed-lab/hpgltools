@@ -33,7 +33,8 @@ bioc_all <- function(release="3.4", mirror="bioc.ism.ac.jp", base="packages", ty
     ## experiment_names <- strsplit(x=pkg_names[[3]], split=",")[[1]]
     ## It appears that with bioconductor release 3.4, experiment has been folded into annotation.
     installed <- list(succeeded=c(), failed=c(), already=c())
-    attempt <- function(pkg, update=suppress_updates, auto=suppress_auto, forceme=force, state=list(succeeded=c(), failed=c(), already=c())) {
+    attempt <- function(pkg, update=suppress_updates, auto=suppress_auto, forceme=force,
+                        state=list(succeeded=c(), failed=c(), already=c())) {
         sleep <- 10
         suc <- state[["succeeded"]]
         fail <- state[["failed"]]
@@ -54,7 +55,7 @@ bioc_all <- function(release="3.4", mirror="bioc.ism.ac.jp", base="packages", ty
                 alr <- append(alr, pkg)
                 sleep <- 0
             } else {
-                installedp <- sm(try(BiocInstaller::biocLite(pkg, ask=FALSE,
+                installedp <- try(sm(BiocInstaller::biocLite(pkg, ask=FALSE,
                                                              suppressUpdates=update,
                                                              suppressAutoUpdate=auto)))
                 if (class(installedp) == "try-error") {

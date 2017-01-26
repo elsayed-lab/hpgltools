@@ -169,7 +169,11 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
         if (!file.exists(savedir)) {
             dir.create(savedir, recursive=TRUE)
         }
+<<<<<<< HEAD
         high_quality <- paste0(savedir, "/", sheet, "_", plotname, ".", fancy_type)
+=======
+        high_quality <- paste0(savedir, "/", sheet, "_", plotname, ".pdf")
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
         if (fancy_type == "pdf") {
             fancy_ret <- try(pdf(file=high_quality))
         } else if (fancy_type == "ps") {

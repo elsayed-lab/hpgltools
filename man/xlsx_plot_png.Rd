@@ -5,9 +5,14 @@
 \title{An attempt to improve the behaivor of openxlsx's plot inserter.}
 \usage{
 xlsx_plot_png(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
+<<<<<<< HEAD
   res = 90, plotname = "plot", savedir = "saved_plots",
   fancy_type = "pdf", start_row = 1, start_col = 1, file_type = "png",
   units = "in", ...)
+=======
+  res = 90, plotname = "plot", savedir = "saved_plots", start_row = 1,
+  start_col = 1, file_type = "png", units = "in", ...)
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
 }
 \arguments{
 \item{a_plot}{The plot provided}

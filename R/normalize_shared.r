@@ -131,6 +131,10 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
         new_expt[["original_expressionset"]] = new_expt[["expressionset"]]
     }
 
+<<<<<<< HEAD
+=======
+    message("This function will replace the expt$expressionset slot with:")
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     operations <- what_happened(transform=transform, batch=batch, convert=convert, norm=norm, filter=filter)
     message(operations)
     message("It backs up the current data into a slot named:

@@ -25,7 +25,7 @@ simple_gadem <- function(inputfile, genome="BSgenome.Hsapiens.UCSC.hs19", ...) {
         stop(paste0("Unable to interpret files of type: ", ext))
     }
 
-    gadem_and_prints <- s_p(rGADEM::GADEM(sequences, verbose=1, pValue=0.05, eValue=10, genome=genome))
+    gadem_and_prints <- sm(rGADEM::GADEM(sequences, verbose=1, pValue=0.05, eValue=10, genome=genome))
     gadem_result <- gadem_and_prints[["result"]]
     gadem_occurences <- rGADEM::nOccurrences(gadem_result)
     gadem_consensus <- rGADEM::consensus(gadem_occurences)

@@ -1,8 +1,8 @@
 Package: hpgltools
 Type: Package
 Title: A pile of (hopefully) useful R functions
-Version: 2016.02
-Date: 2016-02-01
+Version: 2017.01
+Date: 2017-01-12
 Author: Ashton Trey Belew, Keith Hughitt
 Authors@R: c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre")),
              person("Keith", "Hughitt", email="khughitt@umd.edu", role=c("aut")))
@@ -16,7 +16,7 @@ Description: This is a set of functions I have been using in my various
 License: GPL-2 | file LICENSE
 Suggests:
     ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub, BiocGenerics, BiocInstaller, Biostrings,
-    biomaRt, Category, clusterProfiler, corpcor, corrplot, data.table, DBI, DESeq2, DESeq, devtools,
+    biomaRt, Category, clusterProfiler, corpcor, corrplot, DBI, DESeq2, DESeq, devtools,
     directlabels, dplyr, doParallel, DOSE, EDASeq, edgeR, ffpe, fission, genbankr, genefilter,
     genomeIntervals, GenomeInfoDb, GenomicFeatures, genoPlotR, GenomicRanges, ggdendro, ggrepel,
     GO.db, googleVis, goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools, gridExtra, hash,
@@ -28,6 +28,6 @@ Suggests:
     statmod, stringi, stringr, survJamda, sva, taxize, testthat, topGO, variancePartition, xtable,
     XVector
 Imports:
-    Biobase, knitr, ggplot2, magrittr, methods, foreach
+    Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

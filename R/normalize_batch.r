@@ -69,6 +69,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
     if (!is.null(arglist[["low_to_zero"]])) {
         low_to_zero <- arglist[["low_to_zero"]]
     }
+<<<<<<< HEAD
 
     ## Use this to pass along the state of the expt with respect to normalization.
     ## This way, we can avoid double-normalizing the data when using ruvg or limmaresid etc.
@@ -79,6 +80,9 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
     }
 
     cpus <- 4
+=======
+    cpus <- 6
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     if (!is.null(arglist[["cpus"]])) {
         cpus <- arglist[["cpus"]]
     }
@@ -133,8 +137,12 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
         ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches,
         ##                                  mod=conditions, noScale=noscale, ...)
         message("batch_counts: Using a modified cbcbSEQ combatMod for batch correction.")
+<<<<<<< HEAD
         count_table <- hpgl_combatMod(dat=data.frame(count_table), batch=batches,
                                       mod=conditions, noScale=noscale, ...)
+=======
+        count_table <- hpgl_combatMod(dat=data.frame(count_table), batch=batches, mod=conditions, noScale=noscale, ...)
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     } else if (batch == "fsva") {
         message("batch_counts: Using sva::fsva for batch correction.")
         df <- data.frame(count_table)
@@ -152,9 +160,19 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
         sva_object <- sm(sva::sva(mtrx, conditional_model, null_model, n.sv=num_surrogates))
         ## mod_sv = cbind(conditional_model, sva_object$sv)
         fsva_result <- sm(sva::fsva(mtrx, conditional_model, sva_object, newdat=mtrx, method="exact"))
+<<<<<<< HEAD
+=======
+        ## new_expt$conditional_model = conditional_model
+        ## new_expt$null_model = null_model
+        ## new_expt$num_surrogates = num_surrogates
+        ## new_expt$sva_object = sva_object
+        ## new_expt$mod_sv = mod_sv
+        ## new_expt$fsva_result = fsva_result
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
         count_table <- fsva_result[["db"]]
-    } else if (batch == "combat") {
+    } else if (batch == "combat" | batch == "combat_noscale") {
         message("batch_counts: Using sva::combat with a prior for batch correction and no scaling.")
+<<<<<<< HEAD
         count_table <- sm(sva::ComBat(count_table, batches, mod=NULL,
                                       par.prior=TRUE, prior.plots=TRUE, mean.only=TRUE))
     } else if (batch == "combat_noprior") {
@@ -170,6 +188,19 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
         count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
                                       par.prior=FALSE, prior.plots=TRUE, mean.only=FALSE))
     } else if (batch == "svaseq") {
+=======
+        count_table <- sm(sva::ComBat(count_table, batches, mod=NULL, par.prior=TRUE, prior.plots=TRUE, mean.only=TRUE))
+    } else if (batch == "combat_noprior") {
+        message("batch_counts: Using sva::combat without a prior for batch correction and no scaling.")
+        count_table <- sm(sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=FALSE, mean.only=TRUE))
+    } else if (batch == "combat_scale") {
+        message("batch_counts: Using sva::combat with a prior for batch correction and with scaling.")
+        count_table <- sm(sva::ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE, mean.only=FALSE))
+    } else if (batch == "combat_noprior_scale") {
+        message("batch_counts: Using sva::combat without a prior for batch correction and with scaling.")
+        count_table <- sm(sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=TRUE, mean.only=FALSE))
+    } else if (batch == "svaseq_counts") {
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
         message("batch_counts: Using sva::svaseq for batch correction.")
         message("Note to self:  If you feed svaseq a data frame you will get an error like:")
         message("data %*% (Id - mod %*% blah blah requires numeric/complex arguments.")
@@ -179,6 +210,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
         null_model <- conditional_model[, 1]
         num_surrogates <- sm(sva::num.sv(mtrx, conditional_model))
         svaseq_result <- sm(sva::svaseq(mtrx, conditional_model, null_model, n.sv=num_surrogates))
+<<<<<<< HEAD
         count_table <- counts_from_surrogates(mtrx, svaseq_result[["sv"]], design=design)
         ## A recent error in the code might be attributable here, but I do not think so.
         ## Testing with mouse exosome data tells me that the error is 99% not here.
@@ -189,6 +221,10 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
         ## beta <- (Hat %*% t(mtrx))
         ## P <- ncol(conditional_model)
         ## count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
+=======
+        ## Replacing this with the function counts_from_surrogates, but leaving it here for now.
+        count_table <- counts_from_surrogates(mtrx, svaseq_result[["sv"]], design=design)
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     } else if (batch == "varpart") {
         message("Taking residuals from a linear mixed model as suggested by the variancePartition package.")
         cl <- parallel::makeCluster(cpus)
@@ -200,7 +236,11 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
         rm(batch_fit)
         parallel::stopCluster(cl)
     } else if (batch == "ruvg") {
+<<<<<<< HEAD
         message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.)")
+=======
+        message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals).")
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
         df <- as.data.frame(count_table)
         mtrx <- as.matrix(count_table)
@@ -231,11 +271,16 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
         ruv_result <- RUVSeq::RUVg(mtrx, ruv_controls, k=chosen_surrogates)
         count_table <- ruv_result[["normalizedCounts"]]
     } else {
+<<<<<<< HEAD
         ## message("Did not recognize the batch correction, leaving the table alone.")
         ## message("Recognized batch corrections include: 'limma', 'combatmod', 'sva',")
         ## message("limmaresid, combat_noprior, combat, svaseq, and ruvg.")
         message("Passing the batch method to get_model_adjust().")
         message("It understands a few additional batch methods.")
+=======
+        message("Passing the batch method to get_model_adjust().")
+        message("It currently understands: 'sva_(un)supervised', 'ruv_empirical', 'svaseq', 'pca', 'ruv_supervised', and 'ruv_residuals'.")
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
         surrogate_result <- try(get_model_adjust(count_table, design, estimate_type=batch, ...))
         if (class(surrogate_result) != "try-error") {
             count_table <- surrogate_result[["new_counts"]]
@@ -265,11 +310,16 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
 #' @return A data frame of adjusted counts.
 #' @export
 counts_from_surrogates <- function(data, adjust, design=NULL) {
+<<<<<<< HEAD
     data_mtrx <- NULL
+=======
+    base10_mtrx <- NULL
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     my_design <- NULL
     if (class(data) == "expt") {
         my_design <- Biobase::pData(data[["expressionset"]])
         conditions <- droplevels(as.factor(Biobase::pData(data[["expressionset"]])[["condition"]]))
+<<<<<<< HEAD
         data_mtrx <- Biobase::exprs(data[["expressionset"]])
     } else if (class(data) == "ExpressionSet") {
         my_design <- Biobase::pData(data)
@@ -279,12 +329,26 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
         my_design <- design
         conditions <- droplevels(as.factor(design[["condition"]]))
         data_mtrx <- as.matrix(data)
+=======
+        base10_mtrx <- Biobase::exprs(data[["expressionset"]])
+    } else if (class(data) == "ExpressionSet") {
+        my_design <- Biobase::pData(data)
+        conditions <- droplevels(as.factor(Biobase::pData(data)[["condition"]]))
+        base10_mtrx <- Biobase::exprs(data)
+    } else {
+        my_design <- design
+        conditions <- droplevels(as.factor(design[["condition"]]))
+        base10_mtrx <- as.matrix(data)
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     }
     conditional_model <- model.matrix(~ conditions, data=my_design)
 
     new_model <- conditional_model
     ## Explicitly append columns of the adjust matrix to the conditional model.
+<<<<<<< HEAD
     ## In the previous code, this was: 'X <- cbind(conditional_model, sva$sv)'
+=======
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     ## new_model <- cbind(conditional_model, adjust)
     new_colnames <- colnames(conditional_model)
     for (col in 1:ncol(adjust)) {
@@ -295,12 +359,16 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
     colnames(new_model) <- new_colnames
 
     ##data_modifier <- try(solve(t(new_model) %*% new_model) %*% t(new_model))
+<<<<<<< HEAD
     ## In the previous code, this was: 'Hat <- solve(t(X) %*% X) %*% t(X)'
     ## Now it is in two separate lines, first the solve operation:
+=======
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     data_solve <- try(solve(t(new_model) %*% new_model), silent=TRUE)
     if (class(data_solve) == "try-error") {
         message("Data modification by the model failed.")
         message("Leaving counts untouched.")
+<<<<<<< HEAD
         return(data_mtrx)
     }
     ## If the solve operation passes, then the '%*% t(X)' is allowed to happen.
@@ -308,6 +376,14 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
     transformation <- (data_modifier %*% t(data_mtrx))
     conds <- ncol(conditional_model)
     new_counts <- data_mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*%
+=======
+        return(base10_mtrx)
+    }
+    data_modifier <- data_solve %*% t(new_model)
+    transformation <- (data_modifier %*% t(base10_mtrx))
+    conds <- ncol(conditional_model)
+    new_counts <- base10_mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*%
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
                                   transformation[-c(1:conds), ])
     return(new_counts)
 }

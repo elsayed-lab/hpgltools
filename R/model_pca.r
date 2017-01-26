@@ -77,13 +77,21 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' }
 #' @export
 plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
+<<<<<<< HEAD
                      plot_title=NULL, plot_size=5, size_column=NULL, ...) {
+=======
+                     plot_title=TRUE, plot_size=5, size_column=NULL, ...) {
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     ## I have been using hpgl_env for keeping aes() from getting contaminated.
     ## I think that this is no longer needed because I have been smater(sic) about how
     ## I invoke aes_string() and ggplot2()
     hpgl_env <- environment()
     arglist <- list(...)
     plot_names <- arglist[["plot_names"]]
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     ## Set default columns in the experimental design for condition and batch
     ## changing these may be used to query other experimental factors with pca.
     cond_column <- "condition"
@@ -159,8 +167,13 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         plot_names <- design[["name"]]
     }
 
+<<<<<<< HEAD
     ## Different folks like different labels.  I prefer hpglxxxx, but others have asked for
     ## condition_batch; this handles that as eloquently as I am able.
+=======
+    ## Different folks like different labels.  I prefer hpglxxxx, but others have asked for condition_batch
+    ## This handles that as eloquently as I am able.
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     label_list <- NULL
     if (is.null(arglist[["label_list"]]) & is.null(plot_names)) {
         label_list <- design[["sampleid"]]
@@ -172,6 +185,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         label_list <- paste0(design[["sampleid"]], "_", design[[cond_column]])
     }
 
+<<<<<<< HEAD
     svd_result <- corpcor::fast.svd(as.matrix(data) - rowMeans(as.matrix(data)))
     v_vector <- svd_result[["v"]]
     rownames(v_vector) <- colnames(data)
@@ -179,6 +193,13 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     ##pca <- makeSVD(data)
     ## Pull out the batches and conditions used in this plot.
     ## Probably could have just used xxx[stuff, drop=TRUE]
+=======
+    ## I think the makeSVD function is kind of dumb.  It calls fast.svd() and gives me back the pieces.
+    ## But I keep this function call as a reminder that Kwame (who wrote our initial pca plotter) was a nice guy.
+    ## Also, keep in mind that this is a fast.svd of the (matrix - rowmeans(matrix))
+    pca <- makeSVD(data)
+    ## Pull out the batches and conditions used in this plot.  Probably could have just used xxx[stuff, drop=TRUE]
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     included_batches <- as.factor(as.character(design[[batch_column]]))
     included_conditions <- as.factor(as.character(design[[cond_column]]))
 
@@ -191,17 +212,26 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]], batch=design[, batch_column])
     } else if (length(levels(included_batches)) == 1) {
         message("There is just one batch in this data.")
+<<<<<<< HEAD
         pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]],
                          condition=design[, cond_column])
+=======
+        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, cond_column])
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     } else {
         pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]],
                          condition=design[, cond_column], batch=design[, batch_column])
     }
 
     ## By a similar token, get the percentage of variance accounted for in each PC
+<<<<<<< HEAD
     pca_variance <- round((svd_result[["d"]] ^ 2) / sum(svd_result[["d"]] ^ 2) * 100, 2)
     ## These will provide metrics on the x/y axes showing the amount of variance on those
     ## components of our plot.
+=======
+    pca_variance <- round((pca[["d"]] ^ 2) / sum(pca[["d"]] ^ 2) * 100, 2)
+    ## These will provide metrics on the x/y axes showing the amount of variance on those components of our plot.
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
 
@@ -228,7 +258,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
                          design=design, plot_labels=plot_labels,
                          plot_size=plot_size, size_column=size_column, ...)
 
-    ## These should be moved into plot_pcs
+    ## The following are some pretty-ifiers for the plot, they should be moved into plot_pcs
     pca_plot <- pca_plot +
         ggplot2::xlab(xl) +
         ggplot2::ylab(yl) +
@@ -243,8 +273,14 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     } else if (!is.null(plot_title)) {
         data_title <- what_happened(expt=expt)
         plot_title <- paste0(plot_title, "; ", data_title)
+<<<<<<< HEAD
     } else {
         ## Leave the title blank.
+=======
+        pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
+    } else {
+        ## Leave the title blank
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     }
 
     ## Finally, return a list of the interesting bits of what happened.
@@ -309,8 +345,12 @@ factor_rsquared <- function(svd_v, fact, type="factor") {
 #' }
 #' @export
 plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
+<<<<<<< HEAD
                      design=NULL, plot_title=TRUE, plot_labels=NULL,
                      plot_size=5, size_column=NULL, ...) {
+=======
+                     design=NULL, plot_title=TRUE, plot_labels=NULL, plot_size=5, size_column=NULL, ...) {
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     arglist <- list(...)
     hpgl_env <- environment()
     batches <- pca_data[["batch"]]

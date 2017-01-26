@@ -1,3 +1,10 @@
+#' Add a new snp table to a set of comparisons for clustering.
+#'
+#' This is used by expt_snp to read input files and relatively quickly merge them.
+#'
+#' @param sample A text snp summary for 1 sample.
+#' @param input_dir  Location of the data.
+#' @param file_suffix  Suffix to use when finding the file(s).
 snp_add_file <- function(sample, input_dir="preprocessing/outputs", file_suffix="_parsed_ratio.txt") {
     tmp_dt <- as.data.table(read.table(paste0(input_dir, "/", sample, file_suffix)))
     rownames(tmp_dt) <- tmp_dt[["V1"]]
@@ -15,6 +22,10 @@ snp_add_file <- function(sample, input_dir="preprocessing/outputs", file_suffix=
 #' make it testable etc.
 #'
 #' @param expt an expressionset from which to extract information.
+#' @param input_dir  Directory to scan for snps output files.
+#' @param file_suffix  What to add on the end of the files for the resulting output.
+#' @param bam_suffix  How do we find the bam files?
+#' @param tolower  Lowercase stuff like 'HPGL'?
 #' @return some stuff
 #' @export
 expt_snp <- function(expt,
@@ -22,7 +33,6 @@ expt_snp <- function(expt,
                      file_suffix="_parsed_ratio.txt",
                      bam_suffix="_accepted_paired.bam",
                      tolower=TRUE) {
-    expt <- parasite_expt
     samples <- rownames(Biobase::pData(expt$expressionset))
     if (isTRUE(tolower)) {
         samples <- tolower(samples)
@@ -51,7 +61,7 @@ expt_snp <- function(expt,
         }
         return(filenames)
     }
-    pileup_files <- file_list(samples)
+    pileup_files <- snp_file_list(samples)
 
     pileup_info <- Rsamtools::PileupFiles(pileup_files)
     ## Taken directly from the Rsamtools manual
@@ -100,5 +110,6 @@ expt_snp <- function(expt,
     }
     new_dt <- as.data.table(new_dt)
     new_dt[["rownames"]] <- snp_dt[["rownames"]]
-
 }
+
+## EOF

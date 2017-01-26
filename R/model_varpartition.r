@@ -1,15 +1,40 @@
-#' Use variancePartition to gather some plots about a troubling dataset
+#' A shortcut for replotting the percent plots from variancePartition.
 #'
-#' variancePartition is the newest toy introduced by Hector
+#' In case I wish to look at different numbers of genes from variancePartition and/or
+#' different columns to sort from.
+#'
+#' @param varpart_output  List returned by varpart()
+#' @param n  How many genes to plot.
+#' @param column  The df column to use for sorting.
+#' @param decreasing  high->low or vice versa?
+#' @export
+replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing=TRUE) {
+    sorted <- varpart_output[["sorted_df"]]
+    if (!is.null(column)) {
+        if (column %in% colnames(sorted)) {
+            sorted <- sorted[ order(sorted[[column]], decreasing=decreasing), ]
+        } else {
+            message(paste0("The column ", column, "is not in the sorted data frame returned by varpart()."))
+            message("Leaving the data frame alone.")
+        }
+    }
+    new_plot <- variancePartition::plotPercentBars(sorted[1:n, ])
+    return(new_plot)
+}
+
+#' Use variancePartition to try and understand where the variance lies in a data set.
+#'
+#' variancePartition is the newest toy introduced by Hector.
 #'
 #' @param expt  Some data
 #' @param predictor  Non-categorical predictor factor with which to begin the model.
 #' @param factors  Character list of columns in the experiment design to query
 #' @param cpus  Number cpus to use
-#' @param genes Number of genes to count
+#' @param genes  Number of genes to count.
+#' @param parallel  use doParallel?
 #' @return partitions  List of plots and variance data frames
 #' @export
-varpart <- function(expt, predictor="condition", factors=c("batch"), cpus=6, genes=20, parallel=TRUE) {
+varpart <- function(expt, predictor="condition", factors=c("batch"), cpus=6, genes=40, parallel=TRUE) {
     cl <- NULL
     if (isTRUE(parallel)) {
         cl <- parallel::makeCluster(cpus)  ## I am keeping 2 processors to myself, piss off, R.
@@ -37,10 +62,11 @@ varpart <- function(expt, predictor="condition", factors=c("batch"), cpus=6, gen
         stop("An error like 'vtv downdated' may be because there are too many 0s, try and filter the data and rerun.")
     }
     my_sorted <- variancePartition::sortCols(my_extract)
+    my_sorted <- my_sorted[ order(my_sorted[["condition"]], decreasing=TRUE), ]
     percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
     partition_plot <- variancePartition::plotVarPart(my_sorted)
     if (isTRUE(parallel)) {
-        parallel::stopCluster(cl)
+        tt <- sm(parallel::stopCluster(cl))
     }
     ret <- list(
         "model_used" = my_model,
@@ -51,9 +77,16 @@ varpart <- function(expt, predictor="condition", factors=c("batch"), cpus=6, gen
     return(ret)
 }
 
-
+#' Attempt to use variancePartition's fitVarPartModel() function.
+#'
+#' Note the word 'attempt'.  This function is so ungodly slow that it probably will never be used.
+#'
+#' @param expt  Input expressionset.
+#' @param factors  Set of factors to query
+#' @param cpus  Number of cpus to use in doParallel.
+#' @return  Summaries of the new model,  in theory this would be a nicely batch-corrected data set.
 varpart_summaries <- function(expt, factors=c("condition","batch"), cpus=6) {
-    cl <- parallel::makeCluster(cpus)  ## I am keeping 2 processors to myself, piss off, R.
+    cl <- parallel::makeCluster(cpus)
     doParallel::registerDoParallel(cl)
     model_string <- paste0("~ ")
     for (fact in factors) {

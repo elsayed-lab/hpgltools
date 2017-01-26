@@ -454,7 +454,11 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     pca_plot <- metrics[["pcaplot"]]
     try_result <- xlsx_plot_png(pca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
+<<<<<<< HEAD
                                 plotname="pcaplot", savedir=excel_basename, fancy_type="svg")
+=======
+                                plotname="pcaplot", savedir=excel_basename)
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     tmp_data <- sm(normalize_expt(expt, transform="log2", convert="cpm"))
     rspca_plot <- plot_pca(tmp_data)[["plot"]]
     rm(tmp_data)
@@ -623,7 +627,11 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(npca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
+<<<<<<< HEAD
                                 plotname="npcaplot", savedir=excel_basename, fancy_type="svg")
+=======
+                                plotname="npcaplot", savedir=excel_basename)
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
 
     nqq_plot <- norm_metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
@@ -643,7 +651,11 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
             new_col <- 1
             try_result <- xlsx_plot_png(nvarpart_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
+<<<<<<< HEAD
                                         plotname="nviolin", savedir=excel_basename)
+=======
+                                        plotname="nqqplot", savedir=excel_basename)
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
             new_col <- new_col + plot_cols + 1
             npct_plot <- varpart_norm[["percent_plot"]]
             try_result <- xlsx_plot_png(npct_plot, wb=wb, sheet=sheet, width=plot_dim,

@@ -75,6 +75,10 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     if (!is.null(arglist[["round"]])) {
         round <- arglist[["round"]]
     }
+    round <- FALSE
+    if (!is.null(arglist[["round"]])) {
+        round <- arglist[["round"]]
+    }
 
     ## Read in the metadata from the provided data frame, csv, or xlsx.
     sample_definitions <- data.frame()
@@ -120,6 +124,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     if (length(empty_samples) > 0) {
         sample_definitions <- sample_definitions[-empty_samples, ]
     }
+<<<<<<< HEAD
     ## The folks at Biobase, have changed new("AnnotatedDataFrame") so that if a column has
     ## the same information as the rownames(), then one gets the following error:
     ## new("AnnotatedDataFrame", ttt), which is utter BS.
@@ -128,6 +133,13 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## I can therefore either remove the sampleid column or change it in some way.
     ## sample_definitions[[sample_column]] <- paste0("s", sample_definitions[[sample_column]])
     ## This error seems to have stopped happening, so I commented out the previous line.
+=======
+    ## The folks at Biobase, <sarcasm>in their infinite wisdom</sarcasm> have changed new("AnnotatedDataFrame") so that if a column has the same information
+    ## as the rownames(), then one gets the following error:  new("AnnotatedDataFrame", ttt), which is utter BS.
+    ## Ergo, if I have my sample IDs as the rownames _and_ as a column titled 'sampleid', it will now fail to create the ExpressionSet.  Go put down your fasces.
+    ## In any event, I can therefore either remove the sampleid column or change it in some way.
+    ##sample_definitions[[sample_column]] <- paste0("s", sample_definitions[[sample_column]])
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     sample_columns_to_remove <- NULL
     for (col in 1:length(colnames(sample_definitions))) {
         sum_na <- sum(is.na(sample_definitions[[col]]))
@@ -162,20 +174,30 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## [row, ] method to reinforce my weak neurons.
     if (is.null(sample_definitions[["condition"]])) {
         ## type and stage are commonly used, and before I was consistent about always having condition, they were a proxy for it.
+<<<<<<< HEAD
         sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]],
                                                            sample_definitions[["stage"]], sep="_"))
+=======
+        sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]], sample_definitions[["stage"]], sep="_"))
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     }
     ## Extract out the condition names as a factor
     condition_names <- unique(sample_definitions[["condition"]])
     if (is.null(condition_names)) {
         warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
     }
+<<<<<<< HEAD
     ## Condition and Batch are not allowed to be numeric, so if they are just numbers,
     ## prefix them with 'c' and 'b' respectively.
     sample_definitions[["condition"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1",
                                               x=sample_definitions[["condition"]])
     sample_definitions[["batch"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1",
                                           x=sample_definitions[["batch"]])
+=======
+    ## Condition and Batch are not allowed to be numeric, so if they are just numbers, prefix them with 'c' and 'b' respectively.
+    sample_definitions[["condition"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=sample_definitions[["condition"]])
+    sample_definitions[["batch"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=sample_definitions[["batch"]])
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
 
     ## Explicitly skip those samples which are "", null, or "undef" for the filename.
     if (is.null(count_dataframe)) {
@@ -332,8 +354,12 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     gene_infodt[["rownames"]] <- rownames(gene_info)
 
     message("Bringing together the count matrix and gene information.")
+<<<<<<< HEAD
     ## The method here is to create a data.table of the counts and annotation data,
     ## merge them, then split them apart.
+=======
+    ## The method here is to create a data.table of the counts and annotation data, merge them, then split them apart.
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     counts_and_annotations <- merge(tmp_countsdt, gene_infodt, by="rownames", all.x=TRUE)
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
     counts_and_annotations <- as.data.frame(counts_and_annotations)
@@ -358,8 +384,12 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
         final_counts[less_than] <- 0
     }
 
+<<<<<<< HEAD
     ## I moved the color choices to this area pretty late in the process to make sure that
     ## there was time to remove unused samples.
+=======
+    ## I moved the color choices to this area pretty late in the process to make sure that there was time to remove unused samples.
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     ## Make sure we have a viable set of colors for plots
     ## First figure out how many conditions we have
     chosen_colors <- as.character(sample_definitions[["condition"]])
@@ -367,8 +397,12 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## And also the number of samples
     num_samples <- nrow(sample_definitions)
     if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
+<<<<<<< HEAD
         ## Thus if we have a numer of colors == the number of samples, set each sample
         ## with its own color
+=======
+        ## Thus if we have a numer of colors == the number of samples, set each sample with its own color
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
         chosen_colors <- sample_colors
     } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
         ## If instead there are colors == number of conditions, set them appropriately.
@@ -406,8 +440,12 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
         sample_definitions[["file"]] <- "null"
     }
 
+<<<<<<< HEAD
     ## Adding these so that deseq does not complain about characters when
     ## calling DESeqDataSetFromMatrix()
+=======
+    ## Adding these so that deseq does not complain about characters when calling DESeqDataSetFromMatrix()
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     sample_definitions[["condition"]] <- as.factor(sample_definitions[["condition"]])
     sample_definitions[["batch"]] <- as.factor(sample_definitions[["batch"]])
 
@@ -431,14 +469,23 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## Therefore, if we call a function like DESeq() which requires
     ## non-log2 counts, we can check these values and convert accordingly
 
+<<<<<<< HEAD
     ## Now that the expressionset has been created, pack it into an expt object so that I
     ## can keep backups etc.
+=======
+    ## Now that the expressionset has been created, pack it into an expt object so that I can keep backups etc.
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     expt <- expt_subset(experiment) ## I think this is spurious now.
     expt[["original_expressionset"]] <- experiment
     expt[["original_metadata"]] <- Biobase::pData(experiment)
 
+<<<<<<< HEAD
     ## I only leared fairly recently that there is quite a bit of redundancy between my expt
     ## and ExpressionSets. I do not mind this. Yet.
+=======
+    ## I only leared fairly recently that there is quite a bit of redundancy between my expt and ExpressionSets.
+    ## I do not mind this.
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     expt[["title"]] <- title
     expt[["notes"]] <- toString(notes)
     expt[["design"]] <- sample_definitions
@@ -482,8 +529,12 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     return(expt)
 }
 
+<<<<<<< HEAD
 #' An alias to expt_subset, because it is stupid to have something start with verbs
 #' and others start with nouns.
+=======
+#' An alias to expt_subset, because it is stupid to have something start with verbs and others start with nouns.
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
 #'
 #' This just calls expt_subset.
 #'
@@ -687,6 +738,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
         sample_colors <- sm(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
         mapping <- setNames(sample_colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
+<<<<<<< HEAD
     } else if (class(colors) == "character") {
         if (is.null(names(colors))) {
             names(colors) <- levels(as.factor(expt[["conditions"]]))
@@ -707,6 +759,8 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
         }
         chosen_idx <- complete.cases(chosen_colors)
         chosen_colors <- chosen_colors[chosen_idx]
+=======
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     } else if (class(colors) == "list") {
         if (change_by == "condition") {
             ## In this case, we have every color accounted for in the set of conditions.
@@ -874,8 +928,12 @@ set_expt_samplenames <- function(expt, newnames) {
 #' @param filter  How was it filtered?
 #' @param batch  How was it batch-corrected?
 #' @export
+<<<<<<< HEAD
 what_happened <- function(expt=NULL, transform="raw", convert="raw",
                           norm="raw", filter="raw", batch="raw") {
+=======
+what_happened <- function(expt=NULL, transform="raw", convert="raw", norm="raw", filter="raw", batch="raw") {
+>>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     if (!is.null(expt)) {
         transform <- expt[["state"]][["transform"]]
         if (is.null(transform)) {
