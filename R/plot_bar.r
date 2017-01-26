@@ -85,8 +85,8 @@ plot_libsize <- function(data, colors=NULL,
         ## newlabels <- prettyNum(as.character(libsize_df[["sum"]]), big.mark=",")
         libsize_plot <- libsize_plot +
             ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
-                               ggplot2::aes_string(parse=FALSE,
-                                                   x="order",
+                               ## ggplot2::aes_string(parse=FALSE,
+                               ggplot2::aes_string(x="order",
                                                    label='prettyNum(as.character(libsize_df$sum), big.mark=",")'))
     }
 
@@ -114,13 +114,27 @@ plot_libsize <- function(data, colors=NULL,
     return(libsize_plot)
 }
 
-plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start=1000, end=2000, strand=1, padding=100) {
+#' Make relatively pretty bar plots of coverage in a genome.
+#'
+#' This was written for ribosome profiling coverage / gene.
+#' It should however, work for any data with little or no modification.
+#'
+#' @param input  Coverage / position filename.
+#' @param workdir  Where to put the resulting images.
+#' @param output  Output image filename.
+#' @param name  Gene name to print at the bottom of the plot.
+#' @param start  Relative to 0, where is the gene's start codon.
+#' @param end  Relative to 0, where is the gene's stop codon.
+#' @param strand  Is this on the + or - strand? (+1/-1)
+#' @param padding  How much space to provide on the sides?
+plot_rpm = function(input, workdir="images", output="01.svg", name="LmjF.01.0010",
+                    start=1000, end=2000, strand=1, padding=100) {
     head(genes)
-    genes = genes[,c(2,3,5,11)]
+    genes = genes[,c(2, 3, 5, 11)]
     for(ch in 1:36) {
         mychr = paste("LmjF.", sprintf("%02d", ch), sep="")
-        print(mychr)
-        table_path = paste("~/riboseq/coverage/", mychr, "/testme.txt.cov.gz", sep="")
+        message(mychr)
+        table_path = paste0(workdir, "/coverage/", mychr, "/testme.txt.cov.gz")
 
         rpms = read.table(table_path)
         colnames(rpms) = c("chromosome","position","rpm")
@@ -129,26 +143,14 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
 
         for(i in 1:nrow(genes_on_chr)) {
             row = genes_on_chr[i,]
-            genename=row$Name
-            output_file=paste("~/riboseq/coverage/", mychr, "/", genename, ".svg", sep="")
+            genename=row[["Name"]]
+            output_file=paste0(workdir, "/coverage/", mychr, "/", genename, ".svg")
             svg(filename=output_file, height=2, width=8)
-            plot_rpm(rpms, start=row$start, end=row$end, strand=row$strand, output=output_file, name=row$Name)
+            plot_res <- plot_rpm(rpms, start=row[["start"]], end=row[["end"]],
+                                 strand=row[["strand"]], output=output_file, name=row[["Name"]])
             dev.off()
         }
     }
-
-    ##for(i in 1:nrow(genes)) {
-    ##    row <- genes[i,]
-    ##    genename=row$Name
-    ##    chromosome_number =
-    ##        output_file=paste("~/riboseq/rpm/", genename, ".svg", sep="")
-    ##    svg(file=output_file, height=2, width=6)
-    ##    plot_rpm(rpms, st=row$start, en=row$end, strand=row$strand, output=output_file, name=row$name)
-    ##    dev.off()
-    ##}
-    ##dev.new(height=2, width=6)
-    ##plot_rpm(rpms, st=2000, en=20000, strand="+", output=test, name=row$Name)
-    ##dev.off()
 
     mychr = gsub("\\.\\d+$", "", name, perl=TRUE)
     plotted_start = start - padding
@@ -157,10 +159,12 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
     my_end = end
     ## These are good chances to use %>% I guess
     ## rpm_region = subset(input, chromosome==mychr & position >= plotted_start & position <= plotted_end)
-    region_idx <- input[["chromosome"]] == mychr & input[["position"]] >= plotted_start & input[["position"]] <= plotted_end
+    region_idx <- input[["chromosome"]] == mychr &
+        input[["position"]] >= plotted_start &
+        input[["position"]] <= plotted_end
     rpm_region <- rpm_region[region_idx, ]
     rpm_region = rpm_region[,-1]
-    rpm_region$log = log2(rpm_region$rpm + 1)
+    rpm_region[["log"]] = log2(rpm_region[["rpm"]] + 1)
 
     ## pre_start = subset(rpm_region, position < my_start)
     start_idx <- rpm_region[["position"]] < my_start
@@ -174,7 +178,7 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
 
     eval(substitute(
         expr = {
-            stupid = aes(y=0,yend=0,x=my_start,xend=my_end)
+            stupid = aes(y=0, yend=0, x=my_start, xend=my_end)
         },
         env = list(my_start=my_start, my_end=my_end)))
 
@@ -196,20 +200,82 @@ plot_rpm = function(input, output="~/riboseq/01.svg", name="LmjF.01.0010", start
 
 }
 
-plot_updown <- function() {
+#' Make a bar plot of the numbers of significant genes by contrast.
+#' These plots are quite difficult to describe.
+#'
+#' @param ups  Set of up-regulated genes.
+#' @param downs  Set of down-regulated genes.
+#' @param maximum  Maximum/minimum number of genes to display.
+#' @param text  Add text at the ends of the bars describing the number of genes >/< 0 fc.
+#' @param color_list  Set of colors to use for the bars.
+#' @param color_names  Categories associated with aforementioned colors.
+plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
+                                 color_list=c("lightcyan", "lightskyblue", "dodgerblue",
+                                                 "plum1", "orchid", "purple4"),
+                                 color_names=c("a_up_inner", "b_up_middle", "c_up_outer",
+                                                  "a_down_inner", "b_down_middle", "c_down_outer")) {
+    choose_max <- function(u, d) {
+        ## m is the maximum found in the ups/downs
+        m <- 0
+        ## which is extracted from ups and downs
+        um <- max(as.numeric(u))
+        dm <- max(as.numeric(d))
+        ## choose the maximum by which is biggest!
+        if (um >= dm) {
+            m <- um
+        } else {
+            m <- dm
+        }
+        ## Figure out the number of digits in the number
+        digits <- nchar(as.character(m))
+        ## And the number of zeroes in it.
+        num_zeroes <- digits - 1.0
+        ## Add 1 to the first digit
+        first_digit <- as.numeric(strsplit(x=as.character(m), split="")[[1]][[1]]) + 1.0
+        ## And set maximum to that number * 10 to the number of zeroes.
+        maximum <- first_digit * (10 ^ num_zeroes)
+        return(maximum)
+    }
 
-    up$time <- factor(up$time, levels=c("header1", "metac_v_4amast", "4_v_24amast", "24_v_48amast", "48_v_72amast"))
-    down$time <- factor(down$time, levels=c("header1", "metac_v_4amast", "4_v_24amast", "24_v_48amast", "48_v_72amast"))
+    up_sums <- list()
+    down_sums <- list()
+    comp_names <- ups[ ups[["variable"]] == "a_up_inner", ][["comparisons"]]
+    for (comp in 1:length(comp_names)) {
+        comp_name <- comp_names[[comp]]
+        up_sums[[comp_name]] <- sum(as.numeric(ups[ ups[["comparisons"]] == comp_name, ][["value"]]))
+        down_sums[[comp_name]] <- sum(as.numeric(downs[ downs[["comparisons"]] == comp_name, ][["value"]])) * -1.0
+    }
 
-    ggplot() +
-        geom_bar(data = up, aes(x=rev(time), y=value, fill=variable), stat = "identity") +
-        geom_bar(data = down, aes(x=rev(time), y=value, fill=variable), stat = "identity") +
-        scale_fill_manual(values=c("purple4", "plum1", "orchid", "dodgerblue", "lightcyan", "lightskyblue")) + 
-        scale_y_continuous(breaks=seq(-5000,5000,1000)) + coord_flip() +
-        scale_x_discrete(breaks=NULL) + theme_bw() +
-        theme(panel.grid.minor = element_blank()) +
-        theme(legend.position="none")
+    if (is.null(maximum)) {
+        maximum <- choose_max(up_sums, down_sums)
+    }
 
+    ## Try to ensure that ggplot orders my colors and bars in the specific order I want.
+    ## holy ass crackers this is annoying and difficult to get correct,  as the ordering is (to my eyes) arbitrary.
+    names(color_list) <- color_names
+    levels(ups[["variable"]]) <- c("c_up_outer", "b_up_middle", "a_up_inner")
+    levels(downs[["variable"]]) <- c("c_down_outer", "b_down_middle", "a_down_inner")
+
+    sigbar_plot <- ggplot() +
+        ggplot2::geom_col(data=ups, aes_string(x="comparisons", y="value", fill="variable")) +
+        ggplot2::geom_col(data=downs, aes_string(x="comparisons", y="value", fill="variable")) +
+        ggplot2::scale_fill_manual(values=c("a_up_inner"="lightcyan", "b_up_middle"="lightskyblue", "c_up_outer"="dodgerblue", "a_down_inner"="plum1", "b_down_middle"="orchid", "c_down_outer"="purple4")) +
+        ggplot2::coord_flip() +
+        ggplot2::theme_bw() +
+        ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +
+        ggplot2::theme(legend.position="none")
+
+    if (isTRUE(text)) {
+        for (comp in 1:length(comp_names)) {
+            comp_name <- comp_names[[comp]]
+            upstring <- as.character(up_sums[[comp_name]])
+            downstring <- as.character(down_sums[[comp_name]])
+            sigbar_plot = sigbar_plot +
+                ggplot2::annotate("text", x=comp, y=maximum, label=upstring, angle=-90) +
+                ggplot2::annotate("text", x=comp, y=maximum * -1, label=downstring, angle=90)
+        }
+    }
+    return(sigbar_plot)
 }
 
 ## EOF  Damners I don't have many bar plots, do I?

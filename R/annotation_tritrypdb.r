@@ -1,8 +1,3 @@
-#' @export
-local_get_value <- function(x) {
-    return(gsub("^ ","", tail(unlist(strsplit(x, ": ")), n=1), fixed=TRUE))
-}
-
 #' TriTrypDB gene information table parser
 #'
 #' An example input file is the T. brucei Lister427 gene information table
@@ -13,6 +8,7 @@ local_get_value <- function(x) {
 #' @param file Location of TriTrypDB gene information table.
 #' @param verbose  Whether or not to enable verbose output.
 #' @return Returns a dataframe of gene info.
+#' @export
 parse_gene_info_table <- function(file, verbose=FALSE) {
     ## Create empty vector to store dataframe rows
     N <- 1e5
@@ -85,11 +81,14 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
             gene_start <- as.numeric(gsub(",", "", result[2], fixed=TRUE))
             gene_stop  <- as.numeric(gsub(",", "", result[3], fixed=TRUE))
             strand <- result[4]
-        } else if (grepl("^Gene Type", line)) { ## Example: Gene type: protein coding
+        } else if (grepl("^Gene Type", line)) {
+            ## Example: Gene type: protein coding
             gene_type <- local_get_value(line)
-        } else if (grepl("^Product Description", line)) { ## Example: Product Description: mucin-associated surface protein (MASP), putative
+        } else if (grepl("^Product Description", line)) {
+            ## Example: Product Description: mucin-associated surface protein (MASP), putative
             description <- local_get_value(line)
-        } else if (grepl("^Transcript Length", line)) { ## Example: Transcript length: 585
+        } else if (grepl("^Transcript Length", line)) {
+            ## Example: Transcript length: 585
             transcript_length <- as.numeric(local_get_value(line))
         } else if (grepl("^CDS Length", line)) { ## Example: CDS length: 585
             val <- local_get_value(line)
@@ -184,7 +183,7 @@ parse_gene_go_terms <- function (filepath, verbose=FALSE) {
         if(grepl("^Gene ID", x)) {
             gene_id <- local_get_value(x)
             if (verbose) {
-                print(sprintf('Processing gene %d: %s', i, gene_id))
+                message(sprintf('Processing gene %d: %s', i, gene_id))
             }
             i <- i + 1
         }
@@ -215,7 +214,8 @@ parse_gene_go_terms <- function (filepath, verbose=FALSE) {
 #' @param dl_dir  Directory into which to download the various files.
 #' @param quiet  Print download progress?
 #' @export
-tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin", dl_dir="organdb/tritryp", quiet=TRUE) {
+tritryp_downloads <- function(version="27", species="lmajor",
+                              strain="friedlin", dl_dir="organdb/tritryp", quiet=TRUE) {
     files_downloaded <- 0
     files_found <- 0
 
@@ -228,7 +228,8 @@ tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin",
     gff_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, ".gff")
 
     gff_path <- paste0(dl_dir, "/", gff_filename)
-    gff_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/gff/data/", gff_filename)
+    gff_url <- paste0("http://tritrypdb.org/common/downloads/release-", version,
+                      "/", uc_species, uc_strain, "/gff/data/", gff_filename)
     if (file.exists(gff_path)) {
         files_found <- files_found + 1
     } else {
@@ -243,7 +244,8 @@ tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin",
     }
 
     txt_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, "Gene.txt")
-    txt_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/txt/", txt_filename)
+    txt_url <- paste0("http://tritrypdb.org/common/downloads/release-", version,
+                      "/", uc_species, uc_strain, "/txt/", txt_filename)
     txt_path <- paste0(dl_dir, "/", txt_filename)
     if (file.exists(txt_path)) {
         files_found <- files_found + 1
@@ -259,7 +261,8 @@ tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin",
     }
 
     fasta_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, "_Genome.fasta")
-    fasta_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/fasta/data/", fasta_filename)
+    fasta_url <- paste0("http://tritrypdb.org/common/downloads/release-", version,
+                        "/", uc_species, uc_strain, "/fasta/data/", fasta_filename)
     fasta_path <- paste0(dl_dir, "/", fasta_filename)
     if (file.exists(fasta_path)) {
         files_found <- files_found + 1
@@ -275,7 +278,8 @@ tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin",
     }
 
     alias_filename <- paste0("TriTrypDB-", version, "_", uc_species, uc_strain, "_GeneAliases.txt")
-    alias_url <- paste0("http://tritrypdb.org/common/downloads/release-", version, "/", uc_species, uc_strain, "/txt/", alias_filename)
+    alias_url <- paste0("http://tritrypdb.org/common/downloads/release-", version,
+                        "/", uc_species, uc_strain, "/txt/", alias_filename)
     alias_path <- paste0(dl_dir, alias_filename)
     if (file.exists(alias_path)) {
         files_found <- files_found + 1
@@ -306,6 +310,7 @@ tritryp_downloads <- function(version="27", species="lmajor", strain="friedlin",
 #'
 #' @param species  Human readable species name
 #' @return potential NCBI taxon IDs
+#' @export
 get_ncbi_taxonid <- function(species="Leishmania major") {
     taxid <- taxize::get_eolid(sciname=species)[[1]]
     return(taxid)
@@ -331,7 +336,7 @@ get_ncbi_taxonid <- function(species="Leishmania major") {
 #'  crazytown <- make_organismdbi()  ## wait a loong time
 #' }
 #' @export
-make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb", ...) {
+make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organismdbi", ...) {
     arglist <- list(...)
     kegg <- arglist[["kegg"]]
     cfg <- get_eupath_config(cfg)
@@ -359,7 +364,7 @@ make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb
     orgdb_result <- make_orgdb(orgdb_info, id=id, cfg=cfg_line, output_dir=output_dir, kegg=kegg)
     orgdb_package <- orgdb_result[["package_name"]]
     message("Starting make_txdb")
-    txdb_result <- make_txdb(orgdb_info, cfg=cfg_line, gff=files[["gff"]], output_dir=output_dir)
+    txdb_result <- make_txdb(orgdb_info, cfg_line=cfg_line, gff=files[["gff"]], output_dir=output_dir)
     txdb_package <- txdb_result[["package_name"]]
 
     graph_data <- list(
@@ -442,7 +447,8 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
         message(paste0("moving orgdb: ", mv_cmd))
         system(mv_cmd)
         ## Collect the text files in the new package and remove all -like instances in them
-        find_cmd <- paste0("sed -i 's/", removal, "/", replace, "/g' $(find ", new_dir, " -type f | grep -v sqlite)")
+        find_cmd <- paste0("sed -i 's/", removal, "/", replace,
+                           "/g' $(find ", new_dir, " -type f | grep -v sqlite)")
         message(paste0("rewriting orgdb files: ", find_cmd))
         system(find_cmd)
 
@@ -460,7 +466,9 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
         orgdb_dir <- new_dir
         new_pkg_name <- gsub(pattern=removal, replacement=replace, x=sqlite_basename)
         ## Update the orgdb sqlite file to reflect the new name
-        final_sqlite_cmd <- paste0("chmod +w ", new_sqlite, " ; sqlite3 ", new_sqlite, " \"UPDATE metadata SET value='", new_pkg_name, "' WHERE name='SPECIES';\" ; chmod -w ", new_sqlite)
+        final_sqlite_cmd <- paste0("chmod +w ", new_sqlite, " ; sqlite3 ", new_sqlite,
+                                   " \"UPDATE metadata SET value='", new_pkg_name,
+                                   "' WHERE name='SPECIES';\" ; chmod -w ", new_sqlite)
         message(paste0("rewriting sqlite db:", final_sqlite_cmd))
         system(final_sqlite_cmd)
     }
@@ -487,7 +495,8 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
 #' @param ... Args to pass through.
 #' @return List of the resulting package name(s) and whether they installed.
 #' @export
-make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, output_dir="organismdbi", ...) {
+make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
+                       kegg=TRUE, output_dir="organismdbi", ...) {
     arglist=list(...)
     orgdb_pre <- paste0(output_dir, "/orgdb")
     if (!file.exists(orgdb_pre)) {
@@ -531,7 +540,8 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, ou
                                           version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
                                           author = as.character(cfg[["author"]]),
                                           maintainer = as.character(cfg[["maintainer"]]),
-                                          tax_id = as.character(cfg[["tax_id"]]),  ## Maybe use taxize for this and remove from the csv?
+                                          ## Maybe use taxize for this and remove from the csv?
+                                          tax_id = as.character(cfg[["tax_id"]]),
                                           genus = as.character(cfg[["genus"]]),
                                           species = paste0(as.character(cfg[["species"]]), ".", as.character(cfg[["strain"]])),
                                           outputDir = orgdb_pre,
@@ -576,17 +586,30 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL, kegg=TRUE, ou
 #' @param orgdb_info  List of data frames generated by make_orgdb_info().
 #' @param cfg_line  Configuration data frame as per make_orgdb.
 #' @param gff  File to read
+#' @param from_gff  Use a gff file?
 #' @param output_dir  Place to put rda intermediates.
 #' @param ...   Extra arguments to pass through.
 #' @return List of the resulting txDb package and whether it installed.
 #' @export
 make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir="organismdbi", ...) {
+    ## Sections of this were stolen from GenomicFeatures
+    ## because it hates me.
     arglist <- list(...)
 
     destination <- output_dir
     chromosome_info <- orgdb_info[["chromosome_info"]]
-    package_name <- NULL
-    if (!is.null(gff) & isTRUE(from_gff)) {
+    requireNamespace("GenomicFeatures")
+    destination <- paste0(destination, "/txdb")
+    db_version <- format(as.numeric(cfg_line[["db_version"]]), nsmall=1)
+    maintainer <- as.character(cfg_line[["maintainer"]])
+    author <- as.character(cfg_line[["author"]])
+    db_url <- as.character(cfg_line[["db_url"]])
+    package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
+                            cfg_line[["strain"]], ".", cfg_line[["db_name"]],
+                            cfg_line[["db_version"]])
+
+    txdb <- NULL
+    if (!is.null(gff)) {
         txdb <- GenomicFeatures::makeTxDbFromGFF(
             file=gff,
             format='gff3',
@@ -597,32 +620,49 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
         package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
                                 cfg_line[["strain"]], ".", cfg_line[["db_name"]],
                                 cfg_line[["db_version"]])
-    } else {
-        requireNamespace("GenomicFeatures")
-        destination <- paste0(destination, "/txdb")
-        db_version <- format(as.numeric(cfg_line[["db_version"]]), nsmall=1)
-        maintainer <- as.character(cfg_line[["maintainer"]])
-        author <- as.character(cfg_line[["author"]])
-        package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
-                                cfg_line[["strain"]], ".", cfg_line[["db_name"]],
-                                cfg_line[["db_version"]])
-
-        if (file.exists(destination)) {
-            unlink(x=destination, recursive=TRUE)
-        }
-        dir.create(destination, recursive=TRUE)
-        result <- GenomicFeatures::makeTxDbPackage(
-            txdb=txdb,
-            version=db_version,
-            maintainer=maintainer,
-            author=author,
-            destDir=destination,
-            license="Artistic-2.0",
-            pkgname=package_name)
-        ## What in the flying hell means 'Error in cpSubsCon(src[k], destname) : UNRESOLVED SYMBOLS:
-        ## Line 5 : @umd.edu>, atb <atb@u'
-        ## The entire person/author/maintainer system in R is utterly stupid.
     }
+
+    ## This is the section I yanked
+    provider <- GenomicFeatures:::.getMetaDataValue(txdb, "Data source")
+    providerVersion <- GenomicFeatures:::.getTxDbVersion(txdb)
+    dbType <- GenomicFeatures:::.getMetaDataValue(txdb, "Db type")
+    authors <- GenomicFeatures:::.normAuthor(author, maintainer)
+    template_path <- system.file("txdb-template", package = "GenomicFeatures")
+    symvals <- list("PKGTITLE" = paste("Annotation package for", dbType, "object(s)"),
+                    "PKGDESCRIPTION" = paste("Exposes an annotation databases generated from",
+                                             GenomicFeatures:::.getMetaDataValue(txdb, "Data source"), "by exposing these as", dbType, "objects"),
+                    "PKGVERSION" = db_version,
+                    "AUTHOR" = paste(authors, collapse = ", "),
+                    "MAINTAINER" = as.character(GenomicFeatures:::.getMaintainer(authors)),
+                    "GFVERSION" = GenomicFeatures:::.getMetaDataValue(txdb, "GenomicFeatures version at creation time"),
+                    "LIC" = "Artistic-2.0",
+                    "DBTYPE" = dbType,
+                    "ORGANISM" = GenomicFeatures:::.getMetaDataValue(txdb,"Organism"),
+                    "SPECIES" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
+                    "PROVIDER" = provider,
+                    "PROVIDERVERSION" = providerVersion,
+                    "RELEASEDATE" = GenomicFeatures:::.getMetaDataValue(txdb, "Creation time"),
+                    ## SOURCEURL = GenomicFeatures:::.getMetaDataValue(txdb, "Resource URL"),
+                    "SOURCEURL" = db_url,
+                    "ORGANISMBIOCVIEW" = gsub(" ", "_", GenomicFeatures:::.getMetaDataValue(txdb, "Organism")),
+                    "TXDBOBJNAME" = package_name)
+    if (any(duplicated(names(symvals)))) {
+        str(symvals)
+        stop("'symvals' contains duplicated symbols")
+    }
+    is_OK <- sapply(symvals, S4Vectors::isSingleString)
+    if (!all(is_OK)) {
+        bad_syms <- paste(names(is_OK)[!is_OK], collapse=", ")
+        stop("values for symbols ", bad_syms, " are not single strings")
+    }
+    pkg_list <- Biobase::createPackage(pkgname=package_name,
+                                       destinationDir=destination,
+                                       originDir=template_path,
+                                       symbolValues=symvals,
+                                       unlink=TRUE)
+    db_path <- file.path(destination, package_name, "inst", "extdata",
+                         paste(package_name, "sqlite", sep="."))
+    obj <- AnnotationDbi::saveDb(txdb, file=db_path)
 
     install_dir <- paste0(destination, "/", package_name)
     install_dir <- pkg_cleaner(install_dir)
@@ -633,8 +673,8 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
     result <- devtools::install(install_dir)
     package_name <- basename(install_dir)
     ret <- list(
-        package_name = package_name,
-        result = result)
+        "package_name" = package_name,
+        "result" = result)
     return(ret)
 }
 
@@ -642,6 +682,11 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
 #'
 #' This function uses some data copied into inst/ to decide some parameters used for generating the
 #' various packages generated here.
+#'
+#' Tested in test_46ann_tritrypdb.R
+#' This function is sort of stupid and perhaps will be removed.  I keep a small csv file of some
+#' TriTrypDB specific metadata, things like data base version number, URL schemes, etc.
+#' This reads that and extracts the relevant information.
 #'
 #' @param cfg  Optional data frame
 #' @return Dataframe of configuration data, a few columns are required, run it with no args to see

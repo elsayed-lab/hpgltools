@@ -29,9 +29,10 @@ convert_counts <- function(data, convert="raw", ...) {
         annotations <- Biobase::fData(data)
         count_table <- Biobase::exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
-        count_table <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        ## some functions prefer matrix, so I am keeping this explicit for the moment
+        count_table <- as.data.frame(data)
     } else {
-        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+        stop("This function currently only types: expt, ExpressionSet, data.frame, and matrix.")
     }
     if (convert == "cpm") {
         count_table <- edgeR::cpm(count_table)
@@ -57,7 +58,8 @@ convert_counts <- function(data, convert="raw", ...) {
 
 #' Express a data frame of counts as reads per pattern per million.
 #'
-#' This uses a sequence pattern rather than length to normalize sequence.  It is essentially fancy pants rpkm.
+#' This uses a sequence pattern rather than length to normalize sequence.
+#' It is essentially fancy pants rpkm.
 #'
 #' @param counts Read count matrix.
 #' @param genome Genome to search (fasta/BSgenome).
@@ -108,7 +110,7 @@ divide_seq <- function(counts, genome=NULL, ...) {
         ## These are mislabeled (it seems the most common error is a chromosome names 'chr4' vs. '4'
         annotations[["chromosome"]] <- paste0("chr", annotations[["chromosome"]])
     } else if (hits < length(annotation_seqnames)) {
-        warning("Not all the annotation sequence names were found in the genome, this will probably end badly.")
+        warning("Not all the annotation sequences were found, this will probably end badly.")
     }
 
     annotation_class <- class(annotations)[1]

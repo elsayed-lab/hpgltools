@@ -37,6 +37,12 @@ Df of some (by default) human annotations.
 Biomart is an amazing resource of information, but using it is a bit annoying.  This function
 hopes to alleviate some common headaches.
 }
+\details{
+Tested in test_40ann_biomart.R
+This goes to some lengths to find the relevant tables in biomart.  But biomart is incredibly
+complex and one should carefully inspect the output if it fails to see if there are more
+appropriate marts, datasets, and columns to download.
+}
 \examples{
 \dontrun{
  tt = get_biomart_annotations()

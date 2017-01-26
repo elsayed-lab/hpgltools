@@ -1,6 +1,7 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("12norm_normalize.R: Are normalizations consistent over time? (Normalizations)\n")
+context("12norm_normalize.R: Are normalizations consistent over time? (Normalizations)?\n")
 
 ## Note to self: Some recent changed to the creation of my expressionsets lead to changes in the order of the resulting data frames.
 ## This is intended to make it easier for me to keep track of what is happening to the data by forcing it into a consistent order.
@@ -100,4 +101,6 @@ test_that("RLE normalization gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-message("\nFinished 12norm_normalize.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 12norm_normalize.R in ", elapsed, " seconds."))

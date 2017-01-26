@@ -28,6 +28,9 @@ filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
     } else if (tolower(filter) == "kovera") {
         type <- 'kofa'
     }
+    if (isTRUE(filter)) {
+        filter <- "cbcb"
+    }
     filtered_counts <- NULL
     if (filter == "cbcb") {
         filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
@@ -40,11 +43,10 @@ filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
         filtered_counts <- genefilter_cv_counts(count_table, cv_min=cv_min,
                                                 cv_max=cv_max)
     } else if (filter == "simple") {
-        filtered_counts <- simple_filter_counts(count_table, threshold=thresh,
-                                         min_samples=min_samples)
+        filtered_counts <- simple_filter_counts(count_table, threshold=thresh)
     } else {
-        filtered_counts <- simple_filter_counts(count_table, threshold=thresh,
-                                                min_samples=min_samples)
+        filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
+                                              min_samples=min_samples)
     }
     return(filtered_counts)
 }
@@ -88,17 +90,17 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2) {
 #'
 #' @param count_table Data frame of (pseudo)counts by sample.
 #' @param threshold Lower threshold of counts for each gene.
-#' @param min_samples Minimum number of samples.
 #' @return Dataframe of counts without the low-count genes.
 #' @examples
 #' \dontrun{
 #' filtered_table <- simple_filter_counts(count_table)
 #' }
 #' @export
-simple_filter_counts <- function(count_table, threshold=2, min_samples=2) {
+simple_filter_counts <- function(count_table, threshold=2) {
     num_before <- nrow(count_table)
-    keep <- rowSums(count_table > threshold) >= min_samples
-    count_table <- count_table[keep, ]
+    sums <- rowSums(count_table)
+    keepers <- (sums >= threshold)
+    count_table <- count_table[keepers, ]
 
     message(sprintf("Removing %d low-count genes (%d remaining).",
                     num_before - nrow(count_table), nrow(count_table)))
@@ -125,7 +127,8 @@ simple_filter_counts <- function(count_table, threshold=2, min_samples=2) {
 #' }
 #' @export
 genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
-    ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
+    ## genefilter has functions to work with expressionsets directly, but I think I will work merely
+    ## with tables in this.
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {
@@ -160,7 +163,8 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
 #' }
 #' @export
 genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
-    ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
+    ## genefilter has functions to work with expressionsets directly, but I think I will work merely
+    ## with tables in this.
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {
@@ -193,7 +197,8 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
 #' }
 #' @export
 genefilter_kofa_counts <- function(count_table, k=1, A=1) {
-    ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
+    ## genefilter has functions to work with expressionsets directly, but I think I will work merely
+    ## with tables in this.
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {
@@ -212,4 +217,3 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1) {
 }
 
 ## EOF
-

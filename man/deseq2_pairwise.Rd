@@ -4,10 +4,10 @@
 \alias{deseq2_pairwise}
 \title{Set up model matrices contrasts and do pairwise comparisons of all conditions using DESeq2.}
 \usage{
-deseq2_pairwise(input, conditions = NULL, batches = NULL,
-  model_cond = TRUE, alt_model = NULL, extra_contrasts = NULL,
-  model_intercept = FALSE, model_batch = TRUE, annot_df = NULL,
-  force = FALSE, ...)
+deseq2_pairwise(input = NULL, conditions = NULL, batches = NULL,
+  model_cond = TRUE, model_batch = TRUE, model_intercept = FALSE,
+  alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
+  force = FALSE, deseq_method = "long", ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}
@@ -18,19 +18,21 @@ deseq2_pairwise(input, conditions = NULL, batches = NULL,
 
 \item{model_cond}{Is condition in the experimental model?}
 
-\item{alt_model}{Provide an arbitrary model here.}
-
-\item{extra_contrasts}{Provide extra contrasts here.}
+\item{model_batch}{Is batch in the experimental model?}
 
 \item{model_intercept}{Use an intercept model?  DESeq seems to not be a fan of them.}
 
-\item{model_batch}{Is batch in the experimental model?}
+\item{alt_model}{Provide an arbitrary model here.}
+
+\item{extra_contrasts}{Provide extra contrasts here.}
 
 \item{annot_df}{Include some annotation information in the results?}
 
 \item{force}{Force deseq to accept data which likely violates its assumptions.}
 
-\item{...}{triple dots!  Options are passed to arglist.}
+\item{deseq_method}{The DESeq2 manual shows a few ways to invoke it, I make 2 of them available here.}
+
+\item{...}{Triple dots!  Options are passed to arglist.}
 }
 \value{
 List including the following information:
@@ -43,6 +45,20 @@ List including the following information:
 }
 \description{
 Invoking DESeq2 is confusing, this should help.
+}
+\details{
+Tested in test_24de_deseq.R
+Like the other _pairwise() functions, this attempts to perform all pairwise contrasts in the
+provided data set.  The details are of course slightly different when using DESeq2.  Thus, this
+uses the function choose_binom_dataset() to try to ensure that the incoming data is appropriate
+for DESeq2 (if one normalized the data, it will attempt to revert to raw counts, for example).
+It continues on to extract the conditions and batches in the data, choose an appropriate
+experimental model, and run the DESeq analyses as described in the manual.  It defaults to using
+an experimental batch factor, but will accept a string like 'sva' instead, in which case it will
+use sva to estimate the surrogates, and append them to the experimental design.  The deseq_method
+parameter may be used to apply different DESeq2 code paths as outlined in the manual.  If you
+want to play with non-standard data, the force argument will round the data and shoe-horn it into
+DESeq2.
 }
 \examples{
 \dontrun{

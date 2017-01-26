@@ -4,8 +4,9 @@
 \alias{semantic_copynumber_filter}
 \title{Remove multicopy genes from up/down gene expression lists.}
 \usage{
-semantic_copynumber_filter(de_list, max_copies = 2, semantic = c("mucin",
-  "sialidase", "RHS", "MASP", "DGF"), semantic_column = "1.tooltip")
+semantic_copynumber_filter(de_list, max_copies = 2, use_files = FALSE,
+  invert = FALSE, semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF",
+  "GP63"), semantic_column = "1.tooltip")
 }
 \arguments{
 \item{de_list}{List of sets of genes deemed significantly
@@ -13,6 +14,8 @@ up/down with a column expressing approximate count numbers.}
 
 \item{max_copies}{Keep only those genes with <= n putative
 copies.}
+
+\item{use_files}{Use a set of sequence alignments to define the copy numbers?}
 
 \item{semantic}{Set of strings with gene names to exclude.}
 
@@ -28,5 +31,8 @@ consistently obnoxious.  Multi-gene families primarily where the
 coding sequences are divergent, but the UTRs nearly identical.  For
 these genes, our sequence based removal methods fail and so this
 just excludes them by name.
+}
+\details{
+Currently untested, used for Trypanosome analyses primarily, thus the default strings.
 }
 

@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("10norm_shared.R: Are normalizations consistent over time (Shared functions)?\n")
@@ -82,4 +83,6 @@ test_that("Pasilla (un)normalized libsize?", {
     expect_equal(expected, actual)
 })
 
-message("\nFinished 10norm_shared.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 10norm_shared.R in ", elapsed, "seconds."))

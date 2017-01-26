@@ -20,6 +20,12 @@ Data frame of gene IDs, go terms, and names.
 AnnotationDbi provides a reasonably complete set of GO mappings between gene ID and
 ontologies.  This will extract that table for a given set of gene IDs.
 }
+\details{
+Tested in test_45ann_organdb.R
+This is a nice way to extract GO data primarily because the Orgdb data sets are extremely fast
+and flexible, thus by changing the keytype argument, one may use a lot of different ID types
+and still score some useful ontology data.
+}
 \examples{
 \dontrun{
 go_terms <- load_go_terms(org, c("a","b"))

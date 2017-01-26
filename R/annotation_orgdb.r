@@ -3,6 +3,11 @@
 ## for example is not included in any import declarations and so I will likely
 ## re-call it with dplyr::tbl_df() -- or add it to the imports.
 
+#' I see no reason to have load_host_annotations and load_parasite_annotations.
+#'
+#' Thus I am making them both into aliases to load_annotations.
+#'
+#' @param ... Arguments to be passed to load_annotations.
 #' @export
 load_parasite_annotations <- function(...) {
     load_annotations(...)
@@ -12,6 +17,9 @@ load_parasite_annotations <- function(...) {
 #'
 #' Creates a dataframe gene and transcript information for a given set of gene
 #' ids using the OrganismDbi interface.
+#'
+#' Tested in test_45ann_organdb.R
+#' This defaults to a few fields which I have found most useful, but the brave can pass it 'all'.
 #'
 #' @param orgdb OrganismDb instance.
 #' @param include_go  Ask the Dbi for gene ontology information?
@@ -42,7 +50,8 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
 
     if (sum(fields %in% all_fields) != length(fields)) {
         message(toString(fields %in% all_fields))
-        stop(paste0("Some of the fields requested are not in the available, we do have the following ", toString(all_fields)))
+        stop(paste0("Some requested fields are not available.  The following were found: ",
+                    toString(all_fields)))
     }
     ## fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
 
@@ -70,8 +79,14 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
 
     ## Compute total transcript lengths (for all exons)
     ## https://www.biostars.org/p/83901/
-    gene_exons <- GenomicFeatures::exonsBy(orgdb, by="gene")
-    transcripts <- GenomicFeatures::transcripts(orgdb)
+    gene_exons <- try(GenomicFeatures::exonsBy(orgdb, by="gene"), silent=TRUE)
+    if (class(gene_exons) == "try-error") {
+        gene_exons <- NULL
+    }
+    transcripts <- try(GenomicFeatures::transcripts(orgdb), silent=TRUE)
+    if (class(transcripts) == "try-error") {
+        transcripts <- NULL
+    }
     colnames(gene_info) <- tolower(colnames(gene_info))
     gene_info_ret <- NULL
     if (isTRUE(sum_exons)) {
@@ -91,6 +106,155 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
         "transcripts" = transcripts)
     return(retlist)
 }
+
+#' Retrieve GO terms associated with a set of genes.
+#'
+#' AnnotationDbi provides a reasonably complete set of GO mappings between gene ID and
+#' ontologies.  This will extract that table for a given set of gene IDs.
+#'
+#' Tested in test_45ann_organdb.R
+#' This is a nice way to extract GO data primarily because the Orgdb data sets are extremely fast
+#' and flexible, thus by changing the keytype argument, one may use a lot of different ID types
+#' and still score some useful ontology data.
+#'
+#' @param orgdb OrganismDb instance.
+#' @param gene_ids Identifiers of the genes to retrieve annotations.
+#' @param keytype the mysterious keytype returns yet again to haunt my dreams
+#' @return Data frame of gene IDs, go terms, and names.
+#' @seealso \link[AnnotationDbi]{select}
+#' @examples
+#' \dontrun{
+#' go_terms <- load_go_terms(org, c("a","b"))
+#' }
+#' @export
+load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
+    requireNamespace("GO.db")
+    requireNamespace("magrittr")
+    if (is.null(gene_ids)) {
+        stop("gene_ids may not be null.")
+    }
+    go_terms <- suppressWarnings(
+        AnnotationDbi::select(orgdb,
+                              "keys" = gene_ids,
+                              "keytype" = keytype,
+                              "columns" = c("GO"))[,c(1,2)]
+    )
+    ## Deduplicate
+    go_terms <- go_terms[!duplicated(go_terms), ]
+    go_terms <- go_terms[!is.na(go_terms[["GO"]]), ]
+    go_term_names <- suppressWarnings(
+        AnnotationDbi::select(GO.db::GO.db,
+                               keys=unique(go_terms$GO),
+                               columns=c("TERM", "GOID", "ONTOLOGY")))
+    go_terms <- merge(go_terms, go_term_names, by.x="GO", by.y="GOID")
+
+    # Remove redundant annotations which differ only in source/evidence
+    # and rename ONTOLOGYALL column
+    #unique(go_terms %>% rename(ONTOLOGY=ONTOLOGYALL) %>% na.omit())
+    go_terms <- unique(dplyr::tbl_df(go_terms) %>% na.omit())
+    return(go_terms)
+}
+
+#' Creates a gene/KEGG mapping dataframe.
+#'
+#' In much the same way AnnotationDbi provides GO data, it also provides KEGG data.
+#'
+#' Tested in test_45ann_organdb.R
+#' Perhaps this function should be merged with the GO above?
+#'
+#' @param orgdb  OrganismDb instance.
+#' @param gene_ids  Identifiers of the genes to retrieve annotations.
+#' @param keytype  The keytype, eg. the primary key used to query the orgdb.
+#' @param columns  Columns to extract.
+#' @return Df of kegg mappings
+#' @seealso \link[AnnotationDbi]{select}
+#' @examples
+#' \dontrun{
+#' kegg_data <- load_kegg_mapping(org, c("a","b"))
+#' }
+#' @export
+load_kegg_mapping <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("KEGG_PATH")) {
+    if (is.null(gene_ids)) {
+        gene_ids <- AnnotationDbi::keys(orgdb)
+    }
+    kegg_mapping <- try(dplyr::tbl_df(AnnotationDbi::select(orgdb, keys=gene_ids,
+                            keytype=keytype,
+                            columns=columns)) %>% na.omit())
+    if (class(kegg_mapping)[[1]] == "try-error") {
+        stop(paste0("Unable to find the mappings, the available keytypes are: ",
+                    toString(AnnotationDbi::keytypes(orgdb))))
+    }
+    kegg_mapping <- as.data.frame(kegg_mapping)
+    ##colnames(kegg_mapping) <- c("gene", "category")
+    ## goseq does not support tbl_df instances
+    return(kegg_mapping)
+}
+
+#######################################################
+## This function might be reundant with load_annotations()
+#######################################################
+
+#' Load organism annotation data (mouse/human).
+#'
+#' Creates a dataframe gene and transcript information for a given set of gene
+#' ids using the OrganismDbi interface.
+#'
+#' @param orgdb OrganismDb instance.
+#' @param gene_ids Gene identifiers for retrieving annotations.
+#' @param mapto Key to map the IDs against.
+#' @param keytype  Choose a keytype, this will yell if it doesn't like your choice.
+#' @return a table of gene information
+#' @seealso \link[AnnotationDbi]{select}
+#' @examples
+#' \dontrun{
+#' host <- load_host_annotations(org, c("a","b"))
+#' }
+#' @export
+orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="geneid") {
+    mapto <- toupper(mapto)
+    keytype <- toupper(keytype)
+    avail_keytypes <- AnnotationDbi::keytypes(orgdb)
+    found_keys <- sum(mapto %in% avail_keytypes)
+    if (found_keys < length(mapto)) {
+        warning(paste0("The chosen keytype ", mapto, " is not in this orgdb."))
+        warning("Try some of the following instead: ", toString(avail_keytypes), ".")
+        warning("Going to pull all the availble keytypes, which is probably not what you want.")
+        mapto <- avail_keytypes
+    }
+
+    test_masterkey <- sum(keytype %in% avail_keytypes)
+    if (test_masterkey != 1) {
+        warning(paste0("The chosen master key ", keytype, " is not in this orgdb."))
+        warning("Try some of the following instead: ", toString(avail_keytypes), ".")
+        warning("I am going to choose one arbitrarily, which is probably not what you want.")
+        if ("ENTREZID" %in% avail_keytypes) {
+            keytype <- "ENTREZID"
+            message("Using entrezid as the master key.")
+        } else if ("ENSEMBLID" %in% avail_keytypes) {
+            keytype <- "ENSEMBLID"
+            message("Using ensemblid as the master key.")
+        } else
+            stop("Could not think of a usable master key.")
+    }
+
+    ## If no gene ids were chosen, grab them all.
+    if (is.null(gene_ids)) {
+        gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
+    }
+    ## Gene info
+    ## Note querying by "GENEID" will exclude noncoding RNAs
+    gene_info <- AnnotationDbi::select(orgdb, keytype=keytype, keys=gene_ids, columns=mapto)
+    colnames(gene_info) <- tolower(colnames(gene_info))
+    return(gene_info)
+}
+
+
+######################################################
+## Below here I have not tested nor played much with
+## these functions, I think some are redundant and
+## should be deleted.
+######################################################
+
 
 #' Load organism annotation data (mouse/human).
 #'
@@ -156,77 +320,9 @@ load_host_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
                                      host="www.ensembl.org", biomart_dataset)
     biomart <- biomaRt::useDataset(biomart_dataset, mart=ensembl_mart)
     biomart_genes <- biomaRt::getBM(attributes=c("ensembl_gene_id", "gene_biotype"), mart=biomart)
-    gene_info$type <- biomart_genes$gene_biotype[match(gene_info$gene_id,
-                                                       biomart_genes$ensembl_gene_id)]
+    gene_info[["type"]] <- biomart_genes$gene_biotype[match(gene_info$gene_id,
+                                                            biomart_genes$ensembl_gene_id)]
     return(gene_info)
-}
-
-#' Retrieve GO terms associated with a set of genes.
-#'
-#' AnnotationDbi provides a reasonably complete set of GO mappings between gene ID and
-#' ontologies.  This will extract that table for a given set of gene IDs.
-#'
-#' @param orgdb OrganismDb instance.
-#' @param gene_ids Identifiers of the genes to retrieve annotations.
-#' @param keytype the mysterious keytype returns yet again to haunt my dreams
-#' @return Data frame of gene IDs, go terms, and names.
-#' @seealso \link[AnnotationDbi]{select}
-#' @examples
-#' \dontrun{
-#' go_terms <- load_go_terms(org, c("a","b"))
-#' }
-#' @export
-load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
-    requireNamespace("GO.db")
-    requireNamespace("magrittr")
-    if (is.null(gene_ids)) {
-        stop("gene_ids may not be null.")
-    }
-    go_terms <- suppressWarnings(
-        AnnotationDbi::select(orgdb,
-                              "keys" = gene_ids,
-                              "keytype" = keytype,
-                              "columns" = c("GO"))[,c(1,2)]
-    )
-    ## Deduplicate
-    go_terms <- go_terms[!duplicated(go_terms), ]
-    go_terms <- go_terms[!is.na(go_terms[["GO"]]), ]
-    go_term_names <- suppressWarnings(
-        AnnotationDbi::select(GO.db::GO.db,
-                               keys=unique(go_terms$GO),
-                               columns=c("TERM", "GOID", "ONTOLOGY")))
-    go_terms <- merge(go_terms, go_term_names, by.x="GO", by.y="GOID")
-
-    # Remove redundant annotations which differ only in source/evidence
-    # and rename ONTOLOGYALL column
-    #unique(go_terms %>% rename(ONTOLOGY=ONTOLOGYALL) %>% na.omit())
-    go_terms <- unique(dplyr::tbl_df(go_terms) %>% na.omit())
-    return(go_terms)
-}
-
-#' Creates a gene/KEGG mapping dataframe.
-#'
-#' In much the same way AnnotationDbi provides GO data, it also provides KEGG data.
-#'
-#' @param orgdb OrganismDb instance.
-#' @param gene_ids Identifiers of the genes to retrieve annotations.
-#' @param keytype the keytype, damn I really need to read this code
-#' @return Df of kegg mappings
-#' @seealso \link[AnnotationDbi]{select}
-#' @examples
-#' \dontrun{
-#' kegg_data <- load_kegg_mapping(org, c("a","b"))
-#' }
-#' @export
-load_kegg_mapping <- function(orgdb, gene_ids, keytype='ENSEMBL') {
-    kegg_mapping <- suppressWarnings(
-        dplyr::tbl_df(AnnotationDbi::select(orgdb, keys=gene_ids,
-                            keytype=keytype,
-                            columns=c('KEGG_PATH'))) %>% na.omit()
-    )
-    colnames(kegg_mapping) <- c('gene', 'category')
-    ## goseq does not support tbl_df instances
-    return(as.data.frame(kegg_mapping))
 }
 
 #' Creates a KEGG pathway/description mapping dataframe.
@@ -277,7 +373,7 @@ kegg_to_ensembl <- function(kegg_ids) {
     ## query gene ids 10 at a time (max allowed)
     result <- c()
     for (x in split(kegg_ids, ceiling(seq_along(kegg_ids) / 3))) {
-        print(x)
+        ## print(x)
         query <- KEGGREST::keggGet(x)
         for (item in query) {
             dblinks <- item$DBLINKS
@@ -482,58 +578,81 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
     return(tx)
 }
 
-#' Load organism annotation data (mouse/human).
-#'
-#' Creates a dataframe gene and transcript information for a given set of gene
-#' ids using the OrganismDbi interface.
-#'
-#' @param orgdb OrganismDb instance.
-#' @param gene_ids Gene identifiers for retrieving annotations.
-#' @param mapto Key to map the IDs against.
-#' @param keytype  Choose a keytype, this will yell if it doesn't like your choice.
-#' @return a table of gene information
-#' @seealso \link[AnnotationDbi]{select}
-#' @examples
-#' \dontrun{
-#' host <- load_host_annotations(org, c("a","b"))
-#' }
-#' @export
-orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="geneid") {
-    mapto <- toupper(mapto)
-    keytype <- toupper(keytype)
-    avail_keytypes <- AnnotationDbi::keytypes(orgdb)
-    found_keys <- sum(mapto %in% avail_keytypes)
-    if (found_keys < length(mapto)) {
-        warning(paste0("The chosen keytype ", mapto, " is not in this orgdb."))
-        warning("Try some of the following instead: ", toString(avail_keytypes), ".")
-        warning("Going to pull all the availble keytypes, which is probably not what you want.")
-        mapto <- avail_keytypes
+make_organ <- function (txdb, keytype=NA, orgdb=NA) {
+    if (class(txdb) != "TxDb") {
+        stop("'txdb' must be A TxDb object")
     }
-
-    test_masterkey <- sum(keytype %in% avail_keytypes)
-    if (test_masterkey != 1) {
-        warning(paste0("The chosen master key ", keytype, " is not in this orgdb."))
-        warning("Try some of the following instead: ", toString(avail_keytypes), ".")
-        warning("I am going to choose one arbitrarily, which is probably not what you want.")
-        if ("ENTREZID" %in% avail_keytypes) {
-            keytype <- "ENTREZID"
-            message("Using entrezid as the master key.")
-        } else if ("ENSEMBLID" %in% avail_keytypes) {
-            keytype <- "ENSEMBLID"
-            message("Using ensemblid as the master key.")
-        } else
-            stop("Could not think of a usable master key.")
+    if (class(orgdb) != "OrgDb" && !is.na(orgdb)) {
+        stop("'orgdb' must be an OrgDb object or NA")
     }
-
-    ## If no gene ids were chosen, grab them all.
-    if (is.null(gene_ids)) {
-        gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
+    if (!S4Vectors::isSingleStringOrNA(keytype)) {
+        stop("'keytype' must be a single string or NA")
     }
-    ## Gene info
-    ## Note querying by "GENEID" will exclude noncoding RNAs
-    gene_info <- AnnotationDbi::select(orgdb, keytype=keytype, keys=gene_ids, columns=mapto)
-    colnames(gene_info) <- tolower(colnames(gene_info))
-    return(gene_info)
+    txdbName <- GenomicFeatures::makePackageName(txdb)
+    assign(txdbName, txdb, .GlobalEnv)
+    taxId <- AnnotationDbi::taxonomyId(txdb)
+    if (is.na(orgdb)) {
+        orgdbName <- sm(OrganismDbi:::.taxIdToOrgDbName(taxId))
+        if (length(orgdbName) > 1) {
+            message(paste0("Multiple orgDbs returned: ", toString(orgdbName), ", using the first."))
+            orgdbName <- orgdbName[[1]]
+        }
+        ## orgdb <- OrganismDbi:::.taxIdToOrgDb(taxId)  ## The source of the error is here
+        orgdb <- mytaxIdToOrgDb(taxId)  ## The source of the error is here
+        assign(orgdbName, orgdb, .GlobalEnv)
+    } else {
+        org <- S4Vectors::metadata(orgdb)[S4Vectors::metadata(orgdb)$name == "ORGANISM", 2]
+        org <- sub(" ", "_", org)
+        orgdbName <- paste0("org.", org, ".db")
+        orgdb <- orgdb
+        assign(orgdbName, orgdb, .GlobalEnv)
+    }
+    if (is.na(keytype)) {
+        geneKeyType <- AnnotationDbi::chooseCentralOrgPkgSymbol(orgdb)
+    } else {
+        geneKeyType <- keytype
+    }
+    graphData <- list(join1 = setNames(object = c("GOID", "GO"),
+                                       nm = c("GO.db", orgdbName)),
+                      join2 = setNames(object = c(geneKeyType, "GENEID"),
+                                       nm = c(orgdbName, txdbName)))
+    organism <- organism(txdb)
+    gd <- OrganismDbi:::.mungeGraphData(graphData)
+    OrganismDbi:::.testGraphData(gd)
+    allDeps <- unique(as.vector(gd[, 1:2]))
+    biocPkgNames <- OrganismDbi:::.biocAnnPackages()
+    deps <- allDeps[allDeps %in% biocPkgNames]
+    resources <- OrganismDbi:::.gentlyExtractDbFiles(gd, deps)
+    fkeys <- OrganismDbi:::.extractPkgsAndCols(gd)
+    OrganismDbi:::.testKeys(fkeys)
+    graphInfo <- list(graphData = gd, resources = resources)
+    OrganismDbi:::OrganismDb(graphInfo = graphInfo)
 }
+
+mytaxIdToOrgDb <- function (taxid) {
+    ## packageTaxIds <- .packageTaxIds()
+    packageTaxIds <- NULL
+    if (taxid %in% names(packageTaxIds)) {
+        pkg <- packageTaxIds[names(packageTaxIds) %in% taxid]
+        nmspc <- loadNamespace(pkg)
+        res <- get(pkg, nmspc)
+    } else {
+        loadNamespace("AnnotationHub")
+        ah <- AnnotationHub::AnnotationHub()
+        ah <- subset(ah, ah$rdataclass == "OrgDb")
+        mc <- S4Vectors::mcols(ah)[, "taxonomyid", drop = FALSE]
+        AHID <- rownames(mc[mc$taxonomyid == taxid, , drop = FALSE])
+        if (!length(AHID)) {
+            message("No organismdbi exists for this taxonomy id.")
+        } else if (length(AHID) > 1) {
+            message("There is more than one AHID for this taxon, taking the first.")
+            res <- ah[[ AHID[[1]] ]]
+        } else {
+            res <- ah[[AHID]]
+        }
+    }
+    res
+}
+
 
 ## EOF

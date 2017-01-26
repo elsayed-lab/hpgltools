@@ -12,19 +12,23 @@ batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
 
 \item{design}{Model matrix defining the experimental conditions/batches/etc.}
 
-\item{batch}{String describing the method to try to remove the batch effect (or FALSE to leave it alone, TRUE uses limma).}
+\item{batch}{String describing the method to try to remove the batch effect
+(or FALSE to leave it alone, TRUE uses limma).}
 
 \item{batch1}{Column in the design table describing the presumed covariant to remove.}
 
-\item{batch2}{Column in the design table describing the second covariant to remove (only used by limma at the moment).}
+\item{batch2}{Column in the design table describing the second covariant to remove
+(only used by limma at the moment).}
 
-\item{noscale}{Used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.}
+\item{noscale}{Used for combatmod, when true it removes the scaling parameter
+from the invocation of the modified combat.}
 
 \item{...}{More options for you!}
 }
 \value{
-The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this
-may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
+The 'batch corrected' count table and new library size.  Please remember that the
+        library size which comes out of this may not be what you want for voom/limma and would
+        therefore lead to spurious differential expression values.
 }
 \description{
 I found this note which is the clearest explanation of what happens with batch effect data:

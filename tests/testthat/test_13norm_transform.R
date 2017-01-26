@@ -1,6 +1,7 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("13norm_transform.R: Are normalizations consistent over time (Tranformations)?\n")
+context("13norm_transform.R: Are normalizations consistent over time (Transformations)?\n")
 
 ## Note to self: Some recent changed to the creation of my expressionsets lead to changes in the order of the resulting data frames.
 ## This is intended to make it easier for me to keep track of what is happening to the data by forcing it into a consistent order.
@@ -57,3 +58,6 @@ test_that("loge transformation gives expected values (why log10!?)?", {
 })
 
 message("\nFinished 13norm_transform.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 13norm_transform.R in ", elapsed,  " seconds."))

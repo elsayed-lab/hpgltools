@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("03graph_metrics.R: Is it possible to graph the various metrics with hpgltools?\n")
@@ -8,8 +9,12 @@ pasilla_expt <- pasilla[["expt"]]
 ## Uses these genes for quick tests
 test_genes <- c("FBgn0000014","FBgn0000008","FBgn0000017","FBgn0000018", "FBgn0000024")
 
-## What graphs can we make!?
+## I am not sure if I should test this yet, it is slow.
+if (isTRUE(FALSE)) {
+    written <- write_expt(pasilla_expt, excel="pasilla_written.xlsx")
+}
 
+## What graphs can we make!?
 libsize_plot <- plot_libsize(pasilla_expt)
 actual <- libsize_plot[["data"]][["sum"]]
 expected <- c(13971670, 21909886, 8357876, 9840745, 18668667, 9571213, 10343219)
@@ -47,6 +52,7 @@ test_that("Box plot data is as expected?", {
 })
 
 ## Ahh yes I changed the cbcb_filter options to match those from the cbcbSEQ vignette.
+## Note that the filtering has changed slightly, and this affects the results.
 norm <- sm(normalize_expt(pasilla_expt, transform="log2", convert="cbcbcpm", norm="quant", filter=TRUE))
 expected <- "recordedplot"  ## for all the heatmaps
 
@@ -70,14 +76,14 @@ test_that("sampleheat is a recorded plot?", {
 
 smc_plot <- sm(plot_sm(norm, method="pearson"))
 actual <- head(smc_plot[["data"]][["sm"]])
-expected <- c(0.9779550, 0.9822023, 0.9798571, 0.9816597, 0.9783356, 0.9805947)
+expected <- c(0.9759981, 0.9824316, 0.9759981, 0.9821373, 0.9784851, 0.9786376)
 test_that("Is the normalized smc data expected?", {
     expect_equal(expected, actual, tolerance=0.004)
 })
 
 smd_plot <- sm(plot_sm(norm, method="euclidean"))
 actual <- head(smd_plot[["data"]][["sm"]])
-expected <- c(72.26, 64.90, 68.90, 65.68, 71.64, 67.65)
+expected <- c(42.31502, 36.20613, 42.31502, 36.50773, 40.07146, 39.92637)
 test_that("Is the normalized smd data expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
@@ -87,33 +93,35 @@ pca_plot <- pca_stuff[["plot"]]
 pca_pca <- head(pca_stuff[["pca"]])
 
 actual <- pca_plot[["data"]][["PC1"]]
-expected <- c(-0.484593397, -0.464554956, 0.008466696, -0.030043569, -0.070616473, 0.496169040, 0.545172660)
+expected <- c(-0.3588028, -0.4049142, -0.2719889, -0.2427446, 0.2857222, 0.4986218, 0.4941065)
 test_that("Is the pca data as expected for PC1?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
 actual <- as.numeric(head(pca_stuff[["pca"]][["v"]][, 1]))
-expected <- c(-0.484593397, -0.464554956, 0.008466696, -0.030043569, -0.070616473, 0.496169040)
+expected <- c(-0.3588028, -0.4049142, -0.2719889, -0.2427446, 0.2857222, 0.4986218)
 test_that("Is the SVD 'v' element expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
 actual <- pca_stuff[["res"]][[1]]
-expected <- c(29.82, 25.10, 15.84, 10.73, 9.71, 8.80)
+expected <- c(42.54, 31.18, 13.13, 5.80, 4.13, 3.23)
 test_that("Is the pca residual table as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-actual_pca_var <- pca_stuff[["variance"]]
-expected_pca_var <- c(29.82, 25.10, 15.84, 10.73, 9.71, 8.80)
+actual <- pca_stuff[["variance"]]
+expected <- c(42.54, 31.18, 13.13, 5.80, 4.13, 3.23)
 test_that("Is the variance list as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
 actual <- pca_stuff[["table"]][["PC2"]]
-expected <- c(0.06119973, 0.04514489, -0.53934612, -0.44395229, 0.69872704, 0.12172316, 0.05650359)
+expected <- c(0.3023078, 0.2728941, -0.4563121, -0.3892918, 0.6362636, -0.1467970, -0.2190646)
 test_that("Is the PCA PC2 as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-message("\nFinished 03graph_metrics.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 03graph_metrics.R in ", elapsed, "seconds."))

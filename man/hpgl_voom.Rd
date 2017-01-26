@@ -4,8 +4,9 @@
 \alias{hpgl_voom}
 \title{A slight modification of limma's voom().}
 \usage{
-hpgl_voom(dataframe, model = NULL, libsize = NULL, stupid = FALSE,
-  logged = FALSE, converted = FALSE)
+hpgl_voom(dataframe, model = NULL, libsize = NULL,
+  normalize.method = "none", span = 0.5, stupid = FALSE, logged = FALSE,
+  converted = FALSE, ...)
 }
 \arguments{
 \item{dataframe}{Dataframe of sample counts which have been normalized and log transformed.}
@@ -14,11 +15,17 @@ hpgl_voom(dataframe, model = NULL, libsize = NULL, stupid = FALSE,
 
 \item{libsize}{Size of the libraries (usually provided by edgeR).}
 
+\item{normalize.method}{Normalization method used in voom().}
+
+\item{span}{The span used in voom().}
+
 \item{stupid}{Cheat when the resulting matrix is not solvable?}
 
 \item{logged}{Is the input data is known to be logged?}
 
 \item{converted}{Is the input data is known to be cpm converted?}
+
+\item{...}{Extra arguments are passed to arglist.}
 }
 \value{
 EList containing the following information:

@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("26de_edger.R: Does edgeR work with hpgltools?\n")
@@ -40,7 +41,7 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform the edgeR analysis in hpgltools
-hpgl_edger <- sm(edger_pairwise(pasilla_expt))
+hpgl_edger <- sm(edger_pairwise(pasilla_expt, edger_method="short"))
 
 hpgl_result <- hpgl_edger[["all_tables"]][["untreated_vs_treated"]]
 hpgl_result[["logFC"]] <- hpgl_result[["logFC"]] * -1
@@ -55,8 +56,8 @@ edger_logfc <- edger_reordered[["logFC"]]
 hpgl_logfc <- hpgl_reordered[["logFC"]]
 edger_logcpm <- edger_reordered[["logCPM"]]
 hpgl_logcpm <- hpgl_reordered[["logCPM"]]
-edger_f <- edger_reordered[["F"]]
-hpgl_f <- hpgl_reordered[["F"]]  ## I changed the statistic used here, but the result is the same.
+##edger_f <- edger_reordered[["F"]]
+##hpgl_f <- hpgl_reordered[["F"]]  ## I changed the statistic used here, but the result is the same.
 edger_pval <- edger_reordered[["PValue"]]
 hpgl_pval <- hpgl_reordered[["PValue"]]
 edger_fdr <- edger_reordered[["FDR"]]
@@ -70,9 +71,9 @@ test_that("Is the hpgl pairwise similar to edgeR's default method (logcpm)?", {
     expect_equal(edger_logcpm, hpgl_logcpm, tolerance=0.1)
 })
 
-test_that("Is the hpgl pairwise similar to edgeR's default method (F)?", {
-    expect_equal(edger_f, hpgl_f, tolerance=0.1)
-})
+##test_that("Is the hpgl pairwise similar to edgeR's default method (F)?", {
+##    expect_equal(edger_f, hpgl_f, tolerance=0.1)
+##})
 
 test_that("Is the hpgl pairwise similar to edgeR's default method (pval)?", {
     expect_equal(edger_pval, hpgl_pval, tolerance=0.1)
@@ -82,6 +83,13 @@ test_that("Is the hpgl pairwise similar to edgeR's default method (fdr)?", {
     expect_equal(edger_fdr, hpgl_fdr, tolerance=0.1)
 })
 
+edger_written <- sm(write_edger(hpgl_edger, excel="edger.xlsx"))
+test_that("Can we write the results of an edger pairwise analysis?", {
+    expect_true(file.exists("edger.xlsx"))
+})
+
 save(list=ls(), file="de_edger.rda")
 
-message("\nFinished 26de_edger.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 26de_edger.R in ", elapsed,  " seconds."))

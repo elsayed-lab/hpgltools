@@ -4,14 +4,16 @@
 \alias{choose_dataset}
 \title{Choose a suitable data set for Edger/DESeq}
 \usage{
-choose_dataset(input, force = FALSE, ...)
+choose_dataset(input, choose_for = "limma", force = FALSE, ...)
 }
 \arguments{
 \item{input}{Expt input.}
 
-\item{force}{Force non-standard data}
+\item{choose_for}{One of limma, deseq, edger, or basic.  Defines the requested data state.}
 
-\item{...}{More options for future expansion}
+\item{force}{Force non-standard data?}
+
+\item{...}{More options for future expansion.}
 }
 \value{
 List the data, conditions, and batches in the data.
@@ -19,5 +21,8 @@ List the data, conditions, and batches in the data.
 \description{
 The _pairwise family of functions all demand data in specific formats.
 This tries to make that consistent.
+}
+\details{
+Invoked by _pairwise().
 }
 

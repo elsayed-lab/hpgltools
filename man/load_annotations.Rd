@@ -27,6 +27,10 @@ Table of geneids, chromosomes, descriptions, strands, types, and lengths.
 Creates a dataframe gene and transcript information for a given set of gene
 ids using the OrganismDbi interface.
 }
+\details{
+Tested in test_45ann_organdb.R
+This defaults to a few fields which I have found most useful, but the brave can pass it 'all'.
+}
 \examples{
 \dontrun{
 one_gene <- load_annotations(org, c("LmJF.01.0010"))

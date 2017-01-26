@@ -4,7 +4,7 @@
 \alias{basic_pairwise}
 \title{The simplest possible differential expression method.}
 \usage{
-basic_pairwise(input, design = NULL, force = FALSE, ...)
+basic_pairwise(input = NULL, design = NULL, force = FALSE, ...)
 }
 \arguments{
 \item{input}{Count table by sample.}
@@ -25,6 +25,12 @@ them, divides by condition, and returns the result.  No fancy nomalizations, no
 statistical models, no nothing.  It should be the very worst method possible.
 But, it should also provide a baseline to compare the other tools against, they should
 all do better than this, always.
+}
+\details{
+Tested in test_27de_basic.R
+This function was written after the corresponding functions in de_deseq.R, de_edger.R,
+and de_limma.R.  Like those, it performs the full set of pairwise comparisons and returns
+a list of the results.  As mentioned above, unlike those, it is purposefully stupid.
 }
 \examples{
 \dontrun{

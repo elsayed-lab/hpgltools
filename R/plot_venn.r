@@ -1,9 +1,3 @@
-#' @export
-plot_funn_venn <- function(...) {
-    plot_fun_venn(...)
-    ## har har I am so witty!
-}
-
 #' A quick wrapper around venneuler to help label stuff
 #'
 #' venneuler makes pretty venn diagrams, but no labels!

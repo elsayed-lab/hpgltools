@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("21de_limma_combat.R: Does limma with combat work with hpgltools?\n")
@@ -91,7 +92,7 @@ test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts)
 })
 
 ## If we made it this far, then the inputs to limma should agree.
-hpgl_limma_combat_result <- sm(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=FALSE))
+hpgl_limma_combat_result <- sm(limma_pairwise(hpgl_qcpmcombat, model_batch=FALSE, model_intercept=FALSE, which_voom="hpgl"))
 hpgl_voom <- hpgl_limma_combat_result[["voom_result"]]
 hpgl_fit <- hpgl_limma_combat_result[["fit"]]
 hpgl_eb <- hpgl_limma_combat_result[["pairwise_comparisons"]]
@@ -111,8 +112,10 @@ expected <- cbcb_fit[["coefficients"]]
 expected <- expected[sort(rownames(expected)), ]
 actual <- hpgl_fit[["coefficients"]]
 actual <- actual[sort(rownames(actual)), ]
-test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (coefficients)", {
+test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (Intercept)", {
     expect_equal(expected[[1]], actual[[1]])
+})
+test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (untreated)", {
     expect_equal(expected[[2]], actual[[2]])
 })
 
@@ -120,15 +123,20 @@ expected <- cbcb_fit[["stdev.unscaled"]]
 expected <- expected[sort(rownames(expected)), ]
 actual <- hpgl_fit[["stdev.unscaled"]]
 actual <- actual[sort(rownames(actual)), ]
-test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (stdev.unscaled)", {
+test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (stdev.unscaled, intercept)", {
     expect_equal(expected[[1]], actual[[1]])
+})
+
+test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (stdev.unscaled, untreated)", {
     expect_equal(expected[[2]], actual[[2]])
 })
 
 expected <- cbcb_fit[["df.residual"]]
 actual <- hpgl_fit[["df.residual"]]
-test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (df.residual)", {
+test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (df.residual, intercept)", {
     expect_equal(expected[[1]], actual[[1]])
+})
+test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (df.residual, untreated)", {
     expect_equal(expected[[2]], actual[[2]])
 })
 
@@ -136,8 +144,10 @@ expected <- cbcb_fit[["cov.coefficients"]]
 expected <- expected[sort(rownames(expected)), ]
 actual <- hpgl_fit[["cov.coefficients"]]
 actual <- actual[sort(rownames(actual)), ]
-test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (cov.coefficients)", {
+test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (cov.coefficients, intercept)", {
     expect_equal(expected[[1]], actual[[1]])
+})
+test_that("Do cbcbSEQ and hpgltools agree on the lmFit result? (cov.coefficients, untreated)", {
     expect_equal(expected[[2]], actual[[2]])
 })
 
@@ -157,18 +167,22 @@ expected <- cbcb_eb[["t"]]
 expected <- expected[sort(rownames(expected)), ]
 actual <- hpgl_eb[["t"]]
 actual <- actual[sort(rownames(actual)), ]
-test_that("Do cbcbSEQ and hpgltools agree on the eBayes result? (t)", {
-    expect_equal(expected[[1]], actual[[1]])
-    expect_equal(expected[[2]], actual[[2]])
+test_that("Do cbcbSEQ and hpgltools agree on the eBayes result? (t, intercept)", {
+    expect_equal(expected[[1]], actual[[1]], tolerance=0.2)
+})
+test_that("Do cbcbSEQ and hpgltools agree on the eBayes result? (t, untreated)", {
+    expect_equal(expected[[2]], actual[[2]], tolerance=0.02)
 })
 
 expected <- cbcb_eb[["p.value"]]
 expected <- expected[sort(rownames(expected)), ]
 actual <- hpgl_eb[["p.value"]]
 actual <- actual[sort(rownames(actual)), ]
-test_that("Do cbcbSEQ and hpgltools agree on the eBayes result? (p.value)", {
-    expect_equal(expected[[1]], actual[[1]])
-    expect_equal(expected[[2]], actual[[2]])
+test_that("Do cbcbSEQ and hpgltools agree on the eBayes result? (p.value, intercept)", {
+    expect_equal(expected[[1]], actual[[1]], tolerance=0.001)
+})
+test_that("Do cbcbSEQ and hpgltools agree on the eBayes result? (p.value, untreated)", {
+    expect_equal(expected[[2]], actual[[2]], tolerance=0.001)
 })
 
 expected <- cbcb_table
@@ -176,9 +190,11 @@ expected <- expected[sort(rownames(expected)), ]
 actual <- hpgl_table
 actual <- actual[sort(rownames(actual)), ]
 test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
-    expect_equal(expected, actual)
+    expect_equal(expected, actual, tolerance=0.02)
 })
 
 save(list=ls(), file="de_limma_combat.rda")
 
-message("\nFinished 21de_limma_combat.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 21de_limma_combat.R in ", elapsed,  " seconds."))

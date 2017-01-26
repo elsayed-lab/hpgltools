@@ -8,7 +8,7 @@ make_pairwise_contrasts(model, conditions, do_identities = TRUE,
   do_pairwise = TRUE, extra_contrasts = NULL)
 }
 \arguments{
-\item{model}{Model describing the conditions/batches/etc in the experiment.}
+\item{model}{Describe the conditions/batches/etc in the experiment.}
 
 \item{conditions}{Factor of conditions in the experiment.}
 
@@ -22,16 +22,19 @@ need to be set to FALSE, but just in case.}
 }
 \value{
 List including the following information:
-  all_pairwise_contrasts = the result from makeContrasts(...)
-  identities = the string identifying each condition alone
-  all_pairwise = the string identifying each pairwise comparison alone
-  contrast_string = the string passed to R to call makeContrasts(...)
-  names = the names given to the identities/contrasts
+ all_pairwise_contrasts = the result from makeContrasts(...)
+ identities = the string identifying each condition alone
+ all_pairwise = the string identifying each pairwise comparison alone
+ contrast_string = the string passed to R to call makeContrasts(...)
+ names = the names given to the identities/contrasts
 }
 \description{
 In order to have uniformly consistent pairwise contrasts, I decided
 to avoid potential human erors(sic) by having a function generate
 all contrasts.
+}
+\details{
+Invoked by the _pairwise() functions.
 }
 \examples{
 \dontrun{

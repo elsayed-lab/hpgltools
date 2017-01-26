@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("24de_deseq.R: Does DESeq2 work with hpgltools?\n")
@@ -26,6 +27,10 @@ deseq_result <- as.data.frame(DESeq2::results(deseq_run,
 
 ## Performing DESeq2 analysis using hpgltools.
 hpgl_deseq <- sm(deseq2_pairwise(pasilla_expt, model_batch=TRUE))
+hpgl_deseq_written <- sm(write_deseq(hpgl_deseq, excel="deseq.xlsx"))
+test_that("Can I write a deseq2 table?", {
+    expect_true(file.exists("deseq.xlsx"))
+})
 
 ## Note that running the all_pairwise family of functions results in arbitrarily chosen x/y which may be
 ## the opposite of what you actually want.
@@ -77,4 +82,6 @@ test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise():
 
 save(list=ls(), file="de_deseq.rda")
 
-message("\nFinished 24de_deseq.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 24de_deseq.R in ", elapsed,  " seconds."))

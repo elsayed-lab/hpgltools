@@ -1,24 +1,3 @@
-#' this a function scabbed from Hector and Kwame's cbcbSEQ
-#'
-#' It just does fast.svd of a matrix comprised of the matrix - rowMeans(matrix)
-#'
-#' @param data A data frame to decompose
-#' @return a list containing the s,v,u from fast.svd
-#' @seealso \pkg{corpcor} \code{\link[corpcor]{fast.svd}}
-#' @examples
-#' \dontrun{
-#'  svd = makeSVD(data)
-#' }
-#' @export
-makeSVD <- function (data) {
-    data <- as.matrix(data)
-    s <- corpcor::fast.svd(data - rowMeans(data))
-    v <- s$v
-    rownames(v) <- colnames(data)
-    ret <- list(v=v, u=s$u, d=s$d)
-    return(ret)
-}
-
 #' Compute variance of each principal component and how they correlate with batch and cond
 #'
 #' This was copy/pasted from cbcbSEQ
@@ -99,22 +78,37 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' @export
 plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
                      plot_title=NULL, plot_size=5, size_column=NULL, ...) {
+    ## I have been using hpgl_env for keeping aes() from getting contaminated.
+    ## I think that this is no longer needed because I have been smater(sic) about how
+    ## I invoke aes_string() and ggplot2()
     hpgl_env <- environment()
     arglist <- list(...)
     plot_names <- arglist[["plot_names"]]
+    ## Set default columns in the experimental design for condition and batch
+    ## changing these may be used to query other experimental factors with pca.
     cond_column <- "condition"
-    batch_column <- "batch"
     if (!is.null(arglist[["cond_column"]])) {
         cond_column <- arglist[["cond_column"]]
         message(paste0("Using ", cond_column, " as the condition column in the experimental design."))
     }
+    batch_column <- "batch"
     if (!is.null(arglist[["batch_column"]])) {
         batch_column <- arglist[["batch_column"]]
         message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
     }
+
+    ## The following if() series is used to check the type of data provided and extract the available
+    ## metadata from it.  Since I commonly use my ExpressionSet wrapper (expt), most of the material is
+    ## specific to that.  However, the functions in this package should be smart enough to deal when
+    ## that is not true.
+    ## The primary things this particular function is seeking to acquire are: design, colors, counts.
+    ## The only thing it absolutely requires to function is counts, it will make up the rest if it cannot
+    ## find them.
     data_class <- class(data)[1]
     names <- NULL
+    expt <- NULL
     if (data_class == "expt") {
+        expt <- data
         design <- data[["design"]]
         if (cond_column == "condition") {
             plot_colors <- data[["colors"]]
@@ -141,17 +135,20 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     ## Also take into account the fact that sometimes I change the case of hpgl<->HPGL
     given_samples <- tolower(colnames(data))
     colnames(data) <- given_samples
+    ## I hate uppercase characters, I ADMIT IT.
     avail_samples <- tolower(rownames(design))
     rownames(design) <- avail_samples
     if (sum(given_samples %in% avail_samples) == length(given_samples)) {
         design <- design[given_samples, ]
     }
 
+    ## If nothing has given this some colors for the plot, make them up now.
     if (is.null(plot_colors)) {
         plot_colors <- as.numeric(as.factor(design[[cond_column]]))
         plot_colors <- RColorBrewer::brewer.pal(12, "Dark2")[plot_colors]
     }
 
+    ## Similarly, if there is no information which may be used as a design yet, make one up.
     if (is.null(design)) {
         message("No design was provided.  Making one with x conditions, 1 batch.")
         design <- cbind(plot_labels, 1)
@@ -162,6 +159,8 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         plot_names <- design[["name"]]
     }
 
+    ## Different folks like different labels.  I prefer hpglxxxx, but others have asked for
+    ## condition_batch; this handles that as eloquently as I am able.
     label_list <- NULL
     if (is.null(arglist[["label_list"]]) & is.null(plot_names)) {
         label_list <- design[["sampleid"]]
@@ -173,43 +172,61 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         label_list <- paste0(design[["sampleid"]], "_", design[[cond_column]])
     }
 
-    pca <- makeSVD(data)
+    svd_result <- corpcor::fast.svd(as.matrix(data) - rowMeans(as.matrix(data)))
+    v_vector <- svd_result[["v"]]
+    rownames(v_vector) <- colnames(data)
+    svd_result[["v"]] <- v_vector
+    ##pca <- makeSVD(data)
+    ## Pull out the batches and conditions used in this plot.
+    ## Probably could have just used xxx[stuff, drop=TRUE]
     included_batches <- as.factor(as.character(design[[batch_column]]))
     included_conditions <- as.factor(as.character(design[[cond_column]]))
 
+    ## Depending on how much batch/condition information is available, invoke pcRes() to get some idea of how
+    ## much variance in a batch model is accounted for with each PC.
     if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
         warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
     } else if (length(levels(included_conditions)) == 1) {
         warning("There is only one condition, but more than one batch.   Going to run pcRes with the batch information.")
-        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], batch=design[, batch_column])
+        pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]], batch=design[, batch_column])
     } else if (length(levels(included_batches)) == 1) {
-        print("There is just one batch in this data.")
-        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, cond_column])
+        message("There is just one batch in this data.")
+        pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]],
+                         condition=design[, cond_column])
     } else {
-        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, cond_column], batch=design[, batch_column])
+        pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]],
+                         condition=design[, cond_column], batch=design[, batch_column])
     }
 
-    pca_variance <- round((pca[["d"]] ^ 2) / sum(pca[["d"]] ^ 2) * 100, 2)
+    ## By a similar token, get the percentage of variance accounted for in each PC
+    pca_variance <- round((svd_result[["d"]] ^ 2) / sum(svd_result[["d"]] ^ 2) * 100, 2)
+    ## These will provide metrics on the x/y axes showing the amount of variance on those
+    ## components of our plot.
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
 
+    ## Create a data frame with all the material of interest in the actual PCA plot
     pca_data <- data.frame(
         "sampleid" = as.character(design[["sampleid"]]),
         "condition" = as.character(design[[cond_column]]),
         "batch" = as.character(design[[batch_column]]),
         "batch_int" = as.integer(as.factor(design[[batch_column]])),
-        "PC1" = pca[["v"]][, 1],
-        "PC2" = pca[["v"]][, 2],
+        "PC1" = svd_result[["v"]][, 1],
+        "PC2" = svd_result[["v"]][, 2],
         "colors" = as.character(plot_colors),
         "labels" = label_list)
 
+    ## Add an optional column which may be used to change the glyph sizes in the plot
     if (!is.null(size_column)) {
         pca_data[[size_column]] <- as.integer(as.factor(design[, size_column]))
         pca_data[[size_column]] <- pca_data[[size_column]] + 1
     }
 
     pca_plot <- NULL
-    pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2", design=design, plot_labels=plot_labels, plot_size=plot_size, size_column=size_column, ...)
+    ## The plot_pcs() function gives a decent starting plot
+    pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
+                         design=design, plot_labels=plot_labels,
+                         plot_size=plot_size, size_column=size_column, ...)
 
     ## These should be moved into plot_pcs
     pca_plot <- pca_plot +
@@ -217,12 +234,22 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         ggplot2::ylab(yl) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.key.size=grid::unit(0.5, "cm"))
-    if (!is.null(plot_title)) {
-        pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
+
+    ## If plot_title is NULL, print nothing, if it is TRUE
+    ## Then give some information about what happened to the data to make the plot.
+    if (isTRUE(plot_title)) {
+        data_title <- what_happened(expt=expt)
+        pca_plot <- pca_plot + ggplot2::ggtitle(data_title)
+    } else if (!is.null(plot_title)) {
+        data_title <- what_happened(expt=expt)
+        plot_title <- paste0(plot_title, "; ", data_title)
+    } else {
+        ## Leave the title blank.
     }
 
+    ## Finally, return a list of the interesting bits of what happened.
     pca_return <- list(
-        "pca" = pca,
+        "pca" = svd_result,
         "plot" = pca_plot,
         "table" = pca_data,
         "res" = pca_res,
@@ -282,7 +309,8 @@ factor_rsquared <- function(svd_v, fact, type="factor") {
 #' }
 #' @export
 plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
-                     design=NULL, plot_title=NULL, plot_labels=NULL, plot_size=5, size_column=NULL, ...) {
+                     design=NULL, plot_title=TRUE, plot_labels=NULL,
+                     plot_size=5, size_column=NULL, ...) {
     arglist <- list(...)
     hpgl_env <- environment()
     batches <- pca_data[["batch"]]
@@ -465,7 +493,7 @@ u_plot <- function(plotted_us) {
     ## top_threePC = head(plotted_us, n=20)
     plotted_us <- plotted_us[, c("PC1","PC2","PC3")]
     plotted_us[, "ID"] <- rownames(plotted_us)
-    message("The more shallow the curves in these plots, the more genes responsible for this principle component.")
+    message("More shallow curves in these plots suggest more genes in this principle component.")
     plot(plotted_us)
     u_plot <- grDevices::recordPlot()
     return(u_plot)
@@ -556,8 +584,13 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         "prop_var" = component_variance,
         "cumulative_prop_var" = cumulative_pc_variance)
     for (component in expt_factors) {
+        message(component)
         ##comp <- factor(as.character(expt_design[, component]), exclude=FALSE)
         comp <- expt_design[[component]]
+        if (is.null(comp)) {
+            message(paste0("The given component is not in the design: ", comp))
+            next
+        }
         column <- apply(v, 2, factor_rsquared, fact=comp)
         component_rsquared_table[[component]] <- column
     }
@@ -618,7 +651,12 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         "sampleid" = rownames(expt_design))
     rownames(factor_df) <- rownames(expt_design)
     for (fact in expt_factors) {
-        factor_df[fact] <- as.numeric(as.factor(as.character(expt_design[, fact])))
+        if (!is.null(expt_design[[fact]])) {
+            factor_df[[fact]] <- as.numeric(as.factor(as.character(expt_design[, fact])))
+        } else {
+            message(paste0("The column ", fact, " seems to be missing from the design."))
+            message(paste0("The available columns are: ", toString(colnames(expt_design)), "."))
+        }
     }
     factor_df <- factor_df[, -1, drop=FALSE]
     ## fit_one = data.frame()

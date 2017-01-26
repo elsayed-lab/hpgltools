@@ -2,7 +2,7 @@
 #'
 #' This will attempt to make it easier to run topgo on a set of genes.
 #'
-#' @param de_genes Data frame of differentially expressed genes, containing IDs any other columns.
+#' @param sig_genes Data frame of differentially expressed genes, containing IDs any other columns.
 #' @param goid_map File containing mappings of genes to goids in the format expected by topgo.
 #' @param goids_df Data frame of the goids which may be used to make the goid_map.
 #' @param pvals Set of pvalues in the DE data which may be used to improve the topgo results.
@@ -12,26 +12,29 @@
 #' @param sigforall Provide the significance for all nodes?
 #' @param numchar Character limit for the table of results.
 #' @param selector Function name for choosing genes to include.
+#' @param pval_column Column from which to acquire scores.
 #' @param overwrite Yeah I do not remember this one either.
 #' @param densities Densities, yeah, the densities...
 #' @param pval_plots Include pvalue plots of the results a la clusterprofiler?
-#' @param pval_column Column from which to acquire scores.
+#' @param parallel  Perform some operations in parallel to speed this up?
 #' @param ... Other options which I do not remember right now!
 #' @return Big list including the various outputs from topgo
 #' @export
-simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
+simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
                          pvals=NULL, limitby="fisher", limit=0.1, signodes=100,
                          sigforall=TRUE, numchar=300, selector="topDiffGenes",
                          pval_column="adj.P.Val", overwrite=FALSE, densities=FALSE,
                          pval_plots=TRUE, parallel=FALSE, ...) {
-### Some neat ideas from the topGO documentation:
-### geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
-### A variant of these operations make it possible to give topGO scores so that
-### a larger array of tests may be performed
-### x <- topDiffGenes(geneList)
-### sum(x) ## the number of selected genes
-### If we do something like above to give scores to all the 'DEgenes', then we set up the GOdata object like this:
-### mf_GOdata = new("topGOdata", description="something", ontology="BP", allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO, gene2GO=geneID2GO, nodeSize=2)
+    ## Some neat ideas from the topGO documentation:
+    ## geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
+    ## A variant of these operations make it possible to give topGO scores so that
+    ## a larger array of tests may be performed
+    ## x <- topDiffGenes(geneList)
+    ## sum(x) ## the number of selected genes
+    ## If we do something like above to give scores to all the 'DEgenes', then we set up the
+    ## GOdata object like this: mf_GOdata = new("topGOdata", description="something", ontology="BP",
+    ##      allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO,
+    ##      gene2GO=geneID2GO, nodeSize=2)
     ## The following library invocation is in case it was unloaded for pathview
     requireNamespace("topGO")
     require.auto("Hmisc")
@@ -39,17 +42,18 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
     gomap_info <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO <- topGO::readMappings(file=goid_map)
     annotated_genes <- names(geneID2GO)
-    if (is.null(de_genes[["ID"]])) {
-        de_genes[["ID"]] <- make.names(rownames(de_genes), unique=TRUE)
+    if (is.null(sig_genes[["ID"]])) {
+        sig_genes[["ID"]] <- make.names(rownames(sig_genes), unique=TRUE)
     }
-    fisher_interesting_genes <- as.factor(as.integer(annotated_genes %in% de_genes[["ID"]]))
+    fisher_interesting_genes <- as.factor(as.integer(annotated_genes %in% sig_genes[["ID"]]))
     names(fisher_interesting_genes) <- annotated_genes
-    ks_interesting_genes <- as.integer(!annotated_genes %in% de_genes[["ID"]])
-    if (!is.null(de_genes[[pval_column]])) {
-        ## I think this needs to include the entire gene universe, not only the set of x differentially expressed genes
-        ## Making this an explicit as.vector(as.numeric()) because it turns out the values from DESeq are characters.
-        pvals <- as.vector(as.numeric(de_genes[[pval_column]]))
-        names(pvals) <- rownames(de_genes)
+    ks_interesting_genes <- as.integer(!annotated_genes %in% sig_genes[["ID"]])
+    if (!is.null(sig_genes[[pval_column]])) {
+        ## I think this needs to include the entire gene universe, not only the set of x
+        ## differentially expressed genes, making this an explicit as.vector(as.numeric())
+        ## because it turns out the values from DESeq are characters.
+        pvals <- as.vector(as.numeric(sig_genes[[pval_column]]))
+        names(pvals) <- rownames(sig_genes)
         for (p in 1:length(pvals)) {
             name <- names(pvals)[p]
             ks_interesting_genes[[name]] <- pvals[p]
@@ -201,18 +205,24 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
         ## We have collected all the data sets, close the 3-cpu cluster.
         parallel::stopCluster(cl)
     } else {
-        godata_fisher_result[["MF"]] <- new("topGOdata", ontology="MF", allGenes=fisher_interesting_genes,
+        godata_fisher_result[["MF"]] <- new("topGOdata", ontology="MF",
+                                            allGenes=fisher_interesting_genes,
                                             annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        godata_fisher_result[["BP"]] <- new("topGOdata", ontology="BP", allGenes=fisher_interesting_genes,
+        godata_fisher_result[["BP"]] <- new("topGOdata", ontology="BP",
+                                            allGenes=fisher_interesting_genes,
                                             annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        godata_fisher_result[["CC"]] <- new("topGOdata", ontology="CC", allGenes=fisher_interesting_genes,
+        godata_fisher_result[["CC"]] <- new("topGOdata", ontology="CC",
+                                            allGenes=fisher_interesting_genes,
                                             annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        godata_ks_result[["MF"]] <- new("topGOdata", description="MF", ontology="MF", allGenes=ks_interesting_genes,
-                                        geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        godata_ks_result[["BP"]] <- new("topGOdata", description="BP", ontology="BP", allGenes=ks_interesting_genes,
-                                        geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-        godata_ks_result[["CC"]] <- new("topGOdata", description="CC", ontology="CC", allGenes=ks_interesting_genes,
-                                        geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+        godata_ks_result[["MF"]] <- new("topGOdata", description="MF", ontology="MF",
+                                        allGenes=ks_interesting_genes, geneSel=get(selector),
+                                        annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+        godata_ks_result[["BP"]] <- new("topGOdata", description="BP", ontology="BP",
+                                        allGenes=ks_interesting_genes, geneSel=get(selector),
+                                        annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+        godata_ks_result[["CC"]] <- new("topGOdata", description="CC", ontology="CC",
+                                        allGenes=ks_interesting_genes, geneSel=get(selector),
+                                        annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
 
         test_stat <- new("classicCount", testStatistic=topGO::GOFisherTest, name="Fisher test")
         sig_fisher_result[["MF"]] <- topGO::getSigGroups(godata_fisher_result[["MF"]], test_stat)
@@ -230,11 +240,12 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
         sig_el_result[["BP"]] <- topGO::getSigGroups(godata_ks_result[["BP"]], test_stat)
         sig_el_result[["CC"]] <- topGO::getSigGroups(godata_ks_result[["CC"]], test_stat)
         ## I think the following lines were in error, and they should be using the ks test data.
-###        sig_el_result[["mf"]] <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
-###        sig_el_result[["bp"]] <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
-###        sig_el_result[["cc"]] <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
+        ## sig_el_result[["mf"]] <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
+        ## sig_el_result[["bp"]] <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
+        ## sig_el_result[["cc"]] <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
 
-        test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest, name="Fisher test", sigRatio="ratio")
+        test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest,
+                         name="Fisher test", sigRatio="ratio")
         sig_weight_result[["MF"]] <- topGO::getSigGroups(godata_fisher_result[["MF"]], test_stat)
         sig_weight_result[["BP"]] <- topGO::getSigGroups(godata_fisher_result[["BP"]], test_stat)
         sig_weight_result[["CC"]] <- topGO::getSigGroups(godata_fisher_result[["CC"]], test_stat)
@@ -288,7 +299,7 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
         "cc_weight" = sig_weight_result[["CC"]])
 
     tables <- try(topgo_tables(results, limitby=limitby, limit=limit), silent=TRUE)
-    if (class(tables)[1] == 'try-error') {
+    if (class(tables)[1] == "try-error") {
         tables <- NULL
     }
 
@@ -313,24 +324,6 @@ simple_topgo <- function(de_genes, goid_map="id2go.map", goids_df=NULL,
     return(information)
 }
 
-#' Plot the density of categories vs. the possibilities of all categories.
-#'
-#' This can make a large number of plots.
-#'
-#' @param godata Result from topgo.
-#' @param table  Table of genes.
-#' @export
-plot_topgo_densities <- function(godata, table) {
-    ret <- list()
-    for (id in table$GO.ID) {
-        message(id)
-        print(hpgl_GroupDensity(godata, id, ranks=TRUE))
-        added_plot <- recordPlot()
-        ret[[id]] <- added_plot
-    }
-    return(ret)
-}
-
 #' Make pretty tables out of topGO data
 #'
 #' The topgo function GenTable is neat, but it needs some simplification to not be obnoxious.
@@ -342,7 +335,8 @@ plot_topgo_densities <- function(godata, table) {
 #' @param orderby Which of the available columns to order the table by?
 #' @param ranksof Which of the available columns are used to rank the data?
 #' @export
-topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, orderby="classic", ranksof="classic") {
+topgo_tables <- function(result, limit=0.1, limitby="fisher",
+                         numchar=300, orderby="classic", ranksof="classic") {
     ## The following if statement could be replaced by get(limitby)
     ## But I am leaving it as a way to ensure that no shenanigans ensue
     mf_allRes <- bp_allRes <- cc_allRes <- mf_interesting <- bp_interesting <- cc_interesting <- NULL
@@ -370,7 +364,7 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, order
         mf_allRes <- try(topGO::GenTable(result$fmf_godata, classic=result$mf_fisher, KS=result$mf_ks,
                                          EL=result$mf_el, weight=result$mf_weight, orderBy=orderby,
                                          ranksOf=ranksof, topNodes=mf_topnodes, numChar=numchar))
-        if (class(mf_allRes) != 'try-error') {
+        if (class(mf_allRes) != "try-error") {
             mf_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result$mf_fisher))$qvalues)
             mf_allRes <- merge(mf_allRes, mf_qvalues, by.x="GO.ID", by.y="row.names")
             mf_allRes$classic <- as.numeric(mf_allRes$classic)
@@ -389,7 +383,7 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, order
         bp_allRes <- try(topGO::GenTable(result$fbp_godata, classic=result$bp_fisher, KS=result$bp_ks,
                                          EL=result$bp_el, weight=result$bp_weight, orderBy=orderby,
                                          ranksOf=ranksof, topNodes=bp_topnodes, numChar=numchar))
-        if (class(bp_allRes) != 'try-error') {
+        if (class(bp_allRes) != "try-error") {
             bp_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result$bp_fisher))$qvalues)
             bp_allRes <- merge(bp_allRes, bp_qvalues, by.x="GO.ID", by.y="row.names", all.x=TRUE)
             bp_allRes$classic <- as.numeric(bp_allRes$classic)
@@ -408,7 +402,7 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, order
         cc_allRes <- try(topGO::GenTable(result$fcc_godata, classic=result$cc_fisher, KS=result$cc_ks,
                                          EL=result$cc_el, weight=result$cc_weight, orderBy=orderby,
                                          ranksOf=ranksof, topNodes=cc_topnodes, numChar=numchar))
-        if (class(cc_allRes) != 'try-error') {
+        if (class(cc_allRes) != "try-error") {
             cc_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result$cc_fisher))$qvalues)
             cc_allRes <- merge(cc_allRes, cc_qvalues, by.x="GO.ID", by.y="row.names")
             cc_allRes$classic <- as.numeric(cc_allRes$classic)
@@ -430,232 +424,6 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher", numchar=300, order
         "bp_interesting" = bp_interesting,
         "cc_interesting" = cc_interesting)
     return(tables)
-}
-
-#' Print trees from topGO.
-#'
-#' The tree printing functionality of topGO is pretty cool, but difficult to get set correctly.
-#'
-#' @param tg Data from simple_topgo().
-#' @param score_limit Score limit to decide whether to add to the tree.
-#' @param sigforall Add scores to the tree?
-#' @param do_mf_fisher_tree Add the fisher score molecular function tree?
-#' @param do_bp_fisher_tree Add the fisher biological process tree?
-#' @param do_cc_fisher_tree Add the fisher cellular component tree?
-#' @param do_mf_ks_tree Add the ks molecular function tree?
-#' @param do_bp_ks_tree Add the ks biological process tree?
-#' @param do_cc_ks_tree Add the ks cellular component tree?
-#' @param do_mf_el_tree Add the el molecular function tree?
-#' @param do_bp_el_tree Add the el biological process tree?
-#' @param do_cc_el_tree Add the el cellular component tree?
-#' @param do_mf_weight_tree Add the weight mf tree?
-#' @param do_bp_weight_tree Add the bp weighted tree?
-#' @param do_cc_weight_tree Add the guess
-#' @return Big list including the various outputs from topgo.
-#' @export
-topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=TRUE,
-                        do_bp_fisher_tree=TRUE, do_cc_fisher_tree=TRUE, do_mf_ks_tree=FALSE,
-                        do_bp_ks_tree=FALSE, do_cc_ks_tree=FALSE, do_mf_el_tree=FALSE,
-                        do_bp_el_tree=FALSE, do_cc_el_tree=FALSE, do_mf_weight_tree=FALSE,
-                        do_bp_weight_tree=FALSE, do_cc_weight_tree=FALSE, parallel=FALSE) {
-    mf_fisher_nodes <- mf_fisher_tree <- NULL
-    if (isTRUE(do_mf_fisher_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["mf_fisher"]]) <= score_limit))
-        mf_fisher_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["fmf_godata"]],
-                                                        topGO::score(tg[["results"]][["mf_fisher"]]),
-                                                        useInfo="all",
-                                                        sigForAll=sigforall,
-                                                        firstSigNodes=included,
-                                                        useFullNames=TRUE,
-                                                        plotFunction=hpgl_GOplot)))
-        if (class(mf_fisher_nodes)[1] != 'try-error') {
-            mf_fisher_tree <- try(grDevices::recordPlot())
-        }
-    }
-    bp_fisher_nodes <- bp_fisher_tree <- NULL
-    if (isTRUE(do_bp_fisher_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["bp_fisher"]]) <= score_limit))
-        bp_fisher_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["fbp_godata"]],
-                                                        topGO::score(tg[["results"]][["bp_fisher"]]),
-                                                        useInfo="all",
-                                                        sigForAll=sigforall,
-                                                        firstSigNodes=included,
-                                                        useFullNames=TRUE,
-                                                        plotFunction=hpgl_GOplot)))
-        if (class(bp_fisher_nodes)[1] != 'try-error') {
-            bp_fisher_tree <- try(grDevices::recordPlot())
-        }
-    }
-    cc_fisher_nodes <- cc_fisher_tree <- NULL
-    if (isTRUE(do_cc_fisher_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["cc_fisher"]]) <= score_limit))
-        cc_fisher_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["fcc_godata"]],
-                                                        topGO::score(tg[["results"]][["cc_fisher"]]),
-                                                        useInfo="all",
-                                                        sigForAll=sigforall,
-                                                        firstSigNodes=included,
-                                                        useFullNames=TRUE,
-                                                        plotFunction=hpgl_GOplot)))
-        if (class(cc_fisher_nodes)[1] != 'try-error') {
-            cc_fisher_tree <- try(grDevices::recordPlot())
-        }
-    }
-    mf_ks_nodes <- mf_ks_tree <- NULL
-    if (isTRUE(do_mf_ks_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["mf_ks"]]) <= score_limit))
-        mf_ks_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["kmf_godata"]],
-                                                    topGO::score(tg[["results"]][["mf_ks"]]),
-                                                    useInfo="all",
-                                                    sigForAll=sigforall,
-                                                    firstSigNodes=included,
-                                                    useFullNames=TRUE,
-                                                    plotFunction=hpgl_GOplot)))
-        if (class(mf_ks_nodes)[1] != 'try-error') {
-            mf_ks_tree <- try(grDevices::recordPlot())
-        }
-    }
-    bp_ks_nodes <- bp_ks_tree <- NULL
-    if (isTRUE(do_bp_ks_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["bp_ks"]]) <= score_limit))
-        bp_ks_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["kbp_godata"]],
-                                                    topGO::score(tg[["results"]][["bp_ks"]]),
-                                                    useInfo="all",
-                                                    sigForAll=sigforall,
-                                                    firstSigNodes=included,
-                                                    useFullNames=TRUE,
-                                                    plotFunction=hpgl_GOplot)))
-        if (class(bp_ks_nodes)[1] != 'try-error') {
-            bp_ks_tree <- try(grDevices::recordPlot())
-        }
-    }
-    cc_ks_nodes <- cc_ks_tree <- NULL
-    if (isTRUE(do_cc_ks_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["cc_ks"]]) <= score_limit))
-        cc_ks_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["kcc_godata"]],
-                                                    topGO::score(tg[["results"]][["cc_ks"]]),
-                                                    useInfo="all",
-                                                    sigForAll=sigforall,
-                                                    firstSigNodes=included,
-                                                    useFullNames=TRUE,
-                                                    plotFunction=hpgl_GOplot)))
-        if (class(cc_ks_nodes)[1] != 'try-error') {
-            cc_ks_tree <- try(grDevices::recordPlot())
-        }
-    }
-    mf_el_nodes <- mf_el_tree <- NULL
-    if (isTRUE(do_mf_el_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["mf_el"]]) <= score_limit))
-        mf_el_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["fmf_godata"]],
-                                                    topGO::score(tg[["results"]][["mf_el"]]),
-                                                    useInfo="all",
-                                                    sigForAll=sigforall,
-                                                    firstSigNodes=included,
-                                                    useFullNames=TRUE,
-                                                    plotFunction=hpgl_GOplot)))
-        if (class(mf_el_nodes)[1] != 'try-error') {
-            mf_el_tree <- try(grDevices::recordPlot())
-        }
-    }
-    bp_el_nodes <- bp_el_tree <- NULL
-    if (isTRUE(do_bp_el_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["bp_el"]]) <= score_limit))
-        bp_el_nodes <- try(suppressWarnings(topGO::showSigOfNodes(tg[["results"]][["fbp_godata"]],
-                                                                  topGO::score(tg[["results"]][["bp_el"]]),
-                                                                  useInfo="all",
-                                                                  sigForAll=sigforall,
-                                                                  firstSigNodes=included,
-                                                                  useFullNames=TRUE,
-                                                                  plotFunction=hpgl_GOplot)))
-        if (class(bp_el_nodes)[1] != 'try-error') {
-            bp_el_tree <- try(grDevices::recordPlot())
-        }
-    }
-    cc_el_nodes <- cc_el_tree <- NULL
-    if (isTRUE(do_cc_el_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["cc_el"]]) <= score_limit))
-        cc_el_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["kcc_godata"]],
-                                                    topGO::score(tg[["results"]][["cc_el"]]),
-                                                    useInfo="all",
-                                                    sigForAll=sigforall,
-                                                    firstSigNodes=included,
-                                                    useFullNames=TRUE,
-                                                    plotFunction=hpgl_GOplot)))
-        if (class(cc_el_nodes)[1] != 'try-error') {
-            cc_el_tree <- try(grDevices::recordPlot())
-        }
-    }
-    mf_weight_nodes <- mf_weight_tree <- NULL
-    if (isTRUE(do_mf_weight_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["mf_weight"]]) <= score_limit))
-        mf_weight_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["fmf_godata"]],
-                                                        topGO::score(tg[["results"]][["mf_weight"]]),
-                                                        useInfo="all",
-                                                        sigForAll=sigforall,
-                                                        firstSigNodes=included,
-                                                        useFullNames=TRUE,
-                                                        plotFunction=hpgl_GOplot)))
-        if (class(mf_weight_nodes)[1] != 'try-error') {
-            mf_weight_tree <- try(grDevices::recordPlot())
-        }
-    }
-    bp_weight_nodes <- bp_weight_tree <- NULL
-    if (isTRUE(do_bp_weight_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["bp_weight"]]) <= score_limit))
-        bp_weight_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["fbp_godata"]],
-                                                        topGO::score(tg[["results"]][["bp_weight"]]),
-                                                        useInfo="all",
-                                                        sigForAll=sigforall,
-                                                        firstSigNodes=included,
-                                                        useFullNames=TRUE,
-                                                        plotFunction=hpgl_GOplot)))
-        if (class(bp_weight_nodes)[1] != 'try-error') {
-            bp_weight_tree <- try(grDevices::recordPlot())
-        }
-    }
-    cc_weight_nodes <- cc_weight_tree <- NULL
-    if (isTRUE(do_cc_weight_tree)) {
-        included <- length(which(topGO::score(tg[["results"]][["cc_weight"]]) <= score_limit))
-        cc_weight_nodes <- try(sm(topGO::showSigOfNodes(tg[["results"]][["fcc_godata"]],
-                                                        topGO::score(tg[["results"]][["cc_weight"]]),
-                                                        useInfo="all",
-                                                        sigForAll=sigforall,
-                                                        firstSigNodes=included,
-                                                        useFullNames=TRUE,
-                                                        plotFunction=hpgl_GOplot)))
-        if (class(cc_weight_nodes)[1] != 'try-error') {
-            cc_weight_tree <- try(grDevices::recordPlot())
-        }
-    }
-
-    trees <- list(
-        "mf_fisher_nodes" = mf_fisher_nodes,
-        "bp_fisher_nodes" = bp_fisher_nodes,
-        "cc_fisher_nodes" = cc_fisher_nodes,
-        "mf_ks_nodes" = mf_ks_nodes,
-        "bp_ks_nodes" = bp_ks_nodes,
-        "cc_ks_nodes" = cc_ks_nodes,
-        "mf_el_nodes" = mf_el_nodes,
-        "bp_el_nodes" = bp_el_nodes,
-        "cc_el_nodes" = cc_el_nodes,
-        "mf_weight_nodes" = mf_weight_nodes,
-        "bp_weight_nodes" = bp_weight_nodes,
-        "cc_weight_nodes" = cc_weight_nodes,
-        "MF_over" = mf_fisher_tree,  ## copying these here for consistent returns between goseq/cluster/topgo/gostats.
-        "BP_over" = bp_fisher_tree,  ## copying these here for consistent returns between goseq/cluster/topgo/gostats.
-        "CC_over" = cc_fisher_tree,  ## copying these here for consistent returns between goseq/cluster/topgo/gostats.
-        "MF_fisher_tree" = mf_fisher_tree,
-        "BP_fisher_tree" = bp_fisher_tree,
-        "CC_fisher_tree" = cc_fisher_tree,
-        "MF_ks_tree" = mf_ks_tree,
-        "BP_ks_tree" = bp_ks_tree,
-        "CC_ks_tree" = cc_ks_tree,
-        "MF_el_tree" = mf_el_tree,
-        "BP_el_tree" = bp_el_tree,
-        "CC_el_tree" = cc_el_tree,
-        "MF_weight_tree" = mf_weight_tree,
-        "BP_weight_tree" = bp_weight_tree,
-        "CC_weight_tree" = cc_weight_tree)
-    return(trees)
 }
 
 #' Make a go mapping from IDs in a format suitable for topGO.
@@ -708,7 +476,7 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
     return(new_go)
 }
 
-hpgl_topdiffgenes <- function(scores, df=get0("de_genes"), direction="up") {
+hpgl_topdiffgenes <- function(scores, df=get0("sig_genes"), direction="up") {
     ## Testing parameters
     ##scores = pvals
     ##df = epi_cl14clbr_high
@@ -732,55 +500,6 @@ hpgl_topdiffgenes <- function(scores, df=get0("de_genes"), direction="up") {
 #' @param allScore The scores of the genes
 #' @export
 topDiffGenes <- function(allScore) { return(allScore < 0.01) }
-
-#' Make a pvalue plot from topgo data.
-#'
-#' The p-value plots from clusterProfiler are pretty, this sets the topgo data into a format
-#' suitable for plotting in that fashion and returns the resulting plots of significant ontologies.
-#'
-#' @param topgo Some data from topgo!
-#' @param wrapped_width  Maximum width of the text names.
-#' @param cutoff P-value cutoff for the plots.
-#' @param n Maximum number of ontologies to include.
-#' @param type Type of score to use.
-#' @return List of MF/BP/CC pvalue plots.
-#' @seealso \pkg{topgo} \code{clusterProfiler}
-#' @export
-plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
-    mf_newdf <- topgo$tables$mf[, c("GO.ID", "Term", "Annotated","Significant", type)]
-    mf_newdf$term <- as.character(lapply(strwrap(mf_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    mf_newdf$pvalue <- as.numeric(mf_newdf[[type]])
-    mf_newdf <- subset(mf_newdf, get(type) < cutoff)
-    mf_newdf <- mf_newdf[order(mf_newdf$pvalue, mf_newdf[[type]]),]
-    mf_newdf <- head(mf_newdf, n=n)
-    mf_newdf$score <- mf_newdf$Significant / mf_newdf$Annotated
-    mf_pval_plot <- plot_ontpval(mf_newdf, ontology="MF")
-
-    bp_newdf <- topgo$tables$bp[,c("GO.ID", "Term", "Annotated","Significant",type)]
-    bp_newdf$term <- as.character(lapply(strwrap(bp_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    bp_newdf$pvalue <- as.numeric(bp_newdf[[type]])
-    bp_newdf <- subset(bp_newdf, get(type) < cutoff)
-    bp_newdf <- bp_newdf[order(bp_newdf$pvalue, bp_newdf[[type]]),]
-    bp_newdf <- head(bp_newdf, n=n)
-    bp_newdf$score <- bp_newdf$Significant / bp_newdf$Annotated
-    bp_pval_plot <- plot_ontpval(bp_newdf, ontology="MF")
-
-    cc_newdf <- topgo$tables$cc[,c("GO.ID", "Term", "Annotated","Significant",type)]
-    cc_newdf$term <- as.character(lapply(strwrap(cc_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    cc_newdf$pvalue <- as.numeric(cc_newdf[[type]])
-    cc_newdf <- subset(cc_newdf, get(type) < cutoff)
-    cc_newdf <- cc_newdf[order(cc_newdf$pvalue, cc_newdf[[type]]),]
-    cc_newdf <- head(cc_newdf, n=n)
-    cc_newdf$score <- cc_newdf$Significant / cc_newdf$Annotated
-    cc_pval_plot <- plot_ontpval(cc_newdf, ontology="CC")
-
-    pval_plots <- list(
-        "mfp_plot_over" = mf_pval_plot,
-        "bpp_plot_over" = bp_pval_plot,
-        "ccp_plot_over" = cc_pval_plot)
-    return(pval_plots)
-}
-
 
 #' Plot the ontology DAG.
 #'
@@ -965,7 +684,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
 #' @return plot of group densities.
 hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     groupMembers <- try(topGO::genesInTerm(object, whichGO)[[1]])
-    if (class(groupMembers)[1] == 'try-error') {
+    if (class(groupMembers)[1] == "try-error") {
         return(NULL)
     }
     allS <- topGO::geneScore(object, use.names = TRUE)
@@ -978,7 +697,9 @@ hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
         xlab <- "Gene's rank"
     }
     group <- as.integer(names(allS) %in% groupMembers)
-    xx <- data.frame(score=allS, group = factor(group, labels=paste(c("complementary", whichGO), "  (", table(group), ")", sep="")))
+    xx <- data.frame(score=allS, group = factor(group,
+                                                labels=paste(c("complementary", whichGO),
+                                                             "  (", table(group), ")", sep="")))
     plot = lattice::densityplot( ~ score | group, data=xx, layout=c(1,2), xlab=xlab)
     return(plot)
 }

@@ -2,9 +2,9 @@
 % Please edit documentation in R/annotation_genbank.r
 \name{download_gbk}
 \alias{download_gbk}
-\title{A genbank accession downloader scurrilously stolen from ape}
+\title{A genbank accession downloader scurrilously stolen from ape.}
 \usage{
-download_gbk(accessions, write = TRUE)
+download_gbk(accessions = "AE009949", write = TRUE)
 }
 \arguments{
 \item{accessions}{An accession -- actually a set of them.}
@@ -15,6 +15,11 @@ download_gbk(accessions, write = TRUE)
 A list containing the number of files downloaded and the character strings actually acquired
 }
 \description{
-This takes and downloads genbank accessions
+This takes and downloads genbank accessions.
+}
+\details{
+Tested in test_40ann_biomartgenbank.R
+In this function I stole the same functionality from the ape package and set a few defaults
+so that it hopefully fails less often.
 }
 

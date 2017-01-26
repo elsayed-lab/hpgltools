@@ -39,17 +39,14 @@ load(data_file, envir=cdm)
 rm(data_file)
 
 ls()
-## 2 variables should exist now: rmd_file in case I want to knitr this file, cdm which is a list including the data required to make an expressionset.
 
-## expt <- create_expt(metadata='filename.xlsx', gene_info=annotation_data)
+## ----create_expt---------------------------------------------------------
 expt <- create_expt(count_dataframe=cdm$cdm_counts, metadata=cdm$cdm_metadata, gene_info=cdm$gene_info)
-## The gff information is in 'annotations'
-## The experiment is in most_v0M1
-## Here is the meta-data! (well, the first 6 lines anyway).
+
 knitr::kable(head(expt$design))
 summary(expt)
 
-## ----graph_original, show.fig="hide"-------------------------------------
+## ----graph_original, show.fig='hide'-------------------------------------
 raw_metrics <- sm(graph_metrics(expt, qq=TRUE))
 
 ## ----show_original_plots-------------------------------------------------
@@ -67,16 +64,17 @@ raw_metrics$qqrat
 ## The following summary shows the other available plots:
 summary(raw_metrics)
 
-## ----subset_data---------------------------------------------------------
+## ----subset_data, fig.show='hide'----------------------------------------
 head(expt$design)
 ## elt stands for: "early/late in thy"
 batch_a <- expt_subset(expt, subset="batch=='a'")
 batch_b <- expt_subset(expt, subset="batch=='b'")
 
-a_metrics <- graph_metrics(batch_a)
-a_metrics$pcaplot
-b_metrics <- graph_metrics(batch_b)
+
 b_metrics$pcaplot
+
+## ----view_subsets--------------------------------------------------------
+
 
 ## ----normalize_subset, fig.show="hide"-----------------------------------
 ## doing nothing to the data except log2 transforming it has a surprisingly large effect
@@ -128,32 +126,33 @@ my_keepers <- list(
     "mga_media" = c("mga_ll_cf", "mga_ll_cg"))
 
 ## ----combine_test--------------------------------------------------------
-spyogenes_tables <- sm(combine_de_tables(spyogenes_de))
+spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE))
 summary(spyogenes_tables)
 
 ## ----sig_genes_test------------------------------------------------------
-spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables))
+spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables, excel=FALSE))
 knitr::kable(head(spyogenes_sig$limma$ups[[1]]))
 
 ## ----circos--------------------------------------------------------------
-microbe_ids <- as.character(get_microbesonline_ids("pyogenes MGAS5005"))
+microbe_ids <- as.character(sm(get_microbesonline_ids("pyogenes MGAS5005")))
 mgas_df <- sm(get_microbesonline_annotation(microbe_ids[[1]])[[1]])
 mgas_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df$sysName)
 rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
 
 ## First make a template configuration
-circos_test <- sm(circos_prefix())
+circos_test <- circos_prefix()
 ## Fill it in with the data for s.pyogenes
-circos_kary <- sm(circos_karyotype("mgas", length=1895017))
+circos_kary <- circos_karyotype("mgas", length=1895017)
 ## Fill in the gene category annotations by gene-strand
-circos_plus <- sm(circos_plus_minus(mgas_df, circos_test))
+circos_plus <- circos_plus_minus(mgas_df, circos_test)
 
-circos_limma_hist <- sm(circos_hist(spyogenes_de$limma$all_tables[[1]], mgas_df, circos_test, outer=circos_plus))
-circos_deseq_hist <- sm(circos_hist(spyogenes_de$deseq$all_tables[[1]], mgas_df, circos_test, outer=circos_limma_hist))
-circos_edger_hist <- sm(circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df, circos_test, outer=circos_deseq_hist))
+circos_limma_hist <- circos_hist(spyogenes_de$limma$all_tables[[1]], mgas_df, circos_test, outer=circos_plus)
+circos_deseq_hist <- circos_hist(spyogenes_de$deseq$all_tables[[1]], mgas_df, circos_test, outer=circos_limma_hist)
+circos_edger_hist <- circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df, circos_test, outer=circos_deseq_hist)
 circos_suffix(cfgout=circos_test)
-circos_made <- sm(circos_make(target="mgas"))
+circos_made <- circos_make(target="mgas")
 ## For some reason this fails weirdly when not run interactively.
+getwd()
 
 ## ----genoplot------------------------------------------------------------
 genoplot_chromosome()

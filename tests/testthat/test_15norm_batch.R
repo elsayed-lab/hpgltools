@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("15norm_batch.R: Are normalizations consistent over time (Batch estimation/correction)?\n")
@@ -57,7 +58,7 @@ test_that("combatmod from cbcbSEQ batch gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-expected <- c(4.875168, 87.749156, 4418.793105, 557.089237, 9.641209)
+expected <- c(0.1139956, 7.7406815, 384.8292656, 34.1636051, 0.4937972)
 names(expected) <- test_genes
 pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="sva"))
 actual_df <- Biobase::exprs(pasilla_batch[["expressionset"]])
@@ -79,7 +80,7 @@ test_that("combat_scale gives expected values?", {
 })
 
 ## pasilla_batch <- normalize_expt(pasilla_expt, batch="combat_noprior_scale") ## takes forever
-expected <- c(4.610009, 82.109047, 4099.039071, 519.407501, 9.116170)
+expected <- c(0.1139956, 7.7406815, 384.8292656, 34.1636051, 0.4937972)
 names(expected) <- test_genes
 pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="svaseq"))
 actual_df <- Biobase::exprs(pasilla_batch[["expressionset"]])
@@ -88,7 +89,7 @@ test_that("svaseq gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-expected <- c(4,83,4091,496,9)
+expected <- c(4, 83, 4091, 496, 9)
 names(expected) <- test_genes
 pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="ruvg"))
 actual_df <- Biobase::exprs(pasilla_batch[["expressionset"]])
@@ -109,4 +110,6 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ##})
 }
 
-message("\nFinished 15norm_batch.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 15norm_batch.R in ", elapsed,  " seconds."))

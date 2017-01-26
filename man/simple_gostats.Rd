@@ -5,13 +5,13 @@
 \title{Simplification function for gostats, in the same vein as those written for clusterProfiler,
 goseq, and topGO.}
 \usage{
-simple_gostats(de_genes, gff, goids_df, universe_merge = "id",
+simple_gostats(sig_genes, gff, goids_df, universe_merge = "id",
   second_merge_try = "locus_tag", species = "fun", pcutoff = 0.1,
   direction = "over", conditional = FALSE, categorysize = NULL,
   gff_type = "cds", ...)
 }
 \arguments{
-\item{de_genes}{Input list of differentially expressed genes.}
+\item{sig_genes}{Input list of differentially expressed genes.}
 
 \item{gff}{Annotation information for this genome.}
 

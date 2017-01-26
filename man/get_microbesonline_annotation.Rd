@@ -18,4 +18,9 @@ List of dataframes with the annotation information.
 Like I said, the microbesonline mysqldb is rather more complex than I prefer.  This shortcuts
 that process and just grabs a tsv copy of everything and loads it into a dataframe.
 }
+\details{
+Tested in test_70expt_spyogenes.R
+There is so much awesome information in microbesonline, but damn is it annoying to download.
+This function makes that rather easier, or so I hope at least.
+}
 

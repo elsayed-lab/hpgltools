@@ -4,11 +4,14 @@
 \alias{choose_model}
 \title{Try out a few experimental models and return a likely working option.}
 \usage{
-choose_model(conditions, batches, model_batch = TRUE, model_cond = TRUE,
-  model_intercept = TRUE, alt_model = NULL, alt_string = NULL,
-  intercept = 0, reverse = FALSE)
+choose_model(input, conditions, batches, model_batch = TRUE,
+  model_cond = TRUE, model_intercept = TRUE, alt_model = NULL,
+  alt_string = NULL, intercept = 0, reverse = FALSE, surrogates = "be",
+  ...)
 }
 \arguments{
+\item{input}{Input data used to make the model.}
+
 \item{conditions}{Factor of conditions in the putative model.}
 
 \item{batches}{Factor of batches in the putative model.}
@@ -27,6 +30,10 @@ choose_model(conditions, batches, model_batch = TRUE, model_cond = TRUE,
 
 \item{reverse}{Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
 to test.}
+
+\item{surrogates}{Number of or method used to choose the number of surrogate variables.}
+
+\item{...}{Further options are passed to arglist.}
 }
 \value{
 List including a model matrix and strings describing cell-means and intercept models.
@@ -35,5 +42,8 @@ List including a model matrix and strings describing cell-means and intercept mo
 The _pairwise family of functions all demand an experimental model.  This tries to choose a
 consistent and useful model for all for them.  This does not try to do multi-factor, interacting,
 nor dependent variable models, if you want those do them yourself and pass them off as alt_model.
+}
+\details{
+Invoked by the _pairwise() functions.
 }
 

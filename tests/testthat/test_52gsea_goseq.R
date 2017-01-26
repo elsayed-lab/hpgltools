@@ -1,60 +1,69 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 
 context("52gsea_goseq.R: Does goseq work?\n")
-
 ## I want to do some much longer tests using goseq/clusterprofiler/topgo/gostats/gprofiler
 ## These will likely not work with Travis as they take forever.
 ## I am not however, certain how to use skip_on_travis(), so I printed it and am copying the
 ## useful bits here.
 
-
 ##if (!identical(Sys.getenv("TRAVIS"), "true")) {
-limma <- new.env()
-load("de_limma.rda", envir=limma)
-table <- limma$hpgl_table
-sig_genes <- sm(get_sig_genes(table, column="untreated")$up_genes)
+load("gsea_siggenes.rda")
 
-dmel_annotations <- sm(get_biomart_annotations(species="dmelanogaster"))
-dmel_ontologies <- sm(get_biomart_ontologies(species="dmelanogaster"))
-dmel_lengths <- dmel_annotations[, c("geneID", "length")]
-colnames(dmel_lengths) <- c("ID","width")
-rownames(dmel_lengths) <- make.names(dmel_lengths[["ID"]], unique=TRUE)
-## Drop all duplicate gene IDs
-dmel_lengths <- dmel_lengths[ !grepl("\\.", rownames(dmel_lengths)), ]
-goseq_result <- sm(simple_goseq(de_genes=sig_genes, length_db=dmel_lengths, go_db=dmel_ontologies))
+goseq_result <- sm(simple_goseq(sig_genes=fcp_sig_genes,
+                                length_db=dmel_lengths, go_db=dmel_ontologies))
 
-expected <- c("GO:0004252", "GO:0003824")
-actual <- head(rownames(goseq_result$mf_interesting))
+expected <- 53
+actual <- nrow(goseq_result$mf_interesting)
+test_that("Do we get the expected number of interesting mf categories?", {
+    expect_equal(expected, actual, tolerance=2)
+})
+expected <- 71
+actual <- nrow(goseq_result$bp_interesting)
+test_that("Do we get the expected number of interesting bp categories?", {
+    expect_equal(expected, actual)
+})
+expected <- 13
+actual <- nrow(goseq_result$cc_interesting)
+test_that("Do we get the expected number of interesting cc categories?", {
+    expect_equal(expected, actual)
+})
+
+expected <- c("GO:0000146", "GO:0003824", "GO:0003974",
+              "GO:0003978", "GO:0003993", "GO:0004114")
+actual <- head(sort(rownames(goseq_result$mf_interesting)))
 test_that("Are the goseq interesting results as expected (mf categories)?", {
     expect_equal(expected, actual)
 })
 
-expected <- c("GO:0006508")
-actual <- head(rownames(goseq_result$bp_interesting))
+expected <- c("GO:0000422", "GO:0000578", "GO:0001508",
+              "GO:0001676", "GO:0002121", "GO:0002385")
+actual <- head(sort(rownames(goseq_result$bp_interesting)))
 test_that("Are the goseq interesting results as expected (bp categories)?", {
     expect_equal(expected, actual)
 })
 
-expected <- c("GO:0005615", "GO:0016021", "GO:0005576")
-actual <- head(rownames(goseq_result$cc_interesting))
+expected <- c("GO:0005576", "GO:0005578", "GO:0005639",
+              "GO:0005811", "GO:0005859", "GO:0005967")
+actual <- head(sort(rownames(goseq_result$cc_interesting)))
 test_that("Are the goseq interesting results as expected (cc categories)?", {
     expect_equal(expected, actual)
 })
 
-expected <- c(0.2332155, 0.1883853, 0.5333333, 0.2279412, 0.4375000, 0.2129630)
+expected <- c(0.02857143, 0.02884615, 0.02941176, 0.03333333, 0.04651163, 0.07142857)
 actual <- head(goseq_result$pvalue_plots$mfp_plot_over$data$score)
 test_that("Are the goseq results as expected (mf pvalues)?", {
     expect_equal(expected, actual, tolerance=0.000001)
 })
 
-expected <- c(0.1866913, 0.2135922, 0.1853547, 0.1791444, 0.2075472, 0.2777778)
+expected <- c(0.07692308, 0.08333333, 0.09090909, 0.09090909, 0.10000000, 0.10000000)
 actual <- head(goseq_result$pvalue_plots$bpp_plot_over$data$score)
 test_that("Are the goseq results as expected (bp pvalues)?", {
     expect_equal(expected, actual, tolerance=0.000001)
 })
 
-expected <- c(0.1822785, 0.1783088, 0.1606498, 0.1739675, 0.1843972, 0.2471910)
+expected <- c(0.01263538, 0.01895735, 0.03636364, 0.03846154, 0.09090909, 0.11111111)
 actual <- head(goseq_result$pvalue_plots$ccp_plot_over$data$score)
 test_that("Are the goseq results as expected (cc pvalues)?", {
     expect_equal(expected, actual, tolerance=0.01)
@@ -76,4 +85,6 @@ test_that("Are the goseq results as expected (cc pvalues)?", {
 ## This was not my understanding of how enrichment analysis works. Have I just been mistaken this whole time?
 ## Keith
 
-message("\nFinished 52gsea_goseq.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 52gsea_goseq.R in ", elapsed,  " seconds."))

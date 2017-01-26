@@ -15,7 +15,8 @@ cbcb_batch_effect(normalized_counts, model)
 Dataframe of residuals after subtracting batch from the model.
 }
 \description{
-During a lab meeting, the following function was suggested as a quick and dirty batch removal tool
+During a lab meeting, the following function was suggested as a quick and
+dirty batch removal tool
 }
 \examples{
 \dontrun{

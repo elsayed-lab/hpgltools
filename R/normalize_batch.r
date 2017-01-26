@@ -1,6 +1,7 @@
 #' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
 #'
-#' During a lab meeting, the following function was suggested as a quick and dirty batch removal tool
+#' During a lab meeting, the following function was suggested as a quick and
+#' dirty batch removal tool
 #'
 #' @param normalized_counts Data frame of log2cpm counts.
 #' @param model Balanced experimental model containing condition and batch factors.
@@ -16,8 +17,10 @@ cbcb_batch_effect <- function(normalized_counts, model) {
     voomed <- hpgl_voom(normalized_counts, model)
     voomed_fit <- limma::lmFit(voomed)
     modified_model <- model
-    modified_model <- modified_model[, grep("batch", colnames(modified_model))] <- 0 ## Drop batch from the model
-    new_data <- tcrossprod(voomed_fit$coefficient, modified_model) + residuals(voomed_fit, normalized_counts)
+    ## Drop batch from the model
+    modified_model <- modified_model[, grep("batch", colnames(modified_model))] <- 0
+    new_data <- tcrossprod(voomed_fit$coefficient, modified_model) +
+        residuals(voomed_fit, normalized_counts)
     return(new_data)
 }
 
@@ -41,13 +44,17 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #'
 #' @param count_table Matrix of (pseudo)counts.
 #' @param design Model matrix defining the experimental conditions/batches/etc.
-#' @param batch String describing the method to try to remove the batch effect (or FALSE to leave it alone, TRUE uses limma).
+#' @param batch String describing the method to try to remove the batch effect
+#'        (or FALSE to leave it alone, TRUE uses limma).
 #' @param batch1 Column in the design table describing the presumed covariant to remove.
-#' @param batch2 Column in the design table describing the second covariant to remove (only used by limma at the moment).
-#' @param noscale Used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.
+#' @param batch2 Column in the design table describing the second covariant to remove
+#'        (only used by limma at the moment).
+#' @param noscale Used for combatmod, when true it removes the scaling parameter
+#'        from the invocation of the modified combat.
 #' @param ... More options for you!
-#' @return The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this
-#' may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
+#' @return The 'batch corrected' count table and new library size.  Please remember that the
+#'         library size which comes out of this may not be what you want for voom/limma and would
+#'         therefore lead to spurious differential expression values.
 #' @seealso \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
 #' @examples
 #' \dontrun{
@@ -55,13 +62,23 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #' sva_batch <- batch_counts(table, design, batch='sva')
 #' }
 #' @export
-batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2=NULL, noscale=TRUE, ...) {
+batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
+                         batch2=NULL, noscale=TRUE, ...) {
     arglist <- list(...)
     low_to_zero <- FALSE
     if (!is.null(arglist[["low_to_zero"]])) {
         low_to_zero <- arglist[["low_to_zero"]]
     }
-    cpus <- 3
+
+    ## Use this to pass along the state of the expt with respect to normalization.
+    ## This way, we can avoid double-normalizing the data when using ruvg or limmaresid etc.
+    expt_state_norm <- "normed"
+    if (!is.null(arglist[["expt_norm_state"]])) {
+        ## This should only affect what happens if it gets set to 'raw'
+        expt_norm_state <- arglist[["expt_norm_state"]]
+    }
+
+    cpus <- 4
     if (!is.null(arglist[["cpus"]])) {
         cpus <- arglist[["cpus"]]
     }
@@ -87,7 +104,9 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     if (batch == "limma") {
         if (is.null(batch2)) {
             ## A reminder of removeBatchEffect usage
-            ## adjusted_batchdonor = removeBatchEffect(data, batch=as.factor(as.character(des$donor)), batch2=as.factor(as.character(des$batch)))
+            ## adjusted_batchdonor = removeBatchEffect(data,
+            ##                             batch=as.factor(as.character(des$donor)),
+            ##                             batch2=as.factor(as.character(des$batch)))
             message("batch_counts: Using limma's removeBatchEffect to remove batch effect.")
             count_table <- limma::removeBatchEffect(count_table, batch=batches)
         } else {
@@ -97,52 +116,59 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     } else if (batch == "limmaresid") {
         message("batch_counts: Using residuals of limma's lmfit to remove batch effect.")
         batch_model <- model.matrix(~batches)
-        batch_voom <- limma::voom(data.frame(count_table), batch_model, normalize.method="quantile", plot=FALSE)
+        batch_voom <- NULL
+        if (expt_state_norm == "raw") {
+            batch_voom <- limma::voom(data.frame(count_table), batch_model,
+                                      normalize.method="quantile", plot=FALSE)
+        } else {
+            batch_voom <- limma::voom(data.frame(count_table), batch_model, plot=FALSE)
+        }
         batch_fit <- limma::lmFit(batch_voom, design=batch_model)
         count_table <- residuals(batch_fit, batch_voom[["E"]])
-        ## Make sure to change this soon to take into account whether we are working on the log or non-log scale.
-        ## Perhaps switch out the call from limma::voom to my own voom -- though I think I would prefer to use their copy and have a check
-        ## that way if they change something important I will pick up on it.
+        ## Make sure to change this soon to take into account whether we are working on the log
+        ## or non-log scale. Perhaps switch out the call from limma::voom to my own voom -- though
+        ## I think I would prefer to use their copy and have a check that way if they change
+        ## something important I will pick up on it.
     } else if (batch == "combatmod") {
-        ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches, mod=conditions, noScale=noscale, ...)
+        ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches,
+        ##                                  mod=conditions, noScale=noscale, ...)
         message("batch_counts: Using a modified cbcbSEQ combatMod for batch correction.")
-        count_table <- hpgl_combatMod(dat=data.frame(count_table), batch=batches, mod=conditions, noScale=noscale, ...)
-    } else if (batch == "sva") {
+        count_table <- hpgl_combatMod(dat=data.frame(count_table), batch=batches,
+                                      mod=conditions, noScale=noscale, ...)
+    } else if (batch == "fsva") {
         message("batch_counts: Using sva::fsva for batch correction.")
         df <- data.frame(count_table)
         mtrx <- as.matrix(df)
         conditional_model <- model.matrix(~conditions, data=df)
         null_model <- conditional_model[,1]
         num_surrogates <- 0
-        be_surrogates <- sva::num.sv(mtrx, conditional_model, method="be")
-        leek_surrogates <- sva::num.sv(mtrx, conditional_model, method="leek")
+        be_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="be"))
+        leek_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="leek"))
         if (be_surrogates >= 1) {
             num_surrogates <- be_surrogates
         } else {
             num_surrogates <- leek_surrogates
         }
-        sva_object <- sva::sva(mtrx, conditional_model, null_model, n.sv=num_surrogates)
+        sva_object <- sm(sva::sva(mtrx, conditional_model, null_model, n.sv=num_surrogates))
         ## mod_sv = cbind(conditional_model, sva_object$sv)
-        fsva_result <- sva::fsva(mtrx, conditional_model, sva_object, newdat=mtrx, method="exact")
-        ## new_expt$conditional_model = conditional_model
-        ## new_expt$null_model = null_model
-        ## new_expt$num_surrogates = num_surrogates
-        ## new_expt$sva_object = sva_object
-        ## new_expt$mod_sv = mod_sv
-        ## new_expt$fsva_result = fsva_result
+        fsva_result <- sm(sva::fsva(mtrx, conditional_model, sva_object, newdat=mtrx, method="exact"))
         count_table <- fsva_result[["db"]]
     } else if (batch == "combat") {
         message("batch_counts: Using sva::combat with a prior for batch correction and no scaling.")
-        count_table <- sva::ComBat(count_table, batches, mod=NULL, par.prior=TRUE, prior.plots=TRUE, mean.only=TRUE)
-    } else if (batch == 'combat_noprior') {
+        count_table <- sm(sva::ComBat(count_table, batches, mod=NULL,
+                                      par.prior=TRUE, prior.plots=TRUE, mean.only=TRUE))
+    } else if (batch == "combat_noprior") {
         message("batch_counts: Using sva::combat without a prior for batch correction and no scaling.")
-        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=FALSE, mean.only=TRUE)
-    } else if (batch == 'combat_scale') {
+        count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
+                                      par.prior=FALSE, prior.plots=FALSE, mean.only=TRUE))
+    } else if (batch == "combat_scale") {
         message("batch_counts: Using sva::combat with a prior for batch correction and with scaling.")
-        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=TRUE, prior.plots=TRUE, mean.only=FALSE)
-    } else if (batch == 'combat_noprior_scale') {
+        count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
+                                      par.prior=TRUE, prior.plots=TRUE, mean.only=FALSE))
+    } else if (batch == "combat_noprior_scale") {
         message("batch_counts: Using sva::combat without a prior for batch correction and with scaling.")
-        count_table <- sva::ComBat(count_table, batches, mod=conditions, par.prior=FALSE, prior.plots=TRUE, mean.only=FALSE)
+        count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
+                                      par.prior=FALSE, prior.plots=TRUE, mean.only=FALSE))
     } else if (batch == "svaseq") {
         message("batch_counts: Using sva::svaseq for batch correction.")
         message("Note to self:  If you feed svaseq a data frame you will get an error like:")
@@ -151,18 +177,21 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         mtrx <- as.matrix(df)
         conditional_model <- model.matrix(~conditions, data=df)
         null_model <- conditional_model[, 1]
-        num_surrogates <- sva::num.sv(mtrx, conditional_model)
-        svaseq_result <- sva::svaseq(mtrx, conditional_model, null_model, n.sv=num_surrogates)
-        plot(svaseq_result$sv, pch=19, col="blue")
+        num_surrogates <- sm(sva::num.sv(mtrx, conditional_model))
+        svaseq_result <- sm(sva::svaseq(mtrx, conditional_model, null_model, n.sv=num_surrogates))
+        count_table <- counts_from_surrogates(mtrx, svaseq_result[["sv"]], design=design)
+        ## A recent error in the code might be attributable here, but I do not think so.
+        ## Testing with mouse exosome data tells me that the error is 99% not here.
+        ## plot(svaseq_result$sv, pch=19, col="blue")
         ## The following was taken from: https://www.biostars.org/p/121489/
-        X <- cbind(conditional_model, svaseq_result$sv)
-        Hat <- solve(t(X) %*% X) %*% t(X)
-        beta <- (Hat %*% t(mtrx))
-        P <- ncol(conditional_model)
-        count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
+        ## X <- cbind(conditional_model, svaseq_result$sv)
+        ## Hat <- solve(t(X) %*% X) %*% t(X)
+        ## beta <- (Hat %*% t(mtrx))
+        ## P <- ncol(conditional_model)
+        ## count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
     } else if (batch == "varpart") {
         message("Taking residuals from a linear mixed model as suggested by the variancePartition package.")
-        cl <- parallel::makeCluster(cpus)  ## I am keeping 2 processors to myself, piss off, R.
+        cl <- parallel::makeCluster(cpus)
         doParallel::registerDoParallel(cl)
         batch_model <- as.formula("~ (1|batch)")
         message("The function fitvarPartModel may take excessive memory, you have been warned.")
@@ -171,17 +200,20 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         rm(batch_fit)
         parallel::stopCluster(cl)
     } else if (batch == "ruvg") {
-        message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.")
+        message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.)")
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
         df <- as.data.frame(count_table)
         mtrx <- as.matrix(count_table)
         conditional_model <- model.matrix(~conditions, data=df)
-        null_model <- conditional_model[,1]
+        null_model <- conditional_model[, 1]
         num_surrogates <- 0
-        be_surrogates <- sva::num.sv(mtrx, conditional_model, method="be")
-        leek_surrogates <- sva::num.sv(mtrx, conditional_model, method="leek")
+        be_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="be"))
+        leek_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="leek"))
         ruv_input <- edgeR::DGEList(counts=df, group=conditions)
-        ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
+        ruv_input_norm <- ruv_input
+        if (expt_state_norm == "raw") {
+            ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
+        }
         ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, conditional_model)
         ruv_input_tag <- edgeR::estimateGLMTagwiseDisp(ruv_input_glm, conditional_model)
         ruv_fit <- edgeR::glmFit(ruv_input_tag, conditional_model)
@@ -195,13 +227,19 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
         bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
         ruv_controls <- ranked <= bottom_third  ## what is going on here?!
         ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets fail with 400 hard-set
-        chosen_surrogates <- sva::num.sv(dat=mtrx, mod=conditional_model)
+        chosen_surrogates <- sm(sva::num.sv(dat=mtrx, mod=conditional_model))
         ruv_result <- RUVSeq::RUVg(mtrx, ruv_controls, k=chosen_surrogates)
         count_table <- ruv_result[["normalizedCounts"]]
     } else {
-        message("Did not recognize the batch correction, leaving the table alone.")
-        message("Recognized batch corrections include: 'limma', 'combatmod', 'sva',")
-        message("limmaresid, combat_noprior, combat, svaseq, and ruvg.")
+        ## message("Did not recognize the batch correction, leaving the table alone.")
+        ## message("Recognized batch corrections include: 'limma', 'combatmod', 'sva',")
+        ## message("limmaresid, combat_noprior, combat, svaseq, and ruvg.")
+        message("Passing the batch method to get_model_adjust().")
+        message("It understands a few additional batch methods.")
+        surrogate_result <- try(get_model_adjust(count_table, design, estimate_type=batch, ...))
+        if (class(surrogate_result) != "try-error") {
+            count_table <- surrogate_result[["new_counts"]]
+        }
     }
     num_low <- sum(count_table < 0)
     if (num_low > 0) {
@@ -214,6 +252,64 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1='batch', batch2
     libsize <- colSums(count_table)
     counts <- list(count_table=count_table, libsize=libsize)
     return(counts)
+}
+
+#' A single place to extract count tables from a set of surrogate variables.
+#'
+#' Given an initial set of counts and a series of surrogates, what would the resulting count table
+#'     look like? Hopefully this function answers that question.
+#'
+#' @param data  Original count table, may be an expt/expressionset or df/matrix.
+#' @param adjust  Surrogates with which to adjust the data.
+#' @param design  Experimental design if it is not included in the expressionset.
+#' @return A data frame of adjusted counts.
+#' @export
+counts_from_surrogates <- function(data, adjust, design=NULL) {
+    data_mtrx <- NULL
+    my_design <- NULL
+    if (class(data) == "expt") {
+        my_design <- Biobase::pData(data[["expressionset"]])
+        conditions <- droplevels(as.factor(Biobase::pData(data[["expressionset"]])[["condition"]]))
+        data_mtrx <- Biobase::exprs(data[["expressionset"]])
+    } else if (class(data) == "ExpressionSet") {
+        my_design <- Biobase::pData(data)
+        conditions <- droplevels(as.factor(Biobase::pData(data)[["condition"]]))
+        data_mtrx <- Biobase::exprs(data)
+    } else {
+        my_design <- design
+        conditions <- droplevels(as.factor(design[["condition"]]))
+        data_mtrx <- as.matrix(data)
+    }
+    conditional_model <- model.matrix(~ conditions, data=my_design)
+
+    new_model <- conditional_model
+    ## Explicitly append columns of the adjust matrix to the conditional model.
+    ## In the previous code, this was: 'X <- cbind(conditional_model, sva$sv)'
+    ## new_model <- cbind(conditional_model, adjust)
+    new_colnames <- colnames(conditional_model)
+    for (col in 1:ncol(adjust)) {
+        new_model <- cbind(new_model, adjust[, col])
+        new_colname <- paste0("sv", col)
+        new_colnames <- append(new_colnames, new_colname)
+    }
+    colnames(new_model) <- new_colnames
+
+    ##data_modifier <- try(solve(t(new_model) %*% new_model) %*% t(new_model))
+    ## In the previous code, this was: 'Hat <- solve(t(X) %*% X) %*% t(X)'
+    ## Now it is in two separate lines, first the solve operation:
+    data_solve <- try(solve(t(new_model) %*% new_model), silent=TRUE)
+    if (class(data_solve) == "try-error") {
+        message("Data modification by the model failed.")
+        message("Leaving counts untouched.")
+        return(data_mtrx)
+    }
+    ## If the solve operation passes, then the '%*% t(X)' is allowed to happen.
+    data_modifier <- data_solve %*% t(new_model)
+    transformation <- (data_modifier %*% t(data_mtrx))
+    conds <- ncol(conditional_model)
+    new_counts <- data_mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*%
+                                  transformation[-c(1:conds), ])
+    return(new_counts)
 }
 
 #' A modified version of comBatMod.

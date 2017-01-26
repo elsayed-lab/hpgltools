@@ -103,52 +103,36 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     }
     if (filter == FALSE) {
         filter <- "raw"
+    } else if (isTRUE(filter)) {
+        filter <- "cbcb"
     }
+    if (convert == FALSE) {
+        convert <- "raw"
+    } else if (isTRUE(convert)) {
+        convert <- "cbcbcpm"
+    }
+    if (norm == FALSE) {
+        norm <- "raw"
+    } else if (isTRUE(norm)) {
+        norm <- "tmm"
+    }
+    if (transform == FALSE) {
+        transform <- "raw"
+    } else if (isTRUE(transform)) {
+        transform <- "log2"
+    }
+    if (batch == FALSE) {
+        batch <- "raw"
+    } else if (isTRUE(batch)) {
+        batch <- "sva"
+    }
+
     if (is.null(new_expt[["original_expressionset"]])) {
         new_expt[["original_expressionset"]] = new_expt[["expressionset"]]
     }
 
-    message("This function will replace the expt$expressionset slot with:")
-    if (transform != "raw") {
-        type <- paste0(type, transform, '(')
-    }
-    if (batch != "raw") {
-        if (isTRUE(batch)) {
-            type <- paste0(type, 'batch-correct(')
-        } else {
-            type <- paste0(type, batch, '(')
-        }
-    }
-    if (convert != "raw") {
-        type <- paste0(type, convert, '(')
-    }
-    if (norm != "raw") {
-        type <- paste0(type, norm, '(')
-    }
-    if (filter != "raw") {
-        if (isTRUE(filter)) {
-            type <- paste0(type, 'filter(')
-        } else {
-            type <- paste0(type, filter, '(')
-        }
-    }
-    type <- paste0(type, 'data')
-    if (transform != 'raw') {
-        type <- paste0(type, ')')
-    }
-    if (batch != "raw") {
-        type <- paste0(type, ')')
-    }
-    if (convert != "raw") {
-        type <- paste0(type, ')')
-    }
-    if (norm != "raw") {
-        type <- paste0(type, ')')
-    }
-    if (filter != "raw") {
-        type <- paste0(type, ')')
-    }
-    message(type)
+    operations <- what_happened(transform=transform, batch=batch, convert=convert, norm=norm, filter=filter)
+    message(operations)
     message("It backs up the current data into a slot named:
  expt$backup_expressionset. It will also save copies of each step along the way
  in expt$normalized with the corresponding libsizes. Keep the libsizes in mind
@@ -194,6 +178,9 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     }
     if (convert == "cpm" & transform == "tmm") {
         warning("Cpm and tmm perform similar purposes. They should not be applied to the same data.")
+    }
+    if (norm == "quant" & isTRUE(grepl(x=batch, pattern="sva"))) {
+        warning("Quantile normalization and sva do not always play well together.")
     }
     new_expt[["backup_expressionset"]] <- new_expt[["expressionset"]]
     current_data <- Biobase::exprs(current_exprs)
@@ -369,9 +356,10 @@ hpgl_norm <- function(data, ...) {
         if (batch == "raw") {
             message(paste0("Step ", arglist[["batch_step"]], ": not doing batch correction."))
         } else {
-            message(paste0("Step ", arglist[["batch_step"]], ": doing batch correction with ", arglist[["batch"]],"."))
+            message(paste0("Step ", arglist[["batch_step"]], ": doing batch correction with ",
+                           arglist[["batch"]],"."))
             tmp_counts <- try(batch_counts(count_table, design=design, ...))
-            if (class(tmp_counts) == 'try-error') {
+            if (class(tmp_counts) == "try-error") {
                 warning("The batch_counts call failed.  Returning non-batch reduced data.")
                 batched_counts <<- NULL
                 batch_performed <- "raw"
@@ -472,7 +460,12 @@ hpgl_norm <- function(data, ...) {
         transformed_counts <- transform_counts(count_table, ...)
         ## transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
         count_table <- transformed_counts[["count_table"]]
-        transform_performed <- transform
+        if (transform == "round") {
+            transform_performed <- "raw"
+            transform <- "raw"
+        } else {
+            transform_performed <- transform
+        }
     }
 
     if (batch_step == 5) {

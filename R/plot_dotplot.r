@@ -44,10 +44,6 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
 ## 3. The initial aes needs to have a mapping for the same color, fill, shape, etc.
 ## 4. Lay down a geom/scale for every element to change.
 
-###    factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
-###                                  aes_string(x="factor", y="svs",
-###                                             fill="condition", colour="condition",
-###                                             shape="shape")) +
 ###        ggplot2::geom_point(size=5,
 ###                            aes_string(shape="as.factor(shape)",
 ###                                       colour="condition",
@@ -78,12 +74,14 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
 #' @export
 plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") {
     chosen <- expt[["design"]][[batch_column]]
+    num_batches <- length(unique(chosen))
 
     factor_df <- data.frame(
         "sample" = expt[["design"]][["sampleid"]],
         "factor" = as.integer(as.factor(expt[["design"]][[batch_column]])),
         "fill" = expt[["colors"]],
         "condition" = expt[["conditions"]],
+        "batch" = expt[["batches"]],
         "shape" = 21,
         "color" = "black",
         "svs" = svs)
@@ -91,7 +89,10 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
     names(color_list) <- as.character(factor_df[["condition"]])
 
     sample_factor <- ggplot(factor_df, aes_string(x="sample", y="factor")) +
-        ggplot2::geom_dotplot(binaxis="y", stackdir="center", binpositions="all", colour="black", fill=factor_df[["fill"]])
+        ggplot2::geom_dotplot(binaxis="y", stackdir="center",
+                              binpositions="all", colour="black",
+                              fill=factor_df[["fill"]])
+
 
     factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
                                   aes_string(x="factor",
@@ -113,7 +114,11 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
         ggplot2::scale_shape_manual(values=21, guide=FALSE)
 
     svs_sample <- ggplot(factor_df, aes_string(x="sample", y="svs")) +
-        ggplot2::geom_dotplot(binaxis="y", stackdir="center", binpositions="all", colour="black", fill=factor_df[["fill"]]) +
+        ggplot2::geom_dotplot(binaxis="y", stackdir="center",
+                              binpositions="all", colour="black",
+                              fill=factor_df[["fill"]]) +
+        ggplot2::geom_text(aes_string(x="sample", y="svs", label="batch"),
+                          size=4, vjust=2) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
 
     plots <- list(
@@ -203,8 +208,8 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     }
 
     chosen_palette <- "Dark2"
-    if (!is.null(arglist$palette)) {
-        chosen_palette <- arglist$palette
+    if (!is.null(arglist[["palette"]])) {
+        chosen_palette <- arglist[["palette"]]
     }
 
     if (is.null(names)) {
