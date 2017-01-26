@@ -113,7 +113,6 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
                 next
             }
             ## Otherwise add row to dataframe
-            ## message("GOT HERE")
             ## message("Adding elements:")
             ##element <- c(chromosome, gene_start, gene_stop, strand,
             ##             gene_type, transcript_length, cds_length, is_pseudo,

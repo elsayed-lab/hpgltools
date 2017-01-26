@@ -29,11 +29,7 @@ filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
         type <- 'kofa'
     }
     if (isTRUE(filter)) {
-<<<<<<< HEAD
         filter <- "cbcb"
-=======
-        filer <- "cbcb"
->>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
     }
     filtered_counts <- NULL
     if (filter == "cbcb") {

@@ -23,18 +23,18 @@ plot_spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
     hypotenuse <- radius_a + radius_b
     adjacent <- sin(angle_a) * hypotenuse
     opposite <- cos(angle_a) * hypotenuse
-    center_b$x <- center_a$x + adjacent
-    center_b$y <- center_a$y + opposite
+    center_b[["x"]] <- center_a[["x"]] + adjacent
+    center_b[["y"]] <- center_a[["y"]] + opposite
     point_c <- c()
     circle_a_dist <- (circum_a * angle_a) / (2 * pi)
     angle_b_point <- circle_a_dist / (circum_b * (2 * pi))
     hypotenuse <- dist_bc
     adjacent <- sin(angle_b_point) * hypotenuse
     opposite <- cos(angle_b_point) * hypotenuse
-    point_c$x <- center_b$x + adjacent
-    point_c$y <- center_b$y + opposite
+    point_c[["x"]] <- center_b[["x"]] + adjacent
+    point_c[["y"]] <- center_b[["y"]] + opposite
     points <- data.frame(point_c)
-    points$counter <- seq(1, nrow(points))
+    points[["counter"]] <- seq(1, nrow(points))
     spiro <- ggplot2::ggplot(data=points, ggplot2::aes_string(x="x", y="y")) +
         ggplot2::geom_point(ggplot2::aes_string(colour="counter"), size=0.5) +
         ggplot2::theme_bw() +

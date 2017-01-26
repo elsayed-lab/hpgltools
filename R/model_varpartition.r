@@ -100,3 +100,5 @@ varpart_summaries <- function(expt, factors=c("condition","batch"), cpus=6) {
     summaries <- variancePartition::fitVarPartModel(data, my_model, design, fxn=summary)
     return(summaries)
 }
+
+## EOF

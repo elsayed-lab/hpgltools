@@ -13,11 +13,6 @@ test_genes <- c("FBgn0000014","FBgn0000008","FBgn0000017","FBgn0000018", "FBgn00
 if (isTRUE(FALSE)) {
     written <- write_expt(pasilla_expt, excel="pasilla_written.xlsx")
 }
-<<<<<<< HEAD
-=======
-
-## What graphs can we make!?
->>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
 
 ## What graphs can we make!?
 libsize_plot <- plot_libsize(pasilla_expt)
