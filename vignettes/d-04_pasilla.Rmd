@@ -1,0 +1,181 @@
+---
+title: "hpgltools examples using pasilla"
+author: "atb abelew@gmail.com"
+date: "`r Sys.Date()`"
+output:
+ html_document:
+  code_download: true
+  code_folding: show
+  fig_caption: true
+  fig_height: 7
+  fig_width: 7
+  highlight: default
+  keep_md: false
+  mode: selfcontained
+  number_sections: true
+  self_contained: true
+  theme: readable
+  toc: true
+  toc_float:
+    collapsed: false
+    smooth_scroll: false
+vignette: >
+  %\VignetteIndexEntry{d-04_pasilla}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r options, include=FALSE}
+## These are the options I tend to favor
+library("hpgltools")
+knitr::opts_knit$set(
+    progress = TRUE,
+    verbose = TRUE,
+    width = 90,
+    echo = TRUE)
+knitr::opts_chunk$set(
+    error = TRUE,
+    fig.width = 8,
+    fig.height = 8,
+    dpi = 96)
+options(
+    digits = 4,
+    stringsAsFactors = FALSE,
+    knitr.duplicate.label = "allow")
+ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
+set.seed(1)
+rmd_file <- "d-04_pasilla.Rmd"
+```
+
+```{r rendering, include=FALSE, eval=FALSE}
+## This block is used to render a document from within it.
+rmarkdown::render(rmd_file)
+
+rmarkdown::render(rmd_file, output_format="pdf_document", output_options=c("skip_html"))
+
+## Or to save/load large Rdata files.
+hpgltools:::saveme()
+hpgltools:::loadme()
+rm(list=ls())
+```
+
+# Example hpgltool usage with a real data set (pasilla)
+
+In this document, I am hoping to mostly copy/paste material from the tests/ tree and explain the
+various functionalities therein.  It is my hope therefore to step from data loading all the way
+through ontology searching with appropriate visualizations at each stage.
+
+# Load Data
+
+In test_01load_data.R I perform load some data into an expressionset and get ready to play with it.
+
+```{r load_data}
+tt <- sm(library(hpgltools)) ## I use sm to keep functions from printing too much (well, anything really)
+tt <- sm(library(pasilla))
+tt <- sm(data(pasillaGenes))
+```
+
+## Gather annotation data
+
+biomart is an excellent resource for annotation data, but it is entirely too complex.
+The following function 'get_biomart_annotations()' attempts to make that relatively simple.
+
+```{r biomart}
+## Try loading some annotation information for this species.
+gene_info <- sm(get_biomart_annotations(species="dmelanogaster"))
+info_idx <- gene_info[["Type"]] == "protein_coding"
+gene_info <- gene_info[info_idx, ]
+rownames(gene_info) <- make.names(gene_info[["geneID"]], unique=TRUE)
+head(gene_info)
+```
+
+## Load count tables
+
+The pasilla data set provides count tables in a tab separated file, let us read them into an
+expressionset in the following block along with creating an experimental design.  create_expt() will
+then merge the annotations, experimental design, and count tables into an expressionset.
+
+```{r load_counts}
+## This section is copy/pasted to all of these tests, that is dumb.
+datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
+## Load the counts and drop super-low counts genes
+counts <- read.table(datafile, header=TRUE, row.names=1)
+counts <- counts[rowSums(counts) > ncol(counts),]
+## Set up a quick design to be used by cbcbSEQ and hpgltools
+design <- data.frame(row.names=colnames(counts),
+    condition=c("untreated","untreated","untreated",
+        "untreated","treated","treated","treated"),
+    libType=c("single_end","single_end","paired_end",
+        "paired_end","single_end","paired_end","paired_end"))
+metadata <- design
+colnames(metadata) <- c("condition", "batch")
+metadata[["sampleid"]] <- rownames(metadata)
+
+## Make sure it is still possible to create an expt
+pasilla_expt <- sm(create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info))
+```
+
+The rest of test_01load_data.R checks the various slots of the resulting expt to ensure that
+important stuff for future analyses are available, primarily: condition/batch, library sizes,
+annotations, counts.
+
+# Graph metrics
+
+The next set of tests seek to ensure that the various plots used to visualize and understand trends
+in the data are maintained over time.
+
+In this first block I will use a single function graph_metrics() to plot them all.
+And then follow up with the one at a time.  Many functions in hpgltools are quite chatty with
+liberal usage of message(), as a result I will sm() this call to shut it up.
+
+```{r graph_metrics, fig.show="hide"}
+pasilla_metrics <- sm(graph_metrics(pasilla_expt, ma=TRUE, qq=TRUE))
+summary(pasilla_metrics)
+```
+
+Now let us print the graphs
+
+```{r print_graphs}
+library(directlabels)
+library(ggplot2)
+pasilla_metrics$libsize
+## The library sizes range from 8-21 million reads, this might be a problem for some analyses
+pasilla_metrics$nonzero
+## Ergo, the lower abundance libraries have more genes of counts == 0 (bottom left)
+pasilla_metrics$boxplot
+## And a boxplot downshifts them (but not that much because it decided to put the data on the log scale)
+direct.label(pasilla_metrics$density)
+## Similarly, one can see those samples are a bit lower with respect to density
+
+## Unless the data is very well behaved, the rest of the plots are not likely to look good until the
+## data is normalized, nonetheless, lets see
+pasilla_metrics$corheat
+pasilla_metrics$disheat
+pasilla_metrics$pcaplot
+## So the above 3 plots are pretty much the worst case scenario for this data.
+```
+
+# Normalize and replot
+
+The most common normalization suggested by Najib is a cpm(quantile(filter(data))).
+On top of that we often do log2() and/or a batch adjustment.
+default_norm() quietly does the first and may be supplemented with other arguments.
+
+```{r normalize, fig.show="hide"}
+norm <- default_norm(pasilla_expt, transform="log2")
+norm_metrics <- graph_metrics(norm)
+```
+
+```{r show_norm}
+norm_metrics$corheat
+norm_metrics$smc
+norm_metrics$disheat
+norm_metrics$smd
+norm_metrics$pcaplot
+```
+
+[index.html](index.html)
+
+```{r sysinfo, results='asis'}
+pander::pander(sessionInfo())
+```
