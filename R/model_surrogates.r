@@ -32,6 +32,14 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
     base10_mtrx <- NULL
     ## Gather all the likely pieces we can use
 
+    filter <- "raw"
+    if (!is.null(arglist[["filter"]])) {
+        filter <- arglist[["filter"]]
+    }
+    convert <- "cpm"
+    if (!is.null(arglist[["convert"]])) {
+        convert <- arglist[["convert"]]
+    }
     if (class(data) == "expt") {
         ## Gather all the likely pieces we can use
         my_design <- data[["design"]]
@@ -40,10 +48,12 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         base10_mtrx <- as.matrix(my_data)
         log_mtrx <- as.matrix(my_data)
         if (transform_state == "raw") {
-            log_data <- sm(normalize_expt(data, convert="cpm", transform="log2", filter=TRUE, thresh=1))
-            log2_mtrx <- Biobase::exprs(log_data[["expressionset"]])
-            base10_data <- sm(normalize_expt(data, convert="cpm", filter=TRUE, thresh=1))
+            ## I think this was the cause of some problems.  The order of operations performed here
+            ## was imperfect and could potentially lead to multiple different matrix sizes.
+            base10_data <- sm(normalize_expt(data, convert=convert, filter=filter, thresh=1))
             base10_mtrx <- Biobase::exprs(base10_data[["expressionset"]])
+            log_data <- sm(normalize_expt(base10_data, transform="log2"))
+            log2_mtrx <- Biobase::exprs(log_data[["expressionset"]])
             rm(log_data)
             rm(base10_data)
         } else {
@@ -66,15 +76,16 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         base10_mtrx <- as.matrix(my_data)
         log_mtrx <- as.matrix(my_data)
         if (transform_state == "raw") {
-            log_data <- sm(hpgl_norm(data, convert="cpm", transform="log2", filter="simple", thresh=1))
+            log_data <- sm(hpgl_norm(data, convert="cpm", transform="log2", filter=filter, thresh=1))
             log2_mtrx <- as.matrix(log_data[["count_table"]])
-            base10_data <- sm(hpgl_norm(data, convert="cpm", filter="simple", thresh=1))
-            base10_mtrx <- as.matrix(base10_data[["count_table"]])
+            ## base10_data <- sm(hpgl_norm(data, convert="cpm", filter=filter, thresh=1))
+            ## base10_mtrx <- as.matrix(base10_data[["count_table"]])
+            base10_mtrx <- (2 ^ log2_mtrx) - 1
             rm(log_data)
-            rm(base10_data)
+            ## rm(base10_data)
         } else {
             log2_mtrx <- as.matrix(data)
-            base10_mtrx <- as.matrix(2 ^ data)
+            base10_mtrx <- as.matrix(2 ^ data) - 1
         }
     }
 
@@ -186,6 +197,7 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
     } else if (estimate_type == "ruv_supervised") {
         message("Attempting ruvseq supervised surrogate estimation.")
         type_color <- "black"
+        ## Re-calculating the numer of surrogates with this modified data.
         surrogate_estimate <- sm(sva::num.sv(dat=log2_mtrx, mod=conditional_model))
         if (min(rowSums(base10_mtrx)) == 0) {
             warning("empirical.controls will likely fail because some rows are all 0.")
@@ -194,9 +206,13 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
                                                           mod=conditional_model,
                                                           mod0=null_model,
                                                           n.sv=surrogate_estimate))
-        ruv_result <- RUVSeq::RUVg(base10_mtrx,
-                                   cIdx=as.logical(control_likelihoods),
-                                   k=chosen_surrogates)
+        ##ruv_result <- RUVSeq::RUVg(round(base10_mtrx),
+        ##                           cIdx=as.logical(control_likelihoods),
+        ##                           k=surrogate_estimate)
+        ruv_result <- RUVSeq::RUVg(round(base10_mtrx),
+                                   k=surrogate_estimate,
+                                   cIdx=as.logical(control_likelihoods))
+
         surrogate_result <- ruv_result
         returned_counts <- ruv_result[["normalizedCounts"]]
         model_adjust <- as.matrix(ruv_result[["W"]])
@@ -254,6 +270,7 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
     ## transformation <- (data_modifier %*% t(mtrx))
     ## conds <- ncol(conditional_model)
     ## new_counts <- mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*% transformation[-c(1:conds), ])
+    ## counts_from_surrogates currently resides in normalize_batch.R
     new_counts <- counts_from_surrogates(base10_mtrx, model_adjust, design=my_design)
     plotbatch <- as.integer(batches)
     plotcond <- as.numeric(conditions)
@@ -261,7 +278,7 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
 
     surrogate_plots <- NULL
     if (class(data) == "expt") {
-        surrogate_plots <- plot_batchsv(expt, model_adjust)
+        surrogate_plots <- plot_batchsv(data, model_adjust)
     }
 
     ret <- list(

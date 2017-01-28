@@ -881,13 +881,13 @@ extract_significant_genes <- function(combined,
     sig_list <- list()
     title_append <- ""
     if (!is.null(fc)) {
-        title_append <- paste0(title_append, " log2fc><", fc)
+        title_append <- paste0(title_append, " |log2fc|>", fc)
     }
     if (!is.null(p)) {
         title_append <- paste0(title_append, " p<", p)
     }
     if (!is.null(z)) {
-        title_append <- paste0(title_append, " z><", z)
+        title_append <- paste0(title_append, " |z|>", z)
     }
     if (!is.null(n)) {
         title_append <- paste0(title_append, " top|bottom n=", n)
@@ -973,14 +973,7 @@ extract_significant_genes <- function(combined,
         change_counts_up <- list()
         change_counts_down <- list()
         for (table_name in table_names) {
-            message(paste0("Writing excel data sheet ", table_count, "/", num_tables, ": ", table_name))
-            table_count <- table_count + 1
-            table <- all_tables[[table_name]]
-            fc_column <- paste0(according, "_logfc")
-            p_column <- paste0(according, "_adjp")
-            if (p_type != "adj") {
-                p_column <- paste0(according, "_p")
-            }
+            ## Extract the MA data if requested.
             if (isTRUE(ma)) {
                 single_ma <- NULL
                 if (according == "limma") {
@@ -1003,6 +996,15 @@ extract_significant_genes <- function(combined,
                     message("Do not know this according type.")
                 }
                 ma_plots[[table_name]] <- single_ma
+            }
+
+            message(paste0("Writing excel data sheet ", table_count, "/", num_tables, ": ", table_name))
+            table_count <- table_count + 1
+            table <- all_tables[[table_name]]
+            fc_column <- paste0(according, "_logfc")
+            p_column <- paste0(according, "_adjp")
+            if (p_type != "adj") {
+                p_column <- paste0(according, "_p")
             }
             trimming <- get_sig_genes(table, fc=fc, p=p, z=z, n=n,
                                       column=fc_column, p_column=p_column)
@@ -1040,8 +1042,9 @@ extract_significant_genes <- function(combined,
             message(paste0("Printing significant genes to the file: ", excel))
             xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according,
                                         summary_count=summary_count, csv=csv, ma=ma)
+            ## This is in case writing the sheet resulted in it being shortened.
             ## wb <- xlsx_ret[["workbook"]]
-        }
+        } ## End of an if whether to print the data to excel
     } ## End list of according_to's
 
     sig_bar_plots <- NULL
@@ -1194,11 +1197,13 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
         down_title <- down_titles[[table_count]]
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", up_name))
         xls_result <- write_xls(data=up_table, wb=wb, sheet=up_name, title=up_title)
+        ## This is in case the sheet name is past the 30 character limit.
+        sheet_name <- xls_result[["sheet"]]
         if (isTRUE(ma)) {
             ma_row <- 1
             ma_col <- xls_result[["end_col"]] + 1
             if (!is.null(ma_plots[[base_name]])) {
-                try_result <- xlsx_plot_png(ma_plots[[base_name]], wb=wb, sheet=up_name,
+                try_result <- xlsx_plot_png(ma_plots[[base_name]], wb=wb, sheet=sheet_name,
                                             plotname="ma", savedir=excel_basename,
                                             start_row=ma_row, start_col=ma_col)
             }

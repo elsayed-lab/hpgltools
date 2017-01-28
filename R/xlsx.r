@@ -36,7 +36,8 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     }
 
     newsheet <- NULL
-    current_sheets <- names(wb@.xData$worksheets)
+    ##current_sheets <- names(wb@.xData$worksheets)
+    current_sheets <- wb@.xData[[".->sheet_names"]]
     if (sheet %in% current_sheets) {
         message(paste0("The sheet: ", sheet, " is in ", toString(current_sheets), "."))
     } else {

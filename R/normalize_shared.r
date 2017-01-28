@@ -94,6 +94,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     thresh=2, min_samples=2, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
     ...) {
     arglist <- list(...)
+    expt_state <- expt[["state"]]
     new_expt <- expt
     type <- ""
     current_exprs <- expt[["expressionset"]]
@@ -194,7 +195,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     }
     ## A bunch of these options should be moved into ...
     ## Having them as options to maintain is foolish
-    normalized <- hpgl_norm(current_data, design=design, transform=transform,
+    normalized <- hpgl_norm(current_data, expt_state=expt_state, design=design, transform=transform,
                             norm=norm, convert=convert, batch=batch,
                             batch1=batch1, batch2=batch2, low_to_zero=low_to_zero,
                             filter=filter, annotations=annotations,
@@ -289,27 +290,40 @@ hpgl_norm <- function(data, ...) {
     convert_performed <- "raw"
     transform_performed <- "raw"
     batch_performed <- "raw"
+    expt_state <- list(
+        "low_filter" = "raw",
+        "normalization" = "raw",
+        "conversion" = "raw",
+        "batch" = "raw",
+        "transform" = "raw")
     data_class <- class(data)[1]
     original_counts <- NULL
     original_libsize <- NULL
     annot <- NULL
     counts <- NULL
     ## I never quite realized just how nice data.tables are.  To what extent can I refactor all of my data frame usage to them?
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         original_counts <- data[["original_counts"]]
         original_libsizes <- data[["original_libsize"]]
         design <- Biobase::pData(data[["expressionset"]])
         annot <- Biobase::fData(data[["expressionset"]])
         counts <- Biobase::exprs(data[["expressionset"]])
-    } else if (data_class == 'ExpressionSet') {
+        expt_state <- data[["state"]]
+    } else if (data_class == "ExpressionSet") {
         counts <- Biobase::exprs(data)
         design <- Biobase::pData(data)
         annot <- Biobase::fData(data)
+        if (!is.null(arglist[["expt_state"]])) {
+            expt_state <- arglist[["expt_state"]]
+        }
     } else if (data_class == "list") {
         counts <- data[["count_table"]]
         design <- arglist[["design"]]
         if (is.null(data)) {
             stop("The list provided contains no count_table.")
+        }
+        if (!is.null(arglist[["expt_state"]])) {
+            expt_state <- arglist[["expt_state"]]
         }
     } else if (data_class == "matrix" | data_class == "data.frame" | data_class == "data.table") {
         counts <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
@@ -320,6 +334,9 @@ hpgl_norm <- function(data, ...) {
             counts <- counts[-1]
         }
         design <- arglist[["design"]]
+        if (!is.null(arglist[["expt_state"]])) {
+            expt_state <- arglist[["expt_state"]]
+        }
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
@@ -349,7 +366,7 @@ hpgl_norm <- function(data, ...) {
         batch_step <- 5
     }
 
-    do_batch <- function(count_table, design=design, ...) {
+    do_batch <- function(count_table, design=design, expt_state=expt_state, ...) {
         batch <- "raw"
         if (!is.null(arglist[["batch"]])) {
             batch <- arglist[["batch"]]
@@ -359,7 +376,7 @@ hpgl_norm <- function(data, ...) {
         } else {
             message(paste0("Step ", arglist[["batch_step"]], ": doing batch correction with ",
                            arglist[["batch"]],"."))
-            tmp_counts <- try(batch_counts(count_table, design=design, ...))
+            tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, ...))
             if (class(tmp_counts) == "try-error") {
                 warning("The batch_counts call failed.  Returning non-batch reduced data.")
                 batched_counts <<- NULL

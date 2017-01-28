@@ -609,7 +609,10 @@ read_metadata <- function(file, ...) {
     } else if (tools::file_ext(file) == "xlsx") {
         ## xls = loadWorkbook(file, create=FALSE)
         ## tmp_definitions = readWorksheet(xls, 1)
-        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1)
+        definitions <- try(openxlsx::read.xlsx(xlsxFile=file, sheet=1))
+        if (class(definitions) == "try-error") {
+            stop(paste0("Unable to read the metadata file: ", file))
+        }
     } else if (tools::file_ext(file) == "xls") {
         ## This is not correct, but it is a start
         definitions <- XLConnect::read.xls(xlsFile=file, sheet=1)

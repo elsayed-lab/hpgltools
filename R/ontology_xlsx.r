@@ -113,15 +113,18 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
     cc_idx <- order(goseq_cc[["qvalue"]])
     goseq_cc <- goseq_cc[cc_idx, ]
 
-    goseq_mf <- goseq_mf[, c(7, 1, 6, 2, 8, 10, 9, 4, 5)]
-    goseq_bp <- goseq_bp[, c(7, 1, 6, 2, 8, 10, 9, 4, 5)]
-    goseq_cc <- goseq_cc[, c(7, 1, 6, 2, 8, 10, 9, 4, 5)]
-    colnames(goseq_mf) <- c("Ontology","Category","Term","Over p-value", "Q-value",
-                            "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.")
-    colnames(goseq_bp) <- c("Ontology","Category","Term","Over p-value", "Q-value",
-                            "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.")
-    colnames(goseq_cc) <- c("Ontology","Category","Term","Over p-value", "Q-value",
-                            "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.")
+    kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
+                      "qvalue", "sig", "all", "numDEInCat", "numInCat",
+                      "limma_sigfc", "deseq_sigfc", "edger_sigfc")
+    goseq_mf <- goseq_mf[, kept_columns]
+    goseq_bp <- goseq_bp[, kept_columns]
+    goseq_cc <- goseq_cc[, kept_columns]
+    new_columns <- c("Ontology","Category","Term","Over p-value", "Q-value",
+                     "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.",
+                     "FC from limma", "FC from DESeq", "FC from edgeR")
+    colnames(goseq_mf) <- new_columns
+    colnames(goseq_bp) <- new_columns
+    colnames(goseq_cc) <- new_columns
 
     new_row <- 1
     message("Writing the BP data.")

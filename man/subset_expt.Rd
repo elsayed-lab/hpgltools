@@ -2,12 +2,8 @@
 % Please edit documentation in R/expt.r
 \name{subset_expt}
 \alias{subset_expt}
-<<<<<<< HEAD
 \title{An alias to expt_subset, because it is stupid to have something start with verbs
 and others start with nouns.}
-=======
-\title{An alias to expt_subset, because it is stupid to have something start with verbs and others start with nouns.}
->>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
 \usage{
 subset_expt(...)
 }

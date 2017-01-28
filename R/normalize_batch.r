@@ -62,20 +62,27 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #' sva_batch <- batch_counts(table, design, batch='sva')
 #' }
 #' @export
-batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
+batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_state=NULL,
                          batch2=NULL, noscale=TRUE, ...) {
     arglist <- list(...)
     low_to_zero <- FALSE
     if (!is.null(arglist[["low_to_zero"]])) {
         low_to_zero <- arglist[["low_to_zero"]]
     }
-    ## Use this to pass along the state of the expt with respect to normalization.
-    ## This way, we can avoid double-normalizing the data when using ruvg or limmaresid etc.
-    expt_state_norm <- "normed"
-    if (!is.null(arglist[["expt_norm_state"]])) {
-        ## This should only affect what happens if it gets set to 'raw'
-        expt_norm_state <- arglist[["expt_norm_state"]]
+
+    ## Lets use expt_state to make sure we know if the data is already log2/cpm/whatever.
+    ## We want to use this to back-convert or reconvert data to the appropriate scale on return.
+    if (is.null(expt_state)) {
+        expt_state <- list(
+            "lowfilter" = "raw",
+            "normalization" = "raw",
+            "conversion" = "raw",
+            "batch" = "raw",
+            "transform" = "raw")
     }
+    ## Use current_state to keep track of changes made on scale/etc during batch correction
+    ## This is pointed directly at limmaresid for the moment, which converts to log2
+    current_state <- expt_state
 
     cpus <- 4
     if (!is.null(arglist[["cpus"]])) {
@@ -85,8 +92,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
     batches <- droplevels(as.factor(design[[batch1]]))
     conditions <- droplevels(as.factor(design[["condition"]]))
 
-    message("Note to self:  If you get an error like 'x contains missing values'; I think this means that the data has too many 0's and needs to have a better low-count filter applied.")
-    message("Note to self:  I keep forgetting this, but the most common batch correction performed in Dr. El-Sayed's lab is implemented here as 'limmaresid'.")
+    message("Note to self:  If you get an error like 'x contains missing values'; I think this
+ means that the data has too many 0's and needs to have a better low-count filter applied.")
 
     num_low <- sum(count_table < 1 & count_table > 0)
     if (num_low > 0) {
@@ -101,29 +108,46 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
     }
 
     if (batch == "limma") {
+        if (expt_state[["transform"]] == "raw") {
+            count_table <- log2(count_table + 1)
+        }
         if (is.null(batch2)) {
             ## A reminder of removeBatchEffect usage
             ## adjusted_batchdonor = removeBatchEffect(data,
             ##                             batch=as.factor(as.character(des$donor)),
             ##                             batch2=as.factor(as.character(des$batch)))
             message("batch_counts: Using limma's removeBatchEffect to remove batch effect.")
+            ## limma's removeBatchEffect() function does in fact take and return log2.
+            ## Thus we need to check the transform state and make sure the input and output
+            ## is base 10.
             count_table <- limma::removeBatchEffect(count_table, batch=batches)
         } else {
             batches2 <- as.factor(design[[batch2]])
             count_table <- limma::removeBatchEffect(count_table, batch=batches, batch2=batches2)
         }
+        if (expt_state[["transform"]] == "raw") {
+            count_table <- (2 ^ count_table) - 1
+        }
     } else if (batch == "limmaresid") {
+        ## ok a caveat:  voom really does require input on the base 10 scale and returns
+        ## log2 scale data.  Therefore we need to make sure that the input is provided appropriately.
         message("batch_counts: Using residuals of limma's lmfit to remove batch effect.")
         batch_model <- model.matrix(~batches)
+        if (expt_state[["transform"]] == "log2") {
+            ## For now just assume only log2/base10.
+            count_table <- (2 ^ count_table) - 1
+        }
         batch_voom <- NULL
-        if (expt_state_norm == "raw") {
+        if (expt_state[["normalization"]] == "raw") {
             batch_voom <- limma::voom(data.frame(count_table), batch_model,
                                       normalize.method="quantile", plot=FALSE)
         } else {
             batch_voom <- limma::voom(data.frame(count_table), batch_model, plot=FALSE)
-        }
+       }
         batch_fit <- limma::lmFit(batch_voom, design=batch_model)
-        count_table <- residuals(batch_fit, batch_voom[["E"]])
+        ## count_table <- residuals(batch_fit, batch_voom[["E"]])
+        ## This is still fubar!
+        count_table <- limma::residuals.MArrayLM(batch_fit, batch_voom)
         ## Make sure to change this soon to take into account whether we are working on the log
         ## or non-log scale. Perhaps switch out the call from limma::voom to my own voom -- though
         ## I think I would prefer to use their copy and have a check that way if they change
@@ -210,7 +234,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch",
         leek_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="leek"))
         ruv_input <- edgeR::DGEList(counts=df, group=conditions)
         ruv_input_norm <- ruv_input
-        if (expt_state_norm == "raw") {
+        if (expt_state[["normalization"]] == "raw") {
             ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
         }
         ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, conditional_model)
@@ -286,8 +310,9 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
     ## In the previous code, this was: 'X <- cbind(conditional_model, sva$sv)'
     ## new_model <- cbind(conditional_model, adjust)
     new_colnames <- colnames(conditional_model)
-    for (col in 1:ncol(adjust)) {
-        new_model <- cbind(new_model, adjust[, col])
+    adjust_mtrx <- as.matrix(adjust)
+    for (col in 1:ncol(adjust_mtrx)) {
+        new_model <- cbind(new_model, adjust_mtrx[, col])
         new_colname <- paste0("sv", col)
         new_colnames <- append(new_colnames, new_colname)
     }

@@ -163,7 +163,7 @@ test_that("Do the intercept model results equal those from cell means?", {
     expect_equal(as.numeric(head(hpgl_logfc)), as.numeric(head(reordered$logFC)), tolerance=0.1)
 })
 
-limma_written <- sm(write_limma(hpgl_limma, excel="limma.xlsx"))
+limma_written <- sm(write_limma(hpgl_limma, excel="test_limma.xlsx"))
 
 save(list=ls(), file="de_limma.rda")
 

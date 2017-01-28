@@ -37,8 +37,13 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 varpart <- function(expt, predictor="condition", factors=c("batch"), cpus=6, genes=40, parallel=TRUE) {
     cl <- NULL
     if (isTRUE(parallel)) {
-        cl <- parallel::makeCluster(cpus)  ## I am keeping 2 processors to myself, piss off, R.
+        cl <- parallel::makeCluster(cpus)
         doParallel::registerDoParallel(cl)
+    }
+    num_batches <- length(levels(as.factor(expt[["batches"]])))
+    if (num_batches == 1) {
+        message("varpart sees only 1 batch, adjusting the model accordingly.")
+        factors <- factors[!grepl(pattern="batch", x=factors)]
     }
     model_string <- "~ "
     if (!is.null(predictor)) {

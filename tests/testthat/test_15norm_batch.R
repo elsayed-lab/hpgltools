@@ -17,7 +17,7 @@ counts <- counts[rowSums(counts) > ncol(counts),]
 design <- data.frame(row.names=colnames(counts),
     condition=c("untreated","untreated","untreated",
         "untreated","treated","treated","treated"),
-    libType=c("single_end","single_end","paired_end",
+    batch=c("single_end","single_end","paired_end",
         "paired_end","single_end","paired_end","paired_end"))
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
@@ -30,7 +30,9 @@ load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
 ## Test batch
-expected <- c(3.333333, 64.500000, 3040.166667, 383.916667, 7.083333)
+## The following is the previous result, it seems to have changed
+## expected <- c(3.333333, 64.500000, 3040.166667, 383.916667, 7.083333)
+expected <- c(2.032443, 70.820173, 3357.734214, 379.051162, 6.500123)
 names(expected) <- test_genes
 pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="limma"))
 actual_df <- Biobase::exprs(pasilla_batch[["expressionset"]])
@@ -80,7 +82,9 @@ test_that("combat_scale gives expected values?", {
 })
 
 ## pasilla_batch <- normalize_expt(pasilla_expt, batch="combat_noprior_scale") ## takes forever
-expected <- c(0.1139956, 7.7406815, 384.8292656, 34.1636051, 0.4937972)
+## The previous result
+##expected <- c(0.1139956, 7.7406815, 384.8292656, 34.1636051, 0.4937972)
+expected <- c(4.610009, 82.109047, 4099.039062, 519.407500, 9.116170)
 names(expected) <- test_genes
 pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="svaseq"))
 actual_df <- Biobase::exprs(pasilla_batch[["expressionset"]])

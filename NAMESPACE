@@ -47,10 +47,7 @@ export(edger_pairwise)
 export(expt_read_counts)
 export(expt_snp)
 export(expt_subset)
-<<<<<<< HEAD
 export(extract_abundant_genes)
-=======
->>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
 export(extract_coefficient_scatter)
 export(extract_de_ma)
 export(extract_go)
@@ -123,10 +120,6 @@ export(load_kegg_mapping)
 export(load_kegg_pathways)
 export(load_parasite_annotations)
 export(loadme)
-<<<<<<< HEAD
-=======
-export(makeSVD)
->>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
 export(make_exampledata)
 export(make_id2gomap)
 export(make_limma_tables)
@@ -241,10 +234,7 @@ export(write_limma)
 export(write_subset_ontologies)
 export(write_xls)
 export(xlsx_plot_png)
-<<<<<<< HEAD
-=======
 export(ymxb_print)
->>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
 import(data.table)
 import(foreach)
 import(grDevices)

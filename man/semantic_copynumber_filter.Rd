@@ -5,13 +5,8 @@
 \title{Remove multicopy genes from up/down gene expression lists.}
 \usage{
 semantic_copynumber_filter(de_list, max_copies = 2, use_files = FALSE,
-<<<<<<< HEAD
   invert = FALSE, semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF",
   "GP63"), semantic_column = "1.tooltip")
-=======
-  semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
-  semantic_column = "1.tooltip")
->>>>>>> 3d1c7f4094fa17124a141b2aeb2406119656ec68
 }
 \arguments{
 \item{de_list}{List of sets of genes deemed significantly
