@@ -7,7 +7,7 @@ from the combined tables.}
 \usage{
 extract_significant_genes(combined, according_to = "all", fc = 1,
   p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, ma = TRUE,
-  p_type = "adj", csv = NULL, excel = "excel/significant_genes.xlsx",
+  p_type = "adj", excel = "excel/significant_genes.xlsx",
   siglfc_cutoffs = c(0, 1, 2))
 }
 \arguments{
@@ -29,8 +29,6 @@ the deseq, edger, limma, basic, meta, or all.}
 \item{ma}{Add ma plots to the sheets of 'up' genes?}
 
 \item{p_type}{use an adjusted p-value?}
-
-\item{csv}{Write csv instead of xlsx when running OOM.}
 
 \item{excel}{Write the results to this excel file, or NULL.}
 

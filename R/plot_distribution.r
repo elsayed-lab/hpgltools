@@ -45,13 +45,35 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
+    if (is.null(scale)) {
+        if (max(data) > 10000) {
+            message("This data will benefit from being displayed on the log scale.")
+            message("If this is not desired, set scale='raw'")
+            scale <- "log"
+            negative_idx <- data < 0
+            if (sum(negative_idx) > 0) {
+                message("Some data are negative.  We are on log scale, setting them to 0.5.")
+                data[negative_idx] <- 0.5
+                message(paste0("Changed ", sum(negative_idx), " negative features."))
+            }
+            zero_idx <- data == 0
+            if (sum(zero_idx) > 0) {
+                message("Some entries are 0.  We are on log scale, setting them to 0.5.")
+                data[zero_idx] <- 0.5
+                message(paste0("Changed ", sum(zero_idx), " zero count features."))
+            }
+        } else {
+            scale <- "raw"
+        }
+    }
+
     if (is.null(colors)) {
         colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(df)[2])
     }
     data_matrix <- as.matrix(data)
     data[data < 0] <- 0 ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
 
-    data$id <- rownames(data)
+    data[["id"]] <- rownames(data)
     dataframe <- reshape2::melt(data, id=c("id"))
     colnames(dataframe) <- c("gene","variable","value")
     ## The use of data= and aes() leads to no visible binding for global variable warnings
@@ -71,19 +93,12 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
         boxplot <- boxplot + ggplot2::scale_x_discrete(labels=names)
     }
 
-    if (is.null(scale)) {
-        if (max(data_matrix) > 1000) {
-            message("I am reasonably sure this should be log scaled and am setting it.
-  If this is incorrect, set scale='raw'
-")
-            boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
-        }
-    } else {
-        if (scale == "log") {
-            boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
-        } else if (scale == "logdim") {
-            boxplot <- boxplot + ggplot2::coord_trans(y="log2")
-        }
+    if (scale == "log") {
+        boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+    } else if (scale == "logdim") {
+        boxplot <- boxplot + ggplot2::coord_trans(y="log2")
+    } else if (isTRUE(scale)) {
+        boxplot <- boxplot + ggplot2::scale_y_log10()
     }
     return(boxplot)
 }
@@ -109,8 +124,9 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' }
 #' @export
 plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
-                         fill=NULL, title=NULL, scale=NULL, colors_by="condition") {  ## also position='stack'
-  plot_env <- environment()
+                         fill=NULL, title=NULL, scale=NULL, colors_by="condition") {
+    ## also position='stack'
+    plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
         design <- data[["design"]]
@@ -130,6 +146,18 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
             message("This data will benefit from being displayed on the log scale.")
             message("If this is not desired, set scale='raw'")
             scale <- "log"
+            negative_idx <- data < 0
+            if (sum(negative_idx) > 0) {
+                message("Some data are negative.  We are on log scale, setting them to 0.5.")
+                data[negative_idx] <- 0.5
+                message(paste0("Changed ", sum(negative_idx), " negative features."))
+            }
+            zero_idx <- data == 0
+            if (sum(zero_idx) > 0) {
+                message("Some entries are 0.  We are on log scale, setting them to 0.5.")
+                data[zero_idx] <- 0.5
+                message(paste0("Changed ", sum(zero_idx), " zero count features."))
+            }
         } else {
             scale <- "raw"
         }

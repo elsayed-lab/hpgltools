@@ -1251,27 +1251,26 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, invert=FALSE,
                                        semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
                                        semantic_column='1.tooltip') {
-    removed_up <- list()
-    removed_down <- list()
     table_type <- "significance"
     if (!is.null(de_list[["data"]])) {
         table_type <- "combined"
     }
 
     table_list <- NULL
-    up_to_down <- 0
     if (table_type == "combined") {
         table_list <- de_list[["data"]]
     } else {
+        ## The set of significance tables will be 2x the number of contrasts
+        ## Therefore, when we get to > 1x the number of contrasts, all the tables will be 'down'
         table_list <- c(de_list[["ups"]], de_list[["downs"]])
         up_to_down <- length(de_list[["ups"]])
     }
 
-    removed <- list()
+    numbers_removed <- list()
     for (count in 1:length(table_list)) {
         tab <- table_list[[count]]
         table_name <- names(table_list)[[count]]
-        removed[[table_name]] <- list()
+        numbers_removed[[table_name]] <- list()
         message(paste0("Working on ", table_name))
         if (isTRUE(use_files)) {
             file <- ""
@@ -1290,65 +1289,66 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, i
             }
         }  ## End using empirically defined groups of multi-gene families.
 
-        tab_list <- tmp_tab <- NULL
+        ## Now remove genes by name.
+        kept_list <- new_table <- NULL
         for (string in semantic) {
+            pre_remove_size <- nrow(tab)
             idx <- grep(pattern=string, x=tab[, semantic_column], invert=invert)
             num_removed <- length(idx)
-            removed[[table_name]][[string]] <- num_removed
+            numbers_removed[[table_name]][[string]] <- num_removed
             if (num_removed > 0) {
-                tmp_tab <- tab[-idx, ]
+                tab <- tab[-idx, ]
                 type <- "Removed"
                 if (isTRUE(invert)) {
                     type <- "Kept"
-                    tab_list[[string]] <- tmp_tab
+                    kept_list[[string]] <- tab
+                } else {
+                    table_list[[count]] <- tab
                 }
-                message(paste0(type, " entries with string ", string,
+
+                message(paste0("Table started with: ", pre_remove_size, ". ", type,
+                               " entries with string ", string,
                                ", found ", num_removed, "; table has ",
-                               nrow(tmp_tab),  " rows left."))
+                               nrow(tab),  " rows left."))
             } else {
                 message("Found no entries of type ", string, ".")
             }
+        } ## End of the foreach semantic thing to remove
+    } ## End of for each table
+
+    ## Now recreate the original table lists as either de talbes or significance.
+    if (table_type == "combined") {
+        for (count in 1:length(table_list)) {
+            de_list[["data"]][[count]] <- table_list[[count]]
         }
-        if (table_type == "combined") {
-            if (isTRUE(invert)) {
-                de_list[["data"]][[count]] <- tab_list
-            } else {
-                de_list[["data"]][[count]] <- tab
-            }
+    } else {  ## Then it is a set of significance tables.
+        if (count <= up_to_down) {
+            de_list[["ups"]][[count]] <- table_list[[count]]
         } else {
-            if (count <= up_to_down) {
-                if (isTRUE(invert)) {
-                    de_list[["ups"]][[count]] <- tab_list
-                } else {
-                    de_list[["ups"]][[count]] <- tab
-                }
-            } else {
-                if (isTRUE(invert)) {
-                    de_list[["downs"]][[count]] <- tab_list
-                } else {
-                    de_list[["downs"]][[count]] <- tab
-                }
-            }
+            de_list[["downs"]][[count]] <- table_list[[count]]
         }
     }
-    if (!isTRUE(invert)) {
-        if (table_type == "significance") {
-            new_removed <- list()
-            for (count in 1:length(removed)) {
-                old_name <- names(removed)[[count]]
-                new_name <- NULL
-                if (count <= up_to_down) {
-                    new_name <- paste0("up_", old_name)
-                } else {
-                    new_name <- paste0("down_", old_name)
-                }
-                new_removed[[new_name]] <- removed[[old_name]]
-            }
-            removed <- new_removed
-            rm(new_removed)
-        }
-        de_list[["removed"]] <- removed
-    }
+    ## Now the tables should be reconstructed.
+
+    ## Fix the names of the tables
+    ##if (!isTRUE(invert)) {
+    ##    if (table_type == "significance") {
+    ##        new_removed <- list()
+    ##        for (count in 1:length(removed)) {
+    ##            old_name <- names(removed)[[count]]
+    ##            new_name <- NULL
+    ##            if (count <= up_to_down) {
+    ##                new_name <- paste0("up_", old_name)
+    ##            } else {
+    ##                new_name <- paste0("down_", old_name)
+    ##            }
+    ##            new_removed[[new_name]] <- removed[[old_name]]
+    ##        }
+    ##        removed <- new_removed
+    ##        rm(new_removed)
+    ##    }
+    ##}
+    de_list[["numbers_removed"]] <- numbers_removed
     return(de_list)
 }
 

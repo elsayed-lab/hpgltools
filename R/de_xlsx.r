@@ -5,17 +5,16 @@
 #'
 #' @param all_pairwise_result  Output from all_pairwise().
 #' @param extra_annot  Add some annotation information?
-#' @param csv  On some computers (Edson!) printing to excel runs the machine oom for big data sets.
 #' @param excel  Filename for the excel workbook, or null if not printed.
 #' @param excel_title  Title for the excel sheet(s).  If it has the
 #'     string 'YYY', that will be replaced by the contrast name.
-#' @param excel_sheet  Name the excel sheet.
 #' @param keepers  List of reformatted table names to explicitly keep
 #'     certain contrasts in specific orders and orientations.
 #' @param adjp  Perhaps you do not want the adjusted p-values for plotting?
 #' @param excludes  List of columns and patterns to use for excluding genes.
 #' @param include_basic  Include my stupid basic logFC tables?
 #' @param add_plots  Add plots to the end of the sheets with expression values?
+#' @param loess  Add time intensive loess estimation to plots?
 #' @param plot_dim  Number of inches squared for the plot if added.
 #' @param compare_plots  In an attempt to save memory when printing to excel, make it possible to
 #'     exclude comparison plots in the summary sheet.
@@ -29,11 +28,11 @@
 #'                            excludes=list("description" = c("sno","rRNA")))
 #' }
 #' @export
-combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
+combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
-                              excel_sheet="combined_DE", keepers="all",
+                              keepers="all",
                               excludes=NULL, adjp=TRUE,
-                              include_basic=TRUE, add_plots=TRUE,
+                              include_basic=TRUE, add_plots=TRUE, loess=FALSE,
                               plot_dim=6, compare_plots=TRUE) {
     ## The ontology_shared function which creates multiple sheets works a bit differently
     ## It creates all the tables, then does a createWorkbook()
@@ -84,16 +83,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     }
 
     excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-    csv_basename <- NULL
-    if (!is.null(csv)) {
-        if (is.null(excel) | excel == FALSE) {
-            csv_basename <- "excel/csv_export"
-        } else {
-            csv_basename <- excel
-            csv_basename <- gsub(pattern="\\.xlsx", replacement="", x=csv_basename)
-        }
-    }
-
     wb <- NULL
     if (!is.null(excel) & excel != FALSE) {
         excel_dir <- dirname(excel)
@@ -198,6 +187,16 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
     de_summaries <- data.frame()
 
     if (class(keepers) == "list") {
+        ## First check that your set of kepers is in the data
+        all_coefficients <- unlist(strsplit(x=limma[["contrasts_performed"]], split="_vs_"))
+        all_keepers <- as.character(unlist(keepers))
+        found_keepers <- sum(all_keepers %in% all_coefficients)
+        if (found_keepers == 0) {
+            message("The keepers has no elements in the coefficients.")
+            message(paste0("Here are the keepers: ", toString(all_keepers)))
+            message(paste0("Here are the coefficients: ", toString(all_coefficients)))
+            stop("Fix this and try again.")
+        }
         ## Then keep specific tables in specific orientations.
         a <- 0
         keeper_len <- length(names(keepers))
@@ -270,6 +269,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                 summary <- combined[["summary"]]
                 if (isTRUE(do_inverse)) {
                     limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma",
+                                                                    loess=loess,
                                                                     x=denominator,
                                                                     y=numerator)), silent=TRUE)
                     if (class(limma_try) == "list") {
@@ -278,6 +278,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                         limma_plt <- NULL
                     }
                     edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger",
+                                                                    loess=loess,
                                                                     x=denominator,
                                                                     y=numerator)), silent=TRUE)
                     if (class(edger_try) == "list") {
@@ -286,6 +287,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                         edger_plt <- NULL
                     }
                     deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq",
+                                                                    loess=loess,
                                                                     x=denominator,
                                                                     y=numerator)), silent=TRUE)
                     if (class(deseq_try) == "list") {
@@ -295,6 +297,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                     }
                 } else {
                     limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma",
+                                                                    loess=loess,
                                                                     x=numerator,
                                                                     y=denominator)), silent=TRUE)
                     if (class(limma_try) == "list") {
@@ -303,6 +306,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                         limma_plt <- NULL
                     }
                     edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger",
+                                                                    loess=loess,
                                                                     x=numerator,
                                                                     y=denominator)), silent=TRUE)
                     if (class(edger_try) == "list") {
@@ -311,6 +315,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
                         edger_plt <- NULL
                     }
                     deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq",
+                                                                    loess=loess,
                                                                     x=numerator,
                                                                     y=denominator)), silent=TRUE)
                     if (class(deseq_try) == "list") {
@@ -349,9 +354,12 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             splitted <- strsplit(x=tab, split="_vs_")
             xname <- splitted[[1]][1]
             yname <- splitted[[1]][2]
-            limma_plots[[tab]] <- sm(extract_coefficient_scatter(limma, type="limma", x=xname, y=yname))
-            edger_plots[[tab]] <- sm(extract_coefficient_scatter(edger, type="edger", x=xname, y=yname))
-            deseq_plots[[tab]] <- sm(extract_coefficient_scatter(deseq, type="deseq", x=xname, y=yname))
+            limma_plots[[tab]] <- extract_coefficient_scatter(limma, type="limma", loess=loess,
+                                                              x=xname, y=yname)
+            edger_plots[[tab]] <- extract_coefficient_scatter(edger, type="edger", loess=loess,
+                                                              x=xname, y=yname)
+            deseq_plots[[tab]] <- extract_coefficient_scatter(deseq, type="deseq", loess=loess,
+                                                              x=xname, y=yname)
         }
 
         ## Or a single specific table
@@ -377,9 +385,12 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
         table_names[[a]] <- combined[["summary"]][["table"]]
         xname <- splitted[[1]][1]
         yname <- splitted[[1]][2]
-        limma_plots[[name]] <- sm(extract_coefficient_scatter(limma, type="limma", x=xname, y=yname))
-        edger_plots[[name]] <- sm(extract_coefficient_scatter(edger, type="edger", x=xname, y=yname))
-        deseq_plots[[name]] <- sm(extract_coefficient_scatter(deseq, type="deseq", x=xname, y=yname))
+        limma_plots[[name]] <- sm(extract_coefficient_scatter(limma, type="limma",
+                                                              loess=loess, x=xname, y=yname))
+        edger_plots[[name]] <- sm(extract_coefficient_scatter(edger, type="edger",
+                                                              loess=loess, x=xname, y=yname))
+        deseq_plots[[name]] <- sm(extract_coefficient_scatter(deseq, type="deseq",
+                                                              loess=loess, x=xname, y=yname))
     } else {
         stop("I don't know what to do with your specification of tables to keep.")
     } ## End different types of things to keep.
@@ -398,10 +409,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
             final_excel_title <- gsub(pattern='YYY', replacement=tab, x=excel_title)
             xls_result <- write_xls(data=ddd, wb=wb, sheet=sheetname, title=final_excel_title)
             sheetname <- xls_result[["sheet"]]  ## This is in case the original sheet name was too long.
-            if (!is.null(csv)) {
-                csv_filename <- paste0(csv_basename, "_", tab, ".csv")
-                write.csv(x=ddd, file=csv_filename)
-            }
             if (isTRUE(add_plots)) {
                 ## Text on row 1, plots from 2-17 (15 rows)
                 plot_column <- xls_result[["end_col"]] + 2
@@ -529,17 +536,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL, csv=NULL,
         message("Performing save of the workbook.")
         save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
         if (class(save_result) == "try-error") {
-            message("Saving xlsx failed.  Rerunning now with arguments to save to csv files.")
-            retlist <- combine_de_tables(all_pairwise_result,
-                                         extra_annot=extra_annot,
-                                         csv=excel,
-                                         excel=NULL,
-                                         excel_title=excel_title,
-                                         excel_sheet=excel_sheet,
-                                         keepers=keepers,
-                                         include_basic=include_basic,
-                                         add_plots=FALSE,
-                                         compare_plots=FALSE)
+            message("Saving xlsx failed.")
         }
     } ## End if !is.null(excel)
 
@@ -846,7 +843,6 @@ extract_siggenes <- function(...) { extract_significant_genes(...) }
 #' @param n  Take the top/bottom-n genes.
 #' @param ma  Add ma plots to the sheets of 'up' genes?
 #' @param p_type  use an adjusted p-value?
-#' @param csv  Write csv instead of xlsx when running OOM.
 #' @param excel  Write the results to this excel file, or NULL.
 #' @param siglfc_cutoffs  Set of cutoffs used to define levels of 'significant.'
 #' @return The set of up-genes, down-genes, and numbers therein.
@@ -857,7 +853,7 @@ extract_significant_genes <- function(combined,
                                       fc=1.0, p=0.05, sig_bar=TRUE,
                                       z=NULL, n=NULL, ma=TRUE,
                                       p_type="adj",
-                                      csv=NULL, excel="excel/significant_genes.xlsx",
+                                      excel="excel/significant_genes.xlsx",
                                       siglfc_cutoffs=c(0, 1, 2)) {
     excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
     num_tables <- 0
@@ -1041,7 +1037,7 @@ extract_significant_genes <- function(combined,
         } else {
             message(paste0("Printing significant genes to the file: ", excel))
             xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according,
-                                        summary_count=summary_count, csv=csv, ma=ma)
+                                        summary_count=summary_count, ma=ma)
             ## This is in case writing the sheet resulted in it being shortened.
             ## wb <- xlsx_ret[["workbook"]]
         } ## End of an if whether to print the data to excel
@@ -1147,29 +1143,19 @@ extract_significant_genes <- function(combined,
 #' @param upsdowns  Output from extract_significant_genes().
 #' @param wb  Workbook object to use for writing, or start a new one.
 #' @param excel  Filename for writing the data.
-#' @param csv  Write a csv instead/also?
 #' @param according  Use limma, deseq, or edger for defining 'significant'.
 #' @param summary_count  For spacing sequential tables one after another.
 #' @param ma  Include ma plots?
 #' @return Return from write_xls.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx", csv=NULL,
+print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx",
                             according="limma", summary_count=1, ma=FALSE) {
     xls_result <- NULL
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
     }
     excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-    csv_basename <- NULL
-    if (!is.null(csv)) {
-        if (is.null(excel) | excel == FALSE) {
-            csv_basename <- "excel/csv_export"
-        } else {
-            csv_basename <- excel
-            csv_basename <- gsub(pattern="\\.xlsx", replacement="", x=csv_basename)
-        }
-    }
     ups <- upsdowns[["ups"]]
     downs <- upsdowns[["downs"]]
     up_titles <- upsdowns[["up_titles"]]
@@ -1183,10 +1169,6 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     summary_start <- ((num_tables + 2) * summary_count) + 1
     xls_summary_result <- write_xls(wb=wb, data=summary, start_col=1, start_row=summary_start,
                                     sheet="number_changed", title=summary_title)
-    if (!is.null(csv)) {
-        csv_filename <- paste0(csv_basename, "_num_changed.csv")
-        write.csv(x=summary, file=csv_filename)
-    }
     for (base_name in names(ups)) {
         table_count <- table_count + 1
         up_name <- paste0("up_", table_count, according, "_", base_name)
@@ -1210,12 +1192,6 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
         }
         message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", down_name))
         xls_result <- write_xls(data=down_table, wb=wb, sheet=down_name, title=down_title)
-        if (!is.null(csv)) {
-            csv_filename <- paste0(csv_basename, "_", up_name, ".csv")
-            write.csv(x=up_table, file=csv_filename)
-            csv_filename <- paste0(csv_basename, "_", down_name, ".csv")
-            write.csv(x=down_table, file=csv_filename)
-        }
     } ## End for each name in ups
     return(xls_result)
 }
@@ -1223,8 +1199,8 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
 #' Writes out the results of a single pairwise comparison.
 #'
 #' However, this will do a couple of things to make one's life easier:
-#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
-#' 2.  Write out the results() output for them in separate .csv files and/or sheets in excel
+#' 1.  Make a list of the output, one element for each comparison of the contrast matrix.
+#' 2.  Write out the results() output for them in separate sheets in excel.
 #' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
 #'
 #' Tested in test_24deseq.R

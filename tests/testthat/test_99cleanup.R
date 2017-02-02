@@ -15,13 +15,12 @@ map_removed <- try(file.remove("id2go.map"))
 gff_removed <- try(file.remove("dmel.gff"))
 gb_removed <- try(file.remove("AE009949.gb"))
 
-basic_removed <- try(file.remove("test_basic.xlsx"))
-deseq_removed <- try(file.remove("test_deseq.xlsx"))
-edger_removed <- try(file.remove("test_edger.xlsx"))
-limma_removed <- try(file.remove("test_limma.xlsx"))
-
-xlsx_table_removed <- try(file.remove("test_excel.xlsx"))
-xlsx_sig_semoved <- try(file.remove("test_excel_sig.xlsx"))
+limma_removed <- try(file.remove("limma_test.xlsx"))
+basic_removed <- try(file.remove("basic_test.xlsx"))
+deseq_removed <- try(file.remove("deseq_test.xlsx"))
+edger_removed <- try(file.remove("edger_test.xlsx"))
+xlsx_removed <- try(file.remove("excel_test.xlsx"))
+xlsx_sig_removed <- try(file.remove("excel_test_sig.xlsx"))
 
 remove_directories <- c("organdb", "pathview", "pathview_in", "circos", "test_excel", "test_excel_sig")
 for (dir in remove_directories) {

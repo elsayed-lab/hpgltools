@@ -486,6 +486,38 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     return(expt)
 }
 
+#' Exclude some genes given a pattern match
+#'
+#' Because I am too lazy to remember that expressionsets use matrix subsets for [gene,sample]
+#'
+#' @param expt  Expressionset containing expt object.
+#' @param column  fData column to use for subsetting.
+#' @param method  Either remove explicit rows, or keep them.
+#' @param patterns  Character list of patterns to remove/keep
+#' @return  A smaller expt
+#' @export
+expt_exclude_genes <- function(expt, column="txtype", method="remove",
+                               patterns=c("snRNA","tRNA","rRNA"), ...) {
+    ex <- expt[["expressionset"]]
+    annotations <- Biobase::fData(ex)
+    pattern_string <- ""
+    for (pat in patterns) {
+        pattern_string <- paste0(pattern_string, pat, "|")
+    }
+    silly_string <- gsub(pattern="\\|$", replacement="", x=pattern_string)
+    idx <- grepl(pattern=silly_string, x=annotations[[column]])
+    ex2 <- NULL
+    if (method == "remove") {
+        ex2 <- ex[!idx, ]
+    } else {
+        ex2 <- ex[idx, ]
+    }
+    message(paste0("Before removal, there were ", nrow(Biobase::fData(ex)), " entries."))
+    message(paste0("Now there are ", nrow(Biobase::fData(ex2)), " entries."))
+    expt[["expressionset"]] <- ex2
+    return(expt)
+}
+
 #' An alias to expt_subset, because it is stupid to have something start with verbs
 #' and others start with nouns.
 #'

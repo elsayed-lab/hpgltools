@@ -121,12 +121,13 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
 #' @param p  Set a p-value cutoff for coloring the scatter plot (currently not supported).
 #' @param fc  Set a fold-change cutoff for coloring points in the scatter plot (currently not supported.)
 #' @param n  Set a top-n fold-change for coloring the points in the scatter plot (this should work, actually).
+#' @param loess  Add a loess estimation (This is slow.)
 #' @param color_low  Color for the genes less than the mean.
 #' @param color_high  Color for the genes greater than the mean.
 #' @param ...  More arguments are passed to arglist.
 #' @export
 extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1, y=2, z=1.5,
-                                        p=NULL, fc=NULL, n=NULL,
+                                        p=NULL, fc=NULL, n=NULL, loess=FALSE,
                                         color_low="#DD0000", color_high="#7B9F35", ...) {
     arglist <- list(...)
     ## This is an explicit test against all_pairwise() and reduces it to result from type.
@@ -224,14 +225,15 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     }
 
     maxvalue <- max(coefficient_df) + 1.0
-    plot <- sm(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+    minvalue <- min(coefficient_df) - 1.0
+    plot <- sm(plot_linear_scatter(df=coefficient_df, loess=loess, gvis_filename=gvis_filename,
                                    gvis_trendline=gvis_trendline, first=xname, second=yname,
                                    tooltip_data=tooltip_data, base_url=base_url,
                                    pretty_colors=FALSE, color_low=color_low, color_high=color_high,
                                    p=p, fc=fc, n=n, z=z))
     plot[["scatter"]] <- plot[["scatter"]] +
-        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
-        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
+        ggplot2::scale_x_continuous(limits=c(minvalue, maxvalue)) +
+        ggplot2::scale_y_continuous(limits=c(minvalue, maxvalue))
     plot[["df"]] <- coefficient_df
     return(plot)
 }

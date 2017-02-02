@@ -192,6 +192,7 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
         godf <- extract_go(go_db)
     } else if (class(go_db)[[1]] == "data.frame") {
         godf <- go_db
+        godf <- godf[, c("ID","GO")]
     } else {
         message("Not sure what to do here.")
     }

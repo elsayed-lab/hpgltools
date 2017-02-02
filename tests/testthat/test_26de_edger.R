@@ -83,9 +83,9 @@ test_that("Is the hpgl pairwise similar to edgeR's default method (fdr)?", {
     expect_equal(edger_fdr, hpgl_fdr, tolerance=0.1)
 })
 
-edger_written <- sm(write_edger(hpgl_edger, excel="test_edger.xlsx"))
+edger_written <- sm(write_edger(hpgl_edger, excel="edger_test.xlsx"))
 test_that("Can we write the results of an edger pairwise analysis?", {
-    expect_true(file.exists("edger.xlsx"))
+    expect_true(file.exists("edger_test.xlsx"))
 })
 
 save(list=ls(), file="de_edger.rda")

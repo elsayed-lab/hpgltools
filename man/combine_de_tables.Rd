@@ -4,26 +4,20 @@
 \alias{combine_de_tables}
 \title{Combine portions of deseq/limma/edger table output.}
 \usage{
-combine_de_tables(all_pairwise_result, extra_annot = NULL, csv = NULL,
-  excel = NULL,
+combine_de_tables(all_pairwise_result, extra_annot = NULL, excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
-  excel_sheet = "combined_DE", keepers = "all", excludes = NULL,
-  adjp = TRUE, include_basic = TRUE, add_plots = TRUE, plot_dim = 6,
-  compare_plots = TRUE)
+  keepers = "all", excludes = NULL, adjp = TRUE, include_basic = TRUE,
+  add_plots = TRUE, loess = FALSE, plot_dim = 6, compare_plots = TRUE)
 }
 \arguments{
 \item{all_pairwise_result}{Output from all_pairwise().}
 
 \item{extra_annot}{Add some annotation information?}
 
-\item{csv}{On some computers (Edson!) printing to excel runs the machine oom for big data sets.}
-
 \item{excel}{Filename for the excel workbook, or null if not printed.}
 
 \item{excel_title}{Title for the excel sheet(s).  If it has the
 string 'YYY', that will be replaced by the contrast name.}
-
-\item{excel_sheet}{Name the excel sheet.}
 
 \item{keepers}{List of reformatted table names to explicitly keep
 certain contrasts in specific orders and orientations.}
@@ -35,6 +29,8 @@ certain contrasts in specific orders and orientations.}
 \item{include_basic}{Include my stupid basic logFC tables?}
 
 \item{add_plots}{Add plots to the end of the sheets with expression values?}
+
+\item{loess}{Add time intensive loess estimation to plots?}
 
 \item{plot_dim}{Number of inches squared for the plot if added.}
 

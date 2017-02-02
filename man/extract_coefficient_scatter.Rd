@@ -6,7 +6,7 @@
 \usage{
 extract_coefficient_scatter(output, toptable = NULL, type = "limma",
   x = 1, y = 2, z = 1.5, p = NULL, fc = NULL, n = NULL,
-  color_low = "#DD0000", color_high = "#7B9F35", ...)
+  loess = FALSE, color_low = "#DD0000", color_high = "#7B9F35", ...)
 }
 \arguments{
 \item{output}{Result from the de_ family of functions, all_pairwise, or combine_de_tables().}
@@ -26,6 +26,8 @@ extract_coefficient_scatter(output, toptable = NULL, type = "limma",
 \item{fc}{Set a fold-change cutoff for coloring points in the scatter plot (currently not supported.)}
 
 \item{n}{Set a top-n fold-change for coloring the points in the scatter plot (this should work, actually).}
+
+\item{loess}{Add a loess estimation (This is slow.)}
 
 \item{color_low}{Color for the genes less than the mean.}
 

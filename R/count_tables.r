@@ -21,7 +21,8 @@
 #'  count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
 #' }
 #' @export
-expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE, suffix=NULL, ...) {
+expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
+                             suffix=NULL, ...) {
     ## load first sample
     arglist <- list(...)
     skippers <- (files == "" | files == "undef" | is.null(files))
@@ -364,18 +365,18 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     legend_plot <- metrics[["legend"]][["plot"]]
     try_result <- xlsx_plot_png(legend_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="legend", savedir=excel_basename)
+                                plotname="01_legend", savedir=excel_basename, fancy_type="svg")
     new_col <- new_col + plot_cols + 1
     libsize_plot <- metrics[["libsize"]]
     try_result <- xlsx_plot_png(libsize_plot, wb=wb, sheet=sheet, width=plot_dim, height=plot_dim,
                                 start_col=new_col, start_row=new_row,
-                                plotname="libsize", savedir=excel_basename)
+                                plotname="02_libsize", savedir=excel_basename)
     ## Same row, non-zero plot
     new_col <- new_col + plot_cols + 1
     nonzero_plot <- metrics[["nonzero"]]
     try_result <- xlsx_plot_png(nonzero_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nonzero", savedir=excel_basename)
+                                plotname="03_nonzero", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
 
     ## Visualize distributions
@@ -391,12 +392,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(density_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="density", savedir=excel_basename)
+                                plotname="04_density", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
     boxplot_plot <- metrics[["boxplot"]]
     try_result <- xlsx_plot_png(boxplot_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="boxplot", savedir=excel_basename)
+                                plotname="05_boxplot", savedir=excel_basename)
     new_col <- 1
 
     ## Move down next set of rows, heatmaps
@@ -412,12 +413,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     corheat_plot <- metrics[["corheat"]]
     try_result <- xlsx_plot_png(corheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="corheat", savedir=excel_basename)
+                                plotname="06_corheat", savedir=excel_basename)
     disheat_plot <- metrics[["disheat"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(disheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="disheat", savedir=excel_basename)
+                                plotname="07_disheat", savedir=excel_basename)
     new_col <- 1
 
     ## SM plots
@@ -433,12 +434,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     smc_plot <- metrics[["smc"]]
     try_result <- xlsx_plot_png(smc_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="smc", savedir=excel_basename)
+                                plotname="08_smc", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
     smd_plot <- metrics[["smd"]]
     try_result <- xlsx_plot_png(smd_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="smd", savedir=excel_basename)
+                                plotname="09_smd", savedir=excel_basename)
     new_col <- 1
 
     ## PCA, PCA(l2cpm) and qq_log
@@ -454,19 +455,19 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     pca_plot <- metrics[["pcaplot"]]
     try_result <- xlsx_plot_png(pca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="pcaplot", savedir=excel_basename, fancy_type="svg")
+                                plotname="10_pcaplot", savedir=excel_basename, fancy_type="svg")
     tmp_data <- sm(normalize_expt(expt, transform="log2", convert="cpm"))
     rspca_plot <- plot_pca(tmp_data)[["plot"]]
     rm(tmp_data)
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(rspca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="norm_pcaplot", savedir=excel_basename)
+                                plotname="11_norm_pcaplot", savedir=excel_basename)
     qq_plot <- metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(qq_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="qqlog", savedir=excel_basename)
+                                plotname="12_qqlog", savedir=excel_basename)
     new_col <- 1
 
     violin_plot <- NULL
@@ -480,13 +481,13 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
             new_col <- 1
             try_result <- xlsx_plot_png(violin_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="violin", savedir=excel_basename)
+                                        plotname="13_violin", savedir=excel_basename)
             new_col <- new_col + plot_cols + 1
 
             pct_plot <- varpart_raw[["percent_plot"]]
             try_result <- xlsx_plot_png(pct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="pctvar", savedir=excel_basename)
+                                        plotname="14_pctvar", savedir=excel_basename)
         }
     }
 
@@ -538,13 +539,13 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     nlibsize_plot <- norm_metrics[["libsize"]]
     try_result <- xlsx_plot_png(nlibsize_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nlibsize", savedir=excel_basename)
+                                plotname="15_nlibsize", savedir=excel_basename)
     ## Same row, non-zero plot
     new_col <- new_col + plot_cols + 1
     nnzero_plot <- norm_metrics[["nonzero"]]
     try_result <- xlsx_plot_png(nnzero_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nnzero", savedir=excel_basename)
+                                plotname="16_nnzero", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
 
     ## Visualize distributions
@@ -560,12 +561,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(ndensity_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="ndensity", savedir=excel_basename)
+                                plotname="17_ndensity", savedir=excel_basename)
     nboxplot_plot <- norm_metrics[["boxplot"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(nboxplot_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nboxplot", savedir=excel_basename)
+                                plotname="18_nboxplot", savedir=excel_basename)
     new_col <- 1
 
     ## Move down next set of rows, heatmaps
@@ -581,12 +582,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(ncorheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="ncorheat", savedir=excel_basename)
+                                plotname="19_ncorheat", savedir=excel_basename)
     ndisheat_plot <- norm_metrics[["disheat"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(ndisheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="ndisheat", savedir=excel_basename)
+                                plotname="20_ndisheat", savedir=excel_basename)
     new_col <- 1
 
     ## SM plots
@@ -602,12 +603,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(nsmc_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nsmc", savedir=excel_basename)
+                                plotname="21_nsmc", savedir=excel_basename)
     nsmd_plot <- norm_metrics[["smd"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(nsmd_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nsmd", savedir=excel_basename)
+                                plotname="22_nsmd", savedir=excel_basename)
     new_col <- 1
 
     ## PCA and qq_log
@@ -623,12 +624,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(npca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="npcaplot", savedir=excel_basename, fancy_type="svg")
+                                plotname="23_npcaplot", savedir=excel_basename, fancy_type="svg")
     nqq_plot <- norm_metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(nqq_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nqqplot", savedir=excel_basename)
+                                plotname="24_nqqplot", savedir=excel_basename)
     new_col <- 1
 
     ## Violin plots
@@ -642,12 +643,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
             new_col <- 1
             try_result <- xlsx_plot_png(nvarpart_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="nviolin", savedir=excel_basename)
+                                        plotname="25_nviolin", savedir=excel_basename)
             new_col <- new_col + plot_cols + 1
             npct_plot <- varpart_norm[["percent_plot"]]
             try_result <- xlsx_plot_png(npct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="npctplot", savedir=excel_basename)
+                                        plotname="26_npctplot", savedir=excel_basename)
         }
     }
 
