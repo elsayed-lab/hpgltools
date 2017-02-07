@@ -10,6 +10,7 @@ context("56gsea_gprofiler.R: Do gProfiler searches work?\n")
 ## Run your tests here
 load("gsea_siggenes.rda")
 
+##gprofiler_result <- simple_gprofiler(z_sig_genes, species="dmelanogaster", first_col="untreated")
 gprofiler_result <- sm(simple_gprofiler(z_sig_genes, species="dmelanogaster", first_col="untreated"))
 
 expected <- c(2.44e-07, 4.08e-07, 3.69e-06, 1.62e-05, 1.62e-05, 2.13e-05)
@@ -19,7 +20,7 @@ test_that("Does gprofiler return expected values?", {
 })
 
 expected <- c(1.62e-05, 1.46e-03, 4.42e-03, 4.80e-03, 7.72e-03, 9.59e-03)
-actual <- head(sort(gprofiler_result$plots$mfp_plot_over$data$pvalue))
+actual <- head(sort(gprofiler_result$pvalue_plots$mfp_plot_over$data$pvalue))
 test_that("Does gprofiler return expected values? (mfpplot_data)", {
     expect_equal(expected, actual, tolerance=0.01)
 })
@@ -27,13 +28,13 @@ test_that("Does gprofiler return expected values? (mfpplot_data)", {
 ## When I run this in an interactive session it works.
 ## But when I run it with make test,  no!  WTF!?
 expected <- c(2.44e-07, 4.08e-07, 3.69e-06, 1.62e-05, 2.13e-05, 2.56e-05)
-actual <- head(sort(gprofiler_result$plots$bpp_plot_over$data$pvalue))
+actual <- head(sort(gprofiler_result$pvalue_plots$bpp_plot_over$data$pvalue))
 test_that("Does gprofiler return expected values? (bppplot_data)", {
     expect_equal(expected, actual, tolerance=0.03)
 })
 
 expected <- NULL
-actual <- head(gprofiler_result$plots$cp_plot_over$data$pvalue)
+actual <- head(gprofiler_result$pvalue_plots$cp_plot_over$data$pvalue)
 test_that("Does gprofiler return expected values? (ccpplot_data)", {
     expect_equal(expected, actual, tolerance=0.001)
 })

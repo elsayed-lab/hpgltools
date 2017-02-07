@@ -119,6 +119,7 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #' @param trymart Default mart to try, newer marts use a different notation.
 #' @param secondtry The newer mart name.
 #' @param dl_rows  List of rows from the final biomart object to download.
+#' @param dl_rowsv2  A second list of potential rows.
 #' @return Df of geneIDs and GOIDs.
 #' @seealso \link[biomaRt]{getBM}
 #' @examples

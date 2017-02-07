@@ -242,7 +242,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
 #'
 #' @param data  Output from deseq_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[deseq]{toptable} \link{write_xls}
+#' @seealso \link[limma]{toptable} \link{write_xls}
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- edger_pairwise(expressionset)

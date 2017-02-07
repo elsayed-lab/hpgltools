@@ -754,12 +754,12 @@ create_combined_table <- function(li, ed, de, ba,
 #' which are the most/least abundant.  This is in contrast to extract_significant_genes().
 #' That function seeks out the most changed, statistically significant genes.
 #'
-#' @param combined  Output from combine_de_tables().
+#' @param pairwise  Output from _pairwise()().
 #' @param according_to  What tool(s) define 'most?'  One may use deseq, edger, limma, basic, all.
 #' @param n  How many genes to pull?
 #' @param z  Instead take the distribution of abundances and pull those past the given z score.
 #' @param unique  One might want the subset of unique genes in the top-n which are unique in the set
-#'   of available conditions.  This will attempt to provide that.
+#'  of available conditions.  This will attempt to provide that.
 #' @param least  Instead of the most abundant, do the least.
 #' @param excel  Excel file to write.
 #' @return  The set of most/least abundant genes by contrast/tool.

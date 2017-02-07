@@ -6,11 +6,12 @@
 #' @param normalized_counts Data frame of log2cpm counts.
 #' @param model Balanced experimental model containing condition and batch factors.
 #' @return Dataframe of residuals after subtracting batch from the model.
-#' @seealso \link[limma]{voom} \link[limma]{lmFit}
+#' @seealso
+#'  \link[limma]{voom} \link[limma]{lmFit}
 #' @examples
-#' \dontrun{
-#' newdata <- cbcb_batch_effect(counts, expt_model)
-#' }
+#'  \dontrun{
+#'   newdata <- cbcb_batch_effect(counts, expt_model)
+#'  }
 #' @export
 cbcb_batch_effect <- function(normalized_counts, model) {
     ## model = model.matrix(~ condition + batch)
@@ -42,25 +43,27 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #' values, while DESeq2 expects raw counts as input. I couldn't tell you how to properly use the
 #' two methods together.
 #'
-#' @param count_table Matrix of (pseudo)counts.
-#' @param design Model matrix defining the experimental conditions/batches/etc.
-#' @param batch String describing the method to try to remove the batch effect
-#'        (or FALSE to leave it alone, TRUE uses limma).
-#' @param batch1 Column in the design table describing the presumed covariant to remove.
-#' @param batch2 Column in the design table describing the second covariant to remove
-#'        (only used by limma at the moment).
-#' @param noscale Used for combatmod, when true it removes the scaling parameter
-#'        from the invocation of the modified combat.
-#' @param ... More options for you!
+#' @param count_table  Matrix of (pseudo)counts.
+#' @param design  Model matrix defining the experimental conditions/batches/etc.
+#' @param batch  String describing the method to try to remove the batch effect
+#'  (or FALSE to leave it alone, TRUE uses limma).
+#' @param expt_state  Current state of the expt in an attempt to avoid double-normalization.
+#' @param batch1  Column in the design table describing the presumed covariant to remove.
+#' @param batch2  Column in the design table describing the second covariant to remove
+#'  (only used by limma at the moment).
+#' @param noscale  Used for combatmod, when true it removes the scaling parameter
+#'  from the invocation of the modified combat.
+#' @param ...  More options for you!
 #' @return The 'batch corrected' count table and new library size.  Please remember that the
-#'         library size which comes out of this may not be what you want for voom/limma and would
-#'         therefore lead to spurious differential expression values.
-#' @seealso \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
+#'  library size which comes out of this may not be what you want for voom/limma and would
+#'  therefore lead to spurious differential expression values.
+#' @seealso
+#'  \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
 #' @examples
-#' \dontrun{
-#' limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
-#' sva_batch <- batch_counts(table, design, batch='sva')
-#' }
+#'  \dontrun{
+#'   limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
+#'   sva_batch <- batch_counts(table, design, batch='sva')
+#'  }
 #' @export
 batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_state=NULL,
                          batch2=NULL, noscale=TRUE, ...) {
@@ -348,11 +351,12 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
 #' @param prior.plots Print out prior plots?
 #' @param ... Extra options are passed to arglist
 #' @return Df of batch corrected data
-#' @seealso \pkg{sva} \code{\link[sva]{ComBat}}
+#' @seealso
+#'  \pkg{sva} \code{\link[sva]{ComBat}}
 #' @examples
-#' \dontrun{
-#' df_new = hpgl_combatMod(df, batches, model)
-#' }
+#'  \dontrun{
+#'   df_new = hpgl_combatMod(df, batches, model)
+#'  }
 #' @export
 hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE, ...) {
     arglist <- list(...)

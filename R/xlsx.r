@@ -13,13 +13,13 @@
 #' @param start_col First column to write.
 #' @param ...  Set of extra arguments given to openxlsx.
 #' @return List containing the sheet and workbook written as well as the bottom-right coordinates of
-#'     the last row/column written to the worksheet.
+#'  the last row/column written to the worksheet.
 #' @seealso \pkg{openxlsx} \link[openxlsx]{writeDataTable}
 #' @examples
-#' \dontrun{
-#'  xls_coords <- write_xls(dataframe, sheet="hpgl_data")
-#'  xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
-#' }
+#'  \dontrun{
+#'   xls_coords <- write_xls(dataframe, sheet="hpgl_data")
+#'   xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
+#'  }
 #' @export
 write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
                       start_row=1, start_col=1, ...) {
@@ -144,10 +144,12 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
 #' @param res  Resolution of the png image inserted into the sheet.
 #' @param plotname  Prefix of the pdf file created.
 #' @param savedir  Directory to which to save pdf copies of the plots.
+#' @param fancy_type  Plot publication quality images in this format.
 #' @param start_row  Row on which to place the plot in the sheet.
 #' @param start_col  Column on which to place the plot in the sheet.
 #' @param file_type  Currently this only does pngs, but perhaps I will parameterize this.
 #' @param units  Units for the png plotter.
+#' @param ...  Extra arguments are passed to arglist (Primarily for vennerable plots which are odd)
 #' @return  A list containing the result of the tryCatch{} used to invoke the plot prints.
 #' @seealso \pkg{openxlsx}
 #' @examples

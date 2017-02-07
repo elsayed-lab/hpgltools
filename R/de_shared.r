@@ -13,12 +13,12 @@
 #' @param model_cond  Include condition in the model?  This is likely always true.
 #' @param modify_p  Depending on how it is used, sva may require a modification of the p-values.
 #' @param model_batch  Include batch in the model?  This may be true/false/"sva" or other methods
-#'        supported by get_model_adjust().
+#'  supported by get_model_adjust().
 #' @param model_intercept  Use an intercept model instead of cell means?
 #' @param extra_contrasts  Optional extra contrasts beyone the pairwise comparisons.  This can be
-#'        pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or
-#'        (E/D)/(C/B) then use this with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla =
-#'        (E-D)-A, de_vs_cb = (E-D)-(C-B)".
+#'  pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or
+#'  (E/D)/(C/B) then use this with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla =
+#'  (E-D)-A, de_vs_cb = (E-D)-(C-B)".
 #' @param alt_model  Alternate model to use rather than just condition/batch.
 #' @param libsize  Library size of the original data to help voom().
 #' @param annot_df  Annotations to add to the result tables.
@@ -26,10 +26,10 @@
 #' @param ...  Picks up extra arguments into arglist, currently only passed to write_limma().
 #' @return A list of limma, deseq, edger results.
 #' @examples
-#' \dontrun{
-#'  finished_comparison = eBayes(limma_output)
-#'  data_list = all_pairwise(expt)
-#' }
+#'  \dontrun{
+#'   finished_comparison = eBayes(limma_output)
+#'   data_list = all_pairwise(expt)
+#'  }
 #' @export
 all_pairwise <- function(input=NULL, conditions=NULL,
                          batches=NULL, model_cond=TRUE,
@@ -285,7 +285,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' @param alt_string  String describing an alternate model.
 #' @param intercept  Choose an intercept for the model as opposed to 0.
 #' @param reverse  Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
-#'     to test.
+#'  to test.
 #' @param surrogates  Number of or method used to choose the number of surrogate variables.
 #' @param ...  Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
@@ -693,15 +693,15 @@ like me, want to see what happens when you put non-standard data into deseq, the
 #' @param annot_df Include annotation data?
 #' @param ... More options!
 #' @return Heatmap showing how similar they are along with some
-#'     correlations betwee the three players.
+#'  correlations betwee the three players.
 #' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
 #' @examples
-#' \dontrun{
-#'  l = limma_pairwise(expt)
-#'  d = deseq_pairwise(expt)
-#'  e = edger_pairwise(expt)
-#'  fun = compare_tables(limma=l, deseq=d, edger=e)
-#' }
+#'  \dontrun{
+#'   l = limma_pairwise(expt)
+#'   d = deseq_pairwise(expt)
+#'   e = edger_pairwise(expt)
+#'   fun = compare_tables(limma=l, deseq=d, edger=e)
+#'  }
 #' @export
 compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
                            include_basic=TRUE, annot_df=NULL, ...) {
@@ -924,6 +924,21 @@ do_pairwise <- function(type, ...) {
     return(res)
 }
 
+#' Find the set of most/least abundant genes according to limma and friends following a
+#' differential expression analysis.
+#'
+#' Given a data set provided by limma, deseq, edger, etc; one might want to know what are the
+#' most and least abundant genes, much like get_sig_genes() does to find the most significantly
+#' different genes for each contrast.
+#'
+#' @param datum  Output from the _pairwise() functions.
+#' @param type  Extract abundant genes according to what?
+#' @param n  Perhaps take just the top/bottom n genes.
+#' @param z  Or take genes past a given z-score.
+#' @param unique  Unimplemented: take only the genes unique among the conditions surveyed.
+#' @param least  When true, this finds the least abundant rather than most.
+#' @return  List of data frames containing the genes of interest.
+#' @export
 get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE, least=FALSE) {
     if (is.null(z) & is.null(n)) {
         n <- 100
@@ -1015,9 +1030,9 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
 #' @param fc Fold-change cutoff.
 #' @param p P-value cutoff.
 #' @param fold Identifier reminding how to get the bottom portion of a
-#'     fold-change (plusminus says to get the negative of the
-#'     positive, otherwise 1/positive is taken).  This effectively
-#'     tells me if this is a log fold change or not.
+#'  fold-change (plusminus says to get the negative of the
+#'  positive, otherwise 1/positive is taken).  This effectively
+#'  tells me if this is a log fold change or not.
 #' @param column Table's column used to distinguish top vs. bottom.
 #' @param p_column Table's column containing (adjusted or not)p-values.
 #' @return Subset of the up/down genes given the provided criteria.
@@ -1128,16 +1143,19 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
 #'  need to be set to FALSE, but just in case.
 #' @param extra_contrasts Optional string of extra contrasts to include.
 #' @return List including the following information:
-#'  all_pairwise_contrasts = the result from makeContrasts(...)
-#'  identities = the string identifying each condition alone
-#'  all_pairwise = the string identifying each pairwise comparison alone
-#'  contrast_string = the string passed to R to call makeContrasts(...)
-#'  names = the names given to the identities/contrasts
-#' @seealso \link[limma]{makeContrasts}
+#'  \enumerate{
+#'   \item all_pairwise_contrasts = the result from makeContrasts(...)
+#'   \item identities = the string identifying each condition alone
+#'   \item all_pairwise = the string identifying each pairwise comparison alone
+#'   \item contrast_string = the string passed to R to call makeContrasts(...)
+#'   \item names = the names given to the identities/contrasts
+#'  }
+#' @seealso
+#'  \link[limma]{makeContrasts}
 #' @examples
-#' \dontrun{
-#'  pretend = make_pairwise_contrasts(model, conditions)
-#' }
+#'  \dontrun{
+#'   pretend = make_pairwise_contrasts(model, conditions)
+#'  }
 #' @export
 make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
                                     do_pairwise=TRUE, extra_contrasts=NULL) {
@@ -1243,6 +1261,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 #' @param max_copies  Keep only those genes with <= n putative
 #'  copies.
 #' @param use_files  Use a set of sequence alignments to define the copy numbers?
+#' @param invert  Keep only the set of genes in the multi-gene families (FIXME?)
 #' @param semantic  Set of strings with gene names to exclude.
 #' @param semantic_column  Column in the DE table used to find the
 #'  semantic strings for removal.

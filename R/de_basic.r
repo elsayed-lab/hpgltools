@@ -266,7 +266,7 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
 #'
 #' @param data  Output from deseq_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[deseq]{toptable} \link{write_xls}
+#' @seealso \link[DESeq2]{toptable} \link{write_xls}
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- basic_pairwise(expressionset)

@@ -494,10 +494,12 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
 #' @param column  fData column to use for subsetting.
 #' @param method  Either remove explicit rows, or keep them.
 #' @param patterns  Character list of patterns to remove/keep
+#' @param ...  Extra arguments are passed to arglist, currently unused.
 #' @return  A smaller expt
 #' @export
 expt_exclude_genes <- function(expt, column="txtype", method="remove",
                                patterns=c("snRNA","tRNA","rRNA"), ...) {
+    arglist <- list(...)
     ex <- expt[["expressionset"]]
     annotations <- Biobase::fData(ex)
     pattern_string <- ""

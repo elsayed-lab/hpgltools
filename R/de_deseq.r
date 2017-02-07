@@ -324,7 +324,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
 #'
 #' @param data  Output from deseq_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[deseq]{toptable} \link{write_xls}
+#' @seealso \link[DESeq2]{toptable} \link{write_xls}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = deseq_pairwise(expressionset)

@@ -68,13 +68,13 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #'   \item  res = a table of the PCA res data
 #'   \item  variance = a table of the PCA plot variance
 #'  }
-#' @seealso \code{\link{makeSVD}},
-#' \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+#' @seealso
+#'  \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 #' @examples
-#' \dontrun{
-#'  pca_plot <- plot_pca(expt=expt)
-#'  pca_plot
-#' }
+#'  \dontrun{
+#'   pca_plot <- plot_pca(expt=expt)
+#'   pca_plot
+#'  }
 #' @export
 plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
                      plot_title=NULL, plot_size=5, size_column=NULL, ...) {
@@ -264,7 +264,8 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
 #' @param fact Experimental factor from the original data.
 #' @param type Make this categorical or continuous with factor/continuous.
 #' @return The r^2 values of the linear model as a percentage.
-#' @seealso \code{\link[corpcor]{fast.svd}}
+#' @seealso
+#'  \code{\link[corpcor]{fast.svd}}
 #' @export
 factor_rsquared <- function(svd_v, fact, type="factor") {
     if (type == "factor") {

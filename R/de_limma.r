@@ -657,7 +657,7 @@ make_limma_tables <- function(data, adjust="fdr", n=0, coef=NULL, workbook="exce
 #'
 #' @param data  Output from limma_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[deseq]{toptable} \link{write_xls}
+#' @seealso \link[limma]{toptable} \link{write_xls}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = limma_pairwise(expressionset)
