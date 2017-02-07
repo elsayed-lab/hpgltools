@@ -105,9 +105,17 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     ## Set the column lengths, hard set the first to 20,
     ## then try to set it to auto if the length is not too long.
     for (col in 1:ncol(data)) {
+        ## Make an explicit check that the data is not null, which comes out here as character(0)
+        test_null <- identical(as.character(data[[col]]), character(0))
+        test_max <- 4
+        if (isTRUE(test_null)) {
+            test_max <- 1
+        } else {
+            test_max <- max(nchar(as.character(data[[col]])), na.rm=TRUE)
+        }
         if (col == 1) {
             openxlsx::setColWidths(wb, sheet, col, 20)
-        } else if (max(nchar(as.character(data[[col]])), na.rm=TRUE) > 30) {
+        } else if (test_max > 30) {
             openxlsx::setColWidths(wb, sheet, col, 30)
         } else {
             openxlsx::setColWidths(wb, sheet, col, "auto")

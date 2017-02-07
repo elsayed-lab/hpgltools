@@ -269,7 +269,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
                                                 tableStyle=table_style, startRow=new_row))
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
-            a_plot <- gprofiler_result[["plots"]][["bpp_plot_over"]]
+            a_plot <- gprofiler_result[["pvalue_plots"]][["bpp_plot_over"]]
             ##try(print(a_plot), silent=TRUE)
             ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
             ##                                startCol=ncol(bp_data) + 2, startRow=new_row,
@@ -287,7 +287,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
                                                 tableStyle=table_style, startRow=new_row))
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
-            a_plot <- gprofiler_result[["plots"]][["mfp_plot_over"]]
+            a_plot <- gprofiler_result[["pvalue_plots"]][["mfp_plot_over"]]
             ##try(print(a_plot), silent=TRUE)
             ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
             ##                                startCol=ncol(mf_data) + 2, startRow=new_row,
@@ -305,7 +305,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
                                                 tableStyle=table_style, startRow=new_row))
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
-            a_plot <- gprofiler_result[["plots"]][["ccp_plot_over"]]
+            a_plot <- gprofiler_result[["pvalue_plots"]][["ccp_plot_over"]]
             ##try(print(a_plot), silent=TRUE)
             ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
             ##                                startCol=ncol(cc_data) + 2, startRow=new_row,
@@ -330,7 +330,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
                                                 tableStyle=table_style, startRow=new_row))
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
-            a_plot <- gprofiler_result[["plots"]][["kegg_plot_over"]]
+            a_plot <- gprofiler_result[["pvalue_plots"]][["kegg_plot_over"]]
             ##try(print(a_plot), silent=TRUE)
             ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
             ##                                startCol=ncol(kegg_data) + 2, startRow=new_row,
@@ -356,7 +356,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
                                                 tableStyle=table_style, startRow=new_row))
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
-            a_plot <- gprofiler_result[["plots"]][["tf_plot_over"]]
+            a_plot <- gprofiler_result[["pvalue_plots"]][["tf_plot_over"]]
             ##try(print(a_plot), silent=TRUE)
             ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
             ##                                startCol=ncol(tf_data) + 2, startRow=new_row,
@@ -381,7 +381,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
                                                 tableStyle=table_style, startRow=new_row))
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
-            a_plot <- gprofiler_result[["plots"]][["reactome_plot_over"]]
+            a_plot <- gprofiler_result[["pvalue_plots"]][["reactome_plot_over"]]
             ##try(print(a_plot), silent=TRUE)
             ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
             ##                                startCol=ncol(react_data) + 2, startRow=new_row,
@@ -407,7 +407,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
                                                 tableStyle=table_style, startRow=new_row))
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
-            a_plot <- gprofiler_result[["plots"]][["mi_plot_over"]]
+            a_plot <- gprofiler_result[["pvalue_plots"]][["mi_plot_over"]]
             ##try(print(a_plot), silent=TRUE)
             ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
             ##                                startCol=ncol(mi_data) + 2, startRow=new_row,
@@ -432,7 +432,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
                                                 tableStyle=table_style, startRow=new_row))
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
-            a_plot <- gprofiler_result[["plots"]][["hp_plot_over"]]
+            a_plot <- gprofiler_result[["pvalue_plots"]][["hp_plot_over"]]
             ##try(print(a_plot), silent=TRUE)
             ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
             ##                                startCol=ncol(hp_data) + 2, startRow=new_row,
@@ -457,7 +457,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
                                                 tableStyle=table_style, startRow=new_row))
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
-            a_plot <- gprofiler_result[["plots"]][["corum_plot_over"]]
+            a_plot <- gprofiler_result[["pvalue_plots"]][["corum_plot_over"]]
             ##try(print(a_plot), silent=TRUE)
             ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
             ##                                startCol=ncol(corum_data) + 2, startRow=new_row,

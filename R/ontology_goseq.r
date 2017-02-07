@@ -133,15 +133,12 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
             gene_list <- sig_genes[["ID"]]
         }
     } else {
-        stop("Not sure how to handle your set of gene ids.")
+        stop("Not sure how to handle your set of significant gene ids.")
     }
     ## At this point I should have a character list of gene ids named 'gene_list'
     de_genelist <- as.data.frame(gene_list)
     de_genelist[["DE"]] <- 1
     colnames(de_genelist) <- c("ID","DE")
-
-    id_xref <- de_genelist[["ID"]] %in% go_db[["ID"]]
-    message(paste0("Found ", sum(id_xref), " genes from the sig_genes in the go_db."))
 
     ## Database of lengths may be a gff file, TxDb, or OrganismDb
     metadf <- NULL
@@ -159,9 +156,9 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
         stop("OrgDb objects contain links to other databases, but sadly are missing gene lengths.")
     } else if (class(length_db)[[1]] == "OrganismDb" | class(length_db)[[1]] == "AnnotationDbi") {
         ## metadf <- extract_lengths(db=length_db, gene_list=gene_list, ...)
-        metadf <- extract_lengths(db=length_db, gene_list=gene_list)
+        metadf <- sm(extract_lengths(db=length_db, gene_list=gene_list))
     } else if (class(length_db)[[1]] == "TxDb") {
-        metadf <- extract_lengths(db=length_db, gene_list=gene_list, ...)
+        metadf <- sm(extract_lengths(db=length_db, gene_list=gene_list, ...))
     } else if (class(length_db)[[1]] == "data.frame") {
         metadf <- length_db
     } else {
@@ -196,7 +193,16 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
     } else {
         message("Not sure what to do here.")
     }
+    ## entrez IDs are numeric.  This is a problem when doing the pwf function because it sets
+    ## the rownames to the IDs.  As a result, we need to call make.names() on them.
+    godf[["ID"]] <- make.names(godf[["ID"]])
+    metadf[["ID"]] <- make.names(metadf[["ID"]])
+    de_genelist[["ID"]] <- make.names(de_genelist[["ID"]])
     ## Ok, now I have a df of GOids, all gene lengths, and DE gene list. That is everything I am supposed to need for goseq.
+
+    ## See how many entries from the godb are in the list of genes.
+    id_xref <- de_genelist[["ID"]] %in% godf[["ID"]]
+    message(paste0("Found ", sum(id_xref), " genes from the sig_genes in the go_db."))
 
     ## So lets merge the de genes and gene lengths to ensure that they are consistent.
     ## Then make the vectors expected by goseq

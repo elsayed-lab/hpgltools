@@ -283,6 +283,9 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
         tree_sig_cc <- recordPlot()
     }
 
+    pvalue_plotlist <- list(
+        ## I want to split the following list, but I am not sure which belong here.
+    )
     plotlist <- list(
         "ggo_mf_bar" = barplot(ggo_mf, drop=TRUE, showCategory=categories),
         "ggo_bp_bar" = barplot(ggo_bp, drop=TRUE, showCategory=categories),
@@ -316,7 +319,8 @@ simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
         "enrich_go" = enrich_go,
         "gse_go" = gse_go,
         "kegg_data" = kegg_data,
-        "plots" = plotlist)
+        "plots" = plotlist,
+        "pvalue_plots" = plotlist)
     return(retlist)
 }
 
