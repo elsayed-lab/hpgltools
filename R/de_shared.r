@@ -1357,13 +1357,12 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
 #'  up/down with a column expressing approximate count numbers.
 #' @param max_copies  Keep only those genes with <= n putative
 #'  copies.
-#' @param use_files  Use a set of sequence alignments to define the copy numbers?
 #' @param semantic  Set of strings with gene names to exclude.
 #' @param semantic_column  Column in the DE table used to find the
 #'  semantic strings for removal.
 #' @return Smaller list of up/down genes.
 #' @export
-semantic_copynumber_extract <- function(de_list, min_copies=2, use_files=FALSE,
+semantic_copynumber_extract <- function(de_list, min_copies=2,
                                         semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
                                         semantic_column='1.tooltip') {
     table_type <- "significance"
@@ -1387,23 +1386,6 @@ semantic_copynumber_extract <- function(de_list, min_copies=2, use_files=FALSE,
         table_name <- names(table_list)[[count]]
         numbers_found[[table_name]] <- list()
         message(paste0("Working on ", table_name))
-        if (isTRUE(use_files)) {
-            file <- ""
-            if (table_type == "combined") {
-                file <- paste0("singletons/gene_counts/", table_name, ".fasta.out.count")
-            } else {
-                file <- paste0("singletons/gene_counts/up_", table_name, ".fasta.out.count")
-            }
-            tmpdf <- try(read.table(file), silent=TRUE)
-            if (class(tmpdf) == "data.frame") {
-                colnames(tmpdf) = c("ID", "members")
-                tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
-                rownames(tab) <- tab[["Row.names"]]
-                tab <- tab[, -1, drop=FALSE]
-                tab <- tab[count >= min_copies, ]
-            }
-        }  ## End using empirically defined groups of multi-gene families.
-
         ## Now remove genes by name.
         kept_list <- new_table <- NULL
         for (string in semantic) {
@@ -1422,36 +1404,27 @@ semantic_copynumber_extract <- function(de_list, min_copies=2, use_files=FALSE,
                 message("Found no entries of type ", string, ".")
             }
         } ## End of the foreach semantic thing to remove
+        table_list[[table_name]] <- kept_list
     } ## End of for each table
 
-    ## Now recreate the original table lists as either de talbes or significance.
+    ## Now recreate the original table lists as either de tables or significance.
     if (table_type == "combined") {
         for (count in 1:length(table_list)) {
-            de_list[["data"]][[count]] <- table_list[[count]]
+            table_name <- names(table_list)[[count]]
+            de_list[["data"]][[table_name]] <- table_list[[table_name]]
         }
-    } else {  ## Then it is a set of significance tables.
-        if (count <= up_to_down) {
-            de_list[["ups"]][[count]] <- table_list[[count]]
-        } else {
-            de_list[["downs"]][[count]] <- table_list[[count]]
+    }
+    else {  ## Then it is a set of significance tables.
+        for (count in 1:length(table_list)) {
+            table_name <- names(table_list)[[count]]
+            if (count <= up_to_down) {
+                de_list[["ups"]][[count]] <- table_list[[count]]
+            } else {
+                de_list[["downs"]][[count]] <- table_list[[count]]
+            }
         }
     }
 
-    if (table_type == "significance") {
-        new_found <- list()
-        for (count in 1:length(found)) {
-            old_name <- names(found)[[count]]
-            new_name <- NULL
-            if (count <= up_to_down) {
-                new_name <- paste0("up_", old_name)
-            } else {
-                new_name <- paste0("down_", old_name)
-            }
-            new_found[[new_name]] <- found[[old_name]]
-        }
-        found <- new_found
-        rm(new_found)
-    }
     de_list[["numbers_found"]] <- numbers_found
     return(de_list)
 }

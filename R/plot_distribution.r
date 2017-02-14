@@ -32,7 +32,7 @@
 plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, ...) {
     plot_env <- environment()
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         design <- data[["design"]]
         colors <- data[["colors"]]
         names <- data[["names"]]
@@ -68,7 +68,7 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     }
 
     if (is.null(colors)) {
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(df)[2])
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(data)[2])
     }
     data_matrix <- as.matrix(data)
     data[data < 0] <- 0 ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
@@ -79,11 +79,11 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     ## The use of data= and aes() leads to no visible binding for global variable warnings
     ## I am not sure what to do about them in this context.
     boxplot <- ggplot2::ggplot(data=dataframe, ggplot2::aes_string(x="variable", y="value")) +
-        suppressWarnings(ggplot2::geom_boxplot(na.rm=TRUE,
-                                               ggplot2::aes_string(fill="variable"),
-                                               fill=colors, size=0.5,
-                                               outlier.size=1.5,
-                                               outlier.colour=ggplot2::alpha("black", 0.2))) +
+        sm(ggplot2::geom_boxplot(na.rm=TRUE,
+                                 ggplot2::aes_string(fill="variable"),
+                                 fill=colors, size=0.5,
+                                 outlier.size=1.5,
+                                 outlier.colour=ggplot2::alpha("black", 0.2))) +
         ggplot2::theme_bw() + ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
         ggplot2::xlab("Sample") + ggplot2::ylab("Per-gene (pseudo)count distribution")
     if (!is.null(title)) {
