@@ -19,9 +19,9 @@ During a lab meeting, the following function was suggested as a quick and
 dirty batch removal tool
 }
 \examples{
-\dontrun{
-newdata <- cbcb_batch_effect(counts, expt_model)
-}
+ \dontrun{
+  newdata <- cbcb_batch_effect(counts, expt_model)
+ }
 }
 \seealso{
 \link[limma]{voom} \link[limma]{lmFit}

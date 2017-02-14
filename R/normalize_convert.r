@@ -215,7 +215,7 @@ hpgl_rpkm <- function(df, ...) {
     colnames(df_in) <- colnames(df)
     df_in[["temporary_id_number"]] <- 1:nrow(df_in)
     merged_annotations <- merge(df_in, annotations, by="row.names", all.x=TRUE)
-    rownames(merged_annotations) <- merged_annotations[,"Row.names"]
+    rownames(merged_annotations) <- merged_annotations[, "Row.names"]
     merged_annotations <- merged_annotations[-1]
     merged_annotations <- merged_annotations[order(merged_annotations[["temporary_id_number"]]), ]
     merged_counts <- merged_annotations[, colnames(merged_annotations) %in% colnames(df) ]
@@ -225,13 +225,13 @@ hpgl_rpkm <- function(df, ...) {
     ## Sometimes I am stupid and call it length...
     lenvec <- NULL
     if (is.null(merged_annot[["width"]])) {
-        lenvec <- as.vector(merged_annot[["length"]])
+        lenvec <- as.vector(as.numeric(merged_annot[["length"]]))
     } else {
-        lenvec <- as.vector(merged_annot[["width"]])
+        lenvec <- as.vector(as.numeric(merged_annot[["width"]]))
     }
     names(lenvec) <- rownames(merged_annot)
     requireNamespace("edgeR")
-    rpkm_df <- edgeR::rpkm(merged_counts, gene.length=lenvec)
+    rpkm_df <- edgeR::rpkm(as.matrix(merged_counts), gene.length=lenvec)
     colnames(rpkm_df) <- colnames(df)
     return(rpkm_df)
 }

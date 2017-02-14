@@ -47,7 +47,7 @@ which has been transformed onto the M (log ratios) and A (mean average) scale."
 }
 \examples{
 \dontrun{
-plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
+## plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
 ## Currently this assumes that a variant of toptable was used which
 ## gives adjusted p-values.  This is not always the case and I should
 ## check for that, but I have not yet.

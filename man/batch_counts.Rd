@@ -17,6 +17,8 @@ batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
 
 \item{batch1}{Column in the design table describing the presumed covariant to remove.}
 
+\item{expt_state}{Current state of the expt in an attempt to avoid double-normalization.}
+
 \item{batch2}{Column in the design table describing the second covariant to remove
 (only used by limma at the moment).}
 
@@ -27,8 +29,8 @@ from the invocation of the modified combat.}
 }
 \value{
 The 'batch corrected' count table and new library size.  Please remember that the
-        library size which comes out of this may not be what you want for voom/limma and would
-        therefore lead to spurious differential expression values.
+ library size which comes out of this may not be what you want for voom/limma and would
+ therefore lead to spurious differential expression values.
 }
 \description{
 I found this note which is the clearest explanation of what happens with batch effect data:
@@ -48,10 +50,10 @@ values, while DESeq2 expects raw counts as input. I couldn't tell you how to pro
 two methods together.
 }
 \examples{
-\dontrun{
-limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
-sva_batch <- batch_counts(table, design, batch='sva')
-}
+ \dontrun{
+  limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
+  sva_batch <- batch_counts(table, design, batch='sva')
+ }
 }
 \seealso{
 \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}

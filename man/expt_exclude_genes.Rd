@@ -15,6 +15,8 @@ expt_exclude_genes(expt, column = "txtype", method = "remove",
 \item{method}{Either remove explicit rows, or keep them.}
 
 \item{patterns}{Character list of patterns to remove/keep}
+
+\item{...}{Extra arguments are passed to arglist, currently unused.}
 }
 \value{
 A smaller expt

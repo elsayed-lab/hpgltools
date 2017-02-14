@@ -223,7 +223,18 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 #'  compressed = hpgltools:::median_by_factor(data, experiment$condition)
 #' }
 #' @export
-median_by_factor <- function(data, fact) {
+median_by_factor <- function(data, fact="condition") {
+    if (length(fact) == 1) {
+        design <- Biobase::pData(data[["expressionset"]])
+        fact <- design[[fact]]
+        names(fact) <- rownames(design)
+    }
+    if (class(data) == "expt") {
+        data <- Biobase::exprs(data[["expressionset"]])
+    } else if (class(data) == "ExpressionSet") {
+        data <- Biobase::exprs(data)
+    }
+
     medians <- data.frame("ID"=rownames(data))
     data <- as.matrix(data)
     rownames(medians) = rownames(data)
@@ -434,12 +445,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     smc_plot <- metrics[["smc"]]
     try_result <- xlsx_plot_png(smc_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="08_smc", savedir=excel_basename)
+                                plotname="08_smc", savedir=excel_basename, fancy_type="svg")
     new_col <- new_col + plot_cols + 1
     smd_plot <- metrics[["smd"]]
     try_result <- xlsx_plot_png(smd_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="09_smd", savedir=excel_basename)
+                                plotname="09_smd", savedir=excel_basename, fancy_type="svg")
     new_col <- 1
 
     ## PCA, PCA(l2cpm) and qq_log
@@ -462,7 +473,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(rspca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="11_norm_pcaplot", savedir=excel_basename)
+                                plotname="11_norm_pcaplot", savedir=excel_basename, fancy_type="svg")
     qq_plot <- metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(qq_plot, wb=wb, sheet=sheet, width=plot_dim,
@@ -603,12 +614,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(nsmc_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="21_nsmc", savedir=excel_basename)
+                                plotname="21_nsmc", savedir=excel_basename, fancy_type="svg")
     nsmd_plot <- norm_metrics[["smd"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(nsmd_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="22_nsmd", savedir=excel_basename)
+                                plotname="22_nsmd", savedir=excel_basename, fancy_type="svg")
     new_col <- 1
 
     ## PCA and qq_log

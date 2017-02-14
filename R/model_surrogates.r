@@ -31,6 +31,10 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
     base10_data <- NULL
     base10_mtrx <- NULL
     ## Gather all the likely pieces we can use
+    ## Without the following requireNamespace(ruv)
+    ## we get an error 'unable to find an inherited method for function RUVr'
+    ruv_loaded <- try(require(package="ruv", quietly=TRUE))
+    ## In one test, this seems to have been enough, but in another, perhaps not.
 
     filter <- "raw"
     if (!is.null(arglist[["filter"]])) {

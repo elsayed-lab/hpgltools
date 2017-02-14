@@ -6,7 +6,8 @@
 \usage{
 combine_de_tables(all_pairwise_result, extra_annot = NULL, excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
-  keepers = "all", excludes = NULL, adjp = TRUE, include_basic = TRUE,
+  keepers = "all", excludes = NULL, adjp = TRUE, include_limma = TRUE,
+  include_edger = TRUE, include_deseq = TRUE, include_basic = TRUE,
   add_plots = TRUE, loess = FALSE, plot_dim = 6, compare_plots = TRUE)
 }
 \arguments{
@@ -25,6 +26,12 @@ certain contrasts in specific orders and orientations.}
 \item{excludes}{List of columns and patterns to use for excluding genes.}
 
 \item{adjp}{Perhaps you do not want the adjusted p-values for plotting?}
+
+\item{include_limma}{Include limma analyses in the table?}
+
+\item{include_edger}{Include edger analyses in the table?}
+
+\item{include_deseq}{Include deseq analyses in the table?}
 
 \item{include_basic}{Include my stupid basic logFC tables?}
 

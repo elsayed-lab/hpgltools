@@ -53,9 +53,9 @@ This runs limma_pairwise(), deseq_pairwise(), edger_pairwise(), basic_pairwise()
 It collects the results and does some simple comparisons among them.
 }
 \examples{
-\dontrun{
- finished_comparison = eBayes(limma_output)
- data_list = all_pairwise(expt)
-}
+ \dontrun{
+  finished_comparison = eBayes(limma_output)
+  data_list = all_pairwise(expt)
+ }
 }
 

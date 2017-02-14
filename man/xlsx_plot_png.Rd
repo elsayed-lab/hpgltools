@@ -26,6 +26,8 @@ xlsx_plot_png(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
 
 \item{savedir}{Directory to which to save pdf copies of the plots.}
 
+\item{fancy_type}{Plot publication quality images in this format.}
+
 \item{start_row}{Row on which to place the plot in the sheet.}
 
 \item{start_col}{Column on which to place the plot in the sheet.}
@@ -33,6 +35,8 @@ xlsx_plot_png(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
 \item{file_type}{Currently this only does pngs, but perhaps I will parameterize this.}
 
 \item{units}{Units for the png plotter.}
+
+\item{...}{Extra arguments are passed to arglist (Primarily for vennerable plots which are odd)}
 }
 \value{
 A list containing the result of the tryCatch{} used to invoke the plot prints.

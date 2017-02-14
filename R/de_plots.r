@@ -456,6 +456,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #'     followed by 2 fold and 4 fold cutoffs.
 #' @param fc_column  The column in the master-table to use for FC cutoffs.
 #' @param p_type  Adjusted or not?
+#' @param invert  Reverse the order of contrasts for readability?
 #' @param p  Chosen p-value cutoff.
 #' @param z  Choose instead a z-score cutoff.
 #' @param order  Choose a specific order for the plots.
@@ -463,7 +464,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' @param ...  More arguments are passed to arglist.
 #' @export
 significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
-                                 fc_column="limma_logfc", p_type="adj",
+                                 fc_column="limma_logfc", p_type="adj", invert=FALSE,
                                  p=0.05, z=NULL, order=NULL, maximum=NULL, ...) {
     arglist <- list(...)
     sig_lists_up <- list(
@@ -504,7 +505,11 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
             fc_names <- append(fc_names, fc_name)
 
             for (tab in 1:table_length) { ## The table names are shared across methods and ups/downs
-                table_name <- names(fc_sig[[type]][["ups"]])[tab]
+                table_names <- names(fc_sig[[type]][["ups"]])
+                if (isTRUE(invert)) {
+                    table_names <- rev(table_names)
+                }
+                table_name <- table_names[tab]
                 t_up <- nrow(fc_sig[[type]][["ups"]][[table_name]])
                 t_down <- nrow(fc_sig[[type]][["downs"]][[table_name]])
 
@@ -542,7 +547,12 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         mama_bear <- fc_names[[2]]  ## The middle grouping
         baby_bear <- fc_names[[3]]  ## And the smallest grouping
         for (t in 1:table_length) {
-            table_name <- names(sig_lists_up[[type]][[1]])[t]
+            table_names <- names(sig_lists_up[[type]][[1]])
+            if (isTRUE(invert)) {
+                table_names <- rev(table_names)
+            }
+            table_name <- table_names[t]
+            ##table_names <- names(sig_lists_up[[type]][[1]])[t]
             everything_up <- sig_lists_up[[type]][[papa_bear]][[table_name]] ## > 0 lfc
             mid_up <- sig_lists_up[[type]][[mama_bear]][[table_name]] ## > 1 lfc
             exclusive_up <- sig_lists_up[[type]][[baby_bear]][[table_name]] ## > 2 lfc

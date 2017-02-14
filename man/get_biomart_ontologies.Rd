@@ -24,6 +24,8 @@ get_biomart_ontologies(species = "hsapiens", overwrite = FALSE,
 \item{secondtry}{The newer mart name.}
 
 \item{dl_rows}{List of rows from the final biomart object to download.}
+
+\item{dl_rowsv2}{A second list of potential rows.}
 }
 \value{
 Df of geneIDs and GOIDs.

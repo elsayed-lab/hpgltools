@@ -38,13 +38,12 @@ a list containing the following:
 Make a ggplot PCA plot describing the samples' clustering.
 }
 \examples{
-\dontrun{
- pca_plot <- plot_pca(expt=expt)
- pca_plot
-}
+ \dontrun{
+  pca_plot <- plot_pca(expt=expt)
+  pca_plot
+ }
 }
 \seealso{
-\code{\link{makeSVD}},
 \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 }
 

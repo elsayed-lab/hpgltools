@@ -24,6 +24,6 @@ Tested in test_26edger.R
 }
 }
 \seealso{
-\link[deseq]{toptable} \link{write_xls}
+\link[limma]{toptable} \link{write_xls}
 }
 

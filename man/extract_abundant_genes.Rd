@@ -8,6 +8,8 @@ extract_abundant_genes(pairwise, according_to = "all", n = 100, z = NULL,
   unique = FALSE, least = FALSE, excel = "excel/abundant_genes.xlsx")
 }
 \arguments{
+\item{pairwise}{Output from _pairwise()().}
+
 \item{according_to}{What tool(s) define 'most?'  One may use deseq, edger, limma, basic, all.}
 
 \item{n}{How many genes to pull?}
@@ -20,8 +22,6 @@ of available conditions.  This will attempt to provide that.}
 \item{least}{Instead of the most abundant, do the least.}
 
 \item{excel}{Excel file to write.}
-
-\item{combined}{Output from combine_de_tables().}
 }
 \value{
 The set of most/least abundant genes by contrast/tool.

@@ -104,21 +104,25 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     new_row <- new_row + nrow(data) + 2
     ## Set the column lengths, hard set the first to 20,
     ## then try to set it to auto if the length is not too long.
-    for (col in 1:ncol(data)) {
+    for (data_col in 1:ncol(data)) {
         ## Make an explicit check that the data is not null, which comes out here as character(0)
-        test_null <- identical(as.character(data[[col]]), character(0))
+        test_null <- identical(as.character(data[[data_col]]), character(0))
         test_max <- 4
         if (isTRUE(test_null)) {
             test_max <- 1
         } else {
-            test_max <- max(nchar(as.character(data[[col]])), na.rm=TRUE)
+            test_max <- max(nchar(as.character(data[[data_col]])), na.rm=TRUE)
         }
-        if (col == 1) {
-            openxlsx::setColWidths(wb, sheet, col, 20)
+
+        ## Keep in mind that if we are going to set the column widths
+        ## and we set a start_col, then the actual column we will be changing is start_col + data_col.
+        current_col <- start_col + data_col - 1  ## start_col is 1 indexed.
+        if (data_col == 1) {
+            openxlsx::setColWidths(wb, sheet, current_col, 20)
         } else if (test_max > 30) {
-            openxlsx::setColWidths(wb, sheet, col, 30)
+            openxlsx::setColWidths(wb, sheet, current_col, 30)
         } else {
-            openxlsx::setColWidths(wb, sheet, col, "auto")
+            openxlsx::setColWidths(wb, sheet, current_col, "auto")
         }
     }
     end_col <- ncol(data) + 1
@@ -180,7 +184,7 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
         if (!file.exists(savedir)) {
             dir.create(savedir, recursive=TRUE)
         }
-        high_quality <- paste0(savedir, "/", sheet, "_", plotname, ".", fancy_type)
+        high_quality <- paste0(savedir, "/", plotname, ".", fancy_type)
         if (fancy_type == "pdf") {
             fancy_ret <- try(pdf(file=high_quality))
         } else if (fancy_type == "ps") {

@@ -24,6 +24,6 @@ Tested in test_24deseq.R
 }
 }
 \seealso{
-\link[deseq]{toptable} \link{write_xls}
+\link[DESeq2]{toptable} \link{write_xls}
 }
 
