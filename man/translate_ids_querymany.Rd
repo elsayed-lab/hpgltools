@@ -4,15 +4,15 @@
 \alias{translate_ids_querymany}
 \title{Use mygene's queryMany to translate gene ID types}
 \usage{
-translate_ids_querymany(queries, from = "ensembl", to = "entrez",
-  species = "human")
+translate_ids_querymany(queries, from = "ensembl", fields = c("uniprot",
+  "ensembl.gene", "entrezgene", "go"), species = "human")
 }
 \arguments{
 \item{queries}{Gene IDs to translate.}
 
-\item{from}{Database to translate IDs from.}
+\item{from}{Database to translate IDs from, pass null if you want it to choose.}
 
-\item{to}{Database to translate IDs into.}
+\item{fields}{Set of fields to request, pass null for all.}
 
 \item{species}{Human readable species for translation (Eg. 'human' instead of 'hsapiens'.)}
 }
@@ -21,6 +21,12 @@ Df of translated IDs/accessions
 }
 \description{
 Juggling between entrez, ensembl, etc can be quite a hassel.  This hopes to make it easier.
+}
+\details{
+Tested in test_40ann_biomart.R
+This function really just sets a couple of hopefully helpful defaults.  When I first attempted
+to use queryMany, it seemed to need much more intervention than it does now.  But at the least
+this function should provide a reminder of this relatively fast and useful ID translation service.
 }
 \examples{
 \dontrun{

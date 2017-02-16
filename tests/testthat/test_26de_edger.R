@@ -83,8 +83,13 @@ test_that("Is the hpgl pairwise similar to edgeR's default method (fdr)?", {
     expect_equal(edger_fdr, hpgl_fdr, tolerance=0.1)
 })
 
+edger_written <- sm(write_edger(hpgl_edger, excel="edger_test.xlsx"))
+test_that("Can we write the results of an edger pairwise analysis?", {
+    expect_true(file.exists("edger_test.xlsx"))
+})
+
 save(list=ls(), file="de_edger.rda")
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 26de_edger.R in ", elapsed,  " seconds."))

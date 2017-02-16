@@ -24,6 +24,8 @@ get_biomart_ontologies(species = "hsapiens", overwrite = FALSE,
 \item{secondtry}{The newer mart name.}
 
 \item{dl_rows}{List of rows from the final biomart object to download.}
+
+\item{dl_rowsv2}{A second list of potential rows.}
 }
 \value{
 Df of geneIDs and GOIDs.
@@ -33,6 +35,12 @@ I perceive that every time I go to acquire annotation data from biomart, they ha
 something important and made it more difficult for me to find what I want. I recently found the
 *.archive.ensembl.org, and so this function uses that to try to keep things predictable, if not
 consistent.
+}
+\details{
+Tested in test_40ann_biomart.R
+This function makes a couple of attempts to pick up the correct tables from biomart.  It is worth
+noting that it uses the archive.ensembl host(s) because of changes in table organization after
+December 2015 as well as an attempt to keep the annotation sets relatively consistent.
 }
 \examples{
 \dontrun{

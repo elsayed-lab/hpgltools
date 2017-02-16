@@ -4,13 +4,13 @@
 \alias{simple_goseq}
 \title{Perform a simplified goseq analysis.}
 \usage{
-simple_goseq(de_genes, go_db, length_db, doplot = TRUE, adjust = 0.1,
+simple_goseq(sig_genes, go_db, length_db, doplot = TRUE, adjust = 0.1,
   pvalue = 0.1, qvalue = 0.1, length_keytype = "transcripts",
   go_keytype = "ENTREZID", goseq_method = "Wallenius",
   padjust_method = "BH", bioc_length_db = "ensGene", ...)
 }
 \arguments{
-\item{de_genes}{Data frame of differentially expressed genes, containing IDs etc.}
+\item{sig_genes}{Data frame of differentially expressed genes, containing IDs etc.}
 
 \item{go_db}{Database of go to gene mappings (OrgDb/OrganismDb)}
 

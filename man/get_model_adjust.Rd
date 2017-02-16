@@ -10,12 +10,12 @@ get_model_adjust(data, design = NULL, estimate_type = "sva",
 \arguments{
 \item{data}{Expt or data frame to manipulate.}
 
-\item{design}{If the data is not an expt, provide the experimental design here.}
+\item{design}{If the data is not an expt, provide experimental design here.}
 
-\item{estimate_type}{One of sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
+\item{estimate_type}{One of: sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
 ruv_residuals, or pca.}
 
-\item{surrogates}{Choose a method for getting the number of surrogates, be, leek, or a number.}
+\item{surrogates}{Choose a method for getting the number of surrogates, be or leek, or a number.}
 
 \item{...}{Parameters fed to arglist.}
 }

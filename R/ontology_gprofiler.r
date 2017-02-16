@@ -2,7 +2,7 @@
 #'
 #' Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
 #'
-#' @param de_genes Guess!  The set of differentially expressed/interesting genes.
+#' @param sig_genes Guess!  The set of differentially expressed/interesting genes.
 #' @param species  Organism supported by gprofiler.
 #' @param first_col  First place used to define the order of 'significant'.
 #' @param second_col  If that fails, try a second column.
@@ -15,32 +15,35 @@
 #' @param do_hp  Do the hp search?
 #' @param significant  Only return the statistically significant hits?
 #' @param pseudo_gsea  Is the data in a ranked order by significance?
+#' @param id_col  Which column in the table should be used for gene ID crossreferencing?  gProfiler
+#'        uses Ensembl ids.  So if you have a table of entrez or whatever, translate it!
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @export
-simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
+simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                              second_col="limma_logfc", do_go=TRUE, do_kegg=TRUE,
                              do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE,
                              do_corum=TRUE, do_hp=TRUE, significant=TRUE,
-                             pseudo_gsea=TRUE) {
+                             pseudo_gsea=TRUE, id_col="row.names") {
     ## Assume for the moment a limma-ish data frame
     gene_list <- NULL
-    if (class(de_genes) == "character") {
-        gene_ids <- de_genes
+    if (class(sig_genes) == "character") {
+        gene_ids <- sig_genes
     } else {
-        if (!is.null(de_genes[[first_col]])) {
-            gene_list <- de_genes[order(-de_genes[[first_col]]), ]
+        if (!is.null(sig_genes[[first_col]])) {
+            gene_list <- sig_genes[order(-sig_genes[[first_col]]), ]
             pseudo_gsea <- TRUE
-        } else if (!is.null(de_genes[[second_col]])) {
-            gene_list <- de_genes[order(-de_genes[[second_col]]), ]
+        } else if (!is.null(sig_genes[[second_col]])) {
+            gene_list <- sig_genes[order(-sig_genes[[second_col]]), ]
             pseudo_gsea <- TRUE
         }
         gene_ids <- NULL
-        if (!is.null(gene_list[["ID"]])) {
-            gene_ids <- as.vector(gene_list[["ID"]])
-        } else if (!is.null(rownames(gene_list))) {
+        if (is.null(id_col)) {
+            id_col <- "ID"
+        }
+        if (id_col == "row.names") {
             gene_ids <- rownames(gene_list)
         } else {
-            stop("Unable to get the set of gene ids.")
+            gene_ids <- gene_list[[id_col]]
         }
     }
 
@@ -158,7 +161,7 @@ simple_gprofiler <- function(de_genes, species="hsapiens", first_col="logFC",
         "tf" = tf_result,
         "corum" = corum_result,
         "hp" = hp_result)
-    retlist[["plots"]] <- try(plot_gprofiler_pval(retlist))
+    retlist[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlist))
     return(retlist)
 }
 

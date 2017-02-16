@@ -17,4 +17,7 @@ The result from limma/deseq/edger/basic
 \description{
 I want to multithread my pairwise comparisons, this is the first step in doing so.
 }
+\details{
+Used to make parallel operations easier.
+}
 

@@ -4,13 +4,14 @@
 \alias{simple_gprofiler}
 \title{Run searches against the web service g:Profiler.}
 \usage{
-simple_gprofiler(de_genes, species = "hsapiens", first_col = "logFC",
+simple_gprofiler(sig_genes, species = "hsapiens", first_col = "logFC",
   second_col = "limma_logfc", do_go = TRUE, do_kegg = TRUE,
   do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE, do_corum = TRUE,
-  do_hp = TRUE, significant = TRUE, pseudo_gsea = TRUE)
+  do_hp = TRUE, significant = TRUE, pseudo_gsea = TRUE,
+  id_col = "row.names")
 }
 \arguments{
-\item{de_genes}{Guess!  The set of differentially expressed/interesting genes.}
+\item{sig_genes}{Guess!  The set of differentially expressed/interesting genes.}
 
 \item{species}{Organism supported by gprofiler.}
 
@@ -35,6 +36,9 @@ simple_gprofiler(de_genes, species = "hsapiens", first_col = "logFC",
 \item{significant}{Only return the statistically significant hits?}
 
 \item{pseudo_gsea}{Is the data in a ranked order by significance?}
+
+\item{id_col}{Which column in the table should be used for gene ID crossreferencing?  gProfiler
+uses Ensembl ids.  So if you have a table of entrez or whatever, translate it!}
 }
 \value{
 a list of results for go, kegg, reactome, and a few more.

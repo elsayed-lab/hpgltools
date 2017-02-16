@@ -35,8 +35,13 @@ test_that("Do we get the values for treated and untreated samples?", {
     expect_equal(expected_logfc, actual_logfc, tolerance=0.001)
 })
 
+basic_written <- sm(write_basic(hpgl_norm_basic, excel="basic_test.xlsx"))
+test_that("Is it possible to write the results of a basic analysis?", {
+    expect_true(file.exists("basic_test.xlsx"))
+})
+
 save(list=ls(), file="de_basic.rda")
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 27de_basic.R in ", elapsed,  " seconds."))

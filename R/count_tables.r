@@ -1,7 +1,12 @@
 #' Read a bunch of count tables and create a usable data frame from them.
 #'
-#' It is worth noting that this function has some logic intended for the elsayed lab's data storage structure.
-#' It shouldn't interfere with other usages, but it attempts to take into account different ways the data might be stored.
+#' It is worth noting that this function has some logic intended for the elsayed lab's data
+#' storage structure. It shouldn't interfere with other usages, but it attempts to take into
+#' account different ways the data might be stored.
+#'
+#' Used primarily in create_expt()
+#' This is responsible for reading count tables given a list of filenames.  It tries to take into
+#' account upper/lowercase filenames and uses data.table to speed things along.
 #'
 #' @param ids List of experimental ids.
 #' @param files List of files to read.
@@ -16,7 +21,8 @@
 #'  count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
 #' }
 #' @export
-expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE, suffix=NULL, ...) {
+expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
+                             suffix=NULL, ...) {
     ## load first sample
     arglist <- list(...)
     skippers <- (files == "" | files == "undef" | is.null(files))
@@ -108,6 +114,8 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
 #' the experimental design to identify those replicates and sum the counts into a single column in
 #' the count tables.
 #'
+#' Untested as of 2016-12-01, but used in a couple of projects where sequencing runs got repeated.
+#'
 #' @param expt Experiment class containing the requisite metadata and count tables.
 #' @param column Column of the design matrix used to specify which samples are replicates.
 #' @return Expt with the concatenated counts, new design matrix, batches, conditions, etc.
@@ -161,11 +169,51 @@ concatenate_runs <- function(expt, column='replicate') {
     return(final_expt)
 }
 
+#' Small hack of limma's exampleData() to allow for arbitrary data set
+#' sizes.
+#'
+#' exampleData has a set number of genes/samples it creates. This
+#' relaxes that restriction.
+#'
+#' @param ngenes How many genes in the fictional data set?
+#' @param columns How many samples in this data set?
+#' @return Matrix of pretend counts.
+#' @seealso \pkg{limma}
+#' @examples
+#' \dontrun{
+#'  pretend = make_exampledata()
+#' }
+#' @export
+make_exampledata <- function (ngenes=1000, columns=5) {
+    q0 <- stats::rexp(ngenes, rate = 1/250)
+    is_DE <- stats::runif(ngenes) < 0.3
+    lfc <- stats::rnorm(ngenes, sd = 2)
+    q0A <- ifelse(is_DE, q0 * 2^(lfc / 2), q0)
+    q0B <- ifelse(is_DE, q0 * 2^(-lfc / 2), q0)
+    ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
+    true_sf <- abs(stats::rnorm(columns, mean=1, sd=0.4))
+    cond_types <- ceiling(sqrt(columns))
+    ##    conds <- c("A", "A", "B", "B", "B")
+    ##x <- sample( LETTERS[1:4], 10000, replace=TRUE, prob=c(0.1, 0.2, 0.65, 0.05) )
+    conds <- sample(LETTERS[1:cond_types], columns, replace=TRUE)
+    m <- t(sapply(seq_len(ngenes),
+                  function(i) sapply(1:columns,
+                                     function(j) rnbinom(1,
+                                                         mu = true_sf[j] * ifelse(conds[j] == "A",
+                                                                                  q0A[i], q0B[i]),
+                                                         size = 1/0.2))))
+    rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
+    example <- DESeq::newCountDataSet(m, conds)
+    return(example)
+}
+
 #' Create a data frame of the medians of rows by a given factor in the data.
 #'
 #' This assumes of course that (like expressionsets) there are separate columns for each replicate
 #' of the conditions.  This will just iterate through the levels of a factor describing the columns,
 #' extract them, calculate the median, and add that as a new column in a separate data frame.
+#'
+#' Used in write_expt() as well as a few random collaborations.
 #'
 #' @param data Data frame, presumably of counts.
 #' @param fact Factor describing the columns in the data.
@@ -175,8 +223,20 @@ concatenate_runs <- function(expt, column='replicate') {
 #'  compressed = hpgltools:::median_by_factor(data, experiment$condition)
 #' }
 #' @export
-median_by_factor <- function(data, fact) {
+median_by_factor <- function(data, fact="condition") {
+    if (length(fact) == 1) {
+        design <- Biobase::pData(data[["expressionset"]])
+        fact <- design[[fact]]
+        names(fact) <- rownames(design)
+    }
+    if (class(data) == "expt") {
+        data <- Biobase::exprs(data[["expressionset"]])
+    } else if (class(data) == "ExpressionSet") {
+        data <- Biobase::exprs(data)
+    }
+
     medians <- data.frame("ID"=rownames(data))
+    data <- as.matrix(data)
     rownames(medians) = rownames(data)
     fact <- as.factor(fact)
     for (type in levels(fact)) {
@@ -202,6 +262,9 @@ median_by_factor <- function(data, fact) {
 #' Count the number of features(genes) greater than x in a data set.
 #'
 #' Sometimes I am asked how many genes have >= x counts.  Well, here you go.
+#'
+#' Untested as of 2016-12-01 but used with Lucia.  I think it would be interesting to iterate
+#' this function from small to large cutoffs and plot how the number of kept genes decreases.
 #'
 #' @param data  A dataframe/exprs/matrix/whatever of counts.
 #' @param cutoff  Minimum number of counts.
@@ -235,6 +298,15 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE) {
 #' Make pretty xlsx files of count data.
 #'
 #' Some folks love excel for looking at this data.  ok.
+#'
+#' Tested in test_03graph_metrics.R
+#' This performs the following:  Writes the raw data, graphs the raw data, normalizes the data,
+#' writes it, graphs it, and does a median-by-condition and prints that.  I replaced the openxlsx
+#' function which writes images into xlsx files with one which does not require an opening of a
+#' pre-existing plotter.  Instead it (optionally)opens a pdf device, prints the plot to it, opens a
+#' png device, prints to that, and inserts the resulting png file.  Thus it sacrifices some
+#' flexibility for a hopefully more consistent behaivor.  In addition, one may use the pdfs as
+#' a set of images importable into illustrator or whatever.
 #'
 #' @param expt  An expressionset to print.
 #' @param excel  Filename to write.
@@ -302,29 +374,20 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     new_col <- 1
     legend_plot <- metrics[["legend"]][["plot"]]
-    ## tt <- try(print(legend_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(legend_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="legend", savedir=excel_basename)
+                                plotname="01_legend", savedir=excel_basename, fancy_type="svg")
     new_col <- new_col + plot_cols + 1
     libsize_plot <- metrics[["libsize"]]
-    ## tt <- try(print(libsize_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                               startCol=new_col, startRow=new_row, fileType="png", units="in"))
-    try_result <- xlsx_plot_png(libsize_plot, wb=wb, sheet=sheet, width=plot_dim, height=plot,
+    try_result <- xlsx_plot_png(libsize_plot, wb=wb, sheet=sheet, width=plot_dim, height=plot_dim,
                                 start_col=new_col, start_row=new_row,
-                                plotname="libsize", savedir=excel_basename)
+                                plotname="02_libsize", savedir=excel_basename)
     ## Same row, non-zero plot
     new_col <- new_col + plot_cols + 1
     nonzero_plot <- metrics[["nonzero"]]
-    ## tt <- try(print(nonzero_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(nonzero_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nonzero", savedir=excel_basename)
+                                plotname="03_nonzero", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
 
     ## Visualize distributions
@@ -338,20 +401,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     density_plot <- metrics[["density"]]
     new_row <- new_row + 1
-    ## tt <- try(print(density_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(density_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="density", savedir=excel_basename)
+                                plotname="04_density", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
     boxplot_plot <- metrics[["boxplot"]]
-    ## tt <- try(print(boxplot_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(boxplot_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="boxplot", savedir=excel_basename)
+                                plotname="05_boxplot", savedir=excel_basename)
     new_col <- 1
 
     ## Move down next set of rows, heatmaps
@@ -365,20 +422,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     new_row <- new_row + 1
     corheat_plot <- metrics[["corheat"]]
-    ## tt <- try(print(corheat_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(corheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="corheat", savedir=excel_basename)
+                                plotname="06_corheat", savedir=excel_basename)
     disheat_plot <- metrics[["disheat"]]
     new_col <- new_col + plot_cols + 1
-    ## tt <- try(print(disheat_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                      startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(disheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="disheat", savedir=excel_basename)
+                                plotname="07_disheat", savedir=excel_basename)
     new_col <- 1
 
     ## SM plots
@@ -392,20 +443,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     new_row <- new_row + 1
     smc_plot <- metrics[["smc"]]
-    ## tt <- try(print(smc_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(smc_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="smc", savedir=excel_basename)
+                                plotname="08_smc", savedir=excel_basename, fancy_type="svg")
     new_col <- new_col + plot_cols + 1
     smd_plot <- metrics[["smd"]]
-    ## tt <- try(print(smd_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(smd_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="smd", savedir=excel_basename)
+                                plotname="09_smd", savedir=excel_basename, fancy_type="svg")
     new_col <- 1
 
     ## PCA, PCA(l2cpm) and qq_log
@@ -419,30 +464,21 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     new_row <- new_row + 1
     pca_plot <- metrics[["pcaplot"]]
-    ## tt <- try(print(pca_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                               startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(pca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="pcaplot", savedir=excel_basename)
+                                plotname="10_pcaplot", savedir=excel_basename, fancy_type="svg")
     tmp_data <- sm(normalize_expt(expt, transform="log2", convert="cpm"))
     rspca_plot <- plot_pca(tmp_data)[["plot"]]
     rm(tmp_data)
     new_col <- new_col + plot_cols + 1
-    ## tt <- try(print(rspca_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(rspca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="norm_pcaplot", savedir=excel_basename)
+                                plotname="11_norm_pcaplot", savedir=excel_basename, fancy_type="svg")
     qq_plot <- metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
-    ## tt <- try(print(qq_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(qq_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="qqlog", savedir=excel_basename)
+                                plotname="12_qqlog", savedir=excel_basename)
     new_col <- 1
 
     violin_plot <- NULL
@@ -454,23 +490,15 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
             violin_plot <- varpart_raw[["partition_plot"]]
             new_row <- new_row + plot_rows + 2
             new_col <- 1
-            ## tt <- try(print(violin_plot))
-            ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-            ##                               startCol=new_col, startRow=new_row, fileType="png",
-            ##                               units="in"))
             try_result <- xlsx_plot_png(violin_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="violin", savedir=excel_basename)
+                                        plotname="13_violin", savedir=excel_basename)
             new_col <- new_col + plot_cols + 1
 
             pct_plot <- varpart_raw[["percent_plot"]]
-            ## tt <- try(print(pct_plot))
-            ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-            ##                               startCol=new_col, startRow=new_row, fileType="png",
-            ##                               units="in"))
             try_result <- xlsx_plot_png(pct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="pctvar", savedir=excel_basename)
+                                        plotname="14_pctvar", savedir=excel_basename)
         }
     }
 
@@ -516,28 +544,19 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     new_row <- new_row + 1
     new_plot <- norm_metrics[["legend"]][["plot"]]
-    ## tt <- try(print(new_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(new_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row)
     new_col <- new_col + plot_cols + 1
     nlibsize_plot <- norm_metrics[["libsize"]]
-    ## tt <- try(print(nlibsize_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(nlibsize_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nlibsize", savedir=excel_basename)
+                                plotname="15_nlibsize", savedir=excel_basename)
     ## Same row, non-zero plot
     new_col <- new_col + plot_cols + 1
     nnzero_plot <- norm_metrics[["nonzero"]]
-    ## tt <- try(print(nnzero_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(nnzero_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nnzero", savedir=excel_basename)
+                                plotname="16_nnzero", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
 
     ## Visualize distributions
@@ -551,20 +570,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     ndensity_plot <- norm_metrics[["density"]]
     new_row <- new_row + 1
-    ## tt <- try(print(ndensity_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(ndensity_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="ndensity", savedir=excel_basename)
+                                plotname="17_ndensity", savedir=excel_basename)
     nboxplot_plot <- norm_metrics[["boxplot"]]
     new_col <- new_col + plot_cols + 1
-    ## tt <- try(print(nboxplot_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(nboxplot_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nboxplot", savedir=excel_basename)
+                                plotname="18_nboxplot", savedir=excel_basename)
     new_col <- 1
 
     ## Move down next set of rows, heatmaps
@@ -578,20 +591,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     ncorheat_plot <- norm_metrics[["corheat"]]
     new_row <- new_row + 1
-    ## tt <- try(print(ncorheat_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(ncorheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="ncorheat", savedir=excel_basename)
+                                plotname="19_ncorheat", savedir=excel_basename)
     ndisheat_plot <- norm_metrics[["disheat"]]
     new_col <- new_col + plot_cols + 1
-    ## tt <- try(print(ndisheat_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(ndisheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="ndisheat", savedir=excel_basename)
+                                plotname="20_ndisheat", savedir=excel_basename)
     new_col <- 1
 
     ## SM plots
@@ -605,20 +612,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     nsmc_plot <- norm_metrics[["smc"]]
     new_row <- new_row + 1
-    ## tt <- try(print(nsmc_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(nsmc_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nsmc", savedir=excel_basename)
+                                plotname="21_nsmc", savedir=excel_basename, fancy_type="svg")
     nsmd_plot <- norm_metrics[["smd"]]
     new_col <- new_col + plot_cols + 1
-    ## tt <- try(print(nsmd_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(nsmd_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nsmd", savedir=excel_basename)
+                                plotname="22_nsmd", savedir=excel_basename, fancy_type="svg")
     new_col <- 1
 
     ## PCA and qq_log
@@ -632,21 +633,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_col <- 1
     npca_plot <- norm_metrics[["pcaplot"]]
     new_row <- new_row + 1
-    ## tt <- try(print(npca_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                               startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(npca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="npcaplot", savedir=excel_basename)
-
+                                plotname="23_npcaplot", savedir=excel_basename, fancy_type="svg")
     nqq_plot <- norm_metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
-    ## tt <- try(print(new_plot))
-    ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-    ##                                startCol=new_col, startRow=new_row, fileType="png", units="in"))
     try_result <- xlsx_plot_png(nqq_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="nqqplot", savedir=excel_basename)
+                                plotname="24_nqqplot", savedir=excel_basename)
     new_col <- 1
 
     ## Violin plots
@@ -658,22 +652,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
             nvarpart_plot <- varpart_norm[["partition_plot"]]
             new_row <- new_row + plot_rows + 2
             new_col <- 1
-            ## tt <- try(print(nvarpart_plot))
-            ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-            ##                                startCol=new_col, startRow=new_row, fileType="png",
-            ##                                units="in"))
             try_result <- xlsx_plot_png(nvarpart_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="nqqplot", savedir=excel_basename)
+                                        plotname="25_nviolin", savedir=excel_basename)
             new_col <- new_col + plot_cols + 1
             npct_plot <- varpart_norm[["percent_plot"]]
-            ## tt <- try(print(npct_plot))
-            ## tt <- try(openxlsx::insertPlot(wb, sheet=sheet, width=plot_dim, height=plot_dim,
-            ##                                startCol=new_col, startRow=new_row, fileType="png",
-            ##                               units="in"))
             try_result <- xlsx_plot_png(npct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="npctplot", savedir=excel_basname)
+                                        plotname="26_npctplot", savedir=excel_basename)
         }
     }
 

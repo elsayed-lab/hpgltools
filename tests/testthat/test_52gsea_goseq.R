@@ -11,7 +11,8 @@ context("52gsea_goseq.R: Does goseq work?\n")
 ##if (!identical(Sys.getenv("TRAVIS"), "true")) {
 load("gsea_siggenes.rda")
 
-goseq_result <- sm(simple_goseq(de_genes=fcp_sig_genes, length_db=dmel_lengths, go_db=dmel_ontologies))
+goseq_result <- sm(simple_goseq(sig_genes=fcp_sig_genes,
+                                length_db=dmel_lengths, go_db=dmel_ontologies))
 
 expected <- 53
 actual <- nrow(goseq_result$mf_interesting)
@@ -85,5 +86,5 @@ test_that("Are the goseq results as expected (cc pvalues)?", {
 ## Keith
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 52gsea_goseq.R in ", elapsed,  " seconds."))

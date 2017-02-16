@@ -29,7 +29,7 @@ filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
         type <- 'kofa'
     }
     if (isTRUE(filter)) {
-        filer <- "cbcb"
+        filter <- "cbcb"
     }
     filtered_counts <- NULL
     if (filter == "cbcb") {
@@ -127,7 +127,8 @@ simple_filter_counts <- function(count_table, threshold=2) {
 #' }
 #' @export
 genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
-    ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
+    ## genefilter has functions to work with expressionsets directly, but I think I will work merely
+    ## with tables in this.
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {
@@ -162,7 +163,8 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
 #' }
 #' @export
 genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
-    ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
+    ## genefilter has functions to work with expressionsets directly, but I think I will work merely
+    ## with tables in this.
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {
@@ -195,7 +197,8 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
 #' }
 #' @export
 genefilter_kofa_counts <- function(count_table, k=1, A=1) {
-    ## genefilter has functions to work with expressionsets directly, but I think I will work merely with tables in this.
+    ## genefilter has functions to work with expressionsets directly, but I think I will work merely
+    ## with tables in this.
     num_before <- nrow(count_table)
 
     if (class(count_table) == 'ExpressionSet') {

@@ -13,13 +13,13 @@
 #' @param start_col First column to write.
 #' @param ...  Set of extra arguments given to openxlsx.
 #' @return List containing the sheet and workbook written as well as the bottom-right coordinates of
-#'     the last row/column written to the worksheet.
+#'  the last row/column written to the worksheet.
 #' @seealso \pkg{openxlsx} \link[openxlsx]{writeDataTable}
 #' @examples
-#' \dontrun{
-#'  xls_coords <- write_xls(dataframe, sheet="hpgl_data")
-#'  xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
-#' }
+#'  \dontrun{
+#'   xls_coords <- write_xls(dataframe, sheet="hpgl_data")
+#'   xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
+#'  }
 #' @export
 write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
                       start_row=1, start_col=1, ...) {
@@ -36,7 +36,8 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     }
 
     newsheet <- NULL
-    current_sheets <- names(wb@.xData$worksheets)
+    ##current_sheets <- names(wb@.xData$worksheets)
+    current_sheets <- wb@.xData[[".->sheet_names"]]
     if (sheet %in% current_sheets) {
         message(paste0("The sheet: ", sheet, " is in ", toString(current_sheets), "."))
     } else {
@@ -73,10 +74,10 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
                                  border="Bottom", fontSize="30")
     new_row <- start_row
     new_col <- start_col
-    ##print(paste0("GOT HERE openxlswrite, title? ", arglist$title))
     if (!is.null(arglist[["title"]])) {
-        openxlsx::writeData(wb, sheet, arglist[["title"]], startRow=new_row)
-        openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+        xl_result <- openxlsx::writeData(wb, sheet, arglist[["title"]],
+                                         startRow=new_row, startCol=new_col)
+        openxlsx::addStyle(wb, sheet, hs1, new_row, new_col)
         new_row <- new_row + 1
     }
 
@@ -90,7 +91,6 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
         colnames(data)[wtf_stupid] <- paste0(colnames(data)[wtf_stupid], "_", wtf_stupid)
         if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' |
             class(data[[col]]) == 'factor' | class(data[[col]]) == 'AsIs') {
-            ## message(paste0("Converted ", col, " to characters."))
             data[[col]] <- as.character(data[[col]])
         }
     }
@@ -104,13 +104,25 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     new_row <- new_row + nrow(data) + 2
     ## Set the column lengths, hard set the first to 20,
     ## then try to set it to auto if the length is not too long.
-    for (col in 1:ncol(data)) {
-        if (col == 1) {
-            openxlsx::setColWidths(wb, sheet, col, 20)
-        } else if (max(nchar(as.character(data[[col]])), na.rm=TRUE) > 30) {
-            openxlsx::setColWidths(wb, sheet, col, 30)
+    for (data_col in 1:ncol(data)) {
+        ## Make an explicit check that the data is not null, which comes out here as character(0)
+        test_null <- identical(as.character(data[[data_col]]), character(0))
+        test_max <- 4
+        if (isTRUE(test_null)) {
+            test_max <- 1
         } else {
-            openxlsx::setColWidths(wb, sheet, col, "auto")
+            test_max <- max(nchar(as.character(data[[data_col]])), na.rm=TRUE)
+        }
+
+        ## Keep in mind that if we are going to set the column widths
+        ## and we set a start_col, then the actual column we will be changing is start_col + data_col.
+        current_col <- start_col + data_col - 1  ## start_col is 1 indexed.
+        if (data_col == 1) {
+            openxlsx::setColWidths(wb, sheet, current_col, 20)
+        } else if (test_max > 30) {
+            openxlsx::setColWidths(wb, sheet, current_col, 30)
+        } else {
+            openxlsx::setColWidths(wb, sheet, current_col, "auto")
         }
     }
     end_col <- ncol(data) + 1
@@ -128,7 +140,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
 #' nice, but they can be a little annoying.  This attempt to catch some corner cases
 #' and potentially save an extra svg-version of each plot inserted.
 #'
-#' @param plot  The plot provided
+#' @param a_plot  The plot provided
 #' @param wb  Workbook to which to write.
 #' @param sheet  Name or number of the sheet to which to add the plot.
 #' @param width  Plot width in the sheet.
@@ -136,10 +148,12 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
 #' @param res  Resolution of the png image inserted into the sheet.
 #' @param plotname  Prefix of the pdf file created.
 #' @param savedir  Directory to which to save pdf copies of the plots.
+#' @param fancy_type  Plot publication quality images in this format.
 #' @param start_row  Row on which to place the plot in the sheet.
 #' @param start_col  Column on which to place the plot in the sheet.
 #' @param file_type  Currently this only does pngs, but perhaps I will parameterize this.
 #' @param units  Units for the png plotter.
+#' @param ...  Extra arguments are passed to arglist (Primarily for vennerable plots which are odd)
 #' @return  A list containing the result of the tryCatch{} used to invoke the plot prints.
 #' @seealso \pkg{openxlsx}
 #' @examples
@@ -148,10 +162,15 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
 #'   try_results <- xlsx_plot_png(fun_plot)
 #' }
 #' @export
-xlsx_plot_png <- function(plot, wb=NULL, sheet=1, width=6, height=6, res=90,
-                          plotname="plot", savedir="saved_plots",
-                          start_row=1, start_col=1, file_type="png", units="in") {
-    ## arglist <- list(...)
+xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
+                          plotname="plot", savedir="saved_plots", fancy_type="pdf",
+                          start_row=1, start_col=1, file_type="png", units="in", ...) {
+    arglist <- list(...)
+    if (!is.null(arglist[["doWeights"]])) {
+        requireNamespace(package="Vennerable")
+        library("Vennerable")
+    }
+
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
     } else if (class(wb)[[1]] == "list") { ## In case the return from write_xls() was passed to write_xls()
@@ -159,21 +178,54 @@ xlsx_plot_png <- function(plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     } else if (class(wb)[[1]] != "Workbook") {
         stop("A workbook was passed to this, but the format is not understood.")
     }
-    high_quality <- paste0(savedir, "/", plotname, ".pdf")
-    print_ret <- NULL
+    high_quality <- paste0(savedir, "/", plotname, ".", fancy_type)
+    fancy_print_ret <- png_print_ret <- NULL
     if (!is.null(savedir)) {
         if (!file.exists(savedir)) {
             dir.create(savedir, recursive=TRUE)
         }
-        high_quality <- paste0(savedir, "/", sheet, "_", plotname, ".pdf")
-        ## message(paste0("Attempting to write high-quality plot at: ", high_quality, "."))
-        pdf_ret <- try(pdf(file=high_quality))
-        print_ret <- try(print(plot), silent=TRUE)
+        high_quality <- paste0(savedir, "/", plotname, ".", fancy_type)
+        if (fancy_type == "pdf") {
+            fancy_ret <- try(pdf(file=high_quality))
+        } else if (fancy_type == "ps") {
+            fancy_ret <- try(ps(file=high_quality))
+        } else if (fancy_type == "svg") {
+            fancy_ret <- try(svg(file=high_quality))
+        } else if (fancy_type == "emf") {
+            fancy_ret <- try(devEMF(file=high_quality))
+        } else {  ## Default to pdf
+            high_quality_renamed <- gsub(pattern="\\..*$", replacement="\\.pdf", x=high_quality)
+            fancy_ret <- try(pdf(file=high_quality_renamed))
+        }
+
+        ## I do not understand why some images are plot()ed while others
+        ## seem to need to be print()ed.  Adding a try to attempt
+        ## to work around this concern.
+        if (class(a_plot)[[1]] == "Venn") {
+            pdf_print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
+        } else {
+            pdf_print_ret <- try(print(a_plot))
+        }
+        if (class(pdf_print_ret)[[1]] == "try-error") {
+            pdf_print_ret <- try(plot(a_plot, ...))
+        }
         dev.off()
     }
     fileName <- tempfile(pattern = "figureImage", fileext = paste0(".", file_type))
-    png_ret <- try(png(filename=fileName, res=res, width=width, height=height, units=units))
-    print_ret <- try(print(plot), silent=TRUE)
+    png_ret <- try(png(filename=fileName,
+                       width=width,
+                       height=height,
+                       units=units,
+                       res=res))
+
+    if (class(a_plot)[[1]] == "Venn") {
+        pdf_print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
+    } else {
+        png_print_ret <- try(print(a_plot))
+    }
+    if (class(png_print_ret)[[1]] == "try-error") {
+        png_print_ret <- try(plot(a_plot, ...))
+    }
     dev.off()
     insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=fileName, width=width,
                                      height=height, startRow=start_row, startCol=start_col,
@@ -182,7 +234,8 @@ xlsx_plot_png <- function(plot, wb=NULL, sheet=1, width=6, height=6, res=90,
         message(paste0("There was an error inserting the image at: ", fileName))
     }
     ret <- list(
-        "print" = print_ret,
+        "png_print" = png_print_ret,
+        "pdf_print" = pdf_print_ret,
         "openxlsx" = insert_ret)
     return(ret)
 }

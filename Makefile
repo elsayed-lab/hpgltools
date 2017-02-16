@@ -1,4 +1,4 @@
-VERSION=2016.02
+VERSION=2017.01
 export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
 all: clean roxygen reference check build test
@@ -21,9 +21,8 @@ build:
 	@R CMD build .
 
 test: install
-	@rm -rf tests/testthat/*.rda tests/testthat/circos tests/testthat/*.pdf tests/testthat/*.Rdata test/testthat/*.map
 	@echo "Running run_tests.R"
-	./run_tests.R
+	tests/testthat.R
 
 roxygen:
 	@echo "Generating documentation with roxygen2::roxygenize()"

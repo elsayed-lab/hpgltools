@@ -17,11 +17,12 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
                                     "GenomicFeatures::cds",
                                     "GenomicFeatures::transcripts"), ...) {
     arglist <- list(...)
-    ## The 3 ids correspond to the columns produced by genes/cds/transcripts respectively which contain the IDs
-    ## If one is overwritten, the other should be, too
+    ## The 3 ids correspond to the columns produced by genes/cds/transcripts respectively which
+    ## contain the IDs. If one is overwritten, the other should be, too
     tmpdb <- db
     metadf <- NULL
-    gene_list <- gene_list[complete.cases(gene_list)]  ## Translating to ENTREZIDs sometimes introduces NAs which messes up the following operations.
+    gene_list <- gene_list[complete.cases(gene_list)]
+    ## Translating to ENTREZIDs sometimes introduces NAs which messes up the following operations.
     for (c in 1:length(possible_types)) {
         testing <- NULL
         ty <- possible_types[c]
@@ -35,7 +36,8 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
         overlap <- gene_list %in% test_meta[[chosen_column]]
         message(paste0("Testing ", ty, " with column ", chosen_column, " an overlap of ",
                        sum(overlap), " was observed out of ", length(gene_list), " genes."))
-        message(paste0("Actually using type ", type, " consider one of the above if that is not good enough."))
+        message(paste0("Actually using type ", type,
+                       " consider one of the above if that is not good enough."))
     }
     test_string <- paste0("testing <- ", type, "(tmpdb)")
     eval(parse(text=test_string))
@@ -497,9 +499,9 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
             goseq_up_ontology <- try(simple_goseq(up_genes, lengths=gene_lengths, goids_df=goids))
             goseq_down_ontology <- try(simple_goseq(down_genes, lengths=gene_lengths, goids_df=goids))
             if (isTRUE(do_trees)) {
-                goseq_up_trees <- try(goseq_trees(up_genes, goseq_up_ontology, goid_map=goid_map,
+                goseq_up_trees <- try(goseq_trees(goseq_up_ontology, goid_map=goid_map,
                                                   goids_df=goids, overwrite=overwrite))
-                goseq_down_trees <- try(goseq_trees(down_genes, goseq_down_ontology,
+                goseq_down_trees <- try(goseq_trees(goseq_down_ontology,
                                                     goid_map=goid_map, goids_df=goids))
             }
         }

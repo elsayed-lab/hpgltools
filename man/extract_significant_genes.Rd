@@ -7,8 +7,8 @@ from the combined tables.}
 \usage{
 extract_significant_genes(combined, according_to = "all", fc = 1,
   p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, ma = TRUE,
-  p_type = "adj", csv = NULL, excel = "excel/significant_genes.xlsx",
-  siglfc_cutoffs = c(0, 1, 2))
+  p_type = "adj", invert_barplots = FALSE,
+  excel = "excel/significant_genes.xlsx", siglfc_cutoffs = c(0, 1, 2))
 }
 \arguments{
 \item{combined}{Output from combine_de_tables().}
@@ -30,7 +30,7 @@ the deseq, edger, limma, basic, meta, or all.}
 
 \item{p_type}{use an adjusted p-value?}
 
-\item{csv}{Write csv instead of xlsx when running OOM.}
+\item{invert_barplots}{Invert the significance barplots as per Najib's request?}
 
 \item{excel}{Write the results to this excel file, or NULL.}
 

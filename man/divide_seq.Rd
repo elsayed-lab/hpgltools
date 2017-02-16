@@ -17,7 +17,8 @@ divide_seq(counts, genome = NULL, ...)
 The RPseqM counts
 }
 \description{
-This uses a sequence pattern rather than length to normalize sequence.  It is essentially fancy pants rpkm.
+This uses a sequence pattern rather than length to normalize sequence.
+It is essentially fancy pants rpkm.
 }
 \examples{
 \dontrun{

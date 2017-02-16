@@ -5,7 +5,7 @@
 \title{Reprint the output from extract_significant_genes().}
 \usage{
 print_ups_downs(upsdowns, wb = NULL, excel = "excel/significant_genes.xlsx",
-  csv = NULL, according = "limma", summary_count = 1, ma = FALSE)
+  according = "limma", summary_count = 1, ma = FALSE)
 }
 \arguments{
 \item{upsdowns}{Output from extract_significant_genes().}
@@ -13,8 +13,6 @@ print_ups_downs(upsdowns, wb = NULL, excel = "excel/significant_genes.xlsx",
 \item{wb}{Workbook object to use for writing, or start a new one.}
 
 \item{excel}{Filename for writing the data.}
-
-\item{csv}{Write a csv instead/also?}
 
 \item{according}{Use limma, deseq, or edger for defining 'significant'.}
 

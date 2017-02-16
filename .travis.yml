@@ -8,6 +8,9 @@ cache:
   apt: true
   timeout: 1000
 
+deploy:
+  skip_cleanup: true
+
 env:
   global:
     - R_CHECK_ARGS="--no-build-vignettes --no-manual"

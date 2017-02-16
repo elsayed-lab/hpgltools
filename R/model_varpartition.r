@@ -34,11 +34,18 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @param parallel  use doParallel?
 #' @return partitions  List of plots and variance data frames
 #' @export
-varpart <- function(expt, predictor="condition", factors=c("batch"), cpus=6, genes=40, parallel=TRUE) {
+varpart <- function(expt, predictor="condition", factors=c("batch"),
+                    cpus=6, genes=40, parallel=TRUE) {
     cl <- NULL
+    para <- NULL
     if (isTRUE(parallel)) {
-        cl <- parallel::makeCluster(cpus)  ## I am keeping 2 processors to myself, piss off, R.
-        doParallel::registerDoParallel(cl)
+        cl <- parallel::makeCluster(cpus)
+        para <- doParallel::registerDoParallel(cl)
+    }
+    num_batches <- length(levels(as.factor(expt[["batches"]])))
+    if (num_batches == 1) {
+        message("varpart sees only 1 batch, adjusting the model accordingly.")
+        factors <- factors[!grepl(pattern="batch", x=factors)]
     }
     model_string <- "~ "
     if (!is.null(predictor)) {
@@ -66,7 +73,7 @@ varpart <- function(expt, predictor="condition", factors=c("batch"), cpus=6, gen
     percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
     partition_plot <- variancePartition::plotVarPart(my_sorted)
     if (isTRUE(parallel)) {
-        tt <- sm(parallel::stopCluster(cl))
+        para <- parallel::stopCluster(cl)
     }
     ret <- list(
         "model_used" = my_model,
@@ -100,3 +107,5 @@ varpart_summaries <- function(expt, factors=c("condition","batch"), cpus=6) {
     summaries <- variancePartition::fitVarPartModel(data, my_model, design, fxn=summary)
     return(summaries)
 }
+
+## EOF

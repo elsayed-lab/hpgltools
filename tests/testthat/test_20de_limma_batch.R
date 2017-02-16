@@ -163,8 +163,10 @@ test_that("Do the intercept model results equal those from cell means?", {
     expect_equal(as.numeric(head(hpgl_logfc)), as.numeric(head(reordered$logFC)), tolerance=0.1)
 })
 
+limma_written <- sm(write_limma(hpgl_limma, excel="limma_test.xlsx"))
+
 save(list=ls(), file="de_limma.rda")
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 20de_limma_batch.R in ", elapsed,  " seconds."))

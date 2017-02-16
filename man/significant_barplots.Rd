@@ -6,8 +6,8 @@
 significant up/down.}
 \usage{
 significant_barplots(combined, fc_cutoffs = c(0, 1, 2),
-  fc_column = "limma_logfc", p_type = "adj", p = 0.05, z = NULL,
-  order = NULL, maximum = NULL, ...)
+  fc_column = "limma_logfc", p_type = "adj", invert = FALSE, p = 0.05,
+  z = NULL, order = NULL, maximum = NULL, ...)
 }
 \arguments{
 \item{combined}{Result from combine_de_tables and/or extract_significant_genes().}
@@ -18,6 +18,8 @@ followed by 2 fold and 4 fold cutoffs.}
 \item{fc_column}{The column in the master-table to use for FC cutoffs.}
 
 \item{p_type}{Adjusted or not?}
+
+\item{invert}{Reverse the order of contrasts for readability?}
 
 \item{p}{Chosen p-value cutoff.}
 

@@ -1,3 +1,4 @@
+
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.
 #'
@@ -40,9 +41,10 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## Palette for colors when auto-chosen
     chosen_palette <- "Dark2"
     ## I am learning about simplifying vs. preserving subsetting
-    ## This is a case of simplifying and I believe one which is good because I just want the string out from my list
-    ## Lets assume that palette is in fact an element in arglist, I really don't care that the name
-    ## of the resturn is 'palette' -- I already knew that by asking for it.
+    ## This is a case of simplifying and I believe one which is good because I just want
+    ## the string out from my list. Lets assume that palette is in fact an element in arglist,
+    ## I really don't care that the name of the resturn is 'palette'; I already
+    ## knew that by asking for it.
     if (is.null(title)) {
         title <- paste0("This is an expt class.")
     }
@@ -66,7 +68,12 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     }
     file_column <- "file"
     if (!is.null(arglist[["file_column"]])) {
-        file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count tables / sample in one sheet.
+        file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
+        ## tables / sample in one sheet.
+    }
+    round <- FALSE
+    if (!is.null(arglist[["round"]])) {
+        round <- arglist[["round"]]
     }
     round <- FALSE
     if (!is.null(arglist[["round"]])) {
@@ -117,11 +124,14 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     if (length(empty_samples) > 0) {
         sample_definitions <- sample_definitions[-empty_samples, ]
     }
-    ## The folks at Biobase, <sarcasm>in their infinite wisdom</sarcasm> have changed new("AnnotatedDataFrame") so that if a column has the same information
-    ## as the rownames(), then one gets the following error:  new("AnnotatedDataFrame", ttt), which is utter BS.
-    ## Ergo, if I have my sample IDs as the rownames _and_ as a column titled 'sampleid', it will now fail to create the ExpressionSet.  Go put down your fasces.
-    ## In any event, I can therefore either remove the sampleid column or change it in some way.
-    ##sample_definitions[[sample_column]] <- paste0("s", sample_definitions[[sample_column]])
+    ## The folks at Biobase, have changed new("AnnotatedDataFrame") so that if a column has
+    ## the same information as the rownames(), then one gets the following error:
+    ## new("AnnotatedDataFrame", ttt), which is utter BS.
+    ## Ergo, if I have my sample IDs as the rownames _and_ as a column titled 'sampleid', it
+    ## will now fail to create the ExpressionSet.
+    ## I can therefore either remove the sampleid column or change it in some way.
+    ## sample_definitions[[sample_column]] <- paste0("s", sample_definitions[[sample_column]])
+    ## This error seems to have stopped happening, so I commented out the previous line.
     sample_columns_to_remove <- NULL
     for (col in 1:length(colnames(sample_definitions))) {
         sum_na <- sum(is.na(sample_definitions[[col]]))
@@ -156,16 +166,20 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## [row, ] method to reinforce my weak neurons.
     if (is.null(sample_definitions[["condition"]])) {
         ## type and stage are commonly used, and before I was consistent about always having condition, they were a proxy for it.
-        sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]], sample_definitions[["stage"]], sep="_"))
+        sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]],
+                                                           sample_definitions[["stage"]], sep="_"))
     }
     ## Extract out the condition names as a factor
     condition_names <- unique(sample_definitions[["condition"]])
     if (is.null(condition_names)) {
         warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
     }
-    ## Condition and Batch are not allowed to be numeric, so if they are just numbers, prefix them with 'c' and 'b' respectively.
-    sample_definitions[["condition"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=sample_definitions[["condition"]])
-    sample_definitions[["batch"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=sample_definitions[["batch"]])
+    ## Condition and Batch are not allowed to be numeric, so if they are just numbers,
+    ## prefix them with 'c' and 'b' respectively.
+    sample_definitions[["condition"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1",
+                                              x=sample_definitions[["condition"]])
+    sample_definitions[["batch"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1",
+                                          x=sample_definitions[["batch"]])
 
     ## Explicitly skip those samples which are "", null, or "undef" for the filename.
     if (is.null(count_dataframe)) {
@@ -188,7 +202,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     if (!is.null(count_dataframe)) {
         all_count_tables <- count_dataframe
         testthat::expect_equal(colnames(all_count_tables), rownames(sample_definitions))
-        ## If neither of these cases is true, start looking for the files in the processed_data/ directory
+        ## If neither of these cases is true, start looking for the files in the
+        ## processed_data/ directory
     } else if (is.null(sample_definitions[[file_column]])) {
         success <- 0
         ## There are two main organization schemes I have used in the past, the following
@@ -231,7 +246,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
             }
         } ## tried by type
         if (success == 0) {
-            stop("I could not find your count tables organised either by sample nor by type, uppercase nor lowercase.")
+            stop("I could not find your count tables by sample nor type, uppercase nor lowercase.")
         }
     }
 
@@ -253,7 +268,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     all_count_tables <- all_count_tables[complete.cases(all_count_tables), ]
     ## Features like exon:alicethegene-1 are annoying and entirely too common in TriTrypDB data
     rownames(all_count_tables) <- gsub("^exon:", "", rownames(all_count_tables))
-    rownames(all_count_tables) <- make.names(gsub(":\\d+", "", rownames(all_count_tables)), unique=TRUE)
+    rownames(all_count_tables) <- make.names(gsub(":\\d+", "",
+                                                  rownames(all_count_tables)), unique=TRUE)
 
     ## Try a couple different ways of getting gene-level annotations into the expressionset.
     annotation <- NULL
@@ -276,8 +292,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
         gene_info <- as.data.frame(gene_info[["genes"]])
     }
 
-    ## It turns out that loading the annotation information from orgdb/etc may not set the row names.
-    ## Perhaps I should do that there, but I will add a check here, too.
+    ## It turns out that loading the annotation information from orgdb/etc may not set the
+    ## row names. Perhaps I should do that there, but I will add a check here, too.
     if (sum(rownames(gene_info) %in% rownames(all_count_tables)) == 0) {
         if (!is.null(gene_info[["geneid"]])) {
             rownames(gene_info) <- gene_info[["geneid"]]
@@ -320,7 +336,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     gene_infodt[["rownames"]] <- rownames(gene_info)
 
     message("Bringing together the count matrix and gene information.")
-    ## The method here is to create a data.table of the counts and annotation data, merge them, then split them apart.
+    ## The method here is to create a data.table of the counts and annotation data,
+    ## merge them, then split them apart.
     counts_and_annotations <- merge(tmp_countsdt, gene_infodt, by="rownames", all.x=TRUE)
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
     counts_and_annotations <- as.data.frame(counts_and_annotations)
@@ -345,7 +362,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
         final_counts[less_than] <- 0
     }
 
-    ## I moved the color choices to this area pretty late in the process to make sure that there was time to remove unused samples.
+    ## I moved the color choices to this area pretty late in the process to make sure that
+    ## there was time to remove unused samples.
     ## Make sure we have a viable set of colors for plots
     ## First figure out how many conditions we have
     chosen_colors <- as.character(sample_definitions[["condition"]])
@@ -353,7 +371,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## And also the number of samples
     num_samples <- nrow(sample_definitions)
     if (!is.null(sample_colors) & length(sample_colors) == num_samples) {
-        ## Thus if we have a numer of colors == the number of samples, set each sample with its own color
+        ## Thus if we have a numer of colors == the number of samples, set each sample
+        ## with its own color
         chosen_colors <- sample_colors
     } else if (!is.null(sample_colors) & length(sample_colors) == num_conditions) {
         ## If instead there are colors == number of conditions, set them appropriately.
@@ -391,7 +410,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
         sample_definitions[["file"]] <- "null"
     }
 
-    ## Adding these so that deseq does not complain about characters when calling DESeqDataSetFromMatrix()
+    ## Adding these so that deseq does not complain about characters when
+    ## calling DESeqDataSetFromMatrix()
     sample_definitions[["condition"]] <- as.factor(sample_definitions[["condition"]])
     sample_definitions[["batch"]] <- as.factor(sample_definitions[["batch"]])
 
@@ -415,13 +435,14 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## Therefore, if we call a function like DESeq() which requires
     ## non-log2 counts, we can check these values and convert accordingly
 
-    ## Now that the expressionset has been created, pack it into an expt object so that I can keep backups etc.
+    ## Now that the expressionset has been created, pack it into an expt object so that I
+    ## can keep backups etc.
     expt <- expt_subset(experiment) ## I think this is spurious now.
     expt[["original_expressionset"]] <- experiment
     expt[["original_metadata"]] <- Biobase::pData(experiment)
 
-    ## I only leared fairly recently that there is quite a bit of redundancy between my expt and ExpressionSets.
-    ## I do not mind this.
+    ## I only leared fairly recently that there is quite a bit of redundancy between my expt
+    ## and ExpressionSets. I do not mind this. Yet.
     expt[["title"]] <- title
     expt[["notes"]] <- toString(notes)
     expt[["design"]] <- sample_definitions
@@ -465,7 +486,42 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     return(expt)
 }
 
-#' An alias to expt_subset, because it is stupid to have something start with verbs and others start with nouns.
+#' Exclude some genes given a pattern match
+#'
+#' Because I am too lazy to remember that expressionsets use matrix subsets for [gene,sample]
+#'
+#' @param expt  Expressionset containing expt object.
+#' @param column  fData column to use for subsetting.
+#' @param method  Either remove explicit rows, or keep them.
+#' @param patterns  Character list of patterns to remove/keep
+#' @param ...  Extra arguments are passed to arglist, currently unused.
+#' @return  A smaller expt
+#' @export
+expt_exclude_genes <- function(expt, column="txtype", method="remove",
+                               patterns=c("snRNA","tRNA","rRNA"), ...) {
+    arglist <- list(...)
+    ex <- expt[["expressionset"]]
+    annotations <- Biobase::fData(ex)
+    pattern_string <- ""
+    for (pat in patterns) {
+        pattern_string <- paste0(pattern_string, pat, "|")
+    }
+    silly_string <- gsub(pattern="\\|$", replacement="", x=pattern_string)
+    idx <- grepl(pattern=silly_string, x=annotations[[column]])
+    ex2 <- NULL
+    if (method == "remove") {
+        ex2 <- ex[!idx, ]
+    } else {
+        ex2 <- ex[idx, ]
+    }
+    message(paste0("Before removal, there were ", nrow(Biobase::fData(ex)), " entries."))
+    message(paste0("Now there are ", nrow(Biobase::fData(ex2)), " entries."))
+    expt[["expressionset"]] <- ex2
+    return(expt)
+}
+
+#' An alias to expt_subset, because it is stupid to have something start with verbs
+#' and others start with nouns.
 #'
 #' This just calls expt_subset.
 #'
@@ -587,7 +643,10 @@ read_metadata <- function(file, ...) {
     } else if (tools::file_ext(file) == "xlsx") {
         ## xls = loadWorkbook(file, create=FALSE)
         ## tmp_definitions = readWorksheet(xls, 1)
-        definitions <- openxlsx::read.xlsx(xlsxFile=file, sheet=1)
+        definitions <- try(openxlsx::read.xlsx(xlsxFile=file, sheet=1))
+        if (class(definitions) == "try-error") {
+            stop(paste0("Unable to read the metadata file: ", file))
+        }
     } else if (tools::file_ext(file) == "xls") {
         ## This is not correct, but it is a start
         definitions <- XLConnect::read.xls(xlsFile=file, sheet=1)
@@ -639,9 +698,10 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' When exploring differential analyses, it might be useful to play with the conditions/batches of
 #' the experiment.  Use this to make that easier.
 #'
-#' @param expt Expt to modify
-#' @param colors colors to replace
+#' @param expt  Expt to modify
+#' @param colors  colors to replace
 #' @param chosen_palette  I usually use Dark2 as the RColorBrewer palette.
+#' @param change_by  Assuming a list is passed, cross reference by condition or sample?
 #' @return expt Send back the expt with some new metadata
 #' @examples
 #' \dontrun{
@@ -658,42 +718,56 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' esmer_expt <- set_expt_colors(expt=esmer_expt, colors=chosen_colors)
 #' }
 #' @export
-set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2") {
+set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by="condition") {
     num_conditions <- length(levels(as.factor(expt[["conditions"]])))
     num_samples <- nrow(expt[["design"]])
     sample_ids <- expt[["design"]][["sampleid"]]
     chosen_colors <- expt[["conditions"]]
     sample_colors <- NULL
     if (is.null(colors) | isTRUE(colors)) {
-        sample_colors <- sm(grDevices::colorRampPalette(
-                                           RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        sample_colors <- sm(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
         mapping <- setNames(sample_colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
-    } else if (class(colors) == "list") {
-        ## In this instance, we are changing specific colors to the provided colors.
-        chosen_colors <- expt[["colors"]]
-        for (snum in 1:length(names(colors))) {
-            sampleid <- names(colors)[snum]
-            sample_color <- colors[[snum]]
-            chosen_colors[[sampleid]] <- sample_color
+    } else if (class(colors) == "character") {
+        if (is.null(names(colors))) {
+            names(colors) <- levels(as.factor(expt[["conditions"]]))
         }
-    } else if (!is.null(colors) & length(colors) == num_samples) {
-        chosen_colors <- colors
-    } else if (!is.null(colors) & length(colors) == num_conditions) {
-        found_colors <- sum(names(colors) %in% chosen_colors)
-        ## In this case, we have every color accounted for in the set of conditions.
-        if (found_colors == num_conditions) {
+        if (change_by == "condition") {
+            ## In this case, we have every color accounted for in the set of conditions.
+            mapping <- colors
+            chosen_colors <- mapping[chosen_colors]
+        } else if (change_by == "sample") {
+            ## This is changing them by sample id.
+            ## In this instance, we are changing specific colors to the provided colors.
+            chosen_colors <- expt[["colors"]]
+            for (snum in 1:length(names(colors))) {
+                sampleid <- names(colors)[snum]
+                sample_color <- colors[[snum]]
+                chosen_colors[[sampleid]] <- sample_color
+            }
+        }
+        chosen_idx <- complete.cases(chosen_colors)
+        chosen_colors <- chosen_colors[chosen_idx]
+    } else if (class(colors) == "list") {
+        if (change_by == "condition") {
+            ## In this case, we have every color accounted for in the set of conditions.
             mapping <- as.character(colors)
             names(mapping) <- names(colors)
             chosen_colors <- mapping[chosen_colors]
-        } else {
-            ## If we do not have every color accounted for in the set of conditions, let R decide on its own.
-            mapping <- setNames(colors, unique(chosen_colors))
-            chosen_colors <- mapping[chosen_colors]
+        } else if (change_by == "sample") {
+            ## This is changing them by sample id.
+            ## In this instance, we are changing specific colors to the provided colors.
+            chosen_colors <- expt[["colors"]]
+            for (snum in 1:length(names(colors))) {
+                sampleid <- names(colors)[snum]
+                sample_color <- colors[[snum]]
+                chosen_colors[[sampleid]] <- sample_color
+            }
         }
+        chosen_idx <- complete.cases(chosen_colors)
+        chosen_colors <- chosen_colors[chosen_idx]
     } else if (is.null(colors)) {
-        colors <- sm(grDevices::colorRampPalette(
-                                    RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        colors <- sm(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
         ## Check that all conditions are named in the color list:
         mapping <- setNames(colors, unique(chosen_colors))
         chosen_colors <- mapping[chosen_colors]
@@ -731,8 +805,8 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
     original_conditions <- expt[["conditions"]]
     original_length <- length(original_conditions)
     new_expt <- expt  ## Explicitly copying expt to new_expt
-    ## because when I run this as a function call() it seems to be not properly setting the conditions
-    ## and I do not know why.
+    ## because when I run this as a function call() it seems to be not properly setting
+    ## the conditions and I do not know why.
     if (!is.null(ids)) {
         ## Change specific id(s) to given condition(s).
         old_pdata <- Biobase::pData(expt[["expressionset"]])
@@ -811,7 +885,8 @@ set_expt_samplenames <- function(expt, newnames) {
     new_expt <- expt
     oldnames <- rownames(new_expt[["design"]])
     newnames <- make.unique(newnames)
-    newnote <- paste0("Sample names changed from: ", toString(oldnames), " to: ", toString(newnames), " at: ", date(), ".\n")
+    newnote <- paste0("Sample names changed from: ", toString(oldnames),
+                      " to: ", toString(newnames), " at: ", date(), ".\n")
     ## Things to modify include: batches, conditions
     names(new_expt[["batches"]]) <- newnames
     names(new_expt[["colors"]]) <- newnames
@@ -840,7 +915,8 @@ set_expt_samplenames <- function(expt, newnames) {
 #' @param filter  How was it filtered?
 #' @param batch  How was it batch-corrected?
 #' @export
-what_happened <- function(expt=NULL, transform="raw", convert="raw", norm="raw", filter="raw", batch="raw") {
+what_happened <- function(expt=NULL, transform="raw", convert="raw",
+                          norm="raw", filter="raw", batch="raw") {
     if (!is.null(expt)) {
         transform <- expt[["state"]][["transform"]]
         if (is.null(transform)) {

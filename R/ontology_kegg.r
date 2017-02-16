@@ -49,14 +49,20 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
     ## Similar stanzas should probably be added for deseq/edger
     ## This is added because pathview() only works with dataframes/lists with only numbers.
     ## So it is wise to pull only the column of numbers one cares about.
-    if (is.null(path_data[[fc_column]])) {
-        fc_column <- "logFC"
+    if (class(path_data) == "data.frame") {
+        if (is.null(path_data[[fc_column]])) {
+            fc_column <- "logFC"
+        }
+        if (is.null(path_data[[fc_column]])) {
+            stop("Unable to find the fold change column.")
+        }
+        tmp_data <- as.vector(path_data[[fc_column]])
+        names(tmp_data) <- rownames(path_data)
+
+    } else {
+        tmp_data <- path_data
     }
-    if (is.null(path_data[[fc_column]])) {
-        stop("Unable to find the fold change column.")
-    }
-    tmp_data <- as.vector(path_data[[fc_column]])
-    names(tmp_data) <- rownames(path_data)
+
     path_data <- tmp_data
     rm(tmp_data)
     tmp_names <- names(path_data)
@@ -656,3 +662,4 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
 }
 
 ## EOF
+8

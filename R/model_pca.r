@@ -1,24 +1,3 @@
-#' this a function scabbed from Hector and Kwame's cbcbSEQ
-#'
-#' It just does fast.svd of a matrix comprised of the matrix - rowMeans(matrix)
-#'
-#' @param data A data frame to decompose
-#' @return a list containing the s,v,u from fast.svd
-#' @seealso \pkg{corpcor} \code{\link[corpcor]{fast.svd}}
-#' @examples
-#' \dontrun{
-#'  svd = makeSVD(data)
-#' }
-#' @export
-makeSVD <- function (data) {
-    data <- as.matrix(data)
-    s <- corpcor::fast.svd(data - rowMeans(data))
-    v <- s$v
-    rownames(v) <- colnames(data)
-    ret <- list(v=v, u=s$u, d=s$d)
-    return(ret)
-}
-
 #' Compute variance of each principal component and how they correlate with batch and cond
 #'
 #' This was copy/pasted from cbcbSEQ
@@ -89,23 +68,22 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #'   \item  res = a table of the PCA res data
 #'   \item  variance = a table of the PCA plot variance
 #'  }
-#' @seealso \code{\link{makeSVD}},
-#' \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+#' @seealso
+#'  \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 #' @examples
-#' \dontrun{
-#'  pca_plot <- plot_pca(expt=expt)
-#'  pca_plot
-#' }
+#'  \dontrun{
+#'   pca_plot <- plot_pca(expt=expt)
+#'   pca_plot
+#'  }
 #' @export
 plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
-                     plot_title=TRUE, plot_size=5, size_column=NULL, ...) {
+                     plot_title=NULL, plot_size=5, size_column=NULL, ...) {
     ## I have been using hpgl_env for keeping aes() from getting contaminated.
     ## I think that this is no longer needed because I have been smater(sic) about how
     ## I invoke aes_string() and ggplot2()
     hpgl_env <- environment()
     arglist <- list(...)
     plot_names <- arglist[["plot_names"]]
-
     ## Set default columns in the experimental design for condition and batch
     ## changing these may be used to query other experimental factors with pca.
     cond_column <- "condition"
@@ -181,8 +159,8 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         plot_names <- design[["name"]]
     }
 
-    ## Different folks like different labels.  I prefer hpglxxxx, but others have asked for condition_batch
-    ## This handles that as eloquently as I am able.
+    ## Different folks like different labels.  I prefer hpglxxxx, but others have asked for
+    ## condition_batch; this handles that as eloquently as I am able.
     label_list <- NULL
     if (is.null(arglist[["label_list"]]) & is.null(plot_names)) {
         label_list <- design[["sampleid"]]
@@ -194,11 +172,13 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         label_list <- paste0(design[["sampleid"]], "_", design[[cond_column]])
     }
 
-    ## I think the makeSVD function is kind of dumb.  It calls fast.svd() and gives me back the pieces.
-    ## But I keep this function call as a reminder that Kwame (who wrote our initial pca plotter) was a nice guy.
-    ## Also, keep in mind that this is a fast.svd of the (matrix - rowmeans(matrix))
-    pca <- makeSVD(data)
-    ## Pull out the batches and conditions used in this plot.  Probably could have just used xxx[stuff, drop=TRUE]
+    svd_result <- corpcor::fast.svd(as.matrix(data) - rowMeans(as.matrix(data)))
+    v_vector <- svd_result[["v"]]
+    rownames(v_vector) <- colnames(data)
+    svd_result[["v"]] <- v_vector
+    ##pca <- makeSVD(data)
+    ## Pull out the batches and conditions used in this plot.
+    ## Probably could have just used xxx[stuff, drop=TRUE]
     included_batches <- as.factor(as.character(design[[batch_column]]))
     included_conditions <- as.factor(as.character(design[[cond_column]]))
 
@@ -208,17 +188,20 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
     } else if (length(levels(included_conditions)) == 1) {
         warning("There is only one condition, but more than one batch.   Going to run pcRes with the batch information.")
-        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], batch=design[, batch_column])
+        pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]], batch=design[, batch_column])
     } else if (length(levels(included_batches)) == 1) {
         message("There is just one batch in this data.")
-        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, cond_column])
+        pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]],
+                         condition=design[, cond_column])
     } else {
-        pca_res <- pcRes(v=pca[["v"]], d=pca[["d"]], condition=design[, cond_column], batch=design[, batch_column])
+        pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]],
+                         condition=design[, cond_column], batch=design[, batch_column])
     }
 
     ## By a similar token, get the percentage of variance accounted for in each PC
-    pca_variance <- round((pca[["d"]] ^ 2) / sum(pca[["d"]] ^ 2) * 100, 2)
-    ## These will provide metrics on the x/y axes showing the amount of variance on those components of our plot.
+    pca_variance <- round((svd_result[["d"]] ^ 2) / sum(svd_result[["d"]] ^ 2) * 100, 2)
+    ## These will provide metrics on the x/y axes showing the amount of variance on those
+    ## components of our plot.
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
 
@@ -228,8 +211,8 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         "condition" = as.character(design[[cond_column]]),
         "batch" = as.character(design[[batch_column]]),
         "batch_int" = as.integer(as.factor(design[[batch_column]])),
-        "PC1" = pca[["v"]][, 1],
-        "PC2" = pca[["v"]][, 2],
+        "PC1" = svd_result[["v"]][, 1],
+        "PC2" = svd_result[["v"]][, 2],
         "colors" = as.character(plot_colors),
         "labels" = label_list)
 
@@ -260,14 +243,13 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     } else if (!is.null(plot_title)) {
         data_title <- what_happened(expt=expt)
         plot_title <- paste0(plot_title, "; ", data_title)
-        pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
     } else {
-        ## Leave the title blank
+        ## Leave the title blank.
     }
 
     ## Finally, return a list of the interesting bits of what happened.
     pca_return <- list(
-        "pca" = pca,
+        "pca" = svd_result,
         "plot" = pca_plot,
         "table" = pca_data,
         "res" = pca_res,
@@ -282,7 +264,8 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
 #' @param fact Experimental factor from the original data.
 #' @param type Make this categorical or continuous with factor/continuous.
 #' @return The r^2 values of the linear model as a percentage.
-#' @seealso \code{\link[corpcor]{fast.svd}}
+#' @seealso
+#'  \code{\link[corpcor]{fast.svd}}
 #' @export
 factor_rsquared <- function(svd_v, fact, type="factor") {
     if (type == "factor") {
@@ -327,7 +310,8 @@ factor_rsquared <- function(svd_v, fact, type="factor") {
 #' }
 #' @export
 plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
-                     design=NULL, plot_title=TRUE, plot_labels=NULL, plot_size=5, size_column=NULL, ...) {
+                     design=NULL, plot_title=TRUE, plot_labels=NULL,
+                     plot_size=5, size_column=NULL, ...) {
     arglist <- list(...)
     hpgl_env <- environment()
     batches <- pca_data[["batch"]]
@@ -510,7 +494,7 @@ u_plot <- function(plotted_us) {
     ## top_threePC = head(plotted_us, n=20)
     plotted_us <- plotted_us[, c("PC1","PC2","PC3")]
     plotted_us[, "ID"] <- rownames(plotted_us)
-    message("The more shallow the curves in these plots, the more genes responsible for this principle component.")
+    message("More shallow curves in these plots suggest more genes in this principle component.")
     plot(plotted_us)
     u_plot <- grDevices::recordPlot()
     return(u_plot)

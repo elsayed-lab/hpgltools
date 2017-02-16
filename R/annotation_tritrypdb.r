@@ -113,7 +113,6 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
                 next
             }
             ## Otherwise add row to dataframe
-            ## message("GOT HERE")
             ## message("Adding elements:")
             ##element <- c(chromosome, gene_start, gene_stop, strand,
             ##             gene_type, transcript_length, cds_length, is_pseudo,
@@ -336,7 +335,7 @@ get_ncbi_taxonid <- function(species="Leishmania major") {
 #'  crazytown <- make_organismdbi()  ## wait a loong time
 #' }
 #' @export
-make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb", ...) {
+make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organismdbi", ...) {
     arglist <- list(...)
     kegg <- arglist[["kegg"]]
     cfg <- get_eupath_config(cfg)
@@ -592,12 +591,24 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
 #' @return List of the resulting txDb package and whether it installed.
 #' @export
 make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir="organismdbi", ...) {
+    ## Sections of this were stolen from GenomicFeatures
+    ## because it hates me.
     arglist <- list(...)
 
     destination <- output_dir
     chromosome_info <- orgdb_info[["chromosome_info"]]
-    package_name <- NULL
-    if (!is.null(gff) & isTRUE(from_gff)) {
+    requireNamespace("GenomicFeatures")
+    destination <- paste0(destination, "/txdb")
+    db_version <- format(as.numeric(cfg_line[["db_version"]]), nsmall=1)
+    maintainer <- as.character(cfg_line[["maintainer"]])
+    author <- as.character(cfg_line[["author"]])
+    db_url <- as.character(cfg_line[["db_url"]])
+    package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
+                            cfg_line[["strain"]], ".", cfg_line[["db_name"]],
+                            cfg_line[["db_version"]])
+
+    txdb <- NULL
+    if (!is.null(gff)) {
         txdb <- GenomicFeatures::makeTxDbFromGFF(
             file=gff,
             format='gff3',
@@ -608,32 +619,49 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
         package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
                                 cfg_line[["strain"]], ".", cfg_line[["db_name"]],
                                 cfg_line[["db_version"]])
-    } else {
-        requireNamespace("GenomicFeatures")
-        destination <- paste0(destination, "/txdb")
-        db_version <- format(as.numeric(cfg_line[["db_version"]]), nsmall=1)
-        maintainer <- as.character(cfg_line[["maintainer"]])
-        author <- as.character(cfg_line[["author"]])
-        package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
-                                cfg_line[["strain"]], ".", cfg_line[["db_name"]],
-                                cfg_line[["db_version"]])
-
-        if (file.exists(destination)) {
-            unlink(x=destination, recursive=TRUE)
-        }
-        dir.create(destination, recursive=TRUE)
-        result <- GenomicFeatures::makeTxDbPackage(
-            txdb=txdb,
-            version=db_version,
-            maintainer=maintainer,
-            author=author,
-            destDir=destination,
-            license="Artistic-2.0",
-            pkgname=package_name)
-        ## What in the flying hell means 'Error in cpSubsCon(src[k], destname) : UNRESOLVED SYMBOLS:
-        ## Line 5 : @umd.edu>, atb <atb@u'
-        ## The entire person/author/maintainer system in R is utterly stupid.
     }
+
+    ## This is the section I yanked
+    provider <- GenomicFeatures:::.getMetaDataValue(txdb, "Data source")
+    providerVersion <- GenomicFeatures:::.getTxDbVersion(txdb)
+    dbType <- GenomicFeatures:::.getMetaDataValue(txdb, "Db type")
+    authors <- GenomicFeatures:::.normAuthor(author, maintainer)
+    template_path <- system.file("txdb-template", package = "GenomicFeatures")
+    symvals <- list("PKGTITLE" = paste("Annotation package for", dbType, "object(s)"),
+                    "PKGDESCRIPTION" = paste("Exposes an annotation databases generated from",
+                                             GenomicFeatures:::.getMetaDataValue(txdb, "Data source"), "by exposing these as", dbType, "objects"),
+                    "PKGVERSION" = db_version,
+                    "AUTHOR" = paste(authors, collapse = ", "),
+                    "MAINTAINER" = as.character(GenomicFeatures:::.getMaintainer(authors)),
+                    "GFVERSION" = GenomicFeatures:::.getMetaDataValue(txdb, "GenomicFeatures version at creation time"),
+                    "LIC" = "Artistic-2.0",
+                    "DBTYPE" = dbType,
+                    "ORGANISM" = GenomicFeatures:::.getMetaDataValue(txdb,"Organism"),
+                    "SPECIES" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
+                    "PROVIDER" = provider,
+                    "PROVIDERVERSION" = providerVersion,
+                    "RELEASEDATE" = GenomicFeatures:::.getMetaDataValue(txdb, "Creation time"),
+                    ## SOURCEURL = GenomicFeatures:::.getMetaDataValue(txdb, "Resource URL"),
+                    "SOURCEURL" = db_url,
+                    "ORGANISMBIOCVIEW" = gsub(" ", "_", GenomicFeatures:::.getMetaDataValue(txdb, "Organism")),
+                    "TXDBOBJNAME" = package_name)
+    if (any(duplicated(names(symvals)))) {
+        str(symvals)
+        stop("'symvals' contains duplicated symbols")
+    }
+    is_OK <- sapply(symvals, S4Vectors::isSingleString)
+    if (!all(is_OK)) {
+        bad_syms <- paste(names(is_OK)[!is_OK], collapse=", ")
+        stop("values for symbols ", bad_syms, " are not single strings")
+    }
+    pkg_list <- Biobase::createPackage(pkgname=package_name,
+                                       destinationDir=destination,
+                                       originDir=template_path,
+                                       symbolValues=symvals,
+                                       unlink=TRUE)
+    db_path <- file.path(destination, package_name, "inst", "extdata",
+                         paste(package_name, "sqlite", sep="."))
+    obj <- AnnotationDbi::saveDb(txdb, file=db_path)
 
     install_dir <- paste0(destination, "/", package_name)
     install_dir <- pkg_cleaner(install_dir)
@@ -644,8 +672,8 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
     result <- devtools::install(install_dir)
     package_name <- basename(install_dir)
     ret <- list(
-        package_name = package_name,
-        result = result)
+        "package_name" = package_name,
+        "result" = result)
     return(ret)
 }
 
@@ -653,6 +681,11 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
 #'
 #' This function uses some data copied into inst/ to decide some parameters used for generating the
 #' various packages generated here.
+#'
+#' Tested in test_46ann_tritrypdb.R
+#' This function is sort of stupid and perhaps will be removed.  I keep a small csv file of some
+#' TriTrypDB specific metadata, things like data base version number, URL schemes, etc.
+#' This reads that and extracts the relevant information.
 #'
 #' @param cfg  Optional data frame
 #' @return Dataframe of configuration data, a few columns are required, run it with no args to see

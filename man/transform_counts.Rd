@@ -8,18 +8,18 @@ transform_counts(count_table, design = NULL, transform = "raw",
   base = NULL, ...)
 }
 \arguments{
-\item{count_table}{A matrix of count data.}
+\item{count_table}{A matrix of count data}
 
-\item{design}{Sometimes the design is also required.}
+\item{design}{Sometimes the experimental design is also required.}
 
-\item{transform}{A type of transformation to perform: log2/log10/log}
+\item{transform}{A type of transformation to perform: log2/log10/log.}
 
-\item{base}{for other log scales}
+\item{base}{Other log scales?}
 
 \item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{
-dataframe of logx(counts)
+dataframe of transformed counts.
 }
 \description{
 the add argument is only important if the data was previously cpm'd because that does a +1, thus
@@ -27,7 +27,7 @@ this will avoid a double+1 on the data.
 }
 \examples{
 \dontrun{
-filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
+ filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
 }
 }
 

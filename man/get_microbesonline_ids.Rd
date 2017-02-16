@@ -4,7 +4,7 @@
 \alias{get_microbesonline_ids}
 \title{Use the publicly available microbesonline mysql instance to get species ids.}
 \usage{
-get_microbesonline_ids(name, exact = FALSE)
+get_microbesonline_ids(name = "Escherichia", exact = FALSE)
 }
 \arguments{
 \item{name}{Text string containing some part of the species name of interest.}
@@ -18,5 +18,10 @@ Dataframe of ids and names.
 The microbesonline mysql instance is more complex than I like.  Their id system is reminiscent of
 KEGG's and similarly annoying.  Though I haven't figured out how the tables interact, a query to
 get ids is simple enough.
+}
+\details{
+Tested in test_42ann_microbes.R
+This function sets the defaults required for getting a quick and dirty connection to the public
+microbesonline database and returning the ids associated with a given name.
 }
 

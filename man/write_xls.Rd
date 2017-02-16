@@ -24,7 +24,7 @@ write_xls(data = "undef", wb = NULL, sheet = "first", rownames = TRUE,
 }
 \value{
 List containing the sheet and workbook written as well as the bottom-right coordinates of
-    the last row/column written to the worksheet.
+ the last row/column written to the worksheet.
 }
 \description{
 I like to give folks data in any format they prefer, even though I sort
@@ -33,10 +33,10 @@ This function has been through many iterations, first using XLConnect,
 then xlsx, and now openxlsx.  Hopefully this will not change again.
 }
 \examples{
-\dontrun{
- xls_coords <- write_xls(dataframe, sheet="hpgl_data")
- xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
-}
+ \dontrun{
+  xls_coords <- write_xls(dataframe, sheet="hpgl_data")
+  xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
+ }
 }
 \seealso{
 \pkg{openxlsx} \link[openxlsx]{writeDataTable}

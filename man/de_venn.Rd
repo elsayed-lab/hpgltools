@@ -11,6 +11,10 @@ de_venn(table, adjp = FALSE, euler = FALSE, p = 0.05, ...)
 
 \item{adjp}{Use adjusted p-values}
 
+\item{euler}{Perform a euler plot}
+
+\item{p}{p-value cutoff, I forget what for right now.}
+
 \item{...}{More arguments are passed to arglist.}
 }
 \description{

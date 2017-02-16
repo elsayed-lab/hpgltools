@@ -13,11 +13,11 @@
 #' In other words, this is entirely derivative of someone much smarter than me.
 #'
 #' @param data  Expt or data frame to manipulate.
-#' @param design  If the data is not an expt, provide the experimental design here.
-#' @param estimate_type  One of sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
-#'        ruv_residuals, or pca.
-#' @param surrogates  Choose a method for getting the number of surrogates, be, leek, or a number.
-#' @param ...  Parameters fed to arglist.
+#' @param design  If the data is not an expt, provide experimental design here.
+#' @param estimate_type  One of: sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
+#'     ruv_residuals, or pca.
+#' @param surrogates  Choose a method for getting the number of surrogates, be or leek, or a number.
+#' @param ... Parameters fed to arglist.
 #' @return List including the adjustments for a model matrix, a modified count table, and 3 plots of
 #'        the known batch, surrogates, and batch/surrogate.
 #' @export
@@ -30,7 +30,20 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
     log2_mtrx <- NULL
     base10_data <- NULL
     base10_mtrx <- NULL
+    ## Gather all the likely pieces we can use
+    ## Without the following requireNamespace(ruv)
+    ## we get an error 'unable to find an inherited method for function RUVr'
+    ruv_loaded <- try(require(package="ruv", quietly=TRUE))
+    ## In one test, this seems to have been enough, but in another, perhaps not.
 
+    filter <- "raw"
+    if (!is.null(arglist[["filter"]])) {
+        filter <- arglist[["filter"]]
+    }
+    convert <- "cpm"
+    if (!is.null(arglist[["convert"]])) {
+        convert <- arglist[["convert"]]
+    }
     if (class(data) == "expt") {
         ## Gather all the likely pieces we can use
         my_design <- data[["design"]]
@@ -39,21 +52,24 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         base10_mtrx <- as.matrix(my_data)
         log_mtrx <- as.matrix(my_data)
         if (transform_state == "raw") {
-            log_data <- sm(normalize_expt(data, convert="cpm", transform="log2", filter="simple", thresh=1))
-            log2_mtrx <- Biobase::exprs(log_data[["expressionset"]])
-            base10_data <- sm(normalize_expt(data, convert="cpm", filter="simple", thresh=1))
+            ## I think this was the cause of some problems.  The order of operations performed here
+            ## was imperfect and could potentially lead to multiple different matrix sizes.
+            base10_data <- sm(normalize_expt(data, convert=convert, filter=filter, thresh=1))
             base10_mtrx <- Biobase::exprs(base10_data[["expressionset"]])
+            log_data <- sm(normalize_expt(base10_data, transform="log2"))
+            log2_mtrx <- Biobase::exprs(log_data[["expressionset"]])
             rm(log_data)
             rm(base10_data)
         } else {
             log2_mtrx <- as.matrix(data)
-            base10_mtrx <- as.matrix(2 ^ data)
+            base10_mtrx <- as.matrix(2 ^ data) - 1
         }
     } else {
         if (is.null(design)) {
             stop("If an expt is not passed, then design _must_ be.")
         }
-        message("Not able to discern the state of the data.  Going to use a simplistic metric to guess if it is log scale.")
+        message("Not able to discern the state of the data.")
+        message("Going to use a simplistic metric to guess if it is log scale.")
         my_design <- design
         if (max(data) > 100) {
             transform_state <- "raw"
@@ -64,15 +80,16 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         base10_mtrx <- as.matrix(my_data)
         log_mtrx <- as.matrix(my_data)
         if (transform_state == "raw") {
-            log_data <- sm(hpgl_norm(data, convert="cpm", transform="log2", filter="simple", thresh=1))
+            log_data <- sm(hpgl_norm(data, convert="cpm", transform="log2", filter=filter, thresh=1))
             log2_mtrx <- as.matrix(log_data[["count_table"]])
-            base10_data <- sm(hpgl_norm(data, convert="cpm", filter="simple", thresh=1))
-            base10_mtrx <- as.matrix(base10_data[["count_table"]])
+            ## base10_data <- sm(hpgl_norm(data, convert="cpm", filter=filter, thresh=1))
+            ## base10_mtrx <- as.matrix(base10_data[["count_table"]])
+            base10_mtrx <- (2 ^ log2_mtrx) - 1
             rm(log_data)
-            rm(base10_data)
+            ## rm(base10_data)
         } else {
             log2_mtrx <- as.matrix(data)
-            base10_mtrx <- as.matrix(2 ^ data)
+            base10_mtrx <- as.matrix(2 ^ data) - 1
         }
     }
 
@@ -85,15 +102,13 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         message("No estimate nor method to find surrogates was provided. Assuming you want 1 surrogate variable.")
     } else {
         if (class(surrogates) == "character") {
-            ## num.sv assumes log scale.
+            ## num.sv assumes the log scale.
             if (surrogates != "be" & surrogates != "leek") {
                 message("A string was provided, but it was neither 'be' nor 'leek', assuming 'be'.")
-                chosen_surrogates <- sva::num.sv(dat=log2_mtrx,
-                                                 mod=conditional_model)
+                chosen_surrogates <- sm(sva::num.sv(dat=log2_mtrx, mod=conditional_model))
             } else {
-                chosen_surrogates <- sva::num.sv(dat=log2_mtrx,
-                                                 mod=conditional_model,
-                                                 method=surrogates)
+                chosen_surrogates <- sm(sva::num.sv(dat=log2_mtrx,
+                                                    mod=conditional_model, method=surrogates))
             }
             message(paste0("The ", surrogates, " method chose ", chosen_surrogates, " surrogate variable(s)."))
         } else if (class(surrogates) == "numeric") {
@@ -102,16 +117,24 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         }
     }
 
-    ## modified_mtrx <- mtrx + 0.5
     ## empirical controls can take either log or base 10 scale depending on 'control_type'
     control_type <- "norm"
-    control_likelihoods <- try(sm(sva::empirical.controls(dat=log2_mtrx,
-                                                          mod=conditional_model,
-                                                          mod0=null_model,
-                                                          n.sv=chosen_surrogates,
-                                                          type=control_type)))
+    control_likelihoods <- NULL
+    if (control_type == "norm") {
+        control_likelihoods <- try(sm(sva::empirical.controls(dat=log2_mtrx,
+                                                              mod=conditional_model,
+                                                              mod0=null_model,
+                                                              n.sv=chosen_surrogates,
+                                                              type=control_type)))
+    } else {
+        control_likelihoods <- try(sm(sva::empirical.controls(dat=base10_mtrx,
+                                                              mod=conditional_model,
+                                                              mod0=null_model,
+                                                              n.sv=chosen_surrogates,
+                                                              type=control_type)))
+    }
     if (class(control_likelihoods) == "try-error") {
-        control_likelihoods = 0
+        control_likelihoods <- 0
     }
     if (sum(control_likelihoods) == 0) {
         if (estimate_type == "sva_supervised") {
@@ -143,13 +166,11 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
     if (estimate_type == "sva_supervised") {
         message("Attempting sva supervised surrogate estimation.")
         type_color <- "red"
-        ## svaseq assumes base 10 data and will do a lot inside it.
-        supervised_sva <- sva::ssva(log2_mtrx,
-                                    controls=control_likelihoods,
-                                    n.sv=chosen_surrogates)
+        supervised_sva <- sm(sva::ssva(log2_mtrx,
+                                       controls=control_likelihoods,
+                                       n.sv=chosen_surrogates))
         model_adjust <- as.matrix(supervised_sva[["sv"]])
         surrogate_result <- supervised_sva
-        ## If only 1 surrogate is requested, this turns into a numeric list
     } else if (estimate_type == "svaseq") {
         message("This ignores the surrogates parameter and uses the be method to estimate surrogates.")
         type_color <- "dodgerblue"
@@ -180,7 +201,8 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
     } else if (estimate_type == "ruv_supervised") {
         message("Attempting ruvseq supervised surrogate estimation.")
         type_color <- "black"
-        surrogate_estimate <- sva::num.sv(dat=log2_mtrx, mod=conditional_model)
+        ## Re-calculating the numer of surrogates with this modified data.
+        surrogate_estimate <- sm(sva::num.sv(dat=log2_mtrx, mod=conditional_model))
         if (min(rowSums(base10_mtrx)) == 0) {
             warning("empirical.controls will likely fail because some rows are all 0.")
         }
@@ -188,9 +210,13 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
                                                           mod=conditional_model,
                                                           mod0=null_model,
                                                           n.sv=surrogate_estimate))
-        ruv_result <- RUVSeq::RUVg(base10_mtrx,
-                                   cIdx=as.logical(control_likelihoods),
-                                   k=chosen_surrogates)
+        ##ruv_result <- RUVSeq::RUVg(round(base10_mtrx),
+        ##                           cIdx=as.logical(control_likelihoods),
+        ##                           k=surrogate_estimate)
+        ruv_result <- RUVSeq::RUVg(round(base10_mtrx),
+                                   k=surrogate_estimate,
+                                   cIdx=as.logical(control_likelihoods))
+
         surrogate_result <- ruv_result
         returned_counts <- ruv_result[["normalizedCounts"]]
         model_adjust <- as.matrix(ruv_result[["W"]])
@@ -203,7 +229,8 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         ruv_input <- try(edgeR::estimateDisp(norm, design=conditional_model, robust=TRUE))
         ruv_fit <- edgeR::glmFit(ruv_input, conditional_model)
         ruv_res <- residuals(ruv_fit, type="deviance")
-        ruv_normalized <- EDASeq::betweenLaneNormalization(base10_mtrx, which="upper")  ## This also gets mad if you pass it a df and not matrix
+        ruv_normalized <- EDASeq::betweenLaneNormalization(base10_mtrx, which="upper")
+        ## This also gets mad if you pass it a df and not matrix
         controls <- rep(TRUE, dim(base10_mtrx)[1])
         ruv_result <- RUVSeq::RUVr(ruv_normalized, controls, k=chosen_surrogates, ruv_res)
         model_adjust <- as.matrix(ruv_result[["W"]])
@@ -229,7 +256,7 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         surrogate_result <- ruv_result
         model_adjust <- as.matrix(ruv_result[["W"]])
     } else {
-        type_color <- "black"
+        type_color <- "grey"
         ## If given nothing to work with, use supervised sva
         message(paste0("Did not understand ", estimate_type, ", assuming supervised sva."))
         supervised_sva <- sva::svaseq(base10_mtrx,
@@ -241,14 +268,14 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         surrogate_result <- supervised_sva
     }
 
+    ## This is the old code, potentially a source of my recent error, but I think it probably is not.
+    ## new_model <- cbind(conditional_model, model_adjust)
+    ## data_modifier <- solve(t(new_model) %*% new_model) %*% t(new_model)
+    ## transformation <- (data_modifier %*% t(mtrx))
+    ## conds <- ncol(conditional_model)
+    ## new_counts <- mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*% transformation[-c(1:conds), ])
     ## counts_from_surrogates currently resides in normalize_batch.R
     new_counts <- counts_from_surrogates(base10_mtrx, model_adjust, design=my_design)
-    ##new_model <- cbind(conditional_model, model_adjust)
-    ##data_modifier <- solve(t(new_model) %*% new_model) %*% t(new_model)
-    ##transformation <- (data_modifier %*% t(base10_mtrx))
-    ##conds <- ncol(conditional_model)
-    ##new_counts <- base10_mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*% transformation[-c(1:conds), ])
-
     plotbatch <- as.integer(batches)
     plotcond <- as.numeric(conditions)
     x_marks <- 1:length(colnames(data))
@@ -284,34 +311,43 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
 #' @param extra_factors Character list of extra factors which may be included in the final plot of
 #'     the data.
 #' @param do_catplots Include the catplots?  They don't make a lot of sense yet, so probably no.
-#' @param surrogates Use 'be' or 'leek' surrogate estimates, or choose a number.
+#' @param surrogates  Use 'be' or 'leek' surrogate estimates, or choose a number.
 #' @return List of the results.
 #' @export
-compare_surrogate_estimates <- function(expt, extra_factors=NULL, do_catplots=FALSE, surrogates="be") {
+compare_surrogate_estimates <- function(expt, extra_factors=NULL,
+                                        do_catplots=FALSE, surrogates="be") {
     design <- expt[["design"]]
     pca_plots <- list()
     pca_plots[["null"]] <- plot_pca(expt)[["plot"]]
+
     pca_adjust <- get_model_adjust(expt, estimate_type="pca", surrogates=surrogates)
-    pca_plots[["pca"]] <- plot_pca(pca_adjust[["new_counts"]], design=design, plot_colors=expt[["colors"]])[["plot"]]
+    pca_plots[["pca"]] <- plot_pca(pca_adjust[["new_counts"]],
+                                   design=design,
+                                   plot_colors=expt[["colors"]])[["plot"]]
 
     sva_supervised <- get_model_adjust(expt, estimate_type="sva_supervised", surrogates=surrogates)
-    pca_plots[["svasup"]] <- plot_pca(sva_supervised[["new_counts"]], design=design,
+    pca_plots[["svasup"]] <- plot_pca(sva_supervised[["new_counts"]],
+                                      design=design,
                                       plot_colors=expt[["colors"]])[["plot"]]
 
     sva_unsupervised <- get_model_adjust(expt, estimate_type="sva_unsupervised", surrogates=surrogates)
-    pca_plots[["svaunsup"]] <- plot_pca(sva_unsupervised[["new_counts"]], design=design,
+    pca_plots[["svaunsup"]] <- plot_pca(sva_unsupervised[["new_counts"]],
+                                        design=design,
                                         plot_colors=expt[["colors"]])[["plot"]]
 
     ruv_supervised <- get_model_adjust(expt, estimate_type="ruv_supervised", surrogates=surrogates)
-    pca_plots[["ruvsup"]] <- plot_pca(ruv_supervised[["new_counts"]], design=design,
+    pca_plots[["ruvsup"]] <- plot_pca(ruv_supervised[["new_counts"]],
+                                      design=design,
                                       plot_colors=expt[["colors"]])[["plot"]]
 
     ruv_residuals <- get_model_adjust(expt, estimate_type="ruv_residuals", surrogates=surrogates)
-    pca_plots[["ruvresid"]] <- plot_pca(ruv_residuals[["new_counts"]], design=design,
+    pca_plots[["ruvresid"]] <- plot_pca(ruv_residuals[["new_counts"]],
+                                        design=design,
                                         plot_colors=expt[["colors"]])[["plot"]]
 
     ruv_empirical <- get_model_adjust(expt, estimate_type="ruv_empirical", surrogates=surrogates)
-    pca_plots[["ruvemp"]] <- plot_pca(ruv_empirical[["new_counts"]], design=design,
+    pca_plots[["ruvemp"]] <- plot_pca(ruv_empirical[["new_counts"]],
+                                      design=design,
                                       plot_colors=expt[["colors"]])[["plot"]]
 
     first_svs <- data.frame(

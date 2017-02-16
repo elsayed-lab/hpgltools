@@ -5,26 +5,32 @@
 \title{Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.}
 \usage{
 batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
-  batch2 = NULL, noscale = TRUE, ...)
+  expt_state = NULL, batch2 = NULL, noscale = TRUE, ...)
 }
 \arguments{
 \item{count_table}{Matrix of (pseudo)counts.}
 
 \item{design}{Model matrix defining the experimental conditions/batches/etc.}
 
-\item{batch}{String describing the method to try to remove the batch effect (or FALSE to leave it alone, TRUE uses limma).}
+\item{batch}{String describing the method to try to remove the batch effect
+(or FALSE to leave it alone, TRUE uses limma).}
 
 \item{batch1}{Column in the design table describing the presumed covariant to remove.}
 
-\item{batch2}{Column in the design table describing the second covariant to remove (only used by limma at the moment).}
+\item{expt_state}{Current state of the expt in an attempt to avoid double-normalization.}
 
-\item{noscale}{Used for combatmod, when true it removes the scaling parameter from the invocation of the modified combat.}
+\item{batch2}{Column in the design table describing the second covariant to remove
+(only used by limma at the moment).}
+
+\item{noscale}{Used for combatmod, when true it removes the scaling parameter
+from the invocation of the modified combat.}
 
 \item{...}{More options for you!}
 }
 \value{
-The 'batch corrected' count table and new library size.  Please remember that the library size which comes out of this
-may not be what you want for voom/limma and would therefore lead to spurious differential expression values.
+The 'batch corrected' count table and new library size.  Please remember that the
+ library size which comes out of this may not be what you want for voom/limma and would
+ therefore lead to spurious differential expression values.
 }
 \description{
 I found this note which is the clearest explanation of what happens with batch effect data:
@@ -44,10 +50,10 @@ values, while DESeq2 expects raw counts as input. I couldn't tell you how to pro
 two methods together.
 }
 \examples{
-\dontrun{
-limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
-sva_batch <- batch_counts(table, design, batch='sva')
-}
+ \dontrun{
+  limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
+  sva_batch <- batch_counts(table, design, batch='sva')
+ }
 }
 \seealso{
 \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}

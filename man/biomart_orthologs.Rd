@@ -32,4 +32,11 @@ Biomart's function getLDS is incredibly powerful, but it makes me think very pol
 going to start knocking on my door, and it fails weirdly pretty much always. This function
 attempts to alleviate some of that frustration.
 }
+\details{
+Tested in test_40ann_biomart.R
+As with my other biomart functions, this one grew out of frustrations when attempting to work
+with the incredibly unforgiving biomart service.  It does not attempt to guarantee a useful
+biomart connection, but will hopefully point out potentially correct marts and attributes to use
+for a successful query.  I can say with confidence that it works well between mice and humans.
+}
 

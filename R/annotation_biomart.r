@@ -107,6 +107,11 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #' *.archive.ensembl.org, and so this function uses that to try to keep things predictable, if not
 #' consistent.
 #'
+#' Tested in test_40ann_biomart.R
+#' This function makes a couple of attempts to pick up the correct tables from biomart.  It is worth
+#' noting that it uses the archive.ensembl host(s) because of changes in table organization after
+#' December 2015 as well as an attempt to keep the annotation sets relatively consistent.
+#'
 #' @param species Species to query.
 #' @param overwrite Overwrite existing savefile?
 #' @param do_save Create a savefile of the annotations? (if not false, then a filename.)
@@ -114,6 +119,7 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #' @param trymart Default mart to try, newer marts use a different notation.
 #' @param secondtry The newer mart name.
 #' @param dl_rows  List of rows from the final biomart object to download.
+#' @param dl_rowsv2  A second list of potential rows.
 #' @return Df of geneIDs and GOIDs.
 #' @seealso \link[biomaRt]{getBM}
 #' @examples
@@ -201,9 +207,14 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
 #'
 #' Juggling between entrez, ensembl, etc can be quite a hassel.  This hopes to make it easier.
 #'
+#' Tested in test_40ann_biomart.R
+#' This function really just sets a couple of hopefully helpful defaults.  When I first attempted
+#' to use queryMany, it seemed to need much more intervention than it does now.  But at the least
+#' this function should provide a reminder of this relatively fast and useful ID translation service.
+#'
 #' @param queries Gene IDs to translate.
-#' @param from Database to translate IDs from.
-#' @param to Database to translate IDs into.
+#' @param from Database to translate IDs from, pass null if you want it to choose.
+#' @param fields Set of fields to request, pass null for all.
 #' @param species Human readable species for translation (Eg. 'human' instead of 'hsapiens'.)
 #' @return Df of translated IDs/accessions
 #' @seealso \link[mygene]{queryMany}
@@ -212,26 +223,23 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
 #'  data <- translate_ids_querymany(genes)
 #' }
 #' @export
-translate_ids_querymany <- function(queries, from="ensembl", to="entrez", species="human") {
-    scopes <- "entrezgene"
-    if (from == "ensembl") {
-        from_field <- "ensembl.gene"
-    } else if (from == "entrez") {
-        from_field <- "entrezgene"
+translate_ids_querymany <- function(queries,
+                                    from="ensembl",
+                                    fields=c("uniprot", "ensembl.gene", "entrezgene", "go"),
+                                    species="human") {
+    from_field <- from
+    if (!is.null(from)) {
+        if (from == "ensembl") {
+            from_field <- "ensembl.gene"
+        } else if (from == "entrez") {
+            from_field <- "entrezgene"
+        }
     }
 
-    if (to == "entrez") {
-        to <- "entrezgene"
-    } else if (to == "ensembl") {
-        to <- "ensembl.gene"
-    }
-
-    one_way <- mygene::queryMany(queries, scopes=from_field,
-                                 fields=c("uniprot","ensembl.gene","entrezgene", "go"),
-                                 species=species, returnall=TRUE)
-    queries <- as.data.frame(queries)
-    ret <- merge(queries, one_way, by.x="queries", by.y="query", all.x=TRUE)
-    return(ret)
+    one_way <- sm(mygene::queryMany(queries, scopes=from_field,
+                                    fields=fields, species=species, returnall=TRUE))
+    response <- one_way[["response"]]
+    return(response)
 }
 
 #' Use biomart to get orthologs between supported species.
@@ -239,6 +247,12 @@ translate_ids_querymany <- function(queries, from="ensembl", to="entrez", specie
 #' Biomart's function getLDS is incredibly powerful, but it makes me think very polite people are
 #' going to start knocking on my door, and it fails weirdly pretty much always. This function
 #' attempts to alleviate some of that frustration.
+#'
+#' Tested in test_40ann_biomart.R
+#' As with my other biomart functions, this one grew out of frustrations when attempting to work
+#' with the incredibly unforgiving biomart service.  It does not attempt to guarantee a useful
+#' biomart connection, but will hopefully point out potentially correct marts and attributes to use
+#' for a successful query.  I can say with confidence that it works well between mice and humans.
 #'
 #' @param gene_ids List of gene IDs to translate.
 #' @param first_species Linnean species name for one species.

@@ -142,9 +142,9 @@ test_that("Can we monitor changing significance (up_fc)?", {
 
 ## Ensure that the excel table printer is printing excel tables
 test_keepers <- list("treatment" = c("treated","untreated"))
-combined_excel <- sm(combine_de_tables(hpgl_result, excel="test_excel.xlsx", keepers=test_keepers))
+combined_excel <- sm(combine_de_tables(hpgl_result, excel="excel_test.xlsx", keepers=test_keepers))
 test_that("Does combine_de_tables create an excel file?", {
-    expect_true(file.exists("test_excel.xlsx"))
+    expect_true(file.exists("excel_test.xlsx"))
 })
 
 ## We previously checked that we can successfully combine tables, let us now ensure that plots get created etc.
@@ -186,9 +186,9 @@ test_that("Do we get expected columns from the excel sheet?", {
 })
 
 ## Test that we can extract the significant genes and get pretty graphs
-significant_excel <- sm(extract_significant_genes(combined_excel, excel="test_excel_sig.xlsx"))
+significant_excel <- sm(extract_significant_genes(combined_excel, excel="excel_test_sig.xlsx"))
 test_that("Does combine_de_tables create an excel file?", {
-    expect_true(file.exists("test_excel_sig.xlsx"))
+    expect_true(file.exists("excel_test_sig.xlsx"))
 })
 
 ## How many significant up genes did limma find?
@@ -273,9 +273,6 @@ test_that("Plotting an MA plot from a combined DE table provides logFCs in the c
     expect_equal(expected, actual)
 })
 
-tt <- file.remove("test_excel.xlsx")
-tt <- file.remove("test_excel_sig.xlsx")
-
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 29de_shared.R in ", elapsed,  " seconds."))

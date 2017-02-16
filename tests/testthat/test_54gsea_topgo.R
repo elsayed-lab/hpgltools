@@ -63,5 +63,5 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
 }
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 54gsea_topgo.R in ", elapsed,  " seconds."))

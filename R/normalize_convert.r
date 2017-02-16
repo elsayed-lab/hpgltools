@@ -29,9 +29,10 @@ convert_counts <- function(data, convert="raw", ...) {
         annotations <- Biobase::fData(data)
         count_table <- Biobase::exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
-        count_table <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        ## some functions prefer matrix, so I am keeping this explicit for the moment
+        count_table <- as.data.frame(data)
     } else {
-        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+        stop("This function currently only types: expt, ExpressionSet, data.frame, and matrix.")
     }
     if (convert == "cpm") {
         count_table <- edgeR::cpm(count_table)
@@ -57,7 +58,8 @@ convert_counts <- function(data, convert="raw", ...) {
 
 #' Express a data frame of counts as reads per pattern per million.
 #'
-#' This uses a sequence pattern rather than length to normalize sequence.  It is essentially fancy pants rpkm.
+#' This uses a sequence pattern rather than length to normalize sequence.
+#' It is essentially fancy pants rpkm.
 #'
 #' @param counts Read count matrix.
 #' @param genome Genome to search (fasta/BSgenome).
@@ -108,7 +110,7 @@ divide_seq <- function(counts, genome=NULL, ...) {
         ## These are mislabeled (it seems the most common error is a chromosome names 'chr4' vs. '4'
         annotations[["chromosome"]] <- paste0("chr", annotations[["chromosome"]])
     } else if (hits < length(annotation_seqnames)) {
-        warning("Not all the annotation sequence names were found in the genome, this will probably end badly.")
+        warning("Not all the annotation sequences were found, this will probably end badly.")
     }
 
     annotation_class <- class(annotations)[1]
@@ -213,7 +215,7 @@ hpgl_rpkm <- function(df, ...) {
     colnames(df_in) <- colnames(df)
     df_in[["temporary_id_number"]] <- 1:nrow(df_in)
     merged_annotations <- merge(df_in, annotations, by="row.names", all.x=TRUE)
-    rownames(merged_annotations) <- merged_annotations[,"Row.names"]
+    rownames(merged_annotations) <- merged_annotations[, "Row.names"]
     merged_annotations <- merged_annotations[-1]
     merged_annotations <- merged_annotations[order(merged_annotations[["temporary_id_number"]]), ]
     merged_counts <- merged_annotations[, colnames(merged_annotations) %in% colnames(df) ]
@@ -223,13 +225,13 @@ hpgl_rpkm <- function(df, ...) {
     ## Sometimes I am stupid and call it length...
     lenvec <- NULL
     if (is.null(merged_annot[["width"]])) {
-        lenvec <- as.vector(merged_annot[["length"]])
+        lenvec <- as.vector(as.numeric(merged_annot[["length"]]))
     } else {
-        lenvec <- as.vector(merged_annot[["width"]])
+        lenvec <- as.vector(as.numeric(merged_annot[["width"]]))
     }
     names(lenvec) <- rownames(merged_annot)
     requireNamespace("edgeR")
-    rpkm_df <- edgeR::rpkm(merged_counts, gene.length=lenvec)
+    rpkm_df <- edgeR::rpkm(as.matrix(merged_counts), gene.length=lenvec)
     colnames(rpkm_df) <- colnames(df)
     return(rpkm_df)
 }

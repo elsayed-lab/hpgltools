@@ -56,7 +56,8 @@ hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
 
 ## Check that normalization tools work similarly
 cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
-hpgl_quantile_data <- sm(hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw", filter_low=FALSE))
+hpgl_quantile_data <- sm(hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw",
+                                   filter=FALSE))
 hpgl_quantile <- hpgl_quantile_data[["count_table"]]
 expected <- cbcb_quantile[sort(rownames(cbcb_quantile)), ]
 actual <- hpgl_quantile[sort(rownames(hpgl_quantile)), ]
@@ -78,7 +79,7 @@ test_that("Are quantile() normalizations identical?", {
 })
 
 ## Check that cpm(quantile()) normalizations are identical
-hpgl_qcpm <- sm(hpgl_norm(pasilla_expt, norm="quant", convert="cpm", filter_low=FALSE))
+hpgl_qcpm <- sm(hpgl_norm(pasilla_expt, norm="quant", convert="cpm", filter=FALSE))
 hpgl_qcpm <- hpgl_qcpm[["count_table"]]
 hpgl_qcpm <- hpgl_qcpm[sort(rownames(hpgl_qcpm)), ]
 expected <- cbcb_edger_qcpm
@@ -123,8 +124,8 @@ actual <- hpgl_svd[["d"]]
 test_that("Do calls to svd return the same data d->?", {
     expect_equal(expected, actual)
 })
-expected <- cbcb_res
-actual <- hpgl_res
+expected <- cbcb_res[[1]]
+actual <- hpgl_res[[1]]
 test_that("Do calls to svd return the same residuals?", {
     expect_equal(expected, actual)
 })
@@ -205,5 +206,5 @@ test_that("Limma results, toptable.", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 05cbcbseq.R in ", elapsed, " seconds."))

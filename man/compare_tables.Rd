@@ -24,7 +24,7 @@ compare_tables(limma = NULL, deseq = NULL, edger = NULL, basic = NULL,
 }
 \value{
 Heatmap showing how similar they are along with some
-    correlations betwee the three players.
+ correlations betwee the three players.
 }
 \description{
 limma, DEseq2, and EdgeR all make somewhat different assumptions.
@@ -32,13 +32,16 @@ and choices about what makes a meaningful set of differentially.
 expressed genes.  This seeks to provide a quick and dirty metric
 describing the degree to which they (dis)agree.
 }
-\examples{
-\dontrun{
- l = limma_pairwise(expt)
- d = deseq_pairwise(expt)
- e = edger_pairwise(expt)
- fun = compare_tables(limma=l, deseq=d, edger=e)
+\details{
+Invoked by all_pairwise().
 }
+\examples{
+ \dontrun{
+  l = limma_pairwise(expt)
+  d = deseq_pairwise(expt)
+  e = edger_pairwise(expt)
+  fun = compare_tables(limma=l, deseq=d, edger=e)
+ }
 }
 \seealso{
 \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}

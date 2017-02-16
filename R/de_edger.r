@@ -2,6 +2,19 @@
 #'
 #' This function performs the set of possible pairwise comparisons using EdgeR.
 #'
+#' Tested in test_26de_edger.R
+#' Like the other _pairwise() functions, this attempts to perform all pairwise contrasts in the
+#' provided data set.  The details are of course slightly different when using EdgeR.  Thus, this
+#' uses the function choose_binom_dataset() to try to ensure that the incoming data is appropriate
+#' for EdgeR (if one normalized the data, it will attempt to revert to raw counts, for example).
+#' It continues on to extract the conditions and batches in the data, choose an appropriate
+#' experimental model, and run the EdgeR analyses as described in the manual.  It defaults to using
+#' an experimental batch factor, but will accept a string like 'sva' instead, in which case it will
+#' use sva to estimate the surrogates, and append them to the experimental design.  The edger_method
+#' parameter may be used to apply different EdgeR code paths as outlined in the manual.  If you
+#' want to play with non-standard data, the force argument will round the data and shoe-horn it into
+#' EdgeR.
+#'
 #' @param input Dataframe/vector or expt class containing data, normalization state, etc.
 #' @param conditions Factor of conditions in the experiment.
 #' @param batches Factor of batches in the experiment.
@@ -221,98 +234,24 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     return(final)
 }
 
-#' Writes out the results of a edger search using topTags()
+#' Writes out the results of a edger search using write_de_table()
 #'
-#' However, this will do a couple of things to make one's life easier:
-#' 1.  Make a list of the output, one element for each comparison of the contrast matrix
-#' 2.  Write out the results() output for them in separate .csv files and/or sheets in excel
-#' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+#' Looking to provide a single interface for writing tables from edger and friends.
 #'
-#' @param data Output from topTags().
-#' @param adjust Pvalue adjustment chosen.
-#' @param n Number of entries to report, 0 says do them all.
-#' @param coef Which coefficients/contrasts to report, NULL says do them all.
-#' @param workbook Excel filename into which to write the data.
-#' @param excel Write an excel workbook?
-#' @param csv Write out csv files of the tables?
-#' @param annot_df Optional data frame including annotation information to include with the tables.
-#' @return List of data frames comprising the toptable output for each coefficient, I also added a
-#'     qvalue entry to these toptable() outputs.
-#' @seealso \link[edger]{toptable} \link{write_xls}
+#' Tested in test_26edger.R
+#'
+#' @param data  Output from deseq_pairwise()
+#' @param ...  Options for writing the xlsx file.
+#' @seealso \link[limma]{toptable} \link{write_xls}
 #' @examples
 #' \dontrun{
-#'  finished_comparison = topTags(edger_output)
-#'  data_list = write_edger(finished_comparison, workbook="excel/edger_output.xls")
+#'  finished_comparison <- edger_pairwise(expressionset)
+#'  data_list <- write_edger(finished_comparison)
 #' }
 #' @export
-write_edger <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/edger.xls",
-                       excel=FALSE, csv=FALSE, annot_df=NULL) {
-    testdir <- dirname(workbook)
-
-    ## Figure out the number of genes if not provided
-    if (n == 0) {
-        n <- nrow(data[["coefficients"]])
-    }
-
-    ## If specific contrast(s) is/are not requested, get them all.
-    if (is.null(coef)) {
-        coef <- colnames(data[["contrasts"]])
-    } else {
-        coef <- as.character(coef)
-    }
-    return_data <- list()
-    end <- length(coef)
-    for (c in 1:end) {
-        comparison <- coef[c]
-        message(paste0("Edger step 6/6: ", c, "/", end, ": Creating table: ", comparison, "."))
-        data_table <- edger::topTable(data, adjust=adjust, n=n, coef=comparison)
-        ## Reformat the numbers so they are not so obnoxious
-        ## data_table$logFC <- refnum(data_table$logFC, sci=FALSE)
-        ## data_table$AveExpr <- refnum(data_table$AveExpr, sci=FALSE)
-        ## data_table$t <- refnum(data_table$t, sci=FALSE)
-        ## data_table$P.Value <- refnum(data_table$P.Value)
-        ## data_table$adj.P.Val <- refnum(data_table$adj.P.Val)
-        ## data_table$B <- refnum(data_table$B, sci=FALSE)
-        data_table[["logFC"]] <- signif(x=as.numeric(data_table[["logFC"]]), digits=4)
-        data_table[["AveExpr"]] <- signif(x=as.numeric(data_table[["AveExpr"]]), digits=4)
-        data_table[["t"]] <- signif(x=as.numeric(data_table[["t"]]), digits=4)
-        data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
-        data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
-        data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
-        data_table[["qvalue"]] <- tryCatch({
-            ttmp <- as.numeric(data_table[["P.Value"]])
-            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
-            signif(x=ttmp, digits=4)
-        },
-        error=function(cond) {
-            message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
-            return(1)
-        },
-        finally={
-        })
-        if (!is.null(annot_df)) {
-            data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
-            ###data_table = data_table[-1]
-        }
-        ## This write_xls runs out of memory annoyingly often
-        if (isTRUE(excel) | isTRUE(csv)) {
-            if (!file.exists(testdir)) {
-                dir.create(testdir)
-                message(paste0("Creating directory: ", testdir, " for writing excel/csv data."))
-            }
-        }
-        if (isTRUE(excel)) {
-            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwritefile=TRUE))
-        }
-        ## Therefore I will write a csv of each comparison, too
-        if (isTRUE(csv)) {
-            csv_filename <- gsub(".xls$", "", workbook)
-            csv_filename <- paste0(csv_filename, "_", comparison, ".csv")
-            write.csv(data_table, file=csv_filename)
-        }
-        return_data[[comparison]] <- data_table
-    }
-    return(return_data)
+write_edger <- function(data, ...) {
+    result <- write_de_table(data, type="edger", ...)
+    return(result)
 }
 
 ## EOF

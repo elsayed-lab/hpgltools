@@ -84,5 +84,5 @@ test_that("Pasilla (un)normalized libsize?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end - start), digits=1)
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 10norm_shared.R in ", elapsed, "seconds."))

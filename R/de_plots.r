@@ -118,11 +118,16 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
 #' @param x  The x-axis column to use, either a number of name.
 #' @param y  The y-axis column to use.
 #' @param z  Define the range of genes to color (FIXME: extend this to p-value and fold-change).
+#' @param p  Set a p-value cutoff for coloring the scatter plot (currently not supported).
+#' @param fc  Set a fold-change cutoff for coloring points in the scatter plot (currently not supported.)
+#' @param n  Set a top-n fold-change for coloring the points in the scatter plot (this should work, actually).
+#' @param loess  Add a loess estimation (This is slow.)
 #' @param color_low  Color for the genes less than the mean.
 #' @param color_high  Color for the genes greater than the mean.
 #' @param ...  More arguments are passed to arglist.
 #' @export
 extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1, y=2, z=1.5,
+                                        p=NULL, fc=NULL, n=NULL, loess=FALSE,
                                         color_low="#DD0000", color_high="#7B9F35", ...) {
     arglist <- list(...)
     ## This is an explicit test against all_pairwise() and reduces it to result from type.
@@ -220,13 +225,15 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     }
 
     maxvalue <- max(coefficient_df) + 1.0
-    plot <- sm(plot_linear_scatter(df=coefficient_df, loess=TRUE, gvis_filename=gvis_filename,
+    minvalue <- min(coefficient_df) - 1.0
+    plot <- sm(plot_linear_scatter(df=coefficient_df, loess=loess, gvis_filename=gvis_filename,
                                    gvis_trendline=gvis_trendline, first=xname, second=yname,
                                    tooltip_data=tooltip_data, base_url=base_url,
-                                   pretty_colors=FALSE, color_low=color_low, color_high=color_high))
+                                   pretty_colors=FALSE, color_low=color_low, color_high=color_high,
+                                   p=p, fc=fc, n=n, z=z))
     plot[["scatter"]] <- plot[["scatter"]] +
-        ggplot2::scale_x_continuous(limits=c(0, maxvalue)) +
-        ggplot2::scale_y_continuous(limits=c(0, maxvalue))
+        ggplot2::scale_x_continuous(limits=c(minvalue, maxvalue)) +
+        ggplot2::scale_y_continuous(limits=c(minvalue, maxvalue))
     plot[["df"]] <- coefficient_df
     return(plot)
 }
@@ -238,6 +245,8 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #'
 #' @param table Which table to query?
 #' @param adjp  Use adjusted p-values
+#' @param euler  Perform a euler plot
+#' @param p  p-value cutoff, I forget what for right now.
 #' @param ... More arguments are passed to arglist.
 #' @export
 de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
@@ -308,7 +317,8 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
                                 Weight = c(0, up_d, up_e, up_de,
                                            up_l, up_dl, up_el,
                                            up_del))
-    Vennerable::plot(up_venn, doWeights=FALSE)
+    up_res <- Vennerable::plot(up_venn, doWeights=FALSE)
+    ##up_res <- plot(up_venn, doWeights=FALSE)
     up_venn_noweight <- grDevices::recordPlot()
 
     down_ones <- c("d" = down_d, "e" = down_e, "l" = down_l)
@@ -324,14 +334,15 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
                                   Weight = c(0, down_d, down_e, down_de,
                                              down_l, down_dl, down_el,
                                              down_del))
-    Vennerable::plot(down_venn, doWeights=FALSE)
+    down_res <- Vennerable::plot(down_venn, doWeights=FALSE)
+    ##down_res <- plot(down_venn, doWeights=FALSE)
     down_venn_noweight <- grDevices::recordPlot()
 
     retlist <- list(
-        "up_venneuler" = up_venneuler,
+        "up_venn" = up_venn,
         "up_noweight" = up_venn_noweight,
         "up_data" = comp_up,
-        "down_venneuler" = down_fun,
+        "down_venn" = down_venn,
         "down_noweight" = down_venn_noweight,
         "down_data" = comp_down)
     return(retlist)
@@ -445,6 +456,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #'     followed by 2 fold and 4 fold cutoffs.
 #' @param fc_column  The column in the master-table to use for FC cutoffs.
 #' @param p_type  Adjusted or not?
+#' @param invert  Reverse the order of contrasts for readability?
 #' @param p  Chosen p-value cutoff.
 #' @param z  Choose instead a z-score cutoff.
 #' @param order  Choose a specific order for the plots.
@@ -452,7 +464,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' @param ...  More arguments are passed to arglist.
 #' @export
 significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
-                                 fc_column="limma_logfc", p_type="adj",
+                                 fc_column="limma_logfc", p_type="adj", invert=FALSE,
                                  p=0.05, z=NULL, order=NULL, maximum=NULL, ...) {
     arglist <- list(...)
     sig_lists_up <- list(
@@ -493,7 +505,11 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
             fc_names <- append(fc_names, fc_name)
 
             for (tab in 1:table_length) { ## The table names are shared across methods and ups/downs
-                table_name <- names(fc_sig[[type]][["ups"]])[tab]
+                table_names <- names(fc_sig[[type]][["ups"]])
+                if (isTRUE(invert)) {
+                    table_names <- rev(table_names)
+                }
+                table_name <- table_names[tab]
                 t_up <- nrow(fc_sig[[type]][["ups"]][[table_name]])
                 t_down <- nrow(fc_sig[[type]][["downs"]][[table_name]])
 
@@ -531,7 +547,12 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         mama_bear <- fc_names[[2]]  ## The middle grouping
         baby_bear <- fc_names[[3]]  ## And the smallest grouping
         for (t in 1:table_length) {
-            table_name <- names(sig_lists_up[[type]][[1]])[t]
+            table_names <- names(sig_lists_up[[type]][[1]])
+            if (isTRUE(invert)) {
+                table_names <- rev(table_names)
+            }
+            table_name <- table_names[t]
+            ##table_names <- names(sig_lists_up[[type]][[1]])[t]
             everything_up <- sig_lists_up[[type]][[papa_bear]][[table_name]] ## > 0 lfc
             mid_up <- sig_lists_up[[type]][[mama_bear]][[table_name]] ## > 1 lfc
             exclusive_up <- sig_lists_up[[type]][[baby_bear]][[table_name]] ## > 2 lfc

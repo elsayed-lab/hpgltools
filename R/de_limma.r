@@ -469,7 +469,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     limma_identities <- NULL
     limma_tables <- NULL
     if (isTRUE(model_intercept)) {
-        limma_results <- try(write_limma(all_pairwise_comparisons, excel=FALSE))
+        limma_results <- try(make_limma_tables(all_pairwise_comparisons, excel=FALSE))
         limma_identities <- limma_results[["identities"]]
         limma_tables <- limma_results[["contrasts"]]
     } else {
@@ -578,7 +578,7 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 #'  data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
 #' }
 #' @export
-write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
+make_limma_tables <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
                        excel=FALSE, csv=FALSE, annot_df=NULL) {
     testdir <- dirname(workbook)
     ## Figure out the number of genes if not provided
@@ -647,6 +647,26 @@ write_limma <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limm
         "identities" = return_identities,
         "contrasts" = return_data)
     return(retlist)
+}
+
+#' Writes out the results of a limma search using write_de_table()
+#'
+#' Looking to provide a single interface for writing tables from limma and friends.
+#'
+#' Tested in test_24deseq.R
+#'
+#' @param data  Output from limma_pairwise()
+#' @param ...  Options for writing the xlsx file.
+#' @seealso \link[limma]{toptable} \link{write_xls}
+#' @examples
+#' \dontrun{
+#'  finished_comparison = limma_pairwise(expressionset)
+#'  data_list = write_limma(finished_comparison)
+#' }
+#' @export
+write_limma <- function(data, ...) {
+    result <- write_de_table(data, type="limma", ...)
+    return(result)
 }
 
 ## EOF

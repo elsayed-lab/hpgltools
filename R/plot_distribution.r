@@ -32,7 +32,7 @@
 plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, ...) {
     plot_env <- environment()
     data_class <- class(data)[1]
-    if (data_class == 'expt') {
+    if (data_class == "expt") {
         design <- data[["design"]]
         colors <- data[["colors"]]
         names <- data[["names"]]
@@ -45,23 +45,45 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
+    if (is.null(scale)) {
+        if (max(data) > 10000) {
+            message("This data will benefit from being displayed on the log scale.")
+            message("If this is not desired, set scale='raw'")
+            scale <- "log"
+            negative_idx <- data < 0
+            if (sum(negative_idx) > 0) {
+                message("Some data are negative.  We are on log scale, setting them to 0.5.")
+                data[negative_idx] <- 0.5
+                message(paste0("Changed ", sum(negative_idx), " negative features."))
+            }
+            zero_idx <- data == 0
+            if (sum(zero_idx) > 0) {
+                message("Some entries are 0.  We are on log scale, setting them to 0.5.")
+                data[zero_idx] <- 0.5
+                message(paste0("Changed ", sum(zero_idx), " zero count features."))
+            }
+        } else {
+            scale <- "raw"
+        }
+    }
+
     if (is.null(colors)) {
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(df)[2])
+        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(data)[2])
     }
     data_matrix <- as.matrix(data)
     data[data < 0] <- 0 ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
 
-    data$id <- rownames(data)
+    data[["id"]] <- rownames(data)
     dataframe <- reshape2::melt(data, id=c("id"))
     colnames(dataframe) <- c("gene","variable","value")
     ## The use of data= and aes() leads to no visible binding for global variable warnings
     ## I am not sure what to do about them in this context.
     boxplot <- ggplot2::ggplot(data=dataframe, ggplot2::aes_string(x="variable", y="value")) +
-        suppressWarnings(ggplot2::geom_boxplot(na.rm=TRUE,
-                                               ggplot2::aes_string(fill="variable"),
-                                               fill=colors, size=0.5,
-                                               outlier.size=1.5,
-                                               outlier.colour=ggplot2::alpha("black", 0.2))) +
+        sm(ggplot2::geom_boxplot(na.rm=TRUE,
+                                 ggplot2::aes_string(fill="variable"),
+                                 fill=colors, size=0.5,
+                                 outlier.size=1.5,
+                                 outlier.colour=ggplot2::alpha("black", 0.2))) +
         ggplot2::theme_bw() + ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
         ggplot2::xlab("Sample") + ggplot2::ylab("Per-gene (pseudo)count distribution")
     if (!is.null(title)) {
@@ -71,19 +93,12 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
         boxplot <- boxplot + ggplot2::scale_x_discrete(labels=names)
     }
 
-    if (is.null(scale)) {
-        if (max(data_matrix) > 1000) {
-            message("I am reasonably sure this should be log scaled and am setting it.
-  If this is incorrect, set scale='raw'
-")
-            boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
-        }
-    } else {
-        if (scale == "log") {
-            boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
-        } else if (scale == "logdim") {
-            boxplot <- boxplot + ggplot2::coord_trans(y="log2")
-        }
+    if (scale == "log") {
+        boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+    } else if (scale == "logdim") {
+        boxplot <- boxplot + ggplot2::coord_trans(y="log2")
+    } else if (isTRUE(scale)) {
+        boxplot <- boxplot + ggplot2::scale_y_log10()
     }
     return(boxplot)
 }
@@ -109,8 +124,9 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' }
 #' @export
 plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
-                         fill=NULL, title=NULL, scale=NULL, colors_by="condition") {  ## also position='stack'
-  plot_env <- environment()
+                         fill=NULL, title=NULL, scale=NULL, colors_by="condition") {
+    ## also position='stack'
+    plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
         design <- data[["design"]]
@@ -130,6 +146,18 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
             message("This data will benefit from being displayed on the log scale.")
             message("If this is not desired, set scale='raw'")
             scale <- "log"
+            negative_idx <- data < 0
+            if (sum(negative_idx) > 0) {
+                message("Some data are negative.  We are on log scale, setting them to 0.5.")
+                data[negative_idx] <- 0.5
+                message(paste0("Changed ", sum(negative_idx), " negative features."))
+            }
+            zero_idx <- data == 0
+            if (sum(zero_idx) > 0) {
+                message("Some entries are 0.  We are on log scale, setting them to 0.5.")
+                data[zero_idx] <- 0.5
+                message(paste0("Changed ", sum(zero_idx), " zero count features."))
+            }
         } else {
             scale <- "raw"
         }

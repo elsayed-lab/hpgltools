@@ -1,3 +1,4 @@
+start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 library(pasilla)
@@ -76,4 +77,6 @@ test_that("Did pathview work? (unique mapped nodes)", {
 
 unlink("kegg_pathways", recursive=TRUE)
 
-message("\nFinished 57gsea_kegg.R")
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 57gsea_kegg.R in ", elapsed,  " seconds."))

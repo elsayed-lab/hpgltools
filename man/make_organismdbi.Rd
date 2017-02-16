@@ -5,7 +5,7 @@
 \title{Create an OrganismDbi for a species at the TriTrypDb}
 \usage{
 make_organismdbi(id = "lmajor_friedlin", cfg = NULL,
-  output_dir = "organdb", ...)
+  output_dir = "organismdbi", ...)
 }
 \arguments{
 \item{id}{Unique tritrypdb identifier.}

@@ -4,10 +4,12 @@
 \alias{gbk2txdb}
 \title{Given a genbank accession, make a txDb object along with sequences, etc.}
 \usage{
-gbk2txdb(accession = "AE009949")
+gbk2txdb(accession = "AE009949", savetxdb = FALSE)
 }
 \arguments{
 \item{accession}{Accession to download and import}
+
+\item{savetxdb}{Save a txdb package from this?}
 }
 \value{
 List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
@@ -15,5 +17,10 @@ List containing a txDb, sequences, and some other stuff which I haven't yet fina
 \description{
 Let us admit it, sometimes biomart is a pain.  It also does not have easily accessible data for
 microbes.  Genbank does!
+}
+\details{
+Tested in test_40ann_biomartgenbank.R and test_70expt_spyogenes.R
+This just sets some defaults for the genbankr service in order to facilitate downloading
+genomes and such from genbank and dumping them into a local txdb instance.
 }
 

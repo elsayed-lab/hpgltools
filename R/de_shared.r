@@ -1,28 +1,24 @@
-## An F-test only does inf==uninf && inf==bead
-## So the solution is to separately perform the two subtests and subset for the set of genes for which both are true.
-## However, if you do that, the f-statistics are a little screwey, but there are a few ways to handle it:
-## Perform the two separate tests and perform the following combination of the stat and p-value:
-##    stat = min(|inf-uninf|, |inf-bead|)  (logFC)
-##    ^^pval^^ = max(pval(inf-uninf), pval(inf-beads))
-##    adj.pval = p.adjust(^^pval^^, method='BH')
-## ReportingTools hwriter
-
 #' Perform limma, DESeq2, EdgeR pairwise analyses.
 #'
 #' This takes an expt object, collects the set of all possible pairwise comparisons, sets up
 #' experimental models appropriate for the differential expression analyses, and performs them.
 #'
+#' Tested in test_29de_shared.R
+#' This runs limma_pairwise(), deseq_pairwise(), edger_pairwise(), basic_pairwise() each in turn.
+#' It collects the results and does some simple comparisons among them.
+#'
 #' @param input  Dataframe/vector or expt class containing count tables, normalization state, etc.
 #' @param conditions  Factor of conditions in the experiment.
 #' @param batches  Factor of batches in the experiment.
 #' @param model_cond  Include condition in the model?  This is likely always true.
-#' @param modify_p  Depending on how it is used, sva may require an f-state modification of the p-values.
-#' @param model_batch  Include batch in the model?  This may be true/false/"sva" or other methods supported by          get_model_adjust().
+#' @param modify_p  Depending on how it is used, sva may require a modification of the p-values.
+#' @param model_batch  Include batch in the model?  This may be true/false/"sva" or other methods
+#'  supported by get_model_adjust().
 #' @param model_intercept  Use an intercept model instead of cell means?
 #' @param extra_contrasts  Optional extra contrasts beyone the pairwise comparisons.  This can be
-#'        pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or
-#'        (E/D)/(C/B) then use this with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla =
-#'        (E-D)-A, de_vs_cb = (E-D)-(C-B)".
+#'  pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or
+#'  (E/D)/(C/B) then use this with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla =
+#'  (E-D)-A, de_vs_cb = (E-D)-(C-B)".
 #' @param alt_model  Alternate model to use rather than just condition/batch.
 #' @param libsize  Library size of the original data to help voom().
 #' @param annot_df  Annotations to add to the result tables.
@@ -30,10 +26,10 @@
 #' @param ...  Picks up extra arguments into arglist, currently only passed to write_limma().
 #' @return A list of limma, deseq, edger results.
 #' @examples
-#' \dontrun{
-#'  finished_comparison = eBayes(limma_output)
-#'  data_list = all_pairwise(expt)
-#' }
+#'  \dontrun{
+#'   finished_comparison = eBayes(limma_output)
+#'   data_list = all_pairwise(expt)
+#'  }
 #' @export
 all_pairwise <- function(input=NULL, conditions=NULL,
                          batches=NULL, model_cond=TRUE,
@@ -121,36 +117,39 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     original_pvalues <- NULL
     ## Add in a little work to re-adjust the p-values in the situation where sva was used
     ## For the moment, DO NOT DO THIS BECAUSE YOU ARE TOO STUPID
-    ## Only perform this f adjustment if you modify the data without making limma/deseq/edger aware of the modified model.
-    ## Ergo, if we feed sv_model to this function, then by definition, we do not want to use this function.
+    ## Only perform this f adjustment if you modify the data without making
+    ## limma/deseq/edger aware of the modified model.  Ergo, if we feed sv_model to this
+    ## function, then by definition, we do not want to use this function.
     ## Instead, the opposite is true
-    modified_data <- FALSE  ## Thus we will use modified_data (soon) to note if the data was modified by sva.
+    modified_data <- FALSE  ## Thus we will use modified_data to note the data was modified by sva.
     if (is.null(sv_model) & isTRUE(modified_data)) {
         original_pvalues <- data.table::data.table(rownames=rownames(results[["edger"]][["all_tables"]][[1]]))
         message("Using the f.pvalue() function to modify the returned p-values of deseq/limma/edger.")
-        ## This is from section 5 of the sva manual:  "Adjusting for surrogate values using the f.pvalue function
-        ## The following chunk of code is longer and more complex than I would like.  This is because
-        ## f.pvalue() assumes a pairwise comparison of a data set containing only two experimental factors.
-        ## As a way to provide an example of _how_ to calculate appropriately corrected p-values for surrogate
-        ## factor adjusted models, this is great; but when dealing with actual data, it falls a bit short.
+        ## This is from section 5 of the sva manual:  "Adjusting for surrogate values using the
+        ## f.pvalue function. The following chunk of code is longer and more complex than I would
+        ## like. This is because f.pvalue() assumes a pairwise comparison of a data set containing
+        ## only two experimental factors. As a way to provide an example of _how_ to calculate
+        ## appropriately corrected p-values for surrogate factor adjusted models, this is great;
+        ## but when dealing with actual data, it falls a bit short.
         for (it in 1:length(results[["edger"]][["all_tables"]])) {
             name <- names(results[["edger"]][["all_tables"]])[it]
             message(paste0("Readjusting the p-values for comparison: ", name))
             namelst <- strsplit(x=name, split="_vs_")
-            first <- namelst[[1]][[1]]  ## something like 'mutant'
-            second <- namelst[[1]][[2]]  ## something like 'wildtype', ergo the contrast was "mutant_vs_wildtype"
+            ## something like 'mutant'
+            first <- namelst[[1]][[1]]
+            ## something like 'wildtype', ergo the contrast was "mutant_vs_wildtype"
+            second <- namelst[[1]][[2]]
             ## The comments that follow will use mutant and wildtype as examples
 
             ## I am going to need to extract the set of data for the samples in 'first' and 'second'
             ## I will need to also extract the surrogates for those samples from sv_model
-            ## Then I rewrite null_model as the subset(null_model, samples included)
-            ## and rewrite sv_model as subset(sv_model, samples_included)
-            ## in that rewrite, there will just be conditions a, b where a and b are the subsets for first and second
-            ## Then the sv_model will be a for the first samples and b for the second
-            ## With that information, I should e able to feed sva::f.pvalue the appropriate information
-            ## for it to run properly.
-            ## The resulting pvalues will then be appropriate for backfilling the various tables
-            ## from edger/limma/deseq
+            ## Then I rewrite null_model as the subset(null_model, samples included) and rewrite
+            ## sv_model as subset(sv_model, samples_included) in that rewrite, there will just be
+            ## conditions a, b where a and b are the subsets for first and second. Then the
+            ## sv_model will be a for the first samples and b for the second. With that
+            ## information, I should e able to feed sva::f.pvalue the appropriate information
+            ## for it to run properly. The resulting pvalues will then be appropriate for
+            ## backfilling the various tables from edger/limma/deseq.
 
             ## Get the samples from the limma comparison which are condition 'mutant'
             samples_first_idx <- results[["limma"]][["conditions"]] == first
@@ -165,7 +164,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
             ## Concatenate the 'mutant' and 'wildtype' samples by column
             included_samples <- cbind(samples_first, samples_second)
             ## Arbitrarily call them 'first' and 'second'
-            colnames(included_samples) <- c(rep("first", times=num_first), rep("second", times=num_second))
+            colnames(included_samples) <- c(rep("first", times=num_first),
+                                            rep("second", times=num_second))
             ## Do the same thing, but using the rows of the sva model adjustment
             first_sva <- sv_model[samples_first_idx, ]
             second_sva <- sv_model[samples_second_idx, ]
@@ -273,6 +273,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' consistent and useful model for all for them.  This does not try to do multi-factor, interacting,
 #' nor dependent variable models, if you want those do them yourself and pass them off as alt_model.
 #'
+#' Invoked by the _pairwise() functions.
+#'
 #' @param input  Input data used to make the model.
 #' @param conditions  Factor of conditions in the putative model.
 #' @param batches  Factor of batches in the putative model.
@@ -283,7 +285,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' @param alt_string  String describing an alternate model.
 #' @param intercept  Choose an intercept for the model as opposed to 0.
 #' @param reverse  Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
-#'     to test.
+#'  to test.
 #' @param surrogates  Number of or method used to choose the number of surrogate variables.
 #' @param ...  Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
@@ -301,17 +303,21 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
     ## It would be much smarter to generate the models in the following if() {} blocks
     ## But I have it in my head to eventually compare results using different models.
     cond_int_string <- "~ 0 + condition"
-    cond_int_model <- stats::model.matrix(~ 0 + conditions, contrasts.arg=list(conditions="contr.treatment"))
+    cond_int_model <- stats::model.matrix(~ 0 + conditions,
+                                          contrasts.arg=list(conditions="contr.treatment"))
     batch_int_string <- "~ 0 + batch"
-    batch_int_model <- try(stats::model.matrix(~ 0 + batches, contrasts.arg=list(batches="contr.treatment")),
+    batch_int_model <- try(stats::model.matrix(~ 0 + batches,
+                                               contrasts.arg=list(batches="contr.treatment")),
                            silent=TRUE)
     condbatch_int_string <- "~ 0 + condition + batch"
     condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
-                                                   contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                                                   contrasts.arg=list(conditions="contr.treatment",
+                                                                      batches="contr.treatment")),
                                silent=TRUE)
     batchcond_int_string <- "~ 0 + batch + condition"
     batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions,
-                                                   contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                                                   contrasts.arg=list(conditions="contr.treatment",
+                                                                      batches="contr.treatment")),
                                silent=TRUE)
     cond_noint_string <- "~ condition"
     cond_noint_model <- try(stats::model.matrix(~ conditions,
@@ -323,11 +329,13 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
                              silent=TRUE)
     condbatch_noint_string <- "~ condition + batch"
     condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches,
-                                                     contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                                                     contrasts.arg=list(conditions="contr.treatment",
+                                                                        batches="contr.treatment")),
                                  silent=TRUE)
     batchcond_noint_string <- "~ batch + condition"
     batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions,
-                                                     contrasts.arg=list(conditions="contr.treatment", batches="contr.treatment")),
+                                                     contrasts.arg=list(conditions="contr.treatment",
+                                                                        batches="contr.treatment")),
                                  silent=TRUE)
     noint_model <- NULL
     int_model <- NULL
@@ -410,8 +418,8 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
     tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
     tmpnames <- gsub("-", "", tmpnames)
     tmpnames <- gsub("+", "", tmpnames)
-    ## The next lines ensure that conditions/batches which are all numeric will not cause weird errors for contrasts
-    ## Ergo, if a condition is something like '111', now it will be 'c111'
+    ## The next lines ensure that conditions/batches which are all numeric will not cause weird
+    ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
     ## Similarly, a batch '01' will be 'b01'
     tmpnames <- gsub("^conditions(\\d+)$", replacement="c\\1", x=tmpnames)
     tmpnames <- gsub("^batches(\\d+)$", replacement="b\\1", x=tmpnames)
@@ -423,8 +431,8 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
     tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
     tmpnames <- gsub("-", "", tmpnames)
     tmpnames <- gsub("+", "", tmpnames)
-    ## The next lines ensure that conditions/batches which are all numeric will not cause weird errors for contrasts
-    ## Ergo, if a condition is something like '111', now it will be 'c111'
+    ## The next lines ensure that conditions/batches which are all numeric will not cause weird
+    ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
     ## Similarly, a batch '01' will be 'b01'
     tmpnames <- gsub("conditions^(\\d+)$", replacement="c\\1", x=tmpnames)
     tmpnames <- gsub("batches^(\\d+)$", replacement="b\\1", x=tmpnames)
@@ -465,6 +473,8 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
 #'
 #' The _pairwise family of functions all demand data in specific formats.
 #' This tries to make that consistent.
+#'
+#' Invoked by _pairwise().
 #'
 #' @param input  Expt input.
 #' @param force  Force non-standard data?
@@ -508,17 +518,19 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     data <- NULL
     warn_user <- 0
     libsize <- NULL
-    ## It turns out, a more careful examination of how normalization affects the results,
-    ## the above seems only to be true if the following are true:
+    ## It turns out, a more careful examination of how normalization affects the results, the above
+    ## seems only to be true if the following are true:
     ## 1.  There are >2-3k features(genes/transcripts) with a full range of count values.
-    ## 2.  One does not attempt to use sva, or at least one uses sva before messing with the normalization state.
-    ## 2a. #2 primarily applies if one is using quantile normalization, it looks like tmm/rle does not have
-    ##     so profound an effect, and this effect is tightly bound with the state of #1 -- in other words, if
-    ##     one has nice dense data with low->high counts in an even distribution, then quantile+sva might be ok.
-    ##     But if that is not true, then one should expect a poo-show result.
-    ## For these reasons I am telling this function to revert to non-normalized data unless force is on, just like
-    ## I do for edger/deseq.  I think to help this, I will add a parameter which allows one to to turn on/off normalization
-    ## at the voom() step.
+    ## 2.  One does not attempt to use sva, or at least one uses sva before messing with the
+    ##     normalization state.
+    ## 2a. #2 primarily applies if one is using quantile normalization, it looks like tmm/rle
+    ##     does not have so profound an effect, and this effect is tightly bound with the state of
+    ##     #1 -- in other words, if one has nice dense data with low->high counts in an even
+    ##     distribution, then quantile+sva might be ok. But if that is not true, then one should
+    ##     expect a poo-show result.
+    ## For these reasons I am telling this function to revert to non-normalized data unless force
+    ## is on, just like I do for edger/deseq.  I think to help this, I will add a parameter which
+    ## allows one to to turn on/off normalization at the voom() step.
 
     if (input_class == "expt") {
         conditions <- input[["conditions"]]
@@ -582,6 +594,8 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 #'
 #' Take an expt and poke at it to ensure that it will not result in troubled results.
 #'
+#' Invoked by deseq_pairwise() and edger_pairwise().
+#'
 #' @param input Expressionset containing expt object.
 #' @param force Ignore every warning and just use this data.
 #' @param ... Extra arguments passed to arglist.
@@ -589,7 +603,8 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 choose_binom_dataset <- function(input, force=FALSE, ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
-    ## I think I would like to make this function smarter so that it will remove the log2 from transformed data.
+    ## I think I would like to make this function smarter so that it will remove the log2 from
+    ## transformed data.
     data <- NULL
     warn_user <- 0
     if (input_class == "expt") {
@@ -634,10 +649,10 @@ like me, want to see what happens when you put non-standard data into deseq, the
             ## These if statements may be insufficient to check for the appropriate input for deseq.
             data <- Biobase::exprs(input[["original_expressionset"]])
         } else if (norm_state != "raw" | tran_state != "raw") {
-            ## This makes use of the fact that the order of operations in the normalization function is static.
-            ## filter->normalization->convert->batch->transform.
-            ## Thus, if the normalized state is not raw, we can look back either to the filtered or original data
-            ## The same is true for the transformation state.
+            ## This makes use of the fact that the order of operations in the normalization
+            ## function is static. filter->normalization->convert->batch->transform.
+            ## Thus, if the normalized state is not raw, we can look back either to the filtered
+            ## or original data. The same is true for the transformation state.
             message("EdgeR/DESeq expect raw data as input, reverting to the count filtered data.")
             data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
             if (is.null(data)) {
@@ -668,6 +683,8 @@ like me, want to see what happens when you put non-standard data into deseq, the
 #' expressed genes.  This seeks to provide a quick and dirty metric
 #' describing the degree to which they (dis)agree.
 #'
+#' Invoked by all_pairwise().
+#'
 #' @param limma Data from limma_pairwise().
 #' @param deseq Data from deseq2_pairwise().
 #' @param edger Data from edger_pairwise().
@@ -676,15 +693,15 @@ like me, want to see what happens when you put non-standard data into deseq, the
 #' @param annot_df Include annotation data?
 #' @param ... More options!
 #' @return Heatmap showing how similar they are along with some
-#'     correlations betwee the three players.
+#'  correlations betwee the three players.
 #' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
 #' @examples
-#' \dontrun{
-#'  l = limma_pairwise(expt)
-#'  d = deseq_pairwise(expt)
-#'  e = edger_pairwise(expt)
-#'  fun = compare_tables(limma=l, deseq=d, edger=e)
-#' }
+#'  \dontrun{
+#'   l = limma_pairwise(expt)
+#'   d = deseq_pairwise(expt)
+#'   e = edger_pairwise(expt)
+#'   fun = compare_tables(limma=l, deseq=d, edger=e)
+#'  }
 #' @export
 compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
                            include_basic=TRUE, annot_df=NULL, ...) {
@@ -721,37 +738,37 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         d <- data.frame(deseq[[comp]])
         b <- data.frame(basic[[comp]])
         le <- merge(l, e, by.x="row.names", by.y="row.names")
-        le <- le[,c("logFC.x","logFC.y")]
+        le <- le[,c("logFC.x", "logFC.y")]
         colnames(le) <- c("limma logFC", "edgeR logFC")
         lec <- stats::cor.test(x=le[, 1], y=le[, 2])[["estimate"]]
         les <- plot_scatter(le) + ggplot2::labs(title=paste0(comp, ": limma vs. edgeR.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         ld <- merge(l, d, by.x="row.names", by.y="row.names")
-        ld <- ld[, c("logFC.x","logFC.y")]
+        ld <- ld[, c("logFC.x", "logFC.y")]
         colnames(ld) <- c("limma logFC", "DESeq2 logFC")
         ldc <- stats::cor.test(ld[,1], ld[,2])[["estimate"]]
         lds <- plot_scatter(ld) + ggplot2::labs(title=paste0(comp, ": limma vs. DESeq2.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         lb <- merge(l, b, by.x="row.names", by.y="row.names")
-        lb <- lb[, c("logFC.x","logFC.y")]
+        lb <- lb[, c("logFC.x", "logFC.y")]
         colnames(lb) <- c("limma logFC", "basic logFC")
         lbc <- stats::cor.test(lb[,1], lb[,2])[["estimate"]]
         lbs <- plot_scatter(lb) + ggplot2::labs(title=paste0(comp, ": limma vs. basic.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         ed <- merge(e, d, by.x="row.names", by.y="row.names")
-        ed <- ed[, c("logFC.x","logFC.y")]
+        ed <- ed[, c("logFC.x", "logFC.y")]
         colnames(ed) <- c("edgeR logFC", "DESeq2 logFC")
         edc <- stats::cor.test(ed[,1], ed[,2])[["estimate"]]
         eds <- plot_scatter(ed) + ggplot2::labs(title=paste0(comp, ": edgeR vs. DESeq2.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         eb <- merge(e, b, by.x="row.names", by.y="row.names")
-        eb <- eb[, c("logFC.x","logFC.y")]
+        eb <- eb[, c("logFC.x", "logFC.y")]
         colnames(eb) <- c("edgeR logFC", "basic logFC")
         ebc <- stats::cor.test(eb[,1], eb[,2])[["estimate"]]
         ebs <- plot_scatter(eb) + ggplot2::labs(title=paste0(comp, ": edgeR vs. basic.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         db <- merge(d, b, by.x="row.names", by.y="row.names")
-        db <- db[, c("logFC.x","logFC.y")]
+        db <- db[, c("logFC.x", "logFC.y")]
         colnames(db) <- c("DESeq2 logFC", "basic logFC")
         dbc <- stats::cor.test(db[,1], db[,2])[["estimate"]]
         dbs <- plot_scatter(db) +
@@ -803,7 +820,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
                                         Rowv=FALSE, Colv=FALSE,
                                         main="Compare DE tools"), silent=TRUE)
     heat <- NULL
-    if (class(comparison_heatmap) != 'try-error') {
+    if (class(comparison_heatmap) != "try-error") {
         heat <- recordPlot()
     }
     ret <- list(
@@ -827,6 +844,8 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
 #' Compare logFC values from limma and friends
 #'
 #' There are some peculiar discrepencies among these tools, what is up with that?
+#'
+#' Invoked by combine_de_tables() in order to compare the results.
 #'
 #' @param combined_tables The combined tables from limma et al.
 #' @return Some plots
@@ -883,6 +902,8 @@ disjunct_pvalues <- function(contrast_fit, coef1, coef2, ...) {
 #'
 #' I want to multithread my pairwise comparisons, this is the first step in doing so.
 #'
+#' Used to make parallel operations easier.
+#'
 #' @param type  Which type of pairwise comparison to perform
 #' @param ...  The set of arguments intended for limma_pairwise(), edger_pairwise(), and friends.
 #' @return The result from limma/deseq/edger/basic
@@ -903,6 +924,97 @@ do_pairwise <- function(type, ...) {
     return(res)
 }
 
+#' Find the set of most/least abundant genes according to limma and friends following a
+#' differential expression analysis.
+#'
+#' Given a data set provided by limma, deseq, edger, etc; one might want to know what are the
+#' most and least abundant genes, much like get_sig_genes() does to find the most significantly
+#' different genes for each contrast.
+#'
+#' @param datum  Output from the _pairwise() functions.
+#' @param type  Extract abundant genes according to what?
+#' @param n  Perhaps take just the top/bottom n genes.
+#' @param z  Or take genes past a given z-score.
+#' @param unique  Unimplemented: take only the genes unique among the conditions surveyed.
+#' @param least  When true, this finds the least abundant rather than most.
+#' @return  List of data frames containing the genes of interest.
+#' @export
+get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE, least=FALSE) {
+    if (is.null(z) & is.null(n)) {
+        n <- 100
+    }
+
+    ## Extract the coefficent df
+    if (type == "edger") {
+        ## In this case of edger, this can be a little tricky.
+        ## I should probably therefore improve the returns from edger_pairwise()
+        coefficient_df <- datum[["lrt"]][[1]][["coefficients"]]
+        if (max(coefficient_df) <= 0) {
+            coefficient_df <- coefficient_df * -1.0
+        }
+        ## There are a couple of extraneous columns in this table.
+        removers <- c("b","z")
+        keepers <- !(colnames(coefficient_df) %in% removers)
+        coefficient_df <- coefficient_df[, keepers]
+    } else if (type == "limma") {
+        coefficient_df <- datum[["pairwise_comparisons"]][["coefficients"]]
+        all_coefficients <- colnames(coefficient_df)
+        keepers <- !grepl(pattern="_vs_", x=all_coefficients)
+        coefficient_df <- coefficient_df[, keepers]
+    } else if (type == "deseq") {
+        coefficient_df <- NULL
+        coef_names <- names(datum[["coefficients"]])
+        coef_rows <- rownames(datum[["coefficients"]][[1]])
+        coef_list <- NULL
+        for (contrast_num in 1:length(coef_names)) {
+            name <- coef_names[[contrast_num]]
+            tmpdf <- datum[["coefficients"]][[name]]
+            tmpdf[["new"]] <- log2(as.numeric(tmpdf[["baseMean"]])) + tmpdf[["log2FoldChange"]]
+            if (contrast_num == 1) {
+                coefficient_df <- as.data.frame(tmpdf[["new"]])
+                coefficient_df <- as.matrix(coefficient_df)
+            } else {
+                coefficient_df <- cbind(coefficient_df, tmpdf[["new"]])
+            }
+        }
+        coefficient_df <- as.data.frame(coefficient_df)
+        colnames(coefficient_df) <- coef_names
+        rownames(coefficient_df) <- coef_rows
+    } else if (type == "basic") {
+        coefficient_df <- datum[["medians"]]
+    }
+
+    abundant_list <- list()
+    coefficient_df <- as.data.frame(coefficient_df)
+    coefficients <- colnames(coefficient_df)
+    coefficient_rows <- rownames(coefficient_df)
+    coef_ordered <- NULL
+    for (coef in coefficients) {
+        if (isTRUE(least)) {
+            coef_ordered <- coefficient_df[order(coefficient_df[[coef]], decreasing=FALSE), ][[coef]]
+        } else {
+            coef_ordered <- coefficient_df[order(coefficient_df[[coef]], decreasing=TRUE), ][[coef]]
+        }
+        names(coef_ordered) <- coefficient_rows
+        kept_rows <- NULL
+        if (is.null(n)) {  ## Then do it on a z-score
+            tmp_summary <- summary(coef_ordered)
+            tmp_mad <- stats::mad(as.numeric(coef_ordered, na.rm=TRUE))
+            tmp_up_median_dist <- tmp_summary["Median"] + (tmp_mad * z)
+            tmp_down_median_dist <- tmp_summary["Median"] - (tmp_mad * z)
+            if (isTRUE(least)) {
+                kept_rows <- coef_ordered[coef_ordered <= tmp_down_median_dist]
+            } else {
+                kept_rows <- coef_ordered[coef_ordered >= tmp_up_median_dist]
+            }
+            abundant_list[[coef]] <- kept_rows
+        } else {  ## Then do it in a number of rows
+            abundant_list[[coef]] <- head(coef_ordered, n=n)
+        }
+    }
+    return(abundant_list)
+}
+
 #' Get a set of up/down differentially expressed genes.
 #'
 #' Take one or more criteria (fold change, rank order, (adj)p-value,
@@ -910,15 +1022,17 @@ do_pairwise <- function(type, ...) {
 #' which are defined as 'differentially expressed.'  If no criteria
 #' are provided, it arbitrarily chooses all genes outside of 1-z.
 #'
+#' Tested in test_29de_shared.R
+#'
 #' @param table Table from limma/edger/deseq.
 #' @param n Rank-order top/bottom number of genes to take.
 #' @param z Number of z-scores >/< the median to take.
 #' @param fc Fold-change cutoff.
 #' @param p P-value cutoff.
 #' @param fold Identifier reminding how to get the bottom portion of a
-#'     fold-change (plusminus says to get the negative of the
-#'     positive, otherwise 1/positive is taken).  This effectively
-#'     tells me if this is a log fold change or not.
+#'  fold-change (plusminus says to get the negative of the
+#'  positive, otherwise 1/positive is taken).  This effectively
+#'  tells me if this is a log fold change or not.
 #' @param column Table's column used to distinguish top vs. bottom.
 #' @param p_column Table's column containing (adjusted or not)p-values.
 #' @return Subset of the up/down genes given the provided criteria.
@@ -1013,49 +1127,13 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
     return(ret)
 }
 
-#' Small hack of limma's exampleData() to allow for arbitrary data set
-#' sizes.
-#'
-#' exampleData has a set number of genes/samples it creates. This
-#' relaxes that restriction.
-#'
-#' @param ngenes How many genes in the fictional data set?
-#' @param columns How many samples in this data set?
-#' @return Matrix of pretend counts.
-#' @seealso \pkg{limma}
-#' @examples
-#' \dontrun{
-#'  pretend = make_exampledata()
-#' }
-#' @export
-make_exampledata <- function (ngenes=1000, columns=5) {
-    q0 <- stats::rexp(ngenes, rate = 1/250)
-    is_DE <- stats::runif(ngenes) < 0.3
-    lfc <- stats::rnorm(ngenes, sd = 2)
-    q0A <- ifelse(is_DE, q0 * 2^(lfc / 2), q0)
-    q0B <- ifelse(is_DE, q0 * 2^(-lfc / 2), q0)
-    ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
-    true_sf <- abs(stats::rnorm(columns, mean=1, sd=0.4))
-    cond_types <- ceiling(sqrt(columns))
-    ##    conds <- c("A", "A", "B", "B", "B")
-    ##x <- sample( LETTERS[1:4], 10000, replace=TRUE, prob=c(0.1, 0.2, 0.65, 0.05) )
-    conds <- sample(LETTERS[1:cond_types], columns, replace=TRUE)
-    m <- t(sapply(seq_len(ngenes),
-                  function(i) sapply(1:columns,
-                                     function(j) rnbinom(1,
-                                                         mu = true_sf[j] * ifelse(conds[j] == "A",
-                                                                                  q0A[i], q0B[i]),
-                                                         size = 1/0.2))))
-    rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
-    example <- DESeq::newCountDataSet(m, conds)
-    return(example)
-}
-
 #' Run makeContrasts() with all pairwise comparisons.
 #'
 #' In order to have uniformly consistent pairwise contrasts, I decided
 #' to avoid potential human erors(sic) by having a function generate
 #' all contrasts.
+#'
+#' Invoked by the _pairwise() functions.
 #'
 #' @param model  Describe the conditions/batches/etc in the experiment.
 #' @param conditions  Factor of conditions in the experiment.
@@ -1065,16 +1143,19 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 #'  need to be set to FALSE, but just in case.
 #' @param extra_contrasts Optional string of extra contrasts to include.
 #' @return List including the following information:
-#'  all_pairwise_contrasts = the result from makeContrasts(...)
-#'  identities = the string identifying each condition alone
-#'  all_pairwise = the string identifying each pairwise comparison alone
-#'  contrast_string = the string passed to R to call makeContrasts(...)
-#'  names = the names given to the identities/contrasts
-#' @seealso \link[limma]{makeContrasts}
+#'  \enumerate{
+#'   \item all_pairwise_contrasts = the result from makeContrasts(...)
+#'   \item identities = the string identifying each condition alone
+#'   \item all_pairwise = the string identifying each pairwise comparison alone
+#'   \item contrast_string = the string passed to R to call makeContrasts(...)
+#'   \item names = the names given to the identities/contrasts
+#'  }
+#' @seealso
+#'  \link[limma]{makeContrasts}
 #' @examples
-#' \dontrun{
-#'  pretend = make_pairwise_contrasts(model, conditions)
-#' }
+#'  \dontrun{
+#'   pretend = make_pairwise_contrasts(model, conditions)
+#'  }
 #' @export
 make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
                                     do_pairwise=TRUE, extra_contrasts=NULL) {
@@ -1141,12 +1222,6 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
         }
         names(eval_strings) <- eval_names
     }
-    ## for (f in 1:length(eval_strings)) {
-    ##     eval_name = names(eval_strings[f])
-    ##     message(paste("Setting ", eval_name, " with expression:<<", eval_strings[f], ">>", sep=""))
-    ##     eval(parse(text=as.character(eval_strings[f])))
-    ## }
-    ## Now we have bob=(somestuff) in memory in R's environment
     ## Add them to makeContrasts()
     contrast_string <- paste0("all_pairwise_contrasts = limma::makeContrasts(")
     for (f in 1:length(eval_strings)) {
@@ -1179,6 +1254,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 #' these genes, our sequence based removal methods fail and so this
 #' just excludes them by name.
 #'
+#' Currently untested, used for Trypanosome analyses primarily, thus the default strings.
+#'
 #' @param de_list  List of sets of genes deemed significantly
 #'  up/down with a column expressing approximate count numbers.
 #' @param max_copies  Keep only those genes with <= n putative
@@ -1190,29 +1267,28 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 #' @return Smaller list of up/down genes.
 #' @export
 semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
-                                       semantic=c('mucin','sialidase','RHS','MASP','DGF'),
+                                       semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
                                        semantic_column='1.tooltip') {
-    removed_up <- list()
-    removed_down <- list()
     table_type <- "significance"
     if (!is.null(de_list[["data"]])) {
         table_type <- "combined"
     }
 
     table_list <- NULL
-    up_to_down <- 0
     if (table_type == "combined") {
         table_list <- de_list[["data"]]
     } else {
+        ## The set of significance tables will be 2x the number of contrasts
+        ## Therefore, when we get to > 1x the number of contrasts, all the tables will be 'down'
         table_list <- c(de_list[["ups"]], de_list[["downs"]])
         up_to_down <- length(de_list[["ups"]])
     }
 
-    removed <- list()
+    numbers_removed <- list()
     for (count in 1:length(table_list)) {
         tab <- table_list[[count]]
         table_name <- names(table_list)[[count]]
-        removed[[table_name]] <- list()
+        numbers_removed[[table_name]] <- list()
         message(paste0("Working on ", table_name))
         if (isTRUE(use_files)) {
             file <- ""
@@ -1222,7 +1298,7 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
                 file <- paste0("singletons/gene_counts/up_", table_name, ".fasta.out.count")
             }
             tmpdf <- try(read.table(file), silent=TRUE)
-            if (class(tmpdf) == 'data.frame') {
+            if (class(tmpdf) == "data.frame") {
                 colnames(tmpdf) = c("ID", "members")
                 tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
                 rownames(tab) <- tab[["Row.names"]]
@@ -1230,44 +1306,126 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
                 tab <- tab[count <= max_copies, ]
             }
         }  ## End using empirically defined groups of multi-gene families.
+
+        ## Now remove genes by name.
+        kept_list <- new_table <- NULL
         for (string in semantic) {
-            idx <- grep(pattern=string, x=tab[, semantic_column])
+            pre_remove_size <- nrow(tab)
+            idx <- grep(pattern=string, x=tab[, semantic_column], invert=invert)
             num_removed <- length(idx)
-            removed[[table_name]][[string]] <- num_removed
+            numbers_removed[[table_name]][[string]] <- num_removed
             if (num_removed > 0) {
                 tab <- tab[-idx, ]
-                message(paste0("Removing entries with string ", string,
-                               ", found ", num_removed, "; table has ", nrow(tab),  " rows left."))
+                type <- "Removed"
+                table_list[[count]] <- tab
+
+                message(paste0("Table started with: ", pre_remove_size, ". ", type,
+                               " entries with string ", string,
+                               ", found ", num_removed, "; table has ",
+                               nrow(tab),  " rows left."))
             } else {
                 message("Found no entries of type ", string, ".")
             }
+        } ## End of the foreach semantic thing to remove
+    } ## End of for each table
+
+    ## Now recreate the original table lists as either de talbes or significance.
+    if (table_type == "combined") {
+        for (count in 1:length(table_list)) {
+            de_list[["data"]][[count]] <- table_list[[count]]
         }
-        if (table_type == "combined") {
-            de_list[["data"]][[count]] <- tab
+    } else {  ## Then it is a set of significance tables.
+        if (count <= up_to_down) {
+            de_list[["ups"]][[count]] <- table_list[[count]]
         } else {
-            if (count <= up_to_down) {
-                de_list[["ups"]][[count]] <- tab
+            de_list[["downs"]][[count]] <- table_list[[count]]
+        }
+    }
+    ## Now the tables should be reconstructed.
+    de_list[["numbers_removed"]] <- numbers_removed
+    return(de_list)
+}
+
+
+#' Extract multicopy genes from up/down gene expression lists.
+#'
+#' The function semantic_copynumber_filter() is the inverse of this.
+#'
+#' Currently untested, used for Trypanosome analyses primarily, thus the default strings.
+#'
+#' @param de_list  List of sets of genes deemed significantly
+#'  up/down with a column expressing approximate count numbers.
+#' @param max_copies  Keep only those genes with <= n putative
+#'  copies.
+#' @param semantic  Set of strings with gene names to exclude.
+#' @param semantic_column  Column in the DE table used to find the
+#'  semantic strings for removal.
+#' @return Smaller list of up/down genes.
+#' @export
+semantic_copynumber_extract <- function(de_list, min_copies=2,
+                                        semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
+                                        semantic_column='1.tooltip') {
+    table_type <- "significance"
+    if (!is.null(de_list[["data"]])) {
+        table_type <- "combined"
+    }
+
+    table_list <- NULL
+    if (table_type == "combined") {
+        table_list <- de_list[["data"]]
+    } else {
+        ## The set of significance tables will be 2x the number of contrasts
+        ## Therefore, when we get to > 1x the number of contrasts, all the tables will be 'down'
+        table_list <- c(de_list[["ups"]], de_list[["downs"]])
+        up_to_down <- length(de_list[["ups"]])
+    }
+
+    numbers_found <- list()
+    for (count in 1:length(table_list)) {
+        tab <- table_list[[count]]
+        table_name <- names(table_list)[[count]]
+        numbers_found[[table_name]] <- list()
+        message(paste0("Working on ", table_name))
+        ## Now remove genes by name.
+        kept_list <- new_table <- NULL
+        for (string in semantic) {
+            pre_remove_size <- nrow(tab)
+            ## idx <- grep(pattern=string, x=tab[, semantic_column], invert=TRUE)
+            idx <- grep(pattern=string, x=tab[, semantic_column], invert=FALSE)
+            num_found <- length(idx)
+            numbers_found[[table_name]][[string]] <- num_found
+            if (num_found > 0) {
+                type <- "Kept"
+                kept_list[[string]] <- tab
+                message(paste0("Table started with: ", pre_remove_size, ". ", type,
+                               " entries with string ", string,
+                               ", found ", num_found, "."))
             } else {
-                de_list[["downs"]][[count]] <- tab
+                message("Found no entries of type ", string, ".")
+            }
+        } ## End of the foreach semantic thing to remove
+        table_list[[table_name]] <- kept_list
+    } ## End of for each table
+
+    ## Now recreate the original table lists as either de tables or significance.
+    if (table_type == "combined") {
+        for (count in 1:length(table_list)) {
+            table_name <- names(table_list)[[count]]
+            de_list[["data"]][[table_name]] <- table_list[[table_name]]
+        }
+    }
+    else {  ## Then it is a set of significance tables.
+        for (count in 1:length(table_list)) {
+            table_name <- names(table_list)[[count]]
+            if (count <= up_to_down) {
+                de_list[["ups"]][[count]] <- table_list[[count]]
+            } else {
+                de_list[["downs"]][[count]] <- table_list[[count]]
             }
         }
     }
-    if (table_type == "significance") {
-        new_removed <- list()
-        for (count in 1:length(removed)) {
-            old_name <- names(removed)[[count]]
-            new_name <- NULL
-            if (count <= up_to_down) {
-                new_name <- paste0("up_", old_name)
-            } else {
-                new_name <- paste0("down_", old_name)
-            }
-            new_removed[[new_name]] <- removed[[old_name]]
-        }
-        removed <- new_removed
-        rm(new_removed)
-    }
-    de_list[["removed"]] <- removed
+
+    de_list[["numbers_found"]] <- numbers_found
     return(de_list)
 }
 
