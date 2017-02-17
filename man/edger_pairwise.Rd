@@ -69,10 +69,6 @@ EdgeR.
 }
 }
 \seealso{
-\pkg{edgeR} \code{\link[edgeR]{topTags}} \code{\link[edgeR]{glmLRT}}
-  \code{\link{make_pairwise_contrasts}} \code{\link[edgeR]{DGEList}}
-  \code{\link[edgeR]{calcNormFactors}} \code{\link[edgeR]{estimateTagwiseDisp}}
-  \code{\link[edgeR]{estimateCommonDisp}} \code{\link[edgeR]{estimateGLMCommonDisp}}
-  \code{\link[edgeR]{estimateGLMTrendedDisp}} \code{\link[edgeR]{glmFit}}
+\pkg{edgeR}
 }
 

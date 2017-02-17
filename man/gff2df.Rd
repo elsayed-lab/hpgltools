@@ -32,10 +32,10 @@ sometimes those functions fail in unpredictable ways.
 }
 \examples{
 \dontrun{
-funkytown <- gff2df('reference/gff/saccharomyces_cerevsiae.gff.xz')
+ funkytown <- gff2df('reference/gff/saccharomyces_cerevsiae.gff.xz')
 }
 }
 \seealso{
-\pkg{rtracklayer} \link[rtracklayer]{import.gff} \link[rtracklayer]{import.gff2} \link[rtracklayer]{import.gff3}
+\pkg{rtracklayer} \pkg{GenomicRanges}
 }
 

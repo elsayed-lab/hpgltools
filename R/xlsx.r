@@ -14,7 +14,7 @@
 #' @param ...  Set of extra arguments given to openxlsx.
 #' @return List containing the sheet and workbook written as well as the bottom-right coordinates of
 #'  the last row/column written to the worksheet.
-#' @seealso \pkg{openxlsx} \link[openxlsx]{writeDataTable}
+#' @seealso \pkg{openxlsx}
 #' @examples
 #'  \dontrun{
 #'   xls_coords <- write_xls(dataframe, sheet="hpgl_data")

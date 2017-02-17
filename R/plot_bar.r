@@ -57,10 +57,11 @@ plot_libsize <- function(data, colors=NULL,
     }
 
     colors <- as.character(colors)
-    libsize_df <- data.frame(id=colnames(data),
-                             sum=colSums(data),
-                             condition=design[["condition"]],
-                             colors=as.character(colors))
+    libsize_df <- data.frame(
+        "id" = colnames(data),
+        "sum" = colSums(data),
+        "condition" = design[["condition"]],
+        "colors" = as.character(colors))
     libsize_df[["order"]] <- factor(libsize_df[["id"]], as.character(libsize_df[["id"]]))
 
     color_listing <- libsize_df[, c("condition","colors")]
@@ -207,13 +208,24 @@ plot_rpm = function(input, workdir="images", output="01.svg", name="LmjF.01.0010
 #' @param downs  Set of down-regulated genes.
 #' @param maximum  Maximum/minimum number of genes to display.
 #' @param text  Add text at the ends of the bars describing the number of genes >/< 0 fc.
+#' @param invert  Flip the order of the included material for readability?
 #' @param color_list  Set of colors to use for the bars.
 #' @param color_names  Categories associated with aforementioned colors.
-plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
+plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE, invert=FALSE,
                                  color_list=c("lightcyan", "lightskyblue", "dodgerblue",
-                                                 "plum1", "orchid", "purple4"),
+                                              "plum1", "orchid", "purple4"),
                                  color_names=c("a_up_inner", "b_up_middle", "c_up_outer",
-                                                  "a_down_inner", "b_down_middle", "c_down_outer")) {
+                                               "a_down_inner", "b_down_middle", "c_down_outer")) {
+    if (isTRUE(invert)) {
+        ## levels(ups[["comparisons"]]) <- rev(levels(ups[["comparisons"]]))
+        ## levels(downs[["comparisons"]]) <- rev(levels(downs[["comparisons"]]))
+        stop("This fails in such weird ways that I am making it stop now.")
+        print(ups)
+        ups <- ups[with(ups, order(rev(rownames(ups)))), ]
+        print(ups)
+        downs <- downs[with(downs, order(rev(rownames(downs)))), ]
+    }
+
     choose_max <- function(u, d) {
         ## m is the maximum found in the ups/downs
         m <- 0
@@ -259,11 +271,22 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
     sigbar_plot <- ggplot() +
         ggplot2::geom_col(data=ups, aes_string(x="comparisons", y="value", fill="variable")) +
         ggplot2::geom_col(data=downs, aes_string(x="comparisons", y="value", fill="variable")) +
-        ggplot2::scale_fill_manual(values=c("a_up_inner"="lightcyan", "b_up_middle"="lightskyblue", "c_up_outer"="dodgerblue", "a_down_inner"="plum1", "b_down_middle"="orchid", "c_down_outer"="purple4")) +
+        ggplot2::scale_fill_manual(values=c("a_up_inner"="lightcyan",
+                                            "b_up_middle"="lightskyblue",
+                                            "c_up_outer"="dodgerblue",
+                                            "a_down_inner"="plum1",
+                                            "b_down_middle"="orchid",
+                                            "c_down_outer"="purple4")) +
         ggplot2::coord_flip() +
         ggplot2::theme_bw() +
         ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +
         ggplot2::theme(legend.position="none")
+
+    ## One might think this would work, but no.
+    ##if (isTRUE(invert)) {
+    ##    sigbar_plot <- sigbar_plot +
+    ##        ggplot2::scale_x_continuous(trans="reverse")
+    ##}
 
     if (isTRUE(text)) {
         for (comp in 1:length(comp_names)) {

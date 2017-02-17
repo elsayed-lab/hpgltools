@@ -56,6 +56,6 @@ that process a bit simpler as well as give some standard outputs which should be
 returned by clusterprofiler/topgo/gostats/gprofiler.
 }
 \seealso{
-\pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
+\pkg{goseq} \pkg{GO.db}
 }
 

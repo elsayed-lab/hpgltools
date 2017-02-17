@@ -22,6 +22,6 @@ ensembl_list <- kegg_to_ensembl("a")
 }
 }
 \seealso{
-\link[KEGGREST]{keggGet}
+\pkg{KEGGREST}
 }
 

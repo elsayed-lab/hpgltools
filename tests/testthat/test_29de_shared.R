@@ -171,9 +171,9 @@ test_that("Do we get a pretty edger scatter plot?", {
 
 expected <- c("transcriptid", "geneid", "description", "type",
               "length", "chromosome", "strand", "start",
-              "end", "limma_logfc", "deseq_logfc", "edger_logfc",
-              "limma_adjp", "deseq_adjp", "edger_adjp", "limma_ave",
-              "limma_t", "limma_p", "limma_b", "limma_q",
+              "end", "limma_logfc", "limma_adjp", "deseq_logfc",
+              "deseq_adjp", "edger_logfc", "edger_adjp", "limma_ave",
+              "limma_t", "limma_b", "limma_p", "limma_q",
               "deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p",
               "deseq_q", "edger_logcpm", "edger_lr", "edger_p",
               "edger_q", "basic_nummed", "basic_denmed", "basic_numvar",

@@ -11,8 +11,8 @@
 #' @return a plot!
 #' @seealso \link{plot_ma_de}
 #' @examples
-#'  \dontrun{
-#'   prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
+#' \dontrun{
+#'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
 extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=0.05, ...) {
@@ -103,7 +103,7 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
     }
 
     ma_material <- plot_ma_de(table=the_table, expr_col=expr_col, fc_col=fc_col,
-                              p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff) ##, ...)
+                              p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff, ...) ##, ...)
     return(ma_material)
 }
 
@@ -125,6 +125,11 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
 #' @param color_low  Color for the genes less than the mean.
 #' @param color_high  Color for the genes greater than the mean.
 #' @param ...  More arguments are passed to arglist.
+#' @seealso \pkg{ggplot2} \link{plot_linear_scatter}
+#' @examples
+#' \dontrun{
+#'  scatter_plot <- extract_coefficient_scatter(pairwise_output, type="deseq", x="uninfected", y="infected")
+#' }
 #' @export
 extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1, y=2, z=1.5,
                                         p=NULL, fc=NULL, n=NULL, loess=FALSE,
@@ -248,6 +253,12 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #' @param euler  Perform a euler plot
 #' @param p  p-value cutoff, I forget what for right now.
 #' @param ... More arguments are passed to arglist.
+#' @return  A list of venn plots
+#' @seealso \pkg{venneuler} \pkg{Vennerable}
+#' @examples
+#' \dontrun{
+#'  bunchovenns <- de_venn(pairwise_result)
+#' }
 #' @export
 de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
     arglist <- list(...)
@@ -362,6 +373,11 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
 #' @param constant_p When plotting changing FC, where should the p-value be held?
 #' @param constant_fc When plotting changing p, where should the FC be held?
 #' @return Plots and dataframes describing the changing definition of 'significant.'
+#' @seealso \pkg{ggplot2}
+#' @examples
+#' \dontrun{
+#'  crazy_sigplots <- plot_num_siggenes(pairwise_result)
+#' }
 #' @export
 plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_logfc",
                               bins=100, constant_p=0.05, constant_fc=0) {
@@ -462,6 +478,13 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' @param order  Choose a specific order for the plots.
 #' @param maximum  Set a specific limit on the number of genes on the x-axis.
 #' @param ...  More arguments are passed to arglist.
+#' @return list containing the significance bar plots and some information to hopefully help interpret them.
+#' @seealso \pkg{ggplot2}
+#' @examples
+#' \dontrun{
+#'  ## Damn I wish I were smrt enough to make this elegant and easily comprehendable, but I cannot.
+#'  barplots <- significant_barplots(combined_result)
+#' }
 #' @export
 significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
                                  fc_column="limma_logfc", p_type="adj", invert=FALSE,
@@ -506,9 +529,6 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
 
             for (tab in 1:table_length) { ## The table names are shared across methods and ups/downs
                 table_names <- names(fc_sig[[type]][["ups"]])
-                if (isTRUE(invert)) {
-                    table_names <- rev(table_names)
-                }
                 table_name <- table_names[tab]
                 t_up <- nrow(fc_sig[[type]][["ups"]][[table_name]])
                 t_down <- nrow(fc_sig[[type]][["downs"]][[table_name]])
@@ -548,9 +568,6 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         baby_bear <- fc_names[[3]]  ## And the smallest grouping
         for (t in 1:table_length) {
             table_names <- names(sig_lists_up[[type]][[1]])
-            if (isTRUE(invert)) {
-                table_names <- rev(table_names)
-            }
             table_name <- table_names[t]
             ##table_names <- names(sig_lists_up[[type]][[1]])[t]
             everything_up <- sig_lists_up[[type]][[papa_bear]][[table_name]] ## > 0 lfc
@@ -608,7 +625,7 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         down[["value"]] <- as.numeric(down[["value"]]) * -1
         tables_up[[type]] <- up
         tables_down[[type]] <- down
-        plots[[type]] <- plot_significant_bar(up, down, maximum=maximum)
+        plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, invert=invert, ...)
         ##plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
     } ## End iterating over the 3 types, limma/deseq/edger
 

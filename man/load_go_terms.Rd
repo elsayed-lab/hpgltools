@@ -28,10 +28,10 @@ and still score some useful ontology data.
 }
 \examples{
 \dontrun{
-go_terms <- load_go_terms(org, c("a","b"))
+ go_terms <- load_go_terms(org, c("a","b"))
 }
 }
 \seealso{
-\link[AnnotationDbi]{select}
+\pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
 }
 

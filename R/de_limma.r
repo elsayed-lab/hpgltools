@@ -17,6 +17,13 @@
 #' @param col yay columns!
 #' @param ... more arguments!
 #' @return a voom return
+#' @seealso \pkg{limma}
+#' @examples
+#' \dontrun{
+#' ## No seriously, dont run this, I think it is wiser to use the functions provided by limma.
+#' ## But this provides a place to test stuff out.
+#'  voom_result <- hpgl_voomweighted(dataset, model)
+#' }
 #' @export
 hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="none",
                             plot=TRUE, span=0.5, var.design=NULL, method="genebygene",
@@ -83,7 +90,7 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
 #'   design = The resulting design
 #'   lib.size = The size in pseudocounts of the library
 #'   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
-#' @seealso \link[limma]{voom} \link[limma]{lmFit}
+#' @seealso \pkg{limma} \pkg{ggplot2}
 #' @examples
 #' \dontrun{
 #'  funkytown = hpgl_voom(samples, model)
@@ -110,7 +117,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
         }
         counts <- counts[["counts"]]
     } else {
-        isExpressionSet <- suppressPackageStartupMessages(is(counts, "ExpressionSet"))
+        isExpressionSet <- sm(is(counts, "ExpressionSet"))
         if (isExpressionSet) {
             if (length(Biobase::fData(counts))) {
                 out[["genes"]] <- Biobase::fData(counts)
@@ -260,10 +267,10 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
 #'  pairwise_fits = The result from calling contrasts.fit()
 #'  pairwise_comparisons = The result from eBayes()
 #'  limma_result = The result from calling write_limma()
-#' @seealso \link{write_limma}
+#' @seealso \pkg{limma} \link{write_limma} \pkg{Biobase}
 #' @examples
 #' \dontrun{
-#' pretend = balanced_pairwise(data, conditions, batches)
+#'  pretend <- limma_pairwise(expt)
 #' }
 #' @export
 limma_pairwise <- function(input=NULL, conditions=NULL,
@@ -510,18 +517,18 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
 #' @param type Type of scatter plot (linear model, distance, vanilla).
 #' @param ... Use the elipsis to feed options to the html graphs.
 #' @return plot_linear_scatter() set of plots comparing the chosen columns.  If you forget to
-#'     specify tables to compare, it will try the first vs the second.
-#' @seealso \link{plot_linear_scatter} \link[limma]{topTable}
+#'  specify tables to compare, it will try the first vs the second.
+#' @seealso \link{plot_linear_scatter} \pkg{limma}
 #' @examples
 #' \dontrun{
-#' compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
-#'                               first_table="AveExpr", second_column="AveExpr")
-#' compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+#'  compare_logFC <- limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
+#'                                 first_table="AveExpr", second_column="AveExpr")
+#'  compare_B <- limma_scatter(all_pairwise, first_column="B", second_column="B")
 #' }
 #' @export
 limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logFC",
                          second_table=2, second_column="logFC", type="linear_scatter", ...) {
-    tables <- all_pairwise_result$all_tables
+    tables <- all_pairwise_result[["all_tables"]]
     if (is.numeric(first_table)) {
         x_name <- paste(names(tables)[first_table], first_column, sep=":")
     }
@@ -571,7 +578,7 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 #' @param annot_df Optional data frame including annotation information to include with the tables.
 #' @return List of data frames comprising the toptable output for each coefficient, I also added a
 #'     qvalue entry to these toptable() outputs.
-#' @seealso \link[limma]{toptable} \link{write_xls}
+#' @seealso \pkg{limma}} \link{write_xls} \pkg{qvalue}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = eBayes(limma_output)
@@ -653,11 +660,11 @@ make_limma_tables <- function(data, adjust="fdr", n=0, coef=NULL, workbook="exce
 #'
 #' Looking to provide a single interface for writing tables from limma and friends.
 #'
-#' Tested in test_24deseq.R
+#' Tested in test_21limma.R
 #'
 #' @param data  Output from limma_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[limma]{toptable} \link{write_xls}
+#' @seealso \link{write_de_table}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = limma_pairwise(expressionset)

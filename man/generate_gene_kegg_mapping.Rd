@@ -23,10 +23,10 @@ This uses KEGGREST and related function kegg_to_ensembl() to associate genes to 
 }
 \examples{
 \dontrun{
-kegg_df <- generate_gene_kegg_mapping(path, org)
+ kegg_df <- generate_gene_kegg_mapping(path, org)
 }
 }
 \seealso{
-\link[KEGGREST]{keggLink}
+\pkg{KEGGREST}
 }
 

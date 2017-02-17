@@ -41,7 +41,4 @@ However, this will do a couple of things to make one's life easier:
  data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
 }
 }
-\seealso{
-\link[limma]{toptable} \link{write_xls}
-}
 

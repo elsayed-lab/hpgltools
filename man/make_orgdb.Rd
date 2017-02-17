@@ -33,4 +33,12 @@ resulting material created in the filesystem conforms to specifications which al
 multiple strains, etc.  Finally, if everything goes according to plan, it calls
 devtools::install() and installs the resulting package.
 }
+\examples{
+\dontrun{
+ orgdb_installedp <- make_orgdb(id="tcruzi_clbrener")
+}
+}
+\seealso{
+\pkg{AnnotationForge} \pkg{devtools}
+}
 

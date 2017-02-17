@@ -47,8 +47,7 @@ deseq_pairwise <- function(...) {
 #'   conditions = the list of conditions in the experiment
 #'   coefficients = list of coefficients making the contrasts
 #'   all_tables = list of DE tables
-#' @seealso \pkg{DESeq2} \code{\link[DESeq2]{results}} \code{\link[DESeq2]{estimateSizeFactors}}
-#'          \code{\link[DESeq2]{estimateDispersions}} \code{\link[DESeq2]{nbinomWaldTest}}
+#' @seealso \pkg{DESeq2} \pkg{Biobase} \pkg{stats}
 #' @examples
 #' \dontrun{
 #' pretend = deseq2_pairwise(data, conditions, batches)
@@ -311,8 +310,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         "conditions" = conditions,
         "coefficients" = coefficient_list,
         "contrasts_performed" = contrasts,
-        "all_tables" = result_list
-    )
+        "all_tables" = result_list)
     return(ret_list)
 }
 
@@ -324,7 +322,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
 #'
 #' @param data  Output from deseq_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[DESeq2]{toptable} \link{write_xls}
+#' @seealso \pkg{DESeq2} \link{write_xls}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = deseq_pairwise(expressionset)

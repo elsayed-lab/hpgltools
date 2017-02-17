@@ -18,7 +18,15 @@ tritryp_downloads(version = "27", species = "lmajor", strain = "friedlin",
 
 \item{quiet}{Print download progress?}
 }
+\value{
+List of downloaded files.
+}
 \description{
 The tritrypdb nicely makes their downloads standardized!
+}
+\examples{
+\dontrun{
+ filenames <- tritryp_downloads(species="lmajor", strain="friedlin", version="28")
+}
 }
 

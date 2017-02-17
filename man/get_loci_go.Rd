@@ -9,6 +9,9 @@ get_loci_go(taxonid = "160490")
 \arguments{
 \item{taxonid}{Which species to query.}
 }
+\value{
+data frame of GO terms from pub.microbesonline.org
+}
 \description{
 The microbesonline is such a fantastic resource, it is a bit of a shame that it is such a pain
 to query.
@@ -17,5 +20,13 @@ to query.
 Tested in test_42ann_microbes.R
 I am not 100% certain that this is giving me the full correct set of gene ontology accessions.
 At the very least, it does return a large number of them, which is a start.
+}
+\examples{
+\dontrun{
+ go_df <- get_loci_go(taxonid="160490")
+}
+}
+\seealso{
+\pkg{DBI}
 }
 

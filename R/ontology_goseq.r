@@ -93,7 +93,7 @@ goseq_table <- function(df, file=NULL) {
 #'   bpp_plot,
 #'   cc_subset,
 #'   and ccp_plot
-#' @seealso \pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
+#' @seealso \pkg{goseq} \pkg{GO.db}
 #' @export
 simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1,
@@ -335,11 +335,11 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
 #' @param include_all Include all genes in the ontology search?
 #' @param ... Extra options without a purpose just yet.
 #' @return Data frame of categories/genes.
-#' @seealso \link{simple_goseq} \code{\link[clusterProfiler]{buildGOmap}},
+#' @seealso \link{simple_goseq} \pkg{clusterProfiler} \pkg{goseq}
 #' @examples
 #' \dontrun{
-#'  data = simple_goseq(sig_genes=limma_output, lengths=annotation_df, goids=goids_df)
-#'  genes_in_cats = gather_genes(data, ont='BP')
+#'  data <- simple_goseq(sig_genes=limma_output, lengths=annotation_df, goids=goids_df)
+#'  genes_in_cats <- gather_genes(data, ont='BP')
 #' }
 #' @export
 gather_goseq_genes <- function(goseq, ontology=NULL, pval=0.1, include_all=FALSE, ...) {

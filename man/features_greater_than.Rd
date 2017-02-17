@@ -23,4 +23,12 @@ Sometimes I am asked how many genes have >= x counts.  Well, here you go.
 Untested as of 2016-12-01 but used with Lucia.  I think it would be interesting to iterate
 this function from small to large cutoffs and plot how the number of kept genes decreases.
 }
+\examples{
+\dontrun{
+ features <- features_greater_than(expt)
+}
+}
+\seealso{
+\pkg{Biobase}
+}
 

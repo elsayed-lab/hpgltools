@@ -35,10 +35,10 @@ account upper/lowercase filenames and uses data.table to speed things along.
 }
 \examples{
 \dontrun{
- count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
+ count_tables <- hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
 }
 }
 \seealso{
-\link{create_expt}
+\link{create_expt} \pkg{data.table}
 }
 

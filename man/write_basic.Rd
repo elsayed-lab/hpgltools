@@ -7,7 +7,7 @@
 write_basic(data, ...)
 }
 \arguments{
-\item{data}{Output from deseq_pairwise()}
+\item{data}{Output from basic_pairwise()}
 
 \item{...}{Options for writing the xlsx file.}
 }
@@ -15,7 +15,7 @@ write_basic(data, ...)
 Looking to provide a single interface for writing tables from basic and friends.
 }
 \details{
-Tested in test_24deseq.R
+Tested in test_26basic.R
 }
 \examples{
 \dontrun{
@@ -24,6 +24,6 @@ Tested in test_24deseq.R
 }
 }
 \seealso{
-\link[DESeq2]{toptable} \link{write_xls}
+\link{write_de_table}
 }
 

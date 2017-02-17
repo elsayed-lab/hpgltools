@@ -9,7 +9,7 @@ gbk2txdb(accession = "AE009949", savetxdb = FALSE)
 \arguments{
 \item{accession}{Accession to download and import}
 
-\item{savetxdb}{Save a txdb package from this?}
+\item{savetxdb}{Save a txdb package from this? FIXME THIS DOES NOT WORK.}
 }
 \value{
 List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
@@ -22,5 +22,13 @@ microbes.  Genbank does!
 Tested in test_40ann_biomartgenbank.R and test_70expt_spyogenes.R
 This just sets some defaults for the genbankr service in order to facilitate downloading
 genomes and such from genbank and dumping them into a local txdb instance.
+}
+\examples{
+\dontrun {
+ txdb_result <- gbk2txdb(accession="AE009948", savetxdb=TRUE)
+}
+}
+\seealso{
+\pkg{genbankr} \pkt{rentrez}
 }
 

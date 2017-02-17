@@ -8,8 +8,13 @@
 #' genomes and such from genbank and dumping them into a local txdb instance.
 #'
 #' @param accession Accession to download and import
-#' @param savetxdb  Save a txdb package from this?
+#' @param savetxdb  Save a txdb package from this? FIXME THIS DOES NOT WORK.
 #' @return List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
+#' @seealso \pkg{genbankr} \pkg{rentrez} \code{\link[genbankr]{import}} \code{\link[genbankr]{getSeq}}
+#' @examples
+#' \dontrun {
+#'  txdb_result <- gbk2txdb(accession="AE009948", savetxdb=TRUE)
+#' }
 #' @export
 gbk2txdb <- function(accession="AE009949", savetxdb=FALSE) {
     gbk <- NULL
@@ -54,6 +59,12 @@ gbk2txdb <- function(accession="AE009949", savetxdb=FALSE) {
 #'
 #' @param gbr TxDb object to poke at.
 #' @return Granges data
+#' @seealso \pkg{AnnotationDbi} \pkg{GenomeInfoDb} \pkg{GenomicFeatures}
+#'  \code{\link[AnnotationDbi]{select}}
+#' @examples
+#' \dontrun{
+#'  annotations <- gbk_annotations("saureus_txdb")
+#' }
 #' @export
 gbk_annotations <- function(gbr) {
     chromosomes <- GenomeInfoDb::seqlevels(gbr)
@@ -79,7 +90,12 @@ gbk_annotations <- function(gbr) {
 #'
 #' @param accessions An accession -- actually a set of them.
 #' @param write  Write the files?  Otherwise return a list of the strings
-#' @return A list containing the number of files downloaded and the character strings actually acquired
+#' @return A list containing the number of files downloaded and the character strings acquired.
+#' @seealso \pkg{ape}
+#' @examples
+#' \dontrun{
+#'  gbk_file <- download_gbk(accessions=c("AE009949","AE009948"))
+#' }
 #' @export
 download_gbk <- function(accessions="AE009949", write=TRUE) {
     N <- length(accessions)

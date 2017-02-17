@@ -9,8 +9,19 @@ mdesc_table(table = "Locus2Go")
 \arguments{
 \item{table}{Choose a table to query.}
 }
+\value{
+Data frame describing the relevant table
+}
 \description{
 This at least in theory is only used by get_microbesonline,  but if one needs a quick and dirty SQL query
 it might prove useful.
+}
+\examples{
+\dontrun{
+ description <- mdesc_table(table="Locus2Go")
+}
+}
+\seealso{
+\pkg{DBI}
 }
 

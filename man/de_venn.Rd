@@ -17,8 +17,19 @@ de_venn(table, adjp = FALSE, euler = FALSE, p = 0.05, ...)
 
 \item{...}{More arguments are passed to arglist.}
 }
+\value{
+A list of venn plots
+}
 \description{
 The sets of genes provided by limma and friends would ideally always agree,  but they do not.
 Use this to see out how much the (dis)agree.
+}
+\examples{
+\dontrun{
+ bunchovenns <- de_venn(pairwise_result)
+}
+}
+\seealso{
+\pkg{venneuler} \pkg{Vennerable}
 }
 

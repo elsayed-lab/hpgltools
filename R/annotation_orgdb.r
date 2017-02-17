@@ -28,10 +28,12 @@ load_parasite_annotations <- function(...) {
 #' @param fields Columns included in the output.
 #' @param sum_exons Perform a sum of the exons in the data set?
 #' @return Table of geneids, chromosomes, descriptions, strands, types, and lengths.
-#' @seealso \link[AnnotationDbi]{select}
+#' @seealso \pkg{AnnotationDbi} \pkg{GenomicFeatures} \pkg{BiocGenerics}
+#'  \code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
+#'  \code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
 #' @examples
 #' \dontrun{
-#' one_gene <- load_annotations(org, c("LmJF.01.0010"))
+#'  one_gene <- load_annotations(org, c("LmJF.01.0010"))
 #' }
 #' @export
 load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",
@@ -121,10 +123,11 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
 #' @param gene_ids Identifiers of the genes to retrieve annotations.
 #' @param keytype the mysterious keytype returns yet again to haunt my dreams
 #' @return Data frame of gene IDs, go terms, and names.
-#' @seealso \link[AnnotationDbi]{select}
+#' @seealso \pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
+#'  \code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
 #' @examples
 #' \dontrun{
-#' go_terms <- load_go_terms(org, c("a","b"))
+#'  go_terms <- load_go_terms(org, c("a","b"))
 #' }
 #' @export
 load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
@@ -133,19 +136,16 @@ load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
     if (is.null(gene_ids)) {
         stop("gene_ids may not be null.")
     }
-    go_terms <- suppressWarnings(
-        AnnotationDbi::select(orgdb,
-                              "keys" = gene_ids,
-                              "keytype" = keytype,
-                              "columns" = c("GO"))[,c(1,2)]
-    )
+    go_terms <- sm(AnnotationDbi::select(orgdb,
+                                         "keys" = gene_ids,
+                                         "keytype" = keytype,
+                                         "columns" = c("GO"))[,c(1,2)])
     ## Deduplicate
     go_terms <- go_terms[!duplicated(go_terms), ]
     go_terms <- go_terms[!is.na(go_terms[["GO"]]), ]
-    go_term_names <- suppressWarnings(
-        AnnotationDbi::select(GO.db::GO.db,
-                               keys=unique(go_terms$GO),
-                               columns=c("TERM", "GOID", "ONTOLOGY")))
+    go_term_names <- sm(AnnotationDbi::select(GO.db::GO.db,
+                                              keys=unique(go_terms$GO),
+                                              columns=c("TERM", "GOID", "ONTOLOGY")))
     go_terms <- merge(go_terms, go_term_names, by.x="GO", by.y="GOID")
 
     # Remove redundant annotations which differ only in source/evidence
@@ -167,10 +167,11 @@ load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
 #' @param keytype  The keytype, eg. the primary key used to query the orgdb.
 #' @param columns  Columns to extract.
 #' @return Df of kegg mappings
-#' @seealso \link[AnnotationDbi]{select}
+#' @seealso \pkg{AnnotationDbi} \pkg{dplyr}
+#'  \code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
 #' @examples
 #' \dontrun{
-#' kegg_data <- load_kegg_mapping(org, c("a","b"))
+#'  kegg_data <- load_kegg_mapping(org, c("a","b"))
 #' }
 #' @export
 load_kegg_mapping <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("KEGG_PATH")) {
@@ -204,10 +205,11 @@ load_kegg_mapping <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c
 #' @param mapto Key to map the IDs against.
 #' @param keytype  Choose a keytype, this will yell if it doesn't like your choice.
 #' @return a table of gene information
-#' @seealso \link[AnnotationDbi]{select}
+#' @seealso \pkg{AnnotationDbi}
+#'  \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
 #' @examples
 #' \dontrun{
-#' host <- load_host_annotations(org, c("a","b"))
+#'  host <- load_host_annotations(org, c("a","b"))
 #' }
 #' @export
 orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="geneid") {
@@ -248,13 +250,11 @@ orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="genei
     return(gene_info)
 }
 
-
 ######################################################
 ## Below here I have not tested nor played much with
 ## these functions, I think some are redundant and
 ## should be deleted.
 ######################################################
-
 
 #' Load organism annotation data (mouse/human).
 #'
@@ -267,10 +267,11 @@ orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="genei
 #' @param fields Columns to include in the output.
 #' @param biomart_dataset Name of the biomaRt dataset to query for gene type.
 #' @return a table of gene information
-#' @seealso \link[AnnotationDbi]{select}
+#' @seealso \pkg{AnnotationDbi} \pkg{dplyr} \pkg{biomaRt}
+#'  \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
 #' @examples
 #' \dontrun{
-#' host <- load_host_annotations(org, c("a","b"))
+#'  host <- load_host_annotations(org, c("a","b"))
 #' }
 #' @export
 load_host_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
@@ -333,10 +334,10 @@ load_host_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
 #' @param gene_ids Identifiers of the genes to retrieve annotations.
 #' @param keytype as per the previous functions, I don't know what this does yet
 #' @return Character list of pathways.
-#' @seealso \link[AnnotationDbi]{select}
+#' @seealso \pkg{AnnotationDbi}
 #' @examples
 #' \dontrun{
-#' pathnames <- load_kegg_pathways(org, c("a","b","c")
+#'  pathnames <- load_kegg_pathways(org, c("a","b","c")
 #' }
 #' @export
 load_kegg_pathways <- function(orgdb, gene_ids, keytype='ENSEMBL') {
@@ -363,7 +364,8 @@ load_kegg_pathways <- function(orgdb, gene_ids, keytype='ENSEMBL') {
 #'
 #' @param kegg_ids List of KEGG identifiers to be mapped.
 #' @return Ensembl IDs as a character list.
-#' @seealso \link[KEGGREST]{keggGet}
+#' @seealso \pkg{KEGGREST}
+#'  \code{\link[KEGGREST]{keggGet}}
 #' @examples
 #' \dontrun{
 #' ensembl_list <- kegg_to_ensembl("a")
@@ -376,7 +378,7 @@ kegg_to_ensembl <- function(kegg_ids) {
         ## print(x)
         query <- KEGGREST::keggGet(x)
         for (item in query) {
-            dblinks <- item$DBLINKS
+            dblinks <- item$DBLINKS  ## FIXME, no possibly redundant slots allowed
             ensembl_id <- dblinks[grepl('Ensembl', dblinks)]
             if (length(ensembl_id) > 0) {
                 result <- append(result, substring(ensembl_id, 10))
@@ -395,15 +397,16 @@ kegg_to_ensembl <- function(kegg_ids) {
 #' This uses KEGGREST and related function kegg_to_ensembl() to associate genes to KEGG pathways.
 #'
 #' @param pathways Vector of KEGG pathway IDs returned from call to keggLink()
-#'        e.g. "path:mmu05134".
+#'  e.g. "path:mmu05134".
 #' @param org_abbreviation KEGG identifier for the species of interest (e.g.
-#'        "hsa" for Homo sapiens).
+#'  "hsa" for Homo sapiens).
 #' @param verbose talky talky?
 #' @return Df mapping kegg and gene IDs.
-#' @seealso \link[KEGGREST]{keggLink}
+#' @seealso \pkg{KEGGREST}
+#'  \code{\link[KEGGREST]{kegg_to_ensembl}} \code{\link[KEGGREST]{keggLink}}
 #' @examples
 #' \dontrun{
-#' kegg_df <- generate_gene_kegg_mapping(path, org)
+#'  kegg_df <- generate_gene_kegg_mapping(path, org)
 #' }
 #' @export
 generate_gene_kegg_mapping <- function(pathways, org_abbreviation, verbose=FALSE) {
@@ -432,9 +435,12 @@ generate_gene_kegg_mapping <- function(pathways, org_abbreviation, verbose=FALSE
 #' @param pathways Vector of KEGG pathway identifiers.
 #' @param verbose talk talk?
 #' @return Data frame describing some kegg pathways
-#' @seealso \link[KEGGREST]{keggGet}
+#' @seealso \link{KEGGREST}
+#'  \code{\link[KEGGREST]{kegg_to_ensembl}} \code{\link[KEGGREST]{keggLink}}
 #' @examples
+#' \dontrun{
 #'  mapping <- generate_kegg_pathway_mapping(c("hsa00040", "hsa00100"))
+#' }
 #' @export
 generate_kegg_pathway_mapping <- function(pathways, verbose=FALSE) {
     ## result data frame
@@ -445,7 +451,7 @@ generate_kegg_pathway_mapping <- function(pathways, verbose=FALSE) {
         }
         ## Get pathway info
 
-        ##        meta <- try(KEGGREST::keggGet(pathway, "kgml")[[1]])
+        ## meta <- try(KEGGREST::keggGet(pathway, "kgml")[[1]])
         meta <- try(KEGGREST::keggGet(pathway)[[1]])
         if (class(meta) != "try-error") {
             pathway_desc  <- ifelse(is.null(meta[["DESCRIPTION"]]), '', meta[["DESCRIPTION"]])
@@ -473,8 +479,12 @@ generate_kegg_pathway_mapping <- function(pathways, verbose=FALSE) {
 #'
 #' @param species Human readable species name
 #' @return orgdb object for the relevant species, or an error if I don't have a mapping for it.
+#' @seealso \pkg{AnnotationDbi}
+#'  \code{\link[AnnotationDbi]{keytypes}}
 #' @examples
+#' \dontrun{
 #'  object <- choose_orgdb("homo_sapiens")
+#' }
 #' @export
 choose_orgdb <- function(species="saccharomyces_cerevisiae") {
     used_species <- list(
@@ -531,8 +541,12 @@ choose_orgdb <- function(species="saccharomyces_cerevisiae") {
 #'
 #' @param species Human readable species name
 #' @return orgdb object for the relevant species, or an error if I don't have a mapping for it.
+#' @seealso \pkg{AnnotationDbi}
+#'  \code{\link[AnnotationDbi]{keytypes}}
 #' @examples
+#' \dontrun{
 #'  object <- choose_txdb("homo_sapiens")
+#' }
 #' @export
 choose_txdb <- function(species="saccharomyces_cerevisiae") {
     used_species <- list(
@@ -578,6 +592,20 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
     return(tx)
 }
 
+#' Create an organismDbi object by joining a txdb and orgdb together.
+#'
+#' This function is a bit more fragile than I would like.
+#'
+#' @param txdb  Txdb input to merge
+#' @param keytype  When merging to an orgdb, what key to use?
+#' @param orgdb  The orgdb to help create the OrganismDbi instance.
+#' @return An OrganismDb instance
+#' @seealso \pkg{S4Vectors} \pkg{GenomicFeatures} \pkg{AnnotationDbi} \pkg{OrganismDbi}
+#'  \code{\link[GenomicFeatures]{makePackageName}}
+#' @examples
+#' \dontrun{
+#'  orgdbi <- make_organ(Tcruzi_txdb, orgdb=Tcruzi_orgdb)
+#' }
 make_organ <- function (txdb, keytype=NA, orgdb=NA) {
     if (class(txdb) != "TxDb") {
         stop("'txdb' must be A TxDb object")
@@ -629,7 +657,19 @@ make_organ <- function (txdb, keytype=NA, orgdb=NA) {
     OrganismDbi:::OrganismDb(graphInfo = graphInfo)
 }
 
-mytaxIdToOrgDb <- function (taxid) {
+#' Create an orgdb from an taxonID
+#'
+#' This function is a bit more fragile than I would like.  I am not completely sold
+#' on AnnotationHub yet.
+#'
+#' @param taxid  TaxonID from AnnotationHub
+#' @return An Orgdb instance
+#' @seealso \pkg{AnnotationHub} \pkg{S4Vectors}
+#' @examples
+#' \dontrun{
+#'  orgdbi <- mytaxIdToOrgDb(taxid)
+#' }
+mytaxIdToOrgDb <- function(taxid) {
     ## packageTaxIds <- .packageTaxIds()
     packageTaxIds <- NULL
     if (taxid %in% names(packageTaxIds)) {
@@ -639,9 +679,9 @@ mytaxIdToOrgDb <- function (taxid) {
     } else {
         loadNamespace("AnnotationHub")
         ah <- AnnotationHub::AnnotationHub()
-        ah <- subset(ah, ah$rdataclass == "OrgDb")
+        ah <- subset(ah, ah[["rdataclass"]] == "OrgDb")
         mc <- S4Vectors::mcols(ah)[, "taxonomyid", drop = FALSE]
-        AHID <- rownames(mc[mc$taxonomyid == taxid, , drop = FALSE])
+        AHID <- rownames(mc[mc[["taxonomyid"]] == taxid, , drop = FALSE])
         if (!length(AHID)) {
             message("No organismdbi exists for this taxonomy id.")
         } else if (length(AHID) > 1) {
@@ -653,6 +693,5 @@ mytaxIdToOrgDb <- function (taxid) {
     }
     res
 }
-
 
 ## EOF

@@ -1015,6 +1015,55 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
     return(abundant_list)
 }
 
+#' A companion function for get_abundant_genes()
+#'
+#' Instead of pulling to top/bottom abundant genes, get all abundances and variances or stderr.
+#'
+#' @param datum  Output from _pairwise() functions.
+#' @param type  According to deseq/limma/ed ger/basic?
+#' @export
+get_pairwise_gene_abundances <- function(datum, type="limma") {
+    if (type == "limma") {
+        ## Make certain we have a consistent set of column and row orders for the future operations
+        conds <- names(datum[["limma"]][["identity_tables"]])
+        row_order <- rownames(datum[["limma"]][["identity_tables"]][[1]])
+        nconds <- length(conds)
+        num_rows <- length(row_order)
+        ## Pre-allocate and set the row/colnames
+        expression_mtrx <- matrix(ncol=nconds, nrow=num_rows)
+        stdev_mtrx <- matrix(ncol=nconds, nrow=num_rows)
+        t_mtrx <- matrix(ncol=nconds, nrow=num_rows)
+        colnames(expression_mtrx) <- conds
+        colnames(stdev_mtrx) <- conds
+        colnames(t_mtrx) <- conds
+        rownames(expression_mtrx) <- row_order
+        rownames(stdev_mtrx) <- row_order
+        rownames(t_mtrx) <- row_order
+        ## Recast these as data frames because they are easier syntactically.
+        ## E.g. I like setting columns with df[[thingie]]
+        expression_mtrx <- as.data.frame(expression_mtrx)
+        stdev_mtrx <- as.data.frame(stdev_mtrx)
+        t_mtrx <- as.data.frame(t_mtrx)
+        ## I am explicitly setting the row order because it seems that the output
+        ## from limma is not set from one table to the next.
+        for (cond in conds) {
+            tmp_table <- datum[["limma"]][["identity_tables"]][[cond]]
+            new_column <- tmp_table[row_order, "logFC"]
+            expression_mtrx[[cond]] <- new_column
+            new_column <- tmp_table[row_order, "t"]
+            t_mtrx[[cond]] <- new_column
+            tmp_table <- datum[["limma"]][["pairwise_fits"]][["stdev.unscaled"]]
+            stdev_mtrx[[cond]] <- tmp_table[row_order, cond]
+        }
+    }
+    retlist <- list(
+        "expression_values" = expression_mtrx,
+        "t_values" = t_mtrx,
+        "error_values" = expression_mtrx / t_mtrx,
+        "stdev_values" = stdev_mtrx)
+    return(retlist)
+}
+
 #' Get a set of up/down differentially expressed genes.
 #'
 #' Take one or more criteria (fold change, rank order, (adj)p-value,
@@ -1311,7 +1360,7 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
         kept_list <- new_table <- NULL
         for (string in semantic) {
             pre_remove_size <- nrow(tab)
-            idx <- grep(pattern=string, x=tab[, semantic_column], invert=invert)
+            idx <- grep(pattern=string, x=tab[, semantic_column])
             num_removed <- length(idx)
             numbers_removed[[table_name]][[string]] <- num_removed
             if (num_removed > 0) {

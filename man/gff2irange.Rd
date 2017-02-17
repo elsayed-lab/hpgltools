@@ -28,13 +28,13 @@ This is essentially gff2df(), but returns data suitable for getSet()
 }
 \examples{
 \dontrun{
-library(BSgenome.Tcruzi.clbrener.all)
-tc_clb_all <- BSgenome.Tcruzi.clbrener.all
-cds_ranges <- gff2irange('reference/gff/tcruzi_clbrener.gff.xz', type='CDS')
-cds_sequences <- Biostrings::getSeq(tc_clb_all, cds_ranges)
+ library(BSgenome.Tcruzi.clbrener.all)
+ tc_clb_all <- BSgenome.Tcruzi.clbrener.all
+ cds_ranges <- gff2irange('reference/gff/tcruzi_clbrener.gff.xz', type='CDS')
+ cds_sequences <- Biostrings::getSeq(tc_clb_all, cds_ranges)
 }
 }
 \seealso{
-\pkg{rtracklayer} \link{gff2df} \link[Biostrings]{getSeq}
+\pkg{rtracklayer} \link{gff2df} \pkg{Biostrings}
 }
 

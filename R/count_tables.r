@@ -15,10 +15,10 @@
 #' @param suffix Optional suffix to add to the filenames when reading them.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
-#' @seealso \link{create_expt}
+#' @seealso \link{create_expt} \pkg{data.table}
 #' @examples
 #' \dontrun{
-#'  count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
+#'  count_tables <- hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
 #' }
 #' @export
 expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
@@ -119,11 +119,10 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
 #' @param expt Experiment class containing the requisite metadata and count tables.
 #' @param column Column of the design matrix used to specify which samples are replicates.
 #' @return Expt with the concatenated counts, new design matrix, batches, conditions, etc.
-#' @seealso
-#' \pkg{Biobase}
+#' @seealso \pkg{Biobase}
 #' @examples
 #' \dontrun{
-#'  compressed = concatenate_runs(expt)
+#'  compressed <- concatenate_runs(expt)
 #' }
 #' @export
 concatenate_runs <- function(expt, column='replicate') {
@@ -178,7 +177,7 @@ concatenate_runs <- function(expt, column='replicate') {
 #' @param ngenes How many genes in the fictional data set?
 #' @param columns How many samples in this data set?
 #' @return Matrix of pretend counts.
-#' @seealso \pkg{limma}
+#' @seealso \pkg{limma} \pkg{stats} \pkg{DESeq}
 #' @examples
 #' \dontrun{
 #'  pretend = make_exampledata()
@@ -218,9 +217,10 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 #' @param data Data frame, presumably of counts.
 #' @param fact Factor describing the columns in the data.
 #' @return Data frame of the medians.
+#' @seealso \pkg{Biobase} \pkg{matrixStats}
 #' @examples
 #' \dontrun{
-#'  compressed = hpgltools:::median_by_factor(data, experiment$condition)
+#'  compressed = median_by_factor(data, experiment$condition)
 #' }
 #' @export
 median_by_factor <- function(data, fact="condition") {
@@ -270,6 +270,11 @@ median_by_factor <- function(data, fact="condition") {
 #' @param cutoff  Minimum number of counts.
 #' @param hard  Greater-than is hard, greater-than-equals is not.
 #' @return  Number of genes.
+#' @seealso \pkg{Biobase}
+#' @examples
+#' \dontrun{
+#'  features <- features_greater_than(expt)
+#' }
 #' @export
 features_greater_than <- function(data, cutoff=1, hard=TRUE) {
     if (class(data) == "expt") {
@@ -317,6 +322,11 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE) {
 #' @param batch  Batch correction applied.
 #' @param filter  Filtering method used.
 #' @return  A big honking excel file and a list including the dataframes and images created.
+#' @seealso \pkg{openxlsx} \pkg{Biobase} \link{normalize_expt} \link{graph_metrics}
+#' @examples
+#' \dontrun{
+#'  excel_sucks <- write_expt(expt)
+#' }
 #' @export
 write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", violin=FALSE,
                        convert="cpm", transform="log2", batch="sva", filter="cbcb") {

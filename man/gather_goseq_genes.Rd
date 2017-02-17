@@ -32,11 +32,11 @@ With little work this can be made much more generic, and it probably should.
 }
 \examples{
 \dontrun{
- data = simple_goseq(sig_genes=limma_output, lengths=annotation_df, goids=goids_df)
- genes_in_cats = gather_genes(data, ont='BP')
+ data <- simple_goseq(sig_genes=limma_output, lengths=annotation_df, goids=goids_df)
+ genes_in_cats <- gather_genes(data, ont='BP')
 }
 }
 \seealso{
-\link{simple_goseq} \code{\link[clusterProfiler]{buildGOmap}},
+\link{simple_goseq} \pkg{clusterProfiler} \pkg{goseq}
 }
 

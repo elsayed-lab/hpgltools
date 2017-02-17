@@ -15,7 +15,7 @@ write_limma(data, ...)
 Looking to provide a single interface for writing tables from limma and friends.
 }
 \details{
-Tested in test_24deseq.R
+Tested in test_21limma.R
 }
 \examples{
 \dontrun{
@@ -24,6 +24,6 @@ Tested in test_24deseq.R
 }
 }
 \seealso{
-\link[limma]{toptable} \link{write_xls}
+\link{write_de_table}
 }
 

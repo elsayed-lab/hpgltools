@@ -28,10 +28,10 @@ Perhaps this function should be merged with the GO above?
 }
 \examples{
 \dontrun{
-kegg_data <- load_kegg_mapping(org, c("a","b"))
+ kegg_data <- load_kegg_mapping(org, c("a","b"))
 }
 }
 \seealso{
-\link[AnnotationDbi]{select}
+\pkg{AnnotationDbi} \pkg{dplyr}
 }
 

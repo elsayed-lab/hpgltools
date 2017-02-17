@@ -66,7 +66,6 @@ pretend = deseq2_pairwise(data, conditions, batches)
 }
 }
 \seealso{
-\pkg{DESeq2} \code{\link[DESeq2]{results}} \code{\link[DESeq2]{estimateSizeFactors}}
-         \code{\link[DESeq2]{estimateDispersions}} \code{\link[DESeq2]{nbinomWaldTest}}
+\pkg{DESeq2} \pkg{Biobase} \pkg{stats}
 }
 

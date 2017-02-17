@@ -27,7 +27,7 @@ otherwise be too troublesome to acquire.
 }
 \examples{
 \dontrun{
-tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
+ tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
 }
 }
 \seealso{

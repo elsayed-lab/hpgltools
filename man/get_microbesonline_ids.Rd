@@ -24,4 +24,12 @@ Tested in test_42ann_microbes.R
 This function sets the defaults required for getting a quick and dirty connection to the public
 microbesonline database and returning the ids associated with a given name.
 }
+\examples{
+\dontrun{
+ microbes_ids <- get_microbesonline_ids(name="Streptococcus")
+}
+}
+\seealso{
+\pkg{DBI}
+}
 

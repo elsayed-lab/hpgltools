@@ -24,7 +24,10 @@ Used in write_expt() as well as a few random collaborations.
 }
 \examples{
 \dontrun{
- compressed = hpgltools:::median_by_factor(data, experiment$condition)
+ compressed = median_by_factor(data, experiment$condition)
 }
+}
+\seealso{
+\pkg{Biobase} \pkg{matrixStats}
 }
 

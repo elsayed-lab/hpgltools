@@ -22,4 +22,12 @@ List containing gene information (likely from the txt file), chromosome informat
 This function should probably be split into a few more pieces as it is pretty unwieldy at the
 moment.
 }
+\examples{
+\dontrun{
+ orgdb_data <- make_orgdb_info(gff="lmajor.gff", txt="lmajor.txt")
+}
+}
+\seealso{
+\pkg{rtracklayer} \pkg{GenomicRanges}
+}
 

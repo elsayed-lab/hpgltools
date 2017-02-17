@@ -32,6 +32,6 @@ summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
 }
 }
 \seealso{
-\pkg{rtracklayer}
+\pkg{rtracklayer} \link{gff2df}
 }
 

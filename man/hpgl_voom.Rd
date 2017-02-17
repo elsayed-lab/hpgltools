@@ -49,6 +49,6 @@ contains the plot rather than just printing it.
 }
 }
 \seealso{
-\link[limma]{voom} \link[limma]{lmFit}
+\pkg{limma} \pkg{ggplot2}
 }
 

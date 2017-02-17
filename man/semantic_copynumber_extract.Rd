@@ -4,15 +4,12 @@
 \alias{semantic_copynumber_extract}
 \title{Extract multicopy genes from up/down gene expression lists.}
 \usage{
-semantic_copynumber_extract(de_list, min_copies = 2, use_files = FALSE,
-  semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
-  semantic_column = "1.tooltip")
+semantic_copynumber_extract(de_list, min_copies = 2, semantic = c("mucin",
+  "sialidase", "RHS", "MASP", "DGF", "GP63"), semantic_column = "1.tooltip")
 }
 \arguments{
 \item{de_list}{List of sets of genes deemed significantly
 up/down with a column expressing approximate count numbers.}
-
-\item{use_files}{Use a set of sequence alignments to define the copy numbers?}
 
 \item{semantic}{Set of strings with gene names to exclude.}
 

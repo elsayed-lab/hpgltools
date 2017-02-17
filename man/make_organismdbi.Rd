@@ -33,6 +33,6 @@ KEGGREST in order to accomplish these peculiar tasks.
 }
 }
 \seealso{
-\pkg{AnnotationForge}
+\pkg{AnnotationForge} \pkg{OrganismDbi}
 }
 

@@ -37,11 +37,7 @@
 #'   contrast_list = The list of each call to makeContrasts()
 #'   I do this to avoid running into the limit on # of contrasts addressable by topTags()
 #'   all_tables = a list of tables for the contrasts performed.
-#' @seealso \pkg{edgeR} \code{\link[edgeR]{topTags}} \code{\link[edgeR]{glmLRT}}
-#'   \code{\link{make_pairwise_contrasts}} \code{\link[edgeR]{DGEList}}
-#'   \code{\link[edgeR]{calcNormFactors}} \code{\link[edgeR]{estimateTagwiseDisp}}
-#'   \code{\link[edgeR]{estimateCommonDisp}} \code{\link[edgeR]{estimateGLMCommonDisp}}
-#'   \code{\link[edgeR]{estimateGLMTrendedDisp}} \code{\link[edgeR]{glmFit}}
+#' @seealso \pkg{edgeR}
 #' @examples
 #' \dontrun{
 #'  pretend = edger_pairwise(data, conditions, batches)

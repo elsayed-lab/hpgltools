@@ -25,10 +25,10 @@ ids using the OrganismDbi interface.
 }
 \examples{
 \dontrun{
-host <- load_host_annotations(org, c("a","b"))
+ host <- load_host_annotations(org, c("a","b"))
 }
 }
 \seealso{
-\link[AnnotationDbi]{select}
+\pkg{AnnotationDbi}
 }
 

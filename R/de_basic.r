@@ -202,6 +202,18 @@ basic_pairwise <- function(input=NULL, design=NULL,
     return(retlist)
 }
 
+#' Attempt to ensure that input data to basic_pairwise() is suitable.
+#'
+#' basic_pairwise() assumes log2 data as input, use this to ensure that is true.
+#'
+#' @param input  An expressionset containing expt to test and/or modify.
+#' @param force  If we want to try out other distributed data sets, force it in using me.
+#' @return data ready for basic_pairwise()
+#' @seealso \pkg{Biobase}
+#' @examples
+#' \dontrun{
+#'  ready <- choose_basic_dataset(expt)
+#' }
 choose_basic_dataset <- function(input, force=FALSE, ...) {
     arglist <- list(...)
     warn_user <- 0
@@ -262,11 +274,11 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
 #'
 #' Looking to provide a single interface for writing tables from basic and friends.
 #'
-#' Tested in test_24deseq.R
+#' Tested in test_26basic.R
 #'
-#' @param data  Output from deseq_pairwise()
+#' @param data  Output from basic_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[DESeq2]{toptable} \link{write_xls}
+#' @seealso \link{write_de_table}
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- basic_pairwise(expressionset)
