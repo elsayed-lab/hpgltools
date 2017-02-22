@@ -17,4 +17,3 @@ a recordPlot() plot showing the first 3 PCs by rank-order svd$u.
 Plot the rank order svd$u elements to get a view of how much
 the first genes contribute to the total variance by PC.
 }
-

@@ -40,4 +40,3 @@ It then writes out a configuration plot stanza in
 circos/conf/bob_heatmap.conf
 and finally adds an include to circos/bob.conf
 }
-

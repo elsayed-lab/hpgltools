@@ -28,4 +28,6 @@ The function semantic_copynumber_filter() is the inverse of this.
 \details{
 Currently untested, used for Trypanosome analyses primarily, thus the default strings.
 }
-
+\seealso{
+\code{\link{semantic_copynumber_filter}}
+}

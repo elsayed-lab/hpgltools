@@ -43,4 +43,6 @@ workbook in a consistent and relatively easy-to-read fashion.
  go_writer <- write_subset_ontologies(kept_ontologies)
 }
 }
-
+\seealso{
+\pkg{openxlsx}
+}

@@ -35,4 +35,3 @@ Perhaps this function should be merged with the GO above?
 \pkg{AnnotationDbi} \pkg{dplyr}
  \code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
 }
-

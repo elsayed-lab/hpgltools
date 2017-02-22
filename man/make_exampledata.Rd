@@ -27,4 +27,3 @@ relaxes that restriction.
 \seealso{
 \pkg{limma} \pkg{stats} \pkg{DESeq}
 }
-

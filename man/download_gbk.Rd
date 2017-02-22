@@ -30,4 +30,3 @@ so that it hopefully fails less often.
 \seealso{
 \pkg{ape}
 }
-

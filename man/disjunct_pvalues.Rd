@@ -20,4 +20,3 @@ The goal is therefore to find responses different than beads
 The null hypothesis is (H0): (infected == uninfected) || (infected == beads)
 The alt hypothesis is (HA): (infected != uninfected) && (infected != beads)
 }
-

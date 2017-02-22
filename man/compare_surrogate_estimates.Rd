@@ -30,4 +30,6 @@ t statistics as well as a correlation plot making use of the extracted estimator
 condition/batch/whatever else. Finally, it does the same ranking plot against a linear fitting
 Leek performed and returns the whole pile of information as a list.
 }
-
+\seealso{
+\code{\link{get_model_adjust}}
+}

@@ -26,4 +26,6 @@ This function will boil that down to 'not found', '', 'GO:00004', or "GO:0001,  
  ## sane_goterms = deparse_go_value(goterms)
 }
 }
-
+\seealso{
+\pkg{GO.db}
+}

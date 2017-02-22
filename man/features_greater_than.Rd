@@ -31,4 +31,3 @@ this function from small to large cutoffs and plot how the number of kept genes 
 \seealso{
 \pkg{Biobase}
 }
-

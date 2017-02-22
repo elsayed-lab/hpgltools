@@ -52,4 +52,3 @@ appropriate marts, datasets, and columns to download.
 \pkg{biomaRt}
  \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
 }
-

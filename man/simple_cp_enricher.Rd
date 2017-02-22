@@ -20,4 +20,3 @@ Table of 'enriched' categories.
 culsterProfiler::enricher provides a quick and easy enrichment analysis given a set of
 siginficant' genes and a data frame which connects each gene to a category.
 }
-

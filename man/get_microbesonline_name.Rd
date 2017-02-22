@@ -30,4 +30,3 @@ This is essentially covered in get_micrboesonline_ids(), but this works too.
 \pkg{DBI}
  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
 }
-

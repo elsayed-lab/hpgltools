@@ -15,4 +15,3 @@ The filename of the configuration.
 \description{
 circos configuration files need an ending.  This writes it.
 }
-

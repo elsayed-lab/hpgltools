@@ -66,6 +66,6 @@ Creates the set of all possible contrasts and performs them using voom/limma.
 }
 }
 \seealso{
-\pkg{limma} \link{write_limma} \pkg{Biobase}
+\pkg{limma} \pkg{Biobase}
+ \code{\link{write_limma}}
 }
-

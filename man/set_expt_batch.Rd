@@ -27,4 +27,6 @@ the experiment.  Use this to make that easier.
  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
 }
 }
-
+\seealso{
+\code{\link{create_expt}} \code{\link{set_expt_condition}}
+}

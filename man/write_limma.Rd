@@ -24,6 +24,5 @@ Tested in test_21limma.R
 }
 }
 \seealso{
-\link{write_de_table}
+\code{\link{write_de_table}}
 }
-

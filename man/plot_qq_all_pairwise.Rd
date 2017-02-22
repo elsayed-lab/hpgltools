@@ -16,4 +16,6 @@ List containing the recordPlot() output of the ratios, logs, and means among sam
 This function is stupid, don't use it.  It makes more sense to just use plot_qq, however I am not
 quite read to delete this function yet.
 }
-
+\seealso{
+\pkg{Biobase}
+}

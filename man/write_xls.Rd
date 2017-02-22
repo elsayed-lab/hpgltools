@@ -41,4 +41,3 @@ then xlsx, and now openxlsx.  Hopefully this will not change again.
 \seealso{
 \pkg{openxlsx}
 }
-

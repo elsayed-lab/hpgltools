@@ -46,4 +46,11 @@ a list of results for go, kegg, reactome, and a few more.
 \description{
 Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
 }
-
+\examples{
+\dontrun{
+ gprofiler_is_nice_and_easy <- simple_gprofiler(genes, species='mmusculus')
+}
+}
+\seealso{
+\pkg{gProfiler}
+}

@@ -31,12 +31,12 @@ and maintains one's favorite color scheme and tries to make it pretty!
 }
 \examples{
 \dontrun{
- libsize_plot = plot_libsize(expt=expt)
+ libsize_plot <- plot_libsize(expt=expt)
  libsize_plot  ## ooo pretty bargraph
 }
 }
 \seealso{
-\link[ggplot2]{geom_bar} \link[ggplot2]{geom_text}
-\link{prettyNum} \link[ggplot2]{scale_y_log10}
+\pkg{ggplot2}
+ \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
+ \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
 }
-

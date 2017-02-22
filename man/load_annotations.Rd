@@ -41,4 +41,3 @@ This defaults to a few fields which I have found most useful, but the brave can 
  \code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
  \code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
 }
-

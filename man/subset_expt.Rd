@@ -13,4 +13,3 @@ subset_expt(...)
 \description{
 This just calls expt_subset.
 }
-

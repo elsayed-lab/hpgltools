@@ -39,4 +39,3 @@ sometimes those functions fail in unpredictable ways.
 \pkg{rtracklayer} \pkg{GenomicRanges}
  \code{\link[rtracklayer]{import.gff}}
 }
-

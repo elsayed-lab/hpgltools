@@ -30,4 +30,4 @@ Suggests:
 Imports:
     Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

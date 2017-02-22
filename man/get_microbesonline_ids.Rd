@@ -33,4 +33,3 @@ microbesonline database and returning the ids associated with a given name.
 \pkg{DBI}
  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
 }
-

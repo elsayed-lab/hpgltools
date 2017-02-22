@@ -38,4 +38,3 @@ This is essentially gff2df(), but returns data suitable for getSet()
 \pkg{rtracklayer} \link{gff2df} \pkg{Biostrings}
  \code{\link[rtracklayer]{import.gff}}
 }
-

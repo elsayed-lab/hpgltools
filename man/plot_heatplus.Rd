@@ -12,4 +12,3 @@ plot_heatplus(fundata)
 \description{
 Heatplus is an interesting tool, I have a few examples of using it and intend to include them here.
 }
-

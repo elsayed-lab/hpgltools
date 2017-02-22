@@ -36,6 +36,6 @@ But it certainly isn't perfect.
 }
 }
 \seealso{
-\pkg{rtracklayer} \link{gff2df}
+\pkg{rtracklayer}
+ \code{\link{gff2df}}
 }
-

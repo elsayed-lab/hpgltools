@@ -35,4 +35,6 @@ just excludes them by name.
 \details{
 Currently untested, used for Trypanosome analyses primarily, thus the default strings.
 }
-
+\seealso{
+\code{\link{semantic_copynumber_extract}}
+}

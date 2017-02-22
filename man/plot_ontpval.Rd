@@ -20,6 +20,6 @@ Ggplot2 plot of pvalues vs. ontology.
 This function seeks to make generating pretty pvalue plots as shown by clusterprofiler easier.
 }
 \seealso{
-\link[goseq]{goseq} \pkg{ggplot2}
+\pkg{goseq} \pkg{ggplot2}
+ \code{\link[goseq]{goseq}}
 }
-

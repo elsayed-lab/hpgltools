@@ -29,4 +29,3 @@ The tritrypdb nicely makes their downloads standardized!
  filenames <- tritryp_downloads(species="lmajor", strain="friedlin", version="28")
 }
 }
-

@@ -29,4 +29,6 @@ Thus for strong p-values the score will be near 1 and so we can sum the scores
 for all the tools.  Since topgo has 4 tools, the total possible is 7 if everything
 has a p-value equal to 0.
 }
-
+\seealso{
+\pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats}
+}

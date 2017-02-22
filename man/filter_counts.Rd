@@ -37,10 +37,9 @@ meetings; defaulting to the threshold based filter suggested by Hector.
 }
 \examples{
 \dontrun{
-new <- filter_counts(old)
+ new <- filter_counts(old)
 }
 }
 \seealso{
 \pkg{genefilter}
 }
-

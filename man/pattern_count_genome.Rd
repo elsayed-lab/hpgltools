@@ -36,4 +36,3 @@ This function provides that information and is primarily used by cp_seq_m().
  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}} \code{\link[Biostrings]{PDict}}
  \code{\link[Biostrings]{vcountPDict}}
 }
-

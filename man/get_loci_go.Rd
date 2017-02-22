@@ -30,4 +30,3 @@ At the very least, it does return a large number of them, which is a start.
 \pkg{DBI}
  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
 }
-

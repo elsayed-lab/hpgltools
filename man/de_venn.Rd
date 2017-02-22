@@ -32,4 +32,3 @@ Use this to see out how much the (dis)agree.
 \seealso{
 \pkg{venneuler} \pkg{Vennerable}
 }
-

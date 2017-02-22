@@ -26,7 +26,6 @@ to break it into smaller pieces.
 }
 }
 \seealso{
-\pkg{Biobase} \link[Biobase]{pData}
-\link[Biobase]{exprs} \link[Biobase]{fData}
+\pkg{Biobase}
+ \code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
 }
-

@@ -16,7 +16,12 @@ genoplot_chromosome(accession = "AE009949", start = NULL, end = NULL,
 
 \item{title}{Put a title on the resulting plot.}
 }
+\value{
+Hopefully a pretty plot of a genome
+}
 \description{
 genoplotr is cool, I don't yet understand it though
 }
-
+\seealso{
+\pkg{genoPlotR}
+}

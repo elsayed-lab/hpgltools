@@ -27,4 +27,3 @@ Use AnnotationDbi to map descriptions of KEGG pathways to gene IDs.
 \seealso{
 \pkg{AnnotationDbi}
 }
-

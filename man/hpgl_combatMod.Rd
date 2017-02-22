@@ -27,11 +27,11 @@ This is a hack of Kwame Okrah's combatMod to make it not fail on corner-cases.
 This was mostly copy/pasted from https://github.com/kokrah/cbcbSEQ/blob/master/R/transform.R
 }
 \examples{
- \dontrun{
-  df_new = hpgl_combatMod(df, batches, model)
- }
+\dontrun{
+ df_new = hpgl_combatMod(df, batches, model)
+}
 }
 \seealso{
-\pkg{sva} \code{\link[sva]{ComBat}}
+\pkg{sva}
+ \code{\link[sva]{ComBat}}
 }
-

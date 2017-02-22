@@ -22,4 +22,6 @@ Take an expt and poke at it to ensure that it will not result in troubled result
 \details{
 Invoked by deseq_pairwise() and edger_pairwise().
 }
-
+\seealso{
+\pkg{DESeq2} \pkg{edgeR}
+}

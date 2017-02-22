@@ -23,4 +23,3 @@ TriTrypDB gene information table GO term parser
 \author{
 Keith Hughitt
 }
-

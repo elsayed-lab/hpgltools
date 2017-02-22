@@ -25,6 +25,6 @@ This is the most similar to the function suggested by Hector I think.
 }
 }
 \seealso{
-\pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep.
+\pkg{genefilter}
+ \code{\link[genefilter]{kOverA}}
 }
-

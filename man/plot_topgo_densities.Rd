@@ -11,7 +11,12 @@ plot_topgo_densities(godata, table)
 
 \item{table}{Table of genes.}
 }
+\value{
+density plot as per topgo
+}
 \description{
 This can make a large number of plots.
 }
-
+\seealso{
+\pkg{topGO}
+}

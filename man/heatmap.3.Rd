@@ -156,4 +156,6 @@ a heatmap!
 \description{
 heatmap.2 is the devil.
 }
-
+\seealso{
+\code{\link{heatmap.2}}
+}

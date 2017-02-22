@@ -35,10 +35,10 @@ them as a heatmap.  It attempts to standardize the inputs and eventual output.
 \examples{
 \dontrun{
  disheat_plot = plot_disheat(expt=expt, method="euclidean")
- disheat_plot
 }
 }
 \seealso{
-\link[RColorBrewer]{brewer.pal} \link[gplots]{heatmap.2} \link[grDevices]{recordPlot}
+\pkg{RColorBrewer}
+ \code{\link[RColorBrewer]{brewer.pal}} \code{\link[gplots]{heatmap.2}}
+ \code{\link[grDevices]{recordPlot}}
 }
-

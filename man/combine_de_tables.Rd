@@ -53,13 +53,12 @@ limma/DESeq2/EdgeR on a table-by-table basis.
 }
 \examples{
 \dontrun{
-pretty = combine_de_tables(big_result, table='t12_vs_t0')
-pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")))
-pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")),
-                           excludes=list("description" = c("sno","rRNA")))
+ pretty = combine_de_tables(big_result, table='t12_vs_t0')
+ pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")))
+ pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")),
+                            excludes=list("description" = c("sno","rRNA")))
 }
 }
 \seealso{
 \code{\link{all_pairwise}}
 }
-

@@ -21,4 +21,3 @@ a list of IRanges which contain a bunch of As and Us.
 \description{
 Yeah, I do not remember what I changed in this function.
 }
-

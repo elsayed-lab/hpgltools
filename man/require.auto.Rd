@@ -23,10 +23,10 @@ http://sbamin.com/2012/11/05/tips-for-working-in-r-automatically-install-missing
 }
 \examples{
 \dontrun{
-require.auto("ggplot2")
+ require.auto("ggplot2")
 }
 }
 \seealso{
-\link[BiocInstaller]{biocLite} \link{install.packages}
+\pkg{BiocInstaller}
+ \code{\link[BiocInstaller]{biocLite}} \code{\link{install.packages}}
 }
-

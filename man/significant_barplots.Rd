@@ -48,4 +48,3 @@ given a set of fold changes and p-value.
 \seealso{
 \pkg{ggplot2}
 }
-

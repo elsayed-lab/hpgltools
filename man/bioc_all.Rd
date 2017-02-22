@@ -33,8 +33,10 @@ them with BiocInstaller to install all of them.  It performs a sleep between eac
 an attempt to avoid being obnoxious.  As a result, it will of a necessity take forever.
 }
 \examples{
- \dontrun{
-  go_get_some_coffee_this_will_take_a_while <- bioc_all()
+\dontrun{
+ go_get_some_coffee_this_will_take_a_while <- bioc_all()
 }
 }
-
+\seealso{
+\pkg{BiocInstaller}
+}

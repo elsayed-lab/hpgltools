@@ -28,9 +28,11 @@ write_goseq_data(goseq, excel = "excel/goseq.xlsx", wb = NULL,
 \item{...}{Extra arguments are passed to arglist.}
 }
 \value{
-The result from openxlsx
+The result from openxlsx in a prettyified xlsx file.
 }
 \description{
 It is my intention to make a function like this for each ontology tool in my repetoire
 }
-
+\seealso{
+\pkg{openxlsx} \pkg{goseq}
+}

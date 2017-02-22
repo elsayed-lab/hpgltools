@@ -21,7 +21,7 @@ ruv_residuals, or pca.}
 }
 \value{
 List including the adjustments for a model matrix, a modified count table, and 3 plots of
-       the known batch, surrogates, and batch/surrogate.
+ the known batch, surrogates, and batch/surrogate.
 }
 \description{
 This applies the methodologies very nicely explained by Jeff Leek at
@@ -32,4 +32,6 @@ estimates so that one may play with the modified counts and view the changes (wi
 or whatever).  Finally, it prints a couple of the plots shown by Leek in his document.
 In other words, this is entirely derivative of someone much smarter than me.
 }
-
+\seealso{
+\pkg{Biobase} \pkg{sva} \pkg{EDASeq} \pkg{RUVseq} \pkg{edgeR}
+}

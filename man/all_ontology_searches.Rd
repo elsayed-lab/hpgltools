@@ -55,7 +55,7 @@ shift of clusterprofiler and friends towards using them.}
 }
 \value{
 a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and
-    associated trees.
+ associated trees.
 }
 \description{
 This takes a set of differential expression results, extracts a subset of up/down expressed
@@ -72,4 +72,6 @@ in ways which the various tools expect.
                                      goids=goids_df, z=1.5, gff_file='length_db.gff')
 }
 }
-
+\seealso{
+\pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats} \pkg{gProfiler} \pkg{GO.db}
+}

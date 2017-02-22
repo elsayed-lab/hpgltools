@@ -35,4 +35,6 @@ In the same way all_pairwise() attempts to simplify using multiple DE tools, thi
 to make it easier to extract subsets of differentially expressed data and pass them to goseq,
 clusterProfiler, topGO, GOstats, and gProfiler.
 }
-
+\seealso{
+\pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats} \pkg{gProfiler}
+}

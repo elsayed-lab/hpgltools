@@ -37,4 +37,3 @@ held constant.
 \seealso{
 \pkg{ggplot2}
 }
-

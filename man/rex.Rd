@@ -13,4 +13,3 @@ rex(display = ":0")
 This function assumes a line in the .profile which writes the DISPLAY variable to
 ${HOME}/.displays/$(hostname).last
 }
-

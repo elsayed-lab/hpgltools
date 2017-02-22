@@ -27,12 +27,12 @@ relationship between the columns of data plotted.
 }
 \examples{
 \dontrun{
-plot_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
-             gvis_filename="html/fun_scatterplot.html")
+ plot_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+              gvis_filename="html/fun_scatterplot.html")
 }
 }
 \seealso{
-\link{plot_gvis_scatter} \link[ggplot2]{geom_point}
-\link{plot_linear_scatter}
+\pkg{ggplot2} \pkg{googleVis}
+ \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
+ \code{\link{plot_linear_scatter}}
 }
-

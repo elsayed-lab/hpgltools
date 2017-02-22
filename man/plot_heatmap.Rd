@@ -35,6 +35,6 @@ This does what is says on the tin.  Sets the colors for correlation or distance 
 the calculation of the relevant metrics, and plots the heatmap.
 }
 \seealso{
-\link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
+\pkg{RColorBrewer}
+ \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 }
-

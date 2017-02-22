@@ -20,7 +20,9 @@ genes.  It drops genes based on a threshold and number of samples.
 }
 \examples{
 \dontrun{
-filtered_table <- simple_filter_counts(count_table)
+ filtered_table <- simple_filter_counts(count_table)
 }
 }
-
+\seealso{
+\pkg{edgeR}
+}

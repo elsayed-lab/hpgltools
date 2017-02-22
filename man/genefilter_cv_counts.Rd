@@ -22,10 +22,10 @@ low-count filter per se.
 }
 \examples{
 \dontrun{
-filtered_table = genefilter_kofa_counts(count_table)
+ filtered_table = genefilter_kofa_counts(count_table)
 }
 }
 \seealso{
-\pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep.
+\pkg{genefilter}
+ \code{\link[genefilter]{kOverA}}
 }
-

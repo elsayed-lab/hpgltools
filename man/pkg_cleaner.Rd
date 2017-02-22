@@ -27,4 +27,3 @@ KEGGREST in order to accomplish these peculiar tasks.
  crazytown <- make_organismdbi()  ## wait a loong time
 }
 }
-

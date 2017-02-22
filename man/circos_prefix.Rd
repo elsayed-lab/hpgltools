@@ -29,4 +29,3 @@ be no highlight stanzas and at most 1 link stanza.
 chromosomes.  A minimal amount of logic and data organization will
 address these weaknesses.
 }
-

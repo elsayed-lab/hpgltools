@@ -25,4 +25,3 @@ ensembl_list <- kegg_to_ensembl("a")
 \pkg{KEGGREST}
  \code{\link[KEGGREST]{keggGet}}
 }
-

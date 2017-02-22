@@ -21,4 +21,3 @@ It falls under a few main topics
 To see examples of this inaction, check out the vignettes:
 \code{browseVignettes(package = 'hpgltools')}
 }
-

@@ -16,4 +16,3 @@ Whatever the code would have returned.
 Some libraries/functions just won't shut up.  Ergo, silence, peasant!
 This is a simpler silence peasant.
 }
-

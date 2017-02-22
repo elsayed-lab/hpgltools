@@ -10,4 +10,3 @@ lhs \%>\% rhs
 Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
 }
 \keyword{internal}
-

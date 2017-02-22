@@ -23,4 +23,3 @@ quantile(cpm(low-filter(data))).
 \seealso{
 \code{\link{normalize_expt}}
 }
-

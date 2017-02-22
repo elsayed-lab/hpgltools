@@ -39,7 +39,7 @@ then normalized against the maximum.
 }
 }
 \seealso{
-\pkg{ggplot2} \link{plot_gvis_scatter} \link[ggplot2]{geom_point}
-\link{plot_linear_scatter}
+\pkg{ggplot2}
+ \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
+ \code{\link{plot_linear_scatter}}
 }
-

@@ -17,4 +17,3 @@ A value!
 \description{
 Keith wrote this as .get_value() but functions which start with . trouble me.
 }
-

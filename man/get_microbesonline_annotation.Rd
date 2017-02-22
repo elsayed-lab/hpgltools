@@ -32,4 +32,3 @@ This function makes that rather easier, or so I hope at least.
 \pkg{RCurl}
  \code{\link[RCurl]{getURL}}
 }
-

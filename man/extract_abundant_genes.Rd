@@ -31,4 +31,6 @@ Given the output of something_pairwise(), pull out the genes for each contrast
 which are the most/least abundant.  This is in contrast to extract_significant_genes().
 That function seeks out the most changed, statistically significant genes.
 }
-
+\seealso{
+\pkg{openxlsx}
+}

@@ -48,4 +48,3 @@ z-score, or are at the top/bottom of the ranked list.
 \seealso{
 \code{\link{combine_de_tables}}
 }
-

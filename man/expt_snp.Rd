@@ -26,4 +26,3 @@ some stuff
 I have some initial code for working with snps, but it seems that it will be getting more use, so
 make it testable etc.
 }
-

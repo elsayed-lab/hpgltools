@@ -69,13 +69,12 @@ correction.
 }
 \examples{
 \dontrun{
-normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
-                         batch='raw', filter='pofa')
-normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
-                               batch='sva', filter='pofa')
+ normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
+                          batch='raw', filter='pofa')
+ normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
+                                batch='sva', filter='pofa')
 }
 }
 \seealso{
 \pkg{genefilter} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
 }
-

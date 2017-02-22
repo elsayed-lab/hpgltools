@@ -25,8 +25,14 @@ plot_significant_bar(ups, downs, maximum = NULL, text = TRUE,
 
 \item{color_names}{Categories associated with aforementioned colors.}
 }
+\value{
+weird significance bar plots
+}
 \description{
 Make a bar plot of the numbers of significant genes by contrast.
 These plots are quite difficult to describe.
 }
-
+\seealso{
+\pkg{ggplot2}
+ \code{\link{extract_significant_genes}}
+}

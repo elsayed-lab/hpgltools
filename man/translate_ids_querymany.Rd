@@ -34,6 +34,6 @@ this function should provide a reminder of this relatively fast and useful ID tr
 }
 }
 \seealso{
-\pkg{mygene} \code{\link[mygene]{queryMany}}
+\pkg{mygene}
+ \code{\link[mygene]{queryMany}}
 }
-

@@ -22,4 +22,6 @@ Sometimes one does not like the hpgl identifiers, so provide a way to change the
  expt = set_expt_samplenames(expt, c("a","b","c","d","e","f"))
 }
 }
-
+\seealso{
+\code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
+}

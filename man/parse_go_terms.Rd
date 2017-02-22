@@ -26,4 +26,3 @@ on the website. These will not be included in the final database.
 \author{
 Keith Hughitt
 }
-

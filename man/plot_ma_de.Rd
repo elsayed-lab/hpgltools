@@ -60,4 +60,3 @@ which has been transformed onto the M (log ratios) and A (mean average) scale."
  \code{\link[limma]{lmFit}} \code{\link[limma]{makeContrasts}}
  \code{\link[limma]{contrasts.fit}}
 }
-

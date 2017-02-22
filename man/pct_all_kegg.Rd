@@ -33,4 +33,3 @@ given pathway.
 \seealso{
 \pkg{KEGGgraph} \pkg{KEGGREST}
 }
-

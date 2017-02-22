@@ -25,7 +25,7 @@ plot_gvis_volcano(toptable_data, fc_cutoff = 0.8, p_cutoff = 0.05,
 }
 \value{
 NULL, but along the way an html file is generated which contains a googleVis volcano
-    plot.
+ plot.
 }
 \description{
 Volcano plots provide some visual clues regarding the success of a given contrast.  For our data,
@@ -36,11 +36,11 @@ and y-axis is related to a measure of the statistical significance of the signal
 }
 \examples{
 \dontrun{
-plot_gvis_volcano(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
-                   base_url="http://yeastgenome.org/accession?")
+ plot_gvis_volcano(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
+                    base_url="http://yeastgenome.org/accession?")
 }
 }
 \seealso{
-\link{plot_volcano}
+\pkg{googleVis}
+ \code{\link{plot_volcano}}
 }
-

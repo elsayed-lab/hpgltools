@@ -55,4 +55,3 @@ and potentially save an extra svg-version of each plot inserted.
 \seealso{
 \pkg{openxlsx}
 }
-

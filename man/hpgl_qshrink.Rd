@@ -34,10 +34,9 @@ checked to see if it was useful yet.
 }
 \examples{
 \dontrun{
-df <- hpgl_qshrink(data)
+ df <- hpgl_qshrink(data)
 }
 }
 \seealso{
 \pkg{qsmooth}
 }
-

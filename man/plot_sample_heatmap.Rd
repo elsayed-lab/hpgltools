@@ -31,6 +31,6 @@ can handle that.  These heatmap functions should probably be replaced with neatm
 or whatever it is, as the annotation dataframes in them are pretty awesome.
 }
 \seealso{
-\link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
+\pkg{RColorBrewer}
+ \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 }
-

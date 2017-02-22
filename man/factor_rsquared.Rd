@@ -22,6 +22,6 @@ Collect the r^2 values from a linear model fitting between a singular
 value decomposition and factor.
 }
 \seealso{
-\code{\link[corpcor]{fast.svd}}
+\pkg{corpcor}
+ \code{\link[corpcor]{fast.svd}}
 }
-

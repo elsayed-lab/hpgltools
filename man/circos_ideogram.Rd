@@ -20,4 +20,3 @@ The file to which the ideogram configuration was written.
 \description{
 This function writes ideogram files for circos.
 }
-

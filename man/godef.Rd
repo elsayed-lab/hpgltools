@@ -18,12 +18,11 @@ Sometimes it is nice to be able to read the full definition of some GO terms.
 \examples{
 \dontrun{
  godef("GO:0032432")
-## > GO:0032432
-## > "An assembly of actin filaments that are on the same axis but may be oriented with the
-## > same or opposite polarities and may be packed with different levels of tightness."
+ ## > GO:0032432
+ ## > "An assembly of actin filaments that are on the same axis but may be oriented with the
+ ## > same or opposite polarities and may be packed with different levels of tightness."
 }
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}
 }
-

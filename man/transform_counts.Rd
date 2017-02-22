@@ -30,4 +30,6 @@ this will avoid a double+1 on the data.
  filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
 }
 }
-
+\seealso{
+\pkg{limma}
+}

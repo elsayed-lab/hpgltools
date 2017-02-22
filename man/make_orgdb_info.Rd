@@ -30,4 +30,3 @@ moment.
 \seealso{
 \pkg{rtracklayer} \pkg{GenomicRanges}
 }
-

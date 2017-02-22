@@ -31,6 +31,6 @@ otherwise be too troublesome to acquire.
 }
 }
 \seealso{
-\pkg{googleVis} \link{gff2df}
+\pkg{googleVis}
+ \code{\link{gff2df}}
 }
-

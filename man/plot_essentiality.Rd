@@ -15,4 +15,6 @@ A couple of plots
 \description{
 This provides a plot of the essentiality metrics 'zbar' with respect to gene.
 }
-
+\seealso{
+\pkg{ggplot2}
+}

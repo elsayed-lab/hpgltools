@@ -15,4 +15,3 @@ A legend!
 \description{
 This way I can have a legend object to move about.
 }
-

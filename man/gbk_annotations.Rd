@@ -30,4 +30,3 @@ the essential information one might want for printing out a gff or whatever.
 \pkg{AnnotationDbi} \pkg{GenomeInfoDb} \pkg{GenomicFeatures}
  \code{\link[AnnotationDbi]{select}}
 }
-

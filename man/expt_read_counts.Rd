@@ -42,4 +42,3 @@ account upper/lowercase filenames and uses data.table to speed things along.
 \pkg{data.table}
  \code{\link{create_expt}}
 }
-

@@ -28,7 +28,9 @@ checked to see if it was useful yet.
 }
 \examples{
 \dontrun{
-qstatted <- hpgl_qstats(data, conditions)
+ qstatted <- hpgl_qstats(data, conditions)
 }
 }
-
+\seealso{
+\pkg{matrixStats}
+}

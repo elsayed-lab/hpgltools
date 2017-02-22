@@ -26,4 +26,3 @@ Tested in test_24deseq.R
 \seealso{
 \pkg{DESeq2} \link{write_xls}
 }
-

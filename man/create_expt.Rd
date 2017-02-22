@@ -50,12 +50,12 @@ a full pathname or local to the cwd of the project.
 }
 \examples{
 \dontrun{
-new_experiment = create_expt("some_csv_file.csv", color_hash)
-## Remember that this depends on an existing data structure of gene annotations.
+ new_experiment = create_expt("some_csv_file.csv", color_hash)
+ ## Remember that this depends on an existing data structure of gene annotations.
 }
 }
 \seealso{
-\pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData} \link[Biobase]{exprs}
-\link{expt_read_counts} \link[hash]{as.list.hash}
+\pkg{Biobase}
+ \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{exprs}}
+ \code{\link{expt_read_counts}} \code{\link[hash]{as.list.hash}}
 }
-

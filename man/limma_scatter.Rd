@@ -37,6 +37,6 @@ Extract the adjusted abundances for the two conditions used in the pairw
 }
 }
 \seealso{
-\link{plot_linear_scatter} \pkg{limma}
+\pkg{limma}
+ \code{\link{plot_linear_scatter}}
 }
-

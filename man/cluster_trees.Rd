@@ -34,11 +34,11 @@ into the format expected by topGO and uses it to make those trees.
 }
 \examples{
 \dontrun{
-cluster_data <- simple_clusterprofiler(genes, stuff)
-ctrees <- cluster_trees(genes, cluster_data)
+ cluster_data <- simple_clusterprofiler(genes, stuff)
+ ctrees <- cluster_trees(genes, cluster_data)
 }
 }
 \seealso{
-\pkg{Ramigo} \code{\link[topGO]{showSigOfNodes}}
+\pkg{Ramigo}
+ \code{\link[topGO]{showSigOfNodes}}
 }
-

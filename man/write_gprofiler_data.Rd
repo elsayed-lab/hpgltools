@@ -23,7 +23,12 @@ write_gprofiler_data(gprofiler_result, wb = NULL,
 
 \item{...}{More options, not currently used I think.}
 }
+\value{
+A prettyified table in an xlsx document.
+}
 \description{
 Gprofiler is pretty awesome.  This function will attempt to write its results to an excel file.
 }
-
+\seealso{
+\pkg{openxlsx} \pkg{gProfiler}
+}

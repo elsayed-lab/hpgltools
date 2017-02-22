@@ -25,4 +25,3 @@ attmepts to answer that question.
 \seealso{
 \pkg{GOTermsAnnDbBimap}
 }
-

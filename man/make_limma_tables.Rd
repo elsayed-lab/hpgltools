@@ -27,7 +27,7 @@ make_limma_tables(data, adjust = "fdr", n = 0, coef = NULL,
 }
 \value{
 List of data frames comprising the toptable output for each coefficient, I also added a
-    qvalue entry to these toptable() outputs.
+ qvalue entry to these toptable() outputs.
 }
 \description{
 However, this will do a couple of things to make one's life easier:
@@ -45,4 +45,3 @@ However, this will do a couple of things to make one's life easier:
 \pkg{limma} \pkg{qvalue}
  \code{\link{write_xls}} \code{\link[limma]{topTable}}
 }
-

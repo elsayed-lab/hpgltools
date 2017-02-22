@@ -23,4 +23,3 @@ taxize looks like it might be awesome, but it is also pretty annoying
 \seealso{
 \pkg{taxize}
 }
-

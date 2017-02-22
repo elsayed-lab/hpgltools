@@ -20,4 +20,3 @@ I keep forgetting to set appropriate options for knitr.  This tries to set them.
 \seealso{
 \pkg{knitr} \pkg{rmarkdown} \pkg{knitrBootstrap}
 }
-

@@ -43,6 +43,5 @@ This shoehorns gostats data into a format acceptable by topgo and uses it to pri
 ontology trees showing the over represented ontologies.
 }
 \seealso{
-\pkg{topGO}
+\pkg{topGO} \pkg{gostats}
 }
-

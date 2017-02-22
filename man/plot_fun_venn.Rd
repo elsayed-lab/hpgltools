@@ -26,4 +26,6 @@ Two element list containing the venneuler data and the plot.
 \description{
 venneuler makes pretty venn diagrams, but no labels!
 }
-
+\seealso{
+\pkg{venneuler}
+}

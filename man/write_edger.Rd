@@ -24,6 +24,6 @@ Tested in test_26edger.R
 }
 }
 \seealso{
-\link[limma]{toptable} \link{write_xls}
+\pkg{limma}
+ \code{\link[limma]{toptable}} \code{\link{write_xls}}
 }
-

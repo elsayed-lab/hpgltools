@@ -32,4 +32,3 @@ genomes and such from genbank and dumping them into a local txdb instance.
 \pkg{genbankr} \pkg{rentrez}
  \code{\link[genbankr]{import}}
 }
-

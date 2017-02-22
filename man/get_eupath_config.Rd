@@ -23,4 +23,3 @@ This function is sort of stupid and perhaps will be removed.  I keep a small csv
 TriTrypDB specific metadata, things like data base version number, URL schemes, etc.
 This reads that and extracts the relevant information.
 }
-

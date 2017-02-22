@@ -30,4 +30,3 @@ added some new information. This shortcuts that process for me.
 \seealso{
 \code{\link{combine_de_tables}}
 }
-

@@ -25,4 +25,3 @@ it might prove useful.
 \pkg{DBI}
  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
 }
-

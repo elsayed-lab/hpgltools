@@ -17,4 +17,3 @@ snp_add_file(sample, input_dir = "preprocessing/outputs",
 \description{
 This is used by expt_snp to read input files and relatively quickly merge them.
 }
-

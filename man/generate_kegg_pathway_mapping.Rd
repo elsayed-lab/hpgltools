@@ -26,4 +26,3 @@ Make an easier to use df of KEGG -> descriptions using keggGet.
 \pkg{KEGGREST}
  \code{\link[KEGGREST]{keggLink}}
 }
-

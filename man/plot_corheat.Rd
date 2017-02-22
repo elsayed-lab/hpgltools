@@ -33,11 +33,11 @@ Given a set of count tables and design, this will calculate the pairwise correla
 them as a heatmap.  It attempts to standardize the inputs and eventual output.
 }
 \examples{
-## corheat_plot = hpgl_corheat(expt=expt, method="robust")
-## corheat_plot
+\dontrun{
+ corheat_plot <- hpgl_corheat(expt=expt, method="robust")
+}
 }
 \seealso{
-\link{hpgl_cor} \link[RColorBrewer]{brewer.pal}
-\link[grDevices]{recordPlot}
+\pkg{grDevice}
+ \code{\link{hpgl_cor}} \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 }
-

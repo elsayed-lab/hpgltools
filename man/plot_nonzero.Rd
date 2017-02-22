@@ -36,6 +36,6 @@ Temanni <temanni at umd dot edu>.
 }
 }
 \seealso{
-\link[ggplot2]{geom_point} \link[directlabels]{geom_dl}
+\pkg{ggplot2}
+ \code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
 }
-

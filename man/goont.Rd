@@ -18,11 +18,10 @@ Get a go ontology name from an ID.
 \examples{
 \dontrun{
  goont(c("GO:0032432", "GO:0032433"))
-## > GO:0032432 GO:0032433
-## > "CC" "CC"
+ ## > GO:0032432 GO:0032433
+ ## > "CC" "CC"
 }
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}
 }
-

@@ -31,4 +31,3 @@ is not already in your R library tree.
 \pkg{AnnotationDbi}
  \code{\link[AnnotationDbi]{keytypes}}
 }
-

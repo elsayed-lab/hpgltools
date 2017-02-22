@@ -32,6 +32,5 @@ Yay pretty colors and shapes!
 }
 }
 \seealso{
-\link{plot_ma_de}
+\code{\link{plot_ma_de}}
 }
-

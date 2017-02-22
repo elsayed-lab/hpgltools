@@ -42,12 +42,14 @@ create_combined_table(li, ed, de, ba, table_name, annot_df = NULL,
 }
 \value{
 List containing a) Dataframe containing the merged
-    limma/edger/deseq/basic tables, and b) A summary of how many
-    genes were observed as up/down by output table.
+ limma/edger/deseq/basic tables, and b) A summary of how many
+ genes were observed as up/down by output table.
 }
 \description{
 This combines the outputs from the various differential expression
 tools and formalizes some column names to make them a little more
 consistent.
 }
-
+\seealso{
+\pkg{data.table} \pkg{openxlsx}
+}

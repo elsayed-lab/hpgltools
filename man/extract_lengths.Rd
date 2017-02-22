@@ -29,4 +29,6 @@ Dataframe containing 2 columns: ID, length
 Primarily goseq, but also other tools on occasion require a set of gene IDs and lengths.
 This function is resposible for pulling that data from either a gff, or TxDb/OrganismDbi.
 }
-
+\seealso{
+\pkg{GenomicFeatures}
+}

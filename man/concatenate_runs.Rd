@@ -31,4 +31,3 @@ Untested as of 2016-12-01, but used in a couple of projects where sequencing run
 \pkg{Biobase}
  \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{pData}}
 }
-

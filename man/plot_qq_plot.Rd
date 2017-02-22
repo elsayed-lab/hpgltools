@@ -22,4 +22,6 @@ a list of the logs, ratios, and mean between the plots as ggplots.
 Given two columns of data, how well do the distributions match one another?  The answer to that
 question may be visualized through a qq plot!
 }
-
+\seealso{
+\pkg{Biobase}
+}

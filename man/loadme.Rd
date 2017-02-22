@@ -25,6 +25,5 @@ load its R environment.
 }
 }
 \seealso{
-\link{load} \link{save}
+\code{\link{saveme}} \code{\link{load}} \code{\link{save}}
 }
-

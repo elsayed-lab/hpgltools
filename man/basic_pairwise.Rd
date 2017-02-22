@@ -40,4 +40,3 @@ stupid_de <- basic_pairwise(expt)
 \seealso{
 \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 }
-

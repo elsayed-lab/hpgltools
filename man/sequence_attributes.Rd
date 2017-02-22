@@ -31,4 +31,3 @@ attributes.
 \pkg{Biostrings} \pkg{Rsamtools}
  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
 }
-

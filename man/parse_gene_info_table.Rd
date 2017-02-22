@@ -22,4 +22,3 @@ http://tritrypdb.org/common/downloads/Current_Release/TbruceiLister427/txt/data/
 \author{
 Keith Hughitt
 }
-

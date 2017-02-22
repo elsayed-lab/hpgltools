@@ -26,6 +26,6 @@ The p-value plots from clusterProfiler are pretty, this sets the topgo data into
 suitable for plotting in that fashion and returns the resulting plots of significant ontologies.
 }
 \seealso{
-\pkg{topgo} \code{clusterProfiler}
+\pkg{topgo}
+ \code{\link{clusterProfiler}}
 }
-

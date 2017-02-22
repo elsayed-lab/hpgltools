@@ -27,4 +27,3 @@ something which I don't yet know.
 Taken (with modifications) from: http://menugget.blogspot.com/2012/12/spirograph-with-r.html#more
 A positive value for 'B' will result in a epitrochoid, while a negative value will result in a hypotrochoid.
 }
-
