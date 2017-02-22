@@ -8,6 +8,12 @@ pp(file, width = 9, height = 9, res = 180)
 }
 \arguments{
 \item{file}{a filename to write}
+
+\item{width}{How wide?}
+
+\item{height}{How high?}
+
+\item{res}{The chosen resolution.}
 }
 \value{
 a png with height=width=9 inches and a high resolution

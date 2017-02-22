@@ -13,6 +13,9 @@ local_get_value <- function(x, delimiter=": ") {
 #' I hate remembering my options for png()
 #'
 #' @param file a filename to write
+#' @param width  How wide?
+#' @param height  How high?
+#' @param res  The chosen resolution.
 #' @return a png with height=width=9 inches and a high resolution
 #' @export
 pp <- function(file, width=9, height=9, res=180) {
