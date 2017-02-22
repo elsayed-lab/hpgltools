@@ -33,5 +33,6 @@ Much like make_orgdb() above, this uses the same data to generate a TxDb object.
 }
 \seealso{
 \pkg{GenomicFeatures} \pkg{Biobase} \pkg{devtools}
+ \code{\link[Biobase]{createPackage}} \code{\link[GenomicFeatures]{createPackage}}
 }
 

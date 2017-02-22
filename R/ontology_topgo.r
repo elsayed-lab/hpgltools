@@ -19,6 +19,7 @@
 #' @param parallel  Perform some operations in parallel to speed this up?
 #' @param ... Other options which I do not remember right now!
 #' @return Big list including the various outputs from topgo
+#' @seealso \pkg{topGO}
 #' @export
 simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
                          pvals=NULL, limitby="fisher", limit=0.1, signodes=100,
@@ -334,6 +335,8 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
 #' @param numchar How many characters to allow in the description?
 #' @param orderby Which of the available columns to order the table by?
 #' @param ranksof Which of the available columns are used to rank the data?
+#' @return prettier tables
+#' @seealso \pkg{topGO}
 #' @export
 topgo_tables <- function(result, limit=0.1, limitby="fisher",
                          numchar=300, orderby="classic", ranksof="classic") {
@@ -435,6 +438,7 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher",
 #' @param goids_df If there is no goid_map, create it with this data frame.
 #' @param overwrite Rewrite the mapping file?
 #' @return Summary of the new goid table.
+#' @seealso \pkg{topGO}
 #' @export
 make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, overwrite=FALSE) {
     id2go_test <- file.info(goid_map)
@@ -540,6 +544,7 @@ getEdgeWeights <- function(graph) {
 #' @param nodeInfo Hmm.
 #' @param maxchars Maximum characters per line inside the shapes.
 #' @return Topgo plot!
+#' @seealso \pkg{topGO}
 #' @export
 hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
                         nodeShape.type=c('box','circle','ellipse','plaintext')[3],

@@ -79,10 +79,10 @@ default_norm <- function(expt, ...) {
 #' @seealso \pkg{genefilter} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
 #' @examples
 #' \dontrun{
-#' normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
-#'                          batch='raw', filter='pofa')
-#' normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
-#'                                batch='sva', filter='pofa')
+#'  normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
+#'                           batch='raw', filter='pofa')
+#'  normed_batch <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
+#'                                 batch='sva', filter='pofa')
 #' }
 #' @export
 normalize_expt <- function(expt, ## The expt class passed to the normalizer
@@ -270,18 +270,20 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 #' @param data Some data as a df/expt/whatever.
 #' @param ... I should put all those other options here
 #' @return edgeR's DGEList expression of a count table.  This seems to
-#' me to be the easiest to deal with.
-#' @seealso \link[edgeR]{cpm} \link[edgeR]{rpkm}
-#' \link{hpgl_rpkm} \link[DESeq2]{DESeqDataSetFromMatrix}
-#' \link[DESeq]{estimateSizeFactors} \link[edgeR]{DGEList} \link[edgeR]{calcNormFactors}
+#'  me to be the easiest to deal with.
+#' @seealso \pkg{edgeR} \pkg{DESeq2}
+#'  \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+#'  \code{\link{hpgl_rpkm}} \code{\link[DESeq2]{DESeqDataSetFromMatrix}}
+#'  \code{\link[DESeq]{estimateSizeFactors}} \code{\link[edgeR]{DGEList}}
+#'  \code{\link[edgeR]{calcNormFactors}}
 #' @export
 #' @examples
 #' \dontrun{
-#' df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
-#' df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-#' df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2',
-#'                        convert='rpkm')  ## Quantile, log2, rpkm
-#' count_table = df_ql2rpkm$counts
+#'  df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
+#'  df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
+#'  df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2',
+#'                         convert='rpkm')  ## Quantile, log2, rpkm
+#'  count_table = df_ql2rpkm$counts
 #' }
 hpgl_norm <- function(data, ...) {
     arglist <- list(...)

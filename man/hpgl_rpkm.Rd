@@ -24,6 +24,7 @@ rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
 }
 }
 \seealso{
-\pkg{edgeR} and \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+\pkg{edgeR}
+ \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 }
 

@@ -10,9 +10,10 @@
 #' @param accession Accession to download and import
 #' @param savetxdb  Save a txdb package from this? FIXME THIS DOES NOT WORK.
 #' @return List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
-#' @seealso \pkg{genbankr} \pkg{rentrez} \code{\link[genbankr]{import}} \code{\link[genbankr]{getSeq}}
+#' @seealso \pkg{genbankr} \pkg{rentrez}
+#'  \code{\link[genbankr]{import}}
 #' @examples
-#' \dontrun {
+#' \dontrun{
 #'  txdb_result <- gbk2txdb(accession="AE009948", savetxdb=TRUE)
 #' }
 #' @export

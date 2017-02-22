@@ -24,11 +24,12 @@ This just sets some defaults for the genbankr service in order to facilitate dow
 genomes and such from genbank and dumping them into a local txdb instance.
 }
 \examples{
-\dontrun {
+\dontrun{
  txdb_result <- gbk2txdb(accession="AE009948", savetxdb=TRUE)
 }
 }
 \seealso{
-\pkg{genbankr} \pkt{rentrez}
+\pkg{genbankr} \pkg{rentrez}
+ \code{\link[genbankr]{import}}
 }
 

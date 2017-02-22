@@ -208,6 +208,7 @@ basic_pairwise <- function(input=NULL, design=NULL,
 #'
 #' @param input  An expressionset containing expt to test and/or modify.
 #' @param force  If we want to try out other distributed data sets, force it in using me.
+#' @param ... future options, I think currently unused.
 #' @return data ready for basic_pairwise()
 #' @seealso \pkg{Biobase}
 #' @examples
@@ -278,7 +279,7 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
 #'
 #' @param data  Output from basic_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link{write_de_table}
+#' @seealso \code{\link{write_de_table}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- basic_pairwise(expressionset)

@@ -26,6 +26,12 @@ create_combined_table(li, ed, de, ba, table_name, annot_df = NULL,
 
 \item{adjp}{Use adjusted p-values?}
 
+\item{include_deseq}{Include tables from deseq?}
+
+\item{include_edger}{Include tables from edger?}
+
+\item{include_limma}{Include tables from limma?}
+
 \item{include_basic}{Include the basic table?}
 
 \item{fc_cutoff}{Preferred logfoldchange cutoff.}

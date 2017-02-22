@@ -15,11 +15,12 @@
 #' @param data  Expt or data frame to manipulate.
 #' @param design  If the data is not an expt, provide experimental design here.
 #' @param estimate_type  One of: sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
-#'     ruv_residuals, or pca.
+#'  ruv_residuals, or pca.
 #' @param surrogates  Choose a method for getting the number of surrogates, be or leek, or a number.
 #' @param ... Parameters fed to arglist.
 #' @return List including the adjustments for a model matrix, a modified count table, and 3 plots of
-#'        the known batch, surrogates, and batch/surrogate.
+#'  the known batch, surrogates, and batch/surrogate.
+#' @seealso \pkg{Biobase} \pkg{sva} \pkg{EDASeq} \pkg{RUVseq} \pkg{edgeR}
 #' @export
 get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates="be", ...) {
     arglist <- list(...)
@@ -309,10 +310,11 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
 #'
 #' @param expt Experiment containing a design and other information.
 #' @param extra_factors Character list of extra factors which may be included in the final plot of
-#'     the data.
+#'  the data.
 #' @param do_catplots Include the catplots?  They don't make a lot of sense yet, so probably no.
 #' @param surrogates  Use 'be' or 'leek' surrogate estimates, or choose a number.
 #' @return List of the results.
+#' @seealso \code{\link{get_model_adjust}}
 #' @export
 compare_surrogate_estimates <- function(expt, extra_factors=NULL,
                                         do_catplots=FALSE, surrogates="be") {

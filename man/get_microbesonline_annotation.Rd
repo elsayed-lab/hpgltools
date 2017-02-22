@@ -29,6 +29,7 @@ This function makes that rather easier, or so I hope at least.
 }
 }
 \seealso{
-\link{RCurl} \link{get_microbesonline_ids}
+\pkg{RCurl}
+ \code{\link[RCurl]{getURL}}
 }
 

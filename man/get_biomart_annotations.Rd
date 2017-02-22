@@ -50,5 +50,6 @@ appropriate marts, datasets, and columns to download.
 }
 \seealso{
 \pkg{biomaRt}
+ \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
 }
 

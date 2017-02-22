@@ -19,6 +19,10 @@
 #' @param ... More parameters!
 #' @return List of returns from GSEABase, Category, etc.
 #' @seealso \pkg{GSEABase} \pkg{Category}
+#' @examples
+#' \dontrun{
+#'  knickerbockers <- simple_gostats(sig_genes, gff_file, goids)
+#' }
 #' @export
 simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second_merge_try="locus_tag",
                            species="fun", pcutoff=0.10, direction="over", conditional=FALSE,

@@ -9,6 +9,7 @@
 #' @param fives  Character list of quint categories
 #' @param factor Currently unused, but intended to change the radial distance to the label from the center of each circle.
 #' @return Two element list containing the venneuler data and the plot.
+#' @seealso \pkg{venneuler}
 #' @export
 plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), factor=0.9) {
     venn_sets <- ones

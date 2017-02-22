@@ -11,13 +11,13 @@ semantic_copynumber_extract(de_list, min_copies = 2, semantic = c("mucin",
 \item{de_list}{List of sets of genes deemed significantly
 up/down with a column expressing approximate count numbers.}
 
+\item{min_copies}{Keep only those genes with >= n putative
+copies.}
+
 \item{semantic}{Set of strings with gene names to exclude.}
 
 \item{semantic_column}{Column in the DE table used to find the
 semantic strings for removal.}
-
-\item{max_copies}{Keep only those genes with <= n putative
-copies.}
 }
 \value{
 Smaller list of up/down genes.

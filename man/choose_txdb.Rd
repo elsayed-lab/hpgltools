@@ -29,5 +29,6 @@ is not already in your R library tree.
 }
 \seealso{
 \pkg{AnnotationDbi}
+ \code{\link[AnnotationDbi]{keytypes}}
 }
 

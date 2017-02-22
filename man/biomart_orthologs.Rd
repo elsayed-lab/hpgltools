@@ -47,6 +47,7 @@ for a successful query.  I can say with confidence that it works well between mi
 }
 }
 \seealso{
-\pkg{biomaRt}
+\pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
+ \code{\link[biomaRt]{useMart}}
 }
 

@@ -606,7 +606,7 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
 #' @param ...   Extra arguments to pass through.
 #' @return List of the resulting txDb package and whether it installed.
 #' @seealso \pkg{GenomicFeatures} \pkg{Biobase} \pkg{devtools}
-#'  \code{\link[Biobase]{createPackage}} \code{\link[GenomicFeaturesssss]{createPackage}}
+#'  \code{\link[Biobase]{createPackage}}
 #' @examples
 #' \dontrun{
 #'  txdb <- make_txdb(orgdb_output)

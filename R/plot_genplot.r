@@ -6,6 +6,8 @@
 #' @param start  First segment to plot (doesn't quite work yet).
 #' @param end  Final segment to plot (doesn't quite work yet).
 #' @param title  Put a title on the resulting plot.
+#' @return Hopefully a pretty plot of a genome
+#' @seealso \pkg{genoPlotR}
 #' @export
 genoplot_chromosome <- function(accession="AE009949", start=NULL, end=NULL, title="Genome plot") {
     tt <- download_gbk(accession)

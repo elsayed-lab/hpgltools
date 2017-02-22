@@ -30,5 +30,6 @@ ids using the OrganismDbi interface.
 }
 \seealso{
 \pkg{AnnotationDbi}
+ \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
 }
 

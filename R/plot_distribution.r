@@ -22,7 +22,7 @@
 #' the non-outliers), and single dots for each gene which is outside
 #' that range.  A single dot is transparent.
 #' @seealso \pkg{ggplot2} \pkg{reshape2} \link[ggplot2]{geom_boxplot}
-#' \link[reshape2]{melt} \link[ggplot2]{scale_x_discrete}
+#'  \code{\link[reshape2]{melt}} \code{\link[ggplot2]{scale_x_discrete}}
 #' @examples
 #' \dontrun{
 #'  a_boxplot <- plot_boxplot(expt)
@@ -117,10 +117,11 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' @param title Title for the plot.
 #' @param colors_by Factor for coloring the lines
 #' @return Ggplot2 density plot!
-#' @seealso \pkg{ggplot2} \link[ggplot2]{geom_density}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[ggplot2]{geom_density}}
 #' @examples
 #' \dontrun{
-#' funkytown <- plot_density(data)
+#'  funkytown <- plot_density(data)
 #' }
 #' @export
 plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
@@ -216,9 +217,10 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
 #' @param data Expressionset, expt, or dataframe of samples.
 #' @param labels What kind of labels to print?
 #' @return List containing:
-#'   logs = a recordPlot() of the pairwise log qq plots.
-#'   ratios = a recordPlot() of the pairwise ratio qq plots.
-#'   means = a table of the median values of all the summaries of the qq plots.
+#'  logs = a recordPlot() of the pairwise log qq plots.
+#'  ratios = a recordPlot() of the pairwise ratio qq plots.
+#'  means = a table of the median values of all the summaries of the qq plots.
+#' @seealso \pkg{Biobase}
 #' @export
 plot_qq_all <- function(data, labels="short") {
     data_class <- class(data)[1]
@@ -279,18 +281,19 @@ plot_qq_all <- function(data, labels="short") {
 #' @param y Second column to compare.
 #' @param labels Include the lables?
 #' @return a list of the logs, ratios, and mean between the plots as ggplots.
+#' @seealso \pkg{Biobase}
 #' @export
 plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
+        design <- data[["design"]]
+        colors <- data[["colors"]]
+        names <- data[["names"]]
         data <- as.data.frame(Biobase::exprs(data$expressionset))
-    } else if (data_class == 'ExpressionSet') {
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -405,6 +408,7 @@ plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
 #'
 #' @param data Dataframe to perform pairwise qqplots with.
 #' @return List containing the recordPlot() output of the ratios, logs, and means among samples.
+#' @seealso \pkg{Biobase}
 #' @export
 plot_qq_all_pairwise <- function(data) {
     data_class <- class(data)[1]
@@ -414,9 +418,9 @@ plot_qq_all_pairwise <- function(data) {
         colors <- data$colors
         names <- data$names
         data <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")

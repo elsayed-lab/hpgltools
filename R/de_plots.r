@@ -9,7 +9,7 @@
 #' @param pval_cutoff  Cutoff to define 'significant' by p-value.
 #' @param ...  Extra arguments are passed to arglist.
 #' @return a plot!
-#' @seealso \link{plot_ma_de}
+#' @seealso \code{\link{plot_ma_de}}
 #' @examples
 #' \dontrun{
 #'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
@@ -125,7 +125,8 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
 #' @param color_low  Color for the genes less than the mean.
 #' @param color_high  Color for the genes greater than the mean.
 #' @param ...  More arguments are passed to arglist.
-#' @seealso \pkg{ggplot2} \link{plot_linear_scatter}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link{plot_linear_scatter}}
 #' @examples
 #' \dontrun{
 #'  scatter_plot <- extract_coefficient_scatter(pairwise_output, type="deseq", x="uninfected", y="infected")

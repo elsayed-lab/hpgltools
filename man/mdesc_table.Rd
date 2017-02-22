@@ -23,5 +23,6 @@ it might prove useful.
 }
 \seealso{
 \pkg{DBI}
+ \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
 }
 

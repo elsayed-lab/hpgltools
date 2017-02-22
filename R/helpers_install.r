@@ -5,7 +5,7 @@
 #' an attempt to avoid being obnoxious.  As a result, it will of a necessity take forever.
 #'
 #' @param release  Bioconductor release to use, should probably be adjusted to automatically find
-#'     it.
+#'  it.
 #' @param mirror  Bioconductor mirror to use.
 #' @param base  Base directory on the mirror to download from.
 #' @param type  Type in the tree to use (software or annotation)
@@ -13,9 +13,10 @@
 #' @param suppress_auto  For BiocLite(), don't update?
 #' @param force  Install if already installed?
 #' @return a number of packages installed
+#' @seealso \pkg{BiocInstaller}
 #' @examples
-#'  \dontrun{
-#'   go_get_some_coffee_this_will_take_a_while <- bioc_all()
+#' \dontrun{
+#'  go_get_some_coffee_this_will_take_a_while <- bioc_all()
 #' }
 #' @export
 bioc_all <- function(release="3.4", mirror="bioc.ism.ac.jp", base="packages", type="software",
@@ -100,10 +101,11 @@ bioc_all <- function(release="3.4", mirror="bioc.ism.ac.jp", base="packages", ty
 #' @param lib String name of a library to check/install.
 #' @param update Update packages?
 #' @return 0 or 1, whether a package was installed or not.
-#' @seealso \link[BiocInstaller]{biocLite} \link{install.packages}
+#' @seealso \pkg{BiocInstaller}
+#'  \code{\link[BiocInstaller]{biocLite}} \code{\link{install.packages}}
 #' @examples
 #' \dontrun{
-#' require.auto("ggplot2")
+#'  require.auto("ggplot2")
 #' }
 #' @export
 require.auto <- function(lib, update=FALSE) {

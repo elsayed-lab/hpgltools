@@ -23,6 +23,7 @@ Make an easier to use df of KEGG -> descriptions using keggGet.
 }
 }
 \seealso{
-\link{KEGGREST}
+\pkg{KEGGREST}
+ \code{\link[KEGGREST]{keggLink}}
 }
 

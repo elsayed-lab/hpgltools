@@ -25,12 +25,13 @@
 #' @param low_files Explicitly lowercase the filenames when searching the filesystem?
 #' @param ... More parameters are fun!
 #' @return  experiment an expressionset
-#' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData} \link[Biobase]{exprs}
-#' \link{expt_read_counts} \link[hash]{as.list.hash}
+#' @seealso \pkg{Biobase}
+#'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{exprs}}
+#'  \code{\link{expt_read_counts}} \code{\link[hash]{as.list.hash}}
 #' @examples
 #' \dontrun{
-#' new_experiment = create_expt("some_csv_file.csv", color_hash)
-#' ## Remember that this depends on an existing data structure of gene annotations.
+#'  new_experiment = create_expt("some_csv_file.csv", color_hash)
+#'  ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
 create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
@@ -496,6 +497,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
 #' @param patterns  Character list of patterns to remove/keep
 #' @param ...  Extra arguments are passed to arglist, currently unused.
 #' @return  A smaller expt
+#' @seealso \code{\link{create_expt}}
 #' @export
 expt_exclude_genes <- function(expt, column="txtype", method="remove",
                                patterns=c("snRNA","tRNA","rRNA"), ...) {
@@ -539,8 +541,8 @@ subset_expt <- function(...) {
 #' @param expt Expt chosen to extract a subset of data.
 #' @param subset Valid R expression which defines a subset of the design to keep.
 #' @return metadata Expt class which contains the smaller set of data.
-#' @seealso \pkg{Biobase} \link[Biobase]{pData}
-#' \link[Biobase]{exprs} \link[Biobase]{fData}
+#' @seealso \pkg{Biobase}
+#'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
 #' @examples
 #' \dontrun{
 #'  smaller_expt = expt_subset(big_expt, "condition=='control'")
@@ -628,6 +630,7 @@ expt_subset <- function(expt, subset=NULL) {
 #' @param file Csv/xls file to read.
 #' @param ... Arguments for arglist, used by sep, header and similar read.csv/read.table parameters.
 #' @return Df of metadata.
+#' @seealso \pkg{tools} \pkg{openxlsx} \pkg{XLConnect}
 read_metadata <- function(file, ...) {
     arglist <- list(...)
     if (is.null(arglist[["sep"]])) {
@@ -666,6 +669,7 @@ read_metadata <- function(file, ...) {
 #' @param ids  Specific samples to change.
 #' @param ...  Extra options are like spinach.
 #' @return  The original expt with some new metadata.
+#' @seealso \code{\link{create_expt}} \code{\link{set_expt_condition}}
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
@@ -703,6 +707,7 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' @param chosen_palette  I usually use Dark2 as the RColorBrewer palette.
 #' @param change_by  Assuming a list is passed, cross reference by condition or sample?
 #' @return expt Send back the expt with some new metadata
+#' @seealso \code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
 #' @examples
 #' \dontrun{
 #' unique(esmer_expt$design$conditions)
@@ -795,6 +800,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
 #' @param ids Specific sample IDs to change.
 #' @param ...  Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
+#' @seealso \code{\link{set_expt_batch}} \code{\link{create_expt}}
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))
@@ -853,6 +859,7 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
 #' @param ids Specific sample IDs to change.
 #' @param ... Arguments passed along (likely colors)
 #' @return expt Send back the expt with some new metadata
+#' @seealso \code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_factors(big_expt, condition="column", batch="another_column")
@@ -876,6 +883,7 @@ set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
 #' @param expt Expt to modify
 #' @param newnames New names, currently only a character vector.
 #' @return expt Send back the expt with some new metadata
+#' @seealso \code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_samplenames(expt, c("a","b","c","d","e","f"))
@@ -914,6 +922,8 @@ set_expt_samplenames <- function(expt, newnames) {
 #' @param norm  How was it normalized?
 #' @param filter  How was it filtered?
 #' @param batch  How was it batch-corrected?
+#' @return An expression describing what has been done to this data.
+#' @seealso \code{\link{create_expt}}
 #' @export
 what_happened <- function(expt=NULL, transform="raw", convert="raw",
                           norm="raw", filter="raw", batch="raw") {

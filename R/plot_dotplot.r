@@ -6,13 +6,15 @@
 #'
 #' @param expt Experiment from which to acquire the design, counts, etc.
 #' @param svest Set of surrogate variable estimations from sva/svg
-#'        or batch estimates.
+#'  or batch estimates.
 #' @param chosen_factor Factor to compare against.
 #' @param factor_type This may be a factor or range, it is intended to plot
-#'        a scatterplot if it is a range, a dotplot if a factor.
+#'  a scatterplot if it is a range, a dotplot if a factor.
+#' @return surrogate variable plot as per Leek's work
+#' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{
-#' estimate_vs_snps <- plot_svfactor(start, surrogate_estimate, "snpcategory")
+#'  estimate_vs_snps <- plot_svfactor(start, surrogate_estimate, "snpcategory")
 #' }
 #' @export
 plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type="factor") {
@@ -63,13 +65,15 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
 #'
 #' @param expt Experiment from which to acquire the design, counts, etc.
 #' @param svs Set of surrogate variable estimations from sva/svg
-#'        or batch estimates.
+#'  or batch estimates.
 #' @param batch_column Which experimental design column to use?
 #' @param factor_type This may be a factor or range, it is intended to plot
-#'        a scatterplot if it is a range, a dotplot if a factor.
+#'  a scatterplot if it is a range, a dotplot if a factor.
+#' @return Plot of batch vs surrogate variables as per Leek's work.
+#' @seealso \pkg{sva} \pkg{ggplot2}
 #' @examples
 #' \dontrun{
-#' estimate_vs_snps <- plot_batchsv(start, surrogate_estimate, "snpcategory")
+#'  estimate_vs_snps <- plot_batchsv(start, surrogate_estimate, "snpcategory")
 #' }
 #' @export
 plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") {
@@ -136,9 +140,11 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
 #' @param expt Expt containing counts, metadata, etc.
 #' @param exp_factor Experimental factor to compare against.
 #' @param component Which principal component to compare against?
+#' @return Plot of principle component vs factors in the data
+#' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{
-#' estimate_vs_pcs <- plot_pcfactor(pcs, times)
+#'  estimate_vs_pcs <- plot_pcfactor(pcs, times)
 #' }
 #' @export
 plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") {
@@ -174,14 +180,15 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
 #' @param title Title for the graph.
 #' @param ... More parameters to make you happy!
 #' @return ggplot of the standard median something
-#' among the samples.  This will also write to an
-#' open device.  The resulting plot measures the median correlation of
-#' each sample among its peers.  It notes 1.5* the interquartile range
-#' among the samples and makes a horizontal line at that correlation
-#' coefficient.  Any sample which falls below this line is considered
-#' for removal because it is much less similar to all of its peers.
-#' @seealso \link{hpgl_cor} \link[matrixStats]{rowMedians}
-#' \link[stats]{quantile} \link{diff} \link[grDevices]{recordPlot}
+#'  among the samples.  This will also write to an
+#'  open device.  The resulting plot measures the median correlation of
+#'  each sample among its peers.  It notes 1.5* the interquartile range
+#'  among the samples and makes a horizontal line at that correlation
+#'  coefficient.  Any sample which falls below this line is considered
+#'  for removal because it is much less similar to all of its peers.
+#' @seealso \pkg{matrixStats} \pkg{grDevices}
+#'  \code{\link{hpgl_cor}} \code{\link[matrixStats]{rowMedians}}
+#'  \code{\link[stats]{quantile}} \code{\link{diff}} \code{\link[grDevices]{recordPlot}}
 #' @examples
 #' \dontrun{
 #'  smc_plot = hpgl_smc(expt=expt)

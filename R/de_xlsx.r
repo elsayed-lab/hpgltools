@@ -7,9 +7,9 @@
 #' @param extra_annot  Add some annotation information?
 #' @param excel  Filename for the excel workbook, or null if not printed.
 #' @param excel_title  Title for the excel sheet(s).  If it has the
-#'     string 'YYY', that will be replaced by the contrast name.
+#'  string 'YYY', that will be replaced by the contrast name.
 #' @param keepers  List of reformatted table names to explicitly keep
-#'     certain contrasts in specific orders and orientations.
+#'  certain contrasts in specific orders and orientations.
 #' @param adjp  Perhaps you do not want the adjusted p-values for plotting?
 #' @param excludes  List of columns and patterns to use for excluding genes.
 #' @param include_deseq  Include deseq analyses in the table?
@@ -20,15 +20,15 @@
 #' @param loess  Add time intensive loess estimation to plots?
 #' @param plot_dim  Number of inches squared for the plot if added.
 #' @param compare_plots  In an attempt to save memory when printing to excel, make it possible to
-#'     exclude comparison plots in the summary sheet.
+#'  exclude comparison plots in the summary sheet.
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
 #' @examples
 #' \dontrun{
-#' pretty = combine_de_tables(big_result, table='t12_vs_t0')
-#' pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")))
-#' pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")),
-#'                            excludes=list("description" = c("sno","rRNA")))
+#'  pretty = combine_de_tables(big_result, table='t12_vs_t0')
+#'  pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")))
+#'  pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")),
+#'                             excludes=list("description" = c("sno","rRNA")))
 #' }
 #' @export
 combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
@@ -439,7 +439,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                           include_basic=include_basic,
                                           include_deseq=include_deseq,
                                           include_edger=include_edger,
-                                          include_limma=inclide_limma,
+                                          include_limma=include_limma,
                                           excludes=excludes)
         combo[[table]] <- combined[["data"]]
         splitted <- strsplit(x=tab, split="_vs_")
@@ -632,13 +632,17 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 #' @param annot_df  Add some annotation information?
 #' @param inverse  Invert the fold changes?
 #' @param adjp  Use adjusted p-values?
+#' @param include_limma  Include tables from limma?
+#' @param include_deseq  Include tables from deseq?
+#' @param include_edger  Include tables from edger?
 #' @param include_basic  Include the basic table?
 #' @param fc_cutoff  Preferred logfoldchange cutoff.
 #' @param p_cutoff  Preferred pvalue cutoff.
 #' @param excludes  Set of genes to exclude from the output.
 #' @return List containing a) Dataframe containing the merged
-#'     limma/edger/deseq/basic tables, and b) A summary of how many
-#'     genes were observed as up/down by output table.
+#'  limma/edger/deseq/basic tables, and b) A summary of how many
+#'  genes were observed as up/down by output table.
+#' @seealso \pkg{data.table} \pkg{openxlsx}
 #' @export
 create_combined_table <- function(li, ed, de, ba,
                                   table_name, annot_df=NULL, inverse=FALSE, adjp=TRUE,
@@ -708,10 +712,6 @@ create_combined_table <- function(li, ed, de, ba,
     rownames(comb) <- comb[["rownames"]]
     keepers <- colnames(comb) != "rownames"
     comb <- comb[, keepers, drop=FALSE]
-    rm(lidt)
-    rm(dedt)
-    rm(eddt)
-    rm(badt)
     comb[is.na(comb)] <- 0
     if (isTRUE(inverse)) {
         if (isTRUE(include_basic)) {
@@ -925,6 +925,7 @@ combine_de_data_table <- function(lilfcdt, listatsdt, include_limma,
 #' @param least  Instead of the most abundant, do the least.
 #' @param excel  Excel file to write.
 #' @return  The set of most/least abundant genes by contrast/tool.
+#' @seealso \pkg{openxlsx}
 #' @export
 extract_abundant_genes <- function(pairwise, according_to="all", n=100, z=NULL, unique=FALSE,
                                    least=FALSE, excel="excel/abundant_genes.xlsx") {
@@ -997,7 +998,7 @@ extract_siggenes <- function(...) { extract_significant_genes(...) }
 #'
 #' @param combined  Output from combine_de_tables().
 #' @param according_to  What tool(s) decide 'significant?'  One may use
-#'        the deseq, edger, limma, basic, meta, or all.
+#'  the deseq, edger, limma, basic, meta, or all.
 #' @param fc  Log fold change to define 'significant'.
 #' @param p  (Adjusted)p-value to define 'significant'.
 #' @param sig_bar  Add bar plots describing various cutoffs of 'significant'?
@@ -1376,10 +1377,10 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
 #' @param data Output from results().
 #' @param type  Which DE tool to write.
 #' @param ...  Parameters passed downstream, dumped into arglist and passed, notably the number
-#'         of genes (n), the coefficient column (coef)
+#'  of genes (n), the coefficient column (coef)
 #' @return List of data frames comprising the toptable output for each coefficient, I also added a
-#'     qvalue entry to these toptable() outputs.
-#' @seealso \link{write_xls}
+#'  qvalue entry to these toptable() outputs.
+#' @seealso \code{\link{write_xls}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = eBayes(deseq_output)

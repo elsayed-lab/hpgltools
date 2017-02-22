@@ -33,5 +33,6 @@ and still score some useful ontology data.
 }
 \seealso{
 \pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
+ \code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
 }
 

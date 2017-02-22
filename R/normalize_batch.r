@@ -6,12 +6,12 @@
 #' @param normalized_counts Data frame of log2cpm counts.
 #' @param model Balanced experimental model containing condition and batch factors.
 #' @return Dataframe of residuals after subtracting batch from the model.
-#' @seealso
-#'  \link[limma]{voom} \link[limma]{lmFit}
+#' @seealso \pkg{limma}
+#'  \code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
 #' @examples
-#'  \dontrun{
-#'   newdata <- cbcb_batch_effect(counts, expt_model)
-#'  }
+#' \dontrun{
+#'  newdata <- cbcb_batch_effect(counts, expt_model)
+#' }
 #' @export
 cbcb_batch_effect <- function(normalized_counts, model) {
     ## model = model.matrix(~ condition + batch)
@@ -57,13 +57,12 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 #' @return The 'batch corrected' count table and new library size.  Please remember that the
 #'  library size which comes out of this may not be what you want for voom/limma and would
 #'  therefore lead to spurious differential expression values.
-#' @seealso
-#'  \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
+#' @seealso \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
 #' @examples
-#'  \dontrun{
-#'   limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
-#'   sva_batch <- batch_counts(table, design, batch='sva')
-#'  }
+#' \dontrun{
+#'  limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
+#'  sva_batch <- batch_counts(table, design, batch='sva')
+#' }
 #' @export
 batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_state=NULL,
                          batch2=NULL, noscale=TRUE, ...) {
@@ -283,12 +282,13 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
 #' A single place to extract count tables from a set of surrogate variables.
 #'
 #' Given an initial set of counts and a series of surrogates, what would the resulting count table
-#'     look like? Hopefully this function answers that question.
+#' look like? Hopefully this function answers that question.
 #'
 #' @param data  Original count table, may be an expt/expressionset or df/matrix.
 #' @param adjust  Surrogates with which to adjust the data.
 #' @param design  Experimental design if it is not included in the expressionset.
 #' @return A data frame of adjusted counts.
+#' @seealso \pkg{Biobase}
 #' @export
 counts_from_surrogates <- function(data, adjust, design=NULL) {
     data_mtrx <- NULL
@@ -351,12 +351,12 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
 #' @param prior.plots Print out prior plots?
 #' @param ... Extra options are passed to arglist
 #' @return Df of batch corrected data
-#' @seealso
-#'  \pkg{sva} \code{\link[sva]{ComBat}}
+#' @seealso \pkg{sva}
+#'  \code{\link[sva]{ComBat}}
 #' @examples
-#'  \dontrun{
-#'   df_new = hpgl_combatMod(df, batches, model)
-#'  }
+#' \dontrun{
+#'  df_new = hpgl_combatMod(df, batches, model)
+#' }
 #' @export
 hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE, ...) {
     arglist <- list(...)

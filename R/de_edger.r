@@ -32,11 +32,11 @@
 #' @param edger_method  I found a couple/few ways of doing edger in the manual, choose with this.
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #' @return List including the following information:
-#'   contrasts = The string representation of the contrasts performed.
-#'   lrt = A list of the results from calling glmLRT(), one for each contrast.
-#'   contrast_list = The list of each call to makeContrasts()
-#'   I do this to avoid running into the limit on # of contrasts addressable by topTags()
-#'   all_tables = a list of tables for the contrasts performed.
+#'  contrasts = The string representation of the contrasts performed.
+#'  lrt = A list of the results from calling glmLRT(), one for each contrast.
+#'  contrast_list = The list of each call to makeContrasts()
+#'  I do this to avoid running into the limit on # of contrasts addressable by topTags()
+#'  all_tables = a list of tables for the contrasts performed.
 #' @seealso \pkg{edgeR}
 #' @examples
 #' \dontrun{
@@ -238,7 +238,8 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
 #'
 #' @param data  Output from deseq_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[limma]{toptable} \link{write_xls}
+#' @seealso \pkg{limma}
+#'  \code{\link[limma]{toptable}} \code{\link{write_xls}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- edger_pairwise(expressionset)

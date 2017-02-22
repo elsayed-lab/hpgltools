@@ -15,8 +15,8 @@ local_get_value <- function(x, delimiter=": ") {
 #' @param file a filename to write
 #' @return a png with height=width=9 inches and a high resolution
 #' @export
-pp <- function(file) {
-    png(filename=file, width=9, height=9, units="in", res=180)
+pp <- function(file, width=9, height=9, res=180) {
+    png(filename=file, width=width, height=height, units="in", res=res)
 }
 
 #' Silence, m...
@@ -109,20 +109,20 @@ make_report <- function(name="report", type='pdf') {
 #' @seealso \pkg{IRanges} \pkg{Biostrings}
 #' @examples
 #' \dontrun{
-#' ## Extract all the genes from my genome, pull a static region 120nt following the stop
-#' ## and test them for potential ARE sequences.
-#' ## FIXME: There may be an error in this example, another version I have handles the +/- strand
-#' ## genes separately, I need to return to this and check if it is providing the 5' UTR for 1/2
-#' ## the genome, which would be unfortunate -- but the logic for testing remains the same.
-#' are_candidates <- hpgl_arescore(genome)
-#' utr_genes <- subset(lmajor_annotations, type == 'gene')
-#' threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
-#'                                ranges=IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)),
-#'                                strand=Rle(utr_genes[,5]),
-#'                                name=Rle(utr_genes[,10]))
-#' threep_seqstrings <- Biostrings::getSeq(lm, threep)
-#' are_test <- hpgltools:::hpgl_arescore(x=threep_seqstrings)
-#' are_genes <- rownames(are_test[ which(are_test$score > 0), ])
+#'  ## Extract all the genes from my genome, pull a static region 120nt following the stop
+#'  ## and test them for potential ARE sequences.
+#'  ## FIXME: There may be an error in this example, another version I have handles the +/- strand
+#'  ## genes separately, I need to return to this and check if it is providing the 5' UTR for 1/2
+#'  ## the genome, which would be unfortunate -- but the logic for testing remains the same.
+#'  are_candidates <- hpgl_arescore(genome)
+#'  utr_genes <- subset(lmajor_annotations, type == 'gene')
+#'  threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
+#'                                   ranges=IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)),
+#'                                   strand=Rle(utr_genes[,5]),
+#'                                   name=Rle(utr_genes[,10]))
+#'  threep_seqstrings <- Biostrings::getSeq(lm, threep)
+#'  are_test <- hpgltools:::hpgl_arescore(x=threep_seqstrings)
+#'  are_genes <- rownames(are_test[ which(are_test$score > 0), ])
 #' }
 #' @export
 hpgl_arescore <- function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
@@ -224,11 +224,12 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #' @param method Correlation method to use. Includes pearson, spearman, kendal, robust.
 #' @param ... Other options to pass to stats::cor().
 #' @return Some fun correlation statistics.
-#' @seealso \pkg{robust} \link{cor} \link{cov} \link[robust]{covRob}
+#' @seealso \pkg{robust}
+#'  \code{\link{cor}} \code{\link{cov}} \code{\link[robust]{covRob}}
 #' @examples
 #' \dontrun{
-#' hpgl_cor(df=df)
-#' hpgl_cor(df=df, method="robust")
+#'  hpgl_cor(df=df)
+#'  hpgl_cor(df=df, method="robust")
 #' }
 #' @export
 hpgl_cor <- function(df, method="pearson", ...) {
@@ -256,22 +257,22 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{
-#' mydist <- sillydist(df[,1], df[,2], first_median, second_median)
-#' first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"),
-#'                                    environment=hpgl_env) +
-#'   ggplot2::xlab(paste("Expression of", df_x_axis)) +
-#'   ggplot2::ylab(paste("Expression of", df_y_axis)) +
-#'   ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
-#'   ggplot2::geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
-#'   ggplot2::geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
-#'   ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
-#'   ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
-#'   ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
-#'   ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist),
-#'                       alpha=0.6, size=size) +
-#'   ggplot2::theme(legend.position="none")
-#' first_vs_second  ## dots get colored according to how far they are from the medians
-#' ## replace first_median, second_median with 0,0 for the axes
+#'  mydist <- sillydist(df[,1], df[,2], first_median, second_median)
+#'  first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"),
+#'                                     environment=hpgl_env) +
+#'    ggplot2::xlab(paste("Expression of", df_x_axis)) +
+#'    ggplot2::ylab(paste("Expression of", df_y_axis)) +
+#'    ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
+#'    ggplot2::geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
+#'    ggplot2::geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
+#'    ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
+#'    ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
+#'    ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
+#'    ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist),
+#'                        alpha=0.6, size=size) +
+#'    ggplot2::theme(legend.position="none")
+#'  first_vs_second  ## dots get colored according to how far they are from the medians
+#'  ## replace first_median, second_median with 0,0 for the axes
 #' }
 #' @export
 sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
@@ -321,7 +322,7 @@ backup_file <- function(backup_file, backups=4) {
 #' @param directory Directory containing the RData.rda.xz file.
 #' @param filename  Filename to which to save.
 #' @return a bigger global environment
-#' @seealso \link{load} \link{save}
+#' @seealso \code{\link{saveme}} \code{\link{load}} \code{\link{save}}
 #' @examples
 #' \dontrun{
 #'  loadme()
@@ -346,7 +347,7 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #' @param backups  How many revisions?
 #' @param filename  Choose a filename.
 #' @return Command string used to save the global environment.
-#' @seealso \link{save} \link{pipe}
+#' @seealso \code{\link{save}} \code{\link{pipe}}
 #' @examples
 #' \dontrun{
 #'  saveme()

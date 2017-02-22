@@ -14,11 +14,12 @@
 #' @param title Title for the plot.
 #' @param ... More options are wonderful!
 #' @return Gplots heatmap describing describing how the samples are clustering vis a vis pairwise correlation.
-#' @seealso \link{hpgl_cor} \link[RColorBrewer]{brewer.pal}
-#' \link[grDevices]{recordPlot}
+#' @seealso \pkg{grDevice}
+#'  \code{\link{hpgl_cor}} \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 #' @examples
-#' ## corheat_plot = hpgl_corheat(expt=expt, method="robust")
-#' ## corheat_plot
+#' \dontrun{
+#'  corheat_plot <- hpgl_corheat(expt=expt, method="robust")
+#' }
 #' @export
 plot_corheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="pearson", expt_names=NULL,
@@ -43,11 +44,12 @@ plot_corheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 #' @param title Title for the plot.
 #' @param ... More parameters!
 #' @return a recordPlot() heatmap describing the distance between samples.
-#' @seealso \link[RColorBrewer]{brewer.pal} \link[gplots]{heatmap.2} \link[grDevices]{recordPlot}
+#' @seealso \pkg{RColorBrewer}
+#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[gplots]{heatmap.2}}
+#'  \code{\link[grDevices]{recordPlot}}
 #' @examples
 #' \dontrun{
 #'  disheat_plot = plot_disheat(expt=expt, method="euclidean")
-#'  disheat_plot
 #' }
 #' @export
 plot_disheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
@@ -74,7 +76,8 @@ plot_disheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 #' @param title Title for the plot.
 #' @param ... I like elipses!
 #' @return a recordPlot() heatmap describing the distance between samples.
-#' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
+#' @seealso \pkg{RColorBrewer}
+#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 #' @export
 plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="pearson", expt_names=NULL,
@@ -242,7 +245,8 @@ ggplot2_heatmap <- function(some_df) {
 #' @param Rowv Reorder the rows by expression?
 #' @param ... More parameters for a good time!
 #' @return a recordPlot() heatmap describing the samples.
-#' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
+#' @seealso \pkg{RColorBrewer}
+#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 #' @export
 plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=TRUE, ...) {
     hpgl_env <- environment()
@@ -337,6 +341,7 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
 #' @param linewidth the width of lines
 #' @param ... because this function did not already have enough options
 #' @return a heatmap!
+#' @seealso \code{\link{heatmap.2}}
 #' @export
 heatmap.3 <- function (x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
                        distfun=dist, hclustfun=hclust, dendrogram=c("both","row","column","none"),

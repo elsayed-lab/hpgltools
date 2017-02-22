@@ -25,6 +25,8 @@
 #' @param parallel  Use dopar to run limma, deseq, edger, and basic simultaneously.
 #' @param ...  Picks up extra arguments into arglist, currently only passed to write_limma().
 #' @return A list of limma, deseq, edger results.
+#' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
+#'  \code{link{limma_pairwise}} \code{\link{deseq_pairwise}} \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
 #' @examples
 #'  \dontrun{
 #'   finished_comparison = eBayes(limma_output)
@@ -289,6 +291,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' @param surrogates  Number of or method used to choose the number of surrogate variables.
 #' @param ...  Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
+#' @seealso \pkg{stats}
+#'  \code{\link[stats]{model.matrix}}
 #' @export
 choose_model <- function(input, conditions, batches, model_batch=TRUE,
                          model_cond=TRUE, model_intercept=TRUE,
@@ -481,6 +485,8 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
 #' @param choose_for  One of limma, deseq, edger, or basic.  Defines the requested data state.
 #' @param ...  More options for future expansion.
 #' @return List the data, conditions, and batches in the data.
+#' @seealso \code{\link{choose_binom_dataset}} \code{\link{choose_limma_dataset}}
+#'  \code{\link{choose_basic_dataset}}
 #' @export
 choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
     arglist <- list(...)
@@ -512,6 +518,7 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
 #' @param which_voom  Choose between limma'svoom, voomWithQualityWeights, or the hpgl equivalents.
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
+#' @seealso \pkg{limma}
 choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
@@ -600,6 +607,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 #' @param force Ignore every warning and just use this data.
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
+#' @seealso \pkg{DESeq2} \pkg{edgeR}
 choose_binom_dataset <- function(input, force=FALSE, ...) {
     arglist <- list(...)
     input_class <- class(input)[1]
@@ -696,12 +704,12 @@ like me, want to see what happens when you put non-standard data into deseq, the
 #'  correlations betwee the three players.
 #' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
 #' @examples
-#'  \dontrun{
-#'   l = limma_pairwise(expt)
-#'   d = deseq_pairwise(expt)
-#'   e = edger_pairwise(expt)
-#'   fun = compare_tables(limma=l, deseq=d, edger=e)
-#'  }
+#' \dontrun{
+#'  l = limma_pairwise(expt)
+#'  d = deseq_pairwise(expt)
+#'  e = edger_pairwise(expt)
+#'  fun = compare_tables(limma=l, deseq=d, edger=e)
+#' }
 #' @export
 compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
                            include_basic=TRUE, annot_df=NULL, ...) {
@@ -849,6 +857,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
 #'
 #' @param combined_tables The combined tables from limma et al.
 #' @return Some plots
+#' @seealso \code{\link{plot_linear_scatter}}
 #' @export
 compare_logfc_plots <- function(combined_tables) {
     plots <- list()
@@ -907,6 +916,8 @@ disjunct_pvalues <- function(contrast_fit, coef1, coef2, ...) {
 #' @param type  Which type of pairwise comparison to perform
 #' @param ...  The set of arguments intended for limma_pairwise(), edger_pairwise(), and friends.
 #' @return The result from limma/deseq/edger/basic
+#' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq_pairwise}}
+#'  \code{\link{basic_pairwise}}
 #' @export
 do_pairwise <- function(type, ...) {
     arglist <- list(...)
@@ -938,6 +949,7 @@ do_pairwise <- function(type, ...) {
 #' @param unique  Unimplemented: take only the genes unique among the conditions surveyed.
 #' @param least  When true, this finds the least abundant rather than most.
 #' @return  List of data frames containing the genes of interest.
+#' @seealso \pkg{stats} \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @export
 get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE, least=FALSE) {
     if (is.null(z) & is.null(n)) {
@@ -1021,6 +1033,8 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
 #'
 #' @param datum  Output from _pairwise() functions.
 #' @param type  According to deseq/limma/ed ger/basic?
+#' @return  A list containing the expression values and some metrics of variance/error.
+#' @seealso \pkg{limma}
 #' @export
 get_pairwise_gene_abundances <- function(datum, type="limma") {
     if (type == "limma") {
@@ -1085,6 +1099,7 @@ get_pairwise_gene_abundances <- function(datum, type="limma") {
 #' @param column Table's column used to distinguish top vs. bottom.
 #' @param p_column Table's column containing (adjusted or not)p-values.
 #' @return Subset of the up/down genes given the provided criteria.
+#' @seealso \code{\link{extract_significant_genes}}
 #' @export
 get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
                           column="logFC", fold="plusminus", p_column="adj.P.Val") {
@@ -1199,12 +1214,12 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
 #'   \item contrast_string = the string passed to R to call makeContrasts(...)
 #'   \item names = the names given to the identities/contrasts
 #'  }
-#' @seealso
-#'  \link[limma]{makeContrasts}
+#' @seealso \pkg{limma}
+#'  \code{\link[limma]{makeContrasts}}
 #' @examples
-#'  \dontrun{
-#'   pretend = make_pairwise_contrasts(model, conditions)
-#'  }
+#' \dontrun{
+#'  pretend = make_pairwise_contrasts(model, conditions)
+#' }
 #' @export
 make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
                                     do_pairwise=TRUE, extra_contrasts=NULL) {
@@ -1314,6 +1329,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 #' @param semantic_column  Column in the DE table used to find the
 #'  semantic strings for removal.
 #' @return Smaller list of up/down genes.
+#' @seealso \code{\link{semantic_copynumber_extract}}
 #' @export
 semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
                                        semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
@@ -1404,12 +1420,13 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
 #'
 #' @param de_list  List of sets of genes deemed significantly
 #'  up/down with a column expressing approximate count numbers.
-#' @param max_copies  Keep only those genes with <= n putative
+#' @param min_copies  Keep only those genes with >= n putative
 #'  copies.
 #' @param semantic  Set of strings with gene names to exclude.
 #' @param semantic_column  Column in the DE table used to find the
 #'  semantic strings for removal.
 #' @return Smaller list of up/down genes.
+#' @seealso \code{\link{semantic_copynumber_filter}}
 #' @export
 semantic_copynumber_extract <- function(de_list, min_copies=2,
                                         semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),

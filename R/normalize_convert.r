@@ -10,9 +10,10 @@
 #' @param data Matrix of count data.
 #' @param convert Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
 #' @param ... Options I might pass from other functions are dropped into arglist, used by rpkm (gene
-#'     lengths) and divide_seq (genome, pattern to match, and annotation type).
+#'  lengths) and divide_seq (genome, pattern to match, and annotation type).
 #' @return Dataframe of cpm/rpkm/whatever(counts)
-#' @seealso \pkg{edgeR} \pkg{Biobase} \code{\link[edgeR]{cpm}}
+#' @seealso \pkg{edgeR} \pkg{Biobase}
+#'  \code{\link[edgeR]{cpm}}
 #' @examples
 #' \dontrun{
 #'  converted_table = convert_counts(count_table, convert='cbcbcpm')
@@ -65,7 +66,8 @@ convert_counts <- function(data, convert="raw", ...) {
 #' @param genome Genome to search (fasta/BSgenome).
 #' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return The RPseqM counts
-#' @seealso \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
+#' @seealso \pkg{edgeR} \pkg{Rsamtools}
+#'  \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
 #' @examples
 #' \dontrun{
 #'  cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
@@ -166,7 +168,7 @@ divide_seq <- function(counts, genome=NULL, ...) {
 #' @seealso \pkg{edgeR}
 #' @examples
 #' \dontrun{
-#' l2cpm <- hpgl_log2cpm(counts)
+#'  l2cpm <- hpgl_log2cpm(counts)
 #' }
 #' @export
 hpgl_log2cpm <- function(counts, lib.size=NULL) {
@@ -187,10 +189,11 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #' @param df Data frame of counts, alternately an edgeR DGEList.
 #' @param ... extra options including annotations for defining gene lengths.
 #' @return Data frame of counts expressed as rpkm.
-#' @seealso \pkg{edgeR} and \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+#' @seealso \pkg{edgeR}
+#'  \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 #' @examples
 #' \dontrun{
-#' rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
+#'  rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
 #' }
 #' @export
 hpgl_rpkm <- function(df, ...) {

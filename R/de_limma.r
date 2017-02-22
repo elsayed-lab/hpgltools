@@ -85,11 +85,11 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
 #' @param converted  Is the input data is known to be cpm converted?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return EList containing the following information:
-#'   E = The normalized data
-#'   weights = The weights of said data
-#'   design = The resulting design
-#'   lib.size = The size in pseudocounts of the library
-#'   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
+#'  E = The normalized data
+#'  weights = The weights of said data
+#'  design = The resulting design
+#'  lib.size = The size in pseudocounts of the library
+#'  plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
 #' @seealso \pkg{limma} \pkg{ggplot2}
 #' @examples
 #' \dontrun{
@@ -267,7 +267,8 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
 #'  pairwise_fits = The result from calling contrasts.fit()
 #'  pairwise_comparisons = The result from eBayes()
 #'  limma_result = The result from calling write_limma()
-#' @seealso \pkg{limma} \link{write_limma} \pkg{Biobase}
+#' @seealso \pkg{limma} \pkg{Biobase}
+#'  \code{\link{write_limma}}
 #' @examples
 #' \dontrun{
 #'  pretend <- limma_pairwise(expt)
@@ -518,7 +519,8 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
 #' @param ... Use the elipsis to feed options to the html graphs.
 #' @return plot_linear_scatter() set of plots comparing the chosen columns.  If you forget to
 #'  specify tables to compare, it will try the first vs the second.
-#' @seealso \link{plot_linear_scatter} \pkg{limma}
+#' @seealso \pkg{limma}
+#'  \code{\link{plot_linear_scatter}}
 #' @examples
 #' \dontrun{
 #'  compare_logFC <- limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
@@ -577,8 +579,9 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 #' @param csv Write out csv files of the tables?
 #' @param annot_df Optional data frame including annotation information to include with the tables.
 #' @return List of data frames comprising the toptable output for each coefficient, I also added a
-#'     qvalue entry to these toptable() outputs.
-#' @seealso \pkg{limma}} \link{write_xls} \pkg{qvalue}
+#'  qvalue entry to these toptable() outputs.
+#' @seealso \pkg{limma} \pkg{qvalue}
+#'  \code{\link{write_xls}} \code{\link[limma]{topTable}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = eBayes(limma_output)
@@ -664,7 +667,7 @@ make_limma_tables <- function(data, adjust="fdr", n=0, coef=NULL, workbook="exce
 #'
 #' @param data  Output from limma_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link{write_de_table}
+#' @seealso \code{\link{write_de_table}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = limma_pairwise(expressionset)

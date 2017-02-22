@@ -9,6 +9,7 @@
 #' @param base   Other log scales?
 #' @param ...  Options I might pass from other functions are dropped into arglist.
 #' @return dataframe of transformed counts.
+#' @seealso \pkg{limma}
 #' @examples
 #' \dontrun{
 #'  filtered_table = transform_counts(count_table, transform='log2', converted='cpm')

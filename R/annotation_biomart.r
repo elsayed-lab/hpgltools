@@ -13,12 +13,13 @@
 #' @param do_save Create a savefile of annotations for future runs?
 #' @param host Ensembl hostname to use.
 #' @param trymart Biomart has become a circular dependency, this makes me sad, now to list the
-#'     marts, you need to have a mart loaded...
+#'  marts, you need to have a mart loaded...
 #' @param gene_requests  Set of columns to query for description-ish annotations.
 #' @param length_requests Set of columns to query for location-ish annotations.
 #' @param include_lengths Also perform a search on structural elements in the genome?
 #' @return Df of some (by default) human annotations.
-#' @seealso \pkg{biomaRt} \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
+#' @seealso \pkg{biomaRt}
+#'  \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
 #' @examples
 #' \dontrun{
 #'  tt = get_biomart_annotations()
@@ -122,8 +123,8 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #' @param dl_rows  List of rows from the final biomart object to download.
 #' @param dl_rowsv2  A second list of potential rows.
 #' @return Df of geneIDs and GOIDs.
-#' @seealso \pkg{biomaRt} \code{\link[biomaRt]{libMarts}} \code{\link[biomaRt]{useDataset}}
-#'  \code{\link[biomaRt]{getBM}}
+#' @seealso \pkg{biomaRt}
+#'  \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}} \code{\link[biomaRt]{getBM}}
 #' @examples
 #' \dontrun{
 #'  tt = get_biomart_ontologies()
@@ -219,7 +220,8 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
 #' @param fields Set of fields to request, pass null for all.
 #' @param species Human readable species for translation (Eg. 'human' instead of 'hsapiens'.)
 #' @return Df of translated IDs/accessions
-#' @seealso \pkg{mygene} \code{\link[mygene]{queryMany}}
+#' @seealso \pkg{mygene}
+#'  \code{\link[mygene]{queryMany}}
 #' @examples
 #' \dontrun{
 #'  data <- translate_ids_querymany(genes)
@@ -265,6 +267,7 @@ translate_ids_querymany <- function(queries,
 #' @param second_attributes  Key(s) of the second database to use.
 #' @return Df of orthologs.
 #' @seealso \pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
+#'  \code{\link[biomaRt]{useMart}}
 #' @examples
 #' \dontrun{
 #'  mouse_genes <- biomart_orthologs(some_ids)

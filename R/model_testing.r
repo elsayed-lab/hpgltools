@@ -9,6 +9,7 @@
 #' @param factors Experimental factors you rather wish would just go away.
 #' @param ... I might decide to add more options from other functions.
 #' @return List of booleans telling if the factors + goal will work.
+#' @seealso \code{\link{model.matrix}} \code{\link{qr}}
 #' @export
 model_test <- function(design, goal="condition", factors=NULL, ...) {
     arglist <- list(...)

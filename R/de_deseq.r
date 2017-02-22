@@ -4,7 +4,7 @@
 #'
 #' @param ... I like cats.
 #' @return stuff deseq2_pairwise results.
-#' @seealso \link{deseq2_pairwise}
+#' @seealso \code{\link{deseq2_pairwise}}
 #' @export
 deseq_pairwise <- function(...) {
     message("Hey you, use deseq2 pairwise.")
@@ -41,16 +41,16 @@ deseq_pairwise <- function(...) {
 #' @param deseq_method  The DESeq2 manual shows a few ways to invoke it, I make 2 of them available here.
 #' @param ...  Triple dots!  Options are passed to arglist.
 #' @return List including the following information:
-#'   run = the return from calling DESeq()
-#'   denominators = list of denominators in the contrasts
-#'   numerators = list of the numerators in the contrasts
-#'   conditions = the list of conditions in the experiment
-#'   coefficients = list of coefficients making the contrasts
-#'   all_tables = list of DE tables
+#'  run = the return from calling DESeq()
+#'  denominators = list of denominators in the contrasts
+#'  numerators = list of the numerators in the contrasts
+#'  conditions = the list of conditions in the experiment
+#'  coefficients = list of coefficients making the contrasts
+#'  all_tables = list of DE tables
 #' @seealso \pkg{DESeq2} \pkg{Biobase} \pkg{stats}
 #' @examples
 #' \dontrun{
-#' pretend = deseq2_pairwise(data, conditions, batches)
+#'  pretend = deseq2_pairwise(data, conditions, batches)
 #' }
 #' @export
 deseq2_pairwise <- function(input=NULL, conditions=NULL,

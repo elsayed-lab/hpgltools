@@ -39,6 +39,7 @@ account upper/lowercase filenames and uses data.table to speed things along.
 }
 }
 \seealso{
-\link{create_expt} \pkg{data.table}
+\pkg{data.table}
+ \code{\link{create_expt}}
 }
 

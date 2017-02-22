@@ -403,7 +403,7 @@ kegg_to_ensembl <- function(kegg_ids) {
 #' @param verbose talky talky?
 #' @return Df mapping kegg and gene IDs.
 #' @seealso \pkg{KEGGREST}
-#'  \code{\link[KEGGREST]{kegg_to_ensembl}} \code{\link[KEGGREST]{keggLink}}
+#'  \code{\link[KEGGREST]{keggLink}}
 #' @examples
 #' \dontrun{
 #'  kegg_df <- generate_gene_kegg_mapping(path, org)
@@ -435,8 +435,8 @@ generate_gene_kegg_mapping <- function(pathways, org_abbreviation, verbose=FALSE
 #' @param pathways Vector of KEGG pathway identifiers.
 #' @param verbose talk talk?
 #' @return Data frame describing some kegg pathways
-#' @seealso \link{KEGGREST}
-#'  \code{\link[KEGGREST]{kegg_to_ensembl}} \code{\link[KEGGREST]{keggLink}}
+#' @seealso \pkg{KEGGREST}
+#'  \code{\link[KEGGREST]{keggLink}}
 #' @examples
 #' \dontrun{
 #'  mapping <- generate_kegg_pathway_mapping(c("hsa00040", "hsa00100"))

@@ -5,8 +5,8 @@
 #' definitions, etc.
 #'
 #' @param df Dataframe of ontology information.  This is intended to be the output from goseq
-#'     including information like numbers/category, GOids, etc.  It requires a column 'category'
-#'     which contains: GO:000001 and such.
+#'  including information like numbers/category, GOids, etc.  It requires a column 'category'
+#'  which contains: GO:000001 and such.
 #' @param file Csv file to which to write the table.
 #' @return Ontology table with annotation information included.
 #' @seealso \pkg{goseq}
@@ -14,17 +14,17 @@
 #' \dontrun{
 #'  annotated_go = goseq_table(go_ids)
 #'  head(annotated_go, n=1)
-#' ## >        category numDEInCat numInCat over_represented_pvalue
-#' ## > 571  GO:0006364          9       26            4.655108e-08
-#' ## >      under_represented_pvalue       qvalue ontology
-#' ## > 571                 1.0000000 6.731286e-05       BP
-#' ## >                                term
-#' ## > 571                 rRNA processing
-#' ## >                               synonym
-#' ## > 571        "35S primary transcript processing, GO:0006365"
-#' ## >        secondary    definition
-#' ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal
-#' ##          RNA (rRNA) transcript into one or more mature rRNA molecules.
+#'  ## >        category numDEInCat numInCat over_represented_pvalue
+#'  ## > 571  GO:0006364          9       26            4.655108e-08
+#'  ## >      under_represented_pvalue       qvalue ontology
+#'  ## > 571                 1.0000000 6.731286e-05       BP
+#'  ## >                                term
+#'  ## > 571                 rRNA processing
+#'  ## >                               synonym
+#'  ## > 571        "35S primary transcript processing, GO:0006365"
+#'  ## >        secondary    definition
+#'  ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal
+#'  ##          RNA (rRNA) transcript into one or more mature rRNA molecules.
 #' }
 #' @export
 goseq_table <- function(df, file=NULL) {
@@ -82,18 +82,22 @@ goseq_table <- function(df, file=NULL) {
 #' @param bioc_length_db Source of gene lengths?
 #' @param ... Extra parameters which I do not recall
 #' @return Big list including:
-#'   the pwd:pwf function,
-#'   alldata:the godata dataframe,
-#'   pvalue_histogram:p-value histograms,
-#'   godata_interesting:the ontology information of the enhanced groups,
-#'   term_table:the goterms with some information about them,
-#'   mf_subset:a plot of the MF enhanced groups,
-#'   mfp_plot:the pvalues of the MF group,
-#'   bp_subset:a plot of the BP enhanced groups,
-#'   bpp_plot,
-#'   cc_subset,
-#'   and ccp_plot
+#'  the pwd:pwf function,
+#'  alldata:the godata dataframe,
+#'  pvalue_histogram:p-value histograms,
+#'  godata_interesting:the ontology information of the enhanced groups,
+#'  term_table:the goterms with some information about them,
+#'  mf_subset:a plot of the MF enhanced groups,
+#'  mfp_plot:the pvalues of the MF group,
+#'  bp_subset:a plot of the BP enhanced groups,
+#'  bpp_plot,
+#'  cc_subset,
+#'  and ccp_plot
 #' @seealso \pkg{goseq} \pkg{GO.db}
+#' @examples
+#' \dontrun{
+#'  lotsotables <- simple_goseq(gene_list, godb, lengthdb)
+#' }
 #' @export
 simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1,
@@ -335,7 +339,8 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
 #' @param include_all Include all genes in the ontology search?
 #' @param ... Extra options without a purpose just yet.
 #' @return Data frame of categories/genes.
-#' @seealso \link{simple_goseq} \pkg{clusterProfiler} \pkg{goseq}
+#' @seealso \pkg{goseq} \pkg{clusterProfiler}
+#'  \code{\link{simple_goseq}}
 #' @examples
 #' \dontrun{
 #'  data <- simple_goseq(sig_genes=limma_output, lengths=annotation_df, goids=goids_df)

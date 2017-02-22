@@ -8,6 +8,7 @@
 #' @param condition factor describing experiment
 #' @param batch factor describing batch
 #' @return A dataframe containig variance, cum. variance, cond.R-sqrd, batch.R-sqrd
+#' @seealso \code{\link{plot_pca}}
 #' @export
 pcRes <- function(v, d, condition=NULL, batch=NULL){
   pcVar <- round((d ^ 2) / sum(d ^ 2) * 100, 2)
@@ -28,24 +29,24 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
       batch.R2 <- apply(v, 2, batch.R2)
   }
   if(is.null(condition) & is.null(batch)){
-      res <- data.frame("propVar"=pcVar,
-                        "cumPropVar"=cumPcVar)
+      res <- data.frame("propVar" = pcVar,
+                        "cumPropVar" = cumPcVar)
   }
   if(!is.null(batch) & is.null(condition)){
-    res <- data.frame("propVar"=pcVar,
-                      "cumPropVar"=cumPcVar,
-                      "batch.R2"=batch.R2)
+    res <- data.frame("propVar" = pcVar,
+                      "cumPropVar" = cumPcVar,
+                      "batch.R2" = batch.R2)
   }
   if(!is.null(condition) & is.null(batch)){
-    res <- data.frame("propVar"=pcVar,
-                      "cumPropVar"=cumPcVar,
-                      "cond.R2"=cond.R2)
+    res <- data.frame("propVar" = pcVar,
+                      "cumPropVar" = cumPcVar,
+                      "cond.R2" = cond.R2)
   }
   if(!is.null(condition) & !is.null(batch)){
-    res <- data.frame("propVar"=pcVar,
-                      "cumPropVar"=cumPcVar,
-                      "cond.R2"=cond.R2,
-                      "batch.R2"=batch.R2)
+    res <- data.frame("propVar" = pcVar,
+                      "cumPropVar" = cumPcVar,
+                      "cond.R2" = cond.R2,
+                      "batch.R2" = batch.R2)
   }
   return(res)
 }
@@ -61,20 +62,20 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' @param size_column use an experimental factor to size the glyphs of the plot
 #' @param ...  arglist from elipsis!
 #' @return a list containing the following:
-#'  \enumerate{
-#'   \item  pca = the result of fast.svd()
-#'   \item  plot = ggplot2 pca_plot describing the principle component analysis of the samples.
-#'   \item  table = a table of the PCA plot data
-#'   \item  res = a table of the PCA res data
-#'   \item  variance = a table of the PCA plot variance
-#'  }
-#' @seealso
+#' \enumerate{
+#'  \item  pca = the result of fast.svd()
+#'  \item  plot = ggplot2 pca_plot describing the principle component analysis of the samples.
+#'  \item  table = a table of the PCA plot data
+#'  \item  res = a table of the PCA res data
+#'  \item  variance = a table of the PCA plot variance
+#' }
+#' @seealso \pkg{directlabels}
 #'  \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 #' @examples
-#'  \dontrun{
-#'   pca_plot <- plot_pca(expt=expt)
-#'   pca_plot
-#'  }
+#' \dontrun{
+#'  pca_plot <- plot_pca(expt=expt)
+#'  pca_plot
+#' }
 #' @export
 plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
                      plot_title=NULL, plot_size=5, size_column=NULL, ...) {
@@ -264,7 +265,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
 #' @param fact Experimental factor from the original data.
 #' @param type Make this categorical or continuous with factor/continuous.
 #' @return The r^2 values of the linear model as a percentage.
-#' @seealso
+#' @seealso \pkg{corpcor}
 #'  \code{\link[corpcor]{fast.svd}}
 #' @export
 factor_rsquared <- function(svd_v, fact, type="factor") {
@@ -303,7 +304,8 @@ factor_rsquared <- function(svd_v, fact, type="factor") {
 #' @param size_column an experimental factor to use for sizing the glyphs
 #' @param ... extra arguments dropped into arglist
 #' @return a ggplot2 PCA plot
-#' @seealso \pkg{ggplot2} \code{\link[directlabels]{geom_dl}}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[directlabels]{geom_dl}}
 #' @examples
 #' \dontrun{
 #'  pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
@@ -518,24 +520,25 @@ u_plot <- function(plotted_us) {
 #'
 #' @param expt_data  the data to analyze (usually exprs(somedataset)).
 #' @param expt_design   a dataframe describing the experimental design, containing columns with
-#'   useful information like the conditions, batches, number of cells, whatever...
+#'  useful information like the conditions, batches, number of cells, whatever...
 #' @param expt_factors   a character list of experimental conditions to query
-#'   for R^2 against the fast.svd of the data.
+#'  for R^2 against the fast.svd of the data.
 #' @param num_components   a number of principle components to compare the design factors against.
-#'   If left null, it will query the same number of components as factors asked for.
+#'  If left null, it will query the same number of components as factors asked for.
 #' @param plot_pcas   plot the set of PCA plots for every pair of PCs queried.
 #' @return a list of fun pca information:
-#'   svd_u/d/v: The u/d/v parameters from fast.svd
-#'   rsquared_table: A table of the rsquared values between each factor and principle component
-#'   pca_variance: A table of the pca variances
-#'   pca_data: Coordinates for a pca plot
-#'   pca_cor: A table of the correlations between the factors and principle components
-#'   anova_fstats: the sum of the residuals with the factor vs without (manually calculated)
-#'   anova_f: The result from performing anova(withfactor, withoutfactor), the F slot
-#'   anova_p: The p-value calculated from the anova() call
-#'   anova_sums: The RSS value from the above anova() call
-#'   cor_heatmap: A heatmap from recordPlot() describing pca_cor.
-#' @seealso \code{\link[corpcor]{fast.svd}}, \code{\link[stats]{lm}}
+#'  svd_u/d/v: The u/d/v parameters from fast.svd
+#'  rsquared_table: A table of the rsquared values between each factor and principle component
+#'  pca_variance: A table of the pca variances
+#'  pca_data: Coordinates for a pca plot
+#'  pca_cor: A table of the correlations between the factors and principle components
+#'  anova_fstats: the sum of the residuals with the factor vs without (manually calculated)
+#'  anova_f: The result from performing anova(withfactor, withoutfactor), the F slot
+#'  anova_p: The p-value calculated from the anova() call
+#'  anova_sums: The RSS value from the above anova() call
+#'  cor_heatmap: A heatmap from recordPlot() describing pca_cor.
+#' @seealso \pkg{corpcor} \pkg{stats}
+#'  \code{\link[corpcor]{fast.svd}}, \code{\link[stats]{lm}}
 #' @examples
 #' \dontrun{
 #'  pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
@@ -778,11 +781,12 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
 #' @param batches   a factor or character of batches in the experiment.
 #' @param n   the number of genes to extract.
 #' @return a list including the princomp biplot, histogram, and tables
-#' of top/bottom n scored genes with their scores by component.
-#' @seealso \code{\link[stats]{princomp}}
+#'  of top/bottom n scored genes with their scores by component.
+#' @seealso \pkg{stats}
+#'  \code{\link[stats]{princomp}}
 #' @examples
 #' \dontrun{
-#'  information = pca_highscores(df=df, conditions=cond, batches=bat)
+#'  information <- pca_highscores(df=df, conditions=cond, batches=bat)
 #'  information$pca_bitplot  ## oo pretty
 #' }
 #' @export

@@ -33,5 +33,6 @@ ids using the OrganismDbi interface.
 }
 \seealso{
 \pkg{AnnotationDbi} \pkg{dplyr} \pkg{biomaRt}
+ \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
 }
 

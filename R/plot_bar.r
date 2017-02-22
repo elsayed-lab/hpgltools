@@ -13,11 +13,12 @@
 #' @param yscale Whether or not to log10 the y-axis.
 #' @param ... More parameters for your good time!
 #' @return a ggplot2 bar plot of every sample's size
-#' @seealso \link[ggplot2]{geom_bar} \link[ggplot2]{geom_text}
-#' \link{prettyNum} \link[ggplot2]{scale_y_log10}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
+#'  \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
 #' @examples
 #' \dontrun{
-#'  libsize_plot = plot_libsize(expt=expt)
+#'  libsize_plot <- plot_libsize(expt=expt)
 #'  libsize_plot  ## ooo pretty bargraph
 #' }
 #' @export
@@ -128,30 +129,10 @@ plot_libsize <- function(data, colors=NULL,
 #' @param end  Relative to 0, where is the gene's stop codon.
 #' @param strand  Is this on the + or - strand? (+1/-1)
 #' @param padding  How much space to provide on the sides?
+#' @return coverage plot surrounging the ORF of interest
+#' @seealso \pkg{ggplot2}
 plot_rpm = function(input, workdir="images", output="01.svg", name="LmjF.01.0010",
                     start=1000, end=2000, strand=1, padding=100) {
-    head(genes)
-    genes = genes[,c(2, 3, 5, 11)]
-    for(ch in 1:36) {
-        mychr = paste("LmjF.", sprintf("%02d", ch), sep="")
-        message(mychr)
-        table_path = paste0(workdir, "/coverage/", mychr, "/testme.txt.cov.gz")
-
-        rpms = read.table(table_path)
-        colnames(rpms) = c("chromosome","position","rpm")
-        chr_index = with(genes, grepl(mychr, Name))
-        genes_on_chr = genes[chr_index, ]
-
-        for(i in 1:nrow(genes_on_chr)) {
-            row = genes_on_chr[i,]
-            genename=row[["Name"]]
-            output_file=paste0(workdir, "/coverage/", mychr, "/", genename, ".svg")
-            svg(filename=output_file, height=2, width=8)
-            plot_res <- plot_rpm(rpms, start=row[["start"]], end=row[["end"]],
-                                 strand=row[["strand"]], output=output_file, name=row[["Name"]])
-            dev.off()
-        }
-    }
 
     mychr = gsub("\\.\\d+$", "", name, perl=TRUE)
     plotted_start = start - padding
@@ -211,6 +192,10 @@ plot_rpm = function(input, workdir="images", output="01.svg", name="LmjF.01.0010
 #' @param invert  Flip the order of the included material for readability?
 #' @param color_list  Set of colors to use for the bars.
 #' @param color_names  Categories associated with aforementioned colors.
+#' @return weird significance bar plots
+#' @seealso \pkg{ggplot2}
+#'  \code{\link{extract_significant_genes}}
+#' @export
 plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE, invert=FALSE,
                                  color_list=c("lightcyan", "lightskyblue", "dodgerblue",
                                               "plum1", "orchid", "purple4"),

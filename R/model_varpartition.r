@@ -7,6 +7,9 @@
 #' @param n  How many genes to plot.
 #' @param column  The df column to use for sorting.
 #' @param decreasing  high->low or vice versa?
+#' @return  The percent variance bar plots from variancePartition!
+#' @seealso \pkg{variancePartition}
+#'  \code{\link[variancePartition]{plotPercentBars}}
 #' @export
 replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing=TRUE) {
     sorted <- varpart_output[["sorted_df"]]
@@ -33,6 +36,7 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @param genes  Number of genes to count.
 #' @param parallel  use doParallel?
 #' @return partitions  List of plots and variance data frames
+#' @seealso \pkg{doParallel} \pkg{variancePartition}
 #' @export
 varpart <- function(expt, predictor="condition", factors=c("batch"),
                     cpus=6, genes=40, parallel=TRUE) {
@@ -92,6 +96,7 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
 #' @param factors  Set of factors to query
 #' @param cpus  Number of cpus to use in doParallel.
 #' @return  Summaries of the new model,  in theory this would be a nicely batch-corrected data set.
+#' @seealso \pkg{variancePartition}
 varpart_summaries <- function(expt, factors=c("condition","batch"), cpus=6) {
     cl <- parallel::makeCluster(cpus)
     doParallel::registerDoParallel(cl)

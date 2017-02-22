@@ -6,12 +6,13 @@
 #'
 #' @param data  A dataframe/expt/exprs with count data
 #' @return a plot! of the BCV a la ggplot2.
-#' @seealso \pkg{edgeR} \link[edgeR]{plotBCV}
+#' @seealso \pkg{edgeR}
+#'  \code{\link[edgeR]{plotBCV}}
 #' @examples
 #' \dontrun{
-#' bcv <- plot_bcv(expt)
-#' summary(bcv$data)
-#' bcv$plot
+#'  bcv <- plot_bcv(expt)
+#'  summary(bcv$data)
+#'  bcv$plot
 #' }
 #' @export
 plot_bcv <- function(data) {
@@ -78,8 +79,9 @@ plot_bcv <- function(data) {
 #' color dots which are presumed the therefore be interesting because
 #' they are far from 'normal.'  This will make a fun clicky googleVis
 #' graph if requested.
-#' @seealso \pkg{ggplot2} \link{plot_gvis_scatter} \link[ggplot2]{geom_point}
-#' \link{plot_linear_scatter}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
+#'  \code{\link{plot_linear_scatter}}
 #' @examples
 #' \dontrun{
 #'  dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
@@ -151,7 +153,8 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #'     the dots on the plot.  Histograms of each axis are plotted separately and then together under
 #'     a single cdf to allow tests of distribution similarity.  This will make a fun clicky
 #'     googleVis graph if requested.
-#' @seealso \link[robust]{lmRob} \link[stats]{weights} \link{plot_histogram}
+#' @seealso \pkg{robust} \pkg{stats} \pkg{ggplot2}
+#'  \code{\link[robust]{lmRob}} \code{\link[stats]{weights}} \code{\link{plot_histogram}}
 #' @examples
 #' \dontrun{
 #'  plot_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
@@ -320,13 +323,13 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' Make a pretty MA plot from one of limma, deseq, edger, or basic.
 #'
 #' Because I can never remember, the following from wikipedia: "An MA plot is an application of a
-#' Bland–Altman plot for visual representation of two channel DNA microarray gene expression data
+#' Bland-Altman plot for visual representation of two channel DNA microarray gene expression data
 #' which has been transformed onto the M (log ratios) and A (mean average) scale."
 #'
 #' @param table  Df of linear-modelling, normalized counts by sample-type,
 #' @param expr_col  Column showing the average expression across genes.
 #' @param fc_col  Column showing the logFC for each gene.
-#' @param p_col  Column containing the relevant p-values.
+#' @param p_col  Column containing the relevant p values.
 #' @param pval_cutoff  Name of the pvalue column to use for cutoffs.
 #' @param alpha  How transparent to make the dots.
 #' @param logfc_cutoff  Fold change cutoff.
@@ -334,22 +337,23 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' @param size  How big are the dots?
 #' @param tooltip_data  Df of tooltip information for gvis.
 #' @param gvis_filename  Filename to write a fancy html graph.
-#' @param ...  More options for you!
-#' @return Ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
-#'     type across all sample types on the x-axis, and the log fold change between conditions on the
-#'     y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
-#'     googleVis graph if requested.
-#' @seealso \link{plot_gvis_ma} \link[limma]{toptable}
-#' \link[limma]{voom} \link{hpgl_voom}
-#' \link[limma]{lmFit} \link[limma]{makeContrasts}
-#' \link[limma]{contrasts.fit}
+#' @param ...  More options for you
+#' @return  ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
+#'  type across all sample types on the x axis, and the log fold change between conditions on the
+#'  y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
+#'  googleVis graph if requested.
+#' @seealso \pkg{limma} \pkg{googleVis} \pkg{DESeq2} \pkg{edgeR}
+#'  \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
+#'  \code{\link[limma]{voom}} \code{\link{hpgl_voom}}
+#'  \code{\link[limma]{lmFit}} \code{\link[limma]{makeContrasts}}
+#'  \code{\link[limma]{contrasts.fit}}
 #' @examples
-#' \dontrun{
-#' ## plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
-#' ## Currently this assumes that a variant of toptable was used which
-#' ## gives adjusted p-values.  This is not always the case and I should
-#' ## check for that, but I have not yet.
-#' }
+#'  \dontrun{
+#'   plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
+#'   ## Currently this assumes that a variant of toptable was used which
+#'   ## gives adjusted p-values.  This is not always the case and I should
+#'   ## check for that, but I have not yet.
+#'  }
 #' @export
 plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                        pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1, label_numbers=TRUE,
@@ -518,7 +522,8 @@ recolor_points <- function(plot, df, ids, color="red", ...) {
 #' @param title Add a title?
 #' @param ... rawr!
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each library's CPM.
-#' @seealso \link[ggplot2]{geom_point} \link[directlabels]{geom_dl}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
 #' @examples
 #' \dontrun{
 #'  nonzero_plot = plot_nonzero(expt=expt)
@@ -620,7 +625,8 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
 #' @param log Is the data in log format?
 #' @param ... Options are good and passed to arglist().
 #' @return List of affy::maplots
-#' @seealso \link[affy]{ma.plot}
+#' @seealso \pkg{affy}
+#'  \code{\link[affy]{ma.plot}}
 #' @examples
 #' \dontrun{
 #'  ma_plots = plot_pairwise_ma(expt=some_expt)
@@ -689,12 +695,13 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
 #' @param size Size of the dots on the graph.
 #' @param color Color of the dots on the graph.
 #' @return Ggplot2 scatter plot.
-#' @seealso \link{plot_gvis_scatter} \link[ggplot2]{geom_point}
-#' \link{plot_linear_scatter}
+#' @seealso \pkg{ggplot2} \pkg{googleVis}
+#'  \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
+#'  \code{\link{plot_linear_scatter}}
 #' @examples
 #' \dontrun{
-#' plot_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
-#'              gvis_filename="html/fun_scatterplot.html")
+#'  plot_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+#'               gvis_filename="html/fun_scatterplot.html")
 #' }
 #' @export
 plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=2) {
@@ -740,15 +747,16 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to
 #'     log(fold change).  The cutoff values are delineated with lines and mark the boundaries
 #'     between 'significant' and not.  This will make a fun clicky googleVis graph if requested.
-#' @seealso \link{plot_gvis_ma} \link[limma]{toptable}
-#' \link[limma]{voom} \link{hpgl_voom} \link[limma]{lmFit}
-#' \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
+#' @seealso \pkg{limma}
+#'  \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
+#'  \code{\link[limma]{voom}} \code{\link{hpgl_voom}} \code{\link[limma]{lmFit}}
+#'  \code{\link[limma]{makeContrasts}} \code{\link[limma]{contrasts.fit}}
 #' @examples
 #' \dontrun{
 #'  plot_volcano(toptable_data, gvis_filename="html/fun_ma_plot.html")
-#' ## Currently this assumes that a variant of toptable was used which
-#' ## gives adjusted p-values.  This is not always the case and I should
-#' ## check for that, but I have not yet.
+#'  ## Currently this assumes that a variant of toptable was used which
+#'  ## gives adjusted p-values.  This is not always the case and I should
+#'  ## check for that, but I have not yet.
 #' }
 #' @export
 plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,

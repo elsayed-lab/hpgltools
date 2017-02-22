@@ -16,8 +16,13 @@
 #' @param significant  Only return the statistically significant hits?
 #' @param pseudo_gsea  Is the data in a ranked order by significance?
 #' @param id_col  Which column in the table should be used for gene ID crossreferencing?  gProfiler
-#'        uses Ensembl ids.  So if you have a table of entrez or whatever, translate it!
+#'  uses Ensembl ids.  So if you have a table of entrez or whatever, translate it!
 #' @return a list of results for go, kegg, reactome, and a few more.
+#' @seealso \pkg{gProfiler}
+#' @examples
+#' \dontrun{
+#'  gprofiler_is_nice_and_easy <- simple_gprofiler(genes, species='mmusculus')
+#' }
 #' @export
 simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                              second_col="limma_logfc", do_go=TRUE, do_kegg=TRUE,
@@ -25,6 +30,8 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                              do_corum=TRUE, do_hp=TRUE, significant=TRUE,
                              pseudo_gsea=TRUE, id_col="row.names") {
     ## Assume for the moment a limma-ish data frame
+    ## An idea from Dr. Mount: Add the enrichment number of genes as (overlap / #term) * (total genes / #query)
+    ## However, the total number is a constant, so we can likely get the same information from the overlap.size
     gene_list <- NULL
     if (class(sig_genes) == "character") {
         gene_ids <- sig_genes
@@ -160,7 +167,8 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
         "mi" = mi_result,
         "tf" = tf_result,
         "corum" = corum_result,
-        "hp" = hp_result)
+        "hp" = hp_result,
+        "input" = sig_genes)
     retlist[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlist))
     return(retlist)
 }

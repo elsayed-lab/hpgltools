@@ -188,11 +188,11 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
         if (fancy_type == "pdf") {
             fancy_ret <- try(pdf(file=high_quality))
         } else if (fancy_type == "ps") {
-            fancy_ret <- try(ps(file=high_quality))
+            fancy_ret <- try(postscript(file=high_quality))
         } else if (fancy_type == "svg") {
-            fancy_ret <- try(svg(file=high_quality))
+            fancy_ret <- try(svg(filename=high_quality))
         } else if (fancy_type == "emf") {
-            fancy_ret <- try(devEMF(file=high_quality))
+            fancy_ret <- try(devEMF::emf(file=high_quality))
         } else {  ## Default to pdf
             high_quality_renamed <- gsub(pattern="\\..*$", replacement="\\.pdf", x=high_quality)
             fancy_ret <- try(pdf(file=high_quality_renamed))

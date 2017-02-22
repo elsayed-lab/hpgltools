@@ -7,14 +7,15 @@
 #' statistical analysis. If the median line is not straight, the data should be normalized.
 #'
 #' @param df Data frame of counts which have been normalized counts by sample-type, which is to say the
-#'     output from voom/voomMod/hpgl_voom().
+#'  output from voom/voomMod/hpgl_voom().
 #' @param tooltip_data Df of tooltip information (gene names, etc).
 #' @param filename Filename to write a fancy html graph.
 #' @param base_url String with a basename used for generating URLs for clicking dots on the graph.
 #' @param ... more options are more options!
 #' @return NULL, but along the way an html file is generated which contains a googleVis MA plot.
-#'     See plot_de_ma() for details.
-#' @seealso \link{plot_ma_de}
+#'  See plot_de_ma() for details.
+#' @seealso \pkg{googleVis}
+#'  \code{\link{plot_ma_de}}
 #' @examples
 #' \dontrun{
 #'  plot_gvis_ma(df, filename="html/fun_ma_plot.html",
@@ -82,12 +83,13 @@ plot_gvis_ma <- function(df, tooltip_data=NULL, filename="html/gvis_ma_plot.html
 #' @param base_url String with a basename used for generating URLs for clicking dots on the graph.
 #' @param ... more options
 #' @return NULL, but along the way an html file is generated which contains a googleVis volcano
-#'     plot.
-#' @seealso \link{plot_volcano}
+#'  plot.
+#' @seealso \pkg{googleVis}
+#'  \code{\link{plot_volcano}}
 #' @examples
 #' \dontrun{
-#' plot_gvis_volcano(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
-#'                    base_url="http://yeastgenome.org/accession?")
+#'  plot_gvis_volcano(voomed_data, toptable_data, filename="html/fun_ma_plot.html",
+#'                     base_url="http://yeastgenome.org/accession?")
 #' }
 #' @export
 plot_gvis_volcano <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
@@ -143,8 +145,9 @@ plot_gvis_volcano <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
 #' @param base_url Url to send click events which will be suffixed with the gene name.
 #' @param trendline Add a trendline?
 #' @return NULL, but along the way an html file is generated which contains a googleVis scatter
-#'     plot.  See plot_scatter() for details.
-#' @seealso \link[googleVis]{gvisScatterChart}
+#'  plot.  See plot_scatter() for details.
+#' @seealso \pkg{googleVis}
+#'  \code{\link[googleVis]{gvisScatterChart}}
 #' @examples
 #' \dontrun{
 #'  gvis_scatter(a_dataframe_twocolumns, filename="html/fun_scatter_plot.html",

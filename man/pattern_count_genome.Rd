@@ -33,5 +33,7 @@ This function provides that information and is primarily used by cp_seq_m().
 }
 \seealso{
 \pkg{Biostrings} \pkg{Rsamtools} \pkg{Rsamtools}
+ \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}} \code{\link[Biostrings]{PDict}}
+ \code{\link[Biostrings]{vcountPDict}}
 }
 

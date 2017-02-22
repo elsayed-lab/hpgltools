@@ -40,5 +40,6 @@ devtools::install() and installs the resulting package.
 }
 \seealso{
 \pkg{AnnotationForge} \pkg{devtools}
+ \code{\link[AnnotationForge]{makeOrgPackage}}
 }
 

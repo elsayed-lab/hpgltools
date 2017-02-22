@@ -28,5 +28,6 @@ This uses KEGGREST and related function kegg_to_ensembl() to associate genes to 
 }
 \seealso{
 \pkg{KEGGREST}
+ \code{\link[KEGGREST]{keggLink}}
 }
 

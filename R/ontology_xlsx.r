@@ -11,7 +11,8 @@
 #' @param height  Height of included plots.
 #' @param width and their width.
 #' @param ... Extra arguments are passed to arglist.
-#' @return The result from openxlsx
+#' @return The result from openxlsx in a prettyified xlsx file.
+#' @seealso \pkg{openxlsx} \pkg{goseq}
 #' @export
 write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees=TRUE,
                              pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
@@ -223,6 +224,8 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
 #' @param height  Height of included plots?
 #' @param width  And their width.
 #' @param ... More options, not currently used I think.
+#' @return A prettyified table in an xlsx document.
+#' @seealso \pkg{openxlsx} \pkg{gProfiler}
 #' @export
 write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofiler_result.xlsx",
                                  add_plots=TRUE, height=15, width=10, ...) {
@@ -513,6 +516,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
 #' @param table_style   The chosen table style for excel
 #' @param ...  some extra parameters
 #' @return a set of excel sheet/coordinates
+#' @seealso \pkg{openxlsx}
 #' @examples
 #' \dontrun{
 #'  all_contrasts <- all_pairwise(expt, model_batch=TRUE)
@@ -1450,6 +1454,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 #' @param n   the number of ontology categories to include in each table.
 #' @param overwritefile   overwrite an existing excel file
 #' @return the list of ontology information
+#' @seealso \pkg{openxlsx} \pkg{goseq} \pkg{clusterProfiler} \pkg{goStats} \pkg{topGO} \pkg{gProfiler}
 #' @export
 write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/merged_go",
                          dated=TRUE, n=30, overwritefile=TRUE) {

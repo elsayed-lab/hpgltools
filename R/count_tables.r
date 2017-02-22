@@ -15,7 +15,8 @@
 #' @param suffix Optional suffix to add to the filenames when reading them.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
-#' @seealso \link{create_expt} \pkg{data.table}
+#' @seealso \pkg{data.table}
+#'  \code{\link{create_expt}}
 #' @examples
 #' \dontrun{
 #'  count_tables <- hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
@@ -120,12 +121,13 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
 #' @param column Column of the design matrix used to specify which samples are replicates.
 #' @return Expt with the concatenated counts, new design matrix, batches, conditions, etc.
 #' @seealso \pkg{Biobase}
+#'  \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{pData}}
 #' @examples
 #' \dontrun{
 #'  compressed <- concatenate_runs(expt)
 #' }
 #' @export
-concatenate_runs <- function(expt, column='replicate') {
+concatenate_runs <- function(expt, column="replicate") {
     design <- expt[["design"]]
     replicates <- levels(as.factor(design[, column]))
     final_expt <- expt
@@ -322,7 +324,8 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE) {
 #' @param batch  Batch correction applied.
 #' @param filter  Filtering method used.
 #' @return  A big honking excel file and a list including the dataframes and images created.
-#' @seealso \pkg{openxlsx} \pkg{Biobase} \link{normalize_expt} \link{graph_metrics}
+#' @seealso \pkg{openxlsx} \pkg{Biobase}
+#'  \code{\link{normalize_expt}} \code{\link{graph_metrics}}
 #' @examples
 #' \dontrun{
 #'  excel_sucks <- write_expt(expt)
