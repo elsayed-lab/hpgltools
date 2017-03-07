@@ -6,6 +6,7 @@
 #' and maintains one's favorite color scheme and tries to make it pretty!
 #'
 #' @param data Expt, dataframe, or expressionset of samples.
+#' @param condition vector of sample condition names.
 #' @param colors Color scheme if the data is not an expt.
 #' @param names Alternate names for the x-axis.
 #' @param text Add the numeric values inside the top of the bars of the plot?
@@ -21,7 +22,7 @@
 #'  libsize_plot  ## ooo pretty bargraph
 #' }
 #' @export
-plot_libsize <- function(data, colors=NULL,
+plot_libsize <- function(data, condition=NULL, colors=NULL,
                          names=NULL, text=TRUE,
                          title=NULL,  yscale=NULL, ...) {
     hpgl_env <- environment()
@@ -38,7 +39,7 @@ plot_libsize <- function(data, colors=NULL,
 
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        design <- data[["design"]]
+        condition <- data[["design"]][["condition"]]
         colors <- data[["colors"]]
         names <- data[["names"]]
         data <- Biobase::exprs(data[["expressionset"]])  ## Why does this need the simplifying
@@ -56,10 +57,15 @@ plot_libsize <- function(data, colors=NULL,
         colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
     }
 
+    # Get conditions
+    if (is.null(condition)) {
+        stop("Missing condition label vector.")
+    }
+
     colors <- as.character(colors)
     libsize_df <- data.frame(id=colnames(data),
                              sum=colSums(data),
-                             condition=design[["condition"]],
+                             condition=condition,
                              colors=as.character(colors))
     libsize_df[["order"]] <- factor(libsize_df[["id"]], as.character(libsize_df[["id"]]))
 
