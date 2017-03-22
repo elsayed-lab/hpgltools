@@ -15,7 +15,7 @@ Description: This is a set of functions I have been using in my various
     corner cases which are not flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
-    acepack, ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub, base64enc, BiocGenerics, BiocInstaller, Biostrings,
+    acepack, ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub, base64enc, Biobase, BiocGenerics, BiocInstaller, Biostrings,
     biomaRt, bumphunter, Category, caTools, clusterProfiler, corpcor, corrplot, DBI, DESeq2, DESeq, devtools,
     directlabels, dplyr, doParallel, DOSE, EDASeq, edgeR, ffpe, fission, Formula, gdata, ggenbankr, genefilter,
     genomeIntervals, GenomeInfoDb, GenomicFeatures, genoPlotR, GenomicRanges, ggdendro, ggrepel,
