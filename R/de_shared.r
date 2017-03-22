@@ -1057,6 +1057,8 @@ get_pairwise_gene_abundances <- function(datum, type="limma") {
         ## E.g. I like setting columns with df[[thingie]]
         expression_mtrx <- as.data.frame(expression_mtrx)
         stdev_mtrx <- as.data.frame(stdev_mtrx)
+        std_error <- as.data.frame(stdev_mtrx)
+        another_error <- as.data.frame(stdev_mtrx)
         t_mtrx <- as.data.frame(t_mtrx)
         ## I am explicitly setting the row order because it seems that the output
         ## from limma is not set from one table to the next.
@@ -1066,14 +1068,23 @@ get_pairwise_gene_abundances <- function(datum, type="limma") {
             expression_mtrx[[cond]] <- new_column
             new_column <- tmp_table[row_order, "t"]
             t_mtrx[[cond]] <- new_column
-            tmp_table <- datum[["limma"]][["pairwise_fits"]][["stdev.unscaled"]]
+            ## When attempting to extract something suitable for error bars:
+            ## https://support.bioconductor.org/p/79349/
+            ## The discussion seems to me to have settled on:
+            ## std.error =  fit$stdev.unscaled * fit$sigma
+            stdev_table <- datum[["limma"]][["pairwise_fits"]][["stdev.unscaled"]]
+            sigma_table <- datum[["limma"]][["pairwise_fits"]][["sigma"]]
+            s2post_table <- datum[["limma"]][["pairwise_fits"]][["s2.post"]]
+            std_error <- stdev_table * sigma_table
+    ##        another_error <- stdev_table * s2post_table
             stdev_mtrx[[cond]] <- tmp_table[row_order, cond]
         }
     }
     retlist <- list(
         "expression_values" = expression_mtrx,
         "t_values" = t_mtrx,
-        "error_values" = expression_mtrx / t_mtrx,
+        "error_values" = std_error,
+        "another_error" = another_error,
         "stdev_values" = stdev_mtrx)
     return(retlist)
 }
@@ -1462,12 +1473,13 @@ semantic_copynumber_extract <- function(de_list, min_copies=2,
             numbers_found[[table_name]][[string]] <- num_found
             if (num_found > 0) {
                 type <- "Kept"
-                kept_list[[string]] <- tab
+                kept_list[[string]] <- tab[idx, ]
                 message(paste0("Table started with: ", pre_remove_size, ". ", type,
                                " entries with string ", string,
                                ", found ", num_found, "."))
             } else {
                 message("Found no entries of type ", string, ".")
+                kept_list[[string]] <- NULL
             }
         } ## End of the foreach semantic thing to remove
         table_list[[table_name]] <- kept_list

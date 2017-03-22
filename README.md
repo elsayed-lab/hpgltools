@@ -1,7 +1,8 @@
 hpgltools
 ---------
 
-Status: Travis CI [![Build Status](https://travis-ci.org/abelew/hpgltools.svg?branch=master)](https://travis-ci.org/abelew/hpgltools),
+Status: Travis CI [![Build Status](https://travis-ci.org/abelew/hpgltools.svg?branch=master)]
+(https://travis-ci.org/abelew/hpgltools),
 
 ## Overview
 

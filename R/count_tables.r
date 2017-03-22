@@ -47,7 +47,6 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
     } else if (file.exists(lower_filenames[1])) {
         files[1] <- lower_filenames[1]
     }
-    ##count_table = read.table(files[1], header=header, ...)
     count_table <- try(read.table(files[1], header=header))
     count_dt <- data.table::as.data.table(count_table)
     if (class(count_table)[1] == "try-error") {

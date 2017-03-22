@@ -202,13 +202,32 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE, invert=FAL
                                  color_names=c("a_up_inner", "b_up_middle", "c_up_outer",
                                                "a_down_inner", "b_down_middle", "c_down_outer")) {
     if (isTRUE(invert)) {
-        ## levels(ups[["comparisons"]]) <- rev(levels(ups[["comparisons"]]))
-        ## levels(downs[["comparisons"]]) <- rev(levels(downs[["comparisons"]]))
-        stop("This fails in such weird ways that I am making it stop now.")
+        stop("This does not work and i do not know why.")
+        ##levels(ups[["comparisons"]]) <- rev(levels(ups[["comparisons"]]))
+        ##levels(downs[["comparisons"]]) <- rev(levels(downs[["comparisons"]]))
+        start_names <- rownames(ups)
         print(ups)
-        ups <- ups[with(ups, order(rev(rownames(ups)))), ]
-        print(ups)
-        downs <- downs[with(downs, order(rev(rownames(downs)))), ]
+        ##new_ups <- ups[with(ups, order(rev(rownames(ups))), ]
+        ##new_ups <- ups[rev(rownames(ups)), ]
+        ##new_downs <- downs[rev(rownames(downs)), ]
+        #dd[ order(-dd[,4], dd[,1]), ]
+        new_ups <- ups
+        new_ups[["id"]] <- rownames(new_ups)
+        new_downs <- downs
+        new_downs[["id"]] <- rownames(new_downs)
+        new_ups <- ups[ with(new_ups, order(rev(id), variable)), ]
+        new_downs <- downs[ with(new_downs, order(rev(id), variable)), ]
+##        new_downs <- downs[ order(-downs[["id"]], downs[["variable"]]), ]
+        ##new_downs <- downs[with(downs, order(rev(rownames(downs)))), ]
+        rownames(new_ups) <- start_names
+        rownames(new_downs) <- start_names
+        print("TESTME")
+        print(new_ups)
+        print(unique(new_ups[["comparisons"]]))
+        ##levels(new_ups[["comparisons"]]) <- unique(new_ups[["comparisons"]])
+        ##levels(new_downs[["comparisons"]]) <- unique(new_downs[["comparisons"]])
+        ups <- new_ups
+        downs <- new_downs
     }
 
     choose_max <- function(u, d) {
@@ -266,12 +285,6 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE, invert=FAL
         ggplot2::theme_bw() +
         ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +
         ggplot2::theme(legend.position="none")
-
-    ## One might think this would work, but no.
-    ##if (isTRUE(invert)) {
-    ##    sigbar_plot <- sigbar_plot +
-    ##        ggplot2::scale_x_continuous(trans="reverse")
-    ##}
 
     if (isTRUE(text)) {
         for (comp in 1:length(comp_names)) {
