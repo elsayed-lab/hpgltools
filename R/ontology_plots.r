@@ -84,11 +84,11 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1, n=30, mincat=
             cc_go <- cc_go[cc_idx, ]
         } else {
             ## The following supports stuff like level='level > 3 & level < 6'
-            stmt <- paste0("subset(mf_go,  ",  level,  ")")
+            stmt <- paste0("subset(mf_go,  ", level, ")")
             mf_go <- eval(parse(text = stmt))
-            stmt <- paste0("subset(bp_go,  ",  level,  ")")
+            stmt <- paste0("subset(bp_go,  ", level, ")")
             bp_go <- eval(parse(text = stmt))
-            stmt <- paste0("subset(cc_go,  ",  level,  ")")
+            stmt <- paste0("subset(cc_go,  ", level, ")")
             cc_go <- eval(parse(text = stmt))
         }
         keepers <- rbind(keepers, mf_go)
@@ -169,31 +169,37 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1, n=30, mincat=
 #'  \code{\link{clusterProfiler}}
 #' @export
 plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
-    mf_newdf <- topgo$tables$mf[, c("GO.ID", "Term", "Annotated","Significant", type)]
-    mf_newdf$term <- as.character(lapply(strwrap(mf_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    mf_newdf$pvalue <- as.numeric(mf_newdf[[type]])
+    mf_newdf <- topgo[["tables"]][["mf"]][, c("GO.ID", "Term", "Annotated","Significant", type)]
+    mf_newdf[["term"]] <- as.character(lapply(strwrap(mf_newdf[["Term"]],
+                                                      wrapped_width,
+                                                      simplify=FALSE), paste, collapse="\n"))
+    mf_newdf[["pvalue"]] <- as.numeric(mf_newdf[[type]])
     mf_newdf <- subset(mf_newdf, get(type) < cutoff)
-    mf_newdf <- mf_newdf[order(mf_newdf$pvalue, mf_newdf[[type]]),]
+    mf_newdf <- mf_newdf[order(mf_newdf[["pvalue"]], mf_newdf[[type]]),]
     mf_newdf <- head(mf_newdf, n=n)
-    mf_newdf$score <- mf_newdf$Significant / mf_newdf$Annotated
+    mf_newdf[["score"]] <- mf_newdf[["Significant"]] / mf_newdf[["Annotated"]]
     mf_pval_plot <- plot_ontpval(mf_newdf, ontology="MF")
 
-    bp_newdf <- topgo$tables$bp[,c("GO.ID", "Term", "Annotated","Significant",type)]
-    bp_newdf$term <- as.character(lapply(strwrap(bp_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    bp_newdf$pvalue <- as.numeric(bp_newdf[[type]])
+    bp_newdf <- topgo[["tables"]][["bp"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
+    bp_newdf[["term"]] <- as.character(lapply(strwrap(bp_newdf[["Term"]],
+                                                      wrapped_width,
+                                                      simplify=FALSE), paste, collapse="\n"))
+    bp_newdf[["pvalue"]] <- as.numeric(bp_newdf[[type]])
     bp_newdf <- subset(bp_newdf, get(type) < cutoff)
-    bp_newdf <- bp_newdf[order(bp_newdf$pvalue, bp_newdf[[type]]),]
+    bp_newdf <- bp_newdf[order(bp_newdf[["pvalue"]], bp_newdf[[type]]),]
     bp_newdf <- head(bp_newdf, n=n)
-    bp_newdf$score <- bp_newdf$Significant / bp_newdf$Annotated
+    bp_newdf[["score"]] <- bp_newdf[["Significant"]] / bp_newdf[["Annotated"]]
     bp_pval_plot <- plot_ontpval(bp_newdf, ontology="MF")
 
-    cc_newdf <- topgo$tables$cc[,c("GO.ID", "Term", "Annotated","Significant",type)]
-    cc_newdf$term <- as.character(lapply(strwrap(cc_newdf$Term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    cc_newdf$pvalue <- as.numeric(cc_newdf[[type]])
+    cc_newdf <- topgo[["tables"]][["cc"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
+    cc_newdf[["term"]] <- as.character(lapply(strwrap(cc_newdf[["Term"]],
+                                                      wrapped_width,
+                                                      simplify=FALSE), paste, collapse="\n"))
+    cc_newdf[["pvalue"]] <- as.numeric(cc_newdf[[type]])
     cc_newdf <- subset(cc_newdf, get(type) < cutoff)
-    cc_newdf <- cc_newdf[order(cc_newdf$pvalue, cc_newdf[[type]]),]
+    cc_newdf <- cc_newdf[order(cc_newdf[["pvalue"]], cc_newdf[[type]]),]
     cc_newdf <- head(cc_newdf, n=n)
-    cc_newdf$score <- cc_newdf$Significant / cc_newdf$Annotated
+    cc_newdf[["score"]] <- cc_newdf[["Significant"]] / cc_newdf[["Annotated"]]
     cc_pval_plot <- plot_ontpval(cc_newdf, ontology="CC")
 
     pval_plots <- list(
