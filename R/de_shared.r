@@ -178,7 +178,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
             ## Once I have them, make the subset model matrix with append and cbind
             new_sv_model <- append(first_sva, second_sva)
             new_model <- cbind(first_model, second_model, new_sv_model)
-            colnames(new_model) <- c("first","second","sv")
+            colnames(new_model) <- c("first", "second", "sv")
             ## The sva f.pvalue requires a null model of the appropriate size, create that here.
             new_null <- cbind(rep(1, (num_first + num_second)), new_sv_model)
             ## And give its columns suitable names
@@ -299,7 +299,7 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
                          alt_model=NULL, alt_string=NULL,
                          intercept=0, reverse=FALSE,
                          surrogates="be", ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
     ## Make a model matrix which will have one entry for
@@ -354,8 +354,8 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
         including <- "condition"
     } else if (isTRUE(model_cond) & isTRUE(model_batch)) {
         if (class(condbatch_int_model) == "try-error") {
-            message("The condition+batch model failed.  Does your experimental design support both condition and batch?")
-            message("Using only a conditional model.")
+            message("The condition+batch model failed.  Does your experimental design support
+both condition and batch? Using only a conditional model.")
             int_model <- cond_int_model
             noint_model <- cond_noint_model
             int_string <- cond_int_string
@@ -489,7 +489,7 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
 #'  \code{\link{choose_basic_dataset}}
 #' @export
 choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     result <- NULL
     if (choose_for == "limma") {
         result <- choose_limma_dataset(input, force=force, ...)
@@ -520,7 +520,7 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
 #' @return dataset suitable for limma analysis
 #' @seealso \pkg{limma}
 choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     input_class <- class(input)[1]
     data <- NULL
     warn_user <- 0
@@ -563,7 +563,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
             filt_state <- "raw"
         }
 
-        ready <- input
+        ## ready <- input
         data <- Biobase::exprs(input[["expressionset"]])
         if (isTRUE(force)) {
             message("Leaving the data alone, regardless of normalization state.")
@@ -609,7 +609,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 #' @return dataset suitable for limma analysis
 #' @seealso \pkg{DESeq2} \pkg{edgeR}
 choose_binom_dataset <- function(input, force=FALSE, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     input_class <- class(input)[1]
     ## I think I would like to make this function smarter so that it will remove the log2 from
     ## transformed data.
@@ -667,8 +667,8 @@ like me, want to see what happens when you put non-standard data into deseq, the
                 data <- input[["normalized"]][["intermediate_counts"]][["original"]]
             }
         } else {
-            message("The data should be suitable for EdgeR/DESeq.")
-            message("If EdgeR/DESeq freaks out, check the state of the count table and ensure that it is in integer counts.")
+            message("The data should be suitable for EdgeR/DESeq. If EdgeR/DESeq freaks out, check
+the state of the count table and ensure that it is in integer counts.")
         }
         ## End testing if normalization has been performed
     } else {
@@ -713,7 +713,7 @@ like me, want to see what happens when you put non-standard data into deseq, the
 #' @export
 compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
                            include_basic=TRUE, annot_df=NULL, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     ## Fill each column/row of these with the correlation between tools for one contrast performed
     if (class(limma) == "list") {
         ## Then this was fed the raw output from limma_pairwise,
@@ -746,7 +746,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         d <- data.frame(deseq[[comp]])
         b <- data.frame(basic[[comp]])
         le <- merge(l, e, by.x="row.names", by.y="row.names")
-        le <- le[,c("logFC.x", "logFC.y")]
+        le <- le[, c("logFC.x", "logFC.y")]
         colnames(le) <- c("limma logFC", "edgeR logFC")
         lec <- stats::cor.test(x=le[, 1], y=le[, 2])[["estimate"]]
         les <- plot_scatter(le) + ggplot2::labs(title=paste0(comp, ": limma vs. edgeR.")) +
@@ -754,31 +754,31 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         ld <- merge(l, d, by.x="row.names", by.y="row.names")
         ld <- ld[, c("logFC.x", "logFC.y")]
         colnames(ld) <- c("limma logFC", "DESeq2 logFC")
-        ldc <- stats::cor.test(ld[,1], ld[,2])[["estimate"]]
+        ldc <- stats::cor.test(ld[, 1], ld[, 2])[["estimate"]]
         lds <- plot_scatter(ld) + ggplot2::labs(title=paste0(comp, ": limma vs. DESeq2.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         lb <- merge(l, b, by.x="row.names", by.y="row.names")
         lb <- lb[, c("logFC.x", "logFC.y")]
         colnames(lb) <- c("limma logFC", "basic logFC")
-        lbc <- stats::cor.test(lb[,1], lb[,2])[["estimate"]]
+        lbc <- stats::cor.test(lb[, 1], lb[, 2])[["estimate"]]
         lbs <- plot_scatter(lb) + ggplot2::labs(title=paste0(comp, ": limma vs. basic.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         ed <- merge(e, d, by.x="row.names", by.y="row.names")
         ed <- ed[, c("logFC.x", "logFC.y")]
         colnames(ed) <- c("edgeR logFC", "DESeq2 logFC")
-        edc <- stats::cor.test(ed[,1], ed[,2])[["estimate"]]
+        edc <- stats::cor.test(ed[, 1], ed[, 2])[["estimate"]]
         eds <- plot_scatter(ed) + ggplot2::labs(title=paste0(comp, ": edgeR vs. DESeq2.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         eb <- merge(e, b, by.x="row.names", by.y="row.names")
         eb <- eb[, c("logFC.x", "logFC.y")]
         colnames(eb) <- c("edgeR logFC", "basic logFC")
-        ebc <- stats::cor.test(eb[,1], eb[,2])[["estimate"]]
+        ebc <- stats::cor.test(eb[, 1], eb[, 2])[["estimate"]]
         ebs <- plot_scatter(eb) + ggplot2::labs(title=paste0(comp, ": edgeR vs. basic.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         db <- merge(d, b, by.x="row.names", by.y="row.names")
         db <- db[, c("logFC.x", "logFC.y")]
         colnames(db) <- c("DESeq2 logFC", "basic logFC")
-        dbc <- stats::cor.test(db[,1], db[,2])[["estimate"]]
+        dbc <- stats::cor.test(db[, 1], db[, 2])[["estimate"]]
         dbs <- plot_scatter(db) +
             ggplot2::labs(title=paste0(comp, ": DESeq2 vs basic.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
@@ -820,10 +820,10 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
     }
     comparison_df <- as.matrix(comparison_df)
     colnames(comparison_df) <- names(deseq)
-    heat_colors <- grDevices::colorRampPalette(c("white","black"))
+    heat_colors <- grDevices::colorRampPalette(c("white", "black"))
     comparison_heatmap <- try(heatmap.3(comparison_df, scale="none",
                                         trace="none", keysize=1.5,
-                                        linewidth=0.5, margins=c(9,9),
+                                        linewidth=0.5, margins=c(9, 9),
                                         col=heat_colors, dendrogram="none",
                                         Rowv=FALSE, Colv=FALSE,
                                         main="Compare DE tools"), silent=TRUE)
@@ -900,11 +900,44 @@ compare_logfc_plots <- function(combined_tables) {
 #' @param coef1  The first coefficient to query.
 #' @param coef2  And the second.
 #' @param ...  Extra arguments are passed to arglist, but basically ignored.
-disjunct_pvalues <- function(contrast_fit, coef1, coef2, ...) {
-    arglist <- list(...)
-    stat <- BiocGenerics::pmin(abs(contrast_fit[, coef1]), abs(contrast_fit[, coef2]))
-    pval <- BiocGenerics::pmax(contrast_fit$p.val[, coef1], contrast_fit$p.val[, coef2])
-    return(pval)
+disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_contrast) {
+    ## arglist <- list(...)
+    contr_level_counts <- rowSums(contrast_fit[["contrasts"]][, c(conj_contrasts, disj_contrast)] != 0)
+    ## Define the condition levels involved in the tests
+    levels_to_use <- names(contr_level_counts)[contr_level_counts > 0]
+    ## Extract the average counts for each, make into table
+    ave_expression_mat <- cellmeans_fit[["coef"]][, levels_to_use]
+    exp_table <- data.frame("ID" = rownames(ave_expression_mat))
+    exp_table <- cbind(exp_table, as.data.frame(ave_expression_mat))
+    names(exp_table)[-1] <- paste("AveExpr", gsub("condition", "", levels_to_use), sep=":")
+
+    ## stat <- BiocGenerics::pmin(abs(contrast_fit[, coef1]), abs(contrast_fit[, coef2]))
+    ## pval <- BiocGenerics::pmax(contrast_fit[["p.val"]][, coef1], contrast_fit[["p.val"]][, coef2])
+    stat <- BiocGenerics::pmin(abs(contrast_fit[["t"]][, conj_contrasts]))
+    pval <- BiocGenerics::pmax(contrast_fit[["p.value"]][, conj_contrasts])
+   
+    adj.pval <- p.adjust(pval, method="BH")
+    fcs <- as.data.frame(contrast_fit[["coef"]][, conj_contrasts])
+    names(fcs) <- paste("logFC", names(fcs), sep=":")
+    conj_pvals <- as.data.frame(apply(contrast_fit[["p.value"]][, conj_contrasts], 2, p.adjust, method="BH"))
+    names(conj_pvals) <- paste("adj.P.Val", names(conj_pvals), sep=":")
+    conj_table <- data.frame("ID" = rownames(contrast_fit))
+    conj_table <- cbind(conj_table, fcs, conj_pvals, stat=stat, adj.P.Value=adj.pval)
+    names(conj_table)[seq(2 + 2 * length(conj_contrasts), ncol(conj_table))] <- paste(
+        c("stat", "adj.P.Value"), paste(conj_contrasts, collapse=":"), sep=":")
+
+    ## Make the table for the 'other' test
+    disj_table <- data.frame("ID" = rownames(contrast_fit),
+                             "logFC" = contrast_fit[["coef"]][, disj_contrast],
+                             "adj.P.Value" = p.adjust(contrast_fit[["p.value"]][, disj_contrast], method="BH"))
+    names(disj_table)[-1] <- paste(c("logFC", "adj.P.Value"), disj_contrast, sep=":")
+    ## Combine tables, making sure all tables are in the same order
+    stopifnot(all(exp_table$ID == conj_table[["ID"]] & exp_table[["ID"]] == disj_table[["ID"]]))
+    out_table <- cbind(exp_table, conj_table[, -1], disj_table[, -1])
+    ## order output table by the statistic in the disjunctive test
+    o <- order(-stat)
+    out_table <- out_table[o, ]
+    return(out_table)
 }
 
 #' Generalize pairwise comparisons
@@ -920,7 +953,7 @@ disjunct_pvalues <- function(contrast_fit, coef1, coef2, ...) {
 #'  \code{\link{basic_pairwise}}
 #' @export
 do_pairwise <- function(type, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     res <- NULL
     if (type == "limma") {
         res <- try(limma_pairwise(...))
@@ -965,7 +998,7 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
             coefficient_df <- coefficient_df * -1.0
         }
         ## There are a couple of extraneous columns in this table.
-        removers <- c("b","z")
+        removers <- c("b", "z")
         keepers <- !(colnames(coefficient_df) %in% removers)
         coefficient_df <- coefficient_df[, keepers]
     } else if (type == "limma") {
@@ -1009,7 +1042,8 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
         }
         names(coef_ordered) <- coefficient_rows
         kept_rows <- NULL
-        if (is.null(n)) {  ## Then do it on a z-score
+        if (is.null(n)) {
+            ## Then do it on a z-score
             tmp_summary <- summary(coef_ordered)
             tmp_mad <- stats::mad(as.numeric(coef_ordered, na.rm=TRUE))
             tmp_up_median_dist <- tmp_summary["Median"] + (tmp_mad * z)
@@ -1020,7 +1054,8 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
                 kept_rows <- coef_ordered[coef_ordered >= tmp_up_median_dist]
             }
             abundant_list[[coef]] <- kept_rows
-        } else {  ## Then do it in a number of rows
+        } else {
+            ## Then do it in a number of rows
             abundant_list[[coef]] <- head(coef_ordered, n=n)
         }
     }
@@ -1076,7 +1111,7 @@ get_pairwise_gene_abundances <- function(datum, type="limma") {
             sigma_table <- datum[["limma"]][["pairwise_fits"]][["sigma"]]
             s2post_table <- datum[["limma"]][["pairwise_fits"]][["s2.post"]]
             std_error <- stdev_table * sigma_table
-    ##        another_error <- stdev_table * s2post_table
+            ## another_error <- stdev_table * s2post_table
             stdev_mtrx[[cond]] <- tmp_table[row_order, cond]
         }
     }
@@ -1131,9 +1166,9 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
         ## Going to add logic in case one does not ask for fold change
         ## In that case, a p-value assertion should still know the difference between up and down
         ## But it should also still know the difference between ratio and log changes
-        if (fold == 'plusminus' | fold == 'log') {
+        if (fold == "plusminus" | fold == "log") {
             message(paste0("Assuming the fold changes are on the log scale and so taking >< 0"))
-            ##up_idx <- up_genes[, column] > 0.0
+            ## up_idx <- up_genes[, column] > 0.0
             up_idx <- as.numeric(up_genes[[column]]) > 0.0
             up_genes <- up_genes[up_idx, ]
             down_idx <- as.numeric(down_genes[[column]]) < 0.0
@@ -1152,7 +1187,7 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
     if (!is.null(fc)) {
         up_idx <- as.numeric(up_genes[[column]]) >= fc
         up_genes <- up_genes[up_idx, ]
-        if (fold == 'plusminus' | fold == 'log') {
+        if (fold == "plusminus" | fold == "log") {
             message(paste0("Assuming the fold changes are on the log scale and so taking -1.0 * fc"))
             ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
             down_idx <- as.numeric(down_genes[[column]]) <= (fc * -1.0)

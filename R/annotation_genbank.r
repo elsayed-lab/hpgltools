@@ -68,14 +68,16 @@ gbk2txdb <- function(accession="AE009949", savetxdb=FALSE) {
 #' }
 #' @export
 gbk_annotations <- function(gbr) {
-    chromosomes <- GenomeInfoDb::seqlevels(gbr)
+    ## chromosomes <- GenomeInfoDb::seqlevels(gbr)
     genes <- AnnotationDbi::keys(gbr)
-    keytypes <- AnnotationDbi::keytypes(gbr)
-    columns <- AnnotationDbi::columns(gbr)
+    ## keytypes <- AnnotationDbi::keytypes(gbr)
+    ## columns <- AnnotationDbi::columns(gbr)
     lengths <- sm(AnnotationDbi::select(gbr,
+                                        ## columns=columns,
                                         columns=c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
                                                   "CDSSTRAND", "CDSID", "TXNAME"),
                                         keys=genes, keytype="GENEID"))
+                                        ## keys=genes, keytype=keytypes))
     lengths[["length"]] <- abs(lengths[["CDSSTART"]] - lengths[["CDSEND"]])
     granges <- GenomicFeatures::transcripts(gbr)
     return(granges)
@@ -116,7 +118,10 @@ download_gbk <- function(accessions="AE009949", write=TRUE) {
 
         dl_file <- paste0(accessions[1], ".gb")
         data <- try(download.file(url=URL, destfile=dl_file, method="wget", quiet=TRUE))
-        scanned <- try(scan(file=dl_file, what="", sep="\n", quiet=TRUE))
+        scanned <- NULL
+        if (class(data) != "try-error") {
+            scanned <- try(scan(file=dl_file, what="", sep="\n", quiet=TRUE))
+        }
         if (class(scanned) != "try-error") {
             downloaded <- c(downloaded, scanned)
             num_downloaded <- num_downloaded + 1

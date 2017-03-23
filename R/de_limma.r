@@ -99,7 +99,7 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
 hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
                       normalize.method="none", span=0.5,
                       stupid=FALSE, logged=FALSE, converted=FALSE, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     ## Going to attempt to as closely as possible dovetail the original implementation.
     ## I think at this point, my implementation is the same as the original with the exception
     ## of a couple of tests to check that the data is not fubar and I think my plot is prettier.
@@ -113,7 +113,9 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
             model <- model.matrix(~group, data = counts[["samples"]])
         }
         if (is.null(libsize)) {
-            libsize <- with(counts[["samples"]], libsize * norm.factors)
+            ## libsize <- with(counts[["samples"]], libsize * norm.factors)
+            ## This is a bit confusing.
+            libsize <- with(counts[["samples"]], counts[["libsize"]] * counts[["norm.factors"]])
         }
         counts <- counts[["counts"]]
     } else {
@@ -131,7 +133,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
         }
     }
     if (is.null(model)) {
-        design <- matrix(1, ncol(counts), 1)
+        model <- matrix(1, ncol(counts), 1)
         rownames(model) <- colnames(counts)
         colnames(model) <- "GrandMean"
     }
@@ -172,7 +174,8 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
     }
     sx <- linear_fit[["Amean"]] + mean(log2(libsize + 1)) - log2(1e+06)
     sy <- sqrt(linear_fit[["sigma"]])
-    if (is.na(sum(sy))) { ## 1 replicate
+    if (is.na(sum(sy))) {
+        ## 1 replicate
         return(NULL)
     }
     allzero <- rowSums(dataframe) == 0
@@ -385,7 +388,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
         }
     }
 
-    convertedp = input[["state"]][["conversion"]]
+    convertedp <- input[["state"]][["conversion"]]
     if (is.null(convertedp)) {
         message("I cannot determine if this data has been converted, assuming no.")
         convertedp <- FALSE

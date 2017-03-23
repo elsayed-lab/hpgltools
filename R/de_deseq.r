@@ -95,17 +95,20 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     }
     message("Starting DESeq2 pairwise comparisons.")
     input_data <- choose_binom_dataset(input, force=force)
+    ## Now that I understand pData a bit more, I should probably remove the conditions/batches slots
+    ## from my expt classes.
     design <- Biobase::pData(input[["expressionset"]])
     conditions <- input_data[["conditions"]]
     batches <- input_data[["batches"]]
     data <- input_data[["data"]]
     condition_table <- table(conditions)
     condition_levels <- levels(as.factor(conditions))
-    batch_levels <- levels(as.factor(batches))
+    ## batch_levels <- levels(as.factor(batches))
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
     summarized <- NULL
-    ## Moving the size-factor estimation into this if(){} block in order to accomodate sva-ish batch estimation in the model
+    ## Moving the size-factor estimation into this if(){} block in order to accomodate sva-ish
+    ## batch estimation in the model
     deseq_sf <- NULL
 
     ## A caveat because this is a point of confusion
@@ -180,7 +183,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                 message(paste0("Including ", num_sv, " will fail because the resulting model is too low rank."))
                 num_sv <- num_sv - 1
                 message(paste0("Trying again with ", num_sv, " surrogates."))
-                message("You should consider rerunning the pairwise comparison with the number of surrogates explicitly stated with the option surrogates=number.")
+                message("You should consider rerunning the pairwise comparison with the number of
+surrogates explicitly stated with the option surrogates=number.")
                 ret <- try_sv(data, num_sv)
             } else {
                 ## If we get here, then the number of surrogates should work with DESeq2.
@@ -233,7 +237,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
         message("DESeq2 step 4/5: nbinomWaldTest.")
         ## deseq_run <- DESeq2::DESeq(deseq_disp)
-        deseq_run = DESeq2::nbinomWaldTest(deseq_disp, quiet=TRUE)
+        deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, quiet=TRUE)
     }
     ## possible options:  betaPrior=TRUE, betaPriorVar, modelMatrix=NULL
     ## modelMatrixType, maxit=100, useOptim=TRUE useT=FALSE df useQR=TRUE
@@ -260,11 +264,11 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
             result <- as.data.frame(DESeq2::results(deseq_run,
                                                     contrast=c("condition", numerator, denominator),
                                                     format="DataFrame"))
-            result <- result[order(result[["log2FoldChange"]]),]
+            result <- result[order(result[["log2FoldChange"]]), ]
             colnames(result) <- c("baseMean", "logFC", "lfcSE", "stat", "P.Value", "adj.P.Val")
             ## From here on everything is the same.
-            result[is.na(result[["P.Value"]]), "P.Value"] = 1 ## Some p-values come out as NA
-            result[is.na(result[["adj.P.Val"]]), "adj.P.Val"] = 1 ## Some p-values come out as NA
+            result[is.na(result[["P.Value"]]), "P.Value"] <- 1 ## Some p-values come out as NA
+            result[is.na(result[["adj.P.Val"]]), "adj.P.Val"] <- 1 ## Some p-values come out as NA
             result[["baseMean"]] <- signif(x=as.numeric(result[["baseMean"]]), digits=4)
             result[["logFC"]] <- signif(x=as.numeric(result[["logFC"]]), digits=4)
             result[["lfcSE"]] <- signif(x=as.numeric(result[["lfcSE"]]), digits=4)
@@ -277,10 +281,12 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                 ttmp <- as.numeric(result[["P.Value"]])
                 ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
                 signif(x=ttmp, digits=4)
-            }, error=function(cond) {
+            },
+            error=function(cond) {
                 message(paste0("The qvalue estimation failed for ", comparison, "."))
                 return(1)
-            }, finally={
+            },
+            finally={
             })
             result_name <- paste0(numerator, "_vs_", denominator)
             denominators[[result_name]] <- denominator

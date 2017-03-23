@@ -32,7 +32,7 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
                          "isopoint" = rep("", N),
                          stringsAsFactors = FALSE)
     ## Regular expression to extract location info
-    location_regex <- '([0-9,]*) - ([0-9,]*) \\(([-+])\\)'
+    location_regex <- "([0-9,]*) - ([0-9,]*) \\(([-+])\\)"
     gene_ids <- c()
     go_gene_ids <- c()
     gene_num <- 0
@@ -44,7 +44,8 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
     seqid <- ""
     for (i in 1:length(read_vec)) {
         line <- read_vec[i]
-        if (grepl("^Gene ID", line)) {  ## Example: Gene ID: TcCLB.397923.10
+        ## Example: Gene ID: TcCLB.397923.10
+        if (grepl("^Gene ID", line)) {
             gene_num <- gene_num + 1
             gene_id <- local_get_value(line)
             gene_ids[gene_num] <- gene_id
@@ -53,19 +54,22 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
                     message(sprintf('Processing gene %d: %s', gene_num, gene_id))
                 }
             }
-        } else if(grepl("^Molecular Weight", line)) { ## Example: Molecular Weight: 37091
+        } else if(grepl("^Molecular Weight", line)) {
+            ## Example: Molecular Weight: 37091
             if (grepl("^Molecular Weight: Not Assigned", line)) {
                 mweight <- NA
             } else {
                 mweight <- as.numeric(local_get_value(line))
             }
-        } else if(grepl("^Isoelectric Point", line)) { ## Example: Isoelectric Point: 7.79
+        } else if(grepl("^Isoelectric Point", line)) {
+            ## Example: Isoelectric Point: 7.79
             if (grepl("^Isoelectric Point: Not Assigned", line)) {
                 ipoint <- NA
             } else {
                 ipoint <- as.numeric(local_get_value(line))
             }
-        } else if (grepl("^Genomic Sequence ID", line)) { ## Example: Genomic Sequence ID: Tcruzi_56
+        } else if (grepl("^Genomic Sequence ID", line)) {
+            ## Example: Genomic Sequence ID: Tcruzi_56
             ## Genomic Sequence ID serves as chromosome in some genomes.
             ## And, since it comes before the Chromosome line, I will need a check in the chromosome assignment below.
             seqid <- as.character(local_get_value(line))
@@ -76,7 +80,8 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
             } else {
                 chromosome <- as.character(local_get_value(line))
             }
-        } else if (grepl("^Genomic Location:", line)) { ## Example: Genomic location: Tcruzi_56: 2 - 586 (+)
+        } else if (grepl("^Genomic Location:", line)) {
+            ## Example: Genomic location: Tcruzi_56: 2 - 586 (+)
             result <- unlist(regmatches(line, regexec(location_regex, line)))
             gene_start <- as.numeric(gsub(",", "", result[2], fixed=TRUE))
             gene_stop  <- as.numeric(gsub(",", "", result[3], fixed=TRUE))
@@ -92,21 +97,24 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
             transcript_length <- as.numeric(local_get_value(line))
         } else if (grepl("^CDS Length", line)) { ## Example: CDS length: 585
             val <- local_get_value(line)
-            if (val == 'null') {
+            if (val == "null") {
                 cds_length <- NA
             } else {
                 cds_length <- as.numeric(val)
             }
-        } else if (grepl("^Is Pseudo:", line)) { ## Pseudogene
+        } else if (grepl("^Is Pseudo:", line)) {
+            ## Pseudogene
             is_pseudo <- ifelse((local_get_value(line) == "Yes"), TRUE, FALSE)
-        } else if (grepl("^GO:", line)) { ## Gene ontology terms
+        } else if (grepl("^GO:", line)) {
+            ## Gene ontology terms
             go_num <- go_num + 1
             go_gene_ids[go_num] <- gene_id
             go_rows[go_num, ] <- c(head(unlist(strsplit(line, '\t')), 5))
         ##} else if (grepl("^PFAM", line)) { ## PFAM IDs
         ##    pfam_id <- unlist(strsplit(line, "\t"))[2]
         ##    pfam_ids <- paste0(pfam_id, " ", pfam_ids)
-        } else if (grepl("^---", line)) {        ## End of a gene's description
+        } else if (grepl("^---", line)) {
+            ## End of a gene's description
             ## message(paste0("Got to end of entry ", chromosome))
             ## Skip gene if it is not assigned to a chromosome
             if (is.na(chromosome)) {
@@ -161,44 +169,44 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
 #' @export
 parse_gene_go_terms <- function (filepath, verbose=FALSE) {
     ##require(tools)
-    if (tools::file_ext(filepath) == 'gz') {
-        fp <- gzfile(filepath, open='rb')
+    if (tools::file_ext(filepath) == "gz") {
+        fp <- gzfile(filepath, open="rb")
     } else {
-        fp <- file(filepath, open='r')
+        fp <- file(filepath, open="r")
     }
 
-    # Create empty vector to store dataframe rows
+    ## Create empty vector to store dataframe rows
     N <- 1e5
     gene_ids <- c()
     go_rows <- data.frame("GO"=rep("", N),
                           "ONTOLOGY"=rep("", N), TERM=rep("", N),
                           "SOURCE"=rep("", N), EVIDENCE=rep("", N),
                           stringsAsFactors=FALSE)
-    # Counter to keep track of row number
+    ## Counter to keep track of row number
     i <- j <- 1
-    # Iterate through lines in file
+    ## Iterate through lines in file
     while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
-        # Gene ID
-        if(grepl("^Gene ID", x)) {
+        ## Gene ID
+        if (grepl("^Gene ID", x)) {
             gene_id <- local_get_value(x)
             if (verbose) {
-                message(sprintf('Processing gene %d: %s', i, gene_id))
+                message(sprintf("Processing gene %d: %s", i, gene_id))
             }
             i <- i + 1
         }
 
-        # Gene Ontology terms
+        ## Gene Ontology terms
         else if (grepl("^GO:", x)) {
             gene_ids[j] <- gene_id
-            go_rows[j,] <- c(head(unlist(strsplit(x, '\t')), 5))
+            go_rows[j, ] <- c(head(unlist(strsplit(x, "\t")), 5))
             j <- j + 1
         }
     }
-    # get rid of unallocated rows
-    go_rows <- go_rows[1:j-1,]
-    # add gene id column
+    ## get rid of unallocated rows
+    go_rows <- go_rows[1:j-1, ]
+    ## add gene id column
     go_rows <- cbind(GID=gene_ids, go_rows)
-    # close file pointer
+    ## close file pointer
     close(fp)
     return(go_rows)
 }
@@ -377,11 +385,11 @@ make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organis
     txdb_package <- txdb_result[["package_name"]]
 
     graph_data <- list(
-        "join1" = c(GO.db='GOID', orgdb='GO'),
-        "join2" = c(orgdb='GID',  txdb='GENEID')
+        "join1" = c(GO.db="GOID", orgdb="GO"),
+        "join2" = c(orgdb="GID",  txdb="GENEID")
     )
 
-    names(graph_data[["join1"]]) = c('GO.db', orgdb_package)
+    names(graph_data[["join1"]]) = c("GO.db", orgdb_package)
     names(graph_data[["join2"]]) = c(orgdb_package, txdb_package)
 
     requireNamespace(orgdb_package)
@@ -412,7 +420,7 @@ make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organis
         maintainer = maintainer,
         author = author,
         destDir = destination,
-        license='Artistic-2.0'
+        license = "Artistic-2.0"
     )
     organdb_path <- paste0(destination, "/", pkgname)
     organdb_path <- pkg_cleaner(organdb_path)
@@ -512,7 +520,7 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
 #' @export
 make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
                        kegg=TRUE, output_dir="organismdbi", ...) {
-    arglist=list(...)
+    ## arglist <- list(...)
     orgdb_pre <- paste0(output_dir, "/orgdb")
     if (!file.exists(orgdb_pre)) {
         dir.create(orgdb_pre, recursive=TRUE)
@@ -558,7 +566,8 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
                                           ## Maybe use taxize for this and remove from the csv?
                                           tax_id = as.character(cfg[["tax_id"]]),
                                           genus = as.character(cfg[["genus"]]),
-                                          species = paste0(as.character(cfg[["species"]]), ".", as.character(cfg[["strain"]])),
+                                          species = paste0(as.character(cfg[["species"]]), ".",
+                                                           as.character(cfg[["strain"]])),
                                           outputDir = orgdb_pre,
                                           goTable = "go")
     } else {
@@ -572,7 +581,8 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
                                           maintainer = as.character(cfg[["maintainer"]]),
                                           tax_id = as.character(cfg[["tax_id"]]),
                                           genus = as.character(cfg[["genus"]]),
-                                          species = paste0(as.character(cfg[["species"]]), ".", as.character(cfg[["strain"]])),
+                                          species = paste0(as.character(cfg[["species"]]), ".",
+                                                           as.character(cfg[["strain"]])),
                                           outputDir = orgdb_pre,
                                           goTable = "go")
     }
@@ -615,7 +625,7 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
 make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir="organismdbi", ...) {
     ## Sections of this were stolen from GenomicFeatures
     ## because it hates me.
-    arglist <- list(...)
+    ## arglist <- list(...)
 
     destination <- output_dir
     chromosome_info <- orgdb_info[["chromosome_info"]]
@@ -683,7 +693,10 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
                                        unlink=TRUE)
     db_path <- file.path(destination, package_name, "inst", "extdata",
                          paste(package_name, "sqlite", sep="."))
-    obj <- AnnotationDbi::saveDb(txdb, file=db_path)
+    obj <- try(AnnotationDbi::saveDb(txdb, file=db_path))
+    if (class(obj) == "try-error") {
+        warning("Failed to save the txdb object.")
+    }
 
     install_dir <- paste0(destination, "/", package_name)
     install_dir <- pkg_cleaner(install_dir)
@@ -769,7 +782,7 @@ make_orgdb_info <- function(gff, txt, kegg=TRUE) {
     is.empty <- function(stuff) {
         (length(stuff) == 0) && (typeof(stuff) == "character")
     }
-    is.empty.col <- function(x) {
+    empty_colp <- function(x) {
         y <- if (length(x)) {
                  do.call("cbind", lapply(x, "is.empty"))
              } else {
@@ -782,7 +795,7 @@ make_orgdb_info <- function(gff, txt, kegg=TRUE) {
     }
     for (col in colnames(gene_info)) {
         tmp_col <- gene_info[[col]]
-        empty_index <- is.empty.col(tmp_col)
+        empty_index <- empty_colp(tmp_col)
         tmp_col[empty_index] <- NA
         gene_info[[col]] <- tmp_col
         if (sum(!is.na(gene_info[[col]])) == num_rows) {
@@ -851,10 +864,10 @@ make_orgdb_info <- function(gff, txt, kegg=TRUE) {
 #' @export
 parse_go_terms <- function(filepath) {
     fp <- NULL
-    if (tools::file_ext(filepath) == 'gz') {
-        fp <- gzfile(filepath, open='rb')
+    if (tools::file_ext(filepath) == "gz") {
+        fp <- gzfile(filepath, open="rb")
     } else {
-        fp <- file(filepath, open='r')
+        fp <- file(filepath, open="r")
     }
 
     ## Create empty vector to store dataframe rows
@@ -871,7 +884,7 @@ parse_go_terms <- function(filepath) {
     ## Iterate through lines in file
     while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
         ## Gene ID
-        if(grepl("^Gene ID", x)) {
+        if (grepl("^Gene ID", x)) {
             gene_id <- local_get_value(x)
             i <- i + 1
         }
@@ -879,15 +892,15 @@ parse_go_terms <- function(filepath) {
         ## Gene Ontology terms
         else if (grepl("^GO:", x)) {
             gene_ids[j] <- gene_id
-            go_rows[j,] <- c(head(unlist(strsplit(x, '\t')), 5))
-            j = j + 1
+            go_rows[j, ] <- c(head(unlist(strsplit(x, "\t")), 5))
+            j <- j + 1
         }
     }
 
     ## get rid of unallocated rows
-    go_rows <- go_rows[1:j-1,]
+    go_rows <- go_rows[1:j-1, ]
     ## drop unneeded columns
-    go_rows <- go_rows[,c('GO', 'EVIDENCE')]
+    go_rows <- go_rows[, c("GO", "EVIDENCE")]
     ## add gene id column
     go_rows <- cbind(GID=gene_ids, go_rows)
     ## close file pointer
@@ -905,14 +918,14 @@ parse_go_terms <- function(filepath) {
 #' @export
 parse_interpro_domains <- function(filepath) {
     fp <- NULL
-    if (tools::file_ext(filepath) == 'gz') {
-        fp <- gzfile(filepath, open='rb')
+    if (tools::file_ext(filepath) == "gz") {
+        fp <- gzfile(filepath, open="rb")
     } else {
-        fp <- file(filepath, open='r')
+        fp <- file(filepath, open="r")
     }
 
     ## Create empty vector to store dataframe rows
-    N <- 1e5
+    ## N <- 1e5
     gene_ids <- c()
     ##interpro_rows = data.frame(GO=rep("", N),
     ##                     ONTOLOGY=rep("", N), GO_TERM_NAME=rep("", N),
@@ -920,12 +933,11 @@ parse_interpro_domains <- function(filepath) {
     ##                     stringsAsFactors=FALSE)
 
     ## InterPro table columns
-    cols <- c('name', 'interpro_id', 'primary_id', 'secondary_id', 'description',
-             'start_min', 'end_min', 'evalue')
+    cols <- c("name", "interpro_id", "primary_id", "secondary_id", "description",
+             "start_min", "end_min", "evalue")
 
     ## Counter to keep track of row number
-    i <- j <- 1
-
+    i <- 1
     ## Iterate through lines in file
     while (length(x <- readLines(fp, n=1, warn=FALSE)) > 0) {
         ## Gene ID

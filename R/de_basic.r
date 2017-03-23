@@ -115,7 +115,7 @@ basic_pairwise <- function(input=NULL, design=NULL,
             p_data <- vector("list", nrow(xdata))
             for (j in 1:nrow(xdata)) {
                 test_result <- try(t.test(xdata[j, ], ydata[j, ]), silent=TRUE)
-                if (class(test_result) == 'htest') {
+                if (class(test_result) == "htest") {
                     t_data[[j]] <- test_result[[1]]
                     p_data[[j]] <- test_result[[3]]
                 } else {
@@ -216,7 +216,7 @@ basic_pairwise <- function(input=NULL, design=NULL,
 #'  ready <- choose_basic_dataset(expt)
 #' }
 choose_basic_dataset <- function(input, force=FALSE, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     warn_user <- 0
     conditions <- input[["conditions"]]
     batches <- input[["batches"]]

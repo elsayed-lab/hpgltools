@@ -32,8 +32,11 @@ get_microbesonline_ids <- function(name="Escherichia", exact=FALSE) {
     message(query)
     result <- DBI::dbSendQuery(connection, query)
     result_df <- DBI::fetch(result, n=-1)
-    clear <- DBI::dbClearResult(result)
-    disconnect <- DBI::dbDisconnect(connection)
+    clear <- try(DBI::dbClearResult(result))
+    disconnect <- try(DBI::dbDisconnect(connection))
+    if (class(clear) == "try-error" | class(disconnect) == "try-error") {
+        warning("Did not disconnect cleanly.")
+    }
     return(result_df)
 }
 
@@ -65,6 +68,9 @@ get_microbesonline_name <- function(id=316385) {
     result_df <- DBI::fetch(result, n=-1)
     clear <- DBI::dbClearResult(result)
     disconnect <- DBI::dbDisconnect(connection)
+    if (class(clear) == "try-error" | class(disconnect) == "try-error") {
+        warning("Did not disconnect cleanly.")
+    }
     return(result_df)
 }
 
@@ -103,7 +109,7 @@ get_microbesonline_annotation <- function(ids="160490", species=NULL) {
         for (id in ids) {
             idl <- as.list(id)
             current_name <- get_microbesonline_name(id)
-            names(idl) <- current_name[1,1]
+            names(idl) <- current_name[1, 1]
             id_list <- append(x=id_list, values=idl)
         }
     }
@@ -145,6 +151,9 @@ mdesc_table <- function(table="Locus2Go") {
     result_df <- DBI::fetch(result, n=-1)
     clear <- DBI::dbClearResult(result)
     disconnect <- DBI::dbDisconnect(connection)
+    if (class(clear) == "try-error" | class(disconnect) == "try-error") {
+        warning("Did not disconnect cleanly.")
+    }
     return(result_df)
 }
 
@@ -180,6 +189,9 @@ get_loci_go <- function(taxonid="160490") {
     result_df <- DBI::fetch(result, n=-1)
     clear <- DBI::dbClearResult(result)
     disconnect <- DBI::dbDisconnect(connection)
+    if (class(clear) == "try-error" | class(disconnect) == "try-error") {
+        warning("Did not disconnect cleanly.")
+    }
     return(result_df)
 }
 

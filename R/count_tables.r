@@ -25,7 +25,7 @@
 expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
                              suffix=NULL, ...) {
     ## load first sample
-    arglist <- list(...)
+    ## arglist <- list(...)
     skippers <- (files == "" | files == "undef" | is.null(files))
     files <- files[!skippers]
     lower_filenames <- files
@@ -36,7 +36,7 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
         low_hpgl <- tolower(low_hpgl)
         low_hpgl <- paste(low_hpgl, suffix, sep="")
     } else {
-        low_hpgl <- gsub("HPGL","hpgl", basename(files))
+        low_hpgl <- gsub("HPGL", "hpgl", basename(files))
     }
     lower_filenames <- paste(dirs, low_files, sep="/")
     lowhpgl_filenames <- paste(dirs, low_hpgl, sep="/")
@@ -66,7 +66,7 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
         } else if (file.exists(lower_filenames[table])) {
             files[table] <- lower_filenames[table]
         }
-        tmp_count = try(read.table(files[table], header=header))
+        tmp_count <- try(read.table(files[table], header=header))
         if (class(tmp_count)[1] == "try-error") {
             stop(paste0("There was an error reading: ", files[table]))
         }
@@ -132,7 +132,6 @@ concatenate_runs <- function(expt, column="replicate") {
     final_expt <- expt
     final_data <- NULL
     final_design <- NULL
-    final_definitions <- NULL
     column_names <- list()
     colors <- list()
     conditions <- list()
@@ -188,8 +187,8 @@ make_exampledata <- function (ngenes=1000, columns=5) {
     q0 <- stats::rexp(ngenes, rate = 1/250)
     is_DE <- stats::runif(ngenes) < 0.3
     lfc <- stats::rnorm(ngenes, sd = 2)
-    q0A <- ifelse(is_DE, q0 * 2^(lfc / 2), q0)
-    q0B <- ifelse(is_DE, q0 * 2^(-lfc / 2), q0)
+    q0A <- ifelse(is_DE, q0 * 2^ (lfc / 2), q0)
+    q0B <- ifelse(is_DE, q0 * 2^ (-lfc / 2), q0)
     ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
     true_sf <- abs(stats::rnorm(columns, mean=1, sd=0.4))
     cond_types <- ceiling(sqrt(columns))
@@ -238,7 +237,7 @@ median_by_factor <- function(data, fact="condition") {
 
     medians <- data.frame("ID"=rownames(data))
     data <- as.matrix(data)
-    rownames(medians) = rownames(data)
+    rownames(medians) <- rownames(data)
     fact <- as.factor(fact)
     for (type in levels(fact)) {
         columns <- grep(pattern=type, fact)
@@ -376,6 +375,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     message("Graphing the raw reads.")
     sheet <- "raw_graphs"
     newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
+    if (class(newsheet) == "try-error") {
+        warning(paste0("Failed to add the sheet: ", sheet))
+    }
     metrics <- sm(graph_metrics(expt, qq=TRUE))
     ## Start with library sizes.
     openxlsx::writeData(wb, sheet=sheet, x="Legend.", startRow=new_row, startCol=new_col)

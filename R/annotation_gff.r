@@ -55,7 +55,7 @@ get_genelengths <- function(gff, type="gene", key="ID", ...) {
 #' summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
 #' }
 #' @export
-sum_exons <- function(data, gff=NULL, annotdf=NULL, parent='Parent', child='row.names') {
+sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.names") {
     if (is.null(annotdf) & is.null(gff)) {
         stop("I need either a df with parents, children, and widths; or a gff filename.")
     } else if (is.null(annotdf)) {
@@ -115,7 +115,6 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent='Parent', child='row.
 #' @export
 gff2df <- function(gff, type=NULL, id_col="ID", second_id_col="locus_tag", try=NULL) {
     ret <- NULL
-    success <- FALSE
     attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
                   "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE)",
                   "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE)",
@@ -134,14 +133,11 @@ gff2df <- function(gff, type=NULL, id_col="ID", second_id_col="locus_tag", try=N
         eval_string <- paste0("annotations <- try(", attempt, ", silent=TRUE)")
         eval(parse(text=eval_string))
         if (class(annotations) == "try-error") {
-            success <- FALSE
             rm(annotations)
         } else if (is.null(GenomicRanges::as.data.frame(annotations)[[id_col]]) &
                    is.null(GenomicRanges::as.data.frame(annotations)[[second_id_col]])) {
-            success <- FALSE
             rm(annotations)
         } else {
-            success <- TRUE
             annot <- annotations
             rm(annotations)
             message("Had a successful gff import with ", attempt)
@@ -191,9 +187,9 @@ gff2df <- function(gff, type=NULL, id_col="ID", second_id_col="locus_tag", try=N
 gff2irange <- function(gff, type=NULL) {
     ret <- NULL
     annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
-    if (class(annotations) == 'try-error') {
+    if (class(annotations) == "try-error") {
         annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
-        if (class(annotations) == 'try-error') {
+        if (class(annotations) == "try-error") {
             stop("Could not extract the widths from the gff file.")
         } else {
             ret <- annotations
@@ -228,8 +224,8 @@ gff2irange <- function(gff, type=NULL) {
 #'  tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
 #' }
 #' @export
-make_tooltips <- function(annotations, desc_col='description', type="gene", id_col="ID", ...) {
-    arglist <- list(...)
+make_tooltips <- function(annotations, desc_col="description", type="gene", id_col="ID", ...) {
+    ## arglist <- list(...)
     tooltip_data <- NULL
     if (class(annotations) == "character") {
         tooltip_data <- gff2df(gff=annotations, type=type)
@@ -281,7 +277,7 @@ make_tooltips <- function(annotations, desc_col='description', type="gene", id_c
 #'  num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
 #' }
 #' @export
-pattern_count_genome <- function(fasta, gff=NULL, pattern='TA', type='gene', key='locus_tag') {
+pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key="locus_tag") {
     rawseq <- Rsamtools::FaFile(fasta)
     if (is.null(gff)) {
         entry_sequences <- rawseq
@@ -318,7 +314,7 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern='TA', type='gene', key
 #'  num_pattern = sequence_attributes('mgas_5005.fasta', 'mgas_5005.gff')
 #' }
 #' @export
-sequence_attributes <- function(fasta, gff=NULL, type='gene', key='locus_tag') {
+sequence_attributes <- function(fasta, gff=NULL, type="gene", key="locus_tag") {
     rawseq <- Rsamtools::FaFile(fasta)
     if (is.null(gff)) {
         entry_sequences <- rawseq
@@ -336,7 +332,7 @@ sequence_attributes <- function(fasta, gff=NULL, type='gene', key='locus_tag') {
         "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob=TRUE),
         "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob=TRUE))
     rownames(attribs) <- type_entries[["locus_tag"]]
-    colnames(attribs) <- c("gc","at","gt","ac")
+    colnames(attribs) <- c("gc", "at", "gt", "ac")
     return(attribs)
 }
 

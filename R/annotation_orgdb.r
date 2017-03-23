@@ -73,7 +73,6 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
     }
     ## Note querying by "GENEID" will exclude noncoding RNAs
 
-    transcript_length <- NULL
     gene_info <- AnnotationDbi::select(orgdb,
                                        keys=gene_ids,
                                        keytype=keytype,
@@ -90,7 +89,6 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
         transcripts <- NULL
     }
     colnames(gene_info) <- tolower(colnames(gene_info))
-    gene_info_ret <- NULL
     if (isTRUE(sum_exons)) {
         message("Summing exon lengths, this takes a while.")
         lengths <- lapply(gene_exons, function(x) {
@@ -139,7 +137,7 @@ load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
     go_terms <- sm(AnnotationDbi::select(orgdb,
                                          "keys" = gene_ids,
                                          "keytype" = keytype,
-                                         "columns" = c("GO"))[,c(1,2)])
+                                         "columns" = c("GO"))[, c(1, 2)])
     ## Deduplicate
     go_terms <- go_terms[!duplicated(go_terms), ]
     go_terms <- go_terms[!is.na(go_terms[["GO"]]), ]
@@ -212,7 +210,7 @@ load_kegg_mapping <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c
 #'  host <- load_host_annotations(org, c("a","b"))
 #' }
 #' @export
-orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c('ensembl'), keytype="geneid") {
+orgdb_idmap <- function(orgdb, gene_ids=NULL, mapto=c("ensembl"), keytype="geneid") {
     mapto <- toupper(mapto)
     keytype <- toupper(keytype)
     avail_keytypes <- AnnotationDbi::keytypes(orgdb)
@@ -340,12 +338,12 @@ load_host_annotations <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
 #'  pathnames <- load_kegg_pathways(org, c("a","b","c")
 #' }
 #' @export
-load_kegg_pathways <- function(orgdb, gene_ids, keytype='ENSEMBL') {
+load_kegg_pathways <- function(orgdb, gene_ids, keytype="ENSEMBL") {
     kegg_pathways <- suppressWarnings(
         dplyr::tbl_df(AnnotationDbi::select(orgdb, keys=gene_ids,
                             keytype=keytype,
-                            columns=c('KEGG_PATH', 'KEGG_NAME', 'KEGG_CLASS',
-                                        'KEGG_DESCRIPTION')))
+                            columns=c("KEGG_PATH", "KEGG_NAME", "KEGG_CLASS",
+                                        "KEGG_DESCRIPTION")))
     )
     kegg_pathways <- kegg_pathways %>%
         na.omit() %>%
@@ -353,7 +351,7 @@ load_kegg_pathways <- function(orgdb, gene_ids, keytype='ENSEMBL') {
         ## I think these should be quoted
         dplyr::select_("KEGG_PATH", "KEGG_NAME", "KEGG_CLASS", "KEGG_DESCRIPTION")
         #select(-get(keytype))
-    colnames(kegg_pathways) <- c('pathway', 'name', 'class', 'description')
+    colnames(kegg_pathways) <- c("pathway", "name", "class", "description")
     return(kegg_pathways)
 }
 
@@ -378,8 +376,8 @@ kegg_to_ensembl <- function(kegg_ids) {
         ## print(x)
         query <- KEGGREST::keggGet(x)
         for (item in query) {
-            dblinks <- item$DBLINKS  ## FIXME, no possibly redundant slots allowed
-            ensembl_id <- dblinks[grepl('Ensembl', dblinks)]
+            dblinks <- item[["DBLINKS"]]
+            ensembl_id <- dblinks[grepl("Ensembl", dblinks)]
             if (length(ensembl_id) > 0) {
                 result <- append(result, substring(ensembl_id, 10))
                 ## TESTING
@@ -454,8 +452,8 @@ generate_kegg_pathway_mapping <- function(pathways, verbose=FALSE) {
         ## meta <- try(KEGGREST::keggGet(pathway, "kgml")[[1]])
         meta <- try(KEGGREST::keggGet(pathway)[[1]])
         if (class(meta) != "try-error") {
-            pathway_desc  <- ifelse(is.null(meta[["DESCRIPTION"]]), '', meta[["DESCRIPTION"]])
-            pathway_class <- ifelse(is.null(meta[["CLASS"]]), '', meta[["CLASS"]])
+            pathway_desc  <- ifelse(is.null(meta[["DESCRIPTION"]]), "", meta[["DESCRIPTION"]])
+            pathway_class <- ifelse(is.null(meta[["CLASS"]]), "", meta[["CLASS"]])
             kegg_pathways <- rbind(kegg_pathways,
                                    data.frame("pathway" = pathway,
                                               "name" = meta[["PATHWAY_MAP"]],
@@ -497,7 +495,6 @@ choose_orgdb <- function(species="saccharomyces_cerevisiae") {
         "drosophila_melanogaster" = c("org.Dm.eg.db", "bioconductor"),
         "saccharomyces_cerevisiae" = c("org.Sc.sgd.db", "bioconductor")
     )
-    found <- 0
     org <- NULL
     avail_keys <- NULL
     if (species %in% names(used_species)) {
@@ -509,14 +506,18 @@ choose_orgdb <- function(species="saccharomyces_cerevisiae") {
     try_orgdb <- try_list[[1]]
     try_source <- try_list[[2]]
     org <- try(loadNamespace(try_orgdb))  ## try loading it into the environment named 'org'
-    if (class(org) == "try-error") {  ## if that was not found, install it.
+    ## if that was not found, install it.
+    installedp <- NULL
+    if (class(org) == "try-error") {
         if (try_source == "bioconductor") {
-            installedp <- require.auto(try_orgdb)  ## install from bioconductor
+            installedp <- try(require.auto(try_orgdb))  ## install from bioconductor
         } else {
-            installedp <- require.auto(paste0(try_source, "/", try_orgdb))  ## install from github
+            installedp <- try(require.auto(paste0(try_source, "/", try_orgdb)))  ## install from github
         }
         org <- loadNamespace(try_orgdb)
-
+        if (class(installedp) == "try-error") {
+            warning(paste0("Did not install ", try_orgdb))
+        }
     }
     org <- org[[try_orgdb]]
     if (is.null(org)) {
@@ -560,7 +561,6 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
         "drosophila_melanogaster" = c("TxDb.Dmelanogaster.UCSC.dm6.ensGene", "bioconductor"),
         "saccharomyces_cerevisiae" = c("TxDb.Scerevisiae.UCSC.sacCer3.sgdGene", "bioconductor")
     )
-    found <- 0
     tx <- NULL
     avail_keys <- NULL
     if (species %in% names(used_species)) {
@@ -572,14 +572,18 @@ choose_txdb <- function(species="saccharomyces_cerevisiae") {
     try_txdb <- try_list[[1]]
     try_source <- try_list[[2]]
     tx <- try(loadNamespace(try_txdb))  ## try loading it into the environment named 'tx'
-    if (class(tx) == "try-error") {  ## if that was not found, install it.
+    ## if that was not found, install it.
+    installedp <- NULL
+    if (class(tx) == "try-error") {
         if (try_source == "bioconductor") {
-            installedp <- require.auto(try_txdb)  ## install from bioconductor
+            installedp <- try(require.auto(try_txdb))  ## install from bioconductor
         } else {
-            installedp <- require.auto(paste0(try_source, "/", try_txdb))  ## install from github
+            installedp <- try(require.auto(paste0(try_source, "/", try_txdb)))  ## install from github
         }
         tx <- loadNamespace(try_txdb)
-
+        if (class(installedp) == "try-error") {
+            warning(paste0("Did not install ", try_txdb))
+        }
     }
     tx <- tx[[try_txdb]]
     ## avail_namespaces <- ls(paste0("package:", try_txdb))

@@ -16,7 +16,7 @@
 #' }
 #' @export
 extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=0.05, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
 
     expr_col <- NULL
     p_col <- NULL
@@ -141,18 +141,18 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
         output <- output[[type]]
     }
 
-    qlimit <- 0.1
-    if (!is.null(arglist[["qlimit"]])) {
-        qlimit <- arglist[["qlimit"]]
-    }
-    fc_column <- paste0(type, "_logfc")
-    if (!is.null(arglist[["fc_column"]])) {
-        fc_column <- arglist[["fc_column"]]
-    }
-    p_column <- paste0(type, "_adjp")
-    if (!is.null(arglist[["p_column"]])) {
-        p_column <- arglist[["p_column"]]
-    }
+    ## qlimit <- 0.1
+    ## if (!is.null(arglist[["qlimit"]])) {
+    ##     qlimit <- arglist[["qlimit"]]
+    ## }
+    ## fc_column <- paste0(type, "_logfc")
+    ## if (!is.null(arglist[["fc_column"]])) {
+    ##     fc_column <- arglist[["fc_column"]]
+    ## }
+    ## p_column <- paste0(type, "_adjp")
+    ## if (!is.null(arglist[["p_column"]])) {
+    ##     p_column <- arglist[["p_column"]]
+    ## }
     gvis_filename <- NULL
     gvis_trendline <- TRUE
     tooltip_data <- NULL
@@ -262,7 +262,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #' }
 #' @export
 de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     combine_tables <- function(d, e, l) {
         ddf <- as.data.frame(l[, "limma_logfc"])
         rownames(ddf) <- rownames(l)
@@ -330,7 +330,7 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
                                            up_l, up_dl, up_el,
                                            up_del))
     up_res <- Vennerable::plot(up_venn, doWeights=FALSE)
-    ##up_res <- plot(up_venn, doWeights=FALSE)
+    ## up_res <- plot(up_venn, doWeights=FALSE)
     up_venn_noweight <- grDevices::recordPlot()
 
     down_ones <- c("d" = down_d, "e" = down_e, "l" = down_l)
@@ -347,7 +347,7 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
                                              down_l, down_dl, down_el,
                                              down_del))
     down_res <- Vennerable::plot(down_venn, doWeights=FALSE)
-    ##down_res <- plot(down_venn, doWeights=FALSE)
+    ## down_res <- plot(down_venn, doWeights=FALSE)
     down_venn_noweight <- grDevices::recordPlot()
 
     retlist <- list(
@@ -382,9 +382,9 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
 #' @export
 plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_logfc",
                               bins=100, constant_p=0.05, constant_fc=0) {
-    fc_column="limma_logfc"
-    p_column="limma_adjp"
-    bins = 100
+    fc_column <- "limma_logfc"
+    p_column <- "limma_adjp"
+    bins <- 100
     num_genes <- nrow(table)
     min_fc <- min(table[[fc_column]])
     neutral_fc <- 0.0
@@ -424,7 +424,8 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 
     putative_up_inflection <- inflection::findiplist(x=as.matrix(up_nums[[1]]), y=as.matrix(up_nums[[2]]), 0)
     up_point_num <- putative_up_inflection[2,1]
-    up_label <- paste0("At fc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p, ", ", up_nums[up_point_num, ][["num"]], " genes are de.")
+    up_label <- paste0("At fc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p,
+                       ", ", up_nums[up_point_num, ][["num"]], " genes are de.")
     up_plot <- ggplot(data=up_nums, aes_string(x="fc", y="num")) +
         ggplot2::geom_point() + ggplot2::geom_line() +
         ggplot2::geom_hline(yintercept=up_nums[[2]][[up_point_num]]) +
@@ -490,7 +491,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
                                  fc_column="limma_logfc", p_type="adj", invert=FALSE,
                                  p=0.05, z=NULL, order=NULL, maximum=NULL, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     sig_lists_up <- list(
         "limma" = list(),
         "edger" = list(),
@@ -528,7 +529,8 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
             fc_name <- paste0("fc_", fc)
             fc_names <- append(fc_names, fc_name)
 
-            for (tab in 1:table_length) { ## The table names are shared across methods and ups/downs
+            for (tab in 1:table_length) {
+                ## The table names are shared across methods and ups/downs
                 table_names <- names(fc_sig[[type]][["ups"]])
                 table_name <- table_names[tab]
                 t_up <- nrow(fc_sig[[type]][["ups"]][[table_name]])
@@ -579,8 +581,12 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
             up_all[[type]][[table_name]] <- everything_up
             up_mid[[type]][[table_name]] <- mid_up - exclusive_up
             up_max[[type]][[table_name]] <- exclusive_up
-            up_all[[type]][[table_name]] <- up_all[[type]][[table_name]] - up_mid[[type]][[table_name]] - up_max[[type]][[table_name]]
-            up_terminal <- up_all[[type]][[table_name]] + up_mid[[type]][[table_name]] + up_max[[type]][[table_name]]
+            up_all[[type]][[table_name]] <- up_all[[type]][[table_name]] -
+                up_mid[[type]][[table_name]] -
+                up_max[[type]][[table_name]]
+            up_terminal <- up_all[[type]][[table_name]] +
+                up_mid[[type]][[table_name]] +
+                up_max[[type]][[table_name]]
             up_middle <- up_terminal - up_max[[type]][[table_name]]
             up_min <- up_terminal - up_mid[[type]][[table_name]]
             ## Now repeat for the set of down genes.
@@ -592,8 +598,12 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
             down_all[[type]][[table_name]] <- everything_down
             down_mid[[type]][[table_name]] <- mid_down - exclusive_down
             down_max[[type]][[table_name]] <- exclusive_down
-            down_all[[type]][[table_name]] <- down_all[[type]][[table_name]] - down_mid[[type]][[table_name]] - down_max[[type]][[table_name]]
-            down_terminal <- down_all[[type]][[table_name]] + down_mid[[type]][[table_name]] + down_max[[type]][[table_name]]
+            down_all[[type]][[table_name]] <- down_all[[type]][[table_name]] -
+                down_mid[[type]][[table_name]] -
+                down_max[[type]][[table_name]]
+            down_terminal <- down_all[[type]][[table_name]] +
+                down_mid[[type]][[table_name]] +
+                down_max[[type]][[table_name]]
             down_middle <- down_terminal - down_max[[type]][[table_name]]
             down_min <- down_terminal - down_mid[[type]][[table_name]]
         } ## End for 1:table_length
@@ -603,26 +613,26 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         ## Once again, starting with only the up-stuff
         up <- cbind(comparisons, up_all[[type]], up_mid[[type]], up_max[[type]])
         up <- as.data.frame(up)
-        colnames(up) <- c("comparisons","a_up_inner","b_up_middle","c_up_outer")
+        colnames(up) <- c("comparisons", "a_up_inner", "b_up_middle", "c_up_outer")
         uplist[[type]] <- up
         up <- reshape2::melt(up, id.var="comparisons")
         up[["comparisons"]] <- factor(up[["comparisons"]], levels=comparisons)
-        up[["variable"]] <- factor(up[["variable"]],  levels=c("a_up_inner","b_up_middle","c_up_outer"))
+        up[["variable"]] <- factor(up[["variable"]],  levels=c("a_up_inner", "b_up_middle", "c_up_outer"))
         up[["value"]] <- as.numeric(up[["value"]])
         ## Repeat with the set of down materials
         down <- cbind(comparisons, down_all[[type]], down_mid[[type]], down_max[[type]])
         down <- as.data.frame(down)
-        colnames(down) <- c("comparisons","a_down_inner","b_down_middle","c_down_outer")
+        colnames(down) <- c("comparisons", "a_down_inner", "b_down_middle", "c_down_outer")
         downlist[[type]] <- down
-        colnames(down) <- c("comparisons","a_down_inner","b_down_middle","c_down_outer")
+        colnames(down) <- c("comparisons", "a_down_inner", "b_down_middle", "c_down_outer")
         down <- reshape2::melt(down, id.var="comparisons")
         down[["comparisons"]] <- factor(down[["comparisons"]], levels=comparisons)
         ##        down[["variable"]] <- factor(down[["variable"]],
         ##        levels=c("a_down_inner","b_down_middle","c_down_outer"))
         down[["variable"]] <- factor(down[["variable"]],
-                                     levels=c("c_down_outer","b_down_middle","a_down_inner"))
+                                     levels=c("c_down_outer", "b_down_middle", "a_down_inner"))
         up[["variable"]] <- factor(up[["variable"]],
-                                   levels=c("c_up_outer","b_up_middle","a_up_inner"))
+                                   levels=c("c_up_outer", "b_up_middle", "a_up_inner"))
         down[["value"]] <- as.numeric(down[["value"]]) * -1
         tables_up[[type]] <- up
         tables_down[[type]] <- down
