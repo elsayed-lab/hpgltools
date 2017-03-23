@@ -7,26 +7,32 @@ Author: Ashton Trey Belew, Keith Hughitt
 Authors@R: c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre")),
              person("Keith", "Hughitt", email="khughitt@umd.edu", role=c("aut")))
 Maintainer: Ashton Trey Belew <abelew@gmail.com>
-Description: This is a set of functions I have been using in my various
-    analyses in the El-Sayed laboratory. The set of tasks included herein run a spectrum from
-    preprocessing count-tables from RNAseq-like data, through differential expression analyses, to
-    post-processing tasks like gene ontology enrichment.  Along the way, these function seek to make
-    plotting analyses consistent, provide multiple entry-points to the various tools, and handle
-    corner cases which are not flexibly handled by the packages this is based upon.
+Description: This is a set of functions I have been using in my various analyses
+             in the El-Sayed laboratory. The set of tasks included herein run a
+             spectrum from preprocessing count-tables from RNAseq-like data,
+             through differential expression analyses, to post-processing tasks
+             like gene ontology enrichment.  Along the way, these function seek
+             to make plotting analyses consistent, provide multiple entry-points
+             to the various tools, and handle corner cases which are not
+             flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
-    acepack, ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub, base64enc, Biobase, BiocGenerics, BiocInstaller, Biostrings,
-    biomaRt, bumphunter, Category, caTools, clusterProfiler, corpcor, corrplot, DBI, DESeq2, DESeq, devtools,
-    directlabels, dplyr, doParallel, DOSE, EDASeq, edgeR, ffpe, fission, Formula, gdata, ggenbankr, genefilter,
-    genomeIntervals, GenomeInfoDb, GenomicFeatures, genoPlotR, GenomicRanges, ggdendro, ggrepel,
-    GO.db, googleVis, goseq, GOstats, gplots, graph, gProfileR, GSEABase, gtools, gridExtra, hash,
-    Heatplus, Hmisc, htmlTable, igraph, inflection, IRanges, iterators, jsonlite, KEGGgraph, KEGGREST,
-    knitcitations, lattice, limma, matrixStats, motifRG, multtest, mygene, openxlsx, OrganismDbi,
-    pander, parallel, pasilla, pathview, plyr, preprocessCore, qvalue, RamiGO, RColorBrewer,
-    ReactomePA, readr, rentrez, reshape2, RCurl, rGADEM, Rgraphviz, rmarkdown, RMySQL, robustbase,
-    RefManageR, reshape, rjson, robust, Rsamtools, rtracklayer, RUVSeq, S4Vectors, scales, seqinr, seqLogo,
-    statmod, stringi, stringr, survival, survJamda, sva, taxize, testthat, topGO, variancePartition, xtable,
-    XVector
+    acepack, ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub,
+    base64enc, Biobase, BiocGenerics, BiocInstaller, Biostrings,
+    biomaRt, bumphunter, Category, caTools, clusterProfiler, corpcor, corrplot,
+    DBI, DESeq2, DESeq, devtools, directlabels, dplyr, doParallel, DOSE, EDASeq,
+    edgeR, ffpe, fission, Formula, gdata, ggenbankr, genefilter,
+    genomeIntervals, GenomeInfoDb, GenomicFeatures, genoPlotR, GenomicRanges,
+    ggdendro, ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph,
+    gProfileR, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc, htmlTable,
+    igraph, inflection, IRanges, iterators, jsonlite, KEGGgraph, KEGGREST,
+    knitcitations, knitr, lattice, limma, matrixStats, motifRG, multtest,
+    mygene, openxlsx, OrganismDbi, pander, parallel, pasilla, pathview, plyr,
+    preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, readr, rentrez,
+    reshape2, RCurl, rGADEM, Rgraphviz, rmarkdown, RMySQL, robustbase,
+    RefManageR, reshape, rjson, robust, Rsamtools, rtracklayer, RUVSeq,
+    S4Vectors, scales, seqinr, seqLogo, statmod, stringi, stringr, survival,
+    survJamda, sva, taxize, testthat, topGO, variancePartition, xtable, XVector
 Imports:
     Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
