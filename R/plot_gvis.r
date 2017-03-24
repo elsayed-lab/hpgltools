@@ -1,4 +1,4 @@
-n#' Make an html version of an MA plot: M(log ratio of conditions) / A(mean average).
+#' Make an html version of an MA plot: M(log ratio of conditions) / A(mean average).
 #'
 #' A fun snippet from wikipedia: "In many microarray gene expression experiments, an underlying
 #' assumption is that most of the genes would not see any change in their expression therefore the
