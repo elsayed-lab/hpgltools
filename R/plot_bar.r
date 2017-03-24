@@ -65,7 +65,7 @@ plot_libsize <- function(data, colors=NULL,
         "colors" = as.character(colors))
     libsize_df[["order"]] <- factor(libsize_df[["id"]], as.character(libsize_df[["id"]]))
 
-    color_listing <- libsize_df[, c("condition","colors")]
+    color_listing <- libsize_df[, c("condition", "colors")]
     color_listing <- unique(color_listing)
     color_list <- as.character(color_listing[["colors"]])
     names(color_list) <- as.character(color_listing[["condition"]])
@@ -100,9 +100,9 @@ plot_libsize <- function(data, colors=NULL,
         if (scale_difference > 10.0) {
             message("The scale difference between the smallest and largest
    libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
-            scale = TRUE
+            scale <- TRUE
         } else {
-            scale = FALSE
+            scale <- FALSE
         }
     }
     if (scale == TRUE) {
@@ -131,22 +131,22 @@ plot_libsize <- function(data, colors=NULL,
 #' @param padding  How much space to provide on the sides?
 #' @return coverage plot surrounging the ORF of interest
 #' @seealso \pkg{ggplot2}
-plot_rpm = function(input, workdir="images", output="01.svg", name="LmjF.01.0010",
+plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.0010",
                     start=1000, end=2000, strand=1, padding=100) {
 
-    mychr = gsub("\\.\\d+$", "", name, perl=TRUE)
-    plotted_start = start - padding
-    plotted_end = end + padding
-    my_start = start
-    my_end = end
+    mychr <- gsub("\\.\\d+$", "", name, perl=TRUE)
+    plotted_start <- start - padding
+    plotted_end <- end + padding
+    my_start <- start
+    my_end <- end
     ## These are good chances to use %>% I guess
     ## rpm_region = subset(input, chromosome==mychr & position >= plotted_start & position <= plotted_end)
     region_idx <- input[["chromosome"]] == mychr &
         input[["position"]] >= plotted_start &
         input[["position"]] <= plotted_end
     rpm_region <- rpm_region[region_idx, ]
-    rpm_region = rpm_region[,-1]
-    rpm_region[["log"]] = log2(rpm_region[["rpm"]] + 1)
+    rpm_region <- rpm_region[, -1]
+    rpm_region[["log"]] <- log2(rpm_region[["rpm"]] + 1)
 
     ## pre_start = subset(rpm_region, position < my_start)
     start_idx <- rpm_region[["position"]] < my_start
@@ -160,17 +160,17 @@ plot_rpm = function(input, workdir="images", output="01.svg", name="LmjF.01.0010
 
     eval(substitute(
         expr = {
-            stupid = aes(y=0, yend=0, x=my_start, xend=my_end)
+            stupid <- aes(y=0, yend=0, x=my_start, xend=my_end)
         },
-        env = list(my_start=my_start, my_end=my_end)))
+        env <- list(my_start=my_start, my_end=my_end)))
 
     if (strand == "+") {
-        gene_arrow = grid::arrow(type="closed", ends="last")
+        gene_arrow <- grid::arrow(type="closed", ends="last")
     } else {
-        gene_arrow = grid::arrow(type="closed", ends="first")
+        gene_arrow <- grid::arrow(type="closed", ends="first")
     }
-    xlabel_string = paste(name, ": ", my_start, " to ", my_end)
-    my_plot = ggplot(rpm_region, aes_string(x="position", y="log")) +
+    xlabel_string <- paste(name, ": ", my_start, " to ", my_end)
+    my_plot <- ggplot(rpm_region, aes_string(x="position", y="log")) +
         ggplot2::xlab(xlabel_string) +
         ggplot2::ylab("Log2(RPM) reads") +
         ggplot2::geom_bar(data=rpm_region, stat="identity", fill="black", colour="black") +
@@ -291,7 +291,7 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE, invert=FAL
             comp_name <- comp_names[[comp]]
             upstring <- as.character(up_sums[[comp_name]])
             downstring <- as.character(down_sums[[comp_name]])
-            sigbar_plot = sigbar_plot +
+            sigbar_plot <- sigbar_plot +
                 ggplot2::annotate("text", x=comp, y=maximum, label=upstring, angle=-90) +
                 ggplot2::annotate("text", x=comp, y=maximum * -1, label=downstring, angle=90)
         }

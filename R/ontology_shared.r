@@ -50,7 +50,7 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
     } else {
         stop("This requires either length or width columns.")
     }
-    colnames(metadf) <- c("ID","length")
+    colnames(metadf) <- c("ID", "length")
     rownames(metadf) <- metadf[["ID"]]
     return(metadf)
 }
@@ -75,18 +75,18 @@ extract_go <- function(db, metadf=NULL, keytype="ENTREZID") {
     if ("GOID" %in% possible_keytypes) {
         godf <- sm(AnnotationDbi::select(x=db, keys=ids, keytype=keytype, columns=c("GOID")))
         godf[["ID"]] <- godf[[1]]
-        godf <- godf[, c("ID","GOID")]
-        colnames(godf) <- c("ID","GO")
+        godf <- godf[, c("ID", "GOID")]
+        colnames(godf) <- c("ID", "GO")
     } else if ("GO" %in% possible_keytypes) {
         godf <- sm(AnnotationDbi::select(x=db, keys=ids, keytype=keytype, columns=c("GO")))
         godf[["ID"]] <- godf[[1]]
-        godf <- godf[, c("ID","GO")]
-        colnames(godf) <- c("ID","GO")
+        godf <- godf[, c("ID", "GO")]
+        colnames(godf) <- c("ID", "GO")
     } else if ("GOALL" %in% possible_keytypes) {
         godf <- sm(AnnotationDbi::select(x=db, keys=ids, keytype=keytype, columns=c("GOALL")))
         godf[["ID"]] <- godf[[1]]
-        godf <- godf[, c("ID","GO")]
-        colnames(godf) <- c("ID","GO")
+        godf <- godf[, c("ID", "GO")]
+        colnames(godf) <- c("ID", "GO")
     }
     return(godf)
 }
@@ -113,14 +113,15 @@ deparse_go_value <- function(value) {
     result <- ""
     if (class(value) == "try-error") {
         result <- "Not found"
-    } else {  ## Not an error
+    } else {
+        ## Not an error
         if (is.null(value)) {
             result <- ""
         } else if (is.na(value)) {
             result <- ""
         } else if (value == "NULL") {
             result <- ""
-        } else if (grepl('^c\\(', as.character(value))) {
+        } else if (grepl("^c\\(", as.character(value))) {
             value <- eval(parse(text=as.character(value)))
             if (class(value) == "logical") {
                 result <- ""
@@ -128,7 +129,8 @@ deparse_go_value <- function(value) {
                 value <- as.character(value[which(complete.cases(value))])
                 result <- value
             }
-        } else {  ## Just a string "GO:00023409"
+        } else {
+            ## Just a string "GO:00023409"
             result <- value
         }
     }
@@ -296,8 +298,8 @@ golev <- function(go) {
     go <- as.character(go)
     level <- 0
     requireNamespace("GO.db")
-    while(class(try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]])),
-                    silent=FALSE)) != 'try-error') {
+    while (class(try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]])),
+                     silent=FALSE)) != "try-error") {
         ontology <- as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]]))
         if (ontology == "MF") {
             ## I am not certain if GO.db:: will work for this
@@ -355,7 +357,7 @@ gotest <- function(go) {
     gotst <- function(go) {
         go <- as.character(go)
         value <- try(GO.db::GOTERM[[go]])
-        if (class(value) == 'try-error') {
+        if (class(value) == "try-error") {
             return(0)
         }
         if (is.null(value)) {
@@ -460,7 +462,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
     }
     arglist <- list(...)
 
-    goid_map <- get0('goid_map')
+    goid_map <- get0("goid_map")
     if (is.null(goid_map)) {
         goid_map <- "reference/go/id2go.map"
     }
@@ -469,9 +471,11 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
     ## Perhaps a list of tables?
     if (is.null(de_out[["all_tables"]])) {
         if (sum(grepl(pattern="_vs_", x=names(de_out))) == 0) {
-            stop("This assumes you are passing it a limma/deseq/edger output from limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
+            stop("This assumes you are passing it a limma/deseq/edger output from
+limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
         }
-    } else {  ## In this case, you fed it something$limma rather than something$limma$all_tables
+    } else {
+        ## In this case, you fed it something$limma rather than something$limma$all_tables
         de_out <- de_out[["all_tables"]]
     }
     ## Perhaps a single data frame of logFC etc
@@ -627,8 +631,8 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
     }
     gff <- arglist[["gff"]]
     gff_type <- arglist[["gff_type"]]
-    types_list <- c("up_goseq","down_goseq","up_cluster","down_cluster",
-                    "up_topgo","down_topgo","up_gostats","down_gostats",
+    types_list <- c("up_goseq", "down_goseq", "up_cluster", "down_cluster",
+                    "up_topgo", "down_topgo", "up_gostats", "down_gostats",
                     "up_gprofiler", "down_gprofiler")
     names_list <- names(up_list)
     names_length <- length(names_list)
@@ -699,18 +703,19 @@ golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
     } else {
         level <- 0
         continue <- 1
-        golevels <- data.frame(GO=NULL,level=NULL)
+        golevels <- data.frame(GO=NULL, level=NULL)
         while (continue == 1) {
             level <- level + 1
             GO <- try(clusterProfiler:::getGOLevel(ont, level), silent=TRUE)
-            if (class(GO) != 'character') {
+            if (class(GO) != "character") {
                 golevels[["level"]] <- as.numeric(golevels[["level"]])
                 save(golevels, file=savefile, compress="xz")
                 return (golevels)
             } else {
                 tmpdf <- as.data.frame(cbind(GO, level))
-                ## This (hopefully) ensures that each GO id is added only once, and gets the highest possible level.
-                new_go <- tmpdf[unique(tmpdf[["GO"]], golevels[["GO"]]),]
+                ## This (hopefully) ensures that each GO id is added only once,
+                ## and gets the highest possible level.
+                new_go <- tmpdf[unique(tmpdf[["GO"]], golevels[["GO"]]), ]
                 golevels <- rbind(golevels, new_go)
             }
         }
@@ -764,8 +769,8 @@ compare_go_searches <- function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NU
                                      "topgo_el_pvalue", "topgo_ks_pvalue", "topgo_weight_pvalue")
         colnames(topgo_bp_data) <- c("topgo_id", "topgo_fisher_pvalue",
                                      "topgo_el_pvalue", "topgo_ks_pvalue", "topgo_weight_pvalue")
-        colnames(topgo_cc_data) <- c("topgo_id" ,"topgo_fisher_pvalue",
-                                     "topgo_el_pvalue","topgo_ks_pvalue","topgo_weight_pvalue")
+        colnames(topgo_cc_data) <- c("topgo_id", "topgo_fisher_pvalue",
+                                     "topgo_el_pvalue", "topgo_ks_pvalue", "topgo_weight_pvalue")
     }
     gostats_mf_data <- gostats_bp_data <- gostats_cc_data <- NULL
     if (!is.null(gostats)) {

@@ -5,7 +5,7 @@
 #' @param delimiter  The tritrypdb uses ': ' ergo the default.
 #' @return A value!
 local_get_value <- function(x, delimiter=": ") {
-    return(gsub("^ ","", tail(unlist(strsplit(x, delimiter)), n=1), fixed=TRUE))
+    return(gsub("^ ", "", tail(unlist(strsplit(x, delimiter)), n=1), fixed=TRUE))
 }
 
 #' png() shortcut
@@ -47,7 +47,7 @@ sm <- function(...) {
 #' @return Dated report file.
 #' @seealso \pkg{knitr} \pkg{rmarkdown} \pkg{knitrBootstrap}
 #' @export
-make_report <- function(name="report", type='pdf') {
+make_report <- function(name="report", type="pdf") {
     knitr::opts_knit$set(
         progress = TRUE,
         verbose = TRUE,
@@ -69,13 +69,13 @@ make_report <- function(name="report", type='pdf') {
     input_filename <- gsub("\\.rmd", "", input_filename, perl=TRUE)
     input_filename <- gsub("\\.Rmd", "", input_filename, perl=TRUE)
     input_filename <- paste0(input_filename, ".Rmd")
-    if (type == 'html') {
+    if (type == "html") {
         output_filename <- paste0(name, "-", output_date, ".html")
-        output_format <- 'html_document'
+        output_format <- "html_document"
         rmarkdown::render(output_filename, output_format)
     } else {
         output_filename <- paste0(name, "-", output_date, ".pdf")
-        output_format <- 'pdf_document'
+        output_format <- "pdf_document"
     }
     message(paste0("About to run: render(input=", input_filename, ", output_file=",
                    output_filename, " and output_format=", output_format))

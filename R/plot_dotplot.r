@@ -32,7 +32,9 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
     maxval <- max(sv_df$adjust)
     my_binwidth <- (maxval - minval) / 40
     sv_plot <- ggplot2::ggplot(sv_melted, ggplot2::aes_string(x="factors", y="value")) +
-        ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y", stackdir="center", binpositions="all", colour="black", fill=my_colors) +
+        ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y",
+                              stackdir="center", binpositions="all",
+                              colour="black", fill=my_colors) +
         ggplot2::xlab(paste0("Experimental factor: ", chosen_factor)) +
         ggplot2::ylab(paste0("1st surrogate variable estimation")) +
         ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
@@ -238,7 +240,7 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     }
 
     prop_median <- matrixStats::rowMedians(properties)
-    prop_spread <- stats::quantile(prop_median, p=c(1,3)/4)
+    prop_spread <- stats::quantile(prop_median, p=c(1, 3) / 4)
     prop_iqr <- diff(prop_spread)
 
     outer_limit <- NULL

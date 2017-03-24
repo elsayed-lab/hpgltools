@@ -155,8 +155,8 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
         design <- cbind(plot_labels, 1)
         design <- as.data.frame(design)
         design[["condition"]] <- as.numeric(design[["plot_labels"]])
-        colnames(design) <- c("name","batch","condition")
-        design <- design[, c("name","condition","batch")]
+        colnames(design) <- c("name", "batch", "condition")
+        design <- design[, c("name", "condition", "batch")]
         plot_names <- design[["name"]]
     }
 
@@ -188,7 +188,8 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
         warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
     } else if (length(levels(included_conditions)) == 1) {
-        warning("There is only one condition, but more than one batch.   Going to run pcRes with the batch information.")
+        warning("There is only one condition, but more than one batch.
+Going to run pcRes with the batch information.")
         pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]], batch=design[, batch_column])
     } else if (length(levels(included_batches)) == 1) {
         message("There is just one batch in this data.")
@@ -328,7 +329,7 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     num_batches <- length(unique(batches))
     pca_plot <- NULL
 
-    color_listing <- pca_data[, c("condition","colors")]
+    color_listing <- pca_data[, c("condition", "colors")]
     color_listing <- unique(color_listing)
     color_list <- as.character(color_listing[["colors"]])
     names(color_list) <- as.character(color_listing[["condition"]])
@@ -400,7 +401,7 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                                         labels=levels(as.factor(pca_data[["batch"]])),
                                         guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
                                         values=21:25) +
-            ggplot2::scale_size(range=c(2,7))
+            ggplot2::scale_size(range=c(2, 7))
     } else if (!is.null(size_column) & num_batches > 5) {
         maxsize <- max(pca_data[[size_column]])
         pca_plot <- pca_plot +
@@ -414,7 +415,7 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
             ggplot2::scale_color_identity(name="Condition",
                                           guide="legend",
                                           values=color_list) +
-            ggplot2::scale_size(range=c(2,7))
+            ggplot2::scale_size(range=c(2, 7))
     } else {
         stop("This should be an impossible state.")
     }
@@ -439,9 +440,9 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     } else if (plot_labels == "repel") {
         pca_plot <- pca_plot +
             ggrepel::geom_text_repel(ggplot2::aes_string(label="labels"),
-                                     size=5, box.padding=ggplot2::unit(0.5, 'lines'),
-                                     point.padding=ggplot2::unit(1.6, 'lines'),
-                                     arrow=ggplot2::arrow(length=ggplot2::unit(0.01, 'npc')))
+                                     size=5, box.padding=ggplot2::unit(0.5, "lines"),
+                                     point.padding=ggplot2::unit(1.6, "lines"),
+                                     arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
     } else if (plot_labels == "dlsmart") {
         pca_plot <- pca_plot +
             directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="smart.grid")
@@ -466,35 +467,35 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
 #' @return a recordPlot() plot showing the first 3 PCs by rank-order svd$u.
 #' @export
 u_plot <- function(plotted_us) {
-    plotted_us <- abs(plotted_us[,c(1,2,3)])
-    plotted_u1s <- plotted_us[order(plotted_us[,1], decreasing=TRUE),]
-    plotted_u2s <- plotted_us[order(plotted_us[,2], decreasing=TRUE),]
-    plotted_u3s <- plotted_us[order(plotted_us[,3], decreasing=TRUE),]
+    plotted_us <- abs(plotted_us[, c(1, 2, 3)])
+    plotted_u1s <- plotted_us[order(plotted_us[, 1], decreasing=TRUE), ]
+    plotted_u2s <- plotted_us[order(plotted_us[, 2], decreasing=TRUE), ]
+    plotted_u3s <- plotted_us[order(plotted_us[, 3], decreasing=TRUE), ]
     ## allS <- BiocGenerics::rank(allS, ties.method = "random")
     ## plotted_us$rank = rank(plotted_us[,1], ties.method="random")
-    plotted_u1s <- cbind(plotted_u1s, rev(rank(plotted_u1s[,1], ties.method="random")))
-    plotted_u1s <- plotted_u1s[,c(1,4)]
-    colnames(plotted_u1s) <- c("PC1","rank")
+    plotted_u1s <- cbind(plotted_u1s, rev(rank(plotted_u1s[, 1], ties.method="random")))
+    plotted_u1s <- plotted_u1s[, c(1, 4)]
+    colnames(plotted_u1s) <- c("PC1", "rank")
     plotted_u1s <- data.frame(plotted_u1s)
     plotted_u1s$ID <- as.character(rownames(plotted_u1s))
     plotted_u2s <- cbind(plotted_u2s, rev(rank(plotted_u2s[, 2], ties.method="random")))
-    plotted_u2s <- plotted_u2s[, c(2,4)]
-    colnames(plotted_u2s) <- c("PC2","rank")
+    plotted_u2s <- plotted_u2s[, c(2, 4)]
+    colnames(plotted_u2s) <- c("PC2", "rank")
     plotted_u2s <- data.frame(plotted_u2s)
     plotted_u2s$ID <- as.character(rownames(plotted_u2s))
     plotted_u3s <- cbind(plotted_u3s, rev(rank(plotted_u3s[, 3], ties.method="random")))
-    plotted_u3s <- plotted_u3s[, c(3,4)]
-    colnames(plotted_u3s) <- c("PC3","rank")
+    plotted_u3s <- plotted_u3s[, c(3, 4)]
+    colnames(plotted_u3s) <- c("PC3", "rank")
     plotted_u3s <- data.frame(plotted_u3s)
     plotted_u3s$ID <- as.character(rownames(plotted_u3s))
     plotted_us <- merge(plotted_u1s, plotted_u2s, by.x="rank", by.y="rank")
     plotted_us <- merge(plotted_us, plotted_u3s, by.x="rank", by.y="rank")
-    colnames(plotted_us) <- c("rank","PC1","ID1","PC2","ID2","PC3","ID3")
+    colnames(plotted_us) <- c("rank", "PC1", "ID1", "PC2", "ID2", "PC3", "ID3")
     rm(plotted_u1s)
     rm(plotted_u2s)
     rm(plotted_u3s)
     ## top_threePC = head(plotted_us, n=20)
-    plotted_us <- plotted_us[, c("PC1","PC2","PC3")]
+    plotted_us <- plotted_us[, c("PC1", "PC2", "PC3")]
     plotted_us[, "ID"] <- rownames(plotted_us)
     message("More shallow curves in these plots suggest more genes in this principle component.")
     plot(plotted_us)
@@ -545,7 +546,7 @@ u_plot <- function(plotted_us) {
 #'  pca_info
 #' }
 #' @export
-pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("condition","batch"),
+pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("condition", "batch"),
                             num_components=NULL, plot_pcas=FALSE) {
     colors_chosen <- expt_data[["colors"]]
     data_class <- class(expt_data)[1]
@@ -621,7 +622,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     }
     max_components <- ncol(v)
     if (max_components < num_components) {
-        message(paste0("The u and v components of SVD have only ", max_components, " columns, but the list of factors is ", num_components, " long."))
+        message(paste0("The u and v components of SVD have only ", max_components,
+                       " columns, but the list of factors is ", num_components, " long."))
         message(paste0("Therefore, only searching for ", max_components, " PCs."))
         num_components <- max_components
     }
@@ -688,7 +690,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
             ##1.  Perform lm(pc ~ 1 + factor) which is fit1
             ##2.  Perform lm(pc ~ 1) which is fit2
             ##3.  The Fstat is then defined as (sum(residuals(fit1)^2) / sum(residuals(fit2)^2))
-            ##4.  The resulting p-value is 1 - pf(Fstat, (n-(#levels in the factor)), (n-1))  ## n is the number of samples in the fit
+            ##4.  The resulting p-value is 1 - pf(Fstat, (n-(#levels in the factor)), (n-1))
+            ##    n is the number of samples in the fit
             ##5.  Look at anova.test() to see if this provides similar/identical information
             another_fstat <- try(stats::anova(lmwithfactor_test, lmwithoutfactor_test), silent=TRUE)
             if (class(another_fstat)[1] == "try-error") {
@@ -704,19 +707,18 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
             }
             anova_fstats[fact, pc] <- fstat
             cor_test <- NULL
-            tryCatch(
-                {
+            tryCatch({
                     cor_test <- cor.test(tmp_df[, factor_name], tmp_df[, pc_name], na.rm=TRUE)
-                },
-                error=function(cond) {
-                    message(paste("The correlation failed for ", factor_name, " and ", pc_name, ".", sep=""))
-                    cor_test <- 0
-                },
-                warning=function(cond) {
-                    message(paste("The standard deviation was 0 for ", factor_name, " and ", pc_name, ".", sep=""))
-                },
-                finally={
-                }
+            },
+            error=function(cond) {
+                message(paste("The correlation failed for ", factor_name, " and ", pc_name, ".", sep=""))
+                cor_test <- 0
+            },
+            warning=function(cond) {
+                message(paste("The standard deviation was 0 for ", factor_name, " and ", pc_name, ".", sep=""))
+            },
+            finally={
+            }
             ) ## End of the tryCatch
             if (class(cor_test) == "try-error" | is.null(cor_test)) {
                 cor_df[fact, pc] <- 0
@@ -733,35 +735,35 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     colnames(anova_rss) <- colnames(pc_df)
     colnames(anova_fstats) <- colnames(pc_df)
     cor_df <- as.matrix(cor_df)
-    silly_colors <- grDevices::colorRampPalette(c("purple","black","yellow"))(100)
+    silly_colors <- grDevices::colorRampPalette(c("purple", "black", "yellow"))(100)
     cor_df <- cor_df[complete.cases(cor_df), ]
     pc_factor_corheat <- heatmap.3(cor_df, scale="none", trace="none", linewidth=0.5,
-                                   keysize=2, margins=c(8,8), col=silly_colors,
+                                   keysize=2, margins=c(8, 8), col=silly_colors,
                                    dendrogram="none", Rowv=FALSE, Colv=FALSE,
                                    main="cor(factor, PC)")
     pc_factor_corheat <- grDevices::recordPlot()
-    anova_f_colors <- grDevices::colorRampPalette(c("blue","black","red"))(100)
+    anova_f_colors <- grDevices::colorRampPalette(c("blue", "black", "red"))(100)
     anova_f_heat <- heatmap.3(as.matrix(anova_f), scale="none", trace="none",
-                              linewidth=0.5, keysize=2, margins=c(8,8), col=anova_f_colors,
+                              linewidth=0.5, keysize=2, margins=c(8, 8), col=anova_f_colors,
                               dendrogram = "none", Rowv=FALSE, Colv=FALSE,
                               main="anova fstats for (factor, PC)")
     anova_f_heat <- grDevices::recordPlot()
-    anova_fstat_colors <- grDevices::colorRampPalette(c("blue","white","red"))(100)
+    anova_fstat_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
     anova_fstat_heat <- heatmap.3(as.matrix(anova_fstats), scale="none", trace="none", linewidth=0.5,
-                                  keysize=2, margins=c(8,8), col=anova_fstat_colors, dendrogram="none",
+                                  keysize=2, margins=c(8, 8), col=anova_fstat_colors, dendrogram="none",
                                   Rowv=FALSE, Colv=FALSE, main="anova fstats for (factor, PC)")
     anova_fstat_heat <- grDevices::recordPlot()
     neglog_p <- -1 * log(as.matrix(anova_p) + 1)
-    anova_neglogp_colors <- grDevices::colorRampPalette(c("blue","white","red"))(100)
+    anova_neglogp_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
     anova_neglogp_heat <- heatmap.3(as.matrix(neglog_p), scale="none", trace="none", linewidth=0.5,
-                                    keysize=2, margins=c(8,8), col=anova_f_colors, dendrogram="none",
+                                    keysize=2, margins=c(8, 8), col=anova_f_colors, dendrogram="none",
                                     Rowv=FALSE, Colv=FALSE, main="-log(anova_p values)")
     anova_neglogp_heat <- grDevices::recordPlot()
     ## Another option: -log10 p-value of the ftest for this heatmap.
     ## covariate vs PC score
     ## Analagously: boxplot(PCn ~ batch)
     pca_list <- list(
-        pc1_trend=u_plot,svd_d=positives, svd_u=u, svd_v=v, rsquared_table=component_rsquared_table,
+        pc1_trend=u_plot, svd_d=positives, svd_u=u, svd_v=v, rsquared_table=component_rsquared_table,
         pca_variance=pca_variance, pca_data=pca_data, anova_fstats=anova_fstats, anova_sums=anova_sums,
         anova_f=anova_f, anova_p=anova_p, pca_cor=cor_df, cor_heatmap=pc_factor_corheat,
         anova_f_heatmap=anova_f_heat, anova_fstat_heatmap=anova_fstat_heat,
@@ -804,9 +806,9 @@ pca_highscores <- function(df=NULL, conditions=NULL, batches=NULL, n=20) {
     for (pc in 1:length(colnames(another_pca$scores))) {
         tmphigh <- another_pca$scores
         tmplow <- another_pca$scores
-        tmphigh <- tmphigh[order(tmphigh[, pc], decreasing=TRUE),]
+        tmphigh <- tmphigh[order(tmphigh[, pc], decreasing=TRUE), ]
         tmphigh <- head(tmphigh, n=20)
-        tmplow <- tmplow[order(tmplow[, pc], decreasing=FALSE),]
+        tmplow <- tmplow[order(tmplow[, pc], decreasing=FALSE), ]
         tmplow <- head(tmplow, n=20)
         high_column <- paste0(signif(tmphigh[, pc], 4), ":", rownames(tmphigh))
         low_column <- paste0(signif(tmplow[, pc], 4), ":", rownames(tmplow))

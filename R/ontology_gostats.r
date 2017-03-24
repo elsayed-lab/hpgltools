@@ -30,7 +30,7 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
     ## The import(gff) is being used for this primarily because it uses integers for the rownames
     ## and because it (should) contain every gene in the 'universe' used by GOstats, as much it
     ## ought to be pretty much perfect.
-    arglist = list(...)
+    arglist <- list(...)
     if (!is.null(arglist[["gff_df"]])) {
         annotation <- arglist[["gff_df"]]
     } else {
@@ -68,7 +68,7 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
     ## library("AnnotationDbi")
     message(paste0("simple_gostats(): gff_type is: ", gff_type,
                    ". Change that if there are bad merges."))
-    types <- c("cds","gene","exon","protein_coding")
+    types <- c("cds", "gene", "exon", "protein_coding")
     for (type in types) {
         message(paste0("simple_gostats(): type ", type, " has ",
                        sum(annotation[["type"]] == type), " annotations."))
@@ -85,7 +85,8 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
     } else if ("transcript_name" %in% names(annotation)) {
         universe <- annotation[, c("transcript_name", "width")]
     } else {
-        stop("simple_gostats(): Unable to cross reference annotations into universe, perhaps change gff_type to make the merge work.")
+        stop("simple_gostats(): Unable to cross reference annotations into universe,
+perhaps change gff_type to make the merge work.")
     }
     ## This section is a little odd
     ## The goal is to collect a consistent set of numeric gene IDs
@@ -185,8 +186,7 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
     bp_under_table <- GOstats::summary(bp_under, pvalue=1.0, htmlLinks=TRUE)
     cc_under_table <- GOstats::summary(cc_under, pvalue=1.0, htmlLinks=TRUE)
     if (!is.null(dim(mf_over_table))) {
-        mf_over_table[["qvalue"]] <- tryCatch(
-        {
+        mf_over_table[["qvalue"]] <- tryCatch({
             ttmp <- as.numeric(mf_over_table[["Pvalue"]])
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
@@ -198,8 +198,7 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         })
     }
     if (!is.null(dim(bp_over_table))) {
-        bp_over_table[["qvalue"]] <- tryCatch(
-        {
+        bp_over_table[["qvalue"]] <- tryCatch({
             ttmp <- as.numeric(bp_over_table[["Pvalue"]])
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
@@ -211,8 +210,7 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         })
     }
     if (!is.null(dim(cc_over_table))) {
-        cc_over_table[["qvalue"]] <- tryCatch(
-        {
+        cc_over_table[["qvalue"]] <- tryCatch({
             ttmp <- as.numeric(cc_over_table[["Pvalue"]])
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
@@ -224,8 +222,7 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         })
     }
     if (!is.null(dim(mf_under_table))) {
-        mf_under_table[["qvalue"]] <- tryCatch(
-        {
+        mf_under_table[["qvalue"]] <- tryCatch({
             ttmp <- as.numeric(mf_under_table[["Pvalue"]])
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
@@ -237,8 +234,7 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         })
     }
     if (!is.null(dim(bp_under_table))) {
-        bp_under_table[["qvalue"]] <- tryCatch(
-        {
+        bp_under_table[["qvalue"]] <- tryCatch({
             ttmp <- as.numeric(bp_under_table[["Pvalue"]])
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)
@@ -250,8 +246,7 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
         })
     }
     if (!is.null(dim(cc_under_table))) {
-        cc_under_table[["qvalue"]] <- tryCatch(
-        {
+        cc_under_table[["qvalue"]] <- tryCatch({
             ttmp <- as.numeric(cc_under_table[["Pvalue"]])
             ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
             signif(x=ttmp, digits=4)

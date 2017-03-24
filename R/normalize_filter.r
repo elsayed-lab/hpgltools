@@ -24,9 +24,9 @@ filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
                           cv_min=0.01, cv_max=1000, thresh=4, min_samples=2, ...) {
     arglist <- list(...)
     if (tolower(filter) == "povera") {
-        type <- 'pofa'
+        type <- "pofa"
     } else if (tolower(filter) == "kovera") {
-        type <- 'kofa'
+        type <- "kofa"
     }
     if (isTRUE(filter)) {
         filter <- "cbcb"
@@ -134,13 +134,13 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
     ## with tables in this.
     num_before <- nrow(count_table)
 
-    if (class(count_table) == 'ExpressionSet') {
+    if (class(count_table) == "ExpressionSet") {
         counts <- Biobase::exprs(count_table)
     }
     test <- genefilter::pOverA(p=p, A=A)
     filter_list <- genefilter::filterfun(test)
     answer <- genefilter::genefilter(count_table, filter_list)
-    count_table <- count_table[answer,]
+    count_table <- count_table[answer, ]
 
     removed <- num_before - nrow(count_table)
     message(paste0("Removing ", removed, " low-count genes (", nrow(count_table), " remaining)."))
@@ -171,13 +171,13 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
     ## with tables in this.
     num_before <- nrow(count_table)
 
-    if (class(count_table) == 'ExpressionSet') {
+    if (class(count_table) == "ExpressionSet") {
         counts <- Biobase::exprs(count_table)
     }
     test <- genefilter::cv(cv_min, cv_max)
     filter_list <- genefilter::filterfun(test)
     answer <- genefilter::genefilter(count_table, filter_list)
-    count_table <- count_table[answer,]
+    count_table <- count_table[answer, ]
 
     message(sprintf("Removing %d low-count genes (%d remaining).",
                     num_before - nrow(count_table), nrow(count_table)))
@@ -206,13 +206,13 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1) {
     ## with tables in this.
     num_before <- nrow(count_table)
 
-    if (class(count_table) == 'ExpressionSet') {
+    if (class(count_table) == "ExpressionSet") {
         counts <- Biobase::exprs(count_table)
     }
     test <- genefilter::kOverA(k=k, A=A)
     filter_list <- genefilter::filterfun(test)
     answer <- genefilter::genefilter(count_table, filter_list)
-    count_table <- count_table[answer,]
+    count_table <- count_table[answer, ]
 
     message(sprintf("Removing %d low-count genes (%d remaining).",
                     num_before - nrow(count_table), nrow(count_table)))

@@ -370,7 +370,8 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
         "ruv_supervised" = ruv_supervised[["model_adjust"]],
         "ruv_residuals" = ruv_residuals[["model_adjust"]],
         "ruv_empirical" = ruv_empirical[["model_adjust"]])
-    batch_names <- c("condition","batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
+    batch_names <- c("condition", "batch", "pca", "sva_sup", "sva_unsup",
+                     "ruv_sup", "ruv_resid", "ruv_emp")
     silly <- testthat::compare(batch_names, batch_names)  ## I want to try something silly
     if (!is.null(extra_factors)) {
         for (fact in extra_factors) {
@@ -389,7 +390,8 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
                      "+ batch_adjustments$sva_sup", "+ batch_adjustments$sva_unsup",
                      "+ batch_adjustments$ruv_sup", "+ batch_adjustments$ruv_resid",
                      "+ batch_adjustments$ruv_emp")
-    adjust_names <- c("null", "batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
+    adjust_names <- c("null", "batch", "pca", "sva_sup", "sva_unsup",
+                      "ruv_sup", "ruv_resid", "ruv_emp")
     starter <- edgeR::DGEList(counts=Biobase::exprs(expt[["expressionset"]]))
     norm_start <- edgeR::calcNormFactors(starter)
     catplots <- vector("list", length(adjustments) + 1)  ## add 1 for a null adjustment
@@ -410,7 +412,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
     ##names(tstats[["null"]]) <- as.character(1:dim(data)[1])
     ## This needs to be redone to take into account how I organized the adjustments!!!
     num_adjust <- length(adjustments)
-    oldpar <- par(mar=c(5,5,5,5))
+    oldpar <- par(mar=c(5, 5, 5, 5))
     for (adjust in adjustments) {
         counter <- counter + 1
         message(paste0(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with ", adjust, " in the model."))
@@ -428,7 +430,10 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
                 require.auto("ffpe")
             }
             if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-                catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[adjust]]), -rank(tstats[["null"]]), maxrank=1000, make.plot=TRUE)
+                catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[adjust]]),
+                                                     -rank(tstats[["null"]]),
+                                                     maxrank=1000,
+                                                     make.plot=TRUE)
             } else {
                 catplots[[counter]] <- NULL
             }
@@ -440,7 +445,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
             lines(catplots[["ruv_sup"]], col="green", lwd=3, lty=3)
             lines(catplots[["ruv_resid"]], col="orange", lwd=3)
             lines(catplots[["ruv_emp"]], col="purple", lwd=3)
-            legend(200, 0.5, legend=c("some stuff about methods used."), lty=c(1,2,1,3,1), lwd=3)
+            legend(200, 0.5, legend=c("some stuff about methods used."), lty=c(1, 2, 1, 3, 1), lwd=3)
             catplot_together <- grDevices::recordPlot()
             newpar <- par(oldpar)
         } ## End checking whether to do catplots

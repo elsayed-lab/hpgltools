@@ -40,12 +40,12 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
         message("Writing a sheet containing the legend.")
         wb <- openxlsx::createWorkbook(creator="hpgltools")
         legend <- data.frame(rbind(
-            c("Ontology", "Which portion of the ontology tree is being examined?  Molecular Function, Biological Process, or Cellular Component."),
+            c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
             c("Category", "Gene ontology Identifier."),
             c("Term", "Short definition of the category."),
-            c("Over p-value", "Estimate that the set of genes provided to goseq is over-represented in the row's ontology category."),
+            c("Over p-value", "Estimate of goseq over-representation in the row's ontology category."),
             c("Q-value", "False discovery rate correction of the p-value."),
-            c("DE genes in cat", "What genes provided to the ontology search are inside this specific ontology category?"),
+            c("DE genes in cat", "What genes provided are in this specific category?"),
             c("All genes in cat", "The full set of gene annotations included in this ontology category."),
             c("Num. de", "The number of genes in column 'F'."),
             c("Num. in cat", "The number of genes in column 'G'.")
@@ -120,7 +120,7 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
     goseq_mf <- goseq_mf[, kept_columns]
     goseq_bp <- goseq_bp[, kept_columns]
     goseq_cc <- goseq_cc[, kept_columns]
-    new_columns <- c("Ontology","Category","Term","Over p-value", "Q-value",
+    new_columns <- c("Ontology", "Category", "Term", "Over p-value", "Q-value",
                      "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.",
                      "FC from limma", "FC from DESeq", "FC from edgeR")
     colnames(goseq_mf) <- new_columns
@@ -548,8 +548,8 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
     outfile <- gsub(pattern="\\.xls", replacement="", outfile, perl=TRUE)
     excel_basename <- outfile  ## for making pdf plots
 
-    types_list <- c("up_goseq","down_goseq","up_cluster","down_cluster",
-                    "up_topgo","down_topgo","up_gostats","down_gostats",
+    types_list <- c("up_goseq", "down_goseq", "up_cluster", "down_cluster",
+                    "up_topgo", "down_topgo", "up_gostats", "down_gostats",
                     "up_gprofiler", "down_gprofiler")
     ## names_list doesn't exist at this point, I losted it
     ## It is buried not very deep in kept_ontology I think
@@ -568,7 +568,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             down_filename <- paste0(down_filename, suffix)
         }
 
-        onts <- c("bp","mf","cc")
+        onts <- c("bp", "mf", "cc")
         up_stuff <- list()
         down_stuff <- list()
         for (ont in onts) {
@@ -611,7 +611,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                 cluster_up_ont <- cluster_up_ont[, c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
                 colnames(cluster_up_ont) <- c("Ontology", "Category", "Term", "Over p-value",
                                               "Gene ratio", "BG ratio", "Adj. p-value", "Q-value",
-                                              "Count","Genes")
+                                              "Count", "Genes")
                 cluster_down <- kept_ontology[["down_cluster"]][[count]]
                 cluster_down_ont <- as.data.frame(cluster_down[[varname]]@result)
                 if (!is.null(n)) {
@@ -623,7 +623,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                 cluster_down_ont <- cluster_down_ont[, c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
                 colnames(cluster_down_ont) <- c("Ontology", "Category", "Term", "Over p-value",
                                                 "Gene ratio", "BG ratio", "Adj. p-value", "Q-value",
-                                                "Count","Genes")
+                                                "Count", "Genes")
                 element_name <- paste0("cluster_", ont)
                 up_stuff[[element_name]] <- cluster_up_ont
                 down_stuff[[element_name]] <- cluster_down_ont
@@ -637,7 +637,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                     topgo_up_ont <- head(topgo_up_ont, n=n)
                 }
                 topgo_up_ont <- topgo_up_ont[, c(2, 1, 11, 6, 7, 8, 9, 10, 4, 3, 5)]
-                colnames(topgo_up_ont) <- c("Ontology","Category","Term", "Fisher p-value",
+                colnames(topgo_up_ont) <- c("Ontology", "Category", "Term", "Fisher p-value",
                                             "Q-value", "KS score", "EL score", "Weight score",
                                             "Num. DE", "Num. in cat.", "Exp. in cat.")
                 topgo_down <- kept_ontology[["down_topgo"]][[count]]
@@ -661,8 +661,10 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                 if (!is.null(n)) {
                     gostats_up_ont <- head(gostats_up_ont, n=n)
                 }
-                gostats_up_ont[["t"]] <- gsub(gostats_up_ont[["Term"]], pattern=".*\">(.*)</a>", replacement="\\1")
-                gostats_up_ont[["Term"]] <- gsub(gostats_up_ont[["Term"]], pattern="<a href=\"(.*)\">.*", replacement="\\1")
+                gostats_up_ont[["t"]] <- gsub(gostats_up_ont[["Term"]],
+                                              pattern=".*\">(.*)</a>", replacement="\\1")
+                gostats_up_ont[["Term"]] <- gsub(gostats_up_ont[["Term"]],
+                                                 pattern="<a href=\"(.*)\">.*", replacement="\\1")
                 gostats_up_ont[["ont"]] <- ONT
                 gostats_up_ont <- gostats_up_ont[, c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
                 colnames(gostats_up_ont) <- c("Ontology", "Category", "Term", "Fisher p-value",
@@ -933,7 +935,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_bp"]],
                                      tableStyle=table_style, startRow=new_row)
             links <- up_stuff[["gostats_bp"]][["Link"]]
-            class(links) <- 'hyperlink'
+            class(links) <- "hyperlink"
             names(links) <- up_stuff[["gostats_bp"]][["Category"]]
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_gostats"]][[name]][["pvalue_plots"]][["bp_plot_over"]]
@@ -960,7 +962,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
             openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_mf"]],
                                      tableStyle=table_style, startRow=new_row)
             links <- up_stuff[["gostats_mf"]][["Link"]]
-            class(links) <- 'hyperlink'
+            class(links) <- "hyperlink"
             names(links) <- up_stuff[["gostats_mf"]][["Category"]]
             if (isTRUE(add_plots)) {
                 a_plot <- kept_ontology[["up_gostats"]][[name]][["pvalue_plots"]][["mf_plot_over"]]

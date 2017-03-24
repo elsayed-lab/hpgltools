@@ -74,7 +74,8 @@ transform_counts <- function(count_table, design=NULL, transform="raw",
         count_table <- log2(count_table)
     } else if (transform == "log10") {
         count_table <- log10(count_table)
-    } else if (transform == "log") {  ## Natural log
+    } else if (transform == "log") {
+        ## Natural log
         count_table <- log(count_table)  ## Apparently log1p does this.
     } else {
         message("Did not recognize the transformation, leaving the table.

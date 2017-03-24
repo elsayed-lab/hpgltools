@@ -29,7 +29,8 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     }
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
-    } else if (class(wb)[[1]] == "list") { ## In case the return from write_xls() was passed to write_xls()
+    } else if (class(wb)[[1]] == "list") {
+        ## In case the return from write_xls() was passed to write_xls()
         wb <- wb[["workbook"]]
     } else if (class(wb)[[1]] != "Workbook") {
         stop("A workbook was passed to this, but the format is not understood.")
@@ -89,8 +90,8 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     for (col in colnames(data)) {
         wtf_stupid <- wtf_stupid + 1
         colnames(data)[wtf_stupid] <- paste0(colnames(data)[wtf_stupid], "_", wtf_stupid)
-        if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' |
-            class(data[[col]]) == 'factor' | class(data[[col]]) == 'AsIs') {
+        if (class(data[[col]]) == "list" | class(data[[col]]) == "vector" |
+            class(data[[col]]) == "factor" | class(data[[col]]) == "AsIs") {
             data[[col]] <- as.character(data[[col]])
         }
     }
@@ -173,7 +174,8 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
 
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
-    } else if (class(wb)[[1]] == "list") { ## In case the return from write_xls() was passed to write_xls()
+    } else if (class(wb)[[1]] == "list") {
+        ## In case the return from write_xls() was passed to write_xls()
         wb <- wb[["workbook"]]
     } else if (class(wb)[[1]] != "Workbook") {
         stop("A workbook was passed to this, but the format is not understood.")
@@ -193,7 +195,8 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
             fancy_ret <- try(svg(filename=high_quality))
         } else if (fancy_type == "emf") {
             fancy_ret <- try(devEMF::emf(file=high_quality))
-        } else {  ## Default to pdf
+        } else {
+            ## Default to pdf
             high_quality_renamed <- gsub(pattern="\\..*$", replacement="\\.pdf", x=high_quality)
             fancy_ret <- try(pdf(file=high_quality_renamed))
         }

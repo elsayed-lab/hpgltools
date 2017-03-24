@@ -65,7 +65,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         }
         cds <- DESeq::newCountDataSet(count_table, conditions=conds)
         factors <- BiocGenerics::estimateSizeFactors(cds)
-        dispersions <- BiocGenerics::estimateDispersions(factors, method='blind')
+        dispersions <- BiocGenerics::estimateDispersions(factors, method="blind")
         count_table <- DESeq::getVarianceStabilizedData(dispersions)
         norm_performed <- "vsd"
     } else if (norm == "quant") {

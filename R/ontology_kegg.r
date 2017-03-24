@@ -107,7 +107,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         path_name <- tolower(path_name)
         path_name <- gsub(" ", "_", path_name)
         ## RCurl is crap and fails sometimes for no apparent reason.
-        gene_examples <- try(KEGGREST::keggLink(paste("path", path, sep=":"))[,2])
+        gene_examples <- try(KEGGREST::keggLink(paste("path", path, sep=":"))[, 2])
         ## limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
         limit_test <- c(abs(min(as.numeric(path_data), na.rm=TRUE)),
                         abs(max(as.numeric(path_data), na.rm=TRUE)))
@@ -147,19 +147,20 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
             if (format != "png") {
                 filetype <- ".pdf"
             }
-            colored_genes <- dim(pv$plot.data.gene)[1]
+            colored_genes <- dim(pv[["plot.data.gene"]])[1]
             ## "lma04070._proeff.png"
             oldfile <- paste(path, ".", suffix, filetype, sep="")
             ## An if-statement to see if the user prefers pathnames by kegg ID or pathway name
             ## Dr. McIver wants path names...
             newfile <- NULL
             if (filenames == "id") {
-                newfile <- paste(outdir,"/", path, suffix, filetype, sep="")
-            } else {  ## If filenames is not 'id', put in the path name...
+                newfile <- paste(outdir, "/", path, suffix, filetype, sep="")
+            } else {
+                ## If filenames is not 'id', put in the path name...
                 newfile <- paste(outdir, "/", path_name, suffix, filetype, sep="")
             }
             rename_try <- try(file.rename(from=oldfile, to=newfile), silent=TRUE)
-            if (class(rename_try)[1] == 'try-error') {
+            if (class(rename_try)[1] == "try-error") {
                 warning("There was an error renaming a png file, likely because it didn't download properly.")
                 warning("It is likely easiest to just delete the pathview input directory.")
                 newfile <- "undefined"
@@ -177,7 +178,7 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
             unique_mapped <- unique_pathway[["all.mapped"]] != ""
             unique_pct_mapped <- signif(mean(unique_mapped) * 100.0, 4)
 
-            numbers_in_plot <- as.numeric(pv$plot.data.gene$mol.data)
+            numbers_in_plot <- as.numeric(pv[["plot.data.gene"]][["mol.data"]])
             up <- sum(numbers_in_plot >= data_high, na.rm=TRUE)
             down <- sum(numbers_in_plot < data_low, na.rm=TRUE)
 
@@ -204,8 +205,8 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
     retdf[["total_mapped_pct"]] <- NA
     retdf[["unique_mapped_nodes"]] <- NA
     retdf[["unique_mapped_pct"]] <- NA
-    colnames(retdf) <- c("file","genes","up","down","total_mapped_nodes",
-                         "total_mapped_pct","unique_mapped_nodes","unique_mapped_pct")
+    colnames(retdf) <- c("file", "genes", "up", "down", "total_mapped_nodes",
+                         "total_mapped_pct", "unique_mapped_nodes", "unique_mapped_pct")
     for (path in names(return_list)) {
         if (is.null(return_list[[path]][["genes"]])) {
             retdf[path, "genes"] <- 0
@@ -246,7 +247,8 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
                            species="leishmania major", savefile=NULL) {
     if (is.null(abbreviation) & is.null(species)) {
         stop("This requires either a species or 3 letter kegg id.")
-    } else if (is.null(abbreviation)) {  ## Then the species was provided.
+    } else if (is.null(abbreviation)) {
+        ## Then the species was provided.
         abbreviation <- kegg_get_orgn(species)
         message(paste0("The abbreviation detected was: ", abbreviation))
     }
@@ -399,7 +401,7 @@ kegg_get_orgn <- function(species="Leishmania", short=TRUE) {
     org_tsv <- textConnection(all_organisms)
     all <- read.table(org_tsv, sep="\t", quote="", fill=TRUE)
     close(org_tsv)
-    colnames(all) <- c("Tid","orgid","species","phylogeny")
+    colnames(all) <- c("Tid", "orgid", "species", "phylogeny")
     candidates <- all[grepl(species, all[["species"]]), ]  ## Look for the search string in the species column
     if (isTRUE(short)) {
         candidates <- as.character(candidates[["orgid"]])
@@ -529,8 +531,8 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all",
             a_row[[k]] <- toString(a_row[[k]])
         }
         a_row <- as.list(a_row)
-        names(a_row) <- c("pathway","path_name","filename","percent_nodes",
-                          "percent_edges","path_nodes","diff_nodes","path_edges","diff_edges")
+        names(a_row) <- c("pathway", "path_name", "filename", "percent_nodes",
+                          "percent_edges", "path_nodes", "diff_nodes", "path_edges", "diff_edges")
         a_row <- as.data.frame(a_row)
         path_data <- rbind(path_data, a_row)
     }

@@ -16,7 +16,7 @@
 plot_spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
                             revolutions=158, increments=3160, center_a=list(x=0, y=0)) {
     center_b_start <- list(x=0, y=center_a$y + radius_a + radius_b)
-    angle_a <- seq(0, 2 * pi * revolutions, , revolutions * increments)
+    angle_a <- seq(0, 2 * pi * revolutions, revolutions * increments)
     circum_a <- 2 * pi * radius_a
     circum_b <- 2 * pi * radius_b
     center_b <- c()

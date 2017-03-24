@@ -97,7 +97,7 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
 #' @param cpus  Number of cpus to use in doParallel.
 #' @return  Summaries of the new model,  in theory this would be a nicely batch-corrected data set.
 #' @seealso \pkg{variancePartition}
-varpart_summaries <- function(expt, factors=c("condition","batch"), cpus=6) {
+varpart_summaries <- function(expt, factors=c("condition", "batch"), cpus=6) {
     cl <- parallel::makeCluster(cpus)
     doParallel::registerDoParallel(cl)
     model_string <- paste0("~ ")

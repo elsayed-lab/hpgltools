@@ -165,7 +165,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
         df <- data.frame(count_table)
         mtrx <- as.matrix(df)
         conditional_model <- model.matrix(~conditions, data=df)
-        null_model <- conditional_model[,1]
+        null_model <- conditional_model[, 1]
         num_surrogates <- 0
         be_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="be"))
         leek_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="leek"))
@@ -389,7 +389,8 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE, ...
     message("Standardizing data across genes\n")
     if (NAs) {
         warning(paste0("Found ", sum(is.na(dat)), " missing data values."))
-        warning("The original combatMod uses an undefined variable Beta.NA here, I set it to 1 not knowing what its purpose is.")
+        warning("The original combatMod uses an undefined variable Beta.NA here,
+I set it to 1 not knowing what its purpose is.")
         B.hat <- apply(dat, 1, Beta.NA)
     } else {
         ## There are no NAs in the data, this is a good thing(Tm)!
@@ -401,7 +402,7 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE, ...
         var.pooled <- apply(dat - t(design %*% B.hat), 1, var, na.rm=TRUE)
     }
     else {
-        var.pooled <- ((dat - t(design %*% B.hat))^2) %*% rep(1/n.array, n.array)
+        var.pooled <- ((dat - t(design %*% B.hat)) ^ 2) %*% rep(1 / n.array, n.array)
     }
     stand.mean <- t(grand.mean) %*% t(rep(1, n.array))
     if (!is.null(design)) {
@@ -491,7 +492,7 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE, ...
         bayesdata <- s.data
         j <- 1
         for (i in batches) {
-            bayesdata[, i] <- (bayesdata[, i] - t(batch.design[i,] %*% gamma.star)) /
+            bayesdata[, i] <- (bayesdata[, i] - t(batch.design[i, ] %*% gamma.star)) /
                 (sqrt(delta.star[j, ]) %*% t(rep(1, n.batches[j])))
             j <- j + 1
         }

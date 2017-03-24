@@ -107,12 +107,15 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1, n=30, mincat=
     plotting_mf <- plotting_mf[plotting_mf[["over_represented_pvalue"]] <= cutoff, ]
     plotting_mf <- plotting_mf[plotting_mf[["numInCat"]] >= mincat, ]
     ##plotting_mf <- head(plotting_mf, n=n)
-    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
-    ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of the
+    ## factor in plot_ontpval, which should have a note.
     plotting_mf <- tail(plotting_mf, n=n)
-    plotting_mf <- plotting_mf[, c("term","over_represented_pvalue","score")]
-    plotting_mf[["term"]] <- as.character(lapply(strwrap(plotting_mf[["term"]], wrapped_width, simplify=FALSE), paste, collapse="\n"))
-    colnames(plotting_mf) <- c("term","pvalue","score")
+    plotting_mf <- plotting_mf[, c("term", "over_represented_pvalue", "score")]
+    plotting_mf[["term"]] <- as.character(lapply(strwrap(plotting_mf[["term"]],
+                                                         wrapped_width,
+                                                         simplify=FALSE), paste, collapse="\n"))
+    colnames(plotting_mf) <- c("term", "pvalue", "score")
     mf_pval_plot <- plot_ontpval(plotting_mf, ontology="MF")
 
     plotting_bp <- subset(goterms, complete.cases(goterms))
@@ -124,9 +127,11 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1, n=30, mincat=
     plotting_bp <- plotting_bp[plotting_bp[["over_represented_pvalue"]] <= cutoff, ]
     plotting_bp <- plotting_bp[plotting_bp[["numInCat"]] >= mincat, ]
     plotting_bp <- tail(plotting_bp, n=n)
-    plotting_bp <- plotting_bp[, c("term","over_represented_pvalue","score")]
-    colnames(plotting_bp) <- c("term","pvalue","score")
-    plotting_bp[["term"]] <- as.character(lapply(strwrap(plotting_bp[["term"]], wrapped_width, simplify=FALSE), paste, collapse="\n"))
+    plotting_bp <- plotting_bp[, c("term", "over_represented_pvalue", "score")]
+    colnames(plotting_bp) <- c("term", "pvalue", "score")
+    plotting_bp[["term"]] <- as.character(lapply(strwrap(plotting_bp[["term"]],
+                                                         wrapped_width,
+                                                         simplify=FALSE), paste, collapse="\n"))
     bp_pval_plot <- plot_ontpval(plotting_bp, ontology="BP")
 
     plotting_cc <- subset(goterms, complete.cases(goterms))
@@ -138,9 +143,11 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1, n=30, mincat=
     plotting_cc <- plotting_cc[plotting_cc[["over_represented_pvalue"]] <= cutoff, ]
     plotting_cc <- plotting_cc[plotting_cc[["numInCat"]] >= mincat, ]
     plotting_cc <- head(plotting_cc, n=n)
-    plotting_cc <- plotting_cc[, c("term","over_represented_pvalue","score")]
-    colnames(plotting_cc) <- c("term","pvalue","score")
-    plotting_cc[["term"]] <- as.character(lapply(strwrap(plotting_cc[["term"]], wrapped_width, simplify=FALSE), paste, collapse="\n"))
+    plotting_cc <- plotting_cc[, c("term", "over_represented_pvalue", "score")]
+    colnames(plotting_cc) <- c("term", "pvalue", "score")
+    plotting_cc[["term"]] <- as.character(lapply(strwrap(plotting_cc[["term"]],
+                                                         wrapped_width,
+                                                         simplify=FALSE), paste, collapse="\n"))
     cc_pval_plot <- plot_ontpval(plotting_cc, ontology="CC")
 
     pval_plots <- list(
@@ -169,13 +176,13 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1, n=30, mincat=
 #'  \code{\link{clusterProfiler}}
 #' @export
 plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
-    mf_newdf <- topgo[["tables"]][["mf"]][, c("GO.ID", "Term", "Annotated","Significant", type)]
+    mf_newdf <- topgo[["tables"]][["mf"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
     mf_newdf[["term"]] <- as.character(lapply(strwrap(mf_newdf[["Term"]],
                                                       wrapped_width,
                                                       simplify=FALSE), paste, collapse="\n"))
     mf_newdf[["pvalue"]] <- as.numeric(mf_newdf[[type]])
     mf_newdf <- subset(mf_newdf, get(type) < cutoff)
-    mf_newdf <- mf_newdf[order(mf_newdf[["pvalue"]], mf_newdf[[type]]),]
+    mf_newdf <- mf_newdf[order(mf_newdf[["pvalue"]], mf_newdf[[type]]), ]
     mf_newdf <- head(mf_newdf, n=n)
     mf_newdf[["score"]] <- mf_newdf[["Significant"]] / mf_newdf[["Annotated"]]
     mf_pval_plot <- plot_ontpval(mf_newdf, ontology="MF")
@@ -186,7 +193,7 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
                                                       simplify=FALSE), paste, collapse="\n"))
     bp_newdf[["pvalue"]] <- as.numeric(bp_newdf[[type]])
     bp_newdf <- subset(bp_newdf, get(type) < cutoff)
-    bp_newdf <- bp_newdf[order(bp_newdf[["pvalue"]], bp_newdf[[type]]),]
+    bp_newdf <- bp_newdf[order(bp_newdf[["pvalue"]], bp_newdf[[type]]), ]
     bp_newdf <- head(bp_newdf, n=n)
     bp_newdf[["score"]] <- bp_newdf[["Significant"]] / bp_newdf[["Annotated"]]
     bp_pval_plot <- plot_ontpval(bp_newdf, ontology="MF")
@@ -197,7 +204,7 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
                                                       simplify=FALSE), paste, collapse="\n"))
     cc_newdf[["pvalue"]] <- as.numeric(cc_newdf[[type]])
     cc_newdf <- subset(cc_newdf, get(type) < cutoff)
-    cc_newdf <- cc_newdf[order(cc_newdf[["pvalue"]], cc_newdf[[type]]),]
+    cc_newdf <- cc_newdf[order(cc_newdf[["pvalue"]], cc_newdf[[type]]), ]
     cc_newdf <- head(cc_newdf, n=n)
     cc_newdf[["score"]] <- cc_newdf[["Significant"]] / cc_newdf[["Annotated"]]
     cc_pval_plot <- plot_ontpval(cc_newdf, ontology="CC")
@@ -240,18 +247,20 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gro
     if (is.null(mf_over)) {
         plotting_mf_over <- NULL
     } else {
-        plotting_mf_over$score <- plotting_mf_over$ExpCount
+        plotting_mf_over[["score"]] <- plotting_mf_over[["ExpCount"]]
         ## plotting_mf_over <- subset(plotting_mf_over, Term != "NULL")
-        plotting_mf_over <- plotting_mf_over[plotting_mf_over$Term != "NULL", ]
+        plotting_mf_over <- plotting_mf_over[plotting_mf_over[["Term"]] != "NULL", ]
         ## plotting_mf_over <- subset(plotting_mf_over, Pvalue <= cutoff)
-        plotting_mf_over <- plotting_mf_over[plotting_mf_over$Pvalue <= cutoff, ]
+        plotting_mf_over <- plotting_mf_over[plotting_mf_over[["Pvalue"]] <= cutoff, ]
         ## plotting_mf_over <- subset(plotting_mf_over, Size >= group_minsize)
-        plotting_mf_over <- plotting_mf_over[plotting_mf_over$Size >= group_minsize, ]
-        plotting_mf_over <- plotting_mf_over[order(plotting_mf_over$Pvalue), ]
+        plotting_mf_over <- plotting_mf_over[plotting_mf_over[["Size"]] >= group_minsize, ]
+        plotting_mf_over <- plotting_mf_over[order(plotting_mf_over[["Pvalue"]]), ]
         plotting_mf_over <- head(plotting_mf_over, n=n)
-        plotting_mf_over <- plotting_mf_over[, c("Term","Pvalue","score")]
-        colnames(plotting_mf_over) <- c("term","pvalue","score")
-        plotting_mf_over$term <- as.character(lapply(strwrap(plotting_mf_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
+        plotting_mf_over <- plotting_mf_over[, c("Term", "Pvalue", "score")]
+        colnames(plotting_mf_over) <- c("term", "pvalue", "score")
+        plotting_mf_over[["term"]] <- as.character(lapply(strwrap(plotting_mf_over[["term"]],
+                                                                  wrapped_width,
+                                                                  simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_mf_over) > 0) {
         mf_pval_plot_over <- plot_ontpval(plotting_mf_over, ontology="MF")
@@ -261,18 +270,20 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gro
     if (is.null(mf_under)) {
         plotting_mf_under <- NULL
     } else {
-        plotting_mf_under$score <- plotting_mf_under$ExpCount
+        plotting_mf_under[["score"]] <- plotting_mf_under[["ExpCount"]]
         ## plotting_mf_under <- subset(plotting_mf_under, Term != "NULL")
-        plotting_mf_under <- plotting_mf_under[plotting_mf_under$Term != "NULL", ]
+        plotting_mf_under <- plotting_mf_under[plotting_mf_under[["Term"]] != "NULL", ]
         ## plotting_mf_under <- subset(plotting_mf_under, Pvalue <= cutoff)
-        plotting_mf_under <- plotting_mf_under[plotting_mf_under$Pvalue <= cutoff, ]
+        plotting_mf_under <- plotting_mf_under[plotting_mf_under[["Pvalue"]] <= cutoff, ]
         ## plotting_mf_under <- subset(plotting_mf_under, Size >= group_minsize)
-        plotting_mf_under <- plotting_mf_under[plotting_mf_under$Size >= group_minsize, ]
-        plotting_mf_under <- plotting_mf_under[order(plotting_mf_under$Pvalue), ]
+        plotting_mf_under <- plotting_mf_under[plotting_mf_under[["Size"]] >= group_minsize, ]
+        plotting_mf_under <- plotting_mf_under[order(plotting_mf_under[["Pvalue"]]), ]
         plotting_mf_under <- head(plotting_mf_under, n=n)
-        plotting_mf_under <- plotting_mf_under[, c("Term","Pvalue","score")]
-        colnames(plotting_mf_under) <- c("term","pvalue","score")
-        plotting_mf_under$term <- as.character(lapply(strwrap(plotting_mf_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
+        plotting_mf_under <- plotting_mf_under[, c("Term", "Pvalue", "score")]
+        colnames(plotting_mf_under) <- c("term", "pvalue", "score")
+        plotting_mf_under[["term"]] <- as.character(lapply(strwrap(plotting_mf_under[["term"]],
+                                                                   wrapped_width,
+                                                                   simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_mf_under) > 0) {
         mf_pval_plot_under <- plot_ontpval(plotting_mf_under, ontology="MF")
@@ -282,18 +293,20 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gro
     if (is.null(bp_over)) {
         plotting_bp_over <- NULL
     } else {
-        plotting_bp_over$score <- plotting_bp_over$ExpCount
+        plotting_bp_over[["score"]] <- plotting_bp_over[["ExpCount"]]
         ## plotting_bp_over <- subset(plotting_bp_over, Term != "NULL")
-        plotting_bp_over <- plotting_bp_over[plotting_bp_over$Term != "NULL", ]
+        plotting_bp_over <- plotting_bp_over[plotting_bp_over[["Term"]] != "NULL", ]
         ## plotting_bp_over <- subset(plotting_bp_over, Pvalue <= 0.1)
-        plotting_bp_over <- plotting_bp_over[plotting_bp_over$Pvalue <= cutoff, ]
+        plotting_bp_over <- plotting_bp_over[plotting_bp_over[["Pvalue"]] <= cutoff, ]
         ## plotting_bp_over <- subset(plotting_bp_over, Size > 10)
-        plotting_bp_over <- plotting_bp_over[plotting_bp_over$Size >= group_minsize, ]
-        plotting_bp_over <- plotting_bp_over[order(plotting_bp_over$Pvalue), ]
+        plotting_bp_over <- plotting_bp_over[plotting_bp_over[["Size"]] >= group_minsize, ]
+        plotting_bp_over <- plotting_bp_over[order(plotting_bp_over[["Pvalue"]]), ]
         plotting_bp_over <- head(plotting_bp_over, n=n)
-        plotting_bp_over <- plotting_bp_over[, c("Term","Pvalue","score")]
-        colnames(plotting_bp_over) <- c("term","pvalue","score")
-        plotting_bp_over$term <- as.character(lapply(strwrap(plotting_bp_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
+        plotting_bp_over <- plotting_bp_over[, c("Term", "Pvalue", "score")]
+        colnames(plotting_bp_over) <- c("term", "pvalue", "score")
+        plotting_bp_over[["term"]] <- as.character(lapply(strwrap(plotting_bp_over[["term"]],
+                                                                  wrapped_width,
+                                                                  simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_bp_over) > 0) {
         bp_pval_plot_over <- plot_ontpval(plotting_bp_over, ontology="BP")
@@ -303,18 +316,20 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gro
     if (is.null(bp_under)) {
         plotting_bp_under <- NULL
     } else {
-        plotting_bp_under$score <- plotting_bp_under$ExpCount
+        plotting_bp_under[["score"]] <- plotting_bp_under[["ExpCount"]]
         ## plotting_bp_under <- subset(plotting_bp_under, Term != "NULL")
-        plotting_bp_under <- plotting_bp_under[plotting_bp_under$Term != "NULL", ]
+        plotting_bp_under <- plotting_bp_under[plotting_bp_under[["Term"]] != "NULL", ]
         ## plotting_bp_under <- subset(plotting_bp_under, Pvalue <= 0.1)
-        plotting_bp_under <- plotting_bp_under[plotting_bp_under$Pvalue <= cutoff, ]
+        plotting_bp_under <- plotting_bp_under[plotting_bp_under[["Pvalue"]] <= cutoff, ]
         ## plotting_bp_under <- subset(plotting_bp_under, Size > 10)
-        plotting_bp_under <- plotting_bp_under[plotting_bp_under$Size >= group_minsize, ]
-        plotting_bp_under <- plotting_bp_under[order(plotting_bp_under$Pvalue), ]
+        plotting_bp_under <- plotting_bp_under[plotting_bp_under[["Size"]] >= group_minsize, ]
+        plotting_bp_under <- plotting_bp_under[order(plotting_bp_under[["Pvalue"]]), ]
         plotting_bp_under <- head(plotting_bp_under, n=n)
-        plotting_bp_under <- plotting_bp_under[, c("Term","Pvalue","score")]
-        colnames(plotting_bp_under) <- c("term","pvalue","score")
-        plotting_bp_under$term <- as.character(lapply(strwrap(plotting_bp_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
+        plotting_bp_under <- plotting_bp_under[, c("Term", "Pvalue", "score")]
+        colnames(plotting_bp_under) <- c("term", "pvalue", "score")
+        plotting_bp_under[["term"]] <- as.character(lapply(strwrap(plotting_bp_under[["term"]],
+                                                                   wrapped_width,
+                                                                   simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_bp_under) > 0) {
         bp_pval_plot_under <- plot_ontpval(plotting_bp_under, ontology="BP")
@@ -324,18 +339,20 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gro
     if (is.null(cc_over)) {
         plotting_cc_over <- NULL
     } else {
-        plotting_cc_over$score <- plotting_cc_over$ExpCount
+        plotting_cc_over[["score"]] <- plotting_cc_over[["ExpCount"]]
         ## plotting_cc_over <- subset(plotting_cc_over, Term != "NULL")
-        plotting_cc_over <- plotting_cc_over[plotting_cc_over$Term != "NULL", ]
+        plotting_cc_over <- plotting_cc_over[plotting_cc_over[["Term"]] != "NULL", ]
         ## plotting_cc_over <- subset(plotting_cc_over, Pvalue <= 0.1)
-        plotting_cc_over <- plotting_cc_over[plotting_cc_over$Pvalue <= cutoff, ]
+        plotting_cc_over <- plotting_cc_over[plotting_cc_over[["Pvalue"]] <= cutoff, ]
         ## plotting_cc_over <- subset(plotting_cc_over, Size > 10)
-        plotting_cc_over <- plotting_cc_over[plotting_cc_over$Size >= group_minsize, ]
-        plotting_cc_over <- plotting_cc_over[order(plotting_cc_over$Pvalue), ]
+        plotting_cc_over <- plotting_cc_over[plotting_cc_over[["Size"]] >= group_minsize, ]
+        plotting_cc_over <- plotting_cc_over[order(plotting_cc_over[["Pvalue"]]), ]
         plotting_cc_over <- head(plotting_cc_over, n=n)
-        plotting_cc_over <- plotting_cc_over[, c("Term","Pvalue","score")]
-        colnames(plotting_cc_over) <- c("term","pvalue","score")
-        plotting_cc_over$term <- as.character(lapply(strwrap(plotting_cc_over$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
+        plotting_cc_over <- plotting_cc_over[, c("Term", "Pvalue", "score")]
+        colnames(plotting_cc_over) <- c("term", "pvalue", "score")
+        plotting_cc_over[["term"]] <- as.character(lapply(strwrap(plotting_cc_over[["term"]],
+                                                                  wrapped_width,
+                                                                  simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_cc_over) > 0) {
         cc_pval_plot_over <- plot_ontpval(plotting_cc_over, ontology="CC")
@@ -345,18 +362,20 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gro
     if (is.null(cc_under)) {
         plotting_cc_under <- NULL
     } else {
-        plotting_cc_under$score <- plotting_cc_under$ExpCount
+        plotting_cc_under[["score"]] <- plotting_cc_under[["ExpCount"]]
         ## plotting_cc_under <- subset(plotting_cc_under, Term != "NULL")
-        plotting_cc_under <- plotting_cc_under[plotting_cc_under$Term != "NULL", ]
+        plotting_cc_under <- plotting_cc_under[plotting_cc_under[["Term"]] != "NULL", ]
         ## plotting_cc_under <- subset(plotting_cc_under, Pvalue <= 0.1)
-        plotting_cc_under <- plotting_cc_under[plotting_cc_under$Pvalue <= cutoff, ]
+        plotting_cc_under <- plotting_cc_under[plotting_cc_under[["Pvalue"]] <= cutoff, ]
         ## plotting_cc_under <- subset(plotting_cc_under, Size > 10)
-        plotting_cc_under <- plotting_cc_under[plotting_cc_under$Size >= group_minsize, ]
-        plotting_cc_under <- plotting_cc_under[order(plotting_cc_under$Pvalue), ]
+        plotting_cc_under <- plotting_cc_under[plotting_cc_under[["Size"]] >= group_minsize, ]
+        plotting_cc_under <- plotting_cc_under[order(plotting_cc_under[["Pvalue"]]), ]
         plotting_cc_under <- head(plotting_cc_under, n=n)
-        plotting_cc_under <- plotting_cc_under[, c("Term","Pvalue","score")]
-        colnames(plotting_cc_under) <- c("term","pvalue","score")
-        plotting_cc_under$term <- as.character(lapply(strwrap(plotting_cc_under$term, wrapped_width, simplify=FALSE), paste, collapse="\n"))
+        plotting_cc_under <- plotting_cc_under[, c("Term", "Pvalue", "score")]
+        colnames(plotting_cc_under) <- c("term", "pvalue", "score")
+        plotting_cc_under[["term"]] <- as.character(lapply(strwrap(plotting_cc_under[["term"]],
+                                                                   wrapped_width,
+                                                                   simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting_cc_under) > 0) {
         cc_pval_plot_under <- plot_ontpval(plotting_cc_under, ontology="CC")
@@ -405,7 +424,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     corum_result <- gp_result[["corum"]]
     hp_result <- gp_result[["hp"]]
 
-    kept_columns <- c("p.value", "term.size", "query.size", "overlap.size", "recall", "precision", "term.id", "term.name", "relative.depth")
+    kept_columns <- c("p.value", "term.size", "query.size",
+                      "overlap.size", "recall", "precision",
+                      "term.id", "term.name", "relative.depth")
     old_options <- options(scipen=4)
     mf_over <- go_result[go_result[["domain"]] == "MF", ]
     mf_over <- mf_over[, kept_columns]
@@ -433,12 +454,15 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
         plotting_mf_over <- plotting_mf_over[plotting_mf_over[["p.value"]] <= cutoff, ]
         ## Drop anything with fewer than x genes in the group
         plotting_mf_over <- plotting_mf_over[plotting_mf_over[["query.size"]] >= group_minsize, ]
-        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
-        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+        ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+        ## the factor in plot_ontpval, which should have a note.
         plotting_mf_over <- tail(plotting_mf_over, n=n)
         plotting_mf_over <- plotting_mf_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_mf_over) <- c("term", "pvalue", "score")
-        plotting_mf_over[["term"]] <- as.character(lapply(strwrap(plotting_mf_over[["term"]], wrapped_width, simplify=FALSE),
+        plotting_mf_over[["term"]] <- as.character(lapply(strwrap(plotting_mf_over[["term"]],
+                                                                  wrapped_width,
+                                                                  simplify=FALSE),
                                                           paste, collapse="\n"))
         mf_pval_plot_over <- try(plot_ontpval(plotting_mf_over, ontology="MF"), silent=TRUE)
     }
@@ -462,12 +486,15 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
         plotting_bp_over <- plotting_bp_over[plotting_bp_over[["p.value"]] <= cutoff, ]
         ## Drop anything with fewer than x genes in the group
         plotting_bp_over <- plotting_bp_over[plotting_bp_over[["query.size"]] >= group_minsize, ]
-        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
-        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+        ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+        ## the factor in plot_ontpval, which should have a note.
         plotting_bp_over <- tail(plotting_bp_over, n=n)
         plotting_bp_over <- plotting_bp_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_bp_over) <- c("term", "pvalue", "score")
-        plotting_bp_over[["term"]] <- as.character(lapply(strwrap(plotting_bp_over[["term"]], wrapped_width, simplify=FALSE),
+        plotting_bp_over[["term"]] <- as.character(lapply(strwrap(plotting_bp_over[["term"]],
+                                                                  wrapped_width,
+                                                                  simplify=FALSE),
                                                           paste, collapse="\n"))
         bp_pval_plot_over <- try(plot_ontpval(plotting_bp_over, ontology="BP"), silent=TRUE)
     }
@@ -491,12 +518,15 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
         plotting_cc_over <- plotting_cc_over[plotting_cc_over[["p.value"]] <= cutoff, ]
         ## Drop anything with fewer than x genes in the group
         plotting_cc_over <- plotting_cc_over[plotting_cc_over[["query.size"]] >= group_minsize, ]
-        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
-        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+        ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+        ## the factor in plot_ontpval, which should have a note.
         plotting_cc_over <- tail(plotting_cc_over, n=n)
         plotting_cc_over <- plotting_cc_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_cc_over) <- c("term", "pvalue", "score")
-        plotting_cc_over[["term"]] <- as.character(lapply(strwrap(plotting_cc_over[["term"]], wrapped_width, simplify=FALSE),
+        plotting_cc_over[["term"]] <- as.character(lapply(strwrap(plotting_cc_over[["term"]],
+                                                                  wrapped_width,
+                                                                  simplify=FALSE),
                                                           paste, collapse="\n"))
         cc_pval_plot_over <- try(plot_ontpval(plotting_cc_over, ontology="CC"), silent=TRUE)
     }
@@ -520,8 +550,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
         plotting_kegg_over <- plotting_kegg_over[plotting_kegg_over[["p.value"]] <= cutoff, ]
         ## Drop anything with fewer than x genes in the group
         plotting_kegg_over <- plotting_kegg_over[plotting_kegg_over[["query.size"]] >= group_minsize, ]
-        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
-        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+        ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+        ## the factor in plot_ontpval, which should have a note.
         plotting_kegg_over <- tail(plotting_kegg_over, n=n)
         plotting_kegg_over <- plotting_kegg_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_kegg_over) <- c("term", "pvalue", "score")
@@ -549,12 +580,15 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
         plotting_reactome_over <- plotting_reactome_over[plotting_reactome_over[["p.value"]] <= cutoff, ]
         ## Drop anything with fewer than x genes in the group
         plotting_reactome_over <- plotting_reactome_over[plotting_reactome_over[["query.size"]] >= group_minsize, ]
-        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
-        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+        ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+        ## the factor in plot_ontpval, which should have a note.
         plotting_reactome_over <- tail(plotting_reactome_over, n=n)
         plotting_reactome_over <- plotting_reactome_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_reactome_over) <- c("term", "pvalue", "score")
-        plotting_reactome_over[["term"]] <- as.character(lapply(strwrap(plotting_reactome_over[["term"]], wrapped_width, simplify=FALSE),
+        plotting_reactome_over[["term"]] <- as.character(lapply(strwrap(plotting_reactome_over[["term"]],
+                                                                        wrapped_width,
+                                                                        simplify=FALSE),
                                                           paste, collapse="\n"))
         reactome_pval_plot_over <- try(plot_ontpval(plotting_reactome_over, ontology="Reactome"), silent=TRUE)
     }
@@ -578,12 +612,15 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
         plotting_mi_over <- plotting_mi_over[plotting_mi_over[["p.value"]] <= cutoff, ]
         ## Drop anything with fewer than x genes in the group
         plotting_mi_over <- plotting_mi_over[plotting_mi_over[["query.size"]] >= group_minsize, ]
-        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
-        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+        ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+        ## the factor in plot_ontpval, which should have a note.
         plotting_mi_over <- tail(plotting_mi_over, n=n)
         plotting_mi_over <- plotting_mi_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_mi_over) <- c("term", "pvalue", "score")
-        plotting_mi_over[["term"]] <- as.character(lapply(strwrap(plotting_mi_over[["term"]], wrapped_width, simplify=FALSE),
+        plotting_mi_over[["term"]] <- as.character(lapply(strwrap(plotting_mi_over[["term"]],
+                                                                  wrapped_width,
+                                                                  simplify=FALSE),
                                                           paste, collapse="\n"))
         mi_pval_plot_over <- try(plot_ontpval(plotting_mi_over, ontology="miRNA"), silent=TRUE)
     }
@@ -607,12 +644,15 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
         plotting_tf_over <- plotting_tf_over[plotting_tf_over[["p.value"]] <= cutoff, ]
         ## Drop anything with fewer than x genes in the group
         plotting_tf_over <- plotting_tf_over[plotting_tf_over[["query.size"]] >= group_minsize, ]
-        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
-        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+        ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+        ## the factor in plot_ontpval, which should have a note.
         plotting_tf_over <- tail(plotting_tf_over, n=n)
         plotting_tf_over <- plotting_tf_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_tf_over) <- c("term", "pvalue", "score")
-        plotting_tf_over[["term"]] <- as.character(lapply(strwrap(plotting_tf_over[["term"]], wrapped_width, simplify=FALSE),
+        plotting_tf_over[["term"]] <- as.character(lapply(strwrap(plotting_tf_over[["term"]],
+                                                                  wrapped_width,
+                                                                  simplify=FALSE),
                                                           paste, collapse="\n"))
         tf_pval_plot_over <- try(plot_ontpval(plotting_tf_over, ontology="Transcription factors"), silent=TRUE)
     }
@@ -636,12 +676,15 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
         plotting_corum_over <- plotting_corum_over[plotting_corum_over[["p.value"]] <= cutoff, ]
         ## Drop anything with fewer than x genes in the group
         plotting_corum_over <- plotting_corum_over[plotting_corum_over[["query.size"]] >= group_minsize, ]
-        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
-        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+        ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+        ## the factor in plot_ontpval, which should have a note.
         plotting_corum_over <- tail(plotting_corum_over, n=n)
         plotting_corum_over <- plotting_corum_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_corum_over) <- c("term", "pvalue", "score")
-        plotting_corum_over[["term"]] <- as.character(lapply(strwrap(plotting_corum_over[["term"]], wrapped_width, simplify=FALSE),
+        plotting_corum_over[["term"]] <- as.character(lapply(strwrap(plotting_corum_over[["term"]],
+                                                                     wrapped_width,
+                                                                     simplify=FALSE),
                                                           paste, collapse="\n"))
         corum_pval_plot_over <- try(plot_ontpval(plotting_corum_over, ontology="Corum"), silent=TRUE)
     }
@@ -665,12 +708,14 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
         plotting_hp_over <- plotting_hp_over[plotting_hp_over[["p.value"]] <= cutoff, ]
         ## Drop anything with fewer than x genes in the group
         plotting_hp_over <- plotting_hp_over[plotting_hp_over[["query.size"]] >= group_minsize, ]
-        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up, ergo tail here.
-        ## This ordering will be maintained in the plot by setting the levels of the factor in plot_ontpval, which should have a note.
+        ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+        ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+        ## the factor in plot_ontpval, which should have a note.
         plotting_hp_over <- tail(plotting_hp_over, n=n)
         plotting_hp_over <- plotting_hp_over[, c("term.name", "p.value", "recall")]
         colnames(plotting_hp_over) <- c("term", "pvalue", "score")
-        plotting_hp_over[["term"]] <- as.character(lapply(strwrap(plotting_hp_over[["term"]], wrapped_width, simplify=FALSE),
+        plotting_hp_over[["term"]] <- as.character(lapply(strwrap(plotting_hp_over[["term"]],
+                                                                  wrapped_width, simplify=FALSE),
                                                           paste, collapse="\n"))
         hp_pval_plot_over <- try(plot_ontpval(plotting_hp_over, ontology="Human pathology"), silent=TRUE)
     }
@@ -834,15 +879,16 @@ goseq_trees <- function(goseq, goid_map="id2go.map",
 #' }
 #' @export
 cluster_trees <- function(de_genes, cpdata, goid_map="id2go.map", goids_df=NULL,
-                          score_limit=0.2, overwrite=FALSE, selector="topDiffGenes", pval_column="adj.P.Val") {
-    de_genes <- cpdata$de_genes
+                          score_limit=0.2, overwrite=FALSE, selector="topDiffGenes",
+                          pval_column="adj.P.Val") {
+    de_genes <- cpdata[["de_genes"]]
     make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO <- topGO::readMappings(file=goid_map)
     annotated_genes <- names(geneID2GO)
-    if (is.null(de_genes$ID)) {
-        de_genes$ID <- make.names(rownames(de_genes), unique=TRUE)
+    if (is.null(de_genes[["ID"]])) {
+        de_genes[["ID"]] <- make.names(rownames(de_genes), unique=TRUE)
     }
-    interesting_genes <- factor(annotated_genes %in% de_genes$ID)
+    interesting_genes <- factor(annotated_genes %in% de_genes[["ID"]])
     names(interesting_genes) <- annotated_genes
 
     message(paste0("Checking the de_table for a p-value column:", pval_column))
@@ -864,28 +910,32 @@ cluster_trees <- function(de_genes, cpdata, goid_map="id2go.map", goids_df=NULL,
                         geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     }
 
-    mf_all <- cpdata$mf_all
-    ## mf_enriched = cpdata$mf_enriched
-    bp_all <- cpdata$bp_all
-    ## bp_enriched = cpdata$bp_enriched
-    cc_all <- cpdata$cc_all
-    ## cc_enriched = cpdata$cc_enriched
-    mf_all_ids <- mf_all@result$ID
-    bp_all_ids <- bp_all@result$ID
-    cc_all_ids <- cc_all@result$ID
-    mf_all_scores <- mf_all@result$p.adjust
-    bp_all_scores <- bp_all@result$p.adjust
-    cc_all_scores <- cc_all@result$p.adjust
+    mf_all <- cpdata[["mf_all"]]
+    ## mf_enriched = cpdata[["mf_enriched"]]
+    bp_all <- cpdata[["bp_all"]]
+    ## bp_enriched = cpdata[["bp_enriched"]]
+    cc_all <- cpdata[["cc_all"]]
+    ## cc_enriched = cpdata[["cc_enriched"]]
+    mf_all_ids <- mf_all@result[["ID"]]
+    bp_all_ids <- bp_all@result[["ID"]]
+    cc_all_ids <- cc_all@result[["ID"]]
+    mf_all_scores <- mf_all@result[["p.adjust"]]
+    bp_all_scores <- bp_all@result[["p.adjust"]]
+    cc_all_scores <- cc_all@result[["p.adjust"]]
     names(mf_all_scores) <- mf_all_ids
     names(bp_all_scores) <- bp_all_ids
     names(cc_all_scores) <- cc_all_ids
     mf_included <- length(which(mf_all_scores <= score_limit))
-    ## mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all", sigForAll=TRUE, firstSigNodes=mf_included, useFullNames=TRUE, plotFunction=hpgl_GOplot)))
+    ## mf_tree_data = try(suppressWarnings(topGO::showSigOfNodes(mf_GOdata, mf_all_scores,
+    ##                                                           useInfo="all", sigForAll=TRUE,
+    ##                                                           firstSigNodes=mf_included,
+    ##                                                           useFullNames=TRUE,
+    ##                                                           plotFunction=hpgl_GOplot)))
     mf_tree_data <- try(suppressWarnings(
         topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo="all",
                               sigForAll=TRUE, firstSigNodes=floor(mf_included * 1.5),
                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(mf_tree_data)[1] == 'try-error') {
+    if (class(mf_tree_data)[1] == "try-error") {
         mf_tree <- NULL
     } else {
         mf_tree <- grDevices::recordPlot()
@@ -895,7 +945,7 @@ cluster_trees <- function(de_genes, cpdata, goid_map="id2go.map", goids_df=NULL,
         topGO::showSigOfNodes(bp_GOdata, bp_all_scores, useInfo="all",
                               sigForAll=TRUE, firstSigNodes=bp_included,
                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(bp_tree_data)[1] == 'try-error') {
+    if (class(bp_tree_data)[1] == "try-error") {
         bp_tree <- NULL
     } else {
         bp_tree <- grDevices::recordPlot()
@@ -905,7 +955,7 @@ cluster_trees <- function(de_genes, cpdata, goid_map="id2go.map", goids_df=NULL,
         topGO::showSigOfNodes(cc_GOdata, cc_all_scores, useInfo="all",
                               sigForAll=TRUE, firstSigNodes=cc_included,
                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(cc_tree_data)[1] == 'try-error') {
+    if (class(cc_tree_data)[1] == "try-error") {
         cc_tree <- NULL
     } else {
         cc_tree <- grDevices::recordPlot()
@@ -958,7 +1008,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                         firstSigNodes=included,
                                                         useFullNames=TRUE,
                                                         plotFunction=hpgl_GOplot)))
-        if (class(mf_fisher_nodes)[1] != 'try-error') {
+        if (class(mf_fisher_nodes)[1] != "try-error") {
             mf_fisher_tree <- try(grDevices::recordPlot())
         }
     }
@@ -972,7 +1022,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                         firstSigNodes=included,
                                                         useFullNames=TRUE,
                                                         plotFunction=hpgl_GOplot)))
-        if (class(bp_fisher_nodes)[1] != 'try-error') {
+        if (class(bp_fisher_nodes)[1] != "try-error") {
             bp_fisher_tree <- try(grDevices::recordPlot())
         }
     }
@@ -986,7 +1036,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                         firstSigNodes=included,
                                                         useFullNames=TRUE,
                                                         plotFunction=hpgl_GOplot)))
-        if (class(cc_fisher_nodes)[1] != 'try-error') {
+        if (class(cc_fisher_nodes)[1] != "try-error") {
             cc_fisher_tree <- try(grDevices::recordPlot())
         }
     }
@@ -1000,7 +1050,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                     firstSigNodes=included,
                                                     useFullNames=TRUE,
                                                     plotFunction=hpgl_GOplot)))
-        if (class(mf_ks_nodes)[1] != 'try-error') {
+        if (class(mf_ks_nodes)[1] != "try-error") {
             mf_ks_tree <- try(grDevices::recordPlot())
         }
     }
@@ -1014,7 +1064,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                     firstSigNodes=included,
                                                     useFullNames=TRUE,
                                                     plotFunction=hpgl_GOplot)))
-        if (class(bp_ks_nodes)[1] != 'try-error') {
+        if (class(bp_ks_nodes)[1] != "try-error") {
             bp_ks_tree <- try(grDevices::recordPlot())
         }
     }
@@ -1028,7 +1078,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                     firstSigNodes=included,
                                                     useFullNames=TRUE,
                                                     plotFunction=hpgl_GOplot)))
-        if (class(cc_ks_nodes)[1] != 'try-error') {
+        if (class(cc_ks_nodes)[1] != "try-error") {
             cc_ks_tree <- try(grDevices::recordPlot())
         }
     }
@@ -1042,7 +1092,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                     firstSigNodes=included,
                                                     useFullNames=TRUE,
                                                     plotFunction=hpgl_GOplot)))
-        if (class(mf_el_nodes)[1] != 'try-error') {
+        if (class(mf_el_nodes)[1] != "try-error") {
             mf_el_tree <- try(grDevices::recordPlot())
         }
     }
@@ -1056,7 +1106,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                                   firstSigNodes=included,
                                                                   useFullNames=TRUE,
                                                                   plotFunction=hpgl_GOplot)))
-        if (class(bp_el_nodes)[1] != 'try-error') {
+        if (class(bp_el_nodes)[1] != "try-error") {
             bp_el_tree <- try(grDevices::recordPlot())
         }
     }
@@ -1070,7 +1120,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                     firstSigNodes=included,
                                                     useFullNames=TRUE,
                                                     plotFunction=hpgl_GOplot)))
-        if (class(cc_el_nodes)[1] != 'try-error') {
+        if (class(cc_el_nodes)[1] != "try-error") {
             cc_el_tree <- try(grDevices::recordPlot())
         }
     }
@@ -1084,7 +1134,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                         firstSigNodes=included,
                                                         useFullNames=TRUE,
                                                         plotFunction=hpgl_GOplot)))
-        if (class(mf_weight_nodes)[1] != 'try-error') {
+        if (class(mf_weight_nodes)[1] != "try-error") {
             mf_weight_tree <- try(grDevices::recordPlot())
         }
     }
@@ -1098,7 +1148,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                         firstSigNodes=included,
                                                         useFullNames=TRUE,
                                                         plotFunction=hpgl_GOplot)))
-        if (class(bp_weight_nodes)[1] != 'try-error') {
+        if (class(bp_weight_nodes)[1] != "try-error") {
             bp_weight_tree <- try(grDevices::recordPlot())
         }
     }
@@ -1112,7 +1162,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
                                                         firstSigNodes=included,
                                                         useFullNames=TRUE,
                                                         plotFunction=hpgl_GOplot)))
-        if (class(cc_weight_nodes)[1] != 'try-error') {
+        if (class(cc_weight_nodes)[1] != "try-error") {
             cc_weight_tree <- try(grDevices::recordPlot())
         }
     }
@@ -1176,10 +1226,10 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
     make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
     geneID2GO <- topGO::readMappings(file=goid_map)
     annotated_genes <- names(geneID2GO)
-    if (is.null(de_genes$ID)) {
-        de_genes$ID <- make.names(rownames(de_genes), unique=TRUE)
+    if (is.null(de_genes[["ID"]])) {
+        de_genes[["ID"]] <- make.names(rownames(de_genes), unique=TRUE)
     }
-    interesting_genes <- factor(annotated_genes %in% de_genes$ID)
+    interesting_genes <- factor(annotated_genes %in% de_genes[["ID"]])
     names(interesting_genes) <- annotated_genes
     if (is.null(de_genes[[pval_column]])) {
         mf_GOdata <- new("topGOdata", ontology="MF",
@@ -1201,23 +1251,23 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
         cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=pvals,
                          geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     }
-    mf_over_enriched_ids <- mf_over$GOMFID
-    bp_over_enriched_ids <- bp_over$GOBPID
-    cc_over_enriched_ids <- cc_over$GOCCID
-    mf_under_enriched_ids <- mf_under$GOMFID
-    bp_under_enriched_ids <- bp_under$GOBPID
-    cc_under_enriched_ids <- cc_under$GOCCID
-    mf_over_enriched_scores <- mf_over$Pvalue
+    mf_over_enriched_ids <- mf_over[["GOMFID"]]
+    bp_over_enriched_ids <- bp_over[["GOBPID"]]
+    cc_over_enriched_ids <- cc_over[["GOCCID"]]
+    mf_under_enriched_ids <- mf_under[["GOMFID"]]
+    bp_under_enriched_ids <- bp_under[["GOBPID"]]
+    cc_under_enriched_ids <- cc_under[["GOCCID"]]
+    mf_over_enriched_scores <- mf_over[["Pvalue"]]
     names(mf_over_enriched_scores) <- mf_over_enriched_ids
-    bp_over_enriched_scores <- bp_over$Pvalue
+    bp_over_enriched_scores <- bp_over[["Pvalue"]]
     names(bp_over_enriched_scores) <- bp_over_enriched_ids
-    cc_over_enriched_scores <- cc_over$Pvalue
+    cc_over_enriched_scores <- cc_over[["Pvalue"]]
     names(cc_over_enriched_scores) <- cc_over_enriched_ids
-    mf_under_enriched_scores <- mf_under$Pvalue
+    mf_under_enriched_scores <- mf_under[["Pvalue"]]
     names(mf_under_enriched_scores) <- mf_under_enriched_ids
-    bp_under_enriched_scores <- bp_under$Pvalue
+    bp_under_enriched_scores <- bp_under[["Pvalue"]]
     names(bp_under_enriched_scores) <- bp_under_enriched_ids
-    cc_under_enriched_scores <- cc_under$Pvalue
+    cc_under_enriched_scores <- cc_under[["Pvalue"]]
     names(cc_under_enriched_scores) <- cc_under_enriched_ids
 
     mf_avail_nodes <- as.list(mf_GOdata@graph@nodes)
@@ -1234,13 +1284,13 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
         topGO::showSigOfNodes(mf_GOdata, mf_under_nodes, useInfo="all",
                               sigForAll=TRUE, firstSigNodes=mf_under_included,
                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(mf_over_tree_data) == 'try-error') {
+    if (class(mf_over_tree_data) == "try-error") {
         message("There was an error generating the over MF tree.")
         mf_over_tree <- NULL
     } else {
         mf_over_tree <- grDevices::recordPlot()
     }
-    if (class(mf_under_tree_data) == 'try-error') {
+    if (class(mf_under_tree_data) == "try-error") {
         message("There was an error generating the under MF tree.")
         mf_under_tree <- NULL
     } else {
@@ -1261,13 +1311,13 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
         topGO::showSigOfNodes(bp_GOdata, bp_under_nodes, useInfo="all",
                               sigForAll=TRUE, firstSigNodes=bp_under_included,
                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(bp_over_tree_data) == 'try-error') {
+    if (class(bp_over_tree_data) == "try-error") {
         message("There was an error generating the over BP tree.")
         bp_over_tree <- NULL
     } else {
         bp_over_tree <- grDevices::recordPlot()
     }
-    if (class(bp_under_tree_data) == 'try-error') {
+    if (class(bp_under_tree_data) == "try-error") {
         message("There was an error generating the under BP tree.")
         bp_under_tree <- NULL
     } else {
@@ -1288,13 +1338,13 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
         topGO::showSigOfNodes(cc_GOdata, cc_under_nodes, useInfo="all",
                               sigForAll=TRUE, firstSigNodes=cc_under_included,
                               useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-    if (class(cc_over_tree_data) == 'try-error') {
+    if (class(cc_over_tree_data) == "try-error") {
         message("There was an error generating the over CC tree.")
         cc_over_tree <- NULL
     } else {
         cc_over_tree <- grDevices::recordPlot()
     }
-    if (class(cc_under_tree_data) == 'try-error') {
+    if (class(cc_under_tree_data) == "try-error") {
         message("There was an error generating the under CC tree.")
         cc_under_tree <- NULL
     } else {

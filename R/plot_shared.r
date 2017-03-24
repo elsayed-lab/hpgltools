@@ -145,7 +145,8 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
 #' @export
 plot_legend <- function(stuff) {
     plot <- NULL
-    if (class(stuff)[[1]] == "gg") {  ## Then assume it is a pca plot
+    if (class(stuff)[[1]] == "gg") {
+        ## Then assume it is a pca plot
         plot <- stuff
     } else {
         plot <- plot_pca(stuff)[["plot"]]
@@ -158,7 +159,7 @@ plot_legend <- function(stuff) {
     grid::grid.draw(legend)
     legend_plot <- grDevices::recordPlot()
     ret <- list(
-        colors = plot[["data"]][, c("condition","batch","colors")],
+        colors = plot[["data"]][, c("condition", "batch", "colors")],
         plot = legend_plot)
     return(ret)
 }
@@ -187,8 +188,8 @@ plot_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
       ## Make the panel
       ## ncol: Number of columns of plots
       ## nrow: Number of rows needed, calculated from # of cols
-      layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                       ncol=cols, nrow=ceiling(numPlots/cols))
+      layout <- matrix(seq(1, cols * ceiling(numPlots / cols)),
+                       ncol=cols, nrow=ceiling(numPlots / cols))
   }
 
   if (numPlots==1) {

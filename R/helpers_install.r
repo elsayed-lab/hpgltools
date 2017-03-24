@@ -110,9 +110,10 @@ bioc_all <- function(release="3.4", mirror="bioc.ism.ac.jp", base="packages", ty
 #' @export
 require.auto <- function(lib, update=FALSE) {
     count <- 0
-    local({r <- getOption("repos")
-           r["CRAN"] <- "http://cran.r-project.org"
-           options(repos=r)
+    local({
+        r <- getOption("repos")
+        r["CRAN"] <- "http://cran.r-project.org"
+        options(repos=r)
        })
     if (isTRUE(update)) {
         utils::update.packages(ask=FALSE)

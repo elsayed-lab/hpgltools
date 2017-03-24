@@ -98,7 +98,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     new_expt <- expt
     type <- ""
     current_exprs <- expt[["expressionset"]]
-    if (!is.null(arglist[["filter_low"]])) {  ## I changed the name of this argument.
+    if (!is.null(arglist[["filter_low"]])) {
+        ## I changed the name of this argument.
         warning("This argument has been changed to 'filter'.")
         filter <- arglist[["filter"]]
     }
@@ -129,7 +130,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     }
 
     if (is.null(new_expt[["original_expressionset"]])) {
-        new_expt[["original_expressionset"]] = new_expt[["expressionset"]]
+        new_expt[["original_expressionset"]] <- new_expt[["expressionset"]]
     }
 
     message("This function will replace the expt$expressionset slot with:")
@@ -235,7 +236,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 
     ## This state slot should match the information available in
     ## new_expt$normalized$actions
-    ## I am hoping this will prove a more direct place to access it and provide a chance to double-check that things match
+    ## I am hoping this will prove a more direct place to access it and provide a chance
+    ## to double-check that things match
     new_state <- list(
         "filter" = normalized[["actions"]][["filter"]],
         "normalization" = normalized[["actions"]][["normalization"]],
@@ -303,7 +305,8 @@ hpgl_norm <- function(data, ...) {
     original_libsize <- NULL
     annot <- NULL
     counts <- NULL
-    ## I never quite realized just how nice data.tables are.  To what extent can I refactor all of my data frame usage to them?
+    ## I never quite realized just how nice data.tables are.  To what extent can I refactor
+    ## all of my data frame usage to them?
     if (data_class == "expt") {
         original_counts <- data[["original_counts"]]
         original_libsizes <- data[["original_libsize"]]
@@ -377,7 +380,7 @@ hpgl_norm <- function(data, ...) {
             message(paste0("Step ", arglist[["batch_step"]], ": not doing batch correction."))
         } else {
             message(paste0("Step ", arglist[["batch_step"]], ": doing batch correction with ",
-                           arglist[["batch"]],"."))
+                           arglist[["batch"]], "."))
             tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, ...))
             if (class(tmp_counts) == "try-error") {
                 warning("The batch_counts call failed.  Returning non-batch reduced data.")

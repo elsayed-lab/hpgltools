@@ -94,7 +94,7 @@ divide_seq <- function(counts, genome=NULL, ...) {
             system(paste0("xz -d ", genome))
         }
         raw_seq <- try(Rsamtools::FaFile(genome))
-        if (class(raw_seq)[1] == 'try-error') {
+        if (class(raw_seq)[1] == "try-error") {
             stop(paste0("There was a problem reading: ", genome))
         }
         system(paste0(compression, " ", sub("^([^.]*).*", "\\1", genome)))
@@ -122,7 +122,7 @@ divide_seq <- function(counts, genome=NULL, ...) {
         annotation_entries <- gff2irange(annotations, ...)
     } else if (annotation_class == "data.frame") {
         colnames(annotations) <- tolower(colnames(annotations))
-        annotations <- annotations[complete.cases(annotations),]
+        annotations <- annotations[complete.cases(annotations), ]
         if (class(annotations[["strand"]]) == "integer") {
             annotations[["strand"]] <- ifelse(annotations[["strand"]] > 0, "+", "-")
         }
@@ -143,7 +143,7 @@ divide_seq <- function(counts, genome=NULL, ...) {
     result <- Biostrings::vcountPDict(dict, cds_seq)
     num_tas <- data.frame(name=names(cds_seq), tas=as.data.frame(t(result)))
     rownames(num_tas) <- make.names(num_tas[["name"]], unique=TRUE)
-    colnames(num_tas) <- c("name","pattern")
+    colnames(num_tas) <- c("name", "pattern")
     num_tas[["pattern"]] <- num_tas[["pattern"]] + 1  ## No division by 0
     factor <- median(num_tas[["pattern"]])
     num_tas[["pattern"]] <- num_tas[["pattern"]] / factor
@@ -209,7 +209,7 @@ hpgl_rpkm <- function(df, ...) {
   the result was null.  Perhaps your annotation or df's rownames are not set?
   Going to attempt to use the column 'ID'.
 ")
-        rownames(annotations) = make.names(annotations[["ID"]], unique=TRUE)
+        rownames(annotations) <- make.names(annotations[["ID"]], unique=TRUE)
         df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
         if (dim(df_in)[1] == 0) {
             stop("The ID column failed too.")

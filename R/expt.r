@@ -1,4 +1,3 @@
-
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.
 #'
@@ -87,9 +86,11 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     sample_definitions <- data.frame()
     file <- NULL
     meta_dataframe <- NULL
-    if (class(metadata) == "character") { ## This is a filename containing the metadata
+    if (class(metadata) == "character") {
+        ## This is a filename containing the metadata
         file <- metadata
-    } else if (class(metadata) == "data.frame") {  ## A data frame of metadata was passed.
+    } else if (class(metadata) == "data.frame") {
+        ## A data frame of metadata was passed.
         meta_dataframe <- metadata
     } else {
         stop("This requires either a file or meta data.frame.")
@@ -170,14 +171,16 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## difference between the concept of 'row' and 'column' I should probably use the [, column] or
     ## [row, ] method to reinforce my weak neurons.
     if (is.null(sample_definitions[["condition"]])) {
-        ## type and stage are commonly used, and before I was consistent about always having condition, they were a proxy for it.
+        ## type and stage are commonly used, and before I was consistent about always having
+        ## condition, they were a proxy for it.
         sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]],
                                                            sample_definitions[["stage"]], sep="_"))
     }
     ## Extract out the condition names as a factor
     condition_names <- unique(sample_definitions[["condition"]])
     if (is.null(condition_names)) {
-        warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
+        warning("There is no 'condition' field in the definitions, this will make many
+analyses more difficult/impossible.")
     }
     ## Condition and Batch are not allowed to be numeric, so if they are just numbers,
     ## prefix them with 'c' and 'b' respectively.
@@ -202,7 +205,6 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## This may come from either a data frame/matrix, a list of files from the metadata
     ## or it can attempt to figure out the location of the files from the sample names.
     filenames <- NULL
-    found_counts <- NULL
     all_count_tables <- NULL
     if (!is.null(count_dataframe)) {
         all_count_tables <- count_dataframe
