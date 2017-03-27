@@ -26,7 +26,10 @@ Suggests:
     ggdendro, ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph,
     gProfileR, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc, htmlTable,
     igraph, inflection, IRanges, iterators, jsonlite, KEGGgraph, KEGGREST,
-    knitcitations, knitr, lattice, limma, matrixStats, motifRG, multtest
+    knitcitations, knitr, lattice, limma, matrixStats, motifRG, multtest,
+    mygene, openxlsx, OrganismDbi, pander, parallel, pasilla, pathview, plyr,
+    preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, readr, rentrez,
+    reshape2, RCurl, rGADEM, Rgraphviz, rmarkdown, RMySQL, robustbase
 Imports:
     Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
