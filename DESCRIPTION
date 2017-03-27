@@ -29,7 +29,10 @@ Suggests:
     knitcitations, knitr, lattice, limma, matrixStats, motifRG, multtest,
     mygene, openxlsx, OrganismDbi, pander, parallel, pasilla, pathview, plyr,
     preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, readr, rentrez,
-    reshape2, RCurl, rGADEM, Rgraphviz, rmarkdown, RMySQL, robustbase
+    reshape2, RCurl, rGADEM, Rgraphviz, rmarkdown, RMySQL, robustbase,
+    RefManageR, reshape, rjson, robust, Rsamtools, rtracklayer, RUVSeq,
+    S4Vectors, scales, seqinr, seqLogo, statmod, stringi, stringr, survival,
+    survJamda, sva, taxize, testthat, topGO, variancePartition, xtable, XVector
 Imports:
     Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr

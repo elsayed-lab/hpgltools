@@ -12,8 +12,8 @@ cache:
     - $TRAVIS_BUILD_DIR/packrat/src
     - $TRAVIS_BUILD_DIR/packrat/lib
 
-deploy:
-  skip_cleanup: true
+## deploy:
+##   skip_cleanup: true
 
 env:
   global:
