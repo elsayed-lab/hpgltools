@@ -1218,8 +1218,13 @@ extract_significant_genes <- function(combined,
             "down_titles" = down_titles,
             "counts_title" = summary_title,
             "ma_plots" = ma_plots)
-        if (is.null(excel) | (excel == FALSE)) {
+        do_excel=TRUE
+        if (is.null(excel)) {
+            do_excel <- FALSE
             message("Not printing excel sheets for the significant genes.")
+        } else if (excel == FALSE) {
+            do_excel <- FALSE
+            message("Still not printing excel sheets for the significant genes.")
         } else {
             message(paste0("Printing significant genes to the file: ", excel))
             xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according,
@@ -1230,7 +1235,7 @@ extract_significant_genes <- function(combined,
     } ## End list of according_to's
 
     sig_bar_plots <- NULL
-    if (!is.null(excel) & excel != FALSE & isTRUE(sig_bar)) {
+    if (!isTRUE(do_excel) & isTRUE(sig_bar)) {
         ## This needs to be changed to get_sig_genes()
         sig_bar_plots <- significant_barplots(combined, fc_cutoffs=siglfc_cutoffs,
                                               invert=invert_barplots,

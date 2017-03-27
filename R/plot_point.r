@@ -395,6 +395,10 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
         "pcut" = c(FALSE, FALSE, FALSE),
         "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors=TRUE)
 
+    ## Get rid of rows which will be annoying.
+    rows_without_na <- complete.cases(table)
+    table <- table[rows_without_na, ]
+
     ## Extract the information of interest from my original table
     newdf <- data.frame("avg" = table[[expr_col]],
                         "logfc" = table[[fc_col]],
