@@ -1235,7 +1235,7 @@ extract_significant_genes <- function(combined,
     } ## End list of according_to's
 
     sig_bar_plots <- NULL
-    if (!isTRUE(do_excel) & isTRUE(sig_bar)) {
+    if (isTRUE(do_excel) & isTRUE(sig_bar)) {
         ## This needs to be changed to get_sig_genes()
         sig_bar_plots <- significant_barplots(combined, fc_cutoffs=siglfc_cutoffs,
                                               invert=invert_barplots,
@@ -1326,7 +1326,7 @@ extract_significant_genes <- function(combined,
     } ## End if we want significance bar plots
     ret[["sig_bar_plots"]] <- sig_bar_plots
 
-    if (!is.null(excel) & excel != FALSE) {
+    if (isTRUE(do_excel)) {
         excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
     }
 
