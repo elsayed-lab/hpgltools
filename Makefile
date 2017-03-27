@@ -50,7 +50,7 @@ clean:
 prereq:
 	@Rscript -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
 bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
-biocLite('survival'); for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocLite(req) } }; install.packages(\".\", repos=NULL, type=\"source\"); message(\"Checking Dependencies.\"); devtools::install_deps(\".\", dependencies=TRUE); message(\"Finished dependencies.\"); \
+for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocLite(req) } }; install.packages(\".\", repos=NULL, type=\"source\"); message(\"Checking Dependencies.\"); devtools::install_deps(\".\", dependencies=TRUE); message(\"Finished dependencies.\"); \
 ## hahaha looks like lisp!"
 
 update_bioc:
