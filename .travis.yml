@@ -24,10 +24,10 @@ env:
 ##   - cran/survival
 ##   - cran/Hmisc
 
-addons:
-  apt:
-    packages:
-      - r-recommended
+##addons:
+##  apt:
+##    packages:
+##      - r-recommended
 
 ##before_install:
 ##  - sudo apt-get -qq update
