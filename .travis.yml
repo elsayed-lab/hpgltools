@@ -21,9 +21,9 @@ env:
     - R_CHECK_ARGS="--no-build-vignettes --no-manual"
     - _R_CHECK_TIMINGS_="0"
 
-## r_github_packages:
-##   - cran/survival
-##   - cran/Hmisc
+r_github_packages:
+  - cran/survival
+  - cran/Hmisc
 
 ##addons:
 ##  apt:
