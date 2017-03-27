@@ -1,4 +1,5 @@
-language: R
+language: r
+r: bioc-release
 ##sudo: required
 bioc_required: true
 warnings_are_errors: false

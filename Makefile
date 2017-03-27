@@ -51,7 +51,9 @@ prereq:
 	@Rscript -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
 bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr');\
 for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocLite(req) } };\
-## hahaha looks like lisp!"
+## hahaha looks like lisp!
+install.packages(\".\", repos=NULL, type=\"source\", dependencies=TRUE)
+"
 
 update_bioc:
 	Rscript -e "source('http://bioconductor.org/biocLite.R'); biocLite(); biocLite('BiocUpgrade');"
