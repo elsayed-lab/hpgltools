@@ -16,6 +16,7 @@ deploy:
 
 env:
   global:
+    - USE_PACKRAT=1
     - R_CHECK_ARGS="--no-build-vignettes --no-manual"
     - _R_CHECK_TIMINGS_="0"
 
