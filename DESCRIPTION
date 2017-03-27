@@ -20,7 +20,8 @@ Suggests:
     acepack, ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub,
     base64enc, Biobase, BiocGenerics, BiocInstaller, Biostrings,
     biomaRt, bumphunter, Category, caTools, clusterProfiler, corpcor, corrplot,
-    DBI, DESeq2, DESeq, devtools, directlabels, dplyr, doParallel, DOSE, EDASeq
+    DBI, DESeq2, DESeq, devtools, directlabels, dplyr, doParallel, DOSE, EDASeq,
+    edgeR, ffpe, fission, Formula, gdata, genbankr, genefilter
 Imports:
     Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
