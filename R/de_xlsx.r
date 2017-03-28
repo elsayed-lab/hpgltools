@@ -20,6 +20,7 @@
 #' @param loess  Add time intensive loess estimation to plots?
 #' @param plot_dim  Number of inches squared for the plot if added.
 #' @param compare_plots  In an attempt to save memory when printing to excel, make it possible to
+#' @param adjp_type  Add a consistent p adjustment of this type.
 #'  exclude comparison plots in the summary sheet.
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
@@ -33,11 +34,10 @@
 #' @export
 combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
-                              keepers="all",
-                              excludes=NULL, adjp=TRUE, include_limma=TRUE,
+                              keepers="all",excludes=NULL, adjp=TRUE, include_limma=TRUE,
                               include_edger=TRUE, include_deseq=TRUE,
                               include_basic=TRUE, add_plots=TRUE, loess=FALSE,
-                              plot_dim=6, compare_plots=TRUE) {
+                              plot_dim=6, compare_plots=TRUE, padj_type="fdr") {
     ## The ontology_shared function which creates multiple sheets works a bit differently
     ## It creates all the tables, then does a createWorkbook()
     ## Does a createWorkbook() / addWorksheet()
@@ -137,6 +137,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         c("deseq_lfcse", "The standard error observed given the log2 fold change."),
         c("deseq_stat", "T-statistic reported by DESeq2 given the log2FC and observed variances."),
         c("deseq_p", "Resulting p-value."),
+        c(paste0("deseq_adjp_", padj_type), paste0("p-value adjusted with ", padj_type)),
         c("deseq_q", "False-positive corrected p-value.")
     ))
     edger_legend <- data.frame(rbind(
@@ -147,6 +148,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
           "Similar to limma's ave and DESeq2's basemean, except only including the samples in the comparison."),
         c("edger_lr", "Undocumented, I am reasonably certain it is the T-statistic calculated by edgeR."),
         c("edger_p", "The observed p-value from edgeR."),
+        c(paste0("edger_adjp_", padj_type), paste0("p-value adjusted with ", padj_type)),
         c("edger_q", "The observed corrected p-value from edgeR.")
     ))
     limma_legend <- data.frame(rbind(
@@ -156,6 +158,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         c("limma_ave", "Average log2 expression observed by limma across all samples."),
         c("limma_t", "T-statistic reported by limma given the log2FC and variances."),
         c("limma_p", "Derived from limma_t, the p-value asking 'is this logfc significant?'"),
+        c(paste0("limma_adjp_", padj_type), paste0("p-value adjusted with ", padj_type)),
         c("limma_b", "Use a Bayesian estimate to calculate log-odds significance instead of a student's test."),
         c("limma_q", "A q-value FDR adjustment of the p-value above.")
         ))
@@ -168,6 +171,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         c("basic_logfc", "The log2 fold change observed by the basic analysis."),
         c("basic_t", "T-statistic from basic."),
         c("basic_p", "Resulting p-value."),
+        c(paste0("basic_adjp_", padj_type), paste0("p-value adjusted with ", padj_type)),
         c("basic_adjp", "BH correction of the p-value.")
         ))
     summary_legend <- data.frame(rbind(
@@ -313,14 +317,14 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                 basic <- NULL
             }
             if (found > 0) {
-                combined <- create_combined_table(limma, edger, deseq, basic,
-                                                  found_table, inverse=do_inverse,
-                                                  adjp=adjp, annot_df=annot_df,
-                                                  include_deseq=include_deseq,
-                                                  include_edger=include_edger,
-                                                  include_limma=include_limma,
-                                                  include_basic=include_basic,
-                                                  excludes=excludes)
+                combined <- combine_de_table(limma, edger, deseq, basic,
+                                             found_table, inverse=do_inverse,
+                                             adjp=adjp, annot_df=annot_df,
+                                             include_deseq=include_deseq,
+                                             include_edger=include_edger,
+                                             include_limma=include_limma,
+                                             include_basic=include_basic,
+                                             excludes=excludes, padj_type=padj_type)
                 dat <- combined[["data"]]
                 summary <- combined[["summary"]]
                 if (isTRUE(do_inverse)) {
@@ -402,13 +406,13 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             a <- a + 1
             message(paste0("Working on table ", a, "/", names_length, ": ", tab))
             sheet_count <- sheet_count + 1
-            combined <- create_combined_table(limma, edger, deseq, basic,
-                                              tab, annot_df=annot_df,
-                                              include_basic=include_basic,
-                                              include_deseq=include_deseq,
-                                              include_edger=include_edger,
-                                              include_limma=include_limma,
-                                              excludes=excludes)
+            combined <- combine_de_table(limma, edger, deseq, basic,
+                                         tab, annot_df=annot_df,
+                                         include_basic=include_basic,
+                                         include_deseq=include_deseq,
+                                         include_edger=include_edger,
+                                         include_limma=include_limma,
+                                         excludes=excludes, padj_type=padj_type)
             de_summaries <- rbind(de_summaries, combined[["summary"]])
             combo[[tab]] <- combined[["data"]]
             splitted <- strsplit(x=tab, split="_vs_")
@@ -436,13 +440,13 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             table <- names(edger[["contrast_list"]])[[1]]
             message(paste0("Choosing the first table: ", table))
         }
-        combined <- create_combined_table(limma, edger, deseq, basic,
-                                          table, annot_df=annot_df,
-                                          include_basic=include_basic,
-                                          include_deseq=include_deseq,
-                                          include_edger=include_edger,
-                                          include_limma=include_limma,
-                                          excludes=excludes)
+        combined <- combine_de_table(limma, edger, deseq, basic,
+                                     table, annot_df=annot_df,
+                                     include_basic=include_basic,
+                                     include_deseq=include_deseq,
+                                     include_edger=include_edger,
+                                     include_limma=include_limma,
+                                     excludes=excludes, padj_type=padj_type)
         combo[[table]] <- combined[["data"]]
         splitted <- strsplit(x=tab, split="_vs_")
         de_summaries <- rbind(de_summaries, combined[["summary"]])
@@ -645,6 +649,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 #' @param annot_df  Add some annotation information?
 #' @param inverse  Invert the fold changes?
 #' @param adjp  Use adjusted p-values?
+#' @param adjp_type  Add this consistent p-adjustment.
 #' @param include_limma  Include tables from limma?
 #' @param include_deseq  Include tables from deseq?
 #' @param include_edger  Include tables from edger?
@@ -657,43 +662,49 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 #'  genes were observed as up/down by output table.
 #' @seealso \pkg{data.table} \pkg{openxlsx}
 #' @export
-create_combined_table <- function(li, ed, de, ba,
-                                  table_name, annot_df=NULL, inverse=FALSE, adjp=TRUE,
-                                  include_deseq=TRUE, include_edger=TRUE, include_limma=TRUE,
-                                  include_basic=TRUE, fc_cutoff=1, p_cutoff=0.05, excludes=NULL) {
+combine_de_table <- function(li, ed, de, ba, table_name,
+                              annot_df=NULL, inverse=FALSE, adjp=TRUE, padj_type="fdr",
+                              include_deseq=TRUE, include_edger=TRUE, include_limma=TRUE,
+                              include_basic=TRUE, fc_cutoff=1, p_cutoff=0.05, excludes=NULL) {
+    if (!padj_type %in% p.adjust.methods) {
+        warning(paste0("The p adjustment ", padj_type, " is not in the set of p.adjust.methods.
+Defaulting to fdr."))
+        padj_type <- "fdr"
+    }
+
     li <- li[["all_tables"]][[table_name]]
     if (is.null(li)) {
         li <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
-                         "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0, "limma_q" = 0)
+                         "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0)
     }
     de <- de[["all_tables"]][[table_name]]
     if (is.null(de)) {
         de <- data.frame("deseq_basemean" = 0, "deseq_logfc" = 0, "deseq_lfcse" = 0,
-                         "deseq_stat" = 0, "deseq_p" = 0, "deseq_adjp" = 0, "deseq_q" = 0)
+                         "deseq_stat" = 0, "deseq_p" = 0, "deseq_adjp" = 0)
     }
     ed <- ed[["all_tables"]][[table_name]]
     if (is.null(ed)) {
         ed <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
-                         "edger_p" = 0, "edger_adjp" = 0, "edger_q" = 0)
+                         "edger_p" = 0, "edger_adjp" = 0)
     }
     ba <- ba[["all_tables"]][[table_name]]
     if (is.null(ba)) {
         ba <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
-                         "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, adjp=0)
+                         "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
     }
 
     colnames(li) <- c("limma_logfc", "limma_ave", "limma_t", "limma_p",
-                      "limma_adjp", "limma_b", "limma_q")
-    li_stats <- li[, c("limma_ave", "limma_t", "limma_b", "limma_p", "limma_q")]
+                      "limma_adjp", "limma_b")
+    li_stats <- li[, c("limma_ave", "limma_t", "limma_b", "limma_p")]
     li_lfc_adjp <- li[, c("limma_logfc", "limma_adjp")]
 
     colnames(de) <- c("deseq_basemean", "deseq_logfc", "deseq_lfcse",
-                      "deseq_stat", "deseq_p", "deseq_adjp", "deseq_q")
-    de_stats <- de[, c("deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p", "deseq_q")]
+                      "deseq_stat", "deseq_p", "deseq_adjp")
+    de_stats <- de[, c("deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p")]
     de_lfc_adjp <- de[, c("deseq_logfc", "deseq_adjp")]
 
-    colnames(ed) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp", "edger_q")
-    ed_stats <- ed[, c("edger_logcpm", "edger_lr", "edger_p", "edger_q")]
+    colnames(ed) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp")
+    ed_stats <- ed[, c("edger_logcpm", "edger_lr", "edger_p")]
     ed_lfc_adjp <- ed[, c("edger_logfc", "edger_adjp")]
 
     ba_stats <- ba[, c("numerator_median", "denominator_median", "numerator_var",
@@ -741,7 +752,30 @@ create_combined_table <- function(li, ed, de, ba,
             comb[["edger_logfc"]] <- comb[["edger_logfc"]] * -1.0
         }
     }
-    ## I made an odd choice in a moment to normalize.quantils the combined fold changes
+
+    ## Add one final p-adjustment to ensure a consistent and user defined value.
+    if (!is.null(comb[["basic_p"]])) {
+        colname <- paste0("basic_adjp_", padj_type)
+        comb[[colname]] <- p.adjust(comb[["basic_p"]], method=padj_type)
+        comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
+    }
+    if (!is.null(comb[["deseq_p"]])) {
+        colname <- paste0("deseq_adjp_", padj_type)
+        comb[[colname]] <- p.adjust(comb[["deseq_p"]], method=padj_type)
+        comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
+    }
+    if (!is.null(comb[["edger_p"]])) {
+        colname <- paste0("edger_adjp_", padj_type)
+        comb[[colname]] <- p.adjust(comb[["edger_p"]], method=padj_type)
+        comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
+    }
+    if (!is.null(comb[["limma_p"]])) {
+        colname <- paste0("limma_adjp_", padj_type)
+        comb[[colname]] <- p.adjust(comb[["limma_p"]], method=padj_type)
+        comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
+    }
+
+    ## I made an odd choice in a moment to normalize.quantiles the combined fold changes
     ## This should be reevaluated
     temp_fc <- data.frame()
     if (isTRUE(include_limma) & isTRUE(include_deseq) & isTRUE(include_edger)) {

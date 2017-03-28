@@ -275,19 +275,6 @@ surrogates explicitly stated with the option surrogates=number.")
             result[["stat"]] <- signif(x=as.numeric(result[["stat"]]), digits=4)
             result[["P.Value"]] <- signif(x=as.numeric(result[["P.Value"]]), digits=4)
             result[["adj.P.Val"]] <- signif(x=as.numeric(result[["adj.P.Val"]]), digits=4)
-
-            result[["qvalue"]] <- tryCatch({
-                ## Nested expressions are way too confusing for me
-                ttmp <- as.numeric(result[["P.Value"]])
-                ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
-                signif(x=ttmp, digits=4)
-            },
-            error=function(cond) {
-                message(paste0("The qvalue estimation failed for ", comparison, "."))
-                return(1)
-            },
-            finally={
-            })
             result_name <- paste0(numerator, "_vs_", denominator)
             denominators[[result_name]] <- denominator
             numerators[[result_name]] <- numerator

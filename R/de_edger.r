@@ -207,17 +207,6 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
         }
         res[["PValue"]] <- signif(x=as.numeric(res[["PValue"]]), digits=4)
         res[["FDR"]] <- signif(x=as.numeric(res[["FDR"]]), digits=4)
-        res[["qvalue"]] <- tryCatch({
-            ttmp <- as.numeric(res[["PValue"]])
-            ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
-            format(x=ttmp, digits=4, scientific=TRUE)
-        },
-        error=function(cond) {
-            message(paste0("The qvalue estimation failed for ", name, "."))
-            return(1)
-        },
-        finally={
-        })
         result_list[[name]] <- res
     } ## End for loop
     final <- list(

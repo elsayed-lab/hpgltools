@@ -320,6 +320,9 @@ and/or have it print csv versions of the same tables.
 ```{r combine_test}
 spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE))
 summary(spyogenes_tables)
+## Try changing the p-adjustment
+spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE, padj_type="BH"))
+head(spyogenes_tables$data[[1]])
 ```
 
 Finally, extract_significant_genes() may choose 'significant' genes based upon a few metrics

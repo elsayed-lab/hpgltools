@@ -619,17 +619,6 @@ make_limma_tables <- function(data, adjust="fdr", n=0, coef=NULL, workbook="exce
         data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
         data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
         data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
-        data_table[["qvalue"]] <- tryCatch({
-            ttmp <- as.numeric(data_table[["P.Value"]])
-            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
-            signif(x=ttmp, digits=4)
-        },
-        error=function(cond) {
-            message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
-            return(1)
-        },
-        finally={
-        })
         if (!is.null(annot_df)) {
             data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
             ###data_table = data_table[, -1, drop=FALSE]
