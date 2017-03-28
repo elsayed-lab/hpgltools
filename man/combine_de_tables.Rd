@@ -8,7 +8,8 @@ combine_de_tables(all_pairwise_result, extra_annot = NULL, excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
   keepers = "all", excludes = NULL, adjp = TRUE, include_limma = TRUE,
   include_edger = TRUE, include_deseq = TRUE, include_basic = TRUE,
-  add_plots = TRUE, loess = FALSE, plot_dim = 6, compare_plots = TRUE)
+  add_plots = TRUE, loess = FALSE, plot_dim = 6, compare_plots = TRUE,
+  padj_type = "fdr")
 }
 \arguments{
 \item{all_pairwise_result}{Output from all_pairwise().}
@@ -41,7 +42,9 @@ certain contrasts in specific orders and orientations.}
 
 \item{plot_dim}{Number of inches squared for the plot if added.}
 
-\item{compare_plots}{In an attempt to save memory when printing to excel, make it possible to
+\item{compare_plots}{In an attempt to save memory when printing to excel, make it possible to}
+
+\item{adjp_type}{Add a consistent p adjustment of this type.
 exclude comparison plots in the summary sheet.}
 }
 \value{
