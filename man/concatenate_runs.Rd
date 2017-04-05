@@ -24,10 +24,10 @@ Untested as of 2016-12-01, but used in a couple of projects where sequencing run
 }
 \examples{
 \dontrun{
- compressed = concatenate_runs(expt)
+ compressed <- concatenate_runs(expt)
 }
 }
 \seealso{
 \pkg{Biobase}
+ \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{pData}}
 }
-

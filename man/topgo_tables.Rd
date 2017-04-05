@@ -20,7 +20,12 @@ topgo_tables(result, limit = 0.1, limitby = "fisher", numchar = 300,
 
 \item{ranksof}{Which of the available columns are used to rank the data?}
 }
+\value{
+prettier tables
+}
 \description{
 The topgo function GenTable is neat, but it needs some simplification to not be obnoxious.
 }
-
+\seealso{
+\pkg{topGO}
+}

@@ -20,10 +20,10 @@ wraps EdgeR's rpkm in an attempt to make sure that the required gene lengths get
 }
 \examples{
 \dontrun{
-rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
+ rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
 }
 }
 \seealso{
-\pkg{edgeR} and \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+\pkg{edgeR}
+ \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 }
-

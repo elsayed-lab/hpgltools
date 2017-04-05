@@ -4,7 +4,7 @@
 #'
 #' @param ... I like cats.
 #' @return stuff deseq2_pairwise results.
-#' @seealso \link{deseq2_pairwise}
+#' @seealso \code{\link{deseq2_pairwise}}
 #' @export
 deseq_pairwise <- function(...) {
     message("Hey you, use deseq2 pairwise.")
@@ -41,17 +41,16 @@ deseq_pairwise <- function(...) {
 #' @param deseq_method  The DESeq2 manual shows a few ways to invoke it, I make 2 of them available here.
 #' @param ...  Triple dots!  Options are passed to arglist.
 #' @return List including the following information:
-#'   run = the return from calling DESeq()
-#'   denominators = list of denominators in the contrasts
-#'   numerators = list of the numerators in the contrasts
-#'   conditions = the list of conditions in the experiment
-#'   coefficients = list of coefficients making the contrasts
-#'   all_tables = list of DE tables
-#' @seealso \pkg{DESeq2} \code{\link[DESeq2]{results}} \code{\link[DESeq2]{estimateSizeFactors}}
-#'          \code{\link[DESeq2]{estimateDispersions}} \code{\link[DESeq2]{nbinomWaldTest}}
+#'  run = the return from calling DESeq()
+#'  denominators = list of denominators in the contrasts
+#'  numerators = list of the numerators in the contrasts
+#'  conditions = the list of conditions in the experiment
+#'  coefficients = list of coefficients making the contrasts
+#'  all_tables = list of DE tables
+#' @seealso \pkg{DESeq2} \pkg{Biobase} \pkg{stats}
 #' @examples
 #' \dontrun{
-#' pretend = deseq2_pairwise(data, conditions, batches)
+#'  pretend = deseq2_pairwise(data, conditions, batches)
 #' }
 #' @export
 deseq2_pairwise <- function(input=NULL, conditions=NULL,
@@ -96,17 +95,20 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     }
     message("Starting DESeq2 pairwise comparisons.")
     input_data <- choose_binom_dataset(input, force=force)
+    ## Now that I understand pData a bit more, I should probably remove the conditions/batches slots
+    ## from my expt classes.
     design <- Biobase::pData(input[["expressionset"]])
     conditions <- input_data[["conditions"]]
     batches <- input_data[["batches"]]
     data <- input_data[["data"]]
     condition_table <- table(conditions)
     condition_levels <- levels(as.factor(conditions))
-    batch_levels <- levels(as.factor(batches))
+    ## batch_levels <- levels(as.factor(batches))
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
     summarized <- NULL
-    ## Moving the size-factor estimation into this if(){} block in order to accomodate sva-ish batch estimation in the model
+    ## Moving the size-factor estimation into this if(){} block in order to accomodate sva-ish
+    ## batch estimation in the model
     deseq_sf <- NULL
 
     ## A caveat because this is a point of confusion
@@ -181,7 +183,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                 message(paste0("Including ", num_sv, " will fail because the resulting model is too low rank."))
                 num_sv <- num_sv - 1
                 message(paste0("Trying again with ", num_sv, " surrogates."))
-                message("You should consider rerunning the pairwise comparison with the number of surrogates explicitly stated with the option surrogates=number.")
+                message("You should consider rerunning the pairwise comparison with the number of
+surrogates explicitly stated with the option surrogates=number.")
                 ret <- try_sv(data, num_sv)
             } else {
                 ## If we get here, then the number of surrogates should work with DESeq2.
@@ -207,34 +210,48 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     deseq_run <- NULL
     if (deseq_method == "short") {
         message("DESeq steps 2-4 in one shot.")
-        deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric"))
+        deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric"), silent=TRUE)
         if (class(deseq_run) == "try-error") {
-            deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"))
+            message("A fitType of 'parametric' failed for this data, trying 'mean'.")
+            deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"), silent=TRUE)
             if (class(deseq_run) == "try-error") {
-                warning("Neither the default(parametric) nor mean fitting worked.  Something is very wrong.")
+                message("Both 'parametric' and 'mean' failed.  Trying 'local'.")
+                deseq_run <- try(DESeq2::DESeq(dataset, fitType="local"), silent=TRUE)
+                if (class(deseq_run) == "try-error") {
+                    warning("All fitting types failed.  This will end badly.")
+                } else {
+                    message("Using a local fit seems to have worked.")
+                }
             } else {
-                message("Using a mean fitting seems to have worked.  You may be able to ignore the previous error.")
+                message("Using a mean fitting seems to have worked.")
             }
         }
     } else {
+        ## Eg. Using the long method of invoking DESeq.
         ## If making a model ~0 + condition -- then must set betaPrior=FALSE
         message("DESeq2 step 2/5: Estimate size factors.")
         deseq_sf <- DESeq2::estimateSizeFactors(dataset)
         message("DESeq2 step 3/5: Estimate dispersions.")
-        deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="parametric"))
+        deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="parametric"), silent=TRUE)
         if (class(deseq_disp) == "try-error") {
             message("Trying a mean fitting.")
-            deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="mean"))
+            deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="mean"), silent=TRUE)
             if (class(deseq_disp) == "try-error") {
-                warning("Neither the default(parametric) nor mean fitting worked.  Something is very wrong.")
+                warning("Both 'parametric' and 'mean' failed.  Trying 'local'.")
+                deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="local"), silent=TRUE)
+                if (class(deseq_disp) == "try-error") {
+                    warning("All fitting types failed.  This will end badly.")
+                } else {
+                    message("Using a local fit seems to have worked.")
+                }
             } else {
-                message("Using a mean fitting seems to have worked.  You may be able to ignore the previous error.")
+                message("Using a mean fitting seems to have worked.")
             }
         }
         ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
         message("DESeq2 step 4/5: nbinomWaldTest.")
         ## deseq_run <- DESeq2::DESeq(deseq_disp)
-        deseq_run = DESeq2::nbinomWaldTest(deseq_disp, quiet=TRUE)
+        deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, quiet=TRUE)
     }
     ## possible options:  betaPrior=TRUE, betaPriorVar, modelMatrix=NULL
     ## modelMatrixType, maxit=100, useOptim=TRUE useT=FALSE df useQR=TRUE
@@ -261,28 +278,17 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
             result <- as.data.frame(DESeq2::results(deseq_run,
                                                     contrast=c("condition", numerator, denominator),
                                                     format="DataFrame"))
-            result <- result[order(result[["log2FoldChange"]]),]
+            result <- result[order(result[["log2FoldChange"]]), ]
             colnames(result) <- c("baseMean", "logFC", "lfcSE", "stat", "P.Value", "adj.P.Val")
             ## From here on everything is the same.
-            result[is.na(result[["P.Value"]]), "P.Value"] = 1 ## Some p-values come out as NA
-            result[is.na(result[["adj.P.Val"]]), "adj.P.Val"] = 1 ## Some p-values come out as NA
+            result[is.na(result[["P.Value"]]), "P.Value"] <- 1 ## Some p-values come out as NA
+            result[is.na(result[["adj.P.Val"]]), "adj.P.Val"] <- 1 ## Some p-values come out as NA
             result[["baseMean"]] <- signif(x=as.numeric(result[["baseMean"]]), digits=4)
             result[["logFC"]] <- signif(x=as.numeric(result[["logFC"]]), digits=4)
             result[["lfcSE"]] <- signif(x=as.numeric(result[["lfcSE"]]), digits=4)
             result[["stat"]] <- signif(x=as.numeric(result[["stat"]]), digits=4)
             result[["P.Value"]] <- signif(x=as.numeric(result[["P.Value"]]), digits=4)
             result[["adj.P.Val"]] <- signif(x=as.numeric(result[["adj.P.Val"]]), digits=4)
-
-            result[["qvalue"]] <- tryCatch({
-                ## Nested expressions are way too confusing for me
-                ttmp <- as.numeric(result[["P.Value"]])
-                ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
-                signif(x=ttmp, digits=4)
-            }, error=function(cond) {
-                message(paste0("The qvalue estimation failed for ", comparison, "."))
-                return(1)
-            }, finally={
-            })
             result_name <- paste0(numerator, "_vs_", denominator)
             denominators[[result_name]] <- denominator
             numerators[[result_name]] <- numerator
@@ -311,8 +317,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         "conditions" = conditions,
         "coefficients" = coefficient_list,
         "contrasts_performed" = contrasts,
-        "all_tables" = result_list
-    )
+        "all_tables" = result_list)
     return(ret_list)
 }
 
@@ -324,7 +329,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
 #'
 #' @param data  Output from deseq_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[DESeq2]{toptable} \link{write_xls}
+#' @seealso \pkg{DESeq2} \link{write_xls}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = deseq_pairwise(expressionset)

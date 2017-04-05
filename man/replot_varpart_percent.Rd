@@ -16,8 +16,14 @@ replot_varpart_percent(varpart_output, n = 30, column = NULL,
 
 \item{decreasing}{high->low or vice versa?}
 }
+\value{
+The percent variance bar plots from variancePartition!
+}
 \description{
 In case I wish to look at different numbers of genes from variancePartition and/or
 different columns to sort from.
 }
-
+\seealso{
+\pkg{variancePartition}
+ \code{\link[variancePartition]{plotPercentBars}}
+}

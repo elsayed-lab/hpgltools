@@ -21,10 +21,9 @@ Use AnnotationDbi to map descriptions of KEGG pathways to gene IDs.
 }
 \examples{
 \dontrun{
-pathnames <- load_kegg_pathways(org, c("a","b","c")
+ pathnames <- load_kegg_pathways(org, c("a","b","c")
 }
 }
 \seealso{
-\link[AnnotationDbi]{select}
+\pkg{AnnotationDbi}
 }
-

@@ -21,4 +21,3 @@ plot_hypotrochoid(radius_a = 3, radius_b = 7, dist_b = 1,
 \description{
 3,7,1 should give the classic 7 leaf clover
 }
-

@@ -29,11 +29,11 @@ hpgl_voom(dataframe, model = NULL, libsize = NULL,
 }
 \value{
 EList containing the following information:
-  E = The normalized data
-  weights = The weights of said data
-  design = The resulting design
-  lib.size = The size in pseudocounts of the library
-  plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
+ E = The normalized data
+ weights = The weights of said data
+ design = The resulting design
+ lib.size = The size in pseudocounts of the library
+ plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
 }
 \description{
 Estimate mean-variance relationship between samples and generate 'observational-level weights' in
@@ -49,6 +49,5 @@ contains the plot rather than just printing it.
 }
 }
 \seealso{
-\link[limma]{voom} \link[limma]{lmFit}
+\pkg{limma} \pkg{ggplot2}
 }
-

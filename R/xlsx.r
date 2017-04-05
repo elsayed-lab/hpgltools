@@ -14,7 +14,7 @@
 #' @param ...  Set of extra arguments given to openxlsx.
 #' @return List containing the sheet and workbook written as well as the bottom-right coordinates of
 #'  the last row/column written to the worksheet.
-#' @seealso \pkg{openxlsx} \link[openxlsx]{writeDataTable}
+#' @seealso \pkg{openxlsx}
 #' @examples
 #'  \dontrun{
 #'   xls_coords <- write_xls(dataframe, sheet="hpgl_data")
@@ -29,7 +29,8 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     }
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
-    } else if (class(wb)[[1]] == "list") { ## In case the return from write_xls() was passed to write_xls()
+    } else if (class(wb)[[1]] == "list") {
+        ## In case the return from write_xls() was passed to write_xls()
         wb <- wb[["workbook"]]
     } else if (class(wb)[[1]] != "Workbook") {
         stop("A workbook was passed to this, but the format is not understood.")
@@ -89,8 +90,8 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     for (col in colnames(data)) {
         wtf_stupid <- wtf_stupid + 1
         colnames(data)[wtf_stupid] <- paste0(colnames(data)[wtf_stupid], "_", wtf_stupid)
-        if (class(data[[col]]) == 'list' | class(data[[col]]) == 'vector' |
-            class(data[[col]]) == 'factor' | class(data[[col]]) == 'AsIs') {
+        if (class(data[[col]]) == "list" | class(data[[col]]) == "vector" |
+            class(data[[col]]) == "factor" | class(data[[col]]) == "AsIs") {
             data[[col]] <- as.character(data[[col]])
         }
     }
@@ -173,7 +174,8 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
 
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
-    } else if (class(wb)[[1]] == "list") { ## In case the return from write_xls() was passed to write_xls()
+    } else if (class(wb)[[1]] == "list") {
+        ## In case the return from write_xls() was passed to write_xls()
         wb <- wb[["workbook"]]
     } else if (class(wb)[[1]] != "Workbook") {
         stop("A workbook was passed to this, but the format is not understood.")
@@ -188,12 +190,13 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
         if (fancy_type == "pdf") {
             fancy_ret <- try(pdf(file=high_quality))
         } else if (fancy_type == "ps") {
-            fancy_ret <- try(ps(file=high_quality))
+            fancy_ret <- try(postscript(file=high_quality))
         } else if (fancy_type == "svg") {
-            fancy_ret <- try(svg(file=high_quality))
+            fancy_ret <- try(svg(filename=high_quality))
         } else if (fancy_type == "emf") {
-            fancy_ret <- try(devEMF(file=high_quality))
-        } else {  ## Default to pdf
+            fancy_ret <- try(devEMF::emf(file=high_quality))
+        } else {
+            ## Default to pdf
             high_quality_renamed <- gsub(pattern="\\..*$", replacement="\\.pdf", x=high_quality)
             fancy_ret <- try(pdf(file=high_quality_renamed))
         }

@@ -11,6 +11,12 @@
 #' @param name Text string containing some part of the species name of interest.
 #' @param exact Use an exact species name?
 #' @return Dataframe of ids and names.
+#' @seealso \pkg{DBI}
+#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
+#' @examples
+#' \dontrun{
+#'  microbes_ids <- get_microbesonline_ids(name="Streptococcus")
+#' }
 #' @export
 get_microbesonline_ids <- function(name="Escherichia", exact=FALSE) {
     requireNamespace("RMySQL")
@@ -26,8 +32,11 @@ get_microbesonline_ids <- function(name="Escherichia", exact=FALSE) {
     message(query)
     result <- DBI::dbSendQuery(connection, query)
     result_df <- DBI::fetch(result, n=-1)
-    clear <- DBI::dbClearResult(result)
-    disconnect <- DBI::dbDisconnect(connection)
+    clear <- try(DBI::dbClearResult(result))
+    disconnect <- try(DBI::dbDisconnect(connection))
+    if (class(clear) == "try-error" | class(disconnect) == "try-error") {
+        warning("Did not disconnect cleanly.")
+    }
     return(result_df)
 }
 
@@ -42,6 +51,12 @@ get_microbesonline_ids <- function(name="Escherichia", exact=FALSE) {
 #'
 #' @param id Text string containing some part of the species name of interest.
 #' @return Dataframe of ids and names.
+#' @seealso \pkg{DBI}
+#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
+#' @examples
+#' \dontrun{
+#'  names <- get_microbesonline_name(id=316385)
+#' }
 #' @export
 get_microbesonline_name <- function(id=316385) {
     requireNamespace("RMySQL")
@@ -53,6 +68,9 @@ get_microbesonline_name <- function(id=316385) {
     result_df <- DBI::fetch(result, n=-1)
     clear <- DBI::dbClearResult(result)
     disconnect <- DBI::dbDisconnect(connection)
+    if (class(clear) == "try-error" | class(disconnect) == "try-error") {
+        warning("Did not disconnect cleanly.")
+    }
     return(result_df)
 }
 
@@ -68,6 +86,12 @@ get_microbesonline_name <- function(id=316385) {
 #' @param ids List of ids to query.
 #' @param species Species name(s) to use instead.
 #' @return List of dataframes with the annotation information.
+#' @seealso \pkg{RCurl}
+#'  \code{\link[RCurl]{getURL}}
+#' @examples
+#' \dontrun{
+#'  annotations <- get_microbesonline_annotation(ids=c("160490","160491"))
+#' }
 #' @export
 get_microbesonline_annotation <- function(ids="160490", species=NULL) {
     retlist <- list()
@@ -85,7 +109,7 @@ get_microbesonline_annotation <- function(ids="160490", species=NULL) {
         for (id in ids) {
             idl <- as.list(id)
             current_name <- get_microbesonline_name(id)
-            names(idl) <- current_name[1,1]
+            names(idl) <- current_name[1, 1]
             id_list <- append(x=id_list, values=idl)
         }
     }
@@ -110,6 +134,13 @@ get_microbesonline_annotation <- function(ids="160490", species=NULL) {
 #' it might prove useful.
 #'
 #' @param table  Choose a table to query.
+#' @return Data frame describing the relevant table
+#' @seealso \pkg{DBI}
+#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
+#' @examples
+#' \dontrun{
+#'  description <- mdesc_table(table="Locus2Go")
+#' }
 mdesc_table <- function(table="Locus2Go") {
     db_driver <- DBI::dbDriver("MySQL")
     connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
@@ -120,6 +151,9 @@ mdesc_table <- function(table="Locus2Go") {
     result_df <- DBI::fetch(result, n=-1)
     clear <- DBI::dbClearResult(result)
     disconnect <- DBI::dbDisconnect(connection)
+    if (class(clear) == "try-error" | class(disconnect) == "try-error") {
+        warning("Did not disconnect cleanly.")
+    }
     return(result_df)
 }
 
@@ -133,6 +167,13 @@ mdesc_table <- function(table="Locus2Go") {
 #' At the very least, it does return a large number of them, which is a start.
 #'
 #' @param taxonid Which species to query.
+#' @return data frame of GO terms from pub.microbesonline.org
+#' @seealso \pkg{DBI}
+#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
+#' @examples
+#' \dontrun{
+#'  go_df <- get_loci_go(taxonid="160490")
+#' }
 #' @export
 get_loci_go <- function(taxonid="160490") {
     requireNamespace("RMySQL")
@@ -148,6 +189,9 @@ get_loci_go <- function(taxonid="160490") {
     result_df <- DBI::fetch(result, n=-1)
     clear <- DBI::dbClearResult(result)
     disconnect <- DBI::dbDisconnect(connection)
+    if (class(clear) == "try-error" | class(disconnect) == "try-error") {
+        warning("Did not disconnect cleanly.")
+    }
     return(result_df)
 }
 

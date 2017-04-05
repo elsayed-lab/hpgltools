@@ -25,8 +25,13 @@ plot_rpm(input, workdir = "images", output = "01.svg",
 
 \item{padding}{How much space to provide on the sides?}
 }
+\value{
+coverage plot surrounging the ORF of interest
+}
 \description{
 This was written for ribosome profiling coverage / gene.
 It should however, work for any data with little or no modification.
 }
-
+\seealso{
+\pkg{ggplot2}
+}

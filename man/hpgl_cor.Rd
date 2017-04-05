@@ -22,11 +22,11 @@ one calls cor().
 }
 \examples{
 \dontrun{
-hpgl_cor(df=df)
-hpgl_cor(df=df, method="robust")
+ hpgl_cor(df=df)
+ hpgl_cor(df=df, method="robust")
 }
 }
 \seealso{
-\pkg{robust} \link{cor} \link{cov} \link[robust]{covRob}
+\pkg{robust}
+ \code{\link{cor}} \code{\link{cov}} \code{\link[robust]{covRob}}
 }
-

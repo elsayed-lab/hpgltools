@@ -18,10 +18,9 @@ This just wraps golev() in mapply.
 \examples{
 \dontrun{
  golevel(c("GO:0032559", "GO:0000001")
-## > 3 4
+ ## > 3 4
 }
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}
 }
-

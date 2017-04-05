@@ -24,19 +24,19 @@ limma_scatter(all_pairwise_result, first_table = 1, first_column = "logFC",
 }
 \value{
 plot_linear_scatter() set of plots comparing the chosen columns.  If you forget to
-    specify tables to compare, it will try the first vs the second.
+ specify tables to compare, it will try the first vs the second.
 }
 \description{
 Extract the adjusted abundances for the two conditions used in the pairw
 }
 \examples{
 \dontrun{
-compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
-                              first_table="AveExpr", second_column="AveExpr")
-compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+ compare_logFC <- limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
+                                first_table="AveExpr", second_column="AveExpr")
+ compare_B <- limma_scatter(all_pairwise, first_column="B", second_column="B")
 }
 }
 \seealso{
-\link{plot_linear_scatter} \link[limma]{topTable}
+\pkg{limma}
+ \code{\link{plot_linear_scatter}}
 }
-

@@ -28,6 +28,6 @@ With minor changes, it is possible to push the goseq results into a clusterProfi
 plot.  This handles those changes and returns the ggplot results.
 }
 \seealso{
-\link[goseq]{goseq} \pkg{clusterProfiler} \code{\link{plot_ontpval}}
+\pkg{goseq} \pkg{clusterProfiler}
+ \code{\link[goseq]{goseq}} \code{\link{plot_ontpval}}
 }
-

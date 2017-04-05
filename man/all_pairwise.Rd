@@ -58,4 +58,7 @@ It collects the results and does some simple comparisons among them.
   data_list = all_pairwise(expt)
  }
 }
-
+\seealso{
+\pkg{limma} \pkg{DESeq2} \pkg{edgeR}
+ \code{link{limma_pairwise}} \code{\link{deseq_pairwise}} \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
+}

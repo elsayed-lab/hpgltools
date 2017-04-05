@@ -19,4 +19,3 @@ a kitten
 \description{
 I regenerate all my circos pictures with make(1).  This is my makefile.
 }
-

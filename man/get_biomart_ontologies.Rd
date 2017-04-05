@@ -48,6 +48,6 @@ December 2015 as well as an attempt to keep the annotation sets relatively consi
 }
 }
 \seealso{
-\link[biomaRt]{getBM}
+\pkg{biomaRt}
+ \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}} \code{\link[biomaRt]{getBM}}
 }
-

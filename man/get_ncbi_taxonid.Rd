@@ -15,4 +15,11 @@ potential NCBI taxon IDs
 \description{
 taxize looks like it might be awesome, but it is also pretty annoying
 }
-
+\examples{
+\dontrun{
+ taxonid <- get_ncbi_taxonid(species="Trypanosoma cruzi")
+}
+}
+\seealso{
+\pkg{taxize}
+}

@@ -28,10 +28,11 @@ This function provides that information and is primarily used by cp_seq_m().
 }
 \examples{
 \dontrun{
-num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
+ num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
 }
 }
 \seealso{
-\pkg{Biostrings} \pkg{Rsamtools} \link[Biostrings]{PDict} \link[Rsamtools]{FaFile}
+\pkg{Biostrings} \pkg{Rsamtools} \pkg{Rsamtools}
+ \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}} \code{\link[Biostrings]{PDict}}
+ \code{\link[Biostrings]{vcountPDict}}
 }
-

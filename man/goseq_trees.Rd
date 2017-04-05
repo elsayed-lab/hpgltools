@@ -30,4 +30,3 @@ function to make it possible to see significantly increased ontology trees.
 \seealso{
 \pkg{Ramigo}
 }
-

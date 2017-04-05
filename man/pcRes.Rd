@@ -22,4 +22,6 @@ A dataframe containig variance, cum. variance, cond.R-sqrd, batch.R-sqrd
 This was copy/pasted from cbcbSEQ
 https://github.com/kokrah/cbcbSEQ/blob/master/R/explore.R
 }
-
+\seealso{
+\code{\link{plot_pca}}
+}

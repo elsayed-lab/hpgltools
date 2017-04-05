@@ -36,14 +36,13 @@ describing the degree to which they (dis)agree.
 Invoked by all_pairwise().
 }
 \examples{
- \dontrun{
-  l = limma_pairwise(expt)
-  d = deseq_pairwise(expt)
-  e = edger_pairwise(expt)
-  fun = compare_tables(limma=l, deseq=d, edger=e)
- }
+\dontrun{
+ l = limma_pairwise(expt)
+ d = deseq_pairwise(expt)
+ e = edger_pairwise(expt)
+ fun = compare_tables(limma=l, deseq=d, edger=e)
+}
 }
 \seealso{
 \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
 }
-

@@ -22,11 +22,10 @@ This function just goes a mapply(gosn, go).
 \dontrun{
  text =  gosyn("GO:0000001")
  text
-## > GO:000001
-## > "mitochondrial inheritance"
+ ## > GO:000001
+ ## > "mitochondrial inheritance"
 }
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}
 }
-

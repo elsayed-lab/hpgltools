@@ -14,11 +14,12 @@
 #' @param yscale Whether or not to log10 the y-axis.
 #' @param ... More parameters for your good time!
 #' @return a ggplot2 bar plot of every sample's size
-#' @seealso \link[ggplot2]{geom_bar} \link[ggplot2]{geom_text}
-#' \link{prettyNum} \link[ggplot2]{scale_y_log10}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
+#'  \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
 #' @examples
 #' \dontrun{
-#'  libsize_plot = plot_libsize(expt=expt)
+#'  libsize_plot <- plot_libsize(expt=expt)
 #'  libsize_plot  ## ooo pretty bargraph
 #' }
 #' @export
@@ -63,13 +64,13 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
     }
 
     colors <- as.character(colors)
-    libsize_df <- data.frame(id=colnames(data),
-                             sum=colSums(data),
-                             condition=condition,
-                             colors=as.character(colors))
+    libsize_df <- data.frame("id" = colnames(data),
+                             "sum" = colSums(data),
+                             "condition" = condition,
+                             "colors" = as.character(colors))
     libsize_df[["order"]] <- factor(libsize_df[["id"]], as.character(libsize_df[["id"]]))
 
-    color_listing <- libsize_df[, c("condition","colors")]
+    color_listing <- libsize_df[, c("condition", "colors")]
     color_listing <- unique(color_listing)
     color_list <- as.character(color_listing[["colors"]])
     names(color_list) <- as.character(color_listing[["condition"]])
@@ -104,9 +105,9 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
         if (scale_difference > 10.0) {
             message("The scale difference between the smallest and largest
    libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
-            scale = TRUE
+            scale <- TRUE
         } else {
-            scale = FALSE
+            scale <- FALSE
         }
     }
     if (scale == TRUE) {
@@ -133,44 +134,24 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
 #' @param end  Relative to 0, where is the gene's stop codon.
 #' @param strand  Is this on the + or - strand? (+1/-1)
 #' @param padding  How much space to provide on the sides?
-plot_rpm = function(input, workdir="images", output="01.svg", name="LmjF.01.0010",
+#' @return coverage plot surrounging the ORF of interest
+#' @seealso \pkg{ggplot2}
+plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.0010",
                     start=1000, end=2000, strand=1, padding=100) {
-    head(genes)
-    genes = genes[,c(2, 3, 5, 11)]
-    for(ch in 1:36) {
-        mychr = paste("LmjF.", sprintf("%02d", ch), sep="")
-        message(mychr)
-        table_path = paste0(workdir, "/coverage/", mychr, "/testme.txt.cov.gz")
 
-        rpms = read.table(table_path)
-        colnames(rpms) = c("chromosome","position","rpm")
-        chr_index = with(genes, grepl(mychr, Name))
-        genes_on_chr = genes[chr_index, ]
-
-        for(i in 1:nrow(genes_on_chr)) {
-            row = genes_on_chr[i,]
-            genename=row[["Name"]]
-            output_file=paste0(workdir, "/coverage/", mychr, "/", genename, ".svg")
-            svg(filename=output_file, height=2, width=8)
-            plot_res <- plot_rpm(rpms, start=row[["start"]], end=row[["end"]],
-                                 strand=row[["strand"]], output=output_file, name=row[["Name"]])
-            dev.off()
-        }
-    }
-
-    mychr = gsub("\\.\\d+$", "", name, perl=TRUE)
-    plotted_start = start - padding
-    plotted_end = end + padding
-    my_start = start
-    my_end = end
+    mychr <- gsub("\\.\\d+$", "", name, perl=TRUE)
+    plotted_start <- start - padding
+    plotted_end <- end + padding
+    my_start <- start
+    my_end <- end
     ## These are good chances to use %>% I guess
     ## rpm_region = subset(input, chromosome==mychr & position >= plotted_start & position <= plotted_end)
     region_idx <- input[["chromosome"]] == mychr &
         input[["position"]] >= plotted_start &
         input[["position"]] <= plotted_end
     rpm_region <- rpm_region[region_idx, ]
-    rpm_region = rpm_region[,-1]
-    rpm_region[["log"]] = log2(rpm_region[["rpm"]] + 1)
+    rpm_region <- rpm_region[, -1]
+    rpm_region[["log"]] <- log2(rpm_region[["rpm"]] + 1)
 
     ## pre_start = subset(rpm_region, position < my_start)
     start_idx <- rpm_region[["position"]] < my_start
@@ -184,17 +165,17 @@ plot_rpm = function(input, workdir="images", output="01.svg", name="LmjF.01.0010
 
     eval(substitute(
         expr = {
-            stupid = aes(y=0, yend=0, x=my_start, xend=my_end)
+            stupid <- aes(y=0, yend=0, x=my_start, xend=my_end)
         },
-        env = list(my_start=my_start, my_end=my_end)))
+        env <- list(my_start=my_start, my_end=my_end)))
 
     if (strand == "+") {
-        gene_arrow = grid::arrow(type="closed", ends="last")
+        gene_arrow <- grid::arrow(type="closed", ends="last")
     } else {
-        gene_arrow = grid::arrow(type="closed", ends="first")
+        gene_arrow <- grid::arrow(type="closed", ends="first")
     }
-    xlabel_string = paste(name, ": ", my_start, " to ", my_end)
-    my_plot = ggplot(rpm_region, aes_string(x="position", y="log")) +
+    xlabel_string <- paste(name, ": ", my_start, " to ", my_end)
+    my_plot <- ggplot(rpm_region, aes_string(x="position", y="log")) +
         ggplot2::xlab(xlabel_string) +
         ggplot2::ylab("Log2(RPM) reads") +
         ggplot2::geom_bar(data=rpm_region, stat="identity", fill="black", colour="black") +
@@ -215,11 +196,15 @@ plot_rpm = function(input, workdir="images", output="01.svg", name="LmjF.01.0010
 #' @param text  Add text at the ends of the bars describing the number of genes >/< 0 fc.
 #' @param color_list  Set of colors to use for the bars.
 #' @param color_names  Categories associated with aforementioned colors.
+#' @return weird significance bar plots
+#' @seealso \pkg{ggplot2}
+#'  \code{\link{extract_significant_genes}}
+#' @export
 plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
                                  color_list=c("lightcyan", "lightskyblue", "dodgerblue",
-                                                 "plum1", "orchid", "purple4"),
+                                              "plum1", "orchid", "purple4"),
                                  color_names=c("a_up_inner", "b_up_middle", "c_up_outer",
-                                                  "a_down_inner", "b_down_middle", "c_down_outer")) {
+                                               "a_down_inner", "b_down_middle", "c_down_outer")) {
     choose_max <- function(u, d) {
         ## m is the maximum found in the ups/downs
         m <- 0
@@ -265,7 +250,12 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
     sigbar_plot <- ggplot() +
         ggplot2::geom_col(data=ups, aes_string(x="comparisons", y="value", fill="variable")) +
         ggplot2::geom_col(data=downs, aes_string(x="comparisons", y="value", fill="variable")) +
-        ggplot2::scale_fill_manual(values=c("a_up_inner"="lightcyan", "b_up_middle"="lightskyblue", "c_up_outer"="dodgerblue", "a_down_inner"="plum1", "b_down_middle"="orchid", "c_down_outer"="purple4")) +
+        ggplot2::scale_fill_manual(values=c("a_up_inner"="lightcyan",
+                                            "b_up_middle"="lightskyblue",
+                                            "c_up_outer"="dodgerblue",
+                                            "a_down_inner"="plum1",
+                                            "b_down_middle"="orchid",
+                                            "c_down_outer"="purple4")) +
         ggplot2::coord_flip() +
         ggplot2::theme_bw() +
         ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +
@@ -276,7 +266,7 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
             comp_name <- comp_names[[comp]]
             upstring <- as.character(up_sums[[comp_name]])
             downstring <- as.character(down_sums[[comp_name]])
-            sigbar_plot = sigbar_plot +
+            sigbar_plot <- sigbar_plot +
                 ggplot2::annotate("text", x=comp, y=maximum, label=upstring, angle=-90) +
                 ggplot2::annotate("text", x=comp, y=maximum * -1, label=downstring, angle=90)
         }

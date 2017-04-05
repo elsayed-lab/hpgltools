@@ -19,11 +19,10 @@ has to have a whole bunch of logic to handle the various outputs.
 \examples{
 \dontrun{
  gosec("GO:0032432")
-## > GO:0032432
-## > "GO:0000141" "GO:0030482"
+ ## > GO:0032432
+ ## > "GO:0000141" "GO:0030482"
 }
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}
 }
-

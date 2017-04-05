@@ -6,9 +6,9 @@
 These plots are quite difficult to describe.}
 \usage{
 plot_significant_bar(ups, downs, maximum = NULL, text = TRUE,
-  color_list = c("lightcyan", "lightskyblue", "dodgerblue", "plum1", "orchid",
-  "purple4"), color_names = c("a_up_inner", "b_up_middle", "c_up_outer",
-  "a_down_inner", "b_down_middle", "c_down_outer"))
+  invert = FALSE, color_list = c("lightcyan", "lightskyblue", "dodgerblue",
+  "plum1", "orchid", "purple4"), color_names = c("a_up_inner", "b_up_middle",
+  "c_up_outer", "a_down_inner", "b_down_middle", "c_down_outer"))
 }
 \arguments{
 \item{ups}{Set of up-regulated genes.}
@@ -19,12 +19,20 @@ plot_significant_bar(ups, downs, maximum = NULL, text = TRUE,
 
 \item{text}{Add text at the ends of the bars describing the number of genes >/< 0 fc.}
 
+\item{invert}{Flip the order of the included material for readability?}
+
 \item{color_list}{Set of colors to use for the bars.}
 
 \item{color_names}{Categories associated with aforementioned colors.}
+}
+\value{
+weird significance bar plots
 }
 \description{
 Make a bar plot of the numbers of significant genes by contrast.
 These plots are quite difficult to describe.
 }
-
+\seealso{
+\pkg{ggplot2}
+ \code{\link{extract_significant_genes}}
+}

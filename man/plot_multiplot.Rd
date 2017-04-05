@@ -21,4 +21,3 @@ a multiplot!
 \description{
 Make a grid of plots.
 }
-

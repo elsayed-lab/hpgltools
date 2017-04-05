@@ -20,4 +20,3 @@ A list containing slots for plots, the stdout output from gadem, the gadem resul
 \description{
 This should provide a set of rGADEM results given an input file of sequences and a genome.
 }
-

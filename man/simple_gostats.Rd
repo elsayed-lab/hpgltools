@@ -43,7 +43,11 @@ GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs 
 integers. As a result, I am going to have this function take a gff file in order to get the go
 ids and gene ids on the same page.
 }
+\examples{
+\dontrun{
+ knickerbockers <- simple_gostats(sig_genes, gff_file, goids)
+}
+}
 \seealso{
 \pkg{GSEABase} \pkg{Category}
 }
-

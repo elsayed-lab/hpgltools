@@ -23,6 +23,11 @@ environment. This should also make a reasonable attempt at installing the approp
 is not already in your R library tree.
 }
 \examples{
+\dontrun{
  object <- choose_orgdb("homo_sapiens")
 }
-
+}
+\seealso{
+\pkg{AnnotationDbi}
+ \code{\link[AnnotationDbi]{keytypes}}
+}

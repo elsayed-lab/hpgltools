@@ -26,24 +26,24 @@ plot_pca(data, design = NULL, plot_colors = NULL, plot_labels = NULL,
 }
 \value{
 a list containing the following:
- \enumerate{
-  \item  pca = the result of fast.svd()
-  \item  plot = ggplot2 pca_plot describing the principle component analysis of the samples.
-  \item  table = a table of the PCA plot data
-  \item  res = a table of the PCA res data
-  \item  variance = a table of the PCA plot variance
- }
+\enumerate{
+ \item  pca = the result of fast.svd()
+ \item  plot = ggplot2 pca_plot describing the principle component analysis of the samples.
+ \item  table = a table of the PCA plot data
+ \item  res = a table of the PCA res data
+ \item  variance = a table of the PCA plot variance
+}
 }
 \description{
 Make a ggplot PCA plot describing the samples' clustering.
 }
 \examples{
- \dontrun{
-  pca_plot <- plot_pca(expt=expt)
-  pca_plot
- }
+\dontrun{
+ pca_plot <- plot_pca(expt=expt)
+ pca_plot
+}
 }
 \seealso{
-\code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+\pkg{directlabels}
+ \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 }
-

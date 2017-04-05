@@ -1,4 +1,3 @@
-
 #' Wrap bioconductor's expressionset to include some other extraneous
 #' information.
 #'
@@ -25,12 +24,13 @@
 #' @param low_files Explicitly lowercase the filenames when searching the filesystem?
 #' @param ... More parameters are fun!
 #' @return  experiment an expressionset
-#' @seealso \pkg{Biobase} \link[Biobase]{pData} \link[Biobase]{fData} \link[Biobase]{exprs}
-#' \link{expt_read_counts} \link[hash]{as.list.hash}
+#' @seealso \pkg{Biobase}
+#'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{exprs}}
+#'  \code{\link{expt_read_counts}} \code{\link[hash]{as.list.hash}}
 #' @examples
 #' \dontrun{
-#' new_experiment = create_expt("some_csv_file.csv", color_hash)
-#' ## Remember that this depends on an existing data structure of gene annotations.
+#'  new_experiment = create_expt("some_csv_file.csv", color_hash)
+#'  ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
 create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
@@ -69,6 +69,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     file_column <- "file"
     if (!is.null(arglist[["file_column"]])) {
         file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
+        file_column <- tolower(file_column)
+        file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
         ## tables / sample in one sheet.
     }
     round <- FALSE
@@ -84,9 +86,11 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     sample_definitions <- data.frame()
     file <- NULL
     meta_dataframe <- NULL
-    if (class(metadata) == "character") { ## This is a filename containing the metadata
+    if (class(metadata) == "character") {
+        ## This is a filename containing the metadata
         file <- metadata
-    } else if (class(metadata) == "data.frame") {  ## A data frame of metadata was passed.
+    } else if (class(metadata) == "data.frame") {
+        ## A data frame of metadata was passed.
         meta_dataframe <- metadata
     } else {
         stop("This requires either a file or meta data.frame.")
@@ -98,13 +102,15 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
         ## punctuation is the devil
         sample_definitions <- meta_dataframe
         colnames(sample_definitions) <- tolower(colnames(sample_definitions))
-        colnames(sample_definitions) <- gsub("[[:punct:]]", "", colnames(sample_definitions))
+        colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
+                                             x=colnames(sample_definitions))
     }  else {
         sample_definitions <- read_metadata(file, ...)
     }
 
     colnames(sample_definitions) <- tolower(colnames(sample_definitions))
-    colnames(sample_definitions) <- gsub("[[:punct:]]", "", colnames(sample_definitions))
+    colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
+                                         x=colnames(sample_definitions))
     ## Check that condition and batch have been filled in.
     sample_columns <- colnames(sample_definitions)
     sample_column <- NULL
@@ -165,14 +171,16 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## difference between the concept of 'row' and 'column' I should probably use the [, column] or
     ## [row, ] method to reinforce my weak neurons.
     if (is.null(sample_definitions[["condition"]])) {
-        ## type and stage are commonly used, and before I was consistent about always having condition, they were a proxy for it.
+        ## type and stage are commonly used, and before I was consistent about always having
+        ## condition, they were a proxy for it.
         sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]],
                                                            sample_definitions[["stage"]], sep="_"))
     }
     ## Extract out the condition names as a factor
     condition_names <- unique(sample_definitions[["condition"]])
     if (is.null(condition_names)) {
-        warning("There is no 'condition' field in the definitions, this will make many analyses more difficult/impossible.")
+        warning("There is no 'condition' field in the definitions, this will make many
+analyses more difficult/impossible.")
     }
     ## Condition and Batch are not allowed to be numeric, so if they are just numbers,
     ## prefix them with 'c' and 'b' respectively.
@@ -197,7 +205,6 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## This may come from either a data frame/matrix, a list of files from the metadata
     ## or it can attempt to figure out the location of the files from the sample names.
     filenames <- NULL
-    found_counts <- NULL
     all_count_tables <- NULL
     if (!is.null(count_dataframe)) {
         all_count_tables <- count_dataframe
@@ -267,9 +274,10 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## I have had a couple data sets with incomplete counts, get rid of those rows before moving on.
     all_count_tables <- all_count_tables[complete.cases(all_count_tables), ]
     ## Features like exon:alicethegene-1 are annoying and entirely too common in TriTrypDB data
-    rownames(all_count_tables) <- gsub("^exon:", "", rownames(all_count_tables))
-    rownames(all_count_tables) <- make.names(gsub(":\\d+", "",
-                                                  rownames(all_count_tables)), unique=TRUE)
+    rownames(all_count_tables) <- gsub(pattern="^exon:", replacement="",
+                                       x=rownames(all_count_tables))
+    rownames(all_count_tables) <- make.names(gsub(pattern=":\\d+", replacement="",
+                                                  x=rownames(all_count_tables)), unique=TRUE)
 
     ## Try a couple different ways of getting gene-level annotations into the expressionset.
     annotation <- NULL
@@ -327,13 +335,13 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
 
     ## There should no longer be blank columns in the annotation data.
     ## Maybe I will copy/move this to my annotation collection toys?
-    tmp_countsdt <- data.table::as.data.table(all_count_tables)
-    tmp_countsdt[["rownames"]] <- rownames(all_count_tables)
+    tmp_countsdt <- data.table::as.data.table(all_count_tables, keep.rownames="rownames")
+    ##tmp_countsdt[["rownames"]] <- rownames(all_count_tables)
     ## This temporary id number will be used to ensure that the order of features in everything
     ## will remain consistent, as we will call order() using it later.
     tmp_countsdt[["temporary_id_number"]] <- 1:nrow(tmp_countsdt)
-    gene_infodt <- data.table::as.data.table(gene_info)
-    gene_infodt[["rownames"]] <- rownames(gene_info)
+    gene_infodt <- data.table::as.data.table(gene_info, keep.rownames="rownames")
+    ##gene_infodt[["rownames"]] <- rownames(gene_info)
 
     message("Bringing together the count matrix and gene information.")
     ## The method here is to create a data.table of the counts and annotation data,
@@ -342,13 +350,49 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
     counts_and_annotations <- as.data.frame(counts_and_annotations)
     final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_infodt) ]
-    rownames(final_annotations) <- counts_and_annotations[["rownames"]]
     final_annotations <- final_annotations[, -1, drop=FALSE]
     ##colnames(final_annotations) <- colnames(gene_info)
     ##rownames(final_annotations) <- counts_and_annotations[["rownames"]]
     final_countsdt <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_tables) ]
     final_counts <- as.data.frame(final_countsdt)
     rownames(final_counts) <- counts_and_annotations[["rownames"]]
+
+        ## I found a non-bug but utterly obnoxious behaivor in R
+    ## Imagine a dataframe with 2 entries: TcCLB.511511.3 and TcCLB.511511.30
+    ## Then imagine that TcCLB.511511.3 gets removed because it is low abundance.
+    ## Then imagine what happens if I go to query 511511.3...
+    ## Here are some copy/pasted lines illustrating it:
+    ## > find_fiveeleven["TcCLB.511511.3", ]
+    ##                 logFC AveExpr    t   P.Value adj.P.Val     B    qvalue
+    ## TcCLB.511511.30  5.93   6.315 69.6 1.222e-25 7.911e-25 48.86 9.153e-27
+    ## Here is the line in the dataframe documentation explaining this nonsense:
+    ## https://stat.ethz.ch/R-manual/R-devel/library/base/html/Extract.data.frame.html
+    ## Both [ and [[ extraction methods partially match row names. By default neither partially
+    ## match column names, but [[ will if exact = FALSE (and with a warning if exact = NA). If you
+    ## want to exact matching on row names use match, as in the examples
+    ## How about you go eff yourself?  If you then look carefully at the match help, you will see
+    ## that this is a feature, not a bug and that if you want truly exact matches, then the string
+    ## must not end with a numeric value... oooo....kkk....
+    ## Therefore, the following line replaces a terminal numeric rowname with the number and .
+    ## > test_df = data.frame(a=c(1,1,1), b=c(2,2,2))
+    ## > rownames(test_df) = c("TcCLB.511511.3","TcCLB.511511.30","bob")
+    ## > test_df
+    ##                 a b
+    ## TcCLB.511511.3  1 2
+    ## TcCLB.511511.30 1 2
+    ## bob             1 2
+    ## > rownames(test_df) <- gsub(pattern="(\\d)$", replacement="\\1\\.", x=rownames(test_df))
+    ## > test_df
+    ##                  a b
+    ## TcCLB.511511.3.  1 2
+    ## TcCLB.511511.30. 1 2
+    ## bob              1 2
+    ## This is so stupid I think I am going to go and cry.
+    ##rownames(final_annotations) <- gsub(pattern="(\\d)$", replacement="\\1\\.",
+    ##                                    x=rownames(final_annotations), perl=TRUE)
+    ##rownames(final_counts) <- gsub(pattern="(\\d)$", replacement="\\1\\.",
+    ##                                    x=rownames(final_counts), perl=TRUE)
+
     ##final_counts <- final_counts[, -1, drop=FALSE]
     rm(counts_and_annotations)
     rm(tmp_countsdt)
@@ -422,7 +466,6 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
 
     feature_data <- methods::new("AnnotatedDataFrame", final_annotations)
     Biobase::featureNames(feature_data) <- rownames(final_counts)
-
     experiment <- methods::new("ExpressionSet",
                                exprs=as.matrix(final_counts),
                                phenoData=metadata,
@@ -496,6 +539,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
 #' @param patterns  Character list of patterns to remove/keep
 #' @param ...  Extra arguments are passed to arglist, currently unused.
 #' @return  A smaller expt
+#' @seealso \code{\link{create_expt}}
 #' @export
 expt_exclude_genes <- function(expt, column="txtype", method="remove",
                                patterns=c("snRNA","tRNA","rRNA"), ...) {
@@ -539,8 +583,8 @@ subset_expt <- function(...) {
 #' @param expt Expt chosen to extract a subset of data.
 #' @param subset Valid R expression which defines a subset of the design to keep.
 #' @return metadata Expt class which contains the smaller set of data.
-#' @seealso \pkg{Biobase} \link[Biobase]{pData}
-#' \link[Biobase]{exprs} \link[Biobase]{fData}
+#' @seealso \pkg{Biobase}
+#'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
 #' @examples
 #' \dontrun{
 #'  smaller_expt = expt_subset(big_expt, "condition=='control'")
@@ -628,6 +672,7 @@ expt_subset <- function(expt, subset=NULL) {
 #' @param file Csv/xls file to read.
 #' @param ... Arguments for arglist, used by sep, header and similar read.csv/read.table parameters.
 #' @return Df of metadata.
+#' @seealso \pkg{tools} \pkg{openxlsx} \pkg{XLConnect}
 read_metadata <- function(file, ...) {
     arglist <- list(...)
     if (is.null(arglist[["sep"]])) {
@@ -666,6 +711,7 @@ read_metadata <- function(file, ...) {
 #' @param ids  Specific samples to change.
 #' @param ...  Extra options are like spinach.
 #' @return  The original expt with some new metadata.
+#' @seealso \code{\link{create_expt}} \code{\link{set_expt_condition}}
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
@@ -703,6 +749,7 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' @param chosen_palette  I usually use Dark2 as the RColorBrewer palette.
 #' @param change_by  Assuming a list is passed, cross reference by condition or sample?
 #' @return expt Send back the expt with some new metadata
+#' @seealso \code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
 #' @examples
 #' \dontrun{
 #' unique(esmer_expt$design$conditions)
@@ -795,6 +842,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
 #' @param ids Specific sample IDs to change.
 #' @param ...  Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
+#' @seealso \code{\link{set_expt_batch}} \code{\link{create_expt}}
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))
@@ -853,6 +901,7 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
 #' @param ids Specific sample IDs to change.
 #' @param ... Arguments passed along (likely colors)
 #' @return expt Send back the expt with some new metadata
+#' @seealso \code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_factors(big_expt, condition="column", batch="another_column")
@@ -876,6 +925,7 @@ set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
 #' @param expt Expt to modify
 #' @param newnames New names, currently only a character vector.
 #' @return expt Send back the expt with some new metadata
+#' @seealso \code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_samplenames(expt, c("a","b","c","d","e","f"))
@@ -914,6 +964,8 @@ set_expt_samplenames <- function(expt, newnames) {
 #' @param norm  How was it normalized?
 #' @param filter  How was it filtered?
 #' @param batch  How was it batch-corrected?
+#' @return An expression describing what has been done to this data.
+#' @seealso \code{\link{create_expt}}
 #' @export
 what_happened <- function(expt=NULL, transform="raw", convert="raw",
                           norm="raw", filter="raw", batch="raw") {

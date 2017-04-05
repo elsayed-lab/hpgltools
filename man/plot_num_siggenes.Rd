@@ -29,4 +29,11 @@ which define significant.  This provides that metrics as a set of tables of numb
 significant up/down genes when p-value is held constant, as well as number when fold-change is
 held constant.
 }
-
+\examples{
+\dontrun{
+ crazy_sigplots <- plot_num_siggenes(pairwise_result)
+}
+}
+\seealso{
+\pkg{ggplot2}
+}

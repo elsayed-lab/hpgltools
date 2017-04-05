@@ -25,20 +25,19 @@ definitions, etc.
 \dontrun{
  annotated_go = goseq_table(go_ids)
  head(annotated_go, n=1)
-## >        category numDEInCat numInCat over_represented_pvalue
-## > 571  GO:0006364          9       26            4.655108e-08
-## >      under_represented_pvalue       qvalue ontology
-## > 571                 1.0000000 6.731286e-05       BP
-## >                                term
-## > 571                 rRNA processing
-## >                               synonym
-## > 571        "35S primary transcript processing, GO:0006365"
-## >        secondary    definition
-## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal
-##          RNA (rRNA) transcript into one or more mature rRNA molecules.
+ ## >        category numDEInCat numInCat over_represented_pvalue
+ ## > 571  GO:0006364          9       26            4.655108e-08
+ ## >      under_represented_pvalue       qvalue ontology
+ ## > 571                 1.0000000 6.731286e-05       BP
+ ## >                                term
+ ## > 571                 rRNA processing
+ ## >                               synonym
+ ## > 571        "35S primary transcript processing, GO:0006365"
+ ## >        secondary    definition
+ ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal
+ ##          RNA (rRNA) transcript into one or more mature rRNA molecules.
 }
 }
 \seealso{
 \pkg{goseq}
 }
-

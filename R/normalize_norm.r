@@ -5,13 +5,13 @@
 #' @param data Matrix of count data.
 #' @param design Dataframe describing the experimental design. (conditions/batches/etc)
 #' @param norm Normalization to perform: 'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep
-#'     wishy-washing on whether design is a required argument.
+#'  wishy-washing on whether design is a required argument.
 #' @param ... More arguments might be necessary.
 #' @return Dataframe of normalized(counts)
 #' @seealso \pkg{edgeR} \pkg{limma} \pkg{DESeq2}
 #' @examples
 #' \dontrun{
-#' norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
+#'  norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
 #' }
 #' @export
 normalize_counts <- function(data, design=NULL, norm="raw", ...) {
@@ -65,7 +65,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         }
         cds <- DESeq::newCountDataSet(count_table, conditions=conds)
         factors <- BiocGenerics::estimateSizeFactors(cds)
-        dispersions <- BiocGenerics::estimateDispersions(factors, method='blind')
+        dispersions <- BiocGenerics::estimateDispersions(factors, method="blind")
         count_table <- DESeq::getVarianceStabilizedData(dispersions)
         norm_performed <- "vsd"
     } else if (norm == "quant") {
@@ -149,7 +149,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
 #' @seealso \pkg{qsmooth}
 #' @examples
 #' \dontrun{
-#' df <- hpgl_qshrink(data)
+#'  df <- hpgl_qshrink(data)
 #' }
 #' @export
 hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
@@ -233,9 +233,10 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
 #' @param groupLoc I don't remember what this is for.
 #' @param window Window for basking!
 #' @return Some new data.
+#' @seealso \pkg{matrixStats}
 #' @examples
 #' \dontrun{
-#' qstatted <- hpgl_qstats(data, conditions)
+#'  qstatted <- hpgl_qstats(data, conditions)
 #' }
 #' @export
 hpgl_qstats <- function (data, groups, refType="mean",

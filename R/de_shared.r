@@ -25,6 +25,8 @@
 #' @param parallel  Use dopar to run limma, deseq, edger, and basic simultaneously.
 #' @param ...  Picks up extra arguments into arglist, currently only passed to write_limma().
 #' @return A list of limma, deseq, edger results.
+#' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
+#'  \code{link{limma_pairwise}} \code{\link{deseq_pairwise}} \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
 #' @examples
 #'  \dontrun{
 #'   finished_comparison = eBayes(limma_output)
@@ -176,7 +178,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
             ## Once I have them, make the subset model matrix with append and cbind
             new_sv_model <- append(first_sva, second_sva)
             new_model <- cbind(first_model, second_model, new_sv_model)
-            colnames(new_model) <- c("first","second","sv")
+            colnames(new_model) <- c("first", "second", "sv")
             ## The sva f.pvalue requires a null model of the appropriate size, create that here.
             new_null <- cbind(rep(1, (num_first + num_second)), new_sv_model)
             ## And give its columns suitable names
@@ -289,13 +291,15 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' @param surrogates  Number of or method used to choose the number of surrogate variables.
 #' @param ...  Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
+#' @seealso \pkg{stats}
+#'  \code{\link[stats]{model.matrix}}
 #' @export
 choose_model <- function(input, conditions, batches, model_batch=TRUE,
                          model_cond=TRUE, model_intercept=TRUE,
                          alt_model=NULL, alt_string=NULL,
                          intercept=0, reverse=FALSE,
                          surrogates="be", ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
     ## Make a model matrix which will have one entry for
@@ -350,8 +354,8 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
         including <- "condition"
     } else if (isTRUE(model_cond) & isTRUE(model_batch)) {
         if (class(condbatch_int_model) == "try-error") {
-            message("The condition+batch model failed.  Does your experimental design support both condition and batch?")
-            message("Using only a conditional model.")
+            message("The condition+batch model failed.  Does your experimental design support
+both condition and batch? Using only a conditional model.")
             int_model <- cond_int_model
             noint_model <- cond_noint_model
             int_string <- cond_int_string
@@ -481,9 +485,11 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
 #' @param choose_for  One of limma, deseq, edger, or basic.  Defines the requested data state.
 #' @param ...  More options for future expansion.
 #' @return List the data, conditions, and batches in the data.
+#' @seealso \code{\link{choose_binom_dataset}} \code{\link{choose_limma_dataset}}
+#'  \code{\link{choose_basic_dataset}}
 #' @export
 choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     result <- NULL
     if (choose_for == "limma") {
         result <- choose_limma_dataset(input, force=force, ...)
@@ -512,8 +518,9 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
 #' @param which_voom  Choose between limma'svoom, voomWithQualityWeights, or the hpgl equivalents.
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
+#' @seealso \pkg{limma}
 choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     input_class <- class(input)[1]
     data <- NULL
     warn_user <- 0
@@ -556,7 +563,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
             filt_state <- "raw"
         }
 
-        ready <- input
+        ## ready <- input
         data <- Biobase::exprs(input[["expressionset"]])
         if (isTRUE(force)) {
             message("Leaving the data alone, regardless of normalization state.")
@@ -600,8 +607,9 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 #' @param force Ignore every warning and just use this data.
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
+#' @seealso \pkg{DESeq2} \pkg{edgeR}
 choose_binom_dataset <- function(input, force=FALSE, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     input_class <- class(input)[1]
     ## I think I would like to make this function smarter so that it will remove the log2 from
     ## transformed data.
@@ -659,8 +667,8 @@ like me, want to see what happens when you put non-standard data into deseq, the
                 data <- input[["normalized"]][["intermediate_counts"]][["original"]]
             }
         } else {
-            message("The data should be suitable for EdgeR/DESeq.")
-            message("If EdgeR/DESeq freaks out, check the state of the count table and ensure that it is in integer counts.")
+            message("The data should be suitable for EdgeR/DESeq. If EdgeR/DESeq freaks out, check
+the state of the count table and ensure that it is in integer counts.")
         }
         ## End testing if normalization has been performed
     } else {
@@ -696,16 +704,16 @@ like me, want to see what happens when you put non-standard data into deseq, the
 #'  correlations betwee the three players.
 #' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
 #' @examples
-#'  \dontrun{
-#'   l = limma_pairwise(expt)
-#'   d = deseq_pairwise(expt)
-#'   e = edger_pairwise(expt)
-#'   fun = compare_tables(limma=l, deseq=d, edger=e)
-#'  }
+#' \dontrun{
+#'  l = limma_pairwise(expt)
+#'  d = deseq_pairwise(expt)
+#'  e = edger_pairwise(expt)
+#'  fun = compare_tables(limma=l, deseq=d, edger=e)
+#' }
 #' @export
 compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
                            include_basic=TRUE, annot_df=NULL, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     ## Fill each column/row of these with the correlation between tools for one contrast performed
     if (class(limma) == "list") {
         ## Then this was fed the raw output from limma_pairwise,
@@ -738,7 +746,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         d <- data.frame(deseq[[comp]])
         b <- data.frame(basic[[comp]])
         le <- merge(l, e, by.x="row.names", by.y="row.names")
-        le <- le[,c("logFC.x", "logFC.y")]
+        le <- le[, c("logFC.x", "logFC.y")]
         colnames(le) <- c("limma logFC", "edgeR logFC")
         lec <- stats::cor.test(x=le[, 1], y=le[, 2])[["estimate"]]
         les <- plot_scatter(le) + ggplot2::labs(title=paste0(comp, ": limma vs. edgeR.")) +
@@ -746,31 +754,31 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
         ld <- merge(l, d, by.x="row.names", by.y="row.names")
         ld <- ld[, c("logFC.x", "logFC.y")]
         colnames(ld) <- c("limma logFC", "DESeq2 logFC")
-        ldc <- stats::cor.test(ld[,1], ld[,2])[["estimate"]]
+        ldc <- stats::cor.test(ld[, 1], ld[, 2])[["estimate"]]
         lds <- plot_scatter(ld) + ggplot2::labs(title=paste0(comp, ": limma vs. DESeq2.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         lb <- merge(l, b, by.x="row.names", by.y="row.names")
         lb <- lb[, c("logFC.x", "logFC.y")]
         colnames(lb) <- c("limma logFC", "basic logFC")
-        lbc <- stats::cor.test(lb[,1], lb[,2])[["estimate"]]
+        lbc <- stats::cor.test(lb[, 1], lb[, 2])[["estimate"]]
         lbs <- plot_scatter(lb) + ggplot2::labs(title=paste0(comp, ": limma vs. basic.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         ed <- merge(e, d, by.x="row.names", by.y="row.names")
         ed <- ed[, c("logFC.x", "logFC.y")]
         colnames(ed) <- c("edgeR logFC", "DESeq2 logFC")
-        edc <- stats::cor.test(ed[,1], ed[,2])[["estimate"]]
+        edc <- stats::cor.test(ed[, 1], ed[, 2])[["estimate"]]
         eds <- plot_scatter(ed) + ggplot2::labs(title=paste0(comp, ": edgeR vs. DESeq2.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         eb <- merge(e, b, by.x="row.names", by.y="row.names")
         eb <- eb[, c("logFC.x", "logFC.y")]
         colnames(eb) <- c("edgeR logFC", "basic logFC")
-        ebc <- stats::cor.test(eb[,1], eb[,2])[["estimate"]]
+        ebc <- stats::cor.test(eb[, 1], eb[, 2])[["estimate"]]
         ebs <- plot_scatter(eb) + ggplot2::labs(title=paste0(comp, ": edgeR vs. basic.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         db <- merge(d, b, by.x="row.names", by.y="row.names")
         db <- db[, c("logFC.x", "logFC.y")]
         colnames(db) <- c("DESeq2 logFC", "basic logFC")
-        dbc <- stats::cor.test(db[,1], db[,2])[["estimate"]]
+        dbc <- stats::cor.test(db[, 1], db[, 2])[["estimate"]]
         dbs <- plot_scatter(db) +
             ggplot2::labs(title=paste0(comp, ": DESeq2 vs basic.")) +
             ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
@@ -812,10 +820,10 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
     }
     comparison_df <- as.matrix(comparison_df)
     colnames(comparison_df) <- names(deseq)
-    heat_colors <- grDevices::colorRampPalette(c("white","black"))
+    heat_colors <- grDevices::colorRampPalette(c("white", "black"))
     comparison_heatmap <- try(heatmap.3(comparison_df, scale="none",
                                         trace="none", keysize=1.5,
-                                        linewidth=0.5, margins=c(9,9),
+                                        linewidth=0.5, margins=c(9, 9),
                                         col=heat_colors, dendrogram="none",
                                         Rowv=FALSE, Colv=FALSE,
                                         main="Compare DE tools"), silent=TRUE)
@@ -849,6 +857,7 @@ compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
 #'
 #' @param combined_tables The combined tables from limma et al.
 #' @return Some plots
+#' @seealso \code{\link{plot_linear_scatter}}
 #' @export
 compare_logfc_plots <- function(combined_tables) {
     plots <- list()
@@ -891,11 +900,44 @@ compare_logfc_plots <- function(combined_tables) {
 #' @param coef1  The first coefficient to query.
 #' @param coef2  And the second.
 #' @param ...  Extra arguments are passed to arglist, but basically ignored.
-disjunct_pvalues <- function(contrast_fit, coef1, coef2, ...) {
-    arglist <- list(...)
-    stat <- BiocGenerics::pmin(abs(contrast_fit[, coef1]), abs(contrast_fit[, coef2]))
-    pval <- BiocGenerics::pmax(contrast_fit$p.val[, coef1], contrast_fit$p.val[, coef2])
-    return(pval)
+disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_contrast) {
+    ## arglist <- list(...)
+    contr_level_counts <- rowSums(contrast_fit[["contrasts"]][, c(conj_contrasts, disj_contrast)] != 0)
+    ## Define the condition levels involved in the tests
+    levels_to_use <- names(contr_level_counts)[contr_level_counts > 0]
+    ## Extract the average counts for each, make into table
+    ave_expression_mat <- cellmeans_fit[["coef"]][, levels_to_use]
+    exp_table <- data.frame("ID" = rownames(ave_expression_mat))
+    exp_table <- cbind(exp_table, as.data.frame(ave_expression_mat))
+    names(exp_table)[-1] <- paste("AveExpr", gsub("condition", "", levels_to_use), sep=":")
+
+    ## stat <- BiocGenerics::pmin(abs(contrast_fit[, coef1]), abs(contrast_fit[, coef2]))
+    ## pval <- BiocGenerics::pmax(contrast_fit[["p.val"]][, coef1], contrast_fit[["p.val"]][, coef2])
+    stat <- BiocGenerics::pmin(abs(contrast_fit[["t"]][, conj_contrasts]))
+    pval <- BiocGenerics::pmax(contrast_fit[["p.value"]][, conj_contrasts])
+   
+    adj.pval <- p.adjust(pval, method="BH")
+    fcs <- as.data.frame(contrast_fit[["coef"]][, conj_contrasts])
+    names(fcs) <- paste("logFC", names(fcs), sep=":")
+    conj_pvals <- as.data.frame(apply(contrast_fit[["p.value"]][, conj_contrasts], 2, p.adjust, method="BH"))
+    names(conj_pvals) <- paste("adj.P.Val", names(conj_pvals), sep=":")
+    conj_table <- data.frame("ID" = rownames(contrast_fit))
+    conj_table <- cbind(conj_table, fcs, conj_pvals, stat=stat, adj.P.Value=adj.pval)
+    names(conj_table)[seq(2 + 2 * length(conj_contrasts), ncol(conj_table))] <- paste(
+        c("stat", "adj.P.Value"), paste(conj_contrasts, collapse=":"), sep=":")
+
+    ## Make the table for the 'other' test
+    disj_table <- data.frame("ID" = rownames(contrast_fit),
+                             "logFC" = contrast_fit[["coef"]][, disj_contrast],
+                             "adj.P.Value" = p.adjust(contrast_fit[["p.value"]][, disj_contrast], method="BH"))
+    names(disj_table)[-1] <- paste(c("logFC", "adj.P.Value"), disj_contrast, sep=":")
+    ## Combine tables, making sure all tables are in the same order
+    stopifnot(all(exp_table$ID == conj_table[["ID"]] & exp_table[["ID"]] == disj_table[["ID"]]))
+    out_table <- cbind(exp_table, conj_table[, -1], disj_table[, -1])
+    ## order output table by the statistic in the disjunctive test
+    o <- order(-stat)
+    out_table <- out_table[o, ]
+    return(out_table)
 }
 
 #' Generalize pairwise comparisons
@@ -907,9 +949,11 @@ disjunct_pvalues <- function(contrast_fit, coef1, coef2, ...) {
 #' @param type  Which type of pairwise comparison to perform
 #' @param ...  The set of arguments intended for limma_pairwise(), edger_pairwise(), and friends.
 #' @return The result from limma/deseq/edger/basic
+#' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq_pairwise}}
+#'  \code{\link{basic_pairwise}}
 #' @export
 do_pairwise <- function(type, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     res <- NULL
     if (type == "limma") {
         res <- try(limma_pairwise(...))
@@ -938,6 +982,7 @@ do_pairwise <- function(type, ...) {
 #' @param unique  Unimplemented: take only the genes unique among the conditions surveyed.
 #' @param least  When true, this finds the least abundant rather than most.
 #' @return  List of data frames containing the genes of interest.
+#' @seealso \pkg{stats} \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @export
 get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE, least=FALSE) {
     if (is.null(z) & is.null(n)) {
@@ -953,7 +998,7 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
             coefficient_df <- coefficient_df * -1.0
         }
         ## There are a couple of extraneous columns in this table.
-        removers <- c("b","z")
+        removers <- c("b", "z")
         keepers <- !(colnames(coefficient_df) %in% removers)
         coefficient_df <- coefficient_df[, keepers]
     } else if (type == "limma") {
@@ -997,7 +1042,8 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
         }
         names(coef_ordered) <- coefficient_rows
         kept_rows <- NULL
-        if (is.null(n)) {  ## Then do it on a z-score
+        if (is.null(n)) {
+            ## Then do it on a z-score
             tmp_summary <- summary(coef_ordered)
             tmp_mad <- stats::mad(as.numeric(coef_ordered, na.rm=TRUE))
             tmp_up_median_dist <- tmp_summary["Median"] + (tmp_mad * z)
@@ -1008,11 +1054,74 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
                 kept_rows <- coef_ordered[coef_ordered >= tmp_up_median_dist]
             }
             abundant_list[[coef]] <- kept_rows
-        } else {  ## Then do it in a number of rows
+        } else {
+            ## Then do it in a number of rows
             abundant_list[[coef]] <- head(coef_ordered, n=n)
         }
     }
     return(abundant_list)
+}
+
+#' A companion function for get_abundant_genes()
+#'
+#' Instead of pulling to top/bottom abundant genes, get all abundances and variances or stderr.
+#'
+#' @param datum  Output from _pairwise() functions.
+#' @param type  According to deseq/limma/ed ger/basic?
+#' @return  A list containing the expression values and some metrics of variance/error.
+#' @seealso \pkg{limma}
+#' @export
+get_pairwise_gene_abundances <- function(datum, type="limma") {
+    if (type == "limma") {
+        ## Make certain we have a consistent set of column and row orders for the future operations
+        conds <- names(datum[["limma"]][["identity_tables"]])
+        row_order <- rownames(datum[["limma"]][["identity_tables"]][[1]])
+        nconds <- length(conds)
+        num_rows <- length(row_order)
+        ## Pre-allocate and set the row/colnames
+        expression_mtrx <- matrix(ncol=nconds, nrow=num_rows)
+        stdev_mtrx <- matrix(ncol=nconds, nrow=num_rows)
+        t_mtrx <- matrix(ncol=nconds, nrow=num_rows)
+        colnames(expression_mtrx) <- conds
+        colnames(stdev_mtrx) <- conds
+        colnames(t_mtrx) <- conds
+        rownames(expression_mtrx) <- row_order
+        rownames(stdev_mtrx) <- row_order
+        rownames(t_mtrx) <- row_order
+        ## Recast these as data frames because they are easier syntactically.
+        ## E.g. I like setting columns with df[[thingie]]
+        expression_mtrx <- as.data.frame(expression_mtrx)
+        stdev_mtrx <- as.data.frame(stdev_mtrx)
+        std_error <- as.data.frame(stdev_mtrx)
+        another_error <- as.data.frame(stdev_mtrx)
+        t_mtrx <- as.data.frame(t_mtrx)
+        ## I am explicitly setting the row order because it seems that the output
+        ## from limma is not set from one table to the next.
+        for (cond in conds) {
+            tmp_table <- datum[["limma"]][["identity_tables"]][[cond]]
+            new_column <- tmp_table[row_order, "logFC"]
+            expression_mtrx[[cond]] <- new_column
+            new_column <- tmp_table[row_order, "t"]
+            t_mtrx[[cond]] <- new_column
+            ## When attempting to extract something suitable for error bars:
+            ## https://support.bioconductor.org/p/79349/
+            ## The discussion seems to me to have settled on:
+            ## std.error =  fit$stdev.unscaled * fit$sigma
+            stdev_table <- datum[["limma"]][["pairwise_fits"]][["stdev.unscaled"]]
+            sigma_table <- datum[["limma"]][["pairwise_fits"]][["sigma"]]
+            s2post_table <- datum[["limma"]][["pairwise_fits"]][["s2.post"]]
+            std_error <- stdev_table * sigma_table
+            ## another_error <- stdev_table * s2post_table
+            stdev_mtrx[[cond]] <- tmp_table[row_order, cond]
+        }
+    }
+    retlist <- list(
+        "expression_values" = expression_mtrx,
+        "t_values" = t_mtrx,
+        "error_values" = std_error,
+        "another_error" = another_error,
+        "stdev_values" = stdev_mtrx)
+    return(retlist)
 }
 
 #' Get a set of up/down differentially expressed genes.
@@ -1036,6 +1145,7 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
 #' @param column Table's column used to distinguish top vs. bottom.
 #' @param p_column Table's column containing (adjusted or not)p-values.
 #' @return Subset of the up/down genes given the provided criteria.
+#' @seealso \code{\link{extract_significant_genes}}
 #' @export
 get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
                           column="logFC", fold="plusminus", p_column="adj.P.Val") {
@@ -1056,9 +1166,9 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
         ## Going to add logic in case one does not ask for fold change
         ## In that case, a p-value assertion should still know the difference between up and down
         ## But it should also still know the difference between ratio and log changes
-        if (fold == 'plusminus' | fold == 'log') {
+        if (fold == "plusminus" | fold == "log") {
             message(paste0("Assuming the fold changes are on the log scale and so taking >< 0"))
-            ##up_idx <- up_genes[, column] > 0.0
+            ## up_idx <- up_genes[, column] > 0.0
             up_idx <- as.numeric(up_genes[[column]]) > 0.0
             up_genes <- up_genes[up_idx, ]
             down_idx <- as.numeric(down_genes[[column]]) < 0.0
@@ -1077,7 +1187,7 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
     if (!is.null(fc)) {
         up_idx <- as.numeric(up_genes[[column]]) >= fc
         up_genes <- up_genes[up_idx, ]
-        if (fold == 'plusminus' | fold == 'log') {
+        if (fold == "plusminus" | fold == "log") {
             message(paste0("Assuming the fold changes are on the log scale and so taking -1.0 * fc"))
             ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
             down_idx <- as.numeric(down_genes[[column]]) <= (fc * -1.0)
@@ -1150,12 +1260,12 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
 #'   \item contrast_string = the string passed to R to call makeContrasts(...)
 #'   \item names = the names given to the identities/contrasts
 #'  }
-#' @seealso
-#'  \link[limma]{makeContrasts}
+#' @seealso \pkg{limma}
+#'  \code{\link[limma]{makeContrasts}}
 #' @examples
-#'  \dontrun{
-#'   pretend = make_pairwise_contrasts(model, conditions)
-#'  }
+#' \dontrun{
+#'  pretend = make_pairwise_contrasts(model, conditions)
+#' }
 #' @export
 make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
                                     do_pairwise=TRUE, extra_contrasts=NULL) {
@@ -1265,6 +1375,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
 #' @param semantic_column  Column in the DE table used to find the
 #'  semantic strings for removal.
 #' @return Smaller list of up/down genes.
+#' @seealso \code{\link{semantic_copynumber_extract}}
 #' @export
 semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
                                        semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
@@ -1311,7 +1422,7 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
         kept_list <- new_table <- NULL
         for (string in semantic) {
             pre_remove_size <- nrow(tab)
-            idx <- grep(pattern=string, x=tab[, semantic_column], invert=invert)
+            idx <- grep(pattern=string, x=tab[, semantic_column])
             num_removed <- length(idx)
             numbers_removed[[table_name]][[string]] <- num_removed
             if (num_removed > 0) {
@@ -1355,12 +1466,13 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
 #'
 #' @param de_list  List of sets of genes deemed significantly
 #'  up/down with a column expressing approximate count numbers.
-#' @param max_copies  Keep only those genes with <= n putative
+#' @param min_copies  Keep only those genes with >= n putative
 #'  copies.
 #' @param semantic  Set of strings with gene names to exclude.
 #' @param semantic_column  Column in the DE table used to find the
 #'  semantic strings for removal.
 #' @return Smaller list of up/down genes.
+#' @seealso \code{\link{semantic_copynumber_filter}}
 #' @export
 semantic_copynumber_extract <- function(de_list, min_copies=2,
                                         semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
@@ -1396,12 +1508,13 @@ semantic_copynumber_extract <- function(de_list, min_copies=2,
             numbers_found[[table_name]][[string]] <- num_found
             if (num_found > 0) {
                 type <- "Kept"
-                kept_list[[string]] <- tab
+                kept_list[[string]] <- tab[idx, ]
                 message(paste0("Table started with: ", pre_remove_size, ". ", type,
                                " entries with string ", string,
                                ", found ", num_found, "."))
             } else {
                 message("Found no entries of type ", string, ".")
+                kept_list[[string]] <- NULL
             }
         } ## End of the foreach semantic thing to remove
         table_list[[table_name]] <- kept_list

@@ -12,16 +12,17 @@
 #' or whatever).  Finally, it prints a couple of the plots shown by Leek in his document.
 #' In other words, this is entirely derivative of someone much smarter than me.
 #'
-#' @param data  Expt or data frame to manipulate.
+#' @param input  Expt or data frame to manipulate.
 #' @param design  If the data is not an expt, provide experimental design here.
 #' @param estimate_type  One of: sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
-#'     ruv_residuals, or pca.
+#'  ruv_residuals, or pca.
 #' @param surrogates  Choose a method for getting the number of surrogates, be or leek, or a number.
 #' @param ... Parameters fed to arglist.
 #' @return List including the adjustments for a model matrix, a modified count table, and 3 plots of
-#'        the known batch, surrogates, and batch/surrogate.
+#'  the known batch, surrogates, and batch/surrogate.
+#' @seealso \pkg{Biobase} \pkg{sva} \pkg{EDASeq} \pkg{RUVseq} \pkg{edgeR}
 #' @export
-get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates="be", ...) {
+get_model_adjust <- function(input, design=NULL, estimate_type="sva", surrogates="be", ...) {
     arglist <- list(...)
     my_design <- NULL
     my_data <- NULL
@@ -44,25 +45,25 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
     if (!is.null(arglist[["convert"]])) {
         convert <- arglist[["convert"]]
     }
-    if (class(data) == "expt") {
+    if (class(input) == "expt") {
         ## Gather all the likely pieces we can use
-        my_design <- data[["design"]]
-        my_data <- as.data.frame(Biobase::exprs(data[["expressionset"]]))
-        transform_state <- data[["state"]][["transform"]]
+        my_design <- input[["design"]]
+        my_data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+        transform_state <- input[["state"]][["transform"]]
         base10_mtrx <- as.matrix(my_data)
         log_mtrx <- as.matrix(my_data)
         if (transform_state == "raw") {
             ## I think this was the cause of some problems.  The order of operations performed here
             ## was imperfect and could potentially lead to multiple different matrix sizes.
-            base10_data <- sm(normalize_expt(data, convert=convert, filter=filter, thresh=1))
+            base10_data <- sm(normalize_expt(input, convert=convert, filter=filter, thresh=1))
             base10_mtrx <- Biobase::exprs(base10_data[["expressionset"]])
             log_data <- sm(normalize_expt(base10_data, transform="log2"))
             log2_mtrx <- Biobase::exprs(log_data[["expressionset"]])
             rm(log_data)
             rm(base10_data)
         } else {
-            log2_mtrx <- as.matrix(data)
-            base10_mtrx <- as.matrix(2 ^ data) - 1
+            log2_mtrx <- as.matrix(input)
+            base10_mtrx <- as.matrix(2 ^ input) - 1
         }
     } else {
         if (is.null(design)) {
@@ -76,11 +77,11 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         } else {
             transform_state <- "log2"
         }
-        my_data <- data
+        my_data <- input
         base10_mtrx <- as.matrix(my_data)
         log_mtrx <- as.matrix(my_data)
         if (transform_state == "raw") {
-            log_data <- sm(hpgl_norm(data, convert="cpm", transform="log2", filter=filter, thresh=1))
+            log_data <- sm(hpgl_norm(input, convert="cpm", transform="log2", filter=filter, thresh=1))
             log2_mtrx <- as.matrix(log_data[["count_table"]])
             ## base10_data <- sm(hpgl_norm(data, convert="cpm", filter=filter, thresh=1))
             ## base10_mtrx <- as.matrix(base10_data[["count_table"]])
@@ -88,8 +89,8 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
             rm(log_data)
             ## rm(base10_data)
         } else {
-            log2_mtrx <- as.matrix(data)
-            base10_mtrx <- as.matrix(2 ^ data) - 1
+            log2_mtrx <- as.matrix(input)
+            base10_mtrx <- as.matrix(2 ^ input) - 1
         }
     }
 
@@ -134,6 +135,10 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
                                                               type=control_type)))
     }
     if (class(control_likelihoods) == "try-error") {
+        message("The most likely error in sva::empirical.controls() is a call to density in irwsva.build.
+Setting control_likelihoods to zero and using unsupervised sva.")
+        warning("It is highly likely that the underlying reason for this error is too many 0's in
+the dataset, please try doing a filtering of the data and retry.")
         control_likelihoods <- 0
     }
     if (sum(control_likelihoods) == 0) {
@@ -309,10 +314,11 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
 #'
 #' @param expt Experiment containing a design and other information.
 #' @param extra_factors Character list of extra factors which may be included in the final plot of
-#'     the data.
+#'  the data.
 #' @param do_catplots Include the catplots?  They don't make a lot of sense yet, so probably no.
 #' @param surrogates  Use 'be' or 'leek' surrogate estimates, or choose a number.
 #' @return List of the results.
+#' @seealso \code{\link{get_model_adjust}}
 #' @export
 compare_surrogate_estimates <- function(expt, extra_factors=NULL,
                                         do_catplots=FALSE, surrogates="be") {
@@ -368,7 +374,8 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
         "ruv_supervised" = ruv_supervised[["model_adjust"]],
         "ruv_residuals" = ruv_residuals[["model_adjust"]],
         "ruv_empirical" = ruv_empirical[["model_adjust"]])
-    batch_names <- c("condition","batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
+    batch_names <- c("condition", "batch", "pca", "sva_sup", "sva_unsup",
+                     "ruv_sup", "ruv_resid", "ruv_emp")
     silly <- testthat::compare(batch_names, batch_names)  ## I want to try something silly
     if (!is.null(extra_factors)) {
         for (fact in extra_factors) {
@@ -387,7 +394,8 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
                      "+ batch_adjustments$sva_sup", "+ batch_adjustments$sva_unsup",
                      "+ batch_adjustments$ruv_sup", "+ batch_adjustments$ruv_resid",
                      "+ batch_adjustments$ruv_emp")
-    adjust_names <- c("null", "batch","pca","sva_sup","sva_unsup","ruv_sup","ruv_resid","ruv_emp")
+    adjust_names <- c("null", "batch", "pca", "sva_sup", "sva_unsup",
+                      "ruv_sup", "ruv_resid", "ruv_emp")
     starter <- edgeR::DGEList(counts=Biobase::exprs(expt[["expressionset"]]))
     norm_start <- edgeR::calcNormFactors(starter)
     catplots <- vector("list", length(adjustments) + 1)  ## add 1 for a null adjustment
@@ -408,7 +416,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
     ##names(tstats[["null"]]) <- as.character(1:dim(data)[1])
     ## This needs to be redone to take into account how I organized the adjustments!!!
     num_adjust <- length(adjustments)
-    oldpar <- par(mar=c(5,5,5,5))
+    oldpar <- par(mar=c(5, 5, 5, 5))
     for (adjust in adjustments) {
         counter <- counter + 1
         message(paste0(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with ", adjust, " in the model."))
@@ -426,7 +434,10 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
                 require.auto("ffpe")
             }
             if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-                catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[adjust]]), -rank(tstats[["null"]]), maxrank=1000, make.plot=TRUE)
+                catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[adjust]]),
+                                                     -rank(tstats[["null"]]),
+                                                     maxrank=1000,
+                                                     make.plot=TRUE)
             } else {
                 catplots[[counter]] <- NULL
             }
@@ -438,7 +449,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
             lines(catplots[["ruv_sup"]], col="green", lwd=3, lty=3)
             lines(catplots[["ruv_resid"]], col="orange", lwd=3)
             lines(catplots[["ruv_emp"]], col="purple", lwd=3)
-            legend(200, 0.5, legend=c("some stuff about methods used."), lty=c(1,2,1,3,1), lwd=3)
+            legend(200, 0.5, legend=c("some stuff about methods used."), lty=c(1, 2, 1, 3, 1), lwd=3)
             catplot_together <- grDevices::recordPlot()
             newpar <- par(oldpar)
         } ## End checking whether to do catplots

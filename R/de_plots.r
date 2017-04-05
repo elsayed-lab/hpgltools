@@ -9,14 +9,14 @@
 #' @param pval_cutoff  Cutoff to define 'significant' by p-value.
 #' @param ...  Extra arguments are passed to arglist.
 #' @return a plot!
-#' @seealso \link{plot_ma_de}
+#' @seealso \code{\link{plot_ma_de}}
 #' @examples
-#'  \dontrun{
-#'   prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
+#' \dontrun{
+#'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
 extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=0.05, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
 
     expr_col <- NULL
     p_col <- NULL
@@ -103,7 +103,7 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
     }
 
     ma_material <- plot_ma_de(table=the_table, expr_col=expr_col, fc_col=fc_col,
-                              p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff) ##, ...)
+                              p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff, ...) ##, ...)
     return(ma_material)
 }
 
@@ -125,6 +125,12 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
 #' @param color_low  Color for the genes less than the mean.
 #' @param color_high  Color for the genes greater than the mean.
 #' @param ...  More arguments are passed to arglist.
+#' @seealso \pkg{ggplot2}
+#'  \code{\link{plot_linear_scatter}}
+#' @examples
+#' \dontrun{
+#'  scatter_plot <- extract_coefficient_scatter(pairwise_output, type="deseq", x="uninfected", y="infected")
+#' }
 #' @export
 extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1, y=2, z=1.5,
                                         p=NULL, fc=NULL, n=NULL, loess=FALSE,
@@ -135,18 +141,18 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
         output <- output[[type]]
     }
 
-    qlimit <- 0.1
-    if (!is.null(arglist[["qlimit"]])) {
-        qlimit <- arglist[["qlimit"]]
-    }
-    fc_column <- paste0(type, "_logfc")
-    if (!is.null(arglist[["fc_column"]])) {
-        fc_column <- arglist[["fc_column"]]
-    }
-    p_column <- paste0(type, "_adjp")
-    if (!is.null(arglist[["p_column"]])) {
-        p_column <- arglist[["p_column"]]
-    }
+    ## qlimit <- 0.1
+    ## if (!is.null(arglist[["qlimit"]])) {
+    ##     qlimit <- arglist[["qlimit"]]
+    ## }
+    ## fc_column <- paste0(type, "_logfc")
+    ## if (!is.null(arglist[["fc_column"]])) {
+    ##     fc_column <- arglist[["fc_column"]]
+    ## }
+    ## p_column <- paste0(type, "_adjp")
+    ## if (!is.null(arglist[["p_column"]])) {
+    ##     p_column <- arglist[["p_column"]]
+    ## }
     gvis_filename <- NULL
     gvis_trendline <- TRUE
     tooltip_data <- NULL
@@ -248,9 +254,15 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #' @param euler  Perform a euler plot
 #' @param p  p-value cutoff, I forget what for right now.
 #' @param ... More arguments are passed to arglist.
+#' @return  A list of venn plots
+#' @seealso \pkg{venneuler} \pkg{Vennerable}
+#' @examples
+#' \dontrun{
+#'  bunchovenns <- de_venn(pairwise_result)
+#' }
 #' @export
 de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     combine_tables <- function(d, e, l) {
         ddf <- as.data.frame(l[, "limma_logfc"])
         rownames(ddf) <- rownames(l)
@@ -318,7 +330,7 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
                                            up_l, up_dl, up_el,
                                            up_del))
     up_res <- Vennerable::plot(up_venn, doWeights=FALSE)
-    ##up_res <- plot(up_venn, doWeights=FALSE)
+    ## up_res <- plot(up_venn, doWeights=FALSE)
     up_venn_noweight <- grDevices::recordPlot()
 
     down_ones <- c("d" = down_d, "e" = down_e, "l" = down_l)
@@ -335,7 +347,7 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
                                              down_l, down_dl, down_el,
                                              down_del))
     down_res <- Vennerable::plot(down_venn, doWeights=FALSE)
-    ##down_res <- plot(down_venn, doWeights=FALSE)
+    ## down_res <- plot(down_venn, doWeights=FALSE)
     down_venn_noweight <- grDevices::recordPlot()
 
     retlist <- list(
@@ -362,12 +374,17 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
 #' @param constant_p When plotting changing FC, where should the p-value be held?
 #' @param constant_fc When plotting changing p, where should the FC be held?
 #' @return Plots and dataframes describing the changing definition of 'significant.'
+#' @seealso \pkg{ggplot2}
+#' @examples
+#' \dontrun{
+#'  crazy_sigplots <- plot_num_siggenes(pairwise_result)
+#' }
 #' @export
 plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_logfc",
                               bins=100, constant_p=0.05, constant_fc=0) {
-    fc_column="limma_logfc"
-    p_column="limma_adjp"
-    bins = 100
+    fc_column <- "limma_logfc"
+    p_column <- "limma_adjp"
+    bins <- 100
     num_genes <- nrow(table)
     min_fc <- min(table[[fc_column]])
     neutral_fc <- 0.0
@@ -407,7 +424,8 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 
     putative_up_inflection <- inflection::findiplist(x=as.matrix(up_nums[[1]]), y=as.matrix(up_nums[[2]]), 0)
     up_point_num <- putative_up_inflection[2,1]
-    up_label <- paste0("At fc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p, ", ", up_nums[up_point_num, ][["num"]], " genes are de.")
+    up_label <- paste0("At fc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p,
+                       ", ", up_nums[up_point_num, ][["num"]], " genes are de.")
     up_plot <- ggplot(data=up_nums, aes_string(x="fc", y="num")) +
         ggplot2::geom_point() + ggplot2::geom_line() +
         ggplot2::geom_hline(yintercept=up_nums[[2]][[up_point_num]]) +
@@ -462,11 +480,18 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' @param order  Choose a specific order for the plots.
 #' @param maximum  Set a specific limit on the number of genes on the x-axis.
 #' @param ...  More arguments are passed to arglist.
+#' @return list containing the significance bar plots and some information to hopefully help interpret them.
+#' @seealso \pkg{ggplot2}
+#' @examples
+#' \dontrun{
+#'  ## Damn I wish I were smrt enough to make this elegant and easily comprehendable, but I cannot.
+#'  barplots <- significant_barplots(combined_result)
+#' }
 #' @export
 significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
                                  fc_column="limma_logfc", p_type="adj", invert=FALSE,
                                  p=0.05, z=NULL, order=NULL, maximum=NULL, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     sig_lists_up <- list(
         "limma" = list(),
         "edger" = list(),
@@ -497,14 +522,15 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         for (fc in fc_cutoffs) {
             ## This is a bit weird and circuituous
             ## The most common caller of this function is in fact extract_significant_genes
-            fc_sig <- extract_significant_genes(combined, fc=fc,
-                                                p=p, z=z, n=NULL, excel=FALSE,
-                                                p_type=p_type, sig_bar=FALSE, ma=FALSE)
+            fc_sig <- sm(extract_significant_genes(combined, fc=fc,
+                                                   p=p, z=z, n=NULL, excel=FALSE,
+                                                   p_type=p_type, sig_bar=FALSE, ma=FALSE))
             table_length <- length(fc_sig[[type]][["ups"]])
             fc_name <- paste0("fc_", fc)
             fc_names <- append(fc_names, fc_name)
 
-            for (tab in 1:table_length) { ## The table names are shared across methods and ups/downs
+            for (tab in 1:table_length) {
+                ## The table names are shared across methods and ups/downs
                 table_names <- names(fc_sig[[type]][["ups"]])
                 if (isTRUE(invert)) {
                     table_names <- rev(table_names)
@@ -548,9 +574,6 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         baby_bear <- fc_names[[3]]  ## And the smallest grouping
         for (t in 1:table_length) {
             table_names <- names(sig_lists_up[[type]][[1]])
-            if (isTRUE(invert)) {
-                table_names <- rev(table_names)
-            }
             table_name <- table_names[t]
             ##table_names <- names(sig_lists_up[[type]][[1]])[t]
             everything_up <- sig_lists_up[[type]][[papa_bear]][[table_name]] ## > 0 lfc
@@ -561,8 +584,12 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
             up_all[[type]][[table_name]] <- everything_up
             up_mid[[type]][[table_name]] <- mid_up - exclusive_up
             up_max[[type]][[table_name]] <- exclusive_up
-            up_all[[type]][[table_name]] <- up_all[[type]][[table_name]] - up_mid[[type]][[table_name]] - up_max[[type]][[table_name]]
-            up_terminal <- up_all[[type]][[table_name]] + up_mid[[type]][[table_name]] + up_max[[type]][[table_name]]
+            up_all[[type]][[table_name]] <- up_all[[type]][[table_name]] -
+                up_mid[[type]][[table_name]] -
+                up_max[[type]][[table_name]]
+            up_terminal <- up_all[[type]][[table_name]] +
+                up_mid[[type]][[table_name]] +
+                up_max[[type]][[table_name]]
             up_middle <- up_terminal - up_max[[type]][[table_name]]
             up_min <- up_terminal - up_mid[[type]][[table_name]]
             ## Now repeat for the set of down genes.
@@ -574,8 +601,12 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
             down_all[[type]][[table_name]] <- everything_down
             down_mid[[type]][[table_name]] <- mid_down - exclusive_down
             down_max[[type]][[table_name]] <- exclusive_down
-            down_all[[type]][[table_name]] <- down_all[[type]][[table_name]] - down_mid[[type]][[table_name]] - down_max[[type]][[table_name]]
-            down_terminal <- down_all[[type]][[table_name]] + down_mid[[type]][[table_name]] + down_max[[type]][[table_name]]
+            down_all[[type]][[table_name]] <- down_all[[type]][[table_name]] -
+                down_mid[[type]][[table_name]] -
+                down_max[[type]][[table_name]]
+            down_terminal <- down_all[[type]][[table_name]] +
+                down_mid[[type]][[table_name]] +
+                down_max[[type]][[table_name]]
             down_middle <- down_terminal - down_max[[type]][[table_name]]
             down_min <- down_terminal - down_mid[[type]][[table_name]]
         } ## End for 1:table_length
@@ -585,30 +616,30 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         ## Once again, starting with only the up-stuff
         up <- cbind(comparisons, up_all[[type]], up_mid[[type]], up_max[[type]])
         up <- as.data.frame(up)
-        colnames(up) <- c("comparisons","a_up_inner","b_up_middle","c_up_outer")
+        colnames(up) <- c("comparisons", "a_up_inner", "b_up_middle", "c_up_outer")
         uplist[[type]] <- up
         up <- reshape2::melt(up, id.var="comparisons")
         up[["comparisons"]] <- factor(up[["comparisons"]], levels=comparisons)
-        up[["variable"]] <- factor(up[["variable"]],  levels=c("a_up_inner","b_up_middle","c_up_outer"))
+        up[["variable"]] <- factor(up[["variable"]],  levels=c("a_up_inner", "b_up_middle", "c_up_outer"))
         up[["value"]] <- as.numeric(up[["value"]])
         ## Repeat with the set of down materials
         down <- cbind(comparisons, down_all[[type]], down_mid[[type]], down_max[[type]])
         down <- as.data.frame(down)
-        colnames(down) <- c("comparisons","a_down_inner","b_down_middle","c_down_outer")
+        colnames(down) <- c("comparisons", "a_down_inner", "b_down_middle", "c_down_outer")
         downlist[[type]] <- down
-        colnames(down) <- c("comparisons","a_down_inner","b_down_middle","c_down_outer")
+        colnames(down) <- c("comparisons", "a_down_inner", "b_down_middle", "c_down_outer")
         down <- reshape2::melt(down, id.var="comparisons")
         down[["comparisons"]] <- factor(down[["comparisons"]], levels=comparisons)
         ##        down[["variable"]] <- factor(down[["variable"]],
         ##        levels=c("a_down_inner","b_down_middle","c_down_outer"))
         down[["variable"]] <- factor(down[["variable"]],
-                                     levels=c("c_down_outer","b_down_middle","a_down_inner"))
+                                     levels=c("c_down_outer", "b_down_middle", "a_down_inner"))
         up[["variable"]] <- factor(up[["variable"]],
-                                   levels=c("c_up_outer","b_up_middle","a_up_inner"))
+                                   levels=c("c_up_outer", "b_up_middle", "a_up_inner"))
         down[["value"]] <- as.numeric(down[["value"]]) * -1
         tables_up[[type]] <- up
         tables_down[[type]] <- down
-        plots[[type]] <- plot_significant_bar(up, down, maximum=maximum)
+        plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
         ##plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
     } ## End iterating over the 3 types, limma/deseq/edger
 

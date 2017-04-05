@@ -22,7 +22,9 @@ genes.  It drops genes based on a cpm threshold and number of samples.
 }
 \examples{
 \dontrun{
-filtered_table <- cbcb_filter_counts(count_table)
+ filtered_table <- cbcb_filter_counts(count_table)
 }
 }
-
+\seealso{
+\pkg{edgeR}
+}

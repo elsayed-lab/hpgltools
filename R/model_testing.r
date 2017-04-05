@@ -9,11 +9,13 @@
 #' @param factors Experimental factors you rather wish would just go away.
 #' @param ... I might decide to add more options from other functions.
 #' @return List of booleans telling if the factors + goal will work.
+#' @seealso \code{\link{model.matrix}} \code{\link{qr}}
 #' @export
 model_test <- function(design, goal="condition", factors=NULL, ...) {
     arglist <- list(...)
     ## For testing, use some existing matrices/data
-    message(paste0("There are ", length(levels(as.factor(design[, goal]))), " levels in the goal: ", goal, "."))
+    message(paste0("There are ", length(levels(as.factor(design[, goal]))),
+                   " levels in the goal: ", goal, "."))
     ret_list <- list()
     if (is.null(factors)) {
         for (factor in colnames(design)) {
@@ -28,7 +30,8 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
             matrix_test <- model.matrix(matrix_all_formula, data=design)
             num_columns <- ncol(matrix_test)
             matrix_decomp <- qr(matrix_test)
-            message(paste0("The model of ", goal, " and ", factor, " has ", num_columns, " and rank ", matrix_decomp[["rank"]]))
+            message(paste0("The model of ", goal, " and ", factor, " has ", num_columns,
+                           " and rank ", matrix_decomp[["rank"]]))
             if (matrix_decomp[["rank"]] < num_columns) {
                 message("This will not work, a different factor should be used.")
                 ret_list[[factor]] <- 0
@@ -44,7 +47,8 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
             matrix_test <- model.matrix(matrix_all_formula, data=design)
             num_columns <- ncol(matrix_test)
             matrix_decomp <- qr(matrix_test)
-            message(paste0("The model of ", goal, " and ", factor, " has ", num_columns, " and rank ", matrix_decomp[["rank"]]))
+            message(paste0("The model of ", goal, " and ", factor, " has ", num_columns,
+                           " and rank ", matrix_decomp[["rank"]]))
             if (matrix_decomp[["rank"]] < num_columns) {
                 message("This will not work, a different factor should be used.")
                 ret_list[[factor]] <- 0

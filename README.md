@@ -1,7 +1,8 @@
 hpgltools
 ---------
 
-Status: Travis CI [![Build Status](https://travis-ci.org/abelew/hpgltools.svg?branch=master)](https://travis-ci.org/abelew/hpgltools),
+Status: Travis CI [![Build Status](https://travis-ci.org/abelew/hpgltools.svg?branch=master)]
+(https://travis-ci.org/abelew/hpgltools),
 
 ## Overview
 
@@ -16,16 +17,24 @@ analyses.
 
 ## Installation
 
-There are two likely methods of installing this package:
+This package contains a mix of bioconductor and cran packages.  This is annoying because
+install_github and friends will fail as a result.
 
-* If one has Hadley's devtools installed, then run the following from R:
+There are two ways around this problem:
 
-> install_github("elsayed-lab/hpgltools")
+* Using bioconductor, devtools, and remotes
 
-* Otherwise:
+From the fresh R installation:
+
+> source("http://bioconductor.org/biocLite.R")
+> biocLite("devtools")
+> devtools::install_github("mangothecat/remotes")
+> remotes::install_github("abelew/hpgltools", dependencies=TRUE)
+
+* Otherwise, using make and bioconductor
 
 Download the package via 'git pull' or a zip or whatever, go
-into the hpgltools/ directory and perform:
+into the hpgltools/ directory and:
 
 > make install
 

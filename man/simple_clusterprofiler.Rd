@@ -58,4 +58,11 @@ object.  This is mostly advantageous, but will probably cause some changes in th
 functions in the near future.  This function is an initial pass at making something similar to my
 previous 'simple_clusterprofiler()' but using these new toys.
 }
-
+\examples{
+\dontrun{
+ holyasscrackers <- simple_clusterprofiler(gene_list, all_genes, "org.Dm.eg.db")
+}
+}
+\seealso{
+\pkg{clusterProfiler}
+}

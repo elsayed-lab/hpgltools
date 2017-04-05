@@ -22,7 +22,7 @@
 #' the non-outliers), and single dots for each gene which is outside
 #' that range.  A single dot is transparent.
 #' @seealso \pkg{ggplot2} \pkg{reshape2} \link[ggplot2]{geom_boxplot}
-#' \link[reshape2]{melt} \link[ggplot2]{scale_x_discrete}
+#'  \code{\link[reshape2]{melt}} \code{\link[ggplot2]{scale_x_discrete}}
 #' @examples
 #' \dontrun{
 #'  a_boxplot <- plot_boxplot(expt)
@@ -75,7 +75,7 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 
     data[["id"]] <- rownames(data)
     dataframe <- reshape2::melt(data, id=c("id"))
-    colnames(dataframe) <- c("gene","variable","value")
+    colnames(dataframe) <- c("gene", "variable", "value")
     ## The use of data= and aes() leads to no visible binding for global variable warnings
     ## I am not sure what to do about them in this context.
     boxplot <- ggplot2::ggplot(data=dataframe, ggplot2::aes_string(x="variable", y="value")) +
@@ -117,10 +117,11 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' @param title Title for the plot.
 #' @param colors_by Factor for coloring the lines
 #' @return Ggplot2 density plot!
-#' @seealso \pkg{ggplot2} \link[ggplot2]{geom_density}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[ggplot2]{geom_density}}
 #' @examples
 #' \dontrun{
-#' funkytown <- plot_density(data)
+#'  funkytown <- plot_density(data)
 #' }
 #' @export
 plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
@@ -172,20 +173,25 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
     if (dim(melted)[2] == 3) {
         colnames(melted) <- c("id", "sample", "counts")
     } else if (dim(melted)[2] == 2) {
-        colnames(melted) <- c("sample","counts")
+        colnames(melted) <- c("sample", "counts")
     } else {
         stop("Could not properly melt the data.")
     }
     densityplot <- NULL
     if (is.null(fill)) {
-        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes_string(x="counts", colour="sample"), environment=plot_env)
+        densityplot <- ggplot2::ggplot(data=melted,
+                                       ggplot2::aes_string(x="counts", colour="sample"),
+                                       environment=plot_env)
     } else {
         fill <- "sample"
-        densityplot <- ggplot2::ggplot(data=melted, ggplot2::aes_string(x="counts", colour="sample", fill="fill"), environment=plot_env)
+        densityplot <- ggplot2::ggplot(data=melted,
+                                       ggplot2::aes_string(x="counts", colour="sample", fill="fill"),
+                                       environment=plot_env)
     }
 
     densityplot <- densityplot +
-        ggplot2::geom_density(ggplot2::aes_string(x="counts", y="..count..", fill="sample"), position=position, na.rm=TRUE) +
+        ggplot2::geom_density(ggplot2::aes_string(x="counts", y="..count..", fill="sample"),
+                              position=position, na.rm=TRUE) +
         ggplot2::ylab("Number of genes.") + ggplot2::xlab("Number of hits/gene.") +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.key.size=ggplot2::unit(0.3, "cm"))
@@ -216,9 +222,10 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
 #' @param data Expressionset, expt, or dataframe of samples.
 #' @param labels What kind of labels to print?
 #' @return List containing:
-#'   logs = a recordPlot() of the pairwise log qq plots.
-#'   ratios = a recordPlot() of the pairwise ratio qq plots.
-#'   means = a table of the median values of all the summaries of the qq plots.
+#'  logs = a recordPlot() of the pairwise log qq plots.
+#'  ratios = a recordPlot() of the pairwise ratio qq plots.
+#'  means = a table of the median values of all the summaries of the qq plots.
+#' @seealso \pkg{Biobase}
 #' @export
 plot_qq_all <- function(data, labels="short") {
     data_class <- class(data)[1]
@@ -227,15 +234,15 @@ plot_qq_all <- function(data, labels="short") {
         colors <- data$colors
         names <- data$names
         data <- as.data.frame(Biobase::exprs(data$expressionset))
-    } else if (data_class == 'ExpressionSet') {
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
 
-    sample_data <- data[,c(1,2)]
+    sample_data <- data[, c(1, 2)]
     ## This is bizarre, performing this operation with transform fails when called from a function
     ## but works fine when called interactively, wtf indeed?
     ##    sample_data = transform(sample_data, mean=rowMeans(plot_df))
@@ -252,13 +259,13 @@ plot_qq_all <- function(data, labels="short") {
     for (i in 1:comparisons) {
         ith <- colnames(data)[i]
         message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
-        tmpdf <- data.frame("ith"=data[,i],
+        tmpdf <- data.frame("ith"=data[, i],
                             "mean"=sample_data$mean)
         colnames(tmpdf) <- c(ith, "mean")
         tmpqq <- plot_qq_plot(tmpdf, x=1, y=2, labels=labels)
         logs[[count]] <- tmpqq$log
         ratios[[count]] <- tmpqq$ratio
-        means[[count]] <- tmpqq$summary[['Median']]
+        means[[count]] <- tmpqq$summary[["Median"]]
         count <- count + 1
     }
     plot_multiplot(logs)
@@ -279,18 +286,19 @@ plot_qq_all <- function(data, labels="short") {
 #' @param y Second column to compare.
 #' @param labels Include the lables?
 #' @return a list of the logs, ratios, and mean between the plots as ggplots.
+#' @seealso \pkg{Biobase}
 #' @export
 plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
+        design <- data[["design"]]
+        colors <- data[["colors"]]
+        names <- data[["names"]]
         data <- as.data.frame(Biobase::exprs(data$expressionset))
-    } else if (data_class == 'ExpressionSet') {
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -298,8 +306,8 @@ plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
 
     xlabel <- colnames(data)[x]
     ylabel <- colnames(data)[y]
-    xvector <- as.vector(data[,x])
-    yvector <- as.vector(data[,y])
+    xvector <- as.vector(data[, x])
+    yvector <- as.vector(data[, y])
     sorted_x <- sort(xvector)
     sorted_y <- sort(yvector)
     vector_ratio <- sorted_x / sorted_y
@@ -310,9 +318,12 @@ plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     } else {
         y_string <- paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
     }
-    ratio_plot <- ggplot2::ggplot(ratio_df, ggplot2::aes_string(x="increment", y="vector_ratio"), environment=plot_env) +
-        ggplot2::geom_point(colour=suppressWarnings(grDevices::densCols(vector_ratio)), stat="identity", size=1, alpha=0.2, na.rm=TRUE) +
-        ggplot2::scale_y_continuous(limits=c(0,2))
+    ratio_plot <- ggplot2::ggplot(ratio_df,
+                                  ggplot2::aes_string(x="increment", y="vector_ratio"),
+                                  environment=plot_env) +
+        ggplot2::geom_point(colour=sm(grDevices::densCols(vector_ratio)), stat="identity",
+                            size=1, alpha=0.2, na.rm=TRUE) +
+        ggplot2::scale_y_continuous(limits=c(0, 2))
     if (isTRUE(labels)) {
         ratio_plot <- ratio_plot +
             ggplot2::xlab("Sorted gene") +
@@ -351,9 +362,11 @@ plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     log_df <- data.frame(cbind(log(sorted_x), log(sorted_y)))
     gg_max <- max(log_df)
     colnames(log_df) <- c(xlabel, ylabel)
-    log_df$sub <- log_df[,1] - log_df[,2]
-    log_ratio_plot <- ggplot2::ggplot(log_df, ggplot2::aes_string(x="get(xlabel)", y="get(ylabel)"), environment=plot_env) +
-        ggplot2::geom_point(colour=suppressWarnings(grDevices::densCols(sorted_x, sorted_y)), na.rm=TRUE) +
+    log_df$sub <- log_df[, 1] - log_df[, 2]
+    log_ratio_plot <- ggplot2::ggplot(log_df,
+                                      ggplot2::aes_string(x="get(xlabel)", y="get(ylabel)"),
+                                      environment=plot_env) +
+        ggplot2::geom_point(colour=sm(grDevices::densCols(sorted_x, sorted_y)), na.rm=TRUE) +
         ggplot2::scale_y_continuous(limits=c(0, gg_max)) +
         ggplot2::scale_x_continuous(limits=c(0, gg_max))
     if (isTRUE(labels)) {
@@ -405,6 +418,7 @@ plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
 #'
 #' @param data Dataframe to perform pairwise qqplots with.
 #' @return List containing the recordPlot() output of the ratios, logs, and means among samples.
+#' @seealso \pkg{Biobase}
 #' @export
 plot_qq_all_pairwise <- function(data) {
     data_class <- class(data)[1]
@@ -414,9 +428,9 @@ plot_qq_all_pairwise <- function(data) {
         colors <- data$colors
         names <- data$names
         data <- Biobase::exprs(data$expressionset)
-    } else if (data_class == 'ExpressionSet') {
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -435,7 +449,7 @@ plot_qq_all_pairwise <- function(data) {
             tmp <- plot_qq_plot(data, x=i, y=j, labels=names)
             logs[[count]] <- tmp$log
             ratios[[count]] <- tmp$ratio
-            means[i,j] <- tmp$summary[['Mean']]
+            means[i, j] <- tmp$summary[["Mean"]]
             count <- count + 1
         }
     }

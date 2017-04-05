@@ -29,4 +29,6 @@ the experiment.  Use this to make that easier.
  expt = set_expt_factors(big_expt, condition="column", batch="another_column")
 }
 }
-
+\seealso{
+\code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
+}

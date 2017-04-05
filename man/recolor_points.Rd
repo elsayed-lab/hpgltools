@@ -23,4 +23,3 @@ prettier plot.
 \description{
 This function should make it easy to color a family of genes in any of the point plots.
 }
-

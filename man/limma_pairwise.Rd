@@ -62,10 +62,10 @@ Creates the set of all possible contrasts and performs them using voom/limma.
 }
 \examples{
 \dontrun{
-pretend = balanced_pairwise(data, conditions, batches)
+ pretend <- limma_pairwise(expt)
 }
 }
 \seealso{
-\link{write_limma}
+\pkg{limma} \pkg{Biobase}
+ \code{\link{write_limma}}
 }
-

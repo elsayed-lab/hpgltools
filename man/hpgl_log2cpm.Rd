@@ -20,10 +20,9 @@ paper.
 }
 \examples{
 \dontrun{
-l2cpm <- hpgl_log2cpm(counts)
+ l2cpm <- hpgl_log2cpm(counts)
 }
 }
 \seealso{
 \pkg{edgeR}
 }
-

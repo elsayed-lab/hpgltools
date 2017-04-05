@@ -100,6 +100,16 @@ head(all_combined$data[[1]])
 sig_genes <- sm(extract_significant_genes(all_combined, excel=FALSE))
 head(sig_genes$limma$ups[[1]])
 
+## Here we see that edger and deseq agree the least:
+all_comparisons$comparison$comp
+
+## And here we can look at the set of 'significant' genes according to various tools:
+yeast_sig <- extract_significant_genes(all_combined, excel=FALSE)
+yeast_barplots <- sm(significant_barplots(combined=all_combined))
+yeast_barplots$limma
+yeast_barplots$edger
+yeast_barplots$deseq
+
 ## ----ontology_setup------------------------------------------------------
 limma_results <- limma_comparison$all_tables
 ## The set of comparisons performed
@@ -116,13 +126,22 @@ pombe_filters <- biomaRt::listFilters(ensembl_pombe)
 head(pombe_filters, n=20) ## 11 looks to be my guy
 
 possible_pombe_attributes <- biomaRt::listAttributes(ensembl_pombe)
-##pombe_goids <- biomaRt::getBM(attributes=c('pombase_gene_name', 'go_accession'), filters="biotype", values=gene_names, mart=ensembl_pombe)
-pombe_goids <- biomaRt::getBM(attributes=c('pombase_transcript', 'go_accession'), values=gene_names, mart=ensembl_pombe)
+##pombe_goids <- biomaRt::getBM(attributes=c('pombase_gene_name', 'go_accession'), filters="biotype",
+##                              values=gene_names, mart=ensembl_pombe)
+pombe_goids <- biomaRt::getBM(attributes=c('pombase_transcript', 'go_accession'),
+                              values=gene_names, mart=ensembl_pombe)
 colnames(pombe_goids) <- c("ID","GO")
 
+## This used to work, but does so no longer and I do not know why.
 pombe <- sm(GenomicFeatures::makeTxDbFromBiomart(biomart="fungal_mart",
                                                  dataset="spombe_eg_gene",
                                                  host="fungi.ensembl.org"))
+
+## This was found at the bottom of: https://www.biostars.org/p/232005/
+link <- "ftp://ftp.ensemblgenomes.org/pub/release-34/fungi/gff3/schizosaccharomyces_pombe/Schizosaccharomyces_pombe.ASM294v2.34.gff3.gz"
+pombe <- makeTxDbFromGFF(link, format="gff3", organism="Schizosaccharomyces pombe",
+                           taxonomyId="4896")
+
 pombe_transcripts <- as.data.frame(GenomicFeatures::transcriptsBy(pombe))
 lengths <- pombe_transcripts[, c("group_name","width")]
 colnames(lengths) <- c("ID","width")
@@ -138,13 +157,13 @@ summary(updown_genes)
 test_genes <- updown_genes$down_genes
 rownames(test_genes) <- paste0(rownames(test_genes), ".1")
 lengths$ID <- paste0(lengths$ID, ".1")
-funkytown <- simple_goseq(de_genes=test_genes, go_db=pombe_goids, length_db=lengths)
+funkytown <- sm(simple_goseq(sig_genes=test_genes, go_db=pombe_goids, length_db=lengths))
 head(funkytown$alldata)
 funkytown$pvalue_plots$mfp_plot
 
 test_genes <- updown_genes$up_genes
 rownames(test_genes) <- paste0(rownames(test_genes), ".1")
-funkytown <- simple_goseq(de_genes=test_genes, go_db=pombe_goids, length_db=lengths)
+funkytown <- sm(simple_goseq(sig_genes=test_genes, go_db=pombe_goids, length_db=lengths))
 head(funkytown$alldata)
 funkytown$pvalue_plots$bpp_plot
 

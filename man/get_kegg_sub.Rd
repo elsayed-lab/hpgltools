@@ -11,10 +11,12 @@ get_kegg_sub(species = "lma")
 }
 \value{
 2 character lists containing the patterns and replace arguments for gsub(), order
-    matters!
+ matters!
 }
 \description{
 This function should provide 2 character lists which, when applied sequentially, will result in a
 hopefully coherent set of mapped gene IDs matching the TriTypDB/KEGG specifications.
 }
-
+\seealso{
+\pkg{KEGGREST}
+}

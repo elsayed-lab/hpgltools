@@ -29,4 +29,6 @@ Given a data set provided by limma, deseq, edger, etc; one might want to know wh
 most and least abundant genes, much like get_sig_genes() does to find the most significantly
 different genes for each contrast.
 }
-
+\seealso{
+\pkg{stats} \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
+}

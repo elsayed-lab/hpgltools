@@ -70,11 +70,11 @@ head(expt$design)
 batch_a <- expt_subset(expt, subset="batch=='a'")
 batch_b <- expt_subset(expt, subset="batch=='b'")
 
-
-b_metrics$pcaplot
-
 ## ----view_subsets--------------------------------------------------------
-
+a_metrics <- graph_metrics(batch_a)
+b_metrics <- graph_metrics(batch_b)
+a_metrics$pcaplot
+b_metrics$pcaplot
 
 ## ----normalize_subset, fig.show="hide"-----------------------------------
 ## doing nothing to the data except log2 transforming it has a surprisingly large effect
@@ -90,7 +90,9 @@ c_metrics <- sm(graph_metrics(norm_test))  ## c for cpm!
 norm_test <- sm(normalize_expt(expt, filter="pofa"))
 f_metrics <- sm(graph_metrics(norm_test))  ## f for filter!
 ## how about if we mix and match methods?
-norm_test <- sm(normalize_expt(expt, transform="log2", convert="cpm", norm="quant", batch="combat_scale", filter=TRUE, batch_step=4, low_to_zero=TRUE))
+norm_test <- sm(normalize_expt(expt, transform="log2", convert="cpm",
+                               norm="quant", batch="combat_scale", filter=TRUE,
+                               batch_step=4, low_to_zero=TRUE))
 ## Some metrics are not very useful on (especially quantile) normalized data
 norm_graphs <- sm(graph_metrics(norm_test))
 
@@ -128,6 +130,9 @@ my_keepers <- list(
 ## ----combine_test--------------------------------------------------------
 spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE))
 summary(spyogenes_tables)
+## Try changing the p-adjustment
+spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE, padj_type="BH"))
+head(spyogenes_tables$data[[1]])
 
 ## ----sig_genes_test------------------------------------------------------
 spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables, excel=FALSE))

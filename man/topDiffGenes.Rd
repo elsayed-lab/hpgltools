@@ -16,4 +16,3 @@ but have so far deemed them not needed because I am feeding topGO
 already explicit lists of genes which are up/down/whatever.
 But it still is likely to be useful to be able to further subset the data.
 }
-

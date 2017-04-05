@@ -14,11 +14,12 @@
 #' @param title Title for the plot.
 #' @param ... More options are wonderful!
 #' @return Gplots heatmap describing describing how the samples are clustering vis a vis pairwise correlation.
-#' @seealso \link{hpgl_cor} \link[RColorBrewer]{brewer.pal}
-#' \link[grDevices]{recordPlot}
+#' @seealso \pkg{grDevice}
+#'  \code{\link{hpgl_cor}} \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 #' @examples
-#' ## corheat_plot = hpgl_corheat(expt=expt, method="robust")
-#' ## corheat_plot
+#' \dontrun{
+#'  corheat_plot <- hpgl_corheat(expt=expt, method="robust")
+#' }
 #' @export
 plot_corheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="pearson", expt_names=NULL,
@@ -43,11 +44,12 @@ plot_corheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 #' @param title Title for the plot.
 #' @param ... More parameters!
 #' @return a recordPlot() heatmap describing the distance between samples.
-#' @seealso \link[RColorBrewer]{brewer.pal} \link[gplots]{heatmap.2} \link[grDevices]{recordPlot}
+#' @seealso \pkg{RColorBrewer}
+#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[gplots]{heatmap.2}}
+#'  \code{\link[grDevices]{recordPlot}}
 #' @examples
 #' \dontrun{
 #'  disheat_plot = plot_disheat(expt=expt, method="euclidean")
-#'  disheat_plot
 #' }
 #' @export
 plot_disheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
@@ -74,13 +76,14 @@ plot_disheat <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 #' @param title Title for the plot.
 #' @param ... I like elipses!
 #' @return a recordPlot() heatmap describing the distance between samples.
-#' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
+#' @seealso \pkg{RColorBrewer}
+#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 #' @export
 plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                          method="pearson", expt_names=NULL,
                          type="correlation", batch_row="batch", title=NULL, ...) {
     arglist <- list(...)
-    margin_list <- c(12,9)
+    margin_list <- c(12, 9)
     if (!is.null(arglist[["margin_list"]])) {
         margin_list <- arglist[["margin_list"]]
     }
@@ -105,7 +108,8 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     } else if (data_class == "ExpressionSet") {
         expt_data <- Biobase::exprs(expt_data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
-        expt_data <- as.data.frame(expt_data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+        ## some functions prefer matrix, so I am keeping this explicit for the moment
+        expt_data <- as.data.frame(expt_data) 
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
@@ -242,7 +246,8 @@ ggplot2_heatmap <- function(some_df) {
 #' @param Rowv Reorder the rows by expression?
 #' @param ... More parameters for a good time!
 #' @return a recordPlot() heatmap describing the samples.
-#' @seealso \link[RColorBrewer]{brewer.pal} \link[grDevices]{recordPlot}
+#' @seealso \pkg{RColorBrewer}
+#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 #' @export
 plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, title=NULL, Rowv=TRUE, ...) {
     hpgl_env <- environment()
@@ -265,7 +270,7 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
     }
     data <- as.matrix(data)
     heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, dendrogram="column",
-              labCol=names, margins=c(12,8), trace="none", linewidth=0.5, main=title, Rowv=Rowv)
+              labCol=names, margins=c(12, 8), trace="none", linewidth=0.5, main=title, Rowv=Rowv)
     hpgl_heatmap_plot <- grDevices::recordPlot()
     return(hpgl_heatmap_plot)
 }
@@ -337,32 +342,34 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
 #' @param linewidth the width of lines
 #' @param ... because this function did not already have enough options
 #' @return a heatmap!
+#' @seealso \code{\link{heatmap.2}}
 #' @export
 heatmap.3 <- function (x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
-                       distfun=dist, hclustfun=hclust, dendrogram=c("both","row","column","none"),
-                       reorderfun = function(d, w) reorder(d,w), symm = FALSE, scale = c("none", "row", "column"),
+                       distfun=dist, hclustfun=hclust, dendrogram=c("both", "row", "column", "none"),
+                       reorderfun=function(d, w) reorder(d, w),
+                       symm=FALSE, scale=c("none", "row", "column"),
                        na.rm=TRUE, revC=identical(Colv,"Rowv"), add.expr, breaks,
-                       symbreaks = min(x < 0, na.rm = TRUE) || scale != "none",
-                       col = "heat.colors", colsep, rowsep, sepcolor = "white",
-                       sepwidth = c(0.05, 0.05), cellnote, notecex = 1, notecol = "cyan",
-                       na.color = par("bg"), trace = c("column", "row", "both", "none"),
-                       tracecol = "cyan", hline = median(breaks), vline = median(breaks),
-                       linecol = tracecol, margins = c(5, 5), ColSideColors, RowSideColors,
-                       cexRow = 0.2 + 1/log10(nr), cexCol = 0.2 + 1/log10(nc), labRow = NULL,
-                       labCol = NULL, srtRow = NULL, srtCol = NULL, adjRow = c(0,NA),
-                       adjCol = c(NA, 0), offsetRow = 0.5, offsetCol = 0.5,
-                       key = TRUE, keysize = 1.5, density.info = c("histogram", "density", "none"),
-                       denscol = tracecol, symkey = min(x < 0, na.rm = TRUE) || symbreaks, densadj = 0.25,
-                       key.title = NULL, key.xlab = NULL, key.ylab = NULL, key.xtickfun = NULL, key.ytickfun = NULL,
-                       key.par = list(), main = NULL, xlab = NULL, ylab = NULL, lmat = NULL, lhei = NULL,
-                       lwid = NULL, extrafun = NULL, linewidth = 1.0, ...) {
+                       symbreaks=min(x < 0, na.rm=TRUE) || scale != "none",
+                       col="heat.colors", colsep, rowsep, sepcolor="white",
+                       sepwidth=c(0.05, 0.05), cellnote, notecex=1, notecol="cyan",
+                       na.color=par("bg"), trace=c("column", "row", "both", "none"),
+                       tracecol="cyan", hline=median(breaks), vline=median(breaks),
+                       linecol=tracecol, margins=c(5, 5), ColSideColors, RowSideColors,
+                       cexRow=0.2 + 1/log10(nr), cexCol=0.2 + 1/log10(nc), labRow=NULL,
+                       labCol=NULL, srtRow=NULL, srtCol=NULL, adjRow=c(0, NA),
+                       adjCol=c(NA, 0), offsetRow=0.5, offsetCol=0.5,
+                       key=TRUE, keysize=1.5, density.info=c("histogram", "density", "none"),
+                       denscol=tracecol, symkey=min(x < 0, na.rm=TRUE) || symbreaks, densadj=0.25,
+                       key.title=NULL, key.xlab=NULL, key.ylab=NULL, key.xtickfun=NULL,
+                       key.ytickfun=NULL, key.par=list(), main=NULL, xlab=NULL, ylab=NULL,
+                       lmat=NULL, lhei=NULL, lwid=NULL, extrafun=NULL, linewidth=1.0, ...) {
     if (!is.null(main)) {
         if (main == FALSE) {
-            main = NULL
+            main <- NULL
         }
     }
     scale01 <- function(x, low = min(x), high = max(x)) {
-        x <- (x - low)/(high - low)
+        x <- (x - low) / (high - low)
         x
     }
     retval <- list()

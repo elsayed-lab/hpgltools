@@ -24,10 +24,9 @@ This provides shortcut interfaces for normalization functions from deseq2/edger 
 }
 \examples{
 \dontrun{
-norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
+ norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
 }
 }
 \seealso{
 \pkg{edgeR} \pkg{limma} \pkg{DESeq2}
 }
-

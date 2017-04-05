@@ -29,6 +29,6 @@ at the t.test results between distributions.
 }
 }
 \seealso{
-\link[stats]{pairwise.t.test} \link[plyr]{ddply}
+\pkg{ggplot2}
+ \code{\link[stats]{pairwise.t.test}} \code{\link[plyr]{ddply}}
 }
-

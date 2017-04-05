@@ -21,4 +21,3 @@ plot of group densities.
 \description{
 This just adds a couple wrappers to avoid errors in groupDensity.
 }
-

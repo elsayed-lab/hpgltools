@@ -15,4 +15,3 @@ a string representation of that model.
 \description{
 Because, why not!?
 }
-

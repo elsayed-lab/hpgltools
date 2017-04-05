@@ -12,4 +12,3 @@ cp_options(species)
 \description{
 This hard-sets some defaults for orgdb/kegg databases when using clusterProfiler.
 }
-

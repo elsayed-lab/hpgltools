@@ -41,4 +41,12 @@ png device, prints to that, and inserts the resulting png file.  Thus it sacrifi
 flexibility for a hopefully more consistent behaivor.  In addition, one may use the pdfs as
 a set of images importable into illustrator or whatever.
 }
-
+\examples{
+\dontrun{
+ excel_sucks <- write_expt(expt)
+}
+}
+\seealso{
+\pkg{openxlsx} \pkg{Biobase}
+ \code{\link{normalize_expt}} \code{\link{graph_metrics}}
+}

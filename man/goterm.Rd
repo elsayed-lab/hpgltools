@@ -19,11 +19,10 @@ Get a go term from ID.
 \examples{
 \dontrun{
  goterm("GO:0032559")
-## > GO:0032559
-## > "adenyl ribonucleotide binding"
+ ## > GO:0032559
+ ## > "adenyl ribonucleotide binding"
 }
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}
 }
-

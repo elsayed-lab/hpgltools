@@ -21,4 +21,6 @@ dataset suitable for limma analysis
 \description{
 Take an expt and poke at it to ensure that it will not result in troubled limma results.
 }
-
+\seealso{
+\pkg{limma}
+}

@@ -9,6 +9,7 @@
 #'
 #' @param file  a file created using the perl script 'essentiality_tas.pl'
 #' @return A plot and some numbers
+#' @seealso \pkg{ggplot2}
 #' @export
 tnseq_saturation <- function(file) {
     table <- read.table(file=file, header=1)
@@ -54,22 +55,24 @@ tnseq_saturation <- function(file) {
 #'
 #' @param file  a file created using the perl script 'essentiality_tas.pl'
 #' @return A couple of plots
+#' @seealso \pkg{ggplot2}
 #' @export
 plot_essentiality <- function(file) {
     ess <- read.csv(file=file, comment.char="#", sep="\t", header=FALSE)
     colnames(ess) <- c("gene","orf_hits","orf_tas","max_run","max_run_span","posterior_zbar","call")
     ess <- ess[with(ess, order("posterior_zbar")), ]
     ##ess <- subset(ess, posterior_zbar > -1)
-    ess <- ess[ess$posterior_zbar >= -1, ]
+    ess <- ess[ess[["posterior_zbar"]] >= -1, ]
     ess <- transform(ess, rank=ave("posterior_zbar", FUN=function(x) order(x, decreasing=FALSE)))
     zbar_plot <- ggplot2::ggplot(data=ess, ggplot2::aes_string(x="rank", y="posterior_zbar")) +
         ggplot2::geom_point(stat="identity", size=2) +
+        ## What the crab apples are these static numbers (I think to define calling boundaries)
         ggplot2::geom_hline(color="grey", yintercept=0.0371) +
         ggplot2::geom_hline(color="grey", yintercept=0.9902) +
         ggplot2::theme_bw()
     span_df <- ess[,c("max_run","max_run_span")]
     span_plot <- plot_linear_scatter(span_df)
-    returns <- list("zbar" = zbar_plot, "scatter" = span_plot$scatter)
+    returns <- list("zbar" = zbar_plot, "scatter" = span_plot[["scatter"]])
     return(returns)
 }
 

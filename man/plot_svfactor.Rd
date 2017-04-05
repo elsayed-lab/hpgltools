@@ -18,12 +18,17 @@ or batch estimates.}
 \item{factor_type}{This may be a factor or range, it is intended to plot
 a scatterplot if it is a range, a dotplot if a factor.}
 }
+\value{
+surrogate variable plot as per Leek's work
+}
 \description{
 This should make a quick df of the factors and surrogates and plot them.
 }
 \examples{
 \dontrun{
-estimate_vs_snps <- plot_svfactor(start, surrogate_estimate, "snpcategory")
+ estimate_vs_snps <- plot_svfactor(start, surrogate_estimate, "snpcategory")
 }
 }
-
+\seealso{
+\pkg{ggplot2}
+}

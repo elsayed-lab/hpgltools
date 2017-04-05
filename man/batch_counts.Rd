@@ -50,12 +50,11 @@ values, while DESeq2 expects raw counts as input. I couldn't tell you how to pro
 two methods together.
 }
 \examples{
- \dontrun{
-  limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
-  sva_batch <- batch_counts(table, design, batch='sva')
- }
+\dontrun{
+ limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
+ sva_batch <- batch_counts(table, design, batch='sva')
+}
 }
 \seealso{
 \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
 }
-

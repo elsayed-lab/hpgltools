@@ -26,4 +26,6 @@ partitions  List of plots and variance data frames
 \description{
 variancePartition is the newest toy introduced by Hector.
 }
-
+\seealso{
+\pkg{doParallel} \pkg{variancePartition}
+}

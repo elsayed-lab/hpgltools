@@ -34,10 +34,10 @@ Some people like one, some the other.  I think they are both colorful and fun!
 }
 \examples{
 \dontrun{
-funkytown <- plot_density(data)
+ funkytown <- plot_density(data)
 }
 }
 \seealso{
-\pkg{ggplot2} \link[ggplot2]{geom_density}
+\pkg{ggplot2}
+ \code{\link[ggplot2]{geom_density}}
 }
-

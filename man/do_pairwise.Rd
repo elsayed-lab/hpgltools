@@ -20,4 +20,7 @@ I want to multithread my pairwise comparisons, this is the first step in doing s
 \details{
 Used to make parallel operations easier.
 }
-
+\seealso{
+\code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq_pairwise}}
+ \code{\link{basic_pairwise}}
+}

@@ -39,11 +39,11 @@ all contrasts.
 Invoked by the _pairwise() functions.
 }
 \examples{
- \dontrun{
-  pretend = make_pairwise_contrasts(model, conditions)
- }
+\dontrun{
+ pretend = make_pairwise_contrasts(model, conditions)
+}
 }
 \seealso{
-\link[limma]{makeContrasts}
+\pkg{limma}
+ \code{\link[limma]{makeContrasts}}
 }
-

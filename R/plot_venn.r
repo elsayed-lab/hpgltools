@@ -9,6 +9,7 @@
 #' @param fives  Character list of quint categories
 #' @param factor Currently unused, but intended to change the radial distance to the label from the center of each circle.
 #' @return Two element list containing the venneuler data and the plot.
+#' @seealso \pkg{venneuler}
 #' @export
 plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), factor=0.9) {
     venn_sets <- ones
@@ -132,7 +133,8 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
             triple_value <- threes[[i]]
             name_pair <- strsplit(x=triple_name, split="&")[[1]]
             first_name <- name_pair[[1]]
-            third_name <- name_pair[[3]]  ## this assumes they are given as 1,2,3 where 2 is between 1 and 3 on the circle
+            third_name <- name_pair[[3]]
+            ## this assumes they are given as 1,2,3 where 2 is between 1 and 3 on the circle
             middle_x <- (edges_x[[first_name]] + edges_x[[third_name]]) / 2.0
             middle_y <- (edges_y[[first_name]] + edges_y[[third_name]]) / 2.0
             middle_rise <- middle_y - center_y
@@ -155,7 +157,8 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
             quad_value <- fours[[i]]
             name_pair <- strsplit(x=triple_name, split="&")[[1]]
             first_name <- name_pair[[1]]
-            fourth_name <- name_pair[[4]]  ## this assumes they are given as 1,2,3,4 where 2,3 is between 1 and 4 on the circle
+            fourth_name <- name_pair[[4]]
+            ## this assumes they are given as 1,2,3,4 where 2,3 is between 1 and 4 on the circle
             middle_x <- (edges_x[[first_name]] + edges_x[[fourth_name]]) / 2.0
             middle_y <- (edges_y[[first_name]] + edges_y[[fourth_name]]) / 2.0
             middle_rise <- middle_y - center_y

@@ -27,11 +27,10 @@ a plot!
 Yay pretty colors and shapes!
 }
 \examples{
- \dontrun{
-  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
+\dontrun{
+ prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 }
 }
 \seealso{
-\link{plot_ma_de}
+\code{\link{plot_ma_de}}
 }
-

@@ -39,17 +39,17 @@
 #'   \item density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
 #' }
 #' @seealso \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
-#' \link[Biobase]{exprs} \link{hpgl_norm} \link{plot_nonzero} \link{plot_libsize}
-#' \link{plot_boxplot} \link{plot_corheat} \link{plot_sm} \link{plot_disheat}
-#' \link{plot_pca} \link{plot_qq_all} \link{plot_pairwise_ma}
+#'  \code{\link[Biobase]{exprs}} \code{\link{hpgl_norm}} \code{\link{plot_nonzero}} \code{\link{plot_libsize}}
+#'  \code{\link{plot_boxplot}} \code{\link{plot_corheat}} \code{\link{plot_sm}} \code{\link{plot_disheat}}
+#'  \code{\link{plot_pca}} \code{\link{plot_qq_all}} \code{\link{plot_pairwise_ma}}
 #' @examples
 #' \dontrun{
-#' toomany_plots <- graph_metrics(expt)
-#' toomany_plots$pcaplot
-#' norm <- normalize_expt(expt, convert="cpm", batch=TRUE, filter_low=TRUE,
-#'                        transform="log2", norm="rle")
-#' holy_asscrackers <- graph_metrics(norm, qq=TRUE, ma=TRUE)
-#' ## good luck, you are going to be waiting a while for the ma plots to print!
+#'  toomany_plots <- graph_metrics(expt)
+#'  toomany_plots$pcaplot
+#'  norm <- normalize_expt(expt, convert="cpm", batch=TRUE, filter_low=TRUE,
+#'                         transform="log2", norm="rle")
+#'  holy_asscrackers <- graph_metrics(norm, qq=TRUE, ma=TRUE)
+#'  ## good luck, you are going to be waiting a while for the ma plots to print!
 #' }
 #' @export
 graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL,
@@ -145,7 +145,8 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
 #' @export
 plot_legend <- function(stuff) {
     plot <- NULL
-    if (class(stuff)[[1]] == "gg") {  ## Then assume it is a pca plot
+    if (class(stuff)[[1]] == "gg") {
+        ## Then assume it is a pca plot
         plot <- stuff
     } else {
         plot <- plot_pca(stuff)[["plot"]]
@@ -158,7 +159,7 @@ plot_legend <- function(stuff) {
     grid::grid.draw(legend)
     legend_plot <- grDevices::recordPlot()
     ret <- list(
-        colors = plot[["data"]][, c("condition","batch","colors")],
+        colors = plot[["data"]][, c("condition", "batch", "colors")],
         plot = legend_plot)
     return(ret)
 }
@@ -187,8 +188,8 @@ plot_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
       ## Make the panel
       ## ncol: Number of columns of plots
       ## nrow: Number of rows needed, calculated from # of cols
-      layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                       ncol=cols, nrow=ceiling(numPlots/cols))
+      layout <- matrix(seq(1, cols * ceiling(numPlots / cols)),
+                       ncol=cols, nrow=ceiling(numPlots / cols))
   }
 
   if (numPlots==1) {

@@ -22,4 +22,6 @@ This sets up a GSEABase analysis using KEGG pathways rather than gene ontologies
 Does this even work?  I don't think I have ever tested it yet.
 oh, it sort of does, maybe if I export it I will rembmer it.
 }
-
+\seealso{
+\pkg{AnnotationDbi} \pkg{GSEABase} \pkg{Category}
+}

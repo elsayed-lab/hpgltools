@@ -27,10 +27,10 @@ otherwise be too troublesome to acquire.
 }
 \examples{
 \dontrun{
-tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
+ tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
 }
 }
 \seealso{
-\pkg{googleVis} \link{gff2df}
+\pkg{googleVis}
+ \code{\link{gff2df}}
 }
-

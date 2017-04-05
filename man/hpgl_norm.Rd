@@ -13,23 +13,24 @@ hpgl_norm(data, ...)
 }
 \value{
 edgeR's DGEList expression of a count table.  This seems to
-me to be the easiest to deal with.
+ me to be the easiest to deal with.
 }
 \description{
 There are many possible options to this function.  Refer to normalize_expt() for a more complete list.
 }
 \examples{
 \dontrun{
-df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
-df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
-df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2',
-                       convert='rpkm')  ## Quantile, log2, rpkm
-count_table = df_ql2rpkm$counts
+ df_raw = hpgl_norm(expt=expt)  ## Only performs low-count filtering
+ df_raw = hpgl_norm(df=a_df, design=a_design) ## Same, but using a df
+ df_ql2rpkm = hpgl_norm(expt=expt, norm='quant', transform='log2',
+                        convert='rpkm')  ## Quantile, log2, rpkm
+ count_table = df_ql2rpkm$counts
 }
 }
 \seealso{
-\link[edgeR]{cpm} \link[edgeR]{rpkm}
-\link{hpgl_rpkm} \link[DESeq2]{DESeqDataSetFromMatrix}
-\link[DESeq]{estimateSizeFactors} \link[edgeR]{DGEList} \link[edgeR]{calcNormFactors}
+\pkg{edgeR} \pkg{DESeq2}
+ \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+ \code{\link{hpgl_rpkm}} \code{\link[DESeq2]{DESeqDataSetFromMatrix}}
+ \code{\link[DESeq]{estimateSizeFactors}} \code{\link[edgeR]{DGEList}}
+ \code{\link[edgeR]{calcNormFactors}}
 }
-

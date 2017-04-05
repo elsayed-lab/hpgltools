@@ -18,9 +18,11 @@ Data frame describing some kegg pathways
 Make an easier to use df of KEGG -> descriptions using keggGet.
 }
 \examples{
+\dontrun{
  mapping <- generate_kegg_pathway_mapping(c("hsa00040", "hsa00100"))
 }
-\seealso{
-\link[KEGGREST]{keggGet}
 }
-
+\seealso{
+\pkg{KEGGREST}
+ \code{\link[KEGGREST]{keggLink}}
+}

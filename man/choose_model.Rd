@@ -46,4 +46,7 @@ nor dependent variable models, if you want those do them yourself and pass them 
 \details{
 Invoked by the _pairwise() functions.
 }
-
+\seealso{
+\pkg{stats}
+ \code{\link[stats]{model.matrix}}
+}

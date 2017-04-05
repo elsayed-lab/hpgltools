@@ -15,12 +15,17 @@ plot_pcfactor(pc_df, expt, exp_factor = "condition", component = "PC1")
 
 \item{component}{Which principal component to compare against?}
 }
+\value{
+Plot of principle component vs factors in the data
+}
 \description{
 This should make a quick df of the factors and PCs and plot them.
 }
 \examples{
 \dontrun{
-estimate_vs_pcs <- plot_pcfactor(pcs, times)
+ estimate_vs_pcs <- plot_pcfactor(pcs, times)
 }
 }
-
+\seealso{
+\pkg{ggplot2}
+}

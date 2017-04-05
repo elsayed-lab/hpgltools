@@ -10,9 +10,10 @@
 #' @param data Matrix of count data.
 #' @param convert Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
 #' @param ... Options I might pass from other functions are dropped into arglist, used by rpkm (gene
-#'     lengths) and divide_seq (genome, pattern to match, and annotation type).
+#'  lengths) and divide_seq (genome, pattern to match, and annotation type).
 #' @return Dataframe of cpm/rpkm/whatever(counts)
-#' @seealso \pkg{edgeR} \pkg{Biobase} \code{\link[edgeR]{cpm}}
+#' @seealso \pkg{edgeR} \pkg{Biobase}
+#'  \code{\link[edgeR]{cpm}}
 #' @examples
 #' \dontrun{
 #'  converted_table = convert_counts(count_table, convert='cbcbcpm')
@@ -65,7 +66,8 @@ convert_counts <- function(data, convert="raw", ...) {
 #' @param genome Genome to search (fasta/BSgenome).
 #' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return The RPseqM counts
-#' @seealso \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
+#' @seealso \pkg{edgeR} \pkg{Rsamtools}
+#'  \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
 #' @examples
 #' \dontrun{
 #'  cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
@@ -92,7 +94,7 @@ divide_seq <- function(counts, genome=NULL, ...) {
             system(paste0("xz -d ", genome))
         }
         raw_seq <- try(Rsamtools::FaFile(genome))
-        if (class(raw_seq)[1] == 'try-error') {
+        if (class(raw_seq)[1] == "try-error") {
             stop(paste0("There was a problem reading: ", genome))
         }
         system(paste0(compression, " ", sub("^([^.]*).*", "\\1", genome)))
@@ -120,7 +122,7 @@ divide_seq <- function(counts, genome=NULL, ...) {
         annotation_entries <- gff2irange(annotations, ...)
     } else if (annotation_class == "data.frame") {
         colnames(annotations) <- tolower(colnames(annotations))
-        annotations <- annotations[complete.cases(annotations),]
+        annotations <- annotations[complete.cases(annotations), ]
         if (class(annotations[["strand"]]) == "integer") {
             annotations[["strand"]] <- ifelse(annotations[["strand"]] > 0, "+", "-")
         }
@@ -141,7 +143,7 @@ divide_seq <- function(counts, genome=NULL, ...) {
     result <- Biostrings::vcountPDict(dict, cds_seq)
     num_tas <- data.frame(name=names(cds_seq), tas=as.data.frame(t(result)))
     rownames(num_tas) <- make.names(num_tas[["name"]], unique=TRUE)
-    colnames(num_tas) <- c("name","pattern")
+    colnames(num_tas) <- c("name", "pattern")
     num_tas[["pattern"]] <- num_tas[["pattern"]] + 1  ## No division by 0
     factor <- median(num_tas[["pattern"]])
     num_tas[["pattern"]] <- num_tas[["pattern"]] / factor
@@ -166,7 +168,7 @@ divide_seq <- function(counts, genome=NULL, ...) {
 #' @seealso \pkg{edgeR}
 #' @examples
 #' \dontrun{
-#' l2cpm <- hpgl_log2cpm(counts)
+#'  l2cpm <- hpgl_log2cpm(counts)
 #' }
 #' @export
 hpgl_log2cpm <- function(counts, lib.size=NULL) {
@@ -187,10 +189,11 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #' @param df Data frame of counts, alternately an edgeR DGEList.
 #' @param ... extra options including annotations for defining gene lengths.
 #' @return Data frame of counts expressed as rpkm.
-#' @seealso \pkg{edgeR} and \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+#' @seealso \pkg{edgeR}
+#'  \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 #' @examples
 #' \dontrun{
-#' rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
+#'  rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
 #' }
 #' @export
 hpgl_rpkm <- function(df, ...) {
@@ -206,7 +209,7 @@ hpgl_rpkm <- function(df, ...) {
   the result was null.  Perhaps your annotation or df's rownames are not set?
   Going to attempt to use the column 'ID'.
 ")
-        rownames(annotations) = make.names(annotations[["ID"]], unique=TRUE)
+        rownames(annotations) <- make.names(annotations[["ID"]], unique=TRUE)
         df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
         if (dim(df_in)[1] == 0) {
             stop("The ID column failed too.")

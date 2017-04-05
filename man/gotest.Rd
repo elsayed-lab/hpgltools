@@ -18,12 +18,11 @@ This just wraps gotst in mapply.
 \examples{
 \dontrun{
  gotest("GO:0032559")
-## > 1
+ ## > 1
  gotest("GO:0923429034823904")
-## > 0
+ ## > 0
 }
 }
 \seealso{
 \pkg{GOTermsAnnDbBimap}
 }
-

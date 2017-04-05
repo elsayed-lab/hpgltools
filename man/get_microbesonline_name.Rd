@@ -21,4 +21,12 @@ get ids is simple enough.
 Tested in test_42ann_microbesonline.R
 This is essentially covered in get_micrboesonline_ids(), but this works too.
 }
-
+\examples{
+\dontrun{
+ names <- get_microbesonline_name(id=316385)
+}
+}
+\seealso{
+\pkg{DBI}
+ \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
+}

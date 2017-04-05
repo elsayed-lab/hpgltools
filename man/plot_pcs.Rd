@@ -41,6 +41,6 @@ A quick and dirty PCA plotter of arbitrary components against one another.
 }
 }
 \seealso{
-\pkg{ggplot2} \code{\link[directlabels]{geom_dl}}
+\pkg{ggplot2}
+ \code{\link[directlabels]{geom_dl}}
 }
-

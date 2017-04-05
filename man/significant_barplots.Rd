@@ -31,9 +31,20 @@ followed by 2 fold and 4 fold cutoffs.}
 
 \item{...}{More arguments are passed to arglist.}
 }
+\value{
+list containing the significance bar plots and some information to hopefully help interpret them.
+}
 \description{
 These plots are pretty annoying, and I am certain that this function is not well written, but it
 provides a series of bar plots which show the number of genes/contrast which are up and down
 given a set of fold changes and p-value.
 }
-
+\examples{
+\dontrun{
+ ## Damn I wish I were smrt enough to make this elegant and easily comprehendable, but I cannot.
+ barplots <- significant_barplots(combined_result)
+}
+}
+\seealso{
+\pkg{ggplot2}
+}

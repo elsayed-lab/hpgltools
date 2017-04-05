@@ -16,6 +16,5 @@ stuff deseq2_pairwise results.
 This calls deseq2_pairwise(...) because I am determined to forget typing deseq2.
 }
 \seealso{
-\link{deseq2_pairwise}
+\code{\link{deseq2_pairwise}}
 }
-

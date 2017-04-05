@@ -5,8 +5,8 @@
 #' definitions, etc.
 #'
 #' @param df Dataframe of ontology information.  This is intended to be the output from goseq
-#'     including information like numbers/category, GOids, etc.  It requires a column 'category'
-#'     which contains: GO:000001 and such.
+#'  including information like numbers/category, GOids, etc.  It requires a column 'category'
+#'  which contains: GO:000001 and such.
 #' @param file Csv file to which to write the table.
 #' @return Ontology table with annotation information included.
 #' @seealso \pkg{goseq}
@@ -14,17 +14,17 @@
 #' \dontrun{
 #'  annotated_go = goseq_table(go_ids)
 #'  head(annotated_go, n=1)
-#' ## >        category numDEInCat numInCat over_represented_pvalue
-#' ## > 571  GO:0006364          9       26            4.655108e-08
-#' ## >      under_represented_pvalue       qvalue ontology
-#' ## > 571                 1.0000000 6.731286e-05       BP
-#' ## >                                term
-#' ## > 571                 rRNA processing
-#' ## >                               synonym
-#' ## > 571        "35S primary transcript processing, GO:0006365"
-#' ## >        secondary    definition
-#' ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal
-#' ##          RNA (rRNA) transcript into one or more mature rRNA molecules.
+#'  ## >        category numDEInCat numInCat over_represented_pvalue
+#'  ## > 571  GO:0006364          9       26            4.655108e-08
+#'  ## >      under_represented_pvalue       qvalue ontology
+#'  ## > 571                 1.0000000 6.731286e-05       BP
+#'  ## >                                term
+#'  ## > 571                 rRNA processing
+#'  ## >                               synonym
+#'  ## > 571        "35S primary transcript processing, GO:0006365"
+#'  ## >        secondary    definition
+#'  ## > 571    GO:0006365   Any process involved in the conversion of a primary ribosomal
+#'  ##          RNA (rRNA) transcript into one or more mature rRNA molecules.
 #' }
 #' @export
 goseq_table <- function(df, file=NULL) {
@@ -49,13 +49,13 @@ goseq_table <- function(df, file=NULL) {
     ##if (class(secondary) != 'try-error') {
     ##    df$secondary <- secondary
     ##}
-##    print("Gather approximate go levels.")  ## This function is too slow, commented it out.
-##    df$level = golevel(df$categoy)
+    ## print("Gather approximate go levels.")  ## This function is too slow, commented it out.
+    ## df[["level"]] = golevel(df[["categoy"]])
     message("Gathering category definitions.")
     df[["definition"]] <- godef(df[["category"]])
-    df <- df[, c("category","numDEInCat","numInCat","over_represented_pvalue",
-                 "under_represented_pvalue","qvalue","ontology","term",
-                 "synonym","definition")]
+    df <- df[, c("category", "numDEInCat", "numInCat", "over_represented_pvalue",
+                 "under_represented_pvalue", "qvalue", "ontology", "term",
+                 "synonym", "definition")]
     if (!is.null(file)) {
         write.csv(df, file=file)
     }
@@ -82,18 +82,22 @@ goseq_table <- function(df, file=NULL) {
 #' @param bioc_length_db Source of gene lengths?
 #' @param ... Extra parameters which I do not recall
 #' @return Big list including:
-#'   the pwd:pwf function,
-#'   alldata:the godata dataframe,
-#'   pvalue_histogram:p-value histograms,
-#'   godata_interesting:the ontology information of the enhanced groups,
-#'   term_table:the goterms with some information about them,
-#'   mf_subset:a plot of the MF enhanced groups,
-#'   mfp_plot:the pvalues of the MF group,
-#'   bp_subset:a plot of the BP enhanced groups,
-#'   bpp_plot,
-#'   cc_subset,
-#'   and ccp_plot
-#' @seealso \pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
+#'  the pwd:pwf function,
+#'  alldata:the godata dataframe,
+#'  pvalue_histogram:p-value histograms,
+#'  godata_interesting:the ontology information of the enhanced groups,
+#'  term_table:the goterms with some information about them,
+#'  mf_subset:a plot of the MF enhanced groups,
+#'  mfp_plot:the pvalues of the MF group,
+#'  bp_subset:a plot of the BP enhanced groups,
+#'  bpp_plot,
+#'  cc_subset,
+#'  and ccp_plot
+#' @seealso \pkg{goseq} \pkg{GO.db}
+#' @examples
+#' \dontrun{
+#'  lotsotables <- simple_goseq(gene_list, godb, lengthdb)
+#' }
 #' @export
 simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1,
@@ -115,7 +119,8 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
     goids_df <- NULL
     ## sig_genes may be a list, character list, or data frame.
     gene_list <- NULL
-    if (class(sig_genes) == "character") { ## Then this is a character list of gene ids
+    if (class(sig_genes) == "character") {
+        ## Then this is a character list of gene ids
         gene_list <- sig_genes
     } else if (class(sig_genes) == "list") {
         gene_list <- names(sig_genes)
@@ -123,7 +128,8 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
         if (is.null(rownames(sig_genes)) & is.null(sig_genes[["ID"]])) {
             stop("This requires a set of gene IDs either from the rownames or a column named 'ID'.")
         } else if (!is.null(sig_genes[["ID"]])) {
-            ## Use a column named 'ID' first because a bunch of annotation databases use ENTREZ IDs which are just integers, which of course is not allowed by data frame row names.
+            ## Use a column named 'ID' first because a bunch of annotation databases use ENTREZ
+            ## IDs which are just integers, which of course is not allowed by data frame row names.
             message("Using the ID column from your table rather than the row names.")
             gene_list <- sig_genes[["ID"]]
         } else if (!is.null(rownames(sig_genes))) {
@@ -138,16 +144,19 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
     ## At this point I should have a character list of gene ids named 'gene_list'
     de_genelist <- as.data.frame(gene_list)
     de_genelist[["DE"]] <- 1
-    colnames(de_genelist) <- c("ID","DE")
+    colnames(de_genelist) <- c("ID", "DE")
 
     ## Database of lengths may be a gff file, TxDb, or OrganismDb
     metadf <- NULL
-    if (class(length_db)[[1]] == "character")  {  ## Then this should be either a gff file or species name.
+    if (class(length_db)[[1]] == "character")  {
+        ## Then this should be either a gff file or species name.
         if (grepl(pattern="\\.gff", x=length_db, perl=TRUE) |
-            grepl(pattern="\\.gtf", x=length_db, perl=TRUE)) { ## gff file
+            grepl(pattern="\\.gtf", x=length_db, perl=TRUE)) {
+            ## gff file
             txdb <- GenomicFeatures::makeTxDbFromGFF(length_db)
             metadf <- extract_lengths(db=txdb, gene_list=gene_list)
-        } else {  ## Then species name
+        } else {
+            ## Then species name
             message("A species name.")
         }
     } else if (class(length_db)[[1]] == "AnnotationDbi") {
@@ -168,18 +177,22 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
     ## In that case, fix it.
     if (is.null(metadf[["width"]]) & is.null(metadf[["length"]])) {
         stop("The length db needs to have a length or width column.")
-    } else if (is.null(metadf[["length"]])) { ## Then it is named 'width' and I want to rename it to length
+    } else if (is.null(metadf[["length"]])) {
+        ## Then it is named 'width' and I want to rename it to length
         colnames(metadf) <- gsub(x=colnames(metadf), pattern="width", replacement="length")
     }
     ## Now I should have the gene list and gene lengths
 
     godf <- data.frame()
-    if (class(go_db) == "character") {  ## A text table or species name
+    if (class(go_db) == "character") {
+        ## A text table or species name
         if (grepl(pattern="\\.csv", x=go_db, perl=TRUE) |
-            grepl(pattern="\\.tab", x=go_db, perl=TRUE)) { ## table
+            grepl(pattern="\\.tab", x=go_db, perl=TRUE)) {
+            ## table
             godf <- read.table(go_db, ...)
-            colnames(godf) <- c("ID","GO")
-        } else {  ## Assume species name
+            colnames(godf) <- c("ID", "GO")
+        } else {
+            ## Assume species name
             supported <- TRUE
             species <- go_db
         }
@@ -189,7 +202,7 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
         godf <- extract_go(go_db)
     } else if (class(go_db)[[1]] == "data.frame") {
         godf <- go_db
-        godf <- godf[, c("ID","GO")]
+        godf <- godf[, c("ID", "GO")]
     } else {
         message("Not sure what to do here.")
     }
@@ -198,7 +211,8 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
     godf[["ID"]] <- make.names(godf[["ID"]])
     metadf[["ID"]] <- make.names(metadf[["ID"]])
     de_genelist[["ID"]] <- make.names(de_genelist[["ID"]])
-    ## Ok, now I have a df of GOids, all gene lengths, and DE gene list. That is everything I am supposed to need for goseq.
+    ## Ok, now I have a df of GOids, all gene lengths, and DE gene list. That is everything
+    ## I am supposed to need for goseq.
 
     ## See how many entries from the godb are in the list of genes.
     id_xref <- de_genelist[["ID"]] %in% godf[["ID"]]
@@ -207,10 +221,13 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
     ## So lets merge the de genes and gene lengths to ensure that they are consistent.
     ## Then make the vectors expected by goseq
     merged_ids_lengths <- metadf
-    merged_ids_lengths[["ID"]] <- as.character(merged_ids_lengths[["ID"]])  ## To avoid 'unimplemented type 'list' in 'orderVector1'
+    ## The following line was done in order to avoid
+    ## "'unimplemented type 'list' in 'orderVector1'"
+    merged_ids_lengths[["ID"]] <- as.character(merged_ids_lengths[["ID"]])
     merged_ids_lengths <- merge(merged_ids_lengths, de_genelist, by.x="ID", by.y="ID", all.x=TRUE)
     merged_ids_lengths[is.na(merged_ids_lengths)] <- 0
-    ## Not casing the next lines as character/numeric causes weird errors like 'names' attribute must be the same length as the vector
+    ## Not casing the next lines as character/numeric causes weird errors like 'names' attribute
+    ## must be the same length as the vector
     de_vector <- as.vector(as.numeric(merged_ids_lengths[["DE"]]))
     names(de_vector) <- make.names(as.character(merged_ids_lengths[["ID"]]), unique=TRUE)
     length_vector <- as.vector(as.numeric(merged_ids_lengths[["length"]]))
@@ -247,12 +264,13 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
     godata[["term"]] <- goterm(godata[["category"]])
     godata[["ontology"]] <- goont(godata[["category"]])
     godata <- cbind(godata, qvalues)
-    colnames(godata) <- c("category","over_represented_pvalue","under_represented_pvalue",
-                          "numDEInCat","numInCat","term","ontology","qvalue")
+    colnames(godata) <- c("category", "over_represented_pvalue", "under_represented_pvalue",
+                          "numDEInCat", "numInCat", "term", "ontology", "qvalue")
     if (is.null(adjust)) {
         godata_interesting <- subset(godata, godata[["over_represented_pvalue"]] <= pvalue)
         padjust_method <- "none"
-    } else {  ## There is a requested pvalue adjustment
+    } else {
+        ## There is a requested pvalue adjustment
         godata_interesting <- subset(godata, stats::p.adjust(godata[["over_represented_pvalue"]],
                                                              method=padjust_method) <= adjust)
         if (dim(godata_interesting)[1] < minimum_interesting) {
@@ -286,7 +304,7 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
     ##bp_interesting <- subset(godata_interesting, ontology == "BP")
     bp_interesting <- godata_interesting[godata_interesting[["ontology"]] == "BP", ]
     rownames(bp_interesting) <- bp_interesting[["category"]]
-    bp_interesting <- bp_interesting[ ,c("ontology", "numDEInCat", "numInCat",
+    bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
                                          "over_represented_pvalue", "qvalue", "term")]
     ##cc_interesting <- subset(godata_interesting, ontology == "CC")
     cc_interesting <- godata_interesting[godata_interesting[["ontology"]] == "CC", ]
@@ -335,11 +353,12 @@ simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
 #' @param include_all Include all genes in the ontology search?
 #' @param ... Extra options without a purpose just yet.
 #' @return Data frame of categories/genes.
-#' @seealso \link{simple_goseq} \code{\link[clusterProfiler]{buildGOmap}},
+#' @seealso \pkg{goseq} \pkg{clusterProfiler}
+#'  \code{\link{simple_goseq}}
 #' @examples
 #' \dontrun{
-#'  data = simple_goseq(sig_genes=limma_output, lengths=annotation_df, goids=goids_df)
-#'  genes_in_cats = gather_genes(data, ont='BP')
+#'  data <- simple_goseq(sig_genes=limma_output, lengths=annotation_df, goids=goids_df)
+#'  genes_in_cats <- gather_genes(data, ont='BP')
 #' }
 #' @export
 gather_goseq_genes <- function(goseq, ontology=NULL, pval=0.1, include_all=FALSE, ...) {
@@ -348,7 +367,7 @@ gather_goseq_genes <- function(goseq, ontology=NULL, pval=0.1, include_all=FALSE
     if (is.null(ontology)) {
         retlist <- list()
         message("No ontology provided, performing all.")
-        for (type in c("MF","BP","CC")) {
+        for (type in c("MF", "BP", "CC")) {
             retlist[[type]] <- gather_goseq_genes(goseq, ontology=type,
                                                   pval=pval, include_all=include_all, ...)
         }
@@ -362,7 +381,7 @@ gather_goseq_genes <- function(goseq, ontology=NULL, pval=0.1, include_all=FALSE
     } else {
         retlist <- list()
         message("No ontology provided, performing all.")
-        for (type in c("MF","BP","CC")) {
+        for (type in c("MF", "BP", "CC")) {
             retlist[[type]] <- gather_goseq_genes(goseq, ontology=type,
                                                   pval=pval, include_all=include_all, ...)
         }

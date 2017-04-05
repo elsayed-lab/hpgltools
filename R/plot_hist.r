@@ -12,7 +12,8 @@
 #' @param fillcolor Change the fill colors of the plotted elements?
 #' @param color Change the color of the lines of the plotted elements?
 #' @return Ggplot histogram.
-#' @seealso \link[ggplot2]{geom_histogram} \link[ggplot2]{geom_density}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[ggplot2]{geom_histogram}} \code{\link[ggplot2]{geom_density}}
 #' @examples
 #' \dontrun{
 #'  kittytime = plot_histogram(df)
@@ -34,13 +35,15 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
         minval <- min(df, na.rm=TRUE)
         maxval <- max(df, na.rm=TRUE)
         binwidth <- (maxval - minval) / bins
-        ## message(paste("No binwidth provided, setting it to ", binwidth, " in order to have ", bins, " bins.", sep=""))
+        ## message(paste("No binwidth provided, setting it to ", binwidth, "
+        ## in order to have ", bins, " bins.", sep=""))
     }
     a_histogram <- ggplot2::ggplot(df, ggplot2::aes_string(x="values"), environment=hpgl_env) +
         ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), stat="bin", binwidth=binwidth,
                                 colour=color, fill=fillcolor, position="identity") +
         ggplot2::geom_density(alpha=0.4, fill=fillcolor) +
-        ggplot2::geom_vline(ggplot2::aes_string(xintercept="mean(values, na.rm=T)"), color=color, linetype="dashed", size=1) +
+        ggplot2::geom_vline(ggplot2::aes_string(xintercept="mean(values, na.rm=T)"),
+                            color=color, linetype="dashed", size=1) +
         ggplot2::theme_bw()
     if (log) {
         log_histogram <- try(a_histogram + ggplot2::scale_x_log10())
@@ -61,9 +64,10 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
 #' @param log Plot the data on the log scale?
 #' @param bins Set a static # of bins of an unknown width?
 #' @param binwidth Set a static bin width with an unknown # of bins?  If neither of these are
-#'     provided, then bins is set to 500, if both are provided, then bins wins.
+#'  provided, then bins is set to 500, if both are provided, then bins wins.
 #' @return List of the ggplot histogram and some statistics describing the distributions.
-#' @seealso \link[stats]{pairwise.t.test} \link[plyr]{ddply}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[stats]{pairwise.t.test}} \code{\link[plyr]{ddply}}
 #' @examples
 #' \dontrun{
 #'  kittytime = plot_multihistogram(df)
@@ -76,13 +80,13 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
         summary_df <- summary(df)
         play_all <- data.frame()
         for (col in 1:length(colnames(df))) {
-            new_column <- data.frame(expression=df[,col], cond=colnames(df)[col])
+            new_column <- data.frame(expression=df[, col], cond=colnames(df)[col])
             play_all <- BiocGenerics::rbind(play_all, new_column)
         }
     } else if (is.list(data)) {
         summary_df <- summary(data)
         play_all <- reshape2::melt(data)
-        colnames(play_all) <- c("expression","cond")
+        colnames(play_all) <- c("expression", "cond")
     } else {
         stop("This can only work with a list or data frame.")
     }
@@ -106,11 +110,14 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
         message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
     }
     hpgl_multi <- ggplot2::ggplot(play_all, ggplot2::aes_string(x="expression", fill="cond")) +
-        ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), binwidth=binwidth, alpha=0.4, position="identity") +
+        ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."),
+                                binwidth=binwidth, alpha=0.4, position="identity") +
         ggplot2::xlab("Expression") +
         ggplot2::ylab("Observation likelihood") +
         ggplot2::geom_density(alpha=0.5) +
-        ggplot2::geom_vline(data=play_cdf, ggplot2::aes_string(xintercept="rating.mean",  colour="cond"), linetype="dashed", size=0.75) +
+        ggplot2::geom_vline(data=play_cdf,
+                            ggplot2::aes_string(xintercept="rating.mean",  colour="cond"),
+                            linetype="dashed", size=0.75) +
         ggplot2::theme_bw()
     if (log) {
         logged <- try(hpgl_multi + ggplot2::scale_x_log10())

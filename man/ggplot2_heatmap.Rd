@@ -16,4 +16,3 @@ putatively a heatmap!
 Check out the following link for a neat dendrogram library.
 http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning
 }
-

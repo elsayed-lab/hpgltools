@@ -19,4 +19,6 @@ Summaries of the new model,  in theory this would be a nicely batch-corrected da
 \description{
 Note the word 'attempt'.  This function is so ungodly slow that it probably will never be used.
 }
-
+\seealso{
+\pkg{variancePartition}
+}

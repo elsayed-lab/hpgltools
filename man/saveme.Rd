@@ -28,6 +28,5 @@ This assumes you have pxz installed and >= 4 CPUs.
 }
 }
 \seealso{
-\link{save} \link{pipe}
+\code{\link{save}} \code{\link{pipe}}
 }
-

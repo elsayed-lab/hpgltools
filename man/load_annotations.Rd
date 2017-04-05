@@ -33,10 +33,11 @@ This defaults to a few fields which I have found most useful, but the brave can 
 }
 \examples{
 \dontrun{
-one_gene <- load_annotations(org, c("LmJF.01.0010"))
+ one_gene <- load_annotations(org, c("LmJF.01.0010"))
 }
 }
 \seealso{
-\link[AnnotationDbi]{select}
+\pkg{AnnotationDbi} \pkg{GenomicFeatures} \pkg{BiocGenerics}
+ \code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
+ \code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
 }
-

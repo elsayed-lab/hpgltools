@@ -24,10 +24,10 @@ attributes.
 }
 \examples{
 \dontrun{
-num_pattern = sequence_attributes('mgas_5005.fasta', 'mgas_5005.gff')
+ num_pattern = sequence_attributes('mgas_5005.fasta', 'mgas_5005.gff')
 }
 }
 \seealso{
-\pkg{Biostrings} \pkg{Rsamtools} \link[Biostrings]{letterFrequency} \link[Rsamtools]{FaFile}
+\pkg{Biostrings} \pkg{Rsamtools}
+ \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
 }
-

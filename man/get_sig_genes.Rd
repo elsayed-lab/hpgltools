@@ -39,4 +39,6 @@ are provided, it arbitrarily chooses all genes outside of 1-z.
 \details{
 Tested in test_29de_shared.R
 }
-
+\seealso{
+\code{\link{extract_significant_genes}}
+}

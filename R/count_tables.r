@@ -15,16 +15,17 @@
 #' @param suffix Optional suffix to add to the filenames when reading them.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
-#' @seealso \link{create_expt}
+#' @seealso \pkg{data.table}
+#'  \code{\link{create_expt}}
 #' @examples
 #' \dontrun{
-#'  count_tables = hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
+#'  count_tables <- hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
 #' }
 #' @export
 expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
                              suffix=NULL, ...) {
     ## load first sample
-    arglist <- list(...)
+    ## arglist <- list(...)
     skippers <- (files == "" | files == "undef" | is.null(files))
     files <- files[!skippers]
     lower_filenames <- files
@@ -35,7 +36,7 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
         low_hpgl <- tolower(low_hpgl)
         low_hpgl <- paste(low_hpgl, suffix, sep="")
     } else {
-        low_hpgl <- gsub("HPGL","hpgl", basename(files))
+        low_hpgl <- gsub("HPGL", "hpgl", basename(files))
     }
     lower_filenames <- paste(dirs, low_files, sep="/")
     lowhpgl_filenames <- paste(dirs, low_hpgl, sep="/")
@@ -46,7 +47,6 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
     } else if (file.exists(lower_filenames[1])) {
         files[1] <- lower_filenames[1]
     }
-    ##count_table = read.table(files[1], header=header, ...)
     count_table <- try(read.table(files[1], header=header))
     count_dt <- data.table::as.data.table(count_table)
     if (class(count_table)[1] == "try-error") {
@@ -66,7 +66,7 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
         } else if (file.exists(lower_filenames[table])) {
             files[table] <- lower_filenames[table]
         }
-        tmp_count = try(read.table(files[table], header=header))
+        tmp_count <- try(read.table(files[table], header=header))
         if (class(tmp_count)[1] == "try-error") {
             stop(paste0("There was an error reading: ", files[table]))
         }
@@ -119,20 +119,19 @@ expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALS
 #' @param expt Experiment class containing the requisite metadata and count tables.
 #' @param column Column of the design matrix used to specify which samples are replicates.
 #' @return Expt with the concatenated counts, new design matrix, batches, conditions, etc.
-#' @seealso
-#' \pkg{Biobase}
+#' @seealso \pkg{Biobase}
+#'  \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{pData}}
 #' @examples
 #' \dontrun{
-#'  compressed = concatenate_runs(expt)
+#'  compressed <- concatenate_runs(expt)
 #' }
 #' @export
-concatenate_runs <- function(expt, column='replicate') {
+concatenate_runs <- function(expt, column="replicate") {
     design <- expt[["design"]]
     replicates <- levels(as.factor(design[, column]))
     final_expt <- expt
     final_data <- NULL
     final_design <- NULL
-    final_definitions <- NULL
     column_names <- list()
     colors <- list()
     conditions <- list()
@@ -178,7 +177,7 @@ concatenate_runs <- function(expt, column='replicate') {
 #' @param ngenes How many genes in the fictional data set?
 #' @param columns How many samples in this data set?
 #' @return Matrix of pretend counts.
-#' @seealso \pkg{limma}
+#' @seealso \pkg{limma} \pkg{stats} \pkg{DESeq}
 #' @examples
 #' \dontrun{
 #'  pretend = make_exampledata()
@@ -188,8 +187,8 @@ make_exampledata <- function (ngenes=1000, columns=5) {
     q0 <- stats::rexp(ngenes, rate = 1/250)
     is_DE <- stats::runif(ngenes) < 0.3
     lfc <- stats::rnorm(ngenes, sd = 2)
-    q0A <- ifelse(is_DE, q0 * 2^(lfc / 2), q0)
-    q0B <- ifelse(is_DE, q0 * 2^(-lfc / 2), q0)
+    q0A <- ifelse(is_DE, q0 * 2^ (lfc / 2), q0)
+    q0B <- ifelse(is_DE, q0 * 2^ (-lfc / 2), q0)
     ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
     true_sf <- abs(stats::rnorm(columns, mean=1, sd=0.4))
     cond_types <- ceiling(sqrt(columns))
@@ -218,9 +217,10 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 #' @param data Data frame, presumably of counts.
 #' @param fact Factor describing the columns in the data.
 #' @return Data frame of the medians.
+#' @seealso \pkg{Biobase} \pkg{matrixStats}
 #' @examples
 #' \dontrun{
-#'  compressed = hpgltools:::median_by_factor(data, experiment$condition)
+#'  compressed = median_by_factor(data, experiment$condition)
 #' }
 #' @export
 median_by_factor <- function(data, fact="condition") {
@@ -237,7 +237,7 @@ median_by_factor <- function(data, fact="condition") {
 
     medians <- data.frame("ID"=rownames(data))
     data <- as.matrix(data)
-    rownames(medians) = rownames(data)
+    rownames(medians) <- rownames(data)
     fact <- as.factor(fact)
     for (type in levels(fact)) {
         columns <- grep(pattern=type, fact)
@@ -270,6 +270,11 @@ median_by_factor <- function(data, fact="condition") {
 #' @param cutoff  Minimum number of counts.
 #' @param hard  Greater-than is hard, greater-than-equals is not.
 #' @return  Number of genes.
+#' @seealso \pkg{Biobase}
+#' @examples
+#' \dontrun{
+#'  features <- features_greater_than(expt)
+#' }
 #' @export
 features_greater_than <- function(data, cutoff=1, hard=TRUE) {
     if (class(data) == "expt") {
@@ -317,6 +322,12 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE) {
 #' @param batch  Batch correction applied.
 #' @param filter  Filtering method used.
 #' @return  A big honking excel file and a list including the dataframes and images created.
+#' @seealso \pkg{openxlsx} \pkg{Biobase}
+#'  \code{\link{normalize_expt}} \code{\link{graph_metrics}}
+#' @examples
+#' \dontrun{
+#'  excel_sucks <- write_expt(expt)
+#' }
 #' @export
 write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", violin=FALSE,
                        convert="cpm", transform="log2", batch="sva", filter="cbcb") {
@@ -364,6 +375,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     message("Graphing the raw reads.")
     sheet <- "raw_graphs"
     newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
+    if (class(newsheet) == "try-error") {
+        warning(paste0("Failed to add the sheet: ", sheet))
+    }
     metrics <- sm(graph_metrics(expt, qq=TRUE))
     ## Start with library sizes.
     openxlsx::writeData(wb, sheet=sheet, x="Legend.", startRow=new_row, startCol=new_col)

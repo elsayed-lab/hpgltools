@@ -33,4 +33,3 @@ with two configuration files circos/conf/bob_minus_go.conf and
 circos/conf/bob_plus_go.conf and finally adds an include to
 circos/bob.conf
 }
-

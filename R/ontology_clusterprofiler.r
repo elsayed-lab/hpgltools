@@ -25,6 +25,11 @@
 #' @param categories  How many categories should be plotted in bar/dot plots?
 #' @param parallel  Perform slow operations in parallel?
 #' @return a list
+#' @seealso \pkg{clusterProfiler}
+#' @examples
+#' \dontrun{
+#'  holyasscrackers <- simple_clusterprofiler(gene_list, all_genes, "org.Dm.eg.db")
+#' }
 #' @export
 simple_clusterprofiler <- function(sig_genes, all_genes, orgdb="org.Dm.eg.db",
                                    orgdb_from="FLYBASE", orgdb_to="ENTREZID", internal=TRUE,
@@ -334,7 +339,7 @@ cp_options <- function(species) {
         options <- list(
             orgdb = "org.Dm.eg.db",
             orgdb_from = "FLYBASE",
-            orgdb_to = c("ENSEMBL","SYMBOL","ENTREZID"),
+            orgdb_to = c("ENSEMBL", "SYMBOL", "ENTREZID"),
             kegg_prefix = "Dmel_",
             kegg_organism = "dme",
             kegg_id_column = "FLYBASECG")
@@ -342,7 +347,7 @@ cp_options <- function(species) {
         options <- list(
             orgdb = "org.Hs.eg.db",
             orgdb_from = "ENSEMBL",
-            orgdb_to = c("ENSEMBL","SYMBOL","ENTREZID"),
+            orgdb_to = c("ENSEMBL", "SYMBOL", "ENTREZID"),
             kegg_prefix = "Hsa_",
             kegg_organism = "hsa",
             kegg_id_column = "")

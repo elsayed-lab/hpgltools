@@ -12,4 +12,3 @@ kmeans_testing(gene_ids = get0("gene_ids"))
 \description{
 Fill this in asap with real code for Ginger's search of gene sets which have similar profiles over time.
 }
-

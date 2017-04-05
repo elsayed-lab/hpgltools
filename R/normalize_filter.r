@@ -17,16 +17,16 @@
 #' @seealso \pkg{genefilter}
 #' @examples
 #' \dontrun{
-#' new <- filter_counts(old)
+#'  new <- filter_counts(old)
 #' }
 #' @export
 filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
                           cv_min=0.01, cv_max=1000, thresh=4, min_samples=2, ...) {
     arglist <- list(...)
     if (tolower(filter) == "povera") {
-        type <- 'pofa'
+        type <- "pofa"
     } else if (tolower(filter) == "kovera") {
-        type <- 'kofa'
+        type <- "kofa"
     }
     if (isTRUE(filter)) {
         filter <- "cbcb"
@@ -60,9 +60,10 @@ filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
 #' @param threshold Lower threshold of counts for each gene.
 #' @param min_samples Minimum number of samples.
 #' @return Dataframe of counts without the low-count genes.
+#' @seealso \pkg{edgeR}
 #' @examples
 #' \dontrun{
-#' filtered_table <- cbcb_filter_counts(count_table)
+#'  filtered_table <- cbcb_filter_counts(count_table)
 #' }
 #' @export
 cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2) {
@@ -91,9 +92,10 @@ cbcb_filter_counts <- function(count_table, threshold=2, min_samples=2) {
 #' @param count_table Data frame of (pseudo)counts by sample.
 #' @param threshold Lower threshold of counts for each gene.
 #' @return Dataframe of counts without the low-count genes.
+#' @seealso \pkg{edgeR}
 #' @examples
 #' \dontrun{
-#' filtered_table <- simple_filter_counts(count_table)
+#'  filtered_table <- simple_filter_counts(count_table)
 #' }
 #' @export
 simple_filter_counts <- function(count_table, threshold=2) {
@@ -120,7 +122,8 @@ simple_filter_counts <- function(count_table, threshold=2) {
 #' @param p Minimum proportion of each gene's counts/sample to be greater than a minimum(A).
 #' @param A Minimum number of counts in the above proportion.
 #' @return Dataframe of counts without the low-count genes.
-#' @seealso \pkg{genefilter} \code{\link[genefilter]{pOverA}} which this uses to decide what to keep.
+#' @seealso \pkg{genefilter}
+#'  \code{\link[genefilter]{pOverA}}
 #' @examples
 #' \dontrun{
 #'  filtered_table = genefilter_pofa_counts(count_table)
@@ -131,13 +134,13 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
     ## with tables in this.
     num_before <- nrow(count_table)
 
-    if (class(count_table) == 'ExpressionSet') {
+    if (class(count_table) == "ExpressionSet") {
         counts <- Biobase::exprs(count_table)
     }
     test <- genefilter::pOverA(p=p, A=A)
     filter_list <- genefilter::filterfun(test)
     answer <- genefilter::genefilter(count_table, filter_list)
-    count_table <- count_table[answer,]
+    count_table <- count_table[answer, ]
 
     removed <- num_before - nrow(count_table)
     message(paste0("Removing ", removed, " low-count genes (", nrow(count_table), " remaining)."))
@@ -156,10 +159,11 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
 #' @param cv_min Minimum coefficient of variance.
 #' @param cv_max Maximum coefficient of variance.
 #' @return Dataframe of counts without the high/low variance genes.
-#' @seealso \pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep.
+#' @seealso \pkg{genefilter}
+#'  \code{\link[genefilter]{kOverA}}
 #' @examples
 #' \dontrun{
-#' filtered_table = genefilter_kofa_counts(count_table)
+#'  filtered_table = genefilter_kofa_counts(count_table)
 #' }
 #' @export
 genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
@@ -167,13 +171,13 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
     ## with tables in this.
     num_before <- nrow(count_table)
 
-    if (class(count_table) == 'ExpressionSet') {
+    if (class(count_table) == "ExpressionSet") {
         counts <- Biobase::exprs(count_table)
     }
     test <- genefilter::cv(cv_min, cv_max)
     filter_list <- genefilter::filterfun(test)
     answer <- genefilter::genefilter(count_table, filter_list)
-    count_table <- count_table[answer,]
+    count_table <- count_table[answer, ]
 
     message(sprintf("Removing %d low-count genes (%d remaining).",
                     num_before - nrow(count_table), nrow(count_table)))
@@ -190,7 +194,8 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
 #' @param k Minimum number of samples to have >A counts.
 #' @param A Minimum number of counts for each gene's sample in kOverA().
 #' @return Dataframe of counts without the low-count genes.
-#' @seealso \pkg{genefilter} \code{\link[genefilter]{kOverA}} which this uses to decide what to keep.
+#' @seealso \pkg{genefilter}
+#'  \code{\link[genefilter]{kOverA}}
 #' @examples
 #' \dontrun{
 #'  filtered_table = genefilter_kofa_counts(count_table)
@@ -201,13 +206,13 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1) {
     ## with tables in this.
     num_before <- nrow(count_table)
 
-    if (class(count_table) == 'ExpressionSet') {
+    if (class(count_table) == "ExpressionSet") {
         counts <- Biobase::exprs(count_table)
     }
     test <- genefilter::kOverA(k=k, A=A)
     filter_list <- genefilter::filterfun(test)
     answer <- genefilter::genefilter(count_table, filter_list)
-    count_table <- count_table[answer,]
+    count_table <- count_table[answer, ]
 
     message(sprintf("Removing %d low-count genes (%d remaining).",
                     num_before - nrow(count_table), nrow(count_table)))

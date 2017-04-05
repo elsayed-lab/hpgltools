@@ -41,4 +41,3 @@ In its current implementation, this only understands two
 chromosomes.  A minimal amount of logic and data organization will
 address this weakness.
 }
-

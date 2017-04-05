@@ -4,7 +4,7 @@
 \alias{disjunct_pvalues}
 \title{Test for infected/control/beads -- a placebo effect?}
 \usage{
-disjunct_pvalues(contrast_fit, coef1, coef2, ...)
+disjunct_pvalues(contrast_fit, cellmeans_fit, conj_contrasts, disj_contrast)
 }
 \arguments{
 \item{contrast_fit}{The result of lmFit.}
@@ -20,4 +20,3 @@ The goal is therefore to find responses different than beads
 The null hypothesis is (H0): (infected == uninfected) || (infected == beads)
 The alt hypothesis is (HA): (infected != uninfected) && (infected != beads)
 }
-

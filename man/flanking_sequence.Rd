@@ -24,4 +24,3 @@ A list of sequences before and after each sequence.
 \description{
 Given a set of annotations and genome, one might want to get the set of adjacent sequences.
 }
-

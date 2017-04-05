@@ -20,4 +20,3 @@ Set of counts by sequence.
 This just calls PDict() and vcountPDict() on a sequence database given a pattern and number of
 mismatches.  This may be used by divide_seq() normalization.
 }
-

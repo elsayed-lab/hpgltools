@@ -21,4 +21,12 @@ This function should provide a quick reminder of how to use the AnnotationDbi se
 if it does nothing else.  It also (hopefully helpfully) returns a granges object containing
 the essential information one might want for printing out a gff or whatever.
 }
-
+\examples{
+\dontrun{
+ annotations <- gbk_annotations("saureus_txdb")
+}
+}
+\seealso{
+\pkg{AnnotationDbi} \pkg{GenomeInfoDb} \pkg{GenomicFeatures}
+ \code{\link[AnnotationDbi]{select}}
+}

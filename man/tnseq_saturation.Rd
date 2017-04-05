@@ -20,4 +20,6 @@ It furthermore has some logic to tell the difference between reads which were
 observed on the forward vs. reverse strand as well as reads which appear to be on both strands
 (eg. they start and end with 'TA').
 }
-
+\seealso{
+\pkg{ggplot2}
+}

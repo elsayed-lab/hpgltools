@@ -17,6 +17,13 @@
 #' @param col yay columns!
 #' @param ... more arguments!
 #' @return a voom return
+#' @seealso \pkg{limma}
+#' @examples
+#' \dontrun{
+#' ## No seriously, dont run this, I think it is wiser to use the functions provided by limma.
+#' ## But this provides a place to test stuff out.
+#'  voom_result <- hpgl_voomweighted(dataset, model)
+#' }
 #' @export
 hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="none",
                             plot=TRUE, span=0.5, var.design=NULL, method="genebygene",
@@ -78,12 +85,12 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
 #' @param converted  Is the input data is known to be cpm converted?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return EList containing the following information:
-#'   E = The normalized data
-#'   weights = The weights of said data
-#'   design = The resulting design
-#'   lib.size = The size in pseudocounts of the library
-#'   plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
-#' @seealso \link[limma]{voom} \link[limma]{lmFit}
+#'  E = The normalized data
+#'  weights = The weights of said data
+#'  design = The resulting design
+#'  lib.size = The size in pseudocounts of the library
+#'  plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
+#' @seealso \pkg{limma} \pkg{ggplot2}
 #' @examples
 #' \dontrun{
 #'  funkytown = hpgl_voom(samples, model)
@@ -92,7 +99,7 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
 hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
                       normalize.method="none", span=0.5,
                       stupid=FALSE, logged=FALSE, converted=FALSE, ...) {
-    arglist <- list(...)
+    ## arglist <- list(...)
     ## Going to attempt to as closely as possible dovetail the original implementation.
     ## I think at this point, my implementation is the same as the original with the exception
     ## of a couple of tests to check that the data is not fubar and I think my plot is prettier.
@@ -106,11 +113,13 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
             model <- model.matrix(~group, data = counts[["samples"]])
         }
         if (is.null(libsize)) {
-            libsize <- with(counts[["samples"]], libsize * norm.factors)
+            ## libsize <- with(counts[["samples"]], libsize * norm.factors)
+            ## This is a bit confusing.
+            libsize <- with(counts[["samples"]], counts[["libsize"]] * counts[["norm.factors"]])
         }
         counts <- counts[["counts"]]
     } else {
-        isExpressionSet <- suppressPackageStartupMessages(is(counts, "ExpressionSet"))
+        isExpressionSet <- sm(is(counts, "ExpressionSet"))
         if (isExpressionSet) {
             if (length(Biobase::fData(counts))) {
                 out[["genes"]] <- Biobase::fData(counts)
@@ -124,7 +133,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
         }
     }
     if (is.null(model)) {
-        design <- matrix(1, ncol(counts), 1)
+        model <- matrix(1, ncol(counts), 1)
         rownames(model) <- colnames(counts)
         colnames(model) <- "GrandMean"
     }
@@ -165,7 +174,8 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
     }
     sx <- linear_fit[["Amean"]] + mean(log2(libsize + 1)) - log2(1e+06)
     sy <- sqrt(linear_fit[["sigma"]])
-    if (is.na(sum(sy))) { ## 1 replicate
+    if (is.na(sum(sy))) {
+        ## 1 replicate
         return(NULL)
     }
     allzero <- rowSums(dataframe) == 0
@@ -260,10 +270,11 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
 #'  pairwise_fits = The result from calling contrasts.fit()
 #'  pairwise_comparisons = The result from eBayes()
 #'  limma_result = The result from calling write_limma()
-#' @seealso \link{write_limma}
+#' @seealso \pkg{limma} \pkg{Biobase}
+#'  \code{\link{write_limma}}
 #' @examples
 #' \dontrun{
-#' pretend = balanced_pairwise(data, conditions, batches)
+#'  pretend <- limma_pairwise(expt)
 #' }
 #' @export
 limma_pairwise <- function(input=NULL, conditions=NULL,
@@ -377,7 +388,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
         }
     }
 
-    convertedp = input[["state"]][["conversion"]]
+    convertedp <- input[["state"]][["conversion"]]
     if (is.null(convertedp)) {
         message("I cannot determine if this data has been converted, assuming no.")
         convertedp <- FALSE
@@ -510,18 +521,19 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
 #' @param type Type of scatter plot (linear model, distance, vanilla).
 #' @param ... Use the elipsis to feed options to the html graphs.
 #' @return plot_linear_scatter() set of plots comparing the chosen columns.  If you forget to
-#'     specify tables to compare, it will try the first vs the second.
-#' @seealso \link{plot_linear_scatter} \link[limma]{topTable}
+#'  specify tables to compare, it will try the first vs the second.
+#' @seealso \pkg{limma}
+#'  \code{\link{plot_linear_scatter}}
 #' @examples
 #' \dontrun{
-#' compare_logFC = limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
-#'                               first_table="AveExpr", second_column="AveExpr")
-#' compare_B = limma_scatter(all_pairwise, first_column="B", second_column="B")
+#'  compare_logFC <- limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
+#'                                 first_table="AveExpr", second_column="AveExpr")
+#'  compare_B <- limma_scatter(all_pairwise, first_column="B", second_column="B")
 #' }
 #' @export
 limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logFC",
                          second_table=2, second_column="logFC", type="linear_scatter", ...) {
-    tables <- all_pairwise_result$all_tables
+    tables <- all_pairwise_result[["all_tables"]]
     if (is.numeric(first_table)) {
         x_name <- paste(names(tables)[first_table], first_column, sep=":")
     }
@@ -570,8 +582,9 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 #' @param csv Write out csv files of the tables?
 #' @param annot_df Optional data frame including annotation information to include with the tables.
 #' @return List of data frames comprising the toptable output for each coefficient, I also added a
-#'     qvalue entry to these toptable() outputs.
-#' @seealso \link[limma]{toptable} \link{write_xls}
+#'  qvalue entry to these toptable() outputs.
+#' @seealso \pkg{limma} \pkg{qvalue}
+#'  \code{\link{write_xls}} \code{\link[limma]{topTable}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = eBayes(limma_output)
@@ -606,17 +619,6 @@ make_limma_tables <- function(data, adjust="fdr", n=0, coef=NULL, workbook="exce
         data_table[["P.Value"]] <- signif(x=as.numeric(data_table[["P.Value"]]), digits=4)
         data_table[["adj.P.Val"]] <- signif(x=as.numeric(data_table[["adj.P.Val"]]), digits=4)
         data_table[["B"]] <- signif(x=as.numeric(data_table[["B"]]), digits=4)
-        data_table[["qvalue"]] <- tryCatch({
-            ttmp <- as.numeric(data_table[["P.Value"]])
-            ttmp <- qvalue::qvalue(ttmp, robust=TRUE)[["qvalues"]]
-            signif(x=ttmp, digits=4)
-        },
-        error=function(cond) {
-            message(paste("The qvalue estimation failed for ", comparison, ".", sep=""))
-            return(1)
-        },
-        finally={
-        })
         if (!is.null(annot_df)) {
             data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
             ###data_table = data_table[, -1, drop=FALSE]
@@ -653,11 +655,11 @@ make_limma_tables <- function(data, adjust="fdr", n=0, coef=NULL, workbook="exce
 #'
 #' Looking to provide a single interface for writing tables from limma and friends.
 #'
-#' Tested in test_24deseq.R
+#' Tested in test_21limma.R
 #'
 #' @param data  Output from limma_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[limma]{toptable} \link{write_xls}
+#' @seealso \code{\link{write_de_table}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = limma_pairwise(expressionset)

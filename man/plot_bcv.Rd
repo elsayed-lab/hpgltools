@@ -17,12 +17,12 @@ This was written primarily to understand what that function is doing in edgeR.
 }
 \examples{
 \dontrun{
-bcv <- plot_bcv(expt)
-summary(bcv$data)
-bcv$plot
+ bcv <- plot_bcv(expt)
+ summary(bcv$data)
+ bcv$plot
 }
 }
 \seealso{
-\pkg{edgeR} \link[edgeR]{plotBCV}
+\pkg{edgeR}
+ \code{\link[edgeR]{plotBCV}}
 }
-

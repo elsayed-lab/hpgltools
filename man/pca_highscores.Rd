@@ -17,7 +17,7 @@ pca_highscores(df = NULL, conditions = NULL, batches = NULL, n = 20)
 }
 \value{
 a list including the princomp biplot, histogram, and tables
-of top/bottom n scored genes with their scores by component.
+ of top/bottom n scored genes with their scores by component.
 }
 \description{
 This function uses princomp to acquire a principle component biplot
@@ -26,11 +26,11 @@ component by score.
 }
 \examples{
 \dontrun{
- information = pca_highscores(df=df, conditions=cond, batches=bat)
+ information <- pca_highscores(df=df, conditions=cond, batches=bat)
  information$pca_bitplot  ## oo pretty
 }
 }
 \seealso{
-\code{\link[stats]{princomp}}
+\pkg{stats}
+ \code{\link[stats]{princomp}}
 }
-

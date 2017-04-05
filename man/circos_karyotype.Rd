@@ -38,4 +38,3 @@ In addition, this currently only understands how to write bacterial chromosomes,
 likely be fixed when I am asked to write out a L.major karyotype.
 These defaults were chosen because I have a chromosome of this length that is correct.
 }
-

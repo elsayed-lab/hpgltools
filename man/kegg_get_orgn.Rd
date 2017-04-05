@@ -13,7 +13,7 @@ kegg_get_orgn(species = "Leishmania", short = TRUE)
 }
 \value{
 Data frame of possible KEGG identifier codes, genome ID numbers, species, and
-    phylogenetic classifications.
+ phylogenetic classifications.
 }
 \description{
 KEGG identifiers do not always make sense.  For example, how am I supposed to remember that
@@ -23,11 +23,10 @@ that match it.
 \examples{
 \dontrun{
  fun = kegg_get_orgn('Canis')
-## >     Tid     orgid      species                   phylogeny
-## >  17 T01007   cfa Canis familiaris (dog) Eukaryotes;Animals;Vertebrates;Mammals
+ ## >     Tid     orgid      species                   phylogeny
+ ## >  17 T01007   cfa Canis familiaris (dog) Eukaryotes;Animals;Vertebrates;Mammals
 }
 }
 \seealso{
 \pkg{RCurl}
 }
-

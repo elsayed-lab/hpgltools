@@ -64,6 +64,6 @@ statistics.
 }
 }
 \seealso{
-\link[robust]{lmRob} \link[stats]{weights} \link{plot_histogram}
+\pkg{robust} \pkg{stats} \pkg{ggplot2}
+ \code{\link[robust]{lmRob}} \code{\link[stats]{weights}} \code{\link{plot_histogram}}
 }
-

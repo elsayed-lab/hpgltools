@@ -15,4 +15,3 @@ Weights!
 \description{
 This function was stolen from topgo in order to figure out where it was failing.
 }
-

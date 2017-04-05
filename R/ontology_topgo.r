@@ -19,6 +19,7 @@
 #' @param parallel  Perform some operations in parallel to speed this up?
 #' @param ... Other options which I do not remember right now!
 #' @return Big list including the various outputs from topgo
+#' @seealso \pkg{topGO}
 #' @export
 simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
                          pvals=NULL, limitby="fisher", limit=0.1, signodes=100,
@@ -99,7 +100,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
     sig_el_res <- NULL
     results <- list()
     if (isTRUE(parallel)) {
-        ontologies <- c("MF","BP","CC")
+        ontologies <- c("MF", "BP", "CC")
         cl <- parallel::makeCluster(3)  ## 1 for each ontology
         doParallel::registerDoParallel(cl)
         requireNamespace("parallel")
@@ -113,7 +114,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
         ## Then step through the lists and re-order them appropriately.
 
         ## Step 1a:  Iterate through the 3 ontology groups and create Fisher-testable data sets
-        godata_fisher_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools","topGO")) %dopar% {
+        godata_fisher_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
             ont <- ontologies[[c]]
             results[[ont]] <- new("topGOdata",
                                   ontology=ont,
@@ -129,7 +130,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
         rm(godata_fisher_res)
 
         ## Step 1b: As above, but make them suitable for KS tests.
-        godata_ks_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools","topGO")) %dopar% {
+        godata_ks_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
             ont <- ontologies[[c]]
             results[[ont]] <- try(new("topGOdata",
                                       description=ont,
@@ -148,7 +149,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
 
         ## Step 2:  Perform a fisher test using the fisher-testable data
         test_stat <- new("classicCount", testStatistic=topGO::GOFisherTest, name="Fisher test")
-        sig_fisher_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools","topGO")) %dopar% {
+        sig_fisher_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
             ont <- ontologies[[c]]
             results[[ont]] <- try(topGO::getSigGroups(godata_fisher_result[[ont]], test_stat))
         } ## End the foreach %dopar% to get a significant fisher result
@@ -162,7 +163,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
 
         ## Step 3:  Perform a KS test using the appropriate data set
         test_stat <- new("classicScore", testStatistic=topGO::GOKSTest, name="KS tests")
-        sig_ks_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools","topGO")) %dopar% {
+        sig_ks_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
             ont <- ontologies[[c]]
             results[[ont]] <- try(topGO::getSigGroups(godata_ks_result[[ont]], test_stat))
         } ## End the foreach %dopar% to get a significant fisher result
@@ -176,7 +177,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
 
         ## Step 4:  Use the KS-testable data to do an elimination score
         test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="KS test", cutOff=0.05)
-        sig_el_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools","topGO")) %dopar% {
+        sig_el_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
             ont <- ontologies[[c]]
             results[[ont]] <- try(topGO::getSigGroups(godata_ks_result[[ont]], test_stat))
         } ## End the foreach %dopar% to get a significant KS result
@@ -190,7 +191,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
 
         ## Step 5: Finally, use the weighted test on the Fisher-data
         test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest, name="Fisher test", cutOff=0.05)
-        sig_weight_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools","topGO")) %dopar% {
+        sig_weight_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
             ont <- ontologies[[c]]
             results[[ont]] <- try(topGO::getSigGroups(godata_fisher_result[[ont]], test_stat))
         } ## End the foreach %dopar% to get a significant fisher result
@@ -334,6 +335,8 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
 #' @param numchar How many characters to allow in the description?
 #' @param orderby Which of the available columns to order the table by?
 #' @param ranksof Which of the available columns are used to rank the data?
+#' @return prettier tables
+#' @seealso \pkg{topGO}
 #' @export
 topgo_tables <- function(result, limit=0.1, limitby="fisher",
                          numchar=300, orderby="classic", ranksof="classic") {
@@ -341,79 +344,85 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher",
     ## But I am leaving it as a way to ensure that no shenanigans ensue
     mf_allRes <- bp_allRes <- cc_allRes <- mf_interesting <- bp_interesting <- cc_interesting <- NULL
     if (limitby == "fisher") {
-        mf_siglist <- names(which(result$mf_fisher@score <= limit))
-        bp_siglist <- names(which(result$bp_fisher@score <= limit))
-        cc_siglist <- names(which(result$bp_fisher@score <= limit))
+        mf_siglist <- names(which(result[["mf_fisher"]]@score <= limit))
+        bp_siglist <- names(which(result[["bp_fisher"]]@score <= limit))
+        cc_siglist <- names(which(result[["bp_fisher"]]@score <= limit))
     } else if (limitby == "KS") {
-        mf_siglist <- names(which(result$mf_ks@score <= limit))
-        bp_siglist <- names(which(result$bp_ks@score <= limit))
-        cc_siglist <- names(which(result$bp_ks@score <= limit))
+        mf_siglist <- names(which(result[["mf_ks"]]@score <= limit))
+        bp_siglist <- names(which(result[["bp_ks"]]@score <= limit))
+        cc_siglist <- names(which(result[["bp_ks"]]@score <= limit))
     } else if (limitby == "EL") {
-        mf_siglist <- names(which(result$mf_el@score <= limit))
-        bp_siglist <- names(which(result$bp_el@score <= limit))
-        cc_siglist <- names(which(result$bp_el@score <= limit))
+        mf_siglist <- names(which(result[["mf_el"]]@score <= limit))
+        bp_siglist <- names(which(result[["bp_el"]]@score <= limit))
+        cc_siglist <- names(which(result[["bp_el"]]@score <= limit))
     } else if (limitby == "weight") {
-        mf_siglist <- names(which(result$mf_weight@score <= limit))
-        bp_siglist <- names(which(result$bp_weight@score <= limit))
-        cc_siglist <- names(which(result$bp_weight@score <= limit))
+        mf_siglist <- names(which(result[["mf_weight"]]@score <= limit))
+        bp_siglist <- names(which(result[["bp_weight"]]@score <= limit))
+        cc_siglist <- names(which(result[["bp_weight"]]@score <= limit))
     } else {
         stop("I can only limit by: fisher, KS, EL, or weight.")
     }
     mf_topnodes <- length(mf_siglist)
     if (mf_topnodes > 0) {
-        mf_allRes <- try(topGO::GenTable(result$fmf_godata, classic=result$mf_fisher, KS=result$mf_ks,
-                                         EL=result$mf_el, weight=result$mf_weight, orderBy=orderby,
+        mf_allRes <- try(topGO::GenTable(result[["fmf_godata"]], classic=result[["mf_fisher"]],
+                                         KS=result[["mf_ks"]], EL=result[["mf_el"]],
+                                         weight=result[["mf_weight"]], orderBy=orderby,
                                          ranksOf=ranksof, topNodes=mf_topnodes, numChar=numchar))
         if (class(mf_allRes) != "try-error") {
-            mf_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result$mf_fisher))$qvalues)
+            mf_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result[["mf_fisher"]]))[["qvalues"]])
             mf_allRes <- merge(mf_allRes, mf_qvalues, by.x="GO.ID", by.y="row.names")
-            mf_allRes$classic <- as.numeric(mf_allRes$classic)
+            mf_allRes[["classic"]] <- as.numeric(mf_allRes[["classic"]])
             mf_allRes <- mf_allRes[with(mf_allRes, order(classic)), ]
-            colnames(mf_allRes) <- c("GO.ID","Term","Annotated","Significant","Expected",
-                                     "fisher","KS","EL","weight","qvalue")
+            colnames(mf_allRes) <- c("GO.ID", "Term", "Annotated", "Significant", "Expected",
+                                     "fisher", "KS", "EL", "weight", "qvalue")
             mf_interesting <- subset(mf_allRes, get(limitby) <= limit)
             rownames(mf_interesting) <- NULL
-            mf_interesting$ont <- "MF"
-            mf_interesting <- mf_interesting[,c("GO.ID","ont","Annotated","Significant","Expected",
-                                                "fisher","qvalue","KS","EL","weight","Term")]
+            mf_interesting[["ont"]] <- "MF"
+            mf_interesting <- mf_interesting[, c("GO.ID", "ont", "Annotated", "Significant",
+                                                 "Expected", "fisher", "qvalue", "KS", "EL",
+                                                 "weight", "Term")]
         }
     }
     bp_topnodes <- length(bp_siglist)
     if (bp_topnodes > 0) {
-        bp_allRes <- try(topGO::GenTable(result$fbp_godata, classic=result$bp_fisher, KS=result$bp_ks,
-                                         EL=result$bp_el, weight=result$bp_weight, orderBy=orderby,
+        bp_allRes <- try(topGO::GenTable(result[["fbp_godata"]], classic=result[["bp_fisher"]],
+                                         KS=result[["bp_ks"]], EL=result[["bp_el"]],
+                                         weight=result[["bp_weight"]], orderBy=orderby,
                                          ranksOf=ranksof, topNodes=bp_topnodes, numChar=numchar))
         if (class(bp_allRes) != "try-error") {
-            bp_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result$bp_fisher))$qvalues)
+            bp_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result[["bp_fisher"]]))[["qvalues"]])
             bp_allRes <- merge(bp_allRes, bp_qvalues, by.x="GO.ID", by.y="row.names", all.x=TRUE)
-            bp_allRes$classic <- as.numeric(bp_allRes$classic)
+            bp_allRes[["classic"]] <- as.numeric(bp_allRes[["classic"]])
             bp_allRes <- bp_allRes[with(bp_allRes, order(classic)), ]
-            colnames(bp_allRes) <- c("GO.ID","Term","Annotated","Significant","Expected",
-                                     "fisher","KS","EL","weight","qvalue")
+            colnames(bp_allRes) <- c("GO.ID", "Term", "Annotated", "Significant", "Expected",
+                                     "fisher", "KS", "EL", "weight", "qvalue")
             bp_interesting <- subset(bp_allRes, get(limitby) <= limit)
             rownames(bp_interesting) <- NULL
-            bp_interesting$ont <- "BP"
-            bp_interesting = bp_interesting[,c("GO.ID","ont","Annotated","Significant","Expected",
-                                               "fisher","qvalue","KS","EL","weight","Term")]
+            bp_interesting[["ont"]] <- "BP"
+            bp_interesting <- bp_interesting[, c("GO.ID", "ont", "Annotated", "Significant",
+                                                 "Expected", "fisher", "qvalue", "KS", "EL",
+                                                 "weight", "Term")]
         }
     }
     cc_topnodes <- length(cc_siglist)
     if (cc_topnodes > 0) {
-        cc_allRes <- try(topGO::GenTable(result$fcc_godata, classic=result$cc_fisher, KS=result$cc_ks,
-                                         EL=result$cc_el, weight=result$cc_weight, orderBy=orderby,
+        cc_allRes <- try(topGO::GenTable(result[["fcc_godata"]], classic=result[["cc_fisher"]],
+                                         KS=result[["cc_ks"]], EL=result[["cc_el"]],
+                                         weight=result[["cc_weight"]], orderBy=orderby,
                                          ranksOf=ranksof, topNodes=cc_topnodes, numChar=numchar))
         if (class(cc_allRes) != "try-error") {
-            cc_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result$cc_fisher))$qvalues)
+            cc_qvalues <- as.data.frame(qvalue::qvalue(topGO::score(result[["cc_fisher"]]))[["qvalues"]])
             cc_allRes <- merge(cc_allRes, cc_qvalues, by.x="GO.ID", by.y="row.names")
-            cc_allRes$classic <- as.numeric(cc_allRes$classic)
+            cc_allRes[["classic"]] <- as.numeric(cc_allRes[["classic"]])
             cc_allRes <- cc_allRes[with(cc_allRes, order(classic)), ]
-            colnames(cc_allRes) <- c("GO.ID","Term","Annotated","Significant","Expected",
-                                     "fisher","KS","EL","weight","qvalue")
+            colnames(cc_allRes) <- c("GO.ID", "Term", "Annotated", "Significant", "Expected",
+                                     "fisher", "KS", "EL", "weight", "qvalue")
             cc_interesting <- subset(cc_allRes, get(limitby) <= limit)
             rownames(cc_interesting) <- NULL
-            cc_interesting$ont <- "CC"
-            cc_interesting <- cc_interesting[,c("GO.ID","ont","Annotated","Significant","Expected",
-                                                "fisher","qvalue","KS","EL","weight","Term")]
+            cc_interesting[["ont"]] <- "CC"
+            cc_interesting <- cc_interesting[, c("GO.ID", "ont", "Annotated", "Significant",
+                                                 "Expected", "fisher", "qvalue", "KS", "EL",
+                                                 "weight", "Term")]
         }
     }
     tables <- list(
@@ -435,6 +444,7 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher",
 #' @param goids_df If there is no goid_map, create it with this data frame.
 #' @param overwrite Rewrite the mapping file?
 #' @return Summary of the new goid table.
+#' @seealso \pkg{topGO}
 #' @export
 make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, overwrite=FALSE) {
     id2go_test <- file.info(goid_map)
@@ -449,26 +459,28 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
         } else {
             message("Attempting to generate a id2go file in the format expected by topGO.")
 
-            new_go = reshape2::dcast(goids_df, ID~., value.var="GO",
+            new_go <- reshape2::dcast(goids_df, ID~., value.var="GO",
                             fun.aggregate=paste, collapse = ",")
 
             ##new_go <- dplyr::ddply(goids_df, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
             write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
             rm(id2go_test)
         }
-    } else { ## overwrite is not true
+    } else {
+        ## overwrite is not true
         if (is.na(id2go_test[["size"]])) {
             if (is.null(goids_df)) {
                 stop("There is neither a id2go file nor a data frame of goids.")
             } else {
                 message("Attempting to generate a id2go file in the format expected by topGO.")
-                new_go = reshape2::dcast(goids_df, ID~., value.var="GO",
-                                         fun.aggregate=paste, collapse = ",")
+                new_go <- reshape2::dcast(goids_df, ID~., value.var="GO",
+                                          fun.aggregate=paste, collapse = ",")
                 ##new_go <- plyr::ddply(goids_df, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
                 write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
                 id2go_test <- file.info(goid_map)
             }
-        } else { ## There already exists a file, so return its stats
+        } else {
+            ## There already exists a file, so return its stats
             ## new_go = id2go_test
             new_go <- goid_map
         }
@@ -540,6 +552,7 @@ getEdgeWeights <- function(graph) {
 #' @param nodeInfo Hmm.
 #' @param maxchars Maximum characters per line inside the shapes.
 #' @return Topgo plot!
+#' @seealso \pkg{topGO}
 #' @export
 hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
                         nodeShape.type=c('box','circle','ellipse','plaintext')[3],
@@ -555,34 +568,34 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
     ## we set the global Graphviz attributes
     ## graphAttrs <- getDefaultAttrs(layoutType = 'dot')
     graphAttrs <- Rgraphviz::getDefaultAttrs(layoutType = 'dot')
-    graphAttrs$cluster <- NULL
-    graphAttrs$edge$arrowsize = "0.4"
-    graphAttrs$edge$weight = "0.01"
+    graphAttrs[["cluster"]] <- NULL
+    graphAttrs[["edge"]][["arrowsize"]] <- "0.4"
+    graphAttrs[["edge"]][["weight"]] <- "0.01"
 
-    ##graphAttrs$graph$splines <- FALSE
-    graphAttrs$graph$size = "12.0,12.0"
-    graphAttrs$graph$margin = "0.0,0.0"
-    ##  graphAttrs$graph$ranksep = "0.02"
-    ##  graphAttrs$graph$nodesep = "0.30"
+    ##graphAttrs[["graph"]][["splines"]] <- FALSE
+    graphAttrs[["graph"]][["size"]] <- "12.0,12.0"
+    graphAttrs[["graph"]][["margin"]] <- "0.0,0.0"
+    ##  graphAttrs[["graph"]][["ranksep"]] <- "0.02"
+    ##  graphAttrs[["graph"]][["nodesep"]] <- "0.30"
 
     ## set the node shape
-    graphAttrs$node$shape <- nodeShape.type
-    ##graphAttrs$node$fixedsize <- FALSE
+    graphAttrs[["node"]][["shape"]] <- nodeShape.type
+    ##graphAttrs[["node"]][["fixedsize"]] <- FALSE
     ## set the fontsize for the nodes labels
-    graphAttrs$node$fontsize <- '20.0'
-    graphAttrs$node$height <- '2.0'
-    graphAttrs$node$width <- '3.0'
-    graphAttrs$graph$size = "12,12"
-    graphAttrs$node$color = "lightblue"
-    graphAttrs$node$fontname = "arial"
-    graphAttrs$node$style = "invis"
+    graphAttrs[["node"]][["fontsize"]] <- "20.0"
+    graphAttrs[["node"]][["height"]] <- "2.0"
+    graphAttrs[["node"]][["width"]] <- "3.0"
+    graphAttrs[["graph"]][["size"]] <- "12,12"
+    graphAttrs[["node"]][["color"]] <- "lightblue"
+    graphAttrs[["node"]][["fontname"]] <- "arial"
+    graphAttrs[["node"]][["style"]] <- "invis"
 
     ## set the local attributes lists
     nodeAttrs <- list()
     edgeAttrs <- list()
 
     ## try to use adaptive node size
-    ##nodeAttrs$fixedsize[nodes(dag)] <- rep(FALSE, numNodes(dag))
+    ##nodeAttrs[["fixedsize"]][nodes(dag)] <- rep(FALSE, numNodes(dag))
 
     if(is.null(nodeInfo)) {
         nodeInfo <- character(graph::numNodes(dag))
@@ -599,33 +612,33 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
   ## a good idea is to use xxxxxxx instead of GO:xxxxxxx as node labes
     node.names <- graph::nodes(dag)
     if(!useFullNames) {
-        nodeAttrs$label <- sapply(node.names,
+        nodeAttrs[["label"]] <- sapply(node.names,
                                   function(x) {
                                       return(paste(substr(x, 4, nchar(node.names[1])),
                                                    nodeInfo[x], sep = ''))
                                   })
     } else {
-        nodeAttrs$label <- paste(node.names, nodeInfo, sep = '')
-        names(nodeAttrs$label) <- node.names
+        nodeAttrs[["label"]] <- paste(node.names, nodeInfo, sep = '')
+        names(nodeAttrs[["label"]]) <- node.names
     }
 
   ## we will change the shape and the color of the nodes that generated the dag
     if(!is.null(wantedNodes)) {
         diffNodes <- setdiff(wantedNodes, genNodes)
         if(length(diffNodes) > 0) {
-            nodeAttrs$color[diffNodes] <- rep('lightblue', .ln <- length(diffNodes))
-            nodeAttrs$shape[diffNodes] <- rep('circle', .ln)
-            nodeAttrs$height[diffNodes] <- rep('0.45', .ln)
-            ## nodeAttrs$width[diffNodes] <- rep('0.6', .ln)
-            ## nodeAttrs$fixedsize[wantedNodes] <- rep(TRUE, .ln)
+            nodeAttrs[["color"]][diffNodes] <- rep("lightblue", .ln <- length(diffNodes))
+            nodeAttrs[["shape"]][diffNodes] <- rep("circle", .ln)
+            nodeAttrs[["height"]][diffNodes] <- rep("0.45", .ln)
+            ## nodeAttrs[["width"]][diffNodes] <- rep("0.6", .ln)
+            ## nodeAttrs[["fixedsize"]][wantedNodes] <- rep(TRUE, .ln)
         }
     }
 
     ## we will change the shape and the color of the nodes we want back
     if(!is.null(genNodes)) {
-        nodeAttrs$color[genNodes] <- rep('lightblue', .ln <- length(genNodes))
-        nodeAttrs$shape[genNodes] <- rep('box', .ln)
-        ## nodeAttrs$fixedsize[genNodes] <- rep(FALSE, .ln)
+        nodeAttrs[["color"]][genNodes] <- rep("lightblue", .ln <- length(genNodes))
+        nodeAttrs[["shape"]][genNodes] <- rep("box", .ln)
+        ## nodeAttrs[["fixedsize"]][genNodes] <- rep(FALSE, .ln)
     }
 
     ## we will use different fillcolors for the nodes
@@ -653,17 +666,17 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
         sigColor <- sigColor + (mm - max(sigColor))
 
         colorMap <- heat.colors(mm)
-        nodeAttrs$fillcolor <- unlist(lapply(sigColor, function(x) return(colorMap[x])))
+        nodeAttrs[["fillcolor"]] <- unlist(lapply(sigColor, function(x) return(colorMap[x])))
     }
 
     if(!showEdges) {
-        graphAttrs$edge$color <- 'white'
+        graphAttrs[["edge"]][["color"]] <- "white"
     } else {
         ## if we want to differentiate between 'part-of' and 'is-a' edges
         if (edgeTypes) {
             ## 0 for a is_a relation,  1 for a part_of relation
-            ## edgeAttrs$color <- ifelse(getEdgeWeights(dag) == 0, 'black', 'red')
-            edgeAttrs$color <- ifelse(hpgltools::getEdgeWeights(dag) == 0, 'black', 'black')
+            ## edgeAttrs[["color"]] <- ifelse(getEdgeWeights(dag) == 0, 'black', 'red')
+            edgeAttrs[["color"]] <- ifelse(hpgltools::getEdgeWeights(dag) == 0, "black", "black")
         }
         ## plot(dag, attrs = graphAttrs, nodeAttrs = nodeAttrs, edgeAttrs = edgeAttrs)
     }

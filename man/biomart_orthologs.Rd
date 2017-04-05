@@ -39,4 +39,14 @@ with the incredibly unforgiving biomart service.  It does not attempt to guarant
 biomart connection, but will hopefully point out potentially correct marts and attributes to use
 for a successful query.  I can say with confidence that it works well between mice and humans.
 }
-
+\examples{
+\dontrun{
+ mouse_genes <- biomart_orthologs(some_ids)
+ ## Hopefully the defaults are sufficient to translate from human to mouse.
+ yeast_genes <- biomart_orthologs(some_ids, first_species='mmusculus', second_species='scerevisiae')
+}
+}
+\seealso{
+\pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
+ \code{\link[biomaRt]{useMart}}
+}

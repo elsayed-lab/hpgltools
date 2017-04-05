@@ -18,4 +18,3 @@ EuPathDB gene information table InterPro domain parser
 \author{
 Keith Hughitt
 }
-

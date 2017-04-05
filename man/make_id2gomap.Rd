@@ -21,4 +21,6 @@ Summary of the new goid table.
 When using a non-supported organism, one must write out mappings in the format expected by
 topgo.  This handles that process and gives a summary of the new table.
 }
-
+\seealso{
+\pkg{topGO}
+}

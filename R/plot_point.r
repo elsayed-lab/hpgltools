@@ -6,12 +6,13 @@
 #'
 #' @param data  A dataframe/expt/exprs with count data
 #' @return a plot! of the BCV a la ggplot2.
-#' @seealso \pkg{edgeR} \link[edgeR]{plotBCV}
+#' @seealso \pkg{edgeR}
+#'  \code{\link[edgeR]{plotBCV}}
 #' @examples
 #' \dontrun{
-#' bcv <- plot_bcv(expt)
-#' summary(bcv$data)
-#' bcv$plot
+#'  bcv <- plot_bcv(expt)
+#'  summary(bcv$data)
+#'  bcv$plot
 #' }
 #' @export
 plot_bcv <- function(data) {
@@ -50,7 +51,7 @@ plot_bcv <- function(data) {
         ## ..density.. leads to no visible binding for global variable, but I don't fully understand that notation
         ## I remember looking at it a while ago and being confused
         ggplot2::stat_density2d(geom="tile", aes_string(fill="..density..^0.25"), contour=FALSE, show.legend=FALSE) +
-        ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white","black"))(256)) +
+        ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white", "black"))(256)) +
         ggplot2::geom_smooth(method="loess") +
         ggplot2::stat_function(fun=f, colour="red") +
         ggplot2::theme(legend.position="none")
@@ -78,8 +79,9 @@ plot_bcv <- function(data) {
 #' color dots which are presumed the therefore be interesting because
 #' they are far from 'normal.'  This will make a fun clicky googleVis
 #' graph if requested.
-#' @seealso \pkg{ggplot2} \link{plot_gvis_scatter} \link[ggplot2]{geom_point}
-#' \link{plot_linear_scatter}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
+#'  \code{\link{plot_linear_scatter}}
 #' @examples
 #' \dontrun{
 #'  dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
@@ -88,12 +90,12 @@ plot_bcv <- function(data) {
 #' @export
 plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2) {
     hpgl_env <- environment()
-    df <- data.frame(df[, c(1,2)])
-    df <- df[complete.cases(df) ,]
+    df <- data.frame(df[, c(1, 2)])
+    df <- df[complete.cases(df), ]
     df_columns <- colnames(df)
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]
-    colnames(df) <- c("first","second")
+    colnames(df) <- c("first", "second")
     first_median <- summary(df[, 1])["Median"]
     second_median <- summary(df[, 2])["Median"]
     first_mad <- stats::mad(df[, 1])
@@ -151,7 +153,8 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #'     the dots on the plot.  Histograms of each axis are plotted separately and then together under
 #'     a single cdf to allow tests of distribution similarity.  This will make a fun clicky
 #'     googleVis graph if requested.
-#' @seealso \link[robust]{lmRob} \link[stats]{weights} \link{plot_histogram}
+#' @seealso \pkg{robust} \pkg{stats} \pkg{ggplot2}
+#'  \code{\link[robust]{lmRob}} \code{\link[stats]{weights}} \code{\link{plot_histogram}}
 #' @examples
 #' \dontrun{
 #'  plot_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
@@ -182,7 +185,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     df_columns <- colnames(df)
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]
-    colnames(df) <- c("first","second")
+    colnames(df) <- c("first", "second")
     model_test <- try(robustbase::lmrob(formula=second ~ first, data=df, method="SMDM"), silent=TRUE)
     linear_model <- NULL
     linear_model_summary <- NULL
@@ -320,13 +323,13 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' Make a pretty MA plot from one of limma, deseq, edger, or basic.
 #'
 #' Because I can never remember, the following from wikipedia: "An MA plot is an application of a
-#' Bland–Altman plot for visual representation of two channel DNA microarray gene expression data
+#' Bland-Altman plot for visual representation of two channel DNA microarray gene expression data
 #' which has been transformed onto the M (log ratios) and A (mean average) scale."
 #'
 #' @param table  Df of linear-modelling, normalized counts by sample-type,
 #' @param expr_col  Column showing the average expression across genes.
 #' @param fc_col  Column showing the logFC for each gene.
-#' @param p_col  Column containing the relevant p-values.
+#' @param p_col  Column containing the relevant p values.
 #' @param pval_cutoff  Name of the pvalue column to use for cutoffs.
 #' @param alpha  How transparent to make the dots.
 #' @param logfc_cutoff  Fold change cutoff.
@@ -334,22 +337,23 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' @param size  How big are the dots?
 #' @param tooltip_data  Df of tooltip information for gvis.
 #' @param gvis_filename  Filename to write a fancy html graph.
-#' @param ...  More options for you!
-#' @return Ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
-#'     type across all sample types on the x-axis, and the log fold change between conditions on the
-#'     y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
-#'     googleVis graph if requested.
-#' @seealso \link{plot_gvis_ma} \link[limma]{toptable}
-#' \link[limma]{voom} \link{hpgl_voom}
-#' \link[limma]{lmFit} \link[limma]{makeContrasts}
-#' \link[limma]{contrasts.fit}
+#' @param ...  More options for you
+#' @return  ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
+#'  type across all sample types on the x axis, and the log fold change between conditions on the
+#'  y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
+#'  googleVis graph if requested.
+#' @seealso \pkg{limma} \pkg{googleVis} \pkg{DESeq2} \pkg{edgeR}
+#'  \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
+#'  \code{\link[limma]{voom}} \code{\link{hpgl_voom}}
+#'  \code{\link[limma]{lmFit}} \code{\link[limma]{makeContrasts}}
+#'  \code{\link[limma]{contrasts.fit}}
 #' @examples
-#' \dontrun{
-#' ## plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
-#' ## Currently this assumes that a variant of toptable was used which
-#' ## gives adjusted p-values.  This is not always the case and I should
-#' ## check for that, but I have not yet.
-#' }
+#'  \dontrun{
+#'   plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
+#'   ## Currently this assumes that a variant of toptable was used which
+#'   ## gives adjusted p-values.  This is not always the case and I should
+#'   ## check for that, but I have not yet.
+#'  }
 #' @export
 plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                        pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1, label_numbers=TRUE,
@@ -391,6 +395,10 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
         "pcut" = c(FALSE, FALSE, FALSE),
         "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors=TRUE)
 
+    ## Get rid of rows which will be annoying.
+    rows_without_na <- complete.cases(table)
+    table <- table[rows_without_na, ]
+
     ## Extract the information of interest from my original table
     newdf <- data.frame("avg" = table[[expr_col]],
                         "logfc" = table[[fc_col]],
@@ -427,7 +435,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     ## Set up the labels for the legend by significance.
     ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
     state_shapes <- c(24, 25, 21)
-    names(state_shapes) <- c("a_upsig", "b_downsig","c_insig")
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
 
     ## make the plot!
     plt <- ggplot(data=df,
@@ -518,7 +526,8 @@ recolor_points <- function(plot, df, ids, color="red", ...) {
 #' @param title Add a title?
 #' @param ... rawr!
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each library's CPM.
-#' @seealso \link[ggplot2]{geom_point} \link[directlabels]{geom_dl}
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
 #' @examples
 #' \dontrun{
 #'  nonzero_plot = plot_nonzero(expt=expt)
@@ -569,7 +578,7 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
         "batch" = batch,
         "color" = as.character(colors))
 
-    color_listing <- nz_df[, c("condition","color")]
+    color_listing <- nz_df[, c("condition", "color")]
     color_listing <- unique(color_listing)
     color_list <- as.character(color_listing[["color"]])
     names(color_list) <- as.character(color_listing[["condition"]])
@@ -620,7 +629,8 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
 #' @param log Is the data in log format?
 #' @param ... Options are good and passed to arglist().
 #' @return List of affy::maplots
-#' @seealso \link[affy]{ma.plot}
+#' @seealso \pkg{affy}
+#'  \code{\link[affy]{ma.plot}}
 #' @examples
 #' \dontrun{
 #'  ma_plots = plot_pairwise_ma(expt=some_expt)
@@ -632,9 +642,9 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
         design <- data[["design"]]
         colors <- data[["colors"]]
         data <- Biobase::exprs(data[["expressionset"]])
-    } else if (data_class == 'ExpressionSet') {
+    } else if (data_class == "ExpressionSet") {
         data <- Biobase::exprs(data)
-    } else if (data_class == 'matrix' | data_class == 'data.frame') {
+    } else if (data_class == "matrix" | data_class == "data.frame") {
         ## some functions prefer matrix, so I am keeping this explicit for the moment
         data <- as.data.frame(data)
     } else {
@@ -672,7 +682,7 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
             a <- (first + second) / 2
             affy::ma.plot(A=a, M=m, plot.method="smoothScatter", show.statistics=TRUE, add.loess=TRUE)
             title(paste0("MA of ", firstname, " vs ", secondname))
-            plot_list[[name]] = grDevices::recordPlot()
+            plot_list[[name]] <- grDevices::recordPlot()
         }
     }
     return(plot_list)
@@ -689,22 +699,23 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
 #' @param size Size of the dots on the graph.
 #' @param color Color of the dots on the graph.
 #' @return Ggplot2 scatter plot.
-#' @seealso \link{plot_gvis_scatter} \link[ggplot2]{geom_point}
-#' \link{plot_linear_scatter}
+#' @seealso \pkg{ggplot2} \pkg{googleVis}
+#'  \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
+#'  \code{\link{plot_linear_scatter}}
 #' @examples
 #' \dontrun{
-#' plot_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
-#'              gvis_filename="html/fun_scatterplot.html")
+#'  plot_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
+#'               gvis_filename="html/fun_scatterplot.html")
 #' }
 #' @export
 plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=2) {
     hpgl_env <- environment()
-    df <- data.frame(df[,c(1,2)])
-    df <- df[complete.cases(df),]
+    df <- data.frame(df[, c(1, 2)])
+    df <- df[complete.cases(df), ]
     df_columns <- colnames(df)
     df_x_axis <- df_columns[1]
     df_y_axis <- df_columns[2]
-    colnames(df) <- c("first","second")
+    colnames(df) <- c("first", "second")
     first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
         ggplot2::xlab(paste("Expression of", df_x_axis)) +
         ggplot2::ylab(paste("Expression of", df_y_axis)) +
@@ -740,15 +751,16 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to
 #'     log(fold change).  The cutoff values are delineated with lines and mark the boundaries
 #'     between 'significant' and not.  This will make a fun clicky googleVis graph if requested.
-#' @seealso \link{plot_gvis_ma} \link[limma]{toptable}
-#' \link[limma]{voom} \link{hpgl_voom} \link[limma]{lmFit}
-#' \link[limma]{makeContrasts} \link[limma]{contrasts.fit}
+#' @seealso \pkg{limma}
+#'  \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
+#'  \code{\link[limma]{voom}} \code{\link{hpgl_voom}} \code{\link[limma]{lmFit}}
+#'  \code{\link[limma]{makeContrasts}} \code{\link[limma]{contrasts.fit}}
 #' @examples
 #' \dontrun{
 #'  plot_volcano(toptable_data, gvis_filename="html/fun_ma_plot.html")
-#' ## Currently this assumes that a variant of toptable was used which
-#' ## gives adjusted p-values.  This is not always the case and I should
-#' ## check for that, but I have not yet.
+#'  ## Currently this assumes that a variant of toptable was used which
+#'  ## gives adjusted p-values.  This is not always the case and I should
+#'  ## check for that, but I have not yet.
 #' }
 #' @export
 plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
@@ -786,8 +798,8 @@ plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
     df[["pcut"]] <- as.factor(df[[4]])
     df[["state"]] <- as.factor(df[[5]])
 
-    state_shapes <- c(21,22,23,24)
-    names(state_shapes) <- c("downsig","fcinsig","pinsig","upsig")
+    state_shapes <- c(21, 22, 23, 24)
+    names(state_shapes) <- c("downsig", "fcinsig", "pinsig", "upsig")
 
     plt <- ggplot(data=df,
                   aes_string(x="xaxis",
@@ -806,14 +818,19 @@ plot_volcano <- function(toptable_data, tooltip_data=NULL, gvis_filename=NULL,
                                         paste0("P Insig.: ", num_pinsig),
                                         paste0("Up Sig.: ", num_upsig)),
                                     guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
-        ggplot2::scale_fill_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
-        ggplot2::scale_color_manual(name="as.factor(pcut)", values=c("FALSE"="darkred","TRUE"="darkblue"), guide=FALSE) +
+        ggplot2::scale_fill_manual(name="as.factor(pcut)",
+                                   values=c("FALSE"="darkred", "TRUE"="darkblue"),
+                                   guide=FALSE) +
+        ggplot2::scale_color_manual(name="as.factor(pcut)",
+                                    values=c("FALSE"="darkred", "TRUE"="darkblue"),
+                                    guide=FALSE) +
         ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
         ggplot2::theme_bw()
 
     if (!is.null(gvis_filename)) {
-        plot_gvis_volcano(toptable_data, fc_cutoff=fc_cutoff, p_cutoff=p_cutoff, tooltip_data=tooltip_data, filename=gvis_filename)
+        plot_gvis_volcano(toptable_data, fc_cutoff=fc_cutoff, p_cutoff=p_cutoff,
+                          tooltip_data=tooltip_data, filename=gvis_filename)
     }
     retlist <- list("plot" = plt, "df" = df)
     return(retlist)

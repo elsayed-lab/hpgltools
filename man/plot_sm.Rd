@@ -22,12 +22,12 @@ plot_sm(data, colors = NULL, method = "pearson", names = NULL,
 }
 \value{
 ggplot of the standard median something
-among the samples.  This will also write to an
-open device.  The resulting plot measures the median correlation of
-each sample among its peers.  It notes 1.5* the interquartile range
-among the samples and makes a horizontal line at that correlation
-coefficient.  Any sample which falls below this line is considered
-for removal because it is much less similar to all of its peers.
+ among the samples.  This will also write to an
+ open device.  The resulting plot measures the median correlation of
+ each sample among its peers.  It notes 1.5* the interquartile range
+ among the samples and makes a horizontal line at that correlation
+ coefficient.  Any sample which falls below this line is considered
+ for removal because it is much less similar to all of its peers.
 }
 \description{
 This was written by a mix of Kwame Okrah <kokrah at gmail dot com>, Laura
@@ -42,7 +42,7 @@ medians, and plot them.
 }
 }
 \seealso{
-\link{hpgl_cor} \link[matrixStats]{rowMedians}
-\link[stats]{quantile} \link{diff} \link[grDevices]{recordPlot}
+\pkg{matrixStats} \pkg{grDevices}
+ \code{\link{hpgl_cor}} \code{\link[matrixStats]{rowMedians}}
+ \code{\link[stats]{quantile}} \code{\link{diff}} \code{\link[grDevices]{recordPlot}}
 }
-

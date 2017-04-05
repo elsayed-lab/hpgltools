@@ -48,4 +48,7 @@ appropriate marts, datasets, and columns to download.
  tt = get_biomart_annotations()
 }
 }
-
+\seealso{
+\pkg{biomaRt}
+ \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
+}

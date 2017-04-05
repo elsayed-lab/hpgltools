@@ -26,4 +26,12 @@ List of the resulting txDb package and whether it installed.
 \description{
 Much like make_orgdb() above, this uses the same data to generate a TxDb object.
 }
-
+\examples{
+\dontrun{
+ txdb <- make_txdb(orgdb_output)
+}
+}
+\seealso{
+\pkg{GenomicFeatures} \pkg{Biobase} \pkg{devtools}
+ \code{\link[Biobase]{createPackage}}
+}

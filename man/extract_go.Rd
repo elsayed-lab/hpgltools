@@ -20,4 +20,6 @@ Dataframe of 2 columns: geneID and goID.
 Like extract_lengths above, this is primarily intended to read gene ID and GO ID mappings from a
     OrgDb/OrganismDbi object.
 }
-
+\seealso{
+\pkg{AnnotationDbi}
+}

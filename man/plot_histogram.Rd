@@ -33,6 +33,6 @@ set the scale to log if that seems a good idea.
 }
 }
 \seealso{
-\link[ggplot2]{geom_histogram} \link[ggplot2]{geom_density}
+\pkg{ggplot2}
+ \code{\link[ggplot2]{geom_histogram}} \code{\link[ggplot2]{geom_density}}
 }
-

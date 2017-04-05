@@ -26,8 +26,10 @@ interactively, it will give some information regarding the number of genes obser
 pathway.
 }
 \examples{
- \dontrun{
-  kegg_info <- get_kegg_genes(species="Canis familiaris")
- }
+\dontrun{
+ kegg_info <- get_kegg_genes(species="Canis familiaris")
 }
-
+}
+\seealso{
+\pkg{KEGGREST}
+}

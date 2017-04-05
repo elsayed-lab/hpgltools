@@ -42,4 +42,3 @@ It then writes out a configuration plot stanza in
 circos/conf/bob_hist.conf
 and finally adds an include to circos/bob.conf
 }
-

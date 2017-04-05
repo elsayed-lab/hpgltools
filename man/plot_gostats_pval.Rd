@@ -29,6 +29,6 @@ that I understand how the ontology trees work better, this should take advantage
 currently does not.
 }
 \seealso{
-\pkg{clusterProfiler} \link{plot_ontpval}
+\pkg{clusterProfiler}
+ \code{\link{plot_ontpval}}
 }
-

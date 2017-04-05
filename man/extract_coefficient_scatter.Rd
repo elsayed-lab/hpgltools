@@ -39,4 +39,12 @@ extract_coefficient_scatter(output, toptable = NULL, type = "limma",
 Plot the gene abundances for two coefficients in a differential expression comparison.
 By default, genes past 1.5 z scores from the mean are colored red/green.
 }
-
+\examples{
+\dontrun{
+ scatter_plot <- extract_coefficient_scatter(pairwise_output, type="deseq", x="uninfected", y="infected")
+}
+}
+\seealso{
+\pkg{ggplot2}
+ \code{\link{plot_linear_scatter}}
+}

@@ -24,4 +24,6 @@ A smaller expt
 \description{
 Because I am too lazy to remember that expressionsets use matrix subsets for [gene,sample]
 }
-
+\seealso{
+\code{\link{create_expt}}
+}

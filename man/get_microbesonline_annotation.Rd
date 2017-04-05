@@ -23,4 +23,12 @@ Tested in test_70expt_spyogenes.R
 There is so much awesome information in microbesonline, but damn is it annoying to download.
 This function makes that rather easier, or so I hope at least.
 }
-
+\examples{
+\dontrun{
+ annotations <- get_microbesonline_annotation(ids=c("160490","160491"))
+}
+}
+\seealso{
+\pkg{RCurl}
+ \code{\link[RCurl]{getURL}}
+}

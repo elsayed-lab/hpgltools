@@ -32,16 +32,12 @@
 #' @param edger_method  I found a couple/few ways of doing edger in the manual, choose with this.
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #' @return List including the following information:
-#'   contrasts = The string representation of the contrasts performed.
-#'   lrt = A list of the results from calling glmLRT(), one for each contrast.
-#'   contrast_list = The list of each call to makeContrasts()
-#'   I do this to avoid running into the limit on # of contrasts addressable by topTags()
-#'   all_tables = a list of tables for the contrasts performed.
-#' @seealso \pkg{edgeR} \code{\link[edgeR]{topTags}} \code{\link[edgeR]{glmLRT}}
-#'   \code{\link{make_pairwise_contrasts}} \code{\link[edgeR]{DGEList}}
-#'   \code{\link[edgeR]{calcNormFactors}} \code{\link[edgeR]{estimateTagwiseDisp}}
-#'   \code{\link[edgeR]{estimateCommonDisp}} \code{\link[edgeR]{estimateGLMCommonDisp}}
-#'   \code{\link[edgeR]{estimateGLMTrendedDisp}} \code{\link[edgeR]{glmFit}}
+#'  contrasts = The string representation of the contrasts performed.
+#'  lrt = A list of the results from calling glmLRT(), one for each contrast.
+#'  contrast_list = The list of each call to makeContrasts()
+#'  I do this to avoid running into the limit on # of contrasts addressable by topTags()
+#'  all_tables = a list of tables for the contrasts performed.
+#' @seealso \pkg{edgeR}
 #' @examples
 #' \dontrun{
 #'  pretend = edger_pairwise(data, conditions, batches)
@@ -211,17 +207,6 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
         }
         res[["PValue"]] <- signif(x=as.numeric(res[["PValue"]]), digits=4)
         res[["FDR"]] <- signif(x=as.numeric(res[["FDR"]]), digits=4)
-        res[["qvalue"]] <- tryCatch({
-            ttmp <- as.numeric(res[["PValue"]])
-            ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
-            format(x=ttmp, digits=4, scientific=TRUE)
-        },
-        error=function(cond) {
-            message(paste0("The qvalue estimation failed for ", name, "."))
-            return(1)
-        },
-        finally={
-        })
         result_list[[name]] <- res
     } ## End for loop
     final <- list(
@@ -242,7 +227,8 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
 #'
 #' @param data  Output from deseq_pairwise()
 #' @param ...  Options for writing the xlsx file.
-#' @seealso \link[limma]{toptable} \link{write_xls}
+#' @seealso \pkg{limma}
+#'  \code{\link[limma]{toptable}} \code{\link{write_xls}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- edger_pairwise(expressionset)

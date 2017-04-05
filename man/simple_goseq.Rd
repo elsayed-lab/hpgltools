@@ -38,24 +38,28 @@ simple_goseq(sig_genes, go_db, length_db, doplot = TRUE, adjust = 0.1,
 }
 \value{
 Big list including:
-  the pwd:pwf function,
-  alldata:the godata dataframe,
-  pvalue_histogram:p-value histograms,
-  godata_interesting:the ontology information of the enhanced groups,
-  term_table:the goterms with some information about them,
-  mf_subset:a plot of the MF enhanced groups,
-  mfp_plot:the pvalues of the MF group,
-  bp_subset:a plot of the BP enhanced groups,
-  bpp_plot,
-  cc_subset,
-  and ccp_plot
+ the pwd:pwf function,
+ alldata:the godata dataframe,
+ pvalue_histogram:p-value histograms,
+ godata_interesting:the ontology information of the enhanced groups,
+ term_table:the goterms with some information about them,
+ mf_subset:a plot of the MF enhanced groups,
+ mfp_plot:the pvalues of the MF group,
+ bp_subset:a plot of the BP enhanced groups,
+ bpp_plot,
+ cc_subset,
+ and ccp_plot
 }
 \description{
 goseq can be pretty difficult to get set up for non-supported organisms.  This attempts to make
 that process a bit simpler as well as give some standard outputs which should be similar to those
 returned by clusterprofiler/topgo/gostats/gprofiler.
 }
-\seealso{
-\pkg{goseq} \link[goseq]{goseq} \link[goseq]{nullp}
+\examples{
+\dontrun{
+ lotsotables <- simple_goseq(gene_list, godb, lengthdb)
 }
-
+}
+\seealso{
+\pkg{goseq} \pkg{GO.db}
+}
