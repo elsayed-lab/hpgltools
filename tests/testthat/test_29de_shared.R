@@ -177,7 +177,7 @@ expected <- c("transcriptid", "geneid", "description", "type",
               "edger_logcpm", "edger_lr", "edger_p",
               "basic_nummed", "basic_denmed", "basic_numvar", "basic_denvar",
               "basic_logfc", "basic_t", "basic_p", "basic_adjp",
-              "basic_adjp_fdr", "deseq_adjp_fdr", "edger_adjp_fdr", "limma_adjp_fdr",
+              "limma_adjp_fdr", "deseq_adjp_fdr", "edger_adjp_fdr", "basic_adjp_fdr",
               "fc_meta", "fc_var", "fc_varbymed",
               "p_meta", "p_var")
 actual <- colnames(combined_excel$data$treatment)

@@ -4,11 +4,11 @@
 \alias{get_model_adjust}
 \title{Extract some surrogate estimations from a raw data set using sva, ruv, and/or pca.}
 \usage{
-get_model_adjust(data, design = NULL, estimate_type = "sva",
+get_model_adjust(input, design = NULL, estimate_type = "sva",
   surrogates = "be", ...)
 }
 \arguments{
-\item{data}{Expt or data frame to manipulate.}
+\item{input}{Expt or data frame to manipulate.}
 
 \item{design}{If the data is not an expt, provide experimental design here.}
 

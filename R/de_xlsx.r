@@ -94,7 +94,13 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 
     excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
     wb <- NULL
-    if (!is.null(excel) & excel != FALSE) {
+    do_excel <- TRUE
+    if (is.null(excel)) {
+        do_excel <- FALSE
+    } else if (excel == FALSE) {
+        do_excel <- FALSE
+    }
+    if (isTRUE(do_excel)) {
         excel_dir <- dirname(excel)
         if (!file.exists(excel_dir)) {
             dir.create(excel_dir, recursive=TRUE)
@@ -466,7 +472,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 
     venns <- list()
     comp <- NULL
-    if (!is.null(excel) & excel != FALSE) {
+    if (isTRUE(do_excel)) {
         ## Starting a new counter of sheets.
         count <- 0
         for (tab in names(combo)) {
@@ -754,9 +760,9 @@ Defaulting to fdr."))
     }
 
     ## Add one final p-adjustment to ensure a consistent and user defined value.
-    if (!is.null(comb[["basic_p"]])) {
-        colname <- paste0("basic_adjp_", padj_type)
-        comb[[colname]] <- p.adjust(comb[["basic_p"]], method=padj_type)
+    if (!is.null(comb[["limma_p"]])) {
+        colname <- paste0("limma_adjp_", padj_type)
+        comb[[colname]] <- p.adjust(comb[["limma_p"]], method=padj_type)
         comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
     }
     if (!is.null(comb[["deseq_p"]])) {
@@ -769,11 +775,12 @@ Defaulting to fdr."))
         comb[[colname]] <- p.adjust(comb[["edger_p"]], method=padj_type)
         comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
     }
-    if (!is.null(comb[["limma_p"]])) {
-        colname <- paste0("limma_adjp_", padj_type)
-        comb[[colname]] <- p.adjust(comb[["limma_p"]], method=padj_type)
+    if (!is.null(comb[["basic_p"]])) {
+        colname <- paste0("basic_adjp_", padj_type)
+        comb[[colname]] <- p.adjust(comb[["basic_p"]], method=padj_type)
         comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
     }
+
 
     ## I made an odd choice in a moment to normalize.quantiles the combined fold changes
     ## This should be reevaluated

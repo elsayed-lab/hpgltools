@@ -522,9 +522,9 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         for (fc in fc_cutoffs) {
             ## This is a bit weird and circuituous
             ## The most common caller of this function is in fact extract_significant_genes
-            fc_sig <- extract_significant_genes(combined, fc=fc,
-                                                p=p, z=z, n=NULL, excel=FALSE,
-                                                p_type=p_type, sig_bar=FALSE, ma=FALSE)
+            fc_sig <- sm(extract_significant_genes(combined, fc=fc,
+                                                   p=p, z=z, n=NULL, excel=FALSE,
+                                                   p_type=p_type, sig_bar=FALSE, ma=FALSE))
             table_length <- length(fc_sig[[type]][["ups"]])
             fc_name <- paste0("fc_", fc)
             fc_names <- append(fc_names, fc_name)
@@ -532,6 +532,9 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
             for (tab in 1:table_length) {
                 ## The table names are shared across methods and ups/downs
                 table_names <- names(fc_sig[[type]][["ups"]])
+                if (isTRUE(invert)) {
+                    table_names <- rev(table_names)
+                }
                 table_name <- table_names[tab]
                 t_up <- nrow(fc_sig[[type]][["ups"]][[table_name]])
                 t_down <- nrow(fc_sig[[type]][["downs"]][[table_name]])
@@ -636,7 +639,7 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         down[["value"]] <- as.numeric(down[["value"]]) * -1
         tables_up[[type]] <- up
         tables_down[[type]] <- down
-        plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, invert=invert, ...)
+        plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
         ##plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
     } ## End iterating over the 3 types, limma/deseq/edger
 

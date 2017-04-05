@@ -12,7 +12,7 @@
 #' or whatever).  Finally, it prints a couple of the plots shown by Leek in his document.
 #' In other words, this is entirely derivative of someone much smarter than me.
 #'
-#' @param data  Expt or data frame to manipulate.
+#' @param input  Expt or data frame to manipulate.
 #' @param design  If the data is not an expt, provide experimental design here.
 #' @param estimate_type  One of: sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
 #'  ruv_residuals, or pca.
@@ -22,7 +22,7 @@
 #'  the known batch, surrogates, and batch/surrogate.
 #' @seealso \pkg{Biobase} \pkg{sva} \pkg{EDASeq} \pkg{RUVseq} \pkg{edgeR}
 #' @export
-get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates="be", ...) {
+get_model_adjust <- function(input, design=NULL, estimate_type="sva", surrogates="be", ...) {
     arglist <- list(...)
     my_design <- NULL
     my_data <- NULL
@@ -45,25 +45,25 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
     if (!is.null(arglist[["convert"]])) {
         convert <- arglist[["convert"]]
     }
-    if (class(data) == "expt") {
+    if (class(input) == "expt") {
         ## Gather all the likely pieces we can use
-        my_design <- data[["design"]]
-        my_data <- as.data.frame(Biobase::exprs(data[["expressionset"]]))
-        transform_state <- data[["state"]][["transform"]]
+        my_design <- input[["design"]]
+        my_data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+        transform_state <- input[["state"]][["transform"]]
         base10_mtrx <- as.matrix(my_data)
         log_mtrx <- as.matrix(my_data)
         if (transform_state == "raw") {
             ## I think this was the cause of some problems.  The order of operations performed here
             ## was imperfect and could potentially lead to multiple different matrix sizes.
-            base10_data <- sm(normalize_expt(data, convert=convert, filter=filter, thresh=1))
+            base10_data <- sm(normalize_expt(input, convert=convert, filter=filter, thresh=1))
             base10_mtrx <- Biobase::exprs(base10_data[["expressionset"]])
             log_data <- sm(normalize_expt(base10_data, transform="log2"))
             log2_mtrx <- Biobase::exprs(log_data[["expressionset"]])
             rm(log_data)
             rm(base10_data)
         } else {
-            log2_mtrx <- as.matrix(data)
-            base10_mtrx <- as.matrix(2 ^ data) - 1
+            log2_mtrx <- as.matrix(input)
+            base10_mtrx <- as.matrix(2 ^ input) - 1
         }
     } else {
         if (is.null(design)) {
@@ -77,11 +77,11 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
         } else {
             transform_state <- "log2"
         }
-        my_data <- data
+        my_data <- input
         base10_mtrx <- as.matrix(my_data)
         log_mtrx <- as.matrix(my_data)
         if (transform_state == "raw") {
-            log_data <- sm(hpgl_norm(data, convert="cpm", transform="log2", filter=filter, thresh=1))
+            log_data <- sm(hpgl_norm(input, convert="cpm", transform="log2", filter=filter, thresh=1))
             log2_mtrx <- as.matrix(log_data[["count_table"]])
             ## base10_data <- sm(hpgl_norm(data, convert="cpm", filter=filter, thresh=1))
             ## base10_mtrx <- as.matrix(base10_data[["count_table"]])
@@ -89,8 +89,8 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
             rm(log_data)
             ## rm(base10_data)
         } else {
-            log2_mtrx <- as.matrix(data)
-            base10_mtrx <- as.matrix(2 ^ data) - 1
+            log2_mtrx <- as.matrix(input)
+            base10_mtrx <- as.matrix(2 ^ input) - 1
         }
     }
 
@@ -135,6 +135,10 @@ get_model_adjust <- function(data, design=NULL, estimate_type="sva", surrogates=
                                                               type=control_type)))
     }
     if (class(control_likelihoods) == "try-error") {
+        message("The most likely error in sva::empirical.controls() is a call to density in irwsva.build.
+Setting control_likelihoods to zero and using unsupervised sva.")
+        warning("It is highly likely that the underlying reason for this error is too many 0's in
+the dataset, please try doing a filtering of the data and retry.")
         control_likelihoods <- 0
     }
     if (sum(control_likelihoods) == 0) {

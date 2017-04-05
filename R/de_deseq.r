@@ -210,28 +210,42 @@ surrogates explicitly stated with the option surrogates=number.")
     deseq_run <- NULL
     if (deseq_method == "short") {
         message("DESeq steps 2-4 in one shot.")
-        deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric"))
+        deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric"), silent=TRUE)
         if (class(deseq_run) == "try-error") {
-            deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"))
+            message("A fitType of 'parametric' failed for this data, trying 'mean'.")
+            deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"), silent=TRUE)
             if (class(deseq_run) == "try-error") {
-                warning("Neither the default(parametric) nor mean fitting worked.  Something is very wrong.")
+                message("Both 'parametric' and 'mean' failed.  Trying 'local'.")
+                deseq_run <- try(DESeq2::DESeq(dataset, fitType="local"), silent=TRUE)
+                if (class(deseq_run) == "try-error") {
+                    warning("All fitting types failed.  This will end badly.")
+                } else {
+                    message("Using a local fit seems to have worked.")
+                }
             } else {
-                message("Using a mean fitting seems to have worked.  You may be able to ignore the previous error.")
+                message("Using a mean fitting seems to have worked.")
             }
         }
     } else {
+        ## Eg. Using the long method of invoking DESeq.
         ## If making a model ~0 + condition -- then must set betaPrior=FALSE
         message("DESeq2 step 2/5: Estimate size factors.")
         deseq_sf <- DESeq2::estimateSizeFactors(dataset)
         message("DESeq2 step 3/5: Estimate dispersions.")
-        deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="parametric"))
+        deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="parametric"), silent=TRUE)
         if (class(deseq_disp) == "try-error") {
             message("Trying a mean fitting.")
-            deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="mean"))
+            deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="mean"), silent=TRUE)
             if (class(deseq_disp) == "try-error") {
-                warning("Neither the default(parametric) nor mean fitting worked.  Something is very wrong.")
+                warning("Both 'parametric' and 'mean' failed.  Trying 'local'.")
+                deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="local"), silent=TRUE)
+                if (class(deseq_disp) == "try-error") {
+                    warning("All fitting types failed.  This will end badly.")
+                } else {
+                    message("Using a local fit seems to have worked.")
+                }
             } else {
-                message("Using a mean fitting seems to have worked.  You may be able to ignore the previous error.")
+                message("Using a mean fitting seems to have worked.")
             }
         }
         ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
