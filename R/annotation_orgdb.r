@@ -128,16 +128,30 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
 #'  go_terms <- load_go_terms(org, c("a","b"))
 #' }
 #' @export
-load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
+load_go_terms <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("GO","GOALL","GOID")) {
     requireNamespace("GO.db")
     requireNamespace("magrittr")
     if (is.null(gene_ids)) {
-        stop("gene_ids may not be null.")
+        gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
     }
-    go_terms <- sm(AnnotationDbi::select(orgdb,
-                                         "keys" = gene_ids,
-                                         "keytype" = keytype,
-                                         "columns" = c("GO"))[, c(1, 2)])
+    if (class(orgdb)[[1]] == "OrganismDb") {
+        message("This is an organismdbi, that should be ok.")
+    } else if (class(orgdb)[[1]] == "orgdb") {
+        message("This is an orgdb, good.")
+    } else {
+        stop(paste0("This requires either an organismdbi or orgdb instance, not ", class(orgdb)[[1]]))
+    }
+    go_terms <- try(sm(AnnotationDbi::select(orgdb,
+                                             "keys" = gene_ids,
+                                             "keytype" = keytype,
+                                             "columns" = columns)))
+    if (class(go_terms) == "try-error") {
+        if (grep(pattern="Invalid keytype", x=go_terms[[1]])) {
+            message("Here are the possible keytypes:")
+            message(toString(AnnotationDbi::keytypes(orgdb)))
+            stop()
+        }
+    }
     ## Deduplicate
     go_terms <- go_terms[!duplicated(go_terms), ]
     go_terms <- go_terms[!is.na(go_terms[["GO"]]), ]

@@ -308,6 +308,10 @@ analyses more difficult/impossible.")
         }
         if (sum(rownames(gene_info) %in% rownames(all_count_tables)) == 0) {
             warning("Even after changing the rownames in gene info, they do not match the count table.")
+            message("Here are the first few rownames from the count tables:")
+            message(toString(head(rownames(all_count_tables))))
+            message("Here are the first few rownames from the gene information table:")
+            message(toString(head(rownames(gene_info))))
         }
     }
 
