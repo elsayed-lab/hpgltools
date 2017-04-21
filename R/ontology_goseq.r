@@ -99,7 +99,7 @@ goseq_table <- function(df, file=NULL) {
 #'  lotsotables <- simple_goseq(gene_list, godb, lengthdb)
 #' }
 #' @export
-simple_goseq <- function(sig_genes, go_db, length_db, doplot=TRUE,
+simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1,
                          length_keytype="transcripts", go_keytype="ENTREZID",
                          goseq_method="Wallenius", padjust_method="BH",

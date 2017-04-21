@@ -35,7 +35,7 @@
 combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
                               keepers="all",excludes=NULL, adjp=TRUE, include_limma=TRUE,
-                              include_edger=TRUE, include_deseq=TRUE,
+                              include_edger=TRUE, include_deseq=TRUE, rownames=TRUE,
                               include_basic=TRUE, add_plots=TRUE, loess=FALSE,
                               plot_dim=6, compare_plots=TRUE, padj_type="fdr") {
     ## The ontology_shared function which creates multiple sheets works a bit differently
@@ -282,8 +282,11 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             found_table <- NULL
             do_inverse <- NULL
             limma_plt <- NULL
+            limma_ma <- NULL
             edger_plt <- NULL
+            edger_ma <- NULL
             deseq_plt <- NULL
+            deseq_ma <- NULL
 
             contrasts_performed <- NULL
             if (class(limma) != "try-error") {
@@ -343,6 +346,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                     } else {
                         limma_plt <- NULL
                     }
+                    ## limma_try <- try(sm(extract_de_ma(limma, type="limma",
                     edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger",
                                                                     loess=loess,
                                                                     x=denominator,
@@ -483,7 +487,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             ## until I did this I was getting errors I am guessing devtools::load_all() isn't
             ## clearing everything
             final_excel_title <- gsub(pattern="YYY", replacement=tab, x=excel_title)
-            xls_result <- write_xls(data=ddd, wb=wb, sheet=sheetname, title=final_excel_title)
+            xls_result <- write_xls(data=ddd, wb=wb, sheet=sheetname,
+                                    title=final_excel_title, rownames=rownames)
             sheetname <- xls_result[["sheet"]]  ## This is in case the original sheet name was too long.
             if (isTRUE(add_plots)) {
                 ## Text on row 1, plots from 2-17 (15 rows)
@@ -614,7 +619,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             message("Appending a data frame of the original pvalues before sva messed with them.")
             xls_result <- write_xls(wb, data=all_pairwise_result[["original_pvalues"]], sheet="original_pvalues",
                                     title="Original pvalues for all contrasts before sva adjustment.",
-                                    start_row=1)
+                                    start_row=1, rownames=rownames)
         }
 
 

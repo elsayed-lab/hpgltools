@@ -209,46 +209,6 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
     return(biomart_go)
 }
 
-#' Use mygene's queryMany to translate gene ID types
-#'
-#' Juggling between entrez, ensembl, etc can be quite a hassel.  This hopes to make it easier.
-#'
-#' Tested in test_40ann_biomart.R
-#' This function really just sets a couple of hopefully helpful defaults.  When I first attempted
-#' to use queryMany, it seemed to need much more intervention than it does now.  But at the least
-#' this function should provide a reminder of this relatively fast and useful ID translation service.
-#'
-#' @param queries Gene IDs to translate.
-#' @param from Database to translate IDs from, pass null if you want it to choose.
-#' @param fields Set of fields to request, pass null for all.
-#' @param species Human readable species for translation (Eg. 'human' instead of 'hsapiens'.)
-#' @return Df of translated IDs/accessions
-#' @seealso \pkg{mygene}
-#'  \code{\link[mygene]{queryMany}}
-#' @examples
-#' \dontrun{
-#'  data <- translate_ids_querymany(genes)
-#' }
-#' @export
-translate_ids_querymany <- function(queries,
-                                    from="ensembl",
-                                    fields=c("uniprot", "ensembl.gene", "entrezgene", "go"),
-                                    species="human") {
-    from_field <- from
-    if (!is.null(from)) {
-        if (from == "ensembl") {
-            from_field <- "ensembl.gene"
-        } else if (from == "entrez") {
-            from_field <- "entrezgene"
-        }
-    }
-
-    one_way <- sm(mygene::queryMany(queries, scopes=from_field,
-                                    fields=fields, species=species, returnall=TRUE))
-    response <- one_way[["response"]]
-    return(response)
-}
-
 #' Use biomart to get orthologs between supported species.
 #'
 #' Biomart's function getLDS is incredibly powerful, but it makes me think very polite people are

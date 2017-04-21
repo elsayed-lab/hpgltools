@@ -202,7 +202,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                             filter=filter, annotations=annotations,
                             fasta=fasta, thresh=thresh, batch_step=batch_step,
                             min_samples=min_samples, p=p, A=A, k=k,
-                            ## cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
+                            ##cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
                             cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
 
     final_libsize <- normalized[["libsize"]]
@@ -382,6 +382,7 @@ hpgl_norm <- function(data, ...) {
             message(paste0("Step ", arglist[["batch_step"]], ": doing batch correction with ",
                            arglist[["batch"]], "."))
             tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, ...))
+            ##tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, arglist))
             if (class(tmp_counts) == "try-error") {
                 warning("The batch_counts call failed.  Returning non-batch reduced data.")
                 batched_counts <<- NULL
@@ -438,8 +439,8 @@ hpgl_norm <- function(data, ...) {
             message("The experimental design is null.  Some normalizations will therefore fail.")
             message("If you receive an error about an object with no dimensions, that is likely why.")
         }
-        normalized_counts <- normalize_counts(count_table, ...)
-        ## normalized_counts <- normalize_counts(count_table, norm=norm)
+        normalized_counts <- normalize_counts(data=count_table, ...)
+        ##normalized_counts <- normalize_counts(data=count_table, design=design, norm=norm)
         count_table <- normalized_counts[["count_table"]]
         norm_performed <- norm
     }
@@ -493,6 +494,7 @@ hpgl_norm <- function(data, ...) {
 
     if (batch_step == 5) {
         count_table <- do_batch(count_table, ...)
+        ##count_table <- do_batch(count_table, arglist)
     }
 
     ## This list provides the list of operations performed on the data in order they were done.

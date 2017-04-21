@@ -311,6 +311,7 @@ plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     sorted_x <- sort(xvector)
     sorted_y <- sort(yvector)
     vector_ratio <- sorted_x / sorted_y
+    vector_ratio <- vector_ratio[!is.na(vector_ratio)]
     increment <- as.vector(1:length(vector_ratio))
     ratio_df <- data.frame(cbind(increment, sorted_x, sorted_y, vector_ratio))
     if (labels == "short") {
@@ -321,7 +322,9 @@ plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     ratio_plot <- ggplot2::ggplot(ratio_df,
                                   ggplot2::aes_string(x="increment", y="vector_ratio"),
                                   environment=plot_env) +
-        ggplot2::geom_point(colour=sm(grDevices::densCols(vector_ratio)), stat="identity",
+        ##ggplot2::geom_point(colour=sm(grDevices::densCols(vector_ratio)), stat="identity",
+        ##                    size=1, alpha=0.2, na.rm=TRUE) +
+        ggplot2::geom_point(stat="identity",
                             size=1, alpha=0.2, na.rm=TRUE) +
         ggplot2::scale_y_continuous(limits=c(0, 2))
     if (isTRUE(labels)) {
@@ -366,7 +369,8 @@ plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     log_ratio_plot <- ggplot2::ggplot(log_df,
                                       ggplot2::aes_string(x="get(xlabel)", y="get(ylabel)"),
                                       environment=plot_env) +
-        ggplot2::geom_point(colour=sm(grDevices::densCols(sorted_x, sorted_y)), na.rm=TRUE) +
+        ##ggplot2::geom_point(colour=sm(grDevices::densCols(sorted_x, sorted_y)), na.rm=TRUE) +
+        ggplot2::geom_point(na.rm=TRUE) +
         ggplot2::scale_y_continuous(limits=c(0, gg_max)) +
         ggplot2::scale_x_continuous(limits=c(0, gg_max))
     if (isTRUE(labels)) {

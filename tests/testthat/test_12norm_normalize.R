@@ -58,9 +58,10 @@ actual <- actual_df[test_genes, c("untreated1")]
 test_that("size-factor2 normalization gives expected values?", {
     expect_equal(expected, actual)
 })
-
 ## Oh I never noticed before that this is a log, too
-expected <- c(5.488150, 7.082043, 12.021996, 9.160395, 5.707992)
+## Updated this to use DESeq2 estimateDispersions.
+##expected <- c(5.488150, 7.082043, 12.021996, 9.160395, 5.707992)
+expected <- c(6.390378, 7.554126, 12.045030, 9.310557, 6.544189)
 names(expected) <- test_genes
 pasilla_norm <- sm(normalize_expt(pasilla_expt, norm="vsd"))
 actual_df <- Biobase::exprs(pasilla_norm[["expressionset"]])

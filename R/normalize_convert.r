@@ -63,7 +63,6 @@ convert_counts <- function(data, convert="raw", ...) {
 #' It is essentially fancy pants rpkm.
 #'
 #' @param counts Read count matrix.
-#' @param genome Genome to search (fasta/BSgenome).
 #' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return The RPseqM counts
 #' @seealso \pkg{edgeR} \pkg{Rsamtools}
@@ -73,9 +72,10 @@ convert_counts <- function(data, convert="raw", ...) {
 #'  cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
 #' }
 #' @export
-divide_seq <- function(counts, genome=NULL, ...) {
+divide_seq <- function(counts, ...) {
     arglist <- list(...)
     annotations <- arglist[["annotations"]]
+    genome <- arglist[["genome"]]
     pattern <- arglist[["pattern"]]
     if (is.null(pattern)) {
         pattern <- "TA"

@@ -27,17 +27,13 @@ test_that("Did the ontologies come out (go)?", {
     expect_equal(expected_go, actual_go)
 })
 
-query_many <- try(translate_ids_querymany(actual_ids, species="dmelanogaster", from=NULL, fields=NULL))
-## Sometimes this fails with a 400 http return.
-if (class(query_many) == "try-error") {
-    message("querymany request failed.")
-} else {
-    expected <- c("yellow-e", "yellow-e", "yellow-e", "yellow-e", "CG7296", "CG18765")
-    actual <- query_many[["symbol"]]
-    test_that("Does queryMany return sensible outputs?", {
-        expect_equal(expected, actual)
-    })
-}
+
+query_many <- try(translate_ids_querymany(actual_ids))
+expected <- c("yellow-e", "CG7296", "CG18765")
+actual <- as.character(query_many[["symbol"]])
+test_that("Does queryMany return sensible outputs?", {
+    expect_equal(expected, actual)
+})
 
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
 

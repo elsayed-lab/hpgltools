@@ -136,15 +136,26 @@ load_go_terms <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("GO
     }
     if (class(orgdb)[[1]] == "OrganismDb") {
         message("This is an organismdbi, that should be ok.")
-    } else if (class(orgdb)[[1]] == "orgdb") {
+    } else if (class(orgdb)[[1]] == "OrgDb" | class(orgdb)[[1]] == "orgdb") {
         message("This is an orgdb, good.")
     } else {
         stop(paste0("This requires either an organismdbi or orgdb instance, not ", class(orgdb)[[1]]))
     }
+    available_columns <- AnnotationDbi::columns(orgdb)
+    chosen_columns <- c()
+    for (col in columns) {
+        if (col %in% available_columns) {
+            chosen_columns <- c(chosen_columns, col)
+        }
+    }
+    if (is.null(chosen_columns)) {
+        stop(paste0("Did not find any of: ", toString(columns),
+                    " in the set of available columns: ", toString(available_columns)))
+    }
     go_terms <- try(sm(AnnotationDbi::select(orgdb,
                                              "keys" = gene_ids,
                                              "keytype" = keytype,
-                                             "columns" = columns)))
+                                             "columns" = chosen_columns)))
     if (class(go_terms) == "try-error") {
         if (grep(pattern="Invalid keytype", x=go_terms[[1]])) {
             message("Here are the possible keytypes:")

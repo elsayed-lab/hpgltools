@@ -22,7 +22,7 @@
 #'  the known batch, surrogates, and batch/surrogate.
 #' @seealso \pkg{Biobase} \pkg{sva} \pkg{EDASeq} \pkg{RUVseq} \pkg{edgeR}
 #' @export
-get_model_adjust <- function(input, design=NULL, estimate_type="sva", surrogates="be", ...) {
+get_model_adjust <- function(input, design=NULL, estimate_type="sva", surrogates="be", expt_state=NULL, ...) {
     arglist <- list(...)
     my_design <- NULL
     my_data <- NULL
@@ -72,7 +72,7 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva", surrogates
         message("Not able to discern the state of the data.")
         message("Going to use a simplistic metric to guess if it is log scale.")
         my_design <- design
-        if (max(data) > 100) {
+        if (max(input) > 100) {
             transform_state <- "raw"
         } else {
             transform_state <- "log2"

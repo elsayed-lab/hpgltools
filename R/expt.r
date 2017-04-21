@@ -106,6 +106,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
                                              x=colnames(sample_definitions))
     }  else {
         sample_definitions <- read_metadata(file, ...)
+        ##sample_definitions <- read_metadata(file)
     }
 
     colnames(sample_definitions) <- tolower(colnames(sample_definitions))
@@ -119,6 +120,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     if (sum(found_sample) == 0) {
         message("Did not find the sample column in the sample sheet.")
         message("Was it perhaps saved as a .xls?")
+        stop()
     } else {
         ## Take the first column with the word 'sample' in it as the sampleid column
         sample_column <- sample_columns[found_sample][[1]]

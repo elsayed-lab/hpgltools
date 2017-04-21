@@ -38,6 +38,7 @@ test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(expected, actual)
 })
 
+## The set of annotations should be in a consistent order.
 hpgl_annotations <- Biobase::fData(pasilla_expt[["expressionset"]])
 expected <- c("FBgn0000008", "FBgn0000014", "FBgn0000017", "FBgn0000018", "FBgn0000024", "FBgn0000032")
 actual <- head(sort(rownames(hpgl_annotations)))
@@ -45,18 +46,21 @@ test_that("Was the annotation information imported into the expressionset? (stat
     expect_equal(expected, actual)
 })
 
+## Then lengths of features should therefore remain consistent.
 expected <- c(78, 81, 99, 123, 123, 123)
 actual <- head(sort(hpgl_annotations[["length"]]))
 test_that("Was the annotation information imported into the expressionset? (static lengths?)", {
     expect_equal(expected, actual)
 })
 
+## By the same token, the start positions of genes should remain consistent.
 expected <- c(7529, 9839, 21823, 25402, 32478, 47710)
 actual <- head(sort(hpgl_annotations[["start"]]))
 test_that("Was the annotation information imported into the expressionset? (static starts?)", {
     expect_equal(expected, actual)
 })
 
+## As should the chromosome arms of these genes.
 expected <- c("2R", "3R", "3L", "2L", "3R", "3R")
 actual <- head(hpgl_annotations[["chromosome"]])
 test_that("Was the annotation information imported into the expressionset? (static chromosomes?)", {
@@ -70,18 +74,21 @@ test_that("Is the experimental design maintained for samples?", {
     expect_equal(expected, actual)
 })
 
+## The conditions specified by the pasilla data set are treated and untreated and should not change.
 expected <- c("untreated","untreated","untreated","untreated","treated","treated","treated")
 actual <- as.character(pasilla_expt[["design"]][["condition"]])
 test_that("Is the experimental design maintained for conditions?", {
     expect_equal(expected, actual)
 })
 
+## Some sequencing runs of pasilla are paired, and some are single ended; this should not change.
 expected <- c("single_end","single_end","paired_end","paired_end","single_end","paired_end","paired_end")
 actual <-  as.character(pasilla_expt[["design"]][["batch"]])
 test_that("Is the experimental design maintained for batches?", {
     expect_equal(expected, actual)
 })
 
+## We know a priori the library sizes, make sure that this information is intact.
 expected <- c(13971670, 21909886, 8357876, 9840745, 18668667, 9571213, 10343219)
 names(expected) <- c("untreated1","untreated2","untreated3","untreated4","treated1","treated2","treated3")
 actual <- pasilla_expt[["libsize"]]

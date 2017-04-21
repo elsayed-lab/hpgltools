@@ -13,7 +13,7 @@ test_that("Can we extract annotation information from an orgdb instance with eas
     expect_equal(expected, actual)
 })
 
-orgdb_go <- sm(load_go_terms(org.Dm.eg.db, expected, keytype="ACCNUM"))
+orgdb_go <- sm(load_go_terms(org.Dm.eg.db, gene_ids=expected, keytype="ACCNUM"))
 actual <- head(orgdb_go$GO)
 expected <- c("GO:0006486", "GO:0006486", "GO:0006486",
               "GO:0006486", "GO:0006486", "GO:0006486")
