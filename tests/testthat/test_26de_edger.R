@@ -8,15 +8,15 @@ load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 limma <- new.env()
 load("de_limma.rda", envir=limma)
-counts <- limma$counts
-design <- limma$design
+counts <- limma[["counts"]]
+design <- limma[["design"]]
 
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
 ## Performing edgeR differential expression analysis as per the edgeR vignette.
-model <- model.matrix(~ 0 + design$condition + design$libType)
-colnames(model) <- c("treated","untreated","libtype")
-raw <- edgeR::DGEList(counts=counts, group=metadata$condition)
+model <- model.matrix(~ 0 + design$condition + design[["libType"]])
+colnames(model) <- c("treated", "untreated", "libtype")
+raw <- edgeR::DGEList(counts=counts, group=metadata[["condition"]])
 norm <- edgeR::calcNormFactors(raw)
 disp_norm <- edgeR::estimateCommonDisp(norm)
 tagdispnorm <- edgeR::estimateTagwiseDisp(disp_norm)
@@ -34,7 +34,7 @@ glm_table <- as.data.frame(edgeR::topTags(glm_result, n=nrow(raw), sort.by="logF
 ## Create the expt object
 expected <- as.matrix(counts)
 expected <- expected[sort(rownames(expected)), ]
-actual <- Biobase::exprs(pasilla_expt$expressionset)
+actual <- Biobase::exprs(pasilla_expt[["expressionset"]])
 actual <- actual[sort(rownames(actual)), ]
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(expected, actual)
@@ -46,7 +46,8 @@ hpgl_edger <- sm(edger_pairwise(pasilla_expt, edger_method="short"))
 hpgl_result <- hpgl_edger[["all_tables"]][["untreated_vs_treated"]]
 hpgl_result[["logFC"]] <- hpgl_result[["logFC"]] * -1
 
-## Because of rounding errors, the order of logCPM with respect to logFC is not maintained from hpgl->edger
+## Because of rounding errors, the order of logCPM with respect to logFC is not
+## maintained from hpgl->edger
 ## Therefore, order by rownames!
 edger_reordered <- glm_table[order(rownames(glm_table)), ]
 hpgl_reordered <- hpgl_result[order(rownames(hpgl_result)), ]
@@ -56,8 +57,9 @@ edger_logfc <- edger_reordered[["logFC"]]
 hpgl_logfc <- hpgl_reordered[["logFC"]]
 edger_logcpm <- edger_reordered[["logCPM"]]
 hpgl_logcpm <- hpgl_reordered[["logCPM"]]
-##edger_f <- edger_reordered[["F"]]
-##hpgl_f <- hpgl_reordered[["F"]]  ## I changed the statistic used here, but the result is the same.
+## edger_f <- edger_reordered[["F"]]
+## hpgl_f <- hpgl_reordered[["F"]]
+## I changed the statistic used here, but the result is the same.
 edger_pval <- edger_reordered[["PValue"]]
 hpgl_pval <- hpgl_reordered[["PValue"]]
 edger_fdr <- edger_reordered[["FDR"]]

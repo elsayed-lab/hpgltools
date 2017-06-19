@@ -15,15 +15,15 @@ counts <- read.table(datafile, header=TRUE, row.names=1)
 counts <- counts[rowSums(counts) > ncol(counts),]
 ## Set up a quick design to be used by cbcbSEQ and hpgltools
 design <- data.frame(row.names=colnames(counts),
-    condition=c("untreated","untreated","untreated",
-        "untreated","treated","treated","treated"),
-    libType=c("single_end","single_end","paired_end",
-        "paired_end","single_end","paired_end","paired_end"))
+                     condition=c("untreated", "untreated", "untreated",
+                                 "untreated", "treated", "treated", "treated"),
+                     libType=c("single_end", "single_end", "paired_end",
+                               "paired_end", "single_end", "paired_end", "paired_end"))
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
 ## Uses these genes for quick tests
-test_genes <- c("FBgn0000014","FBgn0000008","FBgn0000017","FBgn0000018", "FBgn0000024")
+test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)

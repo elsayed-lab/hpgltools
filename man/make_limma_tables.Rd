@@ -4,8 +4,7 @@
 \alias{make_limma_tables}
 \title{Writes out the results of a limma search using toptable().}
 \usage{
-make_limma_tables(data, adjust = "fdr", n = 0, coef = NULL,
-  workbook = "excel/limma.xls", excel = FALSE, csv = FALSE,
+make_limma_tables(data, adjust = "BH", n = 0, coef = NULL,
   annot_df = NULL)
 }
 \arguments{
@@ -16,12 +15,6 @@ make_limma_tables(data, adjust = "fdr", n = 0, coef = NULL,
 \item{n}{Number of entries to report, 0 says do them all.}
 
 \item{coef}{Which coefficients/contrasts to report, NULL says do them all.}
-
-\item{workbook}{Excel filename into which to write the data.}
-
-\item{excel}{Write an excel workbook?}
-
-\item{csv}{Write out csv files of the tables?}
 
 \item{annot_df}{Optional data frame including annotation information to include with the tables.}
 }
@@ -38,7 +31,7 @@ However, this will do a couple of things to make one's life easier:
 \examples{
 \dontrun{
  finished_comparison = eBayes(limma_output)
- data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+ table = make_limma_tables(finished_comparison, adjust="fdr")
 }
 }
 \seealso{

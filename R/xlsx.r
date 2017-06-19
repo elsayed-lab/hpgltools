@@ -86,19 +86,36 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     ## for a data.frame and it appears to me to be called oddly and causing problems
     ## I hacked the writeDataTable() function in openxlsx and sent a bug report.
     ## Another way to trip this up is for a column in the table to be of class 'list'
-    wtf_stupid <- 0
+    test_column <- 0
     for (col in colnames(data)) {
-        wtf_stupid <- wtf_stupid + 1
-        colnames(data)[wtf_stupid] <- paste0(colnames(data)[wtf_stupid], "_", wtf_stupid)
-        if (class(data[[col]]) == "list" | class(data[[col]]) == "vector" |
-            class(data[[col]]) == "factor" | class(data[[col]]) == "AsIs") {
-            data[[col]] <- as.character(data[[col]])
+        test_column <- test_column + 1
+        colnames(data)[test_column] <- paste0(colnames(data)[test_column], "_", test_column)
+        ## Originally, this was a single test condition, but I fear I need to do separate tasks for each data type.
+        ## If that proves to be the case, I am ready, but until then it remains a series of as.character() castings.
+        if (class(data[, test_column]) == "list") {
+          ##  message(paste0("The column: ", col, " is a list."))
+            ## The above did not work, trying what I found in:
+            ## https://stackoverflow.com/questions/15930880/unlist-all-list-elements-in-a-dataframe
+            ##list_entries <- is.list(data[, test_column])
+            ##ListCols <- sapply(data, is.list)
+            ##cbind(data[!ListCols], t(apply(data[ListCols], 1, unlist)))
+            data[, test_column] <- as.character(data[, test_column])
+        } else if (class(data[, test_column]) == "vector") {
+          ##  message(paste0("The column: ", col, " is a vector."))
+            data[, test_column] <- as.character(data[, test_column])
+        } else if (class(data[, test_column]) == "factor") {
+          ##  message(paste0("The column: ", col, " is a factor."))
+            data[, test_column] <- as.character(data[, test_column])
+        } else if (class(data[, test_column]) == "AsIs") {
+          ##  message(paste0("The column: ", col, " is an AsIs."))
+            data[, test_column] <- as.character(data[, test_column])
         }
-    }
-    obnoxious <- colnames(data)
-    obnoxious <- tolower(obnoxious)
-    obnoxious <- make.names(obnoxious, unique=TRUE)
-    colnames(data) <- obnoxious
+    }  ## Finished adjusting stupid column types.
+
+    final_colnames <- colnames(data)
+    final_colnames <- tolower(final_colnames)
+    final_colnames <- make.names(final_colnames, unique=TRUE)
+    colnames(data) <- final_colnames
     wtf <- try(openxlsx::writeDataTable(wb, sheet, data, startCol=new_col,
                                         startRow=new_row, tableStyle="TableStyleMedium9",
                                         rowNames=rownames, colNames=TRUE))
@@ -107,12 +124,15 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     ## then try to set it to auto if the length is not too long.
     for (data_col in 1:ncol(data)) {
         ## Make an explicit check that the data is not null, which comes out here as character(0)
-        test_null <- identical(as.character(data[[data_col]]), character(0))
+        test_column <- as.character(data[[data_col]])
+        test_column[is.na(test_column)] <- ""
+        test_null <- identical(as.character(test_column), character(0))
         test_max <- 4
+
         if (isTRUE(test_null)) {
             test_max <- 1
         } else {
-            test_max <- max(nchar(as.character(data[[data_col]])), na.rm=TRUE)
+            test_max <- max(nchar(as.character(test_column)), na.rm=TRUE)
         }
 
         ## Keep in mind that if we are going to set the column widths

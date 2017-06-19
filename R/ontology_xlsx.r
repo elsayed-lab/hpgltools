@@ -210,6 +210,7 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
     new_row <- new_row + nrow(goseq_cc) + 2
 
     res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
+    message("Finished writing excel file.")
     return(res)
 }
 
@@ -256,7 +257,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     hp_data <- NULL
     corum_data <- NULL
 
-    if (!is.null(gprofiler_result[["go"]]) & nrow(gprofiler_result[["go"]]) > 0) {
+    do_go <- TRUE
+    if (is.null(gprofiler_result[["go"]])) {
+        do_go <- FALSE
+    }
+    if (nrow(gprofiler_result[["go"]]) == 0) {
+        do_go <- FALSE
+    }
+    if (isTRUE(do_go)) {
         new_row <- 1
         sheet <- "GO"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -321,7 +329,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking if go data is null
 
-    if (!is.null(gprofiler_result[["kegg"]]) & nrow(gprofiler_result[["kegg"]]) > 0) {
+    do_kegg <- TRUE
+    if (is.null(gprofiler_result[["kegg"]])) {
+        do_kegg <- FALSE
+    }
+    if (nrow(gprofiler_result[["kegg"]]) == 0) {
+        do_kegg <- FALSE
+    }
+    if (isTRUE(do_kegg)) {
         new_row <- 1
         sheet <- "KEGG"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -347,7 +362,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     } ## End checking KEGG data
 
 
-    if (!is.null(gprofiler_result[["tf"]]) & nrow(gprofiler_result[["tf"]]) > 0) {
+    do_tf <- TRUE
+    if (is.null(gprofiler_result[["tf"]])) {
+        do_tf <- FALSE
+    }
+    if (nrow(gprofiler_result[["tf"]]) == 0) {
+        do_tf <- FALSE
+    }
+    if (isTRUE(do_tf)) {
         new_row <- 1
         sheet <- "transcription_factor"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -372,7 +394,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking tf data
 
-    if (!is.null(gprofiler_result[["reactome"]]) & nrow(gprofiler_result[["reactome"]]) > 0) {
+    do_reactome <- TRUE
+    if (is.null(gprofiler_result[["reactome"]])) {
+        do_reactome <- FALSE
+    }
+    if (nrow(gprofiler_result[["reactome"]]) == 0) {
+        do_reactome <- FALSE
+    }
+    if (isTRUE(do_reactome)) {
         new_row <- 1
         sheet <- "reactome"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -397,8 +426,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking reactome data
 
-
-    if (!is.null(gprofiler_result[["mi"]]) & nrow(gprofiler_result[["mi"]]) > 0) {
+    do_mi <- TRUE
+    if (is.null(gprofiler_result[["mi"]])) {
+        do_mi <- FALSE
+    }
+    if (nrow(gprofiler_result[["mi"]]) == 0) {
+        do_mi <- FALSE
+    }
+    if (isTRUE(do_mi)) {
         new_row <- 1
         sheet <- "mirna"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -423,7 +458,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking mirna data
 
-    if (!is.null(gprofiler_result[["hp"]]) & nrow(gprofiler_result[["hp"]]) > 0) {
+    do_hp <- TRUE
+    if (is.null(gprofiler_result[["hp"]])) {
+        do_hp <- FALSE
+    }
+    if (nrow(gprofiler_result[["hp"]]) == 0) {
+        do_hp <- FALSE
+    }
+    if (isTRUE(do_hp)) {
         new_row <- 1
         sheet <- "hp"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -448,7 +490,14 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     } ## End checking corum data
 
-    if (!is.null(gprofiler_result[["corum"]]) & nrow(gprofiler_result[["corum"]]) > 0) {
+    do_corum <- TRUE
+    if (is.null(gprofiler_result[["corum"]])) {
+        do_corum <- FALSE
+    }
+    if (nrow(gprofiler_result[["corum"]]) == 0) {
+        do_corum <- FALSE
+    }
+    if (isTRUE(do_corum)) {
         new_row <- 1
         sheet <- "corum"
         openxlsx::addWorksheet(wb, sheetName=sheet)
@@ -499,6 +548,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         write.csv(corum_data, file=csvfile)
         excel_ret <- "csv"
     }
+    message("Finished writing excel file.")
     return(excel_ret)
 }
 

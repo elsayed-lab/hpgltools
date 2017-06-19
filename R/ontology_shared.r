@@ -23,6 +23,7 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
     tmpdb <- db
     metadf <- NULL
     gene_list <- gene_list[complete.cases(gene_list)]
+    chosen_column <- NULL
     ## Translating to ENTREZIDs sometimes introduces NAs which messes up the following operations.
     for (c in 1:length(possible_types)) {
         testing <- NULL
@@ -44,9 +45,9 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
     eval(parse(text=test_string))
     meta <- BiocGenerics::as.data.frame(testing)
     if (!is.null(meta[["width"]])) {
-        metadf <- as.data.frame(cbind(test_meta[[id]], test_meta[["width"]]))
+        metadf <- as.data.frame(cbind(test_meta[[chosen_column]], test_meta[["width"]]))
     } else if (!is.null(test_meta[["length"]])) {
-        metadf <- as.data.frame(cbind(test_meta[[id]], test_meta[["length"]]))
+        metadf <- as.data.frame(cbind(test_meta[[chosen_column]], test_meta[["length"]]))
     } else {
         stop("This requires either length or width columns.")
     }

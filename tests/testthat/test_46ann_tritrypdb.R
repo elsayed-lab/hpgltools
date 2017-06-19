@@ -4,7 +4,7 @@ library(hpgltools)
 context("46ann_tritrypdb.R: Is it possible to extract TriTrypDB data?\n")
 
 eupath_config <- get_eupath_config()
-expected <- 27
+expected <- 32
 actual <- eupath_config["lmajor_friedlin", ][["db_version"]]  ## Pull the db version for lmajor.
 test_that("Do we maintain the lmajor data for creating organismdbi objects?", {
     expect_equal(expected, actual)

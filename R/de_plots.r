@@ -15,8 +15,9 @@
 #'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=0.05, ...) {
-    ## arglist <- list(...)
+extract_de_ma <- function(pairwise, type="edger", table=NULL, logfc=1,
+                          pval_cutoff=0.05, invert=FALSE, ...) {
+    arglist <- list(...)
 
     expr_col <- NULL
     p_col <- NULL
@@ -55,7 +56,7 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
     ## combined_de_tables provides: slots including 'data' and 'de_summary'
     ## while de_edger provides: 'all_tables',  'contrasts_performed' and such.
     possible_tables <- NULL
-    all_tables <- NULL
+    all_tables <- list()
     the_table <- NULL
     if (is.null(table)) {
         table <- 1
@@ -64,6 +65,22 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
         ## If there is a 'all_tables', slot,  then this is de_edger output.
         possible_tables <- names(pairwise[["all_tables"]])
         all_tables <- pairwise[["all_tables"]]
+    } else if (!is.null(pairwise[["data"]]) & class(pairwise[["data"]]) == "data.frame") {
+        ## This is from combining a single table.
+        fc_col <- paste0(type, "_logfc")
+        p_col <- paste0(type, "_adjp")
+        expr_col <- NULL
+        all_tables[[table]] <- pairwise[["data"]]
+        possible_tables <- table
+        if (type == "deseq") {
+            expr_col <- "deseq_basemean"
+        } else if (type == "edger") {
+            expr_col <- "edger_logcpm"
+        } else if (type == "limma") {
+            expr_col <- "limma_ave"
+        } else if (type == "basic") {
+            expr_col <- "basic_nummed"
+        }
     } else {
         ## Then this is combined_tables() output.
         possible_tables <- names(pairwise[["data"]])
@@ -103,7 +120,8 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
     }
 
     ma_material <- plot_ma_de(table=the_table, expr_col=expr_col, fc_col=fc_col,
-                              p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff, ...) ##, ...)
+                              p_col=p_col, logfc_cutoff=logfc, pval_cutoff=pval_cutoff,
+                              invert=invert, ...) ##)
     return(ma_material)
 }
 
@@ -205,9 +223,8 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     if (type == "edger") {
         coefficient_df <- output[["lrt"]][[1]][["coefficients"]]
         coefficient_df <- coefficient_df[, c(xname, yname)]
-        if (max(coefficient_df) < 0) {
-            coefficient_df <- coefficient_df * -1.0
-        }
+        coef_offset <- min(coefficient_df)
+        coefficient_df <- coefficient_df + (coef_offset * -1.0)
     } else if (type == "limma") {
         coefficient_df <- output[["pairwise_comparisons"]][["coefficients"]]
         coefficient_df <- coefficients[, c(x, y)]
@@ -261,7 +278,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #'  bunchovenns <- de_venn(pairwise_result)
 #' }
 #' @export
-de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
+de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, fc=0, ...) {
     ## arglist <- list(...)
     combine_tables <- function(d, e, l) {
         ddf <- as.data.frame(l[, "limma_logfc"])
@@ -288,9 +305,9 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
         edger_p <- "edger_adjp"
     }
 
-    limma_sig <- sm(get_sig_genes(table, column="limma_logfc", p_column=limma_p, p=p))
-    edger_sig <- sm(get_sig_genes(table, column="edger_logfc", p_column=edger_p, p=p))
-    deseq_sig <- sm(get_sig_genes(table, column="deseq_logfc", p_column=deseq_p, p=p))
+    limma_sig <- sm(get_sig_genes(table, fc=fc, column="limma_logfc", p_column=limma_p, p=p))
+    edger_sig <- sm(get_sig_genes(table, fc=fc, column="edger_logfc", p_column=edger_p, p=p))
+    deseq_sig <- sm(get_sig_genes(table, fc=fc, column="deseq_logfc", p_column=deseq_p, p=p))
     comp_up <- combine_tables(deseq_sig[["up_genes"]],
                               edger_sig[["up_genes"]],
                               limma_sig[["up_genes"]])

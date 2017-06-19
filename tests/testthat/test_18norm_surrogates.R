@@ -14,7 +14,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     load("pasilla.Rdata", envir=pasilla)
     pasilla_expt <- pasilla[["expt"]]
 
-    pasilla_svasup <- sm(get_model_adjust(pasilla_expt, estimate_type="sva_supervised", surrogates="leek"))
+    pasilla_svasup <- sm(get_model_adjust(pasilla_expt,
+                                          estimate_type="sva_supervised",
+                                          surrogates="leek"))
     expected <- c(0.32445150, 0.35891445, 0.30688842, 0.31795736, 0.59513446, 0.28929712,
                   0.36435751, 0.77703632, 0.42547368, 0.37467660, 0.07180690, 0.22752995,
                   0.12013255, 0.05870446)
@@ -23,7 +25,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual, tolerance=0.000001)
     })
 
-    pasilla_svasup <- sm(get_model_adjust(pasilla_expt, estimate_type="sva_supervised",  surrogates="be"))
+    pasilla_svasup <- sm(get_model_adjust(pasilla_expt,
+                                          estimate_type="sva_supervised",
+                                          surrogates="be"))
     expected <- c(0.32445150, 0.35891445, -0.30688842, -0.31795736, 0.59513446, -0.28929712,
                   -0.36435751, 0.77703632, -0.42547368, -0.37467660, 0.07180690, -0.22752995,
                   0.12013255, 0.05870446)
@@ -32,7 +36,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual, tolerance=0.000001)
     })
 
-    pasilla_svaunsup <- sm(get_model_adjust(pasilla_expt, estimate_type="sva_unsupervised", surrogates="leek"))
+    pasilla_svaunsup <- sm(get_model_adjust(pasilla_expt,
+                                            estimate_type="sva_unsupervised",
+                                            surrogates="leek"))
     expected <- c(0.32955716, 0.34927818, -0.30687904, -0.31297048, 0.59853774, -0.29097615,
                   -0.36654742, 0.76587766, -0.43025965, -0.38806172, 0.07679965, -0.22375754,
                   0.13027875, 0.06912285)
@@ -41,7 +47,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual, tolerance=0.001)
     })
 
-    pasilla_svaunsup <- sm(get_model_adjust(pasilla_expt, estimate_type="sva_unsupervised", surrogates="be"))
+    pasilla_svaunsup <- sm(get_model_adjust(pasilla_expt,
+                                            estimate_type="sva_unsupervised",
+                                            surrogates="be"))
     expected <- c(0.32955716, 0.34927818, -0.30687904, -0.31297048, 0.59853774, -0.29097615,
                   -0.36654742, 0.76587766, -0.43025965, -0.38806172, 0.07679965, -0.22375754,
                   0.13027875, 0.06912285)
@@ -50,7 +58,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual, tolerance=0.001)
     })
 
-    pasilla_pca <- sm(get_model_adjust(pasilla_expt, estimate_type="pca", surrogates="leek"))
+    pasilla_pca <- sm(get_model_adjust(pasilla_expt,
+                                       estimate_type="pca",
+                                       surrogates="leek"))
     actual <- as.numeric(pasilla_pca[["model_adjust"]])
     expected <- c(-0.3318802, -0.3221039, -0.3461874, -0.3086267, 0.4400211, 0.4356463,
                   0.4331308, 0.3195302, 0.3393188, -0.3383166, -0.3148410, 0.6132450,
@@ -59,7 +69,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual, tolerance=0.001)
     })
 
-    pasilla_ruvsup <- sm(get_model_adjust(pasilla_expt, estimate_type="ruv_supervised", surrogates="leek"))
+    pasilla_ruvsup <- sm(get_model_adjust(pasilla_expt,
+                                          estimate_type="ruv_supervised",
+                                          surrogates="leek"))
     actual <- as.numeric(pasilla_ruvsup[["model_adjust"]])
     ## expected <- c(-0.31886894, -0.34235209, 0.33123193, 0.31618389, -0.61161597, 0.28287038,
     ##               0.34255080, 0.74525582, -0.45037457, -0.40959131, 0.07230244, -0.19867584,
@@ -71,7 +83,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual, tolerance=0.001)
     })
 
-    pasilla_ruvresid <- sm(get_model_adjust(pasilla_expt, estimate_type="ruv_residuals", surrogates="leek"))
+    pasilla_ruvresid <- sm(get_model_adjust(pasilla_expt,
+                                            estimate_type="ruv_residuals",
+                                            surrogates="leek"))
     actual <- as.numeric(pasilla_ruvresid[["model_adjust"]])
     expected <- c(-0.18528065, -0.40474586, 0.28166288, 0.29323140, -0.64606575, 0.31415365,
                   0.34704432, 0.78648114, -0.44129992, -0.41740825, 0.08138963, -0.06528100,
@@ -80,7 +94,9 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual, tolerance=0.001)
     })
 
-    pasilla_ruvemp <- sm(get_model_adjust(pasilla_expt, estimate_type="ruv_empirical", surrogates="leek"))
+    pasilla_ruvemp <- sm(get_model_adjust(pasilla_expt,
+                                          estimate_type="ruv_empirical",
+                                          surrogates="leek"))
     actual <- as.numeric(pasilla_ruvemp[["model_adjust"]])
     expected <- c(-0.29015754, -0.33366726, 0.30928395, 0.31322962, -0.63656174, 0.28689269,
                   0.35098027, 0.76982415, -0.38843346, -0.42542331, 0.04191394, -0.22050955,

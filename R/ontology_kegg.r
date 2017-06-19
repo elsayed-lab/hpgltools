@@ -28,11 +28,11 @@
 #'                                    string_to="_Spy_", filenames="pathname")
 #' }
 #' @export
-hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
-                          pathway="all", species="lma", from_list=NULL,
-                          to_list=NULL, suffix="_colored",
-                          filenames="id", fc_column="limma_logfc",
-                          format="png", verbose=TRUE) {
+simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
+                            pathway="all", species="lma", from_list=NULL,
+                            to_list=NULL, suffix="_colored",
+                            filenames="id", fc_column="limma_logfc",
+                            format="png", verbose=TRUE) {
     ## I have a fun new regex-generator which should replace string_to/second_to
 
     ## Please note that the KGML parser fails if other XML parsers are loaded into R
@@ -71,14 +71,16 @@ hpgl_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         from_list <- substitutions[["patterns"]]
         to_list <- substitutions[["replaces"]]
     }
-    for (sub_count in 1:length(from_list)) {
-        my_from <- from_list[[sub_count]]
-        my_to <- to_list[[sub_count]]
-        tmp_names <- gsub(pattern=my_from, replacement=my_to, x=tmp_names, perl=TRUE)
+    if (!is.null(from_list)) {
+        for (sub_count in 1:length(from_list)) {
+            my_from <- from_list[[sub_count]]
+            my_to <- to_list[[sub_count]]
+            tmp_names <- gsub(pattern=my_from, replacement=my_to, x=tmp_names, perl=TRUE)
+        }
+        ## tmp_names = gsub("\\.","_", tmp_names)
+        names(path_data) <- tmp_names
+        rm(tmp_names)
     }
-    ## tmp_names = gsub("\\.","_", tmp_names)
-    names(path_data) <- tmp_names
-    rm(tmp_names)
 
     ## First check that the input pathview directory exists
     if (!file.exists(indir)) {

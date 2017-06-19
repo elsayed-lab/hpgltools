@@ -37,7 +37,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
                          batches=NULL, model_cond=TRUE,
                          modify_p=FALSE, model_batch=TRUE,
                          model_intercept=TRUE, extra_contrasts=NULL,
-                         alt_model=NULL, libsize=NULL,
+                         alt_model=NULL, libsize=NULL, test_pca=TRUE,
                          annot_df=NULL, parallel=TRUE, ...) {
     arglist <- list(...)
     surrogates <- "be"
@@ -55,6 +55,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     }
     null_model <- NULL
     sv_model <- NULL
+    model_type <- model_batch
     if (class(model_batch) == "character") {
         model_params <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
         model_batch <- model_params[["model_adjust"]]
@@ -62,6 +63,27 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         sv_model <- model_batch
     }
 
+    ## Add a little logic to do a before/after batch PCA plot.
+    pre_pca <- NULL
+    post_pca <- NULL
+    if (isTRUE(test_pca)) {
+        pre_batch <- sm(normalize_expt(input, filter=TRUE, batch=FALSE, transform="log2"))
+        pre_pca <- plot_pca(pre_batch)[["plot"]]
+        post_batch <- pre_batch
+        if (isTRUE(model_type)) {
+            model_type <- "batch in model/limma"
+            message("Using limma's removeBatchEffect to test before/after batch correction.")
+            post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
+        } else if (class(model_type) == "character") {
+            message(paste0("Using ", model_type, " to test before/after batch correction."))
+            post_batch <- sm(normalize_expt(input, filter=TRUE, batch=model_type, transform="log2"))
+        } else {
+            model_type <- "none"
+            message("Assuming no batch in model for testing pca.")
+        }
+        post_pca <- plot_pca(post_batch)[["plot"]]
+    }
+    
     results <- list(
         "limma" = NULL,
         "deseq" = NULL,
@@ -265,6 +287,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         "deseq" = results[["deseq"]],
         "edger" = results[["edger"]],
         "basic" = results[["basic"]],
+        "batch_type" = model_type,
+        "pre_batch" = pre_pca,
+        "post_batch" = post_pca,
         "comparison" = result_comparison)
     return(ret)
 }
@@ -314,15 +339,16 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
                                                contrasts.arg=list(batches="contr.treatment")),
                            silent=TRUE)
     condbatch_int_string <- "~ 0 + condition + batch"
-    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
-                                                   contrasts.arg=list(conditions="contr.treatment",
-                                                                      batches="contr.treatment")),
-                               silent=TRUE)
+##    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
+##                                                   contrasts.arg=list(conditions="contr.treatment",
+##                                                                      batches="contr.treatment")),
+    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches), silent=TRUE)
     batchcond_int_string <- "~ 0 + batch + condition"
-    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions,
-                                                   contrasts.arg=list(conditions="contr.treatment",
-                                                                      batches="contr.treatment")),
-                               silent=TRUE)
+##    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions,
+##                                                   contrasts.arg=list(conditions="contr.treatment",
+##                                                                      batches="contr.treatment")),
+##                               silent=TRUE)
+    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions), silent=TRUE)
     cond_noint_string <- "~ condition"
     cond_noint_model <- try(stats::model.matrix(~ conditions,
                                                 contrasts.arg=list(conditions="contr.treatment")),
@@ -336,11 +362,13 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
                                                      contrasts.arg=list(conditions="contr.treatment",
                                                                         batches="contr.treatment")),
                                  silent=TRUE)
+##    condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches), silent=TRUE)
     batchcond_noint_string <- "~ batch + condition"
     batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions,
                                                      contrasts.arg=list(conditions="contr.treatment",
                                                                         batches="contr.treatment")),
                                  silent=TRUE)
+    batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions), silent=TRUE)
     noint_model <- NULL
     int_model <- NULL
     noint_string <- NULL
@@ -1068,10 +1096,11 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
 #'
 #' @param datum  Output from _pairwise() functions.
 #' @param type  According to deseq/limma/ed ger/basic?
+#' @param excel  Print this to an excel file?
 #' @return  A list containing the expression values and some metrics of variance/error.
 #' @seealso \pkg{limma}
 #' @export
-get_pairwise_gene_abundances <- function(datum, type="limma") {
+get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
     if (type == "limma") {
         ## Make certain we have a consistent set of column and row orders for the future operations
         conds <- names(datum[["limma"]][["identity_tables"]])
@@ -1121,6 +1150,24 @@ get_pairwise_gene_abundances <- function(datum, type="limma") {
         "error_values" = std_error,
         "another_error" = another_error,
         "stdev_values" = stdev_mtrx)
+    if (!is.null(excel)) {
+        annotations <- Biobase::fData(datum[["input"]][["expressionset"]])
+        expressions <- retlist[["expression_values"]]
+        colnames(expressions) <- paste0("expr_", colnames(expressions))
+        errors <- retlist[["error_values"]]
+        colnames(errors) <- paste0("err_", colnames(errors))
+        expression_table <- merge(annotations, expressions, by="row.names")
+        rownames(expression_table) <- expression_table[["Row.names"]]
+        expression_table <- expression_table[, -1]
+        expression_table <- merge(expression_table, errors, by="row.names")
+        rownames(expression_table) <- expression_table[["Row.names"]]
+        expression_table <- expression_table[, -1]
+        expression_written <- write_xls(data=expression_table,
+                                        sheet="expression_values",
+                                        title="Values making up the contrast logFCs and errors by dividing expression / t-statistic")
+        write_result <- openxlsx::saveWorkbook(wb=expression_written[["workbook"]],
+                                               file=excel, overwrite=TRUE)
+    }
     return(retlist)
 }
 

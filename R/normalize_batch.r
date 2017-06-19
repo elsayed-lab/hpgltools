@@ -98,6 +98,9 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
  means that the data has too many 0's and needs to have a better low-count filter applied.")
 
     num_low <- sum(count_table < 1 & count_table > 0)
+    if (is.null(num_low)) {
+        num_low <- 0
+    }
     if (num_low > 0) {
         message(paste0("batch_counts: Before batch correction, ", num_low, " entries 0<x<1."))
     }
@@ -108,7 +111,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
     if (isTRUE(batch)) {
         batch <- "limma"
     }
-
+    
     if (batch == "limma") {
         if (expt_state[["transform"]] == "raw") {
             count_table <- log2(count_table + 1)
@@ -127,6 +130,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
             batches2 <- as.factor(design[[batch2]])
             count_table <- limma::removeBatchEffect(count_table, batch=batches, batch2=batches2)
         }
+        message("If you receive a warning: 'NANs produced', one potential reason is that the data was quantile normalized.")
         if (expt_state[["transform"]] == "raw") {
             count_table <- (2 ^ count_table) - 1
         }
@@ -266,7 +270,11 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
             count_table <- surrogate_result[["new_counts"]]
         }
     }
-    num_low <- sum(count_table < 0)
+    count_table[ is.na(count_table) ] <- 0
+    num_low <- sum(count_table <= 0)
+    if (is.null(num_low)) {
+        num_low <- 0
+    }
     if (num_low > 0) {
         message(paste0("The number of elements which are < 0 after batch correction is: ", num_low))
         message(paste0("The variable low_to_zero sets whether to change <0 values to 0 and is: ", low_to_zero))

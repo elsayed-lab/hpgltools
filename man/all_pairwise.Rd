@@ -7,7 +7,8 @@
 all_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, modify_p = FALSE, model_batch = TRUE,
   model_intercept = TRUE, extra_contrasts = NULL, alt_model = NULL,
-  libsize = NULL, annot_df = NULL, parallel = TRUE, ...)
+  libsize = NULL, test_pca = TRUE, annot_df = NULL, parallel = TRUE,
+  ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing count tables, normalization state, etc.}

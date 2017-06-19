@@ -10,15 +10,15 @@ counts <- read.table(datafile, header=TRUE, row.names=1)
 counts <- counts[rowSums(counts) > ncol(counts),]
 ## Set up a quick design to be used by cbcbSEQ and hpgltools
 design <- data.frame(row.names=colnames(counts),
-    condition=c("untreated","untreated","untreated",
-        "untreated","treated","treated","treated"),
-    libType=c("single_end","single_end","paired_end",
-        "paired_end","single_end","paired_end","paired_end"))
+                     condition=c("untreated","untreated","untreated",
+                                 "untreated","treated","treated","treated"),
+                     libType=c("single_end","single_end","paired_end",
+                               "paired_end","single_end","paired_end","paired_end"))
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
 ## Uses these genes for quick tests
-test_genes <- c("FBgn0000014","FBgn0000008","FBgn0000017","FBgn0000018", "FBgn0000024")
+test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -53,7 +53,8 @@ test_that("rpkm conversions are equivalent?", {
 ## I have a modification of rpkm(), cp_seq_m(), which should give some expected results.
 tt <- sm(require.auto("BSgenome.Dmelanogaster.UCSC.dm6"))
 tt <- sm(library("BSgenome.Dmelanogaster.UCSC.dm6"))
-pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cp_seq_m", genome=BSgenome.Dmelanogaster.UCSC.dm6))
+pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cp_seq_m",
+                                     genome=BSgenome.Dmelanogaster.UCSC.dm6))
 expected <- c(0.03443909, 0.46719586, 22.38432168, 54.32421464, 0.03908639)
 actual <- as.numeric(Biobase::exprs(pasilla_convert[["expressionset"]])[test_genes, 1])
 test_that("cp_seq_m works for TA?", {
@@ -61,7 +62,8 @@ test_that("cp_seq_m works for TA?", {
 })
 
 ## Repeat cp_seq_m() for ATG
-pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cp_seq_m", genome=BSgenome.Dmelanogaster.UCSC.dm6, pattern="ATG"))
+pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cp_seq_m",
+                                     genome=BSgenome.Dmelanogaster.UCSC.dm6, pattern="ATG"))
 expected <- c(0.04536343, 0.51893853, 27.76677691, 46.94320722, 0.05237078)
 actual <- as.numeric(Biobase::exprs(pasilla_convert[["expressionset"]])[test_genes, c("untreated1")])
 test_that("cp_seq_m works for ATG?", {

@@ -38,7 +38,7 @@ translate_ids_querymany <- function(queries,
     ##                                fields=fields, species=species, returnall=TRUE))
     responses <- list()
     for (id in unique(queries)) {
-        res <- query(id, species=species, email=email, fields=fields)$hits
+        res <- mygene::query(id, species=species, email=email, fields=fields)$hits
         ## damn that is a nested data frame.
         new <- t(as.data.frame(unlist(res)))
         rownames(new) <- id

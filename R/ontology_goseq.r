@@ -164,8 +164,8 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     } else if (class(length_db)[[1]] == "OrgDb") {
         stop("OrgDb objects contain links to other databases, but sadly are missing gene lengths.")
     } else if (class(length_db)[[1]] == "OrganismDb" | class(length_db)[[1]] == "AnnotationDbi") {
-        ## metadf <- extract_lengths(db=length_db, gene_list=gene_list, ...)
-        metadf <- sm(extract_lengths(db=length_db, gene_list=gene_list))
+        ## metadf <- extract_lengths(db=length_db, gene_list=gene_list)
+        metadf <- sm(extract_lengths(db=length_db, gene_list=gene_list, ...))
     } else if (class(length_db)[[1]] == "TxDb") {
         metadf <- sm(extract_lengths(db=length_db, gene_list=gene_list, ...))
     } else if (class(length_db)[[1]] == "data.frame") {

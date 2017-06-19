@@ -7,7 +7,7 @@ pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 ## Uses these genes for quick tests
-test_genes <- c("FBgn0000014","FBgn0000008","FBgn0000017","FBgn0000018", "FBgn0000024")
+test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 
 ## I am not sure if I should test this yet, it is slow.
 if (isTRUE(FALSE)) {
@@ -53,17 +53,18 @@ test_that("Box plot data is as expected?", {
 
 ## Ahh yes I changed the cbcb_filter options to match those from the cbcbSEQ vignette.
 ## Note that the filtering has changed slightly, and this affects the results.
-norm <- sm(normalize_expt(pasilla_expt, transform="log2", convert="cbcbcpm", norm="quant", filter=TRUE))
+norm <- sm(normalize_expt(pasilla_expt, transform="log2", convert="cbcbcpm",
+                          norm="quant", filter=TRUE))
 expected <- "recordedplot"  ## for all the heatmaps
 
 corheat_plot <- plot_corheat(norm)
-actual <- class(corheat_plot$plot)
+actual <- class(corheat_plot[["plot"]])
 test_that("corheat is a recorded plot?", {
     expect_equal(expected, actual)
 })
 
 disheat_plot <- plot_disheat(norm)
-actual <- class(disheat_plot$plot)
+actual <- class(disheat_plot[["plot"]])
 test_that("disheat is a recorded plot?", {
     expect_equal(expected, actual)
 })

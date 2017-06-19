@@ -176,6 +176,17 @@ the dataset, please try doing a filtering of the data and retry.")
                                        n.sv=chosen_surrogates))
         model_adjust <- as.matrix(supervised_sva[["sv"]])
         surrogate_result <- supervised_sva
+    } else if (estimate_type == "fsva") {
+        message("Attempting fsva surrogate estimation.")
+        type_color <- "darkred"
+        sva_object <- sm(sva::sva(log2_mtrx, conditional_model,
+                                  null_model, n.sv=chosen_surrogates))
+        fsva_result <- sva::fsva(log2_mtrx, conditional_model,
+                                 sva_object, newdat=as.matrix(log2_mtrx),
+                                 method="exact")
+        ##method="exact"))
+        model_adjust <- as.matrix(fsva_result[["newsv"]])
+        surrogate_result <- fsva_result
     } else if (estimate_type == "svaseq") {
         message("This ignores the surrogates parameter and uses the be method to estimate surrogates.")
         type_color <- "dodgerblue"

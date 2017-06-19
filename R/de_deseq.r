@@ -118,12 +118,13 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     model_choice <- choose_model(input, conditions, batches,
                                  model_batch=model_batch,
                                  model_cond=model_cond,
-                                 model_intercept=FALSE,
+                                 model_intercept=model_intercept,
                                  alt_model=alt_model, ...)
-    ##model_choice <- choose_model(input, conditions, batches,
-    ##                             model_batch=model_batch,
-    ##                             model_cond=model_cond,
-    ##                             alt_model=alt_model)
+    model_choice <- choose_model(input, conditions, batches,
+                                 model_batch=model_batch,
+                                 model_cond=model_cond,
+                                 model_intercept=model_intercept,
+                                 alt_model=alt_model)
     model_including <- model_choice[["including"]]
     if (class(model_choice[["model_batch"]]) == "matrix") {
         ## The SV matrix from sva/ruv/etc are put into the model batch slot of the return from choose_model.
@@ -247,6 +248,8 @@ surrogates explicitly stated with the option surrogates=number.")
             } else {
                 message("Using a mean fitting seems to have worked.")
             }
+        } else {
+            message("Using a parametric fitting seems to have worked.")
         }
         ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
         message("DESeq2 step 4/5: nbinomWaldTest.")
@@ -292,10 +295,10 @@ surrogates explicitly stated with the option surrogates=number.")
             result_name <- paste0(numerator, "_vs_", denominator)
             denominators[[result_name]] <- denominator
             numerators[[result_name]] <- numerator
-            result_list[[result_name]] <- result
             if (!is.null(annot_df)) {
                 result <- merge(result, annot_df, by.x="row.names", by.y="row.names")
             }
+            result_list[[result_name]] <- result
         } ## End for each d
         ## Fill in the last coefficient (since the for loop above goes from 1 to n-1
         denominator <- names(condition_table[length(conditions)])
@@ -305,10 +308,14 @@ surrogates explicitly stated with the option surrogates=number.")
     for (c in 1:(length(condition_levels))) {
         coef <- condition_levels[c]
         coef_name <- paste0("condition", coef)
-        coefficient_list[[coef]] <- as.data.frame(
-            DESeq2::results(deseq_run, contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
+        test_result <- try(DESeq2::results(deseq_run,
+                                           contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
+        if (class(test_result) == "try-error") {
+            coefficient_list[[coef]] <- NULL
+        } else {
+            coefficient_list[[coef]] <- as.data.frame(test_result)
+        }
     }
-
     ret_list <- list(
         "model_string" = model_string,
         "run" = deseq_run,

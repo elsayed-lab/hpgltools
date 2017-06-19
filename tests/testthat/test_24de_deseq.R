@@ -8,8 +8,8 @@ load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 limma <- new.env()
 load("de_limma.rda", envir=limma)
-counts <- limma$counts
-design <- limma$design
+counts <- limma[["counts"]]
+design <- limma[["design"]]
 
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
@@ -32,29 +32,30 @@ test_that("Can I write a deseq2 table?", {
     expect_true(file.exists("deseq_test.xlsx"))
 })
 
-## Note that running the all_pairwise family of functions results in arbitrarily chosen x/y which may be
-## the opposite of what you actually want.
+## Note that running the all_pairwise family of functions results in arbitrarily
+## chosen x/y which may be the opposite of what you actually want.
 ## Also, the all_pairwise functions reorders the result by logFC.
-## In addition, I force it to a limited number of significant digits to avoid have data structures with 35 decimals.
-## This is explicitly in the opposite order as what deseq_pairwise will choose in order to
-## make it necessary to test the columns that change as a result.
+## In addition, I force it to a limited number of significant digits to avoid
+## have data structures with 35 decimals. This is explicitly in the opposite
+## order as what deseq_pairwise will choose in order to make it necessary to
+## test the columns that change as a result.
 hpgl_result <- hpgl_deseq[["all_tables"]][["untreated_vs_treated"]]
 hpgl_result_reordered <- hpgl_result[order(rownames(hpgl_result)), ]
 deseq_result_reordered <- deseq_result[order(rownames(deseq_result)), ]
 
 ## Columns to test: baseMean, logFC, lfcSE, stat, P.Value, adj.P.Val, qvalue
-deseq_basemean <- deseq_result_reordered$baseMean
-hpgl_basemean <- hpgl_result_reordered$baseMean
-deseq_logfc <- deseq_result_reordered$log2FoldChange
-hpgl_logfc <- hpgl_result_reordered$logFC * -1
-deseq_lfcse <- deseq_result_reordered$lfcSE
-hpgl_lfcse <- hpgl_result_reordered$lfcSE
-deseq_stat <- deseq_result_reordered$stat
-hpgl_stat <- hpgl_result_reordered$stat * -1
-deseq_pval <- deseq_result_reordered$pvalue
-hpgl_pval <- hpgl_result_reordered$P.Value
-deseq_adjpval <- deseq_result_reordered$adj.P.Val
-hpgl_adjpval <- hpgl_result_reordered$padj
+deseq_basemean <- deseq_result_reordered[["baseMean"]]
+hpgl_basemean <- hpgl_result_reordered[["baseMean"]]
+deseq_logfc <- deseq_result_reordered[["log2FoldChange"]]
+hpgl_logfc <- hpgl_result_reordered[["logFC"]] * -1
+deseq_lfcse <- deseq_result_reordered[["lfcSE"]]
+hpgl_lfcse <- hpgl_result_reordered[["lfcSE"]]
+deseq_stat <- deseq_result_reordered[["stat"]]
+hpgl_stat <- hpgl_result_reordered[["stat"]] * -1
+deseq_pval <- deseq_result_reordered[["pvalue"]]
+hpgl_pval <- hpgl_result_reordered[["P.Value"]]
+deseq_adjpval <- deseq_result_reordered[["adj.P.Val"]]
+hpgl_adjpval <- hpgl_result_reordered[["padj"]]
 
 test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): basemean?", {
     expect_equal(deseq_basemean, hpgl_basemean, tolerance=1)

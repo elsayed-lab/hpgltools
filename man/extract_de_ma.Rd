@@ -4,8 +4,8 @@
 \alias{extract_de_ma}
 \title{Make a MA plot of some limma output with pretty colors and shapes}
 \usage{
-extract_de_ma(pairwise, type = "edger", table = NULL, fc = 1,
-  pval_cutoff = 0.05, ...)
+extract_de_ma(pairwise, type = "edger", table = NULL, logfc = 1,
+  pval_cutoff = 0.05, invert = FALSE, ...)
 }
 \arguments{
 \item{pairwise}{The result from all_pairwise(), which should be changed to handle other invocations too.}
@@ -14,11 +14,11 @@ extract_de_ma(pairwise, type = "edger", table = NULL, fc = 1,
 
 \item{table}{Result from edger to use, left alone it chooses the first.}
 
-\item{fc}{Cutoff for log2(fold-change) significant.}
-
 \item{pval_cutoff}{Cutoff to define 'significant' by p-value.}
 
 \item{...}{Extra arguments are passed to arglist.}
+
+\item{fc}{Cutoff for log2(fold-change) significant.}
 }
 \value{
 a plot!

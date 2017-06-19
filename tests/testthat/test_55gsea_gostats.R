@@ -17,7 +17,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     })
 
     expected <- c("GO:0000422", "GO:0001508", "GO:0001676",
-                  "GO:0001708", "GO:0002118", "GO:0002121")
+                  "GO:0002118", "GO:0002121", "GO:0002218")
     actual <- head(sort(gst_result$bp_over_enriched$GOBPID))
     test_that("Are the GOstats interesting results as expected? (BP)", {
         expect_equal(expected, actual)

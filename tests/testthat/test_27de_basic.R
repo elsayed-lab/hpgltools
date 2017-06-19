@@ -7,7 +7,8 @@ pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-norm_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=TRUE))
+norm_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant",
+                               convert="cbcbcpm", filter=TRUE))
 
 hpgl_pasilla_basic <- sm(basic_pairwise(pasilla_expt))
 hpgl_norm_basic <- sm(basic_pairwise(norm_expt))

@@ -27,7 +27,6 @@ test_that("Did the ontologies come out (go)?", {
     expect_equal(expected_go, actual_go)
 })
 
-
 query_many <- try(translate_ids_querymany(actual_ids))
 expected <- c("yellow-e", "CG7296", "CG18765")
 actual <- as.character(query_many[["symbol"]])

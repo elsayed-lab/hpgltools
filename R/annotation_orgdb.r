@@ -10,7 +10,7 @@
 #' @param ... Arguments to be passed to load_annotations.
 #' @export
 load_parasite_annotations <- function(...) {
-    load_annotations(...)
+    load_orgdb_annotations(...)
 }
 
 #' Load organism annotation data (parasite).
@@ -36,9 +36,9 @@ load_parasite_annotations <- function(...) {
 #'  one_gene <- load_annotations(org, c("LmJF.01.0010"))
 #' }
 #' @export
-load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",
-                                      ## fields=c("CHR", "GENENAME", "TXSTRAND",
-                                      fields=NULL, sum_exons=FALSE) {
+load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",
+                                   ## fields=c("CHR", "GENENAME", "TXSTRAND",
+                                   fields=NULL, sum_exons=FALSE) {
     ## "TXSTART", "TXEND", "TYPE")) {
     keytype <- toupper(keytype)
     all_fields <- AnnotationDbi::columns(orgdb)
@@ -128,9 +128,9 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
 #'  go_terms <- load_go_terms(org, c("a","b"))
 #' }
 #' @export
-load_go_terms <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("GO","GOALL","GOID")) {
-    requireNamespace("GO.db")
-    requireNamespace("magrittr")
+load_orgdb_go <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("GO","GOALL","GOID")) {
+    tt <- sm(requireNamespace("GO.db"))
+    tt <- sm(requireNamespace("magrittr"))
     if (is.null(gene_ids)) {
         gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
     }
@@ -197,7 +197,7 @@ load_go_terms <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("GO
 #'  kegg_data <- load_kegg_mapping(org, c("a","b"))
 #' }
 #' @export
-load_kegg_mapping <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("KEGG_PATH")) {
+load_orgdb_kegg <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("KEGG_PATH")) {
     if (is.null(gene_ids)) {
         gene_ids <- AnnotationDbi::keys(orgdb)
     }

@@ -325,6 +325,18 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     if (!is.null(arglist[["which_voom"]])) {
         which_voom <- arglist[["which_voom"]]
     }
+    limma_robust=FALSE
+    if (!is.null(arglist[["limma_robust"]])) {
+        limma_robust <- arglist[["limma_robust"]]
+    }
+    limma_trend=FALSE
+    if (!is.null(arglist[["limma_trend"]])) {
+        limma_trend <- arglist[["limma_trend"]]
+    }
+    limma_method="ls"
+    if (!is.null(arglist[["limma_method"]])) {
+        limma_method <- arglist[["limma_method"]]
+    }
     message("Starting limma pairwise comparison.")
     input_data <- choose_limma_dataset(input, force=force, which_voom=which_voom)
     design <- Biobase::pData(input[["expressionset"]])
@@ -358,15 +370,20 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
 
+    message("Limma step 1/6: choosing model.")
     fun_model <- choose_model(input, conditions, batches,
                               model_batch=model_batch,
                               model_cond=model_cond,
                               model_intercept=model_intercept,
-                              alt_model=alt_model)##, ...)
+                              alt_model=alt_model, ...)
+    ##fun_model <- choose_model(input, conditions, batches,
+    ##                          model_batch=model_batch,
+    ##                          model_cond=model_cond,
+    ##                          model_intercept=model_intercept,
+    ##                          alt_model=alt_model)
     fun_model <- fun_model[["chosen_model"]]
 
     fun_voom <- NULL
-    message("Limma step 1/6: choosing model.")
     ## voom() it, taking into account whether the data has been log2 transformed.
 
     ##  Leaving the following here for the moment, but I think it will no longer be needed.
@@ -414,24 +431,47 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                               converted=convertedp)
     } else if (which_voom == "hpgl") {
         message("Limma step 2/6: running hpgl_voom(), switch with the argument 'which_voom'.")
-        fun_voom <- hpgl_voom(data, fun_model, libsize=libsize,
-                              logged=loggedp, converted=convertedp)
+        fun_voom <- hpgl_voom(data,
+                              fun_model,
+                              libsize=libsize,
+                              logged=loggedp,
+                              converted=convertedp)
     } else if (which_voom == "limma_weighted") {
         message("Limma step 2/6: running limma::voomWithQualityWeights(), switch with the argument 'which_voom'.")
-        fun_voom <- try(limma::voomWithQualityWeights(counts=data, design=fun_model, lib.size=libsize,
-                                                      normalize.method=voom_norm, plot=TRUE,
-                                                      span=0.5, var.design=NULL, method="genebygene",
-                                                      maxiter=50, tol=1E-10, trace=FALSE,
-                                                      replace.weights=TRUE, col=NULL))
+        fun_voom <- try(limma::voomWithQualityWeights(counts=data,
+                                                      design=fun_model,
+                                                      lib.size=libsize,
+                                                      normalize.method=voom_norm,
+                                                      plot=TRUE,
+                                                      span=0.5,
+                                                      var.design=NULL,
+                                                      method="genebygene",
+                                                      maxiter=50,
+                                                      tol=1E-10,
+                                                      trace=FALSE,
+                                                      replace.weights=TRUE,
+                                                      col=NULL))
         if (class(fun_voom) == "try-error") {
             message("voomWithQualityWeights failed, falling back to voom.")
-            fun_voom <- limma::voom(counts=data, design=fun_model, lib.size=libsize,
-                                    normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
+            fun_voom <- limma::voom(counts=data,
+                                    design=fun_model,
+                                    lib.size=libsize,
+                                    normalize.method=voom_norm,
+                                    span=0.5,
+                                    plot=TRUE,
+                                    save.plot=TRUE)
             }
     } else {
         message("Limma step 2/6: running limma::voom(), switch with the argument 'which_voom'.")
-        fun_voom <- limma::voom(counts=data, design=fun_model, lib.size=libsize,
-                                normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
+        ## Note to self, the defaults are span=0.5, plot=FALSE, save.plot=FALSE,
+        ## normalize.method="none", lib.size=NULL, design=NULL
+        fun_voom <- limma::voom(counts=data,
+                                design=fun_model,
+                                lib.size=libsize,
+                                normalize.method=voom_norm,
+                                span=0.5,
+                                plot=TRUE,
+                                save.plot=TRUE)
     }
 
     one_replicate <- FALSE
@@ -447,7 +487,10 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
 
     ## Do the lmFit() using this model
     message("Limma step 3/6: running lmFit.")
-    fun_fit <- limma::lmFit(fun_voom, fun_model, robust=TRUE)
+    fun_fit <- limma::lmFit(fun_voom,
+                            fun_model,
+                            robust=limma_robust,
+                            method=limma_method)
     message("Limma step 4/6: making and fitting contrasts.")
     if (isTRUE(model_intercept)) {
         contrasts <- make_pairwise_contrasts(fun_model, conditions,
@@ -459,7 +502,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
         ## Once all that is done, perform the fit
         ## This will first provide the relative abundances of each condition
         ## followed by the set of all pairwise comparisons.
-        all_pairwise_fits <- limma::contrasts.fit(fun_fit, all_pairwise_contrasts)
+        all_pairwise_fits <- limma::contrasts.fit(fun_fit, contrasts=all_pairwise_contrasts)
     } else {
         contrasts <- "nointercept"
         identities <- NULL
@@ -472,15 +515,21 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     if (isTRUE(one_replicate)) {
         all_pairwise_comparisons <- all_pairwise_fits[["coefficients"]]
     } else {
-        all_pairwise_comparisons <- limma::eBayes(all_pairwise_fits, robust=TRUE)
+        all_pairwise_comparisons <- limma::eBayes(all_pairwise_fits,
+                                                  robust=limma_robust,
+                                                  trend=limma_trend,)
         all_tables <- try(limma::topTable(all_pairwise_comparisons,
                                           number=nrow(all_pairwise_comparisons)))
+        ##classified <- limma::classifyTestsP(all_pairwise_comparisons)
+        ##classified <- limma::decideTests(all_pairwise_comparisons, method="global")
+        ##print(summary(classified))
+        ##try(plot(limma::vennDiagram(classified)))
     }
     message("Limma step 6/6: Writing limma outputs.")
     limma_identities <- NULL
     limma_tables <- NULL
     if (isTRUE(model_intercept)) {
-        limma_results <- try(make_limma_tables(all_pairwise_comparisons, excel=FALSE))
+        limma_results <- try(make_limma_tables(all_pairwise_comparisons))
         limma_identities <- limma_results[["identities"]]
         limma_tables <- limma_results[["contrasts"]]
     } else {
@@ -577,9 +626,6 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 #' @param adjust Pvalue adjustment chosen.
 #' @param n Number of entries to report, 0 says do them all.
 #' @param coef Which coefficients/contrasts to report, NULL says do them all.
-#' @param workbook Excel filename into which to write the data.
-#' @param excel Write an excel workbook?
-#' @param csv Write out csv files of the tables?
 #' @param annot_df Optional data frame including annotation information to include with the tables.
 #' @return List of data frames comprising the toptable output for each coefficient, I also added a
 #'  qvalue entry to these toptable() outputs.
@@ -588,12 +634,10 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 #' @examples
 #' \dontrun{
 #'  finished_comparison = eBayes(limma_output)
-#'  data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+#'  table = make_limma_tables(finished_comparison, adjust="fdr")
 #' }
 #' @export
-make_limma_tables <- function(data, adjust="fdr", n=0, coef=NULL, workbook="excel/limma.xls",
-                       excel=FALSE, csv=FALSE, annot_df=NULL) {
-    testdir <- dirname(workbook)
+make_limma_tables <- function(data, adjust="BH", n=0, coef=NULL, annot_df=NULL) {
     ## Figure out the number of genes if not provided
     if (n == 0) {
         n <- nrow(data[["coefficients"]])
@@ -610,7 +654,7 @@ make_limma_tables <- function(data, adjust="fdr", n=0, coef=NULL, workbook="exce
     end <- length(coef)
     for (c in 1:end) {
         comparison <- coef[c]
-        message(paste0("Limma step 6/6: ", c, "/", end, ": Creating table: ", comparison, "."))
+        message(paste0("Limma step 6/6: ", c, "/", end, ": Creating table: ", comparison, ".  Adjust=", adjust))
         data_table <- limma::topTable(data, adjust=adjust, n=n, coef=comparison)
         ## Take a moment to prettily format the numbers in the table.
         data_table[["logFC"]] <- signif(x=as.numeric(data_table[["logFC"]]), digits=4)
@@ -622,22 +666,6 @@ make_limma_tables <- function(data, adjust="fdr", n=0, coef=NULL, workbook="exce
         if (!is.null(annot_df)) {
             data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
             ###data_table = data_table[, -1, drop=FALSE]
-        }
-        ## This write_xls runs out of memory annoyingly often
-        if (isTRUE(excel) | isTRUE(csv)) {
-            if (!file.exists(testdir)) {
-                dir.create(testdir)
-                message(paste0("Creating directory: ", testdir, " for writing excel/csv data."))
-            }
-        }
-        if (isTRUE(excel)) {
-            try(write_xls(data=data_table, sheet=comparison, file=workbook, overwritefile=TRUE))
-        }
-        ## Therefore I will write a csv of each comparison, too
-        if (isTRUE(csv)) {
-            csv_filename <- gsub(".xls$", "", workbook)
-            csv_filename <- paste0(csv_filename, "_", comparison, ".csv")
-            write.csv(data_table, file=csv_filename)
         }
         if (grepl(pattern="_vs_", x=comparison)) {
             return_data[[comparison]] <- data_table

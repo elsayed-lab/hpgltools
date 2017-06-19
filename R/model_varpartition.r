@@ -65,6 +65,7 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
     data <- Biobase::exprs(norm[["expressionset"]])
     design <- expt[["design"]]
     message("Fitting the expressionset to the model, this is slow.")
+    message("(Eg. Take the projected run time and mulitply by 3-6 and round up.)")
     ##my_fit <- try(variancePartition::fitVarPartModel(data, my_model, design))
     ##message("Extracting the variances.")
     ##my_extract <- try(variancePartition::extractVarPart(my_fit))

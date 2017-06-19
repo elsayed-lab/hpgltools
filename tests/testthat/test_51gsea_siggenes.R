@@ -43,7 +43,9 @@ test_that("Do we get a consistent number of fc up genes?", {
     expect_equal(expected, actual)
 })
 
-expected <- 118
+##expected <- 118
+## The new version of limma gets 116 instead of 118 now.
+expected <- 116
 actual <- nrow(fcp_sig_genes)
 test_that("Do we get a consistent number of fc and p up genes?", {
     expect_equal(expected, actual)

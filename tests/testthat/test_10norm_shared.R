@@ -12,13 +12,13 @@ context("10norm_shared.R: Are normalizations consistent over time (Shared functi
 datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
 ## Load the counts and drop super-low counts genes
 counts <- read.table(datafile, header=TRUE, row.names=1)
-counts <- counts[rowSums(counts) > ncol(counts),]
+counts <- counts[rowSums(counts) > ncol(counts), ]
 ## Set up a quick design to be used by cbcbSEQ and hpgltools
 design <- data.frame(row.names=colnames(counts),
-    condition=c("untreated","untreated","untreated",
-        "untreated","treated","treated","treated"),
-    libType=c("single_end","single_end","paired_end",
-        "paired_end","single_end","paired_end","paired_end"))
+                     condition=c("untreated","untreated","untreated",
+                                 "untreated","treated","treated","treated"),
+                     libType=c("single_end","single_end","paired_end",
+                               "paired_end","single_end","paired_end","paired_end"))
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
@@ -39,7 +39,8 @@ test_that("Pasilla title?", {
 ## Ensure that the beginning count table library sizes are identical.
 expected <- colSums(counts)
 actual <- pasilla_expt[["original_libsize"]]
-names(expected) <- c("untreated1","untreated2","untreated3","untreated4","treated1","treated2","treated3")
+names(expected) <- c("untreated1", "untreated2", "untreated3", "untreated4",
+                     "treated1", "treated2", "treated3")
 test_that("Pasilla libsize?", {
     expect_equal(expected, actual)
 })

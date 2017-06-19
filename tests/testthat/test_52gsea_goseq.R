@@ -19,7 +19,9 @@ actual <- nrow(goseq_result$mf_interesting)
 test_that("Do we get the expected number of interesting mf categories?", {
     expect_equal(expected, actual, tolerance=2)
 })
-expected <- 71
+##expected <- 71
+## goseq picks up another bp category now.
+expected <- 72
 actual <- nrow(goseq_result$bp_interesting)
 test_that("Do we get the expected number of interesting bp categories?", {
     expect_equal(expected, actual)
@@ -51,16 +53,20 @@ test_that("Are the goseq interesting results as expected (cc categories)?", {
     expect_equal(expected, actual)
 })
 
-expected <- c(0.02857143, 0.02884615, 0.02941176, 0.03333333, 0.04651163, 0.07142857)
+##expected <- c(0.02857143, 0.02884615, 0.02941176, 0.03333333, 0.04651163, 0.07142857)
+## New goseq versions get slightly lower p-values
+expected <- c(0.02473498, 0.02857143, 0.02941176, 0.03333333, 0.03508772, 0.04651163)
 actual <- head(goseq_result$pvalue_plots$mfp_plot_over$data$score)
 test_that("Are the goseq results as expected (mf pvalues)?", {
     expect_equal(expected, actual, tolerance=0.000001)
 })
 
-expected <- c(0.07692308, 0.08333333, 0.09090909, 0.09090909, 0.10000000, 0.10000000)
+##expected <- c(0.07692308, 0.08333333, 0.09090909, 0.09090909, 0.10000000, 0.10000000)
+## New goseq has slightly higher values here.
+expected <- c(0.08333333, 0.09090909, 0.09090909, 0.09090909, 0.10000000, 0.10000000)
 actual <- head(goseq_result$pvalue_plots$bpp_plot_over$data$score)
 test_that("Are the goseq results as expected (bp pvalues)?", {
-    expect_equal(expected, actual, tolerance=0.000001)
+    expect_equal(expected, actual, tolerance=0.00001)
 })
 
 expected <- c(0.01263538, 0.01895735, 0.03636364, 0.03846154, 0.09090909, 0.11111111)

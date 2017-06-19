@@ -356,7 +356,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
                             title="Columns used in the following tables.")
     rows_down <- nrow(legend)
     new_row <- new_row + rows_down + 3
-    annot <- Biobase::pData(expt[["expressionset"]])
+    annot <- as.data.frame(Biobase::pData(expt[["expressionset"]]))
     xls_result <- write_xls(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
                             sheet=sheet, start_col=1, title="Experimental Design.")
 

@@ -202,7 +202,7 @@ analyses more difficult/impossible.")
             sample_definitions <- sample_definitions[!skippers, ]
         }
     }
-
+    num_samples <- nrow(sample_definitions)
     ## Create a matrix of counts with columns as samples and rows as genes
     ## This may come from either a data frame/matrix, a list of files from the metadata
     ## or it can attempt to figure out the location of the files from the sample names.

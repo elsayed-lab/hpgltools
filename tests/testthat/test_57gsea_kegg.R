@@ -60,7 +60,7 @@ test_that("Can we extract the percent differentially expressed genes from multip
 ## Try testing out pathview
 mel_id <- kegg_get_orgn("melanogaster")
 rownames(sig_up) <- make.names(sig_up[["flybasecg"]], unique=TRUE)
-funkytown <- sm(hpgl_pathview(sig_up, fc_column="logFC", species="dme",
+funkytown <- sm(simple_pathview(sig_up, fc_column="logFC", species="dme",
                               from_list=c("CG"), to_list=c("Dmel_CG")))
 
 expected <- c(22, 34, 5, 3, 12, 106)

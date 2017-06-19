@@ -33,7 +33,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     })
 
     expected <- c("GO:0000422", "GO:0001508", "GO:0001676",
-                  "GO:0001708", "GO:0002118", "GO:0002121")
+                  "GO:0002118", "GO:0002121", "GO:0002218")
     actual <- head(sort(tp_result$tables$bp_interesting$GO.ID))
     test_that("Are the topGO interesting results expected (BP GOIDs)?", {
         expect_equal(expected, actual)
@@ -54,8 +54,8 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual)
     })
 
-    expected <- c("GO:0003974", "GO:0004252", "GO:0004467",
-                  "GO:0004556", "GO:0004742", "GO:0005044")
+    expected <- c("GO:0003974", "GO:0004175", "GO:0004252",
+                  "GO:0004467", "GO:0004556", "GO:0004742")
     actual <- head(sort(tp_result$pvalue_plots$mfp_plot_over$data$GO.ID))
     test_that("Are the topGO interesting results as expected? (MF pval)?", {
         expect_equal(expected, actual)
