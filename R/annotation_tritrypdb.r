@@ -597,7 +597,7 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
 
     inst <- FALSE
     if (!is.null(orgdb_dir)) {
-        inst <- sm(devtools::install(orgdb_dir))
+        inst <- sm(try(devtools::install(orgdb_dir)))
     }
     orgdb_pkg_name <- basename(orgdb_dir)
     ## The result is the pathname of the created orgdb directory
@@ -710,7 +710,7 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
     if (cfg_line[["strain"]] == "CLBrenerNon-Esmeraldo-like") {
         install_dir <- sm(pkg_cleaner(install_dir, removal="Non-Esmeraldo", replace="NonEsmeraldo"))
     }
-    result <- devtools::install(install_dir)
+    result <- sm(try(devtools::install(install_dir)))
     package_name <- basename(install_dir)
     ret <- list(
         "package_name" = package_name,
