@@ -10,11 +10,11 @@ translate_ids_querymany(queries, email = "abelew@gmail.com", fields = "all",
 \arguments{
 \item{queries}{Gene IDs to translate.}
 
+\item{email}{E-mail address to send with the querymany query.}
+
 \item{fields}{Set of fields to request, pass null for all.}
 
 \item{species}{Human readable species for translation (Eg. 'human' instead of 'hsapiens'.)}
-
-\item{from}{Database to translate IDs from, pass null if you want it to choose.}
 }
 \value{
 Df of translated IDs/accessions

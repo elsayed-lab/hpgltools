@@ -5,8 +5,9 @@
 #' @param pairwise  The result from all_pairwise(), which should be changed to handle other invocations too.
 #' @param type  Type of table to use: deseq, edger, limma, basic.
 #' @param table  Result from edger to use, left alone it chooses the first.
-#' @param fc  Cutoff for log2(fold-change) significant.
+#' @param logfc  What logFC to use for the MA plot horizontal lines.
 #' @param pval_cutoff  Cutoff to define 'significant' by p-value.
+#' @param invert  Invert the plot?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return a plot!
 #' @seealso \code{\link{plot_ma_de}}
@@ -270,6 +271,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #' @param adjp  Use adjusted p-values
 #' @param euler  Perform a euler plot
 #' @param p  p-value cutoff, I forget what for right now.
+#' @param fc  What fold-change cutoff to include?
 #' @param ... More arguments are passed to arglist.
 #' @return  A list of venn plots
 #' @seealso \pkg{venneuler} \pkg{Vennerable}

@@ -21,12 +21,14 @@
 #'  (E-D)-A, de_vs_cb = (E-D)-(C-B)".
 #' @param alt_model  Alternate model to use rather than just condition/batch.
 #' @param libsize  Library size of the original data to help voom().
+#' @param test_pca  Perform some tests of the data before/after applying a given batch effect.
 #' @param annot_df  Annotations to add to the result tables.
 #' @param parallel  Use dopar to run limma, deseq, edger, and basic simultaneously.
 #' @param ...  Picks up extra arguments into arglist, currently only passed to write_limma().
 #' @return A list of limma, deseq, edger results.
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
-#'  \code{link{limma_pairwise}} \code{\link{deseq_pairwise}} \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
+#'  \code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
+#'  \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
 #' @examples
 #'  \dontrun{
 #'   finished_comparison = eBayes(limma_output)
@@ -925,9 +927,9 @@ compare_logfc_plots <- function(combined_tables) {
 #' The alt hypothesis is (HA): (infected != uninfected) && (infected != beads)
 #'
 #' @param contrast_fit  The result of lmFit.
-#' @param coef1  The first coefficient to query.
-#' @param coef2  And the second.
-#' @param ...  Extra arguments are passed to arglist, but basically ignored.
+#' @param cellmeans_fit  The result of a cellmeans fit.
+#' @param conj_contrasts  The result from the makeContrasts of the first set.
+#' @param disj_contrast  The result of the makeContrasts of the second set.
 disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_contrast) {
     ## arglist <- list(...)
     contr_level_counts <- rowSums(contrast_fit[["contrasts"]][, c(conj_contrasts, disj_contrast)] != 0)

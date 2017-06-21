@@ -17,6 +17,8 @@ ruv_residuals, or pca.}
 
 \item{surrogates}{Choose a method for getting the number of surrogates, be or leek, or a number.}
 
+\item{expt_state}{Current state of the expt object (to check for log2, cpm, etc)}
+
 \item{...}{Parameters fed to arglist.}
 }
 \value{

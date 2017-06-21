@@ -35,6 +35,8 @@ pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (
 
 \item{libsize}{Library size of the original data to help voom().}
 
+\item{test_pca}{Perform some tests of the data before/after applying a given batch effect.}
+
 \item{annot_df}{Annotations to add to the result tables.}
 
 \item{parallel}{Use dopar to run limma, deseq, edger, and basic simultaneously.}
@@ -61,5 +63,6 @@ It collects the results and does some simple comparisons among them.
 }
 \seealso{
 \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
- \code{link{limma_pairwise}} \code{\link{deseq_pairwise}} \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
+ \code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
+ \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
 }

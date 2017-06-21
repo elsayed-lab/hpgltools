@@ -10,17 +10,18 @@
 #'  string 'YYY', that will be replaced by the contrast name.
 #' @param keepers  List of reformatted table names to explicitly keep
 #'  certain contrasts in specific orders and orientations.
-#' @param adjp  Perhaps you do not want the adjusted p-values for plotting?
 #' @param excludes  List of columns and patterns to use for excluding genes.
+#' @param adjp  Perhaps you do not want the adjusted p-values for plotting?
+#' @param include_limma  Include limma analyses in the table?
 #' @param include_deseq  Include deseq analyses in the table?
 #' @param include_edger  Include edger analyses in the table?
-#' @param include_limma  Include limma analyses in the table?
 #' @param include_basic  Include my stupid basic logFC tables?
+#' @param rownames  Add rownames to the xlsx printed table?
 #' @param add_plots  Add plots to the end of the sheets with expression values?
 #' @param loess  Add time intensive loess estimation to plots?
 #' @param plot_dim  Number of inches squared for the plot if added.
 #' @param compare_plots  In an attempt to save memory when printing to excel, make it possible to
-#' @param adjp_type  Add a consistent p adjustment of this type.
+#' @param padj_type  Add a consistent p adjustment of this type.
 #'  exclude comparison plots in the summary sheet.
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
@@ -35,8 +36,8 @@
 combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                               excel=NULL, excel_title="Table SXXX: Combined Differential Expression of YYY",
                               keepers="all", excludes=NULL, adjp=TRUE, include_limma=TRUE,
-                              include_edger=TRUE, include_deseq=TRUE, rownames=TRUE,
-                              include_basic=TRUE, add_plots=TRUE, loess=FALSE,
+                              include_deseq=TRUE, include_edger=TRUE, include_basic=TRUE,
+                              rownames=TRUE, add_plots=TRUE, loess=FALSE,
                               plot_dim=6, compare_plots=TRUE, padj_type="fdr") {
     ## The ontology_shared function which creates multiple sheets works a bit differently
     ## It creates all the tables, then does a createWorkbook()
@@ -774,10 +775,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 #' @param annot_df  Add some annotation information?
 #' @param inverse  Invert the fold changes?
 #' @param adjp  Use adjusted p-values?
-#' @param adjp_type  Add this consistent p-adjustment.
-#' @param include_limma  Include tables from limma?
+#' @param padj_type  Add this consistent p-adjustment.
 #' @param include_deseq  Include tables from deseq?
 #' @param include_edger  Include tables from edger?
+#' @param include_limma  Include tables from limma?
 #' @param include_basic  Include the basic table?
 #' @param fc_cutoff  Preferred logfoldchange cutoff.
 #' @param p_cutoff  Preferred pvalue cutoff.

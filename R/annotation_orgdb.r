@@ -119,7 +119,8 @@ load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keyty
 #'
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Identifiers of the genes to retrieve annotations.
-#' @param keytype the mysterious keytype returns yet again to haunt my dreams
+#' @param keytype  The mysterious keytype returns yet again to haunt my dreams.
+#' @param columns  The set of columns to request.
 #' @return Data frame of gene IDs, go terms, and names.
 #' @seealso \pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
 #'  \code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
@@ -128,7 +129,8 @@ load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keyty
 #'  go_terms <- load_go_terms(org, c("a","b"))
 #' }
 #' @export
-load_orgdb_go <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("GO","GOALL","GOID")) {
+load_orgdb_go <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
+                          columns=c("GO","GOALL","GOID")) {
     tt <- sm(requireNamespace("GO.db"))
     tt <- sm(requireNamespace("magrittr"))
     if (is.null(gene_ids)) {

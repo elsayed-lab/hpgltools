@@ -8,7 +8,7 @@
 #' this function should provide a reminder of this relatively fast and useful ID translation service.
 #'
 #' @param queries Gene IDs to translate.
-#' @param from Database to translate IDs from, pass null if you want it to choose.
+#' @param email  E-mail address to send with the querymany query.
 #' @param fields Set of fields to request, pass null for all.
 #' @param species Human readable species for translation (Eg. 'human' instead of 'hsapiens'.)
 #' @return Df of translated IDs/accessions

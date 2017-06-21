@@ -9,11 +9,11 @@ disjunct_pvalues(contrast_fit, cellmeans_fit, conj_contrasts, disj_contrast)
 \arguments{
 \item{contrast_fit}{The result of lmFit.}
 
-\item{coef1}{The first coefficient to query.}
+\item{cellmeans_fit}{The result of a cellmeans fit.}
 
-\item{coef2}{And the second.}
+\item{conj_contrasts}{The result from the makeContrasts of the first set.}
 
-\item{...}{Extra arguments are passed to arglist, but basically ignored.}
+\item{disj_contrast}{The result of the makeContrasts of the second set.}
 }
 \description{
 The goal is therefore to find responses different than beads

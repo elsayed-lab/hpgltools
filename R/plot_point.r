@@ -337,6 +337,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' @param size  How big are the dots?
 #' @param tooltip_data  Df of tooltip information for gvis.
 #' @param gvis_filename  Filename to write a fancy html graph.
+#' @param invert  Invert the ma plot?
 #' @param ...  More options for you
 #' @return  ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
 #'  type across all sample types on the x axis, and the log fold change between conditions on the

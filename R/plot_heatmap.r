@@ -342,7 +342,7 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
 #' @param linewidth the width of lines
 #' @param ... because this function did not already have enough options
 #' @return a heatmap!
-#' @seealso \code{\link{heatmap.2}}
+#' @seealso \code{\link[gplots]{heatmap.2}}
 #' @export
 heatmap.3 <- function (x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
                        distfun=dist, hclustfun=hclust, dendrogram=c("both", "row", "column", "none"),

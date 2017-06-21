@@ -32,6 +32,8 @@ plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
 
 \item{gvis_filename}{Filename to write a fancy html graph.}
 
+\item{invert}{Invert the ma plot?}
+
 \item{...}{More options for you}
 }
 \value{

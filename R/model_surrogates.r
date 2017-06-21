@@ -17,12 +17,14 @@
 #' @param estimate_type  One of: sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
 #'  ruv_residuals, or pca.
 #' @param surrogates  Choose a method for getting the number of surrogates, be or leek, or a number.
+#' @param expt_state  Current state of the expt object (to check for log2, cpm, etc)
 #' @param ... Parameters fed to arglist.
 #' @return List including the adjustments for a model matrix, a modified count table, and 3 plots of
 #'  the known batch, surrogates, and batch/surrogate.
 #' @seealso \pkg{Biobase} \pkg{sva} \pkg{EDASeq} \pkg{RUVseq} \pkg{edgeR}
 #' @export
-get_model_adjust <- function(input, design=NULL, estimate_type="sva", surrogates="be", expt_state=NULL, ...) {
+get_model_adjust <- function(input, design=NULL, estimate_type="sva",
+                             surrogates="be", expt_state=NULL, ...) {
     arglist <- list(...)
     my_design <- NULL
     my_data <- NULL

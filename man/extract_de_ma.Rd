@@ -14,11 +14,13 @@ extract_de_ma(pairwise, type = "edger", table = NULL, logfc = 1,
 
 \item{table}{Result from edger to use, left alone it chooses the first.}
 
+\item{logfc}{What logFC to use for the MA plot horizontal lines.}
+
 \item{pval_cutoff}{Cutoff to define 'significant' by p-value.}
 
-\item{...}{Extra arguments are passed to arglist.}
+\item{invert}{Invert the plot?}
 
-\item{fc}{Cutoff for log2(fold-change) significant.}
+\item{...}{Extra arguments are passed to arglist.}
 }
 \value{
 a plot!
