@@ -437,12 +437,12 @@ make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb
 pkg_cleaner <- function(path, removal="-like", replace="") {
     ## This is because TxDb creation fails if you have an author like 'abelew <abelew@gmail.com>'
     ##at_cmd <- paste0("sed -i 's/ at /\\@/g' ", path, "/DESCRIPTION")
-    at_cmd <- paste0("perl -p -i 's/ at /\\@/g' ", path, "/DESCRIPTION")
+    at_cmd <- paste0("perl -p -i -e 's/ at /\\@/g' ", path, "/DESCRIPTION")
     message(paste0("Rewriting DESCRIPTION: ", at_cmd))
     system(command=at_cmd)
     ## Since I changed @ to at I figured . could be dot too
     ##dot_cmd <- paste0("sed -i 's/ dot /\\./g' ", path, "/DESCRIPTION")
-    dot_cmd <- paste0("perl -p -i 's/ dot /\\./g' ", path, "/DESCRIPTION")
+    dot_cmd <- paste0("perl -p -i -e 's/ dot /\\./g' ", path, "/DESCRIPTION")
     message(paste0("Rewriting DESCRIPTION to remove dot: ", dot_cmd))
     system(dot_cmd)
     new_dir <- path
@@ -455,7 +455,7 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
         system(mv_cmd)
         ## Collect the text files in the new package and remove all -like instances in them
         ##find_cmd <- paste0("sed -i 's/", removal, "/", replace,
-        find_cmd <- paste0("perl -p -i 's/", removal, "/", replace,
+        find_cmd <- paste0("perl -p -i -e 's/", removal, "/", replace,
                            "/g' $(find ", new_dir, " -type f | grep -v sqlite)")
         message(paste0("rewriting orgdb files: ", find_cmd))
         system(find_cmd)
