@@ -31,7 +31,7 @@ fc_sig_genes <- sm(get_sig_genes(table, column="untreated", fc=1)$up_genes)
 fcp_sig_genes <- sm(get_sig_genes(table, column="untreated", fc=1, p=0.05)$up_genes)
 top200_sig_genes <- sm(get_sig_genes(table, column="untreated", n=200)$up_genes)
 
-expected <- 1286
+expected <- 1287
 actual <- nrow(z_sig_genes)
 test_that("Do we get a consistent number of z-scored up genes?", {
     expect_equal(expected, actual)

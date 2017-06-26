@@ -194,7 +194,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     if (type == "edger") {
         thenames <- names(output[["contrasts"]][["identities"]])
     } else if (type == "limma") {
-        coefficients <- output[["pairwise_comparisons"]][["coefficients"]]
+        coefficients <- output[["identity_comparisons"]][["coefficients"]]
         thenames <- colnames(coefficients)
     } else if (type == "deseq") {
         thenames <- names(output[["coefficients"]])

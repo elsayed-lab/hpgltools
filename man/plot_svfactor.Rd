@@ -4,8 +4,7 @@
 \alias{plot_svfactor}
 \title{Make a dotplot of some categorised factors and a set of SVs (for other factors).}
 \usage{
-plot_svfactor(expt, svest, chosen_factor = "snpcategory",
-  factor_type = "factor")
+plot_svfactor(expt, svest, chosen_factor = "batch", factor_type = "factor")
 }
 \arguments{
 \item{expt}{Experiment from which to acquire the design, counts, etc.}

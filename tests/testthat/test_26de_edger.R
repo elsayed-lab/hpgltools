@@ -14,7 +14,7 @@ design <- limma[["design"]]
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
 ## Performing edgeR differential expression analysis as per the edgeR vignette.
-model <- model.matrix(~ 0 + design$condition + design[["libType"]])
+model <- model.matrix(~ 0 + design[["condition"]] + design[["libType"]])
 colnames(model) <- c("treated", "untreated", "libtype")
 raw <- edgeR::DGEList(counts=counts, group=metadata[["condition"]])
 norm <- edgeR::calcNormFactors(raw)

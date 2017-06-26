@@ -48,7 +48,7 @@ cbcb_almost_vignette_result <- c(30.39, 18.56, 14.71, 12.92, 12.39, 11.03)
 ## The following was taken from the cbcbSEQIntro.pdf
 cbcb_actual_vignette_result <- c(30.97, 18.65, 14.69, 12.65, 12.09, 10.94)
 test_that("Does the post-batch correction PCA give the same result?", {
-    expect_equal(cbcb_almost_vignette_result, as.numeric(cbcb_res$propVar))
+    expect_equal(cbcb_almost_vignette_result, as.numeric(cbcb_res[["propVar"]]))
 })
 cbcb_v <- cbcbSEQ::voomMod(cbcb_hpgl_combat,
                            model.matrix(~design[["condition"]]),
@@ -112,7 +112,7 @@ test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts)
 })
 
 ## If we made it this far, then the inputs to limma should agree.
-hpgl_limma_combat_result <- sm(limma_pairwise(hpgl_qcpmcombat,
+hpgl_limma_combat_result <- sm(limma_pairwise(hpgl_qcpmcombat, limma_method="ls",
                                               model_batch=FALSE,
                                               model_intercept=FALSE,
                                               which_voom="hpgl"))
@@ -212,7 +212,7 @@ test_that("Do cbcbSEQ and hpgltools agree on the eBayes result? (p.value, untrea
 
 expected <- cbcb_table
 expected <- expected[sort(rownames(expected)), ]
-actual <- hpgl_table
+actual <- hpgl_table[["nointercept"]]
 actual <- actual[sort(rownames(actual)), ]
 test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
     expect_equal(expected, actual, tolerance=0.02)

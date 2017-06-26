@@ -4,13 +4,11 @@
 \alias{write_goseq_data}
 \title{Make a pretty table of goseq data in excel.}
 \usage{
-write_goseq_data(goseq, excel = "excel/goseq.xlsx", wb = NULL,
+write_goseq_data(goseq_result, excel = "excel/goseq.xlsx", wb = NULL,
   add_trees = TRUE, pval = 0.1, add_plots = TRUE, height = 15,
   width = 10, ...)
 }
 \arguments{
-\item{goseq}{A set of results from simple_goseq().}
-
 \item{excel}{An excel file to which to write some pretty results.}
 
 \item{wb}{Workbook object to write to.}
@@ -26,6 +24,8 @@ write_goseq_data(goseq, excel = "excel/goseq.xlsx", wb = NULL,
 \item{width}{and their width.}
 
 \item{...}{Extra arguments are passed to arglist.}
+
+\item{goseq}{A set of results from simple_goseq().}
 }
 \value{
 The result from openxlsx in a prettyified xlsx file.

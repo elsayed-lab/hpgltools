@@ -4,12 +4,10 @@
 \alias{make_limma_tables}
 \title{Writes out the results of a limma search using toptable().}
 \usage{
-make_limma_tables(data, adjust = "BH", n = 0, coef = NULL,
-  annot_df = NULL)
+make_limma_tables(fit = NULL, adjust = "BH", n = 0, coef = NULL,
+  annot_df = NULL, intercept = TRUE)
 }
 \arguments{
-\item{data}{Output from eBayes().}
-
 \item{adjust}{Pvalue adjustment chosen.}
 
 \item{n}{Number of entries to report, 0 says do them all.}
@@ -17,6 +15,8 @@ make_limma_tables(data, adjust = "BH", n = 0, coef = NULL,
 \item{coef}{Which coefficients/contrasts to report, NULL says do them all.}
 
 \item{annot_df}{Optional data frame including annotation information to include with the tables.}
+
+\item{data}{Output from eBayes().}
 }
 \value{
 List of data frames comprising the toptable output for each coefficient, I also added a

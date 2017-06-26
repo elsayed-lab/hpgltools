@@ -6,7 +6,7 @@ data(pasillaGenes)
 context("02load_data.R: Does pasilla load into hpgltools?\n")
 
 ## Try loading some annotation information for this species.
-gene_info <- sm(get_biomart_annotations(species="dmelanogaster"))
+gene_info <- sm(load_biomart_annotations(species="dmelanogaster"))
 info_idx <- gene_info[["Type"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
 rownames(gene_info) <- make.names(gene_info[["geneID"]], unique=TRUE)

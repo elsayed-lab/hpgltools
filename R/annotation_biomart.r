@@ -25,7 +25,7 @@
 #'  tt = get_biomart_annotations()
 #' }
 #' @export
-get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
+load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                     host="dec2015.archive.ensembl.org",
                                     trymart="ENSEMBL_MART_ENSEMBL",
                                     gene_requests=c("ensembl_gene_id",
@@ -134,10 +134,10 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #'  tt = get_biomart_ontologies()
 #' }
 #' @export
-get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
-                                 host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
-                                 secondtry="_gene", dl_rows=c("ensembl_gene_id", "go_accession"),
-                                 dl_rowsv2=c("ensembl_gene_id", "go_id")) {
+load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
+                            host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
+                            secondtry="_gene", dl_rows=c("ensembl_gene_id", "go_accession"),
+                            dl_rowsv2=c("ensembl_gene_id", "go_id")) {
     secondtry <- paste0(species, secondtry)
 
     savefile <- paste0(species, "_go_annotations.rda")

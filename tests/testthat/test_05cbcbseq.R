@@ -47,7 +47,7 @@ design <- data.frame(row.names=colnames(counts),
                                "paired_end","single_end","paired_end","paired_end"))
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
-metadata$sampleid <- rownames(metadata)
+metadata[["sampleid"]] <- rownames(metadata)
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
@@ -171,12 +171,12 @@ test_that("Does calling hpgltools::voom with hpgl-modified data return the same 
 
 ## To be extra-paranoid, make sure that the limma_pairwise() function invokes voom correctly.
 ## Note that this is where the data-ordering problems appear.
-hpgl_limma <- sm(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE,
+hpgl_limma <- sm(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, limma_method="ls",
                                 model_intercept=FALSE, which_voom="hpgl"))
 ## First check the voom result from limma_pairwise
 hpgl_limma_voom <- hpgl_limma[["voom_result"]]
 hpgl_limma_voom_e <- hpgl_limma[["voom_result"]][["E"]][order(rownames(hpgl_limma[["voom_result"]][["E"]])), ]
-cbcb_voom_e <- cbcb_voom$E[order(rownames(cbcb_voom[["E"]])), ]
+cbcb_voom_e <- cbcb_voom[["E"]][order(rownames(cbcb_voom[["E"]])), ]
 test_that("Limma results, voom.", {
     expect_equal(cbcb_voom_e, hpgl_limma_voom_e)
 })

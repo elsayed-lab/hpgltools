@@ -299,8 +299,8 @@ the dataset, please try doing a filtering of the data and retry.")
     x_marks <- 1:length(colnames(data))
 
     surrogate_plots <- NULL
-    if (class(data) == "expt") {
-        surrogate_plots <- plot_batchsv(data, model_adjust)
+    if (class(input) == "expt") {
+        surrogate_plots <- plot_batchsv(input, model_adjust)
     }
 
     ret <- list(

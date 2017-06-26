@@ -327,6 +327,7 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
                          intercept=0, reverse=FALSE,
                          surrogates="be", ...) {
     ## arglist <- list(...)
+    design <- Biobase::pData(input[["expressionset"]])
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
     ## Make a model matrix which will have one entry for
@@ -334,43 +335,48 @@ choose_model <- function(input, conditions, batches, model_batch=TRUE,
     ## It would be much smarter to generate the models in the following if() {} blocks
     ## But I have it in my head to eventually compare results using different models.
     cond_int_string <- "~ 0 + condition"
-    cond_int_model <- stats::model.matrix(~ 0 + conditions,
-                                          contrasts.arg=list(conditions="contr.treatment"))
+    cond_int_model <- stats::model.matrix(~ 0 + conditions, data=design)
+                                          ##contrasts.arg=list(conditions="contr.treatment"))
     batch_int_string <- "~ 0 + batch"
-    batch_int_model <- try(stats::model.matrix(~ 0 + batches,
+    batch_int_model <- try(stats::model.matrix(~ 0 + batches, data=design,
                                                contrasts.arg=list(batches="contr.treatment")),
                            silent=TRUE)
     condbatch_int_string <- "~ 0 + condition + batch"
 ##    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
 ##                                                   contrasts.arg=list(conditions="contr.treatment",
 ##                                                                      batches="contr.treatment")),
-    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches), silent=TRUE)
+    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches, data=design),
+                               silent=TRUE)
     batchcond_int_string <- "~ 0 + batch + condition"
 ##    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions,
 ##                                                   contrasts.arg=list(conditions="contr.treatment",
 ##                                                                      batches="contr.treatment")),
 ##                               silent=TRUE)
-    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions), silent=TRUE)
+    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions, data=design),
+                               silent=TRUE)
     cond_noint_string <- "~ condition"
-    cond_noint_model <- try(stats::model.matrix(~ conditions,
-                                                contrasts.arg=list(conditions="contr.treatment")),
+    ##cond_noint_model <- try(stats::model.matrix(~ conditions,
+    ##                                            contrasts.arg=list(conditions="contr.treatment")),
+    ##                        silent=TRUE)
+    cond_noint_model <- try(stats::model.matrix(~ conditions, data=design),
                             silent=TRUE)
     batch_noint_string <- "~ batch"
-    batch_noint_model <- try(stats::model.matrix(~ batches,
+    batch_noint_model <- try(stats::model.matrix(~ batches, data=design,
                                                  contrasts.arg=list(batches="contr.treatment")),
                              silent=TRUE)
     condbatch_noint_string <- "~ condition + batch"
-    condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches,
+    condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches, data=design,
                                                      contrasts.arg=list(conditions="contr.treatment",
                                                                         batches="contr.treatment")),
                                  silent=TRUE)
 ##    condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches), silent=TRUE)
     batchcond_noint_string <- "~ batch + condition"
-    batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions,
+    batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions, data=design,
                                                      contrasts.arg=list(conditions="contr.treatment",
                                                                         batches="contr.treatment")),
                                  silent=TRUE)
-    batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions), silent=TRUE)
+    batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions, data=design),
+                                 silent=TRUE)
     noint_model <- NULL
     int_model <- NULL
     noint_string <- NULL
@@ -411,18 +417,18 @@ both condition and batch? Using only a conditional model.")
         ## Changing model_batch from 'sva' to the resulting matrix.
         ## Hopefully this will simplify things later for me.
         model_batch <- model_batch_info[["model_adjust"]]
-        int_model <- stats::model.matrix(~ 0 + conditions + model_batch)
+        int_model <- stats::model.matrix(~ 0 + conditions + model_batch, data=design)
                                          ## contrasts.arg=list(conditions="contr.sum"))
-        noint_model <- stats::model.matrix(~ conditions + model_batch)
+        noint_model <- stats::model.matrix(~ conditions + model_batch, data=design)
                                            ## contrasts.arg=list(conditions="contr.sum"))
         int_string <- condbatch_int_string
         noint_string <- condbatch_noint_string
         including <- "condition+batchestimate"
     } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
         message("Including batch estimates from sva/ruv/pca in the model.")
-        int_model <- stats::model.matrix(~ 0 + conditions + model_batch)
+        int_model <- stats::model.matrix(~ 0 + conditions + model_batch, data=design)
                                            ## contrasts.arg=list(conditions="contr.sum"))
-        noint_model <- stats::model.matrix(~ conditions + model_batch)
+        noint_model <- stats::model.matrix(~ conditions + model_batch, data=design)
                                            ## contrasts.arg=list(conditions="contr.sum"))
         int_string <- condbatch_int_string
         noint_string <- condbatch_noint_string
@@ -1316,7 +1322,7 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
 #'  pretend = make_pairwise_contrasts(model, conditions)
 #' }
 #' @export
-make_pairwise_contrasts <- function(model, conditions, do_identities=TRUE,
+make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
                                     do_pairwise=TRUE, extra_contrasts=NULL) {
     tmpnames <- colnames(model)
     tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)

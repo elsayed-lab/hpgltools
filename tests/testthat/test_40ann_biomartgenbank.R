@@ -7,8 +7,8 @@ limma <- new.env()
 load("de_limma.rda", envir=limma)
 table <- limma$hpgl_table
 sig_genes <- sm(get_sig_genes(table, column="untreated")$up_genes)
-dmel_annotations <- sm(get_biomart_annotations(species="dmelanogaster"))
-dmel_go <- sm(get_biomart_ontologies(species="dmelanogaster"))
+dmel_annotations <- sm(load_biomart_annotations(species="dmelanogaster"))
+dmel_go <- sm(load_biomart_go(species="dmelanogaster"))
 
 expected_lengths <- c(1776, 819, 2361, NA, 633, 1164)
 actual_lengths <- head(dmel_annotations$length)

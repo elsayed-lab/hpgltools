@@ -35,20 +35,20 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     expected <- c(0.01822725, 0.01822725, 0.01822725, 0.01822725, 0.01822725, 0.01822725)
     actual <- head(sort(dmel_cp$enrich_go$MF_sig$p.adjust))
     test_that("Does the set of MF_sig have the expected p.adjusts?", {
-        expect_equal(expected, actual)
+        expect_equal(expected, actual, tolerance=0.001)
     })
 
     expected <- c(1.546513e-06, 1.546513e-06, 1.546513e-06,
                   9.483361e-06, 9.483361e-06, 9.772667e-06)
     actual <- head(sort(dmel_cp$enrich_go$BP_sig$p.adjust))
     test_that("Does the set of BP_sig have the expected p.adjusts?", {
-        expect_equal(expected, actual)
+        expect_equal(expected, actual, tolerance=0.00001)
     })
 
     expected <- c(0.01689551)
     actual <- head(sort(dmel_cp$enrich_go$CC_sig$p.adjust))
     test_that("Does the set of CC_sig have the expected p.adjusts?", {
-        expect_equal(expected, actual)
+        expect_equal(expected, actual, tolerance=0.0001)
     })
 
     expected <- c("dme00240", "dme00564", "dme00280")

@@ -4,7 +4,7 @@
 \alias{make_pairwise_contrasts}
 \title{Run makeContrasts() with all pairwise comparisons.}
 \usage{
-make_pairwise_contrasts(model, conditions, do_identities = TRUE,
+make_pairwise_contrasts(model, conditions, do_identities = FALSE,
   do_pairwise = TRUE, extra_contrasts = NULL)
 }
 \arguments{

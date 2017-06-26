@@ -25,8 +25,15 @@ test_that("Do we get the correct E. coli strain name?", {
     expect_equal(expected, actual)
 })
 
+annotations <- sm(load_microbesonline_annotations(species="spyogenes"))[[1]]
+expected <- c("dnaA", "dnaN", "SPy0004", "SPy0006", "pth", "trcF")
+actual <- as.character(head(annotations$name))
+test_that("Do we get the correct gene names for Streptococcus pyogenes?", {
+    expect_equal(expected, actual)
+})
+
 ## The default is 160490, an E. coli strain.
-go_ids <- sm(get_loci_go())
+go_ids <- sm(load_microbesonline_go())
 actual <- head(sort(unique(go_ids[["acc"]])))
 expected <- c("GO:0000015", "GO:0000062", "GO:0000074",
               "GO:0000105", "GO:0000150", "GO:0000154")

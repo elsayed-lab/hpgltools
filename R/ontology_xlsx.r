@@ -14,7 +14,7 @@
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{goseq}
 #' @export
-write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees=TRUE,
+write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, add_trees=TRUE,
                              pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
@@ -55,12 +55,12 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
                                 title="Columns used in the following tables.")
         summary_row <- nrow(legend) + 5
         summary_df <- data.frame(rbind(
-            c("Queried BP ontologies", nrow(goseq[["bp_subset"]])),
-            c("Significant BP ontologies", nrow(goseq[["bp_interesting"]])),
-            c("Queried MF ontologies", nrow(goseq[["mf_subset"]])),
-            c("Significant MF ontologies", nrow(goseq[["mf_interesting"]])),
-            c("Queried CC ontologies", nrow(goseq[["cc_subset"]])),
-            c("Significant CC ontologies", nrow(goseq[["cc_interesting"]]))))
+            c("Queried BP ontologies", nrow(goseq_result[["bp_subset"]])),
+            c("Significant BP ontologies", nrow(goseq_result[["bp_interesting"]])),
+            c("Queried MF ontologies", nrow(goseq_result[["mf_subset"]])),
+            c("Significant MF ontologies", nrow(goseq_result[["mf_interesting"]])),
+            c("Queried CC ontologies", nrow(goseq_result[["cc_subset"]])),
+            c("Significant CC ontologies", nrow(goseq_result[["cc_interesting"]]))))
         colnames(summary_df) <- c("Ontology type", "Number found")
         xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
                                 title="Summary of the goseq search.", start_row=1, start_col=4)
@@ -68,7 +68,7 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
             printme <- "Histogram of observed ontology (adjusted) p-values by goseq."
             xl_result <- openxlsx::writeData(wb, "legend", x=printme,
                                              startRow=summary_row - 1, startCol=1)
-            plot_try <- xlsx_plot_png(goseq[["pvalue_histogram"]], wb=wb, sheet="legend",
+            plot_try <- xlsx_plot_png(goseq_result[["pvalue_histogram"]], wb=wb, sheet="legend",
                                       start_col=1, start_row=summary_row, plotname="p_histogram",
                                       savedir=excel_basename)
         }
@@ -76,14 +76,14 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
 
     trees <- NULL
     if (isTRUE(add_trees)) {
-        trees <- goseq_trees(goseq, pval_column=pval_column)
+        trees <- goseq_trees(goseq_result, pval_column=pval_column)
     }
 
     ## Pull out the relevant portions of the goseq data
     ## For this I am using the same (arbitrary) rules as in gather_goseq_genes()
-    goseq_mf <- goseq[["mf_subset"]]
+    goseq_mf <- goseq_result[["mf_subset"]]
     goseq_mf <- goseq_mf[ goseq_mf[["over_represented_pvalue"]] <= pval, ]
-    goseq_mf_genes <- gather_goseq_genes(goseq, ontology="MF", pval=pval)
+    goseq_mf_genes <- gather_goseq_genes(goseq_result, ontology="MF", pval=pval)
     mf_genes <- as.data.frame(goseq_mf_genes)
     rownames(mf_genes) <- rownames(goseq_mf_genes)
     goseq_mf <- merge(goseq_mf, mf_genes, by="row.names")
@@ -92,9 +92,9 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
     mf_idx <- order(goseq_mf[["qvalue"]])
     goseq_mf <- goseq_mf[mf_idx, ]
 
-    goseq_bp <- goseq[["bp_subset"]]
+    goseq_bp <- goseq_result[["bp_subset"]]
     goseq_bp <- goseq_bp[ goseq_bp[["over_represented_pvalue"]] <= pval, ]
-    goseq_bp_genes <- gather_goseq_genes(goseq, ontology="BP", pval=pval)
+    goseq_bp_genes <- gather_goseq_genes(goseq_result, ontology="BP", pval=pval)
     bp_genes <- as.data.frame(goseq_bp_genes)
     rownames(bp_genes) <- rownames(goseq_bp_genes)
     goseq_bp <- merge(goseq_bp, bp_genes, by="row.names")
@@ -103,9 +103,9 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
     bp_idx <- order(goseq_bp[["qvalue"]])
     goseq_bp <- goseq_bp[bp_idx, ]
 
-    goseq_cc <- goseq[["cc_subset"]]
+    goseq_cc <- goseq_result[["cc_subset"]]
     goseq_cc <- goseq_cc[ goseq_cc[["over_represented_pvalue"]] <= pval, ]
-    goseq_cc_genes <- gather_goseq_genes(goseq, ontology="CC", pval=pval)
+    goseq_cc_genes <- gather_goseq_genes(goseq_result, ontology="CC", pval=pval)
     cc_genes <- as.data.frame(goseq_cc_genes)
     rownames(cc_genes) <- rownames(goseq_cc_genes)
     goseq_cc <- merge(goseq_cc, cc_genes, by="row.names")
@@ -137,7 +137,7 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
     openxlsx::writeDataTable(wb, sheet, x=goseq_bp, tableStyle=table_style, startRow=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
-        a_plot <- goseq[["pvalue_plots"]][["bpp_plot_over"]]
+        a_plot <- goseq_result[["pvalue_plots"]][["bpp_plot_over"]]
         ##tt <- try(print(a_plot), silent=TRUE)
         ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
         ##                     startCol=ncol(goseq_bp) + 2, startRow=new_row,
@@ -164,7 +164,7 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
     new_row <- new_row + 1
     openxlsx::writeDataTable(wb, sheet, x=goseq_mf, tableStyle=table_style, startRow=new_row)
     if (isTRUE(add_plots)) {
-        a_plot <- goseq[["pvalue_plots"]][["mfp_plot_over"]]
+        a_plot <- goseq_result[["pvalue_plots"]][["mfp_plot_over"]]
         ##tt <- try(print(a_plot), silent=TRUE)
         ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
         ##                     startCol=ncol(goseq_mf) + 2, startRow=new_row,
@@ -191,7 +191,7 @@ write_goseq_data <- function(goseq, excel="excel/goseq.xlsx", wb=NULL, add_trees
     new_row <- new_row + 1
     openxlsx::writeDataTable(wb, sheet, x=goseq_cc, tableStyle=table_style, startRow=new_row)
     if (isTRUE(add_plots)) {
-        a_plot <- goseq[["pvalue_plots"]][["ccp_plot_over"]]
+        a_plot <- goseq_result[["pvalue_plots"]][["ccp_plot_over"]]
         ##tt <- try(print(a_plot), silent=TRUE)
         ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
         ##                     startCol=ncol(goseq_cc) + 2, startRow=new_row,
