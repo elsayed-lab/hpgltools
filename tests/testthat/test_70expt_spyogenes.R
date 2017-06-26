@@ -75,7 +75,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual)
     })
 
-    mgas_df <- sm(get_microbesonline_annotation(expected[[1]])[[1]])
+    mgas_df <- sm(load_microbesonline_annotations(expected[[1]])[[1]])
     mgas_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df$sysName)
     rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
 
