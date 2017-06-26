@@ -98,6 +98,11 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
     rownames(biomart_annotations) <- make.names(biomart_annotations[, "transcriptID"], unique=TRUE)
     ## In order for the return from this function to work with other functions in this, the rownames must be set.
 
+    ## Set strand to +/-
+    if (!is.null(biomart_annotations[["strand"]])) {
+        biomart_annotations[["strand"]] <- ifelse(biomart_annotations[["strand"]] == "1", "+", "-")
+    }
+
     if (isTRUE(do_save)) {
         message(paste0("Saving annotations to ", savefile, "."))
         save(list=ls(pattern="biomart_annotations"), file=savefile)

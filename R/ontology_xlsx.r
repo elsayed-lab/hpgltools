@@ -1,3 +1,219 @@
+#' Make a pretty table of clusterprofiler data in excel.
+#'
+#' It is my intention to make a function like this for each ontology tool in my repetoire
+#'
+#' @param cp_result A set of results from simple_clusterprofiler().
+#' @param excel An excel file to which to write some pretty results.
+#' @param wb  Workbook object to write to.
+#' @param add_trees  Include topgoish ontology trees?
+#' @param pval Choose a cutoff for reporting by p-value.
+#' @param add_plots Include some pvalue plots in the excel output?
+#' @param height  Height of included plots.
+#' @param width and their width.
+#' @param ... Extra arguments are passed to arglist.
+#' @return The result from openxlsx in a prettyified xlsx file.
+#' @seealso \pkg{openxlsx} \pkg{goseq}
+#' @export
+write_clusterprofiler_data <- function(cp_result, excel="excel/goseq.xlsx", wb=NULL, add_trees=TRUE,
+                             pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
+    arglist <- list(...)
+    table_style <- "TableStyleMedium9"
+    if (!is.null(arglist[["table_style"]])) {
+        table_style <- arglist[["TableStyleMedium9"]]
+    }
+    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+    excel_dir <- dirname(excel)
+    if (!file.exists(excel_dir)) {
+        dir.create(excel_dir, recursive=TRUE)
+    }
+    if (is.null(wb)) {
+        wb <- openxlsx::createWorkbook(creator="atb")
+        hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold",
+                                     border="Bottom", fontSize="30")
+    }
+    pval_column <- "limma_adjp"
+    if (!is.null(arglist[["pval_column"]])) {
+        pval_column <- arglist[["pval_column"]]
+    }
+
+    if (class(excel) == "character") {
+        message("Writing a sheet containing the legend.")
+        wb <- openxlsx::createWorkbook(creator="hpgltools")
+        legend <- data.frame(rbind(
+            c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
+            c("Category", "Gene ontology Identifier."),
+            c("Term", "Short definition of the category."),
+            c("Over p-value", "Estimate of cp over-representation in the row's ontology category."),
+            c("Q-value", "False discovery rate correction of the p-value."),
+            c("DE genes in cat", "What genes provided are in this specific category?"),
+            c("All genes in cat", "The full set of gene annotations included in this ontology category."),
+            c("Num. de", "The number of genes in column 'F'."),
+            c("Num. in cat", "The number of genes in column 'G'.")
+        ))
+        colnames(legend) <- c("column name", "column definition")
+        xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+                                title="Columns used in the following tables.")
+        summary_row <- nrow(legend) + 5
+        summary_df <- data.frame(rbind(
+            c("Queried BP ontologies", nrow(cp_result[["bp_subset"]])),
+            c("Significant BP ontologies", nrow(cp_result[["bp_interesting"]])),
+            c("Queried MF ontologies", nrow(cp_result[["mf_subset"]])),
+            c("Significant MF ontologies", nrow(cp_result[["mf_interesting"]])),
+            c("Queried CC ontologies", nrow(cp_result[["cc_subset"]])),
+            c("Significant CC ontologies", nrow(cp_result[["cc_interesting"]]))))
+        colnames(summary_df) <- c("Ontology type", "Number found")
+        xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
+                                title="Summary of the cp search.", start_row=1, start_col=4)
+        if (isTRUE(add_plots)) {
+            printme <- "Histogram of observed ontology (adjusted) p-values by cp."
+            xl_result <- openxlsx::writeData(wb, "legend", x=printme,
+                                             startRow=summary_row - 1, startCol=1)
+            plot_try <- xlsx_plot_png(cp_result[["pvalue_histogram"]], wb=wb, sheet="legend",
+                                      start_col=1, start_row=summary_row, plotname="p_histogram",
+                                      savedir=excel_basename)
+        }
+    }  ## End making sure that an excel is desired.
+
+    trees <- NULL
+    if (isTRUE(add_trees)) {
+        trees <- cp_trees(cp_result, pval_column=pval_column)
+    }
+
+    ## Pull out the relevant portions of the cp data
+    ## For this I am using the same (arbitrary) rules as in gather_cp_genes()
+    cp_mf <- cp_result[["mf_subset"]]
+    cp_mf <- cp_mf[ cp_mf[["over_represented_pvalue"]] <= pval, ]
+    cp_mf_genes <- gather_cp_genes(cp_result, ontology="MF", pval=pval)
+    mf_genes <- as.data.frame(cp_mf_genes)
+    rownames(mf_genes) <- rownames(cp_mf_genes)
+    cp_mf <- merge(cp_mf, mf_genes, by="row.names")
+    rownames(cp_mf) <- cp_mf[["Row.names"]]
+    cp_mf <- cp_mf[-1]
+    mf_idx <- order(cp_mf[["qvalue"]])
+    cp_mf <- cp_mf[mf_idx, ]
+
+    cp_bp <- cp_result[["bp_subset"]]
+    cp_bp <- cp_bp[ cp_bp[["over_represented_pvalue"]] <= pval, ]
+    cp_bp_genes <- gather_cp_genes(cp_result, ontology="BP", pval=pval)
+    bp_genes <- as.data.frame(cp_bp_genes)
+    rownames(bp_genes) <- rownames(cp_bp_genes)
+    cp_bp <- merge(cp_bp, bp_genes, by="row.names")
+    rownames(cp_bp) <- cp_bp[["Row.names"]]
+    cp_bp <- cp_bp[-1]
+    bp_idx <- order(cp_bp[["qvalue"]])
+    cp_bp <- cp_bp[bp_idx, ]
+
+    cp_cc <- cp_result[["cc_subset"]]
+    cp_cc <- cp_cc[ cp_cc[["over_represented_pvalue"]] <= pval, ]
+    cp_cc_genes <- gather_cp_genes(cp_result, ontology="CC", pval=pval)
+    cc_genes <- as.data.frame(cp_cc_genes)
+    rownames(cc_genes) <- rownames(cp_cc_genes)
+    cp_cc <- merge(cp_cc, cc_genes, by="row.names")
+    rownames(cp_cc) <- cp_cc[["Row.names"]]
+    cp_cc <- cp_cc[-1]
+    cc_idx <- order(cp_cc[["qvalue"]])
+    cp_cc <- cp_cc[cc_idx, ]
+
+    kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
+                      "qvalue", "sig", "all", "numDEInCat", "numInCat",
+                      "limma_sigfc", "deseq_sigfc", "edger_sigfc")
+    cp_mf <- cp_mf[, kept_columns]
+    cp_bp <- cp_bp[, kept_columns]
+    cp_cc <- cp_cc[, kept_columns]
+    new_columns <- c("Ontology", "Category", "Term", "Over p-value", "Q-value",
+                     "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.",
+                     "FC from limma", "FC from DESeq", "FC from edgeR")
+    colnames(cp_mf) <- new_columns
+    colnames(cp_bp) <- new_columns
+    colnames(cp_cc) <- new_columns
+
+    new_row <- 1
+    message("Writing the BP data.")
+    sheet <- "BP"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "BP Results from cp.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=cp_bp, tableStyle=table_style, startRow=new_row)
+    ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+    if (isTRUE(add_plots)) {
+        a_plot <- cp_result[["pvalue_plots"]][["bpp_plot_over"]]
+        ##tt <- try(print(a_plot), silent=TRUE)
+        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
+        ##                     startCol=ncol(cp_bp) + 2, startRow=new_row,
+        ##                     fileType="png", units="in")
+        plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
+                                  start_col=ncol(cp_bp) + 2, start_row=new_row,
+                                  plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["BP_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["BP_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(cp_bp) + 2, start_row=80, res=210,
+                                      plotname="bp_trees", savedir=excel_basename)
+        }
+    }
+    new_row <- new_row + nrow(cp_bp) + 2
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+    openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
+
+    new_row <- 1
+    message("Writing the MF data.")
+    sheet <- "MF"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "MF Results from cp.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=cp_mf, tableStyle=table_style, startRow=new_row)
+    if (isTRUE(add_plots)) {
+        a_plot <- cp_result[["pvalue_plots"]][["mfp_plot_over"]]
+        ##tt <- try(print(a_plot), silent=TRUE)
+        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
+        ##                     startCol=ncol(cp_mf) + 2, startRow=new_row,
+        ##                     fileType="png", units="in")
+        plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
+                                  start_col=ncol(cp_mf) + 2, start_row=new_row,
+                                  plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["MF_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["MF_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(cp_bp) + 2, start_row=80, res=210,
+                                      plotname="mf_trees", savedir=excel_basename)
+        }
+    }
+    new_row <- new_row + nrow(cp_mf) + 2
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+    openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
+
+    new_row <- 1
+    message("Writing the CC data.")
+    sheet <- "CC"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "CC Results from cp.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=cp_cc, tableStyle=table_style, startRow=new_row)
+    if (isTRUE(add_plots)) {
+        a_plot <- cp_result[["pvalue_plots"]][["ccp_plot_over"]]
+        ##tt <- try(print(a_plot), silent=TRUE)
+        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
+        ##                     startCol=ncol(cp_cc) + 2, startRow=new_row,
+        ##                     fileType="png", units="in")
+        plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
+                                  start_col=ncol(cp_cc) + 2, start_row=new_row,
+                                  plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["CC_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["CC_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(cp_bp) + 2, start_row=80, res=210,
+                                      plotname="cc_trees", savedir=excel_basename)
+        }
+    }
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+    openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
+    new_row <- new_row + nrow(cp_cc) + 2
+
+    res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
+    message("Finished writing excel file.")
+    return(res)
+}
+
 #' Make a pretty table of goseq data in excel.
 #'
 #' It is my intention to make a function like this for each ontology tool in my repetoire
@@ -208,6 +424,222 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
     openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
     new_row <- new_row + nrow(goseq_cc) + 2
+
+    res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
+    message("Finished writing excel file.")
+    return(res)
+}
+
+#' Make a pretty table of gostats data in excel.
+#'
+#' It is my intention to make a function like this for each ontology tool in my repetoire
+#'
+#' @param gostats A set of results from simple_gostats().
+#' @param excel An excel file to which to write some pretty results.
+#' @param wb  Workbook object to write to.
+#' @param add_trees  Include topgoish ontology trees?
+#' @param pval Choose a cutoff for reporting by p-value.
+#' @param add_plots Include some pvalue plots in the excel output?
+#' @param height  Height of included plots.
+#' @param width and their width.
+#' @param ... Extra arguments are passed to arglist.
+#' @return The result from openxlsx in a prettyified xlsx file.
+#' @seealso \pkg{openxlsx} \pkg{gostats}
+#' @export
+write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NULL, add_trees=TRUE,
+                             pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
+    arglist <- list(...)
+    table_style <- "TableStyleMedium9"
+    if (!is.null(arglist[["table_style"]])) {
+        table_style <- arglist[["TableStyleMedium9"]]
+    }
+    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+    excel_dir <- dirname(excel)
+    if (!file.exists(excel_dir)) {
+        dir.create(excel_dir, recursive=TRUE)
+    }
+    if (is.null(wb)) {
+        wb <- openxlsx::createWorkbook(creator="atb")
+        hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold",
+                                     border="Bottom", fontSize="30")
+    }
+    pval_column <- "limma_adjp"
+    if (!is.null(arglist[["pval_column"]])) {
+        pval_column <- arglist[["pval_column"]]
+    }
+
+    if (class(excel) == "character") {
+        message("Writing a sheet containing the legend.")
+        wb <- openxlsx::createWorkbook(creator="hpgltools")
+        legend <- data.frame(rbind(
+            c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
+            c("Category", "Gene ontology Identifier."),
+            c("Term", "Short definition of the category."),
+            c("Over p-value", "Estimate of gostats over-representation in the row's ontology category."),
+            c("Q-value", "False discovery rate correction of the p-value."),
+            c("DE genes in cat", "What genes provided are in this specific category?"),
+            c("All genes in cat", "The full set of gene annotations included in this ontology category."),
+            c("Num. de", "The number of genes in column 'F'."),
+            c("Num. in cat", "The number of genes in column 'G'.")
+        ))
+        colnames(legend) <- c("column name", "column definition")
+        xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+                                title="Columns used in the following tables.")
+        summary_row <- nrow(legend) + 5
+        summary_df <- data.frame(rbind(
+            c("Queried BP ontologies", nrow(gostats_result[["bp_subset"]])),
+            c("Significant BP ontologies", nrow(gostats_result[["bp_interesting"]])),
+            c("Queried MF ontologies", nrow(gostats_result[["mf_subset"]])),
+            c("Significant MF ontologies", nrow(gostats_result[["mf_interesting"]])),
+            c("Queried CC ontologies", nrow(gostats_result[["cc_subset"]])),
+            c("Significant CC ontologies", nrow(gostats_result[["cc_interesting"]]))))
+        colnames(summary_df) <- c("Ontology type", "Number found")
+        xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
+                                title="Summary of the gostats search.", start_row=1, start_col=4)
+        if (isTRUE(add_plots)) {
+            printme <- "Histogram of observed ontology (adjusted) p-values by gostats."
+            xl_result <- openxlsx::writeData(wb, "legend", x=printme,
+                                             startRow=summary_row - 1, startCol=1)
+            plot_try <- xlsx_plot_png(gostats_result[["pvalue_histogram"]], wb=wb, sheet="legend",
+                                      start_col=1, start_row=summary_row, plotname="p_histogram",
+                                      savedir=excel_basename)
+        }
+    }  ## End making sure that an excel is desired.
+
+    trees <- NULL
+    if (isTRUE(add_trees)) {
+        trees <- gostats_trees(gostats_result, pval_column=pval_column)
+    }
+
+    ## Pull out the relevant portions of the gostats data
+    ## For this I am using the same (arbitrary) rules as in gather_gostats_genes()
+    gostats_mf <- gostats_result[["mf_subset"]]
+    gostats_mf <- gostats_mf[ gostats_mf[["over_represented_pvalue"]] <= pval, ]
+    gostats_mf_genes <- gather_gostats_genes(gostats_result, ontology="MF", pval=pval)
+    mf_genes <- as.data.frame(gostats_mf_genes)
+    rownames(mf_genes) <- rownames(gostats_mf_genes)
+    gostats_mf <- merge(gostats_mf, mf_genes, by="row.names")
+    rownames(gostats_mf) <- gostats_mf[["Row.names"]]
+    gostats_mf <- gostats_mf[-1]
+    mf_idx <- order(gostats_mf[["qvalue"]])
+    gostats_mf <- gostats_mf[mf_idx, ]
+
+    gostats_bp <- gostats_result[["bp_subset"]]
+    gostats_bp <- gostats_bp[ gostats_bp[["over_represented_pvalue"]] <= pval, ]
+    gostats_bp_genes <- gather_gostats_genes(gostats_result, ontology="BP", pval=pval)
+    bp_genes <- as.data.frame(gostats_bp_genes)
+    rownames(bp_genes) <- rownames(gostats_bp_genes)
+    gostats_bp <- merge(gostats_bp, bp_genes, by="row.names")
+    rownames(gostats_bp) <- gostats_bp[["Row.names"]]
+    gostats_bp <- gostats_bp[-1]
+    bp_idx <- order(gostats_bp[["qvalue"]])
+    gostats_bp <- gostats_bp[bp_idx, ]
+
+    gostats_cc <- gostats_result[["cc_subset"]]
+    gostats_cc <- gostats_cc[ gostats_cc[["over_represented_pvalue"]] <= pval, ]
+    gostats_cc_genes <- gather_gostats_genes(gostats_result, ontology="CC", pval=pval)
+    cc_genes <- as.data.frame(gostats_cc_genes)
+    rownames(cc_genes) <- rownames(gostats_cc_genes)
+    gostats_cc <- merge(gostats_cc, cc_genes, by="row.names")
+    rownames(gostats_cc) <- gostats_cc[["Row.names"]]
+    gostats_cc <- gostats_cc[-1]
+    cc_idx <- order(gostats_cc[["qvalue"]])
+    gostats_cc <- gostats_cc[cc_idx, ]
+
+    kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
+                      "qvalue", "sig", "all", "numDEInCat", "numInCat",
+                      "limma_sigfc", "deseq_sigfc", "edger_sigfc")
+    gostats_mf <- gostats_mf[, kept_columns]
+    gostats_bp <- gostats_bp[, kept_columns]
+    gostats_cc <- gostats_cc[, kept_columns]
+    new_columns <- c("Ontology", "Category", "Term", "Over p-value", "Q-value",
+                     "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.",
+                     "FC from limma", "FC from DESeq", "FC from edgeR")
+    colnames(gostats_mf) <- new_columns
+    colnames(gostats_bp) <- new_columns
+    colnames(gostats_cc) <- new_columns
+
+    new_row <- 1
+    message("Writing the BP data.")
+    sheet <- "BP"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "BP Results from gostats.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=gostats_bp, tableStyle=table_style, startRow=new_row)
+    ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+    if (isTRUE(add_plots)) {
+        a_plot <- gostats_result[["pvalue_plots"]][["bpp_plot_over"]]
+        ##tt <- try(print(a_plot), silent=TRUE)
+        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
+        ##                     startCol=ncol(gostats_bp) + 2, startRow=new_row,
+        ##                     fileType="png", units="in")
+        plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
+                                  start_col=ncol(gostats_bp) + 2, start_row=new_row,
+                                  plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["BP_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["BP_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(gostats_bp) + 2, start_row=80, res=210,
+                                      plotname="bp_trees", savedir=excel_basename)
+        }
+    }
+    new_row <- new_row + nrow(gostats_bp) + 2
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+    openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
+
+    new_row <- 1
+    message("Writing the MF data.")
+    sheet <- "MF"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "MF Results from gostats.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=gostats_mf, tableStyle=table_style, startRow=new_row)
+    if (isTRUE(add_plots)) {
+        a_plot <- gostats_result[["pvalue_plots"]][["mfp_plot_over"]]
+        ##tt <- try(print(a_plot), silent=TRUE)
+        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
+        ##                     startCol=ncol(gostats_mf) + 2, startRow=new_row,
+        ##                     fileType="png", units="in")
+        plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
+                                  start_col=ncol(gostats_mf) + 2, start_row=new_row,
+                                  plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["MF_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["MF_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(gostats_bp) + 2, start_row=80, res=210,
+                                      plotname="mf_trees", savedir=excel_basename)
+        }
+    }
+    new_row <- new_row + nrow(gostats_mf) + 2
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+    openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
+
+    new_row <- 1
+    message("Writing the CC data.")
+    sheet <- "CC"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "CC Results from gostats.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=gostats_cc, tableStyle=table_style, startRow=new_row)
+    if (isTRUE(add_plots)) {
+        a_plot <- gostats_result[["pvalue_plots"]][["ccp_plot_over"]]
+        ##tt <- try(print(a_plot), silent=TRUE)
+        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
+        ##                     startCol=ncol(gostats_cc) + 2, startRow=new_row,
+        ##                     fileType="png", units="in")
+        plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
+                                  start_col=ncol(gostats_cc) + 2, start_row=new_row,
+                                  plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["CC_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["CC_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(gostats_bp) + 2, start_row=80, res=210,
+                                      plotname="cc_trees", savedir=excel_basename)
+        }
+    }
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+    openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
+    new_row <- new_row + nrow(gostats_cc) + 2
 
     res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     message("Finished writing excel file.")
@@ -550,6 +982,222 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     }
     message("Finished writing excel file.")
     return(excel_ret)
+}
+
+#' Make a pretty table of topgo data in excel.
+#'
+#' It is my intention to make a function like this for each ontology tool in my repetoire
+#'
+#' @param topgo A set of results from simple_topgo().
+#' @param excel An excel file to which to write some pretty results.
+#' @param wb  Workbook object to write to.
+#' @param add_trees  Include topgoish ontology trees?
+#' @param pval Choose a cutoff for reporting by p-value.
+#' @param add_plots Include some pvalue plots in the excel output?
+#' @param height  Height of included plots.
+#' @param width and their width.
+#' @param ... Extra arguments are passed to arglist.
+#' @return The result from openxlsx in a prettyified xlsx file.
+#' @seealso \pkg{openxlsx} \pkg{topgo}
+#' @export
+write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, add_trees=TRUE,
+                             pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
+    arglist <- list(...)
+    table_style <- "TableStyleMedium9"
+    if (!is.null(arglist[["table_style"]])) {
+        table_style <- arglist[["TableStyleMedium9"]]
+    }
+    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+    excel_dir <- dirname(excel)
+    if (!file.exists(excel_dir)) {
+        dir.create(excel_dir, recursive=TRUE)
+    }
+    if (is.null(wb)) {
+        wb <- openxlsx::createWorkbook(creator="atb")
+        hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold",
+                                     border="Bottom", fontSize="30")
+    }
+    pval_column <- "limma_adjp"
+    if (!is.null(arglist[["pval_column"]])) {
+        pval_column <- arglist[["pval_column"]]
+    }
+
+    if (class(excel) == "character") {
+        message("Writing a sheet containing the legend.")
+        wb <- openxlsx::createWorkbook(creator="hpgltools")
+        legend <- data.frame(rbind(
+            c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
+            c("Category", "Gene ontology Identifier."),
+            c("Term", "Short definition of the category."),
+            c("Over p-value", "Estimate of topgo over-representation in the row's ontology category."),
+            c("Q-value", "False discovery rate correction of the p-value."),
+            c("DE genes in cat", "What genes provided are in this specific category?"),
+            c("All genes in cat", "The full set of gene annotations included in this ontology category."),
+            c("Num. de", "The number of genes in column 'F'."),
+            c("Num. in cat", "The number of genes in column 'G'.")
+        ))
+        colnames(legend) <- c("column name", "column definition")
+        xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+                                title="Columns used in the following tables.")
+        summary_row <- nrow(legend) + 5
+        summary_df <- data.frame(rbind(
+            c("Queried BP ontologies", nrow(topgo_result[["bp_subset"]])),
+            c("Significant BP ontologies", nrow(topgo_result[["bp_interesting"]])),
+            c("Queried MF ontologies", nrow(topgo_result[["mf_subset"]])),
+            c("Significant MF ontologies", nrow(topgo_result[["mf_interesting"]])),
+            c("Queried CC ontologies", nrow(topgo_result[["cc_subset"]])),
+            c("Significant CC ontologies", nrow(topgo_result[["cc_interesting"]]))))
+        colnames(summary_df) <- c("Ontology type", "Number found")
+        xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
+                                title="Summary of the topgo search.", start_row=1, start_col=4)
+        if (isTRUE(add_plots)) {
+            printme <- "Histogram of observed ontology (adjusted) p-values by topgo."
+            xl_result <- openxlsx::writeData(wb, "legend", x=printme,
+                                             startRow=summary_row - 1, startCol=1)
+            plot_try <- xlsx_plot_png(topgo_result[["pvalue_histogram"]], wb=wb, sheet="legend",
+                                      start_col=1, start_row=summary_row, plotname="p_histogram",
+                                      savedir=excel_basename)
+        }
+    }  ## End making sure that an excel is desired.
+
+    trees <- NULL
+    if (isTRUE(add_trees)) {
+        trees <- topgo_trees(topgo_result, pval_column=pval_column)
+    }
+
+    ## Pull out the relevant portions of the topgo data
+    ## For this I am using the same (arbitrary) rules as in gather_topgo_genes()
+    topgo_mf <- topgo_result[["mf_subset"]]
+    topgo_mf <- topgo_mf[ topgo_mf[["over_represented_pvalue"]] <= pval, ]
+    topgo_mf_genes <- gather_topgo_genes(topgo_result, ontology="MF", pval=pval)
+    mf_genes <- as.data.frame(topgo_mf_genes)
+    rownames(mf_genes) <- rownames(topgo_mf_genes)
+    topgo_mf <- merge(topgo_mf, mf_genes, by="row.names")
+    rownames(topgo_mf) <- topgo_mf[["Row.names"]]
+    topgo_mf <- topgo_mf[-1]
+    mf_idx <- order(topgo_mf[["qvalue"]])
+    topgo_mf <- topgo_mf[mf_idx, ]
+
+    topgo_bp <- topgo_result[["bp_subset"]]
+    topgo_bp <- topgo_bp[ topgo_bp[["over_represented_pvalue"]] <= pval, ]
+    topgo_bp_genes <- gather_topgo_genes(topgo_result, ontology="BP", pval=pval)
+    bp_genes <- as.data.frame(topgo_bp_genes)
+    rownames(bp_genes) <- rownames(topgo_bp_genes)
+    topgo_bp <- merge(topgo_bp, bp_genes, by="row.names")
+    rownames(topgo_bp) <- topgo_bp[["Row.names"]]
+    topgo_bp <- topgo_bp[-1]
+    bp_idx <- order(topgo_bp[["qvalue"]])
+    topgo_bp <- topgo_bp[bp_idx, ]
+
+    topgo_cc <- topgo_result[["cc_subset"]]
+    topgo_cc <- topgo_cc[ topgo_cc[["over_represented_pvalue"]] <= pval, ]
+    topgo_cc_genes <- gather_topgo_genes(topgo_result, ontology="CC", pval=pval)
+    cc_genes <- as.data.frame(topgo_cc_genes)
+    rownames(cc_genes) <- rownames(topgo_cc_genes)
+    topgo_cc <- merge(topgo_cc, cc_genes, by="row.names")
+    rownames(topgo_cc) <- topgo_cc[["Row.names"]]
+    topgo_cc <- topgo_cc[-1]
+    cc_idx <- order(topgo_cc[["qvalue"]])
+    topgo_cc <- topgo_cc[cc_idx, ]
+
+    kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
+                      "qvalue", "sig", "all", "numDEInCat", "numInCat",
+                      "limma_sigfc", "deseq_sigfc", "edger_sigfc")
+    topgo_mf <- topgo_mf[, kept_columns]
+    topgo_bp <- topgo_bp[, kept_columns]
+    topgo_cc <- topgo_cc[, kept_columns]
+    new_columns <- c("Ontology", "Category", "Term", "Over p-value", "Q-value",
+                     "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.",
+                     "FC from limma", "FC from DESeq", "FC from edgeR")
+    colnames(topgo_mf) <- new_columns
+    colnames(topgo_bp) <- new_columns
+    colnames(topgo_cc) <- new_columns
+
+    new_row <- 1
+    message("Writing the BP data.")
+    sheet <- "BP"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "BP Results from topgo.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=topgo_bp, tableStyle=table_style, startRow=new_row)
+    ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+    if (isTRUE(add_plots)) {
+        a_plot <- topgo_result[["pvalue_plots"]][["bpp_plot_over"]]
+        ##tt <- try(print(a_plot), silent=TRUE)
+        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
+        ##                     startCol=ncol(topgo_bp) + 2, startRow=new_row,
+        ##                     fileType="png", units="in")
+        plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
+                                  start_col=ncol(topgo_bp) + 2, start_row=new_row,
+                                  plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["BP_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["BP_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(topgo_bp) + 2, start_row=80, res=210,
+                                      plotname="bp_trees", savedir=excel_basename)
+        }
+    }
+    new_row <- new_row + nrow(topgo_bp) + 2
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+    openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
+
+    new_row <- 1
+    message("Writing the MF data.")
+    sheet <- "MF"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "MF Results from topgo.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=topgo_mf, tableStyle=table_style, startRow=new_row)
+    if (isTRUE(add_plots)) {
+        a_plot <- topgo_result[["pvalue_plots"]][["mfp_plot_over"]]
+        ##tt <- try(print(a_plot), silent=TRUE)
+        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
+        ##                     startCol=ncol(topgo_mf) + 2, startRow=new_row,
+        ##                     fileType="png", units="in")
+        plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
+                                  start_col=ncol(topgo_mf) + 2, start_row=new_row,
+                                  plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["MF_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["MF_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(topgo_bp) + 2, start_row=80, res=210,
+                                      plotname="mf_trees", savedir=excel_basename)
+        }
+    }
+    new_row <- new_row + nrow(topgo_mf) + 2
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+    openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
+
+    new_row <- 1
+    message("Writing the CC data.")
+    sheet <- "CC"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "CC Results from topgo.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=topgo_cc, tableStyle=table_style, startRow=new_row)
+    if (isTRUE(add_plots)) {
+        a_plot <- topgo_result[["pvalue_plots"]][["ccp_plot_over"]]
+        ##tt <- try(print(a_plot), silent=TRUE)
+        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
+        ##                     startCol=ncol(topgo_cc) + 2, startRow=new_row,
+        ##                     fileType="png", units="in")
+        plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
+                                  start_col=ncol(topgo_cc) + 2, start_row=new_row,
+                                  plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
+        if (!is.null(trees[["CC_over"]])) {
+            plot_try <- xlsx_plot_png(trees[["CC_over"]], wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(topgo_bp) + 2, start_row=80, res=210,
+                                      plotname="cc_trees", savedir=excel_basename)
+        }
+    }
+    openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
+    openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
+    new_row <- new_row + nrow(topgo_cc) + 2
+
+    res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
+    message("Finished writing excel file.")
+    return(res)
 }
 
 #'   Write gene ontology tables for data subsets

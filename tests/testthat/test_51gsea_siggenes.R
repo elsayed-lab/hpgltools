@@ -4,9 +4,9 @@ library(hpgltools)
 context("51gsea_siggenes.R: Do we get consistent sets of 'significant' genes for GSEA analyses?\n")
 
 ## Use biomart's result to get the gene lengths etc.
-dmel_annotations <- sm(get_biomart_annotations(species="dmelanogaster"))
+dmel_annotations <- sm(load_biomart_annotations(species="dmelanogaster"))
 ## And ontology cateogies.
-dmel_ontologies <- sm(get_biomart_ontologies(species="dmelanogaster"))
+dmel_ontologies <- sm(load_biomart_go(species="dmelanogaster"))
 ## Get the annotations ready to be recast as a gff file.
 dmel_annotations$strand <- ifelse(dmel_annotations$strand == "1", "+", "-")
 ## Then make them into a granges object
