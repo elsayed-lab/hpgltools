@@ -41,14 +41,19 @@ sig_up <- sm(get_sig_genes(all_genes, z=2)$up_genes)
 all_ids <- paste0("Dmel_", all_genes[["flybasecg"]])
 sig_ids <- paste0("Dmel_", sig_up[["flybasecg"]])
 
+## When using the web site, it goes to:
+## However, KEGGgraph goes to http://www.genome.jp ...
+
 ## Note, I split the result of this into percent_nodes and percent_edges
+## Looks like some KEGG functionality has died, www.genome.jp/kegg-bin/download no longer returns anything...
+## So I hacked my own retrieveKGML which adds a referer to get around this problem.
 pct_citrate <- sm(pct_kegg_diff(all_ids, sig_ids, organism="dme", pathway="00500"))
 expected <- 6.1
 actual <- pct_citrate$percent_nodes
 test_that("Can we extract the percent differentially expressed genes in one pathway?", {
     expect_equal(expected, actual, tolerance=0.1)
 })
-
+##
 pathways <- c("00010", "00020", "00030", "00040","nonexistent", "00051")
 all_percentages <- sm(pct_all_kegg(all_ids, sig_ids, pathways=pathways, organism="dme"))
 expected <- c(3.704, 4.651, 4.167, 5.769, NA, 3.448)

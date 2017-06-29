@@ -580,11 +580,15 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
         message("The file already exists, loading from it.")
         retrieved <- filename
     } else {
-        retrieved <- try(sm(KEGGgraph::retrieveKGML(pathwayid=pathway,
-                                                    organism=organism,
-                                                    destfile=filename,
-                                                    method="internal",
-                                                    quiet=TRUE)), silent=TRUE)
+        ##        retrieved <- try(sm(KEGGgraph::retrieveKGML(pathwayid=pathway,
+        ##                                                    organism=organism,
+        ##                                                    destfile=filename,
+        ##                                                    method="internal",
+        ##                                                    quiet=TRUE)), silent=TRUE)
+        ##retrieved <- try(KEGGgraph::retrieveKGML(pathwayid=pathway, organism=organism,
+        ## destfile=filename))
+        retrieved <- try(myretrieveKGML(pathwayid=pathway, organism=organism,
+                                        destfile=filename, quiet=TRUE))
         if (class(retrieved) == "try-error") {
             retlist <- list(
                 "pathway" = pathway,
@@ -603,11 +607,14 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
         if (grepl(pattern="Document is empty", x=parse_result[[1]])) {
             message("Deleting the empty file and trying again.")
             file.remove(filename)
-            retrieved <- try(sm(KEGGgraph::retrieveKGML(pathwayid=pathway,
-                                                        organism=organism,
-                                                        destfile=filename,
-                                                        method="internal",
-                                                        quiet=TRUE)))
+            ##retrieved <- try(sm(KEGGgraph::retrieveKGML(pathwayid=pathway,
+            ##                                            organism=organism,
+            ##                                            destfile=filename,
+            ##                                            method="internal",
+            ##                                            quiet=TRUE)))
+            retrieved <- try(myretrieveKGML(pathwayid=pathway, organism=organism,
+                                            destfile=filename,
+                                            quiet=TRUE))
             parse_result <- try(KEGGgraph::parseKGML2Graph(filename, expandGenes=TRUE))
             if (class(parse_result) == "try-error") {
                 retlist <- list(
@@ -666,6 +673,52 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
         "diff_edges" = toString(found_edges)
     )
     return(retlist)
+}
+
+#' A couple functions from KEGGgraph that have broken
+#' @export
+myretrieveKGML <- function(pathwayid, organism, destfile, method = "wget",
+                           hostname="http://www.kegg.jp", ...) {
+    kgml <- mygetKGMLurl(pathwayid=pathwayid, organism=organism, hostname=hostname)
+    referer <- paste0(hostname, "/kegg-bin/show_pathway?org_name=", organism, "&mapno=", pathwayid, "&mapscale=&show_description=hide")
+    message(kgml)
+    message(referer)
+    cmdline <- paste0('wget --header=',
+                      shQuote("Accept: text/html"),
+                      ' --user-agent=',
+                      shQuote("Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0"),
+                      ' --referer=',
+                      shQuote(referer),
+                      ' ', shQuote(kgml),
+                      ' -O ', shQuote(destfile))
+    status <- system(cmdline)
+    return(invisible(kgml))
+}
+
+mygetKGMLurl <- function (pathwayid, organism="hsa", hostname="http://www.kegg.jp", ...) {
+    arglist <- list(...)
+    if (!is.null(arglist[["hostname"]])) {
+        hostname <- arglist[["hostname"]]
+    }
+    baseurl <- paste0(hostname, "/kegg-bin/download?entry=%s%s&format=kgml")
+    pathwayid <- gsub("path", "", pathwayid)
+    pathwayid <- gsub(":", "", pathwayid)
+    pco <- grepl("^[a-z][a-z][a-z]", pathwayid)
+    org.len <- length(organism)
+    if (org.len == 1 & length(pathwayid) != 1) {
+        organisms <- rep(organism, length(pathwayid))
+        organisms[pco] <- sapply(pathwayid[pco],
+                                 function(x) substr(x, 1L, 3L))
+    } else if (org.len == length(pathwayid)) {
+        organisms <- organism
+    } else {
+        stop("The length of 'organism' must be either one or the length of 'pathwayid'\n")
+    }
+    ids <- pathwayid
+    ids[pco] <- sapply(pathwayid[pco],
+                       function(x) substr(x, 4L, nchar(x)))
+    urls <- sprintf(baseurl, organisms, ids)
+    return(urls)
 }
 
 ## EOF

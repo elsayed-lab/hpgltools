@@ -26,7 +26,7 @@
 #' @export
 simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second_merge_try="locus_tag",
                            species="fun", pcutoff=0.10, direction="over", conditional=FALSE,
-                           categorysize=NULL, gff_type="cds", ...) {
+                           categorysize=NULL, gff_type="cds", excel=NULL, ...) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames
     ## and because it (should) contain every gene in the 'universe' used by GOstats, as much it
     ## ought to be pretty much perfect.
@@ -333,6 +333,11 @@ perhaps change gff_type to make the merge work.")
 
     pvalue_plots <- try(plot_gostats_pval(ret_list))
     ret_list[["pvalue_plots"]] <- pvalue_plots
+
+    if (!is.null(excel)) {
+        message(paste0("Writing data to: ", excel, "."))
+        excel_ret <- sm(write_gostats_data(ret_list, excel=excel))
+    }
     return(ret_list)
 }
 

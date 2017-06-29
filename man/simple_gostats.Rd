@@ -8,7 +8,7 @@ goseq, and topGO.}
 simple_gostats(sig_genes, gff, goids_df, universe_merge = "id",
   second_merge_try = "locus_tag", species = "fun", pcutoff = 0.1,
   direction = "over", conditional = FALSE, categorysize = NULL,
-  gff_type = "cds", ...)
+  gff_type = "cds", excel = NULL, ...)
 }
 \arguments{
 \item{sig_genes}{Input list of differentially expressed genes.}

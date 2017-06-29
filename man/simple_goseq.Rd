@@ -8,7 +8,7 @@ simple_goseq(sig_genes, go_db = NULL, length_db = NULL, doplot = TRUE,
   adjust = 0.1, pvalue = 0.1, qvalue = 0.1,
   length_keytype = "transcripts", go_keytype = "ENTREZID",
   goseq_method = "Wallenius", padjust_method = "BH",
-  bioc_length_db = "ensGene", ...)
+  bioc_length_db = "ensGene", excel = NULL, ...)
 }
 \arguments{
 \item{sig_genes}{Data frame of differentially expressed genes, containing IDs etc.}

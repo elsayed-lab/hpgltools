@@ -103,7 +103,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1,
                          length_keytype="transcripts", go_keytype="ENTREZID",
                          goseq_method="Wallenius", padjust_method="BH",
-                         bioc_length_db="ensGene",
+                         bioc_length_db="ensGene", excel=NULL,
                          ...) {
     arglist <- list(...)
 
@@ -334,6 +334,10 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
                         "bp_subset" = bp_subset,
                         "cc_subset" = cc_subset,
                         "qdata" = qdata)
+    if (!is.null(excel)) {
+        message(paste0("Writing data to: ", excel, "."))
+        excel_ret <- sm(write_goseq_data(return_list, excel=excel))
+    }
     return(return_list)
 }
 

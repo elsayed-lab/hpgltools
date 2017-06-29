@@ -356,7 +356,7 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #'  saveme()
 #' }
 #' @export
-saveme <- function(directory="savefiles", backups=4, filename="Rdata.rda.xz") {
+saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda.xz") {
     environment()
     if (!file.exists(directory)) {
         dir.create(directory)
@@ -365,7 +365,7 @@ saveme <- function(directory="savefiles", backups=4, filename="Rdata.rda.xz") {
     message(paste0("The savefile is: ", savefile))
     backup_file(savefile, backups=backups)
     ## The following save strings work:
-    save_string <- paste0("con <- pipe(paste0('pxz -T4 > ",
+    save_string <- paste0("con <- pipe(paste0('pxz -T", cpus, " > ",
                           savefile,
                           "'), 'wb');\n",
                           "save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n",

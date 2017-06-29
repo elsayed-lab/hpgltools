@@ -187,6 +187,9 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
                           plotname="plot", savedir="saved_plots", fancy_type="pdf",
                           start_row=1, start_col=1, file_type="png", units="in", ...) {
     arglist <- list(...)
+    if (is.null(a_plot)) {
+        return(NULL)
+    }
     if (!is.null(arglist[["doWeights"]])) {
         requireNamespace(package="Vennerable")
         library("Vennerable")

@@ -1,3 +1,16 @@
+gather_cp_genes <- function(table, mappings, new="ORF") {
+    strings <- table[["geneID"]]
+    separate <- strsplit(x=strings, split="/")
+    rownames(mappings) <- make.names(mappings[["ENTREZID"]], unique=TRUE)
+
+    ## Taken from https://stackoverflow.com/questions/23420331/replacing-elements-in-a-list-of-lists
+    a <- as.relistable(separate)
+    u <- paste0("X", unlist(a))
+    u <- mappings[u, new]
+    mapped <- relist(u, a)
+    return(mapped)
+}
+
 #' Make a pretty table of clusterprofiler data in excel.
 #'
 #' It is my intention to make a function like this for each ontology tool in my repetoire
@@ -14,7 +27,7 @@
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{goseq}
 #' @export
-write_clusterprofiler_data <- function(cp_result, excel="excel/goseq.xlsx", wb=NULL, add_trees=TRUE,
+write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL, add_trees=TRUE,
                              pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
@@ -55,74 +68,50 @@ write_clusterprofiler_data <- function(cp_result, excel="excel/goseq.xlsx", wb=N
                                 title="Columns used in the following tables.")
         summary_row <- nrow(legend) + 5
         summary_df <- data.frame(rbind(
-            c("Queried BP ontologies", nrow(cp_result[["bp_subset"]])),
-            c("Significant BP ontologies", nrow(cp_result[["bp_interesting"]])),
-            c("Queried MF ontologies", nrow(cp_result[["mf_subset"]])),
-            c("Significant MF ontologies", nrow(cp_result[["mf_interesting"]])),
-            c("Queried CC ontologies", nrow(cp_result[["cc_subset"]])),
-            c("Significant CC ontologies", nrow(cp_result[["cc_interesting"]]))))
+            c("Queried BP ontologies", nrow(cp_result[["enrich_go"]][["BP_all"]])),
+            c("Significant BP ontologies", nrow(cp_result[["enrich_go"]][["BP_sig"]])),
+            c("Queried MF ontologies", nrow(cp_result[["enrich_go"]][["MF_all"]])),
+            c("Significant MF ontologies", nrow(cp_result[["enrich_go"]][["MF_sig"]])),
+            c("Queried CC ontologies", nrow(cp_result[["enrich_go"]][["CC_all"]])),
+            c("Significant CC ontologies", nrow(cp_result[["enrich_go"]][["CC_sig"]]))))
         colnames(summary_df) <- c("Ontology type", "Number found")
         xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
                                 title="Summary of the cp search.", start_row=1, start_col=4)
-        if (isTRUE(add_plots)) {
-            printme <- "Histogram of observed ontology (adjusted) p-values by cp."
-            xl_result <- openxlsx::writeData(wb, "legend", x=printme,
-                                             startRow=summary_row - 1, startCol=1)
-            plot_try <- xlsx_plot_png(cp_result[["pvalue_histogram"]], wb=wb, sheet="legend",
-                                      start_col=1, start_row=summary_row, plotname="p_histogram",
-                                      savedir=excel_basename)
-        }
     }  ## End making sure that an excel is desired.
-
-    trees <- NULL
-    if (isTRUE(add_trees)) {
-        trees <- cp_trees(cp_result, pval_column=pval_column)
-    }
 
     ## Pull out the relevant portions of the cp data
     ## For this I am using the same (arbitrary) rules as in gather_cp_genes()
-    cp_mf <- cp_result[["mf_subset"]]
-    cp_mf <- cp_mf[ cp_mf[["over_represented_pvalue"]] <= pval, ]
-    cp_mf_genes <- gather_cp_genes(cp_result, ontology="MF", pval=pval)
-    mf_genes <- as.data.frame(cp_mf_genes)
-    rownames(mf_genes) <- rownames(cp_mf_genes)
-    cp_mf <- merge(cp_mf, mf_genes, by="row.names")
-    rownames(cp_mf) <- cp_mf[["Row.names"]]
-    cp_mf <- cp_mf[-1]
+    cp_mf <- cp_result[["enrich_go"]][["MF_sig"]]
+    cp_mf <- cp_mf[ cp_mf[["pvalue"]] <= pval, ]
+    cp_mf_genes <- gather_cp_genes(cp_result[["enrich_go"]][["MF_sig"]], cp_result[["all_mappings"]])
+    cp_mf[["named_genes"]] <- cp_mf_genes
     mf_idx <- order(cp_mf[["qvalue"]])
     cp_mf <- cp_mf[mf_idx, ]
+    cp_mf[["Ontology"]] <- "MF"
 
-    cp_bp <- cp_result[["bp_subset"]]
-    cp_bp <- cp_bp[ cp_bp[["over_represented_pvalue"]] <= pval, ]
-    cp_bp_genes <- gather_cp_genes(cp_result, ontology="BP", pval=pval)
-    bp_genes <- as.data.frame(cp_bp_genes)
-    rownames(bp_genes) <- rownames(cp_bp_genes)
-    cp_bp <- merge(cp_bp, bp_genes, by="row.names")
-    rownames(cp_bp) <- cp_bp[["Row.names"]]
-    cp_bp <- cp_bp[-1]
+    cp_bp <- cp_result[["enrich_go"]][["BP_sig"]]
+    cp_bp <- cp_bp[ cp_bp[["pvalue"]] <= pval, ]
+    cp_bp_genes <- gather_cp_genes(cp_result[["enrich_go"]][["BP_sig"]], cp_result[["all_mappings"]])
+    cp_bp[["named_genes"]] <- cp_bp_genes
     bp_idx <- order(cp_bp[["qvalue"]])
     cp_bp <- cp_bp[bp_idx, ]
+    cp_bp[["Ontology"]] <- "BP"
 
-    cp_cc <- cp_result[["cc_subset"]]
-    cp_cc <- cp_cc[ cp_cc[["over_represented_pvalue"]] <= pval, ]
-    cp_cc_genes <- gather_cp_genes(cp_result, ontology="CC", pval=pval)
-    cc_genes <- as.data.frame(cp_cc_genes)
-    rownames(cc_genes) <- rownames(cp_cc_genes)
-    cp_cc <- merge(cp_cc, cc_genes, by="row.names")
-    rownames(cp_cc) <- cp_cc[["Row.names"]]
-    cp_cc <- cp_cc[-1]
+    cp_cc <- cp_result[["enrich_go"]][["CC_sig"]]
+    cp_cc <- cp_cc[ cp_cc[["pvalue"]] <= pval, ]
+    cp_cc_genes <- gather_cp_genes(cp_result[["enrich_go"]][["CC_sig"]], cp_result[["all_mappings"]])
+    cp_cc[["named_genes"]] <- cp_cc_genes
     cc_idx <- order(cp_cc[["qvalue"]])
     cp_cc <- cp_cc[cc_idx, ]
+    cp_cc[["Ontology"]] <- "CC"
 
-    kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
-                      "qvalue", "sig", "all", "numDEInCat", "numInCat",
-                      "limma_sigfc", "deseq_sigfc", "edger_sigfc")
+    kept_columns <- c("ID", "Ontology", "Description", "GeneRatio", "BgRatio", "pvalue",
+                      "p.adjust", "qvalue", "Count", "geneID", "named_genes")
     cp_mf <- cp_mf[, kept_columns]
     cp_bp <- cp_bp[, kept_columns]
     cp_cc <- cp_cc[, kept_columns]
-    new_columns <- c("Ontology", "Category", "Term", "Over p-value", "Q-value",
-                     "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.",
-                     "FC from limma", "FC from DESeq", "FC from edgeR")
+    new_columns <- c("ID", "Ontology", "Description", "Ratio", "BgRatio", "P value",
+                     "Adjusted P", "Q value", "Count", "gene ID", "Named ID")
     colnames(cp_mf) <- new_columns
     colnames(cp_bp) <- new_columns
     colnames(cp_cc) <- new_columns
@@ -137,16 +126,13 @@ write_clusterprofiler_data <- function(cp_result, excel="excel/goseq.xlsx", wb=N
     openxlsx::writeDataTable(wb, sheet, x=cp_bp, tableStyle=table_style, startRow=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
-        a_plot <- cp_result[["pvalue_plots"]][["bpp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(cp_bp) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
+        a_plot <- cp_result[["plots"]][["ego_sig_bp"]]
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(cp_bp) + 2, start_row=new_row,
                                   plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
-        if (!is.null(trees[["BP_over"]])) {
-            plot_try <- xlsx_plot_png(trees[["BP_over"]], wb=wb, sheet=sheet, width=12, height=12,
+        b_plot <- cp_result[["plots"]][["tree_sig_bp"]]
+        if (!is.null(b_plot)) {
+            plot_try <- xlsx_plot_png(b_plot, wb=wb, sheet=sheet, width=12, height=12,
                                       start_col=ncol(cp_bp) + 2, start_row=80, res=210,
                                       plotname="bp_trees", savedir=excel_basename)
         }
@@ -163,18 +149,16 @@ write_clusterprofiler_data <- function(cp_result, excel="excel/goseq.xlsx", wb=N
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     openxlsx::writeDataTable(wb, sheet, x=cp_mf, tableStyle=table_style, startRow=new_row)
+    ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
-        a_plot <- cp_result[["pvalue_plots"]][["mfp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(cp_mf) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
+        a_plot <- cp_result[["plots"]][["ego_sig_mf"]]
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(cp_mf) + 2, start_row=new_row,
                                   plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
-        if (!is.null(trees[["MF_over"]])) {
-            plot_try <- xlsx_plot_png(trees[["MF_over"]], wb=wb, sheet=sheet, width=12, height=12,
-                                      start_col=ncol(cp_bp) + 2, start_row=80, res=210,
+        b_plot <- cp_result[["plots"]][["tree_sig_mf"]]
+        if (!is.null(b_plot)) {
+            plot_try <- xlsx_plot_png(b_plot, wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(cp_mf) + 2, start_row=80, res=210,
                                       plotname="mf_trees", savedir=excel_basename)
         }
     }
@@ -190,24 +174,22 @@ write_clusterprofiler_data <- function(cp_result, excel="excel/goseq.xlsx", wb=N
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     openxlsx::writeDataTable(wb, sheet, x=cp_cc, tableStyle=table_style, startRow=new_row)
+    ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
-        a_plot <- cp_result[["pvalue_plots"]][["ccp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(cp_cc) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
+        a_plot <- cp_result[["plots"]][["ego_sig_cc"]]
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(cp_cc) + 2, start_row=new_row,
                                   plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
-        if (!is.null(trees[["CC_over"]])) {
-            plot_try <- xlsx_plot_png(trees[["CC_over"]], wb=wb, sheet=sheet, width=12, height=12,
-                                      start_col=ncol(cp_bp) + 2, start_row=80, res=210,
+        b_plot <- cp_result[["plots"]][["tree_sig_cc"]]
+        if (!is.null(b_plot)) {
+            plot_try <- xlsx_plot_png(b_plot, wb=wb, sheet=sheet, width=12, height=12,
+                                      start_col=ncol(cp_cc) + 2, start_row=80, res=210,
                                       plotname="cc_trees", savedir=excel_basename)
         }
     }
+    new_row <- new_row + nrow(cp_cc) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
     openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
-    new_row <- new_row + nrow(cp_cc) + 2
 
     res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     message("Finished writing excel file.")

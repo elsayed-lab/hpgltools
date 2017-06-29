@@ -99,7 +99,7 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
 hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
                       normalize.method="none", span=0.5,
                       stupid=FALSE, logged=FALSE, converted=FALSE, ...) {
-    ## arglist <- list(...)
+    arglist <- list(...)
     ## Going to attempt to as closely as possible dovetail the original implementation.
     ## I think at this point, my implementation is the same as the original with the exception
     ## of a couple of tests to check that the data is not fubar and I think my plot is prettier.
@@ -335,7 +335,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     ## This is for the eBayes() call.
     limma_robust=FALSE
     if (!is.null(arglist[["limma_robust"]])) {
-        limma_method <- arglist[["limma_robust"]]
+        limma_robust <- arglist[["limma_robust"]]
     }
     ## This is also used in eBayes()
     limma_trend=FALSE

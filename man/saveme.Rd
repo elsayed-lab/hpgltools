@@ -4,7 +4,8 @@
 \alias{saveme}
 \title{Make a backup rdata file for future reference}
 \usage{
-saveme(directory = "savefiles", backups = 4, filename = "Rdata.rda.xz")
+saveme(directory = "savefiles", backups = 2, cpus = 6,
+  filename = "Rdata.rda.xz")
 }
 \arguments{
 \item{directory}{Directory to save the Rdata file.}

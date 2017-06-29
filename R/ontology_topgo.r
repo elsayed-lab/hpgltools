@@ -25,7 +25,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
                          pvals=NULL, limitby="fisher", limit=0.1, signodes=100,
                          sigforall=TRUE, numchar=300, selector="topDiffGenes",
                          pval_column="adj.P.Val", overwrite=FALSE, densities=FALSE,
-                         pval_plots=TRUE, parallel=FALSE, ...) {
+                         pval_plots=TRUE, parallel=FALSE, excel=NULL, ...) {
     ## Some neat ideas from the topGO documentation:
     ## geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
     ## A variant of these operations make it possible to give topGO scores so that
@@ -322,6 +322,11 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
         "pdists" = p_dists)
     pval_plots <- plot_topgo_pval(information)
     information[["pvalue_plots"]] <- pval_plots
+
+    if (!is.null(excel)) {
+        message(paste0("Writing data to: ", excel, "."))
+        excel_ret <- sm(write_topgo_data(return_list, excel=excel))
+    }
     return(information)
 }
 

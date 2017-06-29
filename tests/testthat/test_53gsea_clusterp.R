@@ -51,7 +51,8 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
         expect_equal(expected, actual, tolerance=0.0001)
     })
 
-    expected <- c("dme00240", "dme00564", "dme00280")
+    expected <- c("dme00240", "dme00410", "dme00564", "dme00280",
+                  "dme00640", "dme00650", "dme00230", "dme04140")
     actual <- rownames(dmel_cp$kegg_data$kegg_sig)
     test_that("Did cp pick up consistent KEGG categories?", {
         expect_equal(expected, actual)
