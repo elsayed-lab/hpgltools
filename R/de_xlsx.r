@@ -236,6 +236,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                             title="Columns used in the following tables.")
 
     if (isTRUE(do_excel)) {
+        message("Printing a pca plot before/after surrogates/batch estimation.")
         ## Add PCA before/after
         chosen_estimate <- all_pairwise_result[["batch_type"]]
         xl_result <- openxlsx::writeData(wb, sheet="legend",
@@ -1555,6 +1556,124 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     return(xls_result)
 }
 
+#' Find the sets of intersecting significant genes
+#'
+#' Use extract_significant_genes() to find the points of agreement between limma/deseq/edger.
+#'
+#' @param combined  A result from combine_de_tables().
+#' @param fc  Define significant via fold-change.
+#' @param p  Or p-value.
+#' @param z  Or z-score.
+#' @param p_type  Use normal or adjusted p-values.
+#' @param excel  An optional excel workbook to which to write.
+#' @export
+intersect_significant <- function(combined, fc=1.0, p=0.05,
+                                  z=NULL, p_type="adj",
+                                  excel="excel/intersect_significant.xlsx") {
+    sig_genes <- sm(extract_significant_genes(combined, fc=fc, p=p,
+                                              z=z, p_type=p_type, excel=NULL))
+
+    up_result_list <- list()
+    down_result_list <- list()
+    for (table in names(sig_genes[["limma"]][["ups"]])) {
+        tabname <- paste0("up_", table)
+        up_result_list[[tabname]] <- make_intersect(sig_genes[["limma"]][["ups"]][[table]],
+                                                    sig_genes[["deseq"]][["ups"]][[table]],
+                                                    sig_genes[["edger"]][["ups"]][[table]])
+        tabname <- paste0("down_", table)
+        down_result_list[[tabname]] <- make_intersect(sig_genes[["limma"]][["downs"]][[table]],
+                                                      sig_genes[["deseq"]][["downs"]][[table]],
+                                                      sig_genes[["edger"]][["downs"]][[table]])
+    }
+
+    xls_result <- NULL
+    if (!is.null(excel)) {
+        wb <- openxlsx::createWorkbook(creator="hpgltools")
+        testdir <- dirname(excel)
+        if (!file.exists(testdir)) {
+            dir.create(testdir, recursive=TRUE)
+        }
+        for (tab in names(up_result_list)) {  ## Get the tables back
+            tabname <- paste0("up_", tab)
+            row_num <- 1
+            xl_result <- write_xls(data=up_result_list[[tab]][["l"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by limma."))
+            row_num <- row_num + nrow(up_result_list[[tab]][["l"]]) + 2
+            xl_result <- write_xls(data=up_result_list[[tab]][["d"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by DESeq2."))
+            row_num <- row_num + nrow(up_result_list[[tab]][["d"]]) + 2
+            xl_result <- write_xls(data=up_result_list[[tab]][["e"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by EdgeR."))
+            row_num <- row_num + nrow(up_result_list[[tab]][["e"]]) + 2
+            xl_result <- write_xls(data=up_result_list[[tab]][["ld"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by limma and DESeq2."))
+            row_num <- row_num + nrow(up_result_list[[tab]][["le"]]) + 2
+            xl_result <- write_xls(data=up_result_list[[tab]][["le"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by limma and EdgeR."))
+            row_num <- row_num + nrow(up_result_list[[tab]][["le"]]) + 2
+            xl_result <- write_xls(data=up_result_list[[tab]][["de"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by DESeq2 and EdgeR."))
+            row_num <- row_num + nrow(up_result_list[[tab]][["led"]]) + 2
+            xl_result <- write_xls(data=up_result_list[[tab]][["led"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by limma, DESeq2, and EdgeR."))
+
+            tabname <- paste0("down_", tab)
+            row_num <- 1
+            xl_result <- write_xls(data=down_result_list[[tab]][["l"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by limma."))
+            row_num <- row_num + nrow(down_result_list[[tab]][["l"]]) + 2
+            xl_result <- write_xls(data=down_result_list[[tab]][["d"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by DESeq2."))
+            row_num <- row_num + nrow(down_result_list[[tab]][["d"]]) + 2
+            xl_result <- write_xls(data=down_result_list[[tab]][["e"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by EdgeR."))
+            row_num <- row_num + nrow(down_result_list[[tab]][["e"]]) + 2
+            xl_result <- write_xls(data=down_result_list[[tab]][["ld"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by limma and DESeq2."))
+            row_num <- row_num + nrow(down_result_list[[tab]][["le"]]) + 2
+            xl_result <- write_xls(data=down_result_list[[tab]][["le"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by limma and EdgeR."))
+            row_num <- row_num + nrow(down_result_list[[tab]][["le"]]) + 2
+            xl_result <- write_xls(data=down_result_list[[tab]][["de"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by DESeq2 and EdgeR."))
+            row_num <- row_num + nrow(down_result_list[[tab]][["led"]]) + 2
+            xl_result <- write_xls(data=down_result_list[[tab]][["led"]], wb=wb, sheet=tabname, start_row=row_num,
+                                   title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by limma, DESeq2, and EdgeR."))
+        }
+        excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+    } ## End if isTRUE(excel)
+    return_list <- append(up_result_list, down_result_list)
+    return(return_list)
+}
+
+make_intersect <- function(limma, deseq, edger) {
+    l_alone_idx <- (! (rownames(limma) %in% rownames(deseq))) & (! (rownames(limma) %in% rownames(edger)))
+    l_alone <- limma[l_alone_idx, ]
+    d_alone_idx <- (! (rownames(deseq) %in% rownames(limma))) & (! (rownames(deseq) %in% rownames(edger)))
+    d_alone <- deseq[d_alone_idx, ]
+    e_alone_idx <- (! (rownames(edger) %in% rownames(limma))) & (! (rownames(edger) %in% rownames(edger)))
+    e_alone <- edger[e_alone_idx, ]
+
+    ld_idx <- (rownames(limma) %in% rownames(deseq)) & (! (rownames(limma) %in% rownames(edger)))
+    ld <- limma[ld_idx, ]
+    le_idx <- (rownames(limma) %in% rownames(edger)) & (! (rownames(limma) %in% rownames(deseq)))
+    le <- limma[le_idx, ]
+    de_idx <- (rownames(deseq) %in% rownames(edger)) & (! (rownames(deseq) %in% rownames(edger)))
+    de <- deseq[de_idx, ]
+    led_idx <- (rownames(limma) %in% rownames(deseq)) &
+        (rownames(limma) %in% rownames(edger))
+    led <- limma[led_idx, ]
+    retlist <- list(
+        "d" = d_alone,
+        "e" = e_alone,
+        "l" = l_alone,
+        "ld" = ld,
+        "le" = le,
+        "de" = de,
+        "led" = led)
+    return(retlist)
+}
+
 #' Writes out the results of a single pairwise comparison.
 #'
 #' However, this will do a couple of things to make one's life easier:
@@ -1585,7 +1704,6 @@ write_de_table <- function(data, type="limma", ...) {
     if (is.null(excel)) {
         excel <- "table.xlsx"
     }
-    testdir <- dirname(excel)
     n <- arglist[["n"]]
     if (is.null(n)) {
         n <- 0

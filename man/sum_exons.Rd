@@ -12,7 +12,7 @@ sum_exons(data, gff = NULL, annotdf = NULL, parent = "Parent",
 
 \item{gff}{Gff filename.}
 
-\item{annotdf}{Dataframe of annotations (probably from gff2df).}
+\item{annotdf}{Dataframe of annotations (probably from load_gff_annotations).}
 
 \item{parent}{Column from the annotations with the gene names.}
 
@@ -33,5 +33,5 @@ summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
 }
 \seealso{
 \pkg{rtracklayer}
- \code{\link{gff2df}}
+ \code{\link{load_gff_annotations}}
 }

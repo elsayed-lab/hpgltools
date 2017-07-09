@@ -49,6 +49,7 @@ convert_counts <- function(data, convert="raw", ...) {
     } else if (convert == "cp_seq_m") {
         counts <- edgeR::cpm(count_table)
         count_table <- divide_seq(counts, annotations=annotations, ...)
+        ##count_table <- divide_seq(counts, annotations=annotations, genome=genome)
     }
     libsize <- colSums(count_table)
     counts <- list(
@@ -123,9 +124,11 @@ divide_seq <- function(counts, ...) {
     } else if (annotation_class == "data.frame") {
         colnames(annotations) <- tolower(colnames(annotations))
         annotations <- annotations[complete.cases(annotations), ]
-        if (class(annotations[["strand"]]) == "integer") {
-            annotations[["strand"]] <- ifelse(annotations[["strand"]] > 0, "+", "-")
-        }
+        annotations[["strand"]] <- as.numeric(annotations[["strand"]])
+        annotations[["strand"]] <- ifelse(annotations[["strand"]] > 0, "+", "-")
+        ## Remove entries in annotations with start==NA
+        na_idx <- is.na(sm(as.numeric(annotations[["start"]])))
+        annotations <- annotations[!na_idx, ]
         annotation_entries <- GenomicRanges::makeGRangesFromDataFrame(annotations)
     } else if (annotation_class == "Granges") {
         annotations <- as.data.frame(annotations)

@@ -127,7 +127,7 @@ simple_motifRG <- function(input_fasta, control_fasta, maximum=3,
 flanking_sequence <- function(bsgenome, annotation, distance=200, type="gene", prefix="") {
     if (class(annotation) == "character") {
         ## Assume it is a filename to a gff file
-        annotations <- gff2df(annotation, type=type)
+        annotations <- load_gff_annotations(annotation, type=type)
         name_key <- "gene_id"
     } else if (class(annotation) == "data.frame") {
         annotations <- annotation

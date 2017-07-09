@@ -34,7 +34,7 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
     if (!is.null(arglist[["gff_df"]])) {
         annotation <- arglist[["gff_df"]]
     } else {
-        annotation <- gff2df(gff, type=gff_type)
+        annotation <- load_gff_annotations(gff, type=gff_type)
     }
     colnames(annotation) <- tolower(colnames(annotation))
     colnames(annotation) <- gsub(pattern="length", replacement="width", x=colnames(annotation))

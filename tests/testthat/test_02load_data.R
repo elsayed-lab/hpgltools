@@ -50,14 +50,14 @@ test_that("Was the annotation information imported into the expressionset? (stat
 
 ## Then lengths of features should therefore remain consistent.
 expected <- c(78, 81, 99, 123, 123, 123)
-actual <- head(sort(hpgl_annotations[["length"]]))
+actual <- head(sm(sort(as.numeric(hpgl_annotations[["length"]]))))
 test_that("Was the annotation information imported into the expressionset? (static lengths?)", {
     expect_equal(expected, actual)
 })
 
 ## By the same token, the start positions of genes should remain consistent.
 expected <- c(7529, 9839, 21823, 25402, 32478, 47710)
-actual <- head(sort(hpgl_annotations[["start"]]))
+actual <- sm(head(sort(as.numeric(hpgl_annotations[["start"]]))))
 test_that("Was the annotation information imported into the expressionset? (static starts?)", {
     expect_equal(expected, actual)
 })

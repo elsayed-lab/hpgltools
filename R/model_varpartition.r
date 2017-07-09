@@ -73,8 +73,14 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
     if (class(my_extract) == "try-error") {
         stop("An error like 'vtv downdated' may be because there are too many 0s, try and filter the data and rerun.")
     }
+    chosen_column <- "condition"
+    if (is.null(predictor)) {
+        chosen_column <- factors[[1]]
+        message(paste0("Placing factor: ", chosen_column, " at the beginning of the model."))
+    }
+
     my_sorted <- variancePartition::sortCols(my_extract)
-    my_sorted <- my_sorted[ order(my_sorted[["condition"]], decreasing=TRUE), ]
+    my_sorted <- my_sorted[ order(my_sorted[[chosen_column]], decreasing=TRUE), ]
     percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
     partition_plot <- variancePartition::plotVarPart(my_sorted)
     if (isTRUE(parallel)) {

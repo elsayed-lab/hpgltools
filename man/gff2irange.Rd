@@ -24,7 +24,7 @@ iranges etc.  This function wraps import.gff/import.gff3/import.gff2 calls in tr
 sometimes those functions fail in unpredictable ways.
 }
 \details{
-This is essentially gff2df(), but returns data suitable for getSet()
+This is essentially load_gff_annotations(), but returns data suitable for getSet()
 }
 \examples{
 \dontrun{
@@ -35,6 +35,6 @@ This is essentially gff2df(), but returns data suitable for getSet()
 }
 }
 \seealso{
-\pkg{rtracklayer} \link{gff2df} \pkg{Biostrings}
+\pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
  \code{\link[rtracklayer]{import.gff}}
 }

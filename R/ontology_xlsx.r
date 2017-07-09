@@ -116,6 +116,14 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     colnames(cp_bp) <- new_columns
     colnames(cp_cc) <- new_columns
 
+    cp_kegg <- cp_result[["kegg_data"]][["kegg_sig"]]
+    kegg_idx <- order(cp_kegg[["qvalue"]])
+    cp_kegg <- cp_kegg[kegg_idx, ]
+
+    cp_david <- cp_result[["david_data"]]
+    david_idx <- order(cp_kegg[["qvalue"]])
+    cp_david <- cp_david[david_idx, ]
+
     new_row <- 1
     message("Writing the BP data.")
     sheet <- "BP"
@@ -190,6 +198,25 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     new_row <- new_row + nrow(cp_cc) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
     openxlsx::setColWidths(wb, sheet=sheet, cols=6:7, widths=30)
+
+    new_row <- 1
+    message("Writing the KEGG data.")
+    sheet <- "KEGG"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "KEGG Results from cp.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=cp_kegg, tableStyle=table_style, startRow=new_row)
+    ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+
+    new_row <- 1
+    message("Writing the DAVID data.")
+    sheet <- "DAVID"
+    openxlsx::addWorksheet(wb, sheetName=sheet)
+    openxlsx::writeData(wb, sheet, "DAVID Results from cp.", startRow=new_row)
+    openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
+    new_row <- new_row + 1
+    openxlsx::writeDataTable(wb, sheet, x=cp_david, tableStyle=table_style, startRow=new_row)
 
     res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     message("Finished writing excel file.")
@@ -336,10 +363,6 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
         a_plot <- goseq_result[["pvalue_plots"]][["bpp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(goseq_bp) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(goseq_bp) + 2, start_row=new_row,
                                   plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
@@ -363,10 +386,6 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     openxlsx::writeDataTable(wb, sheet, x=goseq_mf, tableStyle=table_style, startRow=new_row)
     if (isTRUE(add_plots)) {
         a_plot <- goseq_result[["pvalue_plots"]][["mfp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(goseq_mf) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(goseq_mf) + 2, start_row=new_row,
                                   plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
@@ -390,10 +409,6 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     openxlsx::writeDataTable(wb, sheet, x=goseq_cc, tableStyle=table_style, startRow=new_row)
     if (isTRUE(add_plots)) {
         a_plot <- goseq_result[["pvalue_plots"]][["ccp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(goseq_cc) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(goseq_cc) + 2, start_row=new_row,
                                   plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
@@ -552,10 +567,6 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
         a_plot <- gostats_result[["pvalue_plots"]][["bpp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(gostats_bp) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(gostats_bp) + 2, start_row=new_row,
                                   plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
@@ -579,10 +590,6 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     openxlsx::writeDataTable(wb, sheet, x=gostats_mf, tableStyle=table_style, startRow=new_row)
     if (isTRUE(add_plots)) {
         a_plot <- gostats_result[["pvalue_plots"]][["mfp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(gostats_mf) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(gostats_mf) + 2, start_row=new_row,
                                   plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
@@ -606,10 +613,6 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     openxlsx::writeDataTable(wb, sheet, x=gostats_cc, tableStyle=table_style, startRow=new_row)
     if (isTRUE(add_plots)) {
         a_plot <- gostats_result[["pvalue_plots"]][["ccp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(gostats_cc) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(gostats_cc) + 2, start_row=new_row,
                                   plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
@@ -680,7 +683,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     }
     if (isTRUE(do_go)) {
         new_row <- 1
-        sheet <- "GO"
+        sheet <- "GO_BP"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         go_data <- gprofiler_result[["go"]]
         bp_data <- go_data[go_data[["domain"]]=="BP", ]
@@ -695,16 +698,15 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["bpp_plot_over"]]
-            ##try(print(a_plot), silent=TRUE)
-            ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
-            ##                                startCol=ncol(bp_data) + 2, startRow=new_row,
-            ##                                fileType="png", units="in"))
             plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                       start_col=ncol(bp_data) + 2, start_row=new_row,
                                       plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(bp_data) + 2
 
+        new_row <- 1
+        sheet <- "GO_MF"
+        openxlsx::addWorksheet(wb, sheetName=sheet)
         openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -713,16 +715,15 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["mfp_plot_over"]]
-            ##try(print(a_plot), silent=TRUE)
-            ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
-            ##                                startCol=ncol(mf_data) + 2, startRow=new_row,
-            ##                                fileType="png", units="in"))
             plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                       start_col=ncol(mf_data) + 2, start_row=new_row,
                                       plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(mf_data) + 2
 
+        new_row <- 1
+        sheet <- "GO_CC"
+        openxlsx::addWorksheet(wb, sheetName=sheet)
         openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -731,10 +732,6 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["ccp_plot_over"]]
-            ##try(print(a_plot), silent=TRUE)
-            ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
-            ##                                startCol=ncol(cc_data) + 2, startRow=new_row,
-            ##                                fileType="png", units="in"))
             plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                       start_col=ncol(cc_data) + 2, start_row=new_row,
                                       plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
@@ -763,10 +760,6 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["kegg_plot_over"]]
-            ##try(print(a_plot), silent=TRUE)
-            ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
-            ##                                startCol=ncol(kegg_data) + 2, startRow=new_row,
-            ##                                fileType="png", units="in"))
             plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                       start_col=ncol(kegg_data) + 2, start_row=new_row,
                                       plotname="kegg_plot", savedir=excel_basename, doWeights=FALSE)
@@ -796,10 +789,6 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["tf_plot_over"]]
-            ##try(print(a_plot), silent=TRUE)
-            ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
-            ##                                startCol=ncol(tf_data) + 2, startRow=new_row,
-            ##                                fileType="png", units="in"))
             plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                       start_col=ncol(tf_data) + 2, start_row=new_row,
                                       plotname="tf_plot", savedir=excel_basename, doWeights=FALSE)
@@ -828,10 +817,6 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["reactome_plot_over"]]
-            ##try(print(a_plot), silent=TRUE)
-            ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
-            ##                                startCol=ncol(react_data) + 2, startRow=new_row,
-            ##                                fileType="png", units="in"))
             plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                       start_col=ncol(react_data) + 2, start_row=new_row,
                                       plotname="react_plot", savedir=excel_basename, doWeights=FALSE)
@@ -860,10 +845,6 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["mi_plot_over"]]
-            ##try(print(a_plot), silent=TRUE)
-            ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
-            ##                                startCol=ncol(mi_data) + 2, startRow=new_row,
-            ##                                fileType="png", units="in"))
             plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                       start_col=ncol(mi_data) + 2, start_row=new_row,
                                       plotname="mi_plot", savedir=excel_basename, doWeights=FALSE)
@@ -892,10 +873,6 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["hp_plot_over"]]
-            ##try(print(a_plot), silent=TRUE)
-            ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
-            ##                                startCol=ncol(hp_data) + 2, startRow=new_row,
-            ##                                fileType="png", units="in"))
             plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                       start_col=ncol(hp_data) + 2, start_row=new_row,
                                       plotname="hp_plot", savedir=excel_basename, doWeights=FALSE)
@@ -924,10 +901,6 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["corum_plot_over"]]
-            ##try(print(a_plot), silent=TRUE)
-            ##ins <- try(openxlsx::insertPlot(wb, sheet, width=width, height=height,
-            ##                                startCol=ncol(corum_data) + 2, startRow=new_row,
-            ##                                fileType="png", units="in"))
             plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                       start_col=ncol(corum_data) + 2, start_row=new_row,
                                       plotname="corum_plot", savedir=excel_basename, doWeights=FALSE)
@@ -1106,10 +1079,6 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
         a_plot <- topgo_result[["pvalue_plots"]][["bpp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(topgo_bp) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(topgo_bp) + 2, start_row=new_row,
                                   plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
@@ -1133,10 +1102,6 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
     openxlsx::writeDataTable(wb, sheet, x=topgo_mf, tableStyle=table_style, startRow=new_row)
     if (isTRUE(add_plots)) {
         a_plot <- topgo_result[["pvalue_plots"]][["mfp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(topgo_mf) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(topgo_mf) + 2, start_row=new_row,
                                   plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
@@ -1160,10 +1125,6 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
     openxlsx::writeDataTable(wb, sheet, x=topgo_cc, tableStyle=table_style, startRow=new_row)
     if (isTRUE(add_plots)) {
         a_plot <- topgo_result[["pvalue_plots"]][["ccp_plot_over"]]
-        ##tt <- try(print(a_plot), silent=TRUE)
-        ##openxlsx::insertPlot(wb, sheet, width=width, height=height,
-        ##                     startCol=ncol(topgo_cc) + 2, startRow=new_row,
-        ##                     fileType="png", units="in")
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                                   start_col=ncol(topgo_cc) + 2, start_row=new_row,
                                   plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)

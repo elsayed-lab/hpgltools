@@ -64,8 +64,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
             rm(log_data)
             rm(base10_data)
         } else {
-            log2_mtrx <- as.matrix(input)
-            base10_mtrx <- as.matrix(2 ^ input) - 1
+            log2_mtrx <- as.matrix(my_data)
+            base10_mtrx <- as.matrix(2 ^ my_data) - 1
         }
     } else {
         if (is.null(design)) {

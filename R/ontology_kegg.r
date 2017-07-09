@@ -691,7 +691,7 @@ myretrieveKGML <- function(pathwayid, organism, destfile, method = "wget",
                       shQuote(referer),
                       ' ', shQuote(kgml),
                       ' -O ', shQuote(destfile))
-    status <- system(cmdline)
+    status <- sm(system(cmdline))
     return(invisible(kgml))
 }
 

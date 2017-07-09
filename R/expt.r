@@ -77,10 +77,6 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     if (!is.null(arglist[["round"]])) {
         round <- arglist[["round"]]
     }
-    round <- FALSE
-    if (!is.null(arglist[["round"]])) {
-        round <- arglist[["round"]]
-    }
 
     ## Read in the metadata from the provided data frame, csv, or xlsx.
     sample_definitions <- data.frame()
@@ -265,6 +261,7 @@ analyses more difficult/impossible.")
         filenames <- as.character(sample_definitions[[file_column]])
         sample_ids <- as.character(sample_definitions[[sample_column]])
         all_count_tables <- expt_read_counts(sample_ids, filenames, ...)
+        ##all_count_tables <- expt_read_counts(sample_ids, filenames)
     }
 
     ## Recast the data as a data.frame and make sure everything is numeric
@@ -293,7 +290,7 @@ analyses more difficult/impossible.")
         } else {
             ## Or reading a gff file.
             message("create_expt(): Reading annotation gff, this is slow.")
-            annotation <- gff2df(gff=include_gff, type=gff_type)
+            annotation <- load_gff_annotations(gff=include_gff, type=gff_type)
             tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
             gene_info <- annotation
         }
@@ -310,6 +307,7 @@ analyses more difficult/impossible.")
         }
         if (sum(rownames(gene_info) %in% rownames(all_count_tables)) == 0) {
             warning("Even after changing the rownames in gene info, they do not match the count table.")
+            message("Even after changing the rownames in gene info, they do not match the count table.")
             message("Here are the first few rownames from the count tables:")
             message(toString(head(rownames(all_count_tables))))
             message("Here are the first few rownames from the gene information table:")
@@ -353,6 +351,13 @@ analyses more difficult/impossible.")
     ## The method here is to create a data.table of the counts and annotation data,
     ## merge them, then split them apart.
     counts_and_annotations <- merge(tmp_countsdt, gene_infodt, by="rownames", all.x=TRUE)
+    ## In some cases, the above merge will result in columns being set to NA
+    ## We should set all the NA fields to something I think.
+    na_entries <- is.na(counts_and_annotations)
+    if (sum(na_entries) > 0) {
+        message("Some annotations were lost in merging, setting them to 'undefined'.")
+    }
+    counts_and_annotations[na_entries] <- "undefined"
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
     counts_and_annotations <- as.data.frame(counts_and_annotations)
     final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_infodt) ]
@@ -363,7 +368,7 @@ analyses more difficult/impossible.")
     final_counts <- as.data.frame(final_countsdt)
     rownames(final_counts) <- counts_and_annotations[["rownames"]]
 
-        ## I found a non-bug but utterly obnoxious behaivor in R
+    ## I found a non-bug but utterly obnoxious behaivor in R
     ## Imagine a dataframe with 2 entries: TcCLB.511511.3 and TcCLB.511511.30
     ## Then imagine that TcCLB.511511.3 gets removed because it is low abundance.
     ## Then imagine what happens if I go to query 511511.3...
@@ -552,21 +557,46 @@ expt_exclude_genes <- function(expt, column="txtype", method="remove",
     arglist <- list(...)
     ex <- expt[["expressionset"]]
     annotations <- Biobase::fData(ex)
+    if (is.null(annotations[[column]])) {
+        message(paste0("The ", column, " column is null, doing nothing."))
+        return(expt)
+    }
     pattern_string <- ""
     for (pat in patterns) {
         pattern_string <- paste0(pattern_string, pat, "|")
     }
     silly_string <- gsub(pattern="\\|$", replacement="", x=pattern_string)
-    idx <- grepl(pattern=silly_string, x=annotations[[column]])
-    ex2 <- NULL
+    idx <- grepl(pattern=silly_string, x=annotations[[column]], perl=TRUE)
+    kept <- NULL
+    removed <- NULL
+    kept_sums <- NULL
+    removed_sums <- NULL
     if (method == "remove") {
-        ex2 <- ex[!idx, ]
+        kept <- ex[!idx, ]
+        removed <- ex[idx, ]
     } else {
-        ex2 <- ex[idx, ]
+        kept <- ex[idx, ]
+        removed <- ex[!idx, ]
     }
+
     message(paste0("Before removal, there were ", nrow(Biobase::fData(ex)), " entries."))
-    message(paste0("Now there are ", nrow(Biobase::fData(ex2)), " entries."))
-    expt[["expressionset"]] <- ex2
+    message(paste0("Now there are ", nrow(Biobase::fData(kept)), " entries."))
+    all_tables <- Biobase::exprs(ex)
+    all_sums <- colSums(all_tables)
+    kept_tables <- Biobase::exprs(kept)
+    kept_sums <- colSums(kept_tables)
+    removed_tables <- Biobase::exprs(removed)
+    removed_sums <- colSums(removed_tables)
+    pct_kept <- (kept_sums / all_sums) * 100.0
+    pct_removed <- (removed_sums / all_sums) * 100.0
+    summary_table <- rbind(kept_sums, removed_sums, all_sums,
+                           pct_kept, pct_removed)
+    rownames(summary_table) <- c("kept_sums", "removed_sums", "all_sums",
+                                 "pct_kept", "pct_removed")
+    message(paste0("Percent kept: ", toString(pct_kept)))
+    message(paste0("Percent removed: ", toString(pct_removed)))
+    expt[["expressionset"]] <- kept
+    expt[["summary_table"]] <- summary_table
     return(expt)
 }
 

@@ -33,7 +33,7 @@ test_that("cpm conversions are equivalent?", {
 })
 
 ## Check that the different ways of calling rpkm() are identical
-pasilla_convert <- convert_counts(pasilla_expt, convert="rpkm")
+pasilla_convert <- sm(convert_counts(pasilla_expt, convert="rpkm"))
 pasilla_norm <- sm(normalize_expt(pasilla_expt, convert="rpkm"))
 expected <- pasilla_convert[["count_table"]]
 actual <- Biobase::exprs(pasilla_norm[["expressionset"]])
@@ -42,7 +42,7 @@ test_that("calling convert_counts and normalize_expt are equivalent?", {
 })
 
 ## Similarly check that edgeR's rpkm() comes out the same
-fdata_lengths <- as.vector(Biobase::fData(pasilla_expt[["expressionset"]])[["length"]])
+fdata_lengths <- as.vector(as.numeric(Biobase::fData(pasilla_expt[["expressionset"]])[["length"]]))
 names(fdata_lengths) <- rownames(Biobase::fData(pasilla_expt[["expressionset"]]))
 expected <- edgeR::rpkm(Biobase::exprs(pasilla_expt[["expressionset"]]), gene.length=fdata_lengths)
 actual <- Biobase::exprs(pasilla_norm[["expressionset"]])

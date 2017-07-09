@@ -335,7 +335,9 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     ## This is for the eBayes() call.
     limma_robust=FALSE
     if (!is.null(arglist[["limma_robust"]])) {
-        limma_robust <- arglist[["limma_robust"]]
+        if (!identical(arglist[["limma_robus"]], FALSE)) {
+            limma_robust <- TRUE
+        }
     }
     ## This is also used in eBayes()
     limma_trend=FALSE

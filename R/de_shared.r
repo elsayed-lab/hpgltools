@@ -720,6 +720,40 @@ the state of the count table and ensure that it is in integer counts.")
     return(retlist)
 }
 
+#' Compare the results of separate all_pairwise() invocations.
+#'
+#' Where compare_tables looks for changes between limma and friends, this
+#' function looks for differences/similarities across the models/surrogates/etc
+#' across invocations of limma/deseq/edger.
+#'
+#' Tested in 29de_shared.R
+#'
+#' @param first  One invocation of combine_de_tables to examine.
+#' @param first  A second invocation of combine_de_tables to examine.
+#' @return  A list of compared columns, tables, and methods.
+#' @export
+compare_results_de <- function(first, second) {
+    result <- list()
+    comparisons <- c("logfc", "p", "adjp", "adjp_fdr")
+    methods <- c("limma", "deseq", "edger")
+    for (method in methods) {
+        result[[method]] <- list()
+        tables <- names(first[["data"]])
+        for (table in tables) {
+            result[[method]][[table]] <- list()
+            for (comparison in comparisons) {
+                message(paste0("Comparing ", method, ", ", table, ", ", comparison, "."))
+                column_name <- paste0(method, "_", comparison)
+                f_column <- as.numeric(first[["data"]][[table]][[column_name]])
+                s_column <- as.numeric(second[["data"]][[table]][[column_name]])
+                comp <- cor(f_column, s_column)
+                result[[method]][[table]][[comparison]] <- comp
+            }
+        }
+    }
+    return(result)
+}
+
 #' See how similar are results from limma/deseq/edger.
 #'
 #' limma, DEseq2, and EdgeR all make somewhat different assumptions.

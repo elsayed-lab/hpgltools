@@ -297,7 +297,11 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
 
     message("Attempting DAVID search.")
     david_search <- sm(try(clusterProfiler::enrichDAVID(gene=sig_gene_list, david.user="abelew@umd.edu")))
-    david_data <- as.data.frame(david_search)
+    if (class(david_search)[[1]] == "try-error") {
+        david_data <- NULL
+    } else {
+        david_data <- as.data.frame(david_search)
+    }
     message(paste0("Found ", nrow(david_data), " DAVID hits."))
 
     ##testing <- clusterProfiler::enrichPathway(sig_gene_list)
@@ -446,7 +450,10 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
 
     if (!is.null(excel)) {
         message(paste0("Writing data to: ", excel, "."))
-        excel_ret <- sm(write_cp_data(retlist, excel=excel))
+        excel_ret <- sm(try(write_cp_data(retlist, excel=excel)))
+        if (class(excel_ret) == "try-error") {
+            message("Writing the data to excel failed.")
+        }
     }
     return(retlist)
 }

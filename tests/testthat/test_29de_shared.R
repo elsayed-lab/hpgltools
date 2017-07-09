@@ -21,6 +21,8 @@ normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant
                                      convert="cbcbcpm", filter=TRUE))
 hpgl_result <- sm(all_pairwise(normalized_expt, model_batch=TRUE, which_voom="hpgl",
                                edger_method="short"))
+hpgl_sva_result <- sm(all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",
+                                   limma_method="robust", edger_method="short"))
 
 expected <- deseq[["hpgl_deseq"]][["all_tables"]][["untreated_vs_treated"]]
 actual <- hpgl_result[["deseq"]][["all_tables"]][["untreated_vs_treated"]]
@@ -275,6 +277,80 @@ expected <- sort(forward_plot[["df"]][["logfc"]])
 actual <- sort(reverse_plot[["df"]][["logfc"]] * -1)
 test_that("Plotting an MA plot from a combined DE table provides logFCs in the correct orientation?", {
     expect_equal(expected, actual)
+})
+
+## See that we can compare different analysis types
+combined_sva <- sm(combine_de_tables(hpgl_sva_result, excel=NULL, keepers=test_keepers))
+sva_batch_test <- sm(compare_results_de(combined_excel, combined_sva))
+expected <- 0.98
+actual <- sva_batch_test[["limma"]][["treatment"]][["logfc"]]
+test_that("Do limma with combat and sva agree vis a vis logfc?", {
+    expect_gt(actual, expected)
+})
+actual <- sva_batch_test[["deseq"]][["treatment"]][["logfc"]]
+test_that("Do deseq with combat and sva agree vis a vis logfc?", {
+    expect_gt(actual, expected)
+})
+actual <- sva_batch_test[["edger"]][["treatment"]][["logfc"]]
+test_that("Do edger with combat and sva agree vis a vis logfc?", {
+    expect_gt(actual, expected)
+})
+
+## See if the intersection between limma, deseq, and edger is decent.
+test_intersect <- sm(intersect_significant(combined_sva, excel=NULL))
+expected <- 56
+actual <- nrow(test_intersect[["up_treatment"]][["led"]])
+test_that("Do we get the expected number of agreed upon significant genes between edger/deseq/limma?", {
+    expect_equal(actual, expected)
+})
+actual <- nrow(test_intersect[["down_treatment"]][["led"]])
+expected <- 65
+test_that("Ibid, but in the down direction?", {
+    expect_equal(actual, expected)
+})
+actual <- sum(nrow(test_intersect[["up_treatment"]][["l"]]) +
+              nrow(test_intersect[["up_treatment"]][["e"]]) +
+              nrow(test_intersect[["up_treatment"]][["d"]]))
+expected <- 5
+test_that("Are there very few genes observed without the others?", {
+    expect_lt(actual, expected)
+})
+actual <- sum(nrow(test_intersect[["down_treatment"]][["l"]]) +
+              nrow(test_intersect[["down_treatment"]][["e"]]) +
+              nrow(test_intersect[["down_treatment"]][["d"]]))
+expected <- 2
+test_that("Ibid, but down?", {
+    expect_lt(actual, expected)
+})
+actual <- nrow(test_intersect[["up_treatment"]][["le"]])
+expected <- 23
+test_that("Do limma and edger have some genes in common? (up)", {
+    expect_equal(actual, expected)
+})
+actual <- nrow(test_intersect[["down_treatment"]][["le"]])
+expected <- 22
+test_that("Do limma and edger have some genes in common? (down)", {
+    expect_equal(actual, expected)
+})
+actual <- nrow(test_intersect[["up_treatment"]][["ld"]])
+expected <- 0
+test_that("Do limma and deseq have some genes in common? (up)", {
+    expect_equal(actual, expected)
+})
+actual <- nrow(test_intersect[["down_treatment"]][["ld"]])
+expected <- 0
+test_that("Do limma and deseq have some genes in common? (down)", {
+    expect_equal(actual, expected)
+})
+actual <- nrow(test_intersect[["up_treatment"]][["de"]])
+expected <- 0
+test_that("Do edger and deseq have some genes in common? (up)", {
+    expect_equal(actual, expected)
+})
+actual <- nrow(test_intersect[["down_treatment"]][["de"]])
+expected <- 0
+test_that("Do edger and deseq have some genes in common? (down)", {
+    expect_equal(actual, expected)
 })
 
 end <- as.POSIXlt(Sys.time())
