@@ -5,19 +5,20 @@
 #' integers. As a result, I am going to have this function take a gff file in order to get the go
 #' ids and gene ids on the same page.
 #'
-#' @param sig_genes Input list of differentially expressed genes.
-#' @param gff Annotation information for this genome.
-#' @param goids_df Set of GOids, as before in the format ID/GO.
-#' @param universe_merge Column from which to create the universe of genes.
-#' @param second_merge_try If the first universe merge fails, try this.
-#' @param species Genbank organism to use.
-#' @param pcutoff Pvalue cutoff for deciding significant.
-#' @param direction Under or over represented categories.
-#' @param conditional Perform a conditional search?
-#' @param categorysize Category size below which to not include groups.
-#' @param gff_type Gff column to use for creating the universe.
-#' @param ... More parameters!
-#' @return List of returns from GSEABase, Category, etc.
+#' @param sig_genes  Input list of differentially expressed genes.
+#' @param gff  Annotation information for this genome.
+#' @param goids_df  Set of GOids, as before in the format ID/GO.
+#' @param universe_merge  Column from which to create the universe of genes.
+#' @param second_merge_try  If the first universe merge fails, try this.
+#' @param species  Genbank organism to use.
+#' @param pcutoff  Pvalue cutoff for deciding significant.
+#' @param direction  Under or over represented categories.
+#' @param conditional  Perform a conditional search?
+#' @param categorysize  Category size below which to not include groups.
+#' @param gff_type  Gff column to use for creating the universe.
+#' @param excel  Print the results to an excel file?
+#' @param ...  More parameters!
+#' @return  List of returns from GSEABase, Category, etc.
 #' @seealso \pkg{GSEABase} \pkg{Category}
 #' @examples
 #' \dontrun{

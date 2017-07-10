@@ -9,7 +9,7 @@ compare_results_de(first, second)
 \arguments{
 \item{first}{One invocation of combine_de_tables to examine.}
 
-\item{first}{A second invocation of combine_de_tables to examine.}
+\item{second}{A second invocation of combine_de_tables to examine.}
 }
 \value{
 A list of compared columns, tables, and methods.

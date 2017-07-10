@@ -17,6 +17,7 @@
 #' @param densities Densities, yeah, the densities...
 #' @param pval_plots Include pvalue plots of the results a la clusterprofiler?
 #' @param parallel  Perform some operations in parallel to speed this up?
+#' @param excel  Print the results to an excel file?
 #' @param ... Other options which I do not remember right now!
 #' @return Big list including the various outputs from topgo
 #' @seealso \pkg{topGO}
@@ -325,7 +326,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", goids_df=NULL,
 
     if (!is.null(excel)) {
         message(paste0("Writing data to: ", excel, "."))
-        excel_ret <- sm(write_topgo_data(return_list, excel=excel))
+        excel_ret <- sm(write_topgo_data(information, excel=excel))
     }
     return(information)
 }

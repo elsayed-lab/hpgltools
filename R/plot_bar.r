@@ -80,7 +80,7 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
 #' The function expt_exclude_genes() removes some portion of the original reads.
 #' This function will make it possible to see what is left.
 #'
-#' @param input Dataframe of the material remaining, usually expt$summary_table
+#' @param data Dataframe of the material remaining, usually expt$summary_table
 #' @param row  Row name to plot.
 #' @param condition vector of sample condition names.
 #' @param colors Color scheme if the data is not an expt.

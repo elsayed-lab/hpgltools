@@ -14,6 +14,8 @@ simple_clusterprofiler(sig_genes, de_table = NULL, orgdb = "org.Dm.eg.db",
 \arguments{
 \item{sig_genes}{Dataframe of genes deemed 'significant.'}
 
+\item{de_table}{Dataframe of all genes in the analysis, primarily for gse analyses.}
+
 \item{orgdb}{Name of the orgDb used for gathering annotation data.}
 
 \item{orgdb_from}{Name of a key in the orgdb used to cross reference to entrez IDs.}
@@ -28,6 +30,8 @@ simple_clusterprofiler(sig_genes, de_table = NULL, orgdb = "org.Dm.eg.db",
 
 \item{fc_column}{When extracting vectors of all genes, what column should be used?}
 
+\item{second_fc_column}{When extracting vectors of all genes, what column should be tried the second time around?}
+
 \item{updown}{Include the less than expected ontologies?}
 
 \item{permutations}{How many permutations for GSEA-ish analyses?}
@@ -38,11 +42,11 @@ simple_clusterprofiler(sig_genes, de_table = NULL, orgdb = "org.Dm.eg.db",
 
 \item{kegg_organism}{Choose the 3 letter KEGG organism name here.}
 
+\item{do_gsea}{Perform gsea searches?}
+
 \item{categories}{How many categories should be plotted in bar/dot plots?}
 
-\item{all_genes}{Dataframe of all genes in the analysis, primarily for gse analyses.}
-
-\item{parallel}{Perform slow operations in parallel?}
+\item{excel}{Print the results to an excel file?}
 }
 \value{
 a list

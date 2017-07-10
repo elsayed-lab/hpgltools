@@ -17,6 +17,7 @@
 #' @param pseudo_gsea  Is the data in a ranked order by significance?
 #' @param id_col  Which column in the table should be used for gene ID crossreferencing?  gProfiler
 #'  uses Ensembl ids.  So if you have a table of entrez or whatever, translate it!
+#' @param excel  Print the results to an excel file?
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @seealso \pkg{gProfiler}
 #' @examples

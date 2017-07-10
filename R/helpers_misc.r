@@ -348,6 +348,7 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #'
 #' @param directory  Directory to save the Rdata file.
 #' @param backups  How many revisions?
+#' @param cpus  How many cpus to use for the xz call.
 #' @param filename  Choose a filename.
 #' @return Command string used to save the global environment.
 #' @seealso \code{\link{save}} \code{\link{pipe}}

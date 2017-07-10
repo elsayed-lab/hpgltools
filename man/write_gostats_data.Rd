@@ -9,6 +9,8 @@ write_gostats_data(gostats_result, excel = "excel/gostats.xlsx", wb = NULL,
   width = 10, ...)
 }
 \arguments{
+\item{gostats_result}{A set of results from simple_gostats().}
+
 \item{excel}{An excel file to which to write some pretty results.}
 
 \item{wb}{Workbook object to write to.}
@@ -24,8 +26,6 @@ write_gostats_data(gostats_result, excel = "excel/gostats.xlsx", wb = NULL,
 \item{width}{and their width.}
 
 \item{...}{Extra arguments are passed to arglist.}
-
-\item{gostats}{A set of results from simple_gostats().}
 }
 \value{
 The result from openxlsx in a prettyified xlsx file.

@@ -729,7 +729,7 @@ the state of the count table and ensure that it is in integer counts.")
 #' Tested in 29de_shared.R
 #'
 #' @param first  One invocation of combine_de_tables to examine.
-#' @param first  A second invocation of combine_de_tables to examine.
+#' @param second  A second invocation of combine_de_tables to examine.
 #' @return  A list of compared columns, tables, and methods.
 #' @export
 compare_results_de <- function(first, second) {

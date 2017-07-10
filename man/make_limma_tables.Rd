@@ -8,6 +8,8 @@ make_limma_tables(fit = NULL, adjust = "BH", n = 0, coef = NULL,
   annot_df = NULL, intercept = TRUE)
 }
 \arguments{
+\item{fit}{Result from lmFit()/eBayes()}
+
 \item{adjust}{Pvalue adjustment chosen.}
 
 \item{n}{Number of entries to report, 0 says do them all.}
@@ -16,7 +18,7 @@ make_limma_tables(fit = NULL, adjust = "BH", n = 0, coef = NULL,
 
 \item{annot_df}{Optional data frame including annotation information to include with the tables.}
 
-\item{data}{Output from eBayes().}
+\item{intercept}{Intercept model?}
 }
 \value{
 List of data frames comprising the toptable output for each coefficient, I also added a

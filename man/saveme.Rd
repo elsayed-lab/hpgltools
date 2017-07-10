@@ -12,6 +12,8 @@ saveme(directory = "savefiles", backups = 2, cpus = 6,
 
 \item{backups}{How many revisions?}
 
+\item{cpus}{How many cpus to use for the xz call.}
+
 \item{filename}{Choose a filename.}
 }
 \value{

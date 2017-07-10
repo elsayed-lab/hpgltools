@@ -526,8 +526,8 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
         message(paste0("Limma step 5/6: Running eBayes with robust=",
                        limma_robust, " and trend=", limma_trend, "."))
         if (isTRUE(one_replicate)) {
-            all_pairwise_comparisons <- all_pairwise_fits[["coefficients"]]
-            all_identity_comparisons <- all_pairwise_fits[["coefficients"]]
+            all_pairwise_comparisons <- pairwise_fits[["coefficients"]]
+            all_identity_comparisons <- pairwise_fits[["coefficients"]]
         } else {
             all_pairwise_comparisons <- limma::eBayes(pairwise_fits,
                                                       robust=limma_robust,
@@ -657,11 +657,12 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 #' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
 #' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
 #'
-#' @param data Output from eBayes().
-#' @param adjust Pvalue adjustment chosen.
-#' @param n Number of entries to report, 0 says do them all.
-#' @param coef Which coefficients/contrasts to report, NULL says do them all.
-#' @param annot_df Optional data frame including annotation information to include with the tables.
+#' @param fit  Result from lmFit()/eBayes()
+#' @param adjust  Pvalue adjustment chosen.
+#' @param n  Number of entries to report, 0 says do them all.
+#' @param coef  Which coefficients/contrasts to report, NULL says do them all.
+#' @param annot_df  Optional data frame including annotation information to include with the tables.
+#' @param intercept  Intercept model?
 #' @return List of data frames comprising the toptable output for each coefficient, I also added a
 #'  qvalue entry to these toptable() outputs.
 #' @seealso \pkg{limma} \pkg{qvalue}
@@ -672,7 +673,8 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 #'  table = make_limma_tables(finished_comparison, adjust="fdr")
 #' }
 #' @export
-make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL, annot_df=NULL, intercept=TRUE) {
+make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
+                              annot_df=NULL, intercept=TRUE) {
     ## Figure out the number of genes if not provided
     if (n == 0) {
         n <- nrow(fit[["coefficients"]])

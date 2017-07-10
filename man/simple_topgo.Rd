@@ -41,6 +41,8 @@ simple_topgo(sig_genes, goid_map = "id2go.map", goids_df = NULL,
 
 \item{parallel}{Perform some operations in parallel to speed this up?}
 
+\item{excel}{Print the results to an excel file?}
+
 \item{...}{Other options which I do not remember right now!}
 }
 \value{

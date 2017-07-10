@@ -1,4 +1,4 @@
-gather_cp_genes <- function(table, mappings, new="ORF") {
+gather_ontology_genes <- function(table, mappings, new="ORF") {
     strings <- table[["geneID"]]
     separate <- strsplit(x=strings, split="/")
     rownames(mappings) <- make.names(mappings[["ENTREZID"]], unique=TRUE)
@@ -80,10 +80,10 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     }  ## End making sure that an excel is desired.
 
     ## Pull out the relevant portions of the cp data
-    ## For this I am using the same (arbitrary) rules as in gather_cp_genes()
+    ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
     cp_mf <- cp_result[["enrich_go"]][["MF_sig"]]
     cp_mf <- cp_mf[ cp_mf[["pvalue"]] <= pval, ]
-    cp_mf_genes <- gather_cp_genes(cp_result[["enrich_go"]][["MF_sig"]], cp_result[["all_mappings"]])
+    cp_mf_genes <- gather_ontology_genes(cp_result[["enrich_go"]][["MF_sig"]], cp_result[["all_mappings"]])
     cp_mf[["named_genes"]] <- cp_mf_genes
     mf_idx <- order(cp_mf[["qvalue"]])
     cp_mf <- cp_mf[mf_idx, ]
@@ -91,7 +91,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
 
     cp_bp <- cp_result[["enrich_go"]][["BP_sig"]]
     cp_bp <- cp_bp[ cp_bp[["pvalue"]] <= pval, ]
-    cp_bp_genes <- gather_cp_genes(cp_result[["enrich_go"]][["BP_sig"]], cp_result[["all_mappings"]])
+    cp_bp_genes <- gather_ontology_genes(cp_result[["enrich_go"]][["BP_sig"]], cp_result[["all_mappings"]])
     cp_bp[["named_genes"]] <- cp_bp_genes
     bp_idx <- order(cp_bp[["qvalue"]])
     cp_bp <- cp_bp[bp_idx, ]
@@ -99,7 +99,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
 
     cp_cc <- cp_result[["enrich_go"]][["CC_sig"]]
     cp_cc <- cp_cc[ cp_cc[["pvalue"]] <= pval, ]
-    cp_cc_genes <- gather_cp_genes(cp_result[["enrich_go"]][["CC_sig"]], cp_result[["all_mappings"]])
+    cp_cc_genes <- gather_ontology_genes(cp_result[["enrich_go"]][["CC_sig"]], cp_result[["all_mappings"]])
     cp_cc[["named_genes"]] <- cp_cc_genes
     cc_idx <- order(cp_cc[["qvalue"]])
     cp_cc <- cp_cc[cc_idx, ]
@@ -227,16 +227,16 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
 #'
 #' It is my intention to make a function like this for each ontology tool in my repetoire
 #'
-#' @param goseq A set of results from simple_goseq().
-#' @param excel An excel file to which to write some pretty results.
-#' @param wb  Workbook object to write to.
+#' @param goseq_result  A set of results from simple_goseq().
+#' @param excel  An excel file to which to write some pretty results.
+#' @param wb   Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
-#' @param pval Choose a cutoff for reporting by p-value.
-#' @param add_plots Include some pvalue plots in the excel output?
+#' @param pval  Choose a cutoff for reporting by p-value.
+#' @param add_plots  Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
-#' @param width and their width.
-#' @param ... Extra arguments are passed to arglist.
-#' @return The result from openxlsx in a prettyified xlsx file.
+#' @param width  and their width.
+#' @param ...  Extra arguments are passed to arglist.
+#' @return  The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{goseq}
 #' @export
 write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, add_trees=TRUE,
@@ -305,10 +305,10 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     }
 
     ## Pull out the relevant portions of the goseq data
-    ## For this I am using the same (arbitrary) rules as in gather_goseq_genes()
+    ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
     goseq_mf <- goseq_result[["mf_subset"]]
     goseq_mf <- goseq_mf[ goseq_mf[["over_represented_pvalue"]] <= pval, ]
-    goseq_mf_genes <- gather_goseq_genes(goseq_result, ontology="MF", pval=pval)
+    goseq_mf_genes <- gather_ontology_genes(goseq_result, ontology="MF", pval=pval)
     mf_genes <- as.data.frame(goseq_mf_genes)
     rownames(mf_genes) <- rownames(goseq_mf_genes)
     goseq_mf <- merge(goseq_mf, mf_genes, by="row.names")
@@ -319,7 +319,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
 
     goseq_bp <- goseq_result[["bp_subset"]]
     goseq_bp <- goseq_bp[ goseq_bp[["over_represented_pvalue"]] <= pval, ]
-    goseq_bp_genes <- gather_goseq_genes(goseq_result, ontology="BP", pval=pval)
+    goseq_bp_genes <- gather_ontology_genes(goseq_result, ontology="BP", pval=pval)
     bp_genes <- as.data.frame(goseq_bp_genes)
     rownames(bp_genes) <- rownames(goseq_bp_genes)
     goseq_bp <- merge(goseq_bp, bp_genes, by="row.names")
@@ -330,7 +330,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
 
     goseq_cc <- goseq_result[["cc_subset"]]
     goseq_cc <- goseq_cc[ goseq_cc[["over_represented_pvalue"]] <= pval, ]
-    goseq_cc_genes <- gather_goseq_genes(goseq_result, ontology="CC", pval=pval)
+    goseq_cc_genes <- gather_ontology_genes(goseq_result, ontology="CC", pval=pval)
     cc_genes <- as.data.frame(goseq_cc_genes)
     rownames(cc_genes) <- rownames(goseq_cc_genes)
     goseq_cc <- merge(goseq_cc, cc_genes, by="row.names")
@@ -431,16 +431,16 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
 #'
 #' It is my intention to make a function like this for each ontology tool in my repetoire
 #'
-#' @param gostats A set of results from simple_gostats().
-#' @param excel An excel file to which to write some pretty results.
+#' @param gostats_result  A set of results from simple_gostats().
+#' @param excel  An excel file to which to write some pretty results.
 #' @param wb  Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
-#' @param pval Choose a cutoff for reporting by p-value.
-#' @param add_plots Include some pvalue plots in the excel output?
+#' @param pval  Choose a cutoff for reporting by p-value.
+#' @param add_plots  Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
-#' @param width and their width.
-#' @param ... Extra arguments are passed to arglist.
-#' @return The result from openxlsx in a prettyified xlsx file.
+#' @param width  and their width.
+#' @param ...  Extra arguments are passed to arglist.
+#' @return  The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{gostats}
 #' @export
 write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NULL, add_trees=TRUE,
@@ -509,10 +509,10 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     }
 
     ## Pull out the relevant portions of the gostats data
-    ## For this I am using the same (arbitrary) rules as in gather_gostats_genes()
+    ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
     gostats_mf <- gostats_result[["mf_subset"]]
     gostats_mf <- gostats_mf[ gostats_mf[["over_represented_pvalue"]] <= pval, ]
-    gostats_mf_genes <- gather_gostats_genes(gostats_result, ontology="MF", pval=pval)
+    gostats_mf_genes <- gather_ontology_genes(gostats_result, ontology="MF", pval=pval)
     mf_genes <- as.data.frame(gostats_mf_genes)
     rownames(mf_genes) <- rownames(gostats_mf_genes)
     gostats_mf <- merge(gostats_mf, mf_genes, by="row.names")
@@ -523,7 +523,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 
     gostats_bp <- gostats_result[["bp_subset"]]
     gostats_bp <- gostats_bp[ gostats_bp[["over_represented_pvalue"]] <= pval, ]
-    gostats_bp_genes <- gather_gostats_genes(gostats_result, ontology="BP", pval=pval)
+    gostats_bp_genes <- gather_ontology_genes(gostats_result, ontology="BP", pval=pval)
     bp_genes <- as.data.frame(gostats_bp_genes)
     rownames(bp_genes) <- rownames(gostats_bp_genes)
     gostats_bp <- merge(gostats_bp, bp_genes, by="row.names")
@@ -534,7 +534,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 
     gostats_cc <- gostats_result[["cc_subset"]]
     gostats_cc <- gostats_cc[ gostats_cc[["over_represented_pvalue"]] <= pval, ]
-    gostats_cc_genes <- gather_gostats_genes(gostats_result, ontology="CC", pval=pval)
+    gostats_cc_genes <- gather_ontology_genes(gostats_result, ontology="CC", pval=pval)
     cc_genes <- as.data.frame(gostats_cc_genes)
     rownames(cc_genes) <- rownames(gostats_cc_genes)
     gostats_cc <- merge(gostats_cc, cc_genes, by="row.names")
@@ -943,15 +943,15 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
 #'
 #' It is my intention to make a function like this for each ontology tool in my repetoire
 #'
-#' @param topgo A set of results from simple_topgo().
-#' @param excel An excel file to which to write some pretty results.
+#' @param topgo_result  A set of results from simple_topgo().
+#' @param excel  An excel file to which to write some pretty results.
 #' @param wb  Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
-#' @param pval Choose a cutoff for reporting by p-value.
-#' @param add_plots Include some pvalue plots in the excel output?
+#' @param pval  Choose a cutoff for reporting by p-value.
+#' @param add_plots  Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
-#' @param width and their width.
-#' @param ... Extra arguments are passed to arglist.
+#' @param width  and their width.
+#' @param ...  Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{topgo}
 #' @export
@@ -1017,14 +1017,14 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
 
     trees <- NULL
     if (isTRUE(add_trees)) {
-        trees <- topgo_trees(topgo_result, pval_column=pval_column)
+        trees <- topgo_trees(topgo_result)
     }
 
     ## Pull out the relevant portions of the topgo data
-    ## For this I am using the same (arbitrary) rules as in gather_topgo_genes()
+    ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
     topgo_mf <- topgo_result[["mf_subset"]]
     topgo_mf <- topgo_mf[ topgo_mf[["over_represented_pvalue"]] <= pval, ]
-    topgo_mf_genes <- gather_topgo_genes(topgo_result, ontology="MF", pval=pval)
+    topgo_mf_genes <- gather_ontology_genes(topgo_result, ontology="MF", pval=pval)
     mf_genes <- as.data.frame(topgo_mf_genes)
     rownames(mf_genes) <- rownames(topgo_mf_genes)
     topgo_mf <- merge(topgo_mf, mf_genes, by="row.names")
@@ -1035,7 +1035,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
 
     topgo_bp <- topgo_result[["bp_subset"]]
     topgo_bp <- topgo_bp[ topgo_bp[["over_represented_pvalue"]] <= pval, ]
-    topgo_bp_genes <- gather_topgo_genes(topgo_result, ontology="BP", pval=pval)
+    topgo_bp_genes <- gather_ontology_genes(topgo_result, ontology="BP", pval=pval)
     bp_genes <- as.data.frame(topgo_bp_genes)
     rownames(bp_genes) <- rownames(topgo_bp_genes)
     topgo_bp <- merge(topgo_bp, bp_genes, by="row.names")
@@ -1046,7 +1046,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
 
     topgo_cc <- topgo_result[["cc_subset"]]
     topgo_cc <- topgo_cc[ topgo_cc[["over_represented_pvalue"]] <= pval, ]
-    topgo_cc_genes <- gather_topgo_genes(topgo_result, ontology="CC", pval=pval)
+    topgo_cc_genes <- gather_ontology_genes(topgo_result, ontology="CC", pval=pval)
     cc_genes <- as.data.frame(topgo_cc_genes)
     rownames(cc_genes) <- rownames(topgo_cc_genes)
     topgo_cc <- merge(topgo_cc, cc_genes, by="row.names")

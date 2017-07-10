@@ -9,6 +9,8 @@ write_goseq_data(goseq_result, excel = "excel/goseq.xlsx", wb = NULL,
   width = 10, ...)
 }
 \arguments{
+\item{goseq_result}{A set of results from simple_goseq().}
+
 \item{excel}{An excel file to which to write some pretty results.}
 
 \item{wb}{Workbook object to write to.}
@@ -24,8 +26,6 @@ write_goseq_data(goseq_result, excel = "excel/goseq.xlsx", wb = NULL,
 \item{width}{and their width.}
 
 \item{...}{Extra arguments are passed to arglist.}
-
-\item{goseq}{A set of results from simple_goseq().}
 }
 \value{
 The result from openxlsx in a prettyified xlsx file.

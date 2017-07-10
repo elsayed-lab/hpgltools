@@ -29,9 +29,12 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #'
 #' variancePartition is the newest toy introduced by Hector.
 #'
+#' Tested in 19varpart.R.
+#'
 #' @param expt  Some data
 #' @param predictor  Non-categorical predictor factor with which to begin the model.
 #' @param factors  Character list of columns in the experiment design to query
+#' @param chosen_factor  When checking for sane 'batches', what column to extract from the design?
 #' @param cpus  Number cpus to use
 #' @param genes  Number of genes to count.
 #' @param parallel  use doParallel?
@@ -39,6 +42,7 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @seealso \pkg{doParallel} \pkg{variancePartition}
 #' @export
 varpart <- function(expt, predictor="condition", factors=c("batch"),
+                    chosen_factor="batch",
                     cpus=6, genes=40, parallel=TRUE) {
     cl <- NULL
     para <- NULL
@@ -46,10 +50,10 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
         cl <- parallel::makeCluster(cpus)
         para <- doParallel::registerDoParallel(cl)
     }
-    num_batches <- length(levels(as.factor(expt[["batches"]])))
+    num_batches <- length(levels(as.factor(Biobase::fData(expt[["expressionset"]])[[chosen_factor]])))
     if (num_batches == 1) {
         message("varpart sees only 1 batch, adjusting the model accordingly.")
-        factors <- factors[!grepl(pattern="batch", x=factors)]
+        factors <- factors[!grepl(pattern=chosen_factor, x=factors)]
     }
     model_string <- "~ "
     if (!is.null(predictor)) {
@@ -63,7 +67,7 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
     my_model <- as.formula(model_string)
     norm <- sm(normalize_expt(expt, filter=TRUE))
     data <- Biobase::exprs(norm[["expressionset"]])
-    design <- expt[["design"]]
+    design <- Biobase::fData(expt[["expressionset"]])
     message("Fitting the expressionset to the model, this is slow.")
     message("(Eg. Take the projected run time and mulitply by 3-6 and round up.)")
     ##my_fit <- try(variancePartition::fitVarPartModel(data, my_model, design))

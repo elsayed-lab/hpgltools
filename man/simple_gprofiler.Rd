@@ -39,6 +39,8 @@ simple_gprofiler(sig_genes, species = "hsapiens", first_col = "logFC",
 
 \item{id_col}{Which column in the table should be used for gene ID crossreferencing?  gProfiler
 uses Ensembl ids.  So if you have a table of entrez or whatever, translate it!}
+
+\item{excel}{Print the results to an excel file?}
 }
 \value{
 a list of results for go, kegg, reactome, and a few more.

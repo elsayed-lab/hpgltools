@@ -33,6 +33,8 @@ simple_gostats(sig_genes, gff, goids_df, universe_merge = "id",
 
 \item{gff_type}{Gff column to use for creating the universe.}
 
+\item{excel}{Print the results to an excel file?}
+
 \item{...}{More parameters!}
 }
 \value{

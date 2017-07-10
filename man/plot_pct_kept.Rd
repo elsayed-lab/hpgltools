@@ -8,6 +8,8 @@ plot_pct_kept(data, row = "pct_kept", condition = NULL, colors = NULL,
   names = NULL, text = TRUE, title = NULL, yscale = NULL, ...)
 }
 \arguments{
+\item{data}{Dataframe of the material remaining, usually expt$summary_table}
+
 \item{row}{Row name to plot.}
 
 \item{condition}{vector of sample condition names.}
@@ -23,8 +25,6 @@ plot_pct_kept(data, row = "pct_kept", condition = NULL, colors = NULL,
 \item{yscale}{Whether or not to log10 the y-axis.}
 
 \item{...}{More parameters for your good time!}
-
-\item{input}{Dataframe of the material remaining, usually expt$summary_table}
 }
 \value{
 a ggplot2 bar plot of every sample's size

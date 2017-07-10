@@ -35,6 +35,8 @@ simple_goseq(sig_genes, go_db = NULL, length_db = NULL, doplot = TRUE,
 
 \item{bioc_length_db}{Source of gene lengths?}
 
+\item{excel}{Print the results to an excel file?}
+
 \item{...}{Extra parameters which I do not recall}
 }
 \value{

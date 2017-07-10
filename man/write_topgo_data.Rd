@@ -9,6 +9,8 @@ write_topgo_data(topgo_result, excel = "excel/topgo.xlsx", wb = NULL,
   width = 10, ...)
 }
 \arguments{
+\item{topgo_result}{A set of results from simple_topgo().}
+
 \item{excel}{An excel file to which to write some pretty results.}
 
 \item{wb}{Workbook object to write to.}
@@ -24,8 +26,6 @@ write_topgo_data(topgo_result, excel = "excel/topgo.xlsx", wb = NULL,
 \item{width}{and their width.}
 
 \item{...}{Extra arguments are passed to arglist.}
-
-\item{topgo}{A set of results from simple_topgo().}
 }
 \value{
 The result from openxlsx in a prettyified xlsx file.

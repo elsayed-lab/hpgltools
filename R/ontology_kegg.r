@@ -676,8 +676,17 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
 }
 
 #' A couple functions from KEGGgraph that have broken
+#'
+#' Some material in KEGGREST is borken.
+#'
+#' @param pathwayid  The path to query.
+#' @param organism  Which organism to query?
+#' @param destfile  File to which to download.
+#' @param method  Which download method to use?
+#' @param hostname  Host to download from (this is what is broken.)
+#' @param ...  Arglist!
 #' @export
-myretrieveKGML <- function(pathwayid, organism, destfile, method = "wget",
+myretrieveKGML <- function(pathwayid, organism, destfile, method="wget",
                            hostname="http://www.kegg.jp", ...) {
     kgml <- mygetKGMLurl(pathwayid=pathwayid, organism=organism, hostname=hostname)
     referer <- paste0(hostname, "/kegg-bin/show_pathway?org_name=", organism, "&mapno=", pathwayid, "&mapscale=&show_description=hide")

@@ -7,7 +7,7 @@
 #' previous 'simple_clusterprofiler()' but using these new toys.
 #'
 #' @param sig_genes  Dataframe of genes deemed 'significant.'
-#' @param all_genes  Dataframe of all genes in the analysis, primarily for gse analyses.
+#' @param de_table  Dataframe of all genes in the analysis, primarily for gse analyses.
 #' @param orgdb  Name of the orgDb used for gathering annotation data.
 #' @param orgdb_from  Name of a key in the orgdb used to cross reference to entrez IDs.
 #' @param orgdb_to  List of keys to grab from the orgdb for cross referencing ontologies.
@@ -15,13 +15,15 @@
 #' @param pcutoff  P-value cutoff for 'significant' analyses.
 #' @param qcutoff  Q-value cutoff for 'significant' analyses.
 #' @param fc_column  When extracting vectors of all genes, what column should be used?
+#' @param second_fc_column  When extracting vectors of all genes, what column should be tried the second time around?
 #' @param updown  Include the less than expected ontologies?
 #' @param permutations  How many permutations for GSEA-ish analyses?
 #' @param min_groupsize  Minimum size of an ontology before it is included.
 #' @param kegg_prefix  Many KEGG ids need a prefix before they will cross reference.
 #' @param kegg_organism  Choose the 3 letter KEGG organism name here.
+#' @param do_gsea  Perform gsea searches?
 #' @param categories  How many categories should be plotted in bar/dot plots?
-#' @param parallel  Perform slow operations in parallel?
+#' @param excel  Print the results to an excel file?
 #' @return a list
 #' @seealso \pkg{clusterProfiler}
 #' @examples
