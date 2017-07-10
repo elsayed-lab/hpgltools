@@ -15,8 +15,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     pasilla_expt <- pasilla[["expt"]]
 
     message("Friendly warning, this is slow.")
-    pasilla_varpart <- sm(varpart(pasilla_expt, predictor=NULL,
-                                  factors=c("condition", "batch")))
+    pasilla_varpart <- varpart(pasilla_expt, predictor=NULL, factors=c("condition", "batch"))
 
     ## Grab the model and see if it survived.
     expected <- "(1 | condition) + (1 | batch)"
