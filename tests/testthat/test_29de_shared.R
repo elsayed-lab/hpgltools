@@ -19,10 +19,10 @@ load("de_basic.rda", envir=basic)
 ## The following lines should not be needed any longer.
 normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant",
                                      convert="cbcbcpm", filter=TRUE))
-hpgl_result <- sm(all_pairwise(normalized_expt, model_batch=TRUE, which_voom="hpgl",
-                               edger_method="short"))
-hpgl_sva_result <- sm(all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",
-                                   limma_method="robust", edger_method="short"))
+hpgl_result <- all_pairwise(normalized_expt, model_batch=TRUE, which_voom="hpgl",
+                            edger_method="short", parallel=FALSE)
+hpgl_sva_result <- all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",
+                                limma_method="robust", edger_method="short", parallel=FALSE)
 
 expected <- deseq[["hpgl_deseq"]][["all_tables"]][["untreated_vs_treated"]]
 actual <- hpgl_result[["deseq"]][["all_tables"]][["untreated_vs_treated"]]
@@ -58,10 +58,10 @@ test_that("Are the comparisons between DE tools sufficiently similar? (limma/edg
     expect_gt(le, 0.98)
 })
 test_that("Are the comparisons between DE tools sufficiently similar? (limma/deseq)", {
-    expect_gt(ld, 0.96)
+    expect_gt(ld, 0.98)
 })
 test_that("Are the comparisons between DE tools sufficiently similar? (edger/deseq)", {
-    expect_gt(ed, 0.75)
+    expect_gt(ed, 0.97)
 })
 test_that("Are the comparisons between DE tools sufficiently similar? (limma/basic)", {
     expect_gt(lb, 0.92)
@@ -70,7 +70,7 @@ test_that("Are the comparisons between DE tools sufficiently similar? (edger/bas
     expect_gt(eb, 0.92)
 })
 test_that("Are the comparisons between DE tools sufficiently similar? (deseq/basic)", {
-    expect_gt(db, 0.89)
+    expect_gt(db, 0.92)
 })
 
 combined_table <- sm(combine_de_tables(hpgl_result, excel=FALSE))
@@ -107,13 +107,13 @@ test_that("Are the limma significant ups expected?", {
     expect_equal(expected, actual)
 })
 
-expected <- 66
+expected <- 105
 actual <- nrow(sig_tables[["deseq"]][["ups"]][[1]])
 test_that("Are the deseq significant ups expected?", {
     expect_equal(expected, actual)
 })
 
-expected <- 51
+expected <- 100
 actual <- nrow(sig_tables[["deseq"]][["downs"]][[1]])
 test_that("Are the deseq significant downs expected?", {
     expect_equal(expected, actual)
@@ -205,7 +205,7 @@ test_that("Is the number of significant genes as expected? (limma)", {
 })
 
 actual <- dim(significant_excel[["deseq"]][["ups"]][["treatment"]])
-expected <- c(51, 43)
+expected <- c(100, 43)
 test_that("Is the number of significant genes as expected? (deseq)", {
     expect_equal(expected, actual)
 })
@@ -298,13 +298,13 @@ test_that("Do edger with combat and sva agree vis a vis logfc?", {
 
 ## See if the intersection between limma, deseq, and edger is decent.
 test_intersect <- sm(intersect_significant(combined_sva, excel=NULL))
-expected <- 56
+expected <- 79
 actual <- nrow(test_intersect[["up_treatment"]][["led"]])
 test_that("Do we get the expected number of agreed upon significant genes between edger/deseq/limma?", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["down_treatment"]][["led"]])
-expected <- 65
+expected <- 87
 test_that("Ibid, but in the down direction?", {
     expect_equal(actual, expected)
 })
@@ -313,7 +313,7 @@ actual <- sum(nrow(test_intersect[["up_treatment"]][["l"]]) +
               nrow(test_intersect[["up_treatment"]][["d"]]))
 expected <- 5
 test_that("Are there very few genes observed without the others?", {
-    expect_lt(actual, expected)
+    expect_equal(actual, expected)
 })
 actual <- sum(nrow(test_intersect[["down_treatment"]][["l"]]) +
               nrow(test_intersect[["down_treatment"]][["e"]]) +
@@ -323,12 +323,12 @@ test_that("Ibid, but down?", {
     expect_lt(actual, expected)
 })
 actual <- nrow(test_intersect[["up_treatment"]][["le"]])
-expected <- 23
+expected <- 0
 test_that("Do limma and edger have some genes in common? (up)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["down_treatment"]][["le"]])
-expected <- 22
+expected <- 0
 test_that("Do limma and edger have some genes in common? (down)", {
     expect_equal(actual, expected)
 })
@@ -356,3 +356,4 @@ test_that("Do edger and deseq have some genes in common? (down)", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 29de_shared.R in ", elapsed,  " seconds."))
+tt <- clear_session()

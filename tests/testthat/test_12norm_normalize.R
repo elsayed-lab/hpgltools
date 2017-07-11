@@ -105,3 +105,4 @@ test_that("RLE normalization gives expected values?", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 12norm_normalize.R in ", elapsed, " seconds."))
+tt <- clear_session()

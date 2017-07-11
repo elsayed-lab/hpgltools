@@ -139,7 +139,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         message("DESeq2 step 1/5: Including batch and condition in the deseq model.")
         ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
         ## conditions and batch in this context is information taken from pData()
-        model_string <- "~ batch + condition"
+        ##model_string <- "~ batch + condition"
+        model_string <- model_choice[["chosen_string"]]
         column_data[["condition"]] <- as.factor(column_data[["condition"]])
         column_data[["batch"]] <- as.factor(column_data[["batch"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
@@ -148,7 +149,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     } else if (isTRUE(model_batch)) {
         message("DESeq2 step 1/5: Including only batch in the deseq model.")
-        model_string <- "~ batch "
+        ##model_string <- "~ batch "
+        model_string <- model_choice[["chosen_string"]]
         column_data[["batch"]] <- as.factor(column_data[["batch"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=column_data,
@@ -157,7 +159,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     } else if (class(model_batch) == "matrix") {
         message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
         ##model_string <- "~ condition"
-        cond_model_string <- "~ condition"
+        ##cond_model_string <- "~ condition"
+        cond_model_string <- model_choice[["chosen_string"]]
         column_data[["condition"]] <- as.factor(column_data[["condition"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=column_data,
@@ -170,7 +173,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         rm(new_dataset)
     } else {
         message("DESeq2 step 1/5: Including only condition in the deseq model.")
-        model_string <- "~ condition"
+        model_string <- model_choice[["chosen_string"]]
+        ##model_string <- "~ condition"
         column_data[["condition"]] <- as.factor(column_data[["condition"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=column_data,
@@ -178,16 +182,11 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     }
 
-    message("Plotting dispersions.")
-    dispersions <- sm(try(DESeq2::plotDispEsts(dataset), silent=TRUE))
-    dispersion_plot <- NULL
-    if (class(dispersions)[[1]] != "try-error") {
-        dispersion_plot <- grDevices::recordPlot()
-    }
     deseq_run <- NULL
+    chosen_beta <- !model_intercept
     if (deseq_method == "short") {
         message("DESeq steps 2-4 in one shot.")
-        deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric"), silent=TRUE)
+        deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric", betaPrior=chosen_beta), silent=TRUE)
         if (class(deseq_run) == "try-error") {
             message("A fitType of 'parametric' failed for this data, trying 'mean'.")
             deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"), silent=TRUE)
@@ -230,8 +229,16 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
         message("DESeq2 step 4/5: nbinomWaldTest.")
         ## deseq_run <- DESeq2::DESeq(deseq_disp)
-        deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, quiet=TRUE)
+        deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior=chosen_beta, quiet=TRUE)
     }
+
+    message("Plotting dispersions.")
+    dispersions <- sm(try(DESeq2::plotDispEsts(deseq_run), silent=TRUE))
+    dispersion_plot <- NULL
+    if (class(dispersions)[[1]] != "try-error") {
+        dispersion_plot <- grDevices::recordPlot()
+    }
+
     ## possible options:  betaPrior=TRUE, betaPriorVar, modelMatrix=NULL
     ## modelMatrixType, maxit=100, useOptim=TRUE useT=FALSE df useQR=TRUE
     ## deseq_run = DESeq2::nbinomLRT(deseq_disp)
@@ -281,17 +288,21 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         ## denominator_name = paste0("condition", denominator)  ## maybe needed in 6 lines
     }  ## End for each c
     ## Now that we finished the contrasts, fill in the coefficient list with each set of values
-    for (c in 1:(length(condition_levels))) {
-        coef <- condition_levels[c]
-        coef_name <- paste0("condition", coef)
-        test_result <- try(DESeq2::results(deseq_run,
-                                           contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
-        if (class(test_result) == "try-error") {
-            coefficient_list[[coef]] <- NULL
-        } else {
-            coefficient_list[[coef]] <- as.data.frame(test_result)
-        }
-    }
+    ##for (c in 1:(length(condition_levels))) {
+    ##    coef <- condition_levels[c]
+    ##    coef_name <- paste0("condition", coef)
+    ##    test_result <- try(DESeq2::results(deseq_run,
+    ##                                       contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
+    ##    if (class(test_result) == "try-error") {
+    ##        coefficient_list[[coef]] <- NULL
+    ##    } else {
+    ##        coefficient_list[[coef]] <- as.data.frame(test_result)
+    ##    }
+    ##}
+    coefficient_list <- coef(deseq_run)
+    colnames(coefficient_list) <- gsub(pattern="^condition", replacement="", x=colnames(coefficient_list))
+    colnames(coefficient_list) <- gsub(pattern="^batch", replacement="", x=colnames(coefficient_list))
+
     ret_list <- list(
         "model_string" = model_string,
         "run" = deseq_run,

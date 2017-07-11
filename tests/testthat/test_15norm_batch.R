@@ -117,3 +117,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 15norm_batch.R in ", elapsed,  " seconds."))
+tt <- clear_session()

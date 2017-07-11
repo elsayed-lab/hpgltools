@@ -1,3 +1,5 @@
+clear_session()
+rm(list=ls(all=TRUE))
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
@@ -10,6 +12,8 @@ dmel_ontologies <- sm(load_biomart_go(species="dmelanogaster"))
 ## Get the annotations ready to be recast as a gff file.
 dmel_annotations$strand <- ifelse(dmel_annotations$strand == "1", "+", "-")
 ## Then make them into a granges object
+## WTF is with 'unable to find an inherited method for function 'seqinfo' for signature "GRanges". ??
+## Why is it that if I start with a fresh R session, this works fine!?!?!?
 dmel_granges <- GenomicRanges::makeGRangesFromDataFrame(dmel_annotations, keep.extra.columns=TRUE)
 ## I got a weird error when the column was Type and not type, I suspect though that this line is not needed.
 dmel_granges$type <- dmel_annotations$Type
@@ -82,7 +86,7 @@ test_that("Do we get a consistent top set of z-scored up genes?", {
 })
 
 save(list=ls(), file="gsea_siggenes.rda")
-
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 51gsea_siggenes.R in ", elapsed,  " seconds."))
+tt <- clear_session()

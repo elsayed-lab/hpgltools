@@ -118,3 +118,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 18norm_surrogates.R in ", elapsed,  " seconds."))
+tt <- clear_session()

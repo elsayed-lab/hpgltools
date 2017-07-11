@@ -734,7 +734,7 @@ the state of the count table and ensure that it is in integer counts.")
 #' @export
 compare_results_de <- function(first, second) {
     result <- list()
-    comparisons <- c("logfc", "p", "adjp", "adjp_fdr")
+    comparisons <- c("logfc", "p", "adjp")
     methods <- c("limma", "deseq", "edger")
     for (method in methods) {
         result[[method]] <- list()

@@ -126,3 +126,4 @@ test_that("Is the PCA PC2 as expected?", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 03graph_metrics.R in ", elapsed, " seconds."))
+tt <- clear_session()

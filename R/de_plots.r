@@ -160,18 +160,6 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
         output <- output[[type]]
     }
 
-    ## qlimit <- 0.1
-    ## if (!is.null(arglist[["qlimit"]])) {
-    ##     qlimit <- arglist[["qlimit"]]
-    ## }
-    ## fc_column <- paste0(type, "_logfc")
-    ## if (!is.null(arglist[["fc_column"]])) {
-    ##     fc_column <- arglist[["fc_column"]]
-    ## }
-    ## p_column <- paste0(type, "_adjp")
-    ## if (!is.null(arglist[["p_column"]])) {
-    ##     p_column <- arglist[["p_column"]]
-    ## }
     gvis_filename <- NULL
     gvis_trendline <- TRUE
     tooltip_data <- NULL
@@ -197,7 +185,8 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
         coefficients <- output[["identity_comparisons"]][["coefficients"]]
         thenames <- colnames(coefficients)
     } else if (type == "deseq") {
-        thenames <- names(output[["coefficients"]])
+        coefficients <- as.data.frame(output[["coefficients"]])
+        thenames <- colnames(output[["coefficients"]])
     } else if (type == "basic") {
         thenames <- names(output[["conditions_table"]])
     } else {
@@ -230,19 +219,20 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
         coefficient_df <- output[["pairwise_comparisons"]][["coefficients"]]
         coefficient_df <- coefficients[, c(x, y)]
     } else if (type == "deseq") {
-        first_df <- output[["coefficients"]][[xname]]
-        first_df[["delta"]] <- log2(as.numeric(first_df[["baseMean"]])) + first_df[["log2FoldChange"]]
-        second_df <- output[["coefficients"]][[yname]]
-        second_df[["delta"]] <- log2(as.numeric(second_df[["baseMean"]])) + second_df[["log2FoldChange"]]
-        first_col <- first_df[, c("baseMean", "log2FoldChange", "delta")]
-        colnames(first_col) <- c("mean.1", "fc.1", xname)
-        second_col <- second_df[, c("baseMean", "log2FoldChange", "delta")]
-        colnames(second_col) <- c("mean.2", "fc.2", yname)
-        coefficient_df <- merge(first_col, second_col, by="row.names")
-        rownames(coefficient_df) <- coefficient_df[["Row.names"]]
-        coefficient_df <- coefficient_df[-1]
-        coefficient_df <- coefficient_df[, c(xname, yname)]
-        coefficient_df[is.na(coefficient_df)] <- 0
+        coefficient_df <- coefficients[, c(xname, yname)]
+        ##first_df <- output[["coefficients"]][[xname]]
+        ##first_df[["delta"]] <- log2(as.numeric(first_df[["baseMean"]])) + first_df[["log2FoldChange"]]
+        ##second_df <- output[["coefficients"]][[yname]]
+        ##second_df[["delta"]] <- log2(as.numeric(second_df[["baseMean"]])) + second_df[["log2FoldChange"]]
+        ##first_col <- first_df[, c("baseMean", "log2FoldChange", "delta")]
+        ##colnames(first_col) <- c("mean.1", "fc.1", xname)
+        ##second_col <- second_df[, c("baseMean", "log2FoldChange", "delta")]
+        ##colnames(second_col) <- c("mean.2", "fc.2", yname)
+        ##coefficient_df <- merge(first_col, second_col, by="row.names")
+        ##rownames(coefficient_df) <- coefficient_df[["Row.names"]]
+        ##coefficient_df <- coefficient_df[-1]
+        ##coefficient_df <- coefficient_df[, c(xname, yname)]
+        ##coefficient_df[is.na(coefficient_df)] <- 0
     } else if (type == "basic") {
         coefficient_df <- output[["medians"]]
         coefficient_df <- coefficient_df[, c(xname, yname)]

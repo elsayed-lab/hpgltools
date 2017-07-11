@@ -16,17 +16,17 @@ colnames(metadata) <- c("condition", "batch")
 ## Performing DESeq2 differential expression analysis as per the DESeq vignette.
 summarized <- DESeq2::DESeqDataSetFromMatrix(countData=counts,
                                              colData=metadata,
-                                             design=~ batch + condition)
-dataset <- sm(DESeq2::DESeqDataSet(se=summarized, design=~ batch + condition))
+                                             design=~ 0 + batch + condition)
+dataset <- sm(DESeq2::DESeqDataSet(se=summarized, design=~ 0 + batch + condition))
 deseq_sf <- sm(DESeq2::estimateSizeFactors(dataset))
 deseq_disp <- sm(DESeq2::estimateDispersions(deseq_sf))
-deseq_run <- sm(DESeq2::nbinomWaldTest(deseq_disp))
+deseq_run <- sm(DESeq2::nbinomWaldTest(deseq_disp, betaPrior=FALSE))
 deseq_result <- as.data.frame(DESeq2::results(deseq_run,
                                               contrast=c("condition", "treated", "untreated"),
                                               format="DataFrame"))
 
 ## Performing DESeq2 analysis using hpgltools.
-hpgl_deseq <- sm(deseq2_pairwise(pasilla_expt, model_batch=TRUE))
+hpgl_deseq <- sm(deseq2_pairwise(pasilla_expt, model_batch=TRUE, model_intercept=TRUE))
 hpgl_deseq_written <- sm(write_deseq(hpgl_deseq, excel="deseq_test.xlsx"))
 test_that("Can I write a deseq2 table?", {
     expect_true(file.exists("deseq_test.xlsx"))
@@ -82,7 +82,7 @@ test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise():
 })
 
 save(list=ls(), file="de_deseq.rda")
-
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 24de_deseq.R in ", elapsed,  " seconds."))
+tt <- clear_session()

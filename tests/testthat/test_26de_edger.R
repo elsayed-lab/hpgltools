@@ -1,6 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
+## The following library() seems to be required for glmQLFTest() to work.
+tt <- sm(library(edgeR))
 context("26de_edger.R: Does edgeR work with hpgltools?\n")
 
 pasilla <- new.env()
@@ -28,6 +30,7 @@ glmfit <- edgeR::glmQLFit(glmtagged, design=model)
 ## make it necessary to test the columns that change as a result.
 pair <- "treated - untreated"
 contr <- limma::makeContrasts(contrasts=pair, levels=model)
+## Why does this keep failing!?
 glm_result <- edgeR::glmQLFTest(glmfit, contrast=contr)
 glm_table <- as.data.frame(edgeR::topTags(glm_result, n=nrow(raw), sort.by="logFC"))
 
@@ -95,3 +98,4 @@ save(list=ls(), file="de_edger.rda")
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 26de_edger.R in ", elapsed,  " seconds."))
+tt <- clear_session()

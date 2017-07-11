@@ -15,11 +15,11 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     pasilla_expt <- pasilla[["expt"]]
 
     message("Friendly warning, this is slow.")
-    pasilla_varpart <- varpart(pasilla_expt, predictor=NULL, factors=c("condition", "batch"))
+    pasilla_varpart <- sm(varpart(pasilla_expt, predictor=NULL, factors=c("condition", "batch")))
 
     ## Grab the model and see if it survived.
     expected <- "(1 | condition) + (1 | batch)"
-    actual <- pasilla_varpart[["model_used"]][[2]]
+    actual <- as.character(pasilla_varpart[["model_used"]])[[2]]
     test_that("Does my varpart function return a sane model?", {
         expect_equal(expected, actual)
     })
@@ -35,3 +35,4 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 19varpart.R in ", elapsed,  " seconds."))
+tt <- clear_session()

@@ -414,16 +414,16 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 
                     
                 } else {  ## The data are not inverted.
-                    limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma",
+                    limma_try <- sm(try(extract_coefficient_scatter(limma, type="limma",
                                                                     loess=loess,
                                                                     x=numerator,
-                                                                    y=denominator)), silent=TRUE)
+                                                                    y=denominator)))
                     if (class(limma_try) == "list") {
                         limma_plt <- limma_try
                     } else {
                         limma_plt <- NULL
                     }
-                    limma_ma_try <- try(sm(extract_de_ma(combined, type="limma",
+                    limma_ma_try <- sm(try(extract_de_ma(combined, type="limma",
                                                          table=found_table)))
                     if (class(limma_ma_try) == "list") {
                         limma_ma_plt <- limma_ma_try
@@ -431,16 +431,16 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                         limma_ma_plt <- NULL
                     }
 
-                    edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger",
+                    edger_try <- sm(try(extract_coefficient_scatter(edger, type="edger",
                                                                     loess=loess,
                                                                     x=numerator,
-                                                                    y=denominator)), silent=TRUE)
+                                                                    y=denominator)))
                     if (class(edger_try) == "list") {
                         edger_plt <- edger_try
                     } else {
                         edger_plt <- NULL
                     }
-                    edger_ma_try <- try(sm(extract_de_ma(combined, type="edger",
+                    edger_ma_try <- sm(try(extract_de_ma(combined, type="edger",
                                                          table=found_table)))
                     if (class(edger_ma_try) == "list") {
                         edger_ma_plt <- edger_ma_try
@@ -448,16 +448,16 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                         edger_ma_plt <- NULL
                     }
 
-                    deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq",
+                    deseq_try <- sm(try(extract_coefficient_scatter(deseq, type="deseq",
                                                                     loess=loess,
                                                                     x=numerator,
-                                                                    y=denominator)), silent=TRUE)
+                                                                    y=denominator)))
                     if (class(deseq_try) == "list") {
                         deseq_plt <- deseq_try
                     } else {
                         deseq_plt <- NULL
                     }
-                    deseq_ma_try <- try(sm(extract_de_ma(combined, type="deseq",
+                    deseq_ma_try <- sm(try(extract_de_ma(combined, type="deseq",
                                                          table=found_table)))
                     if (class(deseq_ma_try) == "list") {
                         deseq_ma_plt <- deseq_ma_try
@@ -501,15 +501,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             splitted <- strsplit(x=tab, split="_vs_")
             xname <- splitted[[1]][1]
             yname <- splitted[[1]][2]
-            limma_plots[[tab]] <- extract_coefficient_scatter(limma, type="limma", loess=loess,
-                                                              x=xname, y=yname)
-            limma_ma_plots[[tab]] <- extract_de_ma(combined, type="limma", table=tab)
-            edger_plots[[tab]] <- extract_coefficient_scatter(edger, type="edger", loess=loess,
-                                                              x=xname, y=yname)
-            edger_ma_plots[[tab]] <- extract_de_ma(combined, type="edger", table=tab)
-            deseq_plots[[tab]] <- extract_coefficient_scatter(deseq, type="deseq", loess=loess,
-                                                              x=xname, y=yname)
-            deseq_ma_plots[[tab]] <- extract_de_ma(combined, type="deseq", table=tab)
+            limma_plots[[tab]] <- sm(try(extract_coefficient_scatter(limma, type="limma", loess=loess,
+                                                                     x=xname, y=yname)))
+            limma_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="limma", table=tab)))
+            edger_plots[[tab]] <- sm(try(extract_coefficient_scatter(edger, type="edger", loess=loess,
+                                                                     x=xname, y=yname)))
+            edger_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="edger", table=tab)))
+            deseq_plots[[tab]] <- sm(try(extract_coefficient_scatter(deseq, type="deseq", loess=loess,
+                                                                     x=xname, y=yname)))
+            deseq_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="deseq", table=tab)))
         }
 
         ## Or a single specific table
@@ -539,15 +539,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         table_names[[a]] <- combined[["summary"]][["table"]]
         xname <- splitted[[1]][1]
         yname <- splitted[[1]][2]
-        limma_plots[[name]] <- sm(extract_coefficient_scatter(limma, type="limma",
-                                                              loess=loess, x=xname, y=yname))
-        limma_ma_plots[[tab]] <- extract_de_ma(combined, type="limma", table=table)
-        edger_plots[[name]] <- sm(extract_coefficient_scatter(edger, type="edger",
-                                                              loess=loess, x=xname, y=yname))
-        edger_ma_plots[[tab]] <- extract_de_ma(combined, type="edger", table=table)
-        deseq_plots[[name]] <- sm(extract_coefficient_scatter(deseq, type="deseq",
-                                                              loess=loess, x=xname, y=yname))
-        deseq_ma_plots[[tab]] <- extract_de_ma(combined, type="deseq", table=table)
+        limma_plots[[name]] <- sm(try(extract_coefficient_scatter(limma, type="limma",
+                                                                  loess=loess, x=xname, y=yname)))
+        limma_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="limma", table=table)))
+        edger_plots[[name]] <- sm(try(extract_coefficient_scatter(edger, type="edger",
+                                                                  loess=loess, x=xname, y=yname)))
+        edger_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="edger", table=table)))
+        deseq_plots[[name]] <- sm(try(extract_coefficient_scatter(deseq, type="deseq",
+                                                                  loess=loess, x=xname, y=yname)))
+        deseq_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="deseq", table=table)))
     } else {
         stop("I don't know what to do with your specification of tables to keep.")
     } ## End different types of things to keep.

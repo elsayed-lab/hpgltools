@@ -35,3 +35,4 @@ for (dir in remove_directories) {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 99cleanup.R in ", elapsed,  " seconds."))
+tt <- clear_session()
