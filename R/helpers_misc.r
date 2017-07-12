@@ -16,7 +16,7 @@ clear_session <- function(keepers=NULL, depth=10) {
             detach(package, character.only=TRUE)
         }
     }
-    tt <- sm(rm(list=ls(all=TRUE), envir=globalenv()))
+    tt <- sm(rm(list=ls(all.names=TRUE), envir=globalenv()))
 }
 
 #' Get the current git commit for hpgltools

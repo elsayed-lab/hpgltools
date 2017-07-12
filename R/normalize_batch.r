@@ -125,6 +125,10 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
         batch <- "limma"
     }
 
+    count_df <- data.frame(count_table)
+    count_mtrx <- as.matrix(count_df)
+    conditional_model <- model.matrix(~conditions, data=count_df)
+    null_model <- conditional_model[, 1]
     ## Set the number of surrogates for sva/ruv based methods.
     if (!is.null(surrogate_method)) {
         num_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method=surrogate_method))
@@ -134,11 +138,6 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
         message("This will end badly, so setting num_surrogates to 1.")
         num_surrogates <- 1
     }
-
-    count_df <- data.frame(count_table)
-    count_mtrx <- as.matrix(count_df)
-    conditional_model <- model.matrix(~conditions, data=count_df)
-    null_model <- conditional_model[, 1]
 
     if (batch == "limma") {
         if (expt_state[["transform"]] == "raw") {

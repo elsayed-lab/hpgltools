@@ -610,8 +610,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
     gostats_mf <- gostats_result[["mf_subset"]]
     gostats_mf <- gostats_mf[ gostats_mf[["over_represented_pvalue"]] <= pval, ]
-    gostats_mf_genes <- gather_
-    ontology_genes(gostats_result, ontology="MF", pval=pval)
+    gostats_mf_genes <- gather_ontology_genes(gostats_result, ontology="MF", pval=pval)
     mf_genes <- as.data.frame(gostats_mf_genes)
     rownames(mf_genes) <- rownames(gostats_mf_genes)
     gostats_mf <- merge(gostats_mf, mf_genes, by="row.names")
