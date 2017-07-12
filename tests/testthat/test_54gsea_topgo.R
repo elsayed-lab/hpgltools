@@ -15,15 +15,6 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
 
     tp_result <- sm(simple_topgo(fcp_sig_genes, gff=gff_file, goids_df=dmel_ontologies))
 
-    test_parallel <- FALSE
-    if (isTRUE(test_parallel)) {
-        tp_par_result <- sm(simple_topgo(fcp_sig_genes, gff=gff_file, goids_df=dmel_ontologies, parallel=TRUE))
-        test_that("Are parallel and serial topGO runs equivalent?", {
-            expect_equal(tp_result, tp_par_result)
-        })
-        rm(tp_par_result)
-    }
-
     ## There is some run-to-run variability in these searches.
     expected <- c("GO:0000146", "GO:0000295", "GO:0001871",
                   "GO:0003824", "GO:0003974", "GO:0003978")

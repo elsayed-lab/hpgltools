@@ -25,6 +25,7 @@ design <- data.frame(row.names=colnames(counts),
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
+save(list=ls(), file="pasilla_df.rda")
 
 ## Make sure it is still possible to create an expt
 pasilla_expt <- sm(create_expt(count_dataframe=counts, metadata=metadata,

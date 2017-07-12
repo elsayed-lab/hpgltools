@@ -4,20 +4,7 @@ library(hpgltools)
 cbcb <- sm(library(cbcbSEQ))
 context("20de_limma_batch.R: Does limma work with hpgltools?\n")
 
-## This section is copy/pasted to all of these tests, that is dumb.
-datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
-## Load the counts and drop super-low counts genes
-counts <- read.table(datafile, header=TRUE, row.names=1)
-counts <- counts[rowSums(counts) > ncol(counts),]
-## Set up a quick design to be used by cbcbSEQ and hpgltools
-design <- data.frame(row.names=colnames(counts),
-                     condition=c("untreated", "untreated", "untreated",
-                                 "untreated", "treated", "treated", "treated"),
-                     libType=c("single_end", "single_end", "paired_end",
-                               "paired_end", "single_end", "paired_end", "paired_end"))
-metadata <- design
-colnames(metadata) <- c("condition", "batch")
-metadata[["sampleid"]] <- rownames(metadata)
+load("pasilla_df.rda")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)

@@ -8,27 +8,13 @@ context("12norm_normalize.R: Are normalizations consistent over time? (Normaliza
 ## Sadly, this means that most of these tests fail because they assume the previous generic order of genes.  Thus I am now adding
 ## the gene names to the tests.
 
-## This section is copy/pasted to all of these tests, that is dumb.
-datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
-## Load the counts and drop super-low counts genes
-counts <- read.table(datafile, header=TRUE, row.names=1)
-counts <- counts[rowSums(counts) > ncol(counts),]
-## Set up a quick design to be used by cbcbSEQ and hpgltools
-design <- data.frame(row.names=colnames(counts),
-                     condition=c("untreated", "untreated", "untreated",
-                                 "untreated", "treated", "treated", "treated"),
-                     libType=c("single_end", "single_end", "paired_end",
-                               "paired_end", "single_end", "paired_end", "paired_end"))
-metadata <- design
-colnames(metadata) <- c("condition", "batch")
-metadata[["sampleid"]] <- rownames(metadata)
+load("pasilla_df.rda")
 ## Uses these genes for quick tests
 test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
-
 
 ## Test normalizations -- I should change this to be automatically generated for expected
 expected <- as.numeric(c(5.857143, 91.500000, 4400.000000, 543.785714, 10.714286))

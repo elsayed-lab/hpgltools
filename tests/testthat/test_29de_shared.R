@@ -19,10 +19,10 @@ load("de_basic.rda", envir=basic)
 ## The following lines should not be needed any longer.
 normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant",
                                      convert="cbcbcpm", filter=TRUE))
-hpgl_result <- all_pairwise(normalized_expt, model_batch=TRUE, which_voom="hpgl",
-                            edger_method="short", parallel=FALSE)
-hpgl_sva_result <- all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",
-                                limma_method="robust", edger_method="short", parallel=FALSE)
+hpgl_result <- sm(all_pairwise(normalized_expt, model_batch=TRUE, which_voom="hpgl",
+                               edger_method="short", parallel=FALSE))
+hpgl_sva_result <- sm(all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",
+                                   limma_method="robust", edger_method="short", parallel=FALSE))
 
 expected <- deseq[["hpgl_deseq"]][["all_tables"]][["untreated_vs_treated"]]
 actual <- hpgl_result[["deseq"]][["all_tables"]][["untreated_vs_treated"]]
@@ -101,7 +101,7 @@ test_that("Are the edger significant ups expected?", {
     expect_equal(expected, actual)
 })
 
-expected <- 109
+expected <- 112
 actual <- nrow(sig_tables[["edger"]][["downs"]][[1]])
 test_that("Are the limma significant ups expected?", {
     expect_equal(expected, actual)
@@ -211,7 +211,7 @@ test_that("Is the number of significant genes as expected? (deseq)", {
 })
 
 actual <- dim(significant_excel[["edger"]][["ups"]][["treatment"]])
-expected <- c(109, 43)
+expected <- c(112, 43)
 test_that("Is the number of significant genes as expected? (edger)", {
     expect_equal(expected, actual)
 })

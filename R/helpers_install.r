@@ -19,7 +19,7 @@
 #'  go_get_some_coffee_this_will_take_a_while <- bioc_all()
 #' }
 #' @export
-bioc_all <- function(release="3.4", mirror="bioconductor.statistik.tu-dortmund.de", base="packages", type="software",
+bioc_all <- function(release="3.5", mirror="bioconductor.statistik.tu-dortmund.de", base="packages", type="software",
     suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
     dl_url <- paste0("https://", mirror, "/", base, "/json/", release, "/tree.json")
     ## message(paste0("DL: ", dl_url))

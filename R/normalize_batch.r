@@ -71,6 +71,24 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
     if (!is.null(arglist[["low_to_zero"]])) {
         low_to_zero <- arglist[["low_to_zero"]]
     }
+    num_surrogates <- 1
+    surrogate_method <- NULL
+    if (!is.null(arglist[["num_surrogates"]])) {
+        if (class(arglist[["num_surrogates"]]) == "character") {
+            surrogate_method <- arglist[["num_surrogates"]]
+        } else {
+            num_surrogates <- arglist[["num_surrogates"]]
+        }
+    }
+    cpus <- 4
+    if (!is.null(arglist[["cpus"]])) {
+        cpus <- arglist[["cpus"]]
+    }
+    prior.plots <- FALSE
+    if (!is.null(arglist[["prior.plots"]])) {
+        message("When using ComBat, using prior.plots may result in an error due to infinite ylim.")
+        prior.plots <- arglist[["prior.plots"]]
+    }
 
     ## Lets use expt_state to make sure we know if the data is already log2/cpm/whatever.
     ## We want to use this to back-convert or reconvert data to the appropriate scale on return.
@@ -85,11 +103,6 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
     ## Use current_state to keep track of changes made on scale/etc during batch correction
     ## This is pointed directly at limmaresid for the moment, which converts to log2
     current_state <- expt_state
-
-    cpus <- 4
-    if (!is.null(arglist[["cpus"]])) {
-        cpus <- arglist[["cpus"]]
-    }
     ## These droplevels calls are required to avoid errors like 'confounded by batch'
     batches <- droplevels(as.factor(design[[batch1]]))
     conditions <- droplevels(as.factor(design[["condition"]]))
@@ -111,7 +124,22 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
     if (isTRUE(batch)) {
         batch <- "limma"
     }
-    
+
+    ## Set the number of surrogates for sva/ruv based methods.
+    if (!is.null(surrogate_method)) {
+        num_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method=surrogate_method))
+    }
+    if (num_surrogates < 1) {
+        message(paste0("0 surrogates were detected by the ", surrogate_method, " method."))
+        message("This will end badly, so setting num_surrogates to 1.")
+        num_surrogates <- 1
+    }
+
+    count_df <- data.frame(count_table)
+    count_mtrx <- as.matrix(count_df)
+    conditional_model <- model.matrix(~conditions, data=count_df)
+    null_model <- conditional_model[, 1]
+
     if (batch == "limma") {
         if (expt_state[["transform"]] == "raw") {
             count_table <- log2(count_table + 1)
@@ -145,10 +173,11 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
         }
         batch_voom <- NULL
         if (expt_state[["normalization"]] == "raw") {
-            batch_voom <- limma::voom(data.frame(count_table), batch_model,
-                                      normalize.method="quantile", plot=FALSE)
+            batch_voom <- limma::voom(count_df, batch_model,
+                                      normalize.method="quantile",
+                                      plot=FALSE)
         } else {
-            batch_voom <- limma::voom(data.frame(count_table), batch_model, plot=FALSE)
+            batch_voom <- limma::voom(count_df, batch_model, plot=FALSE)
        }
         batch_fit <- limma::lmFit(batch_voom, design=batch_model)
         ## count_table <- residuals(batch_fit, batch_voom[["E"]])
@@ -162,83 +191,49 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
         ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches,
         ##                                  mod=conditions, noScale=noscale, ...)
         message("batch_counts: Using a modified cbcbSEQ combatMod for batch correction.")
-        count_table <- hpgl_combatMod(dat=data.frame(count_table), batch=batches,
+        count_table <- hpgl_combatMod(dat=count_df, batch=batches,
                                       mod=conditions, noScale=noscale, ...)
     } else if (batch == "fsva") {
         message("batch_counts: Using sva::fsva for batch correction.")
-        df <- data.frame(count_table)
-        mtrx <- as.matrix(df)
-        conditional_model <- model.matrix(~conditions, data=df)
-        null_model <- conditional_model[, 1]
-        num_surrogates <- 0
-        be_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="be"))
-        leek_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="leek"))
-        if (be_surrogates >= 1) {
-            num_surrogates <- be_surrogates
-        } else {
-            num_surrogates <- leek_surrogates
-        }
-        sva_object <- sm(sva::sva(mtrx, conditional_model, null_model, n.sv=num_surrogates))
-        ## mod_sv = cbind(conditional_model, sva_object$sv)
-        fsva_result <- sm(sva::fsva(mtrx, conditional_model, sva_object, newdat=mtrx, method="exact"))
+        sva_object <- sm(sva::sva(count_mtrx, conditional_model, null_model, n.sv=num_surrogates))
+        fsva_result <- sm(sva::fsva(count_mtrx, conditional_model, sva_object, newdat=mtrx, method="exact"))
         count_table <- fsva_result[["db"]]
     } else if (batch == "combat" | batch == "combat_noscale") {
         message("batch_counts: Using sva::combat with a prior for batch correction and no scaling.")
         count_table <- sm(sva::ComBat(count_table, batches, mod=NULL,
-                                      par.prior=TRUE, prior.plots=TRUE, mean.only=TRUE))
+                                      par.prior=TRUE, prior.plots=prior.plots, mean.only=TRUE))
     } else if (batch == "combat_noprior") {
         message("batch_counts: Using sva::combat without a prior for batch correction and no scaling.")
         count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
-                                      par.prior=FALSE, prior.plots=FALSE, mean.only=TRUE))
+                                      par.prior=FALSE, prior.plots=prior.plots, mean.only=TRUE))
     } else if (batch == "combat_scale") {
         message("batch_counts: Using sva::combat with a prior for batch correction and with scaling.")
         count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
-                                      par.prior=TRUE, prior.plots=TRUE, mean.only=FALSE))
+                                      par.prior=TRUE, prior.plots=prior.plots, mean.only=FALSE))
     } else if (batch == "combat_noprior_scale") {
         message("batch_counts: Using sva::combat without a prior for batch correction and with scaling.")
         count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
-                                      par.prior=FALSE, prior.plots=TRUE, mean.only=FALSE))
+                                      par.prior=FALSE, prior.plots=prior.plots, mean.only=FALSE))
     } else if (batch == "svaseq") {
         message("batch_counts: Using sva::svaseq for batch correction.")
         message("Note to self:  If you feed svaseq a data frame you will get an error like:")
         message("data %*% (Id - mod %*% blah blah requires numeric/complex arguments.")
-        df <- data.frame(count_table)
-        mtrx <- as.matrix(df)
-        conditional_model <- model.matrix(~conditions, data=df)
-        null_model <- conditional_model[, 1]
-        num_surrogates <- sm(sva::num.sv(mtrx, conditional_model))
-        svaseq_result <- sm(sva::svaseq(mtrx, conditional_model, null_model, n.sv=num_surrogates))
-        count_table <- counts_from_surrogates(mtrx, svaseq_result[["sv"]], design=design)
-        ## A recent error in the code might be attributable here, but I do not think so.
-        ## Testing with mouse exosome data tells me that the error is 99% not here.
-        ## plot(svaseq_result$sv, pch=19, col="blue")
-        ## The following was taken from: https://www.biostars.org/p/121489/
-        ## X <- cbind(conditional_model, svaseq_result$sv)
-        ## Hat <- solve(t(X) %*% X) %*% t(X)
-        ## beta <- (Hat %*% t(mtrx))
-        ## P <- ncol(conditional_model)
-        ## count_table <- mtrx - t(as.matrix(X[,-c(1:P)]) %*% beta[-c(1:P),])
+        svaseq_result <- sm(sva::svaseq(count_mtrx, conditional_model, null_model, n.sv=num_surrogates))
+        count_table <- counts_from_surrogates(count_mtrx, svaseq_result[["sv"]], design=design)
     } else if (batch == "varpart") {
         message("Taking residuals from a linear mixed model as suggested by the variancePartition package.")
         cl <- parallel::makeCluster(cpus)
         doParallel::registerDoParallel(cl)
         batch_model <- as.formula("~ (1|batch)")
         message("The function fitvarPartModel may take excessive memory, you have been warned.")
-        batch_fit <- variancePartition::fitVarPartModel(as.data.frame(count_table), batch_model, design)
+        batch_fit <- variancePartition::fitVarPartModel(count_df, batch_model, design)
         count_table <- residuals(batch_fit)
         rm(batch_fit)
         parallel::stopCluster(cl)
     } else if (batch == "ruvg") {
         message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.)")
         ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
-        df <- as.data.frame(count_table)
-        mtrx <- as.matrix(count_table)
-        conditional_model <- model.matrix(~conditions, data=df)
-        null_model <- conditional_model[, 1]
-        num_surrogates <- 0
-        be_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="be"))
-        leek_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method="leek"))
-        ruv_input <- edgeR::DGEList(counts=df, group=conditions)
+        ruv_input <- edgeR::DGEList(counts=count_df, group=conditions)
         ruv_input_norm <- ruv_input
         if (expt_state[["normalization"]] == "raw") {
             ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
@@ -256,8 +251,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
         bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
         ruv_controls <- ranked <= bottom_third  ## what is going on here?!
         ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets fail with 400 hard-set
-        chosen_surrogates <- sm(sva::num.sv(dat=mtrx, mod=conditional_model))
-        ruv_result <- RUVSeq::RUVg(mtrx, ruv_controls, k=chosen_surrogates)
+        ruv_result <- RUVSeq::RUVg(count_mtrx, ruv_controls, k=num_surrogates)
         count_table <- ruv_result[["normalizedCounts"]]
     } else {
         ## message("Did not recognize the batch correction, leaving the table alone.")

@@ -1,5 +1,3 @@
-clear_session()
-rm(list=ls(all=TRUE))
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)

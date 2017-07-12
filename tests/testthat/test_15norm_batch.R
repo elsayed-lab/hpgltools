@@ -7,21 +7,7 @@ context("15norm_batch.R: Are normalizations consistent over time (Batch estimati
 ## This is intended to make it easier for me to keep track of what is happening to the data by forcing it into a consistent order.
 ## Sadly, this means that most of these tests fail because they assume the previous generic order of genes.  Thus I am now adding
 ## the gene names to the tests.
-
-## This section is copy/pasted to all of these tests, that is dumb.
-datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
-## Load the counts and drop super-low counts genes
-counts <- read.table(datafile, header=TRUE, row.names=1)
-counts <- counts[rowSums(counts) > ncol(counts),]
-## Set up a quick design to be used by cbcbSEQ and hpgltools
-design <- data.frame(row.names=colnames(counts),
-                     condition=c("untreated", "untreated", "untreated",
-                                 "untreated", "treated", "treated", "treated"),
-                     batch=c("single_end", "single_end", "paired_end",
-                             "paired_end", "single_end", "paired_end", "paired_end"))
-metadata <- design
-colnames(metadata) <- c("condition", "batch")
-metadata[["sampleid"]] <- rownames(metadata)
+load("pasilla_df.rda")
 ## Uses these genes for quick tests
 test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 ## create_expt generates a .Rdata file which may be reread, do so.
@@ -41,7 +27,6 @@ test_that("limma batch gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-## FIXME this is obviously broken
 expected <- c(1.60048774, 0.02101530, -0.07524254, 0.15555548, 0.49697157)
 names(expected) <- test_genes
 pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="limmaresid"))
@@ -69,14 +54,27 @@ test_that("sva batch gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-## TODO Figure out what is up with these
-## pasilla_batch <- normalize_expt(pasilla_expt, batch="combat")  ## broken
-## pasilla_batch <- normalize_expt(pasilla_expt, batch="combat_noprior") ## takes forever
-expected <- c(2.267660, 71.646546, 3481.434409, 410.347808, 6.658058)
-names(expected) <- test_genes
-pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="combat_scale"))
+new_test_genes <- c("FBgn0000008", "FBgn0000017", "FBgn0000018",
+                    "FBgn0000032", "FBgn0000042", "FBgn0000043")
+
+pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="combat"))
 actual_df <- Biobase::exprs(pasilla_batch[["expressionset"]])
-actual <- actual_df[test_genes, c("untreated1")]
+actual <- actual_df[new_test_genes, c("untreated1")]
+expected <- c(58.61422, 2743.68439, 414.96514, 1082.94955, 74271.77394, 20532.79848)
+names(expected) <- new_test_genes
+test_that("combat_noscale gives expected values?", {
+    expect_equal(expected, actual, tolerance=0.0001)
+})
+
+## This works, but takes _forever_
+##pasilla_batch <- normalize_expt(pasilla_expt, batch="combat_noprior", filter=TRUE)
+
+pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="combat_scale", filter=TRUE))
+## Adding the filter drops FBgn0000014 and 24.
+expected <- c(70.92609, 3436.42054, 411.06522, 1035.16745, 75487.65204, 24292.55511)
+names(expected) <- new_test_genes
+actual_df <- Biobase::exprs(pasilla_batch[["expressionset"]])
+actual <- actual_df[new_test_genes, c("untreated1")]
 test_that("combat_scale gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
@@ -106,7 +104,7 @@ test_that("ruvg gives expected values?", {
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
     ##expected <- c(4.610009, 82.109047, 4099.039071, 519.407501, 9.116170)
     ##names(expected) <- test_genes
-    ##pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="varpart"))
+    ##pasilla_batch <- normalize_expt(pasilla_expt, batch="varpart")
     ##actual_df <- Biobase::exprs(pasilla_batch[["expressionset"]])
     ##actual <- actual_df[test_genes, c("untreated1")]
     ##test_that("variancePartition gives expected values?", {
