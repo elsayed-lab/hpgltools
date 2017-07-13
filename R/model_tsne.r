@@ -25,7 +25,7 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
                       plot_labels=NULL, invert=TRUE, perplexity=NULL,
                       min_variance=0.001, plot_title=NULL, plot_size=5,
                       size_column=NULL, components=2, iterations=1000,
-                      theta=0.3, pca=TRUE, ...) {
+                      theta=0.3, pca=TRUE, component_x=1, component_y=2,  ...) {
     ## I have been using hpgl_env for keeping aes() from getting contaminated.
     ## I think that this is no longer needed because I have been smater(sic) about how
     ## I invoke aes_string() and ggplot2()
@@ -183,13 +183,13 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
     } else if (length(levels(included_conditions)) == 1) {
         warning("There is only one condition, but more than one batch.
 Going to run pcRes with the batch information.")
-        tsne_residuals <- tsne_res(v=sne[["Y"]],
-                                   d=sne[["costs"]],
+        tsne_residuals <- tsne_res(Y=sne[["Y"]],
+                                   costs=sne[["costs"]],
                                    batch=design[, batch_column])
     } else if (length(levels(included_batches)) == 1) {
         message("There is just one batch in this data.")
-        tsne_residuals <- tsne_res(v=sne[["Y"]],
-                                   d=sne[["costs"]],
+        tsne_residuals <- tsne_res(Y=sne[["Y"]],
+                                   costs=sne[["costs"]],
                                    condition=design[, cond_column])
     } else {
         tsne_residuals <- tsne_res(Y=sne[["Y"]],
@@ -198,19 +198,24 @@ Going to run pcRes with the batch information.")
                                    batch=design[, batch_column])
     }
 
+    if (component_x > components | component_y > components) {
+        stop("The components plotted must be smaller than the number of components calculated.")
+    }
+    compname_x <- paste0("Comp", component_x)
+    compname_y <- paste0("Comp", component_y)
     tsne_data <- data.frame(
         "sampleid" = as.character(design[["sampleid"]]),
         "condition" = as.character(design[[cond_column]]),
         "batch" = as.character(design[[batch_column]]),
         "batch_int" = as.integer(as.factor(design[[batch_column]])),
-        "TS1" = sne_df[["V1"]],
-        "TS2" = sne_df[["V2"]],
         "colors" = as.character(plot_colors),
         "labels" = label_list)
+    tsne_data[[compname_x]] <- sne_df[[paste0("V", component_x)]]
+    tsne_data[[compname_y]] <- sne_df[[paste0("V", component_y)]]
 
     a_plot <- plot_pcs(tsne_data,
-                       first="TS1",
-                       second="TS2",
+                       first=compname_x,
+                       second=compname_y,
                        design=design,
                        plot_labels=plot_labels,
                        plot_size=plot_size,
@@ -218,8 +223,8 @@ Going to run pcRes with the batch information.")
 
     ## components of our plot.
     tsne_variance <- round((sne[["costs"]] ^ 2) / sum(sne[["costs"]] ^ 2) * 100, 2)
-    xl <- sprintf("TS1: %.2f%% rsquared", tsne_residuals[["cond.R2"]][[1]])
-    yl <- sprintf("TS2: %.2f%% rsquared", tsne_residuals[["batch.R2"]][[1]])
+    xl <- sprintf("Comp%s: %.2f%% rsquared", component_x, tsne_residuals[["cond.R2"]][[1]])
+    yl <- sprintf("Comp%s: %.2f%% rsquared", component_y, tsne_residuals[["batch.R2"]][[1]])
     ## The following are some pretty-ifiers for the plot, they should be moved into plot_pcs
     a_plot <- a_plot +
         ggplot2::xlab(xl) +

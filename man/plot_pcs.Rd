@@ -6,7 +6,7 @@
 \usage{
 plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
   design = NULL, plot_title = TRUE, plot_labels = NULL, plot_size = 5,
-  size_column = NULL, ...)
+  size_column = NULL, rug = TRUE, ...)
 }
 \arguments{
 \item{pca_data}{a dataframe of principle components PC1 .. PCN with any other arbitrary information.}

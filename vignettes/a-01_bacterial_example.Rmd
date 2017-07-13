@@ -220,6 +220,8 @@ a_metrics <- graph_metrics(batch_a)
 b_metrics <- graph_metrics(batch_b)
 a_metrics$pcaplot
 b_metrics$pcaplot
+a_metrics$tsneplot
+b_metrics$tsneplot
 ```
 
 # Normalizing data
@@ -274,6 +276,7 @@ knitr::kable(norm_graphs$pcares)
 norm_graphs$smc
 norm_graphs$disheat  ## svaseq's batch correction seems to draw out the signal quite nicely.
 ## It is worth noting that the wt, early log, thy, replicate c samples are still a bit weird.
+norm_graphs$tsneplot
 ```
 
 # Performing DE analyses

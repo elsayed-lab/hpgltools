@@ -67,6 +67,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     disheat_title <- "Distance heatmap"
     smd_title <- "Standard Median Distance"
     pca_title <- "Principle Component Analysis"
+    tsne_title <- "T-SNE Analysis"
     dens_title <- "Density plot"
     if (!is.null(title_suffix)) {
         nonzero_title <- paste0(nonzero_title, ": ", title_suffix)
@@ -77,6 +78,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
         disheat_title <- paste0(disheat_title, ": ", title_suffix)
         smd_title <- paste0(smd_title, ": ", title_suffix)
         pca_title <- paste0(pca_title, ": ", title_suffix)
+        tsne_title <- paste0(tsne_title, ": ", title_suffix)
         dens_title <- paste0(dens_title, ": ", title_suffix)
     }
     message("Graphing number of non-zero genes with respect to CPM by library.")
@@ -95,6 +97,8 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     smd <- try(plot_sm(expt, method=distmethod, title=smd_title, ...))
     message("Graphing a PCA plot.")
     pca <- try(plot_pca(expt, title=pca_title, ...))
+    message("Graphing a T-SNE plot.")
+    tsne <- try(plot_tsne(expt, title=tsne_title, ...))
     message("Plotting a density plot.")
     density <- try(plot_density(expt, title=dens_title))
     message("Printing a color to condition legend.")
@@ -119,14 +123,18 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
         "nonzero" = nonzero_plot,
         "libsize" = libsize_plot,
         "boxplot" = boxplot,
-        "corheat" = corheat$plot,
+        "corheat" = corheat[["plot"]],
         "smc" = smc,
-        "disheat" = disheat$plot,
+        "disheat" = disheat[["plot"]],
         "smd" = smd,
-        "pcaplot" = pca$plot,
-        "pcatable" = pca$table,
-        "pcares" = pca$res,
-        "pcavar" = pca$variance,
+        "pcaplot" = pca[["plot"]],
+        "pcatable" = pca[["table"]],
+        "pcares" = pca[["res"]],
+        "pcavar" = pca[["variance"]],
+        "tsneplot" = tsne[["plot"]],
+        "tsnetable" = tsne[["table"]],
+        "tsneres" = tsne[["res"]],
+        "tsnevar" = tsne[["variance"]],
         "density" = density,
         "legend" = legend,
         "qqlog" = qq_logs,

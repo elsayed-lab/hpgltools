@@ -15,17 +15,20 @@ pasilla_expt <- pasilla[["expt"]]
 
 pasilla_svasup <- sm(get_model_adjust(pasilla_expt,
                                       estimate_type="sva_supervised", surrogates="leek"))
-expected <- c(0.3334780, 0.3537427, 0.3167739, 0.3146217, 0.5925343, 0.2851664, 0.3631930)
+expected <- c(0.32445, 0.35891, 0.30689, 0.31796, 0.59513,
+              0.28930, 0.36436, 0.77704, 0.42547, 0.37468,
+              0.07181, 0.22753, 0.12013, 0.05870)
 actual <- abs(as.numeric(pasilla_svasup[["model_adjust"]]))
 test_that("Have the sva supervised model adjustments stayed the same? (leek estimation)", {
-    expect_equal(expected, actual, tolerance=0.000001)
+    expect_equal(expected, actual, tolerance=0.0001)
 })
 
 pasilla_svasup <- sm(get_model_adjust(pasilla_expt,
                                       estimate_type="sva_supervised",
                                       surrogates="be"))
-expected <- c(0.32445150, 0.35891445, -0.30688842, -0.31795736, 0.59513446, -0.28929712,
-              -0.36435751, 0.77703632, -0.42547368, -0.37467660, 0.07180690, -0.22752995,
+expected <- c(0.32445150, 0.35891445, -0.30688842, -0.31795736,
+              0.59513446, -0.28929712, -0.36435751, 0.77703632,
+              -0.42547368, -0.37467660, 0.07180690, -0.22752995,
               0.12013255, 0.05870446)
 actual <- as.numeric(pasilla_svasup[["model_adjust"]])
 test_that("Have the sva supervised model adjustments stayed the same? (be estimation)", {
@@ -35,7 +38,9 @@ test_that("Have the sva supervised model adjustments stayed the same? (be estima
 pasilla_svaunsup <- sm(get_model_adjust(pasilla_expt,
                                         estimate_type="sva_unsupervised",
                                         surrogates="leek"))
-expected <- c(0.3339817, 0.3453492, -0.3132165, -0.3104993, 0.5983120, -0.2889621, -0.3649650)
+expected <- c(0.32956, 0.34928, -0.30688, -0.31297, 0.59854,
+              -0.29098, -0.36655, 0.76588, -0.43026, -0.38806,
+              0.07680, -0.22376, 0.13028, 0.06912)
 actual <- as.numeric(pasilla_svaunsup[["model_adjust"]])
 test_that("Have the sva unsupervised model adjustments stayed the same? (leek estimation)", {
     expect_equal(expected, actual, tolerance=0.001)
@@ -56,7 +61,9 @@ pasilla_pca <- sm(get_model_adjust(pasilla_expt,
                                    estimate_type="pca",
                                    surrogates="leek"))
 actual <- as.numeric(pasilla_pca[["model_adjust"]])
-expected <- c(-0.3318802, -0.3221039, -0.3461874, -0.3086267, 0.4400211, 0.4356463, 0.4331308)
+expected <- c(-0.3319, -0.3221, -0.3462, -0.3086, 0.4400,
+              0.4356, 0.4331, 0.3195, 0.3393, -0.3383,
+              -0.3148, 0.6132, -0.2815, -0.3375)
 test_that("Have the pca model adjustments stayed the same?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
@@ -76,7 +83,9 @@ pasilla_ruvresid <- sm(get_model_adjust(pasilla_expt,
                                         estimate_type="ruv_residuals",
                                         surrogates="leek"))
 actual <- as.numeric(pasilla_ruvresid[["model_adjust"]])
-expected <- c(-0.1852807, -0.4047459, 0.2816629, 0.2932314, -0.6460658, 0.3141537, 0.3470443)
+expected <- c(-0.18528, -0.40475, 0.28166, 0.29323, -0.64607,
+              0.31415, 0.34704, 0.78648, -0.44130, -0.41741,
+              0.08139, -0.06528, 0.02565, 0.03047)
 test_that("Have the ruv resid model adjustments stayed the same?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
@@ -85,16 +94,11 @@ pasilla_ruvemp <- sm(get_model_adjust(pasilla_expt,
                                       estimate_type="ruv_empirical",
                                       surrogates="leek"))
 actual <- as.numeric(pasilla_ruvemp[["model_adjust"]])
-expected <- c(-0.2901575, -0.3336673, 0.3092839, 0.3132296, -0.6365617, 0.2868927, 0.3509803)
+expected <- c(-0.29016, -0.33367, 0.30928, 0.31323, -0.63656,
+              0.28689, 0.35098, 0.76982, -0.38843, -0.42542,
+              0.04191, -0.22051, 0.09823, 0.12440)
 test_that("Have the ruv resid empirical adjustments stayed the same?", {
     expect_equal(expected, actual, tolerance=0.001)
-})
-
-pasilla_surrogates <- sm(compare_surrogate_estimates(pasilla_expt, surrogates="leek"))
-actual <- as.numeric(pasilla_surrogates[["pca_adjust"]][["model_adjust"]])
-expected <- c(-0.3318802, -0.3221039, -0.3461874, -0.3086267, 0.4400211, 0.4356463, 0.4331308)
-test_that("Does the compare_surrogate stuff work?", {
-    expect_equal(expected, actual, tolerance=0.0001)
 })
 
 end <- as.POSIXlt(Sys.time())

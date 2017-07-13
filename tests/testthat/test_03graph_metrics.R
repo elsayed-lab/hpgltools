@@ -123,6 +123,31 @@ test_that("Is the PCA PC2 as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
+tsne_stuff <- plot_tsne(norm)
+actual <- tsne_stuff[["table"]][["Comp1"]]
+expected <- c(242.72, 243.21, 36.59, 36.81, -192.08, -185.70, -181.56)
+test_that("Is the tsne data as expected for Comp1?", {
+    expect_equal(expected, actual, tolerance=0.001)
+})
+
+actual <- as.numeric(head(tsne_stuff[["tsne_data"]][["Y"]][, 2]))
+expected <- c(103.6740, 99.5090, 5.1610, 0.9747, -68.0061, -70.0072)
+test_that("Is the tsne second component data expected?", {
+    expect_equal(expected, actual, tolerance=0.001)
+})
+
+actual <- tsne_stuff[["res"]][["cond.R2"]]
+expected <- c(81.08, 72.43)
+test_that("Is the tsne r-squared by condition as expected?", {
+    expect_equal(expected, actual, tolerance=0.001)
+})
+
+actual <- tsne_stuff[["res"]][["batch.R2"]]
+expected <- c(22.38, 30.21)
+test_that("Is the tsne r-squared by condition as expected?", {
+    expect_equal(expected, actual, tolerance=0.001)
+})
+
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 03graph_metrics.R in ", elapsed, " seconds."))
