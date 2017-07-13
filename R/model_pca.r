@@ -245,6 +245,7 @@ Going to run pcRes with the batch information.")
     } else if (!is.null(plot_title)) {
         data_title <- what_happened(expt=expt)
         plot_title <- paste0(plot_title, "; ", data_title)
+        pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
     } else {
         ## Leave the title blank.
     }
@@ -314,7 +315,7 @@ factor_rsquared <- function(svd_v, fact, type="factor") {
 #' @export
 plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                      design=NULL, plot_title=TRUE, plot_labels=NULL,
-                     plot_size=5, size_column=NULL, ...) {
+                     plot_size=5, size_column=NULL, rug=TRUE, ...) {
     arglist <- list(...)
     hpgl_env <- environment()
     batches <- pca_data[["batch"]]
@@ -426,6 +427,10 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
         x_label <- paste("PC", x_var_num, ": ", variances[[x_var_num]], "%  variance", sep="")
         y_label <- paste("PC", y_var_num, ": ", variances[[y_var_num]], "%  variance", sep="")
         pca_plot <- pca_plot + ggplot2::xlab(x_label) + ggplot2::ylab(y_label)
+    }
+
+    if (isTRUE(rug)) {
+        pca_plot <- pca_plot + ggplot2::geom_rug(colour="gray50", alpha=0.7)
     }
 
     if (is.null(plot_labels)) {

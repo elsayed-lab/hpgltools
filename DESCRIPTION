@@ -36,4 +36,5 @@ Suggests:
 Imports:
     Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
+ByteCompile: true
 RoxygenNote: 6.0.1
