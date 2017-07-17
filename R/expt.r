@@ -114,9 +114,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## The sample ID column should have the word 'sample' in it, otherwise this will fail.
     found_sample <- grepl(pattern="sample", x=sample_columns)
     if (sum(found_sample) == 0) {
-        message("Did not find the sample column in the sample sheet.")
-        message("Was it perhaps saved as a .xls?")
-        stop()
+        sample_definitions[["sampleid"]] <- make.names(rownames(sample_definitions), unique=TRUE)
     } else {
         ## Take the first column with the word 'sample' in it as the sampleid column
         sample_column <- sample_columns[found_sample][[1]]
@@ -154,12 +152,15 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     found_condition <- "condition" %in% sample_columns
     if (!isTRUE(found_condition)) {
         message("Did not find the condition column in the sample sheet.")
-        message("Was it perhaps saved as a .xls?")
+        message("Filling it in as undefined.")
+        sample_definitions[["condition"]] <- "undefined"
+
     }
     found_batch <- "batch" %in% sample_columns
     if (!isTRUE(found_batch)) {
         message("Did not find the batch column in the sample sheet.")
-        message("Was it perhaps saved as a .xls?")
+        message("Filling it in as undefined.")
+        sample_definitions[["batch"]] <- "undefined"
     }
 
     ## Double-check that there is a usable condition column
