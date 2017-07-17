@@ -6,10 +6,9 @@
 \usage{
 plot_tsne(data, design = NULL, plot_colors = NULL, seed = 1,
   chosen_features = NULL, number_features = NULL, plot_labels = NULL,
-  invert = TRUE, perplexity = NULL, min_variance = 0.001,
-  plot_title = NULL, plot_size = 5, size_column = NULL, components = 2,
-  iterations = 1000, theta = 0.3, pca = TRUE, component_x = 1,
-  component_y = 2, ...)
+  perplexity = NULL, min_variance = 0.001, plot_title = NULL,
+  plot_size = 5, size_column = NULL, components = 2, iterations = 1000,
+  theta = 0.3, pca = TRUE, component_x = 1, component_y = 2, ...)
 }
 \arguments{
 \item{data}{an expt set of samples.}
