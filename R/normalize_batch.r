@@ -194,8 +194,15 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
                                       mod=conditions, noScale=noscale, ...)
     } else if (batch == "fsva") {
         message("batch_counts: Using sva::fsva for batch correction.")
-        sva_object <- sm(sva::sva(count_mtrx, conditional_model, null_model, n.sv=num_surrogates))
-        fsva_result <- sm(sva::fsva(count_mtrx, conditional_model, sva_object, newdat=mtrx, method="exact"))
+        sva_object <- sm(sva::sva(count_mtrx,
+                                  conditional_model,
+                                  null_model,
+                                  n.sv=num_surrogates))
+        fsva_result <- sm(sva::fsva(count_mtrx,
+                                    conditional_model,
+                                    sva_object,
+                                    newdat=as.matrix(count_mtrx),
+                                    method="exact"))
         count_table <- fsva_result[["db"]]
     } else if (batch == "combat" | batch == "combat_noscale") {
         message("batch_counts: Using sva::combat with a prior for batch correction and no scaling.")
