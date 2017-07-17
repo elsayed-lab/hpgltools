@@ -620,9 +620,13 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         "sampleid" = rownames(expt_design),
         "labels" = rownames(expt_design),
         "condition" = as.character(expt_design[["condition"]]),
-        "batch" = as.character(expt_design[["batch"]]),
-        "batch_int" = as.integer(as.factor(expt_design[["batch"]])),
         "colors" = colors_chosen)
+
+    if (!is.null(expt_design[["batch"]])) {
+        pca_data[["batch"]] <- as.character(expt_design[["batch"]])
+        pca_data[["batch_int"]] <- as.integer(as.factor(expt_design[["batch"]]))
+    }
+
     pc_df <- data.frame(
         "sampleid" = rownames(expt_design))
     rownames(pc_df) <- rownames(expt_design)
