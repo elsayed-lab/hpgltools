@@ -470,11 +470,20 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     ## PCA, PCA(l2cpm) and qq_log
     new_row <- new_row + plot_rows + 2
     new_col <- 1
-    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA.",
+                        startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
-    openxlsx::writeData(wb, sheet=sheet, x="PCA(log2(cpm())).", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet=sheet, x="PCA(log2(cpm())).",
+                        startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
-    openxlsx::writeData(wb, sheet=sheet, x="Raw QQ, log scale.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet=sheet, x="Raw TSNE.",
+                        startRow=new_row, startCol=new_col)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="TSNE(log2(cpm())).",
+                        startRow=new_row, startCol=new_col)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw QQ, log scale.",
+                        startRow=new_row, startCol=new_col)
     new_col <- 1
     new_row <- new_row + 1
     pca_plot <- metrics[["pcaplot"]]
@@ -529,13 +538,15 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     ## PCA table
     new_row <- new_row + plot_rows + 2
     new_col <- 1
-    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA res.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA res.",
+                        startRow=new_row, startCol=new_col)
     new_row <- new_row + 1
     xls_result <- write_xls(data=metrics[["pcares"]], wb=wb, rownames=FALSE,
                             sheet=sheet, start_col=new_col, start_row=new_row)
     new_col <- xls_result[["end_col"]] + 6
     new_row <- new_row - 1
-    openxlsx::writeData(wb, sheet, "Raw PCA table.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet, "Raw PCA table.",
+                        startRow=new_row, startCol=new_col)
     new_row <- new_row + 1
     xls_result <- write_xls(data=metrics[["pcatable"]], wb=wb, rownames=FALSE,
                             sheet=sheet, start_row=new_row, start_col=new_col)
@@ -560,11 +571,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
     norm_metrics <- sm(graph_metrics(norm_data, qq=TRUE))
     ## Start with library sizes.
-    openxlsx::writeData(wb, sheet, "Legend.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet, "Legend.",
+                        startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
-    openxlsx::writeData(wb, sheet, "Normalized library sizes.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet, "Normalized library sizes.",
+                        startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
-    openxlsx::writeData(wb, sheet=sheet, x="Non-zero genes.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet=sheet, x="Non-zero genes.",
+                        startRow=new_row, startCol=new_col)
     new_col <- 1
     new_row <- new_row + 1
     new_plot <- norm_metrics[["legend"]][["plot"]]
@@ -650,6 +664,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + plot_rows + 2
     new_col <- 1
     openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA.",
+                        startRow=new_row, startCol=new_col)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Normalized TSNE.",
                         startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
     openxlsx::writeData(wb, sheet=sheet, x="Normalized QQ, log scale.",

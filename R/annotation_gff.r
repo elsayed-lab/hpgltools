@@ -115,6 +115,9 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.
 #' @export
 load_gff_annotations <- function(gff, type=NULL, id_col="ID",
                                  second_id_col="locus_tag", try=NULL) {
+    if (!file.exists(gff)) {
+        stop(paste0("Unable to find the gff file: ", gff))
+    }
     ret <- NULL
     attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
                   "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE)",

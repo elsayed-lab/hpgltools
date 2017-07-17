@@ -229,6 +229,9 @@ Going to run pcRes with the batch information.")
     pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
                          design=design, plot_labels=plot_labels,
                          plot_size=plot_size, size_column=size_column, ...)
+    pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
+                         design=design, plot_labels=plot_labels,
+                         plot_size=plot_size, size_column=size_column)
 
     ## The following are some pretty-ifiers for the plot, they should be moved into plot_pcs
     pca_plot <- pca_plot +
@@ -334,7 +337,6 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     color_listing <- unique(color_listing)
     color_list <- as.character(color_listing[["colors"]])
     names(color_list) <- as.character(color_listing[["condition"]])
-
     ## Ok, so this is shockingly difficult.  For <5 batch data I want properly colored points with black outlines
     ## The legend colors need to match, in addition, the legend needs to have the shapes noted.
     ## In order to do this, one must do, _in_order_:
@@ -553,15 +555,18 @@ u_plot <- function(plotted_us) {
 #' @export
 pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("condition", "batch"),
                             num_components=NULL, plot_pcas=FALSE) {
-    colors_chosen <- expt_data[["colors"]]
+    colors_chosen <- NULL
     data_class <- class(expt_data)[1]
     if (data_class == "expt") {
         expt_design <- expt_data[["design"]]
         expt_data <- Biobase::exprs(expt_data[["expressionset"]])
+        colors_chosen <- expt_data[["colors"]]
     } else if (data_class == "ExpressionSet") {
         expt_data <- Biobase::exprs(expt_data)
+        colors_chosen <- NULL
     } else if (data_class == "matrix" | data_class == "data.frame") {
         expt_data <- as.matrix(expt_data)
+        colors_chosen <- NULL
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }

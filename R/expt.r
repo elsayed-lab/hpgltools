@@ -845,6 +845,16 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
                 sampleid <- names(colors)[snum]
                 sample_color <- colors[[snum]]
                 chosen_colors[[sampleid]] <- sample_color
+                ## Set the condition for the changed samples to something unique.
+                original_condition <- expt[["design"]][sampleid, "condition"]
+                changed_condition <- paste0(original_condition, snum)
+                expt[["design"]][sampleid, "condition"] <- changed_condition
+                tmp_pdata <- Biobase::pData(expt[["expressionset"]])
+                old_levels <- levels(tmp_pdata[["condition"]])
+                new_levels <- c(old_levels, changed_condition)
+                levels(tmp_pdata[["condition"]]) <- new_levels
+                tmp_pdata[sampleid, "condition"] <- changed_condition
+                Biobase::pData(expt[["expressionset"]]) <- tmp_pdata
             }
         }
         chosen_idx <- complete.cases(chosen_colors)
