@@ -563,10 +563,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         colors_chosen <- expt_data[["colors"]]
     } else if (data_class == "ExpressionSet") {
         expt_data <- Biobase::exprs(expt_data)
-        colors_chosen <- NULL
     } else if (data_class == "matrix" | data_class == "data.frame") {
         expt_data <- as.matrix(expt_data)
-        colors_chosen <- NULL
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
@@ -619,8 +617,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     pca_data <- data.frame(
         "sampleid" = rownames(expt_design),
         "labels" = rownames(expt_design),
-        "condition" = as.character(expt_design[["condition"]]),
-        "colors" = colors_chosen)
+        "condition" = as.character(expt_design[["condition"]]))
+##        "colors" = colors_chosen)
 
     if (!is.null(expt_design[["batch"]])) {
         pca_data[["batch"]] <- as.character(expt_design[["batch"]])
