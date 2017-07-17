@@ -568,6 +568,13 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
+
+    ## Make sure colors get chosen.
+    if (is.null(colors_chosen)) {
+        colors_chosen <- as.numeric(as.factor(design[["condition"]]))
+        colors_chosen <- RColorBrewer::brewer.pal(12, "Dark2")[colors_chosen]
+    }
+
     expt_data <- as.matrix(expt_data)
     expt_means <- rowMeans(expt_data)
     decomposed <- corpcor::fast.svd(expt_data - expt_means)
@@ -614,15 +621,17 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
     ##print(yl)
 
+    if (is.null(expt_design[["batch"]])) {
+        expt_design[["batch"]] <- "undefined"
+    }
+
     pca_data <- data.frame(
         "sampleid" = rownames(expt_design),
         "labels" = rownames(expt_design),
-        "condition" = as.character(expt_design[["condition"]]))
-##        "colors" = colors_chosen)
-
-    if (!is.null(expt_design[["batch"]])) {
-        pca_data[["batch"]] <- as.character(expt_design[["batch"]])
-        pca_data[["batch_int"]] <- as.integer(as.factor(expt_design[["batch"]]))
+        "condition" = as.character(expt_design[["condition"]]),
+        "colors" = colors_chosen,
+        pca_data[["batch"]] <- as.character(expt_design[["batch"]]),
+        pca_data[["batch_int"]] <- as.integer(as.factor(expt_design[["batch"]])))
     }
 
     pc_df <- data.frame(
