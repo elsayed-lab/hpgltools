@@ -302,13 +302,13 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
     data_mtrx <- NULL
     my_design <- NULL
     if (class(data) == "expt") {
-        my_design <- Biobase::pData(data[["expressionset"]])
-        conditions <- droplevels(as.factor(Biobase::pData(data[["expressionset"]])[["condition"]]))
-        data_mtrx <- Biobase::exprs(data[["expressionset"]])
+        my_design <- pData(data)
+        conditions <- droplevels(as.factor(pData(data)[["condition"]]))
+        data_mtrx <- exprs(data)
     } else if (class(data) == "ExpressionSet") {
-        my_design <- Biobase::pData(data)
-        conditions <- droplevels(as.factor(Biobase::pData(data)[["condition"]]))
-        data_mtrx <- Biobase::exprs(data)
+        my_design <- pData(data)
+        conditions <- droplevels(as.factor(pData(data)[["condition"]]))
+        data_mtrx <- exprs(data)
     } else {
         my_design <- design
         conditions <- droplevels(as.factor(design[["condition"]]))

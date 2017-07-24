@@ -25,8 +25,10 @@ test: install
 	tests/testthat.R
 
 roxygen:
-	@echo "Generating documentation with roxygen2::roxygenize()"
-	@Rscript -e "suppressPackageStartupMessages(roxygen2::roxygenize())"
+##	@echo "Generating documentation with roxygen2::roxygenize()"
+##	@Rscript -e "suppressPackageStartupMessages(roxygen2::roxygenize())"
+	@echo "Generating documentation with devtools::document()"
+	@Rscript -e "suppressPackageStartupMessages(devtools::document())"
 
 vignette:
 	@echo "Building vignettes with devtools::build_vignettes()"

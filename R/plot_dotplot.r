@@ -207,11 +207,11 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
         colors <- data[["colors"]]
         names <- data[["names"]]
         conditions <- data[["conditions"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        design <- Biobase::pData(data)
-        conditions <- Biobase::pData(data)[["conditions"]]
-        data <- Biobase::exprs(data)
+        design <- pData(data)
+        conditions <- pData(data)[["conditions"]]
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {

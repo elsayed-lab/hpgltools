@@ -89,7 +89,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     }
     message("Starting edgeR pairwise comparisons.")
     input_data <- choose_binom_dataset(input, force=force)
-    design <- Biobase::pData(input[["expressionset"]])
+    design <- pData(input)
     conditions <- input_data[["conditions"]]
     batches <- input_data[["batches"]]
     data <- input_data[["data"]]

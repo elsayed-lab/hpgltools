@@ -97,7 +97,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     input_data <- choose_binom_dataset(input, force=force)
     ## Now that I understand pData a bit more, I should probably remove the conditions/batches slots
     ## from my expt classes.
-    design <- Biobase::pData(input[["expressionset"]])
+    design <- pData(input)
     conditions <- input_data[["conditions"]]
     batches <- input_data[["batches"]]
     data <- input_data[["data"]]
@@ -134,7 +134,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ## choose_model should now take all of the following into account
     ## Therefore the following 8 or so lines should not be needed any longer.
     model_string <- NULL
-    column_data <- Biobase::pData(input[["expressionset"]])
+    column_data <- pData(input)
     if (isTRUE(model_batch) & isTRUE(model_cond)) {
         message("DESeq2 step 1/5: Including batch and condition in the deseq model.")
         ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
@@ -299,9 +299,30 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ##        coefficient_list[[coef]] <- as.data.frame(test_result)
     ##    }
     ##}
-    coefficient_list <- coef(deseq_run)
-    colnames(coefficient_list) <- gsub(pattern="^condition", replacement="", x=colnames(coefficient_list))
-    colnames(coefficient_list) <- gsub(pattern="^batch", replacement="", x=colnames(coefficient_list))
+    coefficient_df <- coef(deseq_run)
+    colnames(coefficient_df) <- gsub(pattern="^condition", replacement="", x=colnames(coefficient_df))
+    colnames(coefficient_df) <- gsub(pattern="^batch", replacement="", x=colnames(coefficient_df))
+    colnames(coefficient_df) <- gsub(pattern="^_", replacement="", x=colnames(coefficient_df))
+    remaining_list <- colnames(coefficient_df)
+    ## If this is true, then intercept is the second half of the contrasts listed
+    if ("Intercept" %in% remaining_list) {
+        last_pair <- remaining_list[length(remaining_list)]
+        intercept_pair <- strsplit(x=last_pair, split="_vs_")[[1]][2]
+        newnames <- remaining_list
+        newnames[[1]] <- intercept_pair
+        col_number = 0
+        for (newname in newnames) {
+            col_number <- col_number + 1
+            test_modify <- strsplit(x=newname, split="_vs_")[[1]][1]
+            if (is.na(test_modify)) {
+                next
+            } else {
+                newnames[col_number] <- test_modify
+                coefficient_df[, col_number] <- coefficient_df[, col_number] - coefficient_df[, 1] 
+            }
+        }
+        colnames(coefficient_df) <- newnames
+    }
 
     ret_list <- list(
         "model_string" = model_string,
@@ -309,7 +330,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         "denominators" = denominators,
         "numerators" = numerators,
         "conditions" = conditions,
-        "coefficients" = coefficient_list,
+        "coefficients" = coefficient_df,
         "contrasts_performed" = contrasts,
         "all_tables" = result_list,
         "dispersion_plot" = dispersion_plot

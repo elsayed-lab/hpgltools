@@ -23,9 +23,9 @@ normalize_counts <- function(data, design=NULL, norm="raw", ...) {
     norm_performed <- "raw"
     if (data_class == "expt") {
         design <- data[["design"]]
-        count_table <- Biobase::exprs(data[["expressionset"]])
+        count_table <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        count_table <- Biobase::exprs(data)
+        count_table <- exprs(data)
     } else if (data_class == "list") {
         count_table <- data[["count_table"]]
         if (is.null(data)) {
@@ -175,12 +175,12 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
         colnames(normExprs) <- count_colnames
         return(normExprs)
     }
-    res <- hpgl_qstats(Biobase::exprs, groups, refType=refType,
+    res <- hpgl_qstats(exprs(data), groups, refType=refType,
                        groupLoc=groupLoc, window=window)
-    QBETAS <- res$QBETAS
-    Qref <- res$Qref
-    X <- res$model
-    w <- res$smoothWeights
+    QBETAS <- res[["QBETAS"]]
+    Qref <- res[["Qref"]]
+    X <- res[["model"]]
+    w <- res[["smoothWeights"]]
     wQBETAS <- QBETAS * (1 - w)
     wQBETAS <- X %*% t(wQBETAS)
     wQref <- Qref * w

@@ -181,12 +181,12 @@ all_pairwise <- function(input=NULL, conditions=NULL,
             samples_first_idx <- results[["limma"]][["conditions"]] == first
             num_first <- sum(samples_first_idx)
             ## Subset the expressionset and make a new matrix of only the 'mutant' samples
-            samples_first <- Biobase::exprs(input[["expressionset"]])[, samples_first_idx]
+            samples_first <- exprs(input)[, samples_first_idx]
             ## Repeat for the 'wildtype' samples, when finished the m columns for samples_first
             ## 'mutant' and the n samples of samples_second will be 'wildtype'
             samples_second_idx <- results[["limma"]][["conditions"]] == second
             num_second <- sum(samples_second_idx)
-            samples_second <- Biobase::exprs(input[["expressionset"]])[, samples_second_idx]
+            samples_second <- exprs(input)[, samples_second_idx]
             ## Concatenate the 'mutant' and 'wildtype' samples by column
             included_samples <- cbind(samples_first, samples_second)
             ## Arbitrarily call them 'first' and 'second'
@@ -321,68 +321,72 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' @seealso \pkg{stats}
 #'  \code{\link[stats]{model.matrix}}
 #' @export
-choose_model <- function(input, conditions, batches, model_batch=TRUE,
+choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
                          model_cond=TRUE, model_intercept=TRUE,
                          alt_model=NULL, alt_string=NULL,
                          intercept=0, reverse=FALSE,
                          surrogates="be", ...) {
     ## arglist <- list(...)
-    design <- Biobase::pData(input[["expressionset"]])
-    conditions <- as.factor(conditions)
-    batches <- as.factor(batches)
+    design <- pData(input)
+    if (is.null(design)) {
+        conditions <- as.factor(conditions)
+        batches <- as.factor(batches)
+        design <- data.frame("condition" = conditions,
+                             "batch" = batches)
+    }
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
     ## It would be much smarter to generate the models in the following if() {} blocks
     ## But I have it in my head to eventually compare results using different models.
+
+    ## The previous iteration of this had an explicit contrasts.arg set, like this:
+    ##contrasts.arg=list(condition="contr.treatment"))
+    ## Which looked like this for a full invocation:
+    ## condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
+    ##                                                contrasts.arg=list(condition="contr.treatment",
+    ##                                                                   batch="contr.treatment")),
+    ## The contrasts.arg has been removed because it seems to result in the same model.
+
     cond_int_string <- "~ 0 + condition"
-    cond_int_model <- stats::model.matrix(~ 0 + conditions, data=design)
-                                          ##contrasts.arg=list(conditions="contr.treatment"))
+    cond_int_model <- try(stats::model.matrix(as.formula(cond_int_string),
+                                              data=design), silent=TRUE)
+
     batch_int_string <- "~ 0 + batch"
-    batch_int_model <- try(stats::model.matrix(~ 0 + batches, data=design,
-                                               contrasts.arg=list(batches="contr.treatment")),
-                           silent=TRUE)
+    batch_int_model <- try(stats::model.matrix(as.formula(batch_int_string),
+                                               data=design), silent=TRUE)
     condbatch_int_string <- "~ 0 + condition + batch"
-##    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
-##                                                   contrasts.arg=list(conditions="contr.treatment",
-##                                                                      batches="contr.treatment")),
-    condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches, data=design),
-                               silent=TRUE)
+
+    condbatch_int_model <- try(stats::model.matrix(as.formula(condbatch_int_string),
+                                                   data=design), silent=TRUE)
     batchcond_int_string <- "~ 0 + batch + condition"
-##    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions,
-##                                                   contrasts.arg=list(conditions="contr.treatment",
-##                                                                      batches="contr.treatment")),
-##                               silent=TRUE)
-    batchcond_int_model <- try(stats::model.matrix(~ 0 + batches + conditions, data=design),
-                               silent=TRUE)
+    batchcond_int_model <- try(stats::model.matrix(as.formula(batchcond_int_string),
+                                                   data=design), silent=TRUE)
     cond_noint_string <- "~ condition"
-    ##cond_noint_model <- try(stats::model.matrix(~ conditions,
-    ##                                            contrasts.arg=list(conditions="contr.treatment")),
-    ##                        silent=TRUE)
-    cond_noint_model <- try(stats::model.matrix(~ conditions, data=design),
-                            silent=TRUE)
+    cond_noint_model <- try(stats::model.matrix(as.formula(cond_noint_string),
+                                                data=design), silent=TRUE)
     batch_noint_string <- "~ batch"
-    batch_noint_model <- try(stats::model.matrix(~ batches, data=design,
-                                                 contrasts.arg=list(batches="contr.treatment")),
-                             silent=TRUE)
+    batch_noint_model <- try(stats::model.matrix(as.formula(batch_noint_string),
+                                                 data=design), silent=TRUE)
     condbatch_noint_string <- "~ condition + batch"
-    condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches, data=design,
-                                                     contrasts.arg=list(conditions="contr.treatment",
-                                                                        batches="contr.treatment")),
-                                 silent=TRUE)
-##    condbatch_noint_model <- try(stats::model.matrix(~ conditions + batches), silent=TRUE)
+    condbatch_noint_model <- try(stats::model.matrix(as.formula(condbatch_noint_string),
+                                                     data=design), silent=TRUE)
     batchcond_noint_string <- "~ batch + condition"
-    batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions, data=design,
-                                                     contrasts.arg=list(conditions="contr.treatment",
-                                                                        batches="contr.treatment")),
-                                 silent=TRUE)
-    batchcond_noint_model <- try(stats::model.matrix(~ batches + conditions, data=design),
-                                 silent=TRUE)
+    batchcond_noint_model <- try(stats::model.matrix(as.formula(batchcond_noint_string),
+                                                     data=design), silent=TRUE)
+
     noint_model <- NULL
     int_model <- NULL
     noint_string <- NULL
     int_string <- NULL
     including <- NULL
-    if (is.null(model_batch)) {
+    if (!is.null(alt_model)) {
+        chosen_model <- stats::model.matrix(object=as.formula(alt_model), data=design)
+        int_model <- chosen_model
+        noint_model <- chosen_model
+        int_string <- alt_model
+        notint_string <- alt_model
+        including <- "alt"
+    } else if (is.null(model_batch)) {
         int_model <- cond_int_model
         noint_model <- cond_noint_model
         int_string <- cond_int_string
@@ -417,18 +421,18 @@ both condition and batch? Using only a conditional model.")
         ## Changing model_batch from 'sva' to the resulting matrix.
         ## Hopefully this will simplify things later for me.
         model_batch <- model_batch_info[["model_adjust"]]
-        int_model <- stats::model.matrix(~ 0 + conditions + model_batch, data=design)
+        int_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
                                          ## contrasts.arg=list(conditions="contr.sum"))
-        noint_model <- stats::model.matrix(~ conditions + model_batch, data=design)
+        noint_model <- stats::model.matrix(~ condition + model_batch, data=design)
                                            ## contrasts.arg=list(conditions="contr.sum"))
         int_string <- condbatch_int_string
         noint_string <- condbatch_noint_string
         including <- "condition+batchestimate"
     } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
         message("Including batch estimates from sva/ruv/pca in the model.")
-        int_model <- stats::model.matrix(~ 0 + conditions + model_batch, data=design)
+        int_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
                                            ## contrasts.arg=list(conditions="contr.sum"))
-        noint_model <- stats::model.matrix(~ conditions + model_batch, data=design)
+        noint_model <- stats::model.matrix(~ condition + model_batch, data=design)
                                            ## contrasts.arg=list(conditions="contr.sum"))
         int_string <- condbatch_int_string
         noint_string <- condbatch_noint_string
@@ -461,10 +465,10 @@ both condition and batch? Using only a conditional model.")
     ## The next lines ensure that conditions/batches which are all numeric will not cause weird
     ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
     ## Similarly, a batch '01' will be 'b01'
-    tmpnames <- gsub("^conditions(\\d+)$", replacement="c\\1", x=tmpnames)
-    tmpnames <- gsub("^batches(\\d+)$", replacement="b\\1", x=tmpnames)
-    tmpnames <- gsub("conditions", "", tmpnames)
-    tmpnames <- gsub("batches", "", tmpnames)
+    tmpnames <- gsub("^condition(\\d+)$", replacement="c\\1", x=tmpnames)
+    tmpnames <- gsub("^batch(\\d+)$", replacement="b\\1", x=tmpnames)
+    tmpnames <- gsub("condition", "", tmpnames)
+    tmpnames <- gsub("batch", "", tmpnames)
     colnames(int_model) <- tmpnames
 
     tmpnames <- colnames(noint_model)
@@ -474,10 +478,10 @@ both condition and batch? Using only a conditional model.")
     ## The next lines ensure that conditions/batches which are all numeric will not cause weird
     ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
     ## Similarly, a batch '01' will be 'b01'
-    tmpnames <- gsub("conditions^(\\d+)$", replacement="c\\1", x=tmpnames)
-    tmpnames <- gsub("batches^(\\d+)$", replacement="b\\1", x=tmpnames)
-    tmpnames <- gsub("conditions", "", tmpnames)
-    tmpnames <- gsub("batches", "", tmpnames)
+    tmpnames <- gsub("condition^(\\d+)$", replacement="c\\1", x=tmpnames)
+    tmpnames <- gsub("batch^(\\d+)$", replacement="b\\1", x=tmpnames)
+    tmpnames <- gsub("condition", "", tmpnames)
+    tmpnames <- gsub("batch", "", tmpnames)
     colnames(noint_model) <- tmpnames
 
     chosen_model <- NULL
@@ -489,12 +493,6 @@ both condition and batch? Using only a conditional model.")
     } else {
         chosen_model <- noint_model
         chosen_string <- noint_string
-    }
-
-    if (!is.null(alt_model)) {
-        fun_model <- alt_model
-        fun_string <- alt_string
-        including <- "alt"
     }
 
     retlist <- list(
@@ -540,7 +538,8 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
         result <- list(
             "conditions" = input[["design"]][["condition"]],
             "batches" = input[["design"]][["batch"]],
-            "data" = as.data.frame(Biobase::exprs(input[["expressionset"]])))
+            "data" = as.data.frame(exprs(input)))
+
     }
     return(result)
 }
@@ -578,7 +577,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     if (input_class == "expt") {
         conditions <- input[["conditions"]]
         batches <- input[["batches"]]
-        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+        data <- as.data.frame(exprs(input))
 
         tran_state <- input[["state"]][["transform"]]
         ## Note that voom will take care of this for us.
@@ -600,7 +599,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
         }
 
         ## ready <- input
-        data <- Biobase::exprs(input[["expressionset"]])
+        data <- exprs(input)
         if (isTRUE(force)) {
             message("Leaving the data alone, regardless of normalization state.")
             retlist <- list(
@@ -654,7 +653,7 @@ choose_binom_dataset <- function(input, force=FALSE, ...) {
     if (input_class == "expt") {
         conditions <- input[["conditions"]]
         batches <- input[["batches"]]
-        data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+        data <- as.data.frame(exprs(input))
         ## As I understand it, EdgeR fits a binomial distribution
         ## and expects data as integer counts, not floating point nor a log2 transformation
         ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
@@ -691,7 +690,7 @@ like me, want to see what happens when you put non-standard data into deseq, the
             warn_user <- 1
         } else if (norm_state != "raw" & tran_state != "raw" & conv_state != "raw") {
             ## These if statements may be insufficient to check for the appropriate input for deseq.
-            data <- Biobase::exprs(input[["original_expressionset"]])
+            data <- exprs(input[["original_expressionset"]])
         } else if (norm_state != "raw" | tran_state != "raw") {
             ## This makes use of the fact that the order of operations in the normalization
             ## function is static. filter->normalization->convert->batch->transform.
@@ -732,7 +731,7 @@ the state of the count table and ensure that it is in integer counts.")
 #' @param second  A second invocation of combine_de_tables to examine.
 #' @return  A list of compared columns, tables, and methods.
 #' @export
-compare_results_de <- function(first, second) {
+compare_results_de <- function(first, second, cor_method="pearson") {
     result <- list()
     comparisons <- c("logfc", "p", "adjp")
     methods <- c("limma", "deseq", "edger")
@@ -746,7 +745,7 @@ compare_results_de <- function(first, second) {
                 column_name <- paste0(method, "_", comparison)
                 f_column <- as.numeric(first[["data"]][[table]][[column_name]])
                 s_column <- as.numeric(second[["data"]][[table]][[column_name]])
-                comp <- cor(f_column, s_column)
+                comp <- cor(x=f_column, y=s_column, method=cor_method)
                 result[[method]][[table]][[comparison]] <- comp
             }
         }
@@ -1193,7 +1192,7 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
         "another_error" = another_error,
         "stdev_values" = stdev_mtrx)
     if (!is.null(excel)) {
-        annotations <- Biobase::fData(datum[["input"]][["expressionset"]])
+        annotations <- fData(datum[["input"]])
         expressions <- retlist[["expression_values"]]
         colnames(expressions) <- paste0("expr_", colnames(expressions))
         errors <- retlist[["error_values"]]
@@ -1422,7 +1421,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
         names(eval_strings) <- eval_names
     }
     ## Add them to makeContrasts()
-    contrast_string <- paste0("all_pairwise_contrasts = limma::makeContrasts(")
+    contrast_string <- paste0("all_pairwise_contrasts = mymakeContrasts(")
     for (f in 1:length(eval_strings)) {
         ## eval_name = names(eval_strings[f])
         eval_string <- paste0(eval_strings[f])
@@ -1443,6 +1442,74 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
         "contrast_string" = contrast_string,
         "names" = eval_names)
     return(result)
+}
+
+## This is a copy of limma::makeContrasts without the test of make.names()
+## Because I want to be able to use it with interaction models potentially
+## and if a model has first:second, make.names() turns the ':' to a '.'
+## and then the equivalence test fails, causing makeContrasts() to error
+## spuriously (I think).
+mymakeContrasts <- function (..., contrasts = NULL, levels) {
+    e <- substitute(list(...))
+    if (is.factor(levels)) {
+        levels <- levels(levels)
+    }
+    if (!is.character(levels)) {
+        levels <- colnames(levels)
+    }
+    if (levels[1] == "(Intercept)") {
+        levels[1] <- "Intercept"
+        warning("Renaming (Intercept) to Intercept")
+    }
+    n <- length(levels)
+    if (n < 1)
+        stop("No levels to construct contrasts from")
+    indicator <- function(i, n) {
+        out <- rep(0, n)
+        out[i] <- 1
+        out
+    }
+    levelsenv <- new.env()
+    for (i in 1:n) assign(levels[i], indicator(i, n), pos = levelsenv)
+    if (!is.null(contrasts)) {
+        if (length(e) > 1) 
+            stop("Can't specify both ... and contrasts")
+        e <- as.character(contrasts)
+        ne <- length(e)
+        cm <- matrix(0, n, ne, dimnames = list(Levels = levels, 
+            Contrasts = e))
+        if (ne == 0) 
+            return(cm)
+        for (j in 1:ne) {
+            ej <- parse(text = e[j])
+            cm[, j] <- eval(ej, envir = levelsenv)
+        }
+        return(cm)
+    }
+    ne <- length(e)
+    enames <- names(e)[2:ne]
+    easchar <- as.character(e)[2:ne]
+    if (is.null(enames)) 
+        cn <- easchar
+    else cn <- ifelse(enames == "", easchar, enames)
+    cm <- matrix(0, n, ne - 1, dimnames = list(Levels = levels, 
+        Contrasts = cn))
+    if (ne < 2) 
+        return(cm)
+    for (j in 1:(ne - 1)) {
+        ej <- e[[j + 1]]
+        if (is.character(ej)) 
+            ej <- parse(text = ej)
+        ej <- eval(ej, envir = levelsenv)
+        if (!is.numeric(ej)) {
+            colnames(cm)[j] <- as.character(ej)[1]
+            if (is.character(ej)) 
+                ej <- parse(text = ej)
+            ej <- eval(ej, envir = levelsenv)
+        }
+        cm[, j] <- ej
+    }
+    cm
 }
 
 #' Remove multicopy genes from up/down gene expression lists.

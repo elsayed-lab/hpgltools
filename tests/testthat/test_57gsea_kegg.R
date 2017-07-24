@@ -2,6 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 library(pasilla)
+tt <- sm(library(pathview))
 data(pasillaGenes)
 context("57gsea_kegg.R: Do KEGGREST and pathview work?\n")
 
@@ -64,16 +65,13 @@ test_that("Can we extract the percent differentially expressed genes from multip
 ## Try testing out pathview
 mel_id <- kegg_get_orgn("melanogaster")
 rownames(sig_up) <- make.names(sig_up[["flybasecg"]], unique=TRUE)
-funkytown <- sm(simple_pathview(sig_up, fc_column="logFC", species="dme",
-                              from_list=c("CG"), to_list=c("Dmel_CG")))
-expected <- c(22, 34, 5, 3, 12, 106)
+
+funkytown <- sm(simple_pathview(sig_up, fc_column="logFC", species="dme", pathway=pathways,
+                                from_list=c("CG"), to_list=c("Dmel_CG")))
+
+expected <- c(1, 1, 1, 1, 4)
 actual <- head(funkytown[["total_mapped_nodes"]])
 test_that("Did pathview work? (total mapped nodes)", {
-    expect_equal(expected, actual, tolerance=0.1)
-})
-expected <- c(17, 8, 5, 3, 9, 100)
-actual <- head(funkytown[["unique_mapped_nodes"]])
-test_that("Did pathview work? (unique mapped nodes)", {
     expect_equal(expected, actual, tolerance=0.1)
 })
 

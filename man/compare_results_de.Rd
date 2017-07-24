@@ -4,7 +4,7 @@
 \alias{compare_results_de}
 \title{Compare the results of separate all_pairwise() invocations.}
 \usage{
-compare_results_de(first, second)
+compare_results_de(first, second, cor_method = "pearson")
 }
 \arguments{
 \item{first}{One invocation of combine_de_tables to examine.}

@@ -22,7 +22,7 @@
 #'  count_tables <- hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
 #' }
 #' @export
-expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
+read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
                              suffix=NULL, ...) {
     ## load first sample
     ## arglist <- list(...)
@@ -139,8 +139,8 @@ concatenate_runs <- function(expt, column="replicate") {
     samplenames <- list()
     for (rep in replicates) {
         expression <- paste0(column, "=='", rep, "'")
-        tmp_expt <- expt_subset(expt, expression)
-        tmp_data <- rowSums(Biobase::exprs(tmp_expt[["expressionset"]]))
+        tmp_expt <- subset_expt(expt, expression)
+        tmp_data <- rowSums(exprs(tmp_expt))
         tmp_design <- tmp_expt[["design"]][1, ]
         final_data <- cbind(final_data, tmp_data)
         final_design <- rbind(final_design, tmp_design)
@@ -153,9 +153,9 @@ concatenate_runs <- function(expt, column="replicate") {
     }
     final_expt[["design"]] <- final_design
     metadata <- new("AnnotatedDataFrame", final_design)
-    Biobase::sampleNames(metadata) <- colnames(final_data)
-    feature_data <- new("AnnotatedDataFrame", Biobase::fData(expt[["expressionset"]]))
-    Biobase::featureNames(feature_data) <- rownames(final_data)
+    sampleNames(metadata) <- colnames(final_data)
+    feature_data <- new("AnnotatedDataFrame", fData(expt))
+    featureNames(feature_data) <- rownames(final_data)
     experiment <- new("ExpressionSet", exprs=final_data,
                       phenoData=metadata, featureData=feature_data)
     final_expt[["expressionset"]] <- experiment
@@ -225,14 +225,12 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 #' @export
 median_by_factor <- function(data, fact="condition") {
     if (length(fact) == 1) {
-        design <- Biobase::pData(data[["expressionset"]])
+        design <- pData(data)
         fact <- design[[fact]]
         names(fact) <- rownames(design)
     }
-    if (class(data) == "expt") {
-        data <- Biobase::exprs(data[["expressionset"]])
-    } else if (class(data) == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+    if (class(data) == "expt" | class(data) == "ExpressionSet") {
+        data <- exprs(data)
     }
 
     medians <- data.frame("ID"=rownames(data))
@@ -277,10 +275,8 @@ median_by_factor <- function(data, fact="condition") {
 #' }
 #' @export
 features_greater_than <- function(data, cutoff=1, hard=TRUE) {
-    if (class(data) == "expt") {
-        data <- as.data.frame(Biobase::exprs(data[["expressionset"]]))
-    } else if (class(data) == "ExpressionSet") {
-        data <- as.data.frame(Biobase::exprs(data))
+    if (class(data) == "expt" | class(data) == "ExpressionSet") {
+        data <- as.data.frame(exprs(data))
     } else {
         data <- as.data.frame(data)
     }
@@ -356,7 +352,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
                             title="Columns used in the following tables.")
     rows_down <- nrow(legend)
     new_row <- new_row + rows_down + 3
-    annot <- as.data.frame(Biobase::pData(expt[["expressionset"]]))
+    annot <- as.data.frame(pData(expt))
     xls_result <- write_xls(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
                             sheet=sheet, start_col=1, title="Experimental Design.")
 
@@ -365,8 +361,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     sheet <- "raw_reads"
     new_row <- 1
     new_col <- 1
-    reads <- Biobase::exprs(expt[["expressionset"]])
-    info <- Biobase::fData(expt[["expressionset"]])
+    reads <- exprs(expt)
+    info <- fData(expt)
     read_info <- merge(info, reads, by="row.names")
     xls_result <- write_xls(data=read_info, wb=wb, sheet=sheet, rownames=FALSE,
                             start_row=new_row, start_col=new_col, title="Raw Reads.")
@@ -558,8 +554,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- 1
     norm_data <- sm(normalize_expt(expt=expt, transform=transform, norm=norm,
                                    convert=convert, batch=batch, filter=filter))
-    norm_reads <- Biobase::exprs(norm_data[["expressionset"]])
-    info <- Biobase::fData(norm_data[["expressionset"]])
+    norm_reads <- exprs(norm_data)
+    info <- fData(norm_data)
     read_info <- merge(norm_reads, info, by="row.names")
     title <- what_happened(norm_data)
     xls_result <- write_xls(wb=wb, data=read_info, rownames=FALSE,
@@ -730,7 +726,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     sheet <- "median_data"
     new_col <- 1
     new_row <- 1
-    median_data <- median_by_factor(Biobase::exprs(norm_data[["expressionset"]]),
+    median_data <- median_by_factor(exprs(norm_data),
                                     norm_data[["conditions"]])
     median_data_merged <- merge(median_data, info, by="row.names")
     xls_result <- write_xls(wb, data=median_data_merged, start_row=new_row, start_col=new_col,

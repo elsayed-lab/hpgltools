@@ -261,8 +261,8 @@ analyses more difficult/impossible.")
     if (is.null(all_count_tables)) {
         filenames <- as.character(sample_definitions[[file_column]])
         sample_ids <- as.character(sample_definitions[[sample_column]])
-        all_count_tables <- expt_read_counts(sample_ids, filenames, ...)
-        ##all_count_tables <- expt_read_counts(sample_ids, filenames)
+        all_count_tables <- read_counts_expt(sample_ids, filenames, ...)
+        ##all_count_tables <- read_counts_expt(sample_ids, filenames)
     }
 
     ## Recast the data as a data.frame and make sure everything is numeric
@@ -492,7 +492,7 @@ analyses more difficult/impossible.")
 
     ## Now that the expressionset has been created, pack it into an expt object so that I
     ## can keep backups etc.
-    expt <- expt_subset(experiment) ## I think this is spurious now.
+    expt <- subset_expt(experiment) ## I think this is spurious now.
     expt[["original_expressionset"]] <- experiment
     expt[["original_metadata"]] <- Biobase::pData(experiment)
 
@@ -553,7 +553,7 @@ analyses more difficult/impossible.")
 #' @return  A smaller expt
 #' @seealso \code{\link{create_expt}}
 #' @export
-expt_exclude_genes <- function(expt, column="txtype", method="remove",
+exclude_genes_expt <- function(expt, column="txtype", method="remove",
                                patterns=c("snRNA","tRNA","rRNA"), ...) {
     arglist <- list(...)
     ex <- expt[["expressionset"]]
@@ -633,10 +633,10 @@ expt_subset <- function(expt, subset=NULL) {
     starting_metadata <- NULL
     if (class(expt)[[1]] == "ExpressionSet") {
         starting_expressionset <- expt
-        starting_metadata <- Biobase::pData(starting_expressionset)
+        starting_metadata <- pData(starting_expressionset)
     } else if (class(expt)[[1]] == "expt") {
         starting_expressionset <- expt[["expressionset"]]
-        starting_metadata <- Biobase::pData(expt[["expressionset"]])
+        starting_metadata <- pData(expt)
     } else {
         stop("expt is neither an expt nor ExpressionSet")
     }
@@ -682,7 +682,7 @@ expt_subset <- function(expt, subset=NULL) {
             subset_design[[col]] <- droplevels(subset_design[[col]])
         }
     }
-    Biobase::pData(subset_expressionset) <- subset_design
+    pData(subset_expressionset) <- subset_design
 
     new_expt <- list(
         "title" = expt[["title"]],
@@ -771,7 +771,7 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
         stop("The new factor of batches is not the same length as the original.")
     }
     expt[["batches"]] <- fact
-    Biobase::pData(expt[["expressionset"]])[["batch"]] <- fact
+    pData(expt[["expressionset"]])[["batch"]] <- fact
     expt[["design"]][["batch"]] <- fact
     return(expt)
 }
@@ -850,12 +850,12 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
                 original_condition <- expt[["design"]][sampleid, "condition"]
                 changed_condition <- paste0(original_condition, snum)
                 expt[["design"]][sampleid, "condition"] <- changed_condition
-                tmp_pdata <- Biobase::pData(expt[["expressionset"]])
+                tmp_pdata <- pData(expt)
                 old_levels <- levels(tmp_pdata[["condition"]])
                 new_levels <- c(old_levels, changed_condition)
                 levels(tmp_pdata[["condition"]]) <- new_levels
                 tmp_pdata[sampleid, "condition"] <- changed_condition
-                Biobase::pData(expt[["expressionset"]]) <- tmp_pdata
+                pData(expt[["expressionset"]]) <- tmp_pdata
             }
         }
         chosen_idx <- complete.cases(chosen_colors)
@@ -904,14 +904,14 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
     ## the conditions and I do not know why.
     if (!is.null(ids)) {
         ## Change specific id(s) to given condition(s).
-        old_pdata <- Biobase::pData(expt[["expressionset"]])
+        old_pdata <- pData(expt)
         old_cond <- as.character(old_pdata[["condition"]])
         names(old_cond) <- rownames(old_pdata)
         new_cond <- old_cond
         new_cond[ids] <- fact
         new_pdata <- old_pdata
         new_pdata[["condition"]] <- as.factor(new_cond)
-        Biobase::pData(expt[["expressionset"]]) <- new_pdata
+        pData(expt[["expressionset"]]) <- new_pdata
         new_expt[["conditions"]][ids] <- fact
         new_expt[["design"]][["condition"]] <- new_cond
     } else if (length(fact) == 1) {
@@ -919,7 +919,7 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
         if (fact %in% colnames(expt[["design"]])) {
             new_fact <- expt[["design"]][[fact]]
             new_expt[["conditions"]] <- new_fact
-            Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
+            pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
             new_expt[["design"]][["condition"]] <- new_fact
         } else {
             stop("The provided factor is not in the design matrix.")
@@ -928,7 +928,7 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
             stop("The new factor of conditions is not the same length as the original.")
     } else {
         new_expt[["conditions"]] <- fact
-        Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- fact
+        pData(new_expt[["expressionset"]])[["condition"]] <- fact
         new_expt[["design"]][["condition"]] <- fact
     }
 
@@ -1086,4 +1086,40 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
     return(what)
 }
 
+## Make some methods which call Biobase on expts.
+## This way we don't have to do Biobase::exprs/fData/pData/notes()
+## But instead R will call them for us.
+
+## Here is a note from Hadley which is relevant here:
+## Another consideration is that S4 code often needs to run in a certain
+## order. For example, to define the method setMethod("foo", c("bar", "baz"),
+## ...) you must already have created the foo generic and the two classes. By
+## default, R code is loaded in alphabetical order, but that won’t always work
+## for your situation.
+
+#' Create a few methods to make calling exprs/fData/pData/notes easier.
+#'
+#' @name exprs
+#' @import Biobase
+#' @importFrom Biobase exprs fData pData notes
+NULL
+#> NULL
+
+setOldClass("expt")
+setMethod("exprs", signature="expt",
+          function(object) {
+              Biobase::exprs(object[["expressionset"]])
+          })
+setMethod("fData", signature="expt",
+          function(object) {
+              Biobase::fData(object[["expressionset"]])
+          })
+setMethod("pData", signature="expt",
+          function(object) {
+              Biobase::pData(object[["expressionset"]])
+          })
+setMethod("notes", signature="expt",
+          function(object) {
+              Biobase::notes(object[["expressionset"]])
+          })
 ## EOF

@@ -186,13 +186,13 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
         warning("Quantile normalization and sva do not always play well together.")
     }
     new_expt[["backup_expressionset"]] <- new_expt[["expressionset"]]
-    current_data <- Biobase::exprs(current_exprs)
+    current_data <- exprs(current_exprs)
     design <- expt[["design"]]
     if (is.null(annotations)) {
-        annotations <- Biobase::fData(current_exprs)
+        annotations <- fData(current_exprs)
     }
     if (is.null(design)) {
-        design <- Biobase::pData(current_exprs)
+        design <- pData(current_exprs)
     }
     ## A bunch of these options should be moved into ...
     ## Having them as options to maintain is foolish
@@ -213,9 +213,9 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     ## replace an expressionset with a smaller version (low-filtered).
     ## Instead, one must properly subset the object first, then replace.
     ## While this is annoying, I suppose it is smart.
-    unfiltered_genes <- rownames(Biobase::exprs(current_exprs)) %in% rownames(final_data)
+    unfiltered_genes <- rownames(exprs(current_exprs)) %in% rownames(final_data)
     current_exprs <- current_exprs[unfiltered_genes, ]
-    Biobase::exprs(current_exprs) <- final_data
+    exprs(current_exprs) <- final_data
 
     ## The original data structure contains the following slots:
     ## colors, batches, convert, conditions, design, expressionset,
@@ -310,14 +310,14 @@ hpgl_norm <- function(data, ...) {
     if (data_class == "expt") {
         original_counts <- data[["original_counts"]]
         original_libsizes <- data[["original_libsize"]]
-        design <- Biobase::pData(data[["expressionset"]])
-        annot <- Biobase::fData(data[["expressionset"]])
-        counts <- Biobase::exprs(data[["expressionset"]])
+        design <- pData(data)
+        annot <- fData(data)
+        counts <- exprs(data)
         expt_state <- data[["state"]]
     } else if (data_class == "ExpressionSet") {
-        counts <- Biobase::exprs(data)
-        design <- Biobase::pData(data)
-        annot <- Biobase::fData(data)
+        counts <- exprs(data)
+        design <- pData(data)
+        annot <- fData(data)
         if (!is.null(arglist[["expt_state"]])) {
             expt_state <- arglist[["expt_state"]]
         }

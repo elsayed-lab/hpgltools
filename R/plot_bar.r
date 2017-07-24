@@ -43,11 +43,11 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
         condition <- data[["design"]][["condition"]]
         colors <- data[["colors"]]
         names <- data[["names"]]
-        data <- Biobase::exprs(data[["expressionset"]])  ## Why does this need the simplifying
+        data <- exprs(data)  ## Why does this need the simplifying
         ## method of extracting an element? (eg. data['expressionset'] does not work)
         ## that is _really_ weird!
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -118,11 +118,11 @@ plot_pct_kept <- function(data, row="pct_kept", condition=NULL, colors=NULL,
         condition <- data[["design"]][["condition"]]
         colors <- data[["colors"]]
         names <- data[["names"]]
-        data <- Biobase::exprs(data[["expressionset"]])  ## Why does this need the simplifying
+        data <- exprs(data)  ## Why does this need the simplifying
         ## method of extracting an element? (eg. data['expressionset'] does not work)
         ## that is _really_ weird!
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {

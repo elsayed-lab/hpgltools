@@ -18,9 +18,9 @@
 plot_bcv <- function(data) {
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -553,9 +553,9 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
         design <- data[["design"]]
         colors <- data[["colors"]]
         names <- data[["samplenames"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         ## some functions prefer matrix, so I am keeping this explicit for the moment
         data <- as.data.frame(data)
@@ -651,9 +651,9 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
     if (data_class == "expt") {
         design <- data[["design"]]
         colors <- data[["colors"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         ## some functions prefer matrix, so I am keeping this explicit for the moment
         data <- as.data.frame(data)

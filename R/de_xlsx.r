@@ -122,6 +122,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         ## reminder_string <- "The contrasts were performed with surrogates modeled with sva.
         ## The p-values were therefore adjusted using an experimental f-test as per the sva documentation."
         ## message(reminder_string)
+        reminder_string <- "The contrasts were performed using surrogates from sva."
     } else if (isTRUE(reminder_model_batch) & isTRUE(reminder_model_cond)) {
         reminder_string <- "The contrasts were performed with experimental condition and batch in the model."
     } else if (isTRUE(reminder_model_cond)) {
@@ -255,7 +256,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                     start_row=37)
     }
 
-    annot_df <- Biobase::fData(all_pairwise_result[["input"]][["expressionset"]])
+    annot_df <- fData(all_pairwise_result[["input"]])
     if (!is.null(extra_annot)) {
         annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
         rownames(annot_df) <- annot_df[["Row.names"]]
@@ -271,7 +272,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     deseq_ma_plots <- list()
     sheet_count <- 0
     de_summaries <- data.frame()
-
+    name_list <- c()
     if (class(keepers) == "list") {
         ## First check that your set of kepers is in the data
         all_coefficients <- unlist(strsplit(x=limma[["contrasts_performed"]], split="_vs_"))
@@ -304,7 +305,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             summary <- NULL
             found <- 0
             found_table <- NULL
-            do_inverse <- NULL
             limma_plt <- NULL
             limma_ma_plt <- NULL
             edger_plt <- NULL
@@ -324,6 +324,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             } else {
                 stop("None of the DE tools appear to have worked.")
             }
+            do_inverse <- FALSE
             for (tab in limma[["contrasts_performed"]]) {
                 if (tab == same_string) {
                     do_inverse <- FALSE
@@ -336,6 +337,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                     found_table <- inverse_string
                     message(paste0("Found inverse table with ", inverse_string))
                 }
+                name_list[a] <- same_string
             }
             if (class(limma) == "try-error") {
                 limma <- NULL
@@ -478,6 +480,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             deseq_ma_plots[[name]] <- deseq_ma_plt
             de_summaries <- rbind(de_summaries, summary)
             table_names[[a]] <- summary[["table"]]
+            names(combo) <- name_list
         }
         ## If you want all the tables in a dump
 
@@ -487,6 +490,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         table_names <- names(edger[["contrast_list"]])
         for (tab in names(edger[["contrast_list"]])) {
             a <- a + 1
+            name_list[a] <- tab
             message(paste0("Working on table ", a, "/", names_length, ": ", tab))
             sheet_count <- sheet_count + 1
             combined <- combine_de_table(limma, edger, deseq, basic,
@@ -517,6 +521,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 
     else if (class(keepers) == "character") {
         table <- keepers
+        name_list[1] <- table
         sheet_count <- sheet_count + 1
         if (table %in% names(edger[["contrast_list"]])) {
             message(paste0("I found ", table, " in the available contrasts."))
@@ -1139,7 +1144,7 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=100, z=NULL, 
     for (according in names(abundant_lists)) {
         for (coef in names(abundant_lists[[according]])) {
             sheetname <- paste0(according, "_", coef)
-            annotations <- Biobase::fData(pairwise[["input"]][["expressionset"]])
+            annotations <- fData(pairwise[["input"]])
             abundances <- abundant_lists[[according]][[coef]]
             kept_annotations <- names(abundant_lists[[according]][[coef]])
             kept_idx <- rownames(annotations) %in% kept_annotations

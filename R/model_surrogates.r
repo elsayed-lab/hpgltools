@@ -50,7 +50,7 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
     if (class(input) == "expt") {
         ## Gather all the likely pieces we can use
         my_design <- input[["design"]]
-        my_data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+        my_data <- as.data.frame(exprs(input))
         transform_state <- input[["state"]][["transform"]]
         base10_mtrx <- as.matrix(my_data)
         log_mtrx <- as.matrix(my_data)
@@ -58,9 +58,9 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
             ## I think this was the cause of some problems.  The order of operations performed here
             ## was imperfect and could potentially lead to multiple different matrix sizes.
             base10_data <- sm(normalize_expt(input, convert=convert, filter=filter, thresh=1))
-            base10_mtrx <- Biobase::exprs(base10_data[["expressionset"]])
+            base10_mtrx <- exprs(base10_data)
             log_data <- sm(normalize_expt(base10_data, transform="log2"))
-            log2_mtrx <- Biobase::exprs(log_data[["expressionset"]])
+            log2_mtrx <- exprs(log_data)
             rm(log_data)
             rm(base10_data)
         } else {
@@ -413,7 +413,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
                      "+ batch_adjustments$ruv_emp")
     adjust_names <- c("null", "batch", "pca", "sva_sup", "sva_unsup",
                       "ruv_sup", "ruv_resid", "ruv_emp")
-    starter <- edgeR::DGEList(counts=Biobase::exprs(expt[["expressionset"]]))
+    starter <- edgeR::DGEList(counts=exprs(expt))
     norm_start <- edgeR::calcNormFactors(starter)
     catplots <- vector("list", length(adjustments) + 1)  ## add 1 for a null adjustment
     names(catplots) <- adjust_names

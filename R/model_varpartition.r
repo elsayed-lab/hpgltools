@@ -50,7 +50,7 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
         cl <- parallel::makeCluster(cpus)
         para <- doParallel::registerDoParallel(cl)
     }
-    design <- Biobase::pData(expt[["expressionset"]])
+    design <- pData(expt)
     num_batches <- length(levels(as.factor(design[[chosen_factor]])))
     if (num_batches == 1) {
         message("varpart sees only 1 batch, adjusting the model accordingly.")
@@ -67,7 +67,7 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
     message(paste0("Attempting mixed linear model with: ", model_string))
     my_model <- as.formula(model_string)
     norm <- sm(normalize_expt(expt, filter=TRUE))
-    data <- Biobase::exprs(norm[["expressionset"]])
+    data <- exprs(norm)
 
     message("Fitting the expressionset to the model, this is slow.")
     message("(Eg. Take the projected run time and mulitply by 3-6 and round up.)")
@@ -120,7 +120,7 @@ varpart_summaries <- function(expt, factors=c("condition", "batch"), cpus=6) {
     model_string <- gsub(pattern="\\+ $", replacement="", x=model_string)
     my_model <- as.formula(model_string)
     norm <- sm(normalize_expt(expt, filter=TRUE))
-    data <- Biobase::exprs(norm[["expressionset"]])
+    data <- exprs(norm)
     design <- expt[["design"]]
     summaries <- variancePartition::fitVarPartModel(data, my_model, design, fxn=summary)
     return(summaries)

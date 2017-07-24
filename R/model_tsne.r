@@ -41,9 +41,9 @@ plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
             plot_colors <- NULL
         }
         plot_names <- data[["samplenames"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "list") {
         data <- data[["count_table"]]
         if (is.null(data)) {
@@ -228,9 +228,9 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
             plot_colors <- NULL
         }
         plot_names <- data[["samplenames"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "list") {
         data <- data[["count_table"]]
         if (is.null(data)) {

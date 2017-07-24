@@ -24,7 +24,10 @@ clear_session <- function(keepers=NULL, depth=10) {
 #' @export
 get_git_commit <- function(gitdir="/home/trey/hpgltools") {
     cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'commit' | awk '{print $2}'")
-    result <- system(cmdline, intern=TRUE)
+    commit_result <- system(cmdline, intern=TRUE)
+    cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
+    date_result <- system(cmdline, intern=TRUE)
+    result <- paste0(date_result, ": ", commit_result)
     return(result)
 }
 

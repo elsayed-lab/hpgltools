@@ -24,11 +24,11 @@ convert_counts <- function(data, convert="raw", ...) {
     data_class <- class(data)[1]
     annotations <- arglist[["annotations"]]
     if (data_class == "expt") {
-        annotations <- Biobase::fData(data[["expressionset"]])
-        count_table <- Biobase::exprs(data[["expressionset"]])
+        annotations <- fData(data)
+        count_table <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        annotations <- Biobase::fData(data)
-        count_table <- Biobase::exprs(data)
+        annotations <- fData(data)
+        count_table <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         ## some functions prefer matrix, so I am keeping this explicit for the moment
         count_table <- as.data.frame(data)

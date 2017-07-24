@@ -121,13 +121,13 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
     } else {
         isExpressionSet <- sm(is(counts, "ExpressionSet"))
         if (isExpressionSet) {
-            if (length(Biobase::fData(counts))) {
-                out[["genes"]] <- Biobase::fData(counts)
+            if (length(fData(counts))) {
+                out[["genes"]] <- fData(counts)
             }
-            if (length(Biobase::pData(counts))) {
-                out[["targets"]] <- Biobase::pData(counts)
+            if (length(pData(counts))) {
+                out[["targets"]] <- pData(counts)
             }
-            counts <- Biobase::exprs(counts)
+            counts <- exprs(counts)
         } else {
             counts <- as.matrix(counts)
         }
@@ -347,7 +347,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
 
     message("Starting limma pairwise comparison.")
     input_data <- choose_limma_dataset(input, force=force, which_voom=which_voom)
-    design <- Biobase::pData(input[["expressionset"]])
+    design <- pData(input)
     conditions <- design[["condition"]]
     batches <- design[["batch"]]
     data <- input_data[["data"]]
@@ -385,10 +385,10 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                           model_intercept=model_intercept,
                           alt_model=alt_model, ...)
     ##model <- choose_model(input, conditions, batches,
-    ##                          model_batch=model_batch,
-    ##                          model_cond=model_cond,
-    ##                          model_intercept=model_intercept,
-    ##                          alt_model=alt_model)
+    ##                      model_batch=model_batch,
+    ##                      model_cond=model_cond,
+    ##                      model_intercept=model_intercept,
+    ##                      alt_model=alt_model)
     model <- model[["chosen_model"]]
 
     fun_voom <- NULL
