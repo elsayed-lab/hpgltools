@@ -1097,27 +1097,42 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 ## default, R code is loaded in alphabetical order, but that won’t always work
 ## for your situation.
 
-#' Create a few methods to make calling exprs/fData/pData/notes easier.
+#' Extend Biobase::exprs to handle expt ojects.
 #'
 #' @name exprs
-#' @import Biobase
-#' @importFrom Biobase exprs fData pData notes
-NULL
-#> NULL
-
+#' @importFrom Biobase exprs
+#' @export exprs
 setOldClass("expt")
 setMethod("exprs", signature="expt",
           function(object) {
               Biobase::exprs(object[["expressionset"]])
           })
+
+#' Extend Biobase::fData to handle expt objects.
+#'
+#' @name fData
+#' @importFrom Biobase fData
+#' @export fData
 setMethod("fData", signature="expt",
           function(object) {
               Biobase::fData(object[["expressionset"]])
           })
+
+#' Extend Biobase::pData to handle expt objects.
+#'
+#' @name pData
+#' @importFrom Biobase pData
+#' @export pData
 setMethod("pData", signature="expt",
           function(object) {
               Biobase::pData(object[["expressionset"]])
           })
+
+#' Extend Biobase::notes to handle expt objects.
+#'
+#' @name notes
+#' @importFrom Biobase notes
+#' @export notes
 setMethod("notes", signature="expt",
           function(object) {
               Biobase::notes(object[["expressionset"]])

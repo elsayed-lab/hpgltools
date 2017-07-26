@@ -20,7 +20,7 @@ pasilla_expt <- pasilla[["expt"]]
 expected <- c(2.584963, 6.539159, 12.187661, 9.189825, 3.459432)
 names(expected) <- test_genes
 pasilla_trans <- sm(normalize_expt(pasilla_expt, transform="log2"))
-actual_df <- Biobase::exprs(pasilla_trans[["expressionset"]])
+actual_df <- exprs(pasilla_trans)
 actual <- actual_df[test_genes, c("untreated1")]
 test_that("log2 transformation gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
@@ -29,7 +29,7 @@ test_that("log2 transformation gives expected values?", {
 expected <- c(0.7781513, 1.9684829, 3.6688516, 2.7664128, 1.0413927)
 names(expected) <- test_genes
 pasilla_trans <- sm(normalize_expt(pasilla_expt, transform="log10"))
-actual_df <- Biobase::exprs(pasilla_trans[["expressionset"]])
+actual_df <- exprs(pasilla_trans)
 actual <- actual_df[test_genes, c("untreated1")]
 test_that("log10 transformation gives expected values (why log10!?)?", {
     expect_equal(expected, actual, tolerance=0.0001)
@@ -38,7 +38,7 @@ test_that("log10 transformation gives expected values (why log10!?)?", {
 expected <- c(1.791759, 4.532599, 8.447843, 6.369901, 2.397895)
 names(expected) <- test_genes
 pasilla_trans <- sm(normalize_expt(pasilla_expt, transform="log"))
-actual_df <- Biobase::exprs(pasilla_trans[["expressionset"]])
+actual_df <- exprs(pasilla_trans)
 actual <- actual_df[test_genes, c("untreated1")]
 test_that("loge transformation gives expected values (why log10!?)?", {
     expect_equal(expected, actual, tolerance=0.0001)

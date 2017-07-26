@@ -79,7 +79,7 @@ cbcb_table <- topTable(cbcb_eb, coef=2, n=nrow(cbcb_v[["E"]]))
 ## Setting up an expt class to contain the pasilla data and metadata.
 expected <- as.matrix(counts)
 expected <- expected[sort(rownames(expected)), ]
-actual <- Biobase::exprs(pasilla_expt[["expressionset"]])
+actual <- exprs(pasilla_expt)
 actual <- actual[sort(rownames(actual)), ]
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(expected, actual)
@@ -88,7 +88,7 @@ test_that("Does data from an expt equal a raw dataframe?", {
 ## Perform log2/cpm/quantile/combatMod normalization
 hpgl_norm <- sm(normalize_expt(pasilla_expt, transform="log2",
                                norm="quant", convert="cbcbcpm"))
-hpgl_qcpmcounts <- Biobase::exprs(hpgl_norm[["expressionset"]])
+hpgl_qcpmcounts <- exprs(hpgl_norm)
 expected <- cbcb_qcpmcounts
 expected <- expected[sort(rownames(expected)), ]
 actual <- hpgl_qcpmcounts
@@ -101,7 +101,7 @@ test_that("Do cbcbSEQ and hpgltools agree on the definition of log2(quantile(cpm
 hpgl_qcpmcombat <- sm(normalize_expt(pasilla_expt, transform="log2",
                                      norm="quant", convert="cbcbcpm",
                                      batch="combatmod", low_to_zero=FALSE))
-hpgl_combat <- Biobase::exprs(hpgl_qcpmcombat[["expressionset"]])
+hpgl_combat <- exprs(hpgl_qcpmcombat)
 ## cbcb_hpgl_combat <- hpgl_combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]], mod=design[["condition"]], noScale=TRUE)
 expected <- cbcb_hpgl_combat
 expected <- expected[sort(rownames(expected)), ]

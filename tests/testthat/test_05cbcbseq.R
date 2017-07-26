@@ -52,7 +52,7 @@ pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 cbcb_data <- as.matrix(counts)
-hpgl_data <- Biobase::exprs(pasilla_expt[["expressionset"]])
+hpgl_data <- exprs(pasilla_expt)
 
 ## Check that normalization tools work similarly
 cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
@@ -99,7 +99,7 @@ hpgl_l2qcpm <- hpgl_l2qcpm_data[["count_table"]]
 hpgl_l2qcpm <- hpgl_l2qcpm[sort(rownames(hpgl_l2qcpm)), ]
 hpgl_l2qcpm_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant",
                                       convert="cbcbcpm", filter=FALSE))
-hpgl_l2qcpm2 <- Biobase::exprs(hpgl_l2qcpm_expt[["expressionset"]])
+hpgl_l2qcpm2 <- exprs(hpgl_l2qcpm_expt)
 hpgl_l2qcpm2 <- hpgl_l2qcpm2[sort(rownames(hpgl_l2qcpm2)), ]
 expected <- cbcb_l2qcpm
 actual <- hpgl_l2qcpm

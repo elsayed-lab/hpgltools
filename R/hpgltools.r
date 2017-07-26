@@ -7,7 +7,7 @@
 ## at each function declaration serves to make explicit what each function
 ## requires while not (I think) adding excessive cruft to the NAMESPACE
 
-## #' @import scales grid gtable
+## #' @import scales grid gtable Biobase
 ## #' @importFrom plyr defaults
 ## #' @importFrom stats setNames
 ## NULL
@@ -64,6 +64,7 @@ NULL
 #' @docType package
 #' @name hpgltools
 #' @importFrom ggplot2 aes aes_string ggplot
+#' @import Biobase
 #' @import data.table
 #' @import foreach
 #' @import grDevices

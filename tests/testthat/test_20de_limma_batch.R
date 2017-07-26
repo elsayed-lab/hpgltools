@@ -38,7 +38,7 @@ cbcb_table <- topTable(cbcb_eb, coef=2, n=nrow(cbcb_v[["E"]]))
 
 cbcb_data <- as.matrix(counts)
 cbcb_data <- cbcb_data[sort(rownames(cbcb_data)), ]
-hpgl_data <- Biobase::exprs(pasilla_expt[["expressionset"]])
+hpgl_data <- exprs(pasilla_expt)
 hpgl_data <- hpgl_data[sort(rownames(hpgl_data)), ]
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(cbcb_data, hpgl_data)

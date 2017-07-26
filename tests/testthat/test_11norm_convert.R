@@ -14,7 +14,7 @@ pasilla_expt <- pasilla[["expt"]]
 ## Make sure that my invocation of cpm() is the same as edgeR's.
 pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cpm"))
 expected <- edgeR::cpm(pasilla_expt[["expressionset"]])
-actual <- Biobase::exprs(pasilla_convert[["expressionset"]])
+actual <- exprs(pasilla_convert)
 test_that("cpm conversions are equivalent?", {
     expect_equal(expected, actual)
 })
@@ -23,16 +23,16 @@ test_that("cpm conversions are equivalent?", {
 pasilla_convert <- sm(convert_counts(pasilla_expt, convert="rpkm"))
 pasilla_norm <- sm(normalize_expt(pasilla_expt, convert="rpkm"))
 expected <- pasilla_convert[["count_table"]]
-actual <- Biobase::exprs(pasilla_norm[["expressionset"]])
+actual <- exprs(pasilla_norm)
 test_that("calling convert_counts and normalize_expt are equivalent?", {
     expect_equal(expected, actual)
 })
 
 ## Similarly check that edgeR's rpkm() comes out the same
-fdata_lengths <- as.vector(as.numeric(Biobase::fData(pasilla_expt[["expressionset"]])[["length"]]))
-names(fdata_lengths) <- rownames(Biobase::fData(pasilla_expt[["expressionset"]]))
-expected <- edgeR::rpkm(Biobase::exprs(pasilla_expt[["expressionset"]]), gene.length=fdata_lengths)
-actual <- Biobase::exprs(pasilla_norm[["expressionset"]])
+fdata_lengths <- as.vector(as.numeric(fData(pasilla_expt)[["length"]]))
+names(fdata_lengths) <- rownames(fData(pasilla_expt))
+expected <- edgeR::rpkm(exprs(pasilla_expt), gene.length=fdata_lengths)
+actual <- exprs(pasilla_norm)
 test_that("rpkm conversions are equivalent?", {
     expect_equal(expected, actual)
 })
@@ -43,7 +43,7 @@ tt <- sm(library("BSgenome.Dmelanogaster.UCSC.dm6"))
 pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cp_seq_m",
                                      genome=BSgenome.Dmelanogaster.UCSC.dm6))
 expected <- c(0.03443909, 0.46719586, 22.38432168, 54.32421464, 0.03908639)
-actual <- as.numeric(Biobase::exprs(pasilla_convert[["expressionset"]])[test_genes, 1])
+actual <- as.numeric(exprs(pasilla_convert)[test_genes, 1])
 test_that("cp_seq_m works for TA?", {
     expect_equal(expected, actual)
 })
@@ -52,7 +52,7 @@ test_that("cp_seq_m works for TA?", {
 pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cp_seq_m",
                                      genome=BSgenome.Dmelanogaster.UCSC.dm6, pattern="ATG"))
 expected <- c(0.04536343, 0.51893853, 27.76677691, 46.94320722, 0.05237078)
-actual <- as.numeric(Biobase::exprs(pasilla_convert[["expressionset"]])[test_genes, c("untreated1")])
+actual <- as.numeric(exprs(pasilla_convert)[test_genes, c("untreated1")])
 test_that("cp_seq_m works for ATG?", {
     expect_equal(expected, actual)
 })

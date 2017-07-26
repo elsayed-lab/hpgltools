@@ -18,7 +18,7 @@ pasilla_expt <- pasilla[["expt"]]
 ## Test filter
 expected <- c(7526, 7)
 pasilla_filter <- sm(normalize_expt(pasilla_expt, filter="cbcb"))
-actual <- dim(Biobase::exprs(pasilla_filter[["expressionset"]]))
+actual <- dim(exprs(pasilla_filter))
 test_that("cbcb filtering leaves behind the expected number of genes?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
@@ -26,7 +26,7 @@ test_that("cbcb filtering leaves behind the expected number of genes?", {
 ## TODO These may need adjustment
 expected <- c(10153, 7)
 pasilla_filter <- sm(normalize_expt(pasilla_expt, filter="pofa"))
-actual <- dim(Biobase::exprs(pasilla_filter[["expressionset"]]))
+actual <- dim(exprs(pasilla_filter))
 test_that("pofa filtering leaves behind the expected number of genes?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
@@ -34,7 +34,7 @@ test_that("pofa filtering leaves behind the expected number of genes?", {
 ## TODO These may need adjustment
 expected <- c(10153, 7)
 pasilla_filter <- sm(normalize_expt(pasilla_expt, filter="kofa"))
-actual <- dim(Biobase::exprs(pasilla_filter[["expressionset"]]))
+actual <- dim(exprs(pasilla_filter))
 test_that("kofa filtering leaves behind the expected number of genes?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
@@ -42,14 +42,14 @@ test_that("kofa filtering leaves behind the expected number of genes?", {
 ## TODO These may need adjustment
 expected <- c(10153, 7)
 pasilla_filter <- sm(normalize_expt(pasilla_expt, filter="cv"))
-actual <- dim(Biobase::exprs(pasilla_filter[["expressionset"]]))
+actual <- dim(exprs(pasilla_filter))
 test_that("cv filtering leaves behind the expected number of genes?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
 expected <- c(10153, 7)
 pasilla_filter <- sm(normalize_expt(pasilla_expt, filter="simple"))
-actual <- dim(Biobase::exprs(pasilla_filter[["expressionset"]]))
+actual <- dim(exprs(pasilla_filter))
 test_that("simple filtering leaves behind the expected number of genes?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })

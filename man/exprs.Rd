@@ -2,7 +2,7 @@
 % Please edit documentation in R/expt.r
 \name{exprs}
 \alias{exprs}
-\title{Create a few methods to make calling exprs/fData/pData/notes easier.}
+\title{Extend Biobase::exprs to handle expt ojects.}
 \description{
-Create a few methods to make calling exprs/fData/pData/notes easier.
+Extend Biobase::exprs to handle expt ojects.
 }

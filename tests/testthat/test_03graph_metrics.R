@@ -37,7 +37,7 @@ test_that("Density plot data is as expected?", {
     expect_equal(expected, actual)
 })
 
-hist_plot <- sm(plot_histogram(data.frame(Biobase::exprs(pasilla_expt[["expressionset"]]))))
+hist_plot <- sm(plot_histogram(data.frame(exprs(pasilla_expt))))
 actual <- head(hist_plot[["data"]][["values"]])
 ## The values of expected have not changed
 test_that("Histogram data is as expected?", {

@@ -33,7 +33,7 @@ test_that("Pasilla libsize?", {
 
 ## Check a few arbitrary counts to make sure they are maintained.
 expected <- counts[test_genes, "untreated1"]
-testing_counts <- Biobase::exprs(pasilla_expt[["expressionset"]])
+testing_counts <- exprs(pasilla_expt)
 actual <- as.numeric(testing_counts[test_genes, "untreated1"])
 test_that("Pasilla count tables? (untreated1)", {
     expect_equal(expected, actual)
@@ -42,7 +42,7 @@ test_that("Pasilla count tables? (untreated1)", {
 ## Check that all samples agree for 1 gene.
 test_gene <- "FBgn0062565"
 expected <- as.numeric(counts[test_gene, ])
-actual <- as.numeric(Biobase::exprs(pasilla_expt[["expressionset"]])[test_gene, ])
+actual <- as.numeric(exprs(pasilla_expt)[test_gene, ])
 expected <- c(4, 7, 3, 3, 9, 10, 9)
 test_that("Pasilla count tables? (gene FBgn0063565)", {
     expect_equal(expected, actual)
@@ -50,15 +50,15 @@ test_that("Pasilla count tables? (gene FBgn0063565)", {
 
 ## Ensure that normalize_expt does not mess up the data when called without arguments (this wasn't true once)
 unmolested <- sm(normalize_expt(pasilla_expt))
-expected <- as.matrix(Biobase::exprs(pasilla_expt[["expressionset"]]))  ## I accidently changed this to potentially return a data.frame
-actual <- Biobase::exprs(unmolested[["expressionset"]])
+expected <- as.matrix(exprs(pasilla_expt))  ## I accidently changed this to potentially return a data.frame
+actual <- exprs(unmolested)
 test_that("Pasilla (un)normalized counts?", {
     expect_equal(expected, actual)
 })
 
 ## Make sure that the pData information is maintained through normalization
-expected <- Biobase::pData(pasilla_expt[["expressionset"]])
-actual <- Biobase::pData(unmolested[["expressionset"]])
+expected <- pData(pasilla_expt)
+actual <- pData(unmolested)
 test_that("Pasilla (un)normalized pdata?", {
     expect_equal(expected, actual)
 })

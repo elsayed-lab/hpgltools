@@ -37,7 +37,7 @@ glm_table <- as.data.frame(edgeR::topTags(glm_result, n=nrow(raw), sort.by="logF
 ## Create the expt object
 expected <- as.matrix(counts)
 expected <- expected[sort(rownames(expected)), ]
-actual <- Biobase::exprs(pasilla_expt[["expressionset"]])
+actual <- exprs(pasilla_expt)
 actual <- actual[sort(rownames(actual)), ]
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(expected, actual)
