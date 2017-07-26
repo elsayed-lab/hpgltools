@@ -14,7 +14,7 @@ dmel_annotations[["strand"]] <- ifelse(dmel_annotations[["strand"]] == "1", "+",
 ## Why is it that if I start with a fresh R session, this works fine!?!?!?
 dmel_granges <- GenomicRanges::makeGRangesFromDataFrame(dmel_annotations, keep.extra.columns=TRUE)
 ## I got a weird error when the column was Type and not type, I suspect though that this line is not needed.
-dmel_granges[["type"]] <- dmel_annotations[["Type"]]
+dmel_granges$Type <- dmel_annotations[["Type"]]
 ## Recast the data frame first as a List of GRanges
 dmel <- as.data.frame(dmel_granges)
 dmel[["ID"]] <- dmel[["geneID"]]

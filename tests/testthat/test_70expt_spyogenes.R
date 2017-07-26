@@ -84,7 +84,7 @@ test_that("Did the mgas annotations download?", {
 })
 
 ## Plot the coefficients of latelog glucose
-glucose_table <- mgas_pairwise[["limma"]][["all_tables"]][["mga1_ll_cg"]]
+glucose_table <- mgas_pairwise[["limma"]][["identity_tables"]][["mga1_ll_cg"]]
 wtvmga_glucose <- mgas_pairwise[["limma"]][["all_tables"]][["wt_ll_cg_vs_mga1_ll_cg"]]
 
 circos_test <- sm(circos_prefix())
