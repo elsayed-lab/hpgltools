@@ -270,7 +270,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         class(results[["deseq"]]) == "list" &
         class(results[["edger"]]) == "list" &
         class(results[["basic"]]) == "list") {
-        result_comparison <- compare_tables(limma=results[["limma"]],
+        result_comparison <- compare_led_tables(limma=results[["limma"]],
                                             deseq=results[["deseq"]],
                                             edger=results[["edger"]],
                                             basic=results[["basic"]],
@@ -721,7 +721,7 @@ the state of the count table and ensure that it is in integer counts.")
 
 #' Compare the results of separate all_pairwise() invocations.
 #'
-#' Where compare_tables looks for changes between limma and friends, this
+#' Where compare_led_tables looks for changes between limma and friends, this
 #' function looks for differences/similarities across the models/surrogates/etc
 #' across invocations of limma/deseq/edger.
 #'
@@ -731,7 +731,7 @@ the state of the count table and ensure that it is in integer counts.")
 #' @param second  A second invocation of combine_de_tables to examine.
 #' @return  A list of compared columns, tables, and methods.
 #' @export
-compare_results_de <- function(first, second, cor_method="pearson") {
+compare_de_results <- function(first, second, cor_method="pearson") {
     result <- list()
     comparisons <- c("logfc", "p", "adjp")
     methods <- c("limma", "deseq", "edger")
@@ -780,7 +780,7 @@ compare_results_de <- function(first, second, cor_method="pearson") {
 #'  fun = compare_tables(limma=l, deseq=d, edger=e)
 #' }
 #' @export
-compare_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
+compare_led_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
                            include_basic=TRUE, annot_df=NULL, ...) {
     ## arglist <- list(...)
     ## Fill each column/row of these with the correlation between tools for one contrast performed
@@ -1022,7 +1022,6 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
 #'  \code{\link{basic_pairwise}}
 #' @export
 do_pairwise <- function(type, ...) {
-    ## arglist <- list(...)
     res <- NULL
     if (type == "limma") {
         res <- try(limma_pairwise(...))

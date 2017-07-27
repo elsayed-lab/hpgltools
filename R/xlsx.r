@@ -39,8 +39,10 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     newsheet <- NULL
     ##current_sheets <- names(wb@.xData$worksheets)
     current_sheets <- wb@.xData[[".->sheet_names"]]
+    found_sheets <- 0
     if (sheet %in% current_sheets) {
-        message(paste0("The sheet: ", sheet, " is in ", toString(current_sheets), "."))
+        ##message(paste0("The sheet: ", sheet, " is in ", toString(current_sheets), "."))
+        found_sheets <- found_sheets + 1
     } else {
         newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
         if (class(newsheet) == "try-error") {

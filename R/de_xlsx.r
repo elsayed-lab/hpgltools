@@ -303,8 +303,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             dat <- NULL
             plt <- NULL
             summary <- NULL
-            found <- 0
-            found_table <- NULL
             limma_plt <- NULL
             limma_ma_plt <- NULL
             edger_plt <- NULL
@@ -324,6 +322,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             } else {
                 stop("None of the DE tools appear to have worked.")
             }
+
+            found <- 0
+            found_table <- NULL
             do_inverse <- FALSE
             for (tab in limma[["contrasts_performed"]]) {
                 if (tab == same_string) {
@@ -339,6 +340,11 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                 }
                 name_list[a] <- same_string
             }
+            if (found == 0) {
+                message(paste0("Found neither ", same_string, " nor ", inverse_string, "."))
+                break
+            }
+
             if (class(limma) == "try-error") {
                 limma <- NULL
             }
@@ -470,6 +476,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 
             } else {  ## End checking that we found the numerator/denominator
                 warning(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
+                message(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
+                break
             }
             combo[[name]] <- dat
             limma_plots[[name]] <- limma_plt
