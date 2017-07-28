@@ -38,3 +38,4 @@ Imports:
 VignetteBuilder: knitr
 ByteCompile: true
 RoxygenNote: 6.0.1
+biocViews: DifferentialExpression

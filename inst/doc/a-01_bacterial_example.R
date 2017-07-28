@@ -75,6 +75,8 @@ a_metrics <- graph_metrics(batch_a)
 b_metrics <- graph_metrics(batch_b)
 a_metrics$pcaplot
 b_metrics$pcaplot
+a_metrics$tsneplot
+b_metrics$tsneplot
 
 ## ----normalize_subset, fig.show="hide"-----------------------------------
 ## doing nothing to the data except log2 transforming it has a surprisingly large effect
@@ -117,6 +119,7 @@ knitr::kable(norm_graphs$pcares)
 norm_graphs$smc
 norm_graphs$disheat  ## svaseq's batch correction seems to draw out the signal quite nicely.
 ## It is worth noting that the wt, early log, thy, replicate c samples are still a bit weird.
+norm_graphs$tsneplot
 
 ## ----de_test-------------------------------------------------------------
 spyogenes_de <- sm(all_pairwise(expt))

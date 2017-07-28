@@ -7,6 +7,11 @@ install: prereq roxygen
 	@echo "Performing R CMD INSTALL hpgltools"
 	@R CMD INSTALL .
 
+deps:
+	@echo "Invoking devtools::install_dev_deps()"
+	@Rscript -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
+all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'package']; for (t in needed) { biocLite(t) }"
+
 reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
 	@rm -f inst/doc/reference.pdf
