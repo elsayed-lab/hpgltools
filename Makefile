@@ -48,9 +48,24 @@ vt:	clean_vignette vignette reference install
 
 clean:
 	rm -rf hpgltools/
+	rm -rf ./..Rcheck
+	rm -rf tests/testthat/circos
+	rm -rf tests/testthat/excel_test
+	rm -rf tests/testthat/excel_test_sig
+	rm -rf tests/testthat/kegg_pathways
+	rm -rf tests/testthat/pathview
+	rm -rf tests/testthat/pathview_in
+	rm -rf tests/testthat/*.pdf
+	rm -rf tests/testthat/*.png
+	rm -rf tests/testthat/*.xlsx
+	rm -rf tests/testthat/*.rda
+	rm -rf tests/testthat/*.gb
+	rm -rf tests/testthat/*.xml
+	rm -rf vignettes/circos
 	rm -rf hpgltools.Rcheck/
 	rm -rf hpgltools_${VERSION}.tar.gz
 	find . -type f -name '*.Rdata' -exec rm -rf {} ';' 2>/dev/null
+	find . -type f -name '.Rhistory' -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name excel -exec rm -rf {} ';' 2>/dev/null
 	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
 
