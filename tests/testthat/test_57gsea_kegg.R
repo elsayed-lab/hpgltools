@@ -66,8 +66,8 @@ test_that("Can we extract the percent differentially expressed genes from multip
 mel_id <- kegg_get_orgn("melanogaster")
 rownames(sig_up) <- make.names(sig_up[["flybasecg"]], unique=TRUE)
 
-funkytown <- sm(simple_pathview(sig_up, fc_column="logFC", species="dme", pathway=pathways,
-                                from_list=c("CG"), to_list=c("Dmel_CG")))
+funkytown <- simple_pathview(sig_up, fc_column="logFC", species="dme", pathway=pathways,
+                             from_list=c("CG"), to_list=c("Dmel_CG"))
 
 expected <- c(1, 1, 1, 1, 4)
 actual <- head(funkytown[["total_mapped_nodes"]])

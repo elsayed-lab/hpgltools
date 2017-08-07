@@ -829,7 +829,6 @@ make_orgdb_info <- function(gff, txt, kegg=TRUE) {
         load(savefile, envir=txt_information)
         txt_information <- txt_information[["txt_information"]]
     } else {
-        message("Reading the txt takes a long time.")
         txt_information <- parse_gene_info_table(file=txt, verbose=TRUE)
         save(txt_information, file=savefile)
     }

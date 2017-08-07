@@ -57,9 +57,15 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         tmp_data <- path_data
     }
 
-    path_data <- tmp_data
+    ## This little section is weird, that is because pathview does not handle non-numeric
+    ## representations of the data well.
+    ## So we must make certain that the FCs are numeric vectors with the names maintained.
+    path_data <- as.numeric(tmp_data)
+    names(path_data) <- names(tmp_data)
     rm(tmp_data)
     tmp_names <- names(path_data)
+
+    ## Reset the names to KEGG standard names.
     if (is.null(from_list)) {
         substitutions <- get_kegg_sub(species)
         from_list <- substitutions[["patterns"]]
@@ -134,36 +140,36 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         if (format == "png") {
             ## In this invocation, include all the possible arguments for debugging.
             pv <- try(pathview::pathview(gene.data=path_data,
-                                            cpd.data=NULL,
-                                            pathway.id=canonical_path,
-                                            species=species,
-                                            kegg.dir=indir,
-                                            cpd.idtype="kegg",
-                                            gene.idtype="KEGG",
-                                            gene.annotpkg=NULL,
-                                            min.nnodes=3,
-                                            kegg.native=FALSE,
-                                            map.null=TRUE,
-                                            expand.node=FALSE, ## Was true
-                                            split.group=FALSE,
-                                            map.symbol=TRUE,
-                                            map.cpdname=TRUE,
-                                            node.sum="sum",
-                                            discrete=list(gene=FALSE, cpd=FALSE),
-                                            limit=list(gene=limits, cpd=limits),
-                                            bins=list(gene=10, cpd=10),
-                                            both.dirs=list(gene=TRUE, cpd=TRUE),
-                                            trans.fun=list(gene=NULL, cpd=NULL),
-                                            low=list(gene="green", cpd="blue"),
-                                            mid=list(gene="gray", cpd="gray"),
-                                            high=list(gene="red", cpd="yellow"),
-                                            na.col="transparent",
-                                            out.suffix=suffix,
-                                            same.layer=FALSE,
-                                            res=1200,
-                                            new.signature=FALSE,
-                                            cex=0.05,
-                                            key.pos="topright"))
+                                         cpd.data=NULL,
+                                         pathway.id=canonical_path,
+                                         species=species,
+                                         kegg.dir=indir,
+                                         cpd.idtype="kegg",
+                                         gene.idtype="KEGG",
+                                         gene.annotpkg=NULL,
+                                         min.nnodes=3,
+                                         kegg.native=TRUE,
+                                         map.null=TRUE,
+                                         expand.node=FALSE, ## Was true
+                                         split.group=FALSE,
+                                         map.symbol=TRUE,
+                                         map.cpdname=TRUE,
+                                         node.sum="sum",
+                                         discrete=list(gene=FALSE, cpd=FALSE),
+                                         limit=list(gene=limits, cpd=limits),
+                                         bins=list(gene=10, cpd=10),
+                                         both.dirs=list(gene=TRUE, cpd=TRUE),
+                                         trans.fun=list(gene=NULL, cpd=NULL),
+                                         low=list(gene="green", cpd="blue"),
+                                         mid=list(gene="gray", cpd="gray"),
+                                         high=list(gene="red", cpd="yellow"),
+                                         na.col="transparent",
+                                         out.suffix=suffix,
+                                         same.layer=FALSE,
+                                         res=1200,
+                                         new.signature=FALSE,
+                                         cex=0.05,
+                                         key.pos="topright"))
         } else {
             pv <- try(pathview::pathview(gene.data=path_data,
                                          kegg.dir=indir,
@@ -298,7 +304,7 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
         stop("This requires either a species or 3 letter kegg id.")
     } else if (is.null(abbreviation)) {
         ## Then the species was provided.
-        abbreviation <- kegg_get_orgn(species)
+        abbreviation <- get_kegg_orgn(species)
         message(paste0("The abbreviation detected was: ", abbreviation))
     }
 
@@ -440,12 +446,12 @@ gostats_kegg <- function(organism="Homo sapiens", pathdb="org.Hs.egPATH", godb="
 #' @seealso \pkg{RCurl}
 #' @examples
 #' \dontrun{
-#'  fun = kegg_get_orgn('Canis')
+#'  fun = get_kegg_orgn('Canis')
 #'  ## >     Tid     orgid      species                   phylogeny
 #'  ## >  17 T01007   cfa Canis familiaris (dog) Eukaryotes;Animals;Vertebrates;Mammals
 #' }
 #' @export
-kegg_get_orgn <- function(species="Leishmania", short=TRUE) {
+get_kegg_orgn <- function(species="Leishmania", short=TRUE) {
     all_organisms <- RCurl::getURL("http://rest.kegg.jp/list/organism")
     org_tsv <- textConnection(all_organisms)
     all <- read.table(org_tsv, sep="\t", quote="", fill=TRUE)

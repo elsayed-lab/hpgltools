@@ -283,7 +283,7 @@ test_that("Plotting an MA plot from a combined DE table provides logFCs in the c
 combined_sva <- sm(combine_de_tables(hpgl_sva_result,
                                      excel=NULL,
                                      keepers=test_keepers))
-sva_batch_test <- sm(compare_results_de(combined_excel, combined_sva))
+sva_batch_test <- sm(compare_de_results(combined_excel, combined_sva))
 expected <- 0.98
 actual <- sva_batch_test[["limma"]][["treated_vs_untreated"]][["logfc"]]
 test_that("Do limma with combat and sva agree vis a vis logfc?", {
