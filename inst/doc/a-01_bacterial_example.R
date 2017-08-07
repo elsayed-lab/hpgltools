@@ -1,35 +1,24 @@
 ## ----options, include=FALSE----------------------------------------------
-## These are the options I tend to favor
 library("hpgltools")
-knitr::opts_knit$set(
-    progress = TRUE,
-    verbose = TRUE,
-    width = 90,
-    echo = TRUE)
-knitr::opts_chunk$set(
-    error = TRUE,
-    fig.width = 8,
-    fig.height = 8,
-    dpi = 96)
-options(
-    digits = 4,
-    stringsAsFactors = FALSE,
-    knitr.duplicate.label = "allow")
+knitr::opts_knit$set(progress=TRUE,
+                     verbose=TRUE,
+                     width=90,
+                     echo=TRUE)
+knitr::opts_chunk$set(error=TRUE,
+                      fig.width=8,
+                      fig.height=8,
+                      dpi=96)
+old_options <- options(digits=4,
+                       stringsAsFactors=FALSE,
+                       knitr.duplicate.label="allow")
 ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
 rmd_file <- "a-01_bacterial_example.Rmd"
 
 ## ----rendering, include=FALSE, eval=FALSE--------------------------------
-#  ## This block is used to render a document from within it.
 #  rmarkdown::render(rmd_file)
 #  
-#  ## An extra renderer for pdf output
 #  rmarkdown::render(rmd_file, output_format="pdf_document", output_options=c("skip_html"))
-#  
-#  ## Or to save/load large Rdata files.
-#  hpgltools:::saveme()
-#  hpgltools:::loadme()
-#  rm(list=ls())
 
 ## ----loading_data--------------------------------------------------------
 library(hpgltools)
@@ -143,7 +132,7 @@ knitr::kable(head(spyogenes_sig$limma$ups[[1]]))
 
 ## ----circos--------------------------------------------------------------
 microbe_ids <- as.character(sm(get_microbesonline_ids("pyogenes MGAS5005")))
-mgas_df <- sm(get_microbesonline_annotation(microbe_ids[[1]])[[1]])
+mgas_df <- sm(load_microbesonline_annotations(microbe_ids[[1]])[[1]])
 mgas_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df$sysName)
 rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
 

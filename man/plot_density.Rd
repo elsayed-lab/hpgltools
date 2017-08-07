@@ -5,8 +5,8 @@
 \title{Create a density plot, showing the distribution of each column of data.}
 \usage{
 plot_density(data, colors = NULL, sample_names = NULL,
-  position = "identity", fill = NULL, title = NULL, scale = NULL,
-  colors_by = "condition")
+  position = "identity", direct = TRUE, fill = NULL, title = NULL,
+  scale = NULL, colors_by = "condition")
 }
 \arguments{
 \item{data}{Expt, expressionset, or data frame.}

@@ -42,7 +42,7 @@ vignette:
 document: roxygen vignette reference
 
 clean_vignette:
-	@rm -f inst/doc/* vignettes/*.rda vignettes/*.map vignettes/*.Rdata
+	@rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata
 
 vt:	clean_vignette vignette reference install
 

@@ -293,6 +293,11 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         "pre_batch" = pre_pca,
         "post_batch" = post_pca,
         "comparison" = result_comparison)
+
+    if (!is.null(arglist[["excel"]])) {
+        combined <- combine_de_tables(ret, excel=arglist[["excel"]], ...)
+        ret[["combined"]] <- combined
+    }
     return(ret)
 }
 

@@ -125,7 +125,7 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #'  funkytown <- plot_density(data)
 #' }
 #' @export
-plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
+plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity", direct=TRUE,
                          fill=NULL, title=NULL, scale=NULL, colors_by="condition") {
     ## also position='stack'
     plot_env <- environment()
@@ -212,6 +212,10 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
     if (!is.null(colors_by)) {
         densityplot <- densityplot + ggplot2::scale_colour_manual(values=as.character(colors)) +
             ggplot2::scale_fill_manual(values=ggplot2::alpha(as.character(colors), 0.1))
+    }
+
+    if (isTRUE(direct)) {
+        densityplot <- directlabels::direct.label(densityplot)
     }
     return(densityplot)
 }
