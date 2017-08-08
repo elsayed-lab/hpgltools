@@ -24,11 +24,11 @@ convert_counts <- function(data, convert="raw", ...) {
     data_class <- class(data)[1]
     annotations <- arglist[["annotations"]]
     if (data_class == "expt") {
-        annotations <- Biobase::fData(data[["expressionset"]])
-        count_table <- Biobase::exprs(data[["expressionset"]])
+        annotations <- fData(data)
+        count_table <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        annotations <- Biobase::fData(data)
-        count_table <- Biobase::exprs(data)
+        annotations <- fData(data)
+        count_table <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         ## some functions prefer matrix, so I am keeping this explicit for the moment
         count_table <- as.data.frame(data)
@@ -49,6 +49,7 @@ convert_counts <- function(data, convert="raw", ...) {
     } else if (convert == "cp_seq_m") {
         counts <- edgeR::cpm(count_table)
         count_table <- divide_seq(counts, annotations=annotations, ...)
+        ##count_table <- divide_seq(counts, annotations=annotations, genome=genome)
     }
     libsize <- colSums(count_table)
     counts <- list(
@@ -63,7 +64,6 @@ convert_counts <- function(data, convert="raw", ...) {
 #' It is essentially fancy pants rpkm.
 #'
 #' @param counts Read count matrix.
-#' @param genome Genome to search (fasta/BSgenome).
 #' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return The RPseqM counts
 #' @seealso \pkg{edgeR} \pkg{Rsamtools}
@@ -73,9 +73,10 @@ convert_counts <- function(data, convert="raw", ...) {
 #'  cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
 #' }
 #' @export
-divide_seq <- function(counts, genome=NULL, ...) {
+divide_seq <- function(counts, ...) {
     arglist <- list(...)
     annotations <- arglist[["annotations"]]
+    genome <- arglist[["genome"]]
     pattern <- arglist[["pattern"]]
     if (is.null(pattern)) {
         pattern <- "TA"
@@ -123,9 +124,14 @@ divide_seq <- function(counts, genome=NULL, ...) {
     } else if (annotation_class == "data.frame") {
         colnames(annotations) <- tolower(colnames(annotations))
         annotations <- annotations[complete.cases(annotations), ]
-        if (class(annotations[["strand"]]) == "integer") {
+        numberp <- sum(grepl(pattern="1", x=annotations[["strand"]]))
+        if (numberp > 0) {
+            annotations[["strand"]] <- as.numeric(annotations[["strand"]])
             annotations[["strand"]] <- ifelse(annotations[["strand"]] > 0, "+", "-")
         }
+        ## Remove entries in annotations with start==NA
+        na_idx <- is.na(sm(as.numeric(annotations[["start"]])))
+        annotations <- annotations[!na_idx, ]
         annotation_entries <- GenomicRanges::makeGRangesFromDataFrame(annotations)
     } else if (annotation_class == "Granges") {
         annotations <- as.data.frame(annotations)

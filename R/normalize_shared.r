@@ -186,13 +186,13 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
         warning("Quantile normalization and sva do not always play well together.")
     }
     new_expt[["backup_expressionset"]] <- new_expt[["expressionset"]]
-    current_data <- Biobase::exprs(current_exprs)
+    current_data <- exprs(current_exprs)
     design <- expt[["design"]]
     if (is.null(annotations)) {
-        annotations <- Biobase::fData(current_exprs)
+        annotations <- fData(current_exprs)
     }
     if (is.null(design)) {
-        design <- Biobase::pData(current_exprs)
+        design <- pData(current_exprs)
     }
     ## A bunch of these options should be moved into ...
     ## Having them as options to maintain is foolish
@@ -202,7 +202,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                             filter=filter, annotations=annotations,
                             fasta=fasta, thresh=thresh, batch_step=batch_step,
                             min_samples=min_samples, p=p, A=A, k=k,
-                            ## cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
+                            ##cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
                             cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
 
     final_libsize <- normalized[["libsize"]]
@@ -213,9 +213,9 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     ## replace an expressionset with a smaller version (low-filtered).
     ## Instead, one must properly subset the object first, then replace.
     ## While this is annoying, I suppose it is smart.
-    unfiltered_genes <- rownames(Biobase::exprs(current_exprs)) %in% rownames(final_data)
+    unfiltered_genes <- rownames(exprs(current_exprs)) %in% rownames(final_data)
     current_exprs <- current_exprs[unfiltered_genes, ]
-    Biobase::exprs(current_exprs) <- final_data
+    exprs(current_exprs) <- final_data
 
     ## The original data structure contains the following slots:
     ## colors, batches, convert, conditions, design, expressionset,
@@ -310,14 +310,14 @@ hpgl_norm <- function(data, ...) {
     if (data_class == "expt") {
         original_counts <- data[["original_counts"]]
         original_libsizes <- data[["original_libsize"]]
-        design <- Biobase::pData(data[["expressionset"]])
-        annot <- Biobase::fData(data[["expressionset"]])
-        counts <- Biobase::exprs(data[["expressionset"]])
+        design <- pData(data)
+        annot <- fData(data)
+        counts <- exprs(data)
         expt_state <- data[["state"]]
     } else if (data_class == "ExpressionSet") {
-        counts <- Biobase::exprs(data)
-        design <- Biobase::pData(data)
-        annot <- Biobase::fData(data)
+        counts <- exprs(data)
+        design <- pData(data)
+        annot <- fData(data)
         if (!is.null(arglist[["expt_state"]])) {
             expt_state <- arglist[["expt_state"]]
         }
@@ -382,6 +382,7 @@ hpgl_norm <- function(data, ...) {
             message(paste0("Step ", arglist[["batch_step"]], ": doing batch correction with ",
                            arglist[["batch"]], "."))
             tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, ...))
+            ##tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, arglist))
             if (class(tmp_counts) == "try-error") {
                 warning("The batch_counts call failed.  Returning non-batch reduced data.")
                 batched_counts <<- NULL
@@ -438,8 +439,8 @@ hpgl_norm <- function(data, ...) {
             message("The experimental design is null.  Some normalizations will therefore fail.")
             message("If you receive an error about an object with no dimensions, that is likely why.")
         }
-        normalized_counts <- normalize_counts(count_table, ...)
-        ## normalized_counts <- normalize_counts(count_table, norm=norm)
+        normalized_counts <- normalize_counts(data=count_table, ...)
+        ##normalized_counts <- normalize_counts(data=count_table, design=design, norm=norm)
         count_table <- normalized_counts[["count_table"]]
         norm_performed <- norm
     }
@@ -493,6 +494,7 @@ hpgl_norm <- function(data, ...) {
 
     if (batch_step == 5) {
         count_table <- do_batch(count_table, ...)
+        ##count_table <- do_batch(count_table, arglist)
     }
 
     ## This list provides the list of operations performed on the data in order they were done.

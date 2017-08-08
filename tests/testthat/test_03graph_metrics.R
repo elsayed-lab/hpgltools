@@ -7,7 +7,7 @@ pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 ## Uses these genes for quick tests
-test_genes <- c("FBgn0000014","FBgn0000008","FBgn0000017","FBgn0000018", "FBgn0000024")
+test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 
 ## I am not sure if I should test this yet, it is slow.
 if (isTRUE(FALSE)) {
@@ -37,7 +37,7 @@ test_that("Density plot data is as expected?", {
     expect_equal(expected, actual)
 })
 
-hist_plot <- sm(plot_histogram(data.frame(Biobase::exprs(pasilla_expt[["expressionset"]]))))
+hist_plot <- sm(plot_histogram(data.frame(exprs(pasilla_expt))))
 actual <- head(hist_plot[["data"]][["values"]])
 ## The values of expected have not changed
 test_that("Histogram data is as expected?", {
@@ -53,17 +53,18 @@ test_that("Box plot data is as expected?", {
 
 ## Ahh yes I changed the cbcb_filter options to match those from the cbcbSEQ vignette.
 ## Note that the filtering has changed slightly, and this affects the results.
-norm <- sm(normalize_expt(pasilla_expt, transform="log2", convert="cbcbcpm", norm="quant", filter=TRUE))
+norm <- sm(normalize_expt(pasilla_expt, transform="log2", convert="cbcbcpm",
+                          norm="quant", filter=TRUE))
 expected <- "recordedplot"  ## for all the heatmaps
 
 corheat_plot <- plot_corheat(norm)
-actual <- class(corheat_plot$plot)
+actual <- class(corheat_plot[["plot"]])
 test_that("corheat is a recorded plot?", {
     expect_equal(expected, actual)
 })
 
 disheat_plot <- plot_disheat(norm)
-actual <- class(disheat_plot$plot)
+actual <- class(disheat_plot[["plot"]])
 test_that("disheat is a recorded plot?", {
     expect_equal(expected, actual)
 })
@@ -122,6 +123,32 @@ test_that("Is the PCA PC2 as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
+tsne_stuff <- plot_tsne(norm)
+actual <- tsne_stuff[["table"]][["Comp1"]]
+expected <- c(242.72, 243.21, 36.59, 36.81, -192.08, -185.70, -181.56)
+test_that("Is the tsne data as expected for Comp1?", {
+    expect_equal(expected, actual, tolerance=0.001)
+})
+
+actual <- as.numeric(head(tsne_stuff[["tsne_data"]][["Y"]][, 2]))
+expected <- c(103.6740, 99.5090, 5.1610, 0.9747, -68.0061, -70.0072)
+test_that("Is the tsne second component data expected?", {
+    expect_equal(expected, actual, tolerance=0.001)
+})
+
+actual <- tsne_stuff[["res"]][["cond.R2"]]
+expected <- c(81.08, 72.43)
+test_that("Is the tsne r-squared by condition as expected?", {
+    expect_equal(expected, actual, tolerance=0.001)
+})
+
+actual <- tsne_stuff[["res"]][["batch.R2"]]
+expected <- c(22.38, 30.21)
+test_that("Is the tsne r-squared by condition as expected?", {
+    expect_equal(expected, actual, tolerance=0.001)
+})
+
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 03graph_metrics.R in ", elapsed, " seconds."))
+tt <- clear_session()

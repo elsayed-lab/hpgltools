@@ -141,7 +141,10 @@ circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NUL
 #' @export
 circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr="chr1",
                              outer=1.0, width=0.08, spacing=0.0) {
-    message("This function assumes an input table including the columns: 'start', 'stop', 'strand', and 'COGFun'")
+    if (is.null(go_table[["start"]]) | is.null(go_table[["stop"]]) |
+        is.null(go_table[["strand"]]) | is.null(go_table[["COGFun"]])) {
+        stop("This function assumes an input table including the columns: 'start', 'stop', 'strand', and 'COGFun'")
+    }
     plus_cfg_file <- cfgout
     minus_cfg_file <- cfgout
     plus_cfg_file <- gsub(".conf$", "_plus_go.conf", plus_cfg_file)
@@ -750,11 +753,11 @@ circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
     ## I will tell R to print out a suitable stanza for circos while I am at it
     ## because I am tired of mistyping something stupid.
     full_table <- merge(df, annot_df, by.x="row.names", by.y="row.names")
-    full_table <- full_table[, c("start", "stop", colname)]
     if (is.null(full_table[["start"]]) | is.null(full_table[["stop"]]) |
         is.null(rownames(full_table)) | is.null(full_table[[colname]])) {
         stop("This requires columns: start, end, rownames, and datum")
     }
+    full_table <- full_table[, c("start", "stop", colname)]
     datum_cfg_file <- cfgout
     datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
     datum_cfg_file <- paste0(datum_cfg_file, "_", colname, "_hist.conf")

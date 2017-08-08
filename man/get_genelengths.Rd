@@ -13,7 +13,7 @@ get_genelengths(gff, type = "gene", key = "ID", ...)
 
 \item{key}{Identifier in the 10th column of the gff file to use.}
 
-\item{...}{Extra arguments likely for gff2df}
+\item{...}{Extra arguments likely for load_gff_annotations()}
 }
 \value{
 Data frame of gene IDs and widths.
@@ -37,5 +37,5 @@ But it certainly isn't perfect.
 }
 \seealso{
 \pkg{rtracklayer}
- \code{\link{gff2df}}
+ \code{\link{load_gff_annotations}}
 }

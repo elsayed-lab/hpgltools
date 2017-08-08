@@ -38,26 +38,26 @@ context("05cbcbseq.R: Compare cbcbSEQ output to hpgltools.\n")
 datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
 ## Load the counts and drop super-low counts genes
 counts <- read.table(datafile, header=TRUE, row.names=1)
-counts <- counts[rowSums(counts) > ncol(counts),]
+counts <- counts[rowSums(counts) > ncol(counts), ]
 ## Set up a quick design to be used by cbcbSEQ and hpgltools
 design <- data.frame(row.names=colnames(counts),
-    condition=c("untreated","untreated","untreated",
-        "untreated","treated","treated","treated"),
-    libType=c("single_end","single_end","paired_end",
-        "paired_end","single_end","paired_end","paired_end"))
+                     condition=c("untreated","untreated","untreated",
+                                 "untreated","treated","treated","treated"),
+                     libType=c("single_end","single_end","paired_end",
+                               "paired_end","single_end","paired_end","paired_end"))
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
-metadata$sampleid <- rownames(metadata)
+metadata[["sampleid"]] <- rownames(metadata)
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 cbcb_data <- as.matrix(counts)
-hpgl_data <- Biobase::exprs(pasilla_expt$expressionset)
+hpgl_data <- exprs(pasilla_expt)
 
 ## Check that normalization tools work similarly
 cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
-hpgl_quantile_data <- sm(hpgl_norm(pasilla_expt, transform="raw", norm="quant", convert="raw",
-                                   filter=FALSE))
+hpgl_quantile_data <- sm(hpgl_norm(pasilla_expt, transform="raw", norm="quant",
+                                   convert="raw", filter=FALSE))
 hpgl_quantile <- hpgl_quantile_data[["count_table"]]
 expected <- cbcb_quantile[sort(rownames(cbcb_quantile)), ]
 actual <- hpgl_quantile[sort(rownames(hpgl_quantile)), ]
@@ -89,14 +89,17 @@ test_that("Are cpm(quantile()) conversions identical?", {
 })
 
 ## Check that log2(cpm(quantile())) are identical
-## There are a couple of ways to invoke these normalizations, so I will explicitly (and hopefully redundantly) invoke both
+## There are a couple of ways to invoke these normalizations, so I will
+## explicitly (and hopefully redundantly) invoke both
 cbcb_l2qcpm_data <- cbcbSEQ::log2CPM(cbcb_quantile)
 cbcb_l2qcpm <- cbcb_l2qcpm_data[["y"]]
-hpgl_l2qcpm_data <- sm(hpgl_norm(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=FALSE))
+hpgl_l2qcpm_data <- sm(hpgl_norm(pasilla_expt, transform="log2", norm="quant",
+                                 convert="cbcbcpm", filter=FALSE))
 hpgl_l2qcpm <- hpgl_l2qcpm_data[["count_table"]]
 hpgl_l2qcpm <- hpgl_l2qcpm[sort(rownames(hpgl_l2qcpm)), ]
-hpgl_l2qcpm_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant", convert="cbcbcpm", filter=FALSE))
-hpgl_l2qcpm2 <- Biobase::exprs(hpgl_l2qcpm_expt[["expressionset"]])
+hpgl_l2qcpm_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant",
+                                      convert="cbcbcpm", filter=FALSE))
+hpgl_l2qcpm2 <- exprs(hpgl_l2qcpm_expt)
 hpgl_l2qcpm2 <- hpgl_l2qcpm2[sort(rownames(hpgl_l2qcpm2)), ]
 expected <- cbcb_l2qcpm
 actual <- hpgl_l2qcpm
@@ -112,7 +115,8 @@ test_that("Are l2qcpm conversions/transformations identical using cbcbSEQ vs. no
 cbcb_svd <- cbcbSEQ::makeSVD(cbcb_l2qcpm)
 hpgl_pca_info <- plot_pca(hpgl_l2qcpm_expt)
 hpgl_svd <- hpgl_pca_info[["pca"]]
-cbcb_res <- cbcbSEQ::pcRes(cbcb_svd[["v"]], cbcb_svd[["d"]], design[["condition"]], design[["libType"]])
+cbcb_res <- cbcbSEQ::pcRes(cbcb_svd[["v"]], cbcb_svd[["d"]],
+                           design[["condition"]], design[["libType"]])
 hpgl_res <- hpgl_pca_info[["res"]]
 expected <- cbcb_svd[["v"]]
 actual <- hpgl_svd[["v"]]
@@ -145,8 +149,10 @@ condition <- design[["condition"]]
 test_model <- model.matrix(~condition)
 cbcb_voom <- cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize)
 hpgl_voom <- cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize)
-hpgl_voom2 <- hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model, libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
-hpgl_voom3 <- sm(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model, libsize=hpgl_libsize, logged=FALSE, converted=FALSE))
+hpgl_voom2 <- hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model,
+                                   libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
+hpgl_voom3 <- sm(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model,
+                                      libsize=hpgl_libsize, logged=FALSE, converted=FALSE))
 expected <- cbcb_voom
 actual <- hpgl_voom
 test_that("Do different voom() invocations end with the same result?", {
@@ -165,26 +171,27 @@ test_that("Does calling hpgltools::voom with hpgl-modified data return the same 
 
 ## To be extra-paranoid, make sure that the limma_pairwise() function invokes voom correctly.
 ## Note that this is where the data-ordering problems appear.
-hpgl_limma <- sm(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, model_intercept=FALSE, which_voom="hpgl"))
+hpgl_limma <- sm(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, limma_method="ls",
+                                model_intercept=FALSE, which_voom="hpgl"))
 ## First check the voom result from limma_pairwise
-hpgl_limma_voom <- hpgl_limma$voom_result
-hpgl_limma_voom_e <- hpgl_limma$voom_result$E[order(rownames(hpgl_limma$voom_result$E)), ]
-cbcb_voom_e <- cbcb_voom$E[order(rownames(cbcb_voom$E)), ]
+hpgl_limma_voom <- hpgl_limma[["voom_result"]]
+hpgl_limma_voom_e <- hpgl_limma[["voom_result"]][["E"]][order(rownames(hpgl_limma[["voom_result"]][["E"]])), ]
+cbcb_voom_e <- cbcb_voom[["E"]][order(rownames(cbcb_voom[["E"]])), ]
 test_that("Limma results, voom.", {
     expect_equal(cbcb_voom_e, hpgl_limma_voom_e)
 })
 
 ## Then the result from lmFit
-hpgl_limma_fit_coef <- hpgl_limma$fit$coefficients[order(rownames(hpgl_limma$fit$coefficients)), ]
+hpgl_limma_fit_coef <- hpgl_limma[["fit"]][["coefficients"]][order(rownames(hpgl_limma[["fit"]][["coefficients"]])), ]
 cbcb_fit <- limma::lmFit(cbcb_voom)
-cbcb_fit_coef <- cbcb_fit$coefficients[order(rownames(cbcb_fit$coefficients)), ]
+cbcb_fit_coef <- cbcb_fit[["coefficients"]][order(rownames(cbcb_fit[["coefficients"]])), ]
 colnames(cbcb_fit_coef) <- c("(Intercept)", "untreated")
 test_that("Limma results, fitting coefficients.", {
     expect_equal(cbcb_fit_coef, hpgl_limma_fit_coef)
 })
 
-hpgl_limma_fit_stdev <- hpgl_limma$fit$stdev.unscaled[order(rownames(hpgl_limma$fit$stdev.unscaled)), ]
-cbcb_fit_stdev <- cbcb_fit$stdev.unscaled[order(rownames(cbcb_fit$stdev.unscaled)), ]
+hpgl_limma_fit_stdev <- hpgl_limma[["fit"]][["stdev.unscaled"]][order(rownames(hpgl_limma[["fit"]][["stdev.unscaled"]])), ]
+cbcb_fit_stdev <- cbcb_fit[["stdev.unscaled"]][order(rownames(cbcb_fit[["stdev.unscaled"]])), ]
 colnames(cbcb_fit_stdev) <- c("(Intercept)", "untreated")
 test_that("Limma results, fitting standard deviations.", {
     expect_equal(cbcb_fit_stdev, hpgl_limma_fit_stdev)
@@ -192,9 +199,9 @@ test_that("Limma results, fitting standard deviations.", {
 
 ## Now the result from eBayes
 cbcb_eb <- limma::eBayes(cbcb_fit)
-hpgl_eb <- limma::eBayes(hpgl_limma$fit)
+hpgl_eb <- limma::eBayes(hpgl_limma[["fit"]])
 test_that("Limma results, eBayes.", {
-    expect_equal(sort(cbcb_eb$F), sort(hpgl_eb$F))
+    expect_equal(sort(cbcb_eb[["F"]]), sort(hpgl_eb[["F"]]))
 })
 
 cbcb_top <- sm(limma::topTable(cbcb_eb, number=nrow(cbcb_eb)))
@@ -208,3 +215,4 @@ test_that("Limma results, toptable.", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 05cbcbseq.R in ", elapsed, " seconds."))
+tt <- clear_session()

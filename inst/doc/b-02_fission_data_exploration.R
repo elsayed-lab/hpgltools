@@ -1,34 +1,25 @@
 ## ----options, include=FALSE----------------------------------------------
 ## These are the options I tend to favor
 library("hpgltools")
-knitr::opts_knit$set(
-    progress = TRUE,
-    verbose = TRUE,
-    width = 90,
-    echo = TRUE)
-knitr::opts_chunk$set(
-    error = TRUE,
-    fig.width = 8,
-    fig.height = 8,
-    dpi = 96)
-options(
-    digits = 4,
-    stringsAsFactors = FALSE,
-    knitr.duplicate.label = "allow")
+knitr::opts_knit$set(progress=TRUE,
+                     verbose=TRUE,
+                     width=90,
+                     echo=TRUE)
+knitr::opts_chunk$set(error=TRUE,
+                      fig.width=8,
+                      fig.height=8,
+                      dpi=96)
+old_options <- options(digits=4,
+                       stringsAsFactors=FALSE,
+                       knitr.duplicate.label="allow")
 ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
 rmd_file <- "b-02_fission_data_exploration.Rmd"
 
 ## ----rendering, include=FALSE, eval=FALSE--------------------------------
-#  ## This block is used to render a document from within it.
 #  rmarkdown::render(rmd_file)
 #  
 #  rmarkdown::render(rmd_file, output_format="pdf_document", output_options=c("skip_html"))
-#  
-#  ## Or to save/load large Rdata files.
-#  hpgltools:::saveme()
-#  hpgltools:::loadme()
-#  rm(list=ls())
 
 ## ----setup, include=TRUE-------------------------------------------------
 ## These first 4 lines are not needed once hpgltools is installed.
@@ -126,7 +117,7 @@ fission_density
 fission_density <- plot_density(tm_expt)
 fission_density
 
-compare_12 <- plot_qq_plot(fission_expt, x=1, y=2)
+compare_12 <- plot_single_qq(fission_expt, x=1, y=2)
 compare_12$log
 
 ## ----clustering----------------------------------------------------------

@@ -1,3 +1,36 @@
+#' Clear an R session, this is probably unwise given what I have read about R.
+#'
+#' @param keepers  List of namespaces to leave alone (unimplemented).
+#' @param depth  Cheesy forloop of attempts to remove packages stops after this many tries.
+#' @return  A spring-fresh R session, hopefully.
+#' @export
+clear_session <- function(keepers=NULL, depth=10) {
+    ## Partially taken from: https://stackoverflow.com/questions/7505547/detach-all-packages-while-working-in-r
+    basic_packages <- c("package:stats", "package:graphics", "package:grDevices", "package:utils",
+                        "package:datasets", "package:methods", "package:base")
+    package_list <- search()[ifelse(unlist(gregexpr("package:", search()))==1, TRUE, FALSE)]
+    package_list <- setdiff(package_list, basic_packages)
+    result <- R.utils::gcDLLs()
+    if (length(package_list) > 0) {
+        for (package in package_list) {
+            detach(package, character.only=TRUE)
+        }
+    }
+    tt <- sm(rm(list=ls(all.names=TRUE), envir=globalenv()))
+}
+
+#' Get the current git commit for hpgltools
+#'
+#' @export
+get_git_commit <- function(gitdir="/home/trey/hpgltools") {
+    cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'commit' | awk '{print $2}'")
+    commit_result <- system(cmdline, intern=TRUE)
+    cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
+    date_result <- system(cmdline, intern=TRUE)
+    result <- paste0(date_result, ": ", commit_result)
+    return(result)
+}
+
 #' Perform a get_value for delimited files
 #'
 #' Keith wrote this as .get_value() but functions which start with . trouble me.
@@ -348,6 +381,7 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #'
 #' @param directory  Directory to save the Rdata file.
 #' @param backups  How many revisions?
+#' @param cpus  How many cpus to use for the xz call
 #' @param filename  Choose a filename.
 #' @return Command string used to save the global environment.
 #' @seealso \code{\link{save}} \code{\link{pipe}}
@@ -356,7 +390,7 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #'  saveme()
 #' }
 #' @export
-saveme <- function(directory="savefiles", backups=4, filename="Rdata.rda.xz") {
+saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda.xz") {
     environment()
     if (!file.exists(directory)) {
         dir.create(directory)
@@ -365,7 +399,7 @@ saveme <- function(directory="savefiles", backups=4, filename="Rdata.rda.xz") {
     message(paste0("The savefile is: ", savefile))
     backup_file(savefile, backups=backups)
     ## The following save strings work:
-    save_string <- paste0("con <- pipe(paste0('pxz -T4 > ",
+    save_string <- paste0("con <- pipe(paste0('pxz -T", cpus, " > ",
                           savefile,
                           "'), 'wb');\n",
                           "save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n",

@@ -6,10 +6,10 @@
 #' @param gff Gff file with (hopefully) IDs and widths.
 #' @param type Annotation type to use (3rd column).
 #' @param key Identifier in the 10th column of the gff file to use.
-#' @param ... Extra arguments likely for gff2df
+#' @param ... Extra arguments likely for load_gff_annotations()
 #' @return Data frame of gene IDs and widths.
 #' @seealso \pkg{rtracklayer}
-#'  \code{\link{gff2df}}
+#'  \code{\link{load_gff_annotations}}
 #' @examples
 #' \dontrun{
 #'  tt = get_genelengths('reference/fun.gff.gz')
@@ -24,7 +24,7 @@
 #' }
 #' @export
 get_genelengths <- function(gff, type="gene", key="ID", ...) {
-    ret <- gff2df(gff, ...)
+    ret <- load_gff_annotations(gff, ...)
     ret <- ret[ret[["type"]] == type, ]
     ret <- ret[, c(key, "width")]
     colnames(ret) <- c("ID", "width")
@@ -44,12 +44,12 @@ get_genelengths <- function(gff, type="gene", key="ID", ...) {
 #'
 #' @param data Count tables of exons.
 #' @param gff Gff filename.
-#' @param annotdf Dataframe of annotations (probably from gff2df).
+#' @param annotdf Dataframe of annotations (probably from load_gff_annotations).
 #' @param parent Column from the annotations with the gene names.
 #' @param child Column from the annotations with the exon names.
 #' @return List of 2 data frames, counts and lengths by summed exons.
 #' @seealso \pkg{rtracklayer}
-#'  \code{\link{gff2df}}
+#'  \code{\link{load_gff_annotations}}
 #' @examples
 #' \dontrun{
 #' summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
@@ -59,7 +59,7 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.
     if (is.null(annotdf) & is.null(gff)) {
         stop("I need either a df with parents, children, and widths; or a gff filename.")
     } else if (is.null(annotdf)) {
-        annotdf <- gff2df(gff)
+        annotdf <- load_gff_annotations(gff)
     }
 
     tmp_data <- merge(data, annotdf, by=child)
@@ -110,10 +110,14 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.
 #'  \code{\link[rtracklayer]{import.gff}}
 #' @examples
 #' \dontrun{
-#'  funkytown <- gff2df('reference/gff/saccharomyces_cerevsiae.gff.xz')
+#'  funkytown <- load_gff_annotations('reference/gff/saccharomyces_cerevsiae.gff.xz')
 #' }
 #' @export
-gff2df <- function(gff, type=NULL, id_col="ID", second_id_col="locus_tag", try=NULL) {
+load_gff_annotations <- function(gff, type=NULL, id_col="ID",
+                                 second_id_col="locus_tag", try=NULL) {
+    if (!file.exists(gff)) {
+        stop(paste0("Unable to find the gff file: ", gff))
+    }
     ret <- NULL
     attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
                   "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE)",
@@ -169,12 +173,12 @@ gff2df <- function(gff, type=NULL, id_col="ID", second_id_col="locus_tag", try=N
 #' iranges etc.  This function wraps import.gff/import.gff3/import.gff2 calls in try() because
 #' sometimes those functions fail in unpredictable ways.
 #'
-#' This is essentially gff2df(), but returns data suitable for getSet()
+#' This is essentially load_gff_annotations(), but returns data suitable for getSet()
 #'
 #' @param gff Gff filename.
 #' @param type Subset to extract.
 #' @return Iranges! (useful for getSeq().)
-#' @seealso \pkg{rtracklayer} \link{gff2df} \pkg{Biostrings}
+#' @seealso \pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
 #'  \code{\link[rtracklayer]{import.gff}}
 #' @examples
 #' \dontrun{
@@ -218,7 +222,7 @@ gff2irange <- function(gff, type=NULL) {
 #' @param ... Extra arguments dropped into arglist.
 #' @return Df of tooltip information or name of a gff file.
 #' @seealso \pkg{googleVis}
-#'  \code{\link{gff2df}}
+#'  \code{\link{load_gff_annotations}}
 #' @examples
 #' \dontrun{
 #'  tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
@@ -228,7 +232,7 @@ make_tooltips <- function(annotations, desc_col="description", type="gene", id_c
     ## arglist <- list(...)
     tooltip_data <- NULL
     if (class(annotations) == "character") {
-        tooltip_data <- gff2df(gff=annotations, type=type)
+        tooltip_data <- load_gff_annotations(gff=annotations, type=type)
     } else if (class(annotations) == "data.frame") {
         tooltip_data <- annotations
     } else {

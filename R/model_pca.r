@@ -117,9 +117,9 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
             plot_colors <- NULL
         }
         plot_names <- data[["samplenames"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "list") {
         data <- data[["count_table"]]
         if (is.null(data)) {
@@ -229,6 +229,9 @@ Going to run pcRes with the batch information.")
     pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
                          design=design, plot_labels=plot_labels,
                          plot_size=plot_size, size_column=size_column, ...)
+    pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
+                         design=design, plot_labels=plot_labels,
+                         plot_size=plot_size, size_column=size_column)
 
     ## The following are some pretty-ifiers for the plot, they should be moved into plot_pcs
     pca_plot <- pca_plot +
@@ -245,6 +248,7 @@ Going to run pcRes with the batch information.")
     } else if (!is.null(plot_title)) {
         data_title <- what_happened(expt=expt)
         plot_title <- paste0(plot_title, "; ", data_title)
+        pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
     } else {
         ## Leave the title blank.
     }
@@ -314,7 +318,7 @@ factor_rsquared <- function(svd_v, fact, type="factor") {
 #' @export
 plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                      design=NULL, plot_title=TRUE, plot_labels=NULL,
-                     plot_size=5, size_column=NULL, ...) {
+                     plot_size=5, size_column=NULL, rug=TRUE, ...) {
     arglist <- list(...)
     hpgl_env <- environment()
     batches <- pca_data[["batch"]]
@@ -333,7 +337,6 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     color_listing <- unique(color_listing)
     color_list <- as.character(color_listing[["colors"]])
     names(color_list) <- as.character(color_listing[["condition"]])
-
     ## Ok, so this is shockingly difficult.  For <5 batch data I want properly colored points with black outlines
     ## The legend colors need to match, in addition, the legend needs to have the shapes noted.
     ## In order to do this, one must do, _in_order_:
@@ -426,6 +429,10 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
         x_label <- paste("PC", x_var_num, ": ", variances[[x_var_num]], "%  variance", sep="")
         y_label <- paste("PC", y_var_num, ": ", variances[[y_var_num]], "%  variance", sep="")
         pca_plot <- pca_plot + ggplot2::xlab(x_label) + ggplot2::ylab(y_label)
+    }
+
+    if (isTRUE(rug)) {
+        pca_plot <- pca_plot + ggplot2::geom_rug(colour="gray50", alpha=0.7)
     }
 
     if (is.null(plot_labels)) {
@@ -548,21 +555,33 @@ u_plot <- function(plotted_us) {
 #' @export
 pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("condition", "batch"),
                             num_components=NULL, plot_pcas=FALSE) {
-    colors_chosen <- expt_data[["colors"]]
+    ## Start out with some sanity tests
+    colors_chosen <- NULL
+    exprs_data <- NULL
     data_class <- class(expt_data)[1]
     if (data_class == "expt") {
         expt_design <- expt_data[["design"]]
-        expt_data <- Biobase::exprs(expt_data[["expressionset"]])
+        colors_chosen <- expt_data[["colors"]]
+        exprs_data <- exprs(expt_data[["expressionset"]])
     } else if (data_class == "ExpressionSet") {
-        expt_data <- Biobase::exprs(expt_data)
+        exprs_data <- exprs(expt_data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
-        expt_data <- as.matrix(expt_data)
+        exprs_data <- as.matrix(expt_data)
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
-    expt_data <- as.matrix(expt_data)
-    expt_means <- rowMeans(expt_data)
-    decomposed <- corpcor::fast.svd(expt_data - expt_means)
+
+    ## Make sure colors get chosen.
+    if (is.null(colors_chosen)) {
+        colors_chosen <- as.numeric(as.factor(design[["condition"]]))
+        num_chosen <- max(3, length(levels(as.factor(colors_chosen))))
+        colors_chosen <- RColorBrewer::brewer.pal(num_chosen, "Dark2")[colors_chosen]
+        names(colors_chosen) <- rownames(design)
+    }
+
+    ## Extract the various pieces of data we will use later.
+    expt_means <- rowMeans(exprs_data)
+    decomposed <- corpcor::fast.svd(exprs_data - expt_means)
     positives <- decomposed[["d"]]
     u <- decomposed[["u"]]
     v <- decomposed[["v"]]
@@ -571,12 +590,14 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     ## The idea being: the resulting decreasing line should be either a slow even
     ## decrease if many genes are contributing to the given component
     ## Conversely, that line should drop suddenly if dominated by one/few genes.
-    rownames(u) <- rownames(expt_data)
-    rownames(v) <- colnames(expt_data)
+    rownames(u) <- rownames(exprs_data)
+    rownames(v) <- colnames(exprs_data)
     u_plot <- u_plot(u)
+
+    ## Extract the variance for each of the included PCs
+    ## Also extract the r^2 values by component.
     component_variance <- round((positives^2) / sum(positives^2) * 100, 3)
     cumulative_pc_variance <- cumsum(component_variance)
-    ## Include in this table the fstatistic and pvalue described in rnaseq_bma.rmd
     if (is.null(expt_factors)) {
         expt_factors <- colnames(expt_design)
         expt_factors <- expt_factors[expt_factors != "sampleid"]
@@ -584,13 +605,11 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         expt_factors <- colnames(expt_design)
         expt_factors <- expt_factors[expt_factors != "sampleid"]
     }
-
     component_rsquared_table <- data.frame(
         "prop_var" = component_variance,
         "cumulative_prop_var" = cumulative_pc_variance)
+    ## Fill in the R squared table.
     for (component in expt_factors) {
-        message(component)
-        ##comp <- factor(as.character(expt_design[, component]), exclude=FALSE)
         comp <- expt_design[[component]]
         if (is.null(comp)) {
             message(paste0("The given component is not in the design: ", comp))
@@ -602,17 +621,21 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
 
     pca_variance <- round((positives ^ 2) / sum(positives ^2) * 100, 2)
     xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
-    ##print(xl)
     yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
-    ##print(yl)
 
+    if (is.null(expt_design[["batch"]])) {
+        expt_design[["batch"]] <- "undefined"
+    }
+
+    ## Create an initial dataframe to be used by ggplot for plotting the various PCs
     pca_data <- data.frame(
         "sampleid" = rownames(expt_design),
         "labels" = rownames(expt_design),
         "condition" = as.character(expt_design[["condition"]]),
+        "colors" = colors_chosen,
         "batch" = as.character(expt_design[["batch"]]),
-        "batch_int" = as.integer(as.factor(expt_design[["batch"]])),
-        "colors" = colors_chosen)
+        "batch_int" = as.integer(as.factor(expt_design[["batch"]])))
+
     pc_df <- data.frame(
         "sampleid" = rownames(expt_design))
     rownames(pc_df) <- rownames(expt_design)
@@ -627,12 +650,16 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         message(paste0("Therefore, only searching for ", max_components, " PCs."))
         num_components <- max_components
     }
+
+    ## Now fill in the pca_df with the data from the various PCs
     for (pc in 1:num_components) {
         name <- paste("PC", pc, sep="")
+        ## v is a matrix, don't forget that.
         pca_data[[name]] <- v[, pc] ## note you _must_ not shortcut this with [[pc]]
         pc_df[[name]] <- v[, pc]
     }
     pc_df <- pc_df[, -1, drop=FALSE]
+    ## Now that we have filled in a pca data frame, we may plot PCx vs PCy for all x,y.
     pca_plots <- list()
     if (isTRUE(plot_pcas)) {
         for (pc in 1:num_components) {
@@ -653,6 +680,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
             }
         }
     }
+
+    ## Now start filling in data which may be used for correlations/fstats/etc.
     factor_df <- data.frame(
         "sampleid" = rownames(expt_design))
     rownames(factor_df) <- rownames(expt_design)
@@ -665,8 +694,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         }
     }
     factor_df <- factor_df[, -1, drop=FALSE]
-    ## fit_one = data.frame()
-    ## fit_two = data.frame()
+
+    ## Perform the correlations/fstats/anova here
     cor_df <- data.frame()
     anova_rss <- data.frame()
     anova_sums <- data.frame()
@@ -727,6 +756,7 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
             }
         }
     }
+    ## Sanitize the resulting matrices and get them ready for plotting.
     rownames(cor_df) <- colnames(factor_df)
     colnames(cor_df) <- colnames(pc_df)
     colnames(anova_sums) <- colnames(pc_df)
@@ -734,41 +764,56 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     colnames(anova_p) <- colnames(pc_df)
     colnames(anova_rss) <- colnames(pc_df)
     colnames(anova_fstats) <- colnames(pc_df)
-    cor_df <- as.matrix(cor_df)
+    ## Finally, plot them.
     silly_colors <- grDevices::colorRampPalette(c("purple", "black", "yellow"))(100)
     cor_df <- cor_df[complete.cases(cor_df), ]
-    pc_factor_corheat <- heatmap.3(cor_df, scale="none", trace="none", linewidth=0.5,
-                                   keysize=2, margins=c(8, 8), col=silly_colors,
-                                   dendrogram="none", Rowv=FALSE, Colv=FALSE,
-                                   main="cor(factor, PC)")
+    pc_factor_corheat <- heatmap.3(as.matrix(cor_df), scale="none", trace="none",
+                                   linewidth=0.5, keysize=2, margins=c(8, 8),
+                                   col=silly_colors, dendrogram="none", Rowv=FALSE,
+                                   Colv=FALSE, main="cor(factor, PC)")
     pc_factor_corheat <- grDevices::recordPlot()
     anova_f_colors <- grDevices::colorRampPalette(c("blue", "black", "red"))(100)
     anova_f_heat <- heatmap.3(as.matrix(anova_f), scale="none", trace="none",
-                              linewidth=0.5, keysize=2, margins=c(8, 8), col=anova_f_colors,
-                              dendrogram = "none", Rowv=FALSE, Colv=FALSE,
-                              main="anova fstats for (factor, PC)")
+                              linewidth=0.5, keysize=2, margins=c(8, 8),
+                              col=anova_f_colors, dendrogram = "none", Rowv=FALSE,
+                              Colv=FALSE, main="anova fstats for (factor, PC)")
     anova_f_heat <- grDevices::recordPlot()
     anova_fstat_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
-    anova_fstat_heat <- heatmap.3(as.matrix(anova_fstats), scale="none", trace="none", linewidth=0.5,
-                                  keysize=2, margins=c(8, 8), col=anova_fstat_colors, dendrogram="none",
-                                  Rowv=FALSE, Colv=FALSE, main="anova fstats for (factor, PC)")
+    anova_fstat_heat <- heatmap.3(as.matrix(anova_fstats), scale="none", trace="none",
+                                  linewidth=0.5, keysize=2, margins=c(8, 8),
+                                  col=anova_fstat_colors, dendrogram="none", Rowv=FALSE,
+                                  Colv=FALSE, main="anova fstats for (factor, PC)")
     anova_fstat_heat <- grDevices::recordPlot()
     neglog_p <- -1 * log(as.matrix(anova_p) + 1)
     anova_neglogp_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
-    anova_neglogp_heat <- heatmap.3(as.matrix(neglog_p), scale="none", trace="none", linewidth=0.5,
-                                    keysize=2, margins=c(8, 8), col=anova_f_colors, dendrogram="none",
-                                    Rowv=FALSE, Colv=FALSE, main="-log(anova_p values)")
+    anova_neglogp_heat <- heatmap.3(as.matrix(neglog_p), scale="none", trace="none",
+                                    linewidth=0.5, keysize=2, margins=c(8, 8),
+                                    col=anova_f_colors, dendrogram="none", Rowv=FALSE,
+                                    Colv=FALSE, main="-log(anova_p values)")
     anova_neglogp_heat <- grDevices::recordPlot()
     ## Another option: -log10 p-value of the ftest for this heatmap.
     ## covariate vs PC score
     ## Analagously: boxplot(PCn ~ batch)
+
+    ## Finally, return the set of materials collected.
     pca_list <- list(
-        pc1_trend=u_plot, svd_d=positives, svd_u=u, svd_v=v, rsquared_table=component_rsquared_table,
-        pca_variance=pca_variance, pca_data=pca_data, anova_fstats=anova_fstats, anova_sums=anova_sums,
-        anova_f=anova_f, anova_p=anova_p, pca_cor=cor_df, cor_heatmap=pc_factor_corheat,
-        anova_f_heatmap=anova_f_heat, anova_fstat_heatmap=anova_fstat_heat,
-        anova_neglogp_heatmaph=anova_neglogp_heat, pca_plots=pca_plots
-    )
+        "pc1_trend" = u_plot,
+        "svd_d" = positives,
+        "svd_u" = u,
+        "svd_v" = v,
+        "rsquared_table" = component_rsquared_table,
+        "pca_variance" = pca_variance,
+        "pca_data" = pca_data,
+        "anova_fstats" = anova_fstats,
+        "anova_sums" = anova_sums,
+        "anova_f" = anova_f,
+        "anova_p" = anova_p,
+        "pca_cor" = cor_df,
+        "cor_heatmap" = pc_factor_corheat,
+        "anova_f_heatmap" = anova_f_heat,
+        "anova_fstat_heatmap" = anova_fstat_heat,
+        "anova_neglogp_heatmaph" = anova_neglogp_heat,
+        "pca_plots" = pca_plots)
     return(pca_list)
 }
 

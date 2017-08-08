@@ -7,6 +7,11 @@ install: prereq roxygen
 	@echo "Performing R CMD INSTALL hpgltools"
 	@R CMD INSTALL .
 
+deps:
+	@echo "Invoking devtools::install_dev_deps()"
+	@Rscript -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
+all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'package']; for (t in needed) { biocLite(t) }"
+
 reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
 	@rm -f inst/doc/reference.pdf
@@ -25,8 +30,10 @@ test: install
 	tests/testthat.R
 
 roxygen:
-	@echo "Generating documentation with roxygen2::roxygenize()"
-	@Rscript -e "suppressPackageStartupMessages(roxygen2::roxygenize())"
+##	@echo "Generating documentation with roxygen2::roxygenize()"
+##	@Rscript -e "suppressPackageStartupMessages(roxygen2::roxygenize())"
+	@echo "Generating documentation with devtools::document()"
+	@Rscript -e "suppressPackageStartupMessages(devtools::document())"
 
 vignette:
 	@echo "Building vignettes with devtools::build_vignettes()"
@@ -35,17 +42,37 @@ vignette:
 document: roxygen vignette reference
 
 clean_vignette:
-	@rm -f inst/doc/* vignettes/*.rda vignettes/*.map vignettes/*.Rdata
+	@rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata
 
 vt:	clean_vignette vignette reference install
 
 clean:
-	rm -rf hpgltools/
-	rm -rf hpgltools.Rcheck/
-	rm -rf hpgltools_${VERSION}.tar.gz
-	find . -type f -name '*.Rdata' -exec rm -rf {} ';' 2>/dev/null
-	find . -type d -name excel -exec rm -rf {} ';' 2>/dev/null
-	find . -type d -name reference -exec rm -rf {} ';' 2>/dev/null
+	@rm -rf hpgltools/
+	@rm -rf ./..Rcheck
+	@rm -rf tests/testthat/circos
+	@rm -rf tests/testthat/excel_test
+	@rm -rf tests/testthat/excel_test_sig
+	@rm -rf tests/testthat/kegg_pathways
+	@rm -rf tests/testthat/pathview
+	@rm -rf tests/testthat/pathview_in
+	@rm -rf tests/testthat/*.pdf
+	@rm -rf tests/testthat/*.png
+	@rm -rf tests/testthat/*.xlsx
+	@rm -rf tests/testthat/*.rda
+	@rm -rf tests/testthat/*.gff
+	@rm -rf tests/testthat/*.gb
+	@rm -rf tests/testthat/*.map
+	@rm -rf tests/testthat/*.xml
+	@rm -rf vignettes/circos
+	@rm -rf vignettes/*.gff
+	@rm -rf vignettes/*.pdf
+	@rm -rf hpgltools.Rcheck/
+	@rm -rf hpgltools_${VERSION}.tar.gz
+	@rm -rf $(find . -type f -name '*.Rdata')
+	@rm -rf $(find . -type f -name '*.rda' | grep -v inst)
+	@rm -rf $(find . -type f -name '.Rhistory')
+	@rm -rf $(find . -type d -name excel)
+	@rm -rf $(find . -type d -name reference)
 
 prereq:
 	@Rscript -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\

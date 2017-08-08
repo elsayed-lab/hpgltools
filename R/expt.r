@@ -77,10 +77,6 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     if (!is.null(arglist[["round"]])) {
         round <- arglist[["round"]]
     }
-    round <- FALSE
-    if (!is.null(arglist[["round"]])) {
-        round <- arglist[["round"]]
-    }
 
     ## Read in the metadata from the provided data frame, csv, or xlsx.
     sample_definitions <- data.frame()
@@ -106,6 +102,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
                                              x=colnames(sample_definitions))
     }  else {
         sample_definitions <- read_metadata(file, ...)
+        ##sample_definitions <- read_metadata(file)
     }
 
     colnames(sample_definitions) <- tolower(colnames(sample_definitions))
@@ -117,8 +114,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     ## The sample ID column should have the word 'sample' in it, otherwise this will fail.
     found_sample <- grepl(pattern="sample", x=sample_columns)
     if (sum(found_sample) == 0) {
-        message("Did not find the sample column in the sample sheet.")
-        message("Was it perhaps saved as a .xls?")
+        sample_definitions[["sampleid"]] <- make.names(rownames(sample_definitions), unique=TRUE)
     } else {
         ## Take the first column with the word 'sample' in it as the sampleid column
         sample_column <- sample_columns[found_sample][[1]]
@@ -156,12 +152,15 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     found_condition <- "condition" %in% sample_columns
     if (!isTRUE(found_condition)) {
         message("Did not find the condition column in the sample sheet.")
-        message("Was it perhaps saved as a .xls?")
+        message("Filling it in as undefined.")
+        sample_definitions[["condition"]] <- "undefined"
+
     }
     found_batch <- "batch" %in% sample_columns
     if (!isTRUE(found_batch)) {
         message("Did not find the batch column in the sample sheet.")
-        message("Was it perhaps saved as a .xls?")
+        message("Filling it in as undefined.")
+        sample_definitions[["batch"]] <- "undefined"
     }
 
     ## Double-check that there is a usable condition column
@@ -200,7 +199,7 @@ analyses more difficult/impossible.")
             sample_definitions <- sample_definitions[!skippers, ]
         }
     }
-
+    num_samples <- nrow(sample_definitions)
     ## Create a matrix of counts with columns as samples and rows as genes
     ## This may come from either a data frame/matrix, a list of files from the metadata
     ## or it can attempt to figure out the location of the files from the sample names.
@@ -262,7 +261,8 @@ analyses more difficult/impossible.")
     if (is.null(all_count_tables)) {
         filenames <- as.character(sample_definitions[[file_column]])
         sample_ids <- as.character(sample_definitions[[sample_column]])
-        all_count_tables <- expt_read_counts(sample_ids, filenames, ...)
+        all_count_tables <- read_counts_expt(sample_ids, filenames, ...)
+        ##all_count_tables <- read_counts_expt(sample_ids, filenames)
     }
 
     ## Recast the data as a data.frame and make sure everything is numeric
@@ -291,7 +291,7 @@ analyses more difficult/impossible.")
         } else {
             ## Or reading a gff file.
             message("create_expt(): Reading annotation gff, this is slow.")
-            annotation <- gff2df(gff=include_gff, type=gff_type)
+            annotation <- load_gff_annotations(gff=include_gff, type=gff_type)
             tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
             gene_info <- annotation
         }
@@ -308,6 +308,11 @@ analyses more difficult/impossible.")
         }
         if (sum(rownames(gene_info) %in% rownames(all_count_tables)) == 0) {
             warning("Even after changing the rownames in gene info, they do not match the count table.")
+            message("Even after changing the rownames in gene info, they do not match the count table.")
+            message("Here are the first few rownames from the count tables:")
+            message(toString(head(rownames(all_count_tables))))
+            message("Here are the first few rownames from the gene information table:")
+            message(toString(head(rownames(gene_info))))
         }
     }
 
@@ -347,6 +352,13 @@ analyses more difficult/impossible.")
     ## The method here is to create a data.table of the counts and annotation data,
     ## merge them, then split them apart.
     counts_and_annotations <- merge(tmp_countsdt, gene_infodt, by="rownames", all.x=TRUE)
+    ## In some cases, the above merge will result in columns being set to NA
+    ## We should set all the NA fields to something I think.
+    na_entries <- is.na(counts_and_annotations)
+    if (sum(na_entries) > 0) {
+        message("Some annotations were lost in merging, setting them to 'undefined'.")
+    }
+    counts_and_annotations[na_entries] <- "undefined"
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
     counts_and_annotations <- as.data.frame(counts_and_annotations)
     final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_infodt) ]
@@ -357,7 +369,7 @@ analyses more difficult/impossible.")
     final_counts <- as.data.frame(final_countsdt)
     rownames(final_counts) <- counts_and_annotations[["rownames"]]
 
-        ## I found a non-bug but utterly obnoxious behaivor in R
+    ## I found a non-bug but utterly obnoxious behaivor in R
     ## Imagine a dataframe with 2 entries: TcCLB.511511.3 and TcCLB.511511.30
     ## Then imagine that TcCLB.511511.3 gets removed because it is low abundance.
     ## Then imagine what happens if I go to query 511511.3...
@@ -480,7 +492,7 @@ analyses more difficult/impossible.")
 
     ## Now that the expressionset has been created, pack it into an expt object so that I
     ## can keep backups etc.
-    expt <- expt_subset(experiment) ## I think this is spurious now.
+    expt <- subset_expt(experiment) ## I think this is spurious now.
     expt[["original_expressionset"]] <- experiment
     expt[["original_metadata"]] <- Biobase::pData(experiment)
 
@@ -541,26 +553,51 @@ analyses more difficult/impossible.")
 #' @return  A smaller expt
 #' @seealso \code{\link{create_expt}}
 #' @export
-expt_exclude_genes <- function(expt, column="txtype", method="remove",
+exclude_genes_expt <- function(expt, column="txtype", method="remove",
                                patterns=c("snRNA","tRNA","rRNA"), ...) {
     arglist <- list(...)
     ex <- expt[["expressionset"]]
     annotations <- Biobase::fData(ex)
+    if (is.null(annotations[[column]])) {
+        message(paste0("The ", column, " column is null, doing nothing."))
+        return(expt)
+    }
     pattern_string <- ""
     for (pat in patterns) {
         pattern_string <- paste0(pattern_string, pat, "|")
     }
     silly_string <- gsub(pattern="\\|$", replacement="", x=pattern_string)
-    idx <- grepl(pattern=silly_string, x=annotations[[column]])
-    ex2 <- NULL
+    idx <- grepl(pattern=silly_string, x=annotations[[column]], perl=TRUE)
+    kept <- NULL
+    removed <- NULL
+    kept_sums <- NULL
+    removed_sums <- NULL
     if (method == "remove") {
-        ex2 <- ex[!idx, ]
+        kept <- ex[!idx, ]
+        removed <- ex[idx, ]
     } else {
-        ex2 <- ex[idx, ]
+        kept <- ex[idx, ]
+        removed <- ex[!idx, ]
     }
+
     message(paste0("Before removal, there were ", nrow(Biobase::fData(ex)), " entries."))
-    message(paste0("Now there are ", nrow(Biobase::fData(ex2)), " entries."))
-    expt[["expressionset"]] <- ex2
+    message(paste0("Now there are ", nrow(Biobase::fData(kept)), " entries."))
+    all_tables <- Biobase::exprs(ex)
+    all_sums <- colSums(all_tables)
+    kept_tables <- Biobase::exprs(kept)
+    kept_sums <- colSums(kept_tables)
+    removed_tables <- Biobase::exprs(removed)
+    removed_sums <- colSums(removed_tables)
+    pct_kept <- (kept_sums / all_sums) * 100.0
+    pct_removed <- (removed_sums / all_sums) * 100.0
+    summary_table <- rbind(kept_sums, removed_sums, all_sums,
+                           pct_kept, pct_removed)
+    rownames(summary_table) <- c("kept_sums", "removed_sums", "all_sums",
+                                 "pct_kept", "pct_removed")
+    message(paste0("Percent kept: ", toString(pct_kept)))
+    message(paste0("Percent removed: ", toString(pct_removed)))
+    expt[["expressionset"]] <- kept
+    expt[["summary_table"]] <- summary_table
     return(expt)
 }
 
@@ -596,10 +633,10 @@ expt_subset <- function(expt, subset=NULL) {
     starting_metadata <- NULL
     if (class(expt)[[1]] == "ExpressionSet") {
         starting_expressionset <- expt
-        starting_metadata <- Biobase::pData(starting_expressionset)
+        starting_metadata <- pData(starting_expressionset)
     } else if (class(expt)[[1]] == "expt") {
         starting_expressionset <- expt[["expressionset"]]
-        starting_metadata <- Biobase::pData(expt[["expressionset"]])
+        starting_metadata <- pData(expt)
     } else {
         stop("expt is neither an expt nor ExpressionSet")
     }
@@ -645,7 +682,7 @@ expt_subset <- function(expt, subset=NULL) {
             subset_design[[col]] <- droplevels(subset_design[[col]])
         }
     }
-    Biobase::pData(subset_expressionset) <- subset_design
+    pData(subset_expressionset) <- subset_design
 
     new_expt <- list(
         "title" = expt[["title"]],
@@ -734,7 +771,7 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
         stop("The new factor of batches is not the same length as the original.")
     }
     expt[["batches"]] <- fact
-    Biobase::pData(expt[["expressionset"]])[["batch"]] <- fact
+    pData(expt[["expressionset"]])[["batch"]] <- fact
     expt[["design"]][["batch"]] <- fact
     return(expt)
 }
@@ -809,6 +846,16 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
                 sampleid <- names(colors)[snum]
                 sample_color <- colors[[snum]]
                 chosen_colors[[sampleid]] <- sample_color
+                ## Set the condition for the changed samples to something unique.
+                original_condition <- expt[["design"]][sampleid, "condition"]
+                changed_condition <- paste0(original_condition, snum)
+                expt[["design"]][sampleid, "condition"] <- changed_condition
+                tmp_pdata <- pData(expt)
+                old_levels <- levels(tmp_pdata[["condition"]])
+                new_levels <- c(old_levels, changed_condition)
+                levels(tmp_pdata[["condition"]]) <- new_levels
+                tmp_pdata[sampleid, "condition"] <- changed_condition
+                pData(expt[["expressionset"]]) <- tmp_pdata
             }
         }
         chosen_idx <- complete.cases(chosen_colors)
@@ -857,14 +904,14 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
     ## the conditions and I do not know why.
     if (!is.null(ids)) {
         ## Change specific id(s) to given condition(s).
-        old_pdata <- Biobase::pData(expt[["expressionset"]])
+        old_pdata <- pData(expt)
         old_cond <- as.character(old_pdata[["condition"]])
         names(old_cond) <- rownames(old_pdata)
         new_cond <- old_cond
         new_cond[ids] <- fact
         new_pdata <- old_pdata
         new_pdata[["condition"]] <- as.factor(new_cond)
-        Biobase::pData(expt[["expressionset"]]) <- new_pdata
+        pData(expt[["expressionset"]]) <- new_pdata
         new_expt[["conditions"]][ids] <- fact
         new_expt[["design"]][["condition"]] <- new_cond
     } else if (length(fact) == 1) {
@@ -872,7 +919,7 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
         if (fact %in% colnames(expt[["design"]])) {
             new_fact <- expt[["design"]][[fact]]
             new_expt[["conditions"]] <- new_fact
-            Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
+            pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
             new_expt[["design"]][["condition"]] <- new_fact
         } else {
             stop("The provided factor is not in the design matrix.")
@@ -881,7 +928,7 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
             stop("The new factor of conditions is not the same length as the original.")
     } else {
         new_expt[["conditions"]] <- fact
-        Biobase::pData(new_expt[["expressionset"]])[["condition"]] <- fact
+        pData(new_expt[["expressionset"]])[["condition"]] <- fact
         new_expt[["design"]][["condition"]] <- fact
     }
 
@@ -1039,4 +1086,55 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
     return(what)
 }
 
+## Make some methods which call Biobase on expts.
+## This way we don't have to do Biobase::exprs/fData/pData/notes()
+## But instead R will call them for us.
+
+## Here is a note from Hadley which is relevant here:
+## Another consideration is that S4 code often needs to run in a certain
+## order. For example, to define the method setMethod("foo", c("bar", "baz"),
+## ...) you must already have created the foo generic and the two classes. By
+## default, R code is loaded in alphabetical order, but that won’t always work
+## for your situation.
+
+#' Extend Biobase::exprs to handle expt ojects.
+#'
+#' @name exprs
+#' @importFrom Biobase exprs
+#' @export exprs
+setOldClass("expt")
+setMethod("exprs", signature="expt",
+          function(object) {
+              Biobase::exprs(object[["expressionset"]])
+          })
+
+#' Extend Biobase::fData to handle expt objects.
+#'
+#' @name fData
+#' @importFrom Biobase fData
+#' @export fData
+setMethod("fData", signature="expt",
+          function(object) {
+              Biobase::fData(object[["expressionset"]])
+          })
+
+#' Extend Biobase::pData to handle expt objects.
+#'
+#' @name pData
+#' @importFrom Biobase pData
+#' @export pData
+setMethod("pData", signature="expt",
+          function(object) {
+              Biobase::pData(object[["expressionset"]])
+          })
+
+#' Extend Biobase::notes to handle expt objects.
+#'
+#' @name notes
+#' @importFrom Biobase notes
+#' @export notes
+setMethod("notes", signature="expt",
+          function(object) {
+              Biobase::notes(object[["expressionset"]])
+          })
 ## EOF

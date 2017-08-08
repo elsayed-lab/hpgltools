@@ -33,7 +33,7 @@ expt_snp <- function(expt,
                      file_suffix="_parsed_ratio.txt",
                      bam_suffix="_accepted_paired.bam",
                      tolower=TRUE) {
-    samples <- rownames(Biobase::pData(expt$expressionset))
+    samples <- rownames(pData(expt))
     if (isTRUE(tolower)) {
         samples <- tolower(samples)
     }

@@ -33,12 +33,13 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        design <- data[["design"]]
+        design <- pData(data)
         colors <- data[["colors"]]
         names <- data[["names"]]
-        data <- as.data.frame(Biobase::exprs(data[["expressionset"]]))
+        data <- as.data.frame(exprs(data))
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
+        design <- pData(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -124,18 +125,19 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #'  funkytown <- plot_density(data)
 #' }
 #' @export
-plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity",
+plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity", direct=TRUE,
                          fill=NULL, title=NULL, scale=NULL, colors_by="condition") {
     ## also position='stack'
     plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        design <- data[["design"]]
+        design <- pData(data)
         colors <- data[["colors"]]
         names <- data[["names"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
+        design <- pData(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -211,6 +213,10 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
         densityplot <- densityplot + ggplot2::scale_colour_manual(values=as.character(colors)) +
             ggplot2::scale_fill_manual(values=ggplot2::alpha(as.character(colors), 0.1))
     }
+
+    if (isTRUE(direct)) {
+        densityplot <- directlabels::direct.label(densityplot)
+    }
     return(densityplot)
 }
 
@@ -230,12 +236,13 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
 plot_qq_all <- function(data, labels="short") {
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
-        data <- as.data.frame(Biobase::exprs(data$expressionset))
+        design <- pData(data)
+        colors <- data[["colors"]]
+        names <- data[["names"]]
+        data <- as.data.frame(exprs(data))
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
+        design <- pData(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -247,7 +254,7 @@ plot_qq_all <- function(data, labels="short") {
     ## but works fine when called interactively, wtf indeed?
     ##    sample_data = transform(sample_data, mean=rowMeans(plot_df))
     means <- rowMeans(data)
-    sample_data$mean <- means
+    sample_data[["mean"]] <- means
     logs <- list()
     ratios <- list()
     means <- list()
@@ -260,15 +267,15 @@ plot_qq_all <- function(data, labels="short") {
         ith <- colnames(data)[i]
         message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
         tmpdf <- data.frame("ith"=data[, i],
-                            "mean"=sample_data$mean)
+                            "mean"=sample_data[["mean"]])
         colnames(tmpdf) <- c(ith, "mean")
-        tmpqq <- plot_qq_plot(tmpdf, x=1, y=2, labels=labels)
-        logs[[count]] <- tmpqq$log
-        ratios[[count]] <- tmpqq$ratio
-        means[[count]] <- tmpqq$summary[["Median"]]
+        tmpqq <- plot_single_qq(tmpdf, x=1, y=2, labels=labels)
+        logs[[count]] <- tmpqq[["log"]]
+        ratios[[count]] <- tmpqq[["ratio"]]
+        means[[count]] <- tmpqq[["summary"]][["Median"]]
         count <- count + 1
     }
-    plot_multiplot(logs)
+    result <- plot_multiplot(logs)
     log_plots <- grDevices::recordPlot()
     plot_multiplot(ratios)
     ratio_plots <- grDevices::recordPlot()
@@ -288,16 +295,17 @@ plot_qq_all <- function(data, labels="short") {
 #' @return a list of the logs, ratios, and mean between the plots as ggplots.
 #' @seealso \pkg{Biobase}
 #' @export
-plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
+plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
     plot_env <- environment()
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        design <- data[["design"]]
+        design <- pData(data)
         colors <- data[["colors"]]
         names <- data[["names"]]
-        data <- as.data.frame(Biobase::exprs(data$expressionset))
+        data <- as.data.frame(exprs(data))
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
+        design <- pData(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -308,20 +316,26 @@ plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
     ylabel <- colnames(data)[y]
     xvector <- as.vector(data[, x])
     yvector <- as.vector(data[, y])
-    sorted_x <- sort(xvector)
-    sorted_y <- sort(yvector)
-    vector_ratio <- sorted_x / sorted_y
-    increment <- as.vector(1:length(vector_ratio))
-    ratio_df <- data.frame(cbind(increment, sorted_x, sorted_y, vector_ratio))
+    ratio_df <- data.frame("sorted_x" = sort(xvector),
+                           "sorted_y" = sort(yvector))
+    ratio_df[["ratio"]] <- ratio_df[["sorted_x"]] / ratio_df[["sorted_y"]]
+    ## Drop elements with zero
+    ## First by checking for NAN, then Inf.
+    na_idx <- is.na(ratio_df[["ratio"]])
+    ratio_df <- ratio_df[!na_idx, ]
+    nan_idx <- is.infinite(ratio_df[["ratio"]])
+    ratio_df <- ratio_df[!nan_idx, ]
+    ratio_df[["increment"]] <- as.vector(1:nrow(ratio_df))
+
     if (labels == "short") {
         y_string <- paste(xlabel, " : ", ylabel, sep="")
     } else {
         y_string <- paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
     }
     ratio_plot <- ggplot2::ggplot(ratio_df,
-                                  ggplot2::aes_string(x="increment", y="vector_ratio"),
+                                  ggplot2::aes_string(x="increment", y="ratio"),
                                   environment=plot_env) +
-        ggplot2::geom_point(colour=sm(grDevices::densCols(vector_ratio)), stat="identity",
+        ggplot2::geom_point(colour=sm(grDevices::densCols(ratio_df[["ratio"]])), stat="identity",
                             size=1, alpha=0.2, na.rm=TRUE) +
         ggplot2::scale_y_continuous(limits=c(0, 2))
     if (isTRUE(labels)) {
@@ -359,16 +373,18 @@ plot_qq_plot <- function(data, x=1, y=2, labels=TRUE) {
                            plot.background=ggplot2::element_blank())
     }
 
-    log_df <- data.frame(cbind(log(sorted_x), log(sorted_y)))
+    log_df <- data.frame(cbind(log(ratio_df[["sorted_x"]] + 1.5),
+                               log(ratio_df[["sorted_y"]] + 1.5)))
     gg_max <- max(log_df)
     colnames(log_df) <- c(xlabel, ylabel)
-    log_df$sub <- log_df[, 1] - log_df[, 2]
+    log_df[["sub"]] <- log_df[, 1] - log_df[, 2]
+    sorted_x <- as.vector(log_df[, 1])
     log_ratio_plot <- ggplot2::ggplot(log_df,
                                       ggplot2::aes_string(x="get(xlabel)", y="get(ylabel)"),
                                       environment=plot_env) +
-        ggplot2::geom_point(colour=sm(grDevices::densCols(sorted_x, sorted_y)), na.rm=TRUE) +
-        ggplot2::scale_y_continuous(limits=c(0, gg_max)) +
-        ggplot2::scale_x_continuous(limits=c(0, gg_max))
+    ggplot2::geom_point(colour=grDevices::densCols(x=sorted_x), stat="identity") +
+    ggplot2::scale_y_continuous(limits=c(0, gg_max)) +
+    ggplot2::scale_x_continuous(limits=c(0, gg_max))
     if (isTRUE(labels)) {
         log_ratio_plot <- log_ratio_plot +
             ggplot2::xlab(paste("log sorted ", xlabel)) +
@@ -424,12 +440,13 @@ plot_qq_all_pairwise <- function(data) {
     data_class <- class(data)[1]
     names <- NULL
     if (data_class == "expt") {
-        design <- data$design
-        colors <- data$colors
-        names <- data$names
-        data <- Biobase::exprs(data$expressionset)
+        design <- pData(data)
+        colors <- data[["colors"]]
+        names <- data[["names"]]
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
+        design <- pData(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {

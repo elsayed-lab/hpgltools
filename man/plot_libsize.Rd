@@ -4,11 +4,13 @@
 \alias{plot_libsize}
 \title{Make a ggplot graph of library sizes.}
 \usage{
-plot_libsize(data, colors = NULL, names = NULL, text = TRUE,
-  title = NULL, yscale = NULL, ...)
+plot_libsize(data, condition = NULL, colors = NULL, names = NULL,
+  text = TRUE, title = NULL, yscale = NULL, ...)
 }
 \arguments{
 \item{data}{Expt, dataframe, or expressionset of samples.}
+
+\item{condition}{vector of sample condition names.}
 
 \item{colors}{Color scheme if the data is not an expt.}
 

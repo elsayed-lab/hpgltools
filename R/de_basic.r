@@ -37,7 +37,7 @@ basic_pairwise <- function(input=NULL, design=NULL,
     }
     message("Starting basic pairwise comparison.")
     input_data <- choose_basic_dataset(input, force=force)
-    design <- Biobase::pData(input[["expressionset"]])
+    design <- pData(input)
     conditions <- input_data[["conditions"]]
     batches <- input_data[["batches"]]
     data <- input_data[["data"]]
@@ -220,7 +220,7 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
     warn_user <- 0
     conditions <- input[["conditions"]]
     batches <- input[["batches"]]
-    data <- as.data.frame(Biobase::exprs(input[["expressionset"]]))
+    data <- as.data.frame(exprs(input))
     tran_state <- input[["state"]][["transform"]]
     if (is.null(tran_state)) {
         tran_state <- "raw"
@@ -262,7 +262,7 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
         message("Basic step 0/3: Transforming data.")
         ready <- sm(normalize_expt(ready, transform="log2"))
     }
-    data <- as.data.frame(Biobase::exprs(ready[["expressionset"]]))
+    data <- as.data.frame(exprs(ready))
     rm(ready)
     retlist <- list(
         "conditions" = conditions,

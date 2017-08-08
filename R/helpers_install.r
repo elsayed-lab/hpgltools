@@ -19,12 +19,15 @@
 #'  go_get_some_coffee_this_will_take_a_while <- bioc_all()
 #' }
 #' @export
-bioc_all <- function(release="3.4", mirror="bioconductor.statistik.tu-dortmund.de", base="packages", type="software",
+bioc_all <- function(release="3.5", mirror="bioconductor.statistik.tu-dortmund.de", base="packages", type="software",
     suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
     dl_url <- paste0("https://", mirror, "/", base, "/json/", release, "/tree.json")
     ## message(paste0("DL: ", dl_url))
     ## dl_url <- "https://bioc.ism.ac.jp/packages/json/3.3/tree.json"
     suc <- c()
+    ## Sadly, biocLite() does not give different returns for a successfully/failed install.
+    ## Instead it always returns a character of the package(s) asked to install.
+    ## That seems dumb to me, but what do I know.
     fail <- c()
     alr <- c()
     pkg_list <- jsonlite::fromJSON(dl_url)
@@ -48,7 +51,12 @@ bioc_all <- function(release="3.4", mirror="bioconductor.statistik.tu-dortmund.d
             if (class(installedp) == "try-error") {
                 fail <- append(fail, pkg)
             } else {
-                suc <- append(suc, pkg)
+                install_directory <- paste0(.libPaths()[1], "/", pkg)
+                if (file.exists(install_directory)) {
+                    suc <- append(suc, pkg)
+                } else {
+                    fail <- append(fail, pkg)
+                }
             }
         } else {
             if (isTRUE(pkg %in% .packages(all.available=TRUE))) {
@@ -62,7 +70,12 @@ bioc_all <- function(release="3.4", mirror="bioconductor.statistik.tu-dortmund.d
                 if (class(installedp) == "try-error") {
                     fail <- append(fail, pkg)
                 } else {
-                    suc <- append(suc, pkg)
+                    install_directory <- paste0(.libPaths()[1], "/", pkg)
+                    if (file.exists(install_directory)) {
+                        suc <- append(suc, pkg)
+                    } else {
+                        fail <- append(fail, pkg)
+                    }
                 }
             }
         }

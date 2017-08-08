@@ -4,8 +4,8 @@
 \alias{varpart}
 \title{Use variancePartition to try and understand where the variance lies in a data set.}
 \usage{
-varpart(expt, predictor = "condition", factors = c("batch"), cpus = 6,
-  genes = 40, parallel = TRUE)
+varpart(expt, predictor = "condition", factors = c("batch"),
+  chosen_factor = "batch", cpus = 6, genes = 40, parallel = TRUE)
 }
 \arguments{
 \item{expt}{Some data}
@@ -13,6 +13,8 @@ varpart(expt, predictor = "condition", factors = c("batch"), cpus = 6,
 \item{predictor}{Non-categorical predictor factor with which to begin the model.}
 
 \item{factors}{Character list of columns in the experiment design to query}
+
+\item{chosen_factor}{When checking for sane 'batches', what column to extract from the design?}
 
 \item{cpus}{Number cpus to use}
 
@@ -25,6 +27,9 @@ partitions  List of plots and variance data frames
 }
 \description{
 variancePartition is the newest toy introduced by Hector.
+}
+\details{
+Tested in 19varpart.R.
 }
 \seealso{
 \pkg{doParallel} \pkg{variancePartition}

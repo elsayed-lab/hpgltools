@@ -67,7 +67,8 @@ plot_ontpval <- function(df, ontology="MF", fontsize=16) {
 #' @seealso \pkg{goseq} \pkg{clusterProfiler}
 #'  \code{\link[goseq]{goseq}} \code{\link{plot_ontpval}}
 #' @export
-plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1, n=30, mincat=5, level=NULL) {
+plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
+                            n=30, mincat=5, level=NULL) {
     if (!is.null(level)) {
         keepers <- data.frame()
         message("Getting all go levels.  This takes a moment.")
@@ -160,7 +161,6 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1, n=30, mincat=
     return(pval_plots)
 }
 
-
 #' Make a pvalue plot from topgo data.
 #'
 #' The p-value plots from clusterProfiler are pretty, this sets the topgo data into a format
@@ -172,8 +172,7 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1, n=30, mincat=
 #' @param n Maximum number of ontologies to include.
 #' @param type Type of score to use.
 #' @return List of MF/BP/CC pvalue plots.
-#' @seealso \pkg{topgo}
-#'  \code{\link{clusterProfiler}}
+#' @seealso \pkg{topgo} \pkg{clusterProfiler}
 #' @export
 plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
     mf_newdf <- topgo[["tables"]][["mf"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
@@ -410,8 +409,7 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, gro
 #' @param scorer  Which column to use for scoring the data.
 #' @param ...  Options I might pass from other functions are dropped into arglist.
 #' @return List of MF/BP/CC pvalue plots.
-#' @seealso \pkg{topgo}
-#'  \code{\link{clusterProfiler}}
+#' @seealso \pkg{topgo} \pkg{clusterProfiler}
 #' @export
 plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
                                 cutoff=0.1, n=30,

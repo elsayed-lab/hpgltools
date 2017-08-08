@@ -89,11 +89,16 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     }
     message("Starting edgeR pairwise comparisons.")
     input_data <- choose_binom_dataset(input, force=force)
-    design <- Biobase::pData(input[["expressionset"]])
+    design <- pData(input)
     conditions <- input_data[["conditions"]]
     batches <- input_data[["batches"]]
     data <- input_data[["data"]]
 
+    ##model_choice <- choose_model(input, conditions, batches,
+    ##                             model_batch=model_batch,
+    ##                             model_cond=model_cond,
+    ##                             model_intercept=model_intercept,
+    ##                             alt_model=alt_model)
     model_choice <- choose_model(input, conditions, batches,
                                  model_batch=model_batch,
                                  model_cond=model_cond,
@@ -115,7 +120,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     final_norm <- NULL
     if (edger_method == "short") {
         message("EdgeR steps 2 through 6/9: All in one!")
-        final_norm <- edgeR::estimateDisp(norm, design=model_data, robust=TRUE)
+        final_norm <- edgeR::estimateDisp(norm, design=model_data)
     } else {
         state <- TRUE
         message("EdgeR step 2/9: Estimating the common dispersion.")

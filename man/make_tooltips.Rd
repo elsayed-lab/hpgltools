@@ -32,5 +32,5 @@ otherwise be too troublesome to acquire.
 }
 \seealso{
 \pkg{googleVis}
- \code{\link{gff2df}}
+ \code{\link{load_gff_annotations}}
 }

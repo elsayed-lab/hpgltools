@@ -17,10 +17,10 @@
 #'  estimate_vs_snps <- plot_svfactor(start, surrogate_estimate, "snpcategory")
 #' }
 #' @export
-plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type="factor") {
+plot_svfactor <- function(expt, svest, chosen_factor="batch", factor_type="factor") {
     chosen <- expt[["design"]][[chosen_factor]]
     sv_df <- data.frame(
-        "adjust" = svest$model_adjust[, 1],  ## Take a single estimate from compare_estimates()
+        "adjust" = svest[, 1],  ## Take a single estimate from compare_estimates()
         "factors" = chosen,
         "samplenames" = rownames(expt[["design"]])
     )
@@ -37,7 +37,9 @@ plot_svfactor <- function(expt, svest, chosen_factor="snpcategory", factor_type=
                               colour="black", fill=my_colors) +
         ggplot2::xlab(paste0("Experimental factor: ", chosen_factor)) +
         ggplot2::ylab(paste0("1st surrogate variable estimation")) +
-        ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
+        ##ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
+        ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="samplenames"),
+                           angle=45, size=3, vjust=2) +
         ggplot2::theme_bw()
     return(sv_plot)
 }
@@ -90,15 +92,15 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
         "batch" = expt[["batches"]],
         "shape" = 21,
         "color" = "black",
-        "svs" = svs)
+        "svs" = svs[, 1])
     color_list <- as.character(factor_df[["fill"]])
     names(color_list) <- as.character(factor_df[["condition"]])
 
     sample_factor <- ggplot(factor_df, aes_string(x="sample", y="factor")) +
         ggplot2::geom_dotplot(binaxis="y", stackdir="center",
                               binpositions="all", colour="black",
-                              fill=factor_df[["fill"]])
-
+                              ##fill=factor_df[["fill"]])
+                              fill=color_list)
 
     factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
                                   aes_string(x="factor",
@@ -205,11 +207,11 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
         colors <- data[["colors"]]
         names <- data[["names"]]
         conditions <- data[["conditions"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        design <- Biobase::pData(data)
-        conditions <- Biobase::pData(data)[["conditions"]]
-        data <- Biobase::exprs(data)
+        design <- pData(data)
+        conditions <- pData(data)[["conditions"]]
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {

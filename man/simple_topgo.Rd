@@ -8,7 +8,7 @@ simple_topgo(sig_genes, goid_map = "id2go.map", goids_df = NULL,
   pvals = NULL, limitby = "fisher", limit = 0.1, signodes = 100,
   sigforall = TRUE, numchar = 300, selector = "topDiffGenes",
   pval_column = "adj.P.Val", overwrite = FALSE, densities = FALSE,
-  pval_plots = TRUE, parallel = FALSE, ...)
+  pval_plots = TRUE, parallel = FALSE, excel = NULL, ...)
 }
 \arguments{
 \item{sig_genes}{Data frame of differentially expressed genes, containing IDs any other columns.}
@@ -40,6 +40,8 @@ simple_topgo(sig_genes, goid_map = "id2go.map", goids_df = NULL,
 \item{pval_plots}{Include pvalue plots of the results a la clusterprofiler?}
 
 \item{parallel}{Perform some operations in parallel to speed this up?}
+
+\item{excel}{Print the results to an excel file?}
 
 \item{...}{Other options which I do not remember right now!}
 }

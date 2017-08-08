@@ -22,7 +22,7 @@
 #'  count_tables <- hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
 #' }
 #' @export
-expt_read_counts <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
+read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
                              suffix=NULL, ...) {
     ## load first sample
     ## arglist <- list(...)
@@ -139,8 +139,8 @@ concatenate_runs <- function(expt, column="replicate") {
     samplenames <- list()
     for (rep in replicates) {
         expression <- paste0(column, "=='", rep, "'")
-        tmp_expt <- expt_subset(expt, expression)
-        tmp_data <- rowSums(Biobase::exprs(tmp_expt[["expressionset"]]))
+        tmp_expt <- subset_expt(expt, expression)
+        tmp_data <- rowSums(exprs(tmp_expt))
         tmp_design <- tmp_expt[["design"]][1, ]
         final_data <- cbind(final_data, tmp_data)
         final_design <- rbind(final_design, tmp_design)
@@ -153,9 +153,9 @@ concatenate_runs <- function(expt, column="replicate") {
     }
     final_expt[["design"]] <- final_design
     metadata <- new("AnnotatedDataFrame", final_design)
-    Biobase::sampleNames(metadata) <- colnames(final_data)
-    feature_data <- new("AnnotatedDataFrame", Biobase::fData(expt[["expressionset"]]))
-    Biobase::featureNames(feature_data) <- rownames(final_data)
+    sampleNames(metadata) <- colnames(final_data)
+    feature_data <- new("AnnotatedDataFrame", fData(expt))
+    featureNames(feature_data) <- rownames(final_data)
     experiment <- new("ExpressionSet", exprs=final_data,
                       phenoData=metadata, featureData=feature_data)
     final_expt[["expressionset"]] <- experiment
@@ -225,14 +225,12 @@ make_exampledata <- function (ngenes=1000, columns=5) {
 #' @export
 median_by_factor <- function(data, fact="condition") {
     if (length(fact) == 1) {
-        design <- Biobase::pData(data[["expressionset"]])
+        design <- pData(data)
         fact <- design[[fact]]
         names(fact) <- rownames(design)
     }
-    if (class(data) == "expt") {
-        data <- Biobase::exprs(data[["expressionset"]])
-    } else if (class(data) == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+    if (class(data) == "expt" | class(data) == "ExpressionSet") {
+        data <- exprs(data)
     }
 
     medians <- data.frame("ID"=rownames(data))
@@ -277,10 +275,8 @@ median_by_factor <- function(data, fact="condition") {
 #' }
 #' @export
 features_greater_than <- function(data, cutoff=1, hard=TRUE) {
-    if (class(data) == "expt") {
-        data <- as.data.frame(Biobase::exprs(data[["expressionset"]]))
-    } else if (class(data) == "ExpressionSet") {
-        data <- as.data.frame(Biobase::exprs(data))
+    if (class(data) == "expt" | class(data) == "ExpressionSet") {
+        data <- as.data.frame(exprs(data))
     } else {
         data <- as.data.frame(data)
     }
@@ -356,7 +352,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
                             title="Columns used in the following tables.")
     rows_down <- nrow(legend)
     new_row <- new_row + rows_down + 3
-    annot <- Biobase::pData(expt[["expressionset"]])
+    annot <- as.data.frame(pData(expt))
     xls_result <- write_xls(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
                             sheet=sheet, start_col=1, title="Experimental Design.")
 
@@ -365,8 +361,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     sheet <- "raw_reads"
     new_row <- 1
     new_col <- 1
-    reads <- Biobase::exprs(expt[["expressionset"]])
-    info <- Biobase::fData(expt[["expressionset"]])
+    reads <- exprs(expt)
+    info <- fData(expt)
     read_info <- merge(info, reads, by="row.names")
     xls_result <- write_xls(data=read_info, wb=wb, sheet=sheet, rownames=FALSE,
                             start_row=new_row, start_col=new_col, title="Raw Reads.")
@@ -470,29 +466,48 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     ## PCA, PCA(l2cpm) and qq_log
     new_row <- new_row + plot_rows + 2
     new_col <- 1
-    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA.",
+                        startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
-    openxlsx::writeData(wb, sheet=sheet, x="PCA(log2(cpm())).", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet=sheet, x="PCA(log2(cpm())).",
+                        startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
-    openxlsx::writeData(wb, sheet=sheet, x="Raw QQ, log scale.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet=sheet, x="Raw TSNE.",
+                        startRow=new_row, startCol=new_col)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="TSNE(log2(cpm())).",
+                        startRow=new_row, startCol=new_col)
+    new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Raw QQ, log scale.",
+                        startRow=new_row, startCol=new_col)
     new_col <- 1
     new_row <- new_row + 1
     pca_plot <- metrics[["pcaplot"]]
+    tsne_plot <- metrics[["tsneplot"]]
     try_result <- xlsx_plot_png(pca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
                                 plotname="10_pcaplot", savedir=excel_basename, fancy_type="svg")
     tmp_data <- sm(normalize_expt(expt, transform="log2", convert="cpm"))
     rspca_plot <- plot_pca(tmp_data)[["plot"]]
+    rtsne_plot <- plot_tsne(tmp_data)[["plot"]]
     rm(tmp_data)
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(rspca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
                                 plotname="11_norm_pcaplot", savedir=excel_basename, fancy_type="svg")
+    new_col <- new_col + plot_cols + 1
+    try_result <- xlsx_plot_png(tsne_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="12_tsneplot", savedir=excel_basename, fancy_type="svg")
+    new_col <- new_col + plot_cols + 1
+    try_result <- xlsx_plot_png(rtsne_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="13_rtsneplot", savedir=excel_basename, fancy_type="svg")
     qq_plot <- metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(qq_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="12_qqlog", savedir=excel_basename)
+                                plotname="14_qqlog", savedir=excel_basename)
     new_col <- 1
 
     violin_plot <- NULL
@@ -506,26 +521,28 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
             new_col <- 1
             try_result <- xlsx_plot_png(violin_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="13_violin", savedir=excel_basename)
+                                        plotname="15_violin", savedir=excel_basename)
             new_col <- new_col + plot_cols + 1
 
             pct_plot <- varpart_raw[["percent_plot"]]
             try_result <- xlsx_plot_png(pct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="14_pctvar", savedir=excel_basename)
+                                        plotname="16_pctvar", savedir=excel_basename)
         }
     }
 
     ## PCA table
     new_row <- new_row + plot_rows + 2
     new_col <- 1
-    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA res.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet=sheet, x="Raw PCA res.",
+                        startRow=new_row, startCol=new_col)
     new_row <- new_row + 1
     xls_result <- write_xls(data=metrics[["pcares"]], wb=wb, rownames=FALSE,
                             sheet=sheet, start_col=new_col, start_row=new_row)
     new_col <- xls_result[["end_col"]] + 6
     new_row <- new_row - 1
-    openxlsx::writeData(wb, sheet, "Raw PCA table.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet, "Raw PCA table.",
+                        startRow=new_row, startCol=new_col)
     new_row <- new_row + 1
     xls_result <- write_xls(data=metrics[["pcatable"]], wb=wb, rownames=FALSE,
                             sheet=sheet, start_row=new_row, start_col=new_col)
@@ -537,8 +554,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- 1
     norm_data <- sm(normalize_expt(expt=expt, transform=transform, norm=norm,
                                    convert=convert, batch=batch, filter=filter))
-    norm_reads <- Biobase::exprs(norm_data[["expressionset"]])
-    info <- Biobase::fData(norm_data[["expressionset"]])
+    norm_reads <- exprs(norm_data)
+    info <- fData(norm_data)
     read_info <- merge(norm_reads, info, by="row.names")
     title <- what_happened(norm_data)
     xls_result <- write_xls(wb=wb, data=read_info, rownames=FALSE,
@@ -550,11 +567,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
     norm_metrics <- sm(graph_metrics(norm_data, qq=TRUE))
     ## Start with library sizes.
-    openxlsx::writeData(wb, sheet, "Legend.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet, "Legend.",
+                        startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
-    openxlsx::writeData(wb, sheet, "Normalized library sizes.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet, "Normalized library sizes.",
+                        startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
-    openxlsx::writeData(wb, sheet=sheet, x="Non-zero genes.", startRow=new_row, startCol=new_col)
+    openxlsx::writeData(wb, sheet=sheet, x="Non-zero genes.",
+                        startRow=new_row, startCol=new_col)
     new_col <- 1
     new_row <- new_row + 1
     new_plot <- norm_metrics[["legend"]][["plot"]]
@@ -564,13 +584,13 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     nlibsize_plot <- norm_metrics[["libsize"]]
     try_result <- xlsx_plot_png(nlibsize_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="15_nlibsize", savedir=excel_basename)
+                                plotname="17_nlibsize", savedir=excel_basename)
     ## Same row, non-zero plot
     new_col <- new_col + plot_cols + 1
     nnzero_plot <- norm_metrics[["nonzero"]]
     try_result <- xlsx_plot_png(nnzero_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="16_nnzero", savedir=excel_basename)
+                                plotname="18_nnzero", savedir=excel_basename)
     new_col <- new_col + plot_cols + 1
 
     ## Visualize distributions
@@ -586,12 +606,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(ndensity_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="17_ndensity", savedir=excel_basename)
+                                plotname="19_ndensity", savedir=excel_basename)
     nboxplot_plot <- norm_metrics[["boxplot"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(nboxplot_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="18_nboxplot", savedir=excel_basename)
+                                plotname="20_nboxplot", savedir=excel_basename)
     new_col <- 1
 
     ## Move down next set of rows, heatmaps
@@ -607,12 +627,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(ncorheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="19_ncorheat", savedir=excel_basename)
+                                plotname="21_ncorheat", savedir=excel_basename)
     ndisheat_plot <- norm_metrics[["disheat"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(ndisheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="20_ndisheat", savedir=excel_basename)
+                                plotname="22_ndisheat", savedir=excel_basename)
     new_col <- 1
 
     ## SM plots
@@ -628,12 +648,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(nsmc_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="21_nsmc", savedir=excel_basename, fancy_type="svg")
+                                plotname="23_nsmc", savedir=excel_basename, fancy_type="svg")
     nsmd_plot <- norm_metrics[["smd"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(nsmd_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="22_nsmd", savedir=excel_basename, fancy_type="svg")
+                                plotname="24_nsmd", savedir=excel_basename, fancy_type="svg")
     new_col <- 1
 
     ## PCA and qq_log
@@ -642,19 +662,28 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA.",
                         startRow=new_row, startCol=new_col)
     new_col <- new_col + plot_cols + 1
+    openxlsx::writeData(wb, sheet=sheet, x="Normalized TSNE.",
+                        startRow=new_row, startCol=new_col)
+    new_col <- new_col + plot_cols + 1
     openxlsx::writeData(wb, sheet=sheet, x="Normalized QQ, log scale.",
                         startRow=new_row, startCol=new_col)
     new_col <- 1
     npca_plot <- norm_metrics[["pcaplot"]]
+    ntsne_plot <- norm_metrics[["tsneplot"]]
     new_row <- new_row + 1
     try_result <- xlsx_plot_png(npca_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="23_npcaplot", savedir=excel_basename, fancy_type="svg")
+                                plotname="25_npcaplot", savedir=excel_basename, fancy_type="svg")
+    new_col <- new_col + plot_cols + 1
+    try_result <- xlsx_plot_png(ntsne_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="26_ntsneplot", savedir=excel_basename, fancy_type="svg")
     nqq_plot <- norm_metrics[["qqlog"]]
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(nqq_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
-                                plotname="24_nqqplot", savedir=excel_basename)
+                                plotname="27_nqqplot", savedir=excel_basename)
+
     new_col <- 1
 
     ## Violin plots
@@ -668,12 +697,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
             new_col <- 1
             try_result <- xlsx_plot_png(nvarpart_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="25_nviolin", savedir=excel_basename)
+                                        plotname="28_nviolin", savedir=excel_basename)
             new_col <- new_col + plot_cols + 1
             npct_plot <- varpart_norm[["percent_plot"]]
             try_result <- xlsx_plot_png(npct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                         height=plot_dim, start_col=new_col, start_row=new_row,
-                                        plotname="26_npctplot", savedir=excel_basename)
+                                        plotname="29_npctplot", savedir=excel_basename)
         }
     }
 
@@ -697,7 +726,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
     sheet <- "median_data"
     new_col <- 1
     new_row <- 1
-    median_data <- median_by_factor(Biobase::exprs(norm_data[["expressionset"]]),
+    median_data <- median_by_factor(exprs(norm_data),
                                     norm_data[["conditions"]])
     median_data_merged <- merge(median_data, info, by="row.names")
     xls_result <- write_xls(wb, data=median_data_merged, start_row=new_row, start_col=new_col,
@@ -721,7 +750,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
         "raw_smc" = smc_plot,
         "raw_smd" = smd_plot,
         "raw_pca" = pca_plot,
+        "raw_tsne" = tsne_plot,
         "raw_scaled_pca" = rspca_plot,
+        "raw_scaled_tsne" = rtsne_plot,
         "raw_qq" = qq_plot,
         "raw_violin" = violin_plot,
         "raw_percent" = pct_plot,
@@ -735,6 +766,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
         "norm_smc" = nsmc_plot,
         "norm_smd" = nsmd_plot,
         "norm_pca" = npca_plot,
+        "norm_tsne" = ntsne_plot,
         "norm_qq" = nqq_plot,
         "norm_violin" = nvarpart_plot,
         "norm_pct" = npct_plot,

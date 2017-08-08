@@ -29,9 +29,12 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #'
 #' variancePartition is the newest toy introduced by Hector.
 #'
+#' Tested in 19varpart.R.
+#'
 #' @param expt  Some data
 #' @param predictor  Non-categorical predictor factor with which to begin the model.
 #' @param factors  Character list of columns in the experiment design to query
+#' @param chosen_factor  When checking for sane 'batches', what column to extract from the design?
 #' @param cpus  Number cpus to use
 #' @param genes  Number of genes to count.
 #' @param parallel  use doParallel?
@@ -39,6 +42,7 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @seealso \pkg{doParallel} \pkg{variancePartition}
 #' @export
 varpart <- function(expt, predictor="condition", factors=c("batch"),
+                    chosen_factor="batch",
                     cpus=6, genes=40, parallel=TRUE) {
     cl <- NULL
     para <- NULL
@@ -46,10 +50,11 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
         cl <- parallel::makeCluster(cpus)
         para <- doParallel::registerDoParallel(cl)
     }
-    num_batches <- length(levels(as.factor(expt[["batches"]])))
+    design <- pData(expt)
+    num_batches <- length(levels(as.factor(design[[chosen_factor]])))
     if (num_batches == 1) {
         message("varpart sees only 1 batch, adjusting the model accordingly.")
-        factors <- factors[!grepl(pattern="batch", x=factors)]
+        factors <- factors[!grepl(pattern=chosen_factor, x=factors)]
     }
     model_string <- "~ "
     if (!is.null(predictor)) {
@@ -62,9 +67,10 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
     message(paste0("Attempting mixed linear model with: ", model_string))
     my_model <- as.formula(model_string)
     norm <- sm(normalize_expt(expt, filter=TRUE))
-    data <- Biobase::exprs(norm[["expressionset"]])
-    design <- expt[["design"]]
+    data <- exprs(norm)
+
     message("Fitting the expressionset to the model, this is slow.")
+    message("(Eg. Take the projected run time and mulitply by 3-6 and round up.)")
     ##my_fit <- try(variancePartition::fitVarPartModel(data, my_model, design))
     ##message("Extracting the variances.")
     ##my_extract <- try(variancePartition::extractVarPart(my_fit))
@@ -72,8 +78,15 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
     if (class(my_extract) == "try-error") {
         stop("An error like 'vtv downdated' may be because there are too many 0s, try and filter the data and rerun.")
     }
+    chosen_column <- predictor
+    if (is.null(predictor)) {
+        chosen_column <- factors[[1]]
+        message(paste0("Placing factor: ", chosen_column, " at the beginning of the model."))
+    }
+
     my_sorted <- variancePartition::sortCols(my_extract)
-    my_sorted <- my_sorted[ order(my_sorted[["condition"]], decreasing=TRUE), ]
+    order_idx <- order(my_sorted[[chosen_column]], decreasing=TRUE)
+    my_sorted <- my_sorted[order_idx, ]
     percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
     partition_plot <- variancePartition::plotVarPart(my_sorted)
     if (isTRUE(parallel)) {
@@ -107,7 +120,7 @@ varpart_summaries <- function(expt, factors=c("condition", "batch"), cpus=6) {
     model_string <- gsub(pattern="\\+ $", replacement="", x=model_string)
     my_model <- as.formula(model_string)
     norm <- sm(normalize_expt(expt, filter=TRUE))
-    data <- Biobase::exprs(norm[["expressionset"]])
+    data <- exprs(norm)
     design <- expt[["design"]]
     summaries <- variancePartition::fitVarPartModel(data, my_model, design, fxn=summary)
     return(summaries)

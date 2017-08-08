@@ -99,14 +99,14 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     plot_env <- environment()
     data_class <- class(expt_data)[1]
     if (data_class == "expt") {
-        expt_design <- expt_data[["design"]]
+        expt_design <- pData(expt_data)
         expt_colors <- expt_data[["colors"]]
         if (is.null(expt_names)) {
             expt_names <- expt_data[["expt_names"]]
         }
-        expt_data <- Biobase::exprs(expt_data[["expressionset"]])
+        expt_data <- exprs(expt_data)
     } else if (data_class == "ExpressionSet") {
-        expt_data <- Biobase::exprs(expt_data)
+        expt_data <- exprs(expt_data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         ## some functions prefer matrix, so I am keeping this explicit for the moment
         expt_data <- as.data.frame(expt_data) 
@@ -256,9 +256,9 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
         design <- data[["design"]]
         colors <- data[["colors"]]
         names <- data[["names"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -342,7 +342,7 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
 #' @param linewidth the width of lines
 #' @param ... because this function did not already have enough options
 #' @return a heatmap!
-#' @seealso \code{\link{heatmap.2}}
+#' @seealso \code{\link[gplots]{heatmap.2}}
 #' @export
 heatmap.3 <- function (x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
                        distfun=dist, hclustfun=hclust, dendrogram=c("both", "row", "column", "none"),

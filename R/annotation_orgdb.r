@@ -10,7 +10,7 @@
 #' @param ... Arguments to be passed to load_annotations.
 #' @export
 load_parasite_annotations <- function(...) {
-    load_annotations(...)
+    load_orgdb_annotations(...)
 }
 
 #' Load organism annotation data (parasite).
@@ -36,9 +36,9 @@ load_parasite_annotations <- function(...) {
 #'  one_gene <- load_annotations(org, c("LmJF.01.0010"))
 #' }
 #' @export
-load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",
-                                      ## fields=c("CHR", "GENENAME", "TXSTRAND",
-                                      fields=NULL, sum_exons=FALSE) {
+load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",
+                                   ## fields=c("CHR", "GENENAME", "TXSTRAND",
+                                   fields=NULL, sum_exons=FALSE) {
     ## "TXSTART", "TXEND", "TYPE")) {
     keytype <- toupper(keytype)
     all_fields <- AnnotationDbi::columns(orgdb)
@@ -119,7 +119,8 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
 #'
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Identifiers of the genes to retrieve annotations.
-#' @param keytype the mysterious keytype returns yet again to haunt my dreams
+#' @param keytype  The mysterious keytype returns yet again to haunt my dreams.
+#' @param columns  The set of columns to request.
 #' @return Data frame of gene IDs, go terms, and names.
 #' @seealso \pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
 #'  \code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
@@ -128,16 +129,42 @@ load_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="EN
 #'  go_terms <- load_go_terms(org, c("a","b"))
 #' }
 #' @export
-load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
-    requireNamespace("GO.db")
-    requireNamespace("magrittr")
+load_orgdb_go <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
+                          columns=c("GO","GOALL","GOID")) {
+    tt <- sm(requireNamespace("GO.db"))
+    tt <- sm(requireNamespace("magrittr"))
     if (is.null(gene_ids)) {
-        stop("gene_ids may not be null.")
+        gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
     }
-    go_terms <- sm(AnnotationDbi::select(orgdb,
-                                         "keys" = gene_ids,
-                                         "keytype" = keytype,
-                                         "columns" = c("GO"))[, c(1, 2)])
+    if (class(orgdb)[[1]] == "OrganismDb") {
+        message("This is an organismdbi, that should be ok.")
+    } else if (class(orgdb)[[1]] == "OrgDb" | class(orgdb)[[1]] == "orgdb") {
+        message("This is an orgdb, good.")
+    } else {
+        stop(paste0("This requires either an organismdbi or orgdb instance, not ", class(orgdb)[[1]]))
+    }
+    available_columns <- AnnotationDbi::columns(orgdb)
+    chosen_columns <- c()
+    for (col in columns) {
+        if (col %in% available_columns) {
+            chosen_columns <- c(chosen_columns, col)
+        }
+    }
+    if (is.null(chosen_columns)) {
+        stop(paste0("Did not find any of: ", toString(columns),
+                    " in the set of available columns: ", toString(available_columns)))
+    }
+    go_terms <- try(sm(AnnotationDbi::select(orgdb,
+                                             "keys" = gene_ids,
+                                             "keytype" = keytype,
+                                             "columns" = chosen_columns)))
+    if (class(go_terms) == "try-error") {
+        if (grep(pattern="Invalid keytype", x=go_terms[[1]])) {
+            message("Here are the possible keytypes:")
+            message(toString(AnnotationDbi::keytypes(orgdb)))
+            stop()
+        }
+    }
     ## Deduplicate
     go_terms <- go_terms[!duplicated(go_terms), ]
     go_terms <- go_terms[!is.na(go_terms[["GO"]]), ]
@@ -172,7 +199,7 @@ load_go_terms <- function(orgdb, gene_ids, keytype="ENSEMBL") {
 #'  kegg_data <- load_kegg_mapping(org, c("a","b"))
 #' }
 #' @export
-load_kegg_mapping <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("KEGG_PATH")) {
+load_orgdb_kegg <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("KEGG_PATH")) {
     if (is.null(gene_ids)) {
         gene_ids <- AnnotationDbi::keys(orgdb)
     }

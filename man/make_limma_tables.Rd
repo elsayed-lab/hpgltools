@@ -4,12 +4,11 @@
 \alias{make_limma_tables}
 \title{Writes out the results of a limma search using toptable().}
 \usage{
-make_limma_tables(data, adjust = "fdr", n = 0, coef = NULL,
-  workbook = "excel/limma.xls", excel = FALSE, csv = FALSE,
-  annot_df = NULL)
+make_limma_tables(fit = NULL, adjust = "BH", n = 0, coef = NULL,
+  annot_df = NULL, intercept = TRUE)
 }
 \arguments{
-\item{data}{Output from eBayes().}
+\item{fit}{Result from lmFit()/eBayes()}
 
 \item{adjust}{Pvalue adjustment chosen.}
 
@@ -17,13 +16,9 @@ make_limma_tables(data, adjust = "fdr", n = 0, coef = NULL,
 
 \item{coef}{Which coefficients/contrasts to report, NULL says do them all.}
 
-\item{workbook}{Excel filename into which to write the data.}
-
-\item{excel}{Write an excel workbook?}
-
-\item{csv}{Write out csv files of the tables?}
-
 \item{annot_df}{Optional data frame including annotation information to include with the tables.}
+
+\item{intercept}{Intercept model?}
 }
 \value{
 List of data frames comprising the toptable output for each coefficient, I also added a
@@ -38,7 +33,7 @@ However, this will do a couple of things to make one's life easier:
 \examples{
 \dontrun{
  finished_comparison = eBayes(limma_output)
- data_list = write_limma(finished_comparison, workbook="excel/limma_output.xls")
+ table = make_limma_tables(finished_comparison, adjust="fdr")
 }
 }
 \seealso{

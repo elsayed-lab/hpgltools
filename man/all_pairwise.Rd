@@ -7,7 +7,8 @@
 all_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, modify_p = FALSE, model_batch = TRUE,
   model_intercept = TRUE, extra_contrasts = NULL, alt_model = NULL,
-  libsize = NULL, annot_df = NULL, parallel = TRUE, ...)
+  libsize = NULL, test_pca = TRUE, annot_df = NULL, parallel = TRUE,
+  ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing count tables, normalization state, etc.}
@@ -33,6 +34,8 @@ pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (
 \item{alt_model}{Alternate model to use rather than just condition/batch.}
 
 \item{libsize}{Library size of the original data to help voom().}
+
+\item{test_pca}{Perform some tests of the data before/after applying a given batch effect.}
 
 \item{annot_df}{Annotations to add to the result tables.}
 
@@ -60,5 +63,6 @@ It collects the results and does some simple comparisons among them.
 }
 \seealso{
 \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
- \code{link{limma_pairwise}} \code{\link{deseq_pairwise}} \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
+ \code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
+ \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
 }

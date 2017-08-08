@@ -5,7 +5,7 @@
 \title{Extract some surrogate estimations from a raw data set using sva, ruv, and/or pca.}
 \usage{
 get_model_adjust(input, design = NULL, estimate_type = "sva",
-  surrogates = "be", ...)
+  surrogates = "be", expt_state = NULL, ...)
 }
 \arguments{
 \item{input}{Expt or data frame to manipulate.}
@@ -16,6 +16,8 @@ get_model_adjust(input, design = NULL, estimate_type = "sva",
 ruv_residuals, or pca.}
 
 \item{surrogates}{Choose a method for getting the number of surrogates, be or leek, or a number.}
+
+\item{expt_state}{Current state of the expt object (to check for log2, cpm, etc)}
 
 \item{...}{Parameters fed to arglist.}
 }

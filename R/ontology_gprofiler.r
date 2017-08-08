@@ -17,6 +17,7 @@
 #' @param pseudo_gsea  Is the data in a ranked order by significance?
 #' @param id_col  Which column in the table should be used for gene ID crossreferencing?  gProfiler
 #'  uses Ensembl ids.  So if you have a table of entrez or whatever, translate it!
+#' @param excel  Print the results to an excel file?
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @seealso \pkg{gProfiler}
 #' @examples
@@ -28,7 +29,7 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                              second_col="limma_logfc", do_go=TRUE, do_kegg=TRUE,
                              do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE,
                              do_corum=TRUE, do_hp=TRUE, significant=TRUE,
-                             pseudo_gsea=TRUE, id_col="row.names") {
+                             pseudo_gsea=TRUE, id_col="row.names", excel=NULL) {
     ## Assume for the moment a limma-ish data frame
     ## An idea from Dr. Mount: Add the enrichment number of genes as (overlap / #term) * (total genes / #query)
     ## However, the total number is a constant, so we can likely get the same information from the overlap.size
@@ -170,6 +171,11 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
         "hp" = hp_result,
         "input" = sig_genes)
     retlist[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlist))
+
+    if (!is.null(excel)) {
+        message(paste0("Writing data to: ", excel, "."))
+        excel_ret <- sm(write_gprofiler_data(retlist, excel=excel))
+    }
     return(retlist)
 }
 

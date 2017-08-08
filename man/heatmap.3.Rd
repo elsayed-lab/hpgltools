@@ -157,5 +157,5 @@ a heatmap!
 heatmap.2 is the devil.
 }
 \seealso{
-\code{\link{heatmap.2}}
+\code{\link[gplots]{heatmap.2}}
 }

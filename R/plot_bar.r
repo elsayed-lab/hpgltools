@@ -43,11 +43,11 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
         condition <- data[["design"]][["condition"]]
         colors <- data[["colors"]]
         names <- data[["names"]]
-        data <- Biobase::exprs(data[["expressionset"]])  ## Why does this need the simplifying
+        data <- exprs(data)  ## Why does this need the simplifying
         ## method of extracting an element? (eg. data['expressionset'] does not work)
         ## that is _really_ weird!
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -55,7 +55,9 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
     }
 
     if (is.null(colors)) {
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
+        colors <- grDevices::colorRampPalette(
+                                 RColorBrewer::brewer.pal(ncol(data),
+                                                          chosen_palette))(ncol(data))
     }
 
     # Get conditions
@@ -68,19 +70,104 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
                              "sum" = colSums(data),
                              "condition" = condition,
                              "colors" = as.character(colors))
-    libsize_df[["order"]] <- factor(libsize_df[["id"]], as.character(libsize_df[["id"]]))
+    libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
+                                     names=names, text=text, title=title, yscale=yscale, ...)
+    return(libsize_plot)
+}
 
-    color_listing <- libsize_df[, c("condition", "colors")]
+#' Make a ggplot graph of the percentage/number of reads kept/removed.
+#'
+#' The function expt_exclude_genes() removes some portion of the original reads.
+#' This function will make it possible to see what is left.
+#'
+#' @param data Dataframe of the material remaining, usually expt$summary_table
+#' @param row  Row name to plot.
+#' @param condition vector of sample condition names.
+#' @param colors Color scheme if the data is not an expt.
+#' @param names Alternate names for the x-axis.
+#' @param text Add the numeric values inside the top of the bars of the plot?
+#' @param title Title for the plot.
+#' @param yscale Whether or not to log10 the y-axis.
+#' @param ... More parameters for your good time!
+#' @return a ggplot2 bar plot of every sample's size
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
+#'  \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
+#' @examples
+#' \dontrun{
+#'  kept_plot <- plot_pct_kept(expt_removed)
+#'  kept_plot  ## ooo pretty bargraph
+#' }
+#' @export
+plot_pct_kept <- function(data, row="pct_kept", condition=NULL, colors=NULL,
+                          names=NULL, text=TRUE, title=NULL, yscale=NULL, ...) {
+    hpgl_env <- environment()
+    arglist <- list(...)
+    table <- data
+    if (class(data) == "expt") {
+        table <- data[["summary_table"]]
+    }
+    ## In response to Keith's recent comment when there are more than 8 factors
+    chosen_palette <- "Dark2"
+    if (!is.null(arglist[["palette"]])) {
+        chosen_palette <- arglist[["palette"]]
+    }
+
+    data_class <- class(data)[1]
+    if (data_class == "expt") {
+        condition <- data[["design"]][["condition"]]
+        colors <- data[["colors"]]
+        names <- data[["names"]]
+        data <- exprs(data)  ## Why does this need the simplifying
+        ## method of extracting an element? (eg. data['expressionset'] does not work)
+        ## that is _really_ weird!
+    } else if (data_class == "ExpressionSet") {
+        data <- exprs(data)
+    } else if (data_class == "matrix" | data_class == "data.frame") {
+        data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    } else {
+        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    }
+
+    if (is.null(colors)) {
+        colors <- grDevices::colorRampPalette(
+                                 RColorBrewer::brewer.pal(ncol(data),
+                                                          chosen_palette))(ncol(data))
+    }
+
+    # Get conditions
+    if (is.null(condition)) {
+        stop("Missing condition label vector.")
+    }
+
+    colors <- as.character(colors)
+
+    kept_df <- data.frame("id" = colnames(data),
+                          "sum" = table[row, ],
+                          "condition" = condition,
+                          "colors" = as.character(colors))
+    kept_plot <- plot_sample_bars(kept_df, condition=condition, colors=colors,
+                                  names=names, text=text, title=title, yscale=yscale, ...)
+    return(kept_plot)
+}
+
+plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
+                             names=NULL, text=TRUE, title=NULL, yscale=NULL, ...) {
+    hpgl_env <- environment()
+    arglist <- list(...)
+    sample_df[["order"]] <- factor(sample_df[["id"]], as.character(sample_df[["id"]]))
+
+    color_listing <- sample_df[, c("condition", "colors")]
     color_listing <- unique(color_listing)
     color_list <- as.character(color_listing[["colors"]])
     names(color_list) <- as.character(color_listing[["condition"]])
 
-    libsize_plot <- ggplot2::ggplot(data=libsize_df, environment=hpgl_env, colour=colors,
+    sample_plot <- ggplot2::ggplot(data=sample_df, environment=hpgl_env, colour=colors,
                                     aes_string(x="order",
                                                y="sum")) +
         ggplot2::geom_bar(stat="identity",
                           colour="black",
-                          fill=libsize_df[["colors"]],
+                          fill=sample_df[["colors"]],
                           aes_string(x="order")) +
         ggplot2::xlab("Sample ID") +
         ggplot2::ylab("Library size in (pseudo)counts.") +
@@ -88,20 +175,20 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
         ggplot2::theme(axis.text.x=ggplot2::element_text(angle=90, hjust=1.5, vjust=0.5))
 
     if (isTRUE(text)) {
-        libsize_df[["sum"]] <- sprintf("%.2f", round(as.numeric(libsize_df[["sum"]]), 2))
+        sample_df[["sum"]] <- sprintf("%.2f", round(as.numeric(sample_df[["sum"]]), 2))
         ## newlabels <- prettyNum(as.character(libsize_df[["sum"]]), big.mark=",")
-        libsize_plot <- libsize_plot +
+        sample_plot <- sample_plot +
             ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
                                ## ggplot2::aes_string(parse=FALSE,
                                ggplot2::aes_string(x="order",
-                                                   label='prettyNum(as.character(libsize_df$sum), big.mark=",")'))
+                                                   label='prettyNum(as.character(sample_df$sum), big.mark=",")'))
     }
 
     if (!is.null(title)) {
-        libsize_plot <- libsize_plot + ggplot2::ggtitle(title)
+        sample_plot <- sample_plot + ggplot2::ggtitle(title)
     }
     if (is.null(yscale)) {
-        scale_difference <- max(as.numeric(libsize_df[["sum"]])) / min(as.numeric(libsize_df[["sum"]]))
+        scale_difference <- max(as.numeric(sample_df[["sum"]])) / min(as.numeric(sample_df[["sum"]]))
         if (scale_difference > 10.0) {
             message("The scale difference between the smallest and largest
    libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
@@ -111,14 +198,14 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
         }
     }
     if (scale == TRUE) {
-        libsize_plot <- libsize_plot +
+        sample_plot <- sample_plot +
             ggplot2::scale_y_log10()
     }
     if (!is.null(names)) {
-        libsize_plot <- libsize_plot +
+        sample_plot <- sample_plot +
             ggplot2::scale_x_discrete(labels=names)
     }
-    return(libsize_plot)
+    return(sample_plot)
 }
 
 #' Make relatively pretty bar plots of coverage in a genome.

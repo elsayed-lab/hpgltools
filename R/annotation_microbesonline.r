@@ -93,7 +93,7 @@ get_microbesonline_name <- function(id=316385) {
 #'  annotations <- get_microbesonline_annotation(ids=c("160490","160491"))
 #' }
 #' @export
-get_microbesonline_annotation <- function(ids="160490", species=NULL) {
+load_microbesonline_annotations <- function(ids="160490", species=NULL) {
     retlist <- list()
     id_list <- list()
     if (is.null(ids) & is.null(species)) {
@@ -175,7 +175,7 @@ mdesc_table <- function(table="Locus2Go") {
 #'  go_df <- get_loci_go(taxonid="160490")
 #' }
 #' @export
-get_loci_go <- function(taxonid="160490") {
+load_microbesonline_go <- function(taxonid="160490") {
     requireNamespace("RMySQL")
     db_driver <- DBI::dbDriver("MySQL")
     connection <- DBI::dbConnect(db_driver, user="guest", password="guest",

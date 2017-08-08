@@ -25,7 +25,7 @@
 #'  tt = get_biomart_annotations()
 #' }
 #' @export
-get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
+load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                     host="dec2015.archive.ensembl.org",
                                     trymart="ENSEMBL_MART_ENSEMBL",
                                     gene_requests=c("ensembl_gene_id",
@@ -98,6 +98,11 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
     rownames(biomart_annotations) <- make.names(biomart_annotations[, "transcriptID"], unique=TRUE)
     ## In order for the return from this function to work with other functions in this, the rownames must be set.
 
+    ## Set strand to +/-
+    if (!is.null(biomart_annotations[["strand"]])) {
+        biomart_annotations[["strand"]] <- ifelse(biomart_annotations[["strand"]] == "1", "+", "-")
+    }
+
     if (isTRUE(do_save)) {
         message(paste0("Saving annotations to ", savefile, "."))
         save(list=ls(pattern="biomart_annotations"), file=savefile)
@@ -134,10 +139,10 @@ get_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save
 #'  tt = get_biomart_ontologies()
 #' }
 #' @export
-get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
-                                 host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
-                                 secondtry="_gene", dl_rows=c("ensembl_gene_id", "go_accession"),
-                                 dl_rowsv2=c("ensembl_gene_id", "go_id")) {
+load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
+                            host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
+                            secondtry="_gene", dl_rows=c("ensembl_gene_id", "go_accession"),
+                            dl_rowsv2=c("ensembl_gene_id", "go_id")) {
     secondtry <- paste0(species, secondtry)
 
     savefile <- paste0(species, "_go_annotations.rda")
@@ -207,46 +212,6 @@ get_biomart_ontologies <- function(species="hsapiens", overwrite=FALSE, do_save=
     }
 
     return(biomart_go)
-}
-
-#' Use mygene's queryMany to translate gene ID types
-#'
-#' Juggling between entrez, ensembl, etc can be quite a hassel.  This hopes to make it easier.
-#'
-#' Tested in test_40ann_biomart.R
-#' This function really just sets a couple of hopefully helpful defaults.  When I first attempted
-#' to use queryMany, it seemed to need much more intervention than it does now.  But at the least
-#' this function should provide a reminder of this relatively fast and useful ID translation service.
-#'
-#' @param queries Gene IDs to translate.
-#' @param from Database to translate IDs from, pass null if you want it to choose.
-#' @param fields Set of fields to request, pass null for all.
-#' @param species Human readable species for translation (Eg. 'human' instead of 'hsapiens'.)
-#' @return Df of translated IDs/accessions
-#' @seealso \pkg{mygene}
-#'  \code{\link[mygene]{queryMany}}
-#' @examples
-#' \dontrun{
-#'  data <- translate_ids_querymany(genes)
-#' }
-#' @export
-translate_ids_querymany <- function(queries,
-                                    from="ensembl",
-                                    fields=c("uniprot", "ensembl.gene", "entrezgene", "go"),
-                                    species="human") {
-    from_field <- from
-    if (!is.null(from)) {
-        if (from == "ensembl") {
-            from_field <- "ensembl.gene"
-        } else if (from == "entrez") {
-            from_field <- "entrezgene"
-        }
-    }
-
-    one_way <- sm(mygene::queryMany(queries, scopes=from_field,
-                                    fields=fields, species=species, returnall=TRUE))
-    response <- one_way[["response"]]
-    return(response)
 }
 
 #' Use biomart to get orthologs between supported species.

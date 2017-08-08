@@ -26,6 +26,8 @@ combine_de_table(li, ed, de, ba, table_name, annot_df = NULL,
 
 \item{adjp}{Use adjusted p-values?}
 
+\item{padj_type}{Add this consistent p-adjustment.}
+
 \item{include_deseq}{Include tables from deseq?}
 
 \item{include_edger}{Include tables from edger?}
@@ -39,8 +41,6 @@ combine_de_table(li, ed, de, ba, table_name, annot_df = NULL,
 \item{p_cutoff}{Preferred pvalue cutoff.}
 
 \item{excludes}{Set of genes to exclude from the output.}
-
-\item{adjp_type}{Add this consistent p-adjustment.}
 }
 \value{
 List containing a) Dataframe containing the merged

@@ -5,19 +5,20 @@
 #' integers. As a result, I am going to have this function take a gff file in order to get the go
 #' ids and gene ids on the same page.
 #'
-#' @param sig_genes Input list of differentially expressed genes.
-#' @param gff Annotation information for this genome.
-#' @param goids_df Set of GOids, as before in the format ID/GO.
-#' @param universe_merge Column from which to create the universe of genes.
-#' @param second_merge_try If the first universe merge fails, try this.
-#' @param species Genbank organism to use.
-#' @param pcutoff Pvalue cutoff for deciding significant.
-#' @param direction Under or over represented categories.
-#' @param conditional Perform a conditional search?
-#' @param categorysize Category size below which to not include groups.
-#' @param gff_type Gff column to use for creating the universe.
-#' @param ... More parameters!
-#' @return List of returns from GSEABase, Category, etc.
+#' @param sig_genes  Input list of differentially expressed genes.
+#' @param gff  Annotation information for this genome.
+#' @param goids_df  Set of GOids, as before in the format ID/GO.
+#' @param universe_merge  Column from which to create the universe of genes.
+#' @param second_merge_try  If the first universe merge fails, try this.
+#' @param species  Genbank organism to use.
+#' @param pcutoff  Pvalue cutoff for deciding significant.
+#' @param direction  Under or over represented categories.
+#' @param conditional  Perform a conditional search?
+#' @param categorysize  Category size below which to not include groups.
+#' @param gff_type  Gff column to use for creating the universe.
+#' @param excel  Print the results to an excel file?
+#' @param ...  More parameters!
+#' @return  List of returns from GSEABase, Category, etc.
 #' @seealso \pkg{GSEABase} \pkg{Category}
 #' @examples
 #' \dontrun{
@@ -26,7 +27,7 @@
 #' @export
 simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second_merge_try="locus_tag",
                            species="fun", pcutoff=0.10, direction="over", conditional=FALSE,
-                           categorysize=NULL, gff_type="cds", ...) {
+                           categorysize=NULL, gff_type="cds", excel=NULL, ...) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames
     ## and because it (should) contain every gene in the 'universe' used by GOstats, as much it
     ## ought to be pretty much perfect.
@@ -34,7 +35,7 @@ simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second
     if (!is.null(arglist[["gff_df"]])) {
         annotation <- arglist[["gff_df"]]
     } else {
-        annotation <- gff2df(gff, type=gff_type)
+        annotation <- load_gff_annotations(gff, type=gff_type)
     }
     colnames(annotation) <- tolower(colnames(annotation))
     colnames(annotation) <- gsub(pattern="length", replacement="width", x=colnames(annotation))
@@ -333,6 +334,11 @@ perhaps change gff_type to make the merge work.")
 
     pvalue_plots <- try(plot_gostats_pval(ret_list))
     ret_list[["pvalue_plots"]] <- pvalue_plots
+
+    if (!is.null(excel)) {
+        message(paste0("Writing data to: ", excel, "."))
+        excel_ret <- sm(write_gostats_data(ret_list, excel=excel))
+    }
     return(ret_list)
 }
 

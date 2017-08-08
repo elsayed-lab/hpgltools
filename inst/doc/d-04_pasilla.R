@@ -1,20 +1,17 @@
 ## ----options, include=FALSE----------------------------------------------
 ## These are the options I tend to favor
 library("hpgltools")
-knitr::opts_knit$set(
-    progress = TRUE,
-    verbose = TRUE,
-    width = 90,
-    echo = TRUE)
-knitr::opts_chunk$set(
-    error = TRUE,
-    fig.width = 8,
-    fig.height = 8,
-    dpi = 96)
-options(
-    digits = 4,
-    stringsAsFactors = FALSE,
-    knitr.duplicate.label = "allow")
+knitr::opts_knit$set(progress=TRUE,
+                     verbose=TRUE,
+                     width=90,
+                     echo=TRUE)
+knitr::opts_chunk$set(error=TRUE,
+                      fig.width=8,
+                      fig.height=8,
+                      dpi=96)
+old_options <- options(digits=4,
+                       stringsAsFactors=FALSE,
+                       knitr.duplicate.label="allow")
 ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
 rmd_file <- "d-04_pasilla.Rmd"
@@ -37,7 +34,7 @@ tt <- sm(data(pasillaGenes))
 
 ## ----biomart-------------------------------------------------------------
 ## Try loading some annotation information for this species.
-gene_info <- sm(get_biomart_annotations(species="dmelanogaster"))
+gene_info <- sm(load_biomart_annotations(species="dmelanogaster"))
 info_idx <- gene_info[["Type"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
 rownames(gene_info) <- make.names(gene_info[["geneID"]], unique=TRUE)
@@ -67,7 +64,6 @@ pasilla_metrics <- sm(graph_metrics(pasilla_expt, ma=TRUE, qq=TRUE))
 summary(pasilla_metrics)
 
 ## ----print_graphs--------------------------------------------------------
-library(directlabels)
 library(ggplot2)
 pasilla_metrics$libsize
 ## The library sizes range from 8-21 million reads, this might be a problem for some analyses
@@ -75,7 +71,7 @@ pasilla_metrics$nonzero
 ## Ergo, the lower abundance libraries have more genes of counts == 0 (bottom left)
 pasilla_metrics$boxplot
 ## And a boxplot downshifts them (but not that much because it decided to put the data on the log scale)
-direct.label(pasilla_metrics$density)
+pasilla_metrics$density
 ## Similarly, one can see those samples are a bit lower with respect to density
 
 ## Unless the data is very well behaved, the rest of the plots are not likely to look good until the

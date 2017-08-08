@@ -4,10 +4,11 @@
 \alias{simple_goseq}
 \title{Perform a simplified goseq analysis.}
 \usage{
-simple_goseq(sig_genes, go_db, length_db, doplot = TRUE, adjust = 0.1,
-  pvalue = 0.1, qvalue = 0.1, length_keytype = "transcripts",
-  go_keytype = "ENTREZID", goseq_method = "Wallenius",
-  padjust_method = "BH", bioc_length_db = "ensGene", ...)
+simple_goseq(sig_genes, go_db = NULL, length_db = NULL, doplot = TRUE,
+  adjust = 0.1, pvalue = 0.1, qvalue = 0.1,
+  length_keytype = "transcripts", go_keytype = "ENTREZID",
+  goseq_method = "Wallenius", padjust_method = "BH",
+  bioc_length_db = "ensGene", excel = NULL, ...)
 }
 \arguments{
 \item{sig_genes}{Data frame of differentially expressed genes, containing IDs etc.}
@@ -33,6 +34,8 @@ simple_goseq(sig_genes, go_db, length_db, doplot = TRUE, adjust = 0.1,
 \item{padjust_method}{Which method to use to adjust the pvalues.}
 
 \item{bioc_length_db}{Source of gene lengths?}
+
+\item{excel}{Print the results to an excel file?}
 
 \item{...}{Extra parameters which I do not recall}
 }

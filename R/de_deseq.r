@@ -97,7 +97,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     input_data <- choose_binom_dataset(input, force=force)
     ## Now that I understand pData a bit more, I should probably remove the conditions/batches slots
     ## from my expt classes.
-    design <- Biobase::pData(input[["expressionset"]])
+    design <- pData(input)
     conditions <- input_data[["conditions"]]
     batches <- input_data[["batches"]]
     data <- input_data[["data"]]
@@ -118,11 +118,12 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     model_choice <- choose_model(input, conditions, batches,
                                  model_batch=model_batch,
                                  model_cond=model_cond,
-                                 model_intercept=FALSE,
+                                 model_intercept=model_intercept,
                                  alt_model=alt_model, ...)
     ##model_choice <- choose_model(input, conditions, batches,
     ##                             model_batch=model_batch,
     ##                             model_cond=model_cond,
+    ##                             model_intercept=model_intercept,
     ##                             alt_model=alt_model)
     model_including <- model_choice[["including"]]
     if (class(model_choice[["model_batch"]]) == "matrix") {
@@ -133,12 +134,13 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ## choose_model should now take all of the following into account
     ## Therefore the following 8 or so lines should not be needed any longer.
     model_string <- NULL
-    column_data <- Biobase::pData(input[["expressionset"]])
+    column_data <- pData(input)
     if (isTRUE(model_batch) & isTRUE(model_cond)) {
         message("DESeq2 step 1/5: Including batch and condition in the deseq model.")
         ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
         ## conditions and batch in this context is information taken from pData()
-        model_string <- "~ batch + condition"
+        ##model_string <- "~ batch + condition"
+        model_string <- model_choice[["chosen_string"]]
         column_data[["condition"]] <- as.factor(column_data[["condition"]])
         column_data[["batch"]] <- as.factor(column_data[["batch"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
@@ -147,7 +149,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
     } else if (isTRUE(model_batch)) {
         message("DESeq2 step 1/5: Including only batch in the deseq model.")
-        model_string <- "~ batch "
+        ##model_string <- "~ batch "
+        model_string <- model_choice[["chosen_string"]]
         column_data[["batch"]] <- as.factor(column_data[["batch"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=column_data,
@@ -156,7 +159,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     } else if (class(model_batch) == "matrix") {
         message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
         ##model_string <- "~ condition"
-        cond_model_string <- "~ condition"
+        ##cond_model_string <- "~ condition"
+        cond_model_string <- model_choice[["chosen_string"]]
         column_data[["condition"]] <- as.factor(column_data[["condition"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=column_data,
@@ -164,42 +168,13 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
         dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(cond_model_string))
         passed <- FALSE
         num_sv <- ncol(model_batch)
-        try_sv <- function(data, num_sv) {
-            passed <- FALSE
-            formula_string <- "as.formula(~ "
-            for (count in 1:num_sv) {
-                colname <- paste0("SV", count)
-                dataset[[colname]] <- model_batch[, count]
-                formula_string <- paste0(formula_string, " ", colname, " + ")
-            }
-            formula_string <- paste0(formula_string, "condition)")
-            new_formula <- eval(parse(text=formula_string))
-            DESeq2::design(dataset) <- new_formula
-            data_model <- stats::model.matrix.default(DESeq2::design(dataset),
-                                                      data = as.data.frame(dataset@colData))
-            model_columns <- ncol(data_model)
-            model_rank <- qr(data_model)[["rank"]]
-            if (model_rank < model_columns) {
-                message(paste0("Including ", num_sv, " will fail because the resulting model is too low rank."))
-                num_sv <- num_sv - 1
-                message(paste0("Trying again with ", num_sv, " surrogates."))
-                message("You should consider rerunning the pairwise comparison with the number of
-surrogates explicitly stated with the option surrogates=number.")
-                ret <- try_sv(data, num_sv)
-            } else {
-                ## If we get here, then the number of surrogates should work with DESeq2.
-                ## Perhaps I should re-calculate the variables with the specific number of variables.
-                return(data)
-            }
-        }
-        tmp_dataset <- dataset
-        new_dataset <- try_sv(tmp_dataset, num_sv)
+        new_dataset <- deseq_try_sv(dataset, summarized, model_batch)
         dataset <- new_dataset
-        rm(tmp_dataset)
         rm(new_dataset)
     } else {
         message("DESeq2 step 1/5: Including only condition in the deseq model.")
-        model_string <- "~ condition"
+        model_string <- model_choice[["chosen_string"]]
+        ##model_string <- "~ condition"
         column_data[["condition"]] <- as.factor(column_data[["condition"]])
         summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                      colData=column_data,
@@ -208,9 +183,10 @@ surrogates explicitly stated with the option surrogates=number.")
     }
 
     deseq_run <- NULL
+    chosen_beta <- !model_intercept
     if (deseq_method == "short") {
         message("DESeq steps 2-4 in one shot.")
-        deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric"), silent=TRUE)
+        deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric", betaPrior=chosen_beta), silent=TRUE)
         if (class(deseq_run) == "try-error") {
             message("A fitType of 'parametric' failed for this data, trying 'mean'.")
             deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"), silent=TRUE)
@@ -247,12 +223,22 @@ surrogates explicitly stated with the option surrogates=number.")
             } else {
                 message("Using a mean fitting seems to have worked.")
             }
+        } else {
+            message("Using a parametric fitting seems to have worked.")
         }
         ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
         message("DESeq2 step 4/5: nbinomWaldTest.")
         ## deseq_run <- DESeq2::DESeq(deseq_disp)
-        deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, quiet=TRUE)
+        deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior=chosen_beta, quiet=TRUE)
     }
+
+    message("Plotting dispersions.")
+    dispersions <- sm(try(DESeq2::plotDispEsts(deseq_run), silent=TRUE))
+    dispersion_plot <- NULL
+    if (class(dispersions)[[1]] != "try-error") {
+        dispersion_plot <- grDevices::recordPlot()
+    }
+
     ## possible options:  betaPrior=TRUE, betaPriorVar, modelMatrix=NULL
     ## modelMatrixType, maxit=100, useOptim=TRUE useT=FALSE df useQR=TRUE
     ## deseq_run = DESeq2::nbinomLRT(deseq_disp)
@@ -292,21 +278,50 @@ surrogates explicitly stated with the option surrogates=number.")
             result_name <- paste0(numerator, "_vs_", denominator)
             denominators[[result_name]] <- denominator
             numerators[[result_name]] <- numerator
-            result_list[[result_name]] <- result
             if (!is.null(annot_df)) {
                 result <- merge(result, annot_df, by.x="row.names", by.y="row.names")
             }
+            result_list[[result_name]] <- result
         } ## End for each d
         ## Fill in the last coefficient (since the for loop above goes from 1 to n-1
         denominator <- names(condition_table[length(conditions)])
         ## denominator_name = paste0("condition", denominator)  ## maybe needed in 6 lines
     }  ## End for each c
     ## Now that we finished the contrasts, fill in the coefficient list with each set of values
-    for (c in 1:(length(condition_levels))) {
-        coef <- condition_levels[c]
-        coef_name <- paste0("condition", coef)
-        coefficient_list[[coef]] <- as.data.frame(
-            DESeq2::results(deseq_run, contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
+    ##for (c in 1:(length(condition_levels))) {
+    ##    coef <- condition_levels[c]
+    ##    coef_name <- paste0("condition", coef)
+    ##    test_result <- try(DESeq2::results(deseq_run,
+    ##                                       contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
+    ##    if (class(test_result) == "try-error") {
+    ##        coefficient_list[[coef]] <- NULL
+    ##    } else {
+    ##        coefficient_list[[coef]] <- as.data.frame(test_result)
+    ##    }
+    ##}
+    coefficient_df <- coef(deseq_run)
+    colnames(coefficient_df) <- gsub(pattern="^condition", replacement="", x=colnames(coefficient_df))
+    colnames(coefficient_df) <- gsub(pattern="^batch", replacement="", x=colnames(coefficient_df))
+    colnames(coefficient_df) <- gsub(pattern="^_", replacement="", x=colnames(coefficient_df))
+    remaining_list <- colnames(coefficient_df)
+    ## If this is true, then intercept is the second half of the contrasts listed
+    if ("Intercept" %in% remaining_list) {
+        last_pair <- remaining_list[length(remaining_list)]
+        intercept_pair <- strsplit(x=last_pair, split="_vs_")[[1]][2]
+        newnames <- remaining_list
+        newnames[[1]] <- intercept_pair
+        col_number = 0
+        for (newname in newnames) {
+            col_number <- col_number + 1
+            test_modify <- strsplit(x=newname, split="_vs_")[[1]][1]
+            if (is.na(test_modify)) {
+                next
+            } else {
+                newnames[col_number] <- test_modify
+                coefficient_df[, col_number] <- coefficient_df[, col_number] - coefficient_df[, 1] 
+            }
+        }
+        colnames(coefficient_df) <- newnames
     }
 
     ret_list <- list(
@@ -315,10 +330,47 @@ surrogates explicitly stated with the option surrogates=number.")
         "denominators" = denominators,
         "numerators" = numerators,
         "conditions" = conditions,
-        "coefficients" = coefficient_list,
+        "coefficients" = coefficient_df,
         "contrasts_performed" = contrasts,
-        "all_tables" = result_list)
+        "all_tables" = result_list,
+        "dispersion_plot" = dispersion_plot
+    )
     return(ret_list)
+}
+
+deseq_try_sv <- function(data, summarized, svs, num_sv=NULL) {
+    counts <- DESeq2::counts(data)
+    passed <- FALSE
+    if (is.null(num_sv)) {
+        num_sv <- ncol(svs)
+    }
+    formula_string <- "as.formula(~ "
+    for (count in 1:num_sv) {
+        colname <- paste0("SV", count)
+        summarized[[colname]] <- svs[, count]
+        formula_string <- paste0(formula_string, " ", colname, " + ")
+    }
+    formula_string <- paste0(formula_string, "condition)")
+    new_formula <- eval(parse(text=formula_string))
+    new_summarized <- summarized
+    DESeq2::design(new_summarized) <- new_formula
+    data_model <- stats::model.matrix.default(DESeq2::design(summarized),
+                                              data=as.data.frame(summarized@colData))
+    model_columns <- ncol(data_model)
+    model_rank <- qr(data_model)[["rank"]]
+    if (model_rank < model_columns) {
+        message(paste0("Including ", num_sv, " will fail because the resulting model is too low rank."))
+        num_sv <- num_sv - 1
+        message(paste0("Trying again with ", num_sv, " surrogates."))
+        message("You should consider rerunning the pairwise comparison with the number of
+surrogates explicitly stated with the option surrogates=number.")
+        ret <- deseq_try_sv(data, summarized, svs, (num_sv - 1))
+    } else {
+        ## If we get here, then the number of surrogates should work with DESeq2.
+        ## Perhaps I should re-calculate the variables with the specific number of variables.
+        new_dataset <- DESeq2::DESeqDataSet(se=new_summarized, design=new_formula)
+        return(new_dataset)
+    }
 }
 
 #' Writes out the results of a deseq search using write_de_table()

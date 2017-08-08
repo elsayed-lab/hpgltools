@@ -353,7 +353,7 @@ get_ncbi_taxonid <- function(species="Leishmania major") {
 #'  crazytown <- make_organismdbi()  ## wait a loong time
 #' }
 #' @export
-make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organismdbi", ...) {
+make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb/tritryp", ...) {
     arglist <- list(...)
     kegg <- arglist[["kegg"]]
     cfg <- get_eupath_config(cfg)
@@ -363,20 +363,8 @@ make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organis
     shortname <- as.character(cfg_line[["shortname"]])
     files <- tritryp_downloads(version=version, species=shortname, strain=strain)
     ##files <- tritryp_downloads(version=version, species=shortname, strain=strain, ...)
-    savefile <- paste0(output_dir, "/", cfg_line[["id"]], ".rda")
-    orgdb_info <- NULL
-    if (file.exists(savefile)) {
-        message("Found a previous savefile for this species, loading from it.")
-        orgdb_info <- new.env()
-        load(savefile, envir=orgdb_info)
-        orgdb_info <- orgdb_info[["orgdb_info"]]
-        message(paste0("Loaded.  Delete <", savefile, "> to regenerate the rdata file."))
-    } else {
-        message("Reading from a previously downloaded txt/gff file.")
-        orgdb_info <- make_orgdb_info(files[["gff"]], files[["txt"]])
-        save(orgdb_info, file=savefile)
-    }
-
+    ##savefile <- paste0(output_dir, "/", cfg_line[["id"]], ".rda")
+    orgdb_info <- make_orgdb_info(files[["gff"]], files[["txt"]])
     message("Starting make_orgdb.")
     orgdb_result <- make_orgdb(orgdb_info, id=id, cfg=cfg_line, output_dir=output_dir, kegg=kegg)
     orgdb_package <- orgdb_result[["package_name"]]
@@ -448,11 +436,13 @@ make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organis
 #' @export
 pkg_cleaner <- function(path, removal="-like", replace="") {
     ## This is because TxDb creation fails if you have an author like 'abelew <abelew@gmail.com>'
-    at_cmd <- paste0("sed -i 's/ at /\\@/g' ", path, "/DESCRIPTION")
+    ##at_cmd <- paste0("sed -i 's/ at /\\@/g' ", path, "/DESCRIPTION")
+    at_cmd <- paste0("perl -p -i -e 's/ at /\\@/g' ", path, "/DESCRIPTION")
     message(paste0("Rewriting DESCRIPTION: ", at_cmd))
     system(command=at_cmd)
     ## Since I changed @ to at I figured . could be dot too
-    dot_cmd <- paste0("sed -i 's/ dot /\\./g' ", path, "/DESCRIPTION")
+    ##dot_cmd <- paste0("sed -i 's/ dot /\\./g' ", path, "/DESCRIPTION")
+    dot_cmd <- paste0("perl -p -i -e 's/ dot /\\./g' ", path, "/DESCRIPTION")
     message(paste0("Rewriting DESCRIPTION to remove dot: ", dot_cmd))
     system(dot_cmd)
     new_dir <- path
@@ -464,7 +454,8 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
         message(paste0("moving orgdb: ", mv_cmd))
         system(mv_cmd)
         ## Collect the text files in the new package and remove all -like instances in them
-        find_cmd <- paste0("sed -i 's/", removal, "/", replace,
+        ##find_cmd <- paste0("sed -i 's/", removal, "/", replace,
+        find_cmd <- paste0("perl -p -i -e 's/", removal, "/", replace,
                            "/g' $(find ", new_dir, " -type f | grep -v sqlite)")
         message(paste0("rewriting orgdb files: ", find_cmd))
         system(find_cmd)
@@ -520,7 +511,7 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
 #' @export
 make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
                        kegg=TRUE, output_dir="organismdbi", ...) {
-    ## arglist <- list(...)
+    arglist <- list(...)
     orgdb_pre <- paste0(output_dir, "/orgdb")
     if (!file.exists(orgdb_pre)) {
         dir.create(orgdb_pre, recursive=TRUE)
@@ -547,10 +538,22 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
         try(unlink(x=orgdb_pre, recursive=TRUE), silent=TRUE)
         try(unlink(x=orgdb_sqlite_name), silent=TRUE)
         try(dir.create(orgdb_pre, recursive=TRUE), silent=TRUE)
-
     }
+
+    ## We need to ensure that none of the inputs for makeOrgPackage have duplicated rows.
+    ## It looks like go/kegg are the most likely candidates for this particular problem.
+    test_gene_info <- duplicated(gene_info)
+    gene_info <- gene_info[!test_gene_info, ]
+    test_chr_info <- duplicated(chr_info)
+    chr_info <- chr_info[!test_chr_info, ]
+    test_go_info <- duplicated(go_info)
+    go_info <- go_info[!test_go_info, ]
+    test_types <- duplicated(gene_types)
+    gene_types <- gene_types[!test_types, ]
     orgdb_dir <- NULL
     if (isTRUE(kegg)) {
+        test_kegg_info <- duplicated(kegg_info)
+        kegg_info <- kegg_info[!test_kegg_info, ]
         kegg_species <- paste0(cfg[["genus"]], " ", cfg[["species"]])
         kegg_info <- get_kegg_genes(species=kegg_species)
         kegg_info[["GID"]] <- as.character(kegg_info[["GID"]])
@@ -594,7 +597,7 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
 
     inst <- FALSE
     if (!is.null(orgdb_dir)) {
-        inst <- sm(devtools::install(orgdb_dir))
+        inst <- sm(try(devtools::install(orgdb_dir)))
     }
     orgdb_pkg_name <- basename(orgdb_dir)
     ## The result is the pathname of the created orgdb directory
@@ -686,6 +689,9 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
         bad_syms <- paste(names(is_OK)[!is_OK], collapse=", ")
         stop("values for symbols ", bad_syms, " are not single strings")
     }
+    if (!file.exists(destination)) {
+        dir.create(destination, recursive=TRUE)
+    }
     pkg_list <- Biobase::createPackage(pkgname=package_name,
                                        destinationDir=destination,
                                        originDir=template_path,
@@ -704,7 +710,7 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
     if (cfg_line[["strain"]] == "CLBrenerNon-Esmeraldo-like") {
         install_dir <- sm(pkg_cleaner(install_dir, removal="Non-Esmeraldo", replace="NonEsmeraldo"))
     }
-    result <- devtools::install(install_dir)
+    result <- sm(try(devtools::install(install_dir)))
     package_name <- basename(install_dir)
     ret <- list(
         "package_name" = package_name,
@@ -757,19 +763,24 @@ get_eupath_config <- function(cfg=NULL) {
 #'  orgdb_data <- make_orgdb_info(gff="lmajor.gff", txt="lmajor.txt")
 #' }
 make_orgdb_info <- function(gff, txt, kegg=TRUE) {
-    gff_entries <- rtracklayer::import.gff3(gff)
-    genes <- gff_entries[gff_entries$type == "gene"]  ## WTF? why does this work?
-    gene_info <- as.data.frame(GenomicRanges::mcols(genes))
+    savefile <- paste0(txt, ".rda")
+    gff_entries <- GenomicRanges::as.data.frame(rtracklayer::import.gff3(gff))
+    gene_types <- gff_entries[["type"]] == "gene"
+    genes <- gff_entries[gene_types, ]
+    gene_info <- genes
+    ##gene_info <- as.data.frame(mcols(genes))
     gene_info[["description"]] <- gsub("\\+", " ", gene_info[["description"]])  ## Get rid of stupid characters
     colnames(gene_info) <- toupper(colnames(gene_info))
     colnames(gene_info)[colnames(gene_info) == "ID"] <- "GID"
 
     chromosome_types <- c("apicoplast_chromosome", "chromosome", "contig",
                           "geneontig", "genecontig", "random_sequence", "supercontig")
-    chromosomes <- gff_entries[gff_entries$type %in% chromosome_types]
+    available_types <- gff_entries[["type"]]
+    chromosome_entries <- available_types %in% chromosome_types
+    chromosomes <- gff_entries[chromosome_entries, ]
     chromosome_info <- data.frame(
-        "chrom" = chromosomes$ID,
-        "length" = as.numeric(chromosomes$size),
+        "chrom" = chromosomes[["ID"]],
+        "length" = as.numeric(chromosomes[["size"]]),
         "is_circular" = NA)
 
     gid_index <- grep("GID", colnames(gene_info))
@@ -810,16 +821,14 @@ make_orgdb_info <- function(gff, txt, kegg=TRUE) {
     gene_info[["GENEALIAS"]] <- gsub(pattern='"', replacement="", x=gene_info[["GENEALIAS"]])
 
     ## This function takes a long time.
-    savefile <- paste0(txt, ".rda")
     txt_information <- NULL
     if (file.exists(savefile)) {
-        message("Reading the txt file takes forever in R.  Happily we have a savefile for that.")
+        message("Reading the txt file takes a long time in R.  Happily we have a savefile for that.")
         message(paste0("Delete the file ", savefile, " to regenerate."))
         txt_information <- new.env()
         load(savefile, envir=txt_information)
         txt_information <- txt_information[["txt_information"]]
     } else {
-        message("Reading the txt takes forever.")
         txt_information <- parse_gene_info_table(file=txt, verbose=TRUE)
         save(txt_information, file=savefile)
     }

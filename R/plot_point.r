@@ -18,9 +18,9 @@
 plot_bcv <- function(data) {
     data_class <- class(data)[1]
     if (data_class == "expt") {
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
     } else {
@@ -337,6 +337,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' @param size  How big are the dots?
 #' @param tooltip_data  Df of tooltip information for gvis.
 #' @param gvis_filename  Filename to write a fancy html graph.
+#' @param invert  Invert the ma plot?
 #' @param ...  More options for you
 #' @return  ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
 #'  type across all sample types on the x axis, and the log fold change between conditions on the
@@ -357,7 +358,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' @export
 plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                        pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1, label_numbers=TRUE,
-                       size=2, tooltip_data=NULL, gvis_filename=NULL, ...) {
+                       size=2, tooltip_data=NULL, gvis_filename=NULL, invert=FALSE, ...) {
     ## Set up the data frame which will describe the plot
     arglist <- list(...)
     ## I like dark blue and dark red for significant and insignificant genes respectively.
@@ -396,7 +397,13 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
         "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors=TRUE)
 
     ## Get rid of rows which will be annoying.
-    rows_without_na <- complete.cases(table)
+    ## If somehow a list got into the data table, this will fail, lets fix that now.
+    tmp_table <- table
+    for (c in 1:ncol(tmp_table)) {
+        tmp_table[[c]] <- as.character(table[[c]])
+    }
+    rows_without_na <- complete.cases(tmp_table)
+    rm(tmp_table)
     table <- table[rows_without_na, ]
 
     ## Extract the information of interest from my original table
@@ -404,6 +411,9 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                         "logfc" = table[[fc_col]],
                         "pval" = table[[p_col]])
     rownames(newdf) <- rownames(table)
+    if (isTRUE(invert)) {
+        newdf[["logfc"]] <- newdf[["logfc"]] * -1.0
+    }
     ## Check if the data is on a log or base10 scale, if the latter, then convert it.
     if (max(newdf[["avg"]]) > 1000) {
         newdf[["avg"]] <- log(newdf[["avg"]])
@@ -543,9 +553,9 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
         design <- data[["design"]]
         colors <- data[["colors"]]
         names <- data[["samplenames"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         ## some functions prefer matrix, so I am keeping this explicit for the moment
         data <- as.data.frame(data)
@@ -641,9 +651,9 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
     if (data_class == "expt") {
         design <- data[["design"]]
         colors <- data[["colors"]]
-        data <- Biobase::exprs(data[["expressionset"]])
+        data <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        data <- Biobase::exprs(data)
+        data <- exprs(data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         ## some functions prefer matrix, so I am keeping this explicit for the moment
         data <- as.data.frame(data)

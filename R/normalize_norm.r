@@ -23,9 +23,9 @@ normalize_counts <- function(data, design=NULL, norm="raw", ...) {
     norm_performed <- "raw"
     if (data_class == "expt") {
         design <- data[["design"]]
-        count_table <- Biobase::exprs(data[["expressionset"]])
+        count_table <- exprs(data)
     } else if (data_class == "ExpressionSet") {
-        count_table <- Biobase::exprs(data)
+        count_table <- exprs(data)
     } else if (data_class == "list") {
         count_table <- data[["count_table"]]
         if (is.null(data)) {
@@ -61,12 +61,21 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
         original_cols <- colnames(count_table)
         conds <- design[["conditions"]]
         if (is.null(conds)) {
-            conds <- original_cols
+            conds <- design[["condition"]]
+            if (is.null(conds)) {
+                conds <- original_cols
+            }
         }
-        cds <- DESeq::newCountDataSet(count_table, conditions=conds)
-        factors <- BiocGenerics::estimateSizeFactors(cds)
-        dispersions <- BiocGenerics::estimateDispersions(factors, method="blind")
-        count_table <- DESeq::getVarianceStabilizedData(dispersions)
+        fit_type <- "parametric"
+        if (!is.null(arglist[["fit_type"]])) {
+            fit_type <- arglist[["fit_type"]]
+        }
+        tt <- sm(requireNamespace("locfit"))
+        tt <- sm(requireNamespace("DESeq2"))
+        cds <- DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~condition)
+        cds <- DESeq2::estimateSizeFactors(cds)
+        cds <- DESeq2::estimateDispersions(cds, fitType=fit_type)
+        count_table <- DESeq2::getVarianceStabilizedData(cds)
         norm_performed <- "vsd"
     } else if (norm == "quant") {
         # Quantile normalization (Bolstad et al., 2003)
@@ -166,12 +175,12 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
         colnames(normExprs) <- count_colnames
         return(normExprs)
     }
-    res <- hpgl_qstats(Biobase::exprs, groups, refType=refType,
+    res <- hpgl_qstats(exprs(data), groups, refType=refType,
                        groupLoc=groupLoc, window=window)
-    QBETAS <- res$QBETAS
-    Qref <- res$Qref
-    X <- res$model
-    w <- res$smoothWeights
+    QBETAS <- res[["QBETAS"]]
+    Qref <- res[["Qref"]]
+    X <- res[["model"]]
+    w <- res[["smoothWeights"]]
     wQBETAS <- QBETAS * (1 - w)
     wQBETAS <- X %*% t(wQBETAS)
     wQref <- Qref * w

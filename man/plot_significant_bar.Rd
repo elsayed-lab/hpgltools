@@ -6,9 +6,9 @@
 These plots are quite difficult to describe.}
 \usage{
 plot_significant_bar(ups, downs, maximum = NULL, text = TRUE,
-  invert = FALSE, color_list = c("lightcyan", "lightskyblue", "dodgerblue",
-  "plum1", "orchid", "purple4"), color_names = c("a_up_inner", "b_up_middle",
-  "c_up_outer", "a_down_inner", "b_down_middle", "c_down_outer"))
+  color_list = c("lightcyan", "lightskyblue", "dodgerblue", "plum1", "orchid",
+  "purple4"), color_names = c("a_up_inner", "b_up_middle", "c_up_outer",
+  "a_down_inner", "b_down_middle", "c_down_outer"))
 }
 \arguments{
 \item{ups}{Set of up-regulated genes.}
@@ -18,8 +18,6 @@ plot_significant_bar(ups, downs, maximum = NULL, text = TRUE,
 \item{maximum}{Maximum/minimum number of genes to display.}
 
 \item{text}{Add text at the ends of the bars describing the number of genes >/< 0 fc.}
-
-\item{invert}{Flip the order of the included material for readability?}
 
 \item{color_list}{Set of colors to use for the bars.}
 

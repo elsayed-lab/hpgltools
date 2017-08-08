@@ -4,12 +4,10 @@
 \alias{divide_seq}
 \title{Express a data frame of counts as reads per pattern per million.}
 \usage{
-divide_seq(counts, genome = NULL, ...)
+divide_seq(counts, ...)
 }
 \arguments{
 \item{counts}{Read count matrix.}
-
-\item{genome}{Genome to search (fasta/BSgenome).}
 
 \item{...}{Options I might pass from other functions are dropped into arglist.}
 }

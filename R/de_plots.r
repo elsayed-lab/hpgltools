@@ -5,8 +5,9 @@
 #' @param pairwise  The result from all_pairwise(), which should be changed to handle other invocations too.
 #' @param type  Type of table to use: deseq, edger, limma, basic.
 #' @param table  Result from edger to use, left alone it chooses the first.
-#' @param fc  Cutoff for log2(fold-change) significant.
+#' @param logfc  What logFC to use for the MA plot horizontal lines.
 #' @param pval_cutoff  Cutoff to define 'significant' by p-value.
+#' @param invert  Invert the plot?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return a plot!
 #' @seealso \code{\link{plot_ma_de}}
@@ -15,8 +16,9 @@
 #'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=0.05, ...) {
-    ## arglist <- list(...)
+extract_de_ma <- function(pairwise, type="edger", table=NULL, logfc=1,
+                          pval_cutoff=0.05, invert=FALSE, ...) {
+    arglist <- list(...)
 
     expr_col <- NULL
     p_col <- NULL
@@ -55,7 +57,7 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
     ## combined_de_tables provides: slots including 'data' and 'de_summary'
     ## while de_edger provides: 'all_tables',  'contrasts_performed' and such.
     possible_tables <- NULL
-    all_tables <- NULL
+    all_tables <- list()
     the_table <- NULL
     if (is.null(table)) {
         table <- 1
@@ -64,6 +66,22 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
         ## If there is a 'all_tables', slot,  then this is de_edger output.
         possible_tables <- names(pairwise[["all_tables"]])
         all_tables <- pairwise[["all_tables"]]
+    } else if (!is.null(pairwise[["data"]]) & class(pairwise[["data"]]) == "data.frame") {
+        ## This is from combining a single table.
+        fc_col <- paste0(type, "_logfc")
+        p_col <- paste0(type, "_adjp")
+        expr_col <- NULL
+        all_tables[[table]] <- pairwise[["data"]]
+        possible_tables <- table
+        if (type == "deseq") {
+            expr_col <- "deseq_basemean"
+        } else if (type == "edger") {
+            expr_col <- "edger_logcpm"
+        } else if (type == "limma") {
+            expr_col <- "limma_ave"
+        } else if (type == "basic") {
+            expr_col <- "basic_nummed"
+        }
     } else {
         ## Then this is combined_tables() output.
         possible_tables <- names(pairwise[["data"]])
@@ -103,7 +121,8 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, fc=1, pval_cutoff=
     }
 
     ma_material <- plot_ma_de(table=the_table, expr_col=expr_col, fc_col=fc_col,
-                              p_col=p_col, logfc_cutoff=fc, pval_cutoff=pval_cutoff, ...) ##, ...)
+                              p_col=p_col, logfc_cutoff=logfc, pval_cutoff=pval_cutoff,
+                              invert=invert, ...) ##)
     return(ma_material)
 }
 
@@ -141,18 +160,6 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
         output <- output[[type]]
     }
 
-    ## qlimit <- 0.1
-    ## if (!is.null(arglist[["qlimit"]])) {
-    ##     qlimit <- arglist[["qlimit"]]
-    ## }
-    ## fc_column <- paste0(type, "_logfc")
-    ## if (!is.null(arglist[["fc_column"]])) {
-    ##     fc_column <- arglist[["fc_column"]]
-    ## }
-    ## p_column <- paste0(type, "_adjp")
-    ## if (!is.null(arglist[["p_column"]])) {
-    ##     p_column <- arglist[["p_column"]]
-    ## }
     gvis_filename <- NULL
     gvis_trendline <- TRUE
     tooltip_data <- NULL
@@ -175,10 +182,11 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     if (type == "edger") {
         thenames <- names(output[["contrasts"]][["identities"]])
     } else if (type == "limma") {
-        coefficients <- output[["pairwise_comparisons"]][["coefficients"]]
+        coefficients <- output[["identity_comparisons"]][["coefficients"]]
         thenames <- colnames(coefficients)
     } else if (type == "deseq") {
-        thenames <- names(output[["coefficients"]])
+        coefficients <- as.data.frame(output[["coefficients"]])
+        thenames <- colnames(output[["coefficients"]])
     } else if (type == "basic") {
         thenames <- names(output[["conditions_table"]])
     } else {
@@ -205,26 +213,26 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     if (type == "edger") {
         coefficient_df <- output[["lrt"]][[1]][["coefficients"]]
         coefficient_df <- coefficient_df[, c(xname, yname)]
-        if (max(coefficient_df) < 0) {
-            coefficient_df <- coefficient_df * -1.0
-        }
+        coef_offset <- min(coefficient_df)
+        coefficient_df <- coefficient_df + (coef_offset * -1.0)
     } else if (type == "limma") {
         coefficient_df <- output[["pairwise_comparisons"]][["coefficients"]]
         coefficient_df <- coefficients[, c(x, y)]
     } else if (type == "deseq") {
-        first_df <- output[["coefficients"]][[xname]]
-        first_df[["delta"]] <- log2(as.numeric(first_df[["baseMean"]])) + first_df[["log2FoldChange"]]
-        second_df <- output[["coefficients"]][[yname]]
-        second_df[["delta"]] <- log2(as.numeric(second_df[["baseMean"]])) + second_df[["log2FoldChange"]]
-        first_col <- first_df[, c("baseMean", "log2FoldChange", "delta")]
-        colnames(first_col) <- c("mean.1", "fc.1", xname)
-        second_col <- second_df[, c("baseMean", "log2FoldChange", "delta")]
-        colnames(second_col) <- c("mean.2", "fc.2", yname)
-        coefficient_df <- merge(first_col, second_col, by="row.names")
-        rownames(coefficient_df) <- coefficient_df[["Row.names"]]
-        coefficient_df <- coefficient_df[-1]
-        coefficient_df <- coefficient_df[, c(xname, yname)]
-        coefficient_df[is.na(coefficient_df)] <- 0
+        coefficient_df <- coefficients[, c(xname, yname)]
+        ##first_df <- output[["coefficients"]][[xname]]
+        ##first_df[["delta"]] <- log2(as.numeric(first_df[["baseMean"]])) + first_df[["log2FoldChange"]]
+        ##second_df <- output[["coefficients"]][[yname]]
+        ##second_df[["delta"]] <- log2(as.numeric(second_df[["baseMean"]])) + second_df[["log2FoldChange"]]
+        ##first_col <- first_df[, c("baseMean", "log2FoldChange", "delta")]
+        ##colnames(first_col) <- c("mean.1", "fc.1", xname)
+        ##second_col <- second_df[, c("baseMean", "log2FoldChange", "delta")]
+        ##colnames(second_col) <- c("mean.2", "fc.2", yname)
+        ##coefficient_df <- merge(first_col, second_col, by="row.names")
+        ##rownames(coefficient_df) <- coefficient_df[["Row.names"]]
+        ##coefficient_df <- coefficient_df[-1]
+        ##coefficient_df <- coefficient_df[, c(xname, yname)]
+        ##coefficient_df[is.na(coefficient_df)] <- 0
     } else if (type == "basic") {
         coefficient_df <- output[["medians"]]
         coefficient_df <- coefficient_df[, c(xname, yname)]
@@ -253,6 +261,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #' @param adjp  Use adjusted p-values
 #' @param euler  Perform a euler plot
 #' @param p  p-value cutoff, I forget what for right now.
+#' @param fc  What fold-change cutoff to include?
 #' @param ... More arguments are passed to arglist.
 #' @return  A list of venn plots
 #' @seealso \pkg{venneuler} \pkg{Vennerable}
@@ -261,7 +270,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #'  bunchovenns <- de_venn(pairwise_result)
 #' }
 #' @export
-de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
+de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, fc=0, ...) {
     ## arglist <- list(...)
     combine_tables <- function(d, e, l) {
         ddf <- as.data.frame(l[, "limma_logfc"])
@@ -288,9 +297,9 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, ...) {
         edger_p <- "edger_adjp"
     }
 
-    limma_sig <- sm(get_sig_genes(table, column="limma_logfc", p_column=limma_p, p=p))
-    edger_sig <- sm(get_sig_genes(table, column="edger_logfc", p_column=edger_p, p=p))
-    deseq_sig <- sm(get_sig_genes(table, column="deseq_logfc", p_column=deseq_p, p=p))
+    limma_sig <- sm(get_sig_genes(table, fc=fc, column="limma_logfc", p_column=limma_p, p=p))
+    edger_sig <- sm(get_sig_genes(table, fc=fc, column="edger_logfc", p_column=edger_p, p=p))
+    deseq_sig <- sm(get_sig_genes(table, fc=fc, column="deseq_logfc", p_column=deseq_p, p=p))
     comp_up <- combine_tables(deseq_sig[["up_genes"]],
                               edger_sig[["up_genes"]],
                               limma_sig[["up_genes"]])

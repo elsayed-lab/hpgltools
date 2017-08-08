@@ -2,34 +2,25 @@
 ## These are the options I tend to favor
 library("hpgltools")
 ## tt <- devtools::load_all("~/hpgltools")
-knitr::opts_knit$set(
-    progress = TRUE,
-    verbose = TRUE,
-    width = 90,
-    echo = TRUE)
-knitr::opts_chunk$set(
-    error = TRUE,
-    fig.width = 8,
-    fig.height = 8,
-    dpi = 96)
-options(
-    digits = 4,
-    stringsAsFactors = FALSE,
-    knitr.duplicate.label = "allow")
+knitr::opts_knit$set(progress=TRUE,
+                     verbose=TRUE,
+                     width=90,
+                     echo=TRUE)
+knitr::opts_chunk$set(error=TRUE,
+                      fig.width=8,
+                      fig.height=8,
+                      dpi=96)
+old_options <- options(digits=4,
+                       stringsAsFactors=FALSE,
+                       knitr.duplicate.label="allow")
 ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
 rmd_file <- "c-03_fission_differential_expression.Rmd"
 
 ## ----rendering, include=FALSE, eval=FALSE--------------------------------
-#  ## This block is used to render a document from within it.
 #  rmarkdown::render(rmd_file)
 #  
 #  rmarkdown::render(rmd_file, output_format="pdf_document", output_options=c("skip_html"))
-#  
-#  ## Or to save/load large Rdata files.
-#  hpgltools:::saveme()
-#  hpgltools:::loadme()
-#  rm(list=ls())
 
 ## ----setup, include=TRUE-------------------------------------------------
 ## These first 4 lines are not needed once hpgltools is installed.
@@ -128,9 +119,16 @@ head(pombe_filters, n=20) ## 11 looks to be my guy
 possible_pombe_attributes <- biomaRt::listAttributes(ensembl_pombe)
 ##pombe_goids <- biomaRt::getBM(attributes=c('pombase_gene_name', 'go_accession'), filters="biotype",
 ##                              values=gene_names, mart=ensembl_pombe)
-pombe_goids <- biomaRt::getBM(attributes=c('pombase_transcript', 'go_accession'),
+
+pombe_goids <- biomaRt::getBM(attributes=c('pombase_transcript', 'go_id'),
                               values=gene_names, mart=ensembl_pombe)
 colnames(pombe_goids) <- c("ID","GO")
+
+pombe_goids_simple <- load_biomart_go(species="spombe", overwrite=TRUE,
+                                      dl_rows=c("pombase_transcript", "go_id"),
+                                      host="fungi.ensembl.org")
+head(pombe_goids_simple)
+head(pombe_goids)
 
 ## This used to work, but does so no longer and I do not know why.
 pombe <- sm(GenomicFeatures::makeTxDbFromBiomart(biomart="fungal_mart",
@@ -139,8 +137,8 @@ pombe <- sm(GenomicFeatures::makeTxDbFromBiomart(biomart="fungal_mart",
 
 ## This was found at the bottom of: https://www.biostars.org/p/232005/
 link <- "ftp://ftp.ensemblgenomes.org/pub/release-34/fungi/gff3/schizosaccharomyces_pombe/Schizosaccharomyces_pombe.ASM294v2.34.gff3.gz"
-pombe <- makeTxDbFromGFF(link, format="gff3", organism="Schizosaccharomyces pombe",
-                           taxonomyId="4896")
+pombe <- GenomicFeatures::makeTxDbFromGFF(link, format="gff3", organism="Schizosaccharomyces pombe",
+                                          taxonomyId="4896")
 
 pombe_transcripts <- as.data.frame(GenomicFeatures::transcriptsBy(pombe))
 lengths <- pombe_transcripts[, c("group_name","width")]
