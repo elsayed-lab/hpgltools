@@ -241,7 +241,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
         organism <- org_meta[org_row, "value"]
 
         ## Only grab the first of potentially multiple outputs.
-        kegg_organism <- kegg_get_orgn(species=organism)[[1]]
+        kegg_organism <- get_kegg_orgn(species=organism)[[1]]
     }
 
     kegg_universe <- KEGGREST::keggConv(kegg_organism, "ncbi-geneid")

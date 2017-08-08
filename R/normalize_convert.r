@@ -124,8 +124,11 @@ divide_seq <- function(counts, ...) {
     } else if (annotation_class == "data.frame") {
         colnames(annotations) <- tolower(colnames(annotations))
         annotations <- annotations[complete.cases(annotations), ]
-        annotations[["strand"]] <- as.numeric(annotations[["strand"]])
-        annotations[["strand"]] <- ifelse(annotations[["strand"]] > 0, "+", "-")
+        numberp <- sum(grepl(pattern="1", x=annotations[["strand"]]))
+        if (numberp > 0) {
+            annotations[["strand"]] <- as.numeric(annotations[["strand"]])
+            annotations[["strand"]] <- ifelse(annotations[["strand"]] > 0, "+", "-")
+        }
         ## Remove entries in annotations with start==NA
         na_idx <- is.na(sm(as.numeric(annotations[["start"]])))
         annotations <- annotations[!na_idx, ]
