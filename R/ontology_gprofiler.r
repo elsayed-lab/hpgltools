@@ -56,7 +56,7 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
     }
 
     ## Setting 'ordered_query' to TRUE, so rank these by p-value or FC or something
-    go_result <- data.frame()
+    go_result <- data.frame(stringsAsFactors=FALSE)
     if (isTRUE(do_go)) {
         message("Performing g:Profiler GO search.")
         Sys.sleep(3)
@@ -66,12 +66,12 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                                               ordered_query=pseudo_gsea,
                                               src_filter="GO"))
         if (class(go_result) == "try-error") {
-            go_result <- data.frame()
+            go_result <- data.frame(stringsAsFactors=FALSE)
         }
         message(paste0("GO search found ", nrow(go_result), " hits."))
     }
 
-    kegg_result <- data.frame()
+    kegg_result <- data.frame(stringsAsFactors=FALSE)
     if (isTRUE(do_kegg)) {
         message("Performing g:Profiler KEGG search.")
         Sys.sleep(3)
@@ -81,12 +81,12 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                                                 ordered_query=pseudo_gsea,
                                                 src_filter="KEGG"))
         if (class(kegg_result) == "try-error") {
-            kegg_result <- data.frame()
+            kegg_result <- data.frame(stringsAsFactors=FALSE)
         }
         message(paste0("KEGG search found ", nrow(kegg_result), " hits."))
     }
 
-    reactome_result <- data.frame()
+    reactome_result <- data.frame(stringsAsFactors=FALSE)
     if (isTRUE(do_reactome)) {
         message("Performing g:Profiler reactome.db search.")
         Sys.sleep(3)
@@ -96,12 +96,12 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                                                     ordered_query=pseudo_gsea,
                                                     src_filter="REAC"))
         if (class(reactome_result) == "try-error") {
-            reactome_result <- data.frame()
+            reactome_result <- data.frame(stringsAsFactors=FALSE)
         }
         message(paste0("Reactome search found ", nrow(reactome_result), " hits."))
     }
 
-    mi_result <- data.frame()
+    mi_result <- data.frame(stringsAsFactors=FALSE)
     if (isTRUE(do_mi)) {
         message("Performing g:Profiler miRNA search.")
         Sys.sleep(3)
@@ -111,12 +111,12 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                                               ordered_query=pseudo_gsea,
                                               src_filter="MI"))
         if (class(mi_result) == "try-error") {
-            mi_result <- data.frame()
+            mi_result <- data.frame(stringsAsFactors=FALSE)
         }
         message(paste0("miRNA search found ", nrow(mi_result), " hits."))
     }
 
-    tf_result <- data.frame()
+    tf_result <- data.frame(stringsAsFactors=FALSE)
     if (isTRUE(do_tf)) {
         message("Performing g:Profiler transcription-factor search.")
         Sys.sleep(3)
@@ -126,12 +126,12 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                                               ordered_query=pseudo_gsea,
                                               src_filter="TF"))
         if (class(tf_result) == "try-error") {
-            tf_result <- data.frame()
+            tf_result <- data.frame(stringsAsFactors=FALSE)
         }
         message(paste0("transcription-factor search found ", nrow(tf_result), " hits."))
     }
 
-    corum_result <- data.frame()
+    corum_result <- data.frame(stringsAsFactors=FALSE)
     if (isTRUE(do_corum)) {
         message("Performing g:Profiler corum search.")
         Sys.sleep(3)
@@ -141,12 +141,12 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                                                  ordered_query=pseudo_gsea,
                                                  src_filter="CORUM"))
         if (class(corum_result) == "try-error") {
-            corum_result <- data.frame()
+            corum_result <- data.frame(stringsAsFactors=FALSE)
         }
         message(paste0("corum search found ", nrow(corum_result), " hits."))
     }
 
-    hp_result <- data.frame()
+    hp_result <- data.frame(stringsAsFactors=FALSE)
     if (isTRUE(do_hp)) {
         message("Performing g:Profiler hp search.")
         Sys.sleep(3)
@@ -156,7 +156,7 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                                               ordered_query=pseudo_gsea,
                                               src_filter="HP"))
         if (class(hp_result) == "try-error") {
-            hp_result <- data.frame()
+            hp_result <- data.frame(stringsAsFactors=FALSE)
         }
         message(paste0("hp search found ", nrow(hp_result), " hits."))
     }

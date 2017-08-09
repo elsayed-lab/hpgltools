@@ -135,9 +135,9 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
                                           ont="CC", level=go_level))
 
     group_go <- list(
-        "MF" = as.data.frame(ggo_mf),
-        "BP" = as.data.frame(ggo_bp),
-        "CC" = as.data.frame(ggo_cc)
+        "MF" = as.data.frame(ggo_mf, stringsAsFactors=FALSE),
+        "BP" = as.data.frame(ggo_bp, stringsAsFactors=FALSE),
+        "CC" = as.data.frame(ggo_cc, stringsAsFactors=FALSE)
     )
     message(paste0("Found ", nrow(group_go[["MF"]]),
                    " MF, ", nrow(group_go[["BP"]]),
@@ -178,12 +178,12 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
                                                pvalueCutoff=pcutoff))
 
     enrich_go <- list(
-        "MF_all" = as.data.frame(ego_all_mf),
-        "MF_sig" = as.data.frame(ego_sig_mf),
-        "BP_all" = as.data.frame(ego_all_bp),
-        "BP_sig" = as.data.frame(ego_sig_bp),
-        "CC_all" = as.data.frame(ego_all_cc),
-        "CC_sig" = as.data.frame(ego_sig_cc))
+        "MF_all" = as.data.frame(ego_all_mf, stringsAsFactors=FALSE),
+        "MF_sig" = as.data.frame(ego_sig_mf, stringsAsFactors=FALSE),
+        "BP_all" = as.data.frame(ego_all_bp, stringsAsFactors=FALSE),
+        "BP_sig" = as.data.frame(ego_sig_bp, stringsAsFactors=FALSE),
+        "CC_all" = as.data.frame(ego_all_cc, stringsAsFactors=FALSE),
+        "CC_sig" = as.data.frame(ego_sig_cc, stringsAsFactors=FALSE))
     message(paste0("Found ", nrow(enrich_go[["MF_sig"]]),
                    " MF, ", nrow(enrich_go[["BP_sig"]]),
                    " BP, and ", nrow(enrich_go[["CC_sig"]]), " CC enriched hits."))
@@ -223,12 +223,12 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
                                                 nPerm=permutations, minGSSize=min_groupsize,
                                                 pvalueCutoff=pcutoff))
         gse_go <- list(
-            "MF_all" = as.data.frame(gse_all_mf),
-            "MF_sig" = as.data.frame(gse_sig_mf),
-            "BP_all" = as.data.frame(gse_all_bp),
-            "BP_sig" = as.data.frame(gse_sig_bp),
-            "CC_all" = as.data.frame(gse_all_cc),
-            "CC_sig" = as.data.frame(gse_sig_cc))
+            "MF_all" = as.data.frame(gse_all_mf, stringsAsFactors=FALSE),
+            "MF_sig" = as.data.frame(gse_sig_mf, stringsAsFactors=FALSE),
+            "BP_all" = as.data.frame(gse_all_bp, stringsAsFactors=FALSE),
+            "BP_sig" = as.data.frame(gse_sig_bp, stringsAsFactors=FALSE),
+            "CC_all" = as.data.frame(gse_all_cc, stringsAsFactors=FALSE),
+            "CC_sig" = as.data.frame(gse_sig_cc, stringsAsFactors=FALSE))
         message(paste0("Found ", nrow(gse_go[["MF_sig"]]),
                        " MF, ", nrow(gse_go[["BP_sig"]]),
                        " BP, and ", nrow(gse_go[["CC_sig"]]), " CC enriched hits."))
@@ -291,10 +291,10 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     gse_sig_mkegg <- NULL
 
     kegg_data <- list(
-        "kegg_all" = as.data.frame(all_kegg),
-        "kegg_sig" = as.data.frame(enrich_kegg),
-        "kegg_gse_all" = as.data.frame(gse_all_kegg),
-        "kegg_gse_sig" = as.data.frame(gse_sig_kegg))
+        "kegg_all" = as.data.frame(all_kegg, stringsAsFactors=FALSE),
+        "kegg_sig" = as.data.frame(enrich_kegg, stringsAsFactors=FALSE),
+        "kegg_gse_all" = as.data.frame(gse_all_kegg, stringsAsFactors=FALSE),
+        "kegg_gse_sig" = as.data.frame(gse_sig_kegg, stringsAsFactors=FALSE))
     message(paste0("Found ", nrow(kegg_data[["kegg_sig"]]), " KEGG enriched hits."))
 
     message("Attempting DAVID search.")
@@ -302,7 +302,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     if (class(david_search)[[1]] == "try-error") {
         david_data <- NULL
     } else {
-        david_data <- as.data.frame(david_search)
+        david_data <- as.data.frame(david_search, stringsAsFactors=FALSE)
     }
     message(paste0("Found ", nrow(david_data), " DAVID hits."))
 
@@ -500,7 +500,7 @@ simple_cp_enricher <- function(sig_genes, de_table, goids_df=NULL) {
     sig_genenames <- rownames(sig_genes)
     enriched <- clusterProfiler::enricher(sig_genenames, TERM2GENE=goids_df)
     retlist <- list(
-        "enriched" = as.data.frame(enriched))
+        "enriched" = as.data.frame(enriched, stringsAsFactors=FALSE))
     return(retlist)
 }
 

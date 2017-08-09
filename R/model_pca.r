@@ -216,7 +216,8 @@ Going to run pcRes with the batch information.")
         "PC1" = svd_result[["v"]][, 1],
         "PC2" = svd_result[["v"]][, 2],
         "colors" = as.character(plot_colors),
-        "labels" = label_list)
+        "labels" = label_list,
+        stringsAsFactors=FALSE)
 
     ## Add an optional column which may be used to change the glyph sizes in the plot
     if (!is.null(size_column)) {
@@ -634,7 +635,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
         "condition" = as.character(expt_design[["condition"]]),
         "colors" = colors_chosen,
         "batch" = as.character(expt_design[["batch"]]),
-        "batch_int" = as.integer(as.factor(expt_design[["batch"]])))
+        "batch_int" = as.integer(as.factor(expt_design[["batch"]])),
+        stringsAsFactors=FALSE)
 
     pc_df <- data.frame(
         "sampleid" = rownames(expt_design))

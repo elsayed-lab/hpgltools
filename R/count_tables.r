@@ -84,7 +84,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
         message(paste0(files[table], " contains ", pre_merge,
                        " rows and merges to ", post_merge, " rows."))
     }
-    count_table <- as.data.frame(count_dt)
+    count_table <- as.data.frame(count_dt, stringsAsFactors=FALSE)
     rownames(count_table) <- count_table[["rownames"]]
     count_table <- count_table[, -1, drop=FALSE]
     rm(count_dt)
@@ -233,7 +233,7 @@ median_by_factor <- function(data, fact="condition") {
         data <- exprs(data)
     }
 
-    medians <- data.frame("ID"=rownames(data))
+    medians <- data.frame("ID"=rownames(data), stringsAsFactors=FALSE)
     data <- as.matrix(data)
     rownames(medians) <- rownames(data)
     fact <- as.factor(fact)
@@ -245,7 +245,7 @@ median_by_factor <- function(data, fact="condition") {
             next
         } else if (length(columns) == 1) {
             message(paste0("The factor ", type, " has only 1 row."))
-            med <- as.data.frame(data[, columns])
+            med <- as.data.frame(data[, columns], stringsAsFactors=FALSE)
         } else {
             message(paste0("The factor ", type, " has ", length(columns), " rows."))
             med <- matrixStats::rowMedians(data[, columns])
@@ -346,13 +346,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
                                "Some graphs describing the distribution of raw data in worksheet 'raw_plots'.",
                                paste0("The counts normalized with: ", norm_state),
                                "Some graphs describing the distribution of the normalized data on 'norm_plots'.",
-                               "The median normalized counts by condition factor on 'median_data'."))
+                               "The median normalized counts by condition factor on 'median_data'."),
+        stringsAsFactors=FALSE)
     colnames(legend) <- c("Worksheets", "Contents")
     xls_result <- write_xls(wb, data=legend, sheet=sheet, rownames=FALSE,
                             title="Columns used in the following tables.")
     rows_down <- nrow(legend)
     new_row <- new_row + rows_down + 3
-    annot <- as.data.frame(pData(expt))
+    annot <- as.data.frame(pData(expt), stringsAsFactors=FALSE)
     xls_result <- write_xls(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
                             sheet=sheet, start_col=1, title="Experimental Design.")
 

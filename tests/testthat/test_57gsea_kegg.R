@@ -12,7 +12,7 @@ pasilla_expt <- pasilla[["expt"]]
 limma <- new.env()
 load("de_limma.rda", envir=limma)
 
-test_orgn <- kegg_get_orgn("Drosophila melanogaster", short=FALSE)
+test_orgn <- get_kegg_orgn("Drosophila melanogaster", short=FALSE)
 actual <- as.character(test_orgn[["orgid"]])
 expected <- c("dme", "wol")
 test_that("Is it possible to look up a kegg species ID?", {
@@ -63,7 +63,7 @@ test_that("Can we extract the percent differentially expressed genes from multip
 })
 
 ## Try testing out pathview
-mel_id <- kegg_get_orgn("melanogaster")
+mel_id <- get_kegg_orgn("melanogaster")
 rownames(sig_up) <- make.names(sig_up[["flybasecg"]], unique=TRUE)
 
 funkytown <- simple_pathview(sig_up, fc_column="logFC", species="dme", pathway=pathways,

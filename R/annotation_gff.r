@@ -23,7 +23,7 @@
 #' ## 6 YAL068W-A     3
 #' }
 #' @export
-get_genelengths <- function(gff, type="gene", key="ID", ...) {
+get_gff_genelengths <- function(gff, type="gene", key="ID", ...) {
     ret <- load_gff_annotations(gff, ...)
     ret <- ret[ret[["type"]] == type, ]
     ret <- ret[, c(key, "width")]
@@ -67,7 +67,7 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.
     tmp_data <- tmp_data[-1]
     ## Start out by summing the gene widths
     column <- aggregate(tmp_data[, "width"], by=list(Parent=tmp_data[, parent]), FUN=sum)
-    new_data <- data.frame(column[["x"]])
+    new_data <- data.frame(column[["x"]], stringsAsFactors=FALSE)
     rownames(new_data) <- column[["Parent"]]
     colnames(new_data) <- c("width")
 
@@ -78,7 +78,7 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.
         new_data <- cbind(new_data, column[["x"]])
     } ## End for loop
 
-    width_df <- data.frame(new_data[["width"]])
+    width_df <- data.frame(new_data[["width"]], stringsAsFactors=FALSE)
     rownames(width_df) <- rownames(new_data)
     colnames(width_df) <- c("width")
     new_data <- new_data[-1]
@@ -138,8 +138,8 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID",
         eval(parse(text=eval_string))
         if (class(annotations) == "try-error") {
             rm(annotations)
-        } else if (is.null(GenomicRanges::as.data.frame(annotations)[[id_col]]) &
-                   is.null(GenomicRanges::as.data.frame(annotations)[[second_id_col]])) {
+        } else if (is.null(GenomicRanges::as.data.frame(annotations, stringsAsFactors=FALSE)[[id_col]]) &
+                   is.null(GenomicRanges::as.data.frame(annotations, stringsAsFactors=FALSE)[[second_id_col]])) {
             rm(annotations)
         } else {
             annot <- annotations
@@ -150,7 +150,7 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID",
     }
     ret <- NULL
     if (class(annot)[[1]] == "GRanges") {
-        ret <- GenomicRanges::as.data.frame(annot)
+        ret <- GenomicRanges::as.data.frame(annot, stringsAsFactors=FALSE)
         rm(annot)
     } else {
         stop("Unable to load gff file.")
@@ -297,7 +297,8 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
     result <- Biostrings::vcountPDict(dict, entry_sequences)
     num_pattern <- data.frame(
         "name" = names(entry_sequences),
-        "num" = as.data.frame(t(result)))
+        "num" = as.data.frame(t(result)),
+        stringsAsFactors=FALSE)
     return(num_pattern)
 }
 
@@ -334,7 +335,8 @@ sequence_attributes <- function(fasta, gff=NULL, type="gene", key="locus_tag") {
         "gc" = Biostrings::letterFrequency(entry_sequences, "CG", as.prob=TRUE),
         "at" = Biostrings::letterFrequency(entry_sequences, "AT", as.prob=TRUE),
         "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob=TRUE),
-        "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob=TRUE))
+        "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob=TRUE),
+        stringsAsFactors=FALSE)
     rownames(attribs) <- type_entries[["locus_tag"]]
     colnames(attribs) <- c("gc", "at", "gt", "ac")
     return(attribs)

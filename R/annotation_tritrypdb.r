@@ -743,7 +743,6 @@ get_eupath_config <- function(cfg=NULL) {
         cfg_data <- read.csv(cfg, stringsAsFactors=FALSE)
     }
     rownames(cfg_data) <- cfg_data[["id"]]
-
     return(cfg_data)
 }
 
@@ -762,9 +761,9 @@ get_eupath_config <- function(cfg=NULL) {
 #' \dontrun{
 #'  orgdb_data <- make_orgdb_info(gff="lmajor.gff", txt="lmajor.txt")
 #' }
-make_orgdb_info <- function(gff, txt, kegg=TRUE) {
-    savefile <- paste0(txt, ".rda")
-    gff_entries <- GenomicRanges::as.data.frame(rtracklayer::import.gff3(gff))
+make_orgdb_info <- function(gff, txt=NULL, ah=NULL, kegg=TRUE) {
+    gff_entries <- GenomicRanges::as.data.frame(rtracklayer::import.gff3(gff),
+                                                stringsAsFactors=FALSE)
     gene_types <- gff_entries[["type"]] == "gene"
     genes <- gff_entries[gene_types, ]
     gene_info <- genes
@@ -781,13 +780,72 @@ make_orgdb_info <- function(gff, txt, kegg=TRUE) {
     chromosome_info <- data.frame(
         "chrom" = chromosomes[["ID"]],
         "length" = as.numeric(chromosomes[["size"]]),
-        "is_circular" = NA)
+        "is_circular" = NA,
+        stringsAsFactors=FALSE)
 
     gid_index <- grep("GID", colnames(gene_info))
     ## Move gid to the front of the line.
     gene_info <- gene_info[, c(gid_index, (1:ncol(gene_info))[-gid_index])]
     colnames(gene_info) <- paste0("GENE", colnames(gene_info))
     colnames(gene_info)[1] <- "GID"
+
+    txt_information <- NULL
+    gene_set <- NULL
+    go_info <- NULL
+    if (!is.null(txt)) {
+        txt_information <- tritryp_extract_txt(txt, gene_info)
+    } else if (!is.null(ah)) {
+        txt_information <- tritryp_extract_ah(ah, gene_info)
+    }
+
+    gene_set <- txt_information[["genes"]]
+    go_info <- txt_information[["go"]]
+
+    chr_info <- data.frame(
+        "GID" = rownames(gene_set),
+        "CHR" = gene_set[["chromosome"]],
+        stringsAsFactors=FALSE)
+    
+    gene_types <- data.frame(
+        "GID" = rownames(gene_set),
+        "TYPE" = gene_set[["type"]],
+        stringsAsFactors=FALSE)
+
+    ## The information in the following list really should be coming from parse_gene_info_table()
+    ret <- list(
+        "gene_info" = gene_info,
+        "chr_info" = chr_info,
+        "gene_types" = gene_types,
+        "go_info" = go_info,
+        "chromosome_info" = chromosome_info
+    )
+    return(ret)
+}
+
+tritryp_extract_ah <- function(ah, gene_info) {
+    all <- sm(AnnotationHub::AnnotationHub())
+    ## First, assume the user knows which entry to get.
+    specific <- try(all[[ah]], silent=TRUE)
+    if (class(specific) == "try-error") {
+        ## If not, do a query and choose.
+        message(paste0("Unable to find annotation hub entry for: ", ah, ", trying a search."))
+        test_ah <- AnnotationHub::query(all, ah)
+        message(paste0("Found the following hubs: "))
+        for (h in 1:length(test_ah)) {
+            message(test_ah$title[h])
+        }
+        message("Choosing the first one.")
+        chosen <- names(test_ah)[[1]]
+        specific <- sm(all[[chosen]])
+    }
+    avail_genes <- AnnotationDbi::keys(specific)
+    avail_keytypes <- AnnotationDbi::keytypes(specific)
+    table <- AnnotationDbi::select(specific, columns=avail_keytypes, keys=avail_genes)
+    return(table)
+}
+
+tritryp_extract_txt <- function(txt, gene_info) {
+    savefile <- paste0(txt, ".rda")
     num_rows <- nrow(gene_info)
     ## Get rid of character(0) crap and NAs
     is.empty <- function(stuff) {
@@ -832,26 +890,7 @@ make_orgdb_info <- function(gff, txt, kegg=TRUE) {
         txt_information <- parse_gene_info_table(file=txt, verbose=TRUE)
         save(txt_information, file=savefile)
     }
-    gene_set <- txt_information[["genes"]]
-    go_info <- txt_information[["go"]]
-
-    chr_info <- data.frame(
-        "GID" = rownames(gene_set),
-        "CHR" = gene_set[["chromosome"]])
-
-    gene_types <- data.frame(
-        "GID" = rownames(gene_set),
-        "TYPE" = gene_set[["type"]])
-
-    ## The information in the following list really should be coming from parse_gene_info_table()
-    ret <- list(
-        "gene_info" = gene_info,
-        "chr_info" = chr_info,
-        "gene_types" = gene_types,
-        "go_info" = go_info,
-        "chromosome_info" = chromosome_info
-    )
-    return(ret)
+    return(txt_information)
 }
 
 #' EuPathDB gene information table GO term parser
@@ -983,6 +1022,41 @@ parse_interpro_domains <- function(filepath) {
     close(fp)
     ## TODO: Determine source of non-unique rows in the dataframe
     return(unique(go_rows))
+}
+
+get_eupathdb_data <- function(species="Leishmania major Friedlin") {
+    ## Get EuPathDB version (same for all databases)
+    dbversion <- readLines("http://tritrypdb.org/common/downloads/Current_Release/Build_number")
+
+    shared_tags <- c("Annotation", "EuPathDB", "Eukaryote", "Pathogen", "Parasite")
+    tags <- list(
+        "AmoebaDB" = c(shared_tags, "Amoeba"),
+        "CryptoDB" = c(shared_tags, "Cryptosporidium"),
+        "FungiDB" = c(shared_tags, "Fungus", "Fungi"),
+        "GiardiaDB" = c(shared_tags, "Giardia"),
+        "MicrosporidiaDB" = c(shared_tags, "Microsporidia"),
+        "PiroplasmaDB" = c(shared_tags, "Piroplasma"),
+        "PlasmoDB" = c(shared_tags, "Plasmodium"),
+        "ToxoDB" = c(shared_tags, "Toxoplasmosis"),
+        "TrichDB" = c(shared_tags, "Trichomonas"),
+        "TriTrypDB" = c(shared_tags, "Trypanosome", "Kinetoplastid", "Leishmania")
+    )
+    tag_strings <- lapply(tags, function(x) { paste(x, collapse=",") })
+
+    ## construct API request URL
+    base_url <- "http://eupathdb.org/eupathdb/webservices/"
+    query_string <- "OrganismQuestions/GenomeDataTypes.json?o-fields=all"
+    request_url <- paste0(base_url, query_string)
+
+    ## retrieve organism metadata from EuPathDB
+    result <- jsonlite::fromJSON(request_url)
+    records <- result[["response"]][["recordset"]][["records"]]
+
+    ## convert to a dataframe
+    dat <- data.frame(t(sapply(records[["fields"]], function (x) { x[,"value"] } )),
+                      stringsAsFactors=FALSE)
+    colnames(dat) <- records[["fields"]][[1]][["name"]]
+
 }
 
 ## EOF

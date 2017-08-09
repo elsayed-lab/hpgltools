@@ -25,7 +25,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
                       start_row=1, start_col=1, ...) {
     arglist <- list(...)
     if (class(data) == "matrix" | class(data) == "character") {
-        data <- as.data.frame(data)
+        data <- as.data.frame(data, stringsAsFactors=FALSE)
     }
     if (is.null(wb)) {
         wb <- openxlsx::createWorkbook(creator="hpgltools")
@@ -85,7 +85,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", rownames=TRUE,
     }
 
     ## I might have run into a bug in openxlsx, in WorkbookClass.R there is a call to is.nan()
-    ## for a data.frame and it appears to me to be called oddly and causing problems
+    ## for a data.framye and it appears to me to be called oddly and causing problems
     ## I hacked the writeDataTable() function in openxlsx and sent a bug report.
     ## Another way to trip this up is for a column in the table to be of class 'list'
     test_column <- 0

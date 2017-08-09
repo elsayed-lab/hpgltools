@@ -134,7 +134,7 @@ divide_seq <- function(counts, ...) {
         annotations <- annotations[!na_idx, ]
         annotation_entries <- GenomicRanges::makeGRangesFromDataFrame(annotations)
     } else if (annotation_class == "Granges") {
-        annotations <- as.data.frame(annotations)
+        annotations <- as.data.frame(annotations, stringsAsFactors=FALSE)
         colnames(annotations) <- tolower(colnames(annotations))
         annotation_entries <- annotations
     } else if (annotation_class == "orgDb") {
@@ -209,14 +209,16 @@ hpgl_rpkm <- function(df, ...) {
     if (class(df) == "edgeR") {
         df <- df[["counts"]]
     }
-    df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
+    df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ],
+                           stringsAsFactors=FALSE)
     if (dim(df_in)[1] == 0) {
         message("When the annotations and df were checked against each other
   the result was null.  Perhaps your annotation or df's rownames are not set?
   Going to attempt to use the column 'ID'.
 ")
         rownames(annotations) <- make.names(annotations[["ID"]], unique=TRUE)
-        df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ])
+        df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ],
+                               stringsAsFactors=FALSE)
         if (dim(df_in)[1] == 0) {
             stop("The ID column failed too.")
         }

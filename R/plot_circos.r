@@ -38,7 +38,7 @@ circos_karyotype <- function(name="default", conf_dir="circos/conf", length=NULL
     } else {
         raw_seq <- Rsamtools::FaFile(fasta)
         all_seq <- Biostrings::getSeq(raw_seq)
-        genome_length <- sum(as.data.frame(all_seq@ranges)$width)
+        genome_length <- sum(as.data.frame(all_seq@ranges)[["width"]])
     }
 
     outfile <- paste0(conf_dir, "/karyotypes/", name, ".conf")

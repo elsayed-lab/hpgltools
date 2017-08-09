@@ -57,8 +57,8 @@ basic_pairwise <- function(input=NULL, design=NULL,
         median_colnames <- append(median_colnames, condition_name)
         columns <- which(conditions == condition_name)
         if (length(columns) == 1) {
-            med <- data.frame(data[, columns])
-            var <- as.data.frame(matrix(NA, ncol=1, nrow=nrow(med)))
+            med <- data.frame(data[, columns], stringsAsFactors=FALSE)
+            var <- as.data.frame(matrix(NA, ncol=1, nrow=nrow(med)), stringsAsFactors=FALSE)
         } else {
             med_input <- data[, columns]
             med <- data.frame(Biobase::rowMedians(as.matrix(med_input)))

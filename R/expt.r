@@ -285,7 +285,7 @@ analyses more difficult/impossible.")
     if (is.null(gene_info)) {
         ## Including, if all else fails, just grabbing the gene names from the count tables.
         if (is.null(include_gff)) {
-            gene_info <- as.data.frame(rownames(all_count_tables))
+            gene_info <- as.data.frame(rownames(all_count_tables), stringsAsFactors=FALSE)
             rownames(gene_info) <- rownames(all_count_tables)
             colnames(gene_info) <- "name"
         } else {
@@ -297,7 +297,7 @@ analyses more difficult/impossible.")
         }
     } else if (class(gene_info) == "list" & !is.null(gene_info[["genes"]])) {
         ## In this case, it is using the output of reading a OrgDB instance
-        gene_info <- as.data.frame(gene_info[["genes"]])
+        gene_info <- as.data.frame(gene_info[["genes"]], stringsAsFactors=FALSE)
     }
 
     ## It turns out that loading the annotation information from orgdb/etc may not set the
@@ -360,13 +360,13 @@ analyses more difficult/impossible.")
     }
     counts_and_annotations[na_entries] <- "undefined"
     counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
-    counts_and_annotations <- as.data.frame(counts_and_annotations)
+    counts_and_annotations <- as.data.frame(counts_and_annotations, stringsAsFactors=FALSE)
     final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_infodt) ]
     final_annotations <- final_annotations[, -1, drop=FALSE]
     ##colnames(final_annotations) <- colnames(gene_info)
     ##rownames(final_annotations) <- counts_and_annotations[["rownames"]]
     final_countsdt <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_tables) ]
-    final_counts <- as.data.frame(final_countsdt)
+    final_counts <- as.data.frame(final_countsdt, stringsAsFactors=FALSE)
     rownames(final_counts) <- counts_and_annotations[["rownames"]]
 
     ## I found a non-bug but utterly obnoxious behaivor in R
@@ -653,7 +653,7 @@ expt_subset <- function(expt, subset=NULL) {
     if (nrow(subset_design) == 0) {
         stop("When the subset was taken, the resulting design has 0 members, check your expression.")
     }
-    subset_design <- as.data.frame(subset_design)
+    subset_design <- as.data.frame(subset_design, stringsAsFactors=FALSE)
     ## This is to get around stupidity with respect to needing all factors to be in a DESeqDataSet
     starting_ids <- rownames(starting_metadata)
     subset_ids <- rownames(subset_design)

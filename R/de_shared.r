@@ -337,7 +337,8 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
         conditions <- as.factor(conditions)
         batches <- as.factor(batches)
         design <- data.frame("condition" = conditions,
-                             "batch" = batches)
+                             "batch" = batches,
+                             stringsAsFactors=TRUE)
     }
     ## Make a model matrix which will have one entry for
     ## each of the condition/batches
@@ -981,7 +982,7 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
     levels_to_use <- names(contr_level_counts)[contr_level_counts > 0]
     ## Extract the average counts for each, make into table
     ave_expression_mat <- cellmeans_fit[["coef"]][, levels_to_use]
-    exp_table <- data.frame("ID" = rownames(ave_expression_mat))
+    exp_table <- data.frame("ID" = rownames(ave_expression_mat), stringsAsFactors=FALSE)
     exp_table <- cbind(exp_table, as.data.frame(ave_expression_mat))
     names(exp_table)[-1] <- paste("AveExpr", gsub("condition", "", levels_to_use), sep=":")
 
@@ -995,7 +996,7 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
     names(fcs) <- paste("logFC", names(fcs), sep=":")
     conj_pvals <- as.data.frame(apply(contrast_fit[["p.value"]][, conj_contrasts], 2, p.adjust, method="BH"))
     names(conj_pvals) <- paste("adj.P.Val", names(conj_pvals), sep=":")
-    conj_table <- data.frame("ID" = rownames(contrast_fit))
+    conj_table <- data.frame("ID" = rownames(contrast_fit), stringsAsFactors=FALSE)
     conj_table <- cbind(conj_table, fcs, conj_pvals, stat=stat, adj.P.Value=adj.pval)
     names(conj_table)[seq(2 + 2 * length(conj_contrasts), ncol(conj_table))] <- paste(
         c("stat", "adj.P.Value"), paste(conj_contrasts, collapse=":"), sep=":")
@@ -1003,7 +1004,8 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
     ## Make the table for the 'other' test
     disj_table <- data.frame("ID" = rownames(contrast_fit),
                              "logFC" = contrast_fit[["coef"]][, disj_contrast],
-                             "adj.P.Value" = p.adjust(contrast_fit[["p.value"]][, disj_contrast], method="BH"))
+                             "adj.P.Value" = p.adjust(contrast_fit[["p.value"]][, disj_contrast], method="BH"),
+                             stringsAsFactors=FALSE)
     names(disj_table)[-1] <- paste(c("logFC", "adj.P.Value"), disj_contrast, sep=":")
     ## Combine tables, making sure all tables are in the same order
     stopifnot(all(exp_table$ID == conj_table[["ID"]] & exp_table[["ID"]] == disj_table[["ID"]]))
@@ -1089,7 +1091,7 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
             tmpdf <- datum[["coefficients"]][[name]]
             tmpdf[["new"]] <- log2(as.numeric(tmpdf[["baseMean"]])) + tmpdf[["log2FoldChange"]]
             if (contrast_num == 1) {
-                coefficient_df <- as.data.frame(tmpdf[["new"]])
+                coefficient_df <- as.data.frame(tmpdf[["new"]], stringsAsFactors=FALSE)
                 coefficient_df <- as.matrix(coefficient_df)
             } else {
                 coefficient_df <- cbind(coefficient_df, tmpdf[["new"]])

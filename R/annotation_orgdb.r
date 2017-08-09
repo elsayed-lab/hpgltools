@@ -95,7 +95,7 @@ load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keyty
             sum(BiocGenerics::width(GenomicRanges::reduce(x)))
         })
         message("Adding exon lengths to the gene_exons.")
-        lengths <- as.data.frame(unlist(lengths))
+        lengths <- as.data.frame(unlist(lengths), stringsAsFactors=FALSE)
         colnames(lengths) <- "transcript_length"
         gene_info <- merge(gene_info, lengths, by.x=keytype, by.y="row.names")
     }
@@ -210,7 +210,7 @@ load_orgdb_kegg <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL", columns=c("
         stop(paste0("Unable to find the mappings, the available keytypes are: ",
                     toString(AnnotationDbi::keytypes(orgdb))))
     }
-    kegg_mapping <- as.data.frame(kegg_mapping)
+    kegg_mapping <- as.data.frame(kegg_mapping, stringsAsFactors=FALSE)
     ##colnames(kegg_mapping) <- c("gene", "category")
     ## goseq does not support tbl_df instances
     return(kegg_mapping)
@@ -448,7 +448,8 @@ generate_gene_kegg_mapping <- function(pathways, org_abbreviation, verbose=FALSE
         kegg_mapping <- unique(rbind(kegg_mapping,
                                      data.frame(
                                          "gene" = gene_ids,
-                                         "pathway" = pathway)))
+                                         "pathway" = pathway,
+                                         stringsAsFactors=FALSE)))
     }
     return(kegg_mapping)
 }
@@ -485,7 +486,8 @@ generate_kegg_pathway_mapping <- function(pathways, verbose=FALSE) {
                                    data.frame("pathway" = pathway,
                                               "name" = meta[["PATHWAY_MAP"]],
                                               "class" = pathway_class,
-                                              "description" = pathway_desc))
+                                              "description" = pathway_desc,
+                                              stringsAsFactors=FALSE))
         }
     }
     return(kegg_pathways)
