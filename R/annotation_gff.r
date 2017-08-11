@@ -113,7 +113,7 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.
 #'  funkytown <- load_gff_annotations('reference/gff/saccharomyces_cerevsiae.gff.xz')
 #' }
 #' @export
-load_gff_annotations <- function(gff, type=NULL, id_col="ID",
+load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.frame",
                                  second_id_col="locus_tag", try=NULL) {
     if (!file.exists(gff)) {
         stop(paste0("Unable to find the gff file: ", gff))
@@ -149,17 +149,22 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID",
         }
     }
     ret <- NULL
-    if (class(annot)[[1]] == "GRanges") {
+    if (class(annot)[[1]] == "GRanges" & ret_type == "data.frame") {
         ret <- GenomicRanges::as.data.frame(annot, stringsAsFactors=FALSE)
         rm(annot)
+        if (!is.null(type)) {
+            index <- ret[, "type"] == type
+            ret <- ret[index, ]
+        }
+        message(paste0("Returning a df with ", ncol(ret), " columns and ", nrow(ret), " rows."))
+    } else if (class(annot)[[1]] == "GRanges" & ret_type == "GRanges") {
+        ret <- annot
+        rm(annot)
+        message(paste0("Returning a GRanges with ", ncol(ret), " columns and ", nrow(ret), " rows."))
     } else {
         stop("Unable to load gff file.")
     }
-    if (!is.null(type)) {
-        index <- ret[, "type"] == type
-        ret <- ret[index, ]
-    }
-    message(paste0("Returning a df with ", ncol(ret), " columns and ", nrow(ret), " rows."))
+
     return(ret)
 }
 

@@ -1024,39 +1024,4 @@ parse_interpro_domains <- function(filepath) {
     return(unique(go_rows))
 }
 
-get_eupathdb_data <- function(species="Leishmania major Friedlin") {
-    ## Get EuPathDB version (same for all databases)
-    dbversion <- readLines("http://tritrypdb.org/common/downloads/Current_Release/Build_number")
-
-    shared_tags <- c("Annotation", "EuPathDB", "Eukaryote", "Pathogen", "Parasite")
-    tags <- list(
-        "AmoebaDB" = c(shared_tags, "Amoeba"),
-        "CryptoDB" = c(shared_tags, "Cryptosporidium"),
-        "FungiDB" = c(shared_tags, "Fungus", "Fungi"),
-        "GiardiaDB" = c(shared_tags, "Giardia"),
-        "MicrosporidiaDB" = c(shared_tags, "Microsporidia"),
-        "PiroplasmaDB" = c(shared_tags, "Piroplasma"),
-        "PlasmoDB" = c(shared_tags, "Plasmodium"),
-        "ToxoDB" = c(shared_tags, "Toxoplasmosis"),
-        "TrichDB" = c(shared_tags, "Trichomonas"),
-        "TriTrypDB" = c(shared_tags, "Trypanosome", "Kinetoplastid", "Leishmania")
-    )
-    tag_strings <- lapply(tags, function(x) { paste(x, collapse=",") })
-
-    ## construct API request URL
-    base_url <- "http://eupathdb.org/eupathdb/webservices/"
-    query_string <- "OrganismQuestions/GenomeDataTypes.json?o-fields=all"
-    request_url <- paste0(base_url, query_string)
-
-    ## retrieve organism metadata from EuPathDB
-    result <- jsonlite::fromJSON(request_url)
-    records <- result[["response"]][["recordset"]][["records"]]
-
-    ## convert to a dataframe
-    dat <- data.frame(t(sapply(records[["fields"]], function (x) { x[,"value"] } )),
-                      stringsAsFactors=FALSE)
-    colnames(dat) <- records[["fields"]][[1]][["name"]]
-
-}
-
 ## EOF
