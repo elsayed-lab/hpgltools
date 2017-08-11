@@ -4,7 +4,7 @@
 \alias{get_kegg_genepaths}
 \title{Create a data frame of pathways to gene IDs from KEGGREST}
 \usage{
-get_kegg_genepaths(species = "ecoli", abbreviation = NULL)
+get_kegg_genepaths(species = "ecoli", abbreviation = NULL, flatten = TRUE)
 }
 \arguments{
 \item{species}{String to use to query KEGG abbreviation.}

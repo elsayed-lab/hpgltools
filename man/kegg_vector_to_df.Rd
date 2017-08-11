@@ -4,7 +4,7 @@
 \alias{kegg_vector_to_df}
 \title{Convert a potentially non-unique vector from kegg into a normalized data frame.}
 \usage{
-kegg_vector_to_df(vector, final_colname = "first")
+kegg_vector_to_df(vector, final_colname = "first", flatten = TRUE)
 }
 \arguments{
 \item{vector}{Information from KEGGREST}
