@@ -31,16 +31,16 @@ get_kegg_genepaths <- function(species="ecoli", abbreviation=NULL, flatten=TRUE)
     path_df <- kegg_vector_to_df(path_vector, final_colname="pathways", flatten=flatten)
 
     if (isTRUE(flatten)) {
-        result <- merge(genes_df, prot_df, by="ID", all=TRUE)
+        result <- merge(genes_df, prot_df, by="GID", all=TRUE)
         rownames(result) <- result[["ID"]]
-        result <- merge(result, uniprot_df, by="ID", all=TRUE)
+        result <- merge(result, uniprot_df, by="GID", all=TRUE)
         rownames(result) <- result[["ID"]]
-        result <- merge(result, path_df, by="ID", all=TRUE)
+        result <- merge(result, path_df, by="GID", all=TRUE)
         rownames(result) <- result[["ID"]]
     } else {
-        result <- merge(genes_df, prot_df, by="ID", all=TRUE)
-        result <- merge(result, uniprot_df, by="ID", all=TRUE)
-        result <- merge(result, path_df, by="ID", all=TRUE)
+        result <- merge(genes_df, prot_df, by="GID", all=TRUE)
+        result <- merge(result, uniprot_df, by="GID", all=TRUE)
+        result <- merge(result, path_df, by="GID", all=TRUE)
     }
 
     result[["ncbi_geneid"]] <- gsub(pattern="ncbi-geneid:", replacement="", x=result[["ncbi_geneid"]])

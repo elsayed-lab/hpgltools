@@ -4,7 +4,7 @@
 #' @param dir  Directory in which to build the packages.
 #' @return  The result of attempting to install the organismDbi package.
 #' @author  Keith Hughitt
-make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", dir=".") {
+make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", dir=".", kegg_abbreviation=NULL) {
     metadata <- download_eupathdb_metadata()
     all_species <- metadata[["Species"]]
     entry <- NULL
@@ -14,7 +14,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
         stop("Did not find your species.")
     }
 
-    orgdb_name <- make_eupath_orgdb(entry, dir)
+    orgdb_name <- make_eupath_orgdb(entry, dir, kegg_abbreviation=kegg_abbreviation)
     txdb_name <- make_eupath_txdb(entry, dir)
     
     species_parts <- unlist(strsplit(entry[["Species"]], " "))
@@ -109,7 +109,7 @@ download_eupathdb_metadata <- function() {
 
     ## shared metadata
     ## I wish I were this confident with %>% and transmute, I always get confused by them
-    shared_metadata <- dat %>% transmute(
+    shared_metadata <- dat %>% dplyr::transmute(
                                    BiocVersion=as.character(BiocInstaller::biocVersion()),
                                    Genome=sub(".gff", "", basename(URLgff)),
                                    NumGenes=genecount,
@@ -158,7 +158,7 @@ download_eupathdb_metadata <- function() {
 
     ## remove any organisms for which no GFF is available
     gff_exists <- sapply(shared_metadata[["SourceUrl"]],
-                         function(url) { HEAD(url)[["status_code"]] == 200 })
+                         function(url) { httr::HEAD(url)[["status_code"]] == 200 })
     ## remove any organisms for which no GFF is available
     ## Once again, I will attempt a workaround, probably via bioconductor.
     ## gff_exists <- sapply(shared_metadata$SourceUrl, function(url) { HEAD(url)$status_code == 200 })
@@ -196,7 +196,7 @@ download_eupathdb_metadata <- function() {
 #' @param entry One dimensional dataframe with organism metadata
 #' @return OrgDb instance
 #' @author Keith Hughitt 
-make_eupath_orgdb <- function(entry, output_dir) {
+make_eupath_orgdb <- function(entry, output_dir, kegg_abbreviation=NULL) {
     ## Get genus and species from organism name
     species_parts <- unlist(strsplit(entry[["Species"]], " "))
     genus <- species_parts[1]
@@ -207,7 +207,7 @@ make_eupath_orgdb <- function(entry, output_dir) {
 
     ## save gff as tempfile
     input_gff <- tempfile(fileext=".gff")
-    download.file(entry[["SourceUrl"]], input_gff)
+    download <- sm(download.file(entry[["SourceUrl"]], input_gff, method="internal", quiet=TRUE))
 
     ## get chromosome information from GFF file
     gff <- rtracklayer::import.gff3(input_gff)
@@ -232,7 +232,7 @@ make_eupath_orgdb <- function(entry, output_dir) {
     interpro_table <- get_eupath_interpro_table(entry[["DataProvider"]], entry[["Species"]])
     ## kegg data
     genus_species <- paste0(genus, "_", species)
-    kegg_table <- get_kegg_genepaths(genus_species, flatten=FALSE)
+    kegg_table <- get_kegg_genepaths(species=genus_species, flatten=FALSE, abbreviation=kegg_abbreviation)
     colnames(kegg_table) <- toupper(colnames(kegg_table))
 
     ## ortholog table
@@ -452,7 +452,7 @@ make_eupath_txdb <- function(entry, dir) {
 orgdb_info_from_gff <- function(gff) {
     ## get gene features and convert to a dataframe
     genes <- gff[gff$type == "gene"]
-    gene_info <- as.data.frame(elementMetadata(genes))
+    gene_info <- as.data.frame(GenomicRanges::elementMetadata(genes))
 
     ## drop any empty and NA columns
     na_mask <- apply(gene_info, 2, function(x) { sum(!is.na(x)) > 0 })
