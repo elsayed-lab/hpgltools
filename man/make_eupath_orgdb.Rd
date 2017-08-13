@@ -4,7 +4,7 @@
 \alias{make_eupath_orgdb}
 \title{Generate OrgDb for EuPathDB organism}
 \usage{
-make_eupath_orgdb(entry, output_dir)
+make_eupath_orgdb(entry, output_dir, kegg_abbreviation = NULL)
 }
 \arguments{
 \item{entry}{One dimensional dataframe with organism metadata}
