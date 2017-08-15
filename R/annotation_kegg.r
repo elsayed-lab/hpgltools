@@ -5,29 +5,32 @@
 #' @return  dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs and KEGG paths.
 #' @export
 get_kegg_genepaths <- function(species="ecoli", abbreviation=NULL, flatten=TRUE) {
+    chosen <- NULL
     if (is.null(abbreviation) & is.null(species)) {
         stop("This requires either a species or 3 letter kegg id.")
-    } else if (is.null(abbreviation)) {
+    } else if (!is.null(abbreviation)) {
+        chosen <- abbreviation
+    } else {
         ## Then the species was provided.
         abbreviation <- get_kegg_orgn(species)
         message(paste0("The possible abbreviations are: ", toString(abbreviation), "."))
         message("Choosing the first one.")
-        abbreviation <- abbreviation[[1]]
+        chosen <- abbreviation[[1]]
     }
 
     ## Getting a list of genes is easy, as they are unique.
-    genes_vector <- KEGGREST::keggConv("ncbi-geneid", abbreviation)
+    genes_vector <- KEGGREST::keggConv("ncbi-geneid", chosen)
     genes_df <- kegg_vector_to_df(genes_vector, final_colname="ncbi_geneid", flatten=flatten)
 
-    prot_vector <- KEGGREST::keggConv("ncbi-proteinid", abbreviation)
+    prot_vector <- KEGGREST::keggConv("ncbi-proteinid", chosen)
     prot_df <- kegg_vector_to_df(prot_vector, final_colname="ncbi_proteinid", flatten=flatten)
 
-    uniprot_vector <- KEGGREST::keggConv("uniprot", abbreviation)
+    uniprot_vector <- KEGGREST::keggConv("uniprot", chosen)
     uniprot_df <- kegg_vector_to_df(uniprot_vector, final_colname="uniprotid", flatten=flatten)
 
     ## Getting paths<->genes is harder because uniqueness is lost.
     ## So first make the character vector of pathways<->genes
-    path_vector <- KEGGREST::keggLink("pathway", abbreviation)
+    path_vector <- KEGGREST::keggLink("pathway", chosen)
     path_df <- kegg_vector_to_df(path_vector, final_colname="pathways", flatten=flatten)
 
     if (isTRUE(flatten)) {
@@ -48,6 +51,8 @@ get_kegg_genepaths <- function(species="ecoli", abbreviation=NULL, flatten=TRUE)
     result[["uniprotid"]] <- gsub(pattern="up:", replacement="", x=result[["uniprotid"]])
     result[["pathways"]] <- gsub(pattern="path:", replacement="", x=result[["pathways"]])
     ## Now we have a data frame of all genes <-> ncbi-ids, pathways
+    result_nas <- is.na(result)
+    result[result_nas] <- ""
     return(result)
 }
 

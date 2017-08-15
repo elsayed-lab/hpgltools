@@ -95,10 +95,10 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     if (isTRUE(parallel)) {
         cl <- parallel::makeCluster(4)
         doParallel::registerDoParallel(cl)
-        requireNamespace("parallel")
-        requireNamespace("doParallel")
-        requireNamespace("iterators")
-        requireNamespace("foreach")
+        tt <- sm(requireNamespace("parallel"))
+        tt <- sm(requireNamespace("doParallel"))
+        tt <- sm(requireNamespace("iterators"))
+        tt <- sm(requireNamespace("foreach"))
         res <- foreach(c=1:length(names(results)), .packages=c("hpgltools")) %dopar% {
             type <- names(results)[c]
             results[[type]] <- do_pairwise(type,

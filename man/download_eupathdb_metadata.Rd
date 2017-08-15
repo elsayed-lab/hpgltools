@@ -4,7 +4,7 @@
 \alias{download_eupathdb_metadata}
 \title{Returns metadata for all eupathdb organisms.}
 \usage{
-download_eupathdb_metadata()
+download_eupathdb_metadata(db_version = NULL)
 }
 \value{
 Dataframe with lots of rows for the various species in eupathdb.
