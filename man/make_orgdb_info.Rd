@@ -5,7 +5,7 @@
 \title{Generate the (large) set of data frames required to make functional OrgDb/TxDb/OrganismDbi
 objects.}
 \usage{
-make_orgdb_info(gff, txt = NULL, ah = NULL, kegg = TRUE)
+make_orgdb_info(gff, txt = NULL, kegg = TRUE)
 }
 \arguments{
 \item{gff}{File to read gff annotations from.}

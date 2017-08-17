@@ -28,8 +28,6 @@ get_kegg_genepaths <- function(species="ecoli", abbreviation=NULL, flatten=TRUE)
     uniprot_vector <- KEGGREST::keggConv("uniprot", chosen)
     uniprot_df <- kegg_vector_to_df(uniprot_vector, final_colname="uniprotid", flatten=flatten)
 
-    ## Getting paths<->genes is harder because uniqueness is lost.
-    ## So first make the character vector of pathways<->genes
     path_vector <- KEGGREST::keggLink("pathway", chosen)
     path_df <- kegg_vector_to_df(path_vector, final_colname="pathways", flatten=flatten)
 
@@ -85,6 +83,9 @@ kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
             }
         }
         final_df <- unique_df
+        rm(unique_df)
+        final_df[["GID"]] <- rownames(final_df)
+        colnames(final_df) <- c(final_colname, "GID")
     } else {
         final_df <- as.data.frame(vector, stringsAsFactors=FALSE)
         final_df[["GID"]] <- names(vector)

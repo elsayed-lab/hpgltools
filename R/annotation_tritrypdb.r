@@ -226,8 +226,8 @@ parse_gene_go_terms <- function (filepath, verbose=FALSE) {
 #'  filenames <- tritryp_downloads(species="lmajor", strain="friedlin", version="28")
 #' }
 #' @export
-tritryp_downloads <- function(version="27", species="lmajor",
-                              strain="friedlin", dl_dir="organdb/tritryp", quiet=TRUE) {
+download_tritrypdb_text <- function(version="27", species="lmajor",
+                                    strain="friedlin", dl_dir="organdb/tritryp", quiet=TRUE) {
     files_downloaded <- 0
     files_found <- 0
 
@@ -353,7 +353,7 @@ get_ncbi_taxonid <- function(species="Leishmania major") {
 #'  crazytown <- make_organismdbi()  ## wait a loong time
 #' }
 #' @export
-make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb/tritryp", ...) {
+make_tritrypdb_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb/tritryp", ...) {
     arglist <- list(...)
     kegg <- arglist[["kegg"]]
     cfg <- get_eupath_config(cfg)
@@ -361,15 +361,15 @@ make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb
     version <- as.character(cfg_line[["db_version"]])
     strain <- as.character(cfg_line[["strain"]])
     shortname <- as.character(cfg_line[["shortname"]])
-    files <- tritryp_downloads(version=version, species=shortname, strain=strain)
+    files <- download_tritrypdb_text(version=version, species=shortname, strain=strain)
     ##files <- tritryp_downloads(version=version, species=shortname, strain=strain, ...)
     ##savefile <- paste0(output_dir, "/", cfg_line[["id"]], ".rda")
-    orgdb_info <- make_orgdb_info(files[["gff"]], files[["txt"]])
+    orgdb_info <- make_orgdb_info(files[["gff"]], txt=files[["txt"]])
     message("Starting make_orgdb.")
-    orgdb_result <- make_orgdb(orgdb_info, id=id, cfg=cfg_line, output_dir=output_dir, kegg=kegg)
+    orgdb_result <- make_tritrypdb_orgdb(orgdb_info, id=id, cfg=cfg_line, output_dir=output_dir, kegg=kegg)
     orgdb_package <- orgdb_result[["package_name"]]
     message("Starting make_txdb")
-    txdb_result <- make_txdb(orgdb_info, cfg_line=cfg_line, gff=files[["gff"]], output_dir=output_dir)
+    txdb_result <- make_tritrypdb_txdb(orgdb_info, cfg_line=cfg_line, gff=files[["gff"]], output_dir=output_dir)
     txdb_package <- txdb_result[["package_name"]]
 
     graph_data <- list(
@@ -411,7 +411,7 @@ make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb
         license = "Artistic-2.0"
     )
     organdb_path <- paste0(destination, "/", pkgname)
-    organdb_path <- pkg_cleaner(organdb_path)
+    organdb_path <- clean_pkg(organdb_path)
     if (class(organdb) == "list") {
         inst <- devtools::install(organdb_path)
     }
@@ -434,7 +434,7 @@ make_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb
 #'  crazytown <- make_organismdbi()  ## wait a loong time
 #' }
 #' @export
-pkg_cleaner <- function(path, removal="-like", replace="") {
+clean_pkg <- function(path, removal="-like", replace="") {
     ## This is because TxDb creation fails if you have an author like 'abelew <abelew@gmail.com>'
     ##at_cmd <- paste0("sed -i 's/ at /\\@/g' ", path, "/DESCRIPTION")
     at_cmd <- paste0("perl -p -i -e 's/ at /\\@/g' ", path, "/DESCRIPTION")
@@ -480,7 +480,7 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
         message(paste0("rewriting sqlite db:", final_sqlite_cmd))
         system(final_sqlite_cmd)
     }
-    message("Finished pkg_cleaner.")
+    message("Finished clean_pkg.")
     return(new_dir)
 }
 
@@ -509,8 +509,8 @@ pkg_cleaner <- function(path, removal="-like", replace="") {
 #'  orgdb_installedp <- make_orgdb(id="tcruzi_clbrener")
 #' }
 #' @export
-make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
-                       kegg=TRUE, output_dir="organismdbi", ...) {
+make_tritrypdb_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
+                                 kegg=TRUE, output_dir="organismdbi", ...) {
     arglist <- list(...)
     orgdb_pre <- paste0(output_dir, "/orgdb")
     if (!file.exists(orgdb_pre)) {
@@ -542,8 +542,11 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
 
     ## We need to ensure that none of the inputs for makeOrgPackage have duplicated rows.
     ## It looks like go/kegg are the most likely candidates for this particular problem.
+    ## Also, make all the NAs to ""
     test_gene_info <- duplicated(gene_info)
     gene_info <- gene_info[!test_gene_info, ]
+    test_gene_info <- is.na(gene_info)
+    gene_info[test_gene_info] <- ""
     test_chr_info <- duplicated(chr_info)
     chr_info <- chr_info[!test_chr_info, ]
     test_go_info <- duplicated(go_info)
@@ -552,10 +555,10 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
     gene_types <- gene_types[!test_types, ]
     orgdb_dir <- NULL
     if (isTRUE(kegg)) {
+        kegg_species <- paste0(cfg[["genus"]], " ", cfg[["species"]])
+        kegg_info <- get_kegg_genepaths(species=kegg_species)
         test_kegg_info <- duplicated(kegg_info)
         kegg_info <- kegg_info[!test_kegg_info, ]
-        kegg_species <- paste0(cfg[["genus"]], " ", cfg[["species"]])
-        kegg_info <- get_kegg_genes(species=kegg_species)
         kegg_info[["GID"]] <- as.character(kegg_info[["GID"]])
         orgdb_dir <- AnnotationForge::makeOrgPackage(
                                           gene_info = gene_info,
@@ -590,9 +593,9 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
                                           goTable = "go")
     }
 
-    orgdb_dir <- pkg_cleaner(orgdb_dir)
+    orgdb_dir <- clean_pkg(orgdb_dir)
     if (cfg[["strain"]] == "CLBrenerNon-Esmeraldo-like") {
-        orgdb_dir <- sm(pkg_cleaner(orgdb_dir, removal="Non-Esmeraldo", replace="NonEsmeraldo"))
+        orgdb_dir <- sm(clean_pkg(orgdb_dir, removal="Non-Esmeraldo", replace="NonEsmeraldo"))
     }
 
     inst <- FALSE
@@ -625,7 +628,7 @@ make_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
 #'  txdb <- make_txdb(orgdb_output)
 #' }
 #' @export
-make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir="organismdbi", ...) {
+make_tritrypdb_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir="organismdbi", ...) {
     ## Sections of this were stolen from GenomicFeatures
     ## because it hates me.
     ## arglist <- list(...)
@@ -636,7 +639,11 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
     destination <- paste0(destination, "/txdb")
     db_version <- format(as.numeric(cfg_line[["db_version"]]), nsmall=1)
     maintainer <- as.character(cfg_line[["maintainer"]])
+    maintainer <- gsub(pattern=" at ", replacement="@", x=maintainer)
+    maintainer <- gsub(pattern=" dot ", replacement=".", x=maintainer)
     author <- as.character(cfg_line[["author"]])
+    author <- gsub(pattern=" at ", replacement="@", x=author)
+    author <- gsub(pattern=" dot ", replacement=".", x=author)
     db_url <- as.character(cfg_line[["db_url"]])
     package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
                             cfg_line[["strain"]], ".", cfg_line[["db_name"]],
@@ -662,24 +669,30 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
     dbType <- GenomicFeatures:::.getMetaDataValue(txdb, "Db type")
     authors <- GenomicFeatures:::.normAuthor(author, maintainer)
     template_path <- system.file("txdb-template", package = "GenomicFeatures")
-    symvals <- list("PKGTITLE" = paste("Annotation package for", dbType, "object(s)"),
-                    "PKGDESCRIPTION" = paste("Exposes an annotation databases generated from",
-                                             GenomicFeatures:::.getMetaDataValue(txdb, "Data source"), "by exposing these as", dbType, "objects"),
-                    "PKGVERSION" = db_version,
-                    "AUTHOR" = paste(authors, collapse = ", "),
-                    "MAINTAINER" = as.character(GenomicFeatures:::.getMaintainer(authors)),
-                    "GFVERSION" = GenomicFeatures:::.getMetaDataValue(txdb, "GenomicFeatures version at creation time"),
-                    "LIC" = "Artistic-2.0",
-                    "DBTYPE" = dbType,
-                    "ORGANISM" = GenomicFeatures:::.getMetaDataValue(txdb,"Organism"),
-                    "SPECIES" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
-                    "PROVIDER" = provider,
-                    "PROVIDERVERSION" = providerVersion,
-                    "RELEASEDATE" = GenomicFeatures:::.getMetaDataValue(txdb, "Creation time"),
-                    ## SOURCEURL = GenomicFeatures:::.getMetaDataValue(txdb, "Resource URL"),
-                    "SOURCEURL" = db_url,
-                    "ORGANISMBIOCVIEW" = gsub(" ", "_", GenomicFeatures:::.getMetaDataValue(txdb, "Organism")),
-                    "TXDBOBJNAME" = package_name)
+    symvals <- list(
+        "PKGTITLE" = paste("Annotation package for", dbType, "object(s)"),
+        "PKGDESCRIPTION" = paste("Exposes an annotation databases generated from",
+                                 GenomicFeatures:::.getMetaDataValue(txdb, "Data source"), "by exposing these as", dbType, "objects"),
+        "PKGVERSION" = db_version,
+        ## "AUTHOR" = as.character(paste(authors, collapse = ", ")),
+        "AUTHOR" = "Keith Hughitt, Ashton Trey Belew",
+        "AUTHORS@R" =
+            'c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre")),
+                      person("Keith", "Hughitt", email="khughitt@umd.edu", role=c("aut")))',
+        "MAINTAINER" = "Ashton Trey Belew <abelew@gmail.com>",
+        ## "MAINTAINER" = as.character(GenomicFeatures:::.getMaintainer(authors)),
+        "GFVERSION" = GenomicFeatures:::.getMetaDataValue(txdb, "GenomicFeatures version at creation time"),
+        "LIC" = "Artistic-2.0",
+        "DBTYPE" = dbType,
+        "ORGANISM" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
+        "SPECIES" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
+        "PROVIDER" = provider,
+        "PROVIDERVERSION" = providerVersion,
+        "RELEASEDATE" = GenomicFeatures:::.getMetaDataValue(txdb, "Creation time"),
+        ## SOURCEURL = GenomicFeatures:::.getMetaDataValue(txdb, "Resource URL"),
+        "SOURCEURL" = db_url,
+        "ORGANISMBIOCVIEW" = gsub(" ", "_", GenomicFeatures:::.getMetaDataValue(txdb, "Organism")),
+        "TXDBOBJNAME" = package_name)
     if (any(duplicated(names(symvals)))) {
         str(symvals)
         stop("'symvals' contains duplicated symbols")
@@ -705,10 +718,10 @@ make_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir
     }
 
     install_dir <- paste0(destination, "/", package_name)
-    install_dir <- pkg_cleaner(install_dir)
+    install_dir <- clean_pkg(install_dir)
     ## Things with '-' are problematic.
     if (cfg_line[["strain"]] == "CLBrenerNon-Esmeraldo-like") {
-        install_dir <- sm(pkg_cleaner(install_dir, removal="Non-Esmeraldo", replace="NonEsmeraldo"))
+        install_dir <- sm(clean_pkg(install_dir, removal="Non-Esmeraldo", replace="NonEsmeraldo"))
     }
     result <- sm(try(devtools::install(install_dir)))
     package_name <- basename(install_dir)
@@ -761,9 +774,9 @@ get_eupath_config <- function(cfg=NULL) {
 #' \dontrun{
 #'  orgdb_data <- make_orgdb_info(gff="lmajor.gff", txt="lmajor.txt")
 #' }
-make_orgdb_info <- function(gff, txt=NULL, ah=NULL, kegg=TRUE) {
-    gff_entries <- GenomicRanges::as.data.frame(rtracklayer::import.gff3(gff),
-                                                stringsAsFactors=FALSE)
+make_orgdb_info <- function(gff, txt=NULL, kegg=TRUE) {
+    savefile <- paste0(txt, ".rda")
+    gff_entries <- GenomicRanges::as.data.frame(rtracklayer::import.gff3(gff))
     gene_types <- gff_entries[["type"]] == "gene"
     genes <- gff_entries[gene_types, ]
     gene_info <- genes
@@ -780,72 +793,13 @@ make_orgdb_info <- function(gff, txt=NULL, ah=NULL, kegg=TRUE) {
     chromosome_info <- data.frame(
         "chrom" = chromosomes[["ID"]],
         "length" = as.numeric(chromosomes[["size"]]),
-        "is_circular" = NA,
-        stringsAsFactors=FALSE)
+        "is_circular" = NA)
 
     gid_index <- grep("GID", colnames(gene_info))
     ## Move gid to the front of the line.
     gene_info <- gene_info[, c(gid_index, (1:ncol(gene_info))[-gid_index])]
     colnames(gene_info) <- paste0("GENE", colnames(gene_info))
     colnames(gene_info)[1] <- "GID"
-
-    txt_information <- NULL
-    gene_set <- NULL
-    go_info <- NULL
-    if (!is.null(txt)) {
-        txt_information <- tritryp_extract_txt(txt, gene_info)
-    } else if (!is.null(ah)) {
-        txt_information <- tritryp_extract_ah(ah, gene_info)
-    }
-
-    gene_set <- txt_information[["genes"]]
-    go_info <- txt_information[["go"]]
-
-    chr_info <- data.frame(
-        "GID" = rownames(gene_set),
-        "CHR" = gene_set[["chromosome"]],
-        stringsAsFactors=FALSE)
-    
-    gene_types <- data.frame(
-        "GID" = rownames(gene_set),
-        "TYPE" = gene_set[["type"]],
-        stringsAsFactors=FALSE)
-
-    ## The information in the following list really should be coming from parse_gene_info_table()
-    ret <- list(
-        "gene_info" = gene_info,
-        "chr_info" = chr_info,
-        "gene_types" = gene_types,
-        "go_info" = go_info,
-        "chromosome_info" = chromosome_info
-    )
-    return(ret)
-}
-
-tritryp_extract_ah <- function(ah, gene_info) {
-    all <- sm(AnnotationHub::AnnotationHub())
-    ## First, assume the user knows which entry to get.
-    specific <- try(all[[ah]], silent=TRUE)
-    if (class(specific) == "try-error") {
-        ## If not, do a query and choose.
-        message(paste0("Unable to find annotation hub entry for: ", ah, ", trying a search."))
-        test_ah <- AnnotationHub::query(all, ah)
-        message(paste0("Found the following hubs: "))
-        for (h in 1:length(test_ah)) {
-            message(test_ah$title[h])
-        }
-        message("Choosing the first one.")
-        chosen <- names(test_ah)[[1]]
-        specific <- sm(all[[chosen]])
-    }
-    avail_genes <- AnnotationDbi::keys(specific)
-    avail_keytypes <- AnnotationDbi::keytypes(specific)
-    table <- AnnotationDbi::select(specific, columns=avail_keytypes, keys=avail_genes)
-    return(table)
-}
-
-tritryp_extract_txt <- function(txt, gene_info) {
-    savefile <- paste0(txt, ".rda")
     num_rows <- nrow(gene_info)
     ## Get rid of character(0) crap and NAs
     is.empty <- function(stuff) {
@@ -887,10 +841,30 @@ tritryp_extract_txt <- function(txt, gene_info) {
         load(savefile, envir=txt_information)
         txt_information <- txt_information[["txt_information"]]
     } else {
+        message("Reading the txt takes a long time.")
         txt_information <- parse_gene_info_table(file=txt, verbose=TRUE)
         save(txt_information, file=savefile)
     }
-    return(txt_information)
+    gene_set <- txt_information[["genes"]]
+    go_info <- txt_information[["go"]]
+
+    chr_info <- data.frame(
+        "GID" = rownames(gene_set),
+        "CHR" = gene_set[["chromosome"]])
+
+    gene_types <- data.frame(
+        "GID" = rownames(gene_set),
+        "TYPE" = gene_set[["type"]])
+
+    ## The information in the following list really should be coming from parse_gene_info_table()
+    ret <- list(
+        "gene_info" = gene_info,
+        "chr_info" = chr_info,
+        "gene_types" = gene_types,
+        "go_info" = go_info,
+        "chromosome_info" = chromosome_info
+    )
+    return(ret)
 }
 
 #' EuPathDB gene information table GO term parser

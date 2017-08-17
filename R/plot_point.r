@@ -466,7 +466,12 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                                         paste0("Down Sig.: ", num_downsig),
                                         paste0("Insig.: ", num_insig)),
                                     guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey")))
+    } else {
+        plt <- plt +
+            ggplot2::scale_shape_manual(name="State", values=state_shapes,
+                                        guide="none")
     }
+
     plt <- plt +
         ## Set the colors of the significant/insignificant points.
         ggplot2::scale_fill_manual(name="as.factor(pcut)",

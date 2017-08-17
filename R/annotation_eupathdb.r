@@ -80,7 +80,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
         license = "Artistic-2.0"
     ))
     organdb_path <- paste0(destination, "/", pkgname)
-    organdb_path <- pkg_cleaner(organdb_path)
+    organdb_path <- clean_pkg(organdb_path)
     if (class(organdb) == "list") {
         inst <- devtools::install(organdb_path)
     }
@@ -440,7 +440,7 @@ make_eupath_orgdb <- function(entry, dir=".", kegg_abbreviation=NULL,
     Sys.chmod(dbpath, mode="0444")
 
     ## Clean up any strangeness in the DESCRIPTION file
-    orgdb_path <- pkg_cleaner(orgdb_path)
+    orgdb_path <- clean_pkg(orgdb_path)
     ## And install the resulting package.
     inst <- sm(try(devtools::install(orgdb_path)))
     if (class(inst) != "try-error") {
@@ -544,7 +544,7 @@ make_eupath_txdb <- function(entry, dir=".") {
     }
 
     install_dir <- paste0(build_dir, "/", package_name)
-    install_dir <- sm(pkg_cleaner(install_dir))
+    install_dir <- sm(clean_pkg(install_dir))
     result <- sm(try(devtools::install(install_dir)))
     result <- basename(install_dir)
     return(result)

@@ -200,19 +200,37 @@ test_that("Does combine_de_tables create an excel file?", {
 ## How many significant up genes did limma find?
 actual <- dim(significant_excel[["limma"]][["ups"]][["treated_vs_untreated"]])
 expected <- c(94, 43)
-test_that("Is the number of significant genes as expected? (limma)", {
+test_that("Is the number of significant up genes as expected? (limma)", {
     expect_equal(expected, actual)
 })
 
 actual <- dim(significant_excel[["deseq"]][["ups"]][["treated_vs_untreated"]])
 expected <- c(100, 43)
-test_that("Is the number of significant genes as expected? (deseq)", {
+test_that("Is the number of significant up genes as expected? (deseq)", {
     expect_equal(expected, actual)
 })
 
 actual <- dim(significant_excel[["edger"]][["ups"]][["treated_vs_untreated"]])
 expected <- c(112, 43)
-test_that("Is the number of significant genes as expected? (edger)", {
+test_that("Is the number of significant up genes as expected? (edger)", {
+    expect_equal(expected, actual)
+})
+
+actual <- dim(significant_excel[["limma"]][["downs"]][["treated_vs_untreated"]])
+expected <- c(118, 43)
+test_that("Is the number of significant down genes as expected? (limma)", {
+    expect_equal(expected, actual)
+})
+
+actual <- dim(significant_excel[["deseq"]][["downs"]][["treated_vs_untreated"]])
+expected <- c(105, 43)
+test_that("Is the number of significant down genes as expected? (deseq)", {
+    expect_equal(expected, actual)
+})
+
+actual <- dim(significant_excel[["edger"]][["downs"]][["treated_vs_untreated"]])
+expected <- c(106, 43)
+test_that("Is the number of significant down genes as expected? (edger)", {
     expect_equal(expected, actual)
 })
 

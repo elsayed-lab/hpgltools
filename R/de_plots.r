@@ -62,12 +62,10 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, logfc=1,
     if (is.null(table)) {
         table <- 1
     }
-    if (!is.null(pairwise[["all_tables"]])) {
-        ## If there is a 'all_tables', slot,  then this is de_edger output.
-        possible_tables <- names(pairwise[["all_tables"]])
-        all_tables <- pairwise[["all_tables"]]
-    } else if (!is.null(pairwise[["data"]]) & class(pairwise[["data"]]) == "data.frame") {
+
+    if (!is.null(pairwise[["data"]]) & class(pairwise[["data"]]) == "data.frame") {
         ## This is from combining a single table.
+        ## Thus we need only pull the correct column names.
         fc_col <- paste0(type, "_logfc")
         p_col <- paste0(type, "_adjp")
         expr_col <- NULL
@@ -82,9 +80,12 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, logfc=1,
         } else if (type == "basic") {
             expr_col <- "basic_nummed"
         }
+        the_table <- pairwise[["data"]]
     } else {
         ## Then this is combined_tables() output.
-        possible_tables <- names(pairwise[["data"]])
+        ## This makes things a bit more complicated, as we have multiple tables to search through and must set the correct columns for them.
+        ## Set the column names here, and choose the correct table below.
+        possible_tables <- pairwise[["contrast_list"]]
         all_tables <- pairwise[["data"]]
         fc_col <- paste0(type, "_logfc")
         p_col <- paste0(type, "_adjp")
@@ -98,22 +99,64 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, logfc=1,
         } else if (type == "basic") {
             expr_col <- "basic_nummed"
         }
-    }
 
-    if (is.numeric(table)) {
-        the_table <- possible_tables[[table]]
-    } else {
-        the_table <- table
-        revname <- strsplit(x=table, split="_vs_")
-        revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
-        if (!(table %in% possible_tables) & revname %in% possible_tables) {
-            message("Trey you doofus, you reversed the name of the table.")
-            the_table <- revname
-        } else if (!(table %in% possible_tables) & !(revname %in% possible_tables)) {
-            stop("Unable to find the table in the set of possible tables.")
+        ## Now that we have the columns, figure out which table.
+        if (is.numeric(table)) {
+            ## It is possible to just request the 1st, second, etc table
+            the_table <- pairwise[["data"]][[table]]
+        } else if (grepl(pattern="_vs_", x=table)) {
+            ## The requested table might be a_vs_b, but sometimes a and b get flipped.
+            ## Figure that out here and return the appropriate table.
+            the_table <- table
+            revname <- strsplit(x=the_table, split="_vs_")
+            revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
+            possible_tables <- names(pairwise[["data"]])
+            if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
+                message("Trey you doofus, you reversed the name of the table.")
+                the_table <- revname
+            } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
+                stop("Unable to find the table in the set of possible tables.")
+            } else {
+                the_table <- pairwise[["data"]][[the_table]]
+            }
+        } else if (length(table) == 1) {
+            ## One might request a name from the keepers list
+            ## If so, figure that out here.
+            table_parts <- pairwise[["keepers"]][[table]]
+            if (is.null(table_parts)) {
+                stop("Unable to find the table in the set of possible tables.")
+            }
+            fwdname <- paste0(table_parts[[1]], "_vs_", table_parts[[2]])
+            revname <- paste0(table_parts[[2]], "_vs_", table_parts[[1]])
+            final_fwd_table <- pairwise[["data"]][[fwdname]]
+            final_rev_table <- pairwise[["data"]][[revname]]
+            if (is.null(final_fwd_table) & is.null(final_rev_table)) {
+                stop("The table seems to be missing?")
+            } else if (is.null(final_fwd_table)) {
+                message("Trey you doofus, you reversed the name of the table.")
+                the_table <- final_rev_table
+            } else {
+                the_table <- final_fwd_table
+            }
+        } else if (length(table) == 2) {
+            ## Perhaps one will ask for c(numerator, denominator)
+            the_table <- paste0(table[[1]], "_vs_", table[[2]])
+            revname <- strsplit(x=the_table, split="_vs_")
+            revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
+            possible_tables <- names(pairwise[["data"]])
+            if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
+                message("Trey you doofus, you reversed the name of the table.")
+                the_table <- revname
+            } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
+                stop("Unable to find the table in the set of possible tables.")
+            } else {
+                the_table <- pairwise[["data"]][[the_table]]
+            }
+        } else {
+            stop("Unable to discern the table requested.")
         }
     }
-    the_table <- all_tables[[the_table]]
+
     ## DESeq2 returns the median values as base 10, but we are using log2 (or log10?)
     if (type == "deseq") {
         the_table[["log_basemean"]] <- log2(x=the_table[[expr_col]] + 1.0)

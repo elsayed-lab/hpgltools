@@ -431,8 +431,8 @@ both condition and batch? Using only a conditional model.")
                                          ## contrasts.arg=list(conditions="contr.sum"))
         noint_model <- stats::model.matrix(~ condition + model_batch, data=design)
                                            ## contrasts.arg=list(conditions="contr.sum"))
-        int_string <- condbatch_int_string
-        noint_string <- condbatch_noint_string
+        int_string <- cond_int_string
+        noint_string <- cond_noint_string
         including <- "condition+batchestimate"
     } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
         message("Including batch estimates from sva/ruv/pca in the model.")
@@ -440,8 +440,8 @@ both condition and batch? Using only a conditional model.")
                                            ## contrasts.arg=list(conditions="contr.sum"))
         noint_model <- stats::model.matrix(~ condition + model_batch, data=design)
                                            ## contrasts.arg=list(conditions="contr.sum"))
-        int_string <- condbatch_int_string
-        noint_string <- condbatch_noint_string
+        int_string <- cond_int_string
+        noint_string <- cond_noint_string
         including <- "condition+batchestimate"
     } else if (isTRUE(model_cond)) {
         int_model <- cond_int_model
@@ -1157,40 +1157,40 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
         ## Pre-allocate and set the row/colnames
         expression_mtrx <- matrix(ncol=nconds, nrow=num_rows)
         stdev_mtrx <- matrix(ncol=nconds, nrow=num_rows)
+        sigma_mtrx <- matrix(ncol=nconds, nrow=num_rows)
+        s2post_mtrx <- matrix(ncol=nconds, nrow=num_rows)
         t_mtrx <- matrix(ncol=nconds, nrow=num_rows)
         colnames(expression_mtrx) <- conds
         colnames(stdev_mtrx) <- conds
+        colnames(sigma_mtrx) <- conds
+        colnames(s2post_mtrx) <- conds
         colnames(t_mtrx) <- conds
         rownames(expression_mtrx) <- row_order
         rownames(stdev_mtrx) <- row_order
+        rownames(sigma_mtrx) <- row_order
+        rownames(s2post_mtrx) <- row_order
         rownames(t_mtrx) <- row_order
         ## Recast these as data frames because they are easier syntactically.
         ## E.g. I like setting columns with df[[thingie]]
-        expression_mtrx <- as.data.frame(expression_mtrx)
-        stdev_mtrx <- as.data.frame(stdev_mtrx)
-        std_error <- as.data.frame(stdev_mtrx)
-        another_error <- as.data.frame(stdev_mtrx)
-        t_mtrx <- as.data.frame(t_mtrx)
         ## I am explicitly setting the row order because it seems that the output
         ## from limma is not set from one table to the next.
         for (cond in conds) {
-            tmp_table <- datum[["limma"]][["identity_tables"]][[cond]]
-            new_column <- tmp_table[row_order, "logFC"]
-            expression_mtrx[[cond]] <- new_column
-            new_column <- tmp_table[row_order, "t"]
-            t_mtrx[[cond]] <- new_column
+            expression_mtrx[, cond] <- datum[["limma"]][["identity_tables"]][[cond]][row_order, "logFC"]
+            t_mtrx[, cond] <- datum[["limma"]][["identity_tables"]][[cond]][row_order, "t"]
+        
             ## When attempting to extract something suitable for error bars:
             ## https://support.bioconductor.org/p/79349/
             ## The discussion seems to me to have settled on:
             ## std.error =  fit$stdev.unscaled * fit$sigma
-            stdev_table <- datum[["limma"]][["pairwise_fits"]][["stdev.unscaled"]]
-            sigma_table <- datum[["limma"]][["pairwise_fits"]][["sigma"]]
-            s2post_table <- datum[["limma"]][["pairwise_fits"]][["s2.post"]]
-            std_error <- stdev_table * sigma_table
+            stdev_mtrx[, cond] <- as.numeric(datum[["limma"]][["identity_comparisons"]][["stdev.unscaled"]][row_order, cond])
+            sigma_mtrx[, cond] <- as.numeric(datum[["limma"]][["identity_comparisons"]][["sigma"]])
+            s2post_mtrx[, cond] <- as.numeric(datum[["limma"]][["identity_comparisons"]][["s2.post"]])
+            std_error <- stdev_mtrx * sigma_mtrx
+            another_error <- stdev_mtrx * s2post_mtrx
             ## another_error <- stdev_table * s2post_table
-            stdev_mtrx[[cond]] <- tmp_table[row_order, cond]
         }
-    }
+    } ## End if type is limma
+
     retlist <- list(
         "expression_values" = expression_mtrx,
         "t_values" = t_mtrx,

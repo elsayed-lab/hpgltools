@@ -63,6 +63,7 @@ clean:
 	@rm -rf tests/testthat/*.gb
 	@rm -rf tests/testthat/*.map
 	@rm -rf tests/testthat/*.xml
+	@rm -rf tests/testthat/*.Rdata
 	@rm -rf vignettes/circos
 	@rm -rf vignettes/*.gff
 	@rm -rf vignettes/*.pdf

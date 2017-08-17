@@ -279,11 +279,14 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     sheet_count <- 0
     de_summaries <- data.frame()
     name_list <- c()
+    contrast_list <- c()
+    ret_keepers <- list()
     if (class(keepers) == "list") {
         ## First check that your set of kepers is in the data
         all_coefficients <- unlist(strsplit(x=limma[["contrasts_performed"]], split="_vs_"))
         all_keepers <- as.character(unlist(keepers))
         found_keepers <- sum(all_keepers %in% all_coefficients)
+        ret_keepers <- keepers
         if (found_keepers == 0) {
             message("The keepers has no elements in the coefficients.")
             message(paste0("Here are the keepers: ", toString(all_keepers)))
@@ -293,6 +296,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         ## Then keep specific tables in specific orientations.
         a <- 0
         keeper_len <- length(names(keepers))
+        contrast_list <- names(keepers)
         table_names <- list()
         for (name in names(keepers)) {
             a <- a + 1
@@ -374,109 +378,109 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                              excludes=excludes, padj_type=padj_type)
                 dat <- combined[["data"]]
                 summary <- combined[["summary"]]
+                limma_plt <- edger_plt <- deseq_plt <- NULL
+                limma_ma_plt <-  edger_ma_plt <- deseq_ma_plt <- NULL
                 if (isTRUE(do_inverse)) {
-                    limma_try <- try(sm(extract_coefficient_scatter(limma, type="limma",
-                                                                    loess=loess,
-                                                                    x=denominator,
-                                                                    y=numerator)), silent=TRUE)
-                    if (class(limma_try) == "list") {
-                        limma_plt <- limma_try
-                    } else {
-                        limma_plt <- NULL
-                    }
-                    limma_ma_try <- try(sm(extract_de_ma(combined, type="limma", invert=TRUE,
-                                                         table=found_table)))
-                    if (class(limma_ma_try) == "list") {
-                        limma_ma_plt <- limma_ma_try
-                    } else {
-                        limma_ma_plt <- NULL
-                    }
-
-                    edger_try <- try(sm(extract_coefficient_scatter(edger, type="edger",
-                                                                    loess=loess,
-                                                                    x=denominator,
-                                                                    y=numerator)), silent=TRUE)
-                    if (class(edger_try) == "list") {
-                        edger_plt <- edger_try
-                    } else {
-                        edger_plt <- NULL
-                    }
-                    edger_ma_try <- try(sm(extract_de_ma(combined, type="edger", invert=TRUE,
-                                                         table=found_table)))
-                    if (class(edger_ma_try) == "list") {
-                        edger_ma_plt <- edger_ma_try
-                    } else {
-                        edger_ma_plt <- NULL
+                    if (isTRUE(include_limma)) {
+                        limma_try <- try(sm(extract_coefficient_scatter(
+                            limma, type="limma",
+                            loess=loess,
+                            x=denominator,
+                            y=numerator)), silent=TRUE)
+                        limma_ma_try <- try(sm(extract_de_ma(
+                            combined, type="limma", invert=TRUE,
+                            table=found_table)))
+                        if (class(limma_try) == "list") {
+                            limma_plt <- limma_try
+                        }
+                        if (class(limma_ma_try) == "list") {
+                            limma_ma_plt <- limma_ma_try
+                        }
                     }
 
-                    deseq_try <- try(sm(extract_coefficient_scatter(deseq, type="deseq",
-                                                                    loess=loess,
-                                                                    x=denominator,
-                                                                    y=numerator)), silent=TRUE)
-                    if (class(deseq_try) == "list") {
-                        deseq_plt <- deseq_try
-                    } else {
-                        deseq_plt <- NULL
+                    if (isTRUE(include_edger)) {
+                        edger_try <- try(sm(extract_coefficient_scatter(
+                            edger, type="edger",
+                            loess=loess,
+                            x=denominator,
+                            y=numerator)), silent=TRUE)
+                        edger_ma_try <- try(sm(extract_de_ma(
+                            combined, type="edger", invert=TRUE,
+                            table=found_table)))
+                        if (class(edger_try) == "list") {
+                            edger_plt <- edger_try
+                        }
+                        if (class(edger_ma_try) == "list") {
+                            edger_ma_plt <- edger_ma_try
+                        }
                     }
-                    deseq_ma_try <- try(sm(extract_de_ma(combined, type="deseq", invert=TRUE,
-                                                         table=found_table)))
-                    if (class(deseq_ma_try) == "list") {
-                        deseq_ma_plt <- deseq_ma_try
-                    } else {
-                        deseq_ma_plt <- NULL
+                
+                    if (isTRUE(include_deseq)) {
+                        deseq_try <- try(sm(extract_coefficient_scatter(
+                            deseq, type="deseq",
+                            loess=loess,
+                            x=denominator,
+                            y=numerator)), silent=TRUE)
+                        deseq_ma_try <- try(sm(extract_de_ma(
+                            combined, type="deseq", invert=TRUE,
+                            table=found_table)))
+                        if (class(deseq_try) == "list") {
+                            deseq_plt <- deseq_try
+                        }
+                        if (class(deseq_ma_try) == "list") {
+                            deseq_ma_plt <- deseq_ma_try
+                        }
                     }
 
-                    
                 } else {  ## The data are not inverted.
-                    limma_try <- sm(try(extract_coefficient_scatter(limma, type="limma",
-                                                                    loess=loess,
-                                                                    x=numerator,
-                                                                    y=denominator)))
-                    if (class(limma_try) == "list") {
-                        limma_plt <- limma_try
-                    } else {
-                        limma_plt <- NULL
+                    if (isTRUE(include_limma)) {
+                        limma_try <- sm(try(extract_coefficient_scatter(
+                            limma, type="limma",
+                            loess=loess,
+                            x=numerator,
+                            y=denominator)))
+                        limma_ma_try <- sm(try(extract_de_ma(
+                            combined, type="limma",
+                            table=found_table)))
+                        if (class(limma_try) == "list") {
+                            limma_plt <- limma_try
+                        }
+                        if (class(limma_ma_try) == "list") {
+                            limma_ma_plt <- limma_ma_try
+                        }
                     }
-                    limma_ma_try <- sm(try(extract_de_ma(combined, type="limma",
-                                                         table=found_table)))
-                    if (class(limma_ma_try) == "list") {
-                        limma_ma_plt <- limma_ma_try
-                    } else {
-                        limma_ma_plt <- NULL
+                    if (isTRUE(include_edger)) {
+                        edger_try <- sm(try(extract_coefficient_scatter(
+                            edger, type="edger",
+                            loess=loess,
+                            x=numerator,
+                            y=denominator)))
+                        edger_ma_try <- sm(try(extract_de_ma(
+                            combined, type="edger",
+                            table=found_table)))
+                        if (class(edger_try) == "list") {
+                            edger_plt <- edger_try
+                        }
+                        if (class(edger_ma_try) == "list") {
+                            edger_ma_plt <- edger_ma_try
+                        } 
                     }
 
-                    edger_try <- sm(try(extract_coefficient_scatter(edger, type="edger",
-                                                                    loess=loess,
-                                                                    x=numerator,
-                                                                    y=denominator)))
-                    if (class(edger_try) == "list") {
-                        edger_plt <- edger_try
-                    } else {
-                        edger_plt <- NULL
-                    }
-                    edger_ma_try <- sm(try(extract_de_ma(combined, type="edger",
-                                                         table=found_table)))
-                    if (class(edger_ma_try) == "list") {
-                        edger_ma_plt <- edger_ma_try
-                    } else {
-                        edger_ma_plt <- NULL
-                    }
-
-                    deseq_try <- sm(try(extract_coefficient_scatter(deseq, type="deseq",
-                                                                    loess=loess,
-                                                                    x=numerator,
-                                                                    y=denominator)))
-                    if (class(deseq_try) == "list") {
-                        deseq_plt <- deseq_try
-                    } else {
-                        deseq_plt <- NULL
-                    }
-                    deseq_ma_try <- sm(try(extract_de_ma(combined, type="deseq",
-                                                         table=found_table)))
-                    if (class(deseq_ma_try) == "list") {
-                        deseq_ma_plt <- deseq_ma_try
-                    } else {
-                        deseq_ma_plt <- NULL
+                    if (isTRUE(include_deseq)) {
+                        deseq_try <- sm(try(extract_coefficient_scatter(
+                            deseq, type="deseq",
+                            loess=loess,
+                            x=numerator,
+                            y=denominator)))
+                        deseq_ma_try <- sm(try(extract_de_ma(
+                            combined, type="deseq",
+                            table=found_table)))
+                        if (class(deseq_try) == "list") {
+                            deseq_plt <- deseq_try
+                        }
+                        if (class(deseq_ma_try) == "list") {
+                            deseq_ma_plt <- deseq_ma_try
+                        }
                     }
                 }
 
@@ -502,7 +506,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         a <- 0
         names_length <- length(names(edger[["contrast_list"]]))
         table_names <- names(edger[["contrast_list"]])
+        contrast_list <- table_names
+        ret_keepers <- list()
         for (tab in names(edger[["contrast_list"]])) {
+            ret_keepers[[tab]] <- tab
             a <- a + 1
             name_list[a] <- tab
             message(paste0("Working on table ", a, "/", names_length, ": ", tab))
@@ -519,24 +526,54 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             splitted <- strsplit(x=tab, split="_vs_")
             xname <- splitted[[1]][1]
             yname <- splitted[[1]][2]
-            limma_plots[[tab]] <- sm(try(extract_coefficient_scatter(limma, type="limma", loess=loess,
-                                                                     x=xname, y=yname)))
-            limma_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="limma", table=tab)))
-            edger_plots[[tab]] <- sm(try(extract_coefficient_scatter(edger, type="edger", loess=loess,
-                                                                     x=xname, y=yname)))
-            edger_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="edger", table=tab)))
-            deseq_plots[[tab]] <- sm(try(extract_coefficient_scatter(deseq, type="deseq", loess=loess,
-                                                                     x=xname, y=yname)))
-            deseq_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="deseq", table=tab)))
-        }
-
+            limma_plots[[tab]] <-  limma_ma_plots[[tab]] <- edger_plots[[tab]] <- NULL
+            edger_ma_plots[[tab]] <- deseq_plots[[tab]] <- deseq_ma_plots[[tab]] <- NULL
+            if (isTRUE(include_limma)) {
+                limma_try <- sm(try(extract_coefficient_scatter(
+                    limma, type="limma", loess=loess,
+                    x=xname, y=yname)))
+                limma_ma_try <- sm(try(extract_de_ma(combined, type="limma", table=tab)))
+                if (class(limma_try) == "list") {
+                    limma_plots[[tab]] <- limma_try
+                }
+                if (class(limma_ma_try) == "list") {
+                    limma_ma_plots[[tab]] <- limma_ma_try
+                }
+            }
+            if (isTRUE(include_edger)) {
+                edger_try <- sm(try(extract_coefficient_scatter(
+                    edger, type="edger", loess=loess,
+                    x=xname, y=yname)))
+                edger_ma_try <- sm(try(extract_de_ma(combined, type="edger", table=tab)))
+                if (class(edger_try) == "list") {
+                    edger_plots[[tab]] <- edger_try
+                }
+                if (class(edger_ma_try) == "list") {
+                    edger_ma_plots[[tab]] <- edger_ma_try
+                }
+            }
+            if (isTRUE(include_deseq)) {
+                deseq_try <- sm(try(extract_coefficient_scatter(
+                    deseq, type="deseq", loess=loess,
+                    x=xname, y=yname)))
+                deseq_ma_try <- sm(try(extract_de_ma(combined, type="deseq", table=tab)))
+                if (class(deseq_try) == "list") {
+                    deseq_plots[[tab]] <- deseq_try
+                }
+                if (class(deseq_ma_try) == "list") {
+                    deseq_ma_plots[[tab]] <- deseq_ma_try
+                }
+            }
+        } ## End for list
         ## Or a single specific table
     }
 
     else if (class(keepers) == "character") {
         table <- keepers
+        contrast_list <- table
         name_list[1] <- table
         sheet_count <- sheet_count + 1
+        ret_keepers[[table]] <- table
         if (table %in% names(edger[["contrast_list"]])) {
             message(paste0("I found ", table, " in the available contrasts."))
         } else {
@@ -558,15 +595,44 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         table_names[[a]] <- combined[["summary"]][["table"]]
         xname <- splitted[[1]][1]
         yname <- splitted[[1]][2]
-        limma_plots[[name]] <- sm(try(extract_coefficient_scatter(limma, type="limma",
-                                                                  loess=loess, x=xname, y=yname)))
-        limma_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="limma", table=table)))
-        edger_plots[[name]] <- sm(try(extract_coefficient_scatter(edger, type="edger",
-                                                                  loess=loess, x=xname, y=yname)))
-        edger_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="edger", table=table)))
-        deseq_plots[[name]] <- sm(try(extract_coefficient_scatter(deseq, type="deseq",
-                                                                  loess=loess, x=xname, y=yname)))
-        deseq_ma_plots[[tab]] <- sm(try(extract_de_ma(combined, type="deseq", table=table)))
+        limma_plots[[name]] <- edger_plots[[name]] <- deseq_plots[[name]] <- NULL
+        limma_ma_plots[[name]] <- edger_ma_plots[[name]] <- deseq_ma_plots[[name]] <- NULL
+        if (isTRUE(include_limma)) {
+            limma_try <- sm(try(extract_coefficient_scatter(
+                limma, type="limma",
+                loess=loess, x=xname, y=yname)))
+            limma_ma_try <- sm(try(extract_de_ma(combined, type="limma", table=table)))
+            if (class(limma_try) == "list") {
+                limma_plots[[name]] <- limma_try
+            }
+            if (class(limma_ma_try) == "list") {
+                limma_ma_plots[[name]] <- limma_ma_try
+            }
+        }
+        if (isTRUE(include_edger)) {
+            edger_try <- sm(try(extract_coefficient_scatter(
+                edger, type="edger",
+                loess=loess, x=xname, y=yname)))
+            edger_ma_try <- sm(try(extract_de_ma(combined, type="edger", table=table)))
+            if (class(edger_try) == "list") {
+                edger_plots[[name]] <- edger_try
+            }
+            if (class(edger_ma_try) == "list") {
+                edger_ma_plots[[tab]] <- edger_ma_try
+            }
+        }
+        if (isTRUE(include_deseq)) {
+            deseq_try <- sm(try(extract_coefficient_scatter(
+                deseq, type="deseq",
+                loess=loess, x=xname, y=yname)))
+            deseq_ma_try <- sm(try(extract_de_ma(combined, type="deseq", table=table)))
+            if (class(deseq_try) == "list") {
+                deseq_plots[[name]] <- deseq_try
+            }
+            if (class(deseq_ma_try) == "list") {
+                deseq_ma_plots[[tab]] <- deseq_ma_try
+            }
+        }
     } else {
         stop("I don't know what to do with your specification of tables to keep.")
     } ## End different types of things to keep.
@@ -774,6 +840,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             "deseq_plots" = deseq_plots,
             "comp_plot" = comp,
             "venns" = venns,
+            "keepers" = ret_keepers,
+            "contrast_list" = contrast_list,
             "de_summary" = de_summaries)
     } else {
         ret <- retlist
@@ -807,7 +875,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 #'  limma/edger/deseq/basic tables, and b) A summary of how many
 #'  genes were observed as up/down by output table.
 #' @seealso \pkg{data.table} \pkg{openxlsx}
-#' @export
 combine_de_table <- function(li, ed, de, ba, table_name,
                               annot_df=NULL, inverse=FALSE, adjp=TRUE, padj_type="fdr",
                               include_deseq=TRUE, include_edger=TRUE, include_limma=TRUE,
@@ -1222,16 +1289,22 @@ extract_significant_genes <- function(combined,
     num_tables <- 0
     table_names <- NULL
     all_tables <- NULL
-    if (!is.null(combined[["data"]])) {
+    table_mappings <- NULL
+    if (is.null(combined[["data"]])) {
         ## Then this is the result of combine_de_tables()
         num_tables <- length(names(combined[["data"]]))
         table_names <- names(combined[["data"]])
         all_tables <- combined[["data"]]
+        table_mappings <- table_names
     } else {
         ## Then this is the result of all_pairwise()
-        num_tables <- length(combined[["contrasts"]])
-        table_names <- combined[["contrasts"]]
-        all_tables <- combined[["all_tables"]]
+        num_tables <- length(combined[["contrast_list"]])
+        ## Extract the names of the tables which filled combined
+        table_names <- names(combined[["data"]])
+        ## Pull the table list
+        all_tables <- combined[["data"]]
+        ## Get the mappings of contrast_name -> table_name
+        table_mappings <- combined[["keepers"]]
     }
     trimmed_up <- list()
     trimmed_down <- list()
@@ -1253,7 +1326,7 @@ extract_significant_genes <- function(combined,
     }
 
     table_count <- 0
-    if (according_to == "all") {
+    if (according_to[[1]] == "all") {
         according_to <- c("limma", "edger", "deseq", "basic")
     }
 
@@ -1351,9 +1424,9 @@ extract_significant_genes <- function(combined,
                                                table=table_name, fc=fc, pval_cutoff=p)
                     single_ma <- single_ma[["plot"]]
                 } else if (according == "basic") {
-                    ##single_ma <- extract_de_ma(combined, type="basic",
-                    ##                        table=table_name, fc=fc, pval_cutoff=p)
-                    single_ma <- NULL
+                    single_ma <- extract_de_ma(combined, type="basic",
+                                            table=table_name, fc=fc, pval_cutoff=p)
+                    single_ma <- single_ma[["plot"]]
                 } else {
                     message("Do not know this according type.")
                 }

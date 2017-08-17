@@ -196,9 +196,10 @@ the dataset, please try doing a filtering of the data and retry.")
         model_adjust <- as.matrix(fsva_result[["newsv"]])
         surrogate_result <- fsva_result
     } else if (estimate_type == "svaseq") {
-        message("This ignores the surrogates parameter and uses the be method to estimate surrogates.")
-        type_color <- "dodgerblue"
+        message(paste0("Attempting svaseq estimation with ",
+                       chosen_surrogates, " surrogates."))
         svaseq_result <- sm(sva::svaseq(base10_mtrx,
+                                        n.sv=chosen_surrogates,
                                         conditional_model,
                                         null_model))
         surrogate_result <- svaseq_result

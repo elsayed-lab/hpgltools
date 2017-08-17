@@ -134,7 +134,20 @@ load_orgdb_go <- function(orgdb, gene_ids=NULL, keytype="ENSEMBL",
     tt <- sm(requireNamespace("GO.db"))
     tt <- sm(requireNamespace("magrittr"))
     if (is.null(gene_ids)) {
-        gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
+        gene_ids <- try(AnnotationDbi::keys(orgdb, keytype=keytype), silent=TRUE)
+        if (class(gene_ids) == "try-error") {
+            avail_types <- AnnotationDbi::keytypes(orgdb)
+            if ("GID" %in% avail_types) {
+                message(paste0("The chosen keytype was not available.  Using 'GID'."))
+                keytype <- "GID"
+                gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
+            } else {
+                keytype <- avail_types[[1]]
+                message(paste0("Neither the chosen keytype, nor 'GID' was available.
+The available keytypes are: ", toString(avail_types), "choosing ", keytype, "."))
+                gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
+            }
+        }
     }
     if (class(orgdb)[[1]] == "OrganismDb") {
         message("This is an organismdbi, that should be ok.")
