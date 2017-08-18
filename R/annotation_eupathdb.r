@@ -1,3 +1,9 @@
+#' @export
+print_eupath_species <- function() {
+  metadata <- download_eupathdb_metadata()
+  return(metadata[["Species"]])
+}
+
 #' Create an organismDbi instance for an eupathdb organism.
 #'
 #' @param species  A species in the eupathDb metadata.
