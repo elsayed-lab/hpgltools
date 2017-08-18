@@ -386,9 +386,11 @@ make_tritrypdb_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_di
     eval(parse(text=libstring))
     libstring <- paste0("library(", txdb_package, ")")
     eval(parse(text=libstring))
-    organism <- paste0(cfg_line[["genus"]], " ", cfg_line[["species"]], " ", cfg_line[["strain"]])
-    organism <- gsub(pattern="-like", replacement="", x=organism)
-    organism <- gsub(pattern="-", replacement="", x=organism)
+    organism <- paste0(cfg_line[["genus"]], " ",
+                       gsub(pattern="[[:punct:]]", replacement="", x=cfg_line[["species"]]),
+                       " ",
+                       gsub(pattern="[[:punct:]]", replacement="", x=cfg_line[["strain"]]))
+    organism <- gsub(pattern="like", replacement="", x=organism)
     requireNamespace("OrganismDbi")
     pkgname <- as.character(cfg_line[["organismdb_name"]])
     author <- as.character(cfg_line[["author"]])
@@ -529,7 +531,12 @@ make_tritrypdb_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
     gene_types[["GID"]] <- as.character(gene_types[["GID"]])
     chromosome_info <- orgdb_info[["chromosome_info"]]  ## The lengths of the chromosomes
 
-    orgdb_base_name <- paste0("org.", cfg[["shortname"]], ".", cfg[["strain"]], ".eg")
+    orgdb_base_name <- paste0("org.",
+                              gsub(x=cfg[["shortname"]], pattern="[[:punct:]]", replacement=""),
+                              ".",
+                              gsub(x=cfg[["strain"]], pattern="[[:punct:]]", replacement=""),
+                              ".eg")
+    
     orgdb_pkg_name <- paste0(orgdb_base_name, ".db")
     orgdb_sqlite_name <- paste0(orgdb_base_name, ".sqlite")
     assumed_dir <- paste0(orgdb_pre, "/", orgdb_pkg_name)
@@ -554,6 +561,12 @@ make_tritrypdb_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
     test_types <- duplicated(gene_types)
     gene_types <- gene_types[!test_types, ]
     orgdb_dir <- NULL
+
+    clean_genus <- as.character(gsub(pattern="[[:punct:]]", replacement="", x=cfg[["genus"]]))
+    clean_species <- paste0(as.character(gsub(pattern="[[:punct:]]", replacement="", x=cfg[["species"]])),
+                            ".",
+                            as.character(gsub(pattern="[[:punct:]]", replacement="", x=cfg[["strain"]]))
+                            )
     if (isTRUE(kegg)) {
         kegg_species <- paste0(cfg[["genus"]], " ", cfg[["species"]])
         kegg_info <- get_kegg_genepaths(species=kegg_species)
@@ -561,36 +574,34 @@ make_tritrypdb_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
         kegg_info <- kegg_info[!test_kegg_info, ]
         kegg_info[["GID"]] <- as.character(kegg_info[["GID"]])
         orgdb_dir <- AnnotationForge::makeOrgPackage(
-                                          gene_info = gene_info,
-                                          chromosome = chr_info,
-                                          go = go_info,
-                                          kegg_info = kegg_info,
-                                          type = gene_types,
-                                          version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
-                                          author = as.character(cfg[["author"]]),
-                                          maintainer = as.character(cfg[["maintainer"]]),
-                                          ## Maybe use taxize for this and remove from the csv?
-                                          tax_id = as.character(cfg[["tax_id"]]),
-                                          genus = as.character(cfg[["genus"]]),
-                                          species = paste0(as.character(cfg[["species"]]), ".",
-                                                           as.character(cfg[["strain"]])),
-                                          outputDir = orgdb_pre,
-                                          goTable = "go")
+                                        gene_info = gene_info,
+                                        chromosome = chr_info,
+                                        go = go_info,
+                                        kegg_info = kegg_info,
+                                        type = gene_types,
+                                        version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
+                                        author = as.character(cfg[["author"]]),
+                                        maintainer = as.character(cfg[["maintainer"]]),
+                                        ## Maybe use taxize for this and remove from the csv?
+                                        tax_id = as.character(cfg[["tax_id"]]),
+                                        genus = clean_genus,
+                                        species = clean_species,
+                                        outputDir = orgdb_pre,
+                                        goTable = "go")
     } else {
         orgdb_dir <- AnnotationForge::makeOrgPackage(
-                                          gene_info = gene_info,
-                                          chromosome = chr_info,
-                                          go = go_info,
-                                          type = gene_types,
-                                          version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
-                                          author = as.character(cfg[["author"]]),
-                                          maintainer = as.character(cfg[["maintainer"]]),
-                                          tax_id = as.character(cfg[["tax_id"]]),
-                                          genus = as.character(cfg[["genus"]]),
-                                          species = paste0(as.character(cfg[["species"]]), ".",
-                                                           as.character(cfg[["strain"]])),
-                                          outputDir = orgdb_pre,
-                                          goTable = "go")
+                                        gene_info = gene_info,
+                                        chromosome = chr_info,
+                                        go = go_info,
+                                        type = gene_types,
+                                        version = format(as.numeric(cfg[["db_version"]]), nsmall=1),
+                                        author = as.character(cfg[["author"]]),
+                                        maintainer = as.character(cfg[["maintainer"]]),
+                                        tax_id = as.character(cfg[["tax_id"]]),
+                                        genus = clean_genus,
+                                        species = clean_species,
+                                        outputDir = orgdb_pre,
+                                        goTable = "go")
     }
 
     orgdb_dir <- clean_pkg(orgdb_dir)
@@ -629,38 +640,44 @@ make_tritrypdb_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
 #' }
 #' @export
 make_tritrypdb_txdb <- function(orgdb_info, cfg_line, gff=NULL, from_gff=FALSE, output_dir="organismdbi", ...) {
-    ## Sections of this were stolen from GenomicFeatures
-    ## because it hates me.
-    ## arglist <- list(...)
+  ## Sections of this were stolen from GenomicFeatures
+  ## because it hates me.
+  ## arglist <- list(...)
 
-    destination <- output_dir
-    chromosome_info <- orgdb_info[["chromosome_info"]]
-    requireNamespace("GenomicFeatures")
-    destination <- paste0(destination, "/txdb")
-    db_version <- format(as.numeric(cfg_line[["db_version"]]), nsmall=1)
-    maintainer <- as.character(cfg_line[["maintainer"]])
-    maintainer <- gsub(pattern=" at ", replacement="@", x=maintainer)
-    maintainer <- gsub(pattern=" dot ", replacement=".", x=maintainer)
-    author <- as.character(cfg_line[["author"]])
-    author <- gsub(pattern=" at ", replacement="@", x=author)
-    author <- gsub(pattern=" dot ", replacement=".", x=author)
-    db_url <- as.character(cfg_line[["db_url"]])
-    package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
-                            cfg_line[["strain"]], ".", cfg_line[["db_name"]],
-                            cfg_line[["db_version"]])
+  destination <- output_dir
+  chromosome_info <- orgdb_info[["chromosome_info"]]
+  requireNamespace("GenomicFeatures")
+  destination <- paste0(destination, "/txdb")
+  db_version <- format(as.numeric(cfg_line[["db_version"]]), nsmall=1)
+  maintainer <- as.character(cfg_line[["maintainer"]])
+  maintainer <- gsub(pattern=" at ", replacement="@", x=maintainer)
+  maintainer <- gsub(pattern=" dot ", replacement=".", x=maintainer)
+  author <- as.character(cfg_line[["author"]])
+  author <- gsub(pattern=" at ", replacement="@", x=author)
+  author <- gsub(pattern=" dot ", replacement=".", x=author)
+  db_url <- as.character(cfg_line[["db_url"]])
+  clean_species <- gsub(pattern="[[:punct:]]", replacement="", x=cfg_line[["species"]])
+  clean_strain <- gsub(pattern="[[:punct:]]", replacement="", x=cfg_line[["strain"]])
+  package_name <<- paste0("TxDb.",
+                          cfg_line[["shortname"]],
+                          ".",
+                          clean_strain,
+                          ".", cfg_line[["db_name"]],
+                          cfg_line[["db_version"]])
 
     txdb <- NULL
     if (!is.null(gff)) {
-        txdb <- GenomicFeatures::makeTxDbFromGFF(
-            file=gff,
-            format="gff3",
-            chrominfo=chromosome_info,
-            ## exonRankAttributeName=NA,
-            dataSource=paste0(cfg_line[["db_name"]], "_", cfg_line[["db_version"]]),
-            organism=paste0(cfg_line[["genus"]], " ", cfg_line[["species"]]))
-        package_name <<- paste0("TxDb.", cfg_line[["shortname"]], ".",
-                                cfg_line[["strain"]], ".", cfg_line[["db_name"]],
-                                cfg_line[["db_version"]])
+      txdb <- GenomicFeatures::makeTxDbFromGFF(
+                                 file=gff,
+                                 format="gff3",
+                                 chrominfo=chromosome_info,
+                                 ## exonRankAttributeName=NA,
+                                 dataSource=paste0(cfg_line[["db_name"]], "_", cfg_line[["db_version"]]),
+                                 organism=paste0(cfg_line[["genus"]], " ", clean_species))
+      package_name <<- paste0("TxDb.", cfg_line[["shortname"]],
+                              ".", clean_strain,
+                              ".", cfg_line[["db_name"]],
+                              cfg_line[["db_version"]])
     }
 
     ## This is the section I yanked
