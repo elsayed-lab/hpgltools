@@ -1,28 +1,24 @@
 language: r
 r: bioc-release
-sudo: required
+sudo: false
 bioc_required: true
 warnings_are_errors: false
 
 cache:
+  directories: ${TRAVIS_BUILD_DIR}/packrat/
   packages: true
-  apt: true
-  timeout: 1000
-
-## deploy:
-##   skip_cleanup: true
 
 env:
   global:
     - R_CHECK_ARGS="--no-build-vignettes --no-manual"
     - _R_CHECK_TIMINGS_="0"
 
+install: 
+  - R -e "0" --args --bootstrap-packrat
+
 script:
   - make install
   - make test
-
-r_binary_packages:
-  - testthat acepack ade4 affy AnnotationDbi AnnotationForge AnnotationHub base64enc Biobase BiocGenerics BiocInstaller Biostrings biomaRt
 
 notifications:
   email: false

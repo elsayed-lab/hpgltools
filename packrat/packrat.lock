@@ -1,0 +1,211 @@
+PackratFormat: 1.4
+PackratVersion: 0.4.8.1
+RVersion: 3.4.1
+Repos: BioCsoft=https://bioconductor.org/packages/3.5/bioc,
+    BioCann=https://bioconductor.org/packages/3.5/data/annotation,
+    BioCexp=https://bioconductor.org/packages/3.5/data/experiment,
+    BioCextra=https://bioconductor.org/packages/3.5/extra,
+    CRAN=https://cran.rstudio.com/
+
+Package: Biobase
+Source: CRAN
+Version: 2.36.2
+Requires: BiocGenerics
+
+Package: BiocGenerics
+Source: CRAN
+Version: 0.22.0
+
+Package: BiocInstaller
+Source: Bioconductor
+Version: 1.26.0
+Hash: 972ea8eb76c583749fd0dc229f3de85b
+
+Package: R6
+Source: CRAN
+Version: 2.2.2
+Hash: b2366cd9d2f3851a5704b4e192b985c2
+
+Package: RColorBrewer
+Source: CRAN
+Version: 1.1-2
+
+Package: Rcpp
+Source: CRAN
+Version: 0.12.12
+
+Package: acepack
+Source: CRAN
+Version: 1.4.1
+
+Package: colorspace
+Source: CRAN
+Version: 1.3-2
+
+Package: curl
+Source: CRAN
+Version: 2.8.1
+Hash: 5a3f385f21add1e944b93b3cd9ce8b48
+
+Package: data.table
+Source: CRAN
+Version: 1.10.4
+
+Package: devtools
+Source: CRAN
+Version: 1.13.3
+Requires: digest, git2r, httr, jsonlite, memoise, rstudioapi, whisker,
+    withr
+Hash: 2e91d10786ace8f6258480f576bb91f3
+
+Package: dichromat
+Source: CRAN
+Version: 2.0-0
+
+Package: digest
+Source: CRAN
+Version: 0.6.12
+Hash: e53fb8c58673df868183697e39a6a4d6
+
+Package: evaluate
+Source: CRAN
+Version: 0.10.1
+Requires: stringr
+
+Package: foreach
+Source: CRAN
+Version: 1.4.3
+Requires: iterators
+
+Package: ggplot2
+Source: CRAN
+Version: 2.2.1
+Requires: digest, gtable, lazyeval, plyr, tibble, scales, reshape2
+
+Package: git2r
+Source: CRAN
+Version: 0.19.0
+Hash: f4f7966fc357f60dc62dbffcea917eef
+
+Package: gtable
+Source: CRAN
+Version: 0.2.0
+
+Package: highr
+Source: CRAN
+Version: 0.6
+
+Package: httr
+Source: CRAN
+Version: 1.3.1
+Requires: R6, curl, jsonlite, mime, openssl
+Hash: 2d32e01e53d532c812052e27a1021441
+
+Package: iterators
+Source: CRAN
+Version: 1.0.8
+
+Package: jsonlite
+Source: CRAN
+Version: 1.5
+Hash: 9c51936d8dd00b2f1d4fe9d10499694c
+
+Package: knitr
+Source: CRAN
+Version: 1.17
+Requires: digest, highr, yaml, markdown, stringr, evaluate
+
+Package: labeling
+Source: CRAN
+Version: 0.3
+
+Package: lazyeval
+Source: CRAN
+Version: 0.2.0
+
+Package: magrittr
+Source: CRAN
+Version: 1.5
+
+Package: markdown
+Source: CRAN
+Version: 0.8
+Requires: mime
+
+Package: memoise
+Source: CRAN
+Version: 1.1.0
+Requires: digest
+Hash: 410fcd334bc626db100237cc1370f2e9
+
+Package: mime
+Source: CRAN
+Version: 0.5
+Hash: 463550cf44fb6f0a2359368f42eebe62
+
+Package: munsell
+Source: CRAN
+Version: 0.4.3
+Requires: colorspace
+
+Package: openssl
+Source: CRAN
+Version: 0.9.6
+Hash: 5f4711e142a44655dfea4d64fcf2f641
+
+Package: packrat
+Source: CRAN
+Version: 0.4.8-1
+Hash: 6ad605ba7b4b476d84be6632393f5765
+
+Package: plyr
+Source: CRAN
+Version: 1.8.4
+Requires: Rcpp
+
+Package: reshape2
+Source: CRAN
+Version: 1.4.2
+Requires: Rcpp, plyr, stringr
+
+Package: rlang
+Source: CRAN
+Version: 0.1.2
+
+Package: rstudioapi
+Source: CRAN
+Version: 0.6
+Hash: fd256f8bfb9a64cc35f98b0decb1a79f
+
+Package: scales
+Source: CRAN
+Version: 0.4.1
+Requires: RColorBrewer, Rcpp, dichromat, labeling, plyr, munsell
+
+Package: stringi
+Source: CRAN
+Version: 1.1.5
+
+Package: stringr
+Source: CRAN
+Version: 1.2.0
+Requires: magrittr, stringi
+
+Package: tibble
+Source: CRAN
+Version: 1.3.3
+Requires: Rcpp, rlang
+
+Package: whisker
+Source: CRAN
+Version: 0.3-2
+Hash: 803d662762e532705c2c066a82d066e7
+
+Package: withr
+Source: CRAN
+Version: 2.0.0
+Hash: cc7e555b8e249aa5cf391592fcae71a2
+
+Package: yaml
+Source: CRAN
+Version: 2.1.14
