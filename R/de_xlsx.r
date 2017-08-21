@@ -23,6 +23,7 @@
 #' @param compare_plots  In an attempt to save memory when printing to excel, make it possible to
 #' @param padj_type  Add a consistent p adjustment of this type.
 #'  exclude comparison plots in the summary sheet.
+#' @param ...   Arguments passed to significance and abundance tables.
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso \code{\link{all_pairwise}}
 #' @examples
@@ -39,7 +40,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                               keepers="all", excludes=NULL, adjp=TRUE, include_limma=TRUE,
                               include_deseq=TRUE, include_edger=TRUE, include_basic=TRUE,
                               rownames=TRUE, add_plots=TRUE, loess=FALSE,
-                              plot_dim=6, compare_plots=TRUE, padj_type="fdr") {
+                              plot_dim=6, compare_plots=TRUE, padj_type="fdr", ...) {
   ## The ontology_shared function which creates multiple sheets works a bit differently
   ## It creates all the tables, then does a createWorkbook()
   ## Does a createWorkbook() / addWorksheet()
@@ -848,11 +849,11 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     ret <- retlist
   }
   if (!is.null(sig_excel)) {
-    significant <- try(extract_significant_genes(ret, ...))
+    significant <- try(extract_significant_genes(ret, excel=sig_excel, ...))
     ret[["significant"]] <- significant
   }
   if (!is.null(abundant_excel)) {
-    abundant <- try(extract_abundant_genes(ret, ...))
+    abundant <- try(extract_abundant_genes(ret, excel=abundance_excel, ...))
     ret[["abundant"]] <- abundant
   }
   return(ret)

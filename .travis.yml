@@ -17,7 +17,6 @@ install:
   - R -e "0" --args --bootstrap-packrat
 
 script:
-  - make install
   - make test
 
 notifications:
