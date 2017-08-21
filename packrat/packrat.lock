@@ -139,6 +139,12 @@ Source: CRAN
 Version: 0.1-3
 Hash: c590d29e555926af053055e23ee79efb
 
+Package: biomaRt
+Source: Bioconductor
+Version: 2.32.1
+Hash: 2d5ab8fa47f5704901327b44d256e08a
+Requires: AnnotationDbi, RCurl, XML
+
 Package: bit
 Source: CRAN
 Version: 1.1-12
