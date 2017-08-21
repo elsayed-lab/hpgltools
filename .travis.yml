@@ -16,7 +16,7 @@ env:
     - _R_CHECK_TIMINGS_="0"
 
 install: 
-  - make pack
+  - make restore
   - make install
 
 script:
