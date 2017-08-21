@@ -3,9 +3,12 @@ export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
 all: clean roxygen reference check build test
 
-install: roxygen pack
+install:
 	@echo "Performing R CMD INSTALL hpgltools"
 	R CMD INSTALL .
+
+inst: roxygen pack install test
+	@echo "Restored packrat, regenerated documentation, installed, and tested."
 
 hi:
 	@echo "Hello."
@@ -33,7 +36,7 @@ build:
 	@echo "Performing build with R CMD build hpgltools"
 	R CMD build .
 
-test: install
+test: 
 	@echo "Running run_tests.R"
 	tests/testthat.R
 
