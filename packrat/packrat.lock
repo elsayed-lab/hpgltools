@@ -96,6 +96,12 @@ Source: CRAN
 Version: 0.12.12
 Hash: 8b3d5ebb9a9a4ab5c86b3a81b0cfb774
 
+Package: Rtsne
+Source: CRAN
+Version: 0.13
+Hash: 7c216e668d5049f73c9a26b650919082
+Requires: Rcpp
+
 Package: S4Vectors
 Source: Bioconductor
 Version: 0.14.3
