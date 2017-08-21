@@ -4,6 +4,8 @@ export _R_CHECK_FORCE_SUGGESTS_=FALSE
 all: clean roxygen reference check build test
 
 install: roxygen
+	@echo "Restoring the packrat state."
+	R --vanilla --slave -f packrat/init.R --args --bootstrap-packrat
 	@echo "Performing R CMD INSTALL hpgltools"
 	R CMD INSTALL .
 
