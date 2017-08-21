@@ -57,8 +57,9 @@ It collects the results and does some simple comparisons among them.
 }
 \examples{
  \dontrun{
-  finished_comparison = eBayes(limma_output)
-  data_list = all_pairwise(expt)
+  lotsodata <- all_pairwise(input=expt, model_batch="svaseq")
+  summary(lotsodata)
+  ## limma, edger, deseq, basic results; plots; and summaries.
  }
 }
 \seealso{

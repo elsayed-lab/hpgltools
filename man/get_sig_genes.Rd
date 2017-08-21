@@ -39,6 +39,11 @@ are provided, it arbitrarily chooses all genes outside of 1-z.
 \details{
 Tested in test_29de_shared.R
 }
+\examples{
+ \dontrun{
+  sig_table <- get_sig_genes(table, fc=1)
+}
+}
 \seealso{
 \code{\link{extract_significant_genes}}
 }

@@ -46,6 +46,13 @@ nor dependent variable models, if you want those do them yourself and pass them 
 \details{
 Invoked by the _pairwise() functions.
 }
+\examples{
+ \dontrun{
+  a_model <- choose_model(expt, model_batch=TRUE, model_intercept=TRUE)
+  a_model$chosen_model
+  ## ~ 0 + condition + batch
+}
+}
 \seealso{
 \pkg{stats}
  \code{\link[stats]{model.matrix}}

@@ -40,7 +40,7 @@ Invoked by the _pairwise() functions.
 }
 \examples{
 \dontrun{
- pretend = make_pairwise_contrasts(model, conditions)
+ pretend <- make_pairwise_contrasts(model, conditions)
 }
 }
 \seealso{

@@ -11,3 +11,4 @@ if (class(test_result) == "try-error") {
     message("The test suite returned successfully.")
     summary(as.data.frame(test_result))
 }
+warnings()
