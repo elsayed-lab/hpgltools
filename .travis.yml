@@ -5,6 +5,7 @@ bioc_required: true
 warnings_are_errors: false
 
 cache:
+  timeout: 1000
   packages: true
   directories:
           - ${TRAVIS_BUILD_DIR}/packrat/lib
