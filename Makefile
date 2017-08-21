@@ -7,16 +7,27 @@ install:
 	@echo "Performing R CMD INSTALL hpgltools"
 	R CMD INSTALL .
 
-inst: roxygen pack install test
+inst: roxygen restore install test
 	@echo "Restored packrat, regenerated documentation, installed, and tested."
+
+git: snap push
+	@echo "Snapshotted packrat and pushed to github."
 
 hi:
 	@echo "Hello."
 
-pack:
+restore:
 	echo "Restoring packrat."
 	R -e "0" --args --bootstrap-packrat
-	R -e "packrat::restore(restart=FALSE)"
+	R -e "packrat::restore(restart=FALSE, overwrite.dirty=TRUE)"
+
+snap:
+	echo "Snapshotting packrat."
+	R -e "packrat::snapshot()"
+
+push:
+	echo "Pushing to github."
+	git commit -a && git push
 
 deps:
 	@echo "Invoking devtools::install_dev_deps()"

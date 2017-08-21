@@ -34,6 +34,12 @@ Source: Bioconductor
 Version: 1.26.0
 Hash: 972ea8eb76c583749fd0dc229f3de85b
 
+Package: BiocParallel
+Source: Bioconductor
+Version: 1.10.1
+Hash: 9c140f4da33eba3a09cd41ffbbe3b36b
+Requires: futile.logger, snow
+
 Package: DBI
 Source: CRAN
 Version: 0.7
@@ -178,6 +184,16 @@ Version: 1.17.1
 Hash: 97cb6f6293cd18d17df77a6383cc6763
 Requires: bitops
 
+Package: cbcbSEQ
+Source: github
+Version: 0.9.1
+Hash: 4a10cab08c4e352185361b84162eb844
+Requires: corpcor, ggplot2, limma, preprocessCore, sva
+GithubRepo: cbcbSEQ
+GithubUsername: kokrah
+GithubRef: master
+GithubSha1: ec8ba462454800f290d03556557718449258a0ae
+
 Package: colorspace
 Source: CRAN
 Version: 1.3-2
@@ -254,6 +270,17 @@ Source: CRAN
 Version: 1.4.3
 Hash: cd53ef4cf29dc59ce3f8c5c1af735fd1
 Requires: iterators
+
+Package: futile.logger
+Source: CRAN
+Version: 1.4.3
+Hash: d1cc6584b39f2c4cfbe377fd94cbdbaa
+Requires: futile.options, lambda.r
+
+Package: futile.options
+Source: CRAN
+Version: 1.0.0
+Hash: 4f24cbf581681c263186b9425f05ba3e
 
 Package: gdata
 Source: CRAN
@@ -343,6 +370,11 @@ Package: labeling
 Source: CRAN
 Version: 0.3
 Hash: ecf589b42cd284b03a4beb9665482d3e
+
+Package: lambda.r
+Source: CRAN
+Version: 1.1.9
+Hash: d303aea60871b91892fa3815aac6a725
 
 Package: lazyeval
 Source: CRAN
@@ -480,6 +512,11 @@ Version: 0.4.1
 Hash: c23bc27bbba87e4039706edf29d8eb68
 Requires: RColorBrewer, Rcpp, dichromat, labeling, munsell, plyr
 
+Package: snow
+Source: CRAN
+Version: 0.4-2
+Hash: bf705214a3d32b037dd24940931c289e
+
 Package: stringi
 Source: CRAN
 Version: 1.1.5
@@ -490,6 +527,12 @@ Source: CRAN
 Version: 1.2.0
 Hash: 25a86d7f410513ebb7c0bc6a5e16bdc3
 Requires: magrittr, stringi
+
+Package: sva
+Source: Bioconductor
+Version: 3.24.4
+Hash: 55d3f2c3e2839ed171b3a7eb32a0a60f
+Requires: BiocParallel, genefilter, limma, matrixStats
 
 Package: testthat
 Source: CRAN
