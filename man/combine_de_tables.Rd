@@ -10,7 +10,7 @@ combine_de_tables(all_pairwise_result, extra_annot = NULL, excel = NULL,
   keepers = "all", excludes = NULL, adjp = TRUE, include_limma = TRUE,
   include_deseq = TRUE, include_edger = TRUE, include_basic = TRUE,
   rownames = TRUE, add_plots = TRUE, loess = FALSE, plot_dim = 6,
-  compare_plots = TRUE, padj_type = "fdr")
+  compare_plots = TRUE, padj_type = "fdr", ...)
 }
 \arguments{
 \item{all_pairwise_result}{Output from all_pairwise().}
@@ -49,6 +49,8 @@ certain contrasts in specific orders and orientations.}
 
 \item{padj_type}{Add a consistent p adjustment of this type.
 exclude comparison plots in the summary sheet.}
+
+\item{...}{Arguments passed to significance and abundance tables.}
 }
 \value{
 Table combining limma/edger/deseq outputs.
