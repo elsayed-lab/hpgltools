@@ -31,6 +31,11 @@ Version: 1.4.1
 Hash: f853ef9b988da72c04c07432388866b7
 Requires: BSgenome
 
+Package: BiasedUrn
+Source: CRAN
+Version: 1.07
+Hash: eb6c93fe7359e661dee83e28020d75cf
+
 Package: Biobase
 Source: Bioconductor
 Version: 2.36.2
@@ -546,6 +551,12 @@ Requires: Biobase, BiocGenerics, Biostrings, GenomeInfoDb,
     GenomicFeatures, GenomicRanges, IRanges, S4Vectors,
     VariantAnnotation, rtracklayer
 
+Package: geneLenDataBase
+Source: Bioconductor
+Version: 1.12.0
+Hash: d4c1f4e62e5516ef5c91e0addb9ac591
+Requires: GenomicFeatures, rtracklayer
+
 Package: genefilter
 Source: Bioconductor
 Version: 1.58.1
@@ -579,6 +590,13 @@ Package: glue
 Source: CRAN
 Version: 1.1.1
 Hash: dfd5a27768175ae51d08dc6beba1ef11
+
+Package: goseq
+Source: Bioconductor
+Version: 1.28.0
+Hash: d6b0ba1b992afe17d60c470fcbb7be97
+Requires: AnnotationDbi, BiasedUrn, BiocGenerics, GO.db,
+    geneLenDataBase
 
 Package: gplots
 Source: CRAN
