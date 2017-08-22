@@ -172,7 +172,7 @@ test_that("Does calling hpgltools::voom with hpgl-modified data return the same 
 ## To be extra-paranoid, make sure that the limma_pairwise() function invokes voom correctly.
 ## Note that this is where the data-ordering problems appear.
 hpgl_limma <- sm(limma_pairwise(hpgl_l2qcpm_expt, model_batch=FALSE, limma_method="ls",
-                                model_intercept=FALSE, which_voom="hpgl"))
+                                model_intercept=TRUE, which_voom="hpgl"))
 ## First check the voom result from limma_pairwise
 hpgl_limma_voom <- hpgl_limma[["voom_result"]]
 hpgl_limma_voom_e <- hpgl_limma[["voom_result"]][["E"]][order(rownames(hpgl_limma[["voom_result"]][["E"]])), ]

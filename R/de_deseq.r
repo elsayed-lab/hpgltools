@@ -33,7 +33,7 @@ deseq_pairwise <- function(...) {
 #' @param batches  Factor of batches in the experiment.
 #' @param model_cond  Is condition in the experimental model?
 #' @param model_batch  Is batch in the experimental model?
-#' @param model_intercept  Use an intercept model?  DESeq seems to not be a fan of them.
+#' @param model_intercept  Use an intercept model?
 #' @param alt_model  Provide an arbitrary model here.
 #' @param extra_contrasts  Provide extra contrasts here.
 #' @param annot_df  Include some annotation information in the results?
@@ -55,7 +55,7 @@ deseq_pairwise <- function(...) {
 #' @export
 deseq2_pairwise <- function(input=NULL, conditions=NULL,
                             batches=NULL, model_cond=TRUE,
-                            model_batch=TRUE, model_intercept=TRUE,
+                            model_batch=TRUE, model_intercept=FALSE,
                             alt_model=NULL, extra_contrasts=NULL,
                             annot_df=NULL, force=FALSE,
                             deseq_method="long", ...) {
@@ -154,7 +154,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   }
 
   deseq_run <- NULL
-  chosen_beta <- !model_intercept
+  chosen_beta <- model_intercept
   if (deseq_method == "short") {
     message("DESeq steps 2-4 in one shot.")
     deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric", betaPrior=chosen_beta), silent=TRUE)

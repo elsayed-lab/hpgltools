@@ -279,7 +279,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
 #' @export
 limma_pairwise <- function(input=NULL, conditions=NULL,
                            batches=NULL, model_cond=TRUE,
-                           model_batch=TRUE, model_intercept=TRUE,
+                           model_batch=TRUE, model_intercept=FALSE,
                            alt_model=NULL, extra_contrasts=NULL,
                            annot_df=NULL, libsize=NULL,
                            force=FALSE, ...) {
@@ -481,7 +481,29 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                               method=limma_method)
   all_tables <- NULL
   if (isTRUE(model_intercept)) {
-    message("Limma step 4/6: making and fitting contrasts with an intercept.")
+    message("Limma step 4/6: making and fitting contrasts with an intercept. (~ condition)")
+    contrasts <- "nointercept"
+    all_pairwise_contrasts <- NULL
+    contrast_string <- "no intercept done"
+    all_pairwise <- NULL
+    pairwise_fits <- fitted_data
+    identity_contrasts <- NULL
+    identities <- NULL
+    identity_fits <- fitted_data
+    message(paste0("Limma step 5/6: Running eBayes with robust=",
+                   limma_robust, " and trend=", limma_trend, "."))
+    all_pairwise_comparisons <- limma::eBayes(fitted_data,
+                                              robust=limma_robust,
+                                              trend=limma_trend)
+    all_identity_comparisons <- NULL
+    message("Limma step 6/6: Writing limma outputs with an intercept.")
+    pairwise_results <- make_limma_tables(fit=all_pairwise_comparisons, adjust="BH",
+                                          n=0, coef=NULL, annot_df=NULL, intercept=TRUE)
+    limma_tables <- pairwise_results[["contrasts"]]
+    contrasts_performed <- names(limma_tables)
+    limma_identities <- pairwise_results[["identities"]]
+  } else {
+    message("Limma step 4/6: making and fitting contrasts with no intercept. (~ 0 + condition)")
     contrasts <- make_pairwise_contrasts(model=chosen_model, conditions=conditions,
                                          extra_contrasts=extra_contrasts)
     all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]
@@ -518,29 +540,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     limma_identities <- identity_results[["identities"]]
     
     contrasts_performed <- names(limma_tables)
-  } else {
-    message("Limma step 4/6: making and fitting contrasts without an intercept.")
-    contrasts <- "nointercept"
-    all_pairwise_contrasts <- NULL
-    contrast_string <- "no intercept done"
-    all_pairwise <- NULL
-    pairwise_fits <- fitted_data
-    identity_contrasts <- NULL
-    identities <- NULL
-    identity_fits <- fitted_data
-    message(paste0("Limma step 5/6: Running eBayes with robust=",
-                   limma_robust, " and trend=", limma_trend, "."))
-    all_pairwise_comparisons <- limma::eBayes(fitted_data,
-                                              robust=limma_robust,
-                                              trend=limma_trend)
-    all_identity_comparisons <- NULL
-    message("Limma step 6/6: Writing limma outputs without an intercept.")
-    pairwise_results <- make_limma_tables(fit=all_pairwise_comparisons, adjust="BH",
-                                          n=0, coef=NULL, annot_df=NULL, intercept=FALSE)
-    limma_tables <- pairwise_results[["contrasts"]]
-    contrasts_performed <- names(limma_tables)
-    limma_identities <- pairwise_results[["identities"]]
-  }
+  } 
 
   result <- list(
     "all_pairwise" = all_pairwise,
@@ -647,7 +647,7 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 #' }
 #' @export
 make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
-                              annot_df=NULL, intercept=TRUE) {
+                              annot_df=NULL, intercept=FALSE) {
   ## Figure out the number of genes if not provided
   if (n == 0) {
     n <- nrow(fit[["coefficients"]])
@@ -656,10 +656,10 @@ make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
   ## If specific contrast(s) is/are not requested, get them all.
   if (is.null(coef)) {
     if (isTRUE(intercept)) {
-      coef <- colnames(fit[["contrasts"]])
-    } else {
       coef <- colnames(fit[["coefficients"]])
       coef <- coef[2:length(coef)]
+    } else {
+      coef <- colnames(fit[["contrasts"]])
     }
   } else {
     coef <- as.character(coef)
@@ -677,6 +677,33 @@ make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
   ##b <- limma::vennDiagram(a)
   if (isTRUE(intercept)) {
 
+    ## If we do have an intercept model, then we get the data
+    ## in a slightly different fashion.
+    for (c in 1:ncol(fit[["coefficients"]])) {
+      data_table <-  limma::topTable(fit,
+                                     adjust.method=adjust,
+                                     n=n,
+                                     coef=c,
+                                     sort.by="logFC")
+
+      for (column in 1:ncol(data_table)) {
+        data_table[[column]] <- signif(x=as.numeric(data_table[[column]]), digits=4)
+      }
+      if (!is.null(annot_df)) {
+        data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
+      }
+
+      if (c == 1) {
+        return_identities[[1]] <- data_table
+      } else {
+        comparison <- colnames(fit[["coefficients"]])[c]
+        return_data[[comparison]] <- data_table
+      }
+    }
+
+  } else {
+    ## If we do not have an intercept (~ 0 + ...)
+    ## Then extract the coefficients and identities separately.
     for (c in 1:end) {
       comparison <- coef[c]
       message(paste0("Limma step 6/6: ", c, "/", end, ": Creating table: ",
@@ -705,31 +732,7 @@ make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
         return_identities[[comparison]] <- table
       }
     }
-    
-  } else {
-    ## If we do not have an intercept model, then we get the data
-    ## in a slightly different fashion.
-    for (c in 1:ncol(fit[["coefficients"]])) {
-      data_table <-  limma::topTable(fit,
-                                     adjust.method=adjust,
-                                     n=n,
-                                     coef=c,
-                                     sort.by="logFC")
 
-      for (column in 1:ncol(data_table)) {
-        data_table[[column]] <- signif(x=as.numeric(data_table[[column]]), digits=4)
-      }
-      if (!is.null(annot_df)) {
-        data_table <- merge(data_table, annot_df, by.x="row.names", by.y="row.names")
-      }
-
-      if (c == 1) {
-        return_identities[[1]] <- data_table
-      } else {
-        comparison <- colnames(fit[["coefficients"]])[c]
-        return_data[[comparison]] <- data_table
-      }
-    }
   } ## End checking for an intercept/nointercept model.
 
   retlist <- list(

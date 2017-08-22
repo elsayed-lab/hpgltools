@@ -4,14 +4,16 @@ export _R_CHECK_FORCE_SUGGESTS_=FALSE
 all: clean roxygen reference check build test
 
 install:
-	@echo "Performing R CMD INSTALL hpgltools"
-	R CMD INSTALL .
-
-global:
-	@echo "Installing hpgltools globally."
+	@echo "Performing R CMD INSTALL hpgltools globally."
 	R -e "packrat::disable()"
 	R CMD INSTALL .
 	R -e "packrat::init()"
+
+test:
+	@echo "Installing hpgltools in the local packrat tree."
+	R CMD INSTALL .
+	@echo "Running run_tests.R"
+	tests/testthat.R
 
 inst: roxygen restore install test
 	@echo "Restored packrat, regenerated documentation, installed, and tested."
@@ -53,10 +55,6 @@ check:
 build:
 	@echo "Performing build with R CMD build hpgltools"
 	R CMD build .
-
-test: 
-	@echo "Running run_tests.R"
-	tests/testthat.R
 
 roxygen:
 	@echo "Generating documentation with devtools::document()"

@@ -114,7 +114,7 @@ test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts)
 ## If we made it this far, then the inputs to limma should agree.
 hpgl_limma_combat_result <- sm(limma_pairwise(hpgl_qcpmcombat, limma_method="ls",
                                               model_batch=FALSE,
-                                              model_intercept=FALSE,
+                                              model_intercept=TRUE,
                                               which_voom="hpgl"))
 hpgl_voom <- hpgl_limma_combat_result[["voom_result"]]
 hpgl_fit <- hpgl_limma_combat_result[["fit"]]

@@ -17,22 +17,7 @@ Description: This is a set of functions I have been using in my various analyses
              flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
-    acepack, ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub,
-    base64enc, Biobase, BiocGenerics, BiocInstaller, Biostrings,
-    biomaRt, bumphunter, Category, caTools, clusterProfiler, corpcor, corrplot,
-    DBI, DESeq2, DESeq, devtools, directlabels, dplyr, doParallel, DOSE, EDASeq,
-    edgeR, ffpe, fission, Formula, gdata, genbankr, genefilter,
-    genomeIntervals, GenomeInfoDb, GenomicFeatures, genoPlotR, GenomicRanges,
-    ggdendro, ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph,
-    gProfileR, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc, htmlTable,
-    igraph, inflection, IRanges, iterators, jsonlite, KEGGgraph, KEGGREST,
-    knitcitations, knitr, lattice, limma, matrixStats, motifRG, multtest,
-    mygene, openxlsx, OrganismDbi, pander, parallel, pasilla, pathview, plyr,
-    preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, readr, rentrez,
-    reshape2, RCurl, rGADEM, Rgraphviz, rmarkdown, RMySQL, robustbase,
-    RefManageR, reshape, rjson, robust, Rsamtools, rtracklayer, RUVSeq,
-    S4Vectors, scales, seqinr, seqLogo, statmod, stringi, stringr, survival,
-    sva, taxize, testthat, topGO, variancePartition, xtable, XVector, survJamda
+    acepack, ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub
 Imports:
     Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr

@@ -20,7 +20,7 @@
 #' @param batches Factor of batches in the experiment.
 #' @param model_cond Include condition in the experimental model?
 #' @param model_batch Include batch in the model?  In most cases this is a good thing(tm).
-#' @param model_intercept Use cell means or intercept?
+#' @param model_intercept Use an intercept containing model?
 #' @param alt_model Alternate experimental model to use?
 #' @param extra_contrasts Add some extra contrasts to add to the list of pairwise contrasts.
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
@@ -45,7 +45,7 @@
 #' @export
 edger_pairwise <- function(input=NULL, conditions=NULL,
                            batches=NULL, model_cond=TRUE,
-                           model_batch=TRUE, model_intercept=TRUE,
+                           model_batch=TRUE, model_intercept=FALSE,
                            alt_model=NULL, extra_contrasts=NULL,
                            annot_df=NULL, force=FALSE,
                            edger_method="long", ...) {

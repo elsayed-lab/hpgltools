@@ -39,7 +39,7 @@
 all_pairwise <- function(input=NULL, conditions=NULL,
                          batches=NULL, model_cond=TRUE,
                          modify_p=FALSE, model_batch=TRUE,
-                         model_intercept=TRUE, extra_contrasts=NULL,
+                         model_intercept=FALSE, extra_contrasts=NULL,
                          alt_model=NULL, libsize=NULL, test_pca=TRUE,
                          annot_df=NULL, parallel=TRUE, ...) {
   arglist <- list(...)
@@ -328,13 +328,13 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #'  \code{\link[stats]{model.matrix}}
 #' @examples
 #'  \dontrun{
-#'   a_model <- choose_model(expt, model_batch=TRUE, model_intercept=TRUE)
+#'   a_model <- choose_model(expt, model_batch=TRUE, model_intercept=FALSE)
 #'   a_model$chosen_model
 #'   ## ~ 0 + condition + batch
 #' }
 #' @export
 choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
-                         model_cond=TRUE, model_intercept=TRUE,
+                         model_cond=TRUE, model_intercept=FALSE,
                          alt_model=NULL, alt_string=NULL,
                          intercept=0, reverse=FALSE,
                          surrogates="be", ...) {
@@ -360,32 +360,32 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
   ##                                                                   batch="contr.treatment")),
   ## The contrasts.arg has been removed because it seems to result in the same model.
 
-  cond_int_string <- "~ 0 + condition"
-  cond_int_model <- try(stats::model.matrix(as.formula(cond_int_string),
-                                            data=design), silent=TRUE)
-
-  batch_int_string <- "~ 0 + batch"
-  batch_int_model <- try(stats::model.matrix(as.formula(batch_int_string),
-                                             data=design), silent=TRUE)
-  condbatch_int_string <- "~ 0 + condition + batch"
-
-  condbatch_int_model <- try(stats::model.matrix(as.formula(condbatch_int_string),
-                                                 data=design), silent=TRUE)
-  batchcond_int_string <- "~ 0 + batch + condition"
-  batchcond_int_model <- try(stats::model.matrix(as.formula(batchcond_int_string),
-                                                 data=design), silent=TRUE)
-  cond_noint_string <- "~ condition"
+  cond_noint_string <- "~ 0 + condition"
   cond_noint_model <- try(stats::model.matrix(as.formula(cond_noint_string),
                                               data=design), silent=TRUE)
-  batch_noint_string <- "~ batch"
+
+  batch_noint_string <- "~ 0 + batch"
   batch_noint_model <- try(stats::model.matrix(as.formula(batch_noint_string),
                                                data=design), silent=TRUE)
-  condbatch_noint_string <- "~ condition + batch"
+  condbatch_noint_string <- "~ 0 + condition + batch"
+
   condbatch_noint_model <- try(stats::model.matrix(as.formula(condbatch_noint_string),
                                                    data=design), silent=TRUE)
-  batchcond_noint_string <- "~ batch + condition"
-  batchcond_noint_model <- try(stats::model.matrix(as.formula(batchcond_noint_string),
-                                                   data=design), silent=TRUE)
+  batchcond_int_string <- "~ 0 + batch + condition"
+  batchcond_int_model <- try(stats::model.matrix(as.formula(batchcond_noint_string),
+                                                 data=design), silent=TRUE)
+  cond_int_string <- "~ condition"
+  cond_int_model <- try(stats::model.matrix(as.formula(cond_int_string),
+                                            data=design), silent=TRUE)
+  batch_int_string <- "~ batch"
+  batch_int_model <- try(stats::model.matrix(as.formula(batch_int_string),
+                                             data=design), silent=TRUE)
+  condbatch_int_string <- "~ condition + batch"
+  condbatch_int_model <- try(stats::model.matrix(as.formula(condbatch_int_string),
+                                                 data=design), silent=TRUE)
+  batchcond_int_string <- "~ batch + condition"
+  batchcond_int_model <- try(stats::model.matrix(as.formula(batchcond_int_string),
+                                                 data=design), silent=TRUE)
 
   noint_model <- NULL
   int_model <- NULL
@@ -434,19 +434,20 @@ both condition and batch? Using only a conditional model.")
     ## Changing model_batch from 'sva' to the resulting matrix.
     ## Hopefully this will simplify things later for me.
     model_batch <- model_batch_info[["model_adjust"]]
-    int_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
-    ## contrasts.arg=list(conditions="contr.sum"))
-    noint_model <- stats::model.matrix(~ condition + model_batch, data=design)
-    ## contrasts.arg=list(conditions="contr.sum"))
-    int_string <- cond_int_string
+    noint_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
+    ##                                 contrasts.arg=list(conditions="contr.sum"))
     noint_string <- cond_noint_string
+
+    int_model <- stats::model.matrix(~ condition + model_batch, data=design)
+    ##                               contrasts.arg=list(conditions="contr.sum"))
+    int_string <- cond_int_string
     including <- "condition+batchestimate"
   } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
     message("Including batch estimates from sva/ruv/pca in the model.")
-    int_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
-    ## contrasts.arg=list(conditions="contr.sum"))
-    noint_model <- stats::model.matrix(~ condition + model_batch, data=design)
-    ## contrasts.arg=list(conditions="contr.sum"))
+    noint_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
+    ##                                 contrasts.arg=list(conditions="contr.sum"))
+    int_model <- stats::model.matrix(~ condition + model_batch, data=design)
+    ##                               contrasts.arg=list(conditions="contr.sum"))
     int_string <- cond_int_string
     noint_string <- cond_noint_string
     including <- "condition+batchestimate"
