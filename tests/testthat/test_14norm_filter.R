@@ -16,7 +16,7 @@ load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
 ## Test filter
-expected <- c(7526, 7)
+expected <- c(7531, 7)
 pasilla_filter <- sm(normalize_expt(pasilla_expt, filter="cbcb"))
 actual <- dim(exprs(pasilla_filter))
 test_that("cbcb filtering leaves behind the expected number of genes?", {

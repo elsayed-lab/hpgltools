@@ -106,7 +106,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     if (filter == FALSE) {
         filter <- "raw"
     } else if (isTRUE(filter)) {
-        filter <- "cbcb"
+        filter <- "hpgl"
     }
     if (convert == FALSE) {
         convert <- "raw"
