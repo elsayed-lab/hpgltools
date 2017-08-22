@@ -98,6 +98,12 @@ Source: CRAN
 Version: 1.2-2
 Hash: 31c4658e6ae879eee45fcf7b6d109464
 
+Package: GO.db
+Source: Bioconductor
+Version: 3.4.1
+Hash: 2a149023f3a513f836439b78ff34b2c7
+Requires: AnnotationDbi
+
 Package: GenomeInfoDb
 Source: Bioconductor
 Version: 1.12.2
@@ -142,6 +148,21 @@ Source: Bioconductor
 Version: 2.10.2
 Hash: 792977f8f9d97dba74f25a968ac54138
 Requires: BiocGenerics, S4Vectors
+
+Package: Mus.musculus
+Source: Bioconductor
+Version: 1.3.1
+Hash: 4f7853246c9db837585300a7dbf1cabd
+Requires: AnnotationDbi, GO.db, GenomicFeatures, OrganismDbi,
+    TxDb.Mmusculus.UCSC.mm10.knownGene, org.Mm.eg.db
+
+Package: OrganismDbi
+Source: Bioconductor
+Version: 1.18.0
+Hash: b10319fd3a2e824e9af344089be56330
+Requires: AnnotationDbi, Biobase, BiocGenerics, BiocInstaller,
+    GenomicFeatures, GenomicRanges, IRanges, RBGL, RSQLite, S4Vectors,
+    graph
 
 Package: R.methodsS3
 Source: CRAN
@@ -249,6 +270,21 @@ Package: SuppDists
 Source: CRAN
 Version: 1.1-9.4
 Hash: b7f6b9d24f9131ae5d180ea695828e8a
+
+Package: TxDb.Mmusculus.UCSC.mm10.knownGene
+Source: Bioconductor
+Version: 3.4.0
+Hash: c44a91ac48d925d6e30a7e21fe9ecdda
+Requires: AnnotationDbi, GenomicFeatures
+
+Package: VariantAnnotation
+Source: Bioconductor
+Version: 1.22.3
+Hash: e7e4dfbbf61c425c177743499df7ebdd
+Requires: AnnotationDbi, BSgenome, Biobase, BiocGenerics, Biostrings,
+    DBI, GenomeInfoDb, GenomicFeatures, GenomicRanges, IRanges,
+    Rsamtools, S4Vectors, SummarizedExperiment, XVector, rtracklayer,
+    zlibbioc
 
 Package: Vennerable
 Source: github
@@ -363,6 +399,11 @@ Version: 1.8.3
 Hash: f9639d7685b7bd2350dd6169849e2ae2
 Requires: backports
 
+Package: chron
+Source: CRAN
+Version: 2.3-50
+Hash: 86ef5f32dd2ef3c4076e52e7c89740b3
+
 Package: colorRamps
 Source: CRAN
 Version: 2.3
@@ -473,6 +514,14 @@ Version: 2.18.0
 Hash: 62797fafa287d1845a014c615d46e50c
 Requires: gtools
 
+Package: genbankr
+Source: Bioconductor
+Version: 1.4.0
+Hash: 20d4b6222ff02ec1eacf36a88b39242c
+Requires: Biobase, BiocGenerics, Biostrings, GenomeInfoDb,
+    GenomicFeatures, GenomicRanges, IRanges, S4Vectors,
+    VariantAnnotation, rtracklayer
+
 Package: genefilter
 Source: Bioconductor
 Version: 1.58.1
@@ -519,6 +568,12 @@ Source: CRAN
 Version: 2.2.1
 Hash: 8f54b57d4b0598ed5b27e0eafe86a670
 Requires: gtable
+
+Package: gsubfn
+Source: CRAN
+Version: 0.6-6
+Hash: cc1999b8ee76bbf10c968ac973290421
+Requires: proto
 
 Package: gtable
 Source: CRAN
@@ -673,6 +728,13 @@ Version: 0.4.3
 Hash: f96d896947fcaf9b6d0074002e9f4f9d
 Requires: colorspace
 
+Package: mygene
+Source: Bioconductor
+Version: 1.12.0
+Hash: fdefd1d7465f7e68e25d1f489135f5bd
+Requires: GenomicFeatures, Hmisc, S4Vectors, httr, jsonlite, plyr,
+    sqldf
+
 Package: nloptr
 Source: CRAN
 Version: 1.0.4
@@ -693,6 +755,12 @@ Source: CRAN
 Version: 4.0.17
 Hash: ab52397f112cd613fefb9eabd8f9afba
 Requires: Rcpp
+
+Package: org.Mm.eg.db
+Source: Bioconductor
+Version: 3.4.1
+Hash: acdaf3a291a6028133c24c2f7896d7b8
+Requires: AnnotationDbi
 
 Package: packrat
 Source: CRAN
@@ -742,10 +810,21 @@ Version: 1.6.1
 Hash: a293698cbc0bfdc90d0ac23b988bb055
 Requires: Rcpp, lava
 
+Package: proto
+Source: CRAN
+Version: 1.0.0
+Hash: f9a2528572320c1e0bc8783dfd6e0fae
+
 Package: quadprog
 Source: CRAN
 Version: 1.5-5
 Hash: 69000b7dc41b09977dcf781f909d235c
+
+Package: rentrez
+Source: CRAN
+Version: 1.1.0
+Hash: d1b87eed821ab1a78f811d2907b32b56
+Requires: XML, httr, jsonlite
 
 Package: reshape2
 Source: CRAN
@@ -811,6 +890,12 @@ Package: snow
 Source: CRAN
 Version: 0.4-2
 Hash: bf705214a3d32b037dd24940931c289e
+
+Package: sqldf
+Source: CRAN
+Version: 0.4-11
+Hash: e083fd1980e39fc2df6e5519bd4eb5ab
+Requires: DBI, RSQLite, chron, gsubfn, proto
 
 Package: statmod
 Source: CRAN

@@ -18,11 +18,11 @@ load("de_basic.rda", envir=basic)
 ## The following lines should not be needed any longer.
 normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant",
                                      convert="cbcbcpm", filter="cbcb", thresh=1))
-hpgl_all <- sm(all_pairwise(pasilla_expt, parallel=FALSE))
+hpgl_all <- sm(all_pairwise(pasilla_expt))
 
 hpgl_sva_result <- sm(all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",
                                    limma_method="robust", edger_method="long",
-                                   edger_test="qlr", parallel=FALSE))
+                                   edger_test="qlr"))
 
 expected <- deseq[["hpgl_deseq"]][["all_tables"]][["untreated_vs_treated"]]
 table_order <- rownames(expected)
