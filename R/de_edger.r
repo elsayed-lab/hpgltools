@@ -49,179 +49,173 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
                            alt_model=NULL, extra_contrasts=NULL,
                            annot_df=NULL, force=FALSE,
                            edger_method="long", ...) {
-    arglist <- list(...)
-    if (!is.null(arglist[["input"]])) {
-        input <- arglist[["input"]]
-    }
-    if (!is.null(arglist[["conditions"]])) {
-        conditions <- arglist[["conditions"]]
-    }
-    if (!is.null(arglist[["batches"]])) {
-        batches <- arglist[["batches"]]
-    }
-    if (!is.null(arglist[["model_cond"]])) {
-        model_cond <- arglist[["model_cond"]]
-    }
-    if (!is.null(arglist[["model_batch"]])) {
-        model_batch <- arglist[["model_batch"]]
-    }
-    if (!is.null(arglist[["model_intercept"]])) {
-        model_intercept <- arglist[["model_intercept"]]
-    }
-    if (!is.null(arglist[["alt_model"]])) {
-        alt_model <- arglist[["alt_model"]]
-    }
-    if (!is.null(arglist[["extra_contrasts"]])) {
-        extra_contrasts <- arglist[["extra_contrasts"]]
-    }
-    if (!is.null(arglist[["annot_df"]])) {
-        annot_df <- arglist[["annot_df"]]
-    }
-    if (!is.null(arglist[["force"]])) {
-        force <- arglist[["force"]]
-    }
-    if (!is.null(arglist[["edger_method"]])) {
-        edger_method <- arglist[["edger_method"]]
-    }
-    test_type <- "lrt"
-    if (!is.null(arglist[["test_type"]])) {
-        test_type <- arglist[["test_type"]]
-    }
-    message("Starting edgeR pairwise comparisons.")
-    input_data <- choose_binom_dataset(input, force=force)
-    design <- pData(input)
-    conditions <- input_data[["conditions"]]
-    batches <- input_data[["batches"]]
-    data <- input_data[["data"]]
+  arglist <- list(...)
 
-    ##model_choice <- choose_model(input, conditions, batches,
-    ##                             model_batch=model_batch,
-    ##                             model_cond=model_cond,
-    ##                             model_intercept=model_intercept,
-    ##                             alt_model=alt_model)
-    model_choice <- choose_model(input, conditions, batches,
-                                 model_batch=model_batch,
-                                 model_cond=model_cond,
-                                 model_intercept=model_intercept,
-                                 alt_model=alt_model, ...)
-    model_including <- model_choice[["including"]]
-    if (class(model_choice[["model_batch"]]) == "matrix") {
-        model_batch <- model_choice[["model_batch"]]
-    }
-    model_data <- model_choice[["chosen_model"]]
+  edger_test <- "lrt"
+  if (!is.null(arglist[["edger_test"]])) {
+    edger_test <- arglist[["edger_test"]]
+  }
+  message("Starting edgeR pairwise comparisons.")
+  input_data <- choose_binom_dataset(input, force=force)
+  design <- pData(input)
+  conditions <- input_data[["conditions"]]
+  conditions_table <- table(conditions)
+  batches <- input_data[["batches"]]
+  batches_table <- table(batches)
+  data <- input_data[["data"]]
+  conditions <- as.factor(conditions)
+  batches <- as.factor(batches)
 
-    ## I have a strong sense that the most recent version of edgeR changed its dispersion estimate code
-    ## Here is a note from the user's guide, which may have been there previously and I merely did not notice:
-    ## To estimate common dispersion, trended dispersions and tagwise dispersions in one run
-    ## y <- estimateDisp(y, design)
-    raw <- edgeR::DGEList(counts=data, group=conditions)
-    message("EdgeR step 1/9: normalizing data.")
-    norm <- edgeR::calcNormFactors(raw)
-    final_norm <- NULL
-    if (edger_method == "short") {
-        message("EdgeR steps 2 through 6/9: All in one!")
-        final_norm <- edgeR::estimateDisp(norm, design=model_data)
+  model_choice <- choose_model(input, conditions, batches,
+                               model_batch=model_batch,
+                               model_cond=model_cond,
+                               model_intercept=model_intercept,
+                               alt_model=alt_model, ...)
+  ##model_choice <- choose_model(input, conditions, batches,
+  ##                             model_batch=model_batch,
+  ##                             model_cond=model_cond,
+  ##                             model_intercept=model_intercept,
+  ##                             alt_model=alt_model)
+  model_including <- model_choice[["including"]]
+  if (class(model_choice[["model_batch"]]) == "matrix") {
+    model_batch <- model_choice[["model_batch"]]
+  }
+  model_data <- model_choice[["chosen_model"]]
+  model_string <- model_choice[["chosen_string"]]
+
+  ## I have a strong sense that the most recent version of edgeR changed its dispersion estimate code
+  ## Here is a note from the user's guide, which may have been there previously and I merely did not notice:
+  ## To estimate common dispersion, trended dispersions and tagwise dispersions in one run
+  ## y <- estimateDisp(y, design)
+  raw <- edgeR::DGEList(counts=data, group=conditions)
+  message("EdgeR step 1/9: normalizing data.")
+  norm <- edgeR::calcNormFactors(raw)
+  final_norm <- NULL
+  if (edger_method == "short") {
+    message("EdgeR steps 2 through 6/9: All in one!")
+    final_norm <- edgeR::estimateDisp(norm, design=model_data)
+  } else {
+    state <- TRUE
+    message("EdgeR step 2/9: Estimating the common dispersion.")
+    disp_norm <- try(edgeR::estimateCommonDisp(norm))
+    if (class(disp_norm) == "try-error") {
+      warning("estimateCommonDisp() failed.  Trying again with estimateDisp().")
+      state <- FALSE
+    }
+    if (isTRUE(state)) {
+      message("EdgeR step 3/9: Estimating dispersion across genes.")
+      tagdisp_norm <- try(edgeR::estimateTagwiseDisp(disp_norm))
+      if (class(tagdisp_norm) == "try-error") {
+        warning("estimateTagwiseDisp() failed.  Trying again with estimateDisp().")
+        state <- FALSE
+      }
+    }
+    if (isTRUE(state)) {
+      message("EdgeR step 4/9: Estimating GLM Common dispersion.")
+      glm_norm <- try(edgeR::estimateGLMCommonDisp(tagdisp_norm, model_data))
+      if (class(glm_norm) == "try-error") {
+        warning("estimateGLMCommonDisp() failed.  Trying again with estimateDisp().")
+        state <- FALSE
+      }
+    }
+    if (isTRUE(state)) {
+      message("EdgeR step 5/9: Estimating GLM Trended dispersion.")
+      glm_trended <- try(edgeR::estimateGLMTrendedDisp(glm_norm, model_data))
+      if (class(glm_trended) == "try-error") {
+        warning("estimateGLMTrendedDisp() failed.  Trying again with estimateDisp().")
+        state <- FALSE
+      }
+    }
+    if (isTRUE(state)) {
+      message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
+      final_norm <- try(edgeR::estimateGLMTagwiseDisp(glm_trended, model_data))
+      if (class(final_norm) == "try-error") {
+        warning("estimateGLMTagwiseDisp() failed.  Trying again with estimateDisp.()")
+        state <- FALSE
+      }
+    }
+
+    ## If we had a failure along the way, redo using estimateDisp()
+    if (!isTRUE(state)) {
+      warning("There was a failure when doing the estimations.")
+      message("There was a failure when doing the estimations, using estimateDisp().")
+      final_norm <- edgeR::estimateDisp(norm, design=model_data, robust=TRUE)
+    }
+  }
+  cond_fit <- NULL
+  if (edger_test == "lrt") {
+    message("EdgeR step 7/9: Running glmFit, switch to glmQLFit by changing the argument 'edger_test'.")
+    cond_fit <- edgeR::glmFit(final_norm, design=model_data, robust=TRUE)
+  } else {
+    message("EdgeR step 7/9: Running glmQLFit, switch to glmFit by changing the argument 'edger_test'.")
+    cond_fit <- edgeR::glmQLFit(final_norm, design=model_data, robust=TRUE)
+  }
+
+  message("EdgeR step 8/9: Making pairwise contrasts.")
+  apc <- make_pairwise_contrasts(model_data, conditions,
+                                 extra_contrasts=extra_contrasts,
+                                 do_identities=FALSE)
+  contrast_string <- apc[["contrast_string"]]
+
+  ## This section is convoluted because glmLRT only seems to take up to 7 contrasts at a time.
+  ## As a result, I iterate through the set of possible contrasts one at a time and ask for each
+  ## separately.
+  contrast_list <- list()
+  result_list <- list()
+  lrt_list <- list()
+  sc <- vector("list", length(apc[["names"]]))
+  end <- length(apc[["names"]])
+  for (con in 1:length(apc[["names"]])) {
+    name <- apc[["names"]][[con]]
+    message(paste0("EdgeR step 9/9: ", con, "/", end, ": Creating table: ", name, ".")) ## correct
+    sc[[name]] <- gsub(pattern=",", replacement="", apc[["all_pairwise"]][[con]])
+    tt <- parse(text=sc[[name]])
+    ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=model_data)")
+    eval(parse(text=ctr_string))
+    contrast_list[[name]] <- tt
+    lrt_list[[name]] <- NULL
+    tt <- sm(library(edgeR))
+    if (edger_test == "lrt") {
+      lrt_list[[name]] <- edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
     } else {
-        state <- TRUE
-        message("EdgeR step 2/9: Estimating the common dispersion.")
-        disp_norm <- try(edgeR::estimateCommonDisp(norm))
-        if (class(disp_norm) == "try-error") {
-            warning("estimateCommonDisp() failed.  Trying again with estimateDisp().")
-            state <- FALSE
-        }
-        if (isTRUE(state)) {
-            message("EdgeR step 3/9: Estimating dispersion across genes.")
-            tagdisp_norm <- try(edgeR::estimateTagwiseDisp(disp_norm))
-            if (class(tagdisp_norm) == "try-error") {
-                warning("estimateTagwiseDisp() failed.  Trying again with estimateDisp().")
-                state <- FALSE
-            }
-        }
-        if (isTRUE(state)) {
-            message("EdgeR step 4/9: Estimating GLM Common dispersion.")
-            glm_norm <- try(edgeR::estimateGLMCommonDisp(tagdisp_norm, model_data))
-            if (class(glm_norm) == "try-error") {
-                warning("estimateGLMCommonDisp() failed.  Trying again with estimateDisp().")
-                state <- FALSE
-            }
-        }
-        if (isTRUE(state)) {
-            message("EdgeR step 5/9: Estimating GLM Trended dispersion.")
-            glm_trended <- try(edgeR::estimateGLMTrendedDisp(glm_norm, model_data))
-            if (class(glm_trended) == "try-error") {
-                warning("estimateGLMTrendedDisp() failed.  Trying again with estimateDisp().")
-                state <- FALSE
-            }
-        }
-        if (isTRUE(state)) {
-            message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
-            final_norm <- try(edgeR::estimateGLMTagwiseDisp(glm_trended, model_data))
-            if (class(final_norm) == "try-error") {
-                warning("estimateGLMTagwiseDisp() failed.  Trying again with estimateDisp.()")
-                state <- FALSE
-            }
-        }
-        if (!isTRUE(state)) {
-            final_norm <- edgeR::estimateDisp(norm, design=model_data, robust=TRUE)
-        }
+      lrt_list[[name]] <- edgeR::glmQLFTest(cond_fit, contrast=contrast_list[[name]])
     }
-    cond_fit <- NULL
-    if (test_type == "lrt") {
-        message("EdgeR step 7/9: Running glmFit, switch to glmQLFit by changing the argument 'test_type'.")
-        cond_fit <- edgeR::glmFit(final_norm, design=model_data, robust=TRUE)
-    } else {
-        message("EdgeR step 7/9: Running glmQLFit, switch to glmFit by changing the argument 'test_type'.")
-        cond_fit <- edgeR::glmQLFit(final_norm, design=model_data, robust=TRUE)
+    res <- edgeR::topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")
+    res <- as.data.frame(res)
+    res[["logFC"]] <- signif(x=as.numeric(res[["logFC"]]), digits=4)
+    res[["logCPM"]] <- signif(x=as.numeric(res[["logCPM"]]), digits=4)
+    if (!is.null(res[["LR"]])) {
+      res[["LR"]] <- signif(x=as.numeric(res[["LR"]]), digits=4)
+    } else if (!is.null(res[["F"]])) {
+      res[["F"]] <- signif(x=as.numeric(res[["F"]]), digits=4)
     }
+    res[["PValue"]] <- signif(x=as.numeric(res[["PValue"]]), digits=4)
+    res[["FDR"]] <- signif(x=as.numeric(res[["FDR"]]), digits=4)
+    result_list[[name]] <- res
+  } ## End for loop
 
-    message("EdgeR step 8/9: Making pairwise contrasts.")
-    apc <- make_pairwise_contrasts(model_data, conditions,
-                                   extra_contrasts=extra_contrasts,
-                                   do_identities=FALSE)
+  dispersions <- sm(try(edgeR::plotBCV(y=final_norm), silent=TRUE))
+  dispersion_plot <- NULL
+  if (class(dispersions)[[1]] != "try-error") {
+    dispersion_plot <- grDevices::recordPlot()
+  }
 
-    ## This section is convoluted because glmLRT only seems to take up to 7 contrasts at a time.
-    ## As a result, I iterate through the set of possible contrasts one at a time and ask for each
-    ## separately.
-    contrast_list <- list()
-    result_list <- list()
-    lrt_list <- list()
-    sc <- vector("list", length(apc[["names"]]))
-    end <- length(apc[["names"]])
-    for (con in 1:length(apc[["names"]])) {
-        name <- apc[["names"]][[con]]
-        message(paste0("EdgeR step 9/9: ", con, "/", end, ": Creating table: ", name, ".")) ## correct
-        sc[[name]] <- gsub(pattern=",", replacement="", apc[["all_pairwise"]][[con]])
-        tt <- parse(text=sc[[name]])
-        ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=model_data)")
-        eval(parse(text=ctr_string))
-        contrast_list[[name]] <- tt
-        lrt_list[[name]] <- NULL
-        if (test_type == "lrt") {
-            lrt_list[[name]] <- edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
-        } else {
-            lrt_list[[name]] <- edgeR::glmQLFTest(cond_fit, contrast=contrast_list[[name]])
-        }
-        res <- edgeR::topTags(lrt_list[[name]], n=nrow(data), sort.by="logFC")
-        res <- as.data.frame(res)
-        res[["logFC"]] <- signif(x=as.numeric(res[["logFC"]]), digits=4)
-        res[["logCPM"]] <- signif(x=as.numeric(res[["logCPM"]]), digits=4)
-        if (!is.null(res[["LR"]])) {
-            res[["LR"]] <- signif(x=as.numeric(res[["LR"]]), digits=4)
-        } else if (!is.null(res[["F"]])) {
-            res[["F"]] <- signif(x=as.numeric(res[["F"]]), digits=4)
-        }
-        res[["PValue"]] <- signif(x=as.numeric(res[["PValue"]]), digits=4)
-        res[["FDR"]] <- signif(x=as.numeric(res[["FDR"]]), digits=4)
-        result_list[[name]] <- res
-    } ## End for loop
-    final <- list(
-        "model" = model_data,
-        "contrasts" = apc,
-        "contrasts_performed" = apc[["names"]],
-        "lrt" = lrt_list,
-        "contrast_list" = contrast_list,
-        "all_tables" = result_list)
-    return(final)
+  final <- list(
+    "all_tables" = result_list,
+    "batches" = batches,
+    "batches_table" = batches_table,
+    "conditions" = conditions,
+    "conditions_table" = conditions_table,
+    "contrast_list" = contrast_list,
+    "contrasts" = apc,
+    "contrast_string" = contrast_string,
+    "contrasts_performed" = apc[["names"]],
+    "dispersion_plot" = dispersion_plot,
+    "input_data" = input,
+    "lrt" = lrt_list,
+    "model" = model_data,
+    "model_string" = model_string)
+  return(final)
 }
 
 #' Writes out the results of a edger search using write_de_table()
@@ -241,8 +235,8 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
 #' }
 #' @export
 write_edger <- function(data, ...) {
-    result <- write_de_table(data, type="edger", ...)
-    return(result)
+  result <- write_de_table(data, type="edger", ...)
+  return(result)
 }
 
 ## EOF

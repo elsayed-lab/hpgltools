@@ -81,6 +81,7 @@ test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise():
     expect_equal(deseq_adjpval, hpgl_adjpval, tolerance=0.1)
 })
 
+hpgl_deseq <- sm(deseq_pairwise(pasilla_expt))
 save(list=ls(), file="de_deseq.rda")
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))

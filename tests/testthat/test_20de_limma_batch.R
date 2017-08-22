@@ -197,7 +197,7 @@ test_that("Do the intercept and no-intercept fits give equal P-Values?", {
 })
 
 limma_written <- sm(write_limma(noint_limma, excel="limma_test.xlsx"))
-
+hpgl_limma <- sm(limma_pairwise(pasilla_expt))
 save(list=ls(), file="de_limma.rda")
 
 end <- as.POSIXlt(Sys.time())

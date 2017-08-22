@@ -56,7 +56,6 @@ build:
 
 test: 
 	@echo "Running run_tests.R"
-	@R CMD INSTALL . 2>/dev/null 1>&2
 	tests/testthat.R
 
 roxygen:

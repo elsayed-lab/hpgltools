@@ -281,20 +281,20 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   ## So that if I use combine_tables() I can report in the resulting tables
   ## some information about what was performed.
   ret <- list(
-    "model_cond" = model_cond,
-    "model_batch" = model_batch,
-    "extra_contrasts" = extra_contrasts,
-    "original_pvalues" = original_pvalues,
-    "input" = input,
-    "limma" = results[["limma"]],
+    "basic" = results[["basic"]],
     "deseq" = results[["deseq"]],
     "edger" = results[["edger"]],
-    "basic" = results[["basic"]],
+    "limma" = results[["limma"]],
     "batch_type" = model_type,
+    "comparison" = result_comparison,
+    "extra_contrasts" = extra_contrasts,
+    "input" = input,
+    "model_cond" = model_cond,
+    "model_batch" = model_batch,
+    "original_pvalues" = original_pvalues,
     "pre_batch" = pre_pca,
-    "post_batch" = post_pca,
-    "comparison" = result_comparison)
-
+    "post_batch" = post_pca)
+  
   if (!is.null(arglist[["excel"]])) {
     combined <- combine_de_tables(ret, excel=arglist[["excel"]], ...)
     ret[["combined"]] <- combined
@@ -771,8 +771,11 @@ compare_de_results <- function(first, second, cor_method="pearson") {
         message(paste0("Comparing ", method, ", ", table, ", ", comparison, "."))
         column_name <- paste0(method, "_", comparison)
         f_column <- as.numeric(first[["data"]][[table]][[column_name]])
+        names(f_column) <- rownames(first[["data"]][[table]])
         s_column <- as.numeric(second[["data"]][[table]][[column_name]])
-        comp <- cor(x=f_column, y=s_column, method=cor_method)
+        names(s_column) <- rownames(second[["data"]][[table]])
+        fs <- merge(f_column, s_column, by="row.names")
+        comp <- cor(x=fs[["x"]], y=fs[["y"]], method=cor_method)
         result[[method]][[table]][[comparison]] <- comp
       }
     }

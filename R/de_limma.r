@@ -362,6 +362,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
   ##                      model_intercept=model_intercept,
   ##                      alt_model=alt_model)
   chosen_model <- model[["chosen_model"]]
+  model_string <- model[["chosen_string"]]
 
   fun_voom <- NULL
   ## voom() it, taking into account whether the data has been log2 transformed.
@@ -451,7 +452,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     ## Note to self, the defaults are span=0.5, plot=FALSE, save.plot=FALSE,
     ## normalize.method="none", lib.size=NULL, design=NULL
     fun_voom <- limma::voom(counts=data,
-                            design=model,
+                            design=chosen_model,
                             lib.size=libsize,
                             normalize.method=voom_norm,
                             span=0.5,
@@ -544,22 +545,23 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
   result <- list(
     "all_pairwise" = all_pairwise,
     "all_tables" = limma_tables,
-    "identity_tables" = limma_identities,
     "batches" = batches,
     "batches_table" = batch_table,
     "conditions" = conditions,
     "conditions_table" = condition_table,
     "contrast_string" = contrast_string,
+    "contrasts_performed" = contrasts_performed,
+    "dispersion_plot" = voom_plot,
     "fit" = fitted_data,
     "identities" = identities,
+    "identity_tables" = limma_identities,
+    "identity_comparisons" = all_identity_comparisons,
     "input_data" = data,
     "model" = model,
+    "model_string" = model_string,
     "pairwise_comparisons" = all_pairwise_comparisons,
-    "identity_comparisons" = all_identity_comparisons,
     "single_table" = all_tables,
     "voom_design" = fun_design,
-    "contrasts_performed" = contrasts_performed,
-    "voom_plot" = voom_plot,
     "voom_result" = fun_voom)
   return(result)
 }

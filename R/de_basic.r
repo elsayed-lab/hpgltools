@@ -245,7 +245,7 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
     } else {
         if (filt_state == "raw") {
             message("Basic step 0/3: Filtering data.")
-            ready <- sm(normalize_expt(ready, filter="cbcb"))
+            ready <- sm(normalize_expt(ready, filter=TRUE))
         }
         if (norm_state == "raw") {
             message("Basic step 0/3: Normalizing data.")

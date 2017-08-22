@@ -165,6 +165,12 @@ Source: CRAN
 Version: 2.2.2
 Hash: b2366cd9d2f3851a5704b4e192b985c2
 
+Package: RBGL
+Source: Bioconductor
+Version: 1.52.0
+Hash: 1552ec708bf5555510e9ce823d64f974
+Requires: graph
+
 Package: RColorBrewer
 Source: CRAN
 Version: 1.1-2
@@ -243,6 +249,16 @@ Package: SuppDists
 Source: CRAN
 Version: 1.1-9.4
 Hash: b7f6b9d24f9131ae5d180ea695828e8a
+
+Package: Vennerable
+Source: github
+Version: 3.1.0.9000
+Hash: f0ae436b74d9ca7af813f1230744824a
+Requires: RBGL, RColorBrewer, graph, gtools, reshape2
+GithubRepo: Vennerable
+GithubUsername: js229
+GithubRef: master
+GithubSha1: 46057c99ede68bfa8b937a6d0a990291e729e1c8
 
 Package: XML
 Source: CRAN
@@ -492,6 +508,12 @@ Version: 3.0.1
 Hash: b7abe122479c203aa236499b7fc4b816
 Requires: caTools, gdata, gtools
 
+Package: graph
+Source: Bioconductor
+Version: 1.54.0
+Hash: e7cc07b2b72e7d1bc3ad55f58f4cce9e
+Requires: BiocGenerics
+
 Package: gridExtra
 Source: CRAN
 Version: 2.2.1
@@ -541,6 +563,11 @@ Package: hwriter
 Source: CRAN
 Version: 1.3.2
 Hash: 4c36a3e4a7471fdc3d5ee75b5188c37d
+
+Package: inflection
+Source: CRAN
+Version: 1.3
+Hash: e7620b22947e5f19ac9b76603c9a1dc0
 
 Package: ipred
 Source: CRAN
@@ -768,6 +795,11 @@ Hash: 2913ef01532ed000df6aaff904a28c98
 Requires: BiocGenerics, Biostrings, GenomeInfoDb, GenomicAlignments,
     GenomicRanges, IRanges, RCurl, Rsamtools, S4Vectors, XML, XVector,
     zlibbioc
+
+Package: ruv
+Source: CRAN
+Version: 0.9.6
+Hash: 0a50a1341cbf7c6d5d807e148999d658
 
 Package: scales
 Source: CRAN
