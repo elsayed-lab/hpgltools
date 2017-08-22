@@ -5,6 +5,12 @@ all: clean roxygen reference check build test
 
 install:
 	@echo "Performing R CMD INSTALL hpgltools"
+	R -e "packrat::disable()"
+	R CMD INSTALL .
+	R -e "packrat::init()"
+
+local:
+	@echo "Installing hpgltools locally."a
 	R CMD INSTALL .
 
 inst: roxygen restore install test
@@ -50,6 +56,7 @@ build:
 
 test: 
 	@echo "Running run_tests.R"
+	@R CMD INSTALL . 2>/dev/null 1>&2
 	tests/testthat.R
 
 roxygen:
