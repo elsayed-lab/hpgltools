@@ -18,6 +18,8 @@ load("de_basic.rda", envir=basic)
 ## The following lines should not be needed any longer.
 normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant",
                                      convert="cbcbcpm", filter="cbcb", thresh=1))
+
+## Interestingly, doParallel does not work when run from packrat.
 hpgl_all <- sm(all_pairwise(pasilla_expt, parallel=FALSE))
 
 hpgl_sva_result <- sm(all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",

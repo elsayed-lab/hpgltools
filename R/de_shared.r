@@ -1299,6 +1299,12 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
   up_genes <- table
   down_genes <- table
 
+  if (is.null(table[[column]])) {
+    message(paste0("There is no ", column, " column in the table."))
+    message(paste0("The columns are: ", toString(colnames(table))))
+    stop(paste0("There is no ", column, " column in the table."))
+  }
+
   if (!is.null(p)) {
     up_idx <- as.numeric(up_genes[[p_column]]) <= p
     ## Remember we have these reformatted as scientific
