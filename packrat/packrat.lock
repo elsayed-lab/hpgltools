@@ -203,6 +203,12 @@ Version: 1.95-4.8
 Hash: 79c7d5a8684e44e0e3426d3093aa7d90
 Requires: bitops
 
+Package: RMySQL
+Source: CRAN
+Version: 0.10.13
+Hash: 9cb5f1692b33d3c6b981e5e1e95abee6
+Requires: DBI
+
 Package: RSQLite
 Source: CRAN
 Version: 2.0
@@ -949,8 +955,8 @@ Requires: R6, crayon, digest, magrittr, praise
 
 Package: tibble
 Source: CRAN
-Version: 1.3.3
-Hash: 6a18f6da2887d2c4c4a6554027161483
+Version: 1.3.4
+Hash: 3111e0d62502af60fe0fa8b4213fedad
 Requires: Rcpp, rlang
 
 Package: variancePartition
