@@ -28,6 +28,10 @@ get_git_commit <- function(gitdir="/home/trey/hpgltools") {
     cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
     date_result <- system(cmdline, intern=TRUE)
     result <- paste0(date_result, ": ", commit_result)
+    message(paste0("If you wish to reproduce this exact build of hpgltools, invoke the following:"))
+    message("> git clone http://github.com/abelew/hpgltools.git")
+    message(paste0("> git reset ", commit_result))
+    message("R> packrat::restore()")
     return(result)
 }
 

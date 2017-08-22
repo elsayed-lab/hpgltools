@@ -11,7 +11,7 @@ Package: AnnotationDbi
 Source: Bioconductor
 Version: 1.38.2
 Hash: 8ff7587608809ef045fa8bc7f286a1c1
-Requires: BiocGenerics, DBI, Biobase, S4Vectors, IRanges, RSQLite
+Requires: Biobase, BiocGenerics, DBI, IRanges, RSQLite, S4Vectors
 
 Package: AnnotationForge
 Source: Bioconductor
@@ -21,10 +21,11 @@ Requires: AnnotationDbi, Biobase, BiocGenerics, DBI, RCurl, RSQLite,
     S4Vectors, XML
 
 Package: AnnotationHub
-Source: CRAN
+Source: Bioconductor
 Version: 2.8.2
-Requires: BiocGenerics, BiocInstaller, yaml, S4Vectors, httr,
-    interactiveDisplayBase, RSQLite, AnnotationDbi
+Hash: 82e7fb79427ccbb2a321d5f003eee666
+Requires: AnnotationDbi, BiocGenerics, BiocInstaller, RSQLite,
+    S4Vectors, httr, interactiveDisplayBase, yaml
 
 Package: BH
 Source: CRAN
@@ -295,7 +296,7 @@ Package: RSQLite
 Source: CRAN
 Version: 2.0
 Hash: 4a5b22207d2176cae55ed9e0856660b3
-Requires: BH, DBI, Rcpp, pkgconfig, plogr, bit64, memoise, blob
+Requires: BH, DBI, Rcpp, bit64, blob, memoise, pkgconfig, plogr
 
 Package: RUVSeq
 Source: Bioconductor
@@ -420,16 +421,19 @@ Hash: 5ed3b04bc1fa1a934188fc6022d3ba7c
 Package: ade4
 Source: CRAN
 Version: 1.7-8
+Hash: 43f9d30125173a260b76c3b410be3605
 
 Package: affy
-Source: CRAN
+Source: Bioconductor
 Version: 1.54.0
-Requires: BiocGenerics, BiocInstaller, preprocessCore, zlibbioc,
-    Biobase, affyio
+Hash: 26bb594251a0cf5f6c0febacb08cb548
+Requires: Biobase, BiocGenerics, BiocInstaller, affyio, preprocessCore,
+    zlibbioc
 
 Package: affyio
-Source: CRAN
+Source: Bioconductor
 Version: 1.46.0
+Hash: 5d30046468fe7ca533454b62d8bcbe79
 Requires: zlibbioc
 
 Package: annotate
@@ -791,6 +795,7 @@ Requires: htmltools, jsonlite, yaml
 Package: httpuv
 Source: CRAN
 Version: 1.3.5
+Hash: 2cc5284565b71276d1faf3d5c043fe4e
 Requires: Rcpp
 
 Package: httr
@@ -816,8 +821,9 @@ Version: 1.3
 Hash: e7620b22947e5f19ac9b76603c9a1dc0
 
 Package: interactiveDisplayBase
-Source: CRAN
+Source: Bioconductor
 Version: 1.14.0
+Hash: 4fd75b64cab5312513d6a64dfe4b7e85
 Requires: BiocGenerics, shiny
 
 Package: ipred
@@ -1143,8 +1149,9 @@ Hash: a52126189376bc2efe909d9d4e6c099a
 Package: shiny
 Source: CRAN
 Version: 1.0.4
-Requires: R6, digest, jsonlite, mime, sourcetools, xtable, httpuv,
-    htmltools
+Hash: bb780de024f905a7fcac8a45e6cce14a
+Requires: R6, digest, htmltools, httpuv, jsonlite, mime, sourcetools,
+    xtable
 
 Package: snow
 Source: CRAN
@@ -1154,6 +1161,7 @@ Hash: bf705214a3d32b037dd24940931c289e
 Package: sourcetools
 Source: CRAN
 Version: 0.1.6
+Hash: 226d56d7469587da40b0f96180e711b4
 
 Package: sqldf
 Source: CRAN

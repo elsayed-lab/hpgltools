@@ -18,7 +18,6 @@ env:
 
 install: 
   - make restore
-  - make install
 
 script:
   - make test
