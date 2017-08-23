@@ -17,7 +17,10 @@ Description: This is a set of functions I have been using in my various analyses
              flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
-    acepack, ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub
+    acepack, ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub,
+    base64enc, Biobase, BiocGenerics, BiocInstaller, Biostrings,
+    biomaRt, bumphunter, Category, caTools, clusterProfiler, corpcor, corrplot,
+    DBI, DESeq2, DESeq, devtools, directlabels, dplyr, doParallel, DOSE, EDASeq
 Imports:
     Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
