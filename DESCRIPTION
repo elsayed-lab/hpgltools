@@ -25,7 +25,6 @@ Suggests:
     genomeIntervals, GenomeInfoDb, GenomicFeatures, genoPlotR, GenomicRanges,
     ggdendro, ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph,
     gProfileR, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc, htmlTable
-
 Imports:
     Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
