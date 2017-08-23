@@ -24,7 +24,11 @@ Suggests:
     edgeR, ffpe, fission, Formula, gdata, genbankr, genefilter,
     genomeIntervals, GenomeInfoDb, GenomicFeatures, genoPlotR, GenomicRanges,
     ggdendro, ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph,
-    gProfileR, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc, htmlTable
+    gProfileR, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc, htmlTable,
+        igraph, inflection, IRanges, iterators, jsonlite, KEGGgraph, KEGGREST,
+    knitcitations, knitr, lattice, limma, matrixStats, motifRG, multtest,
+    mygene, openxlsx, OrganismDbi, pander, parallel, pasilla, pathview, plyr,
+    preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, readr, rentrez
 Imports:
     Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
