@@ -7,7 +7,7 @@ limma <- new.env()
 load("de_limma.rda", envir=limma)
 limma_result <- limma[["hpgl_limma"]]
 table <- limma_result[["all_tables"]][[1]]
-sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
+sig_genes <- sm(get_sig_genes(table, column="logFC")[["up_genes"]])
 dmel_annotations <- sm(load_biomart_annotations(species="dmelanogaster"))
 dmel_go <- sm(load_biomart_go(species="dmelanogaster"))
 

@@ -45,7 +45,7 @@ test_that("Is the transformation state maintained?", {
     expect_equal("log2", mgas_norm[["state"]][["transform"]])
 })
 
-mgas_pairwise <- sm(all_pairwise(mgas_expt))
+mgas_pairwise <- sm(all_pairwise(mgas_expt, parallel=FALSE))
 
 mgas_data <- sm(gbk2txdb(accession="AE009949"))
 expected <- 1895017
