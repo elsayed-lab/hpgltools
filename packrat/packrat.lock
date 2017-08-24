@@ -468,11 +468,6 @@ Source: CRAN
 Version: 3.98-1.9
 Hash: 02079c4025bbfa0f63400cc0bb414952
 
-Package: XMLRPC
-Source: Bioconductor
-Version: 0.3-0
-Requires: XML, RCurl
-
 Package: XVector
 Source: Bioconductor
 Version: 0.16.0
