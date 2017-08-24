@@ -4,7 +4,7 @@
 \alias{load_orgdb_kegg}
 \title{Creates a gene/KEGG mapping dataframe.}
 \usage{
-load_orgdb_kegg(orgdb, gene_ids = NULL, keytype = "ENSEMBL",
+load_orgdb_kegg(orgdb, gene_ids = NULL, keytype = "ensembl",
   columns = c("KEGG_PATH"))
 }
 \arguments{

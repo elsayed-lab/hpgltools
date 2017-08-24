@@ -6,7 +6,7 @@
 \usage{
 all_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, modify_p = FALSE, model_batch = TRUE,
-  model_intercept = TRUE, extra_contrasts = NULL, alt_model = NULL,
+  model_intercept = FALSE, extra_contrasts = NULL, alt_model = NULL,
   libsize = NULL, test_pca = TRUE, annot_df = NULL, parallel = TRUE,
   ...)
 }

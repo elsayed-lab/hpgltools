@@ -20,7 +20,7 @@ deseq2_pairwise(input = NULL, conditions = NULL, batches = NULL,
 
 \item{model_batch}{Is batch in the experimental model?}
 
-\item{model_intercept}{Use an intercept model?  DESeq seems to not be a fan of them.}
+\item{model_intercept}{Use an intercept model?}
 
 \item{alt_model}{Provide an arbitrary model here.}
 

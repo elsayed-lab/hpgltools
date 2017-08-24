@@ -5,7 +5,7 @@
 \title{Try out a few experimental models and return a likely working option.}
 \usage{
 choose_model(input, conditions = NULL, batches = NULL, model_batch = TRUE,
-  model_cond = TRUE, model_intercept = TRUE, alt_model = NULL,
+  model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
   alt_string = NULL, intercept = 0, reverse = FALSE, surrogates = "be",
   ...)
 }
@@ -48,7 +48,7 @@ Invoked by the _pairwise() functions.
 }
 \examples{
  \dontrun{
-  a_model <- choose_model(expt, model_batch=TRUE, model_intercept=TRUE)
+  a_model <- choose_model(expt, model_batch=TRUE, model_intercept=FALSE)
   a_model$chosen_model
   ## ~ 0 + condition + batch
 }

@@ -4,8 +4,8 @@
 \alias{load_orgdb_go}
 \title{Retrieve GO terms associated with a set of genes.}
 \usage{
-load_orgdb_go(orgdb, gene_ids = NULL, keytype = "ENSEMBL",
-  columns = c("GO", "GOALL", "GOID"))
+load_orgdb_go(orgdb, gene_ids = NULL, keytype = "ensembl",
+  columns = c("go", "goall", "goid"))
 }
 \arguments{
 \item{orgdb}{OrganismDb instance.}
