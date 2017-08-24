@@ -4,7 +4,7 @@
 \alias{pp}
 \title{png() shortcut}
 \usage{
-pp(file, width = 9, height = 9, res = 180)
+pp(file, width = 9, height = 9, res = 180, ...)
 }
 \arguments{
 \item{file}{a filename to write}
@@ -16,7 +16,7 @@ pp(file, width = 9, height = 9, res = 180)
 \item{res}{The chosen resolution.}
 }
 \value{
-a png with height=width=9 inches and a high resolution
+a png/svg/eps/ps/pdf with height=width=9 inches and a high resolution
 }
 \description{
 I hate remembering my options for png()
