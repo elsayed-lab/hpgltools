@@ -704,7 +704,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                          start_row=51)
           try_vol_result <- xlsx_plot_png(vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
                                           height=plot_dim, start_col=plot_column + 10,
-                                          plotname="edvol" savedir=excel_basename,
+                                          plotname="edvol", savedir=excel_basename,
                                           start_row=51)
         }
         ## Text on 81, plots 82-112
