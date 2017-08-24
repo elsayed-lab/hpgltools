@@ -330,11 +330,6 @@ Version: 1.10.0
 Hash: d256b37eeab2b62fc7bfd9b08059b693
 Requires: Biobase, EDASeq, edgeR
 
-Package: RamiGO
-Source: CRAN
-Version: 1.22.0
-Requires: png, graph, RCurl, igraph, gsubfn, RCytoscape
-
 Package: Rcpp
 Source: CRAN
 Version: 0.12.12
