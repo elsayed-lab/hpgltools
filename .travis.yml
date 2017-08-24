@@ -15,6 +15,7 @@ env:
   global:
     - R_CHECK_ARGS="--no-build-vignettes --no-manual"
     - _R_CHECK_TIMINGS_="0"
+    - R_MAX_NUM_DLLS=256
 
 install: 
   - make restore
