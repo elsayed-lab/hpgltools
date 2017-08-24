@@ -5,34 +5,34 @@
 #' @return  A spring-fresh R session, hopefully.
 #' @export
 clear_session <- function(keepers=NULL, depth=10) {
-    ## Partially taken from: https://stackoverflow.com/questions/7505547/detach-all-packages-while-working-in-r
-    basic_packages <- c("package:stats", "package:graphics", "package:grDevices", "package:utils",
-                        "package:datasets", "package:methods", "package:base")
-    package_list <- search()[ifelse(unlist(gregexpr("package:", search()))==1, TRUE, FALSE)]
-    package_list <- setdiff(package_list, basic_packages)
-    result <- R.utils::gcDLLs()
-    if (length(package_list) > 0) {
-        for (package in package_list) {
-            detach(package, character.only=TRUE)
-        }
+  ## Partially taken from: https://stackoverflow.com/questions/7505547/detach-all-packages-while-working-in-r
+  basic_packages <- c("package:stats", "package:graphics", "package:grDevices", "package:utils",
+                      "package:datasets", "package:methods", "package:base")
+  package_list <- search()[ifelse(unlist(gregexpr("package:", search()))==1, TRUE, FALSE)]
+  package_list <- setdiff(package_list, basic_packages)
+  result <- R.utils::gcDLLs()
+  if (length(package_list) > 0) {
+    for (package in package_list) {
+      detach(package, character.only=TRUE)
     }
-    tt <- sm(rm(list=ls(all.names=TRUE), envir=globalenv()))
+  }
+  tt <- sm(rm(list=ls(all.names=TRUE), envir=globalenv()))
 }
 
 #' Get the current git commit for hpgltools
 #'
 #' @export
 get_git_commit <- function(gitdir="/home/trey/hpgltools") {
-    cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'commit' | awk '{print $2}'")
-    commit_result <- system(cmdline, intern=TRUE)
-    cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
-    date_result <- system(cmdline, intern=TRUE)
-    result <- paste0(date_result, ": ", commit_result)
-    message(paste0("If you wish to reproduce this exact build of hpgltools, invoke the following:"))
-    message("> git clone http://github.com/abelew/hpgltools.git")
-    message(paste0("> git reset ", commit_result))
-    message("R> packrat::restore()")
-    return(result)
+  cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'commit' | awk '{print $2}'")
+  commit_result <- system(cmdline, intern=TRUE)
+  cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
+  date_result <- system(cmdline, intern=TRUE)
+  result <- paste0(date_result, ": ", commit_result)
+  message(paste0("If you wish to reproduce this exact build of hpgltools, invoke the following:"))
+  message("> git clone http://github.com/abelew/hpgltools.git")
+  message(paste0("> git reset ", commit_result))
+  message("R> packrat::restore()")
+  return(result)
 }
 
 #' Perform a get_value for delimited files
@@ -42,7 +42,7 @@ get_git_commit <- function(gitdir="/home/trey/hpgltools") {
 #' @param delimiter  The tritrypdb uses ': ' ergo the default.
 #' @return A value!
 local_get_value <- function(x, delimiter=": ") {
-    return(gsub("^ ", "", tail(unlist(strsplit(x, delimiter)), n=1), fixed=TRUE))
+  return(gsub("^ ", "", tail(unlist(strsplit(x, delimiter)), n=1), fixed=TRUE))
 }
 
 #' png() shortcut
@@ -53,10 +53,24 @@ local_get_value <- function(x, delimiter=": ") {
 #' @param width  How wide?
 #' @param height  How high?
 #' @param res  The chosen resolution.
-#' @return a png with height=width=9 inches and a high resolution
+#' @return a png/svg/eps/ps/pdf with height=width=9 inches and a high resolution
 #' @export
-pp <- function(file, width=9, height=9, res=180) {
-    png(filename=file, width=width, height=height, units="in", res=res)
+pp <- function(file, width=9, height=9, res=180, ...) {
+  ext <- tools::file_ext(file)
+  if (ext == "png") {
+    png(filename=file, width=width, height=height, units="in", res=res, ...)
+  } else if (ext == "svg") {
+    svg(filename=file)
+  } else if (ext == "ps") {
+    postscript(filename=file, width=width, height=height, units="in", ...)
+  } else if (ext == "eps") {
+    cairo_ps(filename=file, width=width, height=height, ...)
+  } else if (ext == "pdf") {
+    pdf(file=file, ...)
+  } else {
+    message("Defaulting to tiff.")
+    tiff(filename=file, width=width, height=height, units="in", ...)
+  }
 }
 
 #' Silence, m...
@@ -68,11 +82,11 @@ pp <- function(file, width=9, height=9, res=180) {
 #' @return Whatever the code would have returned.
 #' @export
 sm <- function(...) {
-    ret <- NULL
-    output <- capture.output(type="output", {
-        ret <- suppressWarnings(suppressMessages(...))
-    })
-    return(ret)
+  ret <- NULL
+  output <- capture.output(type="output", {
+    ret <- suppressWarnings(suppressMessages(...))
+  })
+  return(ret)
 }
 
 #' Make a knitr report with some defaults set a priori.
@@ -85,43 +99,43 @@ sm <- function(...) {
 #' @seealso \pkg{knitr} \pkg{rmarkdown} \pkg{knitrBootstrap}
 #' @export
 make_report <- function(name="report", type="pdf") {
-    knitr::opts_knit$set(
-        progress = TRUE,
-        verbose = TRUE,
-        width = 90,
-        echo = TRUE)
-    knitr::opts_chunk$set(
-        error = TRUE,
-        fig.width = 8,
-        fig.height = 8,
-        dpi = 96)
-    options(digits = 4,
-            stringsAsFactors = FALSE,
-            knitr.duplicate.label = "allow")
-    ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
-    set.seed(1)
-    output_date <- format(Sys.time(), "%Y%m%d-%H%M")
-    input_filename <- name
-    ## In case I add .rmd on the end.
-    input_filename <- gsub("\\.rmd", "", input_filename, perl=TRUE)
-    input_filename <- gsub("\\.Rmd", "", input_filename, perl=TRUE)
-    input_filename <- paste0(input_filename, ".Rmd")
-    if (type == "html") {
-        output_filename <- paste0(name, "-", output_date, ".html")
-        output_format <- "html_document"
-        rmarkdown::render(output_filename, output_format)
-    } else {
-        output_filename <- paste0(name, "-", output_date, ".pdf")
-        output_format <- "pdf_document"
-    }
-    message(paste0("About to run: render(input=", input_filename, ", output_file=",
-                   output_filename, " and output_format=", output_format))
-    result <- try(rmarkdown::render(
-        "input" = input_filename,
-        "output_file" = output_filename,
-        "output_format" = output_format), silent=TRUE)
+  knitr::opts_knit$set(
+                     progress = TRUE,
+                     verbose = TRUE,
+                     width = 90,
+                     echo = TRUE)
+  knitr::opts_chunk$set(
+                      error = TRUE,
+                      fig.width = 8,
+                      fig.height = 8,
+                      dpi = 96)
+  options(digits = 4,
+          stringsAsFactors = FALSE,
+          knitr.duplicate.label = "allow")
+  ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
+  set.seed(1)
+  output_date <- format(Sys.time(), "%Y%m%d-%H%M")
+  input_filename <- name
+  ## In case I add .rmd on the end.
+  input_filename <- gsub("\\.rmd", "", input_filename, perl=TRUE)
+  input_filename <- gsub("\\.Rmd", "", input_filename, perl=TRUE)
+  input_filename <- paste0(input_filename, ".Rmd")
+  if (type == "html") {
+    output_filename <- paste0(name, "-", output_date, ".html")
+    output_format <- "html_document"
+    rmarkdown::render(output_filename, output_format)
+  } else {
+    output_filename <- paste0(name, "-", output_date, ".pdf")
+    output_format <- "pdf_document"
+  }
+  message(paste0("About to run: render(input=", input_filename, ", output_file=",
+                 output_filename, " and output_format=", output_format))
+  result <- try(rmarkdown::render(
+                             "input" = input_filename,
+                             "output_file" = output_filename,
+                             "output_format" = output_format), silent=TRUE)
 
-    return(result)
+  return(result)
 }
 
 #' Implement the arescan function in R
@@ -168,48 +182,48 @@ make_report <- function(name="report", type="pdf") {
 hpgl_arescore <- function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
                            d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
                            aub.p.to.end=0.55) {
-    ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
-    ## However, the repository I want for it is 'seqtools'
-    ## Ergo my stupid require.auto() will be confused by definition because it assumes equivalent names
-    ##if (isTRUE('SeqTools' %in% .packages(all.available=TRUE))) {
-    ##    library('SeqTools')
-    ##} else {
-    ##    require.auto("lianos/seqtools/R/pkg")
-    ##    library('SeqTools')
-    ##}
-    xtype <- match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
-    if (xtype == "DNA") {
-        pentamer <- "ATTTA"
-        overmer <- "ATTTATTTA"
-    } else {
-        pentamer <- "AUUUA"
-        overmer <- "AUUUAUUUA"
+  ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
+  ## However, the repository I want for it is 'seqtools'
+  ## Ergo my stupid require.auto() will be confused by definition because it assumes equivalent names
+  ##if (isTRUE('SeqTools' %in% .packages(all.available=TRUE))) {
+  ##    library('SeqTools')
+  ##} else {
+  ##    require.auto("lianos/seqtools/R/pkg")
+  ##    library('SeqTools')
+  ##}
+  xtype <- match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
+  if (xtype == "DNA") {
+    pentamer <- "ATTTA"
+    overmer <- "ATTTATTTA"
+  } else {
+    pentamer <- "AUUUA"
+    overmer <- "AUUUAUUUA"
+  }
+  x <- as(x, "DNAStringSet")
+  pmatches <- Biostrings::vmatchPattern(pentamer, x)
+  omatches <- Biostrings::vmatchPattern(overmer, x)
+  basal.score <- S4Vectors::elementLengths(pmatches) * basal
+  over.score <- S4Vectors::elementLengths(omatches) * overlapping
+  no.cluster <- data.frame(d1.3 = 0, d4.6 = 0, d7.9 = 0)
+  clust <- lapply(pmatches, function(m) {
+    if (length(m) < 2) {
+      return(no.cluster)
     }
-    x <- as(x, "DNAStringSet")
-    pmatches <- Biostrings::vmatchPattern(pentamer, x)
-    omatches <- Biostrings::vmatchPattern(overmer, x)
-    basal.score <- S4Vectors::elementLengths(pmatches) * basal
-    over.score <- S4Vectors::elementLengths(omatches) * overlapping
-    no.cluster <- data.frame(d1.3 = 0, d4.6 = 0, d7.9 = 0)
-    clust <- lapply(pmatches, function(m) {
-        if (length(m) < 2) {
-            return(no.cluster)
-        }
-        wg <- BiocGenerics::width(IRanges::gaps(m))
-        data.frame(d1.3=sum(wg <= 3), d4.6=sum(wg >= 4 & wg <= 6), d7.9=sum(wg >= 7 & wg <= 9))
-    })
-    clust <- do.call(rbind, clust)
-    dscores <- clust$d1.3 * d1.3 + clust$d4.6 * d4.6 + clust$d7.9 *  d7.9
-    ## require.auto("Biostrings")
-    au.blocks <- my_identifyAUBlocks(x, aub.min.length, aub.p.to.start, aub.p.to.end)
-    aub.score <- sum(IRanges::countOverlaps(pmatches, au.blocks) * within.AU)
-    score <- basal.score + over.score + dscores + aub.score
-    ans <- S4Vectors::DataFrame(score=score,
-                                n.pentamer=S4Vectors::elementLengths(pmatches),
-                                n.overmer=S4Vectors::elementLengths(omatches),
-                                au.blocks=au.blocks,
-                                n.au.blocks=S4Vectors::elementLengths(au.blocks))
-    cbind(ans, S4Vectors::DataFrame(clust))
+    wg <- BiocGenerics::width(IRanges::gaps(m))
+    data.frame(d1.3=sum(wg <= 3), d4.6=sum(wg >= 4 & wg <= 6), d7.9=sum(wg >= 7 & wg <= 9))
+  })
+  clust <- do.call(rbind, clust)
+  dscores <- clust$d1.3 * d1.3 + clust$d4.6 * d4.6 + clust$d7.9 *  d7.9
+  ## require.auto("Biostrings")
+  au.blocks <- my_identifyAUBlocks(x, aub.min.length, aub.p.to.start, aub.p.to.end)
+  aub.score <- sum(IRanges::countOverlaps(pmatches, au.blocks) * within.AU)
+  score <- basal.score + over.score + dscores + aub.score
+  ans <- S4Vectors::DataFrame(score=score,
+                              n.pentamer=S4Vectors::elementLengths(pmatches),
+                              n.overmer=S4Vectors::elementLengths(omatches),
+                              au.blocks=au.blocks,
+                              n.au.blocks=S4Vectors::elementLengths(au.blocks))
+  cbind(ans, S4Vectors::DataFrame(clust))
 }
 
 #' copy/paste the function from SeqTools and figure out where it falls on its ass.
@@ -223,36 +237,36 @@ hpgl_arescore <- function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
 #'
 #' @return a list of IRanges which contain a bunch of As and Us.
 my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
-    xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
-    stopifnot(S4Vectors::isSingleNumber(min.length) && min.length >= 5 &&  min.length <= 50)
-    stopifnot(S4Vectors::isSingleNumber(p.to.start) && p.to.start >= 0.5 && p.to.start <= 0.95)
-    stopifnot(S4Vectors::isSingleNumber(p.to.end) && p.to.end >= 0.2 && p.to.end <= 0.7)
-    stopifnot(p.to.start > p.to.end)
-    if (xtype == "DNA") {
-        AU <- "AT"
-    } else {
-        AU <- "AU"
-    }
-    y <- as(x, sprintf("%sStringSet", xtype))
+  xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
+  stopifnot(S4Vectors::isSingleNumber(min.length) && min.length >= 5 &&  min.length <= 50)
+  stopifnot(S4Vectors::isSingleNumber(p.to.start) && p.to.start >= 0.5 && p.to.start <= 0.95)
+  stopifnot(S4Vectors::isSingleNumber(p.to.end) && p.to.end >= 0.2 && p.to.end <= 0.7)
+  stopifnot(p.to.start > p.to.end)
+  if (xtype == "DNA") {
+    AU <- "AT"
+  } else {
+    AU <- "AU"
+  }
+  y <- as(x, sprintf("%sStringSet", xtype))
 
-    widths <- BiocGenerics::width(x)
-    fun <- function(i) {
-        one_seq <- x[[i]]
-        au <- Biostrings::letterFrequencyInSlidingView(one_seq, min.length, AU, as.prob=TRUE)
-        if (is.null(au) | nrow(au) == 0) {
-                return(IRanges::IRanges())
-            }
-        au <- as.numeric(au)
-        can.start <- au >= p.to.start
-        can.end <- au <= p.to.end
-        posts <- .Call("find_au_start_end", au, p.to.start, p.to.end, PACKAGE="SeqTools")
-        blocks <- IRanges::IRanges(posts$start, posts$end + min.length -  1L)
-        stats::end(blocks) <- ifelse(stats::end(blocks) > widths[i], widths[i], stats::end(blocks))
-        IRanges::reduce(blocks)
+  widths <- BiocGenerics::width(x)
+  fun <- function(i) {
+    one_seq <- x[[i]]
+    au <- Biostrings::letterFrequencyInSlidingView(one_seq, min.length, AU, as.prob=TRUE)
+    if (is.null(au) | nrow(au) == 0) {
+      return(IRanges::IRanges())
     }
-    au.blocks = lapply(1:length(x), fun)
-    ret <- IRanges::IRangesList(au.blocks)
-    return(ret)
+    au <- as.numeric(au)
+    can.start <- au >= p.to.start
+    can.end <- au <= p.to.end
+    posts <- .Call("find_au_start_end", au, p.to.start, p.to.end, PACKAGE="SeqTools")
+    blocks <- IRanges::IRanges(posts$start, posts$end + min.length -  1L)
+    stats::end(blocks) <- ifelse(stats::end(blocks) > widths[i], widths[i], stats::end(blocks))
+    IRanges::reduce(blocks)
+  }
+  au.blocks = lapply(1:length(x), fun)
+  ret <- IRanges::IRangesList(au.blocks)
+  return(ret)
 }
 
 #' Wrap cor() to include robust correlations.
@@ -273,13 +287,13 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #' }
 #' @export
 hpgl_cor <- function(df, method="pearson", ...) {
-    if (method == "robust") {
-        robust_cov <- robust::covRob(df, corr=TRUE)
-        correlation <- robust_cov[["cov"]]
-    } else {
-        correlation <- stats::cor(df, method=method, ...)
-    }
-    return(correlation)
+  if (method == "robust") {
+    robust_cov <- robust::covRob(df, corr=TRUE)
+    correlation <- robust_cov[["cov"]]
+  } else {
+    correlation <- stats::cor(df, method=method, ...)
+  }
+  return(correlation)
 }
 
 #' Calculate a simplistic distance function of a point against two axes.
@@ -316,14 +330,14 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' }
 #' @export
 sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
-    dataframe <- data.frame(firstterm, secondterm)
-    dataframe[["x"]] <- (abs(dataframe[, 1]) - abs(firstaxis)) / abs(firstaxis)
-    dataframe[["y"]] <- abs((dataframe[, 2] - secondaxis) / secondaxis)
-    dataframe[["x"]] <- abs(dataframe[, 1] / max(dataframe[["x"]]))
-    dataframe[["y"]] <- abs(dataframe[, 2] / max(dataframe[["y"]]))
-    dataframe[["dist"]] <- abs(dataframe$x * dataframe[["y"]])
-    dataframe[["dist"]] <- dataframe$dist / max(dataframe[["dist"]])
-    return(dataframe)
+  dataframe <- data.frame(firstterm, secondterm)
+  dataframe[["x"]] <- (abs(dataframe[, 1]) - abs(firstaxis)) / abs(firstaxis)
+  dataframe[["y"]] <- abs((dataframe[, 2] - secondaxis) / secondaxis)
+  dataframe[["x"]] <- abs(dataframe[, 1] / max(dataframe[["x"]]))
+  dataframe[["y"]] <- abs(dataframe[, 2] / max(dataframe[["y"]]))
+  dataframe[["dist"]] <- abs(dataframe$x * dataframe[["y"]])
+  dataframe[["dist"]] <- dataframe$dist / max(dataframe[["dist"]])
+  return(dataframe)
 }
 
 #' Make a backup of an existing file with n revisions, like VMS!
@@ -334,23 +348,23 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #' @param backup_file Filename to backup.
 #' @param backups How many revisions?
 backup_file <- function(backup_file, backups=4) {
-    if (file.exists(backup_file)) {
-        for (i in backups:01) {
-            j <- i + 1
-            i <- sprintf("%02d", i)
-            j <- sprintf("%02d", j)
-            test <- paste0(backup_file, ".", i)
-            new <- paste0(backup_file, ".", j)
-            if (file.exists(test)) {
-                file.rename(test, new)
-            }
-        }
-        newfile <- paste0(backup_file, ".", i)
-        message(paste0("Renaming ", backup_file, " to ", newfile, "."))
-        file.copy(backup_file, newfile)
-    } else {
-        message("The file does not yet exist.")
+  if (file.exists(backup_file)) {
+    for (i in backups:01) {
+      j <- i + 1
+      i <- sprintf("%02d", i)
+      j <- sprintf("%02d", j)
+      test <- paste0(backup_file, ".", i)
+      new <- paste0(backup_file, ".", j)
+      if (file.exists(test)) {
+        file.rename(test, new)
+      }
     }
+    newfile <- paste0(backup_file, ".", i)
+    message(paste0("Renaming ", backup_file, " to ", newfile, "."))
+    file.copy(backup_file, newfile)
+  } else {
+    message("The file does not yet exist.")
+  }
 }
 
 #' Load a backup rdata file
@@ -369,11 +383,11 @@ backup_file <- function(backup_file, backups=4) {
 #' }
 #' @export
 loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
-    savefile <- paste0(getwd(), "/", directory, "/", filename)
-    message(paste0("Loading the savefile: ", savefile))
-    load_string <- paste0("load('", savefile, "', envir=globalenv())")
-    message(paste0("Command run: ", load_string))
-    eval(parse(text=load_string))
+  savefile <- paste0(getwd(), "/", directory, "/", filename)
+  message(paste0("Loading the savefile: ", savefile))
+  load_string <- paste0("load('", savefile, "', envir=globalenv())")
+  message(paste0("Command run: ", load_string))
+  eval(parse(text=load_string))
 }
 
 #' Make a backup rdata file for future reference
@@ -395,21 +409,21 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #' }
 #' @export
 saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda.xz") {
-    environment()
-    if (!file.exists(directory)) {
-        dir.create(directory)
-    }
-    savefile <- paste0(getwd(), "/", directory, "/", filename)
-    message(paste0("The savefile is: ", savefile))
-    backup_file(savefile, backups=backups)
-    ## The following save strings work:
-    save_string <- paste0("con <- pipe(paste0('pxz -T", cpus, " > ",
-                          savefile,
-                          "'), 'wb');\n",
-                          "save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n",
-                          "close(con)")
-    message(paste0("The save string is: ", save_string))
-    eval(parse(text=save_string))
+  environment()
+  if (!file.exists(directory)) {
+    dir.create(directory)
+  }
+  savefile <- paste0(getwd(), "/", directory, "/", filename)
+  message(paste0("The savefile is: ", savefile))
+  backup_file(savefile, backups=backups)
+  ## The following save strings work:
+  save_string <- paste0("con <- pipe(paste0('pxz -T", cpus, " > ",
+                        savefile,
+                        "'), 'wb');\n",
+                        "save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n",
+                        "close(con)")
+  message(paste0("The save string is: ", save_string))
+  eval(parse(text=save_string))
 }
 
 #' Print a model as y = mx + b just like in grade school!
@@ -420,12 +434,12 @@ saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda
 #' @return a string representation of that model.
 #' @export
 ymxb_print <- function(model) {
-    intercept <- round(coefficients(model)[1], 2)
-    x_name <- names(coefficients(model)[-1])
-    slope <- round(coefficients(model)[-1], 2)
-    ret <- paste0("y = ", slope, "*", x_name, " + ", intercept)
-    message(ret)
-    return(ret)
+  intercept <- round(coefficients(model)[1], 2)
+  x_name <- names(coefficients(model)[-1])
+  slope <- round(coefficients(model)[-1], 2)
+  ret <- paste0("y = ", slope, "*", x_name, " + ", intercept)
+  message(ret)
+  return(ret)
 }
 
 #' Resets the display and xauthority variables to the new computer I am using so that plot() works.
@@ -437,16 +451,16 @@ ymxb_print <- function(model) {
 #'
 #' @export
 rex <- function(display=":0") {
-    home <- Sys.getenv("HOME")
-    host <- Sys.info()[["nodename"]]
-    if (is.null(display)) {
-        display <- read.table(paste0(home, "/.displays/", host, ".last"))[1, 1]
-    }
-    auth <- paste0(home, "/.Xauthority")
-    message(paste0("Setting display to: ", display))
-    result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
-    X11(display=display)
-    return(NULL)
+  home <- Sys.getenv("HOME")
+  host <- Sys.info()[["nodename"]]
+  if (is.null(display)) {
+    display <- read.table(paste0(home, "/.displays/", host, ".last"))[1, 1]
+  }
+  auth <- paste0(home, "/.Xauthority")
+  message(paste0("Setting display to: ", display))
+  result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
+  X11(display=display)
+  return(NULL)
 }
 
 ## EOF

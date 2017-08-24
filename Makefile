@@ -26,9 +26,7 @@ hi:
 
 restore:
 	echo "Restoring packrat."
-	R -e "0" --args --bootstrap-packrat
-	R -e "packrat::restore(restart=FALSE)"
-##	R -e "packrat::restore(restart=FALSE, overwrite.dirty=TRUE)"
+	R -e "packrat::clean(); packrat::restore(restart=FALSE, overwrite.dirty=TRUE)" --args --bootstrap-packrat
 
 snap:
 	echo "Snapshotting packrat."
