@@ -306,11 +306,6 @@ Version: 1.95-4.8
 Hash: 79c7d5a8684e44e0e3426d3093aa7d90
 Requires: bitops
 
-Package: RCytoscape
-Source: CRAN
-Version: 1.26.0
-Requires: BiocGenerics, graph, XMLRPC
-
 Package: RDAVIDWebService
 Source: Bioconductor
 Version: 1.14.0
