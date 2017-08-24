@@ -5,9 +5,9 @@ all: clean roxygen reference check build test
 
 install:
 	@echo "Performing R CMD INSTALL hpgltools globally."
-	R -e "packrat::disable()"
+	@mv .Rprofile .Rprofile.bak
 	R CMD INSTALL .
-	R -e "packrat::init()"
+	@mv .Rprofile.bak .Rprofile
 
 test:
 	@echo "Installing hpgltools in the local packrat tree."
