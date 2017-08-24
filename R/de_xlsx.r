@@ -274,10 +274,13 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   combo <- list()
   limma_plots <- list()
   limma_ma_plots <- list()
+  limma_vol_plots <- list()
   edger_plots <- list()
   edger_ma_plots <- list()
+  edger_vol_plots <- list()
   deseq_plots <- list()
   deseq_ma_plots <- list()
+  deseq_vol_plots <- list()
   sheet_count <- 0
   de_summaries <- data.frame()
   name_list <- c()
@@ -315,12 +318,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       dat <- NULL
       plt <- NULL
       summary <- NULL
-      limma_plt <- NULL
-      limma_ma_plt <- NULL
-      edger_plt <- NULL
-      edger_ma_plt <- NULL
-      deseq_plt <- NULL
-      deseq_ma_plt <- NULL
+      limma_plt <- limma_ma_plt <- limma_vol_plt <- NULL
+      edger_plt <- edger_ma_plt <- edger_vol_plt <- NULL
+      deseq_plt <- deseq_ma_plt <- deseq_vol_plt <- NULL
 
       contrasts_performed <- NULL
       if (class(limma) != "try-error") {
@@ -382,107 +382,56 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         summary <- combined[["summary"]]
         limma_plt <- edger_plt <- deseq_plt <- NULL
         limma_ma_plt <-  edger_ma_plt <- deseq_ma_plt <- NULL
-        if (isTRUE(do_inverse)) {
-          if (isTRUE(include_limma)) {
-            limma_try <- try(sm(extract_coefficient_scatter(
-              limma, type="limma",
-              loess=loess,
-              x=denominator,
-              y=numerator)), silent=TRUE)
-            limma_ma_try <- try(sm(extract_de_ma(
-              combined, type="limma", invert=TRUE,
-              table=found_table)))
-            if (class(limma_try) == "list") {
-              limma_plt <- limma_try
-            }
-            if (class(limma_ma_try) == "list") {
-              limma_ma_plt <- limma_ma_try
-            }
-          }
+        limma_vol_plt <-  edger_vol_plt <- deseq_vol_plt <- NULL
 
-          if (isTRUE(include_edger)) {
-            edger_try <- try(sm(extract_coefficient_scatter(
-              edger, type="edger",
-              loess=loess,
-              x=denominator,
-              y=numerator)), silent=TRUE)
-            edger_ma_try <- try(sm(extract_de_ma(
-              combined, type="edger", invert=TRUE,
-              table=found_table)))
-            if (class(edger_try) == "list") {
-              edger_plt <- edger_try
-            }
-            if (class(edger_ma_try) == "list") {
-              edger_ma_plt <- edger_ma_try
-            }
+        if (isTRUE(include_limma)) {
+          limma_try <- try(sm(extract_coefficient_scatter(
+            limma, type="limma",
+            loess=loess,
+            x=denominator,
+            y=numerator)), silent=TRUE)
+          if (class(limma_try) == "list") {
+            limma_plt <- limma_try
           }
-          
-          if (isTRUE(include_deseq)) {
-            deseq_try <- try(sm(extract_coefficient_scatter(
-              deseq, type="deseq",
-              loess=loess,
-              x=denominator,
-              y=numerator)), silent=TRUE)
-            deseq_ma_try <- try(sm(extract_de_ma(
-              combined, type="deseq", invert=TRUE,
-              table=found_table)))
-            if (class(deseq_try) == "list") {
-              deseq_plt <- deseq_try
-            }
-            if (class(deseq_ma_try) == "list") {
-              deseq_ma_plt <- deseq_ma_try
-            }
+          ma_vol <- try(sm(extract_de_plots(
+            combined, type="limma", invert=do_inverse, table=found_table)))
+          if (class(ma_vol) != "try-error") {
+            limma_ma_plt <- ma_vol[["ma"]]
+            limma_vol_plt <- ma_vol[["volcano"]]
           }
+        }
 
-        } else {  ## The data are not inverted.
-          if (isTRUE(include_limma)) {
-            limma_try <- sm(try(extract_coefficient_scatter(
-              limma, type="limma",
-              loess=loess,
-              x=numerator,
-              y=denominator)))
-            limma_ma_try <- sm(try(extract_de_ma(
-              combined, type="limma",
-              table=found_table)))
-            if (class(limma_try) == "list") {
-              limma_plt <- limma_try
-            }
-            if (class(limma_ma_try) == "list") {
-              limma_ma_plt <- limma_ma_try
-            }
+        if (isTRUE(include_edger)) {
+          edger_try <- try(sm(extract_coefficient_scatter(
+            edger, type="edger",
+            loess=loess,
+            x=denominator,
+            y=numerator)), silent=TRUE)
+          if (class(edger_try) == "list") {
+            edger_plt <- edger_try
           }
-          if (isTRUE(include_edger)) {
-            edger_try <- sm(try(extract_coefficient_scatter(
-              edger, type="edger",
-              loess=loess,
-              x=numerator,
-              y=denominator)))
-            edger_ma_try <- sm(try(extract_de_ma(
-              combined, type="edger",
-              table=found_table)))
-            if (class(edger_try) == "list") {
-              edger_plt <- edger_try
-            }
-            if (class(edger_ma_try) == "list") {
-              edger_ma_plt <- edger_ma_try
-            } 
+          ma_vol <- try(sm(extract_de_plots(
+            combined, type="edger", invert=do_inverse, table=found_table)))
+          if (class(ma_vol) != "try-error") {
+            edger_ma_plt <- ma_vol[["ma"]]
+            edger_vol_plt <- ma_vol[["volcano"]]
           }
+        }
 
-          if (isTRUE(include_deseq)) {
-            deseq_try <- sm(try(extract_coefficient_scatter(
-              deseq, type="deseq",
-              loess=loess,
-              x=numerator,
-              y=denominator)))
-            deseq_ma_try <- sm(try(extract_de_ma(
-              combined, type="deseq",
-              table=found_table)))
-            if (class(deseq_try) == "list") {
-              deseq_plt <- deseq_try
-            }
-            if (class(deseq_ma_try) == "list") {
-              deseq_ma_plt <- deseq_ma_try
-            }
+        if (isTRUE(include_deseq)) {
+          deseq_try <- try(sm(extract_coefficient_scatter(
+            deseq, type="deseq",
+            loess=loess,
+            x=denominator,
+            y=numerator)), silent=TRUE)
+          if (class(deseq_try) == "list") {
+            deseq_plt <- deseq_try
+          }
+          ma_vol <- try(sm(extract_de_plots(
+            combined, type="deseq", invert=do_inverse, table=found_table)))
+          if (class(ma_vol) != "try-error") {
+            deseq_ma_plt <- ma_vol[["ma"]]
+            deseq_vol_plt <- ma_vol[["volcano"]]
           }
         }
 
@@ -494,10 +443,13 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       combo[[name]] <- dat
       limma_plots[[name]] <- limma_plt
       limma_ma_plots[[name]] <- limma_ma_plt
+      limma_vol_plots[[name]] <- limma_vol_plt
       edger_plots[[name]] <- edger_plt
       edger_ma_plots[[name]] <- edger_ma_plt
+      edger_vol_plots[[name]] <- edger_vol_plt
       deseq_plots[[name]] <- deseq_plt
       deseq_ma_plots[[name]] <- deseq_ma_plt
+      deseq_vol_plots[[name]] <- deseq_vol_plt
       de_summaries <- rbind(de_summaries, summary)
       table_names[[a]] <- summary[["table"]]
       names(combo) <- name_list
@@ -534,36 +486,39 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         limma_try <- sm(try(extract_coefficient_scatter(
           limma, type="limma", loess=loess,
           x=xname, y=yname)))
-        limma_ma_try <- sm(try(extract_de_ma(combined, type="limma", table=tab)))
-        if (class(limma_try) == "list") {
+        limma_ma_vol <- sm(try(extract_de_plots(combined, type="limma", table=tab)))
+        if (class(limma_ma_vol) == "list") {
           limma_plots[[tab]] <- limma_try
         }
-        if (class(limma_ma_try) == "list") {
-          limma_ma_plots[[tab]] <- limma_ma_try
+        if (class(limma_ma_vol) == "list") {
+          limma_ma_plots[[tab]] <- limma_ma_vol[["ma"]]
+          limma_vol_plots[[tab]] <- limma_ma_vol[["volcano"]]
         }
       }
       if (isTRUE(include_edger)) {
         edger_try <- sm(try(extract_coefficient_scatter(
           edger, type="edger", loess=loess,
           x=xname, y=yname)))
-        edger_ma_try <- sm(try(extract_de_ma(combined, type="edger", table=tab)))
+        edger_ma_vol <- sm(try(extract_de_plots(combined, type="edger", table=tab)))
         if (class(edger_try) == "list") {
           edger_plots[[tab]] <- edger_try
         }
-        if (class(edger_ma_try) == "list") {
-          edger_ma_plots[[tab]] <- edger_ma_try
+        if (class(edger_ma_vol) == "list") {
+          edger_ma_plots[[tab]] <- edger_ma_vol[["ma"]]
+          edger_vol_plots[[tab]] <- edger_ma_vol[["volcano"]]
         }
       }
       if (isTRUE(include_deseq)) {
         deseq_try <- sm(try(extract_coefficient_scatter(
           deseq, type="deseq", loess=loess,
           x=xname, y=yname)))
-        deseq_ma_try <- sm(try(extract_de_ma(combined, type="deseq", table=tab)))
+        deseq_ma_try <- sm(try(extract_de_plots(combined, type="deseq", table=tab)))
         if (class(deseq_try) == "list") {
           deseq_plots[[tab]] <- deseq_try
         }
-        if (class(deseq_ma_try) == "list") {
-          deseq_ma_plots[[tab]] <- deseq_ma_try
+        if (class(deseq_ma_vol) == "list") {
+          deseq_ma_plots[[tab]] <- deseq_ma_vol[["ma"]]
+          deseq_vol_plots[[tab]] <- deseq_ma_vol[["volcano"]]
         }
       }
     } ## End for list
@@ -603,36 +558,39 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       limma_try <- sm(try(extract_coefficient_scatter(
         limma, type="limma",
         loess=loess, x=xname, y=yname)))
-      limma_ma_try <- sm(try(extract_de_ma(combined, type="limma", table=table)))
+      limma_ma_vol <- sm(try(extract_de_plots(combined, type="limma", table=table)))
       if (class(limma_try) == "list") {
         limma_plots[[name]] <- limma_try
       }
-      if (class(limma_ma_try) == "list") {
-        limma_ma_plots[[name]] <- limma_ma_try
+      if (class(limma_ma_vol) == "list") {
+        limma_ma_plots[[name]] <- limma_ma_vol[["ma"]]
+        limma_vol_plots[[name]] <- limma_ma_vol[["volcano"]]
       }
     }
     if (isTRUE(include_edger)) {
       edger_try <- sm(try(extract_coefficient_scatter(
         edger, type="edger",
         loess=loess, x=xname, y=yname)))
-      edger_ma_try <- sm(try(extract_de_ma(combined, type="edger", table=table)))
+      edger_ma_vol <- sm(try(extract_de_plots(combined, type="edger", table=table)))
       if (class(edger_try) == "list") {
         edger_plots[[name]] <- edger_try
       }
-      if (class(edger_ma_try) == "list") {
-        edger_ma_plots[[tab]] <- edger_ma_try
+      if (class(edger_ma_vol) == "list") {
+        edger_ma_plots[[tab]] <- edger_ma_vol[["ma"]]
+        edger_vol_plots[[tab]] <- edger_ma_vol[["volcano"]]
       }
     }
     if (isTRUE(include_deseq)) {
       deseq_try <- sm(try(extract_coefficient_scatter(
         deseq, type="deseq",
         loess=loess, x=xname, y=yname)))
-      deseq_ma_try <- sm(try(extract_de_ma(combined, type="deseq", table=table)))
+      deseq_ma_vol <- sm(try(extract_de_plots(combined, type="deseq", table=table)))
       if (class(deseq_try) == "list") {
         deseq_plots[[name]] <- deseq_try
       }
-      if (class(deseq_ma_try) == "list") {
-        deseq_ma_plots[[tab]] <- deseq_ma_try
+      if (class(deseq_ma_vol) == "list") {
+        deseq_ma_plots[[tab]] <- deseq_ma_vol[["ma"]]
+        deseq_vol_plots[[tab]] <- deseq_ma_vol[["volcano"]]
       }
     }
   } else {
@@ -706,6 +664,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         ## Text on row 18, plots from 19-49 (30 rows)
         plt <- limma_plots[count][[1]]
         ma_plt <- limma_ma_plots[count][[1]]
+        vol_plt <- limma_vol_plots[count][[1]]
         if (class(plt) != "try-error" & !is.null(plt)) {
           printme <- paste0("Limma expression coefficients for ", names(combo)[[count]], "; R^2: ",
                             signif(x=plt[["lm_rsq"]], digits=3), "; equation: ",
@@ -720,10 +679,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                          height=plot_dim, start_col=plot_column + 10,
                                          plotname="lmma", savedir=excel_basename,
                                          start_row=19)
+          try_vol_result <- xlsx_plot_png(vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
+                                          height=plot_dim, start_col=plot_column + 10,
+                                          pltname="lmvol", savedir=excel_basename,
+                                          start_row=19)
         }
         ## Text on row 50, plots from 51-81
         plt <- edger_plots[count][[1]] ##FIXME this is suspicious
         ma_plt <- edger_ma_plots[count][[1]]
+        vol_plt <- edger_ma_plots[count][[1]]
         if (class(plt) != "try-error" & !is.null(plt)) {
           printme <- paste0("Edger expression coefficients for ", names(combo)[[count]], "; R^2: ",
                             signif(plt[["lm_rsq"]], digits=3), "; equation: ",
@@ -738,10 +702,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                          height=plot_dim, start_col=plot_column + 10,
                                          plotname="edma", savedir=excel_basename,
                                          start_row=51)
+          try_vol_result <- xlsx_plot_png(vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
+                                          height=plot_dim, start_col=plot_column + 10,
+                                          plotname="edvol" savedir=excel_basename,
+                                          start_row=51)
         }
         ## Text on 81, plots 82-112
         plt <- deseq_plots[count][[1]]
         ma_plt <- deseq_ma_plots[count][[1]]
+        vol_plt <- deseq_vol_plots[count][[1]]
         if (class(plt) != "try-error" & !is.null(plt)) {
           printme <- paste0("DESeq2 expression coefficients for ", names(combo)[[count]], "; R^2: ",
                             signif(plt[["lm_rsq"]], digits=3), "; equation: ",
@@ -756,6 +725,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                          height=plot_dim, start_col=plot_column + 10,
                                          plotname="dema", savedir=excel_basename,
                                          start_row=82)
+          try_vol_result <- xlsx_plot_png(vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
+                                          height=plot_dim, start_col=plot_column + 10,
+                                          plotname="devol", savedir=excel_basename,
+                                          start_row=82)
         }
       }
     }  ## End for loop

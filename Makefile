@@ -38,7 +38,7 @@ push:
 
 deps:
 	@echo "Invoking devtools::install_dev_deps()"
-	Rscript -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
+	R -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
 all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'package']; for (t in needed) { biocLite(t) }"
 
 reference:
@@ -56,11 +56,11 @@ build:
 
 roxygen:
 	@echo "Generating documentation with devtools::document()"
-	Rscript -e "suppressPackageStartupMessages(devtools::document())"
+	R -e "suppressPackageStartupMessages(devtools::document())"
 
 vignette:
 	@echo "Building vignettes with devtools::build_vignettes()"
-	Rscript -e "devtools::build_vignettes()"
+	R -e "devtools::build_vignettes()"
 
 document: roxygen vignette reference
 
@@ -95,16 +95,16 @@ clean:
 
 prereq:
 	@echo "Checking a few essential prerequisites.(maybe not needed with packrat)"
-	Rscript -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
+	R -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
 bioc_prereq <- c('pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
-for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocLite(req) } }; devtools::install_deps(\".\", dependencies=TRUE); \
+for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocLite(req) } } \
 ## hahaha looks like lisp!"
 
 update_bioc:
-	Rscript -e "source('http://bioconductor.org/biocLite.R'); biocLite(); biocLite('BiocUpgrade');"
+	R -e "source('http://bioconductor.org/biocLite.R'); biocLite(); biocLite('BiocUpgrade');"
 
 update:
-	Rscript -e "source('http://bioconductor.org/biocLite.R'); biocLite(); library(BiocInstaller); biocValid()"
+	R -e "source('http://bioconductor.org/biocLite.R'); biocLite(); library(BiocInstaller); biocValid()"
 
 install_bioconductor:
-	Rscript -e "library(hpgltools); bioc_all()"
+	R -e "library(hpgltools); bioc_all()"

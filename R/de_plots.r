@@ -16,8 +16,8 @@
 #'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-extract_de_ma <- function(pairwise, type="edger", table=NULL, logfc=1,
-                          pval_cutoff=0.05, invert=FALSE, ...) {
+extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
+                             pval_cutoff=0.05, invert=FALSE, ...) {
     arglist <- list(...)
 
     expr_col <- NULL
@@ -163,10 +163,16 @@ extract_de_ma <- function(pairwise, type="edger", table=NULL, logfc=1,
         expr_col <- "log_basemean"
     }
 
-    ma_material <- plot_ma_de(table=the_table, expr_col=expr_col, fc_col=fc_col,
-                              p_col=p_col, logfc_cutoff=logfc, pval_cutoff=pval_cutoff,
-                              invert=invert, ...) ##)
-    return(ma_material)
+    ma_material <- plot_ma_de(
+      table=the_table, expr_col=expr_col, fc_col=fc_col,
+      p_col=p_col, logfc_cutoff=logfc, pval_cutoff=pval_cutoff,
+      invert=invert, ...) ##)
+    vol_material <- plot_ma_volcano(
+      table=the_table, fc_col=fc_col,
+      p_col=p_col, logfc_cutoff=logfc, pval_cutoff=pval_cutoff,
+      ...)
+    retlist <- list("ma" = ma_material, "volcano" = vol_material)
+    return(retlist)
 }
 
 #' Perform a coefficient scatter plot of a limma/deseq/edger/basic table.
