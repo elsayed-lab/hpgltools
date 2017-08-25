@@ -728,6 +728,11 @@ Source: CRAN
 Version: 0.4-2
 Hash: bf705214a3d32b037dd24940931c289e
 
+Package: statmod
+Source: CRAN
+Version: 1.4.30
+Hash: 8056353aa1923b5e708d08d83f02fe16
+
 Package: stringi
 Source: CRAN
 Version: 1.1.5
