@@ -337,6 +337,11 @@ Version: 0.8
 Hash: 045d7c594d503b41f1c28946d076c8aa
 Requires: mime
 
+Package: matrixStats
+Source: CRAN
+Version: 0.52.2
+Hash: 6488b8966b761e99eb2ccb3e6ab09ba7
+
 Package: memoise
 Source: CRAN
 Version: 1.1.0
