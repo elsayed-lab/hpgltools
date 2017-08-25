@@ -199,6 +199,12 @@ Version: 0.7.960.1.1
 Hash: ab00f704be3b4979d880d939d074379a
 Requires: Rcpp
 
+Package: RcppEigen
+Source: CRAN
+Version: 0.3.3.3.0
+Hash: d2dba1ec87fb5d2c38791848e9a78ade
+Requires: Rcpp
+
 Package: Rsamtools
 Source: Bioconductor
 Version: 1.28.0
@@ -341,6 +347,11 @@ Version: 1.8.3
 Hash: f9639d7685b7bd2350dd6169849e2ae2
 Requires: backports
 
+Package: colorRamps
+Source: CRAN
+Version: 2.3
+Hash: d96002cc5a5865a552486c392e39f5ed
+
 Package: colorspace
 Source: CRAN
 Version: 1.3-2
@@ -399,6 +410,12 @@ Source: CRAN
 Version: 2017.03.31
 Hash: 409f974f6c0fc256c6a191008117c463
 Requires: quadprog
+
+Package: doParallel
+Source: CRAN
+Version: 1.0.10
+Hash: df91a7abfa938c06ad87b9a2b9269adb
+Requires: foreach, iterators
 
 Package: ecodist
 Source: CRAN
@@ -579,6 +596,12 @@ Source: Bioconductor
 Version: 3.32.5
 Hash: 53cffc30a9da405a8dea28f7f3789733
 
+Package: lme4
+Source: CRAN
+Version: 1.1-13
+Hash: 025fc4efef1b570ec0a843d750a58e01
+Requires: Rcpp, RcppEigen, minqa, nloptr
+
 Package: locfit
 Source: CRAN
 Version: 1.5-9.1
@@ -611,11 +634,22 @@ Source: CRAN
 Version: 0.5
 Hash: 463550cf44fb6f0a2359368f42eebe62
 
+Package: minqa
+Source: CRAN
+Version: 1.2.4
+Hash: c0b06acb19de5b852d625f10ed40d0da
+Requires: Rcpp
+
 Package: munsell
 Source: CRAN
 Version: 0.4.3
 Hash: f96d896947fcaf9b6d0074002e9f4f9d
 Requires: colorspace
+
+Package: nloptr
+Source: CRAN
+Version: 1.0.4
+Hash: 8053df240a4635aeb54fc68c6de67709
 
 Package: numDeriv
 Source: CRAN
@@ -627,6 +661,12 @@ Source: CRAN
 Version: 0.9.6
 Hash: 5f4711e142a44655dfea4d64fcf2f641
 
+Package: openxlsx
+Source: CRAN
+Version: 4.0.17
+Hash: ab52397f112cd613fefb9eabd8f9afba
+Requires: Rcpp
+
 Package: packrat
 Source: CRAN
 Version: 0.4.8-1
@@ -636,6 +676,12 @@ Package: pasilla
 Source: Bioconductor
 Version: 1.4.0
 Hash: f32f7ba1387cd6c11e20ca26d9734c2f
+
+Package: pbkrtest
+Source: CRAN
+Version: 0.4-7
+Hash: f195c3a0f527f69c491569c5cbaaf1db
+Requires: lme4
 
 Package: pkgconfig
 Source: CRAN
@@ -783,6 +829,13 @@ Source: CRAN
 Version: 1.3.4
 Hash: 3111e0d62502af60fe0fa8b4213fedad
 Requires: Rcpp, rlang
+
+Package: variancePartition
+Source: Bioconductor
+Version: 1.6.0
+Hash: 491e3244c19ce071cbf26bcbb50a69ba
+Requires: Biobase, colorRamps, doParallel, foreach, ggplot2, gplots,
+    iterators, limma, lme4, pbkrtest, reshape2
 
 Package: viridis
 Source: CRAN
