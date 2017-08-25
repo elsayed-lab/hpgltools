@@ -20,7 +20,7 @@ Suggests:
  R.utils, pasilla, biomaRt, DESeq, directlabels, edgeR, preprocessCore 
 Imports:
  Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach, gtools, gplots,
- matrixStats, corpcor
+ matrixStats, corpcor, ggrepel
 VignetteBuilder: knitr
 ByteCompile: true
 RoxygenNote: 6.0.1
