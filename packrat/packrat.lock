@@ -210,6 +210,12 @@ Version: 2017.03.31
 Hash: 409f974f6c0fc256c6a191008117c463
 Requires: quadprog
 
+Package: edgeR
+Source: Bioconductor
+Version: 3.18.1
+Hash: f0e025c8ec9d4e25ff153606f053fef7
+Requires: limma, locfit
+
 Package: evaluate
 Source: CRAN
 Version: 0.10.1
@@ -286,6 +292,11 @@ Package: lazyeval
 Source: CRAN
 Version: 0.2.0
 Hash: 3d6e7608e65bbf5cb170dab1e3c9ed8b
+
+Package: limma
+Source: Bioconductor
+Version: 3.32.5
+Hash: 53cffc30a9da405a8dea28f7f3789733
 
 Package: locfit
 Source: CRAN
