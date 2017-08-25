@@ -512,7 +512,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         deseq_try <- sm(try(extract_coefficient_scatter(
           deseq, type="deseq", loess=loess,
           x=xname, y=yname)))
-        deseq_ma_try <- sm(try(extract_de_plots(combined, type="deseq", table=tab)))
+        deseq_ma_vol <- sm(try(extract_de_plots(combined, type="deseq", table=tab)))
         if (class(deseq_try) == "list") {
           deseq_plots[[tab]] <- deseq_try
         }
