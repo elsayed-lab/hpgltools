@@ -794,11 +794,11 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
                    "yaxis" = as.numeric(table[[p_col]]), stringsAsFactors=TRUE)
   df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))  ## This might have been converted to a string
   df[["pcut"]] <- df[["yaxis"]] <= pval_cutoff
-  df[["state"]] <- ifelse(table[[yaxis_column]] > pval_cutoff, "pinsig",
-                   ifelse(table[[yaxis_column]] <= pval_cutoff &
-                          table[[xaxis_column]] >= logfc_cutoff, "upsig",
-                   ifelse(table[[yaxis_column]] <= pval_cutoff &
-                          table[[xaxis_column]] <= (-1 * logfc_cutoff),
+  df[["state"]] <- ifelse(table[[p_col]] > pval_cutoff, "pinsig",
+                   ifelse(table[[p_col]] <= pval_cutoff &
+                          table[[fc_col]] >= logfc_cutoff, "upsig",
+                   ifelse(table[[p_col]] <= pval_cutoff &
+                          table[[fc_col]] <= (-1 * logfc_cutoff),
                           "downsig", "fcinsig")))
   df[["pcut"]] <- as.factor(df[["pcut"]])
   df[["state"]] <- as.factor(df[["state"]])
