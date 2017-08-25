@@ -156,6 +156,12 @@ Source: CRAN
 Version: 1.0-6
 Hash: 931f9972deae0f205e1c78a51f33149b
 
+Package: caTools
+Source: CRAN
+Version: 1.17.1
+Hash: 97cb6f6293cd18d17df77a6383cc6763
+Requires: bitops
+
 Package: colorspace
 Source: CRAN
 Version: 1.3-2
@@ -228,6 +234,12 @@ Version: 1.4.3
 Hash: cd53ef4cf29dc59ce3f8c5c1af735fd1
 Requires: iterators
 
+Package: gdata
+Source: CRAN
+Version: 2.18.0
+Hash: 62797fafa287d1845a014c615d46e50c
+Requires: gtools
+
 Package: genefilter
 Source: Bioconductor
 Version: 1.58.1
@@ -250,6 +262,12 @@ Package: git2r
 Source: CRAN
 Version: 0.19.0
 Hash: f4f7966fc357f60dc62dbffcea917eef
+
+Package: gplots
+Source: CRAN
+Version: 3.0.1
+Hash: b7abe122479c203aa236499b7fc4b816
+Requires: caTools, gdata, gtools
 
 Package: gtable
 Source: CRAN

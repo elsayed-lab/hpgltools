@@ -19,7 +19,7 @@ License: GPL-2 | file LICENSE
 Suggests:
  R.utils, pasilla, biomaRt, DESeq, directlabels, edgeR, preprocessCore 
 Imports:
- Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach, gtools
+ Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach, gtools, gplots
 VignetteBuilder: knitr
 ByteCompile: true
 RoxygenNote: 6.0.1
