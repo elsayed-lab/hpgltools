@@ -28,6 +28,23 @@ Source: Bioconductor
 Version: 1.26.0
 Hash: 972ea8eb76c583749fd0dc229f3de85b
 
+Package: R.methodsS3
+Source: CRAN
+Version: 1.7.1
+Hash: 99f841ba1614c005e6672c5fb01b352a
+
+Package: R.oo
+Source: CRAN
+Version: 1.21.0
+Hash: d155101c5eb87d728d43e23c6902f4d5
+Requires: R.methodsS3
+
+Package: R.utils
+Source: CRAN
+Version: 2.5.0
+Hash: 15d8a7e9c80859cd587510b529dce2dc
+Requires: R.methodsS3, R.oo
+
 Package: R6
 Source: CRAN
 Version: 2.2.2

@@ -41,6 +41,11 @@ deps:
 	R -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
 all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'package']; for (t in needed) { biocLite(t) }"
 
+dep_push: deps snap
+	echo "Setting default commit message and pushing."
+	git commit -a -m 'packrat modification.'
+	git push
+
 reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
 	rm -f inst/doc/reference.pdf

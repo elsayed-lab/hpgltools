@@ -17,8 +17,9 @@ Description: This is a set of functions I have been using in my various analyses
              flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
+ R.utils 
 Imports:
-    Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
+ Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
 ByteCompile: true
 RoxygenNote: 6.0.1
