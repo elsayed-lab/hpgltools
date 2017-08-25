@@ -39,6 +39,13 @@ Source: CRAN
 Version: 0.7
 Hash: 1ab72df487f06ad5f0de05446cdd4bd6
 
+Package: DESeq
+Source: Bioconductor
+Version: 1.28.0
+Hash: a879b6f17310008375ebe1f9aaa37c8f
+Requires: Biobase, BiocGenerics, RColorBrewer, genefilter, geneplotter,
+    locfit
+
 Package: IRanges
 Source: Bioconductor
 Version: 2.10.2
@@ -99,6 +106,12 @@ Package: XML
 Source: CRAN
 Version: 3.98-1.9
 Hash: 02079c4025bbfa0f63400cc0bb414952
+
+Package: annotate
+Source: Bioconductor
+Version: 1.54.0
+Hash: 6dca0f06539628e2c75553496bb69ba2
+Requires: AnnotationDbi, Biobase, BiocGenerics, DBI, RCurl, XML, xtable
 
 Package: assertthat
 Source: CRAN
@@ -191,6 +204,12 @@ Source: CRAN
 Version: 0.6.12
 Hash: e53fb8c58673df868183697e39a6a4d6
 
+Package: directlabels
+Source: CRAN
+Version: 2017.03.31
+Hash: 409f974f6c0fc256c6a191008117c463
+Requires: quadprog
+
 Package: evaluate
 Source: CRAN
 Version: 0.10.1
@@ -202,6 +221,18 @@ Source: CRAN
 Version: 1.4.3
 Hash: cd53ef4cf29dc59ce3f8c5c1af735fd1
 Requires: iterators
+
+Package: genefilter
+Source: Bioconductor
+Version: 1.58.1
+Hash: 6fa8ff935bdc0d1a6e57110af34667a6
+Requires: AnnotationDbi, Biobase, S4Vectors, annotate
+
+Package: geneplotter
+Source: Bioconductor
+Version: 1.54.0
+Hash: e34294381bf11ed315269adef3cc4dc3
+Requires: AnnotationDbi, Biobase, BiocGenerics, RColorBrewer, annotate
 
 Package: ggplot2
 Source: CRAN
@@ -255,6 +286,11 @@ Package: lazyeval
 Source: CRAN
 Version: 0.2.0
 Hash: 3d6e7608e65bbf5cb170dab1e3c9ed8b
+
+Package: locfit
+Source: CRAN
+Version: 1.5-9.1
+Hash: f8adf87b055dff233b7c3f5b4a174554
 
 Package: magrittr
 Source: CRAN
@@ -319,6 +355,11 @@ Package: praise
 Source: CRAN
 Version: 1.0.0
 Hash: 77da8f1df873a4b91e5c4a68fe2fb1b6
+
+Package: quadprog
+Source: CRAN
+Version: 1.5-5
+Hash: 69000b7dc41b09977dcf781f909d235c
 
 Package: reshape2
 Source: CRAN
@@ -399,6 +440,11 @@ Source: CRAN
 Version: 1.1.1
 Hash: 534feed3c69280ec9529f1e54fd6c428
 Requires: BH, Rcpp
+
+Package: xtable
+Source: CRAN
+Version: 1.8-2
+Hash: 7293235cfcc14cdff1ce7fd1a0212031
 
 Package: yaml
 Source: CRAN
