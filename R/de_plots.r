@@ -553,23 +553,28 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
   sig_lists_up <- list(
     "limma" = list(),
     "edger" = list(),
-    "deseq" = list())
+    "deseq" = list(),
+    "basic" = list())
   sig_lists_down <- list(
     "limma" = list(),
     "edger" = list(),
-    "deseq" = list())
+    "deseq" = list(),
+    "basic" = list())
   plots <- list(
     "limma" = NULL,
     "edger" = NULL,
-    "deseq" = NULL)
+    "deseq" = NULL,
+    "basic" = NULL)
   tables_up <- list(
     "limma" = NULL,
     "edger" = NULL,
-    "deseq" = NULL)
+    "deseq" = NULL,
+    "basic" = NULL)
   tables_down <- list(
     "limma" = NULL,
     "edger" = NULL,
-    "deseq" = NULL)
+    "deseq" = NULL,
+    "basic" = NULL)
   table_length <- 0
   fc_names <- c()
 
@@ -580,7 +585,10 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
   if (according_to == "all") {
     types <- c("limma", "edger", "deseq")
   }
-  
+  ##else if (according_to == c("limma", "edger", "deseq", "basic")) {
+  ##  types <- c("limma", "edger", "deseq")
+  ##}
+
   for (type in types) {
     for (fc in fc_cutoffs) {
       ## This is a bit weird and circuituous
