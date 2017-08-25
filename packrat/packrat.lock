@@ -172,6 +172,11 @@ Source: CRAN
 Version: 1.2
 Hash: 1290583b9d16fb60322126a8698fb729
 
+Package: corpcor
+Source: CRAN
+Version: 1.6.9
+Hash: f641167f85158bfc7cd4b97ac1c26701
+
 Package: crayon
 Source: CRAN
 Version: 1.3.2
