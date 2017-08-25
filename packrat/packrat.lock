@@ -85,6 +85,14 @@ Version: 0.2.7
 Hash: fa6477f464f0c1e5203ae55d4786b10f
 Requires: BiocGenerics, IRanges, S4Vectors, matrixStats
 
+Package: EDASeq
+Source: Bioconductor
+Version: 2.10.0
+Hash: d426be1976b34a0c6adb23c9df63d7c2
+Requires: AnnotationDbi, Biobase, BiocGenerics, Biostrings, DESeq,
+    GenomicFeatures, GenomicRanges, IRanges, Rsamtools, ShortRead,
+    aroma.light, biomaRt
+
 Package: Formula
 Source: CRAN
 Version: 1.2-2
@@ -107,6 +115,14 @@ Version: 1.12.2
 Hash: f37b927558ee1f3a34934485905a87ad
 Requires: BiocGenerics, BiocParallel, Biostrings, GenomeInfoDb,
     GenomicRanges, IRanges, Rsamtools, S4Vectors, SummarizedExperiment
+
+Package: GenomicFeatures
+Source: Bioconductor
+Version: 1.28.4
+Hash: bc11675b83115c2597dfe0316ea268f8
+Requires: AnnotationDbi, Biobase, BiocGenerics, Biostrings, DBI,
+    GenomeInfoDb, GenomicRanges, IRanges, RCurl, RSQLite, S4Vectors,
+    XVector, biomaRt, rtracklayer
 
 Package: GenomicRanges
 Source: Bioconductor
@@ -166,6 +182,12 @@ Version: 2.0
 Hash: 6fb66e96b21ee22fc386ed87cbf79797
 Requires: BH, DBI, Rcpp, bit64, blob, memoise, pkgconfig, plogr
 
+Package: RUVSeq
+Source: Bioconductor
+Version: 1.10.0
+Hash: d256b37eeab2b62fc7bfd9b08059b693
+Requires: Biobase, EDASeq, edgeR
+
 Package: Rcpp
 Source: CRAN
 Version: 0.12.12
@@ -196,12 +218,25 @@ Version: 0.14.3
 Hash: 5ffd7a647d370f866a27c285263933fd
 Requires: BiocGenerics
 
+Package: ShortRead
+Source: Bioconductor
+Version: 1.34.0
+Hash: dab152335db951204fde11bdc79a6fac
+Requires: Biobase, BiocGenerics, BiocParallel, Biostrings,
+    GenomeInfoDb, GenomicAlignments, GenomicRanges, IRanges, Rsamtools,
+    S4Vectors, XVector, hwriter, latticeExtra, zlibbioc
+
 Package: SummarizedExperiment
 Source: Bioconductor
 Version: 1.6.3
 Hash: 62171c532fc0ac4f97c6a914d1a7be22
 Requires: Biobase, BiocGenerics, DelayedArray, GenomeInfoDb,
     GenomicRanges, IRanges, S4Vectors
+
+Package: SuppDists
+Source: CRAN
+Version: 1.1-9.4
+Hash: b7f6b9d24f9131ae5d180ea695828e8a
 
 Package: XML
 Source: CRAN
@@ -224,6 +259,12 @@ Source: Bioconductor
 Version: 1.54.0
 Hash: 6dca0f06539628e2c75553496bb69ba2
 Requires: AnnotationDbi, Biobase, BiocGenerics, DBI, RCurl, XML, xtable
+
+Package: aroma.light
+Source: Bioconductor
+Version: 3.6.0
+Hash: ee602213e353058210842a627a4b2567
+Requires: R.methodsS3, R.oo, R.utils, matrixStats
 
 Package: assertthat
 Source: CRAN
@@ -267,6 +308,11 @@ Source: CRAN
 Version: 1.1.0
 Hash: e29764e47f2faf0cd5b74cbcddc3fa9c
 Requires: tibble
+
+Package: bootstrap
+Source: CRAN
+Version: 2017.2
+Hash: 45de91ec55ad624d5ad5840e830edb0d
 
 Package: brew
 Source: CRAN
@@ -353,6 +399,11 @@ Source: CRAN
 Version: 2017.03.31
 Hash: 409f974f6c0fc256c6a191008117c463
 Requires: quadprog
+
+Package: ecodist
+Source: CRAN
+Version: 2.0.1
+Hash: e4d6ae75d6e5c7f913bcbea8d7ef4053
 
 Package: edgeR
 Source: Bioconductor
@@ -469,6 +520,17 @@ Version: 1.3.1
 Hash: 2d32e01e53d532c812052e27a1021441
 Requires: R6, curl, jsonlite, mime, openssl
 
+Package: hwriter
+Source: CRAN
+Version: 1.3.2
+Hash: 4c36a3e4a7471fdc3d5ee75b5188c37d
+
+Package: ipred
+Source: CRAN
+Version: 0.9-6
+Hash: 2fd946bce1622291262c12515d27e780
+Requires: prodlim
+
 Package: iterators
 Source: CRAN
 Version: 1.0.8
@@ -500,6 +562,12 @@ Source: CRAN
 Version: 0.6-28
 Hash: efdf3a10a129129f7b8f4ae5a0d7ec3d
 Requires: RColorBrewer
+
+Package: lava
+Source: CRAN
+Version: 1.5
+Hash: b3b9ac09b84bc492cfe27ec5dfdb7ae8
+Requires: numDeriv
 
 Package: lazyeval
 Source: CRAN
@@ -549,6 +617,11 @@ Version: 0.4.3
 Hash: f96d896947fcaf9b6d0074002e9f4f9d
 Requires: colorspace
 
+Package: numDeriv
+Source: CRAN
+Version: 2016.8-1
+Hash: 3a9d0fc99ba2f6aaa500b3d584962be2
+
 Package: openssl
 Source: CRAN
 Version: 0.9.6
@@ -590,6 +663,12 @@ Source: Bioconductor
 Version: 1.38.1
 Hash: a985dbeface311b8da9c9981c84257ff
 
+Package: prodlim
+Source: CRAN
+Version: 1.6.1
+Hash: a293698cbc0bfdc90d0ac23b988bb055
+Requires: Rcpp, lava
+
 Package: quadprog
 Source: CRAN
 Version: 1.5-5
@@ -605,6 +684,11 @@ Package: rlang
 Source: CRAN
 Version: 0.1.2
 Hash: c17b638e3282aa222a47112d7a60bc66
+
+Package: rmeta
+Source: CRAN
+Version: 2.16
+Hash: 2235cd194ec6e61560ef46492e2575db
 
 Package: roxygen2
 Source: CRAN
@@ -654,6 +738,28 @@ Source: CRAN
 Version: 1.2.0
 Hash: 25a86d7f410513ebb7c0bc6a5e16bdc3
 Requires: magrittr, stringi
+
+Package: survJamda
+Source: CRAN
+Version: 1.1.4
+Hash: e485d38cb12e76c844f78b6a8df323e2
+Requires: ecodist, survJamda.data, survcomp, survivalROC
+
+Package: survJamda.data
+Source: CRAN
+Version: 1.0.2
+Hash: 7f12600aa047253d077d6d4af9d935f0
+
+Package: survcomp
+Source: Bioconductor
+Version: 1.26.0
+Hash: 04276748286533c72230444964f0892a
+Requires: SuppDists, bootstrap, ipred, prodlim, rmeta, survivalROC
+
+Package: survivalROC
+Source: CRAN
+Version: 1.0.3
+Hash: df92aa6c356d97b517bf8e4e0fb3cbc1
 
 Package: sva
 Source: Bioconductor
