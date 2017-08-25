@@ -1397,21 +1397,21 @@ extract_significant_genes <- function(combined,
       if (isTRUE(ma)) {
         single_ma <- NULL
         if (according == "limma") {
-          single_ma <- extract_de_ma(combined, type="limma",
-                                     table=table_name, fc=fc,  pval_cutoff=p)
-          single_ma <- single_ma[["plot"]]
+          single_ma <- extract_de_plots(combined, type="limma",
+                                        table=table_name, fc=fc,  pval_cutoff=p)
+          single_ma <- single_ma[["ma"]][["plot"]]
         } else if (according == "deseq") {
-          single_ma <- extract_de_ma(combined, type="deseq",
+          single_ma <- extract_de_plots(combined, type="deseq",
                                      table=table_name, fc=fc, pval_cutoff=p)
-          single_ma <- single_ma[["plot"]]
+          single_ma <- single_ma[["ma"]][["plot"]]
         } else if (according == "edger") {
-          single_ma <- extract_de_ma(combined, type="edger",
+          single_ma <- extract_de_plots(combined, type="edger",
                                      table=table_name, fc=fc, pval_cutoff=p)
-          single_ma <- single_ma[["plot"]]
+          single_ma <- single_ma[["ma"]][["plot"]]
         } else if (according == "basic") {
-          single_ma <- extract_de_ma(combined, type="basic",
-                                     table=table_name, fc=fc, pval_cutoff=p)
-          single_ma <- single_ma[["plot"]]
+          single_ma <- extract_de_plots(combined, type="basic",
+                                        table=table_name, fc=fc, pval_cutoff=p)
+          single_ma <- single_ma[["ma"]][["plot"]]
         } else {
           message("Do not know this according type.")
         }
