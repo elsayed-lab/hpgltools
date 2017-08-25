@@ -226,6 +226,11 @@ Source: CRAN
 Version: 0.4.8-1
 Hash: 6ad605ba7b4b476d84be6632393f5765
 
+Package: pasilla
+Source: Bioconductor
+Version: 1.4.0
+Hash: f32f7ba1387cd6c11e20ca26d9734c2f
+
 Package: plyr
 Source: CRAN
 Version: 1.8.4
