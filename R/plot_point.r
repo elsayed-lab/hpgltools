@@ -350,7 +350,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #'  \code{\link[limma]{contrasts.fit}}
 #' @examples
 #'  \dontrun{
-#'   plot_ma(voomed_data, toptable_data, gvis_filename="html/fun_ma_plot.html")
+#'   plot_ma(voomed_data, table, gvis_filename="html/fun_ma_plot.html")
 #'   ## Currently this assumes that a variant of toptable was used which
 #'   ## gives adjusted p-values.  This is not always the case and I should
 #'   ## check for that, but I have not yet.
@@ -751,7 +751,7 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' applications, where the x-axis is related to a measure of the strength of a statistical signal,
 #' and y-axis is related to a measure of the statistical significance of the signal."
 #'
-#' @param toptable_data Dataframe from limma's toptable which includes log(fold change) and an
+#' @param table Dataframe from limma's toptable which includes log(fold change) and an
 #'     adjusted p-value.
 #' @param p_cutoff Cutoff defining significant from not.
 #' @param fc_cutoff Cutoff defining the minimum/maximum fold change for interesting.  This is log,
@@ -772,7 +772,7 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #'  \code{\link[limma]{makeContrasts}} \code{\link[limma]{contrasts.fit}}
 #' @examples
 #' \dontrun{
-#'  plot_volcano(toptable_data, gvis_filename="html/fun_ma_plot.html")
+#'  plot_volcano(table, gvis_filename="html/fun_ma_plot.html")
 #'  ## Currently this assumes that a variant of toptable was used which
 #'  ## gives adjusted p-values.  This is not always the case and I should
 #'  ## check for that, but I have not yet.
@@ -790,15 +790,15 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
   low_vert_line <- 0.0 - logfc_cutoff
   horiz_line <- -1 * log10(pval_cutoff)
 
-  df <- data.frame("xaxis" = as.numeric(toptable_data[[fc_col]]),
-                   "yaxis" = as.numeric(toptable_data[[p_col]]), stringsAsFactors=TRUE)
+  df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
+                   "yaxis" = as.numeric(table[[p_col]]), stringsAsFactors=TRUE)
   df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))  ## This might have been converted to a string
   df[["pcut"]] <- df[["yaxis"]] <= pval_cutoff
-  df[["state"]] <- ifelse(toptable_data[[yaxis_column]] > pval_cutoff, "pinsig",
-                   ifelse(toptable_data[[yaxis_column]] <= pval_cutoff &
-                          toptable_data[[xaxis_column]] >= logfc_cutoff, "upsig",
-                   ifelse(toptable_data[[yaxis_column]] <= pval_cutoff &
-                          toptable_data[[xaxis_column]] <= (-1 * logfc_cutoff),
+  df[["state"]] <- ifelse(table[[yaxis_column]] > pval_cutoff, "pinsig",
+                   ifelse(table[[yaxis_column]] <= pval_cutoff &
+                          table[[xaxis_column]] >= logfc_cutoff, "upsig",
+                   ifelse(table[[yaxis_column]] <= pval_cutoff &
+                          table[[xaxis_column]] <= (-1 * logfc_cutoff),
                           "downsig", "fcinsig")))
   df[["pcut"]] <- as.factor(df[["pcut"]])
   df[["state"]] <- as.factor(df[["state"]])
