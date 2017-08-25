@@ -367,6 +367,11 @@ Source: CRAN
 Version: 1.0.0
 Hash: 77da8f1df873a4b91e5c4a68fe2fb1b6
 
+Package: preprocessCore
+Source: Bioconductor
+Version: 1.38.1
+Hash: a985dbeface311b8da9c9981c84257ff
+
 Package: quadprog
 Source: CRAN
 Version: 1.5-5
