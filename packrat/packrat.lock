@@ -13,6 +13,13 @@ Version: 1.38.2
 Hash: 8ff7587608809ef045fa8bc7f286a1c1
 Requires: BiocGenerics, DBI, Biobase, S4Vectors, IRanges, RSQLite
 
+Package: AnnotationHub
+Source: Bioconductor
+Version: 2.8.2
+Hash: 82e7fb79427ccbb2a321d5f003eee666
+Requires: AnnotationDbi, BiocGenerics, BiocInstaller, RSQLite,
+    S4Vectors, httr, interactiveDisplayBase, yaml
+
 Package: BH
 Source: CRAN
 Version: 1.65.0-1
@@ -34,6 +41,7 @@ Requires: BSgenome
 Package: BiasedUrn
 Source: CRAN
 Version: 1.07
+Hash: eb6c93fe7359e661dee83e28020d75cf
 
 Package: Biobase
 Source: Bioconductor
@@ -103,8 +111,9 @@ Version: 1.2-2
 Hash: 31c4658e6ae879eee45fcf7b6d109464
 
 Package: GO.db
-Source: CRAN
+Source: Bioconductor
 Version: 3.4.1
+Hash: 2a149023f3a513f836439b78ff34b2c7
 Requires: AnnotationDbi
 
 Package: GenomeInfoDb
@@ -152,6 +161,12 @@ Version: 2.10.2
 Hash: 792977f8f9d97dba74f25a968ac54138
 Requires: BiocGenerics, S4Vectors
 
+Package: OrganismDbi
+Source: CRAN
+Version: 1.18.0
+Requires: BiocGenerics, BiocInstaller, Biobase, S4Vectors, IRanges,
+    RSQLite, GenomicRanges, AnnotationDbi, GenomicFeatures, RBGL, graph
+
 Package: R.methodsS3
 Source: CRAN
 Version: 1.7.1
@@ -173,6 +188,11 @@ Package: R6
 Source: CRAN
 Version: 2.2.2
 Hash: b2366cd9d2f3851a5704b4e192b985c2
+
+Package: RBGL
+Source: CRAN
+Version: 1.52.0
+Requires: graph
 
 Package: RColorBrewer
 Source: CRAN
@@ -467,9 +487,10 @@ Hash: 62797fafa287d1845a014c615d46e50c
 Requires: gtools
 
 Package: geneLenDataBase
-Source: CRAN
+Source: Bioconductor
 Version: 1.12.0
-Requires: rtracklayer, GenomicFeatures
+Hash: d4c1f4e62e5516ef5c91e0addb9ac591
+Requires: GenomicFeatures, rtracklayer
 
 Package: genefilter
 Source: Bioconductor
@@ -501,9 +522,10 @@ Version: 0.19.0
 Hash: f4f7966fc357f60dc62dbffcea917eef
 
 Package: goseq
-Source: CRAN
+Source: Bioconductor
 Version: 1.28.0
-Requires: BiasedUrn, BiocGenerics, AnnotationDbi, GO.db,
+Hash: d6b0ba1b992afe17d60c470fcbb7be97
+Requires: AnnotationDbi, BiasedUrn, BiocGenerics, GO.db,
     geneLenDataBase
 
 Package: gplots
@@ -511,6 +533,11 @@ Source: CRAN
 Version: 3.0.1
 Hash: b7abe122479c203aa236499b7fc4b816
 Requires: caTools, gdata, gtools
+
+Package: graph
+Source: CRAN
+Version: 1.54.0
+Requires: BiocGenerics
 
 Package: gridExtra
 Source: CRAN
@@ -551,6 +578,12 @@ Version: 0.9
 Hash: 7514f6ea9f3bef6d9b6c945095275302
 Requires: htmltools, jsonlite, yaml
 
+Package: httpuv
+Source: CRAN
+Version: 1.3.5
+Hash: 2cc5284565b71276d1faf3d5c043fe4e
+Requires: Rcpp
+
 Package: httr
 Source: CRAN
 Version: 1.3.1
@@ -561,6 +594,17 @@ Package: hwriter
 Source: CRAN
 Version: 1.3.2
 Hash: 4c36a3e4a7471fdc3d5ee75b5188c37d
+
+Package: inflection
+Source: CRAN
+Version: 1.3
+Hash: e7620b22947e5f19ac9b76603c9a1dc0
+
+Package: interactiveDisplayBase
+Source: Bioconductor
+Version: 1.14.0
+Hash: 4fd75b64cab5312513d6a64dfe4b7e85
+Requires: BiocGenerics, shiny
 
 Package: ipred
 Source: CRAN
@@ -789,10 +833,22 @@ Hash: c108129462eb98e2699b07201fd12acf
 Requires: R6, RColorBrewer, Rcpp, dichromat, labeling, munsell, plyr,
     viridisLite
 
+Package: shiny
+Source: CRAN
+Version: 1.0.5
+Hash: 4d47532a807122bfd6bc3818310f9d2e
+Requires: R6, digest, htmltools, httpuv, jsonlite, mime, sourcetools,
+    xtable
+
 Package: snow
 Source: CRAN
 Version: 0.4-2
 Hash: bf705214a3d32b037dd24940931c289e
+
+Package: sourcetools
+Source: CRAN
+Version: 0.1.6
+Hash: 226d56d7469587da40b0f96180e711b4
 
 Package: statmod
 Source: CRAN

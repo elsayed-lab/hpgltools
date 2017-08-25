@@ -531,8 +531,9 @@ make_tritrypdb_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
     gene_types[["GID"]] <- as.character(gene_types[["GID"]])
     chromosome_info <- orgdb_info[["chromosome_info"]]  ## The lengths of the chromosomes
 
+    shortname <- stringi::stri_trans_general(str=cfg[["shortname"]], id="Title")
     orgdb_base_name <- paste0("org.",
-                              gsub(x=cfg[["shortname"]], pattern="[[:punct:]]", replacement=""),
+                              gsub(x=shortname, pattern="[[:punct:]]", replacement=""),
                               ".",
                               gsub(x=cfg[["strain"]], pattern="[[:punct:]]", replacement=""),
                               ".eg")
@@ -540,7 +541,7 @@ make_tritrypdb_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
     orgdb_pkg_name <- paste0(orgdb_base_name, ".db")
     orgdb_sqlite_name <- paste0(orgdb_base_name, ".sqlite")
     assumed_dir <- paste0(orgdb_pre, "/", orgdb_pkg_name)
-
+    message(paste0("The directory will be: ", assumed_dir))
     if (file.exists(assumed_dir)) {
         try(unlink(x=orgdb_pre, recursive=TRUE), silent=TRUE)
         try(unlink(x=orgdb_sqlite_name), silent=TRUE)
