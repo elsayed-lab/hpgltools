@@ -546,10 +546,10 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #'  barplots <- significant_barplots(combined_result)
 #' }
 #' @export
-significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
-                                 fc_column="limma_logfc", p_type="adj", invert=FALSE,
-                                 p=0.05, z=NULL, order=NULL, maximum=NULL, ...) {
-  ## arglist <- list(...)
+significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
+                                 p=0.05, z=NULL, p_type="adj",
+                                 according_to="all", order=NULL, maximum=NULL, ...) {
+  arglist <- list(...)
   sig_lists_up <- list(
     "limma" = list(),
     "edger" = list(),
@@ -575,18 +575,23 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
 
   uplist <- list()
   downlist <- list()
-  for (type in c("limma", "edger", "deseq")) {
 
+  types <- according_to
+  if (according_to == "all") {
+    types <- c("limma", "edger", "deseq")
+  }
+  
+  for (type in types) {
     for (fc in fc_cutoffs) {
       ## This is a bit weird and circuituous
       ## The most common caller of this function is in fact extract_significant_genes
-      fc_sig <- sm(extract_significant_genes(combined, fc=fc,
+      fc_sig <- sm(extract_significant_genes(combined, fc=fc, according_to=according_to,
                                              p=p, z=z, n=NULL, excel=FALSE,
                                              p_type=p_type, sig_bar=FALSE, ma=FALSE))
       table_length <- length(fc_sig[[type]][["ups"]])
       fc_name <- paste0("fc_", fc)
       fc_names <- append(fc_names, fc_name)
-
+      
       for (tab in 1:table_length) {
         ## The table names are shared across methods and ups/downs
         table_names <- names(fc_sig[[type]][["ups"]])
@@ -596,14 +601,13 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
         table_name <- table_names[tab]
         t_up <- nrow(fc_sig[[type]][["ups"]][[table_name]])
         t_down <- nrow(fc_sig[[type]][["downs"]][[table_name]])
-
+        
         sig_lists_up[[type]][[fc_name]][[table_name]] <- t_up
         sig_lists_down[[type]][[fc_name]][[table_name]] <- t_down
-
       } ## End iterating through every table
-    } ## End querying all fc cutoffs
+    } ## End querying all fc cutoffs 
     ## Now we need to collate the data and make the bars
-
+    
     up_all <- list("limma" = numeric(),
                    "deseq" = numeric(),
                    "edger" = numeric())## The number of all genes FC > 0
@@ -626,7 +630,7 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
     ## ######### #### #  <-- Total width is the number of all >1FC genes
     ##         ^    ^------- Total >0FC - the set between 4FC and 2FC
     ##         |------------ Total >0FC - the smallest set >4FC
-
+    
     papa_bear <- fc_names[[1]]  ## Because it is the largest grouping
     mama_bear <- fc_names[[2]]  ## The middle grouping
     baby_bear <- fc_names[[3]]  ## And the smallest grouping
@@ -668,7 +672,7 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
       down_middle <- down_terminal - down_max[[type]][[table_name]]
       down_min <- down_terminal - down_mid[[type]][[table_name]]
     } ## End for 1:table_length
-
+    
     ## Prepare the tables for plotting.
     comparisons <- names(sig_lists_up[[type]][[1]])
     ## Once again, starting with only the up-stuff
@@ -700,7 +704,6 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2),
     plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
     ##plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
   } ## End iterating over the 3 types, limma/deseq/edger
-
   retlist <- list(
     "ups" = uplist,
     "downs" = downlist,

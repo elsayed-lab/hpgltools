@@ -276,6 +276,15 @@ Source: CRAN
 Version: 1.1-9.4
 Hash: b7f6b9d24f9131ae5d180ea695828e8a
 
+Package: VariantAnnotation
+Source: Bioconductor
+Version: 1.22.3
+Hash: e7e4dfbbf61c425c177743499df7ebdd
+Requires: AnnotationDbi, BSgenome, Biobase, BiocGenerics, Biostrings,
+    DBI, GenomeInfoDb, GenomicFeatures, GenomicRanges, IRanges,
+    Rsamtools, S4Vectors, SummarizedExperiment, XVector, rtracklayer,
+    zlibbioc
+
 Package: Vennerable
 Source: github
 Version: 3.1.0.9000
@@ -503,6 +512,14 @@ Source: CRAN
 Version: 2.18.0
 Hash: 62797fafa287d1845a014c615d46e50c
 Requires: gtools
+
+Package: genbankr
+Source: Bioconductor
+Version: 1.4.0
+Hash: 20d4b6222ff02ec1eacf36a88b39242c
+Requires: Biobase, BiocGenerics, Biostrings, GenomeInfoDb,
+    GenomicFeatures, GenomicRanges, IRanges, S4Vectors,
+    VariantAnnotation, rtracklayer
 
 Package: geneLenDataBase
 Source: Bioconductor

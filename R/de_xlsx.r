@@ -1275,13 +1275,19 @@ extract_significant_genes <- function(combined,
   table_names <- NULL
   all_tables <- NULL
   table_mappings <- NULL
-  if (is.null(combined[["data"]])) {
+  if (class(combined) == "data.frame") {
+    ## Then this is just a data frame.
+    all_tables[["all"]] <- combined
+    table_names <- "all"
+    num_tables <- 1
+    table_mappings <- table_names
+  } else if (is.null(combined[["data"]])) {
     ## Then this is the result of combine_de_tables()
     num_tables <- length(names(combined[["data"]]))
     table_names <- names(combined[["data"]])
     all_tables <- combined[["data"]]
     table_mappings <- table_names
-  } else {
+  } else if (!is.null(combined[["contrast_list"]])) {
     ## Then this is the result of all_pairwise()
     num_tables <- length(combined[["contrast_list"]])
     ## Extract the names of the tables which filled combined
@@ -1290,7 +1296,14 @@ extract_significant_genes <- function(combined,
     all_tables <- combined[["data"]]
     ## Get the mappings of contrast_name -> table_name
     table_mappings <- combined[["keepers"]]
+  } else {
+    ## Then this is just a data frame.
+    all_tables[["all"]] <- combined
+    table_names <- "all"
+    num_tables <- 1
+    table_mappings <- table_names
   }
+
   trimmed_up <- list()
   trimmed_down <- list()
   up_titles <- list()
@@ -1396,19 +1409,19 @@ extract_significant_genes <- function(combined,
       ## Extract the MA data if requested.
       if (isTRUE(ma)) {
         single_ma <- NULL
-        if (according == "limma") {
+        if (according_to == "limma") {
           single_ma <- extract_de_plots(combined, type="limma",
                                         table=table_name, fc=fc,  pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according == "deseq") {
+        } else if (according_to == "deseq") {
           single_ma <- extract_de_plots(combined, type="deseq",
                                      table=table_name, fc=fc, pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according == "edger") {
+        } else if (according_to == "edger") {
           single_ma <- extract_de_plots(combined, type="edger",
                                      table=table_name, fc=fc, pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according == "basic") {
+        } else if (according_to == "basic") {
           single_ma <- extract_de_plots(combined, type="basic",
                                         table=table_name, fc=fc, pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
@@ -1426,6 +1439,7 @@ extract_significant_genes <- function(combined,
       if (p_type != "adj") {
         p_column <- paste0(according, "_p")
       }
+
       trimming <- get_sig_genes(table, fc=fc, p=p, z=z, n=n,
                                 column=fc_column, p_column=p_column)
       trimmed_up[[table_name]] <- trimming[["up_genes"]]
@@ -1480,7 +1494,8 @@ extract_significant_genes <- function(combined,
     ## This needs to be changed to get_sig_genes()
     sig_bar_plots <- significant_barplots(combined, fc_cutoffs=siglfc_cutoffs,
                                           invert=invert_barplots,
-                                          p=p, z=z, p_type=p_type, fc_column=fc_column)
+                                          p=p, z=z, p_type=p_type,
+                                          according_to=according_to)
     plot_row <- 1
     plot_col <- 1
     message(paste0("Adding significance bar plots."))
@@ -1522,47 +1537,52 @@ extract_significant_genes <- function(combined,
 
     ## I messed up something here.  The plots and tables
     ## at this point should start 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
+    if ("limma" %in% according_to) {
     xl_result <- openxlsx::writeData(wb, "number_changed",
                                      x="Significant limma genes.",
                                      startRow=plot_row, startCol=plot_col)
-    plot_row <- plot_row + 1
-    try_result <- xlsx_plot_png(sig_bar_plots[["limma"]], wb=wb, sheet="number_changed",
-                                plotname="sigbar_limma", savedir=excel_basename,
-                                width=9, height=6, start_row=plot_row, start_col=plot_col)
+      plot_row <- plot_row + 1
+      try_result <- xlsx_plot_png(sig_bar_plots[["limma"]], wb=wb, sheet="number_changed",
+                                  plotname="sigbar_limma", savedir=excel_basename,
+                                  width=9, height=6, start_row=plot_row, start_col=plot_col)
+      summary_row <- plot_row
+      summary_col <- plot_col + 11
+      limma_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["limma"]], sig_bar_plots[["downs"]][["limma"]])
+      limma_xls_summary <- write_xls(data=limma_summary, wb=wb, sheet="number_changed",
+                                     rownames=TRUE, start_row=summary_row, start_col=summary_col)
+      plot_row <- plot_row + 30
+    }
 
-    summary_row <- plot_row
-    summary_col <- plot_col + 11
-    limma_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["limma"]], sig_bar_plots[["downs"]][["limma"]])
-    limma_xls_summary <- write_xls(data=limma_summary, wb=wb, sheet="number_changed",
-                                   rownames=TRUE, start_row=summary_row, start_col=summary_col)
+    if ("deseq" %in% according_to) {
+      xl_result <- openxlsx::writeData(wb, "number_changed",
+                                       x="Significant deseq genes.",
+                                       startRow=plot_row, startCol=plot_col)
+      plot_row <- plot_row + 1
+      try_result <- xlsx_plot_png(sig_bar_plots[["deseq"]], wb=wb, sheet="number_changed",
+                                  plotname="sigbar_deseq", savedir=excel_basename,
+                                  width=9, height=6, start_row=plot_row, start_col=plot_col)
+      summary_row <- plot_row
+      summary_col <- plot_col + 11
+      deseq_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["deseq"]], sig_bar_plots[["downs"]][["deseq"]])
+      deseq_xls_summary <- write_xls(data=deseq_summary, wb=wb, sheet="number_changed",
+                                     rownames=TRUE, start_row=summary_row, start_col=summary_col)
+      plot_row <- plot_row + 30
+    }
 
-    plot_row <- plot_row + 30
-    xl_result <- openxlsx::writeData(wb, "number_changed",
-                                     x="Significant deseq genes.",
-                                     startRow=plot_row, startCol=plot_col)
-    plot_row <- plot_row + 1
-    try_result <- xlsx_plot_png(sig_bar_plots[["deseq"]], wb=wb, sheet="number_changed",
-                                plotname="sigbar_deseq", savedir=excel_basename,
-                                width=9, height=6, start_row=plot_row, start_col=plot_col)
-    summary_row <- plot_row
-    summary_col <- plot_col + 11
-    deseq_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["deseq"]], sig_bar_plots[["downs"]][["deseq"]])
-    deseq_xls_summary <- write_xls(data=deseq_summary, wb=wb, sheet="number_changed",
-                                   rownames=TRUE, start_row=summary_row, start_col=summary_col)
-
-    plot_row <- plot_row + 30
-    xl_result <- openxlsx::writeData(wb, "number_changed",
-                                     x="Significant edger genes.",
-                                     startRow=plot_row, startCol=plot_col)
-    plot_row <- plot_row + 1
-    try_result <- xlsx_plot_png(sig_bar_plots[["edger"]], wb=wb, sheet="number_changed",
-                                plotname="sibar_edger", savedir=excel_basename,
-                                width=9, height=6, start_row=plot_row, start_col=plot_col)
-    summary_row <- plot_row
-    summary_col <- plot_col + 11
-    edger_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["edger"]], sig_bar_plots[["downs"]][["edger"]])
-    edger_xls_summary <- write_xls(data=edger_summary, wb=wb, sheet="number_changed",
-                                   rownames=TRUE, start_row=summary_row, start_col=summary_col)
+    if ("edger" %in% according_to) {
+      xl_result <- openxlsx::writeData(wb, "number_changed",
+                                       x="Significant edger genes.",
+                                       startRow=plot_row, startCol=plot_col)
+      plot_row <- plot_row + 1
+      try_result <- xlsx_plot_png(sig_bar_plots[["edger"]], wb=wb, sheet="number_changed",
+                                  plotname="sibar_edger", savedir=excel_basename,
+                                  width=9, height=6, start_row=plot_row, start_col=plot_col)
+      summary_row <- plot_row
+      summary_col <- plot_col + 11
+      edger_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["edger"]], sig_bar_plots[["downs"]][["edger"]])
+      edger_xls_summary <- write_xls(data=edger_summary, wb=wb, sheet="number_changed",
+                                     rownames=TRUE, start_row=summary_row, start_col=summary_col)
+    }
 
   } ## End if we want significance bar plots
   ret[["sig_bar_plots"]] <- sig_bar_plots
