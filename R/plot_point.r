@@ -772,7 +772,7 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #'  \code{\link[limma]{makeContrasts}} \code{\link[limma]{contrasts.fit}}
 #' @examples
 #' \dontrun{
-#'  plot_volcano(table, gvis_filename="html/fun_ma_plot.html")
+#'  plot_volcano_de(table, gvis_filename="html/fun_ma_plot.html")
 #'  ## Currently this assumes that a variant of toptable was used which
 #'  ## gives adjusted p-values.  This is not always the case and I should
 #'  ## check for that, but I have not yet.
@@ -782,9 +782,10 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
                             gvis_filename=NULL, logfc_cutoff=1.0,
                             pval_cutoff=0.05, size=2, alpha=0.6,
                             fc_col="logFC", p_col="adj.P.Val",
-                            fc_name="log Fold change", p_name="log P value",
+                            fc_name="log2 fold change", p_name="-log10 p-value",
                             line_color="black", color_by="p",
                             line_position="bottom",
+                            shapes_by_state=TRUE,
                             color_list=c("FALSE"="darkred", "TRUE"="darkblue"),
                             ...) {
   low_vert_line <- 0.0 - logfc_cutoff
@@ -826,12 +827,22 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
   num_pinsig <- sum(df[["state"]] == "pinsig")
   num_upsig <- sum(df[["state"]] == "upsig")
 
-  plt <- ggplot(data=df,
-                aes_string(x="xaxis",
-                           y="logyaxis",
-                           fill=color_column,
-                           colour=color_column,
-                           shape="state"))
+  plt <- NULL
+  if (isTRUE(shapes_by_state)) {
+    plt <- ggplot(data=df,
+                  aes_string(x="xaxis",
+                             y="logyaxis",
+                             fill=color_column,
+                             colour=color_column,
+                             shape="state"))
+  } else {
+    plt <- ggplot(data=df,
+                  aes_string(x="xaxis",
+                             y="logyaxis",
+                             fill=color_column,
+                             colour=color_column))
+  }
+
   ## Now define when to put lines vs. points
   if (line_position == "bottom") {
     ## lines, then points.
@@ -849,15 +860,20 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
       ggplot2::geom_vline(xintercept=low_vert_line, color=line_color, size=(size / 2))
   }
 
-  ## Now set the colors and labels
+  ## If shapes are being set by state,  add that to the legend now.
+  if (isTRUE(shapes_by_state)) {
+    plt <- plt +
+      ggplot2::scale_shape_manual(name="state", values=state_shapes,
+                                  labels=c(
+                                    paste0("Down Sig.: ", num_downsig),
+                                    paste0("FC Insig.: ", num_fcinsig),
+                                    paste0("P Insig.: ", num_pinsig),
+                                    paste0("Up Sig.: ", num_upsig)),
+                                  guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey")))
+      }
+
+  ## Now set the colors and axis labels
   plt <- plt +
-    ggplot2::scale_shape_manual(name="state", values=state_shapes,
-                                labels=c(
-                                  paste0("Down Sig.: ", num_downsig),
-                                  paste0("FC Insig.: ", num_fcinsig),
-                                  paste0("P Insig.: ", num_pinsig),
-                                  paste0("Up Sig.: ", num_upsig)),
-                                guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey"))) +
     ggplot2::scale_fill_manual(name=color_column,
                                values=color_list,
                                guide=FALSE) +
@@ -865,13 +881,11 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
                                 values=color_list,
                                 guide=FALSE) +
     ggplot2::xlab(label=fc_name) +
-    ggplot2::ylab(label=p_name)
-
-
+    ggplot2::ylab(label=p_name) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
     ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
     ggplot2::theme_bw()
-
+  
   gvis_result <- NULL
   if (!is.null(gvis_filename)) {
     gvis_result <- plot_gvis_volcano(

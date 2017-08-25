@@ -6,10 +6,10 @@
 \usage{
 plot_volcano_de(table, tooltip_data = NULL, gvis_filename = NULL,
   logfc_cutoff = 1, pval_cutoff = 0.05, size = 2, alpha = 0.6,
-  fc_col = "logFC", p_col = "adj.P.Val", fc_name = "log Fold change",
-  p_name = "log P value", line_color = "black", color_by = "p",
-  line_position = "bottom", color_list = c(`FALSE` = "darkred", `TRUE` =
-  "darkblue"), ...)
+  fc_col = "logFC", p_col = "adj.P.Val", fc_name = "log2 fold change",
+  p_name = "-log10 p-value", line_color = "black", color_by = "p",
+  line_position = "bottom", shapes_by_state = TRUE, color_list = c(`FALSE`
+  = "darkred", `TRUE` = "darkblue"), ...)
 }
 \arguments{
 \item{table}{Dataframe from limma's toptable which includes log(fold change) and an
@@ -49,7 +49,7 @@ and y-axis is related to a measure of the statistical significance of the signal
 }
 \examples{
 \dontrun{
- plot_volcano(table, gvis_filename="html/fun_ma_plot.html")
+ plot_volcano_de(table, gvis_filename="html/fun_ma_plot.html")
  ## Currently this assumes that a variant of toptable was used which
  ## gives adjusted p-values.  This is not always the case and I should
  ## check for that, but I have not yet.

@@ -300,8 +300,8 @@ test_that("When we reverse a combined_de_tables(), we get appropriate p-values? 
 })
 
 ## Make sure that MA plots from combined tables are putting the logFCs in the right direction
-forward_plot <- extract_de_ma(forward_combined_excel, type="limma")
-reverse_plot <- extract_de_ma(reverse_combined_excel, type="limma")
+forward_plot <- extract_de_plots(forward_combined_excel, type="limma")[["ma"]]
+reverse_plot <- extract_de_plots(reverse_combined_excel, type="limma")[["ma"]]
 expected <- sort(forward_plot[["df"]][["logfc"]])
 actual <- sort(reverse_plot[["df"]][["logfc"]] * -1)
 test_that("Plotting an MA plot from a combined DE table provides logFCs in the correct orientation?", {
