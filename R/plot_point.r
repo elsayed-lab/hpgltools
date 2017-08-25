@@ -820,6 +820,12 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
     color_list <- default_color_list
   }
 
+  ## Count the numbers in the categories
+  num_downsig <- sum(df[["state"]] == "downsig")
+  num_fcinsig <- sum(df[["state"]] == "fcinsig")
+  num_pinsig <- sum(df[["state"]] == "pinsig")
+  num_upsig <- sum(df[["state"]] == "upsig")
+
   plt <- ggplot(data=df,
                 aes_string(x="xaxis",
                            y="logyaxis",
@@ -858,8 +864,9 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
     ggplot2::scale_color_manual(name=color_column,
                                 values=color_list,
                                 guide=FALSE) +
-    ggplot2::ylab(label=yaxis_name) +
-    ggplot2::xlab(label=xaxis_name)
+    ggplot2::xlab(label=fc_name) +
+    ggplot2::ylab(label=p_name)
+
 
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
     ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +

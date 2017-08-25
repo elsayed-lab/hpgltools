@@ -503,7 +503,7 @@ Hash: f4f7966fc357f60dc62dbffcea917eef
 Package: goseq
 Source: CRAN
 Version: 1.28.0
-Requires: BiocGenerics, AnnotationDbi, BiasedUrn, GO.db,
+Requires: BiasedUrn, BiocGenerics, AnnotationDbi, GO.db,
     geneLenDataBase
 
 Package: gplots
