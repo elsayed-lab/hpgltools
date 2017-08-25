@@ -24,6 +24,10 @@ git: snap push
 hi:
 	@echo "Hello."
 
+packrat_install:
+	echo "Installing all packrat packages globally."
+	R -e "library(hpgltools); hpgltools::packrat_install_globally()"
+
 restore:
 	echo "Restoring packrat."
 	R -e "packrat::restore(restart=FALSE)" --args --bootstrap-packrat

@@ -12,6 +12,9 @@ plot_volcano_de(table, tooltip_data = NULL, gvis_filename = NULL,
   "darkblue"), ...)
 }
 \arguments{
+\item{table}{Dataframe from limma's toptable which includes log(fold change) and an
+adjusted p-value.}
+
 \item{tooltip_data}{Df of tooltip information for gvis.}
 
 \item{gvis_filename}{Filename to write a fancy html graph.}
@@ -21,9 +24,6 @@ plot_volcano_de(table, tooltip_data = NULL, gvis_filename = NULL,
 \item{alpha}{How transparent to make the dots.}
 
 \item{...}{I love parameters!}
-
-\item{toptable_data}{Dataframe from limma's toptable which includes log(fold change) and an
-adjusted p-value.}
 
 \item{p_cutoff}{Cutoff defining significant from not.}
 
@@ -49,7 +49,7 @@ and y-axis is related to a measure of the statistical significance of the signal
 }
 \examples{
 \dontrun{
- plot_volcano(toptable_data, gvis_filename="html/fun_ma_plot.html")
+ plot_volcano(table, gvis_filename="html/fun_ma_plot.html")
  ## Currently this assumes that a variant of toptable was used which
  ## gives adjusted p-values.  This is not always the case and I should
  ## check for that, but I have not yet.

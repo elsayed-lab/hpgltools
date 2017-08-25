@@ -21,7 +21,7 @@ Suggests:
 Imports:
  Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach, gtools, gplots,
  matrixStats, corpcor, ggrepel, Rtsne, DESeq2, survJamda, RUVSeq, statmod, variancePartition,
- openxlsx, goseq
+ openxlsx, goseq, inflection, AnnotationHub
 VignetteBuilder: knitr
 ByteCompile: true
 RoxygenNote: 6.0.1
