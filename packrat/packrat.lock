@@ -91,6 +91,19 @@ Requires: Biobase, BiocGenerics, BiocParallel, GenomicRanges, Hmisc,
     IRanges, Rcpp, RcppArmadillo, S4Vectors, SummarizedExperiment,
     genefilter, geneplotter, ggplot2, locfit
 
+Package: DO.db
+Source: Bioconductor
+Version: 2.9
+Hash: f0aabcfd2d0c83dbce04334f48335f17
+Requires: AnnotationDbi
+
+Package: DOSE
+Source: Bioconductor
+Version: 3.2.0
+Hash: bd8e48294c6315d65e0a846f84e148f5
+Requires: AnnotationDbi, BiocParallel, DO.db, GOSemSim, S4Vectors,
+    fgsea, ggplot2, igraph, qvalue, reshape2, scales
+
 Package: DelayedArray
 Source: Bioconductor
 Version: 0.2.7
@@ -115,6 +128,12 @@ Source: Bioconductor
 Version: 3.4.1
 Hash: 2a149023f3a513f836439b78ff34b2c7
 Requires: AnnotationDbi
+
+Package: GOSemSim
+Source: Bioconductor
+Version: 2.2.0
+Hash: 5b3f89f3c789f821b97459ac84dba98a
+Requires: AnnotationDbi, GO.db, Rcpp
 
 Package: GenomeInfoDb
 Source: Bioconductor
@@ -420,6 +439,13 @@ Source: CRAN
 Version: 2.3-50
 Hash: 86ef5f32dd2ef3c4076e52e7c89740b3
 
+Package: clusterProfiler
+Source: Bioconductor
+Version: 3.4.4
+Hash: 68d5295c3d86e35e5a6350dab9211c7a
+Requires: AnnotationDbi, DOSE, GO.db, GOSemSim, ggplot2, magrittr,
+    plyr, qvalue, rvcheck, tidyr
+
 Package: colorRamps
 Source: CRAN
 Version: 2.3
@@ -513,6 +539,17 @@ Source: CRAN
 Version: 0.10.1
 Hash: 54d95f4ec6d0300100413ed0127d89ae
 Requires: stringr
+
+Package: fastmatch
+Source: CRAN
+Version: 1.1-0
+Hash: 932691e01f5e2d6de914fd4b847f37c8
+
+Package: fgsea
+Source: Bioconductor
+Version: 1.2.1
+Hash: b1370b7ea3a7b81ddece234a763d95a4
+Requires: BiocParallel, Rcpp, data.table, fastmatch, ggplot2, gridExtra
 
 Package: foreach
 Source: CRAN
@@ -666,6 +703,12 @@ Source: CRAN
 Version: 1.3.2
 Hash: 4c36a3e4a7471fdc3d5ee75b5188c37d
 
+Package: igraph
+Source: CRAN
+Version: 1.1.2
+Hash: 07d33f151f94269a4573d354104e81aa
+Requires: irlba, magrittr, pkgconfig
+
 Package: inflection
 Source: CRAN
 Version: 1.3
@@ -682,6 +725,11 @@ Source: CRAN
 Version: 0.9-6
 Hash: 2fd946bce1622291262c12515d27e780
 Requires: prodlim
+
+Package: irlba
+Source: CRAN
+Version: 2.2.1
+Hash: 35437a4fd43dbefef9d8b1fd457b3a5f
 
 Package: iterators
 Source: CRAN
@@ -868,10 +916,22 @@ Source: CRAN
 Version: 1.0.0
 Hash: f9a2528572320c1e0bc8783dfd6e0fae
 
+Package: purrr
+Source: CRAN
+Version: 0.2.3
+Hash: d741f262ed1b74543e33c5426a497996
+Requires: magrittr, rlang, tibble
+
 Package: quadprog
 Source: CRAN
 Version: 1.5-5
 Hash: 69000b7dc41b09977dcf781f909d235c
+
+Package: qvalue
+Source: Bioconductor
+Version: 2.8.0
+Hash: d3a632d12d600b302cade4831169038a
+Requires: ggplot2, reshape2
 
 Package: reshape2
 Source: CRAN
@@ -914,6 +974,11 @@ Hash: 2913ef01532ed000df6aaff904a28c98
 Requires: BiocGenerics, Biostrings, GenomeInfoDb, GenomicAlignments,
     GenomicRanges, IRanges, RCurl, Rsamtools, S4Vectors, XML, XVector,
     zlibbioc
+
+Package: rvcheck
+Source: CRAN
+Version: 0.0.9
+Hash: 9b4851b4c04e707db46176cd621bfc87
 
 Package: scales
 Source: CRAN
@@ -1000,6 +1065,19 @@ Source: CRAN
 Version: 1.3.4
 Hash: 3111e0d62502af60fe0fa8b4213fedad
 Requires: Rcpp, rlang
+
+Package: tidyr
+Source: CRAN
+Version: 0.7.0
+Hash: 2a57379324a1f6ba921f53481dcf9e2c
+Requires: Rcpp, dplyr, glue, magrittr, purrr, rlang, stringi, tibble,
+    tidyselect
+
+Package: tidyselect
+Source: CRAN
+Version: 0.1.1
+Hash: b4a923c118b74d3e7ab54563b32d4ed9
+Requires: Rcpp, glue, rlang
 
 Package: variancePartition
 Source: Bioconductor
