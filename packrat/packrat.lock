@@ -180,6 +180,12 @@ Version: 2.10.2
 Hash: 792977f8f9d97dba74f25a968ac54138
 Requires: BiocGenerics, S4Vectors
 
+Package: KEGGREST
+Source: Bioconductor
+Version: 1.16.1
+Hash: 34fce842e3188f46e4add8f0ae20c460
+Requires: Biostrings, httr, png
+
 Package: OrganismDbi
 Source: Bioconductor
 Version: 1.18.0
@@ -894,6 +900,11 @@ Source: CRAN
 Version: 1.8.4
 Hash: 8fbaff6962e3421b5c9652eebae36159
 Requires: Rcpp
+
+Package: png
+Source: CRAN
+Version: 0.1-7
+Hash: 421d7d6e0fb4bd885ecbd909b6456b8b
 
 Package: praise
 Source: CRAN
