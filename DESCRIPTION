@@ -17,11 +17,11 @@ Description: This is a set of functions I have been using in my various analyses
              flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
- R.utils, pasilla, biomaRt, DESeq, directlabels, edgeR, preprocessCore 
+ R.utils, pasilla, biomaRt, DESeq, directlabels, edgeR, preprocessCore, gtools,
+ gplots,  matrixStats, corpcor, ggrepel, Rtsne, DESeq2, survJamda, RUVSeq, statmod, variancePartition,
+ openxlsx, goseq, inflection, AnnotationHub, OrganismDbi, mygene, genbankr, RMySQL, dplyr
 Imports:
- Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach, gtools, gplots,
- matrixStats, corpcor, ggrepel, Rtsne, DESeq2, survJamda, RUVSeq, statmod, variancePartition,
- openxlsx, goseq, inflection, AnnotationHub, OrganismDbi, mygene, genbankr, RMySQL
+ Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
 ByteCompile: true
 RoxygenNote: 6.0.1
