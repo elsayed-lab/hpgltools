@@ -20,7 +20,7 @@ Suggests:
  R.utils, pasilla, biomaRt, DESeq, directlabels, edgeR, preprocessCore, gtools,
  gplots,  matrixStats, corpcor, ggrepel, Rtsne, DESeq2, survJamda, RUVSeq, statmod, variancePartition,
  openxlsx, goseq, inflection, AnnotationHub, OrganismDbi, mygene, genbankr, RMySQL, dplyr, clusterProfiler,
- topGO, GOstats
+ topGO, GOstats, Rgraphviz
 Imports:
  Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr

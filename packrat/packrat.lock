@@ -295,6 +295,12 @@ Version: 0.3.3.3.0
 Hash: d2dba1ec87fb5d2c38791848e9a78ade
 Requires: Rcpp
 
+Package: Rgraphviz
+Source: Bioconductor
+Version: 2.20.0
+Hash: 3de624a8685acc556439fa52c866399d
+Requires: graph
+
 Package: Rsamtools
 Source: Bioconductor
 Version: 1.28.0
