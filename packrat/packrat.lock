@@ -612,6 +612,12 @@ Source: CRAN
 Version: 1.0.0
 Hash: 4f24cbf581681c263186b9425f05ba3e
 
+Package: gProfileR
+Source: CRAN
+Version: 0.6.1
+Hash: 3f086c722e96c98ee4b125c0c0c8c22d
+Requires: RCurl, plyr
+
 Package: gdata
 Source: CRAN
 Version: 2.18.0

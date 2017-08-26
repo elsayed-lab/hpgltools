@@ -6,6 +6,7 @@ context("53gsea_clusterp.R: Does clusterProfiler work?\n")
 load("gsea_siggenes.rda")
 
 dmel_cp <- sm(simple_clusterprofiler(z_sig_genes, table,
+				     do_david=FALSE,
                                      orgdb="org.Dm.eg.db"))
 
 expected <- c("GO:0001071", "GO:0001871", "GO:0003700",
