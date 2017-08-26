@@ -13,6 +13,13 @@ Version: 1.38.2
 Hash: 8ff7587608809ef045fa8bc7f286a1c1
 Requires: Biobase, BiocGenerics, DBI, IRanges, RSQLite, S4Vectors
 
+Package: AnnotationForge
+Source: Bioconductor
+Version: 1.18.1
+Hash: 142e2b4094b10a5e6749a201f8bac56e
+Requires: AnnotationDbi, Biobase, BiocGenerics, DBI, RCurl, RSQLite,
+    S4Vectors, XML
+
 Package: AnnotationHub
 Source: Bioconductor
 Version: 2.8.2
@@ -70,6 +77,13 @@ Source: Bioconductor
 Version: 2.44.2
 Hash: 6ef0debd450ce581b180d7423adbf158
 Requires: BiocGenerics, IRanges, S4Vectors, XVector
+
+Package: Category
+Source: Bioconductor
+Version: 2.42.1
+Hash: aa16daf3d676b1d727a7876937a21aaa
+Requires: AnnotationDbi, Biobase, BiocGenerics, DBI, GSEABase, RBGL,
+    annotate, genefilter, graph
 
 Package: DBI
 Source: CRAN
@@ -134,6 +148,19 @@ Source: Bioconductor
 Version: 2.2.0
 Hash: 5b3f89f3c789f821b97459ac84dba98a
 Requires: AnnotationDbi, GO.db, Rcpp
+
+Package: GOstats
+Source: Bioconductor
+Version: 2.42.0
+Hash: ef0fbeb1cdf79f59e8c817ff05eb8a16
+Requires: AnnotationDbi, AnnotationForge, Biobase, Category, GO.db,
+    RBGL, annotate, graph
+
+Package: GSEABase
+Source: Bioconductor
+Version: 1.38.1
+Hash: 18ad4cf3a2182c49ef5cbea7593a1921
+Requires: AnnotationDbi, Biobase, BiocGenerics, XML, annotate, graph
 
 Package: GenomeInfoDb
 Source: Bioconductor
@@ -294,6 +321,11 @@ Hash: dab152335db951204fde11bdc79a6fac
 Requires: Biobase, BiocGenerics, BiocParallel, Biostrings,
     GenomeInfoDb, GenomicAlignments, GenomicRanges, IRanges, Rsamtools,
     S4Vectors, XVector, hwriter, latticeExtra, zlibbioc
+
+Package: SparseM
+Source: CRAN
+Version: 1.77
+Hash: 08f1f60e1038957030bcd9f4a58d22d8
 
 Package: SummarizedExperiment
 Source: Bioconductor
@@ -1089,6 +1121,13 @@ Source: CRAN
 Version: 0.1.1
 Hash: b4a923c118b74d3e7ab54563b32d4ed9
 Requires: Rcpp, glue, rlang
+
+Package: topGO
+Source: Bioconductor
+Version: 2.28.0
+Hash: 877ae4fe4a73b79f2aa2924063300ae0
+Requires: AnnotationDbi, Biobase, BiocGenerics, DBI, GO.db, SparseM,
+    graph, matrixStats
 
 Package: variancePartition
 Source: Bioconductor
