@@ -213,6 +213,12 @@ Version: 1.16.1
 Hash: 34fce842e3188f46e4add8f0ae20c460
 Requires: Biostrings, httr, png
 
+Package: KEGGgraph
+Source: Bioconductor
+Version: 1.38.1
+Hash: b3d33a5015fba559bafa27ee27e77954
+Requires: XML, graph
+
 Package: OrganismDbi
 Source: Bioconductor
 Version: 1.18.0
@@ -913,6 +919,12 @@ Version: 3.4.1
 Hash: 2915f57cbd5d885d0b6ac259552c99ae
 Requires: AnnotationDbi
 
+Package: org.Hs.eg.db
+Source: Bioconductor
+Version: 3.4.1
+Hash: c1fc734181596d96b11166129f731f9b
+Requires: AnnotationDbi
+
 Package: packrat
 Source: CRAN
 Version: 0.4.8-1
@@ -922,6 +934,13 @@ Package: pasilla
 Source: Bioconductor
 Version: 1.4.0
 Hash: f32f7ba1387cd6c11e20ca26d9734c2f
+
+Package: pathview
+Source: Bioconductor
+Version: 1.16.5
+Hash: 814835a82795e89d5adc0e5a3a0ecc4e
+Requires: AnnotationDbi, KEGGREST, KEGGgraph, Rgraphviz, XML, graph,
+    org.Hs.eg.db, png
 
 Package: pbkrtest
 Source: CRAN
