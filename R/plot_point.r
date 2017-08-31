@@ -54,7 +54,8 @@ plot_bcv <- function(data) {
     ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white", "black"))(256)) +
     ggplot2::geom_smooth(method="loess") +
     ggplot2::stat_function(fun=f, colour="red") +
-    ggplot2::theme(legend.position="none")
+    ggplot2::theme(legend.position="none",
+                   axis.text=ggplot2::element_text(size=10, colour="black"))
   ret <- list("data"=disp_df, "plot"=disp_plot)
   return(ret)
 }
@@ -118,7 +119,8 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
     ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
     ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
     ggplot2::geom_point(colour=grDevices::hsv(mydist[["dist"]], 1, mydist[["dist"]]), alpha=0.6, size=size) +
-    ggplot2::theme(legend.position="none")
+    ggplot2::theme(legend.position="none",
+                   axis.text=ggplot2::element_text(size=10, colour="black"))
   if (!is.null(gvis_filename)) {
     plot_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
   }
@@ -285,7 +287,8 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
   }
 
   first_vs_second <- first_vs_second +
-    ggplot2::theme(legend.position="none") +
+    ggplot2::theme(legend.position="none",
+                   axis.text=ggplot2::element_text(size=10, colour="black")) +
     ggplot2::theme_bw()
 
   if (!is.null(gvis_filename)) {
@@ -479,7 +482,8 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     ggplot2::scale_color_manual(name="as.factor(pcut)",
                                 values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
-    ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=-90)) +
     ggplot2::xlab("Average log2(Counts)") +
     ggplot2::ylab("log2(fold change)") +
     ggplot2::theme_bw()
@@ -631,7 +635,9 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     non_zero_plot <- non_zero_plot + ggplot2::ggtitle(title)
   }
   non_zero_plot <- non_zero_plot +
-    ggplot2::theme(axis.ticks=ggplot2::element_blank(), axis.text.x=ggplot2::element_text(angle=90))
+    ggplot2::theme(axis.ticks=ggplot2::element_blank(),
+                   axis.text=ggplot2::element_text(size=10, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90))
   return(non_zero_plot)
 }
 
@@ -735,7 +741,8 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
     ggplot2::xlab(paste("Expression of", df_x_axis)) +
     ggplot2::ylab(paste("Expression of", df_y_axis)) +
     ggplot2::geom_point(colour=color, alpha=0.6, size=size) +
-    ggplot2::theme(legend.position="none")
+    ggplot2::theme(legend.position="none",
+                   axis.text=ggplot2::element_text(size=10, colour="black"))
   if (!is.null(gvis_filename)) {
     plot_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
   }
@@ -883,7 +890,8 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
     ggplot2::xlab(label=fc_name) +
     ggplot2::ylab(label=p_name) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
-    ggplot2::theme(axis.text.x=ggplot2::element_text(angle=-90)) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=-90)) +
     ggplot2::theme_bw()
   
   gvis_result <- NULL

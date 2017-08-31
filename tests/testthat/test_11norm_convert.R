@@ -29,7 +29,11 @@ test_that("calling convert_counts and normalize_expt are equivalent?", {
 })
 
 ## Similarly check that edgeR's rpkm() comes out the same
-fdata_lengths <- as.vector(as.numeric(fData(pasilla_expt)[["length"]]))
+## Make sure that we remove undefined numbers from fdata(length)
+undef <- fData(pasilla_expt)[["length"]] == "undefined"
+lengths <- fData(pasilla_expt)[["length"]]
+lengths[undef] <- NA
+fdata_lengths <- as.vector(as.numeric(lengths))
 names(fdata_lengths) <- rownames(fData(pasilla_expt))
 expected <- edgeR::rpkm(exprs(pasilla_expt), gene.length=fdata_lengths)
 actual <- exprs(pasilla_norm)
@@ -38,6 +42,8 @@ test_that("rpkm conversions are equivalent?", {
 })
 
 ## I have a modification of rpkm(), cp_seq_m(), which should give some expected results.
+## This is intended to count the number of instances of a given sequence ('TA' by default)
+## and normalize based on its relative frequency.  This is useful primarily for tnseq.
 tt <- sm(require.auto("BSgenome.Dmelanogaster.UCSC.dm6"))
 tt <- sm(library("BSgenome.Dmelanogaster.UCSC.dm6"))
 pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cp_seq_m",
