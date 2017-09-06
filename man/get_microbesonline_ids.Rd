@@ -26,7 +26,7 @@ microbesonline database and returning the ids associated with a given name.
 }
 \examples{
 \dontrun{
- microbes_ids <- get_microbesonline_ids(name="Streptococcus")
+
 }
 }
 \seealso{
