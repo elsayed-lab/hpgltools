@@ -1180,7 +1180,7 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=100, z=NULL, 
   final_list <- list()
 
   data <- NULL
-  if (according_to == "all") {
+  if (according_to[[1]] == "all") {
     according_to <- c("limma", "deseq", "edger", "basic")
   }
 
@@ -1409,19 +1409,19 @@ extract_significant_genes <- function(combined,
       ## Extract the MA data if requested.
       if (isTRUE(ma)) {
         single_ma <- NULL
-        if (according_to == "limma") {
+        if (according == "limma") {
           single_ma <- extract_de_plots(combined, type="limma",
                                         table=table_name, fc=fc,  pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according_to == "deseq") {
+        } else if (according == "deseq") {
           single_ma <- extract_de_plots(combined, type="deseq",
                                      table=table_name, fc=fc, pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according_to == "edger") {
+        } else if (according == "edger") {
           single_ma <- extract_de_plots(combined, type="edger",
                                      table=table_name, fc=fc, pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according_to == "basic") {
+        } else if (according == "basic") {
           single_ma <- extract_de_plots(combined, type="basic",
                                         table=table_name, fc=fc, pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]

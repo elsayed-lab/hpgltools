@@ -173,9 +173,12 @@ plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
                       aes_string(x="order")) +
     ggplot2::xlab("Sample ID") +
     ggplot2::ylab("Library size in (pseudo)counts.") +
+    ## theme_bw() sets a bunch of reasonable defaults.
+    ggplot2::theme_bw() +
+    ## angle=90 puts the text vertically, vjust=0.5 centers the labels below the tick mark.
     ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90)) + ##, hjust=1.5, vjust=0.5)) 
-    ggplot2::theme_bw()
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) ##, hjust=1.5, vjust=0.5))
+
 
   if (isTRUE(text)) {
     sample_df[["sum"]] <- sprintf("%.2f", round(as.numeric(sample_df[["sum"]]), 2))
@@ -194,7 +197,7 @@ plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
     scale_difference <- max(as.numeric(sample_df[["sum"]])) / min(as.numeric(sample_df[["sum"]]))
     if (scale_difference > 10.0) {
       message("The scale difference between the smallest and largest
-   libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
+libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
       scale <- TRUE
     } else {
       scale <- FALSE
@@ -348,8 +351,8 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
                                         "c_down_outer"="purple4")) +
     ggplot2::coord_flip() +
     ggplot2::theme_bw() +
-    ggplot2::theme(panel.grid.minor=ggplot2::element_blank()) +
-    ggplot2::theme(legend.position="none")
+    ggplot2::theme(panel.grid.minor=ggplot2::element_blank(),
+                   legend.position="none")
 
   if (isTRUE(text)) {
     for (comp in 1:length(comp_names)) {

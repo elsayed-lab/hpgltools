@@ -345,6 +345,7 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
     ratio_plot <- ratio_plot +
       ggplot2::xlab("Sorted gene") +
       ggplot2::ylab(y_string) +
+      ggplot2::theme_bw() +
       ggplot2::theme(legend.position="none")
   } else if (labels == "short") {
     ratio_plot <- ratio_plot +
@@ -361,7 +362,8 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
                      panel.grid.minor=ggplot2::element_blank(),
                      plot.background=ggplot2::element_blank())
   } else {
-    ratio_plot <- ratio_plot + ggplot2::theme_bw() +
+    ratio_plot <- ratio_plot +
+      ggplot2::theme_bw() +
       ggplot2::theme(axis.line=ggplot2::element_blank(),
                      axis.text.x=ggplot2::element_blank(),
                      axis.text.y=ggplot2::element_blank(),
@@ -392,11 +394,13 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
     log_ratio_plot <- log_ratio_plot +
       ggplot2::xlab(paste("log sorted ", xlabel)) +
       ggplot2::ylab(paste("log sorted ", ylabel)) +
+      ggplot2::theme_bw() +
       ggplot2::theme(legend.position="none")
   } else if (labels == "short") {
     log_ratio_plot <- log_ratio_plot +
       ggplot2::xlab("gene") +
       ggplot2::ylab(y_string) +
+      ggplot2::theme_bw() +
       ggplot2::theme(axis.text.x=ggplot2::element_blank(),
                      axis.text.y=ggplot2::element_blank(),
                      axis.ticks=ggplot2::element_blank(),
@@ -423,10 +427,11 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
                      panel.grid.minor=ggplot2::element_blank(),
                      plot.background=ggplot2::element_blank())
   }
-  ratio_plot <- ratio_plot + ggplot2::theme_bw()
-  log_ratio_plot <- log_ratio_plot + ggplot2::theme_bw()
-  log_summary <- summary(log_df$sub)
-  qq_plots <- list(ratio=ratio_plot, log=log_ratio_plot, summary=log_summary)
+  log_summary <- summary(log_df[["sub"]])
+  qq_plots <- list(
+    "ratio" = ratio_plot,
+    "log" = log_ratio_plot,
+    "summary" = log_summary)
   return(qq_plots)
 }
 
@@ -467,9 +472,9 @@ plot_qq_all_pairwise <- function(data) {
       jth <- colnames(data)[j]
       message(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
       tmp <- plot_qq_plot(data, x=i, y=j, labels=names)
-      logs[[count]] <- tmp$log
-      ratios[[count]] <- tmp$ratio
-      means[i, j] <- tmp$summary[["Mean"]]
+      logs[[count]] <- tmp[["log"]]
+      ratios[[count]] <- tmp[["ratio"]]
+      means[i, j] <- tmp[["summary"]][["Mean"]]
       count <- count + 1
     }
   }

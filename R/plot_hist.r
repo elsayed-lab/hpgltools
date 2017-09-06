@@ -44,8 +44,8 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
     ggplot2::geom_density(alpha=0.4, fill=fillcolor) +
     ggplot2::geom_vline(ggplot2::aes_string(xintercept="mean(values, na.rm=T)"),
                         color=color, linetype="dashed", size=1) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black")) +
-    ggplot2::theme_bw()
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"))
   if (log) {
     log_histogram <- try(a_histogram + ggplot2::scale_x_log10())
     if (log_histogram != "try-error") {
@@ -91,18 +91,20 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
   } else {
     stop("This can only work with a list or data frame.")
   }
-  play_cdf <- plyr::ddply(play_all, "cond", plyr::summarise, rating.mean=mean(expression, na.rm=TRUE))
-  uncor_t <- stats::pairwise.t.test(play_all$expression, play_all$cond, p.adjust="none")
-  bon_t <- try(stats::pairwise.t.test(play_all$expression, play_all$cond, p.adjust="bon", na.rm=TRUE))
+  play_cdf <- plyr::ddply(play_all, "cond",
+                          plyr::summarise, rating.mean=mean(expression, na.rm=TRUE))
+  uncor_t <- stats::pairwise.t.test(play_all[["expression"]], play_all[["cond"]], p.adjust="none")
+  bon_t <- try(stats::pairwise.t.test(play_all[["expression"]], play_all[["cond"]],
+                                      p.adjust="bon", na.rm=TRUE))
   if (is.null(bins) & is.null(binwidth)) {
-    minval <- min(play_all$expression, na.rm=TRUE)
-    maxval <- max(play_all$expression, na.rm=TRUE)
+    minval <- min(play_all[["expression"]], na.rm=TRUE)
+    maxval <- max(play_all[["expression"]], na.rm=TRUE)
     bins <- 500
     binwidth <- (maxval - minval) / bins
     ## message(paste("Setting binwidth to ", binwidth, " in order to have ", bins, " bins.", sep=""))
   } else if  (is.null(binwidth)) {
-    minval <- min(play_all$expression, na.rm=TRUE)
-    maxval <- max(play_all$expression, na.rm=TRUE)
+    minval <- min(play_all[["expression"]], na.rm=TRUE)
+    maxval <- max(play_all[["expression"]], na.rm=TRUE)
     binwidth <- (maxval - minval) / bins
     ## message(paste("Setting binwidth to ", binwidth, " in order to have ", bins, " bins.", sep=""))
     ## } else if (is.null(bins)) {
@@ -119,8 +121,8 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
     ggplot2::geom_vline(data=play_cdf,
                         ggplot2::aes_string(xintercept="rating.mean",  colour="cond"),
                         linetype="dashed", size=0.75) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black")) +
-    ggplot2::theme_bw()
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"))
   if (log) {
     logged <- try(hpgl_multi + ggplot2::scale_x_log10())
     if (class(logged) != "try-error") {

@@ -57,20 +57,22 @@ local_get_value <- function(x, delimiter=": ") {
 #' @export
 pp <- function(file, width=9, height=9, res=180, ...) {
   ext <- tools::file_ext(file)
+  res <- NULL
   if (ext == "png") {
-    png(filename=file, width=width, height=height, units="in", res=res, ...)
+    res <- png(filename=file, width=width, height=height, units="in", res=res, ...)
   } else if (ext == "svg") {
-    svg(filename=file)
+    res <- svg(filename=file)
   } else if (ext == "ps") {
-    postscript(filename=file, width=width, height=height, units="in", ...)
+    res <- postscript(filename=file, width=width, height=height, units="in", ...)
   } else if (ext == "eps") {
-    cairo_ps(filename=file, width=width, height=height, ...)
+    res <- cairo_ps(filename=file, width=width, height=height, ...)
   } else if (ext == "pdf") {
-    pdf(file=file, ...)
+    res <- pdf(file=file, ...)
   } else {
     message("Defaulting to tiff.")
-    tiff(filename=file, width=width, height=height, units="in", ...)
+    res <- tiff(filename=file, width=width, height=height, units="in", ...)
   }
+  return(res)
 }
 
 #' Silence, m...

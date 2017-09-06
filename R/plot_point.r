@@ -287,9 +287,9 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
   }
 
   first_vs_second <- first_vs_second +
+    ggplot2::theme_bw() +
     ggplot2::theme(legend.position="none",
-                   axis.text=ggplot2::element_text(size=10, colour="black")) +
-    ggplot2::theme_bw()
+                   axis.text=ggplot2::element_text(size=10, colour="black"))
 
   if (!is.null(gvis_filename)) {
     plot_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename,
@@ -482,11 +482,11 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     ggplot2::scale_color_manual(name="as.factor(pcut)",
                                 values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
+    ggplot2::theme_bw() +
     ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
                    axis.text.x=ggplot2::element_text(angle=-90)) +
     ggplot2::xlab("Average log2(Counts)") +
-    ggplot2::ylab("log2(fold change)") +
-    ggplot2::theme_bw()
+    ggplot2::ylab("log2(fold change)")
 
   ## Make a gvis plot if requested.
   if (!is.null(gvis_filename)) {
@@ -890,10 +890,10 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
     ggplot2::xlab(label=fc_name) +
     ggplot2::ylab(label=p_name) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
+    ggplot2::theme_bw() +
     ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=-90)) +
-    ggplot2::theme_bw()
-  
+                   axis.text.x=ggplot2::element_text(angle=-90))
+
   gvis_result <- NULL
   if (!is.null(gvis_filename)) {
     gvis_result <- plot_gvis_volcano(

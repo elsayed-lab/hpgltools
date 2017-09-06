@@ -996,6 +996,180 @@ compare_logfc_plots <- function(combined_tables) {
   return(plots)
 }
 
+#' Implement a cleaner version of 'subset_significants' from analyses with Maria Adelaida.
+#'
+#' This should provide nice venn diagrams and some statistics to compare 2 or 3
+#' contrasts in a differential expression analysis.
+compare_significant_contrasts <- function(sig_tables, compare_by="deseq", contrasts=c(1,2,3)) {
+  retlist <- NULL
+  contrast_names <- names(sig_tables[[compare_by]][["ups"]])
+  if (length(contrasts) == 2) {
+    first <- contrasts[[1]]
+    f_name <- contrast_names[[1]]
+    second <- contrasts[[2]]
+    s_name <- contrast_names[[2]]
+    first_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[first]])
+    second_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[second]])
+    first_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[first]])
+    second_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[second]])
+
+    first_solo_up_idx <- ! first_up_genes %in% second_up_genes
+    first_solo_up <- first_up_genes[first_solo_up_idx]
+    f_shared_s_idx <- first_up_genes %in% second_up_genes
+    f_shared_s_up <- first_up_genes[f_shared_s_idx]
+    second_solo_up_idx <- ! second_up_genes %in% first_up_genes
+    second_solo_up <- second_up_genes[second_solo_up_idx]
+
+    first_solo_down_idx <- ! first_down_genes %in% second_down_genes
+    first_solo_down <- first_down_genes[first_solo_down_idx]
+    f_shared_s_idx <- first_down_genes %in% second_down_genes
+    f_shared_s_down <- first_down_genes[f_shared_s_idx]
+    second_solo_down_idx <- ! second_down_genes %in% first_down_genes
+    second_solo_down <- second_down_genes[second_solo_down_idx]
+
+    first_solo_up_name <- paste0(f_name, "_solo_up")
+    second_solo_up_name <- paste0(s_name, "_solo_up")
+    first_solo_down_name <- paste0(f_name, "_solo_down")
+    second_solo_down_name <- paste0(s_name, "_solo_down")
+    shared_up_name <- paste0(f_name, "_", s_name, "_shared_up")
+    shared_down_name <- paste0(f_name, "_", s_name, "_shared_down")
+    retlist <- list(
+      "first_solo_up_name" = sig_tables[[compare_by]][["ups"]][[first]][first_solo_up, ],
+      "second_solo_up_name" = sig_tables[[compare_by]][["ups"]][[second]][second_solo_up, ],
+      "shared_up_name" = sig_tables[[compare_by]][["ups"]][[first]][f_shared_s_up, ],
+      "first_solo_down_name" = sig_tables[[compare_by]][["downs"]][[first]][first_solo_down, ],
+      "second_solo_down_name" = sig_tables[[compare_by]][["downs"]][[second]][second_solo_down, ],
+      "shared_down_name" = sig_tables[[compare_by]][["downs"]][[first]][f_shared_s_down, ])
+    retlist[["up_weights"]] <- c(0,
+                                 nrow(retlist[[first_solo_up_name]]),
+                                 nrow(retlist[[second_solo_up_name]]),
+                                 nrow(retlist[[shared_up_name]]))
+    retlist[["down_weights"]] <- c(0,
+                                   nrow(retlist[[first_solo_down_name]]),
+                                   nrow(retlist[[second_solo_down_name]]),
+                                   nrow(retlist[[shared_down_e]]))
+    retlist[["up_venn"]] <- Vennerable::Venn(SetNames = c("sh", "chr"),
+                                             Weight = retlist[["up_weights"]])
+    retlist[["down_venn"]] <- Vennerable::Venn(SetNames = c("sh", "chr"),
+                                               Weight = retlist[["down_weights"]])
+    names(retlist) <- c(first_solo_up_name, second_solo_up_name, shared_up_name,
+                        first_solo_down_name, second_solo_down_name, shared_down_name,
+                        "up_weights", "down_weights", "up_venn", "down_venn")
+  } else if (length(contrasts) == 3) {
+    first <- contrasts[[1]]
+    f_name <- contrast_names[[1]]
+    second <- contrasts[[2]]
+    s_name <- contrast_names[[2]]
+    third <- contrasts[[3]]
+    t_name <- contrast_names[[3]]
+    first_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[first]])
+    second_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[second]])
+    first_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[first]])
+    second_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[second]])
+    third_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[third]])
+    third_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[third]])
+
+    first_solo_up_idx <- (! first_up_genes %in% second_up_genes) &
+      (! first_up_genes %in% third_up_genes)
+    first_solo_up <- first_up_genes[first_solo_up_idx]
+    second_solo_up_idx <- (! second_up_genes %in% first_up_genes) &
+      (! second_up_genes %in% third_up_genes)
+    second_solo_up <- second_up_genes[second_solo_up_idx]
+    third_solo_up_idx <- (! third_up_genes %in% first_up_genes) &
+      (! third_up_genes %in% second_up_genes)
+    third_solo_up <- third_up_genes[second_solo_up_idx]
+    fs_up_idx <- (first_up_genes %in% second_up_genes) &
+      (! first_up_genes %in% third_up_genes) & (! second_up_genes %in% third_up_genes)
+    fs_up <- first_up_genes[fs_up_idx]
+    st_up_idx <- (second_up_genes %in% third_up_genes) &
+      (! second_up_genes %in% first_up_genes) & (! third_up_genes %in% first_up_genes)
+    st_up <- second_up_genes[st_up_idx]
+    ft_up_idx <- (first_up_genes %in% third_up_genes) &
+      (! first_up_genes %in% second_up_genes) & (! third_up_genes %in% second_up_genes)
+    ft_up <- first_up_genes[ft_up_idx]
+    shared_up_idx <- (first_up_genes %in% second_up_genes) &
+      (first_up_genes %in% third_up_genes)
+    shared_up <- first_up_genes[shared_up_idx]
+
+    first_solo_down_idx <- (! first_down_genes %in% second_down_genes) &
+      (! first_down_genes %in% third_down_genes)
+    first_solo_down <- first_down_genes[first_solo_down_idx]
+    second_solo_down_idx <- (! second_down_genes %in% first_down_genes) &
+      (! second_down_genes %in% third_down_genes)
+    second_solo_down <- second_down_genes[second_solo_down_idx]
+    third_solo_down_idx <- (! third_down_genes %in% first_down_genes) &
+      (! third_down_genes %in% second_down_genes)
+    third_solo_down <- third_down_genes[second_solo_down_idx]
+    fs_down_idx <- (first_down_genes %in% second_down_genes) &
+      (! first_down_genes %in% third_down_genes) & (! second_down_genes %in% third_down_genes)
+    fs_down <- first_down_genes[fs_down_idx]
+    st_down_idx <- (second_down_genes %in% third_down_genes) &
+      (! second_down_genes %in% first_down_genes) & (! third_down_genes %in% first_down_genes)
+    st_down <- second_down_genes[st_down_idx]
+    ft_down_idx <- (first_down_genes %in% third_down_genes) &
+      (! first_down_genes %in% second_down_genes) & (! third_down_genes %in% second_down_genes)
+    ft_down <- first_down_genes[ft_down_idx]
+    shared_down_idx <- (first_down_genes %in% second_down_genes) &
+      (first_down_genes %in% third_down_genes)
+    shared_down <- first_down_genes[shared_down_idx]
+
+    first_solo_up_name <- paste0(f_name, "_solo_up")
+    second_solo_up_name <- paste0(s_name, "_solo_up")
+    third_solo_up_name <- paste0(t_name, "_solo_up")
+    fs_up_name <- paste0(f_name, "_", s_name, "_up")
+    st_up_name <- paste0(s_name, "_", t_name, "_up")
+    ft_up_name <- paste0(f_name, "_", t_name, "_up")
+    shared_name <- "shared_up"
+
+    first_solo_down_name <- paste0(f_name, "_solo_down")
+    second_solo_down_name <- paste0(s_name, "_solo_down")
+    third_solo_down_name <- paste0(t_name, "_solo_down")
+    fs_down_name <- paste0(f_name, "_", s_name, "_down")
+    st_down_name <- paste0(s_name, "_", t_name, "_down")
+    ft_down_name <- paste0(f_name, "_", t_name, "_down")
+    shared_name <- "shared_down"
+
+    up_weights <- c(0, nrow(first_solo_up), nrow(second_solo_up), nrow(third_solo_up),
+                    nrow(fs_up), nrow(st_up), nrow(ft_up), nrow(shared_up))
+    down_weights <- c(0, nrow(first_solo_down), nrow(second_solo_down), nrow(third_solo_down),
+                      nrow(fs_down), nrow(st_down), nrow(ft_down), nrow(shared_down))
+    up_venn <- Vennerable::Venn(SetNames=c(first_up_name, second_up_name, third_up_name),
+                                Weight=up_weights)
+    up_venn_result <- Vennerable::plot(up_venn, doWeights=FALSE)
+    down_venn <- Vennerable::Venn(SetNames=c(first_down_name, second_down_name, third_down_name),
+                                Weight=down_weights)
+    down_venn_result <- Vennerable::plot(down_venn, doWeights=FALSE)
+
+    retlist <- list(
+      "first_solo_up_name" = sig_tables[[compare_by]][["ups"]][[first]][first_solo_up, ],
+      "second_solo_up_name" = sig_tables[[compare_by]][["ups"]][[second]][second_solo_up, ],
+      "third_solo_up_name" = sig_tables[[compare_by]][["ups"]][[third]][third_solo_up, ],
+      "fs_up_name" = sig_tables[[compare_by]][["ups"]][[first]][fs_up, ],
+      "st_up_name" = sig_tables[[compare_by]][["ups"]][[second]][st_up, ],
+      "ft_up_name" = sig_tables[[compare_by]][["ups"]][[third]][ft_up, ],
+      "shared_up_name" = sig_tables[[compare_by]][["ups"]][[first]][shared_up, ],
+      "first_solo_down_name" = sig_tables[[compare_by]][["downs"]][[first]][first_solo_down, ],
+      "second_solo_down_name" = sig_tables[[compare_by]][["downs"]][[second]][second_solo_down, ],
+      "third_solo_down_name" = sig_tables[[compare_by]][["downs"]][[third]][third_solo_down, ],
+      "fs_down_name" = sig_tables[[compare_by]][["downs"]][[first]][fs_down, ],
+      "st_down_name" = sig_tables[[compare_by]][["downs"]][[second]][st_down, ],
+      "ft_down_name" = sig_tables[[compare_by]][["downs"]][[third]][ft_down, ],
+      "shared_down_name" = sig_tables[[compare_by]][["downs"]][[first]][shared_down, ],
+      "up_weights" = up_weights,
+      "down_weights" = down_weights,
+      "up_venn" = up_venn_result,
+      "down_venn" = down_venn_result)
+    names(retlist) <- c(first_solo_up_name, second_solo_up_name, third_solo_up_name,
+                        fs_up_name, st_up_name, ft_up_name, shared_up_name,
+                        first_solo_down_name, second_solo_down_name, third_solo_down_name,
+                        fs_down_name, st_down_name, ft_down_name, shared_down_name,
+                        "up_weights", "down_weights", "up_venn", "down_venn")
+  } else {
+    stop("Currently this handles only 2 or 3 contrasts.")
+  }
+  return(retlist)
+}
+
 #' Test for infected/control/beads -- a placebo effect?
 #'
 #' The goal is therefore to find responses different than beads
