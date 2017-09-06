@@ -1007,6 +1007,12 @@ Version: 2.8.0
 Hash: d3a632d12d600b302cade4831169038a
 Requires: ggplot2, reshape2
 
+Package: rentrez
+Source: CRAN
+Version: 1.1.0
+Hash: d1b87eed821ab1a78f811d2907b32b56
+Requires: XML, httr, jsonlite
+
 Package: reshape2
 Source: CRAN
 Version: 1.4.2
