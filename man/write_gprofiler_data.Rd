@@ -5,8 +5,8 @@
 \title{Write some excel results from a gprofiler search.}
 \usage{
 write_gprofiler_data(gprofiler_result, wb = NULL,
-  excel = "excel/gprofiler_result.xlsx", add_plots = TRUE, height = 15,
-  width = 10, ...)
+  excel = "excel/gprofiler_result.xlsx", order_by = "recall",
+  add_plots = TRUE, height = 15, width = 10, decreasing = FALSE, ...)
 }
 \arguments{
 \item{gprofiler_result}{The result from simple_gprofiler().}

@@ -5,8 +5,8 @@
 \title{Make a pretty table of gostats data in excel.}
 \usage{
 write_gostats_data(gostats_result, excel = "excel/gostats.xlsx", wb = NULL,
-  add_trees = TRUE, pval = 0.1, add_plots = TRUE, height = 15,
-  width = 10, ...)
+  add_trees = TRUE, order_by = "qvalue", pval = 0.1, add_plots = TRUE,
+  height = 15, width = 10, decreasing = FALSE, ...)
 }
 \arguments{
 \item{gostats_result}{A set of results from simple_gostats().}

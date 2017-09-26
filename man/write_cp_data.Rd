@@ -5,8 +5,8 @@
 \title{Make a pretty table of clusterprofiler data in excel.}
 \usage{
 write_cp_data(cp_result, excel = "excel/clusterprofiler.xlsx", wb = NULL,
-  add_trees = TRUE, pval = 0.1, add_plots = TRUE, height = 15,
-  width = 10, ...)
+  add_trees = TRUE, order_by = "qvalue", pval = 0.1, add_plots = TRUE,
+  height = 15, width = 10, decreasing = FALSE, ...)
 }
 \arguments{
 \item{cp_result}{A set of results from simple_clusterprofiler().}
