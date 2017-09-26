@@ -102,7 +102,7 @@ goseq_table <- function(df, file=NULL) {
 #' @export
 simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
                          adjust=0.1, pvalue=0.1, qvalue=0.1,
-                         length_keytype="transcripts", go_keytype="ENTREZID",
+                         length_keytype="transcripts", go_keytype="entrezid",
                          goseq_method="Wallenius", padjust_method="BH",
                          bioc_length_db="ensGene", excel=NULL,
                          ...) {
@@ -165,7 +165,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   } else if (class(length_db)[[1]] == "OrgDb") {
     stop("OrgDb objects contain links to other databases, but sadly are missing gene lengths.")
   } else if (class(length_db)[[1]] == "OrganismDb" | class(length_db)[[1]] == "AnnotationDbi") {
-    ## metadf <- extract_lengths(db=length_db, gene_list=gene_list)
+    ##metadf <- extract_lengths(db=length_db, gene_list=gene_list)
     metadf <- sm(extract_lengths(db=length_db, gene_list=gene_list, ...))
   } else if (class(length_db)[[1]] == "TxDb") {
     metadf <- sm(extract_lengths(db=length_db, gene_list=gene_list, ...))
@@ -174,6 +174,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   } else {
     stop("This requires either the name of a goseq supported species or an orgdb instance.")
   }
+
   ## Sometimes the column with gene lengths is named 'width'
   ## In that case, fix it.
   if (is.null(metadf[["width"]]) & is.null(metadf[["length"]])) {
@@ -198,9 +199,9 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
         species <- go_db
       }
     } else if (class(go_db)[[1]] == "OrganismDb") {
-      godf <- extract_go(go_db)
+      godf <- extract_go(go_db, keytype=go_keytype)
     } else if (class(go_db)[[1]] == "OrgDb") {
-      godf <- extract_go(go_db)
+      godf <- extract_go(go_db, keytype=go_keytype)
     } else if (class(go_db)[[1]] == "data.frame") {
       godf <- go_db
       if (!is.null(godf[["ID"]])) {
@@ -225,8 +226,12 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   
   ## See how many entries from the godb are in the list of genes.
   id_xref <- de_genelist[["ID"]] %in% godf[["ID"]]
-  message(paste0("Found ", sum(id_xref), " genes from the sig_genes in the go_db."))
-  
+  message(paste0("Found ", sum(id_xref), " genes out of ", nrow(sig_genes),
+                 " from the sig_genes in the go_db."))
+  id_xref <- de_genelist[["ID"]] %in% metadf[["ID"]]
+  message(paste0("Found ", sum(id_xref), " genes out of ", nrow(sig_genes),
+                 " from the sig_genes in the length_db."))
+
   ## So lets merge the de genes and gene lengths to ensure that they are consistent.
   ## Then make the vectors expected by goseq
   merged_ids_lengths <- metadf
@@ -234,6 +239,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   ## "'unimplemented type 'list' in 'orderVector1'"
   merged_ids_lengths[["ID"]] <- as.character(merged_ids_lengths[["ID"]])
   merged_ids_lengths <- merge(merged_ids_lengths, de_genelist, by.x="ID", by.y="ID", all.x=TRUE)
+  merged_ids_lengths[["length"]] <- as.numeric(merged_ids_lengths[["length"]])
   merged_ids_lengths[is.na(merged_ids_lengths)] <- 0
   ## Not casing the next lines as character/numeric causes weird errors like 'names' attribute
   ## must be the same length as the vector

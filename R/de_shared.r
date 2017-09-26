@@ -295,8 +295,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     "pre_batch" = pre_pca,
     "post_batch" = post_pca)
   
-  if (!is.null(arglist[["excel"]])) {
-    combined <- combine_de_tables(ret, excel=arglist[["excel"]], ...)
+  if (!is.null(arglist[["com_excel"]])) {
+    message("Invoking combine_de_tables().")
+    combined <- combine_de_tables(ret, excel=arglist[["com_excel"]], ...)
     ret[["combined"]] <- combined
   }
   return(ret)

@@ -20,34 +20,62 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
     arglist <- list(...)
     ## The 3 ids correspond to the columns produced by genes/cds/transcripts respectively which
     ## contain the IDs. If one is overwritten, the other should be, too
+
+    ## Here is the fundamental problem with extracting lengths from these databases:
+    ## If we have 1 gene ID, what do we associate the length to?  A single transcript,
+    ## the entire gene's length before transcription?, the length before splicing?
+    ## All of these are possible given the databases of gene lengths we have available
+    ## And it is not always trivial/possible to tell which is correct because we cannot be
+    ## certain which ID type has been provided.  Therefore, this function will query every type
+    ## and try to find the one with the best overlap against the set of gene IDs provided.
     tmpdb <- db
     metadf <- NULL
     gene_list <- gene_list[complete.cases(gene_list)]
     chosen_column <- NULL
+    hits_list <- list()
+    column_list <- list()
+    chosen_type <- NULL
+    most_hits <- 0
     ## Translating to ENTREZIDs sometimes introduces NAs which messes up the following operations.
+    ## possible_types should be a listing of the various methods we have of acquiring gene lengths.
+    ## The code in the for loop should therefore invoke each of these in turn and figure out
+    ## which provides the best overlap and use that.
     for (c in 1:length(possible_types)) {
         testing <- NULL
         ty <- possible_types[c]
+        ## make a granges/iranges using the function in possible_types.
         test_string <- paste0("testing <- ", ty, "(tmpdb)")
         eval(parse(text=test_string))
         ## as.data.frame is not only base, but also biocgenerics!!!
+        ## Make a dataframe out of the information above and find the most likely appropriate ID column
         test_meta <- BiocGenerics::as.data.frame(testing)
         possible_columns <- colnames(test_meta)
-        ##chosen_column <- possible_ids[c]
+        ## It turns out this is pretty much always the last column.
         chosen_column <- possible_columns[length(possible_columns)]
+        ## Find the overlap, and if this is largest than our current best overlap...
         overlap <- gene_list %in% test_meta[[chosen_column]]
+        hits_list[[ty]] <- testing
+        column_list[[ty]] <- chosen_column
         message(paste0("Testing ", ty, " with column ", chosen_column, " an overlap of ",
                        sum(overlap), " was observed out of ", length(gene_list), " genes."))
-        message(paste0("Actually using type ", type,
-                       " consider one of the above if that is not good enough."))
+        ## Note it as the best type so far.
+        if (sum(overlap) > most_hits) {
+          chosen_type <- ty
+          most_hits <- sum(overlap)
+        }
     }
-    test_string <- paste0("testing <- ", type, "(tmpdb)")
-    eval(parse(text=test_string))
+    message(paste0("Actually using type ", chosen_type,
+                   " consider one of the above if that is not good enough."))
+    ## Now we have a list of all the lengths by function used to acquire them.
+    testing <- hits_list[[chosen_type]]
+    ## We have a second list of the columns containing the appropriate IDs.
+    chosen_column <- column_list[[chosen_type]]
+    ## So, bring them together here.
     meta <- BiocGenerics::as.data.frame(testing)
     if (!is.null(meta[["width"]])) {
-        metadf <- as.data.frame(cbind(test_meta[[chosen_column]], test_meta[["width"]]))
+        metadf <- as.data.frame(meta)[, c(chosen_column, "width")]
     } else if (!is.null(test_meta[["length"]])) {
-        metadf <- as.data.frame(cbind(test_meta[[chosen_column]], test_meta[["length"]]))
+        metadf <- as.data.frame(meta)[, c(chosen_column, "length")]
     } else {
         stop("This requires either length or width columns.")
     }

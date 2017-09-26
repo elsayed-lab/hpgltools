@@ -293,10 +293,11 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     ggplot2::ylab(paste0("Standard Median ", method)) +
     ggplot2::xlab(paste0("Sample")) +
     ggplot2::ggtitle(title) +
+    ggplot2::theme_bw() +
     ggplot2::theme(axis.text.x=ggplot2::element_text(size=10, colour="black",
-                                                     angle=90, hjust=1)) +
-    ggplot2::theme_bw()
+                                                     angle=90, hjust=1))
 
+            
   return(sm_plot)
 }
 

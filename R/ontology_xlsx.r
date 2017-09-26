@@ -125,8 +125,9 @@ gather_ontology_genes <- function(goseq, ontology=NULL, pval=0.1, include_all=FA
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{goseq}
 #' @export
-write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL, add_trees=TRUE,
-                             pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
+write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL,
+                          add_trees=TRUE, order_by="qvalue", pval=0.1, add_plots=TRUE,
+                          height=15, width=10, decreasing=FALSE, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
     if (!is.null(arglist[["table_style"]])) {
@@ -183,7 +184,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     cp_mf <- cp_mf[ cp_mf[["pvalue"]] <= pval, ]
     cp_mf_genes <- gather_cp_genes(cp_result[["enrich_go"]][["MF_sig"]], cp_result[["all_mappings"]])
     cp_mf[["named_genes"]] <- cp_mf_genes
-    mf_idx <- order(cp_mf[["qvalue"]])
+    mf_idx <- order(cp_mf[[order_by]], decreasing=decreasing)
     cp_mf <- cp_mf[mf_idx, ]
     cp_mf[["Ontology"]] <- "MF"
 
@@ -191,7 +192,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     cp_bp <- cp_bp[ cp_bp[["pvalue"]] <= pval, ]
     cp_bp_genes <- gather_cp_genes(cp_result[["enrich_go"]][["BP_sig"]], cp_result[["all_mappings"]])
     cp_bp[["named_genes"]] <- cp_bp_genes
-    bp_idx <- order(cp_bp[["qvalue"]])
+    bp_idx <- order(cp_bp[[order_by]], decreasing=decreasing)
     cp_bp <- cp_bp[bp_idx, ]
     cp_bp[["Ontology"]] <- "BP"
 
@@ -199,7 +200,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     cp_cc <- cp_cc[ cp_cc[["pvalue"]] <= pval, ]
     cp_cc_genes <- gather_cp_genes(cp_result[["enrich_go"]][["CC_sig"]], cp_result[["all_mappings"]])
     cp_cc[["named_genes"]] <- cp_cc_genes
-    cc_idx <- order(cp_cc[["qvalue"]])
+    cc_idx <- order(cp_cc[[order_by]], decreasing=decreasing)
     cp_cc <- cp_cc[cc_idx, ]
     cp_cc[["Ontology"]] <- "CC"
 
@@ -215,11 +216,11 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     colnames(cp_cc) <- new_columns
 
     cp_kegg <- cp_result[["kegg_data"]][["kegg_sig"]]
-    kegg_idx <- order(cp_kegg[["qvalue"]])
+    kegg_idx <- order(cp_kegg[[order_by]], decreasing=decreasing)
     cp_kegg <- cp_kegg[kegg_idx, ]
 
     cp_david <- cp_result[["david_data"]]
-    david_idx <- order(cp_kegg[["qvalue"]])
+    david_idx <- order(cp_kegg[[order_by]], decreasing=decreasing)
     cp_david <- cp_david[david_idx, ]
 
     new_row <- 1
@@ -337,8 +338,9 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
 #' @return  The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{goseq}
 #' @export
-write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, add_trees=TRUE,
-                             pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
+write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
+                             add_trees=TRUE, order_by="qvalue", pval=0.1,
+                             add_plots=TRUE, height=15, width=10, decreasing=FALSE, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
     if (!is.null(arglist[["table_style"]])) {
@@ -412,7 +414,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     goseq_mf <- merge(goseq_mf, mf_genes, by="row.names")
     rownames(goseq_mf) <- goseq_mf[["Row.names"]]
     goseq_mf <- goseq_mf[-1]
-    mf_idx <- order(goseq_mf[["qvalue"]])
+    mf_idx <- order(goseq_mf[[order_by]], decreasing=decreasing)
     goseq_mf <- goseq_mf[mf_idx, ]
 
     goseq_bp <- goseq_result[["bp_subset"]]
@@ -423,7 +425,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     goseq_bp <- merge(goseq_bp, bp_genes, by="row.names")
     rownames(goseq_bp) <- goseq_bp[["Row.names"]]
     goseq_bp <- goseq_bp[-1]
-    bp_idx <- order(goseq_bp[["qvalue"]])
+    bp_idx <- order(goseq_bp[[order_by]], decreasing=decreasing)
     goseq_bp <- goseq_bp[bp_idx, ]
 
     goseq_cc <- goseq_result[["cc_subset"]]
@@ -434,7 +436,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     goseq_cc <- merge(goseq_cc, cc_genes, by="row.names")
     rownames(goseq_cc) <- goseq_cc[["Row.names"]]
     goseq_cc <- goseq_cc[-1]
-    cc_idx <- order(goseq_cc[["qvalue"]])
+    cc_idx <- order(goseq_cc[[order_by]], decreasing=decreasing)
     goseq_cc <- goseq_cc[cc_idx, ]
 
     kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
@@ -541,8 +543,9 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
 #' @return  The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{gostats}
 #' @export
-write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NULL, add_trees=TRUE,
-                             pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
+write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NULL,
+                               add_trees=TRUE, order_by="qvalue", pval=0.1, add_plots=TRUE,
+                               height=15, width=10, decreasing=FALSE, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
     if (!is.null(arglist[["table_style"]])) {
@@ -616,7 +619,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     gostats_mf <- merge(gostats_mf, mf_genes, by="row.names")
     rownames(gostats_mf) <- gostats_mf[["Row.names"]]
     gostats_mf <- gostats_mf[-1]
-    mf_idx <- order(gostats_mf[["qvalue"]])
+    mf_idx <- order(gostats_mf[[order_by]], decreasing=decreasing)
     gostats_mf <- gostats_mf[mf_idx, ]
 
     gostats_bp <- gostats_result[["bp_subset"]]
@@ -627,7 +630,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     gostats_bp <- merge(gostats_bp, bp_genes, by="row.names")
     rownames(gostats_bp) <- gostats_bp[["Row.names"]]
     gostats_bp <- gostats_bp[-1]
-    bp_idx <- order(gostats_bp[["qvalue"]])
+    bp_idx <- order(gostats_bp[[order_by]], decreasing=decreasing)
     gostats_bp <- gostats_bp[bp_idx, ]
 
     gostats_cc <- gostats_result[["cc_subset"]]
@@ -638,7 +641,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     gostats_cc <- merge(gostats_cc, cc_genes, by="row.names")
     rownames(gostats_cc) <- gostats_cc[["Row.names"]]
     gostats_cc <- gostats_cc[-1]
-    cc_idx <- order(gostats_cc[["qvalue"]])
+    cc_idx <- order(gostats_cc[[order_by]], decreasing=decreasing)
     gostats_cc <- gostats_cc[cc_idx, ]
 
     kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
@@ -744,7 +747,8 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 #' @seealso \pkg{openxlsx} \pkg{gProfiler}
 #' @export
 write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofiler_result.xlsx",
-                                 add_plots=TRUE, height=15, width=10, ...) {
+                                 order_by="recall", add_plots=TRUE, height=15,
+                                 width=10, decreasing=FALSE, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
     if (!is.null(arglist[["table_style"]])) {
@@ -785,8 +789,11 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         openxlsx::addWorksheet(wb, sheetName=sheet)
         go_data <- gprofiler_result[["go"]]
         bp_data <- go_data[go_data[["domain"]]=="BP", ]
+        bp_data <- order(bp_data[[order_by]], decreasing=decreasing)
         mf_data <- go_data[go_data[["domain"]]=="MF", ]
+        mf_data <- order(mf_data[[order_by]], decreasing=decreasing)
         cc_data <- go_data[go_data[["domain"]]=="CC", ]
+        cc_data <- order(cc_data[[order_by]], decreasing=decreasing)
 
         openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
@@ -850,6 +857,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "KEGG"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         kegg_data <- gprofiler_result[["kegg"]]
+        kegg_data <- order(kegg_data[[order_by]], decreasing=decreasing)
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -879,6 +887,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "transcription_factor"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         tf_data <- gprofiler_result[["tf"]]
+        tf_data <- order(tf_data[[order_by]], decreasing=decreasing)
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -907,6 +916,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "reactome"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         react_data <- gprofiler_result[["reactome"]]
+        react_data <- order(react_data[[order_by]], decreasing=decreasing)
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -935,6 +945,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "mirna"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         mi_data <- gprofiler_result[["mi"]]
+        mi_data <- order(mi_data[[order_by]], decreasing=decreasing)
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -963,6 +974,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "hp"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         hp_data <- gprofiler_result[["hp"]]
+        hp_data <- order(hp_data[[order_by]], decreasing=decreasing)
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -991,6 +1003,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "corum"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         corum_data <- gprofiler_result[["corum"]]
+        corum_data <- order(corum_data[[order_by]], decreasing=decreasing)
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -1010,28 +1023,6 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     excel_ret <- NULL
     if (!is.null(excel)) {
         excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
-    }
-    if (class(excel_ret) == "try-error") {
-        ## In case of an error with zip(1) in making an excel file.
-        csvfile <- paste0(excel, "_gomf.csv")
-        write.csv(mf_data, file=csvfile)
-        csvfile <- paste0(excel, "_gobp.csv")
-        write.csv(bp_data, file=csvfile)
-        csvfile <- paste0(excel, "_gocc.csv")
-        write.csv(cc_data, file=csvfile)
-        csvfile <- paste0(excel, "_kegg.csv")
-        write.csv(kegg_data, file=csvfile)
-        csvfile <- paste0(excel, "_tf.csv")
-        write.csv(tf_data, file=csvfile)
-        csvfile <- paste0(excel, "_reactome.csv")
-        write.csv(react_data, file=csvfile)
-        csvfile <- paste0(excel, "_mi.csv")
-        write.csv(mi_data, file=csvfile)
-        csvfile <- paste0(excel, "_hp.csv")
-        write.csv(hp_data, file=csvfile)
-        csvfile <- paste0(excel, "_corum.csv")
-        write.csv(corum_data, file=csvfile)
-        excel_ret <- "csv"
     }
     message("Finished writing excel file.")
     return(excel_ret)
@@ -1053,7 +1044,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{topgo}
 #' @export
-write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, add_trees=TRUE,
+write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
+                             add_trees=TRUE, order_by="qvalue", decreasing=FALSE,
                              pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
@@ -1128,7 +1120,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
     topgo_mf <- merge(topgo_mf, mf_genes, by="row.names")
     rownames(topgo_mf) <- topgo_mf[["Row.names"]]
     topgo_mf <- topgo_mf[-1]
-    mf_idx <- order(topgo_mf[["qvalue"]])
+    mf_idx <- order(topgo_mf[[order_by]], decreasing=decreasing)
     topgo_mf <- topgo_mf[mf_idx, ]
 
     topgo_bp <- topgo_result[["bp_subset"]]
@@ -1139,7 +1131,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
     topgo_bp <- merge(topgo_bp, bp_genes, by="row.names")
     rownames(topgo_bp) <- topgo_bp[["Row.names"]]
     topgo_bp <- topgo_bp[-1]
-    bp_idx <- order(topgo_bp[["qvalue"]])
+    bp_idx <- order(topgo_bp[[order_by]], decreasing=decreasing)
     topgo_bp <- topgo_bp[bp_idx, ]
 
     topgo_cc <- topgo_result[["cc_subset"]]
@@ -1150,7 +1142,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
     topgo_cc <- merge(topgo_cc, cc_genes, by="row.names")
     rownames(topgo_cc) <- topgo_cc[["Row.names"]]
     topgo_cc <- topgo_cc[-1]
-    cc_idx <- order(topgo_cc[["qvalue"]])
+    cc_idx <- order(topgo_cc[["qvalue"]], decreasing=decreasing)
     topgo_cc <- topgo_cc[cc_idx, ]
 
     kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
