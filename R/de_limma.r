@@ -351,7 +351,9 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
   batches <- as.factor(batches)
 
   message("Limma step 1/6: choosing model.")
-  model <- choose_model(input, conditions, batches,
+  model <- choose_model(input=input,
+                        conditions=conditions,
+                        batches=batches,
                         model_batch=model_batch,
                         model_cond=model_cond,
                         model_intercept=model_intercept,
@@ -481,7 +483,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                               method=limma_method)
   all_tables <- NULL
   if (isTRUE(model_intercept)) {
-    message("Limma step 4/6: making and fitting contrasts with an intercept. (~ condition)")
+    message("Limma step 4/6: making and fitting contrasts with an intercept. (~ factors)")
     contrasts <- "nointercept"
     all_pairwise_contrasts <- NULL
     contrast_string <- "no intercept done"
@@ -503,7 +505,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     contrasts_performed <- names(limma_tables)
     limma_identities <- pairwise_results[["identities"]]
   } else {
-    message("Limma step 4/6: making and fitting contrasts with no intercept. (~ 0 + condition)")
+    message("Limma step 4/6: making and fitting contrasts with no intercept. (~ 0 + factors)")
     contrasts <- make_pairwise_contrasts(model=chosen_model, conditions=conditions,
                                          extra_contrasts=extra_contrasts)
     all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]

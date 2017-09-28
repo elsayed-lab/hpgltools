@@ -93,19 +93,20 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   ##                             model_batch=model_batch,
   ##                             model_cond=model_cond,
   ##                             model_intercept=model_intercept,
-  ##                             alt_model=alt_model, surrogates=1)
+  ##                             alt_model=alt_model)
   model_data <- model_choice[["chosen_model"]]
   model_including <- model_choice[["including"]]
-  model_string <- model_choice[["model_string"]]
+  model_string <- model_choice[["chosen_string"]]
+  column_data <- pData(input)
   if (class(model_choice[["model_batch"]]) == "matrix") {
     ## The SV matrix from sva/ruv/etc are put into the model batch slot of the return from choose_model.
     ## Use them here if appropriate
     model_batch <- model_choice[["model_batch"]]
+    column_data <- cbind(column_data, model_batch)
   }
   ## choose_model should now take all of the following into account
   ## Therefore the following 8 or so lines should not be needed any longer.
   model_string <- NULL
-  column_data <- pData(input)
   if (isTRUE(model_batch) & isTRUE(model_cond)) {
     message("DESeq2 step 1/5: Including batch and condition in the deseq model.")
     ## summarized = DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset), design=~ 0 + condition + batch)
@@ -131,17 +132,18 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
     ##model_string <- "~ condition"
     ##cond_model_string <- "~ condition"
-    cond_model_string <- model_choice[["chosen_string"]]
+    sv_model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                  colData=column_data,
-                                                 design=as.formula(cond_model_string))
-    dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(cond_model_string))
-    passed <- FALSE
-    num_sv <- ncol(model_batch)
-    new_dataset <- deseq_try_sv(dataset, summarized, model_batch)
-    dataset <- new_dataset
-    rm(new_dataset)
+                                                 design=as.formula(sv_model_string))
+    dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(sv_model_string))
+    ## I think the following lines are no longer needed now that I properly add the SVs to the model.
+    ##passed <- FALSE
+    ##num_sv <- ncol(model_batch)
+    ##new_dataset <- deseq_try_sv(dataset, summarized, model_batch)
+    ##dataset <- new_dataset
+    ##rm(new_dataset)
   } else {
     message("DESeq2 step 1/5: Including only condition in the deseq model.")
     model_string <- model_choice[["chosen_string"]]
@@ -262,42 +264,81 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ## denominator_name = paste0("condition", denominator)  ## maybe needed in 6 lines
   }  ## End for each c
 
-  ## Now that we finished the contrasts, fill in the coefficient list with each set of values
-  ##for (c in 1:(length(condition_levels))) {
-  ##    coef <- condition_levels[c]
-  ##    coef_name <- paste0("condition", coef)
-  ##    test_result <- try(DESeq2::results(deseq_run,
-  ##                                       contrast=as.numeric(coef_name == DESeq2::resultsNames(deseq_run))))
-  ##    if (class(test_result) == "try-error") {
-  ##        coefficient_list[[coef]] <- NULL
-  ##    } else {
-  ##        coefficient_list[[coef]] <- as.data.frame(test_result)
-  ##    }
-  ##}
+  ## The logic here is a little tortuous.
+  ## Here are some sample column names from an arbitrary coef() call:
+  ## "Intercept" "SV1" "SV2" "SV3" "condition_mtc_wtu_vs_mtc_mtu"
+  ## First of all, we don't care about the 'condition' prefix.
+  ## In addition, if we want the coefficient for mtc_wtu, then we need to subtract
+  ## the mtc_wtu_vs_mtc_mtu from the Intercept, which is annoying.
+  ## The following lines will attempt to do these things and
+  ## appropriately rename the columns.
   coefficient_df <- coef(deseq_run)
+  ## Here I will just simplify the column names.
   colnames(coefficient_df) <- gsub(pattern="^condition", replacement="", x=colnames(coefficient_df))
   colnames(coefficient_df) <- gsub(pattern="^batch", replacement="", x=colnames(coefficient_df))
   colnames(coefficient_df) <- gsub(pattern="^_", replacement="", x=colnames(coefficient_df))
   remaining_list <- colnames(coefficient_df)
 
-  ## If this is true, then intercept is the second half of the contrasts listed
+  ## Create a list of all the likely column names, depending on how deseq was called this might be
+  ## numerator_vs_denominator or numerator denominator.
+  ## So, I just make a list of them all.
+  num_den <- unique(c(names(numerators), names(denominators)))
+  ## AFAICT, the intercept is the second half of the contrasts listed.
+  ## So grab that contrast name out
   if ("Intercept" %in% remaining_list) {
-    last_pair <- remaining_list[length(remaining_list)]
-    intercept_pair <- strsplit(x=last_pair, split="_vs_")[[1]][2]
-    newnames <- remaining_list
-    newnames[[1]] <- intercept_pair
-    col_number = 0
-    for (newname in newnames) {
-      col_number <- col_number + 1
-      test_modify <- strsplit(x=newname, split="_vs_")[[1]][1]
-      if (is.na(test_modify)) {
-        next
-      } else {
-        newnames[col_number] <- test_modify
-        coefficient_df[, col_number] <- coefficient_df[, col_number] - coefficient_df[, 1] 
+    ## When there is a bunch of x_vs_y, then the intercept will be set to the _y
+    ## And all other columns will be subtracted from it to get their coefficients.
+    vs_indexes <- grepl(pattern="_vs_", x=colnames(coefficient_df))
+    if (sum(vs_indexes) > 0) {
+      intercept_pairing <- strsplit(x=colnames(coefficient_df)[vs_indexes], split="_vs_")
+      ## This gives a list like: [[1]][1]: 'numerator' [[1]][2]: 'denominator'
+      ## So grab the second element of an arbitrary list element.
+      intercept_name <- intercept_pairing[[1]][2]
+      ## Now grab a list of every other column
+      not_intercepts_idx <- ! grepl(pattern=intercept_name, x=unlist(intercept_pairing))
+      not_intercepts <- unlist(intercept_pairing)[not_intercepts_idx]
+      for (count in 1:ncol(coefficient_df)) {
+        column_name <- colnames(coefficient_df)[count]
+        if (count == 1) {
+          colnames(coefficient_df)[1] <- intercept_name
+          next
+        } else if (! vs_indexes[count]) {
+          ## Then this does not have _vs_ in it, so skip.
+          next
+        } else {
+          numerator <- strsplit(x=column_name, split="_vs_")[[1]][1]
+          coefficient_df[, count] <- abs(coefficient_df[, 1] - coefficient_df[, count])
+          colnames(coefficient_df)[count] <- numerator
+        }
       }
-    }
-    colnames(coefficient_df) <- newnames
+      ## End if the columns have _vs_ in them.
+    } else {
+      ## In this case, we just want the name of the condition which is not in the set
+      ## of columns of the coefficient df.
+      ## This is a bit more verbose that strictly it needs to be, but I hope it is clearer therefore.
+      ## 1st, if a numerator/denominator is missing, then it is the intercept name.
+      missing_name_idx <- ! num_den %in% columns
+      missing_name <- num_den[missing_name_idx]
+      ## Those indexes found in the numerator+denominator list will be subtracted
+      containing_names_idx <- columns %in% num_den
+      containing_names <- columns[containing_names_idx]
+      ## If the are not in the numerator+denominator list, then they must be the SVs (except the
+      ## first column of course, that is the intercept.
+      extra_names_idx <- ! columns %in% num_den
+      extra_names <- columns[extra_names_idx]
+      for (count in 1:ncol(coefficient_df)) {
+        column_name <- colnames(coefficient_df)[count]
+        if (count == 1) {
+          colnames(coefficient_df)[1] <- missing_name
+          next
+        } else if (column_name %in% extra_names) {
+          ## The SV columns or batch or whatever
+          next
+        } else {
+          coefficient_df[, count] <- abs(coefficient_df[, 1] - coefficient_df[, count])
+        }
+      }
+    } ## End both likely types of intercept columns.
   }
 
   ret_list <- list(

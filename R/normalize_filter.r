@@ -32,25 +32,34 @@ filter_counts <- function(count_table, filter="hpgl", p=0.01, A=1, k=1,
     filter <- "cbcb"
   }
   filtered_counts <- NULL
-  if (filter == "cbcb") {
-    filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
-                                          min_samples=min_samples)
-  } else if (filter == "hpgl") {
-    filtered_counts <- hpgl_filter_counts(count_table, threshold=thresh,
-                                          min_samples=min_samples)
-  } else if (filter == "pofa") {
-    filtered_counts <- genefilter_pofa_counts(count_table, p=p, A=A)
-  } else if (filter == "kofa") {
-    filtered_counts <- genefilter_kofa_counts(count_table, k=k, A=A)
-  } else if (filter == "cv") {
-    filtered_counts <- genefilter_cv_counts(count_table, cv_min=cv_min,
-                                            cv_max=cv_max)
-  } else if (filter == "simple") {
-    filtered_counts <- simple_filter_counts(count_table, threshold=thresh)
-  } else {
-    filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
-                                          min_samples=min_samples, ...)
-  }
+  switchret <- switch(
+    filter,
+    "cbcb" = {
+      filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
+                                            min_samples=min_samples)
+    },
+    "hpgl" = {
+      filtered_counts <- hpgl_filter_counts(count_table, threshold=thresh,
+                                            min_samples=min_samples)
+    },
+    "pofa" = {
+      filtered_counts <- genefilter_pofa_counts(count_table, p=p, A=A)
+    },
+    "kofa" = {
+      filtered_counts <- genefilter_kofa_counts(count_table, k=k, A=A)
+    },
+    "cv" = {
+      filtered_counts <- genefilter_cv_counts(count_table, cv_min=cv_min,
+                                              cv_max=cv_max)
+    },
+    "simple" = {
+      filtered_counts <- simple_filter_counts(count_table, threshold=thresh)
+    },
+    {
+      filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
+                                            min_samples=min_samples, ...)
+    }
+  ) ## Ending the switch
   return(filtered_counts)
 }
 

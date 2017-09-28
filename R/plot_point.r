@@ -447,6 +447,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
 
   ## Set up the labels for the legend by significance.
   ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
+  ## shape 24 is the up arrow, 25 the down arrow, 21 the circle.
   state_shapes <- c(24, 25, 21)
   names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
 
@@ -483,8 +484,8 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                                 values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
     ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=-90)) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black")) +                  
+    ##             axis.text.x=ggplot2::element_text(angle=-90)) +
     ggplot2::xlab("Average log2(Counts)") +
     ggplot2::ylab("log2(fold change)")
 
@@ -811,7 +812,8 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
   df[["pcut"]] <- as.factor(df[["pcut"]])
   df[["state"]] <- as.factor(df[["state"]])
 
-  state_shapes <- c(21, 22, 23, 24)
+  ## shape 25 is the down arrow, 22 is the square, 23 the diamond, 24 the up arrow
+  state_shapes <- c(25, 22, 23, 24)
   names(state_shapes) <- c("downsig", "fcinsig", "pinsig", "upsig")
 
   color_column <- "pcut"
@@ -891,8 +893,8 @@ plot_volcano_de <- function(table, tooltip_data=NULL,
     ggplot2::ylab(label=p_name) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
     ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=-90))
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"))
+  ##  axis.text.x=ggplot2::element_text(angle=-90))
 
   gvis_result <- NULL
   if (!is.null(gvis_filename)) {

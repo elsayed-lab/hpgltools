@@ -41,18 +41,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                               include_deseq=TRUE, include_edger=TRUE, include_basic=TRUE,
                               rownames=TRUE, add_plots=TRUE, loess=FALSE,
                               plot_dim=6, compare_plots=TRUE, padj_type="fdr", ...) {
-  ## The ontology_shared function which creates multiple sheets works a bit differently
-  ## It creates all the tables, then does a createWorkbook()
-  ## Does a createWorkbook() / addWorksheet()
-  ## Then a writeData() / writeDataTable() / print(plot) / insertPlot() / saveWorkbook()
-  ## Lets try that here.
   retlist <- NULL
 
+  ## First pull out the data for each tool
   limma <- all_pairwise_result[["limma"]]
   deseq <- all_pairwise_result[["deseq"]]
   edger <- all_pairwise_result[["edger"]]
   basic <- all_pairwise_result[["basic"]]
 
+  ## Prettily print the linear equation relating the genes for each contrast
   make_equate <- function(lm_model) {
     coefficients <- summary(lm_model)[["coefficients"]]
     int <- signif(x=coefficients["(Intercept)", 1], digits=3)
@@ -95,6 +92,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     message("Not adding plots, basic had an error.")
   }
 
+  ## Take a moment to ensure that we can create the excel file without error.
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
   wb <- NULL
   do_excel <- TRUE
@@ -115,16 +113,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     wb <- openxlsx::createWorkbook(creator="hpgltools")
   }
 
+  ## I want to print a string reminding the user what kind of model was used in the analysis.
+  ## Do that here.  Noting that if 'batch' is actually from a surrogate variable, then we will
+  ## not have TRUE/FALSE but instead a matrix.
   reminder_model_cond <- all_pairwise_result[["model_cond"]]
   reminder_model_batch <- all_pairwise_result[["model_batch"]]
   reminder_extra <- all_pairwise_result[["extra_contrasts"]]
   reminder_string <- NULL
   if (class(reminder_model_batch) == "matrix") {
-    ## This is currently not true, ths pvalues are only modified if we modify the data.
-    ## reminder_string <- "The contrasts were performed with surrogates modeled with sva.
-    ## The p-values were therefore adjusted using an experimental f-test as per the sva documentation."
-    ## message(reminder_string)
-    reminder_string <- "The contrasts were performed using surrogates from sva."
+    reminder_string <- "The contrasts were performed using surrogates from sva/ruv/etc."
   } else if (isTRUE(reminder_model_batch) & isTRUE(reminder_model_cond)) {
     reminder_string <- "The contrasts were performed with experimental condition and batch in the model."
   } else if (isTRUE(reminder_model_cond)) {
@@ -132,6 +129,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   } else {
     reminder_string <- "The contrasts were performed in a strange way, beware!"
   }
+
+  ## The next large set of data.frame() calls create the first sheet, containing a legend.
   message("Writing a legend of columns.")
   legend <- data.frame(rbind(
     c("", reminder_string),
@@ -209,6 +208,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     c("", "If this data was adjusted with sva, then check for a sheet 'original_pvalues' at the end.")
   ),
   stringsAsFactors=FALSE)
+  ## Here we including only those columns which are relevant to the analysis performed.
   if (isTRUE(include_limma)) {
     legend <- rbind(legend,
                     c("limma_logfc", "The log2 fold change reported by limma."),
@@ -244,6 +244,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
                           title="Columns used in the following tables.")
 
+  ## Some folks have asked for some PCA showing the before/after surrogates.
+  ## Put that on the first sheet, then.
+  ## This if (isTRUE()) is a little odd, perhaps it should be removed or moved up.
   if (isTRUE(do_excel)) {
     message("Printing a pca plot before/after surrogates/batch estimation.")
     ## Add PCA before/after
@@ -264,6 +267,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                 start_row=37)
   }
 
+  ## A common request is to have the annotation data added to the table.  Do that here.
   annot_df <- fData(all_pairwise_result[["input"]])
   if (!is.null(extra_annot)) {
     annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
@@ -271,6 +275,11 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     annot_df <- annot_df[, -1, drop=FALSE]
   }
 
+  ## Now set up to do the more difficult work, starting by blanking out some lists to hold the data.
+  ## The following will either:
+  ## a) Take only those elements from all_pairwise() in the keepers list
+  ## b) Take all elements arbitrarily
+  ## c) Take a single element.
   combo <- list()
   limma_plots <- list()
   limma_ma_plots <- list()
@@ -286,12 +295,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   name_list <- c()
   contrast_list <- c()
   ret_keepers <- list()
+  ## Here, we will look for only those elements in the keepers list.
+  ## In addition, if someone wanted a_vs_b, but we did b_vs_a, then this will flip the logFCs.
   if (class(keepers) == "list") {
     ## First check that your set of kepers is in the data
     all_coefficients <- unlist(strsplit(x=limma[["contrasts_performed"]], split="_vs_"))
     all_keepers <- as.character(unlist(keepers))
     found_keepers <- sum(all_keepers %in% all_coefficients)
     ret_keepers <- keepers
+    ## Just make sure we have something to work with.
     if (found_keepers == 0) {
       message("The keepers has no elements in the coefficients.")
       message(paste0("Here are the keepers: ", toString(all_keepers)))
@@ -306,7 +318,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     for (name in names(keepers)) {
       a <- a + 1
       message(paste0("Working on ", a, "/", keeper_len, ": ",  name))
+      ## Each element in the list gets one worksheet.
       sheet_count <- sheet_count + 1
+      ## The numerators and denominators will be used to check that we are a_vs_b or b_vs_a
       numerator <- keepers[[name]][1]
       denominator <- keepers[[name]][2]
       same_string <- numerator
@@ -315,6 +329,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         same_string <- paste0(numerator, "_vs_", denominator)
         inverse_string <- paste0(denominator, "_vs_", numerator)
       }
+      ## Blank out some elements for plots and such.
       dat <- NULL
       plt <- NULL
       summary <- NULL
@@ -322,6 +337,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       edger_plt <- edger_ma_plt <- edger_vol_plt <- NULL
       deseq_plt <- deseq_ma_plt <- deseq_vol_plt <- NULL
 
+      ## Make sure there were no errors and die if things went catastrophically wrong.
       contrasts_performed <- NULL
       if (class(limma) != "try-error") {
         contrasts_performed <- limma[["contrasts_performed"]]
@@ -335,6 +351,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         stop("None of the DE tools appear to have worked.")
       }
 
+      ## Do the actual table search, checking for the same_string (a_vs_b) and inverse (b_vs_a)
+      ## Set a flag do_inverse appropriately, this will be used later to flip some numbers.
       found <- 0
       found_table <- NULL
       do_inverse <- FALSE
@@ -357,6 +375,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         break
       }
 
+      ## If an analysis returned an error, null it out.
       if (class(limma) == "try-error") {
         limma <- NULL
       }
@@ -369,6 +388,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       if (class(basic) == "try-error") {
         basic <- NULL
       }
+      ## Now make a single table from the limma etc results.
       if (found > 0) {
         combined <- combine_de_table(limma, edger, deseq, basic,
                                      found_table, inverse=do_inverse,
@@ -380,10 +400,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                      excludes=excludes, padj_type=padj_type)
         dat <- combined[["data"]]
         summary <- combined[["summary"]]
+        ## And get a bunch of variables ready to receive the coefficient, ma, and volcano plots.
         limma_plt <- edger_plt <- deseq_plt <- NULL
         limma_ma_plt <-  edger_ma_plt <- deseq_ma_plt <- NULL
         limma_vol_plt <-  edger_vol_plt <- deseq_vol_plt <- NULL
 
+        ## The following logic will be repeated for limma, edger, deseq
+        ## Check that the tool's data survived, and if so plot the coefficients, ma, and vol
+        ## I think I will put extract_coefficient_scatter into extract_de_plots
+        ## partially to simplify this and partially because having them separate is dumb.
         if (isTRUE(include_limma)) {
           limma_try <- try(sm(extract_coefficient_scatter(
             limma, type="limma",
@@ -400,7 +425,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             limma_vol_plt <- ma_vol[["volcano"]]
           }
         }
-
         if (isTRUE(include_edger)) {
           edger_try <- try(sm(extract_coefficient_scatter(
             edger, type="edger",
@@ -417,7 +441,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             edger_vol_plt <- ma_vol[["volcano"]]
           }
         }
-
         if (isTRUE(include_deseq)) {
           deseq_try <- try(sm(extract_coefficient_scatter(
             deseq, type="deseq",
@@ -440,6 +463,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         message(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
         break
       }
+
+      ## Now that we have made the plots and tables, drop them into the appropriate element
+      ## in the top-level lists.
       combo[[name]] <- dat
       limma_plots[[name]] <- limma_plt
       limma_ma_plots[[name]] <- limma_ma_plt
@@ -454,8 +480,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       table_names[[a]] <- summary[["table"]]
       names(combo) <- name_list
     }
-    ## If you want all the tables in a dump
 
+    ## If you want all the tables in a dump
+    ## The logic here is the same as above without worrying about a_vs_b, but instead just
+    ## iterating through every returned table, combining them, and printing them to the excel.
   } else if (class(keepers) == "character" & keepers == "all") {
     a <- 0
     names_length <- length(names(edger[["contrast_list"]]))
@@ -522,9 +550,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         }
       }
     } ## End for list
-    ## Or a single specific table
   }
 
+  ## Finally, the simplest case, just print a single table.  Otherwise the logic should
+  ## be identical to the first case above.
   else if (class(keepers) == "character") {
     table <- keepers
     contrast_list <- table
@@ -597,6 +626,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     stop("I don't know what to do with your specification of tables to keep.")
   } ## End different types of things to keep.
 
+  ## At this point, we have done everything we can to combine the requested tables.
+  ## So lets dump the tables to the excel file and compare how the various tools performed
+  ## with some venn diagrams, and finally dump the plots from above into the sheet.
   venns <- list()
   venns_sig <- list()
   comp <- list()
@@ -606,22 +638,29 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     for (tab in names(combo)) {
       sheetname <- tab
       count <- count + 1
+      ## I was getting some weird errors which magically disappeared when I did the following
+      ## two lines.  This is obviously not how things are supposed to work.
       ddd <- combo[[count]]
       oddness = summary(ddd)
-      ## until I did this I was getting errors I am guessing devtools::load_all() isn't
-      ## clearing everything
       final_excel_title <- gsub(pattern="YYY", replacement=tab, x=excel_title)
+      ## Dump each table to the appropriate excel sheet
       xls_result <- write_xls(data=ddd, wb=wb, sheet=sheetname,
                               title=final_excel_title, rownames=rownames)
 
-      sheetname <- xls_result[["sheet"]]  ## This is in case the original sheet name was too long.
+      ## The function write_xls has some logic in it to get around excel name limitations
+      ## (30 characters), therefore set the sheetname to what was returned in case it had to
+      ## change the sheet's name.
+      sheetname <- xls_result[["sheet"]]
       if (isTRUE(add_plots)) {
         ## Text on row 1, plots from 2-17 (15 rows)
         plot_column <- xls_result[["end_col"]] + 2
         message(paste0("Adding venn plots for ", names(combo)[[count]], "."))
+        ## Make some venn diagrams comparing deseq/limma/edger!
         venn_list <- try(de_venn(ddd, fc=0, adjp=adjp))
         venn_sig_list <- try(de_venn(ddd, fc=1, adjp=adjp))
 
+        ## If they worked, add them to the excel sheets after the data,
+        ## but make them smaller than other graphs.
         if (class(venn_list) != "try-error") {
           xl_result <- openxlsx::writeData(wb, sheetname, x="Venn of p-value up genes, lfc > 0.",
                                            startRow=1, startCol=plot_column)
@@ -661,6 +700,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 
         }
 
+        ## Now add the coefficients, ma, and volcanoes below the venns.
         ## Text on row 18, plots from 19-49 (30 rows)
         plt <- limma_plots[count][[1]]
         ma_plt <- limma_ma_plots[count][[1]]
@@ -687,7 +727,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         ## Text on row 50, plots from 51-81
         plt <- edger_plots[count][[1]] ##FIXME this is suspicious
         ma_plt <- edger_ma_plots[count][[1]]
-        vol_plt <- edger_ma_plots[count][[1]]
+        vol_plt <- edger_vol_plots[count][[1]]
         if (class(plt) != "try-error" & !is.null(plt)) {
           printme <- paste0("Edger expression coefficients for ", names(combo)[[count]], "; R^2: ",
                             signif(plt[["lm_rsq"]], digits=3), "; equation: ",
@@ -731,9 +771,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                                           start_row=82)
         }
       }
-    }  ## End for loop
+    }  ## End for loop iterating over every kept table.
     count <- count + 1
 
+    ## Now add some summary data and some plots comparing the tools.
     message("Writing summary information.")
     if (isTRUE(compare_plots)) {
       sheetname <- "pairwise_summary"
@@ -806,6 +847,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     }
   } ## End if !is.null(excel)
 
+  ## We have finished!  Dump the important stuff into a return list.
   ret <- NULL
   if (is.null(retlist)) {
     ret <- list(
@@ -821,12 +863,16 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   } else {
     ret <- retlist
   }
+
+  ## If someone asked for the siginficant/abundant genes to be printed, just do that here.
   if (!is.null(sig_excel)) {
+    message("Invoking extract_significant_genes().")
     significant <- try(extract_significant_genes(ret, excel=sig_excel, ...))
     ret[["significant"]] <- significant
   }
   if (!is.null(abundant_excel)) {
-    abundant <- try(extract_abundant_genes(ret, excel=abundance_excel, ...))
+    message("Invoking extract_abundant_genes().")
+    abundant <- try(extract_abundant_genes(all_pairwise_result, excel=abundant_excel, ...))
     ret[["abundant"]] <- abundant
   }
   return(ret)

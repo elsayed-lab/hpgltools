@@ -170,8 +170,10 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
   vol_material <- plot_volcano_de(
     table=the_table, fc_col=fc_col,
     p_col=p_col, logfc_cutoff=logfc,
-    pval_cutoff=pval_cutoff, ...)
-  retlist <- list("ma" = ma_material, "volcano" = vol_material)
+    pval_cutoff=pval_cutoff, ...) ##)
+  retlist <- list(
+    "ma" = ma_material,
+    "volcano" = vol_material)
   return(retlist)
 }
 
@@ -582,7 +584,7 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
   downlist <- list()
 
   types <- according_to
-  if (according_to == "all") {
+  if (according_to[[1]] == "all") {
     types <- c("limma", "edger", "deseq")
   }
   ##else if (according_to == c("limma", "edger", "deseq", "basic")) {
@@ -710,7 +712,7 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
     tables_up[[type]] <- up
     tables_down[[type]] <- down
     plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
-    ##plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
+    ## plots[[type]] <- plot_significant_bar(up, down, maximum=maximum) #, ...)
   } ## End iterating over the 3 types, limma/deseq/edger
   retlist <- list(
     "ups" = uplist,
@@ -723,7 +725,8 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
     "deseq" = plots[["deseq"]],
     "edger_up_table" = tables_up[["edger"]],
     "edger_down_table"= tables_down[["edger"]],
-    "edger" = plots[["edger"]])
+    "edger" = plots[["edger"]]
+  )
   return(retlist)
 }
 

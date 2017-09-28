@@ -295,9 +295,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     "pre_batch" = pre_pca,
     "post_batch" = post_pca)
   
-  if (!is.null(arglist[["com_excel"]])) {
+  if (!is.null(arglist[["combined_excel"]])) {
     message("Invoking combine_de_tables().")
-    combined <- combine_de_tables(ret, excel=arglist[["com_excel"]], ...)
+    combined <- combine_de_tables(ret, excel=arglist[["combined_excel"]], ...)
     ret[["combined"]] <- combined
   }
   return(ret)
@@ -339,7 +339,7 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
                          alt_model=NULL, alt_string=NULL,
                          intercept=0, reverse=FALSE,
                          surrogates="be", ...) {
-  ## arglist <- list(...)
+  arglist <- list(...)
   design <- pData(input)
   if (is.null(design)) {
     conditions <- as.factor(conditions)
@@ -435,23 +435,34 @@ both condition and batch? Using only a conditional model.")
     ## Changing model_batch from 'sva' to the resulting matrix.
     ## Hopefully this will simplify things later for me.
     model_batch <- model_batch_info[["model_adjust"]]
-    noint_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
-    ##                                 contrasts.arg=list(conditions="contr.sum"))
-    noint_string <- cond_noint_string
-
     int_model <- stats::model.matrix(~ condition + model_batch, data=design)
-    ##                               contrasts.arg=list(conditions="contr.sum"))
+    noint_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
+    sv_names <- paste0("SV", 1:ncol(model_batch))
+    noint_string <- cond_noint_string
     int_string <- cond_int_string
-    including <- "condition+batchestimate"
+    sv_string <- ""
+    for (sv in sv_names) {
+      sv_string <- paste0(sv_string, " + ", sv)
+    }
+    noint_string <- paste0(noint_string, sv_string)
+    int_string <- paste0(int_string, sv_string)
+    rownames(model_batch) <- rownames(int_model)
+    including <- paste0("condition", sv_string)
   } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
     message("Including batch estimates from sva/ruv/pca in the model.")
-    noint_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
-    ##                                 contrasts.arg=list(conditions="contr.sum"))
     int_model <- stats::model.matrix(~ condition + model_batch, data=design)
-    ##                               contrasts.arg=list(conditions="contr.sum"))
+    noint_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
+    sv_names <- paste0("SV", 1:ncol(model_batch))
     int_string <- cond_int_string
     noint_string <- cond_noint_string
-    including <- "condition+batchestimate"
+    sv_string <- ""
+    for (sv in sv_names) {
+      sv_string <- paste0(sv_string, " + ", sv)
+    }
+    int_string <- paste0(int_string, sv_string)
+    noint_string <- paste0(noint_string, sv_string)
+    rownames(model_batch) <- rownames(int_model)
+    including <- paste0("condition", sv_string)
   } else if (isTRUE(model_cond)) {
     int_model <- cond_int_model
     noint_model <- cond_noint_model
@@ -474,29 +485,31 @@ both condition and batch? Using only a conditional model.")
   }
 
   tmpnames <- colnames(int_model)
-  tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
-  tmpnames <- gsub("-", "", tmpnames)
-  tmpnames <- gsub("+", "", tmpnames)
+  tmpnames <- gsub(pattern="model_batch", replacement="SV1", x=tmpnames)
+  tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="+", replacement="", x=tmpnames)
   ## The next lines ensure that conditions/batches which are all numeric will not cause weird
   ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
   ## Similarly, a batch '01' will be 'b01'
-  tmpnames <- gsub("^condition(\\d+)$", replacement="c\\1", x=tmpnames)
-  tmpnames <- gsub("^batch(\\d+)$", replacement="b\\1", x=tmpnames)
-  tmpnames <- gsub("condition", "", tmpnames)
-  tmpnames <- gsub("batch", "", tmpnames)
+  tmpnames <- gsub(pattern="^condition(\\d+)$", replacement="c\\1", x=tmpnames)
+  tmpnames <- gsub(pattern="^batch(\\d+)$", replacement="b\\1", x=tmpnames)
+  tmpnames <- gsub(pattern="condition", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="batch", replacement="", x=tmpnames)
   colnames(int_model) <- tmpnames
 
   tmpnames <- colnames(noint_model)
-  tmpnames <- gsub("data[[:punct:]]", "", tmpnames)
-  tmpnames <- gsub("-", "", tmpnames)
-  tmpnames <- gsub("+", "", tmpnames)
+  tmpnames <- gsub(pattern="model_batch", replacement="SV1", x=tmpnames)
+  tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="+", replacement="", x=tmpnames)
   ## The next lines ensure that conditions/batches which are all numeric will not cause weird
   ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
   ## Similarly, a batch '01' will be 'b01'
-  tmpnames <- gsub("condition^(\\d+)$", replacement="c\\1", x=tmpnames)
-  tmpnames <- gsub("batch^(\\d+)$", replacement="b\\1", x=tmpnames)
-  tmpnames <- gsub("condition", "", tmpnames)
-  tmpnames <- gsub("batch", "", tmpnames)
+  tmpnames <- gsub(pattern="condition^(\\d+)$", replacement="c\\1", x=tmpnames)
+  tmpnames <- gsub(pattern="batch^(\\d+)$", replacement="b\\1", x=tmpnames)
+  tmpnames <- gsub(pattern="condition", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="batch", replacement="", x=tmpnames)
   colnames(noint_model) <- tmpnames
 
   chosen_model <- NULL
@@ -506,6 +519,7 @@ both condition and batch? Using only a conditional model.")
     chosen_model <- int_model
     chosen_string <- int_string
   } else {
+    message("Choosing the non-intercept containing model.")
     chosen_model <- noint_model
     chosen_string <- noint_string
   }
@@ -1297,24 +1311,7 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
     keepers <- !grepl(pattern="_vs_", x=all_coefficients)
     coefficient_df <- coefficient_df[, keepers]
   } else if (type == "deseq") {
-    coefficient_df <- NULL
-    coef_names <- names(datum[["coefficients"]])
-    coef_rows <- rownames(datum[["coefficients"]][[1]])
-    coef_list <- NULL
-    for (contrast_num in 1:length(coef_names)) {
-      name <- coef_names[[contrast_num]]
-      tmpdf <- datum[["coefficients"]][[name]]
-      tmpdf[["new"]] <- log2(as.numeric(tmpdf[["baseMean"]])) + tmpdf[["log2FoldChange"]]
-      if (contrast_num == 1) {
-        coefficient_df <- as.data.frame(tmpdf[["new"]], stringsAsFactors=FALSE)
-        coefficient_df <- as.matrix(coefficient_df)
-      } else {
-        coefficient_df <- cbind(coefficient_df, tmpdf[["new"]])
-      }
-    }
-    coefficient_df <- as.data.frame(coefficient_df)
-    colnames(coefficient_df) <- coef_names
-    rownames(coefficient_df) <- coef_rows
+    coefficient_df <- datum[["coefficients"]]
   } else if (type == "basic") {
     coefficient_df <- datum[["medians"]]
   }
