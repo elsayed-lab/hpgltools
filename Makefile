@@ -18,8 +18,9 @@ test:
 inst: roxygen restore install test
 	@echo "Restored packrat, regenerated documentation, installed, and tested."
 
-git: snap push
+git: snap
 	@echo "Snapshotted packrat and pushed to github."
+	git commit -a -m 'snapshotted packrat.' && git push
 
 hi:
 	@echo "Hello."
